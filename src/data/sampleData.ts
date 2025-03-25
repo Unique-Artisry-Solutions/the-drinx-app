@@ -1,0 +1,196 @@
+
+// Sample data for development purposes
+
+// Sample establishments
+export const sampleEstablishments = [
+  {
+    id: "1",
+    name: "The Mocktail Lounge",
+    address: "123 Main St, Anytown, USA",
+    distance: "0.5 miles",
+    cocktailCount: 8,
+    image: "https://images.unsplash.com/photo-1567696911980-2eed69a46042?auto=format&fit=crop&q=80&w=1000",
+    phone: "(555) 123-4567",
+    website: "https://example.com",
+    hours: [
+      "Mon-Thu: 4pm - 12am",
+      "Fri-Sat: 4pm - 2am",
+      "Sun: 4pm - 10pm"
+    ],
+    latitude: 40.7128,
+    longitude: -74.006
+  },
+  {
+    id: "2",
+    name: "Sober Bar & Kitchen",
+    address: "456 Oak Ave, Somewhere, USA",
+    distance: "1.2 miles",
+    cocktailCount: 12,
+    image: "https://images.unsplash.com/photo-1470337458703-46ad1756a187?auto=format&fit=crop&q=80&w=1000",
+    phone: "(555) 987-6543",
+    website: "https://example.com",
+    hours: [
+      "Mon-Thu: 11am - 11pm",
+      "Fri-Sat: 11am - 1am",
+      "Sun: 11am - 10pm"
+    ],
+    latitude: 40.7282,
+    longitude: -73.994
+  },
+  {
+    id: "3",
+    name: "Zero Proof",
+    address: "789 Pine St, Elsewhere, USA",
+    distance: "2.4 miles",
+    cocktailCount: 6,
+    image: "https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&q=80&w=1000",
+    phone: "(555) 246-8101",
+    website: "https://example.com",
+    hours: [
+      "Tue-Thu: 5pm - 11pm",
+      "Fri-Sat: 5pm - 12am",
+      "Sun-Mon: Closed"
+    ],
+    latitude: 40.7112,
+    longitude: -74.013
+  },
+  {
+    id: "4",
+    name: "Spiritless Social",
+    address: "101 Elm St, Nowhere, USA",
+    distance: "3.0 miles",
+    cocktailCount: 10,
+    image: "https://images.unsplash.com/photo-1616902348073-98abb8f595e3?auto=format&fit=crop&q=80&w=1000",
+    phone: "(555) 369-2578",
+    website: "https://example.com",
+    hours: [
+      "Mon-Fri: 3pm - 12am",
+      "Sat-Sun: 12pm - 2am"
+    ],
+    latitude: 40.7220,
+    longitude: -73.989
+  },
+  {
+    id: "5",
+    name: "Mindful Mixology",
+    address: "202 Maple Dr, Anywhere, USA",
+    distance: "3.6 miles",
+    cocktailCount: 15,
+    image: "https://images.unsplash.com/photo-1600456899121-68eda5705257?auto=format&fit=crop&q=80&w=1000",
+    phone: "(555) 741-9630",
+    website: "https://example.com",
+    hours: [
+      "Mon-Sun: 12pm - 10pm"
+    ],
+    latitude: 40.7180,
+    longitude: -74.001
+  }
+];
+
+// Sample cocktails
+export const sampleCocktails = [
+  {
+    id: "1",
+    name: "Garden Spritz",
+    price: "$12",
+    description: "A refreshing blend of cucumber, mint, lime, and sparkling water with a hint of elderflower.",
+    ingredients: ["Cucumber", "Mint", "Lime", "Elderflower Syrup", "Sparkling Water"],
+    image: "https://images.unsplash.com/photo-1536935338788-846bb9981813?auto=format&fit=crop&q=80&w=1000",
+    establishment: {
+      id: "1",
+      name: "The Mocktail Lounge",
+      distance: "0.5 miles"
+    }
+  },
+  {
+    id: "2",
+    name: "Berry Bliss",
+    price: "$14",
+    description: "Mixed berries muddled with basil and lemon, topped with ginger beer and a splash of cranberry juice.",
+    ingredients: ["Mixed Berries", "Basil", "Lemon", "Ginger Beer", "Cranberry Juice"],
+    image: "https://images.unsplash.com/photo-1595981267035-7b04ca84a82d?auto=format&fit=crop&q=80&w=1000",
+    establishment: {
+      id: "1",
+      name: "The Mocktail Lounge",
+      distance: "0.5 miles"
+    }
+  },
+  {
+    id: "3",
+    name: "Spiced Hibiscus Sour",
+    price: "$13",
+    description: "Tangy hibiscus tea infused with cinnamon and star anise, mixed with fresh lemon juice and maple syrup.",
+    ingredients: ["Hibiscus Tea", "Lemon Juice", "Maple Syrup", "Cinnamon", "Star Anise", "Egg White Alternative"],
+    image: "https://images.unsplash.com/photo-1638957773782-f9614cf5fb5d?auto=format&fit=crop&q=80&w=1000",
+    establishment: {
+      id: "2",
+      name: "Sober Bar & Kitchen",
+      distance: "1.2 miles"
+    }
+  },
+  {
+    id: "4",
+    name: "Smoky Pineapple",
+    price: "$15",
+    description: "Grilled pineapple juice with smoked rosemary, lime, and chili-infused honey for a complex, smoky-sweet flavor.",
+    ingredients: ["Grilled Pineapple", "Smoked Rosemary", "Lime", "Chili-infused Honey", "Tonic Water"],
+    image: "https://images.unsplash.com/photo-1551538827-9c037cb4f32a?auto=format&fit=crop&q=80&w=1000",
+    establishment: {
+      id: "2",
+      name: "Sober Bar & Kitchen",
+      distance: "1.2 miles"
+    }
+  },
+  {
+    id: "5",
+    name: "Cardamom Coffee Fizz",
+    price: "$13",
+    description: "Cold brew coffee shaken with cardamom syrup and orange bitters, topped with tonic water and an orange twist.",
+    ingredients: ["Cold Brew Coffee", "Cardamom Syrup", "Orange Bitters", "Tonic Water", "Orange Twist"],
+    image: "https://images.unsplash.com/photo-1563729784474-d77dbb933a9e?auto=format&fit=crop&q=80&w=1000",
+    establishment: {
+      id: "3",
+      name: "Zero Proof",
+      distance: "2.4 miles"
+    }
+  },
+  {
+    id: "6",
+    name: "Lemongrass Thai Cooler",
+    price: "$14",
+    description: "Fresh lemongrass, ginger, lime, and coconut water with a touch of Thai basil, served over ice.",
+    ingredients: ["Lemongrass", "Ginger", "Lime", "Coconut Water", "Thai Basil"],
+    image: "https://images.unsplash.com/photo-1587888637140-849b25d80ef9?auto=format&fit=crop&q=80&w=1000",
+    establishment: {
+      id: "3",
+      name: "Zero Proof",
+      distance: "2.4 miles"
+    }
+  },
+  {
+    id: "7",
+    name: "Vanilla Fig Fizz",
+    price: "$16",
+    description: "Fig purée with vanilla bean, lemon, and a dash of cinnamon, topped with sparkling water and a fresh fig garnish.",
+    ingredients: ["Fig Purée", "Vanilla Bean", "Lemon", "Cinnamon", "Sparkling Water"],
+    image: "https://images.unsplash.com/photo-1560508179-b2c9a3f8e92b?auto=format&fit=crop&q=80&w=1000",
+    establishment: {
+      id: "4",
+      name: "Spiritless Social",
+      distance: "3.0 miles"
+    }
+  },
+  {
+    id: "8",
+    name: "Rosemary Peach Refresher",
+    price: "$13",
+    description: "Juicy peaches muddled with fresh rosemary, lemon juice, and honey, topped with ginger ale.",
+    ingredients: ["Peaches", "Rosemary", "Lemon Juice", "Honey", "Ginger Ale"],
+    image: "https://images.unsplash.com/photo-1616097970275-1e187b4ce59f?auto=format&fit=crop&q=80&w=1000",
+    establishment: {
+      id: "5",
+      name: "Mindful Mixology",
+      distance: "3.6 miles"
+    }
+  }
+];

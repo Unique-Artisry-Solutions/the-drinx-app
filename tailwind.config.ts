@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,7 +62,24 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				material: {
+					'primary': '#6750A4',
+					'on-primary': '#FFFFFF',
+					'primary-container': '#EADDFF',
+					'on-primary-container': '#21005E',
+					'secondary': '#625B71',
+					'on-secondary': '#FFFFFF',
+					'secondary-container': '#E8DEF8',
+					'on-secondary-container': '#1E192B',
+					'surface': '#FEF7FF',
+					'on-surface': '#1C1B1F',
+					'surface-variant': '#E7E0EB',
+					'on-surface-variant': '#49454E',
+					'outline': '#79747E',
+					'background': '#FEF7FF',
+					'on-background': '#1C1B1F',
+				},
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -84,12 +102,45 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'fade-in': {
+					'0%': { opacity: '0' },
+					'100%': { opacity: '1' }
+				},
+				'fade-out': {
+					'0%': { opacity: '1' },
+					'100%': { opacity: '0' }
+				},
+				'slide-up': {
+					'0%': { transform: 'translateY(20px)', opacity: '0' },
+					'100%': { transform: 'translateY(0)', opacity: '1' }
+				},
+				'slide-down': {
+					'0%': { transform: 'translateY(-20px)', opacity: '0' },
+					'100%': { transform: 'translateY(0)', opacity: '1' }
+				},
+				'pulse-subtle': {
+					'0%, 100%': { opacity: '1' },
+					'50%': { opacity: '0.8' }
+				},
+				'float': {
+					'0%, 100%': { transform: 'translateY(0)' },
+					'50%': { transform: 'translateY(-5px)' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
-			}
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'fade-in': 'fade-in 0.3s ease-in-out',
+				'fade-out': 'fade-out 0.3s ease-in-out',
+				'slide-up': 'slide-up 0.4s ease-out',
+				'slide-down': 'slide-down 0.4s ease-out',
+				'pulse-subtle': 'pulse-subtle 2s ease-in-out infinite',
+				'float': 'float 3s ease-in-out infinite'
+			},
+			fontFamily: {
+				'roboto': ['Roboto', 'sans-serif'],
+			},
 		}
 	},
 	plugins: [require("tailwindcss-animate")],
