@@ -15,6 +15,7 @@ interface UserAuthProps {
 
 const UserAuth: React.FC<UserAuthProps> = ({ onSuccess, onClose, defaultTab = 'login' }) => {
   const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -29,7 +30,14 @@ const UserAuth: React.FC<UserAuthProps> = ({ onSuccess, onClose, defaultTab = 'l
     setTimeout(() => {
       // Mock successful login
       localStorage.setItem('user_authenticated', 'true');
-      localStorage.setItem('user_email', email);
+      
+      // Store either email or username based on what was used
+      if (email) {
+        localStorage.setItem('user_email', email);
+      } else if (username) {
+        localStorage.setItem('user_username', username);
+      }
+      
       toast({
         title: 'Login successful',
         description: 'Welcome back!',
@@ -50,6 +58,7 @@ const UserAuth: React.FC<UserAuthProps> = ({ onSuccess, onClose, defaultTab = 'l
       localStorage.setItem('user_authenticated', 'true');
       localStorage.setItem('user_email', email);
       localStorage.setItem('user_name', name);
+      localStorage.setItem('user_username', username);
       toast({
         title: 'Account created',
         description: 'Welcome to Spiritless!',
@@ -80,14 +89,23 @@ const UserAuth: React.FC<UserAuthProps> = ({ onSuccess, onClose, defaultTab = 'l
             <CardContent className="space-y-4 pt-6">
               <div className="space-y-2">
                 <label className="text-sm font-medium" htmlFor="email">
-                  Email
+                  Email or Username
                 </label>
                 <Input
                   id="email"
-                  type="email"
-                  placeholder="Enter your email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  type={email.includes('@') ? 'email' : 'text'}
+                  placeholder="Enter your email or username"
+                  value={email || username}
+                  onChange={(e) => {
+                    // Determine if input looks like an email or username
+                    if (e.target.value.includes('@')) {
+                      setEmail(e.target.value);
+                      setUsername('');
+                    } else {
+                      setUsername(e.target.value);
+                      setEmail('');
+                    }
+                  }}
                   required
                 />
               </div>
@@ -139,6 +157,18 @@ const UserAuth: React.FC<UserAuthProps> = ({ onSuccess, onClose, defaultTab = 'l
                   placeholder="Enter your name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium" htmlFor="username">
+                  Username
+                </label>
+                <Input
+                  id="username"
+                  placeholder="Choose a username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                   required
                 />
               </div>
