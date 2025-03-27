@@ -2,16 +2,7 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Check } from 'lucide-react';
-
-interface Establishment {
-  id: string;
-  name: string;
-  address: string;
-}
-
-interface VisitedTabProps {
-  visitedEstablishments: Establishment[];
-}
+import { VisitedTabProps } from '@/types/ProfileTypes';
 
 const VisitedTab: React.FC<VisitedTabProps> = ({ visitedEstablishments }) => {
   return (

@@ -2,22 +2,7 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Star } from 'lucide-react';
-
-interface Establishment {
-  id: string;
-  name: string;
-}
-
-interface Cocktail {
-  id: string;
-  name: string;
-  price: number | string;
-  establishment: string | { name: string };
-}
-
-interface FavoritesTabProps {
-  favoriteCocktails: Cocktail[];
-}
+import { FavoritesTabProps } from '@/types/ProfileTypes';
 
 const FavoritesTab: React.FC<FavoritesTabProps> = ({ favoriteCocktails }) => {
   return (

@@ -12,6 +12,9 @@ import VisitedTab from '@/components/profile/VisitedTab';
 import FavoritesTab from '@/components/profile/FavoritesTab';
 import ReviewsTab from '@/components/profile/ReviewsTab';
 
+// Import types
+import { Establishment, Cocktail } from '@/types/ProfileTypes';
+
 // Sample data - would be fetched from API in a real application
 import { sampleCocktails, sampleEstablishments } from '@/data/sampleData';
 

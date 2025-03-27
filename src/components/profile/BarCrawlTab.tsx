@@ -4,17 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { MapPin } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-
-interface Establishment {
-  id: string;
-  name: string;
-  address: string;
-}
-
-interface BarCrawlTabProps {
-  barCrawlList: Establishment[];
-  shareBarCrawl: () => void;
-}
+import { BarCrawlTabProps } from '@/types/ProfileTypes';
 
 const BarCrawlTab: React.FC<BarCrawlTabProps> = ({ barCrawlList, shareBarCrawl }) => {
   const navigate = useNavigate();

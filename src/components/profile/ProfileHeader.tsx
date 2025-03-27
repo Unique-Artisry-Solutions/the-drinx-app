@@ -1,11 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-
-interface ProfileHeaderProps {
-  userName: string;
-  handleLogout: () => void;
-}
+import { ProfileHeaderProps } from '@/types/ProfileTypes';
 
 const ProfileHeader: React.FC<ProfileHeaderProps> = ({ userName, handleLogout }) => {
   return (
