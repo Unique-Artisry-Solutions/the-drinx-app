@@ -1,28 +1,18 @@
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Edit, MoreHorizontal, Plus, Search, Trash } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 // Sample data - would be fetched from API in a real application
 import { sampleEstablishments, sampleCocktails } from '@/data/sampleData';
+
+// Imported components
+import AdminHeader from '@/components/admin/AdminHeader';
+import SearchToolbar from '@/components/admin/SearchToolbar';
+import EstablishmentsTable from '@/components/admin/EstablishmentsTable';
+import CocktailsTable from '@/components/admin/CocktailsTable';
+import TabContentPlaceholder from '@/components/admin/TabContentPlaceholder';
 
 const AdminDashboard: React.FC = () => {
   const [establishments, setEstablishments] = useState(sampleEstablishments);
@@ -39,7 +29,7 @@ const AdminDashboard: React.FC = () => {
     }
   }, [navigate]);
 
-  const handleLogout = () => {
+  const handleLogout = () => {a
     localStorage.removeItem('admin_authenticated');
     navigate('/admin');
   };
@@ -70,32 +60,13 @@ const AdminDashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-material-background">
-      <header className="bg-material-primary text-material-on-primary p-4 shadow-md">
-        <div className="container max-w-5xl mx-auto flex justify-between items-center">
-          <h1 className="text-xl font-medium">Admin Dashboard</h1>
-          <Button variant="outline" onClick={handleLogout}>Logout</Button>
-        </div>
-      </header>
+      <AdminHeader onLogout={handleLogout} />
 
       <main className="container max-w-5xl mx-auto p-4">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-medium">Manage Data</h2>
-          <div className="flex space-x-2">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-material-on-surface-variant" />
-              <Input
-                type="search"
-                placeholder="Search..."
-                className="pl-8"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <Button onClick={() => navigate('/add')}>
-              <Plus className="mr-2 h-4 w-4" /> Add New
-            </Button>
-          </div>
-        </div>
+        <SearchToolbar 
+          searchTerm={searchTerm} 
+          onSearchChange={setSearchTerm} 
+        />
 
         <Tabs defaultValue="establishments">
           <TabsList className="mb-4">
@@ -106,139 +77,31 @@ const AdminDashboard: React.FC = () => {
           </TabsList>
 
           <TabsContent value="establishments">
-            <div className="bg-white rounded-md shadow-sm overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Address</TableHead>
-                    <TableHead>Cocktails</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredEstablishments.map((est) => (
-                    <TableRow key={est.id}>
-                      <TableCell className="font-medium">{est.name}</TableCell>
-                      <TableCell>{est.address}</TableCell>
-                      <TableCell>{est.cocktailCount}</TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreHorizontal className="h-4 w-4" />
-                              <span className="sr-only">Actions</span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => navigate(`/establishment/${est.id}`)}>
-                              <Edit className="mr-2 h-4 w-4" />
-                              Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              className="text-red-600"
-                              onClick={() => handleDeleteEstablishment(est.id)}
-                            >
-                              <Trash className="mr-2 h-4 w-4" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+            <EstablishmentsTable 
+              establishments={filteredEstablishments} 
+              onDeleteEstablishment={handleDeleteEstablishment} 
+            />
           </TabsContent>
 
           <TabsContent value="cocktails">
-            <div className="bg-white rounded-md shadow-sm overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Establishment</TableHead>
-                    <TableHead>Price</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredCocktails.map((cocktail) => {
-                    // Fix: Properly handle establishment that could be an object or string
-                    let establishmentName: string;
-                    if (typeof cocktail.establishment === 'object' && cocktail.establishment !== null) {
-                      establishmentName = cocktail.establishment.name;
-                    } else if (typeof cocktail.establishment === 'string') {
-                      establishmentName = cocktail.establishment;
-                    } else {
-                      establishmentName = 'Unknown';
-                    }
-                    
-                    // Fix: Properly handle price formatting for both string and number types
-                    let displayPrice: string;
-                    if (typeof cocktail.price === 'number') {
-                      // Type assertion to ensure TypeScript knows this is a number
-                      displayPrice = (cocktail.price as number).toFixed(2);
-                    } else if (typeof cocktail.price === 'string') {
-                      // Remove $ if it exists in the string
-                      displayPrice = cocktail.price.replace('$', '');
-                    } else {
-                      displayPrice = '0.00';
-                    }
-                    
-                    return (
-                      <TableRow key={cocktail.id}>
-                        <TableCell className="font-medium">{cocktail.name}</TableCell>
-                        <TableCell>{establishmentName}</TableCell>
-                        <TableCell>${displayPrice}</TableCell>
-                        <TableCell className="text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <MoreHorizontal className="h-4 w-4" />
-                                <span className="sr-only">Actions</span>
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem>
-                                <Edit className="mr-2 h-4 w-4" />
-                                Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuItem 
-                                className="text-red-600"
-                                onClick={() => handleDeleteCocktail(cocktail.id)}
-                              >
-                                <Trash className="mr-2 h-4 w-4" />
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
+            <CocktailsTable 
+              cocktails={filteredCocktails}
+              onDeleteCocktail={handleDeleteCocktail}
+            />
           </TabsContent>
 
           <TabsContent value="promotions">
-            <div className="p-8 text-center">
-              <h3 className="text-lg font-medium">Promotions Management</h3>
-              <p className="text-material-on-surface-variant mt-2">
-                This section will allow you to manage promotional codes created by establishments.
-              </p>
-            </div>
+            <TabContentPlaceholder
+              title="Promotions Management"
+              description="This section will allow you to manage promotional codes created by establishments."
+            />
           </TabsContent>
 
           <TabsContent value="reviews">
-            <div className="p-8 text-center">
-              <h3 className="text-lg font-medium">Reviews Management</h3>
-              <p className="text-material-on-surface-variant mt-2">
-                This section will allow you to manage user reviews for mocktails.
-              </p>
-            </div>
+            <TabContentPlaceholder
+              title="Reviews Management"
+              description="This section will allow you to manage user reviews for mocktails."
+            />
           </TabsContent>
         </Tabs>
       </main>
