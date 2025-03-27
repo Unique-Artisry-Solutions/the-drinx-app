@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
@@ -167,7 +166,7 @@ const ProfilePage: React.FC = () => {
                     <div className="flex-1">
                       <h3 className="font-medium">{cocktail.name}</h3>
                       <div className="flex items-center text-sm text-material-on-surface-variant">
-                        <span>{cocktail.establishment} · ${cocktail.price.toFixed(2)}</span>
+                        <span>{cocktail.establishment} · ${typeof cocktail.price === 'number' ? cocktail.price.toFixed(2) : cocktail.price}</span>
                       </div>
                     </div>
                   </CardContent>

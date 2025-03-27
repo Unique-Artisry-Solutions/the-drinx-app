@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Layout from '@/components/Layout';
@@ -8,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Check, ExternalLink, MapPin, Phone, Star, User, Users } from 'lucide-react';
+import { Check, ExternalLink, MapPin, Phone, Star, User, Users, PlusCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 // Sample data - would be fetched from API in a real application
@@ -330,7 +329,7 @@ const EstablishmentDetail = () => {
                     className="w-full justify-start"
                     onClick={handleAddToBarCrawl}
                   >
-                    <Plus size={16} className="mr-2" />
+                    <PlusCircle size={16} className="mr-2" />
                     Add to Bar Crawl
                   </Button>
                   

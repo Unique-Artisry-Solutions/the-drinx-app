@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -168,7 +167,7 @@ const AdminDashboard: React.FC = () => {
                     <TableRow key={cocktail.id}>
                       <TableCell className="font-medium">{cocktail.name}</TableCell>
                       <TableCell>{cocktail.establishment}</TableCell>
-                      <TableCell>${cocktail.price.toFixed(2)}</TableCell>
+                      <TableCell>${typeof cocktail.price === 'number' ? cocktail.price.toFixed(2) : cocktail.price}</TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
