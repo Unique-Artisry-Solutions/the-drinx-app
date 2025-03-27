@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
@@ -157,21 +158,28 @@ const ProfilePage: React.FC = () => {
             <div className="space-y-4">
               <h2 className="font-medium">My Favorite Mocktails</h2>
               
-              {sampleCocktails.slice(0, 3).map((cocktail) => (
-                <Card key={cocktail.id} className="relative">
-                  <CardContent className="p-4 flex items-center">
-                    <div className="h-10 w-10 rounded-full bg-material-primary/10 flex items-center justify-center mr-3">
-                      <Star size={16} className="text-material-primary" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-medium">{cocktail.name}</h3>
-                      <div className="flex items-center text-sm text-material-on-surface-variant">
-                        <span>{cocktail.establishment} · ${typeof cocktail.price === 'number' ? cocktail.price.toFixed(2) : cocktail.price}</span>
+              {sampleCocktails.slice(0, 3).map((cocktail) => {
+                let displayPrice = cocktail.price;
+                if (typeof cocktail.price === 'number') {
+                  displayPrice = cocktail.price.toFixed(2);
+                }
+                
+                return (
+                  <Card key={cocktail.id} className="relative">
+                    <CardContent className="p-4 flex items-center">
+                      <div className="h-10 w-10 rounded-full bg-material-primary/10 flex items-center justify-center mr-3">
+                        <Star size={16} className="text-material-primary" />
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                      <div className="flex-1">
+                        <h3 className="font-medium">{cocktail.name}</h3>
+                        <div className="flex items-center text-sm text-material-on-surface-variant">
+                          <span>{cocktail.establishment} · ${displayPrice}</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           </TabsContent>
 

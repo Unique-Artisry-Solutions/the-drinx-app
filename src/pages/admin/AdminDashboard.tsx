@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -163,36 +164,49 @@ const AdminDashboard: React.FC = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredCocktails.map((cocktail) => (
-                    <TableRow key={cocktail.id}>
-                      <TableCell className="font-medium">{cocktail.name}</TableCell>
-                      <TableCell>{cocktail.establishment}</TableCell>
-                      <TableCell>${typeof cocktail.price === 'number' ? cocktail.price.toFixed(2) : cocktail.price}</TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreHorizontal className="h-4 w-4" />
-                              <span className="sr-only">Actions</span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
-                              <Edit className="mr-2 h-4 w-4" />
-                              Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              className="text-red-600"
-                              onClick={() => handleDeleteCocktail(cocktail.id)}
-                            >
-                              <Trash className="mr-2 h-4 w-4" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {filteredCocktails.map((cocktail) => {
+                    // Extract establishment name if it's an object
+                    const establishmentName = typeof cocktail.establishment === 'object' 
+                      ? cocktail.establishment.name 
+                      : cocktail.establishment;
+                    
+                    // Format price correctly
+                    let displayPrice = cocktail.price;
+                    if (typeof cocktail.price === 'number') {
+                      displayPrice = cocktail.price.toFixed(2);
+                    }
+                    
+                    return (
+                      <TableRow key={cocktail.id}>
+                        <TableCell className="font-medium">{cocktail.name}</TableCell>
+                        <TableCell>{establishmentName}</TableCell>
+                        <TableCell>${displayPrice}</TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <MoreHorizontal className="h-4 w-4" />
+                                <span className="sr-only">Actions</span>
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem>
+                                <Edit className="mr-2 h-4 w-4" />
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                className="text-red-600"
+                                onClick={() => handleDeleteCocktail(cocktail.id)}
+                              >
+                                <Trash className="mr-2 h-4 w-4" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>

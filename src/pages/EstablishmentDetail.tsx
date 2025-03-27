@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Layout from '@/components/Layout';
@@ -32,7 +33,14 @@ const EstablishmentDetail = () => {
     setEstablishment(est);
     
     // Filter cocktails for this establishment
-    const estCocktails = sampleCocktails.filter(c => c.establishment === est?.name);
+    const estCocktails = sampleCocktails.filter(c => {
+      // Convert establishment object to string if needed
+      const establishmentName = typeof c.establishment === 'object' 
+        ? c.establishment.name 
+        : c.establishment;
+      
+      return establishmentName === est?.name;
+    });
     setCocktails(estCocktails);
     
     // Simulate active users (random number between 0 and 10)
