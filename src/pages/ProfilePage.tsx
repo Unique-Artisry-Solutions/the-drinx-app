@@ -159,9 +159,25 @@ const ProfilePage: React.FC = () => {
               <h2 className="font-medium">My Favorite Mocktails</h2>
               
               {sampleCocktails.slice(0, 3).map((cocktail) => {
-                let displayPrice = cocktail.price;
+                // Fix: Properly handle price formatting for both string and number types
+                let displayPrice: string;
                 if (typeof cocktail.price === 'number') {
                   displayPrice = cocktail.price.toFixed(2);
+                } else if (typeof cocktail.price === 'string') {
+                  // Remove $ if it exists in the string
+                  displayPrice = cocktail.price.replace('$', '');
+                } else {
+                  displayPrice = '0.00';
+                }
+                
+                // Fix: Properly handle establishment that could be an object or string
+                let establishmentName: string;
+                if (typeof cocktail.establishment === 'object' && cocktail.establishment !== null) {
+                  establishmentName = cocktail.establishment.name;
+                } else if (typeof cocktail.establishment === 'string') {
+                  establishmentName = cocktail.establishment;
+                } else {
+                  establishmentName = 'Unknown';
                 }
                 
                 return (
@@ -173,7 +189,7 @@ const ProfilePage: React.FC = () => {
                       <div className="flex-1">
                         <h3 className="font-medium">{cocktail.name}</h3>
                         <div className="flex items-center text-sm text-material-on-surface-variant">
-                          <span>{cocktail.establishment} · ${displayPrice}</span>
+                          <span>{establishmentName} · ${displayPrice}</span>
                         </div>
                       </div>
                     </CardContent>

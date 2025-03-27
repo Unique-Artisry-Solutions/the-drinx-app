@@ -165,15 +165,25 @@ const AdminDashboard: React.FC = () => {
                 </TableHeader>
                 <TableBody>
                   {filteredCocktails.map((cocktail) => {
-                    // Extract establishment name if it's an object
-                    const establishmentName = typeof cocktail.establishment === 'object' 
-                      ? cocktail.establishment.name 
-                      : cocktail.establishment;
+                    // Fix: Properly handle establishment that could be an object or string
+                    let establishmentName: string;
+                    if (typeof cocktail.establishment === 'object' && cocktail.establishment !== null) {
+                      establishmentName = cocktail.establishment.name;
+                    } else if (typeof cocktail.establishment === 'string') {
+                      establishmentName = cocktail.establishment;
+                    } else {
+                      establishmentName = 'Unknown';
+                    }
                     
-                    // Format price correctly
-                    let displayPrice = cocktail.price;
+                    // Fix: Properly handle price formatting for both string and number types
+                    let displayPrice: string;
                     if (typeof cocktail.price === 'number') {
                       displayPrice = cocktail.price.toFixed(2);
+                    } else if (typeof cocktail.price === 'string') {
+                      // Remove $ if it exists in the string
+                      displayPrice = cocktail.price.replace('$', '');
+                    } else {
+                      displayPrice = '0.00';
                     }
                     
                     return (
