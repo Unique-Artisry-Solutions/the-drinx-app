@@ -10,6 +10,9 @@ import MapPage from "./pages/MapPage";
 import AddPage from "./pages/AddPage";
 import EstablishmentDetail from "./pages/EstablishmentDetail";
 import NotFound from "./pages/NotFound";
+import ProfilePage from "./pages/ProfilePage";
+import AdminLogin from "./pages/admin/AdminLogin";
+import AdminDashboard from "./pages/admin/AdminDashboard";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +28,9 @@ const App = () => (
           <Route path="/map" element={<MapPage />} />
           <Route path="/add" element={<AddPage />} />
           <Route path="/establishment/:id" element={<EstablishmentDetail />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/admin" element={<AdminLogin />} />
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

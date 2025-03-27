@@ -3,6 +3,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, Map, Plus, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import TopNavigation from './TopNavigation';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -20,11 +21,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   return (
     <div className="flex flex-col min-h-screen bg-material-background">
-      <main className="flex-1 pb-16 pt-2 px-2 md:px-6 container max-w-5xl mx-auto">
+      <TopNavigation />
+      
+      <main className="flex-1 pb-16 md:pb-6 pt-2 px-2 md:px-6 container max-w-5xl mx-auto">
         {children}
       </main>
       
-      <nav className="fixed bottom-0 w-full bg-white elevation-3 z-50">
+      <nav className="fixed bottom-0 w-full bg-white elevation-3 z-50 md:hidden">
         <div className="max-w-5xl mx-auto">
           <div className="flex justify-around items-center h-16">
             {navItems.map((item) => {
