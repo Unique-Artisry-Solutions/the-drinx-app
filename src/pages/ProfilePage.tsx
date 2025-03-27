@@ -162,7 +162,8 @@ const ProfilePage: React.FC = () => {
                 // Fix: Properly handle price formatting for both string and number types
                 let displayPrice: string;
                 if (typeof cocktail.price === 'number') {
-                  displayPrice = cocktail.price.toFixed(2);
+                  // Type assertion to ensure TypeScript knows this is a number
+                  displayPrice = (cocktail.price as number).toFixed(2);
                 } else if (typeof cocktail.price === 'string') {
                   // Remove $ if it exists in the string
                   displayPrice = cocktail.price.replace('$', '');
