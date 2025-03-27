@@ -5,18 +5,21 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 interface UserAuthProps {
   onSuccess?: () => void;
   onClose?: () => void;
+  defaultTab?: 'login' | 'signup';
 }
 
-const UserAuth: React.FC<UserAuthProps> = ({ onSuccess, onClose }) => {
+const UserAuth: React.FC<UserAuthProps> = ({ onSuccess, onClose, defaultTab = 'login' }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,6 +36,7 @@ const UserAuth: React.FC<UserAuthProps> = ({ onSuccess, onClose }) => {
       });
       setIsLoading(false);
       if (onSuccess) onSuccess();
+      else navigate('/');
     }, 1000);
   };
 
@@ -52,6 +56,7 @@ const UserAuth: React.FC<UserAuthProps> = ({ onSuccess, onClose }) => {
       });
       setIsLoading(false);
       if (onSuccess) onSuccess();
+      else navigate('/');
     }, 1000);
   };
 
@@ -64,7 +69,7 @@ const UserAuth: React.FC<UserAuthProps> = ({ onSuccess, onClose }) => {
         </CardDescription>
       </CardHeader>
       
-      <Tabs defaultValue="login" className="w-full">
+      <Tabs defaultValue={defaultTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="login">Login</TabsTrigger>
           <TabsTrigger value="signup">Sign up</TabsTrigger>
