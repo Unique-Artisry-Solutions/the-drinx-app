@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -29,7 +28,7 @@ const AdminDashboard: React.FC = () => {
     }
   }, [navigate]);
 
-  const handleLogout = () => {a
+  const handleLogout = () => {
     localStorage.removeItem('admin_authenticated');
     navigate('/admin');
   };
