@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Map, Plus, Search, User } from 'lucide-react';
+import { Home, Map, Plus, Search, User, Settings, LogOut } from 'lucide-react';
 import { 
   NavigationMenu,
   NavigationMenuContent,
@@ -13,9 +13,24 @@ import {
 } from "@/components/ui/navigation-menu";
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const TopNavigation: React.FC = () => {
   const location = useLocation();
+  const isAuthenticated = localStorage.getItem('user_authenticated') === 'true';
+
+  const handleLogout = () => {
+    localStorage.removeItem('user_authenticated');
+    localStorage.removeItem('user_email');
+    localStorage.removeItem('user_username');
+    window.location.href = '/';
+  };
 
   const navItems = [
     { icon: Home, label: 'Home', path: '/' },
@@ -62,11 +77,42 @@ const TopNavigation: React.FC = () => {
           <Link to="/admin">
             <Button variant="ghost" size="sm">Admin</Button>
           </Link>
-          <Link to="/profile">
-            <Button variant="outline" size="icon">
-              <User size={18} />
-            </Button>
-          </Link>
+          
+          {isAuthenticated ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <User size={18} />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                  <Link to="/profile" className="flex items-center gap-2 cursor-pointer">
+                    <User className="h-4 w-4" />
+                    <span>Profile</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/settings" className="flex items-center gap-2 cursor-pointer">
+                    <Settings className="h-4 w-4" />
+                    <span>Settings</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  className="flex items-center gap-2 text-red-600 cursor-pointer" 
+                  onClick={handleLogout}
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>Logout</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Link to="/login">
+              <Button variant="default">Login</Button>
+            </Link>
+          )}
         </div>
       </div>
     </div>
