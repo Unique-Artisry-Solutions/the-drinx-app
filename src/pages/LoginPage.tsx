@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { UserAuth } from '@/components/UserAuth';
+import UserAuth from '@/components/UserAuth';
 import { ArrowLeft } from 'lucide-react';
 
 const LoginPage = () => {

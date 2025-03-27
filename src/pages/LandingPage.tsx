@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight, MapPin, Glass, Clock, Users, Star } from 'lucide-react';
+import { ChevronRight, MapPin, Wine, Clock, Users, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 
@@ -85,7 +85,7 @@ const LandingPage = () => {
               description="Discover establishments with non-alcoholic options close to your location."
             />
             <FeatureCard 
-              icon={<Glass size={28} />}
+              icon={<Wine size={28} />}
               title="Unique Flavors"
               description="Explore creative and delicious alcohol-free cocktails with detailed recipes."
             />
