@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -43,8 +42,9 @@ const UserAuth: React.FC<UserAuthProps> = ({ onSuccess, onClose, defaultTab = 'l
         description: 'Welcome back!',
       });
       setIsLoading(false);
-      if (onSuccess) onSuccess();
-      else navigate('/');
+      
+      // Always navigate to the homepage after successful login
+      navigate('/');
     }, 1000);
   };
 
@@ -64,8 +64,9 @@ const UserAuth: React.FC<UserAuthProps> = ({ onSuccess, onClose, defaultTab = 'l
         description: 'Welcome to Spiritless!',
       });
       setIsLoading(false);
-      if (onSuccess) onSuccess();
-      else navigate('/');
+      
+      // Always navigate to the homepage after successful signup
+      navigate('/');
     }, 1000);
   };
 
