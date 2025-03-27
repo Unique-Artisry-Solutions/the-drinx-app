@@ -1,21 +1,17 @@
-
 import React, { useEffect, useState } from 'react';
 import Layout from '@/components/Layout';
 import UserAuth from '@/components/UserAuth';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 
-// Import the extracted components
 import ProfileHeader from '@/components/profile/ProfileHeader';
 import BarCrawlTab from '@/components/profile/BarCrawlTab';
 import VisitedTab from '@/components/profile/VisitedTab';
 import FavoritesTab from '@/components/profile/FavoritesTab';
 import ReviewsTab from '@/components/profile/ReviewsTab';
 
-// Import types
 import { Establishment, Cocktail } from '@/types/ProfileTypes';
 
-// Sample data - would be fetched from API in a real application
 import { sampleCocktails, sampleEstablishments } from '@/data/sampleData';
 
 const ProfilePage: React.FC = () => {
@@ -29,7 +25,6 @@ const ProfilePage: React.FC = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check if user is authenticated
     const auth = localStorage.getItem('user_authenticated') === 'true';
     setIsAuthenticated(auth);
     
