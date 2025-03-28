@@ -1,15 +1,14 @@
 
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
 import Layout from '@/components/Layout';
 import MapView from '@/components/MapView';
-import EstablishmentCard from '@/components/EstablishmentCard';
 import BarCrawlControl from '@/components/BarCrawlControl';
 import LocationSearch from '@/components/LocationSearch';
+import EstablishmentList from '@/components/EstablishmentList';
+import ViewModeToggle from '@/components/ViewModeToggle';
+import { useUserLocation } from '@/hooks/useUserLocation';
 import { useToast } from '@/hooks/use-toast';
-import { Heart, Filter, Map, List } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { useNavigate } from 'react-router-dom';
 
 // Sample data - would be fetched from API in a real application
 import { sampleEstablishments } from '@/data/sampleData';
@@ -17,34 +16,12 @@ import { sampleEstablishments } from '@/data/sampleData';
 const MapPage = () => {
   const [establishments, setEstablishments] = useState(sampleEstablishments);
   const [filteredEstablishments, setFilteredEstablishments] = useState(sampleEstablishments);
-  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [selectedEstablishment, setSelectedEstablishment] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
   const [favoriteEstablishments, setFavoriteEstablishments] = useState<string[]>([]);
   const navigate = useNavigate();
   const { toast } = useToast();
-
-  useEffect(() => {
-    // Get user location
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setUserLocation({
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-          });
-        },
-        (error) => {
-          console.error('Error getting user location:', error);
-          toast({
-            title: "Location access denied",
-            description: "Enable location services to find nearby establishments.",
-            variant: "destructive",
-          });
-        }
-      );
-    }
-  }, [toast]);
+  const { userLocation } = useUserLocation();
 
   const handleMarkerClick = (establishmentId: string) => {
     setSelectedEstablishment(establishmentId);
@@ -57,7 +34,7 @@ const MapPage = () => {
   };
 
   const handleEstablishmentClick = (establishmentId: string) => {
-    navigate(`/establishment/${establishmentId}`);
+    // This is handled in the EstablishmentList component
   };
 
   const handleSearch = (query: string) => {
@@ -125,24 +102,10 @@ const MapPage = () => {
             </p>
           </div>
           
-          <div className="flex gap-2">
-            <Button 
-              variant={viewMode === 'map' ? 'default' : 'outline'} 
-              size="sm"
-              onClick={() => setViewMode('map')}
-            >
-              <Map size={16} className="mr-2" />
-              Map
-            </Button>
-            <Button 
-              variant={viewMode === 'list' ? 'default' : 'outline'} 
-              size="sm"
-              onClick={() => setViewMode('list')}
-            >
-              <List size={16} className="mr-2" />
-              List
-            </Button>
-          </div>
+          <ViewModeToggle 
+            viewMode={viewMode} 
+            onViewModeChange={setViewMode} 
+          />
         </div>
 
         <LocationSearch onSearch={handleSearch} />
@@ -160,64 +123,13 @@ const MapPage = () => {
           />
         )}
 
-        <div className="mt-6">
-          <div className="flex justify-between items-center mb-3">
-            <h2 className="text-lg font-medium text-material-on-surface">
-              {userLocation ? 'Nearby Establishments' : 'All Establishments'}
-            </h2>
-            
-            <Badge variant="outline">
-              {filteredEstablishments.length} {filteredEstablishments.length === 1 ? 'Result' : 'Results'}
-            </Badge>
-          </div>
-          
-          <div className="space-y-3">
-            {filteredEstablishments.map((establishment) => (
-              <div 
-                id={`establishment-${establishment.id}`}
-                key={establishment.id}
-                className={`relative ${selectedEstablishment === establishment.id ? 'animate-pulse-subtle' : ''}`}
-              >
-                <EstablishmentCard
-                  id={establishment.id}
-                  name={establishment.name}
-                  address={establishment.address}
-                  distance={establishment.distance}
-                  cocktailCount={establishment.cocktailCount}
-                  image={establishment.image}
-                  onClick={() => handleEstablishmentClick(establishment.id)}
-                />
-                
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="absolute top-3 right-3 h-8 w-8 p-0 rounded-full bg-white/80 hover:bg-white"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleFavorite(establishment.id);
-                  }}
-                >
-                  <Heart 
-                    size={16} 
-                    className={favoriteEstablishments.includes(establishment.id) ? "fill-red-500 text-red-500" : ""}
-                  />
-                </Button>
-              </div>
-            ))}
-            
-            {filteredEstablishments.length === 0 && (
-              <div className="text-center py-8 border border-dashed rounded-lg">
-                <p className="text-material-on-surface-variant">No establishments found matching your criteria.</p>
-                <Button
-                  variant="link"
-                  onClick={() => setFilteredEstablishments(establishments)}
-                >
-                  Reset filters
-                </Button>
-              </div>
-            )}
-          </div>
-        </div>
+        <EstablishmentList 
+          establishments={filteredEstablishments}
+          selectedEstablishment={selectedEstablishment}
+          favoriteEstablishments={favoriteEstablishments}
+          onToggleFavorite={toggleFavorite}
+          onEstablishmentClick={handleEstablishmentClick}
+        />
       </div>
     </Layout>
   );
