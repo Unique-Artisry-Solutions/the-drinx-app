@@ -8,8 +8,8 @@ import Footer from '@/components/landing/Footer';
 
 const LandingPage = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-purple-50">
-      {/* Hero Section */}
+    <div className="min-h-screen">
+      {/* Hero Section with gradient background image */}
       <Hero />
       
       {/* Features Section */}

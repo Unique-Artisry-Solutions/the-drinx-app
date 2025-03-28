@@ -10,7 +10,8 @@ import {
   Settings, 
   LogOut, 
   User,
-  Layout
+  Layout,
+  Globe
 } from 'lucide-react';
 import {
   Menubar,
@@ -54,6 +55,13 @@ const AdminNavigation: React.FC<AdminNavigationProps> = ({ onLogout }) => {
             <Link to="/add" className="flex items-center gap-2">
               <Plus className="h-4 w-4" />
               <span>Add</span>
+            </Link>
+          </MenubarItem>
+          <MenubarSeparator />
+          <MenubarItem asChild>
+            <Link to="/landing" className="flex items-center gap-2">
+              <Globe className="h-4 w-4" />
+              <span>Landing Page</span>
             </Link>
           </MenubarItem>
         </MenubarContent>

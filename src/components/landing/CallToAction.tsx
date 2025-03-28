@@ -12,11 +12,18 @@ const CallToAction = () => {
           Create an account today and start finding the best non-alcoholic cocktails in your area. 
           Save your favorites, track your visits, and connect with a community of like-minded enthusiasts.
         </p>
-        <Link to="/signup">
-          <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-material-primary">
-            Create Free Account
-          </Button>
-        </Link>
+        <div className="flex flex-wrap justify-center gap-4">
+          <Link to="/signup">
+            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-material-primary">
+              Create Free Account
+            </Button>
+          </Link>
+          <Link to="/pricing">
+            <Button size="lg" className="bg-white text-material-primary hover:bg-white/90">
+              View Pricing Plans
+            </Button>
+          </Link>
+        </div>
       </div>
     </div>
   );

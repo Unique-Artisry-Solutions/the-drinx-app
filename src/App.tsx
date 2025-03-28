@@ -17,8 +17,50 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
+import PricingPage from "./pages/PricingPage";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
+// Auth context for global state management
+export const useAuth = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return localStorage.getItem('user_authenticated') === 'true';
+  });
+  
+  const login = () => {
+    localStorage.setItem('user_authenticated', 'true');
+    setIsAuthenticated(true);
+  };
+  
+  const logout = () => {
+    localStorage.removeItem('user_authenticated');
+    localStorage.removeItem('user_email');
+    localStorage.removeItem('user_username');
+    setIsAuthenticated(false);
+  };
+  
+  // Check auth status on mount and when localStorage changes
+  useEffect(() => {
+    const checkAuth = () => {
+      const auth = localStorage.getItem('user_authenticated') === 'true';
+      setIsAuthenticated(auth);
+    };
+    
+    window.addEventListener('storage', checkAuth);
+    return () => {
+      window.removeEventListener('storage', checkAuth);
+    };
+  }, []);
+  
+  return { isAuthenticated, login, logout };
+};
 
 // Route Guard component for protected routes
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -26,6 +68,17 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
+  }
+  
+  return <>{children}</>;
+};
+
+// Admin Route Guard component
+const AdminRoute = ({ children }: { children: React.ReactNode }) => {
+  const isAdminAuthenticated = localStorage.getItem('admin_authenticated') === 'true';
+  
+  if (!isAdminAuthenticated) {
+    return <Navigate to="/admin" replace />;
   }
   
   return <>{children}</>;
@@ -60,8 +113,10 @@ const App = () => {
           <Routes>
             {/* Public routes */}
             <Route path="/" element={isAuthenticated ? <Index /> : <LandingPage />} />
+            <Route path="/landing" element={<LandingPage />} />
             <Route path="/login" element={isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />} />
             <Route path="/signup" element={isAuthenticated ? <Navigate to="/" replace /> : <SignupPage />} />
+            <Route path="/pricing" element={<PricingPage />} />
             
             {/* Protected routes */}
             <Route path="/explore" element={<Navigate to="/" replace />} />
@@ -93,7 +148,11 @@ const App = () => {
             
             {/* Admin routes */}
             <Route path="/admin" element={<AdminLogin />} />
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/admin/dashboard" element={
+              <AdminRoute>
+                <AdminDashboard />
+              </AdminRoute>
+            } />
             
             {/* Catch-all route */}
             <Route path="*" element={<NotFound />} />
