@@ -31,11 +31,13 @@ const useMapInitialization = ({
     try {
       console.log("Initializing map with token:", mapboxgl.accessToken);
       
-      // Determine initial center position
+      // Determine initial center position - prioritize user location
       let initialCenter: [number, number] = [-74.006, 40.7128]; // Default to NYC
+      let initialZoom = 12;
       
       if (userLocation) {
         initialCenter = [userLocation.longitude, userLocation.latitude];
+        initialZoom = 14; // Closer zoom when focusing on user location
       } else if (establishments.length > 0) {
         initialCenter = [establishments[0].longitude, establishments[0].latitude];
       }
@@ -46,7 +48,7 @@ const useMapInitialization = ({
       mapRef.current = new mapboxgl.Map({
         container: containerRef.current,
         style: mapStyle,
-        zoom: 12,
+        zoom: initialZoom,
         center: initialCenter,
         attributionControl: true,
       });

@@ -65,9 +65,10 @@ const MapView: React.FC<MapViewProps> = ({
   const handleRecenter = () => {
     if (map) {
       if (userLocation) {
+        // Focus on user location with animation
         map.flyTo({
           center: [userLocation.longitude, userLocation.latitude],
-          zoom: 13,
+          zoom: 14,
           duration: 1000
         });
       } else if (establishments.length > 0) {
@@ -117,6 +118,13 @@ const MapView: React.FC<MapViewProps> = ({
     // Add user location marker if available
     if (userLocation) {
       userMarkerRef.current = UserLocationMarker({ map, userLocation });
+      
+      // Center map on user location immediately when user location becomes available
+      map.flyTo({
+        center: [userLocation.longitude, userLocation.latitude],
+        zoom: 14,
+        duration: 1000
+      });
     }
 
     // Add establishment markers
@@ -129,34 +137,6 @@ const MapView: React.FC<MapViewProps> = ({
         
       markersRef.current[establishment.id] = marker;
     });
-
-    // Fit bounds to include all markers if establishments exist
-    if ((establishments.length > 0 || userLocation) && map) {
-      try {
-        const bounds = new mapboxgl.LngLatBounds();
-        
-        // Add establishments to bounds
-        establishments.forEach(establishment => {
-          bounds.extend([establishment.longitude, establishment.latitude]);
-        });
-        
-        // Add user location to bounds if available
-        if (userLocation) {
-          bounds.extend([userLocation.longitude, userLocation.latitude]);
-        }
-        
-        // Only fit bounds if we have coordinates to fit
-        if (!bounds.isEmpty()) {
-          map.fitBounds(bounds, {
-            padding: 70,
-            maxZoom: 15,
-            duration: 1000
-          });
-        }
-      } catch (error) {
-        console.error("Error fitting bounds:", error);
-      }
-    }
     
     // Cancel any existing animation frame
     if (animationRef.current) {
@@ -164,6 +144,17 @@ const MapView: React.FC<MapViewProps> = ({
       animationRef.current = null;
     }
   }, [establishments, userLocation, mapInitialized, onMarkerClick, map]);
+
+  // When user location changes, center map on user location
+  useEffect(() => {
+    if (map && userLocation) {
+      map.flyTo({
+        center: [userLocation.longitude, userLocation.latitude],
+        zoom: 14,
+        duration: 1000
+      });
+    }
+  }, [userLocation, map]);
 
   // Cleanup animation frame when component unmounts
   useEffect(() => {
