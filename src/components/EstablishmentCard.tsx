@@ -12,6 +12,7 @@ interface EstablishmentCardProps {
   cocktailCount: number;
   image?: string;
   className?: string;
+  onClick?: () => void;
 }
 
 const EstablishmentCard: React.FC<EstablishmentCardProps> = ({
@@ -22,9 +23,17 @@ const EstablishmentCard: React.FC<EstablishmentCardProps> = ({
   cocktailCount,
   image,
   className,
+  onClick,
 }) => {
+  const handleClick = (e: React.MouseEvent) => {
+    if (onClick) {
+      e.preventDefault();
+      onClick();
+    }
+  };
+
   return (
-    <Link to={`/establishment/${id}`}>
+    <Link to={`/establishment/${id}`} onClick={handleClick}>
       <div 
         className={cn(
           "flex rounded-xl overflow-hidden bg-white elevation-2 border border-gray-100 transition-all-300 hover:elevation-3 hover:translate-y-[-2px]",
