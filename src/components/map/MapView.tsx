@@ -6,6 +6,7 @@ import MapControls from '@/components/map/MapControls';
 import useMapInitialization from './useMapInitialization';
 import UserLocationMarker from './UserLocationMarker';
 import EstablishmentMarker from './EstablishmentMarker';
+import { useToast } from '@/hooks/use-toast';
 
 interface MapViewProps {
   establishments?: {
@@ -37,6 +38,7 @@ const MapView: React.FC<MapViewProps> = ({
   const userMarkerRef = useRef<mapboxgl.Marker | null>(null);
   const [mapStyle, setMapStyle] = useState<string>('mapbox://styles/mapbox/light-v11');
   const animationRef = useRef<number | null>(null);
+  const { toast } = useToast();
   
   // Use custom hook for map initialization
   const { map, mapInitialized } = useMapInitialization({
@@ -93,7 +95,15 @@ const MapView: React.FC<MapViewProps> = ({
 
   // Update markers when user location or establishments change
   useEffect(() => {
-    if (!map || !mapInitialized) return;
+    if (!map || !mapInitialized) {
+      console.log("Map not ready for markers:", { map, mapInitialized });
+      return;
+    }
+
+    console.log("Updating markers:", { 
+      establishments: establishments.length, 
+      userLocation: !!userLocation 
+    });
 
     // Clear existing markers
     Object.values(markersRef.current).forEach(marker => marker.remove());
@@ -121,26 +131,30 @@ const MapView: React.FC<MapViewProps> = ({
     });
 
     // Fit bounds to include all markers if establishments exist
-    if (establishments.length > 0 || userLocation) {
-      const bounds = new mapboxgl.LngLatBounds();
-      
-      // Add establishments to bounds
-      establishments.forEach(establishment => {
-        bounds.extend([establishment.longitude, establishment.latitude]);
-      });
-      
-      // Add user location to bounds if available
-      if (userLocation) {
-        bounds.extend([userLocation.longitude, userLocation.latitude]);
-      }
-      
-      // Only fit bounds if we have coordinates to fit
-      if (!bounds.isEmpty()) {
-        map.fitBounds(bounds, {
-          padding: 70,
-          maxZoom: 15,
-          duration: 1000
+    if ((establishments.length > 0 || userLocation) && map) {
+      try {
+        const bounds = new mapboxgl.LngLatBounds();
+        
+        // Add establishments to bounds
+        establishments.forEach(establishment => {
+          bounds.extend([establishment.longitude, establishment.latitude]);
         });
+        
+        // Add user location to bounds if available
+        if (userLocation) {
+          bounds.extend([userLocation.longitude, userLocation.latitude]);
+        }
+        
+        // Only fit bounds if we have coordinates to fit
+        if (!bounds.isEmpty()) {
+          map.fitBounds(bounds, {
+            padding: 70,
+            maxZoom: 15,
+            duration: 1000
+          });
+        }
+      } catch (error) {
+        console.error("Error fitting bounds:", error);
       }
     }
     
@@ -161,11 +175,23 @@ const MapView: React.FC<MapViewProps> = ({
     };
   }, []);
 
+  // Handle errors and show fallback UI if map fails to load
+  if (!mapboxgl.supported()) {
+    return (
+      <div className={`${height} rounded-xl bg-gray-100 flex items-center justify-center text-center p-4`}>
+        <div>
+          <p className="text-gray-700 mb-2">Your browser doesn't support Mapbox GL</p>
+          <p className="text-sm text-gray-500">Try using a more recent browser version</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={`${height} rounded-xl overflow-hidden elevation-2 relative`}>
       <div ref={mapContainer} className="w-full h-full" />
       
-      {interactive && (
+      {interactive && map && (
         <MapControls 
           onZoomIn={handleZoomIn}
           onZoomOut={handleZoomOut}
