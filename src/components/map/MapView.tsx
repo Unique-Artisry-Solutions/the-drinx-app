@@ -2,7 +2,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import mapboxgl from 'mapbox-gl';
-import MapControls from '@/components/MapControls';
+import MapControls from '@/components/map/MapControls';
 import useMapInitialization from './useMapInitialization';
 import UserLocationMarker from './UserLocationMarker';
 import EstablishmentMarker from './EstablishmentMarker';

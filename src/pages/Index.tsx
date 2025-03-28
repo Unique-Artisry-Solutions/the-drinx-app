@@ -6,7 +6,7 @@ import EstablishmentCard from '@/components/EstablishmentCard';
 import SearchFilter from '@/components/SearchFilter';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import MapView from '@/components/MapView';
+import MapView from '@/components/map/MapView';
 import { useUserLocation } from '@/hooks/useUserLocation';
 
 // Sample data - would be fetched from API in a real application
