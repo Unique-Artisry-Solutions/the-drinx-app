@@ -10,6 +10,7 @@ import Explore from "./pages/Explore";
 import MapPage from "./pages/MapPage";
 import AddPage from "./pages/AddPage";
 import EstablishmentDetail from "./pages/EstablishmentDetail";
+import CocktailDetail from "./pages/CocktailDetail";
 import NotFound from "./pages/NotFound";
 import ProfilePage from "./pages/ProfilePage";
 import AdminLogin from "./pages/admin/AdminLogin";
@@ -82,6 +83,11 @@ const App = () => {
             <Route path="/establishment/:id" element={
               <ProtectedRoute>
                 <EstablishmentDetail />
+              </ProtectedRoute>
+            } />
+            <Route path="/cocktail/:id" element={
+              <ProtectedRoute>
+                <CocktailDetail />
               </ProtectedRoute>
             } />
             <Route path="/profile" element={

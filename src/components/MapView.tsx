@@ -28,33 +28,13 @@ const MapView: React.FC<MapViewProps> = ({
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const markersRef = useRef<{ [key: string]: mapboxgl.Marker }>({});
-  const [mapboxToken, setMapboxToken] = useState<string>('');
   const { toast } = useToast();
   
-  // Add a state for storing the token input by the user
-  const [tokenInput, setTokenInput] = useState('');
-  const [tokenSubmitted, setTokenSubmitted] = useState(false);
-
-  const handleTokenSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (tokenInput.trim()) {
-      setMapboxToken(tokenInput);
-      setTokenSubmitted(true);
-      localStorage.setItem('mapbox_token', tokenInput);
-    }
-  };
+  // Set the Mapbox token directly
+  const mapboxToken = 'pk.eyJ1IjoidHJhdmFsaXNvMTQiLCJhIjoiY204ODI4bjIwMG5jMTJxcHU2MHBrcmpubyJ9.EoN25lrcBgX-5Fusy-Imeg';
 
   useEffect(() => {
-    // Check for token in localStorage
-    const savedToken = localStorage.getItem('mapbox_token');
-    if (savedToken) {
-      setMapboxToken(savedToken);
-      setTokenSubmitted(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!mapboxToken || !mapContainer.current) return;
+    if (!mapContainer.current) return;
 
     try {
       mapboxgl.accessToken = mapboxToken;
@@ -186,34 +166,6 @@ const MapView: React.FC<MapViewProps> = ({
       }
     };
   }, [establishments, userLocation, mapboxToken, interactive, onMarkerClick, toast]);
-
-  if (!tokenSubmitted) {
-    return (
-      <div className={`${height} rounded-xl bg-white elevation-2 p-6 flex flex-col justify-center items-center`}>
-        <h3 className="text-xl font-medium text-material-on-surface mb-6">Map Token Required</h3>
-        <p className="text-material-on-surface-variant mb-6 text-center max-w-md">
-          Please enter your Mapbox access token to enable the map functionality. You can get one for free at <a href="https://mapbox.com" target="_blank" rel="noopener noreferrer" className="text-material-primary underline">mapbox.com</a>
-        </p>
-        
-        <form onSubmit={handleTokenSubmit} className="w-full max-w-md">
-          <input 
-            type="text" 
-            value={tokenInput}
-            onChange={(e) => setTokenInput(e.target.value)}
-            placeholder="Enter your Mapbox access token"
-            className="w-full p-3 border border-material-outline rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-material-primary"
-            required
-          />
-          <button 
-            type="submit" 
-            className="w-full bg-material-primary text-material-on-primary rounded-lg py-3 font-medium transition-all hover:bg-opacity-90"
-          >
-            Set Token
-          </button>
-        </form>
-      </div>
-    );
-  }
 
   return (
     <div className={`${height} rounded-xl overflow-hidden elevation-2`}>
