@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import MapView from '@/components/MapView';
 import BarCrawlControl from '@/components/BarCrawlControl';
@@ -21,7 +21,26 @@ const MapPage = () => {
   const [favoriteEstablishments, setFavoriteEstablishments] = useState<string[]>([]);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { userLocation } = useUserLocation();
+  const { 
+    userLocation, 
+    isLoading: isLoadingLocation, 
+    refreshLocation,
+    calculateDistance,
+    formatDistance
+  } = useUserLocation();
+
+  // Calculate distances when user location changes
+  useEffect(() => {
+    if (userLocation && establishments.length > 0) {
+      const updatedEstablishments = establishments.map(est => ({
+        ...est,
+        distance: formatDistance(calculateDistance(est.latitude, est.longitude))
+      }));
+      
+      setEstablishments(updatedEstablishments);
+      setFilteredEstablishments(updatedEstablishments);
+    }
+  }, [userLocation, establishments, calculateDistance, formatDistance]);
 
   const handleMarkerClick = (establishmentId: string) => {
     setSelectedEstablishment(establishmentId);
@@ -120,6 +139,8 @@ const MapPage = () => {
             establishments={mapEstablishments}
             userLocation={userLocation}
             onMarkerClick={handleMarkerClick}
+            onRefreshLocation={refreshLocation}
+            isLoadingLocation={isLoadingLocation}
           />
         )}
 

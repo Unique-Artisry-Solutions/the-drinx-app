@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { useToast } from '@/hooks/use-toast';
+import MapControls from './MapControls';
 
 interface MapViewProps {
   establishments?: {
@@ -16,6 +17,8 @@ interface MapViewProps {
   height?: string;
   interactive?: boolean;
   onMarkerClick?: (establishmentId: string) => void;
+  onRefreshLocation?: () => void;
+  isLoadingLocation?: boolean;
 }
 
 const MapView: React.FC<MapViewProps> = ({
@@ -24,14 +27,65 @@ const MapView: React.FC<MapViewProps> = ({
   height = 'h-[50vh]',
   interactive = true,
   onMarkerClick,
+  onRefreshLocation,
+  isLoadingLocation = false,
 }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const markersRef = useRef<{ [key: string]: mapboxgl.Marker }>({});
   const { toast } = useToast();
+  const [mapStyle, setMapStyle] = useState<string>('mapbox://styles/mapbox/light-v11');
   
   // Set the Mapbox token directly
   const mapboxToken = 'pk.eyJ1IjoidHJhdmFsaXNvMTQiLCJhIjoiY204ODI4bjIwMG5jMTJxcHU2MHBrcmpubyJ9.EoN25lrcBgX-5Fusy-Imeg';
+
+  // Map control handlers
+  const handleZoomIn = () => {
+    if (map.current) {
+      map.current.zoomIn();
+    }
+  };
+
+  const handleZoomOut = () => {
+    if (map.current) {
+      map.current.zoomOut();
+    }
+  };
+
+  const handleRecenter = () => {
+    if (map.current) {
+      if (userLocation) {
+        map.current.flyTo({
+          center: [userLocation.longitude, userLocation.latitude],
+          zoom: 13,
+          duration: 1000
+        });
+      } else if (establishments.length > 0) {
+        const bounds = new mapboxgl.LngLatBounds();
+        establishments.forEach(establishment => {
+          bounds.extend([establishment.longitude, establishment.latitude]);
+        });
+        
+        map.current.fitBounds(bounds, {
+          padding: 70,
+          maxZoom: 15,
+          duration: 1000
+        });
+      }
+    }
+  };
+
+  const handleToggleMapStyle = () => {
+    const newStyle = mapStyle === 'mapbox://styles/mapbox/light-v11' 
+      ? 'mapbox://styles/mapbox/dark-v11'
+      : 'mapbox://styles/mapbox/light-v11';
+    
+    setMapStyle(newStyle);
+    
+    if (map.current) {
+      map.current.setStyle(newStyle);
+    }
+  };
 
   useEffect(() => {
     if (!mapContainer.current) return;
@@ -42,7 +96,7 @@ const MapView: React.FC<MapViewProps> = ({
       // Initialize map
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/light-v11',
+        style: mapStyle,
         zoom: 12,
         center: userLocation 
           ? [userLocation.longitude, userLocation.latitude] 
@@ -51,12 +105,12 @@ const MapView: React.FC<MapViewProps> = ({
             : [-74.006, 40.7128], // Default to NYC
       });
 
-      // Add navigation controls if interactive
-      if (interactive) {
-        map.current.addControl(
-          new mapboxgl.NavigationControl(),
-          'top-right'
-        );
+      // Remove default navigation controls as we're providing our own
+      if (!interactive) {
+        map.current.dragPan.disable();
+        map.current.doubleClickZoom.disable();
+        map.current.scrollZoom.disable();
+        map.current.touchZoomRotate.disable();
       }
 
       // Setup map
@@ -165,11 +219,23 @@ const MapView: React.FC<MapViewProps> = ({
         map.current = null;
       }
     };
-  }, [establishments, userLocation, mapboxToken, interactive, onMarkerClick, toast]);
+  }, [establishments, userLocation, mapboxToken, interactive, onMarkerClick, toast, mapStyle]);
 
   return (
-    <div className={`${height} rounded-xl overflow-hidden elevation-2`}>
+    <div className={`${height} rounded-xl overflow-hidden elevation-2 relative`}>
       <div ref={mapContainer} className="w-full h-full" />
+      
+      {interactive && (
+        <MapControls 
+          onZoomIn={handleZoomIn}
+          onZoomOut={handleZoomOut}
+          onRecenter={handleRecenter}
+          onToggleMapStyle={handleToggleMapStyle}
+          onRefreshLocation={onRefreshLocation || (() => {})}
+          isLoading={isLoadingLocation}
+          mapStyle={mapStyle}
+        />
+      )}
     </div>
   );
 };
