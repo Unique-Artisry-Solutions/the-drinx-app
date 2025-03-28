@@ -1,0 +1,90 @@
+
+import { useRef, useState, useEffect } from 'react';
+import mapboxgl from 'mapbox-gl';
+import { useToast } from '@/hooks/use-toast';
+
+// Set the Mapbox token directly
+const mapboxToken = 'pk.eyJ1IjoidHJhdmFsaXNvMTQiLCJhIjoiY204ODI4bjIwMG5jMTJxcHU2MHBrcmpubyJ9.EoN25lrcBgX-5Fusy-Imeg';
+
+interface UseMapInitializationProps {
+  containerRef: React.RefObject<HTMLDivElement>;
+  mapStyle: string;
+  userLocation?: { latitude: number; longitude: number } | null;
+  establishments?: Array<{ longitude: number; latitude: number }>;
+  interactive?: boolean;
+}
+
+const useMapInitialization = ({
+  containerRef,
+  mapStyle,
+  userLocation,
+  establishments = [],
+  interactive = true,
+}: UseMapInitializationProps) => {
+  const mapRef = useRef<mapboxgl.Map | null>(null);
+  const [mapInitialized, setMapInitialized] = useState<boolean>(false);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (!containerRef.current || mapInitialized) return;
+
+    try {
+      mapboxgl.accessToken = mapboxToken;
+      
+      // Determine initial center position
+      const initialCenter = userLocation 
+        ? [userLocation.longitude, userLocation.latitude] 
+        : establishments.length > 0 
+          ? [establishments[0].longitude, establishments[0].latitude]
+          : [-74.006, 40.7128]; // Default to NYC
+      
+      // Initialize map
+      mapRef.current = new mapboxgl.Map({
+        container: containerRef.current,
+        style: mapStyle,
+        zoom: 12,
+        center: initialCenter as [number, number],
+      });
+
+      // Disable interactions if not interactive
+      if (!interactive) {
+        mapRef.current.dragPan.disable();
+        mapRef.current.doubleClickZoom.disable();
+        mapRef.current.scrollZoom.disable();
+        mapRef.current.touchZoomRotate.disable();
+      }
+
+      // Set initialization status when map is loaded
+      mapRef.current.on('load', () => {
+        setMapInitialized(true);
+      });
+
+      // Cleanup function
+      return () => {
+        if (mapRef.current) {
+          mapRef.current.remove();
+          mapRef.current = null;
+          setMapInitialized(false);
+        }
+      };
+    } catch (error) {
+      console.error('Error initializing map:', error);
+      toast({
+        title: "Error initializing map",
+        description: "Please check your Mapbox token and try again.",
+        variant: "destructive"
+      });
+    }
+  }, [containerRef, mapStyle, interactive, toast, userLocation, establishments]);
+
+  // Update map style when it changes
+  useEffect(() => {
+    if (mapRef.current && mapInitialized) {
+      mapRef.current.setStyle(mapStyle);
+    }
+  }, [mapStyle, mapInitialized]);
+
+  return { map: mapRef.current, mapInitialized };
+};
+
+export default useMapInitialization;

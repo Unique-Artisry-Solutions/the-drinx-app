@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
-import MapView from '@/components/MapView';
+import MapView from '@/components/map/MapView';
 import BarCrawlControl from '@/components/BarCrawlControl';
 import LocationSearch from '@/components/LocationSearch';
 import EstablishmentList from '@/components/EstablishmentList';
