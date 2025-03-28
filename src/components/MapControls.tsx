@@ -6,8 +6,7 @@ import {
   ZoomOut, 
   Layers, 
   Navigation, 
-  Locate,
-  MapPin
+  Locate
 } from 'lucide-react';
 import { 
   Tooltip,
