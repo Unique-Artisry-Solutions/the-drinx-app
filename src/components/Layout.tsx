@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Map, Plus, Search } from 'lucide-react';
+import { Home, Map, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import TopNavigation from './TopNavigation';
 
@@ -14,7 +14,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   const navItems = [
     { icon: Home, label: 'Home', path: '/' },
-    { icon: Search, label: 'Explore', path: '/explore' },
     { icon: Map, label: 'Map', path: '/map' },
     { icon: Plus, label: 'Add', path: '/add' },
   ];

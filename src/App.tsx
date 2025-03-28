@@ -6,7 +6,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import Index from "./pages/Index";
-import Explore from "./pages/Explore";
 import MapPage from "./pages/MapPage";
 import AddPage from "./pages/AddPage";
 import EstablishmentDetail from "./pages/EstablishmentDetail";
@@ -65,11 +64,7 @@ const App = () => {
             <Route path="/signup" element={isAuthenticated ? <Navigate to="/" replace /> : <SignupPage />} />
             
             {/* Protected routes */}
-            <Route path="/explore" element={
-              <ProtectedRoute>
-                <Explore />
-              </ProtectedRoute>
-            } />
+            <Route path="/explore" element={<Navigate to="/" replace />} />
             <Route path="/map" element={
               <ProtectedRoute>
                 <MapPage />

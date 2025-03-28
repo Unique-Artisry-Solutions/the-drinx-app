@@ -37,6 +37,7 @@ const MapView: React.FC<MapViewProps> = ({
   const { toast } = useToast();
   const [mapStyle, setMapStyle] = useState<string>('mapbox://styles/mapbox/light-v11');
   const [mapInitialized, setMapInitialized] = useState<boolean>(false);
+  const animationRef = useRef<number | null>(null);
   
   // Set the Mapbox token directly
   const mapboxToken = 'pk.eyJ1IjoidHJhdmFsaXNvMTQiLCJhIjoiY204ODI4bjIwMG5jMTJxcHU2MHBrcmpubyJ9.EoN25lrcBgX-5Fusy-Imeg';
@@ -126,6 +127,11 @@ const MapView: React.FC<MapViewProps> = ({
           map.current = null;
           setMapInitialized(false);
         }
+        // Cancel any ongoing animation frame
+        if (animationRef.current) {
+          cancelAnimationFrame(animationRef.current);
+          animationRef.current = null;
+        }
       };
     } catch (error) {
       console.error('Error initializing map:', error);
@@ -210,6 +216,12 @@ const MapView: React.FC<MapViewProps> = ({
           duration: 1000
         });
       }
+    }
+    
+    // Cancel any existing animation frame
+    if (animationRef.current) {
+      cancelAnimationFrame(animationRef.current);
+      animationRef.current = null;
     }
   }, [establishments, userLocation, mapInitialized, onMarkerClick]);
 
