@@ -1,10 +1,14 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
 interface UserLocation {
   latitude: number;
   longitude: number;
+}
+
+interface DistanceOptions {
+  units?: 'miles' | 'kilometers';
 }
 
 export const useUserLocation = () => {
@@ -13,7 +17,41 @@ export const useUserLocation = () => {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
+  const calculateDistance = useCallback((
+    destLat: number, 
+    destLng: number, 
+    options: DistanceOptions = { units: 'miles' }
+  ): number | null => {
+    if (!userLocation) return null;
+    
+    // Implementation of the Haversine formula for calculating distance between two points on Earth
+    const toRadian = (degree: number) => degree * Math.PI / 180;
+    
+    const earthRadius = options.units === 'kilometers' ? 6371 : 3958.8; // Earth radius in km or miles
+    
+    const latDiff = toRadian(destLat - userLocation.latitude);
+    const lngDiff = toRadian(destLng - userLocation.longitude);
+    
+    const a = 
+      Math.sin(latDiff / 2) * Math.sin(latDiff / 2) +
+      Math.cos(toRadian(userLocation.latitude)) * Math.cos(toRadian(destLat)) * 
+      Math.sin(lngDiff / 2) * Math.sin(lngDiff / 2);
+    
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distance = earthRadius * c;
+    
+    return parseFloat(distance.toFixed(1));
+  }, [userLocation]);
+  
+  const formatDistance = useCallback((distance: number | null): string => {
+    if (distance === null) return 'Unknown';
+    return `${distance} miles`;
+  }, []);
+
+  const fetchUserLocation = useCallback(() => {
+    setIsLoading(true);
+    setError(null);
+    
     // Get user location
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -23,6 +61,11 @@ export const useUserLocation = () => {
             longitude: position.coords.longitude,
           });
           setIsLoading(false);
+          
+          toast({
+            title: "Location updated",
+            description: "Your current location has been refreshed.",
+          });
         },
         (error) => {
           console.error('Error getting user location:', error);
@@ -46,5 +89,16 @@ export const useUserLocation = () => {
     }
   }, [toast]);
 
-  return { userLocation, isLoading, error };
+  useEffect(() => {
+    fetchUserLocation();
+  }, [fetchUserLocation]);
+
+  return { 
+    userLocation, 
+    isLoading, 
+    error, 
+    refreshLocation: fetchUserLocation,
+    calculateDistance,
+    formatDistance
+  };
 };
