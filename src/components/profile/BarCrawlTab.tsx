@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { User, Share2, MapPin, Users, Beer } from 'lucide-react';
+import { User, Share2, MapPin, Users, Beer, QrCode, Tag } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface BarCrawlTabProps {
@@ -15,6 +15,7 @@ const BarCrawlTab: React.FC<BarCrawlTabProps> = ({ barCrawlList, shareBarCrawl }
   const [currentEstablishment, setCurrentEstablishment] = useState<any>(barCrawlList[0] || null);
   const [activeUsers, setActiveUsers] = useState<number>(Math.floor(Math.random() * 20) + 5);
   const [isParticipating, setIsParticipating] = useState<boolean>(true);
+  const [promoCode, setPromoCode] = useState<string>("SPIRITLESS25");
 
   const toggleParticipation = () => {
     setIsParticipating(!isParticipating);
@@ -51,21 +52,37 @@ const BarCrawlTab: React.FC<BarCrawlTabProps> = ({ barCrawlList, shareBarCrawl }
                     <Users className="h-5 w-5 mr-2 text-material-primary" />
                     <span className="text-sm">{activeUsers} app users here now</span>
                   </div>
+                  <div className="flex items-center">
+                    <Tag className="h-5 w-5 mr-2 text-material-primary" />
+                    <span className="text-sm font-medium">Promo Code:</span>
+                    <span className="ml-2 bg-material-primary/10 text-material-primary px-2 py-1 rounded text-sm font-bold">
+                      {promoCode}
+                    </span>
+                  </div>
                 </div>
                 
-                <div className="flex flex-col justify-end space-y-2">
-                  <Link to={`/establishment/${currentEstablishment.id}`}>
-                    <Button variant="outline" className="w-full justify-start">
-                      <MapPin size={16} className="mr-2" />
-                      View Details
-                    </Button>
-                  </Link>
-                  <Link to="/map">
-                    <Button variant="outline" className="w-full justify-start">
-                      <User size={16} className="mr-2" />
-                      Locate Crawlers
-                    </Button>
-                  </Link>
+                <div className="flex flex-col space-y-4">
+                  <div className="flex justify-center items-center p-4 bg-gray-100 rounded-lg h-32">
+                    <div className="text-center">
+                      <QrCode className="h-16 w-16 mx-auto mb-2 text-material-primary" />
+                      <p className="text-sm text-material-on-surface-variant">Scan for special offers</p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col justify-end space-y-2">
+                    <Link to={`/establishment/${currentEstablishment.id}`}>
+                      <Button variant="outline" className="w-full justify-start">
+                        <MapPin size={16} className="mr-2" />
+                        View Details
+                      </Button>
+                    </Link>
+                    <Link to="/map">
+                      <Button variant="outline" className="w-full justify-start">
+                        <User size={16} className="mr-2" />
+                        Locate Crawlers
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
               </div>
             </div>
