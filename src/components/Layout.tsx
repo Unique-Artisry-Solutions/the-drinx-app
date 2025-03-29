@@ -17,8 +17,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [navigationType, setNavigationType] = useState<NavigationType>(NavigationType.GUEST);
   const [userType, setUserType] = useState<'individual' | 'establishment'>('individual');
   const [isAdmin, setIsAdmin] = useState(false);
-  const { items } = useCart();
-  const hasCartItems = items.length > 0;
 
   useEffect(() => {
     const checkAuth = () => {
@@ -50,7 +48,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   
   const getContentPadding = () => {
     if (isLandingPage) {
-      return hasCartItems ? 'pt-16 pb-0 px-0' : 'pt-0 pb-0 px-0';
+      return 'pt-16 pb-0 px-0';
     } else {
       return 'pt-20 pb-20 md:pb-6 px-4';
     }
@@ -61,8 +59,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       return <AdminTopNavigation />;
     } else if (navigationType === NavigationType.USER) {
       return <UserTopNavigation />;
-    } else if (isLandingPage) {
-      return hasCartItems ? <GuestTopNavigation /> : null;
     } else {
       return <GuestTopNavigation />;
     }

@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 const Footer = () => {
   return (
@@ -19,27 +20,27 @@ const Footer = () => {
             <div>
               <h4 className="text-lg font-medium mb-4">About</h4>
               <ul className="space-y-2">
-                <li><a href="#" className="text-gray-400 hover:text-white">Our Mission</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white">Team</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white">Partners</a></li>
+                <li><Link to="/mission" className="text-gray-400 hover:text-white">Our Mission</Link></li>
+                <li><Link to="/mission#team" className="text-gray-400 hover:text-white">Team</Link></li>
+                <li><Link to="/mission#partners" className="text-gray-400 hover:text-white">Partners</Link></li>
               </ul>
             </div>
             
             <div>
               <h4 className="text-lg font-medium mb-4">Resources</h4>
               <ul className="space-y-2">
-                <li><a href="#" className="text-gray-400 hover:text-white">Blog</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white">Recipes</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white">FAQ</a></li>
+                <li><Link to="/resources" className="text-gray-400 hover:text-white">Blog</Link></li>
+                <li><Link to="/resources" className="text-gray-400 hover:text-white">Recipes</Link></li>
+                <li><Link to="/resources" className="text-gray-400 hover:text-white">FAQ</Link></li>
               </ul>
             </div>
             
             <div>
               <h4 className="text-lg font-medium mb-4">Legal</h4>
               <ul className="space-y-2">
-                <li><a href="#" className="text-gray-400 hover:text-white">Privacy Policy</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white">Terms of Service</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white">Cookie Policy</a></li>
+                <li><Link to="/legal?tab=privacy" className="text-gray-400 hover:text-white">Privacy Policy</Link></li>
+                <li><Link to="/legal?tab=terms" className="text-gray-400 hover:text-white">Terms of Service</Link></li>
+                <li><Link to="/legal?tab=cookies" className="text-gray-400 hover:text-white">Cookie Policy</Link></li>
               </ul>
             </div>
           </div>

@@ -21,6 +21,9 @@ import PricingPage from "./pages/PricingPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import UserProfilePage from "./pages/profile/UserProfilePage";
 import EstablishmentProfilePage from "./pages/establishment/EstablishmentProfilePage";
+import MissionPage from "./pages/MissionPage";
+import ResourcesPage from "./pages/ResourcesPage";
+import LegalPage from "./pages/LegalPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -145,6 +148,10 @@ const App = () => {
               <Route path="/signup" element={isAuthenticated ? <Navigate to="/" replace /> : <SignupPage />} />
               <Route path="/pricing" element={<PricingPage />} />
               <Route path="/checkout" element={<CheckoutPage />} />
+              
+              <Route path="/mission" element={<MissionPage />} />
+              <Route path="/resources" element={<ResourcesPage />} />
+              <Route path="/legal" element={<LegalPage />} />
               
               <Route path="/explore" element={<Navigate to="/" replace />} />
               <Route path="/map" element={

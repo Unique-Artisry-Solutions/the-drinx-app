@@ -3,12 +3,14 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   Home, 
-  ShoppingCart, 
   LogIn,
   UserPlus,
   Menu,
   X,
-  Sparkles
+  Sparkles,
+  HeartHandshake,
+  BookOpen,
+  FileText
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import CartButton from '@/components/cart/CartButton';
@@ -19,6 +21,9 @@ const GuestTopNavigation: React.FC = () => {
   
   const guestNavItems = [
     { icon: Home, label: 'Home', path: '/landing' },
+    { icon: HeartHandshake, label: 'Our Mission', path: '/mission' },
+    { icon: BookOpen, label: 'Resources', path: '/resources' },
+    { icon: FileText, label: 'Legal', path: '/legal' },
   ];
 
   return (
