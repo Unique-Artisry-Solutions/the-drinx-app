@@ -6,30 +6,33 @@ import Benefits from '@/components/landing/Benefits';
 import KeyFeatures from '@/components/landing/KeyFeatures';
 import CallToAction from '@/components/landing/CallToAction';
 import Footer from '@/components/landing/Footer';
+import Layout from '@/components/Layout';
 
 const LandingPage = () => {
   return (
-    <div className="min-h-screen">
-      {/* Hero Section with gradient background image */}
-      <main id="main-content">
-        <Hero />
+    <Layout>
+      <div className="min-h-screen">
+        {/* Hero Section with gradient background image */}
+        <main id="main-content">
+          <Hero />
+          
+          {/* Features Section */}
+          <Features />
+          
+          {/* New Bold Key Features Section */}
+          <KeyFeatures />
+          
+          {/* Benefits Section */}
+          <Benefits />
+          
+          {/* CTA Section */}
+          <CallToAction />
+        </main>
         
-        {/* Features Section */}
-        <Features />
-        
-        {/* New Bold Key Features Section */}
-        <KeyFeatures />
-        
-        {/* Benefits Section */}
-        <Benefits />
-        
-        {/* CTA Section */}
-        <CallToAction />
-      </main>
-      
-      {/* Footer */}
-      <Footer />
-    </div>
+        {/* Footer */}
+        <Footer />
+      </div>
+    </Layout>
   );
 };
 
