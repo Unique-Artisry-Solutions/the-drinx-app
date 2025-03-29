@@ -12,7 +12,6 @@ import {
   X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import CartButton from '@/components/cart/CartButton';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -93,8 +92,6 @@ const UserTopNavigation: React.FC = () => {
           </div>
           
           <div className="user-nav-right flex items-center space-x-4">
-            <CartButton />
-            
             <Button 
               variant="ghost" 
               size="icon" 

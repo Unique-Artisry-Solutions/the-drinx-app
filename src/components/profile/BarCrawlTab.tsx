@@ -1,53 +1,127 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { MapPin } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { BarCrawlTabProps } from '@/types/ProfileTypes';
+import { Badge } from '@/components/ui/badge';
+import { User, Share2, MapPin, Users, Beer } from 'lucide-react';
+import { Link } from 'react-router-dom';
+
+interface BarCrawlTabProps {
+  barCrawlList: any[];
+  shareBarCrawl: () => void;
+}
 
 const BarCrawlTab: React.FC<BarCrawlTabProps> = ({ barCrawlList, shareBarCrawl }) => {
-  const navigate = useNavigate();
-  
+  const [currentEstablishment, setCurrentEstablishment] = useState<any>(barCrawlList[0] || null);
+  const [activeUsers, setActiveUsers] = useState<number>(Math.floor(Math.random() * 20) + 5);
+  const [isParticipating, setIsParticipating] = useState<boolean>(true);
+
+  const toggleParticipation = () => {
+    setIsParticipating(!isParticipating);
+  };
+
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="font-medium">My Bar Crawl List</h2>
-        <Button onClick={shareBarCrawl}>Share Bar Crawl</Button>
-      </div>
-      
-      {barCrawlList.length > 0 ? (
-        <div className="space-y-3">
-          {barCrawlList.map((est, index) => (
-            <Card key={est.id} className="relative">
-              <CardContent className="p-4 flex items-center">
-                <div className="h-8 w-8 rounded-full bg-material-primary text-white flex items-center justify-center mr-3">
-                  {index + 1}
+    <div className="space-y-6">
+      {isParticipating && currentEstablishment && (
+        <Card className="border-spiritless-pink border-2">
+          <CardContent className="pt-6">
+            <div className="space-y-4">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="text-lg font-semibold">Currently Participating</h3>
+                  <p className="text-material-on-surface-variant text-sm">You're checked in to the bar crawl</p>
                 </div>
-                <div className="flex-1">
-                  <h3 className="font-medium">{est.name}</h3>
-                  <div className="flex items-center text-sm text-material-on-surface-variant">
-                    <MapPin size={14} className="mr-1" />
-                    {est.address}
+                <Button variant="outline" size="sm" onClick={toggleParticipation}>
+                  Leave Crawl
+                </Button>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <div className="space-y-3">
+                  <div className="flex items-center">
+                    <Beer className="h-5 w-5 mr-2 text-material-primary" />
+                    <span className="font-medium">Current Stop:</span>
+                    <span className="ml-2">{currentEstablishment.name}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <MapPin className="h-5 w-5 mr-2 text-material-primary" />
+                    <span className="text-sm">{currentEstablishment.address}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <Users className="h-5 w-5 mr-2 text-material-primary" />
+                    <span className="text-sm">{activeUsers} app users here now</span>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-8">
-          <p className="text-material-on-surface-variant">
-            You haven't added any establishments to your bar crawl list yet.
-          </p>
-          <Button
-            className="mt-4"
-            onClick={() => navigate('/explore')}
-          >
-            Explore Establishments
-          </Button>
-        </div>
+                
+                <div className="flex flex-col justify-end space-y-2">
+                  <Link to={`/establishment/${currentEstablishment.id}`}>
+                    <Button variant="outline" className="w-full justify-start">
+                      <MapPin size={16} className="mr-2" />
+                      View Details
+                    </Button>
+                  </Link>
+                  <Link to="/map">
+                    <Button variant="outline" className="w-full justify-start">
+                      <User size={16} className="mr-2" />
+                      Locate Crawlers
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       )}
+      
+      <div>
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-medium">Your Bar Crawl List</h3>
+          {barCrawlList.length > 0 && (
+            <Button size="sm" variant="outline" onClick={shareBarCrawl}>
+              <Share2 className="h-4 w-4 mr-2" />
+              Share
+            </Button>
+          )}
+        </div>
+        
+        {barCrawlList.length === 0 ? (
+          <div className="text-center py-8 border border-dashed rounded-lg bg-gray-50">
+            <p className="text-material-on-surface-variant">No establishments in your bar crawl list yet.</p>
+            <Link to="/map">
+              <Button variant="link" className="mt-2">
+                Explore Map
+              </Button>
+            </Link>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {barCrawlList.map((establishment) => (
+              <div 
+                key={establishment.id} 
+                className={`border rounded-lg p-4 ${currentEstablishment?.id === establishment.id ? 'border-material-primary bg-material-primary/5' : ''}`}
+              >
+                <div className="flex justify-between items-start">
+                  <div>
+                    <div className="flex items-center">
+                      <h4 className="font-medium">{establishment.name}</h4>
+                      {currentEstablishment?.id === establishment.id && (
+                        <Badge className="ml-2 bg-material-primary">Current</Badge>
+                      )}
+                    </div>
+                    <p className="text-sm text-material-on-surface-variant mt-1">
+                      {establishment.address}
+                    </p>
+                  </div>
+                  
+                  <Link to={`/establishment/${establishment.id}`}>
+                    <Button size="sm" variant="outline">View</Button>
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
