@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Layout from '@/components/Layout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -8,19 +7,16 @@ import MocktailMenuTab from '@/components/establishment/MocktailMenuTab';
 import VisitorStatsTab from '@/components/establishment/VisitorStatsTab';
 import BarCrawlsTab from '@/components/establishment/BarCrawlsTab';
 import { useEstablishmentProfile } from '@/hooks/useEstablishmentProfile';
-
 const EstablishmentProfilePage = () => {
-  const { 
-    profileState, 
-    promotionsState, 
-    drinksState, 
-    visitorStats, 
-    barCrawlsState 
+  const {
+    profileState,
+    promotionsState,
+    drinksState,
+    visitorStats,
+    barCrawlsState
   } = useEstablishmentProfile();
-
-  return (
-    <Layout>
-      <div className="py-4 animate-fade-in">
+  return <Layout>
+      <div className="py-4 animate-fade-in px-0 mx-[10%]">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-medium text-material-on-background">Establishment Profile</h1>
@@ -40,43 +36,15 @@ const EstablishmentProfilePage = () => {
           </TabsList>
 
           <TabsContent value="profile">
-            <ProfileTab 
-              name={profileState.name}
-              email={profileState.email}
-              description={profileState.description}
-              address={profileState.address}
-              phone={profileState.phone}
-              website={profileState.website}
-              isLoading={profileState.isLoading}
-              setName={profileState.setName}
-              setEmail={profileState.setEmail}
-              setDescription={profileState.setDescription}
-              setAddress={profileState.setAddress}
-              setPhone={profileState.setPhone}
-              setWebsite={profileState.setWebsite}
-              handleSaveProfile={profileState.handleSaveProfile}
-            />
+            <ProfileTab name={profileState.name} email={profileState.email} description={profileState.description} address={profileState.address} phone={profileState.phone} website={profileState.website} isLoading={profileState.isLoading} setName={profileState.setName} setEmail={profileState.setEmail} setDescription={profileState.setDescription} setAddress={profileState.setAddress} setPhone={profileState.setPhone} setWebsite={profileState.setWebsite} handleSaveProfile={profileState.handleSaveProfile} />
           </TabsContent>
 
           <TabsContent value="promotions">
-            <PromotionsTab 
-              promotions={promotionsState.promotions}
-              newPromoCode={promotionsState.newPromoCode}
-              newPromoDescription={promotionsState.newPromoDescription}
-              setNewPromoCode={promotionsState.setNewPromoCode}
-              setNewPromoDescription={promotionsState.setNewPromoDescription}
-              handleAddPromotion={promotionsState.handleAddPromotion}
-              handleDeletePromotion={promotionsState.handleDeletePromotion}
-            />
+            <PromotionsTab promotions={promotionsState.promotions} newPromoCode={promotionsState.newPromoCode} newPromoDescription={promotionsState.newPromoDescription} setNewPromoCode={promotionsState.setNewPromoCode} setNewPromoDescription={promotionsState.setNewPromoDescription} handleAddPromotion={promotionsState.handleAddPromotion} handleDeletePromotion={promotionsState.handleDeletePromotion} />
           </TabsContent>
 
           <TabsContent value="menu">
-            <MocktailMenuTab 
-              drinks={drinksState.drinks}
-              onAddDrink={drinksState.handleAddDrink}
-              onUpdateDrink={drinksState.handleUpdateDrink}
-              onDeleteDrink={drinksState.handleDeleteDrink}
-            />
+            <MocktailMenuTab drinks={drinksState.drinks} onAddDrink={drinksState.handleAddDrink} onUpdateDrink={drinksState.handleUpdateDrink} onDeleteDrink={drinksState.handleDeleteDrink} />
           </TabsContent>
 
           <TabsContent value="visitors">
@@ -84,16 +52,10 @@ const EstablishmentProfilePage = () => {
           </TabsContent>
 
           <TabsContent value="barCrawls">
-            <BarCrawlsTab 
-              barCrawls={barCrawlsState.barCrawls}
-              handleEndParticipation={barCrawlsState.handleEndParticipation}
-              handleAcceptRequest={barCrawlsState.handleAcceptRequest}
-            />
+            <BarCrawlsTab barCrawls={barCrawlsState.barCrawls} handleEndParticipation={barCrawlsState.handleEndParticipation} handleAcceptRequest={barCrawlsState.handleAcceptRequest} />
           </TabsContent>
         </Tabs>
       </div>
-    </Layout>
-  );
+    </Layout>;
 };
-
 export default EstablishmentProfilePage;
