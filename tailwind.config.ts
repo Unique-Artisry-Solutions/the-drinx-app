@@ -63,13 +63,23 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				// New color palette from image
+				// Bold color palette from image
 				spiritless: {
 					pink: '#D94E8F',      // Pink - #D94E8F (217, 78, 143)
+					'pink-light': '#FF6EAF', // Lighter pink for hover states
+					'pink-dark': '#B43973', // Darker pink for active states
 					green: '#84BF04',     // Green - #84BF04 (132, 191, 4)
+					'green-light': '#A4DF24', // Lighter green for hover states
+					'green-dark': '#648F03', // Darker green for active states
 					orange: '#F29F05',    // Orange - #F29F05 (242, 159, 5)
+					'orange-light': '#FFBF25', // Lighter orange for hover states
+					'orange-dark': '#D28704', // Darker orange for active states
 					'bright-orange': '#F28705', // Bright Orange - #F28705 (242, 135, 5)
+					'bright-orange-light': '#FFA725', // Lighter bright orange for hover
+					'bright-orange-dark': '#D27504', // Darker bright orange for active
 					burgundy: '#590202',  // Burgundy - #590202 (89, 2, 2)
+					'burgundy-light': '#791919', // Lighter burgundy for hover states
+					'burgundy-dark': '#3A0101', // Darker burgundy for active states
 				},
 				material: {
 					'primary': '#D94E8F',      // Pink as primary
@@ -99,6 +109,13 @@ export default {
 				lg: 'var(--radius)',
 				md: 'calc(var(--radius) - 2px)',
 				sm: 'calc(var(--radius) - 4px)'
+			},
+			boxShadow: {
+				'bold': '0 10px 25px -5px rgba(0, 0, 0, 0.2)',
+				'bold-pink': '0 10px 25px -5px rgba(217, 78, 143, 0.3)',
+				'bold-green': '0 10px 25px -5px rgba(132, 191, 4, 0.3)',
+				'bold-orange': '0 10px 25px -5px rgba(242, 159, 5, 0.3)',
+				'bold-burgundy': '0 10px 25px -5px rgba(89, 2, 2, 0.3)',
 			},
 			keyframes: {
 				'accordion-down': {
@@ -154,6 +171,12 @@ export default {
 			},
 			fontFamily: {
 				'roboto': ['Roboto', 'sans-serif'],
+			},
+			backgroundImage: {
+				'gradient-pink': 'linear-gradient(135deg, #D94E8F 0%, #FF6EAF 100%)',
+				'gradient-green': 'linear-gradient(135deg, #84BF04 0%, #A4DF24 100%)',
+				'gradient-orange': 'linear-gradient(135deg, #F29F05 0%, #FFBF25 100%)',
+				'gradient-burgundy': 'linear-gradient(135deg, #590202 0%, #791919 100%)',
 			},
 		}
 	},
