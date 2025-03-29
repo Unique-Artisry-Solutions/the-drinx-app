@@ -58,14 +58,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     <div className="flex flex-col min-h-screen bg-material-background">
       <NavigationTypes type={navigationType} userType={userType} />
       
-      {/* Show floating cart button on non-interior pages when user is not authenticated */}
+      {/* Show cart button on non-interior pages when user is not authenticated */}
       {!isInteriorPage() && navigationType === NavigationType.GUEST && (
         <div className="fixed bottom-20 right-6 z-30 md:bottom-10">
           <CartButton />
         </div>
       )}
       
-      {/* Show floating cart indicator when cart has items */}
+      {/* Show floating cart indicator when cart has items and not on pricing/checkout */}
       {items.length > 0 && !isPricingOrCheckout() && <FloatingCartIndicator />}
       
       <main className="flex-1 pb-16 md:pb-6 pt-2 px-2 md:px-6 container max-w-5xl mx-auto">
