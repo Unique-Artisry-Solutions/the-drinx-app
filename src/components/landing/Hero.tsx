@@ -81,21 +81,11 @@ const Hero = () => {
                   Get Started <ChevronRight className="ml-2" size={18} aria-hidden="true" />
                 </Button>
               </Link>
-              <Link to="/explore">
-                <Button 
-                  variant="outline" 
-                  size="lg" 
-                  className="text-white border-white hover:bg-white/20 focus:ring-2 focus:ring-white"
-                  aria-label="Browse our mocktail collection"
-                >
-                  Browse Mocktails
-                </Button>
-              </Link>
               <Link to="/pricing">
                 <Button 
                   variant="outline" 
                   size="lg" 
-                  className="text-white border-white hover:bg-white/20 focus:ring-2 focus:ring-white"
+                  className="text-white border-white bg-[#590202] hover:bg-[#3A0101] focus:ring-2 focus:ring-white"
                   aria-label="View our pricing plans"
                 >
                   View Pricing

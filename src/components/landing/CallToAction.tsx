@@ -26,7 +26,7 @@ const CallToAction = () => {
           <Link to="/pricing">
             <Button 
               size="lg" 
-              className="bg-white text-spiritless-pink-dark hover:bg-white/90 font-bold focus:ring-2 focus:ring-spiritless-pink-light"
+              className="bg-[#590202] text-white hover:bg-[#3A0101] font-bold focus:ring-2 focus:ring-white"
               aria-label="View our pricing plans"
             >
               View Pricing Plans
