@@ -5,6 +5,10 @@ import { CardContent, CardFooter } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import AuthButton from './AuthButton';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+import { Form, FormField, FormItem, FormControl, FormLabel } from '@/components/ui/form';
+import { useForm } from 'react-hook-form';
 
 interface SignupFormProps {
   onSuccess?: () => void;
@@ -16,6 +20,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess, onClose }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [userType, setUserType] = useState<'individual' | 'establishment'>('individual');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -31,18 +36,24 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess, onClose }) => {
       localStorage.setItem('user_email', email);
       localStorage.setItem('user_name', name);
       localStorage.setItem('user_username', username);
+      localStorage.setItem('user_type', userType);
+      
       toast({
         title: 'Account created',
         description: 'Welcome to Spiritless!',
       });
       setIsLoading(false);
       
-      // Call onSuccess if provided, otherwise navigate to homepage
+      // Call onSuccess if provided, otherwise navigate to appropriate homepage
       if (onSuccess) {
         onSuccess();
       } else {
-        // Always navigate to the homepage after successful signup
-        navigate('/');
+        // Navigate to the appropriate profile page based on user type
+        if (userType === 'establishment') {
+          navigate('/establishment/profile');
+        } else {
+          navigate('/');
+        }
       }
     }, 1000);
   };
@@ -99,6 +110,32 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess, onClose }) => {
             onChange={(e) => setPassword(e.target.value)}
             required
           />
+        </div>
+        
+        <div className="space-y-2 pt-2">
+          <label className="text-sm font-medium block mb-2">
+            Account Type
+          </label>
+          <RadioGroup 
+            defaultValue="individual" 
+            value={userType}
+            onValueChange={(value) => setUserType(value as 'individual' | 'establishment')}
+            className="flex flex-col space-y-2"
+          >
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="individual" id="individual" />
+              <Label htmlFor="individual">Individual User</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="establishment" id="establishment" />
+              <Label htmlFor="establishment">Establishment / Business</Label>
+            </div>
+          </RadioGroup>
+          <p className="text-xs text-muted-foreground mt-1">
+            {userType === 'individual' 
+              ? 'Create an account to discover and save mocktails' 
+              : 'Register your business to manage your mocktail offerings'}
+          </p>
         </div>
       </CardContent>
       <CardFooter className="flex flex-col gap-4">

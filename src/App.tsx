@@ -18,6 +18,8 @@ import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import PricingPage from "./pages/PricingPage";
+import UserProfilePage from "./pages/profile/UserProfilePage";
+import EstablishmentProfilePage from "./pages/establishment/EstablishmentProfilePage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -43,6 +45,7 @@ export const useAuth = () => {
     localStorage.removeItem('user_authenticated');
     localStorage.removeItem('user_email');
     localStorage.removeItem('user_username');
+    localStorage.removeItem('user_type');
     setIsAuthenticated(false);
   };
   
@@ -84,14 +87,44 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+// Type-specific route guard
+const TypedProtectedRoute = ({ 
+  userType, 
+  children 
+}: { 
+  userType: 'individual' | 'establishment', 
+  children: React.ReactNode 
+}) => {
+  const isAuthenticated = localStorage.getItem('user_authenticated') === 'true';
+  const storedUserType = localStorage.getItem('user_type');
+  
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  if (storedUserType !== userType) {
+    return <Navigate to="/" replace />;
+  }
+  
+  return <>{children}</>;
+};
+
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userType, setUserType] = useState<'individual' | 'establishment'>('individual');
   
   useEffect(() => {
     // Check authentication status on initial load and when it changes
     const checkAuth = () => {
       const auth = localStorage.getItem('user_authenticated') === 'true';
       setIsAuthenticated(auth);
+      
+      const type = localStorage.getItem('user_type');
+      if (type === 'establishment') {
+        setUserType('establishment');
+      } else {
+        setUserType('individual');
+      }
     };
     
     checkAuth();
@@ -117,8 +150,9 @@ const App = () => {
             <Route path="/login" element={isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />} />
             <Route path="/signup" element={isAuthenticated ? <Navigate to="/" replace /> : <SignupPage />} />
             <Route path="/pricing" element={<PricingPage />} />
+            <Route path="/cart" element={<div>Shopping Cart</div>} />
             
-            {/* Protected routes */}
+            {/* Protected routes for any logged in user */}
             <Route path="/explore" element={<Navigate to="/" replace />} />
             <Route path="/map" element={
               <ProtectedRoute>
@@ -140,9 +174,28 @@ const App = () => {
                 <CocktailDetail />
               </ProtectedRoute>
             } />
+            
+            {/* Individual-specific routes */}
+            <Route path="/profile" element={
+              <TypedProtectedRoute userType="individual">
+                <UserProfilePage />
+              </TypedProtectedRoute>
+            } />
+            
+            {/* Establishment-specific routes */}
+            <Route path="/establishment/profile" element={
+              <TypedProtectedRoute userType="establishment">
+                <EstablishmentProfilePage />
+              </TypedProtectedRoute>
+            } />
+            
+            {/* Backward compatibility - redirect to appropriate profile */}
             <Route path="/profile" element={
               <ProtectedRoute>
-                <ProfilePage />
+                {userType === 'establishment' ? 
+                  <Navigate to="/establishment/profile" replace /> : 
+                  <ProfilePage />
+                }
               </ProtectedRoute>
             } />
             
