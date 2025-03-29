@@ -23,6 +23,7 @@ const useMapInitialization = (
   const markerRefs = useRef<{ [key: string]: mapboxgl.Marker }>({});
   const userMarkerRef = useRef<mapboxgl.Marker | null>(null);
   const [mapError, setMapError] = useState<string | null>(null);
+  const initializedRef = useRef(false);
 
   // Initialize map
   useEffect(() => {
@@ -117,8 +118,8 @@ const useMapInitialization = (
       bounds.extend([userLocation.longitude, userLocation.latitude]);
     }
     
-    // Fit map to bounds 
-    if (establishments.length > 0 || userLocation) {
+    // Fit map to bounds - but only once on initial load
+    if ((establishments.length > 0 || userLocation) && !initializedRef.current) {
       if (singleEstablishmentView && establishments.length === 1) {
         // For single establishment view, zoom closer
         map.current.flyTo({
@@ -139,6 +140,9 @@ const useMapInitialization = (
           maxZoom: 15
         });
       }
+      
+      // Mark as initialized to prevent continuous zooming
+      initializedRef.current = true;
     }
   }, [establishments, userLocation, isMapLoaded, singleEstablishmentView]);
 
