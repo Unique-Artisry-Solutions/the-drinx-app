@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, Map, Plus, ShoppingCart, User, Settings, LogOut, Globe } from 'lucide-react';
@@ -19,6 +18,8 @@ import {
   navigationMenuTriggerStyle
 } from "@/components/ui/navigation-menu";
 import { useToast } from '@/hooks/use-toast';
+import CartButton from '@/components/cart/CartButton';
+import { useCart } from '@/contexts/CartContext';
 
 // Types of navigation
 export enum NavigationType {
@@ -35,6 +36,7 @@ interface NavigationTypesProps {
 const NavigationTypes: React.FC<NavigationTypesProps> = ({ type, userType = 'individual' }) => {
   const location = useLocation();
   const { toast } = useToast();
+  const { items } = useCart();
   
   const handleLogout = () => {
     localStorage.removeItem('user_authenticated');
@@ -53,7 +55,7 @@ const NavigationTypes: React.FC<NavigationTypesProps> = ({ type, userType = 'ind
   // Guest Navigation Items
   const guestNavItems = [
     { icon: Home, label: 'Home', path: '/landing' },
-    { icon: ShoppingCart, label: 'Cart', path: '/cart' },
+    { icon: ShoppingCart, label: 'Cart', path: '/checkout' },
   ];
 
   // User Navigation Items
@@ -93,6 +95,12 @@ const NavigationTypes: React.FC<NavigationTypesProps> = ({ type, userType = 'ind
     return '/profile';
   };
 
+  // Determine if current page is an interior app page
+  const isInteriorPage = () => {
+    const interiorPaths = ['/map', '/add', '/establishment/', '/cocktail/', '/profile'];
+    return interiorPaths.some(path => location.pathname.startsWith(path));
+  };
+
   return (
     <div className="hidden md:block w-full border-b border-material-outline">
       <div className="container max-w-5xl mx-auto py-2 px-4 flex justify-between items-center">
@@ -128,6 +136,8 @@ const NavigationTypes: React.FC<NavigationTypesProps> = ({ type, userType = 'ind
         </div>
         
         <div className="flex items-center space-x-4">
+          {type === NavigationType.GUEST && !isInteriorPage() && <CartButton />}
+          
           {type === NavigationType.ADMIN && (
             <Link to="/admin">
               <Button variant="ghost" size="sm">Admin</Button>

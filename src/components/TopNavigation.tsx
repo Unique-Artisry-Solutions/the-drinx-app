@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, LogOut, Settings } from 'lucide-react';
@@ -24,7 +25,7 @@ const TopNavigation: React.FC<TopNavigationProps> = ({ onMenuToggle, isMenuOpen 
         </Link>
         
         <div className="flex items-center space-x-4">
-          {/* Cart Button */}
+          {/* Cart Button - Always visible */}
           <CartButton />
           
           {/* Hamburger menu for smaller screens */}
