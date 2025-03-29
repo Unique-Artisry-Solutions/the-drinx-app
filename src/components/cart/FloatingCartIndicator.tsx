@@ -13,7 +13,7 @@ const FloatingCartIndicator: React.FC = () => {
   if (items.length === 0) return null;
 
   return (
-    <div className="fixed bottom-20 right-6 z-30 md:bottom-10 md:right-10 animate-fade-in">
+    <div className="fixed bottom-20 right-6 z-50 md:bottom-10 md:right-10 animate-fade-in">
       <Button 
         onClick={() => navigate('/checkout')}
         className={cn(
