@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Map, Glass, BookMarked, Share2 } from 'lucide-react';
+import { Map, Wine, BookMarked, Share2 } from 'lucide-react';
 
 const KeyFeatures = () => {
   const features = [
@@ -13,7 +13,7 @@ const KeyFeatures = () => {
       delay: 0.1
     },
     {
-      icon: <Glass size={32} />,
+      icon: <Wine size={32} />,
       title: "Cocktail Library",
       description: "Browse an extensive library of non-alcoholic cocktail recipes from top establishments.",
       color: "spiritless-green", 
