@@ -7,7 +7,7 @@ import KeyFeatures from '@/components/landing/KeyFeatures';
 import CallToAction from '@/components/landing/CallToAction';
 import Footer from '@/components/landing/Footer';
 import { useCart } from '@/contexts/CartContext';
-import CartButton from '@/components/cart/CartButton';
+import GuestTopNavigation from '@/components/navigation/GuestTopNavigation';
 
 const LandingPage = () => {
   const { items } = useCart();
@@ -15,15 +15,11 @@ const LandingPage = () => {
 
   return (
     <div className="landing-page min-h-screen w-full">
-      {/* Only show floating cart button if there are items in the cart and no navigation */}
-      {hasCartItems && !hasCartItems && (
-        <div className="fixed top-4 right-4 z-50">
-          <CartButton />
-        </div>
-      )}
+      {/* Show navigation header when there are items in cart */}
+      {hasCartItems && <GuestTopNavigation />}
       
       {/* Main content for landing page */}
-      <main id="main-content" className="landing-main">
+      <main id="main-content" className={`landing-main ${hasCartItems ? 'pt-16' : ''}`}>
         {/* Hero Section with gradient background image */}
         <Hero />
         
