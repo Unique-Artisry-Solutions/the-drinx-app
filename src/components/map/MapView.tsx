@@ -24,6 +24,8 @@ interface MapViewProps {
   onRefreshLocation: () => void;
   isLoadingLocation: boolean;
   singleEstablishmentView?: boolean;
+  onMarkerClick?: (establishmentId: string) => void;
+  height?: string;
 }
 
 const MapView: React.FC<MapViewProps> = ({
@@ -31,10 +33,13 @@ const MapView: React.FC<MapViewProps> = ({
   userLocation,
   onRefreshLocation,
   isLoadingLocation,
-  singleEstablishmentView = false
+  singleEstablishmentView = false,
+  onMarkerClick,
+  height
 }) => {
   const [selectedEstablishment, setSelectedEstablishment] = useState<Establishment | null>(null);
   const [isBarCrawlModalOpen, setIsBarCrawlModalOpen] = useState(false);
+  const [mapStyle, setMapStyle] = useState('streets-v12');
   const { toast } = useToast();
   const { mapContainer, mapInstance, isMapLoaded } = useMapInitialization(
     establishments,
@@ -51,6 +56,10 @@ const MapView: React.FC<MapViewProps> = ({
   
   const handleMarkerClick = (establishment: Establishment) => {
     setSelectedEstablishment(establishment);
+    
+    if (onMarkerClick) {
+      onMarkerClick(establishment.id);
+    }
     
     // Center map on establishment
     if (mapInstance) {
@@ -77,8 +86,44 @@ const MapView: React.FC<MapViewProps> = ({
     setIsBarCrawlModalOpen(true);
   };
 
+  // Map control handlers
+  const handleZoomIn = () => {
+    if (mapInstance) {
+      mapInstance.zoomIn();
+    }
+  };
+
+  const handleZoomOut = () => {
+    if (mapInstance) {
+      mapInstance.zoomOut();
+    }
+  };
+
+  const handleRecenter = () => {
+    if (mapInstance && userLocation) {
+      mapInstance.flyTo({
+        center: [userLocation.longitude, userLocation.latitude],
+        zoom: 13
+      });
+    } else if (mapInstance && establishments.length > 0) {
+      // If no user location, center on first establishment
+      mapInstance.flyTo({
+        center: [establishments[0].longitude, establishments[0].latitude],
+        zoom: 12
+      });
+    }
+  };
+
+  const handleToggleMapStyle = () => {
+    if (!mapInstance) return;
+    
+    const newStyle = mapStyle === 'streets-v12' ? 'satellite-v9' : 'streets-v12';
+    setMapStyle(newStyle);
+    mapInstance.setStyle(`mapbox://styles/mapbox/${newStyle}`);
+  };
+
   return (
-    <div className="relative w-full bg-gray-100 rounded-lg overflow-hidden" style={{ height: singleEstablishmentView ? '100%' : '600px' }}>
+    <div className="relative w-full bg-gray-100 rounded-lg overflow-hidden" style={{ height: height || (singleEstablishmentView ? '100%' : '600px') }}>
       <div ref={mapContainer} className="h-full w-full" />
       
       {!isMapLoaded && (
@@ -134,7 +179,17 @@ const MapView: React.FC<MapViewProps> = ({
         />
       )}
       
-      {!singleEstablishmentView && <MapControls />}
+      {!singleEstablishmentView && (
+        <MapControls 
+          onZoomIn={handleZoomIn}
+          onZoomOut={handleZoomOut}
+          onRecenter={handleRecenter}
+          onToggleMapStyle={handleToggleMapStyle}
+          onRefreshLocation={onRefreshLocation}
+          isLoading={isLoadingLocation}
+          mapStyle={mapStyle}
+        />
+      )}
     </div>
   );
 };

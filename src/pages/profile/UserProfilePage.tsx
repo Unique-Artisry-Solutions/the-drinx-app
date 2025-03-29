@@ -207,7 +207,10 @@ const UserProfilePage = () => {
           <CardContent>
             <MapView 
               establishments={mockEstablishmentsForMap}
-              height="h-[300px]"
+              userLocation={null}
+              onRefreshLocation={() => {}}
+              isLoadingLocation={false}
+              height="300px"
             />
           </CardContent>
         </Card>

@@ -137,9 +137,9 @@ const MapPage = () => {
           <MapView 
             establishments={mapEstablishments}
             userLocation={userLocation}
-            onMarkerClick={handleMarkerClick}
             onRefreshLocation={refreshLocation}
             isLoadingLocation={isLoadingLocation}
+            onMarkerClick={handleMarkerClick}
           />
         )}
 
