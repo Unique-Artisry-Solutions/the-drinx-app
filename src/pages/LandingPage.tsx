@@ -9,9 +9,10 @@ import Footer from '@/components/landing/Footer';
 
 const LandingPage = () => {
   return (
-    <div className="min-h-screen">
-      {/* Hero Section with gradient background image */}
-      <main id="main-content">
+    <div className="landing-page min-h-screen w-full">
+      {/* Main content for landing page */}
+      <main id="main-content" className="landing-main pt-20">
+        {/* Hero Section with gradient background image */}
         <Hero />
         
         {/* Features Section */}

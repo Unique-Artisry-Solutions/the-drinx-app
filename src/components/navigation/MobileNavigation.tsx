@@ -5,6 +5,12 @@ import { Home, Map, Plus, ShoppingCart, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { NavigationType } from './NavigationTypes';
 
+interface NavItem {
+  icon: React.FC<any>;
+  label: string;
+  path: string;
+}
+
 interface MobileNavigationProps {
   type: NavigationType;
   userType?: 'individual' | 'establishment';
@@ -28,7 +34,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
   }, []);
 
   // Guest Navigation Items
-  const guestNavItems = [
+  const guestNavItems: NavItem[] = [
     { icon: Home, label: 'Home', path: '/landing' },
     { icon: ShoppingCart, label: 'Cart', path: '/cart' },
     { icon: User, label: 'Login', path: '/login' },
@@ -40,7 +46,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
   };
 
   // User Navigation Items
-  const userNavItems = [
+  const userNavItems: NavItem[] = [
     { icon: Home, label: 'Home', path: '/' },
     { icon: Map, label: 'Map', path: '/map' },
     { icon: Plus, label: 'Add', path: '/add' },
@@ -48,7 +54,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
   ];
 
   // Admin Navigation Items
-  const adminNavItems = [
+  const adminNavItems: NavItem[] = [
     { icon: Home, label: 'Home', path: '/' },
     { icon: Map, label: 'Map', path: '/map' },
     { icon: Plus, label: 'Add', path: '/add' },
@@ -70,10 +76,15 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
 
   const navItems = getNavItems();
 
+  // Don't render the mobile nav on landing or admin pages
+  if (location.pathname === '/landing' || location.pathname.startsWith('/admin')) {
+    return null;
+  }
+
   return (
-    <nav className="fixed bottom-0 w-full bg-white elevation-3 z-50 md:hidden">
-      <div className="max-w-5xl mx-auto">
-        <div className="flex justify-around items-center h-16">
+    <nav className="spiritless-mobile-nav fixed bottom-0 w-full bg-white shadow-lg z-50 md:hidden">
+      <div className="spiritless-mobile-container max-w-5xl mx-auto">
+        <div className="spiritless-mobile-inner flex justify-around items-center h-16">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;
             return (
@@ -81,7 +92,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
                 key={item.path}
                 to={item.path}
                 className={cn(
-                  "flex flex-col items-center justify-center w-full h-full transition-all-200",
+                  "spiritless-mobile-link flex flex-col items-center justify-center w-full h-full transition-all-200",
                   isActive 
                     ? "text-material-primary" 
                     : "text-material-on-surface-variant"

@@ -1,8 +1,11 @@
 
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import NavigationTypes, { NavigationType } from './navigation/NavigationTypes';
+import { NavigationType } from './navigation/NavigationTypes';
 import MobileNavigation from './navigation/MobileNavigation';
+import AdminTopNavigation from './navigation/AdminTopNavigation';
+import UserTopNavigation from './navigation/UserTopNavigation';
+import GuestTopNavigation from './navigation/GuestTopNavigation';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -39,15 +42,44 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     };
   }, []);
 
+  // Determine if we're on a landing page (show guest nav) or interior page (show appropriate nav)
+  const isLandingPage = location.pathname === '/landing';
+  const isAdminPage = location.pathname.startsWith('/admin');
+  
+  // Calculate content padding based on the page type
+  const getContentPadding = () => {
+    if (isLandingPage) {
+      return 'pt-0 pb-0 px-0'; // No padding for landing page
+    } else {
+      return 'pt-20 pb-20 md:pb-6 px-4'; // Padding for top and bottom nav on interior pages
+    }
+  };
+
+  // Render the appropriate navigation based on user type and page
+  const renderNavigation = () => {
+    if (isAdminPage || isAdmin) {
+      return <AdminTopNavigation />;
+    } else if (navigationType === NavigationType.USER) {
+      return <UserTopNavigation />;
+    } else {
+      return <GuestTopNavigation />;
+    }
+  };
+
   return (
-    <div className="flex flex-col min-h-screen bg-material-background">
-      <NavigationTypes type={navigationType} userType={userType} />
+    <div className="flex flex-col min-h-screen bg-material-background w-full">
+      {/* Render the appropriate top navigation */}
+      {renderNavigation()}
       
-      <main className="flex-1 pb-16 md:pb-6 pt-2 px-2 md:px-6 container max-w-5xl mx-auto">
+      {/* Main content with dynamic padding */}
+      <main className={`flex-1 w-full ${getContentPadding()}`}>
         {children}
       </main>
       
-      <MobileNavigation type={navigationType} userType={userType} />
+      {/* Mobile Navigation for interior app pages */}
+      {!isLandingPage && (
+        <MobileNavigation type={navigationType} userType={userType} />
+      )}
     </div>
   );
 };
