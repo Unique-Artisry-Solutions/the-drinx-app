@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { NavigationType } from './navigation/NavigationTypes';
 import MobileNavigation from './navigation/MobileNavigation';
@@ -7,6 +7,7 @@ import AdminTopNavigation from './navigation/AdminTopNavigation';
 import UserTopNavigation from './navigation/UserTopNavigation';
 import GuestTopNavigation from './navigation/GuestTopNavigation';
 import AppFooter from './AppFooter';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -14,20 +15,20 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
-  const [navigationType, setNavigationType] = useState<NavigationType>(NavigationType.GUEST);
-  const [userType, setUserType] = useState<'individual' | 'establishment'>('individual');
-  const [isAdmin, setIsAdmin] = useState(false);
+  const { user, isEmailVerified } = useAuth();
+  const [navigationType, setNavigationType] = React.useState<NavigationType>(NavigationType.GUEST);
+  const [userType, setUserType] = React.useState<'individual' | 'establishment'>('individual');
+  const [isAdmin, setIsAdmin] = React.useState(false);
 
   useEffect(() => {
     const checkAuth = () => {
-      const isAuthenticated = localStorage.getItem('user_authenticated') === 'true';
       const isAdminAuth = localStorage.getItem('admin_authenticated') === 'true';
       const userTypeStored = localStorage.getItem('user_type');
 
       if (isAdminAuth) {
         setNavigationType(NavigationType.ADMIN);
         setIsAdmin(true);
-      } else if (isAuthenticated) {
+      } else if (user && isEmailVerified) {
         setNavigationType(NavigationType.USER);
         setUserType(userTypeStored === 'establishment' ? 'establishment' : 'individual');
       } else {
@@ -36,12 +37,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     };
 
     checkAuth();
-    window.addEventListener('storage', checkAuth);
-
-    return () => {
-      window.removeEventListener('storage', checkAuth);
-    };
-  }, []);
+  }, [user, isEmailVerified]);
 
   const isLandingPage = location.pathname === '/' || location.pathname === '/landing';
   const isAdminPage = location.pathname.startsWith('/admin');

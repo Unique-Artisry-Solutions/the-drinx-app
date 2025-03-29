@@ -3,10 +3,10 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { useState } from "react";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { CartProvider } from "@/contexts/CartContext";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import MapPage from "./pages/MapPage";
 import AddPage from "./pages/AddPage";
@@ -30,6 +30,7 @@ import EstablishmentProfilePage from "./pages/establishment/EstablishmentProfile
 import MissionPage from "./pages/MissionPage";
 import ResourcesPage from "./pages/ResourcesPage";
 import LegalPage from "./pages/LegalPage";
+import EmailVerificationPage from "./pages/EmailVerificationPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -40,13 +41,44 @@ const queryClient = new QueryClient({
   },
 });
 
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const isAuthenticated = localStorage.getItem('user_authenticated') === 'true';
+// Component to handle email verification redirects
+const EmailVerificationHandler = () => {
+  const location = useLocation();
+  const { refreshSession } = useAuth();
   
-  if (!isAuthenticated) {
+  useEffect(() => {
+    const handleEmailConfirmation = async () => {
+      if (location.search.includes('email_confirmed=true')) {
+        await refreshSession();
+        // Redirect will be handled in AuthContext
+      }
+    };
+    
+    handleEmailConfirmation();
+  }, [location, refreshSession]);
+  
+  return null;
+};
+
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, isLoading, isEmailVerified } = useAuth();
+  
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  }
+  
+  // If not authenticated, redirect to login
+  if (!user) {
     return <Navigate to="/login" replace />;
   }
   
+  // If email not verified, redirect to verification page
+  if (!isEmailVerified) {
+    return <Navigate to="/verify-email" replace />;
+  }
+  
+  // User is authenticated and verified
   return <>{children}</>;
 };
 
@@ -67,23 +99,110 @@ const TypedProtectedRoute = ({
   userType: 'individual' | 'establishment', 
   children: React.ReactNode 
 }) => {
-  const isAuthenticated = localStorage.getItem('user_authenticated') === 'true';
+  const { user, isLoading, isEmailVerified } = useAuth();
   const storedUserType = localStorage.getItem('user_type');
   
-  if (!isAuthenticated) {
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  }
+  
+  // If not authenticated, redirect to login
+  if (!user) {
     return <Navigate to="/login" replace />;
   }
   
+  // If email not verified, redirect to verification page
+  if (!isEmailVerified) {
+    return <Navigate to="/verify-email" replace />;
+  }
+  
+  // If wrong user type, redirect to home
   if (storedUserType !== userType) {
     return <Navigate to="/" replace />;
   }
   
+  // User is authenticated, verified, and of the correct type
   return <>{children}</>;
 };
 
+const AuthenticatedApp = () => {
+  // Wrap all routes with the email verification handler
+  return (
+    <>
+      <EmailVerificationHandler />
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/landing" element={<LandingPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignupPage />} />
+        <Route path="/verify-email" element={<EmailVerificationPage />} />
+        <Route path="/pricing" element={<PricingPage />} />
+        <Route path="/checkout" element={<CheckoutPage />} />
+        
+        <Route path="/mission" element={<MissionPage />} />
+        <Route path="/resources" element={<ResourcesPage />} />
+        <Route path="/legal" element={<LegalPage />} />
+        
+        <Route path="/explore" element={<Navigate to="/" replace />} />
+        <Route path="/map" element={
+          <ProtectedRoute>
+            <MapPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/add" element={
+          <ProtectedRoute>
+            <AddPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/create-bar-crawl" element={
+          <ProtectedRoute>
+            <CreateBarCrawlPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/establishment/:id" element={<EstablishmentDetail />} />
+        <Route path="/cocktail/:id" element={<CocktailDetail />} />
+        
+        <Route path="/profile" element={
+          <ProtectedRoute>
+            <ProfilePage />
+          </ProtectedRoute>
+        } />
+        <Route path="/profile/bar-crawls" element={
+          <ProtectedRoute>
+            <BarCrawlsPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/profile/favorites" element={
+          <ProtectedRoute>
+            <FavoritesPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/profile/visited" element={
+          <ProtectedRoute>
+            <VisitedPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/establishment/profile" element={
+          <TypedProtectedRoute userType="establishment">
+            <EstablishmentProfilePage />
+          </TypedProtectedRoute>
+        } />
+        
+        <Route path="/admin" element={<AdminLogin />} />
+        <Route path="/admin/dashboard" element={
+          <AdminRoute>
+            <AdminDashboard />
+          </AdminRoute>
+        } />
+        
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </>
+  );
+};
+
 const App = () => {
-  const [userType, setUserType] = useState<'individual' | 'establishment'>('individual');
-  
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
@@ -92,40 +211,7 @@ const App = () => {
             <Toaster />
             <Sonner />
             <BrowserRouter>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/landing" element={<LandingPage />} />
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/signup" element={<SignupPage />} />
-                <Route path="/pricing" element={<PricingPage />} />
-                <Route path="/checkout" element={<CheckoutPage />} />
-                
-                <Route path="/mission" element={<MissionPage />} />
-                <Route path="/resources" element={<ResourcesPage />} />
-                <Route path="/legal" element={<LegalPage />} />
-                
-                <Route path="/explore" element={<Navigate to="/" replace />} />
-                <Route path="/map" element={<MapPage />} />
-                <Route path="/add" element={<AddPage />} />
-                <Route path="/create-bar-crawl" element={<CreateBarCrawlPage />} />
-                <Route path="/establishment/:id" element={<EstablishmentDetail />} />
-                <Route path="/cocktail/:id" element={<CocktailDetail />} />
-                
-                <Route path="/profile" element={<ProfilePage />} />
-                <Route path="/profile/bar-crawls" element={<BarCrawlsPage />} />
-                <Route path="/profile/favorites" element={<FavoritesPage />} />
-                <Route path="/profile/visited" element={<VisitedPage />} />
-                <Route path="/establishment/profile" element={<EstablishmentProfilePage />} />
-                
-                <Route path="/admin" element={<AdminLogin />} />
-                <Route path="/admin/dashboard" element={
-                  <AdminRoute>
-                    <AdminDashboard />
-                  </AdminRoute>
-                } />
-                
-                <Route path="*" element={<NotFound />} />
-              </Routes>
+              <AuthenticatedApp />
             </BrowserRouter>
           </CartProvider>
         </AuthProvider>

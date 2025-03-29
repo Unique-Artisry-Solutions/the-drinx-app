@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+
+import React, { useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Home, 
   Map, 
@@ -18,35 +19,27 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 const UserTopNavigation: React.FC = () => {
   const location = useLocation();
-  const { toast } = useToast();
+  const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [userType, setUserType] = useState<'individual' | 'establishment'>('individual');
+  const { signOut, user } = useAuth();
   
-  useEffect(() => {
+  React.useEffect(() => {
     const storedUserType = localStorage.getItem('user_type');
     if (storedUserType === 'establishment') {
       setUserType('establishment');
     } else {
       setUserType('individual');
     }
-  }, []);
+  }, [user]);
   
-  const handleLogout = () => {
-    localStorage.removeItem('user_authenticated');
-    localStorage.removeItem('user_email');
-    localStorage.removeItem('user_username');
-    localStorage.removeItem('user_type');
-    
-    toast({
-      title: 'Logged out',
-      description: 'You have been successfully logged out',
-    });
-    
-    window.location.href = '/';
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/landing');
   };
 
   const userNavItems = [
@@ -126,7 +119,7 @@ const UserTopNavigation: React.FC = () => {
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 
-                  className="user-logout-item flex items-center gap-2 text-red-600 cursor-pointer" 
+                  className="user-profile-item flex items-center gap-2 text-red-600 cursor-pointer" 
                   onClick={handleLogout}
                 >
                   <LogOut className="h-4 w-4" />

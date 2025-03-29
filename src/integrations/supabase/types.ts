@@ -9,6 +9,149 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      bar_crawl_establishments: {
+        Row: {
+          bar_crawl_id: string
+          created_at: string | null
+          establishment_id: string
+          id: string
+          order_position: number
+          status: string | null
+        }
+        Insert: {
+          bar_crawl_id: string
+          created_at?: string | null
+          establishment_id: string
+          id?: string
+          order_position: number
+          status?: string | null
+        }
+        Update: {
+          bar_crawl_id?: string
+          created_at?: string | null
+          establishment_id?: string
+          id?: string
+          order_position?: number
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bar_crawl_establishments_bar_crawl_id_fkey"
+            columns: ["bar_crawl_id"]
+            isOneToOne: false
+            referencedRelation: "bar_crawls"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bar_crawl_establishments_establishment_id_fkey"
+            columns: ["establishment_id"]
+            isOneToOne: false
+            referencedRelation: "establishments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bar_crawls: {
+        Row: {
+          created_at: string | null
+          end_date: string | null
+          id: string
+          name: string
+          organizer_id: string
+          start_date: string | null
+          status: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          end_date?: string | null
+          id?: string
+          name: string
+          organizer_id: string
+          start_date?: string | null
+          status?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          end_date?: string | null
+          id?: string
+          name?: string
+          organizer_id?: string
+          start_date?: string | null
+          status?: string | null
+        }
+        Relationships: []
+      }
+      establishments: {
+        Row: {
+          address: string
+          cocktail_count: number | null
+          created_at: string | null
+          hours: Json | null
+          id: string
+          image_url: string | null
+          latitude: number
+          longitude: number
+          name: string
+          phone: string | null
+          website: string | null
+        }
+        Insert: {
+          address: string
+          cocktail_count?: number | null
+          created_at?: string | null
+          hours?: Json | null
+          id?: string
+          image_url?: string | null
+          latitude: number
+          longitude: number
+          name: string
+          phone?: string | null
+          website?: string | null
+        }
+        Update: {
+          address?: string
+          cocktail_count?: number | null
+          created_at?: string | null
+          hours?: Json | null
+          id?: string
+          image_url?: string | null
+          latitude?: number
+          longitude?: number
+          name?: string
+          phone?: string | null
+          website?: string | null
+        }
+        Relationships: []
+      }
+      favorites: {
+        Row: {
+          created_at: string | null
+          establishment_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          establishment_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          establishment_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "favorites_establishment_id_fkey"
+            columns: ["establishment_id"]
+            isOneToOne: false
+            referencedRelation: "establishments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string | null
