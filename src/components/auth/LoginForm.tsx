@@ -52,10 +52,13 @@ const LoginForm: React.FC<LoginFormProps> = ({
       
       setIsLoading(false);
       
-      // Refresh the page and redirect
-      window.location.href = userType === 'establishment' 
-        ? '/establishment/profile' 
-        : '/';
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        // Redirect to appropriate page based on user type
+        const redirectPath = userType === 'establishment' ? '/establishment/profile' : '/';
+        navigate(redirectPath);
+      }
     }, 1000);
   };
 

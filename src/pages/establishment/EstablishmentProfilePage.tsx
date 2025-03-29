@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Upload, Camera, PlusCircle, Trash, Users, Calendar, BarChart, Map } from 'lucide-react';
+import { Upload, Camera, PlusCircle, Trash, Users, Calendar, BarChart, Map, X } from 'lucide-react';
 
 const EstablishmentProfilePage = () => {
   const [name, setName] = useState('');
@@ -148,6 +148,15 @@ const EstablishmentProfilePage = () => {
     toast({
       title: 'Photo removed',
       description: 'The photo has been removed successfully',
+    });
+  };
+
+  const handleEndParticipation = (crawlId: string) => {
+    setBarCrawls(barCrawls.filter(crawl => crawl.id !== crawlId));
+    
+    toast({
+      title: 'Participation ended',
+      description: 'You have successfully ended your participation in this bar crawl',
     });
   };
 
@@ -393,6 +402,15 @@ const EstablishmentProfilePage = () => {
                             <Map className="h-4 w-4 text-gray-500 mr-2" />
                             <span className="text-sm">Organizer: {crawl.organizer}</span>
                           </div>
+                        </div>
+                        <div className="mt-3 pt-3 border-t flex justify-end">
+                          <Button 
+                            variant="destructive" 
+                            size="sm"
+                            onClick={() => handleEndParticipation(crawl.id)}
+                          >
+                            <X className="h-4 w-4 mr-1" /> End Participation
+                          </Button>
                         </div>
                       </div>
                     ))}
