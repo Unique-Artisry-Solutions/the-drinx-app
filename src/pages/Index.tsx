@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import Layout from '@/components/Layout';
 import CocktailCard from '@/components/CocktailCard';
@@ -11,7 +10,6 @@ import { useUserLocation } from '@/hooks/useUserLocation';
 
 // Sample data - would be fetched from API in a real application
 import { sampleCocktails, sampleEstablishments } from '@/data/sampleData';
-
 const Index = () => {
   const [cocktails, setCocktails] = useState(sampleCocktails);
   const [allCocktails, setAllCocktails] = useState(sampleCocktails);
@@ -19,13 +17,15 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState({
     priceRange: [0, 25],
-    distance: 10,
+    distance: 10
   });
   const [activeTab, setActiveTab] = useState("featured");
-  const { toast } = useToast();
-  const { 
-    userLocation, 
-    isLoading: isLoadingLocation, 
+  const {
+    toast
+  } = useToast();
+  const {
+    userLocation,
+    isLoading: isLoadingLocation,
     refreshLocation,
     calculateDistance,
     formatDistance
@@ -38,36 +38,25 @@ const Index = () => {
         ...est,
         distance: formatDistance(calculateDistance(est.latitude, est.longitude))
       }));
-      
       setEstablishments(updatedEstablishments);
     }
   }, [userLocation, establishments, calculateDistance, formatDistance]);
-
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    
+
     // Filter cocktails based on search query
     if (query) {
-      const filtered = allCocktails.filter(cocktail => 
-        cocktail.name.toLowerCase().includes(query.toLowerCase()) ||
-        cocktail.description.toLowerCase().includes(query.toLowerCase()) ||
-        cocktail.ingredients.some(i => i.toLowerCase().includes(query.toLowerCase()))
-      );
+      const filtered = allCocktails.filter(cocktail => cocktail.name.toLowerCase().includes(query.toLowerCase()) || cocktail.description.toLowerCase().includes(query.toLowerCase()) || cocktail.ingredients.some(i => i.toLowerCase().includes(query.toLowerCase())));
       setCocktails(filtered);
     } else {
       setCocktails(allCocktails);
     }
   };
-
   const handleFilterChange = (newFilters: any) => {
     setFilters(newFilters);
-    
+
     // Apply price range filter
-    const filtered = allCocktails.filter(cocktail => 
-      cocktail.price >= newFilters.priceRange[0] && 
-      cocktail.price <= newFilters.priceRange[1]
-    );
-    
+    const filtered = allCocktails.filter(cocktail => cocktail.price >= newFilters.priceRange[0] && cocktail.price <= newFilters.priceRange[1]);
     setCocktails(filtered);
   };
 
@@ -77,12 +66,10 @@ const Index = () => {
     name: e.name,
     latitude: e.latitude,
     longitude: e.longitude,
-    cocktailCount: e.cocktailCount,
+    cocktailCount: e.cocktailCount
   }));
-
-  return (
-    <Layout>
-      <div className="animate-fade-in">
+  return <Layout>
+      <div className="animate-fade-in my-[30px] px-[148px]">
         <div className="mb-6 mt-2 text-center">
           <h1 className="text-3xl font-medium text-material-on-background">
             Spirit<span className="text-material-primary">less</span>
@@ -92,11 +79,7 @@ const Index = () => {
           </p>
         </div>
 
-        <SearchFilter 
-          onSearch={handleSearch} 
-          onFilterChange={handleFilterChange} 
-          className="mb-6"
-        />
+        <SearchFilter onSearch={handleSearch} onFilterChange={handleFilterChange} className="mb-6" />
 
         <Tabs defaultValue="featured" className="w-full" onValueChange={setActiveTab}>
           <TabsList className="w-full mb-6">
@@ -112,44 +95,20 @@ const Index = () => {
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {cocktails.slice(0, 4).map((cocktail) => (
-                  <CocktailCard
-                    key={cocktail.id}
-                    id={cocktail.id}
-                    name={cocktail.name}
-                    price={cocktail.price}
-                    description={cocktail.description}
-                    ingredients={cocktail.ingredients}
-                    image={cocktail.image}
-                    establishment={cocktail.establishment}
-                  />
-                ))}
+                {cocktails.slice(0, 4).map(cocktail => <CocktailCard key={cocktail.id} id={cocktail.id} name={cocktail.name} price={cocktail.price} description={cocktail.description} ingredients={cocktail.ingredients} image={cocktail.image} establishment={cocktail.establishment} />)}
               </div>
             </section>
 
             <section>
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-lg font-medium text-material-on-surface">Nearby Establishments</h2>
-                <button 
-                  className="text-sm text-material-primary"
-                  onClick={() => setActiveTab("map")}
-                >
+                <button className="text-sm text-material-primary" onClick={() => setActiveTab("map")}>
                   View map
                 </button>
               </div>
               
               <div className="space-y-3">
-                {establishments.slice(0, 5).map((establishment) => (
-                  <EstablishmentCard
-                    key={establishment.id}
-                    id={establishment.id}
-                    name={establishment.name}
-                    address={establishment.address}
-                    distance={establishment.distance}
-                    cocktailCount={establishment.cocktailCount}
-                    image={establishment.image}
-                  />
-                ))}
+                {establishments.slice(0, 5).map(establishment => <EstablishmentCard key={establishment.id} id={establishment.id} name={establishment.name} address={establishment.address} distance={establishment.distance} cocktailCount={establishment.cocktailCount} image={establishment.image} />)}
               </div>
             </section>
           </TabsContent>
@@ -159,70 +118,37 @@ const Index = () => {
               <h2 className="text-lg font-medium text-material-on-surface mb-4">All Cocktails</h2>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {cocktails.map((cocktail) => (
-                  <CocktailCard
-                    key={cocktail.id}
-                    id={cocktail.id}
-                    name={cocktail.name}
-                    price={cocktail.price}
-                    description={cocktail.description}
-                    ingredients={cocktail.ingredients}
-                    image={cocktail.image}
-                    establishment={cocktail.establishment}
-                  />
-                ))}
+                {cocktails.map(cocktail => <CocktailCard key={cocktail.id} id={cocktail.id} name={cocktail.name} price={cocktail.price} description={cocktail.description} ingredients={cocktail.ingredients} image={cocktail.image} establishment={cocktail.establishment} />)}
               </div>
               
-              {cocktails.length === 0 && (
-                <div className="text-center py-8 border border-dashed rounded-lg">
+              {cocktails.length === 0 && <div className="text-center py-8 border border-dashed rounded-lg">
                   <p className="text-material-on-surface-variant">No cocktails found matching your criteria.</p>
-                  <button
-                    className="text-material-primary mt-2"
-                    onClick={() => {
-                      setSearchQuery('');
-                      setCocktails(allCocktails);
-                      setFilters({
-                        priceRange: [0, 25],
-                        distance: 10,
-                      });
-                    }}
-                  >
+                  <button className="text-material-primary mt-2" onClick={() => {
+                setSearchQuery('');
+                setCocktails(allCocktails);
+                setFilters({
+                  priceRange: [0, 25],
+                  distance: 10
+                });
+              }}>
                     Reset filters
                   </button>
-                </div>
-              )}
+                </div>}
             </div>
           </TabsContent>
           
           <TabsContent value="map">
-            <MapView 
-              establishments={mapEstablishments}
-              userLocation={userLocation}
-              onRefreshLocation={refreshLocation}
-              isLoadingLocation={isLoadingLocation}
-            />
+            <MapView establishments={mapEstablishments} userLocation={userLocation} onRefreshLocation={refreshLocation} isLoadingLocation={isLoadingLocation} />
             
             <div className="mt-6">
               <h2 className="text-lg font-medium text-material-on-surface mb-4">Establishments</h2>
               <div className="space-y-3">
-                {establishments.map((establishment) => (
-                  <EstablishmentCard
-                    key={establishment.id}
-                    id={establishment.id}
-                    name={establishment.name}
-                    address={establishment.address}
-                    distance={establishment.distance}
-                    cocktailCount={establishment.cocktailCount}
-                    image={establishment.image}
-                  />
-                ))}
+                {establishments.map(establishment => <EstablishmentCard key={establishment.id} id={establishment.id} name={establishment.name} address={establishment.address} distance={establishment.distance} cocktailCount={establishment.cocktailCount} image={establishment.image} />)}
               </div>
             </div>
           </TabsContent>
         </Tabs>
       </div>
-    </Layout>
-  );
+    </Layout>;
 };
-
 export default Index;
