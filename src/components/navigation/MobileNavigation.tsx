@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, Map, Plus, ShoppingCart, User, Star, CheckSquare, Route } from 'lucide-react';
@@ -50,13 +49,20 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
     return currentUserType === 'establishment' ? '/establishment/profile' : '/profile';
   };
 
-  // User Navigation Items
+  // User Navigation Items (modified to show "Create" for individuals)
   const userNavItems: NavItem[] = [
     { icon: Home, label: 'Home', path: '/' },
     { icon: Map, label: 'Map', path: '/map' },
-    { icon: Plus, label: 'Add', path: '/add' },
-    { icon: User, label: 'Profile', path: getProfilePath() },
   ];
+  
+  // Add Create for individuals and Add for establishments
+  if (currentUserType === 'individual') {
+    userNavItems.push({ icon: Route, label: 'Create', path: '/create-bar-crawl' });
+  } else {
+    userNavItems.push({ icon: Plus, label: 'Add', path: '/add' });
+  }
+  
+  userNavItems.push({ icon: User, label: 'Profile', path: getProfilePath() });
 
   // Profile Related Items (shown when expanded)
   const profileItems: NavItem[] = [

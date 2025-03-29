@@ -1,15 +1,14 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   Home, 
   Map, 
-  Plus, 
   User, 
   Settings, 
   LogOut,
   Menu,
-  X
+  X,
+  Route
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -53,8 +52,13 @@ const UserTopNavigation: React.FC = () => {
   const userNavItems = [
     { icon: Home, label: 'Home', path: '/' },
     { icon: Map, label: 'Map', path: '/map' },
-    { icon: Plus, label: 'Add', path: '/add' },
   ];
+  
+  if (userType === 'individual') {
+    userNavItems.push({ icon: Route, label: 'Create', path: '/create-bar-crawl' });
+  } else {
+    userNavItems.push({ icon: Route, label: 'Add', path: '/add' });
+  }
 
   const getProfilePath = () => {
     if (userType === 'establishment') {
@@ -133,7 +137,6 @@ const UserTopNavigation: React.FC = () => {
           </div>
         </div>
         
-        {/* Mobile Menu */}
         {isMobileMenuOpen && (
           <div className="user-mobile-menu md:hidden py-3 space-y-2">
             {userNavItems.map((item) => {

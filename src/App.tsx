@@ -15,6 +15,7 @@ import ProfilePage from "./pages/ProfilePage";
 import BarCrawlsPage from "./pages/profile/BarCrawlsPage";
 import FavoritesPage from "./pages/profile/FavoritesPage";
 import VisitedPage from "./pages/profile/VisitedPage";
+import CreateBarCrawlPage from "./pages/profile/CreateBarCrawlPage";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import LandingPage from "./pages/LandingPage";
@@ -166,6 +167,11 @@ const App = () => {
                 <ProtectedRoute>
                   <AddPage />
                 </ProtectedRoute>
+              } />
+              <Route path="/create-bar-crawl" element={
+                <TypedProtectedRoute userType="individual">
+                  <CreateBarCrawlPage />
+                </TypedProtectedRoute>
               } />
               <Route path="/establishment/:id" element={
                 <ProtectedRoute>
