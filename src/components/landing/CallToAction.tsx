@@ -11,7 +11,7 @@ const CallToAction = () => {
         </p>
         <div className="flex flex-wrap justify-center gap-4">
           <Link to="/signup">
-            <Button size="lg" variant="outline" aria-label="Create a free account" className="border-white text-brown hover:bg-white hover:text-spiritless-pink-dark focus:ring-2 focus:ring-white">
+            <Button size="lg" variant="outline" aria-label="Create a free account" className="border-white text-brown hover:bg-white hover:text-spiritless-pink-dark focus:ring-2 focus:ring-white text-[#1b0106]">
               Create Free Account
             </Button>
           </Link>
