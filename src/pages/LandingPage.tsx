@@ -11,19 +11,21 @@ const LandingPage = () => {
   return (
     <div className="min-h-screen">
       {/* Hero Section with gradient background image */}
-      <Hero />
-      
-      {/* Features Section */}
-      <Features />
-      
-      {/* New Bold Key Features Section */}
-      <KeyFeatures />
-      
-      {/* Benefits Section */}
-      <Benefits />
-      
-      {/* CTA Section */}
-      <CallToAction />
+      <main id="main-content">
+        <Hero />
+        
+        {/* Features Section */}
+        <Features />
+        
+        {/* New Bold Key Features Section */}
+        <KeyFeatures />
+        
+        {/* Benefits Section */}
+        <Benefits />
+        
+        {/* CTA Section */}
+        <CallToAction />
+      </main>
       
       {/* Footer */}
       <Footer />

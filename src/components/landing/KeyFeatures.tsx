@@ -36,7 +36,11 @@ const KeyFeatures = () => {
   ];
 
   return (
-    <section className="py-20 px-4 bg-pattern-pink">
+    <section 
+      className="py-20 px-4 bg-pattern-pink"
+      role="region" 
+      aria-labelledby="features-heading"
+    >
       <div className="container mx-auto">
         <motion.div 
           className="text-center mb-12"
@@ -45,7 +49,10 @@ const KeyFeatures = () => {
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
         >
-          <h2 className="text-3xl font-bold mb-4 border-b-4 border-spiritless-pink inline-block pb-2">
+          <h2 
+            id="features-heading"
+            className="text-3xl font-bold mb-4 border-b-4 border-spiritless-pink inline-block pb-2"
+          >
             Unlock These Amazing Features
           </h2>
           <p className="text-lg max-w-2xl mx-auto">
@@ -62,11 +69,21 @@ const KeyFeatures = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: feature.delay }}
+              role="article"
+              aria-labelledby={`feature-heading-${index}`}
             >
-              <div className="bg-white/20 p-4 rounded-full w-16 h-16 flex items-center justify-center mb-4 mx-auto">
+              <div 
+                className="bg-white/20 p-4 rounded-full w-16 h-16 flex items-center justify-center mb-4 mx-auto"
+                aria-hidden="true"
+              >
                 {feature.icon}
               </div>
-              <h3 className="text-xl font-bold mb-3 text-center">{feature.title}</h3>
+              <h3 
+                id={`feature-heading-${index}`} 
+                className="text-xl font-bold mb-3 text-center"
+              >
+                {feature.title}
+              </h3>
               <p className="text-white/90 text-center">{feature.description}</p>
             </motion.div>
           ))}

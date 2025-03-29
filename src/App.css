@@ -1,3 +1,4 @@
+
 #root {
   max-width: 1280px;
   margin: 0 auto;
@@ -72,7 +73,7 @@
   padding-left: 1rem;
 }
 
-/* Colorful buttons */
+/* Improved contrast buttons */
 .btn-pink {
   background-color: #D94E8F;
   color: white;
@@ -133,4 +134,28 @@
   background-color: #f0ffe0;
   background-image: radial-gradient(circle at 1px 1px, #84BF04 1px, transparent 0);
   background-size: 20px 20px;
+}
+
+/* Accessibility focus styles */
+a:focus, button:focus, [role="button"]:focus {
+  outline: 3px solid #D94E8F;
+  outline-offset: 2px;
+}
+
+/* Skip to content link for keyboard navigation */
+.skip-link {
+  background: #D94E8F;
+  color: white;
+  font-weight: bold;
+  left: 50%;
+  padding: 8px;
+  position: absolute;
+  transform: translateX(-50%);
+  transition: top 0.3s;
+  z-index: 100;
+  top: -100px;
+}
+
+.skip-link:focus {
+  top: 0;
 }

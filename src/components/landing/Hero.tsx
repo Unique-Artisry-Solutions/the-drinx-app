@@ -8,27 +8,41 @@ import { motion } from 'framer-motion';
 const Hero = () => {
   return (
     <div 
-      className="relative pt-12 pb-24"
+      className="relative pt-12 pb-24 bg-gradient-to-b from-black/70 to-black/40"
       style={{
-        backgroundImage: "url('/lovable-uploads/07ac2056-6934-42e8-9cf4-8dfb6ee099bb.png')",
+        backgroundImage: "url('https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=2000&q=80')",
         backgroundSize: "cover",
         backgroundPosition: "center",
+        backgroundBlendMode: "overlay",
       }}
+      role="banner"
+      aria-label="Welcome to Spiritless - Find non-alcoholic cocktails near you"
     >
       {/* Overlay to ensure text readability */}
-      <div className="absolute inset-0 bg-black/30"></div>
+      <div className="absolute inset-0 bg-black/50" aria-hidden="true"></div>
       
       <div className="container mx-auto px-4 relative z-10">
         <header className="flex justify-between items-center mb-16">
           <h1 className="text-3xl font-medium text-white">
-            Spirit<span className="text-material-primary">less</span>
+            Spirit<span className="text-spiritless-pink">less</span>
           </h1>
           <div className="space-x-4">
             <Link to="/login">
-              <Button variant="outline" className="text-white border-white hover:bg-white/20">Login</Button>
+              <Button 
+                variant="outline" 
+                className="text-white border-white hover:bg-white/20 focus:ring-2 focus:ring-white"
+                aria-label="Log in to your account"
+              >
+                Login
+              </Button>
             </Link>
             <Link to="/signup">
-              <Button className="bg-material-primary hover:bg-material-primary/90">Sign Up</Button>
+              <Button 
+                className="bg-spiritless-pink hover:bg-spiritless-pink-dark text-white font-medium focus:ring-2 focus:ring-spiritless-pink-light"
+                aria-label="Create a new account"
+              >
+                Sign Up
+              </Button>
             </Link>
           </div>
         </header>
@@ -59,17 +73,31 @@ const Hero = () => {
               className="flex flex-wrap gap-4"
             >
               <Link to="/signup">
-                <Button size="lg" className="bg-material-primary hover:bg-material-primary/90">
-                  Get Started <ChevronRight className="ml-2" size={18} />
+                <Button 
+                  size="lg" 
+                  className="bg-spiritless-pink hover:bg-spiritless-pink-dark text-white font-bold focus:ring-2 focus:ring-spiritless-pink-light"
+                  aria-label="Get started using Spiritless"
+                >
+                  Get Started <ChevronRight className="ml-2" size={18} aria-hidden="true" />
                 </Button>
               </Link>
               <Link to="/explore">
-                <Button variant="outline" size="lg" className="text-white border-white hover:bg-white/20">
+                <Button 
+                  variant="outline" 
+                  size="lg" 
+                  className="text-white border-white hover:bg-white/20 focus:ring-2 focus:ring-white"
+                  aria-label="Browse our mocktail collection"
+                >
                   Browse Mocktails
                 </Button>
               </Link>
               <Link to="/pricing">
-                <Button variant="outline" size="lg" className="text-white border-white hover:bg-white/20">
+                <Button 
+                  variant="outline" 
+                  size="lg" 
+                  className="text-white border-white hover:bg-white/20 focus:ring-2 focus:ring-white"
+                  aria-label="View our pricing plans"
+                >
                   View Pricing
                 </Button>
               </Link>
@@ -83,8 +111,8 @@ const Hero = () => {
               transition={{ duration: 0.7 }}
             >
               <img 
-                src="/cocktail-hero.jpg" 
-                alt="Colorful non-alcoholic cocktails" 
+                src="https://images.unsplash.com/photo-1662908587262-415ed271ee6e?auto=format&fit=crop&w=1200&q=80" 
+                alt="Colorful non-alcoholic cocktails with garnishes" 
                 className="rounded-lg shadow-xl w-full h-auto"
               />
             </motion.div>
