@@ -19,7 +19,6 @@ const GuestTopNavigation: React.FC = () => {
   
   const guestNavItems = [
     { icon: Home, label: 'Home', path: '/landing' },
-    { icon: ShoppingCart, label: 'Cart', path: '/cart' },
   ];
 
   return (
