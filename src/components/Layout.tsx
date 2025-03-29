@@ -53,13 +53,18 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const isPricingOrCheckout = () => {
     return location.pathname === '/pricing' || location.pathname === '/checkout';
   };
+  
+  // Determine if we're on the landing page
+  const isLandingPage = () => {
+    return location.pathname === '/' || location.pathname === '/landing';
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-material-background">
       <NavigationTypes type={navigationType} userType={userType} />
       
       {/* Show cart button on non-interior pages when user is not authenticated */}
-      {!isInteriorPage() && navigationType === NavigationType.GUEST && (
+      {!isInteriorPage() && navigationType === NavigationType.GUEST && !isLandingPage() && (
         <div className="fixed bottom-20 right-6 z-30 md:bottom-10">
           <CartButton />
         </div>

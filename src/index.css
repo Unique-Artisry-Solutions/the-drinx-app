@@ -221,4 +221,8 @@
   .animate-bounce-subtle {
     animation: bounce-subtle 2s ease-in-out infinite;
   }
+
+  .shadow-bold-pink {
+    box-shadow: 0 4px 20px rgba(217, 78, 143, 0.5);
+  }
 }
