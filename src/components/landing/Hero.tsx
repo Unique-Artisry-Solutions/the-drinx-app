@@ -20,14 +20,10 @@ const Hero = () => {
           </h1>
           <div className="space-x-4">
             <Link to="/login">
-              <Button variant="outline" aria-label="Log in to your account" className="text-brown border-white hover:bg-white focus:ring-2 focus:ring-white">
-                Login
-              </Button>
+              
             </Link>
             <Link to="/signup">
-              <Button className="bg-spiritless-pink hover:bg-spiritless-pink-dark text-white font-medium focus:ring-2 focus:ring-spiritless-pink-light" aria-label="Create a new account">
-                Sign Up
-              </Button>
+              
             </Link>
           </div>
         </header>
