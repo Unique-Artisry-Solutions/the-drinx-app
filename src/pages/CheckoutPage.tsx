@@ -1,6 +1,7 @@
+
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, CreditCard } from 'lucide-react';
+import { ArrowLeft, CreditCard, AlertCircle } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,15 +9,34 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import TopNavigation from '@/components/TopNavigation';
 import CartButton from '@/components/cart/CartButton';
+import ReCAPTCHA from 'react-google-recaptcha';
 
 const CheckoutPage: React.FC = () => {
   const { items, totalPrice, clearCart } = useCart();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [captchaValue, setCaptchaValue] = useState<string | null>(null);
+  const [formValid, setFormValid] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  const handleCaptchaChange = (value: string | null) => {
+    setCaptchaValue(value);
+    // Only allow form submission if captcha is verified
+    setFormValid(!!value);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!captchaValue) {
+      toast({
+        title: "CAPTCHA Required",
+        description: "Please complete the CAPTCHA verification",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsProcessing(true);
     
     // Simulate payment processing
@@ -112,12 +132,28 @@ const CheckoutPage: React.FC = () => {
                       </div>
                     </div>
                   </div>
+                  
+                  <div className="pt-4">
+                    <h3 className="font-medium mb-2">Verification</h3>
+                    <div className="flex justify-center my-4">
+                      <ReCAPTCHA
+                        sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI" // This is Google's test key
+                        onChange={handleCaptchaChange}
+                      />
+                    </div>
+                    {!captchaValue && (
+                      <div className="text-destructive flex items-center text-sm mt-2">
+                        <AlertCircle className="h-4 w-4 mr-1" />
+                        Please complete the CAPTCHA verification
+                      </div>
+                    )}
+                  </div>
                 </CardContent>
                 <CardFooter>
                   <Button 
                     type="submit" 
                     className="w-full"
-                    disabled={isProcessing}
+                    disabled={isProcessing || !formValid}
                   >
                     {isProcessing ? 'Processing...' : 'Complete Payment'}
                   </Button>
