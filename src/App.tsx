@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -41,7 +40,6 @@ const queryClient = new QueryClient({
   },
 });
 
-// Component to handle email verification redirects
 const EmailVerificationHandler = () => {
   const location = useLocation();
   const { refreshSession } = useAuth();
@@ -63,22 +61,18 @@ const EmailVerificationHandler = () => {
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, isLoading, isEmailVerified } = useAuth();
   
-  // Show loading state while checking authentication
   if (isLoading) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
   
-  // If not authenticated, redirect to login
   if (!user) {
     return <Navigate to="/login" replace />;
   }
   
-  // If email not verified, redirect to verification page
   if (!isEmailVerified) {
     return <Navigate to="/verify-email" replace />;
   }
   
-  // User is authenticated and verified
   return <>{children}</>;
 };
 
@@ -102,37 +96,31 @@ const TypedProtectedRoute = ({
   const { user, isLoading, isEmailVerified } = useAuth();
   const storedUserType = localStorage.getItem('user_type');
   
-  // Show loading state while checking authentication
   if (isLoading) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
   
-  // If not authenticated, redirect to login
   if (!user) {
     return <Navigate to="/login" replace />;
   }
   
-  // If email not verified, redirect to verification page
   if (!isEmailVerified) {
     return <Navigate to="/verify-email" replace />;
   }
   
-  // If wrong user type, redirect to home
   if (storedUserType !== userType) {
     return <Navigate to="/" replace />;
   }
   
-  // User is authenticated, verified, and of the correct type
   return <>{children}</>;
 };
 
 const AuthenticatedApp = () => {
-  // Wrap all routes with the email verification handler
   return (
     <>
       <EmailVerificationHandler />
       <Routes>
-        <Route path="/" element={<Index />} />
+        <Route path="/" element={<LandingPage />} />
         <Route path="/landing" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
@@ -144,7 +132,7 @@ const AuthenticatedApp = () => {
         <Route path="/resources" element={<ResourcesPage />} />
         <Route path="/legal" element={<LegalPage />} />
         
-        <Route path="/explore" element={<Navigate to="/" replace />} />
+        <Route path="/explore" element={<Index />} />
         <Route path="/map" element={
           <ProtectedRoute>
             <MapPage />
