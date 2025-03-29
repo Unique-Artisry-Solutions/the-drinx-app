@@ -32,7 +32,7 @@ const UserAuth: React.FC<UserAuthProps> = ({
         </TabsList>
         
         <TabsContent value="login">
-          <LoginForm onClose={onClose} />
+          <LoginForm onClose={onClose} onSuccess={onSuccess} />
         </TabsContent>
         
         <TabsContent value="signup">

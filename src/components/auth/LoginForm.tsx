@@ -8,9 +8,10 @@ import AuthButton from './AuthButton';
 
 interface LoginFormProps {
   onClose?: () => void;
+  onSuccess?: () => void;
 }
 
-const LoginForm: React.FC<LoginFormProps> = ({ onClose }) => {
+const LoginForm: React.FC<LoginFormProps> = ({ onClose, onSuccess }) => {
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -40,8 +41,13 @@ const LoginForm: React.FC<LoginFormProps> = ({ onClose }) => {
       });
       setIsLoading(false);
       
-      // Always navigate to the homepage after successful login
-      navigate('/');
+      // Call onSuccess callback if provided
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        // Always navigate to the index page after successful login
+        navigate('/');
+      }
     }, 1000);
   };
 
