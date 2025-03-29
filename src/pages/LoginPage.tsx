@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import UserAuth from '@/components/UserAuth';
@@ -8,9 +7,8 @@ const LoginPage = () => {
   const navigate = useNavigate();
   
   const handleAuthSuccess = () => {
-    // Navigate to the index page after successful authentication
-    // Using replace: true to prevent going back to login page with back button
-    navigate('/', { replace: true });
+    // Force page refresh and navigation to index
+    window.location.href = '/';
   };
   
   return (

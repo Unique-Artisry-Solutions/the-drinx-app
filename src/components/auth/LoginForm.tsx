@@ -51,8 +51,8 @@ const LoginForm: React.FC<LoginFormProps> = ({ onClose, onSuccess }) => {
       if (onSuccess) {
         onSuccess();
       } else {
-        // Force navigation to index page
-        navigate('/', { replace: true });
+        // Force page refresh and navigation to index
+        window.location.href = '/';
       }
     }, 1000);
   };
