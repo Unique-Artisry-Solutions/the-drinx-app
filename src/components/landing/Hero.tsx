@@ -10,7 +10,7 @@ const Hero = () => {
     <div 
       className="relative pt-12 pb-24 bg-gradient-to-b from-black/70 to-black/40"
       style={{
-        backgroundImage: "url('https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=2000&q=80')",
+        backgroundImage: "url('/FireflyMasthead.jpg')",
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundBlendMode: "overlay",
@@ -85,7 +85,7 @@ const Hero = () => {
                 <Button 
                   variant="outline" 
                   size="lg" 
-                  className="text-white border-white bg-[#590202] hover:bg-[#3A0101] focus:ring-2 focus:ring-white"
+                  className="text-white border-white bg-[#590202] hover:bg-[#3A0101] hover:text-white focus:ring-2 focus:ring-white"
                   aria-label="View our pricing plans"
                 >
                   View Pricing
