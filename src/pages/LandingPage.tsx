@@ -11,9 +11,9 @@ import Layout from '@/components/Layout';
 const LandingPage = () => {
   return (
     <Layout>
-      <div className="min-h-screen">
+      <div className="w-full">
         {/* Hero Section with gradient background image */}
-        <main id="main-content">
+        <main id="main-content" className="w-full">
           <Hero />
           
           {/* Features Section */}
