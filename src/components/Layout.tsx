@@ -6,7 +6,7 @@ import MobileNavigation from './navigation/MobileNavigation';
 import AdminTopNavigation from './navigation/AdminTopNavigation';
 import UserTopNavigation from './navigation/UserTopNavigation';
 import GuestTopNavigation from './navigation/GuestTopNavigation';
-import { useCart } from '@/contexts/CartContext';
+import AppFooter from './AppFooter';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -71,6 +71,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <main className={`flex-1 w-full ${getContentPadding()}`}>
         {children}
       </main>
+      
+      {/* Show AppFooter on interior pages, not on landing page */}
+      {!isLandingPage && <AppFooter />}
       
       {!isLandingPage && (
         <MobileNavigation type={navigationType} userType={userType} />

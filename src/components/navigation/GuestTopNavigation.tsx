@@ -8,9 +8,7 @@ import {
   Menu,
   X,
   Sparkles,
-  HeartHandshake,
-  BookOpen,
-  FileText
+  HeartHandshake
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import CartButton from '@/components/cart/CartButton';
@@ -22,8 +20,6 @@ const GuestTopNavigation: React.FC = () => {
   const guestNavItems = [
     { icon: Home, label: 'Home', path: '/landing' },
     { icon: HeartHandshake, label: 'Our Mission', path: '/mission' },
-    { icon: BookOpen, label: 'Resources', path: '/resources' },
-    { icon: FileText, label: 'Legal', path: '/legal' },
   ];
 
   return (
