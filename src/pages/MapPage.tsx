@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import MapView from '@/components/map/MapView';
@@ -12,7 +11,6 @@ import { useNavigate } from 'react-router-dom';
 
 // Sample data - would be fetched from API in a real application
 import { sampleEstablishments } from '@/data/sampleData';
-
 const MapPage = () => {
   const [establishments, setEstablishments] = useState(sampleEstablishments);
   const [filteredEstablishments, setFilteredEstablishments] = useState(sampleEstablishments);
@@ -21,10 +19,12 @@ const MapPage = () => {
   const [favoriteEstablishments, setFavoriteEstablishments] = useState<string[]>([]);
   const [mapboxToken, setMapboxToken] = useState<string | null>(localStorage.getItem('mapbox_token'));
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const { 
-    userLocation, 
-    isLoading: isLoadingLocation, 
+  const {
+    toast
+  } = useToast();
+  const {
+    userLocation,
+    isLoading: isLoadingLocation,
     refreshLocation,
     calculateDistance,
     formatDistance
@@ -37,7 +37,6 @@ const MapPage = () => {
         ...est,
         distance: formatDistance(calculateDistance(est.latitude, est.longitude))
       }));
-      
       setEstablishments(updatedEstablishments);
       setFilteredEstablishments(updatedEstablishments);
     }
@@ -49,69 +48,56 @@ const MapPage = () => {
       const token = localStorage.getItem('mapbox_token');
       setMapboxToken(token);
     };
-
     window.addEventListener('storage', handleStorageChange);
-    
     return () => {
       window.removeEventListener('storage', handleStorageChange);
     };
   }, []);
-
   const handleMarkerClick = (establishmentId: string) => {
     setSelectedEstablishment(establishmentId);
-    
+
     // Scroll to the establishment card
     const element = document.getElementById(`establishment-${establishmentId}`);
     if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
+      element.scrollIntoView({
+        behavior: 'smooth'
+      });
     }
   };
-
   const handleEstablishmentClick = (establishmentId: string) => {
     // This is handled in the EstablishmentList component
   };
-
   const handleSearch = (query: string) => {
     if (!query) {
       setFilteredEstablishments(establishments);
       return;
     }
-    
-    const filtered = establishments.filter(est => 
-      est.name.toLowerCase().includes(query.toLowerCase()) || 
-      est.address.toLowerCase().includes(query.toLowerCase())
-    );
-    
+    const filtered = establishments.filter(est => est.name.toLowerCase().includes(query.toLowerCase()) || est.address.toLowerCase().includes(query.toLowerCase()));
     setFilteredEstablishments(filtered);
-    
     toast({
       title: `${filtered.length} establishments found`,
-      description: filtered.length > 0 
-        ? "Results updated based on your search." 
-        : "Try a different search term.",
+      description: filtered.length > 0 ? "Results updated based on your search." : "Try a different search term."
     });
   };
-
   const toggleFavorite = (establishmentId: string) => {
     if (favoriteEstablishments.includes(establishmentId)) {
       setFavoriteEstablishments(favoriteEstablishments.filter(id => id !== establishmentId));
       toast({
         title: "Removed from favorites",
-        description: "Establishment removed from your favorites.",
+        description: "Establishment removed from your favorites."
       });
     } else {
       setFavoriteEstablishments([...favoriteEstablishments, establishmentId]);
       toast({
         title: "Added to favorites",
-        description: "Establishment added to your favorites.",
+        description: "Establishment added to your favorites."
       });
     }
   };
-
   const saveBarCrawl = (selectedEstablishments: any[]) => {
     // In a real app, this would save to a database or local storage
     console.log('Bar crawl saved:', selectedEstablishments);
-    
+
     // Navigate to profile page to view the bar crawl
     navigate('/profile');
   };
@@ -122,12 +108,10 @@ const MapPage = () => {
     name: e.name,
     latitude: e.latitude,
     longitude: e.longitude,
-    cocktailCount: e.cocktailCount,
+    cocktailCount: e.cocktailCount
   }));
-
-  return (
-    <Layout>
-      <div className="animate-fade-in">
+  return <Layout>
+      <div className="animate-fade-in mx-[5%]">
         <div className="mb-4 flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-medium text-material-on-background">Nearby Map</h1>
@@ -136,40 +120,17 @@ const MapPage = () => {
             </p>
           </div>
           
-          <ViewModeToggle 
-            viewMode={viewMode} 
-            onViewModeChange={setViewMode} 
-          />
+          <ViewModeToggle viewMode={viewMode} onViewModeChange={setViewMode} />
         </div>
 
         <LocationSearch onSearch={handleSearch} />
         
-        <BarCrawlControl 
-          establishments={establishments} 
-          onSaveBarCrawl={saveBarCrawl} 
-        />
+        <BarCrawlControl establishments={establishments} onSaveBarCrawl={saveBarCrawl} />
 
-        {viewMode === 'map' && (
-          <MapView 
-            establishments={mapEstablishments}
-            userLocation={userLocation}
-            onRefreshLocation={refreshLocation}
-            isLoadingLocation={isLoadingLocation}
-            onMarkerClick={handleMarkerClick}
-            mapboxToken={mapboxToken || undefined}
-          />
-        )}
+        {viewMode === 'map' && <MapView establishments={mapEstablishments} userLocation={userLocation} onRefreshLocation={refreshLocation} isLoadingLocation={isLoadingLocation} onMarkerClick={handleMarkerClick} mapboxToken={mapboxToken || undefined} />}
 
-        <EstablishmentList 
-          establishments={filteredEstablishments}
-          selectedEstablishment={selectedEstablishment}
-          favoriteEstablishments={favoriteEstablishments}
-          onToggleFavorite={toggleFavorite}
-          onEstablishmentClick={handleEstablishmentClick}
-        />
+        <EstablishmentList establishments={filteredEstablishments} selectedEstablishment={selectedEstablishment} favoriteEstablishments={favoriteEstablishments} onToggleFavorite={toggleFavorite} onEstablishmentClick={handleEstablishmentClick} />
       </div>
-    </Layout>
-  );
+    </Layout>;
 };
-
 export default MapPage;
