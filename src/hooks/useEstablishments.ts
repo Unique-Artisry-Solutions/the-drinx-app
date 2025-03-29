@@ -1,119 +1,104 @@
 
 import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase, Establishment } from '@/lib/supabase';
-import { useToast } from '@/hooks/use-toast';
-import { useUserLocation } from '@/hooks/useUserLocation';
-import { sampleEstablishments } from '@/data/sampleData'; // For fallback
+import { calculateDistance } from '@/lib/utils';
 
-export const useEstablishments = () => {
+type FetchEstablishmentsOptions = {
+  latitude?: number;
+  longitude?: number;
+  searchTerm?: string;
+}
+
+const fetchEstablishmentsFromSupabase = async ({ 
+  latitude, 
+  longitude, 
+  searchTerm 
+}: FetchEstablishmentsOptions): Promise<Establishment[]> => {
+  let query = supabase
+    .from('establishments')
+    .select('*');
+  
+  if (searchTerm) {
+    query = query.ilike('name', `%${searchTerm}%`);
+  }
+  
+  const { data, error } = await query;
+  
+  if (error) {
+    console.error('Error fetching establishments:', error);
+    throw new Error(error.message);
+  }
+  
+  // If we have user location, calculate distances
+  if (latitude && longitude && data) {
+    return data.map(establishment => {
+      const distance = calculateDistance(
+        latitude,
+        longitude,
+        establishment.latitude,
+        establishment.longitude
+      );
+      
+      // Map database fields to our app's format
+      return {
+        ...establishment,
+        cocktailCount: establishment.cocktail_count,
+        image: establishment.image_url,
+        distance: `${distance.toFixed(1)} mi`
+      } as Establishment;
+    });
+  }
+  
+  // Return data without distances if no location
+  return data?.map(establishment => ({
+    ...establishment,
+    cocktailCount: establishment.cocktail_count,
+    image: establishment.image_url,
+  })) as Establishment[] || [];
+};
+
+export const useEstablishments = (options: FetchEstablishmentsOptions = {}) => {
   const [establishments, setEstablishments] = useState<Establishment[]>([]);
   const [filteredEstablishments, setFilteredEstablishments] = useState<Establishment[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
-  const { userLocation, calculateDistance, formatDistance } = useUserLocation();
-
-  // Fetch establishments from Supabase
+  
+  const { 
+    data, 
+    isLoading, 
+    error, 
+    refetch 
+  } = useQuery({
+    queryKey: ['establishments', options],
+    queryFn: () => fetchEstablishmentsFromSupabase(options),
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+  
   useEffect(() => {
-    const fetchEstablishments = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        const { data, error } = await supabase
-          .from('establishments')
-          .select('*');
-
-        if (error) {
-          throw error;
-        }
-
-        if (data) {
-          // Transform data to match our application's structure
-          const transformedData = data.map((est: any) => ({
-            id: est.id,
-            name: est.name,
-            address: est.address,
-            latitude: est.latitude,
-            longitude: est.longitude,
-            cocktailCount: est.cocktail_count,
-            image: est.image_url,
-            phone: est.phone,
-            website: est.website,
-            hours: est.hours,
-            distance: userLocation 
-              ? formatDistance(calculateDistance(est.latitude, est.longitude)) 
-              : 'Unknown'
-          }));
-
-          setEstablishments(transformedData);
-          setFilteredEstablishments(transformedData);
-        } else {
-          // Fallback to sample data if no data is returned
-          console.warn('No establishments found in Supabase, using sample data.');
-          const sampleData = sampleEstablishments.map(est => ({
-            ...est,
-            distance: userLocation 
-              ? formatDistance(calculateDistance(est.latitude, est.longitude)) 
-              : 'Unknown'
-          }));
-          setEstablishments(sampleData);
-          setFilteredEstablishments(sampleData);
-        }
-      } catch (err: any) {
-        console.error('Error fetching establishments:', err);
-        setError(err.message || 'Failed to fetch establishments');
-        toast({
-          title: 'Error fetching establishments',
-          description: 'Using sample data instead.',
-          variant: 'destructive',
-        });
-        
-        // Fallback to sample data
-        const sampleData = sampleEstablishments.map(est => ({
-          ...est,
-          distance: userLocation 
-            ? formatDistance(calculateDistance(est.latitude, est.longitude)) 
-            : 'Unknown'
-        }));
-        setEstablishments(sampleData);
-        setFilteredEstablishments(sampleData);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchEstablishments();
-  }, [userLocation, calculateDistance, formatDistance, toast]);
-
-  // Search function
-  const handleSearch = (query: string) => {
-    if (!query) {
+    if (data) {
+      setEstablishments(data);
+      setFilteredEstablishments(data);
+    }
+  }, [data]);
+  
+  const filterEstablishments = (searchTerm: string) => {
+    if (!searchTerm.trim()) {
       setFilteredEstablishments(establishments);
       return;
     }
-
-    const filtered = establishments.filter(est => 
-      est.name.toLowerCase().includes(query.toLowerCase()) || 
-      est.address.toLowerCase().includes(query.toLowerCase())
+    
+    const filtered = establishments.filter(place =>
+      place.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      place.address.toLowerCase().includes(searchTerm.toLowerCase())
     );
     
     setFilteredEstablishments(filtered);
-    
-    toast({
-      title: `${filtered.length} establishments found`,
-      description: filtered.length > 0 
-        ? "Results updated based on your search." 
-        : "Try a different search term."
-    });
   };
-
+  
   return {
-    establishments,
-    filteredEstablishments,
+    establishments: filteredEstablishments,
     isLoading,
     error,
-    handleSearch,
-    setFilteredEstablishments
+    refetch,
+    filterEstablishments
   };
 };

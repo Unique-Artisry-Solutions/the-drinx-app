@@ -35,6 +35,10 @@ export type Establishment = {
   website?: string;
   hours?: string[];
   created_at: string;
+  // Add these for compatibility with existing code
+  cocktailCount?: number;
+  image?: string;
+  distance?: string;
 };
 
 export type Favorite = {

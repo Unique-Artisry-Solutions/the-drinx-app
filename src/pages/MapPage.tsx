@@ -1,147 +1,125 @@
 
 import React, { useState, useEffect } from 'react';
+import { Grid } from 'lucide-react';
 import Layout from '@/components/Layout';
-import MapView from '@/components/map/MapView';
-import BarCrawlControl from '@/components/BarCrawlControl';
-import LocationSearch from '@/components/LocationSearch';
+import SearchFilter from '@/components/SearchFilter';
 import EstablishmentList from '@/components/EstablishmentList';
+import MapView from '@/components/map/MapView';
 import ViewModeToggle from '@/components/ViewModeToggle';
-import { useUserLocation } from '@/hooks/useUserLocation';
-import { useToast } from '@/hooks/use-toast';
-import { useNavigate } from 'react-router-dom';
 import { useEstablishments } from '@/hooks/useEstablishments';
-import { useFavorites } from '@/hooks/useFavorites';
+import { useUserLocation } from '@/hooks/useUserLocation';
+import { useMobile } from '@/hooks/use-mobile';
 
-const MapPage = () => {
-  const [selectedEstablishment, setSelectedEstablishment] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
-  const [mapboxToken, setMapboxToken] = useState<string | null>(localStorage.getItem('mapbox_token'));
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const {
-    userLocation,
-    isLoading: isLoadingLocation,
-    refreshLocation
-  } = useUserLocation();
+enum ViewMode {
+  MAP = 'map',
+  LIST = 'list'
+}
+
+const MapPage: React.FC = () => {
+  const isMobile = useMobile();
+  const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.MAP);
+  const [searchTerm, setSearchTerm] = useState('');
+  const { userLocation, locationError, isLocating } = useUserLocation();
   
   const { 
     establishments, 
-    filteredEstablishments, 
-    isLoading: isLoadingEstablishments,
-    handleSearch
-  } = useEstablishments();
-  
-  const { 
-    favoriteEstablishments, 
-    toggleFavorite 
-  } = useFavorites();
+    isLoading, 
+    error: establishmentsError, 
+    filterEstablishments 
+  } = useEstablishments({
+    latitude: userLocation?.latitude,
+    longitude: userLocation?.longitude,
+    searchTerm: searchTerm,
+  });
 
-  // Listen for storage events to detect token changes
+  const handleSearch = (term: string) => {
+    setSearchTerm(term);
+    filterEstablishments(term);
+  };
+
+  const toggleViewMode = () => {
+    setViewMode(prevMode => prevMode === ViewMode.MAP ? ViewMode.LIST : ViewMode.MAP);
+  };
+
+  // Handle errors
   useEffect(() => {
-    const handleStorageChange = () => {
-      const token = localStorage.getItem('mapbox_token');
-      setMapboxToken(token);
-    };
-    window.addEventListener('storage', handleStorageChange);
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, []);
-  
-  const handleMarkerClick = (establishmentId: string) => {
-    setSelectedEstablishment(establishmentId);
-
-    // Scroll to the establishment card
-    const element = document.getElementById(`establishment-${establishmentId}`);
-    if (element) {
-      element.scrollIntoView({
-        behavior: 'smooth'
-      });
+    if (locationError) {
+      console.error('Error getting location:', locationError);
     }
-  };
-  
-  const handleEstablishmentClick = (establishmentId: string) => {
-    // This is handled in the EstablishmentList component
-  };
-  
-  const saveBarCrawl = async (selectedEstablishments: any[]) => {
-    try {
-      // In a real app with Supabase integration, this would save to Supabase
-      console.log('Bar crawl saved:', selectedEstablishments);
-      
-      // Store bar crawl in localStorage for now
-      const barCrawls = JSON.parse(localStorage.getItem('barCrawls') || '[]');
-      barCrawls.push({
-        id: Date.now().toString(),
-        establishments: selectedEstablishments,
-        created_at: new Date().toISOString()
-      });
-      localStorage.setItem('barCrawls', JSON.stringify(barCrawls));
-      
-      toast({
-        title: "Bar crawl saved!",
-        description: `Your bar crawl with ${selectedEstablishments.length} establishments has been saved.`,
-      });
-
-      // Navigate to profile page to view the bar crawl
-      navigate('/profile');
-    } catch (error) {
-      console.error('Error saving bar crawl:', error);
-      toast({
-        title: "Error saving bar crawl",
-        description: "Please try again later.",
-        variant: "destructive"
-      });
+    
+    if (establishmentsError) {
+      console.error('Error fetching establishments:', establishmentsError);
     }
-  };
+  }, [locationError, establishmentsError]);
 
-  // Transform establishment data for the map
-  const mapEstablishments = filteredEstablishments.map(e => ({
-    id: e.id,
-    name: e.name,
-    latitude: e.latitude,
-    longitude: e.longitude,
-    cocktailCount: e.cocktailCount
-  }));
-  
-  return <Layout>
-      <div className="animate-fade-in mx-[5%]">
-        <div className="mb-4 flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-medium text-material-on-background">Nearby Map</h1>
-            <p className="text-material-on-surface-variant">
-              Find spirit-free cocktails around you
-            </p>
+  // Render loading state
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="container mx-auto px-4 py-6">
+          <div className="text-center py-12">
+            <div className="animate-pulse flex flex-col items-center">
+              <div className="h-12 w-12 bg-gray-200 rounded-full mb-4"></div>
+              <div className="h-4 w-48 bg-gray-200 rounded mb-4"></div>
+              <div className="h-4 w-64 bg-gray-200 rounded"></div>
+            </div>
           </div>
-          
-          <ViewModeToggle viewMode={viewMode} onViewModeChange={setViewMode} />
         </div>
+      </Layout>
+    );
+  }
 
-        <LocationSearch onSearch={handleSearch} />
-        
-        <BarCrawlControl establishments={establishments} onSaveBarCrawl={saveBarCrawl} />
-
-        {viewMode === 'map' && (
-          <MapView 
-            establishments={mapEstablishments} 
-            userLocation={userLocation} 
-            onRefreshLocation={refreshLocation} 
-            isLoadingLocation={isLoadingLocation} 
-            onMarkerClick={handleMarkerClick} 
-            mapboxToken={mapboxToken || undefined} 
+  return (
+    <Layout>
+      <div className="min-h-[calc(100vh-4rem)] flex flex-col">
+        <div className="p-4 border-b">
+          <div className="flex flex-col sm:flex-row gap-2 justify-between items-center mb-4">
+            <h1 className="text-xl font-bold">Explore Mocktails</h1>
+            <ViewModeToggle 
+              currentMode={viewMode === ViewMode.MAP ? 'map' : 'list'} 
+              onToggleMode={toggleViewMode} 
+            />
+          </div>
+          <SearchFilter 
+            onSearch={handleSearch} 
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm} 
           />
+        </div>
+        
+        <div className="flex-1">
+          {viewMode === ViewMode.MAP ? (
+            <div className="h-full">
+              <MapView 
+                establishments={establishments}
+                userLocation={userLocation}
+                isLocating={isLocating}
+              />
+            </div>
+          ) : (
+            <div className="p-4">
+              <EstablishmentList 
+                establishments={establishments} 
+                userLocation={userLocation}
+              />
+            </div>
+          )}
+        </div>
+        
+        {isMobile && (
+          <div className="fixed bottom-20 right-4">
+            <button 
+              onClick={toggleViewMode}
+              className="bg-material-primary text-white p-3 rounded-full shadow-lg"
+              aria-label="Toggle view mode"
+            >
+              <Grid size={24} />
+            </button>
+          </div>
         )}
-
-        <EstablishmentList 
-          establishments={filteredEstablishments} 
-          selectedEstablishment={selectedEstablishment} 
-          favoriteEstablishments={favoriteEstablishments} 
-          onToggleFavorite={toggleFavorite} 
-          onEstablishmentClick={handleEstablishmentClick} 
-          isLoading={isLoadingEstablishments}
-        />
       </div>
-    </Layout>;
+    </Layout>
+  );
 };
 
 export default MapPage;
