@@ -9,11 +9,36 @@ import ViewModeToggle from '@/components/ViewModeToggle';
 import { useEstablishments } from '@/hooks/useEstablishments';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { Establishment as SupabaseEstablishment } from '@/lib/supabase';
 
 enum ViewMode {
   MAP = 'map',
   LIST = 'list'
 }
+
+// Define a component-specific Establishment type that guarantees required properties
+interface Establishment {
+  id: string;
+  name: string;
+  address: string;
+  latitude: number;
+  longitude: number;
+  cocktailCount: number;
+  image?: string;
+  distance?: string;
+}
+
+// Helper function to map from Supabase Establishment to component Establishment
+const mapToComponentEstablishment = (est: SupabaseEstablishment): Establishment => ({
+  id: est.id,
+  name: est.name,
+  address: est.address,
+  latitude: est.latitude,
+  longitude: est.longitude,
+  cocktailCount: est.cocktail_count || est.cocktailCount || 0,
+  image: est.image_url || est.image,
+  distance: est.distance
+});
 
 const MapPage: React.FC = () => {
   const isMobile = useIsMobile();
@@ -27,7 +52,7 @@ const MapPage: React.FC = () => {
   } = useUserLocation();
   
   const { 
-    establishments, 
+    establishments: supabaseEstablishments, 
     isLoading, 
     error: establishmentsError, 
     filterEstablishments 
@@ -36,6 +61,9 @@ const MapPage: React.FC = () => {
     longitude: userLocation?.longitude,
     searchTerm: searchTerm,
   });
+
+  // Map the Supabase establishments to our component's expected format
+  const establishments: Establishment[] = supabaseEstablishments.map(mapToComponentEstablishment);
 
   const handleSearch = (term: string) => {
     setSearchTerm(term);
