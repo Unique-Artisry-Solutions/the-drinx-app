@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { NavigationType } from './navigation/NavigationTypes';
@@ -44,23 +45,27 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     };
   }, []);
 
+  // Determine if we're on a landing page (show guest nav) or interior page (show appropriate nav)
   const isLandingPage = location.pathname === '/landing';
   const isAdminPage = location.pathname.startsWith('/admin');
   
+  // Calculate content padding based on the page type
   const getContentPadding = () => {
     if (isLandingPage) {
-      return hasCartItems ? 'pt-16 pb-0 px-0' : 'pt-0 pb-0 px-0';
+      return 'pt-0 pb-0 px-0'; // No padding for landing page
     } else {
-      return 'pt-20 pb-20 md:pb-6 px-4';
+      return 'pt-20 pb-20 md:pb-6 px-4'; // Padding for top and bottom nav on interior pages
     }
   };
 
+  // Render the appropriate navigation based on user type, page, and cart status
   const renderNavigation = () => {
     if (isAdminPage || isAdmin) {
       return <AdminTopNavigation />;
     } else if (navigationType === NavigationType.USER) {
       return <UserTopNavigation />;
     } else if (isLandingPage) {
+      // Only show guest navigation on landing page if there are items in cart
       return hasCartItems ? <GuestTopNavigation /> : null;
     } else {
       return <GuestTopNavigation />;
@@ -69,12 +74,15 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   return (
     <div className="flex flex-col min-h-screen bg-material-background w-full">
+      {/* Render the appropriate top navigation */}
       {renderNavigation()}
       
+      {/* Main content with dynamic padding */}
       <main className={`flex-1 w-full ${getContentPadding()}`}>
         {children}
       </main>
       
+      {/* Mobile Navigation for interior app pages */}
       {!isLandingPage && (
         <MobileNavigation type={navigationType} userType={userType} />
       )}
