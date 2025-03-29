@@ -3,7 +3,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Map, List } from 'lucide-react';
 
-interface ViewModeToggleProps {
+export interface ViewModeToggleProps {
   viewMode: 'map' | 'list';
   onViewModeChange: (mode: 'map' | 'list') => void;
 }

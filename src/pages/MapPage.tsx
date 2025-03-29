@@ -8,7 +8,7 @@ import MapView from '@/components/map/MapView';
 import ViewModeToggle from '@/components/ViewModeToggle';
 import { useEstablishments } from '@/hooks/useEstablishments';
 import { useUserLocation } from '@/hooks/useUserLocation';
-import { useMobile } from '@/hooks/use-mobile';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 enum ViewMode {
   MAP = 'map',
@@ -16,10 +16,15 @@ enum ViewMode {
 }
 
 const MapPage: React.FC = () => {
-  const isMobile = useMobile();
+  const isMobile = useIsMobile();
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.MAP);
   const [searchTerm, setSearchTerm] = useState('');
-  const { userLocation, locationError, isLocating } = useUserLocation();
+  const { 
+    userLocation, 
+    isLoading: isLocating, 
+    error: locationError, 
+    refreshLocation 
+  } = useUserLocation();
   
   const { 
     establishments, 
@@ -76,14 +81,13 @@ const MapPage: React.FC = () => {
           <div className="flex flex-col sm:flex-row gap-2 justify-between items-center mb-4">
             <h1 className="text-xl font-bold">Explore Mocktails</h1>
             <ViewModeToggle 
-              currentMode={viewMode === ViewMode.MAP ? 'map' : 'list'} 
-              onToggleMode={toggleViewMode} 
+              viewMode={viewMode === ViewMode.MAP ? 'map' : 'list'} 
+              onViewModeChange={toggleViewMode} 
             />
           </div>
           <SearchFilter 
-            onSearch={handleSearch} 
-            searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm} 
+            onSearch={handleSearch}
+            onFilterChange={() => {}}
           />
         </div>
         
@@ -93,14 +97,18 @@ const MapPage: React.FC = () => {
               <MapView 
                 establishments={establishments}
                 userLocation={userLocation}
-                isLocating={isLocating}
+                onRefreshLocation={refreshLocation}
+                isLoadingLocation={isLocating}
               />
             </div>
           ) : (
             <div className="p-4">
               <EstablishmentList 
                 establishments={establishments} 
-                userLocation={userLocation}
+                selectedEstablishment={null}
+                favoriteEstablishments={[]}
+                onToggleFavorite={() => {}}
+                onEstablishmentClick={() => {}}
               />
             </div>
           )}

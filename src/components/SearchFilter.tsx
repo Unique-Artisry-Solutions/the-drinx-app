@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Search, SlidersHorizontal, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-interface SearchFilterProps {
+export interface SearchFilterProps {
   onSearch: (query: string) => void;
   onFilterChange: (filters: any) => void;
   className?: string;

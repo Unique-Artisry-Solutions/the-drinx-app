@@ -48,7 +48,7 @@ export const useUserLocation = () => {
     return `${distance} miles`;
   }, []);
 
-  const fetchUserLocation = useCallback(() => {
+  const refreshLocation = useCallback(() => {
     setIsLoading(true);
     setError(null);
     
@@ -90,14 +90,14 @@ export const useUserLocation = () => {
   }, [toast]);
 
   useEffect(() => {
-    fetchUserLocation();
-  }, [fetchUserLocation]);
+    refreshLocation();
+  }, [refreshLocation]);
 
   return { 
     userLocation, 
-    isLoading, 
-    error, 
-    refreshLocation: fetchUserLocation,
+    isLoading, // This will be used as isLocating in MapPage
+    error: error, // This will be used as locationError in MapPage
+    refreshLocation,
     calculateDistance,
     formatDistance
   };
