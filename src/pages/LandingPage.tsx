@@ -46,7 +46,7 @@ const LandingPage = () => {
         </div>}
       
       {/* Main content for landing page */}
-      <main id="main-content" className="landing-main pt-20 py-[55px]">
+      <main id="main-content" className="landing-main pt-20 py-[20px]">
         {/* Hero Section with gradient background image */}
         <Hero />
         
