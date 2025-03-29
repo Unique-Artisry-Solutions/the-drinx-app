@@ -28,6 +28,21 @@
   }
 }
 
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out forwards;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   a:nth-of-type(2) .logo {
     animation: logo-spin infinite 20s linear;
@@ -159,3 +174,19 @@ a:focus, button:focus, [role="button"]:focus {
 .skip-link:focus {
   top: 0;
 }
+
+/* Cart button styles */
+.cart-button-container {
+  position: relative;
+  transition: transform 0.2s;
+}
+
+.cart-button-container:hover {
+  transform: scale(1.05);
+}
+
+/* Landing page sticky header */
+.landing-header {
+  transition: all 0.3s ease;
+}
+
