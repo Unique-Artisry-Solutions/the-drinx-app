@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import { useToast } from '@/hooks/use-toast';
@@ -6,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Upload, Camera, PlusCircle, Trash, Users, Calendar, BarChart, Map, X } from 'lucide-react';
+import { Upload, Camera, PlusCircle, Trash, Users, Calendar, BarChart, Map, X, Check, Clock } from 'lucide-react';
 
 const EstablishmentProfilePage = () => {
   const [name, setName] = useState('');
@@ -34,6 +35,10 @@ const EstablishmentProfilePage = () => {
     date: string;
     participants: number;
     organizer: string;
+    startDate: string;
+    endDate: string;
+    status: 'accepted' | 'pending';
+    otherEstablishments: string[];
   }[]>([]);
 
   useEffect(() => {
@@ -67,14 +72,33 @@ const EstablishmentProfilePage = () => {
           name: 'Downtown Mocktail Tour',
           date: '2023-11-15',
           participants: 12,
-          organizer: 'John Smith'
+          organizer: 'John Smith',
+          startDate: '2023-11-15',
+          endDate: '2023-11-15',
+          status: 'accepted',
+          otherEstablishments: []
         },
         {
           id: '2',
           name: 'Weekend Spirits-Free Adventure',
           date: '2023-11-20',
           participants: 8,
-          organizer: 'Sarah Johnson'
+          organizer: 'Sarah Johnson',
+          startDate: '2023-11-20',
+          endDate: '2023-11-20',
+          status: 'accepted',
+          otherEstablishments: []
+        },
+        {
+          id: '3',
+          name: 'Holiday Mocktail Crawl',
+          date: '2023-12-15',
+          participants: 15,
+          organizer: 'Mike Wilson',
+          startDate: '2023-12-15',
+          endDate: '2023-12-16',
+          status: 'pending',
+          otherEstablishments: ['The Juice Bar', 'Herbal Infusions', 'Tropical Blends']
         }
       ]);
     }, 500);
@@ -157,6 +181,19 @@ const EstablishmentProfilePage = () => {
     toast({
       title: 'Participation ended',
       description: 'You have successfully ended your participation in this bar crawl',
+    });
+  };
+
+  const handleAcceptRequest = (crawlId: string) => {
+    setBarCrawls(barCrawls.map(crawl => 
+      crawl.id === crawlId 
+        ? { ...crawl, status: 'accepted' as const } 
+        : crawl
+    ));
+    
+    toast({
+      title: 'Request accepted',
+      description: 'You have successfully accepted the bar crawl request',
     });
   };
 
@@ -381,8 +418,77 @@ const EstablishmentProfilePage = () => {
               </CardHeader>
               <CardContent>
                 {barCrawls.length > 0 ? (
-                  <div className="space-y-4">
-                    {barCrawls.map(crawl => (
+                  <div className="space-y-6">
+                    {barCrawls.filter(crawl => crawl.status === 'pending').map(crawl => (
+                      <div key={crawl.id} className="border-2 border-orange-300 rounded-md p-4 bg-orange-50">
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="flex items-center">
+                            <Clock className="h-5 w-5 text-orange-500 mr-2" />
+                            <h3 className="font-medium">{crawl.name}</h3>
+                          </div>
+                          <div className="bg-orange-200 text-orange-800 px-3 py-1 rounded">
+                            Pending Request
+                          </div>
+                        </div>
+                        
+                        <div className="mt-2 grid grid-cols-2 gap-2">
+                          <div className="flex items-center">
+                            <Calendar className="h-4 w-4 text-gray-500 mr-2" />
+                            <span className="text-sm">
+                              <span className="font-medium">Starts:</span> {new Date(crawl.startDate).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <div className="flex items-center">
+                            <Calendar className="h-4 w-4 text-gray-500 mr-2" />
+                            <span className="text-sm">
+                              <span className="font-medium">Ends:</span> {new Date(crawl.endDate).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        <div className="mt-3">
+                          <h4 className="text-sm font-medium mb-1">Organizer</h4>
+                          <div className="flex items-center bg-white p-2 rounded mb-3">
+                            <Users className="h-4 w-4 text-gray-500 mr-2" />
+                            <span className="text-sm">{crawl.organizer}</span>
+                          </div>
+                          
+                          <h4 className="text-sm font-medium mb-1">Other Participating Establishments</h4>
+                          <div className="bg-white p-2 rounded">
+                            {crawl.otherEstablishments.length > 0 ? (
+                              <ul className="list-disc list-inside text-sm">
+                                {crawl.otherEstablishments.map((est, index) => (
+                                  <li key={index}>{est}</li>
+                                ))}
+                              </ul>
+                            ) : (
+                              <p className="text-sm text-gray-500">No other establishments yet</p>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div className="mt-4 pt-3 border-t flex justify-end">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleEndParticipation(crawl.id)}
+                            className="mr-2"
+                          >
+                            <X className="h-4 w-4 mr-1" /> Decline
+                          </Button>
+                          <Button 
+                            variant="default" 
+                            size="sm"
+                            onClick={() => handleAcceptRequest(crawl.id)}
+                            className="bg-green-600 hover:bg-green-700"
+                          >
+                            <Check className="h-4 w-4 mr-1" /> Accept Request
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                    
+                    {barCrawls.filter(crawl => crawl.status === 'accepted').map(crawl => (
                       <div key={crawl.id} className="border rounded-md p-4">
                         <div className="flex justify-between items-start mb-2">
                           <div className="flex items-center">
@@ -401,6 +507,18 @@ const EstablishmentProfilePage = () => {
                           <div className="flex items-center">
                             <Map className="h-4 w-4 text-gray-500 mr-2" />
                             <span className="text-sm">Organizer: {crawl.organizer}</span>
+                          </div>
+                          <div className="flex items-center">
+                            <Calendar className="h-4 w-4 text-gray-500 mr-2" />
+                            <span className="text-sm">
+                              <span className="font-medium">Starts:</span> {new Date(crawl.startDate).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <div className="flex items-center">
+                            <Calendar className="h-4 w-4 text-gray-500 mr-2" />
+                            <span className="text-sm">
+                              <span className="font-medium">Ends:</span> {new Date(crawl.endDate).toLocaleDateString()}
+                            </span>
                           </div>
                         </div>
                         <div className="mt-3 pt-3 border-t flex justify-end">
