@@ -5,9 +5,10 @@ import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ProfileTab from '@/components/establishment/ProfileTab';
 import PromotionsTab from '@/components/establishment/PromotionsTab';
-import PhotosTab from '@/components/establishment/PhotosTab';
+import MocktailMenuTab from '@/components/establishment/MocktailMenuTab';
 import VisitorStatsTab from '@/components/establishment/VisitorStatsTab';
 import BarCrawlsTab from '@/components/establishment/BarCrawlsTab';
+import { Drink } from '@/components/establishment/DrinkProfileModal';
 
 const EstablishmentProfilePage = () => {
   const [name, setName] = useState('');
@@ -17,7 +18,7 @@ const EstablishmentProfilePage = () => {
   const [phone, setPhone] = useState('');
   const [website, setWebsite] = useState('');
   const [promotions, setPromotions] = useState<{id: string; code: string; description: string}[]>([]);
-  const [photos, setPhotos] = useState<{id: string; url: string; description: string}[]>([]);
+  const [drinks, setDrinks] = useState<Drink[]>([]);
   const [newPromoCode, setNewPromoCode] = useState('');
   const [newPromoDescription, setNewPromoDescription] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -55,9 +56,24 @@ const EstablishmentProfilePage = () => {
         {id: '2', code: 'MOCKTAIL2023', description: 'Buy one get one free on signature mocktails'}
       ]);
       
-      setPhotos([
-        {id: '1', url: 'https://placehold.co/300x200', description: 'Our signature blue mocktail'},
-        {id: '2', url: 'https://placehold.co/300x200', description: 'Tropical fruits mix'}
+      // Initial mocktail menu items
+      setDrinks([
+        {
+          id: '1',
+          name: 'Blue Lagoon',
+          description: 'A refreshing blend of blue curaçao syrup, lemon juice, and sprite, garnished with a lemon wheel and cherry.',
+          price: '$8.99',
+          ingredients: ['Blue Curaçao Syrup', 'Lemon Juice', 'Sprite'],
+          photoUrl: 'https://placehold.co/300x200'
+        },
+        {
+          id: '2',
+          name: 'Tropical Paradise',
+          description: 'A tropical mix of pineapple juice, coconut cream, and orange juice, garnished with a pineapple wedge.',
+          price: '$9.99',
+          ingredients: ['Pineapple Juice', 'Coconut Cream', 'Orange Juice'],
+          photoUrl: 'https://placehold.co/300x200'
+        }
       ]);
       
       setVisitorStats({
@@ -151,27 +167,22 @@ const EstablishmentProfilePage = () => {
     });
   };
 
-  const handleUploadPhoto = () => {
-    const mockPhoto = {
-      id: Date.now().toString(),
-      url: 'https://placehold.co/300x200',
-      description: 'New mocktail photo'
-    };
-    
-    setPhotos([...photos, mockPhoto]);
-    
-    toast({
-      title: 'Photo uploaded',
-      description: 'Your photo has been uploaded successfully',
-    });
+  const handleAddDrink = (drink: Drink) => {
+    setDrinks([...drinks, drink]);
   };
 
-  const handleDeletePhoto = (id: string) => {
-    setPhotos(photos.filter(photo => photo.id !== id));
+  const handleUpdateDrink = (updatedDrink: Drink) => {
+    setDrinks(drinks.map(drink => 
+      drink.id === updatedDrink.id ? updatedDrink : drink
+    ));
+  };
+
+  const handleDeleteDrink = (id: string) => {
+    setDrinks(drinks.filter(drink => drink.id !== id));
     
     toast({
-      title: 'Photo removed',
-      description: 'The photo has been removed successfully',
+      title: 'Mocktail removed',
+      description: 'The mocktail has been removed from your menu',
     });
   };
 
@@ -213,7 +224,7 @@ const EstablishmentProfilePage = () => {
           <TabsList className="w-full mb-4">
             <TabsTrigger value="profile">Profile</TabsTrigger>
             <TabsTrigger value="promotions">Promotions</TabsTrigger>
-            <TabsTrigger value="photos">Mocktail Photos</TabsTrigger>
+            <TabsTrigger value="menu">Mocktail Menu</TabsTrigger>
             <TabsTrigger value="visitors">Visitor Stats</TabsTrigger>
             <TabsTrigger value="barCrawls">Bar Crawl Requests</TabsTrigger>
           </TabsList>
@@ -249,11 +260,12 @@ const EstablishmentProfilePage = () => {
             />
           </TabsContent>
 
-          <TabsContent value="photos">
-            <PhotosTab 
-              photos={photos}
-              handleUploadPhoto={handleUploadPhoto}
-              handleDeletePhoto={handleDeletePhoto}
+          <TabsContent value="menu">
+            <MocktailMenuTab 
+              drinks={drinks}
+              onAddDrink={handleAddDrink}
+              onUpdateDrink={handleUpdateDrink}
+              onDeleteDrink={handleDeleteDrink}
             />
           </TabsContent>
 
