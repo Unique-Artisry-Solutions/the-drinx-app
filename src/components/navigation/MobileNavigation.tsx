@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Map, Plus, ShoppingCart, User } from 'lucide-react';
+import { Home, Map, Plus, ShoppingCart, User, Star, CheckSquare, Route } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { NavigationType } from './NavigationTypes';
 
@@ -22,6 +22,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
 }) => {
   const location = useLocation();
   const [currentUserType, setCurrentUserType] = useState(userType);
+  const [expanded, setExpanded] = useState(false);
   
   useEffect(() => {
     // Get the user type from localStorage to ensure it's up to date
@@ -32,6 +33,10 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
       setCurrentUserType('individual');
     }
   }, []);
+
+  const toggleExpand = () => {
+    setExpanded(!expanded);
+  };
 
   // Guest Navigation Items
   const guestNavItems: NavItem[] = [
@@ -51,6 +56,13 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
     { icon: Map, label: 'Map', path: '/map' },
     { icon: Plus, label: 'Add', path: '/add' },
     { icon: User, label: 'Profile', path: getProfilePath() },
+  ];
+
+  // Profile Related Items (shown when expanded)
+  const profileItems: NavItem[] = [
+    { icon: Route, label: 'Bar Crawls', path: '/profile/bar-crawls' },
+    { icon: Star, label: 'Favorites', path: '/profile/favorites' },
+    { icon: CheckSquare, label: 'Visited', path: '/profile/visited' },
   ];
 
   // Admin Navigation Items
@@ -75,6 +87,12 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
   };
 
   const navItems = getNavItems();
+  
+  // Show profile related items if we're on a profile page and the user is logged in
+  const shouldShowProfileItems = 
+    type === NavigationType.USER && 
+    (location.pathname === '/profile' || 
+     location.pathname.startsWith('/profile/'));
 
   // Don't render the mobile nav on landing or admin pages
   if (location.pathname === '/landing' || location.pathname.startsWith('/admin')) {
@@ -83,14 +101,49 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
 
   return (
     <nav className="spiritless-mobile-nav fixed bottom-0 w-full bg-white shadow-lg z-50 md:hidden">
+      {shouldShowProfileItems && expanded && (
+        <div className="spiritless-profile-nav border-t border-gray-200 bg-gray-50">
+          <div className="grid grid-cols-3 gap-1 px-2 py-2">
+            {profileItems.map((item) => {
+              const isActive = location.pathname === item.path;
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={cn(
+                    "flex flex-col items-center justify-center py-2 px-1 rounded-md",
+                    isActive 
+                      ? "bg-material-primary/10 text-material-primary" 
+                      : "text-material-on-surface-variant hover:bg-gray-100"
+                  )}
+                >
+                  <item.icon size={20} />
+                  <span className="text-xs mt-1">{item.label}</span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
       <div className="spiritless-mobile-container max-w-5xl mx-auto">
         <div className="spiritless-mobile-inner flex justify-around items-center h-16">
           {navItems.map((item) => {
-            const isActive = location.pathname === item.path;
+            const isActive = location.pathname === item.path || 
+              (item.path === '/profile' && location.pathname.startsWith('/profile/'));
+            
+            // If this is the profile button and we're on a profile page, make it toggle the menu
+            const handleClick = (e: React.MouseEvent) => {
+              if (item.path === getProfilePath() && shouldShowProfileItems) {
+                e.preventDefault();
+                toggleExpand();
+              }
+            };
+            
             return (
               <Link
                 key={item.path}
                 to={item.path}
+                onClick={handleClick}
                 className={cn(
                   "spiritless-mobile-link flex flex-col items-center justify-center w-full h-full transition-all-200",
                   isActive 

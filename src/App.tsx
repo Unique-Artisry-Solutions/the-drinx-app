@@ -12,6 +12,9 @@ import EstablishmentDetail from "./pages/EstablishmentDetail";
 import CocktailDetail from "./pages/CocktailDetail";
 import NotFound from "./pages/NotFound";
 import ProfilePage from "./pages/ProfilePage";
+import BarCrawlsPage from "./pages/profile/BarCrawlsPage";
+import FavoritesPage from "./pages/profile/FavoritesPage";
+import VisitedPage from "./pages/profile/VisitedPage";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import LandingPage from "./pages/LandingPage";
@@ -177,7 +180,25 @@ const App = () => {
               
               <Route path="/profile" element={
                 <TypedProtectedRoute userType="individual">
-                  <UserProfilePage />
+                  <ProfilePage />
+                </TypedProtectedRoute>
+              } />
+              
+              <Route path="/profile/bar-crawls" element={
+                <TypedProtectedRoute userType="individual">
+                  <BarCrawlsPage />
+                </TypedProtectedRoute>
+              } />
+              
+              <Route path="/profile/favorites" element={
+                <TypedProtectedRoute userType="individual">
+                  <FavoritesPage />
+                </TypedProtectedRoute>
+              } />
+              
+              <Route path="/profile/visited" element={
+                <TypedProtectedRoute userType="individual">
+                  <VisitedPage />
                 </TypedProtectedRoute>
               } />
               
@@ -185,15 +206,6 @@ const App = () => {
                 <TypedProtectedRoute userType="establishment">
                   <EstablishmentProfilePage />
                 </TypedProtectedRoute>
-              } />
-              
-              <Route path="/profile" element={
-                <ProtectedRoute>
-                  {userType === 'establishment' ? 
-                    <Navigate to="/establishment/profile" replace /> : 
-                    <ProfilePage />
-                  }
-                </ProtectedRoute>
               } />
               
               <Route path="/admin" element={<AdminLogin />} />

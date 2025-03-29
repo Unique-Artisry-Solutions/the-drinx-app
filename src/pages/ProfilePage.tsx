@@ -1,27 +1,18 @@
+
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import UserAuth from '@/components/UserAuth';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 
 import ProfileHeader from '@/components/profile/ProfileHeader';
-import BarCrawlTab from '@/components/profile/BarCrawlTab';
-import VisitedTab from '@/components/profile/VisitedTab';
-import FavoritesTab from '@/components/profile/FavoritesTab';
-import ReviewsTab from '@/components/profile/ReviewsTab';
-
-import { Establishment, Cocktail } from '@/types/ProfileTypes';
-
-import { sampleCocktails, sampleEstablishments } from '@/data/sampleData';
 
 const ProfilePage: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userName, setUserName] = useState('');
   const [userEmail, setUserEmail] = useState('');
-  const [favoriteEstablishments, setFavoriteEstablishments] = useState([]);
-  const [barCrawlList, setBarCrawlList] = useState(sampleEstablishments.slice(0, 3));
-  const [visitedEstablishments, setVisitedEstablishments] = useState([]);
-  const [userReviews, setUserReviews] = useState([]);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -51,13 +42,6 @@ const ProfilePage: React.FC = () => {
     });
   };
 
-  const shareBarCrawl = () => {
-    toast({
-      title: 'Bar Crawl Shared',
-      description: 'Your bar crawl list has been shared with users in your area!',
-    });
-  };
-
   if (!isAuthenticated) {
     return (
       <Layout>
@@ -74,33 +58,42 @@ const ProfilePage: React.FC = () => {
       <div className="py-4 animate-fade-in">
         <ProfileHeader userName={userName} handleLogout={handleLogout} />
 
-        <Tabs defaultValue="barCrawl">
-          <TabsList className="w-full mb-4">
-            <TabsTrigger value="barCrawl">Bar Crawl</TabsTrigger>
-            <TabsTrigger value="visited">Visited</TabsTrigger>
-            <TabsTrigger value="favorites">Favorites</TabsTrigger>
-            <TabsTrigger value="reviews">My Reviews</TabsTrigger>
-          </TabsList>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Profile Information</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <div>
+                <div className="text-sm font-medium">Name</div>
+                <div>{userName}</div>
+              </div>
+              <div>
+                <div className="text-sm font-medium">Email</div>
+                <div>{userEmail}</div>
+              </div>
+            </CardContent>
+          </Card>
 
-          <TabsContent value="barCrawl">
-            <BarCrawlTab 
-              barCrawlList={barCrawlList} 
-              shareBarCrawl={shareBarCrawl} 
-            />
-          </TabsContent>
-
-          <TabsContent value="visited">
-            <VisitedTab visitedEstablishments={sampleEstablishments.slice(2, 5)} />
-          </TabsContent>
-
-          <TabsContent value="favorites">
-            <FavoritesTab favoriteCocktails={sampleCocktails.slice(0, 3)} />
-          </TabsContent>
-
-          <TabsContent value="reviews">
-            <ReviewsTab />
-          </TabsContent>
-        </Tabs>
+          <Card>
+            <CardHeader>
+              <CardTitle>Your Activity</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <Link to="/profile/bar-crawls">
+                  <Button variant="outline" className="w-full">Bar Crawls</Button>
+                </Link>
+                <Link to="/profile/favorites">
+                  <Button variant="outline" className="w-full">Favorites</Button>
+                </Link>
+                <Link to="/profile/visited">
+                  <Button variant="outline" className="w-full">Visited</Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </Layout>
   );
