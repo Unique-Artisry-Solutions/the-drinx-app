@@ -4,14 +4,6 @@ import { Link, useLocation } from 'react-router-dom';
 import { Home, Map, Plus, ShoppingCart, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { NavigationType } from './NavigationTypes';
-import { useCart } from '@/contexts/CartContext';
-
-interface NavItem {
-  icon: React.FC<any>;
-  label: string;
-  path: string;
-  badge?: boolean;
-}
 
 interface MobileNavigationProps {
   type: NavigationType;
@@ -24,7 +16,6 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
 }) => {
   const location = useLocation();
   const [currentUserType, setCurrentUserType] = useState(userType);
-  const { items } = useCart();
   
   useEffect(() => {
     // Get the user type from localStorage to ensure it's up to date
@@ -37,9 +28,9 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
   }, []);
 
   // Guest Navigation Items
-  const guestNavItems: NavItem[] = [
+  const guestNavItems = [
     { icon: Home, label: 'Home', path: '/landing' },
-    { icon: ShoppingCart, label: 'Cart', path: '/checkout', badge: items.length > 0 },
+    { icon: ShoppingCart, label: 'Cart', path: '/cart' },
     { icon: User, label: 'Login', path: '/login' },
   ];
 
@@ -49,7 +40,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
   };
 
   // User Navigation Items
-  const userNavItems: NavItem[] = [
+  const userNavItems = [
     { icon: Home, label: 'Home', path: '/' },
     { icon: Map, label: 'Map', path: '/map' },
     { icon: Plus, label: 'Add', path: '/add' },
@@ -57,7 +48,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
   ];
 
   // Admin Navigation Items
-  const adminNavItems: NavItem[] = [
+  const adminNavItems = [
     { icon: Home, label: 'Home', path: '/' },
     { icon: Map, label: 'Map', path: '/map' },
     { icon: Plus, label: 'Add', path: '/add' },
@@ -97,15 +88,10 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
                 )}
               >
                 <div className={cn(
-                  "flex items-center justify-center relative",
+                  "flex items-center justify-center",
                   isActive && "animate-pulse-subtle"
                 )}>
                   <item.icon size={24} />
-                  {item.badge && (
-                    <span className="absolute -top-1 -right-1 bg-spiritless-pink text-white h-4 w-4 flex items-center justify-center rounded-full text-xs">
-                      {items.length}
-                    </span>
-                  )}
                 </div>
                 <span className="text-xs mt-1">{item.label}</span>
               </Link>
