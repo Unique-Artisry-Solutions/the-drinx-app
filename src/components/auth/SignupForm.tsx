@@ -62,6 +62,34 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess, onClose, userType = 
   return (
     <form onSubmit={handleSignup}>
       <CardContent className="space-y-4 pt-6">
+        {/* Account Type Selection - Prominently at the top */}
+        <div className="space-y-2 pb-4 border-b border-gray-100">
+          <label className="text-sm font-medium block mb-2">
+            Select Account Type
+          </label>
+          <RadioGroup 
+            defaultValue={userType} 
+            value={selectedUserType}
+            onValueChange={(value) => setSelectedUserType(value as 'individual' | 'establishment')}
+            className="flex gap-4"
+          >
+            <div className="flex-1 border rounded-md p-3 hover:bg-gray-50 transition-colors cursor-pointer flex flex-col items-center space-y-2">
+              <RadioGroupItem value="individual" id="individual-account" className="text-spiritless-pink border-spiritless-pink/50 data-[state=checked]:bg-spiritless-pink" />
+              <Label htmlFor="individual-account" className="font-medium">Individual</Label>
+              <p className="text-xs text-center text-muted-foreground">
+                Discover and save mocktails
+              </p>
+            </div>
+            <div className="flex-1 border rounded-md p-3 hover:bg-gray-50 transition-colors cursor-pointer flex flex-col items-center space-y-2">
+              <RadioGroupItem value="establishment" id="establishment-account" className="text-spiritless-green border-spiritless-green/50 data-[state=checked]:bg-spiritless-green" />
+              <Label htmlFor="establishment-account" className="font-medium">Establishment</Label>
+              <p className="text-xs text-center text-muted-foreground">
+                Register your business
+              </p>
+            </div>
+          </RadioGroup>
+        </div>
+
         <div className="space-y-2">
           <label className="text-sm font-medium" htmlFor="name">
             Name
@@ -75,6 +103,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess, onClose, userType = 
             className="border-spiritless-pink/20 focus-visible:ring-spiritless-pink"
           />
         </div>
+        
         <div className="space-y-2">
           <label className="text-sm font-medium" htmlFor="username">
             Username
@@ -88,6 +117,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess, onClose, userType = 
             className="border-spiritless-pink/20 focus-visible:ring-spiritless-pink"
           />
         </div>
+        
         <div className="space-y-2">
           <label className="text-sm font-medium" htmlFor="signup-email">
             Email
@@ -102,6 +132,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess, onClose, userType = 
             className="border-spiritless-pink/20 focus-visible:ring-spiritless-pink"
           />
         </div>
+        
         <div className="space-y-2">
           <label className="text-sm font-medium" htmlFor="signup-password">
             Password
@@ -117,39 +148,24 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess, onClose, userType = 
           />
         </div>
         
-        <div className="space-y-2 pt-2">
-          <label className="text-sm font-medium block mb-2">
-            Account Type
-          </label>
-          <RadioGroup 
-            defaultValue={userType} 
-            value={selectedUserType}
-            onValueChange={(value) => setSelectedUserType(value as 'individual' | 'establishment')}
-            className="flex flex-col space-y-2"
-          >
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="individual" id="individual" className="text-spiritless-pink border-spiritless-pink/50 data-[state=checked]:bg-spiritless-pink" />
-              <Label htmlFor="individual">Individual User</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="establishment" id="establishment" className="text-spiritless-green border-spiritless-green/50 data-[state=checked]:bg-spiritless-green" />
-              <Label htmlFor="establishment">Establishment / Business</Label>
-            </div>
-          </RadioGroup>
-          <p className="text-xs text-muted-foreground mt-1">
-            {selectedUserType === 'individual' 
-              ? 'Create an account to discover and save mocktails' 
-              : 'Register your business to manage your mocktail offerings'}
-          </p>
-        </div>
+        {/* Conditional fields based on account type */}
+        {selectedUserType === 'establishment' && (
+          <div className="space-y-2 pt-2 bg-gray-50 p-3 rounded-md border border-gray-100">
+            <h3 className="text-sm font-medium text-spiritless-green">Establishment Details</h3>
+            <p className="text-xs text-muted-foreground mb-2">
+              You'll be able to add more details to your establishment profile after signing up.
+            </p>
+          </div>
+        )}
       </CardContent>
+      
       <CardFooter className="flex flex-col gap-4">
         <AuthButton
           type="submit"
           isLoading={isLoading}
           className={`w-full ${selectedUserType === 'individual' ? 'bg-spiritless-pink hover:bg-spiritless-pink/90' : 'bg-spiritless-green hover:bg-spiritless-green/90'} text-white`}
         >
-          {isLoading ? 'Creating account...' : 'Create account'}
+          {isLoading ? 'Creating account...' : `Create ${selectedUserType === 'establishment' ? 'Business' : 'Personal'} Account`}
         </AuthButton>
         {onClose && (
           <AuthButton
