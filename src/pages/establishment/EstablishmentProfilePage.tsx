@@ -3,11 +3,11 @@ import React, { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Upload, Camera, PlusCircle, Trash, Users, Calendar, BarChart, Map, X, Check, Clock } from 'lucide-react';
+import ProfileTab from '@/components/establishment/ProfileTab';
+import PromotionsTab from '@/components/establishment/PromotionsTab';
+import PhotosTab from '@/components/establishment/PhotosTab';
+import VisitorStatsTab from '@/components/establishment/VisitorStatsTab';
+import BarCrawlsTab from '@/components/establishment/BarCrawlsTab';
 
 const EstablishmentProfilePage = () => {
   const [name, setName] = useState('');
@@ -219,327 +219,54 @@ const EstablishmentProfilePage = () => {
           </TabsList>
 
           <TabsContent value="profile">
-            <Card>
-              <CardHeader>
-                <CardTitle>Establishment Information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Name</label>
-                  <Input value={name} onChange={(e) => setName(e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Email</label>
-                  <Input value={email} onChange={(e) => setEmail(e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Description</label>
-                  <Textarea 
-                    value={description} 
-                    onChange={(e) => setDescription(e.target.value)}
-                    rows={4} 
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Address</label>
-                  <Input value={address} onChange={(e) => setAddress(e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Phone</label>
-                  <Input value={phone} onChange={(e) => setPhone(e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Website</label>
-                  <Input value={website} onChange={(e) => setWebsite(e.target.value)} />
-                </div>
-                <Button 
-                  className="w-full mt-4" 
-                  onClick={handleSaveProfile}
-                  disabled={isLoading}
-                >
-                  {isLoading ? 'Saving...' : 'Save Profile'}
-                </Button>
-              </CardContent>
-            </Card>
+            <ProfileTab 
+              name={name}
+              email={email}
+              description={description}
+              address={address}
+              phone={phone}
+              website={website}
+              isLoading={isLoading}
+              setName={setName}
+              setEmail={setEmail}
+              setDescription={setDescription}
+              setAddress={setAddress}
+              setPhone={setPhone}
+              setWebsite={setWebsite}
+              handleSaveProfile={handleSaveProfile}
+            />
           </TabsContent>
 
           <TabsContent value="promotions">
-            <Card>
-              <CardHeader>
-                <CardTitle>Promotional Codes</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4 mb-6">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Promotion Code</label>
-                    <Input 
-                      value={newPromoCode} 
-                      onChange={(e) => setNewPromoCode(e.target.value)}
-                      placeholder="e.g., SUMMER2023" 
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Description</label>
-                    <Textarea 
-                      value={newPromoDescription} 
-                      onChange={(e) => setNewPromoDescription(e.target.value)}
-                      placeholder="Describe what this promotion offers" 
-                      rows={2}
-                    />
-                  </div>
-                  <Button onClick={handleAddPromotion} className="w-full">
-                    <PlusCircle className="mr-2 h-4 w-4" /> Add Promotion
-                  </Button>
-                </div>
-
-                <div className="space-y-3">
-                  <h3 className="font-medium mb-2">Your Promotions</h3>
-                  {promotions.length > 0 ? (
-                    promotions.map(promo => (
-                      <div key={promo.id} className="border rounded-md p-3 flex justify-between items-start">
-                        <div>
-                          <div className="font-medium">{promo.code}</div>
-                          <div className="text-sm text-muted-foreground">{promo.description}</div>
-                        </div>
-                        <Button 
-                          variant="ghost" 
-                          size="icon"
-                          onClick={() => handleDeletePromotion(promo.id)}
-                        >
-                          <Trash className="h-4 w-4 text-red-500" />
-                        </Button>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-muted-foreground text-center py-4">
-                      No promotions added yet. Create your first one!
-                    </p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+            <PromotionsTab 
+              promotions={promotions}
+              newPromoCode={newPromoCode}
+              newPromoDescription={newPromoDescription}
+              setNewPromoCode={setNewPromoCode}
+              setNewPromoDescription={setNewPromoDescription}
+              handleAddPromotion={handleAddPromotion}
+              handleDeletePromotion={handleDeletePromotion}
+            />
           </TabsContent>
 
           <TabsContent value="photos">
-            <Card>
-              <CardHeader>
-                <CardTitle>Mocktail Photos</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Button onClick={handleUploadPhoto} className="w-full mb-6">
-                  <Upload className="mr-2 h-4 w-4" /> Upload Photo
-                </Button>
-
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {photos.map(photo => (
-                    <div key={photo.id} className="border rounded-md overflow-hidden">
-                      <div className="aspect-video bg-muted relative">
-                        <img 
-                          src={photo.url} 
-                          alt={photo.description} 
-                          className="w-full h-full object-cover"
-                        />
-                        <Button 
-                          variant="ghost" 
-                          size="icon"
-                          className="absolute top-1 right-1 bg-white/80 rounded-full p-1"
-                          onClick={() => handleDeletePhoto(photo.id)}
-                        >
-                          <Trash className="h-4 w-4 text-red-500" />
-                        </Button>
-                      </div>
-                      <p className="p-2 text-sm">{photo.description}</p>
-                    </div>
-                  ))}
-                  
-                  <div 
-                    className="border border-dashed rounded-md flex items-center justify-center min-h-[150px] cursor-pointer"
-                    onClick={handleUploadPhoto}
-                  >
-                    <div className="text-center p-4">
-                      <Camera className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                      <p className="text-sm text-muted-foreground">Add more photos</p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <PhotosTab 
+              photos={photos}
+              handleUploadPhoto={handleUploadPhoto}
+              handleDeletePhoto={handleDeletePhoto}
+            />
           </TabsContent>
 
           <TabsContent value="visitors">
-            <Card>
-              <CardHeader>
-                <CardTitle>Visitor Statistics</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                  <div className="bg-blue-50 p-4 rounded-lg">
-                    <div className="flex items-center mb-2">
-                      <Users className="h-5 w-5 text-blue-500 mr-2" />
-                      <h3 className="font-medium">Total Visits</h3>
-                    </div>
-                    <p className="text-2xl font-bold">{visitorStats.totalVisits}</p>
-                  </div>
-                  
-                  <div className="bg-green-50 p-4 rounded-lg">
-                    <div className="flex items-center mb-2">
-                      <Users className="h-5 w-5 text-green-500 mr-2" />
-                      <h3 className="font-medium">Unique Visitors</h3>
-                    </div>
-                    <p className="text-2xl font-bold">{visitorStats.uniqueVisitors}</p>
-                  </div>
-                  
-                  <div className="bg-purple-50 p-4 rounded-lg">
-                    <div className="flex items-center mb-2">
-                      <Users className="h-5 w-5 text-purple-500 mr-2" />
-                      <h3 className="font-medium">Returning Visitors</h3>
-                    </div>
-                    <p className="text-2xl font-bold">{visitorStats.returningVisitors}</p>
-                  </div>
-                </div>
-                
-                <div className="mt-6">
-                  <h3 className="font-medium mb-4">Visitor Trends</h3>
-                  <div className="bg-gray-100 h-48 rounded flex items-center justify-center">
-                    <BarChart className="h-8 w-8 text-gray-400 mr-2" />
-                    <p className="text-material-on-surface-variant text-sm">
-                      Visitor trend charts will be displayed here
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <VisitorStatsTab visitorStats={visitorStats} />
           </TabsContent>
 
           <TabsContent value="barCrawls">
-            <Card>
-              <CardHeader>
-                <CardTitle>Bar Crawl Participation</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {barCrawls.length > 0 ? (
-                  <div className="space-y-6">
-                    {barCrawls.filter(crawl => crawl.status === 'pending').map(crawl => (
-                      <div key={crawl.id} className="border-2 border-orange-300 rounded-md p-4 bg-orange-50">
-                        <div className="flex justify-between items-start mb-2">
-                          <div className="flex items-center">
-                            <Clock className="h-5 w-5 text-orange-500 mr-2" />
-                            <h3 className="font-medium">{crawl.name}</h3>
-                          </div>
-                          <div className="bg-orange-200 text-orange-800 px-3 py-1 rounded">
-                            Pending Request
-                          </div>
-                        </div>
-                        
-                        <div className="mt-2 grid grid-cols-2 gap-2">
-                          <div className="flex items-center">
-                            <Calendar className="h-4 w-4 text-gray-500 mr-2" />
-                            <span className="text-sm">
-                              <span className="font-medium">Starts:</span> {new Date(crawl.startDate).toLocaleDateString()}
-                            </span>
-                          </div>
-                          <div className="flex items-center">
-                            <Calendar className="h-4 w-4 text-gray-500 mr-2" />
-                            <span className="text-sm">
-                              <span className="font-medium">Ends:</span> {new Date(crawl.endDate).toLocaleDateString()}
-                            </span>
-                          </div>
-                        </div>
-                        
-                        <div className="mt-3">
-                          <h4 className="text-sm font-medium mb-1">Organizer</h4>
-                          <div className="flex items-center bg-white p-2 rounded mb-3">
-                            <Users className="h-4 w-4 text-gray-500 mr-2" />
-                            <span className="text-sm">{crawl.organizer}</span>
-                          </div>
-                          
-                          <h4 className="text-sm font-medium mb-1">Other Participating Establishments</h4>
-                          <div className="bg-white p-2 rounded">
-                            {crawl.otherEstablishments.length > 0 ? (
-                              <ul className="list-disc list-inside text-sm">
-                                {crawl.otherEstablishments.map((est, index) => (
-                                  <li key={index}>{est}</li>
-                                ))}
-                              </ul>
-                            ) : (
-                              <p className="text-sm text-gray-500">No other establishments yet</p>
-                            )}
-                          </div>
-                        </div>
-                        
-                        <div className="mt-4 pt-3 border-t flex justify-end">
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleEndParticipation(crawl.id)}
-                            className="mr-2"
-                          >
-                            <X className="h-4 w-4 mr-1" /> Decline
-                          </Button>
-                          <Button 
-                            variant="default" 
-                            size="sm"
-                            onClick={() => handleAcceptRequest(crawl.id)}
-                            className="bg-green-600 hover:bg-green-700"
-                          >
-                            <Check className="h-4 w-4 mr-1" /> Accept Request
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                    
-                    {barCrawls.filter(crawl => crawl.status === 'accepted').map(crawl => (
-                      <div key={crawl.id} className="border rounded-md p-4">
-                        <div className="flex justify-between items-start mb-2">
-                          <div className="flex items-center">
-                            <Calendar className="h-5 w-5 text-material-primary mr-2" />
-                            <h3 className="font-medium">{crawl.name}</h3>
-                          </div>
-                          <div className="bg-material-primary/10 px-3 py-1 rounded text-material-primary">
-                            {new Date(crawl.date).toLocaleDateString()}
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-2 mt-2">
-                          <div className="flex items-center">
-                            <Users className="h-4 w-4 text-gray-500 mr-2" />
-                            <span className="text-sm">{crawl.participants} participants</span>
-                          </div>
-                          <div className="flex items-center">
-                            <Map className="h-4 w-4 text-gray-500 mr-2" />
-                            <span className="text-sm">Organizer: {crawl.organizer}</span>
-                          </div>
-                          <div className="flex items-center">
-                            <Calendar className="h-4 w-4 text-gray-500 mr-2" />
-                            <span className="text-sm">
-                              <span className="font-medium">Starts:</span> {new Date(crawl.startDate).toLocaleDateString()}
-                            </span>
-                          </div>
-                          <div className="flex items-center">
-                            <Calendar className="h-4 w-4 text-gray-500 mr-2" />
-                            <span className="text-sm">
-                              <span className="font-medium">Ends:</span> {new Date(crawl.endDate).toLocaleDateString()}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="mt-3 pt-3 border-t flex justify-end">
-                          <Button 
-                            variant="destructive" 
-                            size="sm"
-                            onClick={() => handleEndParticipation(crawl.id)}
-                          >
-                            <X className="h-4 w-4 mr-1" /> End Participation
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-center py-8 text-muted-foreground">
-                    No bar crawl requests at this time.
-                  </p>
-                )}
-              </CardContent>
-            </Card>
+            <BarCrawlsTab 
+              barCrawls={barCrawls}
+              handleEndParticipation={handleEndParticipation}
+              handleAcceptRequest={handleAcceptRequest}
+            />
           </TabsContent>
         </Tabs>
       </div>
