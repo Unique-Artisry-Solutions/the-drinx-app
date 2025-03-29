@@ -16,8 +16,7 @@ const CartButton: React.FC = () => {
         variant="ghost" 
         size="icon" 
         onClick={() => setIsCartOpen(true)}
-        className="relative cart-button-container"
-        aria-label={`Shopping cart with ${items.length} items`}
+        className="relative"
       >
         <ShoppingCart className="h-5 w-5" />
         {items.length > 0 && (
