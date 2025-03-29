@@ -5,8 +5,7 @@ import { CardContent, CardFooter } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import AuthButton from './AuthButton';
-import { Form, FormField, FormItem, FormControl, FormLabel } from '@/components/ui/form';
-import { useForm } from 'react-hook-form';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface SignupFormProps {
   onSuccess?: () => void;
@@ -14,46 +13,51 @@ interface SignupFormProps {
   userType?: 'individual' | 'establishment';
 }
 
-const SignupForm: React.FC<SignupFormProps> = ({ onSuccess, onClose, userType = 'individual' }) => {
+const SignupForm: React.FC<SignupFormProps> = ({ 
+  onSuccess, 
+  onClose, 
+  userType = 'individual' 
+}) => {
   const [email, setEmail] = useState('');
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
+  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('');
+  const [formError, setFormError] = useState('');
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const { signUp, isLoading } = useAuth();
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    setFormError('');
     
-    // In a real app, this would call an API endpoint
-    setTimeout(() => {
-      // Mock successful signup
-      localStorage.setItem('user_authenticated', 'true');
-      localStorage.setItem('user_email', email);
-      localStorage.setItem('user_name', name);
-      localStorage.setItem('user_username', username);
+    try {
+      // Add metadata for user profile
+      const metadata = {
+        name,
+        username,
+        user_type: userType
+      };
+      
+      await signUp(email, password, metadata);
+      
+      // Store user type in localStorage
       localStorage.setItem('user_type', userType);
       
-      toast({
-        title: 'Account created',
-        description: 'Welcome to Spiritless!',
-      });
-      setIsLoading(false);
-      
-      // Call onSuccess if provided, otherwise navigate to appropriate homepage
       if (onSuccess) {
         onSuccess();
       } else {
-        // Navigate to the appropriate profile page based on user type
-        if (userType === 'establishment') {
-          navigate('/establishment/profile');
-        } else {
-          navigate('/');
-        }
+        // Show success message and stay on the signup page
+        // User needs to confirm email before being redirected
+        toast({
+          title: 'Check your email',
+          description: 'Please check your email to confirm your account',
+        });
       }
-    }, 1000);
+    } catch (error: any) {
+      console.error('Signup error:', error);
+      setFormError(error.message || 'Failed to sign up');
+    }
   };
 
   return (
@@ -125,6 +129,10 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess, onClose, userType = 
               You'll be able to add more details to your establishment profile after signing up.
             </p>
           </div>
+        )}
+        
+        {formError && (
+          <div className="text-red-500 text-sm mt-2">{formError}</div>
         )}
       </CardContent>
       

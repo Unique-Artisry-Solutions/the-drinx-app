@@ -1,10 +1,12 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { CartProvider } from "@/contexts/CartContext";
+import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import MapPage from "./pages/MapPage";
 import AddPage from "./pages/AddPage";
@@ -37,39 +39,6 @@ const queryClient = new QueryClient({
     },
   },
 });
-
-export const useAuth = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return localStorage.getItem('user_authenticated') === 'true';
-  });
-  
-  const login = () => {
-    localStorage.setItem('user_authenticated', 'true');
-    setIsAuthenticated(true);
-  };
-  
-  const logout = () => {
-    localStorage.removeItem('user_authenticated');
-    localStorage.removeItem('user_email');
-    localStorage.removeItem('user_username');
-    localStorage.removeItem('user_type');
-    setIsAuthenticated(false);
-  };
-  
-  useEffect(() => {
-    const checkAuth = () => {
-      const auth = localStorage.getItem('user_authenticated') === 'true';
-      setIsAuthenticated(auth);
-    };
-    
-    window.addEventListener('storage', checkAuth);
-    return () => {
-      window.removeEventListener('storage', checkAuth);
-    };
-  }, []);
-  
-  return { isAuthenticated, login, logout };
-};
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const isAuthenticated = localStorage.getItem('user_authenticated') === 'true';
@@ -113,118 +82,53 @@ const TypedProtectedRoute = ({
 };
 
 const App = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userType, setUserType] = useState<'individual' | 'establishment'>('individual');
-  
-  useEffect(() => {
-    const checkAuth = () => {
-      const auth = localStorage.getItem('user_authenticated') === 'true';
-      setIsAuthenticated(auth);
-      
-      const type = localStorage.getItem('user_type');
-      if (type === 'establishment') {
-        setUserType('establishment');
-      } else {
-        setUserType('individual');
-      }
-    };
-    
-    checkAuth();
-    
-    window.addEventListener('storage', checkAuth);
-    
-    return () => {
-      window.removeEventListener('storage', checkAuth);
-    };
-  }, []);
   
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <CartProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={isAuthenticated ? <Index /> : <LandingPage />} />
-              <Route path="/landing" element={<LandingPage />} />
-              <Route path="/login" element={isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />} />
-              <Route path="/signup" element={isAuthenticated ? <Navigate to="/" replace /> : <SignupPage />} />
-              <Route path="/pricing" element={<PricingPage />} />
-              <Route path="/checkout" element={<CheckoutPage />} />
-              
-              <Route path="/mission" element={<MissionPage />} />
-              <Route path="/resources" element={<ResourcesPage />} />
-              <Route path="/legal" element={<LegalPage />} />
-              
-              <Route path="/explore" element={<Navigate to="/" replace />} />
-              <Route path="/map" element={
-                <ProtectedRoute>
-                  <MapPage />
-                </ProtectedRoute>
-              } />
-              <Route path="/add" element={
-                <ProtectedRoute>
-                  <AddPage />
-                </ProtectedRoute>
-              } />
-              <Route path="/create-bar-crawl" element={
-                <TypedProtectedRoute userType="individual">
-                  <CreateBarCrawlPage />
-                </TypedProtectedRoute>
-              } />
-              <Route path="/establishment/:id" element={
-                <ProtectedRoute>
-                  <EstablishmentDetail />
-                </ProtectedRoute>
-              } />
-              <Route path="/cocktail/:id" element={
-                <ProtectedRoute>
-                  <CocktailDetail />
-                </ProtectedRoute>
-              } />
-              
-              <Route path="/profile" element={
-                <TypedProtectedRoute userType="individual">
-                  <ProfilePage />
-                </TypedProtectedRoute>
-              } />
-              
-              <Route path="/profile/bar-crawls" element={
-                <TypedProtectedRoute userType="individual">
-                  <BarCrawlsPage />
-                </TypedProtectedRoute>
-              } />
-              
-              <Route path="/profile/favorites" element={
-                <TypedProtectedRoute userType="individual">
-                  <FavoritesPage />
-                </TypedProtectedRoute>
-              } />
-              
-              <Route path="/profile/visited" element={
-                <TypedProtectedRoute userType="individual">
-                  <VisitedPage />
-                </TypedProtectedRoute>
-              } />
-              
-              <Route path="/establishment/profile" element={
-                <TypedProtectedRoute userType="establishment">
-                  <EstablishmentProfilePage />
-                </TypedProtectedRoute>
-              } />
-              
-              <Route path="/admin" element={<AdminLogin />} />
-              <Route path="/admin/dashboard" element={
-                <AdminRoute>
-                  <AdminDashboard />
-                </AdminRoute>
-              } />
-              
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </CartProvider>
+        <AuthProvider>
+          <CartProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/landing" element={<LandingPage />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/signup" element={<SignupPage />} />
+                <Route path="/pricing" element={<PricingPage />} />
+                <Route path="/checkout" element={<CheckoutPage />} />
+                
+                <Route path="/mission" element={<MissionPage />} />
+                <Route path="/resources" element={<ResourcesPage />} />
+                <Route path="/legal" element={<LegalPage />} />
+                
+                <Route path="/explore" element={<Navigate to="/" replace />} />
+                <Route path="/map" element={<MapPage />} />
+                <Route path="/add" element={<AddPage />} />
+                <Route path="/create-bar-crawl" element={<CreateBarCrawlPage />} />
+                <Route path="/establishment/:id" element={<EstablishmentDetail />} />
+                <Route path="/cocktail/:id" element={<CocktailDetail />} />
+                
+                <Route path="/profile" element={<ProfilePage />} />
+                <Route path="/profile/bar-crawls" element={<BarCrawlsPage />} />
+                <Route path="/profile/favorites" element={<FavoritesPage />} />
+                <Route path="/profile/visited" element={<VisitedPage />} />
+                <Route path="/establishment/profile" element={<EstablishmentProfilePage />} />
+                
+                <Route path="/admin" element={<AdminLogin />} />
+                <Route path="/admin/dashboard" element={
+                  <AdminRoute>
+                    <AdminDashboard />
+                  </AdminRoute>
+                } />
+                
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </CartProvider>
+        </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );
