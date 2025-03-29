@@ -8,8 +8,9 @@ const LoginPage = () => {
   const navigate = useNavigate();
   
   const handleAuthSuccess = () => {
-    // Redirect to the index page after successful authentication
-    navigate('/');
+    // Navigate to the index page after successful authentication
+    // Using replace: true to prevent going back to login page with back button
+    navigate('/', { replace: true });
   };
   
   return (

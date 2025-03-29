@@ -44,14 +44,15 @@ const LoginForm: React.FC<LoginFormProps> = ({ onClose, onSuccess }) => {
         title: 'Login successful',
         description: 'Welcome back!',
       });
+      
       setIsLoading(false);
       
       // Call onSuccess callback if provided
       if (onSuccess) {
         onSuccess();
       } else {
-        // Always navigate to the index page after successful login
-        navigate('/');
+        // Force navigation to index page
+        navigate('/', { replace: true });
       }
     }, 1000);
   };
