@@ -8,6 +8,7 @@ import UserTopNavigation from './navigation/UserTopNavigation';
 import GuestTopNavigation from './navigation/GuestTopNavigation';
 import AppFooter from './AppFooter';
 import { useAuth } from '@/contexts/AuthContext';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -19,6 +20,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [navigationType, setNavigationType] = React.useState<NavigationType>(NavigationType.GUEST);
   const [userType, setUserType] = React.useState<'individual' | 'establishment'>('individual');
   const [isAdmin, setIsAdmin] = React.useState(false);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const checkAuth = () => {
@@ -45,6 +47,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const getContentPadding = () => {
     if (isLandingPage) {
       return 'pt-16 pb-0 px-0';
+    } else if (isMobile) {
+      return 'pt-16 pb-24 px-3'; // Adjusted padding for mobile
     } else {
       return 'pt-20 pb-20 md:pb-6 px-4';
     }
@@ -64,12 +68,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     <div className="flex flex-col min-h-screen bg-material-background w-full">
       {renderNavigation()}
       
-      <main className={`flex-1 w-full ${getContentPadding()}`}>
+      <main className={`flex-1 w-full max-w-full overflow-x-hidden ${getContentPadding()}`}>
         {children}
       </main>
       
       {/* Show AppFooter on interior pages, not on landing page */}
-      {!isLandingPage && <AppFooter />}
+      {!isLandingPage && !isMobile && <AppFooter />}
       
       {!isLandingPage && (
         <MobileNavigation type={navigationType} userType={userType} />

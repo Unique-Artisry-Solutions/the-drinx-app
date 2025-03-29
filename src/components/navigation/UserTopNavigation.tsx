@@ -20,6 +20,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from '@/contexts/AuthContext';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const UserTopNavigation: React.FC = () => {
   const location = useLocation();
@@ -27,6 +28,7 @@ const UserTopNavigation: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [userType, setUserType] = useState<'individual' | 'establishment'>('individual');
   const { signOut, user } = useAuth();
+  const isMobile = useIsMobile();
   
   React.useEffect(() => {
     const storedUserType = localStorage.getItem('user_type');
@@ -66,7 +68,8 @@ const UserTopNavigation: React.FC = () => {
         <div className="user-nav-inner flex items-center justify-between">
           <div className="user-nav-left flex items-center">
             <Link to="/" className="user-nav-logo text-xl font-semibold text-material-primary mr-6">
-              Spirit<span>less</span>
+              {isMobile ? "SL" : "Spirit"}
+              {!isMobile && <span>less</span>}
             </Link>
             
             <div className="user-nav-links hidden md:flex space-x-1">

@@ -42,7 +42,7 @@ const mapToComponentEstablishment = (est: SupabaseEstablishment): Establishment 
 
 const MapPage: React.FC = () => {
   const isMobile = useIsMobile();
-  const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.MAP);
+  const [viewMode, setViewMode] = useState<ViewMode>(isMobile ? ViewMode.LIST : ViewMode.MAP);
   const [searchTerm, setSearchTerm] = useState('');
   const { 
     userLocation, 
@@ -64,6 +64,13 @@ const MapPage: React.FC = () => {
 
   // Map the Supabase establishments to our component's expected format
   const establishments: Establishment[] = supabaseEstablishments.map(mapToComponentEstablishment);
+
+  // Update viewMode when mobile status changes
+  useEffect(() => {
+    if (isMobile) {
+      setViewMode(ViewMode.LIST);
+    }
+  }, [isMobile]);
 
   const handleSearch = (term: string) => {
     setSearchTerm(term);
@@ -105,13 +112,15 @@ const MapPage: React.FC = () => {
   return (
     <Layout>
       <div className="min-h-[calc(100vh-4rem)] flex flex-col">
-        <div className="p-4 border-b">
+        <div className="p-2 sm:p-4 border-b">
           <div className="flex flex-col sm:flex-row gap-2 justify-between items-center mb-4">
             <h1 className="text-xl font-bold">Explore Mocktails</h1>
-            <ViewModeToggle 
-              viewMode={viewMode === ViewMode.MAP ? 'map' : 'list'} 
-              onViewModeChange={toggleViewMode} 
-            />
+            {!isMobile && (
+              <ViewModeToggle 
+                viewMode={viewMode === ViewMode.MAP ? 'map' : 'list'} 
+                onViewModeChange={toggleViewMode} 
+              />
+            )}
           </div>
           <SearchFilter 
             onSearch={handleSearch}
@@ -130,7 +139,7 @@ const MapPage: React.FC = () => {
               />
             </div>
           ) : (
-            <div className="p-4">
+            <div className="p-2 sm:p-4">
               <EstablishmentList 
                 establishments={establishments} 
                 selectedEstablishment={null}

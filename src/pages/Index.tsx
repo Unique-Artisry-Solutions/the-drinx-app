@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import Layout from '@/components/Layout';
 import CocktailCard from '@/components/CocktailCard';
@@ -7,9 +8,11 @@ import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import MapView from '@/components/map/MapView';
 import { useUserLocation } from '@/hooks/useUserLocation';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 // Sample data - would be fetched from API in a real application
 import { sampleCocktails, sampleEstablishments } from '@/data/sampleData';
+
 const Index = () => {
   const [cocktails, setCocktails] = useState(sampleCocktails);
   const [allCocktails, setAllCocktails] = useState(sampleCocktails);
@@ -20,6 +23,7 @@ const Index = () => {
     distance: 10
   });
   const [activeTab, setActiveTab] = useState("featured");
+  const isMobile = useIsMobile();
   const {
     toast
   } = useToast();
@@ -41,6 +45,7 @@ const Index = () => {
       setEstablishments(updatedEstablishments);
     }
   }, [userLocation, establishments, calculateDistance, formatDistance]);
+  
   const handleSearch = (query: string) => {
     setSearchQuery(query);
 
@@ -52,6 +57,7 @@ const Index = () => {
       setCocktails(allCocktails);
     }
   };
+  
   const handleFilterChange = (newFilters: any) => {
     setFilters(newFilters);
 
@@ -68,13 +74,15 @@ const Index = () => {
     longitude: e.longitude,
     cocktailCount: e.cocktailCount
   }));
-  return <Layout>
-      <div className="animate-fade-in my-[30px] px-[148px]">
+  
+  return (
+    <Layout>
+      <div className="animate-fade-in my-4 sm:my-[30px] px-3 sm:px-6 md:px-[148px]">
         <div className="mb-6 mt-2 text-center">
-          <h1 className="text-3xl font-medium text-material-on-background">
+          <h1 className="text-2xl sm:text-3xl font-medium text-material-on-background">
             Spirit<span className="text-material-primary">less</span>
           </h1>
-          <p className="text-material-on-surface-variant">
+          <p className="text-material-on-surface-variant text-sm sm:text-base">
             Discover non-alcoholic cocktails near you
           </p>
         </div>
@@ -95,7 +103,18 @@ const Index = () => {
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {cocktails.slice(0, 4).map(cocktail => <CocktailCard key={cocktail.id} id={cocktail.id} name={cocktail.name} price={cocktail.price} description={cocktail.description} ingredients={cocktail.ingredients} image={cocktail.image} establishment={cocktail.establishment} />)}
+                {cocktails.slice(0, 4).map(cocktail => (
+                  <CocktailCard 
+                    key={cocktail.id} 
+                    id={cocktail.id} 
+                    name={cocktail.name} 
+                    price={cocktail.price} 
+                    description={cocktail.description} 
+                    ingredients={cocktail.ingredients} 
+                    image={cocktail.image} 
+                    establishment={cocktail.establishment} 
+                  />
+                ))}
               </div>
             </section>
 
@@ -108,7 +127,17 @@ const Index = () => {
               </div>
               
               <div className="space-y-3">
-                {establishments.slice(0, 5).map(establishment => <EstablishmentCard key={establishment.id} id={establishment.id} name={establishment.name} address={establishment.address} distance={establishment.distance} cocktailCount={establishment.cocktailCount} image={establishment.image} />)}
+                {establishments.slice(0, 5).map(establishment => (
+                  <EstablishmentCard 
+                    key={establishment.id} 
+                    id={establishment.id} 
+                    name={establishment.name} 
+                    address={establishment.address} 
+                    distance={establishment.distance} 
+                    cocktailCount={establishment.cocktailCount} 
+                    image={establishment.image} 
+                  />
+                ))}
               </div>
             </section>
           </TabsContent>
@@ -118,37 +147,72 @@ const Index = () => {
               <h2 className="text-lg font-medium text-material-on-surface mb-4">All Cocktails</h2>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {cocktails.map(cocktail => <CocktailCard key={cocktail.id} id={cocktail.id} name={cocktail.name} price={cocktail.price} description={cocktail.description} ingredients={cocktail.ingredients} image={cocktail.image} establishment={cocktail.establishment} />)}
+                {cocktails.map(cocktail => (
+                  <CocktailCard 
+                    key={cocktail.id} 
+                    id={cocktail.id} 
+                    name={cocktail.name} 
+                    price={cocktail.price} 
+                    description={cocktail.description} 
+                    ingredients={cocktail.ingredients} 
+                    image={cocktail.image} 
+                    establishment={cocktail.establishment} 
+                  />
+                ))}
               </div>
               
-              {cocktails.length === 0 && <div className="text-center py-8 border border-dashed rounded-lg">
+              {cocktails.length === 0 && (
+                <div className="text-center py-8 border border-dashed rounded-lg">
                   <p className="text-material-on-surface-variant">No cocktails found matching your criteria.</p>
-                  <button className="text-material-primary mt-2" onClick={() => {
-                setSearchQuery('');
-                setCocktails(allCocktails);
-                setFilters({
-                  priceRange: [0, 25],
-                  distance: 10
-                });
-              }}>
+                  <button 
+                    className="text-material-primary mt-2" 
+                    onClick={() => {
+                      setSearchQuery('');
+                      setCocktails(allCocktails);
+                      setFilters({
+                        priceRange: [0, 25],
+                        distance: 10
+                      });
+                    }}
+                  >
                     Reset filters
                   </button>
-                </div>}
+                </div>
+              )}
             </div>
           </TabsContent>
           
           <TabsContent value="map">
-            <MapView establishments={mapEstablishments} userLocation={userLocation} onRefreshLocation={refreshLocation} isLoadingLocation={isLoadingLocation} />
+            <div className={isMobile ? "h-[60vh]" : "h-[50vh]"}>
+              <MapView 
+                establishments={mapEstablishments} 
+                userLocation={userLocation} 
+                onRefreshLocation={refreshLocation} 
+                isLoadingLocation={isLoadingLocation} 
+              />
+            </div>
             
             <div className="mt-6">
               <h2 className="text-lg font-medium text-material-on-surface mb-4">Establishments</h2>
               <div className="space-y-3">
-                {establishments.map(establishment => <EstablishmentCard key={establishment.id} id={establishment.id} name={establishment.name} address={establishment.address} distance={establishment.distance} cocktailCount={establishment.cocktailCount} image={establishment.image} />)}
+                {establishments.map(establishment => (
+                  <EstablishmentCard 
+                    key={establishment.id} 
+                    id={establishment.id} 
+                    name={establishment.name} 
+                    address={establishment.address} 
+                    distance={establishment.distance} 
+                    cocktailCount={establishment.cocktailCount} 
+                    image={establishment.image} 
+                  />
+                ))}
               </div>
             </div>
           </TabsContent>
         </Tabs>
       </div>
-    </Layout>;
+    </Layout>
+  );
 };
+
 export default Index;
