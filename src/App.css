@@ -1,4 +1,3 @@
-
 #root {
   max-width: 1280px;
   margin: 0 auto;
@@ -104,4 +103,34 @@
   background-color: #73a504;
   box-shadow: 0 6px 12px rgba(132, 191, 4, 0.3);
   transform: translateY(-2px);
+}
+
+/* Bold colorful cards */
+.card-pink {
+  @apply bg-gradient-to-br from-spiritless-pink to-spiritless-pink/80 text-white shadow-lg hover:shadow-xl transition-all border-l-4 border-spiritless-pink;
+}
+
+.card-green {
+  @apply bg-gradient-to-br from-spiritless-green to-spiritless-green/80 text-white shadow-lg hover:shadow-xl transition-all border-l-4 border-spiritless-green;
+}
+
+.card-orange {
+  @apply bg-gradient-to-br from-spiritless-orange to-spiritless-orange/80 text-white shadow-lg hover:shadow-xl transition-all border-l-4 border-spiritless-orange;
+}
+
+.card-burgundy {
+  @apply bg-gradient-to-br from-spiritless-burgundy to-spiritless-burgundy/80 text-white shadow-lg hover:shadow-xl transition-all border-l-4 border-spiritless-burgundy;
+}
+
+/* Bold section backgrounds */
+.bg-pattern-pink {
+  background-color: #ffecf4;
+  background-image: radial-gradient(circle at 1px 1px, #D94E8F 1px, transparent 0);
+  background-size: 20px 20px;
+}
+
+.bg-pattern-green {
+  background-color: #f0ffe0;
+  background-image: radial-gradient(circle at 1px 1px, #84BF04 1px, transparent 0);
+  background-size: 20px 20px;
 }
