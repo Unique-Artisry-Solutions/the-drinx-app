@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import { useToast } from '@/hooks/use-toast';
@@ -8,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { MapPin, PenSquare, Trash, Upload, Map as MapIcon, Users } from 'lucide-react';
 import MapView from '@/components/map/MapView';
+import { PlusCircle } from '@/components/icons/PlusCircle';
 
 const UserProfilePage = () => {
   const [name, setName] = useState('');
@@ -45,7 +45,6 @@ const UserProfilePage = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // In a real app, this would fetch user data from an API
     setTimeout(() => {
       setName(localStorage.getItem('user_name') || 'User');
       setEmail(localStorage.getItem('user_email') || '');
@@ -56,7 +55,6 @@ const UserProfilePage = () => {
   const handleSaveProfile = () => {
     setIsLoading(true);
     
-    // In a real app, this would call an API endpoint
     setTimeout(() => {
       localStorage.setItem('user_name', name);
       localStorage.setItem('user_email', email);
@@ -97,7 +95,6 @@ const UserProfilePage = () => {
   const handleSaveBarCrawl = () => {
     if (!selectedBarCrawl) return;
     
-    // Update the bar crawl in the list
     setBarCrawls(barCrawls.map(bc => 
       bc.id === selectedBarCrawl.id ? selectedBarCrawl : bc
     ));
@@ -107,7 +104,6 @@ const UserProfilePage = () => {
       description: 'Your bar crawl has been updated successfully',
     });
     
-    // Go back to the list
     setSelectedBarCrawl(null);
   };
 
