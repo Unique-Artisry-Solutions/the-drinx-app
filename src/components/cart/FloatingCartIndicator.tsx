@@ -13,13 +13,14 @@ const FloatingCartIndicator: React.FC = () => {
   if (items.length === 0) return null;
 
   return (
-    <div className="fixed bottom-20 right-6 z-50 md:bottom-10 md:right-10 animate-fade-in">
+    <div className="fixed bottom-24 right-6 z-50 md:bottom-10 md:right-10">
       <Button 
         onClick={() => navigate('/checkout')}
         className={cn(
           "flex items-center gap-2 shadow-lg hover:shadow-xl transition-all",
-          "bg-spiritless-pink hover:bg-pink-700 text-white rounded-full py-2 px-4"
+          "bg-spiritless-pink hover:bg-pink-700 text-white rounded-full py-3 px-5"
         )}
+        size="lg"
       >
         <ShoppingCart className="h-5 w-5" />
         <span className="font-semibold">${totalPrice.toFixed(2)}</span>
