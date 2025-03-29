@@ -1,9 +1,17 @@
+
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, Map, Plus, ShoppingCart, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { NavigationType } from './NavigationTypes';
 import { useCart } from '@/contexts/CartContext';
+
+interface NavItem {
+  icon: React.FC<any>;
+  label: string;
+  path: string;
+  badge?: boolean;
+}
 
 interface MobileNavigationProps {
   type: NavigationType;
@@ -29,7 +37,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
   }, []);
 
   // Guest Navigation Items
-  const guestNavItems = [
+  const guestNavItems: NavItem[] = [
     { icon: Home, label: 'Home', path: '/landing' },
     { icon: ShoppingCart, label: 'Cart', path: '/checkout', badge: items.length > 0 },
     { icon: User, label: 'Login', path: '/login' },
@@ -41,7 +49,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
   };
 
   // User Navigation Items
-  const userNavItems = [
+  const userNavItems: NavItem[] = [
     { icon: Home, label: 'Home', path: '/' },
     { icon: Map, label: 'Map', path: '/map' },
     { icon: Plus, label: 'Add', path: '/add' },
@@ -49,7 +57,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
   ];
 
   // Admin Navigation Items
-  const adminNavItems = [
+  const adminNavItems: NavItem[] = [
     { icon: Home, label: 'Home', path: '/' },
     { icon: Map, label: 'Map', path: '/map' },
     { icon: Plus, label: 'Add', path: '/add' },
