@@ -45,14 +45,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   // Determine if current page is an interior app page (protected pages)
   const isInteriorPage = () => {
     const interiorPaths = ['/map', '/add', '/establishment/', '/cocktail/', '/profile'];
-    return interiorPaths.some(path => location.pathname.startsWith(path));
+    return interiorPaths.some(path => location.pathname.startsWith(path)) || 
+           location.pathname === '/' && navigationType !== NavigationType.GUEST;
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-material-background">
-      <NavigationTypes type={navigationType} userType={userType} />
+    <div className="flex flex-col min-h-screen w-full bg-material-background">
+      {/* Only show navigation for interior app pages */}
+      {isInteriorPage() && <NavigationTypes type={navigationType} userType={userType} />}
       
-      <main className="flex-1 pb-16 md:pb-6 pt-2 px-2 md:px-6 container max-w-5xl mx-auto">
+      <main className={`flex-1 pb-16 md:pb-6 pt-2 w-full ${isInteriorPage() ? 'px-2 md:px-6 container max-w-5xl mx-auto' : ''}`}>
         {children}
       </main>
       
