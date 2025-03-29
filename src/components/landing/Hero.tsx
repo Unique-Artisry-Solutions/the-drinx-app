@@ -20,7 +20,7 @@ const Hero = () => {
           </h1>
           <div className="space-x-4">
             <Link to="/login">
-              <Button variant="outline" className="text-white border-white hover:bg-white/20 focus:ring-2 focus:ring-white" aria-label="Log in to your account">
+              <Button variant="outline" aria-label="Log in to your account" className="text-brown border-white hover:bg-white/20 focus:ring-2 focus:ring-white">
                 Login
               </Button>
             </Link>
