@@ -9,9 +9,14 @@ import AuthButton from './AuthButton';
 interface LoginFormProps {
   onClose?: () => void;
   onSuccess?: () => void;
+  userType?: 'individual' | 'establishment';
 }
 
-const LoginForm: React.FC<LoginFormProps> = ({ onClose, onSuccess }) => {
+const LoginForm: React.FC<LoginFormProps> = ({ 
+  onClose, 
+  onSuccess, 
+  userType = 'individual' 
+}) => {
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -35,25 +40,22 @@ const LoginForm: React.FC<LoginFormProps> = ({ onClose, onSuccess }) => {
         localStorage.setItem('user_username', username);
       }
       
-      // Set default user type if not already set (for existing users)
-      if (!localStorage.getItem('user_type')) {
-        localStorage.setItem('user_type', 'individual');
-      }
+      // Set user type based on selected tab
+      localStorage.setItem('user_type', userType);
       
       toast({
         title: 'Login successful',
-        description: 'Welcome back!',
+        description: userType === 'establishment' 
+          ? 'Welcome to your establishment dashboard!' 
+          : 'Welcome back!',
       });
       
       setIsLoading(false);
       
-      // Call onSuccess callback if provided
-      if (onSuccess) {
-        onSuccess();
-      } else {
-        // Force page refresh and navigation to index
-        window.location.href = '/';
-      }
+      // Refresh the page and redirect
+      window.location.href = userType === 'establishment' 
+        ? '/establishment/profile' 
+        : '/';
     }, 1000);
   };
 
@@ -62,12 +64,14 @@ const LoginForm: React.FC<LoginFormProps> = ({ onClose, onSuccess }) => {
       <CardContent className="space-y-4 pt-6">
         <div className="space-y-2">
           <label className="text-sm font-medium" htmlFor="email">
-            Email or Username
+            {userType === 'establishment' ? 'Business Email or Username' : 'Email or Username'}
           </label>
           <Input
             id="email"
             type={email.includes('@') ? 'email' : 'text'}
-            placeholder="Enter your email or username"
+            placeholder={userType === 'establishment' 
+              ? "Enter your business email or username" 
+              : "Enter your email or username"}
             value={email || username}
             onChange={(e) => {
               // Determine if input looks like an email or username
@@ -100,8 +104,9 @@ const LoginForm: React.FC<LoginFormProps> = ({ onClose, onSuccess }) => {
         <AuthButton
           type="submit"
           isLoading={isLoading}
+          className={`w-full ${userType === 'establishment' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-material-primary'} text-material-on-primary`}
         >
-          {isLoading ? 'Logging in...' : 'Login'}
+          {isLoading ? 'Logging in...' : (userType === 'establishment' ? 'Login to Dashboard' : 'Login')}
         </AuthButton>
         {onClose && (
           <AuthButton

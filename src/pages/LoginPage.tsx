@@ -1,10 +1,14 @@
-import React from 'react';
+
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import UserAuth from '@/components/UserAuth';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Building, User } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card } from '@/components/ui/card';
 
 const LoginPage = () => {
   const navigate = useNavigate();
+  const [userType, setUserType] = useState<'individual' | 'establishment'>('individual');
   
   const handleAuthSuccess = () => {
     // Force page refresh and navigation to index
@@ -30,7 +34,28 @@ const LoginPage = () => {
               </p>
             </div>
             
-            <UserAuth defaultTab="login" onSuccess={handleAuthSuccess} />
+            <Card className="mb-6">
+              <Tabs defaultValue="individual" onValueChange={(value) => setUserType(value as 'individual' | 'establishment')}>
+                <TabsList className="w-full grid grid-cols-2">
+                  <TabsTrigger value="individual" className="flex items-center justify-center">
+                    <User size={16} className="mr-2" />
+                    Individual
+                  </TabsTrigger>
+                  <TabsTrigger value="establishment" className="flex items-center justify-center">
+                    <Building size={16} className="mr-2" />
+                    Establishment
+                  </TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="individual">
+                  <UserAuth defaultTab="login" onSuccess={handleAuthSuccess} userType="individual" />
+                </TabsContent>
+                
+                <TabsContent value="establishment">
+                  <UserAuth defaultTab="login" onSuccess={handleAuthSuccess} userType="establishment" />
+                </TabsContent>
+              </Tabs>
+            </Card>
             
             <div className="text-center mt-6">
               <p className="text-gray-600">

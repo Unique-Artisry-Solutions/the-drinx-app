@@ -9,19 +9,25 @@ interface UserAuthProps {
   onSuccess?: () => void;
   onClose?: () => void;
   defaultTab?: 'login' | 'signup';
+  userType?: 'individual' | 'establishment';
 }
 
 const UserAuth: React.FC<UserAuthProps> = ({ 
   onSuccess,
   onClose,
-  defaultTab = 'login'
+  defaultTab = 'login',
+  userType = 'individual'
 }) => {
   return (
     <Card className="w-full max-w-md mx-auto">
       <CardHeader>
-        <CardTitle className="text-2xl text-center">Welcome</CardTitle>
+        <CardTitle className="text-2xl text-center">
+          {userType === 'establishment' ? 'Establishment Login' : 'Welcome'}
+        </CardTitle>
         <CardDescription className="text-center">
-          Sign in or create an account to track your favorite mocktails
+          {userType === 'establishment' 
+            ? 'Sign in to manage your business profile and mocktails'
+            : 'Sign in or create an account to track your favorite mocktails'}
         </CardDescription>
       </CardHeader>
       
@@ -32,11 +38,11 @@ const UserAuth: React.FC<UserAuthProps> = ({
         </TabsList>
         
         <TabsContent value="login">
-          <LoginForm onClose={onClose} onSuccess={onSuccess} />
+          <LoginForm onClose={onClose} onSuccess={onSuccess} userType={userType} />
         </TabsContent>
         
         <TabsContent value="signup">
-          <SignupForm onSuccess={onSuccess} onClose={onClose} />
+          <SignupForm onSuccess={onSuccess} onClose={onClose} userType={userType} />
         </TabsContent>
       </Tabs>
     </Card>
