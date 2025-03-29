@@ -60,7 +60,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     } else if (navigationType === NavigationType.USER) {
       return <UserTopNavigation />;
     } else {
-      return <GuestTopNavigation />;
+      // Only show GuestTopNavigation on the landing page or for unauthenticated users on non-interior pages
+      if (isLandingPage || (!user && (location.pathname === '/login' || location.pathname === '/signup' || location.pathname === '/mission'))) {
+        return <GuestTopNavigation />;
+      } else {
+        // For other interior pages when not authenticated, still show UserTopNavigation
+        return <UserTopNavigation />;
+      }
     }
   };
 
