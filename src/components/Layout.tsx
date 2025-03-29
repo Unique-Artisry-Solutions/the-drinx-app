@@ -6,6 +6,7 @@ import MobileNavigation from './navigation/MobileNavigation';
 import AdminTopNavigation from './navigation/AdminTopNavigation';
 import UserTopNavigation from './navigation/UserTopNavigation';
 import GuestTopNavigation from './navigation/GuestTopNavigation';
+import { useCart } from '@/contexts/CartContext';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -16,6 +17,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [navigationType, setNavigationType] = useState<NavigationType>(NavigationType.GUEST);
   const [userType, setUserType] = useState<'individual' | 'establishment'>('individual');
   const [isAdmin, setIsAdmin] = useState(false);
+  const { items } = useCart();
+  const hasCartItems = items.length > 0;
 
   useEffect(() => {
     const checkAuth = () => {
@@ -55,12 +58,15 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     }
   };
 
-  // Render the appropriate navigation based on user type and page
+  // Render the appropriate navigation based on user type, page, and cart status
   const renderNavigation = () => {
     if (isAdminPage || isAdmin) {
       return <AdminTopNavigation />;
     } else if (navigationType === NavigationType.USER) {
       return <UserTopNavigation />;
+    } else if (isLandingPage) {
+      // Only show guest navigation on landing page if there are items in cart
+      return hasCartItems ? <GuestTopNavigation /> : null;
     } else {
       return <GuestTopNavigation />;
     }
