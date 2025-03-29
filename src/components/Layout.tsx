@@ -65,10 +65,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         </div>
       )}
       
-      {/* Show floating cart indicator when cart has items and we're not on pricing/checkout pages */}
-      {items.length > 0 && !isPricingOrCheckout() && (
-        <FloatingCartIndicator />
-      )}
+      {/* Show floating cart indicator when cart has items */}
+      {items.length > 0 && !isPricingOrCheckout() && <FloatingCartIndicator />}
       
       <main className="flex-1 pb-16 md:pb-6 pt-2 px-2 md:px-6 container max-w-5xl mx-auto">
         {children}
