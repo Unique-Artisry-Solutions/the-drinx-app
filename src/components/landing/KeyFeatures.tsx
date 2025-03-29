@@ -37,7 +37,12 @@ const KeyFeatures = () => {
 
   return (
     <section 
-      className="py-20 px-4 bg-pattern-pink"
+      className="py-20 px-4"
+      style={{
+        backgroundImage: "url('/featuresBG.jpg')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }}
       role="region" 
       aria-labelledby="features-heading"
     >
@@ -51,11 +56,11 @@ const KeyFeatures = () => {
         >
           <h2 
             id="features-heading"
-            className="text-3xl font-bold mb-4 border-b-4 border-spiritless-pink inline-block pb-2"
+            className="text-3xl font-bold mb-4 border-b-4 border-spiritless-pink inline-block pb-2 text-[#590202]"
           >
             Unlock These Amazing Features
           </h2>
-          <p className="text-lg max-w-2xl mx-auto">
+          <p className="text-lg max-w-2xl mx-auto text-[#590202]">
             Once you sign up, you'll gain access to these powerful tools to enhance your alcohol-free experience.
           </p>
         </motion.div>
