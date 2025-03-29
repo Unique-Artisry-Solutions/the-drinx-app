@@ -72,6 +72,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess, onClose, userType = 
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
+            className="border-spiritless-pink/20 focus-visible:ring-spiritless-pink"
           />
         </div>
         <div className="space-y-2">
@@ -84,6 +85,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess, onClose, userType = 
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             required
+            className="border-spiritless-pink/20 focus-visible:ring-spiritless-pink"
           />
         </div>
         <div className="space-y-2">
@@ -97,6 +99,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess, onClose, userType = 
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            className="border-spiritless-pink/20 focus-visible:ring-spiritless-pink"
           />
         </div>
         <div className="space-y-2">
@@ -110,6 +113,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess, onClose, userType = 
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            className="border-spiritless-pink/20 focus-visible:ring-spiritless-pink"
           />
         </div>
         
@@ -124,11 +128,11 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess, onClose, userType = 
             className="flex flex-col space-y-2"
           >
             <div className="flex items-center space-x-2">
-              <RadioGroupItem value="individual" id="individual" />
+              <RadioGroupItem value="individual" id="individual" className="text-spiritless-pink border-spiritless-pink/50 data-[state=checked]:bg-spiritless-pink" />
               <Label htmlFor="individual">Individual User</Label>
             </div>
             <div className="flex items-center space-x-2">
-              <RadioGroupItem value="establishment" id="establishment" />
+              <RadioGroupItem value="establishment" id="establishment" className="text-spiritless-green border-spiritless-green/50 data-[state=checked]:bg-spiritless-green" />
               <Label htmlFor="establishment">Establishment / Business</Label>
             </div>
           </RadioGroup>
@@ -143,6 +147,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess, onClose, userType = 
         <AuthButton
           type="submit"
           isLoading={isLoading}
+          className={`w-full ${selectedUserType === 'individual' ? 'bg-spiritless-pink hover:bg-spiritless-pink/90' : 'bg-spiritless-green hover:bg-spiritless-green/90'} text-white`}
         >
           {isLoading ? 'Creating account...' : 'Create account'}
         </AuthButton>
@@ -152,6 +157,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess, onClose, userType = 
             variant="outline"
             onClick={onClose}
             isLoading={false}
+            className="w-full border-spiritless-orange text-spiritless-orange hover:bg-spiritless-orange/10"
           >
             Cancel
           </AuthButton>

@@ -16,7 +16,7 @@ const AuthButton: React.FC<AuthButtonProps> = ({
   type = 'submit',
   onClick,
   variant = 'default',
-  className = 'w-full bg-material-primary text-material-on-primary',
+  className = 'w-full bg-spiritless-pink text-white hover:bg-spiritless-pink/90',
   children
 }) => {
   return (

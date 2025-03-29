@@ -63,15 +63,27 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
+				// New color palette from image
+				spiritless: {
+					pink: '#D94E8F',      // Pink - #D94E8F (217, 78, 143)
+					green: '#84BF04',     // Green - #84BF04 (132, 191, 4)
+					orange: '#F29F05',    // Orange - #F29F05 (242, 159, 5)
+					'bright-orange': '#F28705', // Bright Orange - #F28705 (242, 135, 5)
+					burgundy: '#590202',  // Burgundy - #590202 (89, 2, 2)
+				},
 				material: {
-					'primary': '#6750A4',
+					'primary': '#D94E8F',      // Pink as primary
 					'on-primary': '#FFFFFF',
-					'primary-container': '#EADDFF',
-					'on-primary-container': '#21005E',
-					'secondary': '#625B71',
+					'primary-container': '#FFECF4',
+					'on-primary-container': '#3E1428',
+					'secondary': '#84BF04',    // Green as secondary
 					'on-secondary': '#FFFFFF',
-					'secondary-container': '#E8DEF8',
-					'on-secondary-container': '#1E192B',
+					'secondary-container': '#F0FFE0',
+					'on-secondary-container': '#253601',
+					'tertiary': '#F29F05',     // Orange as tertiary
+					'on-tertiary': '#FFFFFF',
+					'tertiary-container': '#FFF0DC',
+					'on-tertiary-container': '#462E01',
 					'surface': '#FEF7FF',
 					'on-surface': '#1C1B1F',
 					'surface-variant': '#E7E0EB',
@@ -79,6 +91,8 @@ export default {
 					'outline': '#79747E',
 					'background': '#FEF7FF',
 					'on-background': '#1C1B1F',
+					'error': '#590202',        // Burgundy as error
+					'on-error': '#FFFFFF',
 				},
 			},
 			borderRadius: {
