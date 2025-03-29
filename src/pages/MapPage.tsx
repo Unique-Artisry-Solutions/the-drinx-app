@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import MapView from '@/components/map/MapView';
@@ -8,39 +9,32 @@ import ViewModeToggle from '@/components/ViewModeToggle';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { useEstablishments } from '@/hooks/useEstablishments';
+import { useFavorites } from '@/hooks/useFavorites';
 
-// Sample data - would be fetched from API in a real application
-import { sampleEstablishments } from '@/data/sampleData';
 const MapPage = () => {
-  const [establishments, setEstablishments] = useState(sampleEstablishments);
-  const [filteredEstablishments, setFilteredEstablishments] = useState(sampleEstablishments);
   const [selectedEstablishment, setSelectedEstablishment] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
-  const [favoriteEstablishments, setFavoriteEstablishments] = useState<string[]>([]);
   const [mapboxToken, setMapboxToken] = useState<string | null>(localStorage.getItem('mapbox_token'));
   const navigate = useNavigate();
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
   const {
     userLocation,
     isLoading: isLoadingLocation,
-    refreshLocation,
-    calculateDistance,
-    formatDistance
+    refreshLocation
   } = useUserLocation();
-
-  // Calculate distances when user location changes
-  useEffect(() => {
-    if (userLocation && establishments.length > 0) {
-      const updatedEstablishments = establishments.map(est => ({
-        ...est,
-        distance: formatDistance(calculateDistance(est.latitude, est.longitude))
-      }));
-      setEstablishments(updatedEstablishments);
-      setFilteredEstablishments(updatedEstablishments);
-    }
-  }, [userLocation, establishments, calculateDistance, formatDistance]);
+  
+  const { 
+    establishments, 
+    filteredEstablishments, 
+    isLoading: isLoadingEstablishments,
+    handleSearch
+  } = useEstablishments();
+  
+  const { 
+    favoriteEstablishments, 
+    toggleFavorite 
+  } = useFavorites();
 
   // Listen for storage events to detect token changes
   useEffect(() => {
@@ -53,6 +47,7 @@ const MapPage = () => {
       window.removeEventListener('storage', handleStorageChange);
     };
   }, []);
+  
   const handleMarkerClick = (establishmentId: string) => {
     setSelectedEstablishment(establishmentId);
 
@@ -64,42 +59,40 @@ const MapPage = () => {
       });
     }
   };
+  
   const handleEstablishmentClick = (establishmentId: string) => {
     // This is handled in the EstablishmentList component
   };
-  const handleSearch = (query: string) => {
-    if (!query) {
-      setFilteredEstablishments(establishments);
-      return;
-    }
-    const filtered = establishments.filter(est => est.name.toLowerCase().includes(query.toLowerCase()) || est.address.toLowerCase().includes(query.toLowerCase()));
-    setFilteredEstablishments(filtered);
-    toast({
-      title: `${filtered.length} establishments found`,
-      description: filtered.length > 0 ? "Results updated based on your search." : "Try a different search term."
-    });
-  };
-  const toggleFavorite = (establishmentId: string) => {
-    if (favoriteEstablishments.includes(establishmentId)) {
-      setFavoriteEstablishments(favoriteEstablishments.filter(id => id !== establishmentId));
-      toast({
-        title: "Removed from favorites",
-        description: "Establishment removed from your favorites."
+  
+  const saveBarCrawl = async (selectedEstablishments: any[]) => {
+    try {
+      // In a real app with Supabase integration, this would save to Supabase
+      console.log('Bar crawl saved:', selectedEstablishments);
+      
+      // Store bar crawl in localStorage for now
+      const barCrawls = JSON.parse(localStorage.getItem('barCrawls') || '[]');
+      barCrawls.push({
+        id: Date.now().toString(),
+        establishments: selectedEstablishments,
+        created_at: new Date().toISOString()
       });
-    } else {
-      setFavoriteEstablishments([...favoriteEstablishments, establishmentId]);
+      localStorage.setItem('barCrawls', JSON.stringify(barCrawls));
+      
       toast({
-        title: "Added to favorites",
-        description: "Establishment added to your favorites."
+        title: "Bar crawl saved!",
+        description: `Your bar crawl with ${selectedEstablishments.length} establishments has been saved.`,
       });
-    }
-  };
-  const saveBarCrawl = (selectedEstablishments: any[]) => {
-    // In a real app, this would save to a database or local storage
-    console.log('Bar crawl saved:', selectedEstablishments);
 
-    // Navigate to profile page to view the bar crawl
-    navigate('/profile');
+      // Navigate to profile page to view the bar crawl
+      navigate('/profile');
+    } catch (error) {
+      console.error('Error saving bar crawl:', error);
+      toast({
+        title: "Error saving bar crawl",
+        description: "Please try again later.",
+        variant: "destructive"
+      });
+    }
   };
 
   // Transform establishment data for the map
@@ -110,6 +103,7 @@ const MapPage = () => {
     longitude: e.longitude,
     cocktailCount: e.cocktailCount
   }));
+  
   return <Layout>
       <div className="animate-fade-in mx-[5%]">
         <div className="mb-4 flex justify-between items-center">
@@ -127,10 +121,27 @@ const MapPage = () => {
         
         <BarCrawlControl establishments={establishments} onSaveBarCrawl={saveBarCrawl} />
 
-        {viewMode === 'map' && <MapView establishments={mapEstablishments} userLocation={userLocation} onRefreshLocation={refreshLocation} isLoadingLocation={isLoadingLocation} onMarkerClick={handleMarkerClick} mapboxToken={mapboxToken || undefined} />}
+        {viewMode === 'map' && (
+          <MapView 
+            establishments={mapEstablishments} 
+            userLocation={userLocation} 
+            onRefreshLocation={refreshLocation} 
+            isLoadingLocation={isLoadingLocation} 
+            onMarkerClick={handleMarkerClick} 
+            mapboxToken={mapboxToken || undefined} 
+          />
+        )}
 
-        <EstablishmentList establishments={filteredEstablishments} selectedEstablishment={selectedEstablishment} favoriteEstablishments={favoriteEstablishments} onToggleFavorite={toggleFavorite} onEstablishmentClick={handleEstablishmentClick} />
+        <EstablishmentList 
+          establishments={filteredEstablishments} 
+          selectedEstablishment={selectedEstablishment} 
+          favoriteEstablishments={favoriteEstablishments} 
+          onToggleFavorite={toggleFavorite} 
+          onEstablishmentClick={handleEstablishmentClick} 
+          isLoading={isLoadingEstablishments}
+        />
       </div>
     </Layout>;
 };
+
 export default MapPage;

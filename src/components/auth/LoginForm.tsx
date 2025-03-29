@@ -5,6 +5,7 @@ import { CardContent, CardFooter } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import AuthButton from './AuthButton';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface LoginFormProps {
   onClose?: () => void;
@@ -18,39 +19,21 @@ const LoginForm: React.FC<LoginFormProps> = ({
   userType = 'individual' 
 }) => {
   const [email, setEmail] = useState('');
-  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [formError, setFormError] = useState('');
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { signIn, isLoading } = useAuth();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    setFormError('');
     
-    // In a real app, this would call an API endpoint
-    setTimeout(() => {
-      // Mock successful login
-      localStorage.setItem('user_authenticated', 'true');
+    try {
+      await signIn(email, password);
       
-      // Store either email or username based on what was used
-      if (email) {
-        localStorage.setItem('user_email', email);
-      } else if (username) {
-        localStorage.setItem('user_username', username);
-      }
-      
-      // Set user type based on selected tab
+      // Store user type based on selected tab
       localStorage.setItem('user_type', userType);
-      
-      toast({
-        title: 'Login successful',
-        description: userType === 'establishment' 
-          ? 'Welcome to your establishment dashboard!' 
-          : 'Welcome back!',
-      });
-      
-      setIsLoading(false);
       
       if (onSuccess) {
         onSuccess();
@@ -59,7 +42,10 @@ const LoginForm: React.FC<LoginFormProps> = ({
         const redirectPath = userType === 'establishment' ? '/establishment/profile' : '/';
         navigate(redirectPath);
       }
-    }, 1000);
+    } catch (error: any) {
+      console.error('Login error:', error);
+      setFormError(error.message || 'Failed to login');
+    }
   };
 
   return (
@@ -67,25 +53,16 @@ const LoginForm: React.FC<LoginFormProps> = ({
       <CardContent className="space-y-4 pt-6">
         <div className="space-y-2">
           <label className="text-sm font-medium" htmlFor="email">
-            {userType === 'establishment' ? 'Business Email or Username' : 'Email or Username'}
+            Email
           </label>
           <Input
             id="email"
-            type={email.includes('@') ? 'email' : 'text'}
+            type="email"
             placeholder={userType === 'establishment' 
-              ? "Enter your business email or username" 
-              : "Enter your email or username"}
-            value={email || username}
-            onChange={(e) => {
-              // Determine if input looks like an email or username
-              if (e.target.value.includes('@')) {
-                setEmail(e.target.value);
-                setUsername('');
-              } else {
-                setUsername(e.target.value);
-                setEmail('');
-              }
-            }}
+              ? "Enter your business email" 
+              : "Enter your email"}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             required
           />
         </div>
@@ -102,6 +79,10 @@ const LoginForm: React.FC<LoginFormProps> = ({
             required
           />
         </div>
+        
+        {formError && (
+          <div className="text-red-500 text-sm mt-2">{formError}</div>
+        )}
       </CardContent>
       <CardFooter className="flex flex-col gap-4">
         <AuthButton
