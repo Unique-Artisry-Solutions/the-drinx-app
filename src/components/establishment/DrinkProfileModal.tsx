@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,27 +29,62 @@ const DrinkProfileModal: React.FC<DrinkProfileModalProps> = ({
   drink,
   onSave
 }) => {
-  const [name, setName] = useState(drink?.name || '');
-  const [description, setDescription] = useState(drink?.description || '');
-  const [price, setPrice] = useState(drink?.price || '');
-  const [ingredients, setIngredients] = useState(drink?.ingredients?.join(', ') || '');
-  const [photoUrl, setPhotoUrl] = useState(drink?.photoUrl || '');
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    price: '',
+    ingredients: '',
+    photoUrl: ''
+  });
+
+  // Update form data when drink changes
+  useEffect(() => {
+    if (drink) {
+      setFormData({
+        name: drink.name || '',
+        description: drink.description || '',
+        price: drink.price || '',
+        ingredients: drink.ingredients?.join(', ') || '',
+        photoUrl: drink.photoUrl || ''
+      });
+    } else {
+      // Reset form for new drink
+      setFormData({
+        name: '',
+        description: '',
+        price: '',
+        ingredients: '',
+        photoUrl: ''
+      });
+    }
+  }, [drink]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { id, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [id]: value
+    }));
+  };
   
   const handlePhotoSelect = (file: File) => {
     // In a real app, this would upload the file to a server
     // For now, we'll just create a local URL
     const url = URL.createObjectURL(file);
-    setPhotoUrl(url);
+    setFormData(prev => ({
+      ...prev,
+      photoUrl: url
+    }));
   };
 
   const handleSave = () => {
     const updatedDrink: Drink = {
       id: drink?.id || Date.now().toString(),
-      name,
-      description,
-      price,
-      ingredients: ingredients.split(',').map(i => i.trim()).filter(i => i),
-      photoUrl
+      name: formData.name,
+      description: formData.description,
+      price: formData.price,
+      ingredients: formData.ingredients.split(',').map(i => i.trim()).filter(i => i),
+      photoUrl: formData.photoUrl
     };
     
     onSave(updatedDrink);
@@ -68,8 +103,8 @@ const DrinkProfileModal: React.FC<DrinkProfileModalProps> = ({
             <Label htmlFor="name">Name</Label>
             <Input 
               id="name" 
-              value={name} 
-              onChange={(e) => setName(e.target.value)} 
+              value={formData.name} 
+              onChange={handleChange} 
               placeholder="Enter mocktail name"
             />
           </div>
@@ -78,8 +113,8 @@ const DrinkProfileModal: React.FC<DrinkProfileModalProps> = ({
             <Label htmlFor="description">Description</Label>
             <Textarea 
               id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              value={formData.description}
+              onChange={handleChange}
               placeholder="Enter mocktail description"
               rows={3}
             />
@@ -89,8 +124,8 @@ const DrinkProfileModal: React.FC<DrinkProfileModalProps> = ({
             <Label htmlFor="price">Price</Label>
             <Input 
               id="price" 
-              value={price} 
-              onChange={(e) => setPrice(e.target.value)} 
+              value={formData.price} 
+              onChange={handleChange} 
               placeholder="$0.00"
             />
           </div>
@@ -99,26 +134,26 @@ const DrinkProfileModal: React.FC<DrinkProfileModalProps> = ({
             <Label htmlFor="ingredients">Ingredients (comma separated)</Label>
             <Input 
               id="ingredients" 
-              value={ingredients} 
-              onChange={(e) => setIngredients(e.target.value)} 
+              value={formData.ingredients} 
+              onChange={handleChange} 
               placeholder="ingredient1, ingredient2, ..."
             />
           </div>
           
           <div className="grid gap-2">
             <Label>Photo</Label>
-            {photoUrl ? (
+            {formData.photoUrl ? (
               <div className="relative rounded-md overflow-hidden">
                 <img 
-                  src={photoUrl} 
-                  alt={name} 
+                  src={formData.photoUrl} 
+                  alt={formData.name} 
                   className="w-full h-48 object-cover"
                 />
                 <Button 
                   variant="outline" 
                   size="sm"
                   className="absolute top-2 right-2"
-                  onClick={() => setPhotoUrl('')}
+                  onClick={() => setFormData(prev => ({ ...prev, photoUrl: '' }))}
                 >
                   Change Photo
                 </Button>
