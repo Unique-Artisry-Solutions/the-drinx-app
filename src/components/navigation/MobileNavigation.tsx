@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, Map, Plus, ShoppingCart, User } from 'lucide-react';
@@ -9,13 +8,6 @@ import { useCart } from '@/contexts/CartContext';
 interface MobileNavigationProps {
   type: NavigationType;
   userType?: 'individual' | 'establishment';
-}
-
-interface NavItem {
-  icon: React.ForwardRefExoticComponent<any>;
-  label: string;
-  path: string;
-  showBadge?: boolean;
 }
 
 const MobileNavigation: React.FC<MobileNavigationProps> = ({ 
@@ -37,9 +29,9 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
   }, []);
 
   // Guest Navigation Items
-  const guestNavItems: NavItem[] = [
+  const guestNavItems = [
     { icon: Home, label: 'Home', path: '/landing' },
-    { icon: ShoppingCart, label: 'Cart', path: '/checkout', showBadge: items.length > 0 },
+    { icon: ShoppingCart, label: 'Cart', path: '/checkout', badge: items.length > 0 },
     { icon: User, label: 'Login', path: '/login' },
   ];
 
@@ -49,7 +41,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
   };
 
   // User Navigation Items
-  const userNavItems: NavItem[] = [
+  const userNavItems = [
     { icon: Home, label: 'Home', path: '/' },
     { icon: Map, label: 'Map', path: '/map' },
     { icon: Plus, label: 'Add', path: '/add' },
@@ -57,7 +49,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
   ];
 
   // Admin Navigation Items
-  const adminNavItems: NavItem[] = [
+  const adminNavItems = [
     { icon: Home, label: 'Home', path: '/' },
     { icon: Map, label: 'Map', path: '/map' },
     { icon: Plus, label: 'Add', path: '/add' },
@@ -101,7 +93,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
                   isActive && "animate-pulse-subtle"
                 )}>
                   <item.icon size={24} />
-                  {item.showBadge && (
+                  {item.badge && (
                     <span className="absolute -top-1 -right-1 bg-spiritless-pink text-white h-4 w-4 flex items-center justify-center rounded-full text-xs">
                       {items.length}
                     </span>

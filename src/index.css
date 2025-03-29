@@ -1,3 +1,4 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
 
 @tailwind base;
@@ -95,6 +96,7 @@
     @apply bg-background text-foreground font-roboto;
   }
 
+  /* Material design elevation shadows */
   .elevation-1 {
     @apply shadow-sm;
   }
@@ -115,6 +117,7 @@
     @apply shadow-xl;
   }
 
+  /* Glass morphism */
   .glass {
     @apply bg-white/80 backdrop-blur-md border border-white/20;
   }
@@ -123,6 +126,7 @@
     @apply bg-black/50 backdrop-blur-md border border-white/10;
   }
 
+  /* Transitions */
   .transition-all-200 {
     @apply transition-all duration-200;
   }
@@ -135,6 +139,7 @@
     @apply transition-transform duration-300;
   }
 
+  /* Button hover effects */
   .btn-hover-effect {
     @apply relative overflow-hidden;
   }
@@ -148,10 +153,12 @@
     @apply scale-x-100;
   }
 
+  /* Smooth scrolling */
   html {
     scroll-behavior: smooth;
   }
 
+  /* Hide scrollbar but keep functionality */
   .hide-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -161,6 +168,7 @@
     display: none;
   }
 
+  /* Custom scrollbar */
   .custom-scrollbar::-webkit-scrollbar {
     width: 6px;
   }
@@ -177,10 +185,12 @@
     @apply bg-gray-400 dark:bg-gray-500;
   }
 
+  /* Map container */
   .map-container {
     @apply w-full h-full rounded-lg overflow-hidden;
   }
 
+  /* Bold colorful cards */
   .card-pink {
     @apply bg-gradient-to-br from-spiritless-pink to-spiritless-pink/80 text-white shadow-lg hover:shadow-xl transition-all border-l-4 border-spiritless-pink;
   }
@@ -197,6 +207,7 @@
     @apply bg-gradient-to-br from-spiritless-burgundy to-spiritless-burgundy/80 text-white shadow-lg hover:shadow-xl transition-all border-l-4 border-spiritless-burgundy;
   }
 
+  /* Bold section backgrounds */
   .bg-pattern-pink {
     background-color: #ffecf4;
     background-image: radial-gradient(circle at 1px 1px, #D94E8F 1px, transparent 0);
@@ -207,22 +218,5 @@
     background-color: #f0ffe0;
     background-image: radial-gradient(circle at 1px 1px, #84BF04 1px, transparent 0);
     background-size: 20px 20px;
-  }
-
-  @keyframes bounce-subtle {
-    0%, 100% {
-      transform: translateY(0);
-    }
-    50% {
-      transform: translateY(-5px);
-    }
-  }
-  
-  .animate-bounce-subtle {
-    animation: bounce-subtle 2s ease-in-out infinite;
-  }
-
-  .shadow-bold-pink {
-    box-shadow: 0 4px 20px rgba(217, 78, 143, 0.5);
   }
 }
