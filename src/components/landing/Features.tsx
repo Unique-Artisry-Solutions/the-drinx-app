@@ -5,7 +5,14 @@ import FeatureCard from './FeatureCard';
 
 const Features = () => {
   return (
-    <div className="bg-white py-24">
+    <div 
+      className="py-24 bg-cover bg-center bg-no-repeat"
+      style={{
+        backgroundImage: "url('/featursBG.jpg')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }}
+    >
       <div className="container mx-auto px-4">
         <h2 className="text-3xl font-bold text-center mb-16 text-[#590202]">Why Choose Spiritless?</h2>
         
