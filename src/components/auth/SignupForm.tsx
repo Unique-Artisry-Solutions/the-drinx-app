@@ -13,14 +13,15 @@ import { useForm } from 'react-hook-form';
 interface SignupFormProps {
   onSuccess?: () => void;
   onClose?: () => void;
+  userType?: 'individual' | 'establishment';
 }
 
-const SignupForm: React.FC<SignupFormProps> = ({ onSuccess, onClose }) => {
+const SignupForm: React.FC<SignupFormProps> = ({ onSuccess, onClose, userType = 'individual' }) => {
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-  const [userType, setUserType] = useState<'individual' | 'establishment'>('individual');
+  const [selectedUserType, setSelectedUserType] = useState<'individual' | 'establishment'>(userType);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -36,7 +37,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess, onClose }) => {
       localStorage.setItem('user_email', email);
       localStorage.setItem('user_name', name);
       localStorage.setItem('user_username', username);
-      localStorage.setItem('user_type', userType);
+      localStorage.setItem('user_type', selectedUserType);
       
       toast({
         title: 'Account created',
@@ -49,7 +50,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess, onClose }) => {
         onSuccess();
       } else {
         // Navigate to the appropriate profile page based on user type
-        if (userType === 'establishment') {
+        if (selectedUserType === 'establishment') {
           navigate('/establishment/profile');
         } else {
           navigate('/');
@@ -117,9 +118,9 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess, onClose }) => {
             Account Type
           </label>
           <RadioGroup 
-            defaultValue="individual" 
-            value={userType}
-            onValueChange={(value) => setUserType(value as 'individual' | 'establishment')}
+            defaultValue={userType} 
+            value={selectedUserType}
+            onValueChange={(value) => setSelectedUserType(value as 'individual' | 'establishment')}
             className="flex flex-col space-y-2"
           >
             <div className="flex items-center space-x-2">
@@ -132,7 +133,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess, onClose }) => {
             </div>
           </RadioGroup>
           <p className="text-xs text-muted-foreground mt-1">
-            {userType === 'individual' 
+            {selectedUserType === 'individual' 
               ? 'Create an account to discover and save mocktails' 
               : 'Register your business to manage your mocktail offerings'}
           </p>
