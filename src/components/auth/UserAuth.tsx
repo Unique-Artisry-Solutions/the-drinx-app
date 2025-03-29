@@ -22,12 +22,18 @@ const UserAuth: React.FC<UserAuthProps> = ({
     <Card className="w-full max-w-md mx-auto">
       <CardHeader>
         <CardTitle className="text-2xl text-center">
-          {userType === 'establishment' ? 'Establishment Registration' : 'Create Your Account'}
+          {defaultTab === 'signup' 
+            ? (userType === 'establishment' ? 'Establishment Registration' : 'Create Your Account')
+            : 'Welcome Back'
+          }
         </CardTitle>
         <CardDescription className="text-center">
-          {userType === 'establishment' 
-            ? 'Register your business to showcase your mocktails'
-            : 'Sign up to discover and track your favorite mocktails'}
+          {defaultTab === 'signup' 
+            ? (userType === 'establishment' 
+              ? 'Register your business to showcase your mocktails'
+              : 'Sign up to discover and track your favorite mocktails')
+            : 'Login to continue your mocktail journey'
+          }
         </CardDescription>
       </CardHeader>
       

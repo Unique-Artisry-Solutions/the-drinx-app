@@ -23,6 +23,7 @@ const SignupForm: React.FC<SignupFormProps> = ({
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
   const [formError, setFormError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { signUp, isLoading } = useAuth();
@@ -30,6 +31,7 @@ const SignupForm: React.FC<SignupFormProps> = ({
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError('');
+    setIsSubmitting(true);
     
     try {
       // Add metadata for user profile
@@ -41,22 +43,20 @@ const SignupForm: React.FC<SignupFormProps> = ({
       
       await signUp(email, password, metadata);
       
-      // Store user type in localStorage
-      localStorage.setItem('user_type', userType);
+      // Show success message about email verification
+      toast({
+        title: 'Check your email',
+        description: 'Please check your email to confirm your account',
+      });
       
       if (onSuccess) {
         onSuccess();
-      } else {
-        // Show success message and stay on the signup page
-        // User needs to confirm email before being redirected
-        toast({
-          title: 'Check your email',
-          description: 'Please check your email to confirm your account',
-        });
       }
     } catch (error: any) {
       console.error('Signup error:', error);
       setFormError(error.message || 'Failed to sign up');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -65,7 +65,7 @@ const SignupForm: React.FC<SignupFormProps> = ({
       <CardContent className="space-y-4 pt-6">
         <div className="space-y-2">
           <label className="text-sm font-medium" htmlFor="name">
-            Name
+            Display Name
           </label>
           <Input
             id="name"
@@ -75,6 +75,9 @@ const SignupForm: React.FC<SignupFormProps> = ({
             required
             className="border-spiritless-pink/20 focus-visible:ring-spiritless-pink"
           />
+          <p className="text-xs text-muted-foreground">
+            This is how you'll appear to others on the platform
+          </p>
         </div>
         
         <div className="space-y-2">
@@ -89,6 +92,9 @@ const SignupForm: React.FC<SignupFormProps> = ({
             required
             className="border-spiritless-pink/20 focus-visible:ring-spiritless-pink"
           />
+          <p className="text-xs text-muted-foreground">
+            Must be unique, you'll use this to log in
+          </p>
         </div>
         
         <div className="space-y-2">
@@ -139,11 +145,16 @@ const SignupForm: React.FC<SignupFormProps> = ({
       <CardFooter className="flex flex-col gap-4">
         <AuthButton
           type="submit"
-          isLoading={isLoading}
+          isLoading={isLoading || isSubmitting}
           className={`w-full ${userType === 'individual' ? 'bg-spiritless-pink hover:bg-spiritless-pink/90' : 'bg-spiritless-green hover:bg-spiritless-green/90'} text-white`}
         >
-          {isLoading ? 'Creating account...' : `Create ${userType === 'establishment' ? 'Business' : 'Personal'} Account`}
+          {isLoading || isSubmitting ? 'Creating account...' : `Create ${userType === 'establishment' ? 'Business' : 'Personal'} Account`}
         </AuthButton>
+        
+        <p className="text-xs text-center text-muted-foreground">
+          By signing up, you'll receive a verification email to confirm your account
+        </p>
+        
         {onClose && (
           <AuthButton
             type="button"
