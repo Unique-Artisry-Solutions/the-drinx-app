@@ -42,6 +42,7 @@ const UserProfilePage = () => {
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedBarCrawl, setSelectedBarCrawl] = useState<any>(null);
+  const [mapboxToken, setMapboxToken] = useState<string | null>(localStorage.getItem('mapbox_token'));
   const { toast } = useToast();
 
   useEffect(() => {
@@ -50,6 +51,19 @@ const UserProfilePage = () => {
       setEmail(localStorage.getItem('user_email') || '');
       setUsername(localStorage.getItem('user_username') || '');
     }, 500);
+  }, []);
+
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const token = localStorage.getItem('mapbox_token');
+      setMapboxToken(token);
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
   const handleSaveProfile = () => {
@@ -211,6 +225,7 @@ const UserProfilePage = () => {
               onRefreshLocation={() => {}}
               isLoadingLocation={false}
               height="300px"
+              mapboxToken={mapboxToken || undefined}
             />
           </CardContent>
         </Card>

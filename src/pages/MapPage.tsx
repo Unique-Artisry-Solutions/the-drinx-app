@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import MapView from '@/components/map/MapView';
@@ -18,6 +19,7 @@ const MapPage = () => {
   const [selectedEstablishment, setSelectedEstablishment] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
   const [favoriteEstablishments, setFavoriteEstablishments] = useState<string[]>([]);
+  const [mapboxToken, setMapboxToken] = useState<string | null>(localStorage.getItem('mapbox_token'));
   const navigate = useNavigate();
   const { toast } = useToast();
   const { 
@@ -40,6 +42,20 @@ const MapPage = () => {
       setFilteredEstablishments(updatedEstablishments);
     }
   }, [userLocation, establishments, calculateDistance, formatDistance]);
+
+  // Listen for storage events to detect token changes
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const token = localStorage.getItem('mapbox_token');
+      setMapboxToken(token);
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
 
   const handleMarkerClick = (establishmentId: string) => {
     setSelectedEstablishment(establishmentId);
@@ -140,6 +156,7 @@ const MapPage = () => {
             onRefreshLocation={refreshLocation}
             isLoadingLocation={isLoadingLocation}
             onMarkerClick={handleMarkerClick}
+            mapboxToken={mapboxToken || undefined}
           />
         )}
 

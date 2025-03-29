@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { Map, MapPin, CrosshairIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import EstablishmentMarker from './EstablishmentMarker';
@@ -26,6 +27,7 @@ interface MapViewProps {
   singleEstablishmentView?: boolean;
   onMarkerClick?: (establishmentId: string) => void;
   height?: string;
+  mapboxToken?: string;
 }
 
 const MapView: React.FC<MapViewProps> = ({
@@ -35,16 +37,27 @@ const MapView: React.FC<MapViewProps> = ({
   isLoadingLocation,
   singleEstablishmentView = false,
   onMarkerClick,
-  height
+  height,
+  mapboxToken
 }) => {
   const [selectedEstablishment, setSelectedEstablishment] = useState<Establishment | null>(null);
   const [isBarCrawlModalOpen, setIsBarCrawlModalOpen] = useState(false);
   const [mapStyle, setMapStyle] = useState('streets-v12');
+  const [tokenInput, setTokenInput] = useState('');
+  const [customToken, setCustomToken] = useState<string | undefined>(
+    mapboxToken || localStorage.getItem('mapbox_token') || undefined
+  );
   const { toast } = useToast();
-  const { mapContainer, mapInstance, isMapLoaded } = useMapInitialization(
+  const { 
+    mapContainer, 
+    mapInstance, 
+    isMapLoaded,
+    mapError
+  } = useMapInitialization(
     establishments,
     userLocation,
-    singleEstablishmentView
+    singleEstablishmentView,
+    customToken
   );
 
   // When in single establishment view, auto-select the establishment
@@ -84,6 +97,25 @@ const MapView: React.FC<MapViewProps> = ({
     }
     
     setIsBarCrawlModalOpen(true);
+  };
+
+  const handleSaveToken = () => {
+    if (!tokenInput.trim()) {
+      toast({
+        title: 'Invalid token',
+        description: 'Please enter a valid Mapbox token',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    localStorage.setItem('mapbox_token', tokenInput);
+    setCustomToken(tokenInput);
+    
+    toast({
+      title: 'Token saved',
+      description: 'Mapbox token has been saved',
+    });
   };
 
   // Map control handlers
@@ -131,6 +163,24 @@ const MapView: React.FC<MapViewProps> = ({
           <div className="text-center">
             <Map className="h-12 w-12 mx-auto text-gray-400 animate-pulse" />
             <p className="mt-2 text-gray-500">Loading map...</p>
+            
+            {mapError && (
+              <div className="mt-4 max-w-md mx-auto">
+                <p className="text-red-500 mb-2">{mapError}</p>
+                <div className="space-y-2">
+                  <p className="text-sm text-gray-600">Enter your Mapbox token below. You can get one from <a href="https://mapbox.com/" target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">mapbox.com</a> dashboard.</p>
+                  <Input
+                    value={tokenInput}
+                    onChange={(e) => setTokenInput(e.target.value)}
+                    placeholder="Enter Mapbox token..."
+                    className="bg-white"
+                  />
+                  <Button onClick={handleSaveToken} className="w-full">
+                    Save Token
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

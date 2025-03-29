@@ -3,11 +3,6 @@ import { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
-// Mock API key - in a real app, this would be an environment variable
-const MAPBOX_API_KEY = 'pk.eyJ1Ijoic3Bpcml0bGVzcy1hcHAiLCJhIjoiY2xsMnV3NGo2MGQxdDNmbW55dHJpaXJjdCJ9.UxBiZHmQg7QKl3mOEfZNEA';
-
-mapboxgl.accessToken = MAPBOX_API_KEY;
-
 interface Establishment {
   id: string;
   name: string;
@@ -19,31 +14,48 @@ interface Establishment {
 const useMapInitialization = (
   establishments: Establishment[],
   userLocation: { latitude: number; longitude: number } | null,
-  singleEstablishmentView: boolean = false
+  singleEstablishmentView: boolean = false,
+  mapboxToken?: string
 ) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const markerRefs = useRef<{ [key: string]: mapboxgl.Marker }>({});
   const userMarkerRef = useRef<mapboxgl.Marker | null>(null);
+  const [mapError, setMapError] = useState<string | null>(null);
 
   // Initialize map
   useEffect(() => {
     if (!mapContainer.current) return;
     
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/streets-v12',
-      center: [userLocation?.longitude || -74.0060, userLocation?.latitude || 40.7128],
-      zoom: userLocation ? 13 : 10,
-    });
+    // Set the token
+    const token = mapboxToken || localStorage.getItem('mapbox_token') || 'pk.eyJ1Ijoic3Bpcml0bGVzcy1hcHAiLCJhIjoiY2xsMnV3NGo2MGQxdDNmbW55dHJpaXJjdCJ9.UxBiZHmQg7QKl3mOEfZNEA';
+    mapboxgl.accessToken = token;
     
-    map.current.on('load', () => {
-      setIsMapLoaded(true);
-    });
-    
-    // Add navigation controls
-    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+    try {
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: 'mapbox://styles/mapbox/streets-v12',
+        center: [userLocation?.longitude || -74.0060, userLocation?.latitude || 40.7128],
+        zoom: userLocation ? 13 : 10,
+      });
+      
+      map.current.on('load', () => {
+        setIsMapLoaded(true);
+        setMapError(null);
+      });
+      
+      map.current.on('error', (e) => {
+        console.error('Mapbox error:', e);
+        setMapError('Failed to load map. Please check your Mapbox token.');
+      });
+      
+      // Add navigation controls
+      map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+    } catch (error) {
+      console.error('Error initializing map:', error);
+      setMapError('Failed to initialize map');
+    }
     
     return () => {
       if (map.current) {
@@ -51,7 +63,7 @@ const useMapInitialization = (
         map.current = null;
       }
     };
-  }, []);
+  }, [mapboxToken]);
 
   // Update markers when establishments or user location changes
   useEffect(() => {
@@ -133,7 +145,8 @@ const useMapInitialization = (
   return {
     mapContainer,
     mapInstance: map.current,
-    isMapLoaded
+    isMapLoaded,
+    mapError
   };
 };
 
