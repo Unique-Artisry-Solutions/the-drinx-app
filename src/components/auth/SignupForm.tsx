@@ -5,8 +5,6 @@ import { CardContent, CardFooter } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import AuthButton from './AuthButton';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
 import { Form, FormField, FormItem, FormControl, FormLabel } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
 
@@ -21,7 +19,6 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess, onClose, userType = 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-  const [selectedUserType, setSelectedUserType] = useState<'individual' | 'establishment'>(userType);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -37,7 +34,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess, onClose, userType = 
       localStorage.setItem('user_email', email);
       localStorage.setItem('user_name', name);
       localStorage.setItem('user_username', username);
-      localStorage.setItem('user_type', selectedUserType);
+      localStorage.setItem('user_type', userType);
       
       toast({
         title: 'Account created',
@@ -50,7 +47,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess, onClose, userType = 
         onSuccess();
       } else {
         // Navigate to the appropriate profile page based on user type
-        if (selectedUserType === 'establishment') {
+        if (userType === 'establishment') {
           navigate('/establishment/profile');
         } else {
           navigate('/');
@@ -62,34 +59,6 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess, onClose, userType = 
   return (
     <form onSubmit={handleSignup}>
       <CardContent className="space-y-4 pt-6">
-        {/* Account Type Selection - Prominently at the top */}
-        <div className="space-y-2 pb-4 border-b border-gray-100">
-          <label className="text-sm font-medium block mb-2">
-            Select Account Type
-          </label>
-          <RadioGroup 
-            defaultValue={userType} 
-            value={selectedUserType}
-            onValueChange={(value) => setSelectedUserType(value as 'individual' | 'establishment')}
-            className="flex gap-4"
-          >
-            <div className="flex-1 border rounded-md p-3 hover:bg-gray-50 transition-colors cursor-pointer flex flex-col items-center space-y-2">
-              <RadioGroupItem value="individual" id="individual-account" className="text-spiritless-pink border-spiritless-pink/50 data-[state=checked]:bg-spiritless-pink" />
-              <Label htmlFor="individual-account" className="font-medium">Individual</Label>
-              <p className="text-xs text-center text-muted-foreground">
-                Discover and save mocktails
-              </p>
-            </div>
-            <div className="flex-1 border rounded-md p-3 hover:bg-gray-50 transition-colors cursor-pointer flex flex-col items-center space-y-2">
-              <RadioGroupItem value="establishment" id="establishment-account" className="text-spiritless-green border-spiritless-green/50 data-[state=checked]:bg-spiritless-green" />
-              <Label htmlFor="establishment-account" className="font-medium">Establishment</Label>
-              <p className="text-xs text-center text-muted-foreground">
-                Register your business
-              </p>
-            </div>
-          </RadioGroup>
-        </div>
-
         <div className="space-y-2">
           <label className="text-sm font-medium" htmlFor="name">
             Name
@@ -149,7 +118,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess, onClose, userType = 
         </div>
         
         {/* Conditional fields based on account type */}
-        {selectedUserType === 'establishment' && (
+        {userType === 'establishment' && (
           <div className="space-y-2 pt-2 bg-gray-50 p-3 rounded-md border border-gray-100">
             <h3 className="text-sm font-medium text-spiritless-green">Establishment Details</h3>
             <p className="text-xs text-muted-foreground mb-2">
@@ -163,9 +132,9 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess, onClose, userType = 
         <AuthButton
           type="submit"
           isLoading={isLoading}
-          className={`w-full ${selectedUserType === 'individual' ? 'bg-spiritless-pink hover:bg-spiritless-pink/90' : 'bg-spiritless-green hover:bg-spiritless-green/90'} text-white`}
+          className={`w-full ${userType === 'individual' ? 'bg-spiritless-pink hover:bg-spiritless-pink/90' : 'bg-spiritless-green hover:bg-spiritless-green/90'} text-white`}
         >
-          {isLoading ? 'Creating account...' : `Create ${selectedUserType === 'establishment' ? 'Business' : 'Personal'} Account`}
+          {isLoading ? 'Creating account...' : `Create ${userType === 'establishment' ? 'Business' : 'Personal'} Account`}
         </AuthButton>
         {onClose && (
           <AuthButton
