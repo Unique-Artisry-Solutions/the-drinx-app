@@ -15,15 +15,15 @@ const LandingPage = () => {
 
   return (
     <div className="landing-page min-h-screen w-full">
-      {/* Only show floating cart button if there are items in the cart */}
-      {hasCartItems && (
+      {/* Only show floating cart button if there are items in the cart and no navigation */}
+      {hasCartItems && !hasCartItems && (
         <div className="fixed top-4 right-4 z-50">
           <CartButton />
         </div>
       )}
       
       {/* Main content for landing page */}
-      <main id="main-content" className="landing-main pt-20">
+      <main id="main-content" className="landing-main">
         {/* Hero Section with gradient background image */}
         <Hero />
         
