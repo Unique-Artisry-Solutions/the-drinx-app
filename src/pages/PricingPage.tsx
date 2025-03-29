@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Check, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import TopNavigation from '@/components/TopNavigation';
+import { useCart } from '@/contexts/CartContext';
 
 const PricingFeature = ({ children }: { children: React.ReactNode }) => (
   <div className="flex items-center space-x-2">
@@ -16,23 +17,24 @@ const PricingFeature = ({ children }: { children: React.ReactNode }) => (
 );
 
 const PricingPage = () => {
-  const [checkoutPlan, setCheckoutPlan] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { addItem } = useCart();
 
-  const handleCheckout = (planName: string, planPrice: string) => {
-    setCheckoutPlan(planName);
+  const handleAddToCart = (planName: string, planPrice: number, planType: 'user' | 'establishment', interval: string = 'monthly') => {
     setIsLoading(true);
     
-    // Simulate checkout process
+    // Add to cart with a slight delay to show loading state
     setTimeout(() => {
-      toast({
-        title: "Checkout Successful!",
-        description: `You've subscribed to the ${planName} plan for ${planPrice}.`,
+      addItem({
+        id: `${planType}-${planName.toLowerCase()}-${interval}`,
+        name: planName,
+        price: planPrice,
+        type: planType,
+        interval: interval
       });
       setIsLoading(false);
-      setCheckoutPlan(null);
-    }, 2000);
+    }, 500);
   };
 
   return (
@@ -109,10 +111,10 @@ const PricingPage = () => {
                 <CardFooter>
                   <Button 
                     className="w-full" 
-                    onClick={() => handleCheckout("Premium", "$6.99/month")}
-                    disabled={isLoading && checkoutPlan === "Premium"}
+                    onClick={() => handleAddToCart("Premium", 6.99, "user", "monthly")}
+                    disabled={isLoading}
                   >
-                    {isLoading && checkoutPlan === "Premium" ? "Processing..." : "Subscribe Now"}
+                    {isLoading ? "Adding to cart..." : "Add to Cart"}
                   </Button>
                 </CardFooter>
               </Card>
@@ -138,10 +140,10 @@ const PricingPage = () => {
                   <Button 
                     variant="outline" 
                     className="w-full"
-                    onClick={() => handleCheckout("Annual", "$59.99/year")}
-                    disabled={isLoading && checkoutPlan === "Annual"}
+                    onClick={() => handleAddToCart("Annual", 59.99, "user", "yearly")}
+                    disabled={isLoading}
                   >
-                    {isLoading && checkoutPlan === "Annual" ? "Processing..." : "Subscribe Annually"}
+                    {isLoading ? "Adding to cart..." : "Add to Cart"}
                   </Button>
                 </CardFooter>
               </Card>
@@ -171,10 +173,10 @@ const PricingPage = () => {
                   <Button 
                     variant="outline" 
                     className="w-full"
-                    onClick={() => handleCheckout("Basic Establishment", "$29.99/month")}
-                    disabled={isLoading && checkoutPlan === "Basic Establishment"}
+                    onClick={() => handleAddToCart("Basic Establishment", 29.99, "establishment", "monthly")}
+                    disabled={isLoading}
                   >
-                    {isLoading && checkoutPlan === "Basic Establishment" ? "Processing..." : "Subscribe Now"}
+                    {isLoading ? "Adding to cart..." : "Add to Cart"}
                   </Button>
                 </CardFooter>
               </Card>
@@ -204,10 +206,10 @@ const PricingPage = () => {
                 <CardFooter>
                   <Button 
                     className="w-full"
-                    onClick={() => handleCheckout("Pro Establishment", "$79.99/month")}
-                    disabled={isLoading && checkoutPlan === "Pro Establishment"}
+                    onClick={() => handleAddToCart("Pro Establishment", 79.99, "establishment", "monthly")}
+                    disabled={isLoading}
                   >
-                    {isLoading && checkoutPlan === "Pro Establishment" ? "Processing..." : "Subscribe Now"}
+                    {isLoading ? "Adding to cart..." : "Add to Cart"}
                   </Button>
                 </CardFooter>
               </Card>
@@ -235,10 +237,10 @@ const PricingPage = () => {
                   <Button 
                     variant="outline"
                     className="w-full"
-                    onClick={() => handleCheckout("Enterprise", "$199.99/month")}
-                    disabled={isLoading && checkoutPlan === "Enterprise"}
+                    onClick={() => handleAddToCart("Enterprise", 199.99, "establishment", "monthly")}
+                    disabled={isLoading}
                   >
-                    {isLoading && checkoutPlan === "Enterprise" ? "Processing..." : "Contact Sales"}
+                    {isLoading ? "Adding to cart..." : "Add to Cart"}
                   </Button>
                 </CardFooter>
               </Card>

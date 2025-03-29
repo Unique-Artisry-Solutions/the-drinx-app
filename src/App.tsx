@@ -1,10 +1,10 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { CartProvider } from "@/contexts/CartContext";
 import Index from "./pages/Index";
 import MapPage from "./pages/MapPage";
 import AddPage from "./pages/AddPage";
@@ -18,6 +18,7 @@ import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import PricingPage from "./pages/PricingPage";
+import CheckoutPage from "./pages/CheckoutPage";
 import UserProfilePage from "./pages/profile/UserProfilePage";
 import EstablishmentProfilePage from "./pages/establishment/EstablishmentProfilePage";
 
@@ -30,7 +31,6 @@ const queryClient = new QueryClient({
   },
 });
 
-// Auth context for global state management
 export const useAuth = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     return localStorage.getItem('user_authenticated') === 'true';
@@ -49,7 +49,6 @@ export const useAuth = () => {
     setIsAuthenticated(false);
   };
   
-  // Check auth status on mount and when localStorage changes
   useEffect(() => {
     const checkAuth = () => {
       const auth = localStorage.getItem('user_authenticated') === 'true';
@@ -65,7 +64,6 @@ export const useAuth = () => {
   return { isAuthenticated, login, logout };
 };
 
-// Route Guard component for protected routes
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const isAuthenticated = localStorage.getItem('user_authenticated') === 'true';
   
@@ -76,7 +74,6 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-// Admin Route Guard component
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   const isAdminAuthenticated = localStorage.getItem('admin_authenticated') === 'true';
   
@@ -87,7 +84,6 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-// Type-specific route guard
 const TypedProtectedRoute = ({ 
   userType, 
   children 
@@ -114,7 +110,6 @@ const App = () => {
   const [userType, setUserType] = useState<'individual' | 'establishment'>('individual');
   
   useEffect(() => {
-    // Check authentication status on initial load and when it changes
     const checkAuth = () => {
       const auth = localStorage.getItem('user_authenticated') === 'true';
       setIsAuthenticated(auth);
@@ -129,7 +124,6 @@ const App = () => {
     
     checkAuth();
     
-    // Listen for storage events (in case authentication state changes in another tab)
     window.addEventListener('storage', checkAuth);
     
     return () => {
@@ -140,77 +134,72 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            {/* Public routes */}
-            <Route path="/" element={isAuthenticated ? <Index /> : <LandingPage />} />
-            <Route path="/landing" element={<LandingPage />} />
-            <Route path="/login" element={isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />} />
-            <Route path="/signup" element={isAuthenticated ? <Navigate to="/" replace /> : <SignupPage />} />
-            <Route path="/pricing" element={<PricingPage />} />
-            <Route path="/cart" element={<div>Shopping Cart</div>} />
-            
-            {/* Protected routes for any logged in user */}
-            <Route path="/explore" element={<Navigate to="/" replace />} />
-            <Route path="/map" element={
-              <ProtectedRoute>
-                <MapPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/add" element={
-              <ProtectedRoute>
-                <AddPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/establishment/:id" element={
-              <ProtectedRoute>
-                <EstablishmentDetail />
-              </ProtectedRoute>
-            } />
-            <Route path="/cocktail/:id" element={
-              <ProtectedRoute>
-                <CocktailDetail />
-              </ProtectedRoute>
-            } />
-            
-            {/* Individual-specific routes */}
-            <Route path="/profile" element={
-              <TypedProtectedRoute userType="individual">
-                <UserProfilePage />
-              </TypedProtectedRoute>
-            } />
-            
-            {/* Establishment-specific routes */}
-            <Route path="/establishment/profile" element={
-              <TypedProtectedRoute userType="establishment">
-                <EstablishmentProfilePage />
-              </TypedProtectedRoute>
-            } />
-            
-            {/* Backward compatibility - redirect to appropriate profile */}
-            <Route path="/profile" element={
-              <ProtectedRoute>
-                {userType === 'establishment' ? 
-                  <Navigate to="/establishment/profile" replace /> : 
-                  <ProfilePage />
-                }
-              </ProtectedRoute>
-            } />
-            
-            {/* Admin routes */}
-            <Route path="/admin" element={<AdminLogin />} />
-            <Route path="/admin/dashboard" element={
-              <AdminRoute>
-                <AdminDashboard />
-              </AdminRoute>
-            } />
-            
-            {/* Catch-all route */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
+        <CartProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={isAuthenticated ? <Index /> : <LandingPage />} />
+              <Route path="/landing" element={<LandingPage />} />
+              <Route path="/login" element={isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />} />
+              <Route path="/signup" element={isAuthenticated ? <Navigate to="/" replace /> : <SignupPage />} />
+              <Route path="/pricing" element={<PricingPage />} />
+              <Route path="/checkout" element={<CheckoutPage />} />
+              
+              <Route path="/explore" element={<Navigate to="/" replace />} />
+              <Route path="/map" element={
+                <ProtectedRoute>
+                  <MapPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/add" element={
+                <ProtectedRoute>
+                  <AddPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/establishment/:id" element={
+                <ProtectedRoute>
+                  <EstablishmentDetail />
+                </ProtectedRoute>
+              } />
+              <Route path="/cocktail/:id" element={
+                <ProtectedRoute>
+                  <CocktailDetail />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/profile" element={
+                <TypedProtectedRoute userType="individual">
+                  <UserProfilePage />
+                </TypedProtectedRoute>
+              } />
+              
+              <Route path="/establishment/profile" element={
+                <TypedProtectedRoute userType="establishment">
+                  <EstablishmentProfilePage />
+                </TypedProtectedRoute>
+              } />
+              
+              <Route path="/profile" element={
+                <ProtectedRoute>
+                  {userType === 'establishment' ? 
+                    <Navigate to="/establishment/profile" replace /> : 
+                    <ProfilePage />
+                  }
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/admin" element={<AdminLogin />} />
+              <Route path="/admin/dashboard" element={
+                <AdminRoute>
+                  <AdminDashboard />
+                </AdminRoute>
+              } />
+              
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </CartProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );
