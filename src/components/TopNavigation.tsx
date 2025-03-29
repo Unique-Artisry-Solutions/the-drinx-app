@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, Map, Plus, Search, User, Settings, LogOut } from 'lucide-react';
 import { 
@@ -23,12 +23,27 @@ import {
 
 const TopNavigation: React.FC = () => {
   const location = useLocation();
-  const isAuthenticated = localStorage.getItem('user_authenticated') === 'true';
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userType, setUserType] = useState<'individual' | 'establishment'>('individual');
+  
+  useEffect(() => {
+    const auth = localStorage.getItem('user_authenticated') === 'true';
+    setIsAuthenticated(auth);
+    
+    // Get the user type from localStorage
+    const type = localStorage.getItem('user_type');
+    if (type === 'establishment') {
+      setUserType('establishment');
+    } else {
+      setUserType('individual');
+    }
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('user_authenticated');
     localStorage.removeItem('user_email');
     localStorage.removeItem('user_username');
+    localStorage.removeItem('user_type');
     window.location.href = '/';
   };
 
@@ -37,6 +52,11 @@ const TopNavigation: React.FC = () => {
     { icon: Map, label: 'Map', path: '/map' },
     { icon: Plus, label: 'Add', path: '/add' },
   ];
+
+  // Function to get the correct profile path based on user type
+  const getProfilePath = () => {
+    return userType === 'establishment' ? '/establishment/profile' : '/profile';
+  };
 
   return (
     <div className="hidden md:block w-full border-b border-material-outline">
@@ -86,7 +106,7 @@ const TopNavigation: React.FC = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem asChild>
-                  <Link to="/profile" className="flex items-center gap-2 cursor-pointer">
+                  <Link to={getProfilePath()} className="flex items-center gap-2 cursor-pointer">
                     <User className="h-4 w-4" />
                     <span>Profile</span>
                   </Link>

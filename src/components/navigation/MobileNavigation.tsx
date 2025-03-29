@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, Map, Plus, ShoppingCart, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -15,6 +15,17 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
   userType = 'individual' 
 }) => {
   const location = useLocation();
+  const [currentUserType, setCurrentUserType] = useState(userType);
+  
+  useEffect(() => {
+    // Get the user type from localStorage to ensure it's up to date
+    const type = localStorage.getItem('user_type');
+    if (type === 'establishment') {
+      setCurrentUserType('establishment');
+    } else {
+      setCurrentUserType('individual');
+    }
+  }, []);
 
   // Guest Navigation Items
   const guestNavItems = [
@@ -23,12 +34,17 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
     { icon: User, label: 'Login', path: '/login' },
   ];
 
+  // Get the correct profile path based on user type
+  const getProfilePath = () => {
+    return currentUserType === 'establishment' ? '/establishment/profile' : '/profile';
+  };
+
   // User Navigation Items
   const userNavItems = [
     { icon: Home, label: 'Home', path: '/' },
     { icon: Map, label: 'Map', path: '/map' },
     { icon: Plus, label: 'Add', path: '/add' },
-    { icon: User, label: 'Profile', path: userType === 'establishment' ? '/establishment/profile' : '/profile' },
+    { icon: User, label: 'Profile', path: getProfilePath() },
   ];
 
   // Admin Navigation Items

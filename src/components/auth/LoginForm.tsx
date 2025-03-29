@@ -35,6 +35,11 @@ const LoginForm: React.FC<LoginFormProps> = ({ onClose, onSuccess }) => {
         localStorage.setItem('user_username', username);
       }
       
+      // Set default user type if not already set (for existing users)
+      if (!localStorage.getItem('user_type')) {
+        localStorage.setItem('user_type', 'individual');
+      }
+      
       toast({
         title: 'Login successful',
         description: 'Welcome back!',
