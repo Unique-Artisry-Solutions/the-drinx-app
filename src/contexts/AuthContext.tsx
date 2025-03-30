@@ -85,9 +85,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               localStorage.setItem('user_email', currentSession.user.email || '');
               localStorage.setItem('user_type', currentSession.user.user_metadata.user_type || 'individual');
               
-              // Redirect to home if user has just verified email
+              // Redirect to explore if user has just verified email
               if (window.location.href.includes('?email_confirmed=true')) {
-                window.location.href = '/';
+                window.location.href = '/explore';
               }
             }
           } else if (event === 'SIGNED_OUT') {

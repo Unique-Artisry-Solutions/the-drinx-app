@@ -27,6 +27,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isResendingEmail, setIsResendingEmail] = useState(false);
   const [showResendVerification, setShowResendVerification] = useState(false);
+  const [isAdminLogin, setIsAdminLogin] = useState(false);
   
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -39,12 +40,34 @@ const LoginForm: React.FC<LoginFormProps> = ({
     setShowResendVerification(false);
     
     try {
-      await signIn(email, password);
-      
-      if (onSuccess) {
-        onSuccess();
+      if (isAdminLogin) {
+        // Admin login logic
+        if (email === 'admin@spiritless.com' && password === 'admin123') {
+          localStorage.setItem('admin_authenticated', 'true');
+          toast({
+            title: 'Admin login successful',
+            description: 'Welcome to the admin dashboard',
+          });
+          navigate('/admin/dashboard');
+          return;
+        } else {
+          throw new Error('Invalid admin credentials');
+        }
       } else {
-        navigate('/');
+        // Regular user login
+        await signIn(email, password);
+        
+        toast({
+          title: 'Login successful',
+          description: 'Welcome back!',
+        });
+        
+        if (onSuccess) {
+          onSuccess();
+        } else {
+          // Redirect to the explore page on successful login
+          navigate('/explore');
+        }
       }
     } catch (error: any) {
       console.error('Login error:', error);
@@ -90,9 +113,22 @@ const LoginForm: React.FC<LoginFormProps> = ({
     }
   };
 
+  const toggleAdminLogin = () => {
+    setIsAdminLogin(!isAdminLogin);
+    setFormError('');
+  };
+
   return (
     <form onSubmit={handleLogin}>
       <CardContent className="space-y-4 pt-6">
+        {isAdminLogin && (
+          <div className="bg-amber-50 p-3 rounded-md border border-amber-200 mb-4">
+            <p className="text-sm text-amber-800">
+              You are logging in as an administrator
+            </p>
+          </div>
+        )}
+        
         <div className="space-y-2">
           <label className="text-sm font-medium" htmlFor="email">
             Email
@@ -128,6 +164,18 @@ const LoginForm: React.FC<LoginFormProps> = ({
           />
         </div>
         
+        <div className="flex items-center justify-end">
+          <Button
+            type="button"
+            variant="link"
+            size="sm"
+            onClick={toggleAdminLogin}
+            className="text-xs text-spiritless-pink hover:text-spiritless-pink/90 p-0 h-auto"
+          >
+            {isAdminLogin ? 'Switch to user login' : 'Admin login'}
+          </Button>
+        </div>
+        
         {formError && (
           <div className="text-red-500 text-sm mt-2">{formError}</div>
         )}
@@ -156,9 +204,9 @@ const LoginForm: React.FC<LoginFormProps> = ({
         <AuthButton
           type="submit"
           isLoading={isLoading || isSubmitting}
-          className={`w-full ${userType === 'individual' ? 'bg-spiritless-pink hover:bg-spiritless-pink/90' : 'bg-spiritless-green hover:bg-spiritless-green/90'} text-white`}
+          className={`w-full ${isAdminLogin ? 'bg-purple-600 hover:bg-purple-700' : userType === 'individual' ? 'bg-spiritless-pink hover:bg-spiritless-pink/90' : 'bg-spiritless-green hover:bg-spiritless-green/90'} text-white`}
         >
-          {isLoading || isSubmitting ? 'Signing in...' : 'Login'}
+          {isLoading || isSubmitting ? 'Signing in...' : isAdminLogin ? 'Admin Login' : 'Login'}
         </AuthButton>
         
         {onClose && (
