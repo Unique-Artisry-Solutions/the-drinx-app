@@ -1,4 +1,3 @@
-
 // Sample data for development purposes
 
 // Sample establishments
@@ -192,5 +191,44 @@ export const sampleCocktails = [
       name: "Mindful Mixology",
       distance: "3.6 miles"
     }
+  }
+];
+
+export const sampleBarCrawls = [
+  {
+    id: "1",
+    name: "Downtown Mocktail Tour",
+    stops: 4,
+    description: "Explore the best downtown locations for spirit-free options",
+    establishments: ["est1", "est2", "est3", "est4"],
+    organizer: "John Doe",
+    distance: "2.5 mi"
+  },
+  {
+    id: "2",
+    name: "Uptown Refreshment Walk",
+    stops: 3,
+    description: "A leisurely stroll through uptown's best mocktail spots",
+    establishments: ["est5", "est6", "est7"],
+    organizer: "Jane Smith",
+    distance: "1.8 mi"
+  },
+  {
+    id: "3",
+    name: "Harbor Breeze Crawl",
+    stops: 5,
+    description: "Seaside venues with amazing alcohol-free options",
+    establishments: ["est8", "est9", "est10", "est11", "est12"],
+    organizer: "Sam Wilson",
+    distance: "3.2 mi"
+  },
+  {
+    id: "4",
+    name: "Arts District Crawl",
+    stops: 3,
+    description: "Unique mocktails at creative establishments",
+    establishments: ["est13", "est14", "est15"],
+    organizer: "Alex Johnson",
+    distance: "1.5 mi"
   }
 ];

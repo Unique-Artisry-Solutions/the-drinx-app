@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -29,7 +30,10 @@ import EstablishmentProfilePage from "./pages/establishment/EstablishmentProfile
 import MissionPage from "./pages/MissionPage";
 import ResourcesPage from "./pages/ResourcesPage";
 import LegalPage from "./pages/LegalPage";
-import EmailVerificationPage from "./pages/EmailVerificationPage";
+import VerifyEmail from "./pages/VerifyEmail";
+import Explore from "./pages/Explore";
+import AdminUsersPage from "./pages/admin/AdminUsersPage";
+import AdminEstablishmentsPage from "./pages/admin/AdminEstablishmentsPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -124,7 +128,7 @@ const AuthenticatedApp = () => {
         <Route path="/landing" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
-        <Route path="/verify-email" element={<EmailVerificationPage />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/checkout" element={<CheckoutPage />} />
         
@@ -132,7 +136,7 @@ const AuthenticatedApp = () => {
         <Route path="/resources" element={<ResourcesPage />} />
         <Route path="/legal" element={<LegalPage />} />
         
-        <Route path="/explore" element={<Index />} />
+        <Route path="/explore" element={<Explore />} />
         <Route path="/map" element={
           <ProtectedRoute>
             <MapPage />
@@ -181,6 +185,16 @@ const AuthenticatedApp = () => {
         <Route path="/admin/dashboard" element={
           <AdminRoute>
             <AdminDashboard />
+          </AdminRoute>
+        } />
+        <Route path="/admin/users" element={
+          <AdminRoute>
+            <AdminUsersPage />
+          </AdminRoute>
+        } />
+        <Route path="/admin/establishments" element={
+          <AdminRoute>
+            <AdminEstablishmentsPage />
           </AdminRoute>
         } />
         
