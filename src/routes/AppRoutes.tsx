@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { ProtectedRoute, AdminRoute, TypedProtectedRoute } from './protectedRoutes';
@@ -41,8 +40,10 @@ const AppRoutes = () => {
     <>
       <EmailVerificationHandler />
       <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/landing" element={<LandingPage />} />
+        <Route path="/" element={<LandingPage />}>
+          <Route index element={<Index />} />
+          <Route path="?email_confirmed=true" element={<EmailVerificationHandler />} />
+        </Route>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/verify-email" element={<VerifyEmail />} />

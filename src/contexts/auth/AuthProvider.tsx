@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
 import { AuthContextType } from './types';
 import { useAuthActions } from './useAuthActions';
+import { useNavigate } from 'react-router-dom';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -74,11 +75,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return;
         }
         
+        console.log('Session check result:', data);
         setSession(data.session);
         setUser(data.session?.user || null);
         
         // Set email verification status
         if (data.session?.user) {
+          console.log('User email verified status:', data.session.user.email_confirmed_at !== null);
           setIsEmailVerified(data.session.user.email_confirmed_at !== null);
           
           // Ensure localStorage is consistent with session state
@@ -115,7 +118,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Set up authentication state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, currentSession) => {
-        console.log('Auth state changed:', event);
+        console.log('Auth state changed:', event, currentSession);
         setSession(currentSession);
         setUser(currentSession?.user || null);
         
@@ -128,12 +131,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (currentSession.user.email_confirmed_at) {
               localStorage.setItem('user_authenticated', 'true');
               localStorage.setItem('user_email', currentSession.user.email || '');
-              localStorage.setItem('user_type', currentSession.user.user_metadata.user_type || 'individual');
-              localStorage.setItem('user_username', currentSession.user.user_metadata.username || '');
-              
-              // Redirect to explore if user has just verified email
-              if (window.location.href.includes('?email_confirmed=true')) {
-                window.location.href = '/explore';
+              if (currentSession.user.user_metadata) {
+                localStorage.setItem('user_type', currentSession.user.user_metadata.user_type || 'individual');
+                localStorage.setItem('user_username', currentSession.user.user_metadata.username || '');
               }
             }
           } else if (event === 'SIGNED_OUT') {
@@ -153,6 +153,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       refreshSession();
       checkAdminSession();
     }, 15 * 60 * 1000); // Check every 15 minutes
+
+    // Check for email verification in URL
+    const checkEmailVerification = () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('email_confirmed') === 'true') {
+        console.log('Email verification detected in URL');
+        refreshSession();
+      }
+    };
+    
+    checkEmailVerification();
 
     return () => {
       subscription.unsubscribe();

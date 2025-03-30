@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -69,20 +70,38 @@ export function useAuthActions() {
   const signUp = async (email: string, password: string, metadata?: { [key: string]: any }) => {
     try {
       setIsLoading(true);
+      console.log('Starting sign up process for:', email);
       
-      const { error } = await supabase.auth.signUp({ 
+      // Make sure we have a proper redirect URL
+      const redirectTo = `${window.location.origin}/verify-email`;
+      console.log('Using redirect URL:', redirectTo);
+      
+      const { data, error } = await supabase.auth.signUp({ 
         email, 
         password,
         options: {
           data: metadata,
-          emailRedirectTo: `${window.location.origin}/?email_confirmed=true`,
+          emailRedirectTo: redirectTo,
         }
       });
       
       if (error) {
+        console.error('Signup error from Supabase:', error);
         throw error;
       }
+      
+      console.log('Signup response:', data);
+      
+      // Check if the user was created but needs email verification
+      if (data.user && !data.user.email_confirmed_at) {
+        console.log('User created, email verification needed');
+        toast({
+          title: 'Verification email sent',
+          description: 'Please check your email inbox and click the verification link',
+        });
+      }
     } catch (error: any) {
+      console.error('Error in signUp function:', error);
       toast({
         title: 'Registration failed',
         description: error.message || 'An error occurred during registration',
