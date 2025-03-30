@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -36,7 +35,6 @@ export function useAuthActions() {
         throw error;
       }
       
-      // Check if email is verified
       if (data.user && !data.user.email_confirmed_at) {
         toast({
           title: 'Email not verified',
@@ -44,7 +42,6 @@ export function useAuthActions() {
           variant: 'destructive',
         });
         
-        // Sign out the user if email is not verified
         await supabase.auth.signOut();
         throw new Error('Email not verified');
       } else {
@@ -53,7 +50,6 @@ export function useAuthActions() {
           description: 'Welcome back!',
         });
         
-        // Store authentication state in localStorage
         localStorage.setItem('user_authenticated', 'true');
         localStorage.setItem('user_email', data.user?.email || '');
         localStorage.setItem('user_type', data.user?.user_metadata.user_type || 'individual');
@@ -74,7 +70,6 @@ export function useAuthActions() {
     try {
       setIsLoading(true);
       
-      // Enable email confirmation by default
       const { error } = await supabase.auth.signUp({ 
         email, 
         password,
@@ -87,11 +82,6 @@ export function useAuthActions() {
       if (error) {
         throw error;
       }
-      
-      toast({
-        title: 'Registration successful',
-        description: 'Please check your email to confirm your account',
-      });
     } catch (error: any) {
       toast({
         title: 'Registration failed',
@@ -113,7 +103,6 @@ export function useAuthActions() {
         throw error;
       }
       
-      // Clear local storage
       localStorage.removeItem('user_authenticated');
       localStorage.removeItem('user_email');
       localStorage.removeItem('user_type');
