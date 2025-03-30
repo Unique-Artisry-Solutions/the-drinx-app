@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Home, 
@@ -21,22 +21,45 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from '@/contexts/AuthContext';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { supabase } from '@/integrations/supabase/client';
 
 const UserTopNavigation: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [userType, setUserType] = useState<'individual' | 'establishment'>('individual');
+  const [username, setUsername] = useState<string | null>(null);
   const { signOut, user } = useAuth();
   const isMobile = useIsMobile();
   
-  React.useEffect(() => {
+  useEffect(() => {
     const storedUserType = localStorage.getItem('user_type');
     if (storedUserType === 'establishment') {
       setUserType('establishment');
     } else {
       setUserType('individual');
     }
+
+    // Fetch username if user is logged in
+    const fetchUsername = async () => {
+      if (user) {
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('username, display_name')
+            .eq('id', user.id)
+            .single();
+          
+          if (data && !error) {
+            setUsername(data.display_name || data.username || null);
+          }
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+        }
+      }
+    };
+
+    fetchUsername();
   }, [user]);
   
   const handleLogout = async () => {
@@ -92,6 +115,12 @@ const UserTopNavigation: React.FC = () => {
           </div>
           
           <div className="user-nav-right flex items-center space-x-4">
+            {username && (
+              <span className="text-sm hidden md:block text-gray-600">
+                Welcome, <span className="font-medium text-spiritless-pink">{username}</span>
+              </span>
+            )}
+            
             <Button 
               variant="ghost" 
               size="icon" 
@@ -108,6 +137,14 @@ const UserTopNavigation: React.FC = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="user-profile-dropdown">
+                {username && (
+                  <>
+                    <div className="px-2 py-1.5 text-sm font-medium text-gray-500">
+                      Signed in as <span className="text-spiritless-pink">{username}</span>
+                    </div>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
                 <DropdownMenuItem asChild>
                   <Link to={getProfilePath()} className="user-profile-item flex items-center gap-2 cursor-pointer">
                     <User className="h-4 w-4" />
@@ -135,6 +172,11 @@ const UserTopNavigation: React.FC = () => {
         
         {isMobileMenuOpen && (
           <div className="user-mobile-menu md:hidden py-3 space-y-2">
+            {username && (
+              <div className="px-3 py-2 text-sm text-gray-600 border-b border-gray-100 mb-2 pb-2">
+                Welcome, <span className="font-medium text-spiritless-pink">{username}</span>
+              </div>
+            )}
             {userNavItems.map((item) => {
               const isActive = location.pathname === item.path;
               return (

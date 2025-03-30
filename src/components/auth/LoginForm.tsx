@@ -21,7 +21,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
   onClose, 
   userType = 'individual' 
 }) => {
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [formError, setFormError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -42,7 +42,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
     try {
       if (isAdminLogin) {
         // Admin login logic
-        if (email === 'admin@spiritless.com' && password === 'admin123') {
+        if (identifier === 'admin@spiritless.com' && password === 'admin123') {
           localStorage.setItem('admin_authenticated', 'true');
           toast({
             title: 'Admin login successful',
@@ -54,8 +54,34 @@ const LoginForm: React.FC<LoginFormProps> = ({
           throw new Error('Invalid admin credentials');
         }
       } else {
-        // Regular user login
-        await signIn(email, password);
+        // Check if identifier is an email or username
+        const isEmail = identifier.includes('@');
+        
+        if (isEmail) {
+          // Regular email login
+          await signIn(identifier, password);
+        } else {
+          // Username login - first get the email associated with the username
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('username', identifier)
+            .single();
+            
+          if (error || !data) {
+            throw new Error('Username not found');
+          }
+            
+          // Get the user's email from auth.users using the id
+          const { data: userData, error: userError } = await supabase.auth.admin.getUserById(data.id);
+          
+          if (userError || !userData.user) {
+            throw new Error('User not found');
+          }
+            
+          // Now sign in with the email
+          await signIn(userData.user.email || '', password);
+        }
         
         toast({
           title: 'Login successful',
@@ -83,7 +109,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
   };
   
   const handleResendVerification = async () => {
-    if (!email) {
+    if (!identifier) {
       setFormError('Please enter your email address');
       return;
     }
@@ -92,7 +118,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
     try {
       const { error } = await supabase.auth.resend({
         type: 'signup',
-        email,
+        email: identifier,
         options: {
           emailRedirectTo: `${window.location.origin}/?email_confirmed=true`,
         }
@@ -130,15 +156,15 @@ const LoginForm: React.FC<LoginFormProps> = ({
         )}
         
         <div className="space-y-2">
-          <label className="text-sm font-medium" htmlFor="email">
-            Email
+          <label className="text-sm font-medium" htmlFor="identifier">
+            Email or Username
           </label>
           <Input
-            id="email"
-            type="email"
-            placeholder="Enter your email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            id="identifier"
+            type="text"
+            placeholder="Enter your email or username"
+            value={identifier}
+            onChange={(e) => setIdentifier(e.target.value)}
             required
             className="border-spiritless-pink/20 focus-visible:ring-spiritless-pink"
           />

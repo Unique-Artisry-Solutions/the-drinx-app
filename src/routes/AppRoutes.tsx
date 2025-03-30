@@ -30,6 +30,7 @@ import ResourcesPage from "@/pages/ResourcesPage";
 import LegalPage from "@/pages/LegalPage";
 import VerifyEmail from "@/pages/VerifyEmail";
 import Explore from "@/pages/Explore";
+import BarCrawlDetail from "@/pages/BarCrawlDetail";
 import AdminUsersPage from "@/pages/admin/AdminUsersPage";
 import AdminEstablishmentsPage from "@/pages/admin/AdminEstablishmentsPage";
 import AdminUserProfile from "@/pages/admin/AdminUserProfile";
@@ -53,6 +54,7 @@ const AppRoutes = () => {
         <Route path="/legal" element={<LegalPage />} />
         
         <Route path="/explore" element={<Explore />} />
+        <Route path="/bar-crawl/:id" element={<BarCrawlDetail />} />
         <Route path="/map" element={
           <ProtectedRoute>
             <MapPage />
