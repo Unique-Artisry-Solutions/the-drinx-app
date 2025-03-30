@@ -27,9 +27,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       const isAdminAuth = localStorage.getItem('admin_authenticated') === 'true';
       const userTypeStored = localStorage.getItem('user_type');
 
+      setIsAdmin(isAdminAuth);
+      
       if (isAdminAuth) {
         setNavigationType(NavigationType.ADMIN);
-        setIsAdmin(true);
       } else if (user && isEmailVerified) {
         setNavigationType(NavigationType.USER);
         setUserType(userTypeStored === 'establishment' ? 'establishment' : 'individual');
@@ -39,7 +40,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     };
 
     checkAuth();
-  }, [user, isEmailVerified]);
+  }, [user, isEmailVerified, location.pathname]);
 
   const isLandingPage = location.pathname === '/' || location.pathname === '/landing';
   const isAdminPage = location.pathname.startsWith('/admin');

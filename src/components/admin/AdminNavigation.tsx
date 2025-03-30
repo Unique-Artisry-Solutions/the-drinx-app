@@ -13,16 +13,17 @@ import {
   Layout,
   Globe,
   Store,
-  UserCog
 } from 'lucide-react';
 import {
-  Menubar,
-  MenubarMenu,
-  MenubarTrigger,
-  MenubarContent,
-  MenubarItem,
-  MenubarSeparator,
-} from "@/components/ui/menubar";
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+  navigationMenuTriggerStyle,
+} from "@/components/ui/navigation-menu";
+import { cn } from "@/lib/utils";
 
 interface AdminNavigationProps {
   onLogout: () => void;
@@ -30,108 +31,115 @@ interface AdminNavigationProps {
 
 const AdminNavigation: React.FC<AdminNavigationProps> = ({ onLogout }) => {
   return (
-    <Menubar className="border-none bg-transparent px-0">
-      {/* Main App Navigation */}
-      <MenubarMenu>
-        <MenubarTrigger className="font-medium text-white">Main App</MenubarTrigger>
-        <MenubarContent>
-          <MenubarItem asChild>
-            <Link to="/" className="flex items-center gap-2">
-              <Home className="h-4 w-4" />
-              <span>Home</span>
-            </Link>
-          </MenubarItem>
-          <MenubarItem asChild>
-            <Link to="/explore" className="flex items-center gap-2">
-              <Search className="h-4 w-4" />
-              <span>Explore</span>
-            </Link>
-          </MenubarItem>
-          <MenubarItem asChild>
-            <Link to="/map" className="flex items-center gap-2">
-              <MapPin className="h-4 w-4" />
-              <span>Map</span>
-            </Link>
-          </MenubarItem>
-          <MenubarItem asChild>
-            <Link to="/add" className="flex items-center gap-2">
-              <Plus className="h-4 w-4" />
-              <span>Add</span>
-            </Link>
-          </MenubarItem>
-          <MenubarSeparator />
-          <MenubarItem asChild>
-            <Link to="/landing" className="flex items-center gap-2">
-              <Globe className="h-4 w-4" />
-              <span>Landing Page</span>
-            </Link>
-          </MenubarItem>
-        </MenubarContent>
-      </MenubarMenu>
-
-      {/* Admin Pages */}
-      <MenubarMenu>
-        <MenubarTrigger className="font-medium text-white">Admin</MenubarTrigger>
-        <MenubarContent>
-          <MenubarItem asChild>
-            <Link to="/admin/dashboard" className="flex items-center gap-2">
-              <Layout className="h-4 w-4" />
-              <span>Dashboard</span>
-            </Link>
-          </MenubarItem>
-          <MenubarItem asChild>
-            <Link to="/admin/users" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              <span>Users</span>
-            </Link>
-          </MenubarItem>
-          <MenubarItem asChild>
-            <Link to="/admin/establishments" className="flex items-center gap-2">
-              <Store className="h-4 w-4" />
-              <span>Establishments</span>
-            </Link>
-          </MenubarItem>
-          <MenubarSeparator />
-          <MenubarItem asChild>
-            <Link to="/profile" className="flex items-center gap-2">
-              <User className="h-4 w-4" />
-              <span>User Profile</span>
-            </Link>
-          </MenubarItem>
-          <MenubarItem asChild>
-            <Link to="/establishment/profile" className="flex items-center gap-2">
-              <Store className="h-4 w-4" />
-              <span>Establishment Profile</span>
-            </Link>
-          </MenubarItem>
-        </MenubarContent>
-      </MenubarMenu>
-
-      {/* Auth Pages */}
-      <MenubarMenu>
-        <MenubarTrigger className="font-medium text-white">Auth</MenubarTrigger>
-        <MenubarContent>
-          <MenubarItem asChild>
-            <Link to="/login" className="flex items-center gap-2">
-              <User className="h-4 w-4" />
-              <span>Login Page</span>
-            </Link>
-          </MenubarItem>
-          <MenubarItem asChild>
-            <Link to="/signup" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              <span>Signup Page</span>
-            </Link>
-          </MenubarItem>
-          <MenubarSeparator />
-          <MenubarItem className="flex items-center gap-2 text-red-600" onClick={onLogout}>
-            <LogOut className="h-4 w-4" />
-            <span>Logout</span>
-          </MenubarItem>
-        </MenubarContent>
-      </MenubarMenu>
-    </Menubar>
+    <NavigationMenu className="max-w-none">
+      <NavigationMenuList>
+        <NavigationMenuItem>
+          <NavigationMenuTrigger className="bg-transparent text-white hover:bg-white/10 hover:text-white">
+            Main App
+          </NavigationMenuTrigger>
+          <NavigationMenuContent>
+            <ul className="grid w-[400px] gap-2 p-4 md:grid-cols-2">
+              <ListItem href="/" title="Home" icon={<Home className="h-4 w-4" />}>
+                Return to the main application
+              </ListItem>
+              <ListItem href="/explore" title="Explore" icon={<Search className="h-4 w-4" />}>
+                Discover mocktails and establishments
+              </ListItem>
+              <ListItem href="/map" title="Map" icon={<MapPin className="h-4 w-4" />}>
+                Find nearby establishments
+              </ListItem>
+              <ListItem href="/add" title="Add" icon={<Plus className="h-4 w-4" />}>
+                Add new mocktails or establishments
+              </ListItem>
+              <ListItem href="/landing" title="Landing Page" icon={<Globe className="h-4 w-4" />}>
+                View the landing page
+              </ListItem>
+            </ul>
+          </NavigationMenuContent>
+        </NavigationMenuItem>
+        
+        <NavigationMenuItem>
+          <NavigationMenuTrigger className="bg-transparent text-white hover:bg-white/10 hover:text-white">
+            Admin
+          </NavigationMenuTrigger>
+          <NavigationMenuContent>
+            <ul className="grid w-[400px] gap-2 p-4 md:grid-cols-2">
+              <ListItem href="/admin/dashboard" title="Dashboard" icon={<Layout className="h-4 w-4" />}>
+                Admin dashboard overview
+              </ListItem>
+              <ListItem href="/admin/users" title="Users" icon={<Users className="h-4 w-4" />}>
+                Manage user accounts
+              </ListItem>
+              <ListItem href="/admin/establishments" title="Establishments" icon={<Store className="h-4 w-4" />}>
+                Manage registered establishments
+              </ListItem>
+              <ListItem href="/profile" title="User Profile" icon={<User className="h-4 w-4" />}>
+                View user profile page
+              </ListItem>
+              <ListItem href="/establishment/profile" title="Establishment Profile" icon={<Store className="h-4 w-4" />}>
+                View establishment profile page
+              </ListItem>
+            </ul>
+          </NavigationMenuContent>
+        </NavigationMenuItem>
+        
+        <NavigationMenuItem>
+          <NavigationMenuTrigger className="bg-transparent text-white hover:bg-white/10 hover:text-white">
+            Auth
+          </NavigationMenuTrigger>
+          <NavigationMenuContent>
+            <ul className="grid w-[300px] gap-2 p-4">
+              <ListItem href="/login" title="Login Page" icon={<User className="h-4 w-4" />}>
+                View the login page
+              </ListItem>
+              <ListItem href="/signup" title="Signup Page" icon={<Users className="h-4 w-4" />}>
+                View the signup page
+              </ListItem>
+              <li className="px-2 py-2">
+                <button 
+                  onClick={onLogout} 
+                  className="flex w-full items-center gap-2 rounded-md p-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>Logout</span>
+                </button>
+              </li>
+            </ul>
+          </NavigationMenuContent>
+        </NavigationMenuItem>
+      </NavigationMenuList>
+    </NavigationMenu>
   );
 };
+
+const ListItem = React.forwardRef<
+  React.ElementRef<"a">,
+  React.ComponentPropsWithoutRef<"a"> & { icon: React.ReactNode }
+>(({ className, title, children, icon, ...props }, ref) => {
+  return (
+    <li>
+      <NavigationMenuLink asChild>
+        <a
+          ref={ref}
+          className={cn(
+            "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+            className
+          )}
+          {...props}
+        >
+          <div className="flex items-center gap-2 text-sm font-medium leading-none">
+            {icon}
+            <span>{title}</span>
+          </div>
+          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+            {children}
+          </p>
+        </a>
+      </NavigationMenuLink>
+    </li>
+  );
+});
+
+ListItem.displayName = "ListItem";
 
 export default AdminNavigation;

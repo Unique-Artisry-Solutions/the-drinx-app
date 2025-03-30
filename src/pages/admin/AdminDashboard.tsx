@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -30,6 +31,10 @@ const AdminDashboard: React.FC = () => {
 
   const handleLogout = () => {
     localStorage.removeItem('admin_authenticated');
+    toast({
+      title: 'Successfully logged out',
+      description: 'You have been logged out of the admin dashboard',
+    });
     navigate('/admin');
   };
 
@@ -58,51 +63,66 @@ const AdminDashboard: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen bg-material-background">
+    <div className="min-h-screen bg-gray-50">
       <AdminHeader onLogout={handleLogout} />
 
-      <main className="container max-w-5xl mx-auto p-4">
-        <SearchToolbar 
-          searchTerm={searchTerm} 
-          onSearchChange={setSearchTerm} 
-        />
+      <main className="container max-w-5xl mx-auto p-4 pt-6">
+        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+          <h1 className="text-2xl font-semibold mb-2 text-gray-800">Dashboard</h1>
+          <p className="text-gray-600 mb-4">Manage your establishments, cocktails, and more</p>
+          
+          <SearchToolbar 
+            searchTerm={searchTerm} 
+            onSearchChange={setSearchTerm} 
+          />
+        </div>
 
-        <Tabs defaultValue="establishments">
-          <TabsList className="mb-4">
-            <TabsTrigger value="establishments">Establishments</TabsTrigger>
-            <TabsTrigger value="cocktails">Cocktails</TabsTrigger>
-            <TabsTrigger value="promotions">Promotions</TabsTrigger>
-            <TabsTrigger value="reviews">Reviews</TabsTrigger>
-          </TabsList>
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <Tabs defaultValue="establishments" className="w-full">
+            <TabsList className="mb-6 bg-gray-100 p-1 rounded-md">
+              <TabsTrigger value="establishments" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                Establishments
+              </TabsTrigger>
+              <TabsTrigger value="cocktails" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                Cocktails
+              </TabsTrigger>
+              <TabsTrigger value="promotions" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                Promotions
+              </TabsTrigger>
+              <TabsTrigger value="reviews" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                Reviews
+              </TabsTrigger>
+            </TabsList>
 
-          <TabsContent value="establishments">
-            <EstablishmentsTable 
-              establishments={filteredEstablishments} 
-              onDeleteEstablishment={handleDeleteEstablishment} 
-            />
-          </TabsContent>
+            <TabsContent value="establishments">
+              <EstablishmentsTable 
+                establishments={filteredEstablishments} 
+                onDeleteEstablishment={handleDeleteEstablishment} 
+              />
+            </TabsContent>
 
-          <TabsContent value="cocktails">
-            <CocktailsTable 
-              cocktails={filteredCocktails}
-              onDeleteCocktail={handleDeleteCocktail}
-            />
-          </TabsContent>
+            <TabsContent value="cocktails">
+              <CocktailsTable 
+                cocktails={filteredCocktails}
+                onDeleteCocktail={handleDeleteCocktail}
+              />
+            </TabsContent>
 
-          <TabsContent value="promotions">
-            <TabContentPlaceholder
-              title="Promotions Management"
-              description="This section will allow you to manage promotional codes created by establishments."
-            />
-          </TabsContent>
+            <TabsContent value="promotions">
+              <TabContentPlaceholder
+                title="Promotions Management"
+                description="This section will allow you to manage promotional codes created by establishments."
+              />
+            </TabsContent>
 
-          <TabsContent value="reviews">
-            <TabContentPlaceholder
-              title="Reviews Management"
-              description="This section will allow you to manage user reviews for mocktails."
-            />
-          </TabsContent>
-        </Tabs>
+            <TabsContent value="reviews">
+              <TabContentPlaceholder
+                title="Reviews Management"
+                description="This section will allow you to manage user reviews for mocktails."
+              />
+            </TabsContent>
+          </Tabs>
+        </div>
       </main>
     </div>
   );

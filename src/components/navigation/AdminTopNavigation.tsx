@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   Home, 
@@ -11,7 +11,8 @@ import {
   LogOut,
   Globe,
   Menu,
-  X
+  X,
+  LayoutDashboard
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import CartButton from '@/components/cart/CartButton';
@@ -28,6 +29,13 @@ const AdminTopNavigation: React.FC = () => {
   const location = useLocation();
   const { toast } = useToast();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [adminUsername, setAdminUsername] = useState<string>('Admin');
+  
+  useEffect(() => {
+    // Try to get admin username from localStorage
+    const storedUsername = localStorage.getItem('admin_username') || 'Admin';
+    setAdminUsername(storedUsername);
+  }, []);
   
   const handleLogout = () => {
     localStorage.removeItem('user_authenticated');
@@ -35,6 +43,7 @@ const AdminTopNavigation: React.FC = () => {
     localStorage.removeItem('user_email');
     localStorage.removeItem('user_username');
     localStorage.removeItem('user_type');
+    localStorage.removeItem('admin_username');
     
     toast({
       title: 'Logged out',
@@ -49,7 +58,7 @@ const AdminTopNavigation: React.FC = () => {
     { icon: Map, label: 'Map', path: '/map' },
     { icon: Plus, label: 'Add', path: '/add' },
     { icon: Globe, label: 'Landing', path: '/landing' },
-    { icon: User, label: 'Admin', path: '/admin' },
+    { icon: LayoutDashboard, label: 'Admin', path: '/admin/dashboard' },
   ];
 
   return (
@@ -63,7 +72,8 @@ const AdminTopNavigation: React.FC = () => {
             
             <div className="admin-nav-links hidden md:flex space-x-1">
               {adminNavItems.map((item) => {
-                const isActive = location.pathname === item.path;
+                const isActive = location.pathname === item.path || 
+                  (item.path === '/admin/dashboard' && location.pathname.startsWith('/admin'));
                 return (
                   <Link
                     key={item.path}
@@ -81,6 +91,10 @@ const AdminTopNavigation: React.FC = () => {
           </div>
           
           <div className="admin-nav-right flex items-center space-x-4">
+            <div className="hidden md:block text-sm text-white/80 mr-2">
+              Welcome, <span className="font-medium text-white">{adminUsername}</span>
+            </div>
+            
             <CartButton />
             
             <Button 
@@ -94,14 +108,22 @@ const AdminTopNavigation: React.FC = () => {
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon" className="admin-profile-button border-white text-white hover:bg-white/20">
+                <Button 
+                  variant="outline" 
+                  size="icon" 
+                  className="admin-profile-button border-white text-white hover:bg-white/20 transition-colors duration-200"
+                >
                   <User size={18} />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="admin-profile-dropdown">
+              <DropdownMenuContent align="end" className="admin-profile-dropdown w-56">
+                <div className="px-2 py-1.5 text-sm font-medium text-muted-foreground md:hidden">
+                  Welcome, {adminUsername}
+                </div>
+                <DropdownMenuSeparator className="md:hidden" />
                 <DropdownMenuItem asChild>
                   <Link to="/admin/dashboard" className="admin-profile-item flex items-center gap-2 cursor-pointer">
-                    <User className="h-4 w-4" />
+                    <LayoutDashboard className="h-4 w-4" />
                     <span>Dashboard</span>
                   </Link>
                 </DropdownMenuItem>
@@ -113,7 +135,7 @@ const AdminTopNavigation: React.FC = () => {
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 
-                  className="admin-logout-item flex items-center gap-2 text-red-600 cursor-pointer" 
+                  className="admin-logout-item flex items-center gap-2 text-red-600 cursor-pointer focus:text-red-700 focus:bg-red-50" 
                   onClick={handleLogout}
                 >
                   <LogOut className="h-4 w-4" />
@@ -126,9 +148,13 @@ const AdminTopNavigation: React.FC = () => {
         
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <div className="admin-mobile-menu md:hidden py-3 space-y-2">
+          <div className="admin-mobile-menu md:hidden py-3 space-y-2 animate-fade-in">
+            <div className="text-sm text-white/80 px-3 py-2">
+              Welcome, <span className="font-medium text-white">{adminUsername}</span>
+            </div>
             {adminNavItems.map((item) => {
-              const isActive = location.pathname === item.path;
+              const isActive = location.pathname === item.path || 
+                (item.path === '/admin/dashboard' && location.pathname.startsWith('/admin'));
               return (
                 <Link
                   key={item.path}
@@ -145,6 +171,13 @@ const AdminTopNavigation: React.FC = () => {
                 </Link>
               );
             })}
+            <button
+              className="flex items-center w-full px-3 py-2 text-red-200 hover:bg-red-800/30 rounded-md"
+              onClick={handleLogout}
+            >
+              <LogOut className="mr-2 h-5 w-5" />
+              <span>Logout</span>
+            </button>
           </div>
         )}
       </div>

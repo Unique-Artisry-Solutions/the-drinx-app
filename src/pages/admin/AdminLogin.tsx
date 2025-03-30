@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,6 +14,14 @@ const AdminLogin: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  useEffect(() => {
+    // Check if admin is already logged in
+    const isAdminAuth = localStorage.getItem('admin_authenticated') === 'true';
+    if (isAdminAuth) {
+      navigate('/admin/dashboard');
+    }
+  }, [navigate]);
+
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -23,6 +31,11 @@ const AdminLogin: React.FC = () => {
       if (username === 'admin' && password === 'password') {
         // Set admin session in localStorage (in a real app, use proper JWT tokens or cookies)
         localStorage.setItem('admin_authenticated', 'true');
+        localStorage.setItem('admin_username', username);
+        
+        // Set a session timestamp
+        localStorage.setItem('admin_session_created', new Date().toISOString());
+        
         toast({
           title: 'Login successful',
           description: 'Welcome to the admin dashboard',
@@ -40,14 +53,14 @@ const AdminLogin: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-material-background">
+    <div className="min-h-screen flex flex-col bg-gray-50">
       <TopNavigation />
       <div className="flex-1 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle className="text-2xl">Admin Login</CardTitle>
-            <CardDescription>
-              Login to manage establishments and cocktails
+        <Card className="w-full max-w-md shadow-lg">
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl font-bold text-center">Admin Login</CardTitle>
+            <CardDescription className="text-center">
+              Enter your credentials to access the admin dashboard
             </CardDescription>
           </CardHeader>
           <form onSubmit={handleLogin}>
@@ -61,6 +74,7 @@ const AdminLogin: React.FC = () => {
                   placeholder="Enter your username"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
+                  className="focus:ring-2 focus:ring-material-primary/30"
                   required
                 />
               </div>
@@ -74,14 +88,20 @@ const AdminLogin: React.FC = () => {
                   placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  className="focus:ring-2 focus:ring-material-primary/30"
                   required
                 />
+              </div>
+              <div className="text-sm text-gray-500">
+                <p>For demo purposes:</p>
+                <p>Username: admin</p>
+                <p>Password: password</p>
               </div>
             </CardContent>
             <CardFooter>
               <Button
                 type="submit"
-                className="w-full bg-material-primary text-material-on-primary"
+                className="w-full bg-material-primary hover:bg-material-primary/90 text-white"
                 disabled={isLoading}
               >
                 {isLoading ? 'Logging in...' : 'Login'}
