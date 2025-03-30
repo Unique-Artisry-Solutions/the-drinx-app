@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, LogIn, UserPlus, Menu, X, Sparkles, HeartHandshake, Compass } from 'lucide-react';
+import { Home, LogIn, UserPlus, Menu, X, Sparkles, HeartHandshake } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import CartButton from '@/components/cart/CartButton';
 
@@ -17,10 +17,6 @@ const GuestTopNavigation: React.FC = () => {
     icon: HeartHandshake,
     label: 'Our Mission',
     path: '/mission'
-  }, {
-    icon: Compass,
-    label: 'Explore',
-    path: '/explore'
   }];
 
   return (
