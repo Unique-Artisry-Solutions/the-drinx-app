@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -34,6 +33,8 @@ import VerifyEmail from "./pages/VerifyEmail";
 import Explore from "./pages/Explore";
 import AdminUsersPage from "./pages/admin/AdminUsersPage";
 import AdminEstablishmentsPage from "./pages/admin/AdminEstablishmentsPage";
+import AdminUserProfile from "./pages/admin/AdminUserProfile";
+import AdminEstablishmentProfile from "./pages/admin/AdminEstablishmentProfile";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -195,6 +196,16 @@ const AuthenticatedApp = () => {
         <Route path="/admin/establishments" element={
           <AdminRoute>
             <AdminEstablishmentsPage />
+          </AdminRoute>
+        } />
+        <Route path="/admin/user/:id" element={
+          <AdminRoute>
+            <AdminUserProfile />
+          </AdminRoute>
+        } />
+        <Route path="/admin/establishment/:id" element={
+          <AdminRoute>
+            <AdminEstablishmentProfile />
           </AdminRoute>
         } />
         

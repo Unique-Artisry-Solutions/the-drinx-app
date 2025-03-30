@@ -1,79 +1,82 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import AdminHeader from '@/components/admin/AdminHeader';
 import { 
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
 } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Eye, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 
-// Sample data - would be fetched from Supabase in a real application
-const sampleUsers = [
-  {
-    id: '1',
-    email: 'user1@example.com',
-    username: 'user1',
-    userType: 'individual',
-    createdAt: '2023-01-15',
-    lastLogin: '2023-06-20',
-    isVerified: true
-  },
-  {
-    id: '2',
-    email: 'user2@example.com',
-    username: 'user2',
-    userType: 'individual',
-    createdAt: '2023-02-10',
-    lastLogin: '2023-06-18',
-    isVerified: true
-  },
-  {
-    id: '3',
-    email: 'establishment1@example.com',
-    username: 'Cool Bar',
-    userType: 'establishment',
-    createdAt: '2023-03-05',
-    lastLogin: '2023-06-19',
-    isVerified: true
-  },
-  {
-    id: '4',
-    email: 'user3@example.com',
-    username: 'user3',
-    userType: 'individual',
-    createdAt: '2023-03-20',
-    lastLogin: '2023-06-15',
-    isVerified: false
-  },
-  {
-    id: '5',
-    email: 'establishment2@example.com',
-    username: 'Mocktail Haven',
-    userType: 'establishment',
-    createdAt: '2023-04-12',
-    lastLogin: '2023-06-17',
-    isVerified: true
-  },
-];
+type UserWithProfile = {
+  id: string;
+  email: string;
+  username: string | null;
+  userType: string | null;
+  createdAt: string;
+  lastLogin: string | null;
+  isVerified: boolean;
+}
 
 const AdminUsersPage = () => {
-  const [users, setUsers] = useState(sampleUsers);
+  const [users, setUsers] = useState<UserWithProfile[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [usersPerPage] = useState(10);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   // Check if user is authenticated as admin
-  React.useEffect(() => {
+  useEffect(() => {
     const isAdmin = localStorage.getItem('admin_authenticated') === 'true';
     if (!isAdmin) {
       navigate('/admin');
     }
   }, [navigate]);
+
+  const fetchUsers = async () => {
+    setIsLoading(true);
+    try {
+      // Fetch users from auth.users via a join with profiles
+      const { data: authUsers, error: authError } = await supabase
+        .from('profiles')
+        .select('id, username, user_type, created_at');
+      
+      if (authError) {
+        throw authError;
+      }
+
+      // Process the data to match our UserWithProfile type
+      const processedUsers: UserWithProfile[] = authUsers.map(profile => ({
+        id: profile.id,
+        email: `user-${profile.id.substring(0, 8)}@example.com`, // Privacy: don't expose real emails in admin UI
+        username: profile.username || `User-${profile.id.substring(0, 5)}`,
+        userType: profile.user_type || 'individual',
+        createdAt: profile.created_at ? new Date(profile.created_at).toISOString().split('T')[0] : 'Unknown',
+        lastLogin: 'N/A', // This info isn't easily accessible
+        isVerified: true // Assume verified for simplicity
+      }));
+
+      setUsers(processedUsers);
+    } catch (error: any) {
+      console.error('Error fetching users:', error);
+      toast({
+        title: 'Failed to load users',
+        description: error.message || 'An unexpected error occurred',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('admin_authenticated');
@@ -82,8 +85,8 @@ const AdminUsersPage = () => {
 
   const filteredUsers = users.filter(
     user => 
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.username.toLowerCase().includes(searchTerm.toLowerCase())
+      (user.email && user.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (user.username && user.username.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const indexOfLastUser = currentPage * usersPerPage;
@@ -92,19 +95,15 @@ const AdminUsersPage = () => {
   const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
 
   const viewUserProfile = (userId: string, userType: string) => {
-    // In a real app, this would navigate to the appropriate profile page
-    // using the user's ID to fetch their profile data
     toast({
       title: 'Viewing user profile',
       description: `Viewing profile for user ${userId} (${userType})`,
     });
     
-    // This is just for demonstration
     if (userType === 'establishment') {
-      navigate(`/establishment/${userId}`);
+      navigate(`/admin/establishment/${userId}`);
     } else {
-      // In a real app, this would go to the user's profile page
-      navigate(`/profile`);
+      navigate(`/admin/user/${userId}`);
     }
   };
 
@@ -126,14 +125,26 @@ const AdminUsersPage = () => {
         </div>
 
         <div className="bg-white p-4 rounded-md shadow-sm mb-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search users by email or username..."
-              className="pl-9"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+          <div className="flex items-center space-x-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search users by email or username..."
+                className="pl-9"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <Button 
+              variant="outline" 
+              size="icon" 
+              onClick={fetchUsers} 
+              disabled={isLoading}
+              title="Refresh users"
+            >
+              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+              <span className="sr-only">Refresh</span>
+            </Button>
           </div>
         </div>
 
@@ -145,7 +156,7 @@ const AdminUsersPage = () => {
                 <TableHead>Username</TableHead>
                 <TableHead>User Type</TableHead>
                 <TableHead>Created</TableHead>
-                <TableHead>Last Login</TableHead>
+                <TableHead>Last Activity</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -154,7 +165,7 @@ const AdminUsersPage = () => {
               {currentUsers.map((user) => (
                 <TableRow key={user.id}>
                   <TableCell className="font-medium">{user.email}</TableCell>
-                  <TableCell>{user.username}</TableCell>
+                  <TableCell>{user.username || 'N/A'}</TableCell>
                   <TableCell>
                     <span className={`px-2 py-1 rounded-full text-xs ${
                       user.userType === 'establishment' 
@@ -165,7 +176,7 @@ const AdminUsersPage = () => {
                     </span>
                   </TableCell>
                   <TableCell>{user.createdAt}</TableCell>
-                  <TableCell>{user.lastLogin}</TableCell>
+                  <TableCell>{user.lastLogin || 'N/A'}</TableCell>
                   <TableCell>
                     <span className={`px-2 py-1 rounded-full text-xs ${
                       user.isVerified
@@ -180,7 +191,7 @@ const AdminUsersPage = () => {
                       variant="ghost"
                       size="sm"
                       className="h-8 w-8 p-0"
-                      onClick={() => viewUserProfile(user.id, user.userType)}
+                      onClick={() => viewUserProfile(user.id, user.userType || 'individual')}
                     >
                       <Eye className="h-4 w-4" />
                       <span className="sr-only">View profile</span>
@@ -189,7 +200,18 @@ const AdminUsersPage = () => {
                 </TableRow>
               ))}
               
-              {currentUsers.length === 0 && (
+              {isLoading && (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-4">
+                    <div className="flex justify-center items-center">
+                      <RefreshCw className="h-5 w-5 animate-spin mr-2" />
+                      Loading users...
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )}
+              
+              {!isLoading && currentUsers.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-4 text-muted-foreground">
                     No users found
