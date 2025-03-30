@@ -45,12 +45,10 @@ const SignupForm: React.FC<SignupFormProps> = ({
       
       await signUp(email, password, metadata);
       
-      // Show confirmation modal instead of toast and redirect
+      // Show confirmation modal instead of redirecting
       setShowConfirmationModal(true);
       
-      if (onSuccess) {
-        onSuccess();
-      }
+      // Do NOT call onSuccess here, which could trigger redirection
     } catch (error: any) {
       console.error('Signup error:', error);
       setFormError(error.message || 'Failed to sign up');
@@ -61,6 +59,10 @@ const SignupForm: React.FC<SignupFormProps> = ({
 
   const handleConfirmationClose = () => {
     setShowConfirmationModal(false);
+    // Only call onSuccess after the user explicitly dismisses the modal, if needed
+    if (onSuccess) {
+      onSuccess();
+    }
   };
 
   return (
