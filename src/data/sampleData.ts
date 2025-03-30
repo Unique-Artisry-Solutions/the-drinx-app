@@ -1,3 +1,4 @@
+
 // Sample data for development purposes
 
 // Sample establishments
@@ -202,7 +203,8 @@ export const sampleBarCrawls = [
     description: "Explore the best downtown locations for spirit-free options",
     establishments: ["est1", "est2", "est3", "est4"],
     organizer: "John Doe",
-    distance: "2.5 mi"
+    distance: "2.5 mi",
+    date: "2023-06-15"
   },
   {
     id: "2",
@@ -211,7 +213,8 @@ export const sampleBarCrawls = [
     description: "A leisurely stroll through uptown's best mocktail spots",
     establishments: ["est5", "est6", "est7"],
     organizer: "Jane Smith",
-    distance: "1.8 mi"
+    distance: "1.8 mi",
+    date: "2023-07-22"
   },
   {
     id: "3",
@@ -220,7 +223,8 @@ export const sampleBarCrawls = [
     description: "Seaside venues with amazing alcohol-free options",
     establishments: ["est8", "est9", "est10", "est11", "est12"],
     organizer: "Sam Wilson",
-    distance: "3.2 mi"
+    distance: "3.2 mi",
+    date: "2023-08-10"
   },
   {
     id: "4",
@@ -229,6 +233,7 @@ export const sampleBarCrawls = [
     description: "Unique mocktails at creative establishments",
     establishments: ["est13", "est14", "est15"],
     organizer: "Alex Johnson",
-    distance: "1.5 mi"
+    distance: "1.5 mi",
+    date: "2023-09-05"
   }
 ];

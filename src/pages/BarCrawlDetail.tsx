@@ -8,8 +8,22 @@ import { Route, ArrowLeft, Calendar, Users, Clock } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { sampleBarCrawls, sampleEstablishments } from '@/data/sampleData';
-import { Establishment } from '@/types/ProfileTypes';
 import BackButton from '@/components/navigation/BackButton';
+
+// Updated interface to match the sample data structure
+interface BarCrawlEstablishment {
+  id: string;
+  name: string;
+  address: string;
+  distance?: string;
+  cocktailCount?: number;
+  image?: string;
+  phone?: string;
+  website?: string;
+  hours?: string[];
+  latitude: number;
+  longitude: number;
+}
 
 interface BarCrawl {
   id: string;
@@ -17,7 +31,7 @@ interface BarCrawl {
   stops: number;
   organizer: string;
   date: string;
-  establishments: Establishment[];
+  establishments: BarCrawlEstablishment[];
   description?: string;
 }
 
@@ -39,6 +53,7 @@ const BarCrawlDetail: React.FC = () => {
           
           setBarCrawl({
             ...crawl,
+            date: crawl.date || new Date().toISOString().split('T')[0], // Ensure date exists
             establishments
           });
         }
