@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
@@ -80,8 +81,8 @@ const Index = () => {
         : cocktail.price;
       
       return !isNaN(cocktailPrice) && 
-        cocktailPrice >= newFilters.priceRange[0] && 
-        cocktailPrice <= newFilters.priceRange[1];
+        cocktailPrice >= filters.priceRange[0] && 
+        cocktailPrice <= filters.priceRange[1];
     });
     
     setCocktails(filtered);
