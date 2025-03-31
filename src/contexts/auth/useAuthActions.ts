@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -9,16 +10,20 @@ export function useAuthActions() {
 
   const refreshSession = async () => {
     try {
+      console.log('Refreshing session...');
       const { data, error } = await supabase.auth.refreshSession();
       if (error) {
         console.error('Error refreshing session:', error);
-        return { session: null, user: null };
+        return { session: null, user: null, isEmailVerified: false };
       }
+      
+      const isVerified = data.session?.user ? (data.session.user.email_confirmed_at !== null) : false;
+      console.log('Session refreshed, email verified:', isVerified);
       
       return { 
         session: data.session, 
         user: data.session?.user || null,
-        isEmailVerified: data.session?.user ? (data.session.user.email_confirmed_at !== null) : false
+        isEmailVerified: isVerified
       };
     } catch (error) {
       console.error('Error in refreshSession:', error);
@@ -74,8 +79,10 @@ export function useAuthActions() {
       setIsLoading(true);
       console.log('Starting sign up process for:', email);
       
-      // Make sure we have a proper redirect URL
-      const finalRedirectTo = options?.emailRedirectTo || `${window.location.origin}/?email_confirmed=true`;
+      // Make sure we have a proper redirect URL with the confirmation parameter
+      // Use the explicit form with email_confirmed=true parameter
+      const baseUrl = window.location.origin;
+      const finalRedirectTo = options?.emailRedirectTo || `${baseUrl}/?email_confirmed=true`;
       console.log('Using redirect URL:', finalRedirectTo);
       
       const { data, error } = await supabase.auth.signUp({ 
@@ -99,7 +106,7 @@ export function useAuthActions() {
         console.log('User created, email verification needed');
         toast({
           title: 'Verification email sent',
-          description: 'Please check your email inbox and click the verification link',
+          description: `Please check ${email} inbox and click the verification link`,
         });
       }
     } catch (error: any) {

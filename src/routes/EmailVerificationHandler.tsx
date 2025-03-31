@@ -13,26 +13,47 @@ const EmailVerificationHandler = () => {
   
   useEffect(() => {
     const handleEmailConfirmation = async () => {
-      console.log('Email verification handler triggered', location.search);
+      // Log the entire URL and search parameters for debugging
+      console.log('Email verification handler triggered with URL:', window.location.href);
+      console.log('Search params:', location.search);
+      
       setIsChecking(true);
       
-      // Check for email_confirmed in URL parameter
-      if (location.search.includes('email_confirmed=true')) {
-        console.log('Email confirmed parameter detected');
+      // Check for any of the possible email verification parameters
+      // Different Supabase versions might use different parameters
+      const hasConfirmation = location.search.includes('email_confirmed=true') || 
+                             location.search.includes('type=signup') ||
+                             location.search.includes('type=recovery');
+      
+      if (hasConfirmation) {
+        console.log('Email confirmation parameter detected in URL');
         
         try {
           // Refresh the session to get the updated verification status
-          await refreshSession();
+          const sessionResult = await refreshSession();
+          console.log('Session refresh result:', sessionResult);
           
-          toast({
-            title: 'Email verified successfully',
-            description: 'Your email has been verified. You can now access all features.',
-          });
-          
-          // Explicitly redirect to explore page with replace to prevent
-          // the user from navigating back to this URL
-          console.log('Redirecting to explore page');
-          navigate('/explore', { replace: true });
+          // Check if the user is now verified
+          if (sessionResult.isEmailVerified) {
+            console.log('Email is verified, proceeding to explore page');
+            
+            toast({
+              title: 'Email verified successfully',
+              description: 'Your email has been verified. You can now access all features.',
+            });
+            
+            // Explicitly redirect to explore page with replace to prevent
+            // the user from navigating back to this URL
+            console.log('Redirecting to explore page');
+            navigate('/explore', { replace: true });
+          } else {
+            console.log('Email not verified after refresh, staying on current page');
+            toast({
+              title: 'Verification pending',
+              description: 'Your email verification is still being processed. Please try again in a moment.',
+              variant: 'destructive',
+            });
+          }
         } catch (error) {
           console.error('Error during email confirmation:', error);
           toast({
@@ -41,6 +62,8 @@ const EmailVerificationHandler = () => {
             variant: 'destructive',
           });
         }
+      } else {
+        console.log('No email confirmation parameter found in URL');
       }
       
       setIsChecking(false);
@@ -49,6 +72,7 @@ const EmailVerificationHandler = () => {
     handleEmailConfirmation();
   }, [location, refreshSession, navigate, toast]);
   
+  // Return null as this is a utility component
   return null;
 };
 
