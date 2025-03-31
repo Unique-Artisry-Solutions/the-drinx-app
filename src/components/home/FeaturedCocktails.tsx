@@ -32,7 +32,7 @@ const FeaturedCocktails: React.FC<FeaturedCocktailsProps> = ({ cocktails }) => {
             key={cocktail.id} 
             id={cocktail.id} 
             name={cocktail.name} 
-            price={cocktail.price} 
+            price={cocktail.price.toString()} 
             description={cocktail.description} 
             ingredients={cocktail.ingredients} 
             image={cocktail.image} 

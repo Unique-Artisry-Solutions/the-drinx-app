@@ -1,8 +1,11 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Search, SlidersHorizontal, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import SearchSuggestions from './SearchSuggestions';
+import { createFuzzySearch, extractSearchSuggestions, performAdvancedSearch } from '@/utils/searchUtils';
+import Fuse from 'fuse.js';
 
 export interface SearchFilterProps {
   onSearch: (query: string) => void;
@@ -10,6 +13,8 @@ export interface SearchFilterProps {
   onApplyFilters: () => void;
   className?: string;
   initialSearchTerm?: string;
+  cocktails?: any[];
+  establishments?: any[];
 }
 
 const SearchFilter: React.FC<SearchFilterProps> = ({
@@ -18,11 +23,41 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
   onApplyFilters,
   className,
   initialSearchTerm = '',
+  cocktails = [],
+  establishments = [],
 }) => {
   const [query, setQuery] = useState(initialSearchTerm);
   const [showFilters, setShowFilters] = useState(false);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 25]);
   const [distance, setDistance] = useState<number>(10);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [suggestions, setSuggestions] = useState<Array<{value: string; label: string; type: 'cocktail' | 'establishment' | 'ingredient'}>>([]);
+  const [fuseInstance, setFuseInstance] = useState<Fuse<any> | null>(null);
+  const searchRef = useRef<HTMLDivElement>(null);
+
+  // Initialize fuzzy search when cocktails or establishments change
+  useEffect(() => {
+    if (cocktails.length > 0 || establishments.length > 0) {
+      // Combine cocktails and establishments for fuzzy search
+      const searchItems = [
+        ...cocktails.map(c => ({
+          ...c,
+          type: 'cocktail',
+        })),
+        ...establishments.map(e => ({
+          ...e,
+          type: 'establishment',
+        })),
+      ];
+      
+      // Create Fuse instance
+      setFuseInstance(createFuzzySearch(searchItems));
+      
+      // Extract suggestions
+      const extractedSuggestions = extractSearchSuggestions(cocktails, establishments);
+      setSuggestions(extractedSuggestions);
+    }
+  }, [cocktails, establishments]);
 
   useEffect(() => {
     if (initialSearchTerm !== query) {
@@ -30,8 +65,23 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
     }
   }, [initialSearchTerm]);
 
+  // Handle clicks outside the search component
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    setShowSuggestions(false);
     onSearch(query);
   };
 
@@ -45,7 +95,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
   const handleApplyFilters = () => {
     handleFilterChange();
     onApplyFilters();
-    // Optionally close the filters after applying
+    // Close the filters after applying
     setShowFilters(false);
   };
 
@@ -54,15 +104,41 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
     onSearch('');
   };
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setQuery(value);
+    
+    // Show suggestions if there's text and we have suggestions
+    if (value.length > 1 && suggestions.length > 0) {
+      setShowSuggestions(true);
+      
+      // Filter suggestions based on input
+      const filtered = suggestions.filter(suggestion => 
+        suggestion.label.toLowerCase().includes(value.toLowerCase())
+      );
+      
+      setSuggestions(filtered.length > 0 ? filtered : suggestions);
+    } else {
+      setShowSuggestions(false);
+    }
+  };
+
+  const handleSuggestionSelect = (value: string) => {
+    setQuery(value);
+    setShowSuggestions(false);
+    onSearch(value);
+  };
+
   return (
-    <div className={cn("w-full", className)}>
+    <div className={cn("w-full", className)} ref={searchRef}>
       <form onSubmit={handleSearch} className="relative">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-material-outline" size={20} />
           <input
             type="text"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={handleInputChange}
+            onFocus={() => query.length > 1 && setShowSuggestions(true)}
             placeholder="Search cocktails or establishments..."
             className="w-full pl-10 pr-14 py-3 rounded-full border border-material-outline bg-white focus:outline-none focus:ring-2 focus:ring-material-primary"
           />
@@ -86,9 +162,18 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
             <SlidersHorizontal size={16} />
           </button>
         </div>
+        
+        {/* Search Suggestions */}
+        <SearchSuggestions 
+          suggestions={suggestions}
+          isOpen={showSuggestions}
+          onSelect={handleSuggestionSelect}
+          onOpenChange={setShowSuggestions}
+          searchTerm={query}
+        />
       
         {showFilters && (
-          <div className="mt-3 p-4 bg-white rounded-xl elevation-2 animate-slide-down">
+          <div className="mt-3 p-4 bg-white rounded-xl elevation-2 animate-slide-down shadow-md z-10">
             <h4 className="text-sm font-medium text-material-on-surface mb-3">Filters</h4>
             
             <div className="mb-4">

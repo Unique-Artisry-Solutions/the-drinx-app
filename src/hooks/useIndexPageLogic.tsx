@@ -1,7 +1,9 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useUserLocation } from '@/hooks/useUserLocation';
+import Fuse from 'fuse.js';
+import { performAdvancedSearch, createFuzzySearch } from '@/utils/searchUtils';
 
 // Import sample data
 import { sampleCocktails, sampleEstablishments } from '@/data/sampleData';
@@ -32,6 +34,12 @@ export const useIndexPageLogic = () => {
     formatDistance
   } = useUserLocation();
 
+  // Create fuzzy search instance for cocktails
+  const fuseInstance = useMemo(() => 
+    createFuzzySearch(allCocktails),
+    [allCocktails]
+  );
+
   // Calculate distances when user location changes
   useEffect(() => {
     if (userLocation && establishments.length > 0) {
@@ -46,14 +54,10 @@ export const useIndexPageLogic = () => {
   const handleSearch = (query: string) => {
     setSearchQuery(query);
 
-    // Filter cocktails based on search query
+    // Perform advanced search with fuzzy matching and regex
     if (query) {
-      const filtered = allCocktails.filter(cocktail => 
-        cocktail.name.toLowerCase().includes(query.toLowerCase()) || 
-        cocktail.description.toLowerCase().includes(query.toLowerCase()) || 
-        cocktail.ingredients.some(i => i.toLowerCase().includes(query.toLowerCase()))
-      );
-      setCocktails(filtered);
+      const searchResults = performAdvancedSearch(allCocktails, query, fuseInstance);
+      setCocktails(searchResults);
     } else {
       setCocktails(allCocktails);
     }
@@ -64,8 +68,13 @@ export const useIndexPageLogic = () => {
   };
   
   const applyFilters = () => {
+    // Start with all cocktails or current search results
+    let filteredCocktails = searchQuery ? 
+      performAdvancedSearch(allCocktails, searchQuery, fuseInstance) : 
+      [...allCocktails];
+    
     // Apply price range filter
-    const filtered = allCocktails.filter(cocktail => {
+    filteredCocktails = filteredCocktails.filter(cocktail => {
       const cocktailPrice = typeof cocktail.price === 'string' 
         ? parseFloat(cocktail.price) 
         : cocktail.price;
@@ -75,11 +84,11 @@ export const useIndexPageLogic = () => {
         cocktailPrice <= filters.priceRange[1];
     });
     
-    setCocktails(filtered);
+    setCocktails(filteredCocktails);
     
     toast({
       title: "Filters Applied",
-      description: `Found ${filtered.length} cocktails matching your criteria.`
+      description: `Found ${filteredCocktails.length} cocktails matching your criteria.`
     });
   };
 
@@ -94,6 +103,7 @@ export const useIndexPageLogic = () => {
 
   return {
     cocktails,
+    allCocktails,
     establishments,
     searchQuery,
     filters,
