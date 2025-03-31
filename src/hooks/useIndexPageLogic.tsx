@@ -3,7 +3,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import Fuse from 'fuse.js';
-import { performAdvancedSearch, createFuzzySearch } from '@/utils/searchUtils';
+import { performAdvancedSearch, createFuzzySearch, SearchableItem } from '@/utils/searchUtils';
 
 // Import sample data
 import { sampleCocktails, sampleEstablishments } from '@/data/sampleData';
@@ -13,9 +13,23 @@ interface Filters {
   distance: number;
 }
 
+// Define the cocktail interface to match the expected structure
+interface Cocktail {
+  id: string;
+  name: string;
+  price: string | number;
+  description: string;
+  ingredients: string[];
+  image?: string;
+  establishment: {
+    name: string;
+    distance?: string;
+  };
+}
+
 export const useIndexPageLogic = () => {
-  const [cocktails, setCocktails] = useState(sampleCocktails);
-  const [allCocktails, setAllCocktails] = useState(sampleCocktails);
+  const [cocktails, setCocktails] = useState<Cocktail[]>(sampleCocktails);
+  const [allCocktails, setAllCocktails] = useState<Cocktail[]>(sampleCocktails);
   const [establishments, setEstablishments] = useState(sampleEstablishments);
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<Filters>({
@@ -36,7 +50,7 @@ export const useIndexPageLogic = () => {
 
   // Create fuzzy search instance for cocktails
   const fuseInstance = useMemo(() => 
-    createFuzzySearch(allCocktails),
+    createFuzzySearch(allCocktails as unknown as SearchableItem[]),
     [allCocktails]
   );
 
@@ -56,7 +70,13 @@ export const useIndexPageLogic = () => {
 
     // Perform advanced search with fuzzy matching and regex
     if (query) {
-      const searchResults = performAdvancedSearch(allCocktails, query, fuseInstance);
+      // Cast search results back to Cocktail[] to match the expected type
+      const searchResults = performAdvancedSearch(
+        allCocktails as unknown as SearchableItem[], 
+        query, 
+        fuseInstance
+      ) as unknown as Cocktail[];
+      
       setCocktails(searchResults);
     } else {
       setCocktails(allCocktails);
@@ -70,7 +90,11 @@ export const useIndexPageLogic = () => {
   const applyFilters = () => {
     // Start with all cocktails or current search results
     let filteredCocktails = searchQuery ? 
-      performAdvancedSearch(allCocktails, searchQuery, fuseInstance) : 
+      performAdvancedSearch(
+        allCocktails as unknown as SearchableItem[], 
+        searchQuery, 
+        fuseInstance
+      ) as unknown as Cocktail[] : 
       [...allCocktails];
     
     // Apply price range filter
