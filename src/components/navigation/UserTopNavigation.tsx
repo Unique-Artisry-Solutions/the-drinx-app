@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
@@ -19,7 +18,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -40,7 +39,6 @@ const UserTopNavigation: React.FC = () => {
       setUserType('individual');
     }
 
-    // Fetch username if user is logged in
     const fetchUsername = async () => {
       if (user) {
         try {
@@ -63,8 +61,12 @@ const UserTopNavigation: React.FC = () => {
   }, [user]);
   
   const handleLogout = async () => {
-    await signOut();
-    navigate('/landing');
+    try {
+      await signOut();
+      navigate('/login');
+    } catch (error) {
+      console.error('Error during logout:', error);
+    }
   };
 
   const userNavItems = [

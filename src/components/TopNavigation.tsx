@@ -1,7 +1,9 @@
+
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, LogOut, Settings } from 'lucide-react';
 import CartButton from './cart/CartButton';
+import { useAuth } from '@/contexts/auth';
 
 interface TopNavigationProps {
   onMenuToggle?: () => void;
@@ -10,10 +12,24 @@ interface TopNavigationProps {
 
 const TopNavigation: React.FC<TopNavigationProps> = ({ onMenuToggle, isMenuOpen }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const { signOut } = useAuth();
   
   const toggleProfile = () => {
     setIsProfileOpen(!isProfileOpen);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      // Close the profile dropdown
+      setIsProfileOpen(false);
+      // Navigate to home page after logout
+      navigate('/');
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
   };
 
   return (
@@ -45,7 +61,10 @@ const TopNavigation: React.FC<TopNavigationProps> = ({ onMenuToggle, isMenuOpen 
                 <Link to="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                   View Profile
                 </Link>
-                <button className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 focus:outline-none">
+                <button 
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 focus:outline-none"
+                >
                   <LogOut size={16} className="mr-2" />
                   Logout
                 </button>

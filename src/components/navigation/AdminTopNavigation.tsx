@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Home, 
   Map, 
@@ -24,15 +23,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 const AdminTopNavigation: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [adminUsername, setAdminUsername] = useState<string>('Admin');
   
   useEffect(() => {
-    // Try to get admin username from localStorage
     const storedUsername = localStorage.getItem('admin_username') || 'Admin';
     setAdminUsername(storedUsername);
   }, []);
@@ -50,7 +50,7 @@ const AdminTopNavigation: React.FC = () => {
       description: 'You have been successfully logged out',
     });
     
-    window.location.href = '/';
+    navigate('/');
   };
 
   const adminNavItems = [
@@ -146,7 +146,6 @@ const AdminTopNavigation: React.FC = () => {
           </div>
         </div>
         
-        {/* Mobile Menu */}
         {isMobileMenuOpen && (
           <div className="admin-mobile-menu md:hidden py-3 space-y-2 animate-fade-in">
             <div className="text-sm text-white/80 px-3 py-2">

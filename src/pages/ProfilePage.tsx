@@ -1,12 +1,12 @@
 
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import UserAuth from '@/components/UserAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-
+import { useAuth } from '@/contexts/auth';
 import ProfileHeader from '@/components/profile/ProfileHeader';
 
 const ProfilePage: React.FC = () => {
@@ -14,6 +14,8 @@ const ProfilePage: React.FC = () => {
   const [userName, setUserName] = useState('');
   const [userEmail, setUserEmail] = useState('');
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { signOut } = useAuth();
 
   useEffect(() => {
     const auth = localStorage.getItem('user_authenticated') === 'true';
@@ -31,15 +33,25 @@ const ProfilePage: React.FC = () => {
     setUserEmail(localStorage.getItem('user_email') || '');
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('user_authenticated');
-    localStorage.removeItem('user_name');
-    localStorage.removeItem('user_email');
-    setIsAuthenticated(false);
-    toast({
-      title: 'Logged out',
-      description: 'You have been successfully logged out',
-    });
+  const handleLogout = async () => {
+    try {
+      // Use the Auth context signOut method
+      await signOut();
+      setIsAuthenticated(false);
+      toast({
+        title: 'Logged out',
+        description: 'You have been successfully logged out',
+      });
+      // Navigate to login page
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast({
+        title: 'Logout failed',
+        description: 'There was a problem logging out',
+        variant: 'destructive',
+      });
+    }
   };
 
   if (!isAuthenticated) {
