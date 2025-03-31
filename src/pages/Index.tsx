@@ -1,6 +1,7 @@
-
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
+import { useAuth } from '@/contexts/auth';
 import CocktailCard from '@/components/CocktailCard';
 import EstablishmentCard from '@/components/EstablishmentCard';
 import SearchFilter from '@/components/SearchFilter';
@@ -14,6 +15,8 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { sampleCocktails, sampleEstablishments } from '@/data/sampleData';
 
 const Index = () => {
+  const { user, isLoading } = useAuth();
+  const navigate = useNavigate();
   const [cocktails, setCocktails] = useState(sampleCocktails);
   const [allCocktails, setAllCocktails] = useState(sampleCocktails);
   const [establishments, setEstablishments] = useState(sampleEstablishments);
@@ -46,6 +49,13 @@ const Index = () => {
     }
   }, [userLocation, establishments, calculateDistance, formatDistance]);
   
+  useEffect(() => {
+    // If user is authenticated, redirect to explore page
+    if (user && !isLoading) {
+      navigate('/explore');
+    }
+  }, [user, isLoading, navigate]);
+
   const handleSearch = (query: string) => {
     setSearchQuery(query);
 

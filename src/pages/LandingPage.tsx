@@ -1,5 +1,6 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import Hero from '@/components/landing/Hero';
 import Features from '@/components/landing/Features';
@@ -7,8 +8,19 @@ import Benefits from '@/components/landing/Benefits';
 import KeyFeatures from '@/components/landing/KeyFeatures';
 import CallToAction from '@/components/landing/CallToAction';
 import Footer from '@/components/landing/Footer';
+import { useAuth } from '@/contexts/auth';
 
 const LandingPage = () => {
+  const { user, isLoading } = useAuth();
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    // If user is authenticated, redirect to explore page
+    if (user && !isLoading) {
+      navigate('/explore');
+    }
+  }, [user, isLoading, navigate]);
+
   return (
     <Layout>
       <div className="landing-page min-h-screen w-full">

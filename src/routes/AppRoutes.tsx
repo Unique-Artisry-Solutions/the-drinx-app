@@ -1,7 +1,9 @@
-import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+
+import React, { useEffect } from 'react';
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { ProtectedRoute, AdminRoute, TypedProtectedRoute } from './protectedRoutes';
 import EmailVerificationHandler from './EmailVerificationHandler';
+import { useAuth } from '@/contexts/auth';
 
 // Import pages
 import Index from "@/pages/Index";
@@ -35,7 +37,22 @@ import AdminEstablishmentsPage from "@/pages/admin/AdminEstablishmentsPage";
 import AdminUserProfile from "@/pages/admin/AdminUserProfile";
 import AdminEstablishmentProfile from "@/pages/admin/AdminEstablishmentProfile";
 
+// Routes that should redirect to /explore if the user is logged in
+const publicOnlyRoutes = ['/', '/landing', '/login', '/signup'];
+
 const AppRoutes = () => {
+  const { user, isLoading } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  useEffect(() => {
+    // If user is authenticated and trying to access a public-only route,
+    // redirect them to the explore page
+    if (user && !isLoading && publicOnlyRoutes.includes(location.pathname)) {
+      navigate('/explore');
+    }
+  }, [user, isLoading, location.pathname, navigate]);
+  
   return (
     <>
       {/* Place EmailVerificationHandler outside of Routes to catch URL parameters regardless of current route */}
