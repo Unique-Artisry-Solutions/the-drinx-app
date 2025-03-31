@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
@@ -23,7 +24,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from '@/hooks/use-toast';
-import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/auth';
 
 const AdminTopNavigation: React.FC = () => {
   const location = useLocation();
@@ -31,26 +32,38 @@ const AdminTopNavigation: React.FC = () => {
   const { toast } = useToast();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [adminUsername, setAdminUsername] = useState<string>('Admin');
+  const { signOut } = useAuth();
   
   useEffect(() => {
     const storedUsername = localStorage.getItem('admin_username') || 'Admin';
     setAdminUsername(storedUsername);
   }, []);
   
-  const handleLogout = () => {
-    localStorage.removeItem('user_authenticated');
-    localStorage.removeItem('admin_authenticated');
-    localStorage.removeItem('user_email');
-    localStorage.removeItem('user_username');
-    localStorage.removeItem('user_type');
-    localStorage.removeItem('admin_username');
-    
-    toast({
-      title: 'Logged out',
-      description: 'You have been successfully logged out',
-    });
-    
-    navigate('/');
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      
+      localStorage.removeItem('user_authenticated');
+      localStorage.removeItem('admin_authenticated');
+      localStorage.removeItem('user_email');
+      localStorage.removeItem('user_username');
+      localStorage.removeItem('user_type');
+      localStorage.removeItem('admin_username');
+      
+      toast({
+        title: 'Logged out',
+        description: 'You have been successfully logged out',
+      });
+      
+      navigate('/');
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast({
+        title: 'Logout failed',
+        description: 'There was a problem logging out',
+        variant: 'destructive',
+      });
+    }
   };
 
   const adminNavItems = [
