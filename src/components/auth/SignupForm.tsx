@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { CardContent, CardFooter } from '@/components/ui/card';
@@ -62,10 +61,8 @@ const SignupForm: React.FC<SignupFormProps> = ({
 
   const handleConfirmationClose = () => {
     setShowConfirmationModal(false);
-    // Only call onSuccess after the user explicitly dismisses the modal, if needed
-    if (onSuccess) {
-      onSuccess();
-    }
+    // Don't call onSuccess which would trigger navigation to landing page
+    // Instead, stay on the current page and let the email verification handler redirect later
   };
 
   return (
@@ -136,7 +133,6 @@ const SignupForm: React.FC<SignupFormProps> = ({
             />
           </div>
           
-          {/* Conditional fields based on account type */}
           {userType === 'establishment' && (
             <div className="space-y-2 pt-2 bg-gray-50 p-3 rounded-md border border-gray-100">
               <h3 className="text-sm font-medium text-spiritless-green">Establishment Details</h3>

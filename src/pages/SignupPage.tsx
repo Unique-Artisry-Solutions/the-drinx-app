@@ -1,18 +1,14 @@
 
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import UserAuth from '@/components/UserAuth';
 import { ArrowLeft } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const SignupPage = () => {
-  const navigate = useNavigate();
   const [selectedUserType, setSelectedUserType] = useState<'individual' | 'establishment'>('individual');
   
-  const handleAuthSuccess = () => {
-    // Redirect to the main app after successful authentication
-    navigate('/');
-  };
+  // Remove the redirect function, as we want to stay on this page after signup
   
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-white to-purple-50">
@@ -57,9 +53,9 @@ const SignupPage = () => {
             </div>
             
             <UserAuth 
-              onSuccess={handleAuthSuccess} 
               defaultTab="signup" 
               userType={selectedUserType}
+              // Remove the onSuccess prop which was triggering navigation
             />
             
             <div className="text-center mt-6">

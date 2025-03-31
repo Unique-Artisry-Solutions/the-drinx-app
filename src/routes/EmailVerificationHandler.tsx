@@ -7,7 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 const EmailVerificationHandler = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { refreshSession, isEmailVerified } = useAuth();
+  const { refreshSession } = useAuth();
   const { toast } = useToast();
   const [isChecking, setIsChecking] = useState(true);
   
@@ -29,7 +29,8 @@ const EmailVerificationHandler = () => {
             description: 'Your email has been verified. You can now access all features.',
           });
           
-          // Explicitly redirect to explore page
+          // Explicitly redirect to explore page with replace to prevent
+          // the user from navigating back to this URL
           console.log('Redirecting to explore page');
           navigate('/explore', { replace: true });
         } catch (error) {
