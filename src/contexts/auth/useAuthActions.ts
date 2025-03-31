@@ -66,20 +66,23 @@ export function useAuthActions() {
     }
   };
 
-  const signUp = async (email: string, password: string, metadata?: { [key: string]: any }, redirectTo?: string) => {
+  const signUp = async (email: string, password: string, options?: { 
+    data?: { [key: string]: any },
+    emailRedirectTo?: string 
+  }) => {
     try {
       setIsLoading(true);
       console.log('Starting sign up process for:', email);
       
       // Make sure we have a proper redirect URL
-      const finalRedirectTo = redirectTo || `${window.location.origin}/?email_confirmed=true`;
+      const finalRedirectTo = options?.emailRedirectTo || `${window.location.origin}/?email_confirmed=true`;
       console.log('Using redirect URL:', finalRedirectTo);
       
       const { data, error } = await supabase.auth.signUp({ 
         email, 
         password,
         options: {
-          data: metadata,
+          data: options?.data,
           emailRedirectTo: finalRedirectTo,
         }
       });

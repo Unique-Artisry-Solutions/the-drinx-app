@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { CardContent, CardFooter } from '@/components/ui/card';
@@ -45,7 +46,12 @@ const SignupForm: React.FC<SignupFormProps> = ({
       // Make sure redirectTo is correctly set to use the full URL with the origin
       const redirectTo = `${window.location.origin}/?email_confirmed=true`;
       
-      await signUp(email, password, metadata, redirectTo);
+      // Update the signUp call to match the expected parameters
+      // The useAuthActions.ts expects email, password, and an options object
+      await signUp(email, password, {
+        data: metadata,
+        emailRedirectTo: redirectTo
+      });
       
       // Show confirmation modal instead of redirecting
       setShowConfirmationModal(true);
