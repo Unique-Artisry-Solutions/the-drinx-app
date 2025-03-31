@@ -5,10 +5,13 @@ import Fuse from 'fuse.js';
 export interface SearchableItem {
   id: string;
   name: string;
+  price?: string | number;
   description?: string;
   ingredients?: string[];
+  image?: string;
   establishment?: {
     name: string;
+    distance?: string;
   };
   [key: string]: any;
 }

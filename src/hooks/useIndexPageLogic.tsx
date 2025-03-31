@@ -50,7 +50,7 @@ export const useIndexPageLogic = () => {
 
   // Create fuzzy search instance for cocktails
   const fuseInstance = useMemo(() => 
-    createFuzzySearch(allCocktails as unknown as SearchableItem[]),
+    createFuzzySearch(allCocktails as SearchableItem[]),
     [allCocktails]
   );
 
@@ -72,10 +72,10 @@ export const useIndexPageLogic = () => {
     if (query) {
       // Cast search results back to Cocktail[] to match the expected type
       const searchResults = performAdvancedSearch(
-        allCocktails as unknown as SearchableItem[], 
+        allCocktails as SearchableItem[], 
         query, 
         fuseInstance
-      ) as unknown as Cocktail[];
+      ) as Cocktail[];
       
       setCocktails(searchResults);
     } else {
@@ -91,10 +91,10 @@ export const useIndexPageLogic = () => {
     // Start with all cocktails or current search results
     let filteredCocktails = searchQuery ? 
       performAdvancedSearch(
-        allCocktails as unknown as SearchableItem[], 
+        allCocktails as SearchableItem[], 
         searchQuery, 
         fuseInstance
-      ) as unknown as Cocktail[] : 
+      ) as Cocktail[] : 
       [...allCocktails];
     
     // Apply price range filter
