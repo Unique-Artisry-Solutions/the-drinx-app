@@ -7,7 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 const EmailVerificationHandler = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { refreshSession } = useAuth();
+  const { refreshSession, isEmailVerified } = useAuth();
   const { toast } = useToast();
   const [isChecking, setIsChecking] = useState(true);
   

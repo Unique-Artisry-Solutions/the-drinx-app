@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
@@ -44,6 +43,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.setItem('user_type', result.user.user_metadata.user_type);
       }
     }
+    
+    return { isEmailVerified: result.isEmailVerified };
   };
 
   useEffect(() => {
