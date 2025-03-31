@@ -5,9 +5,15 @@ import { useAuth } from '@/contexts/auth';
 
 export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, isLoading, isEmailVerified } = useAuth();
+  const isAdminBypass = localStorage.getItem('admin_bypass') === 'true';
   
   if (isLoading) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  }
+  
+  if (isAdminBypass) {
+    // Admin bypass is enabled, allow access
+    return <>{children}</>;
   }
   
   if (!user) {
@@ -40,9 +46,19 @@ export const TypedProtectedRoute = ({
 }) => {
   const { user, isLoading, isEmailVerified } = useAuth();
   const storedUserType = localStorage.getItem('user_type');
+  const isAdminBypass = localStorage.getItem('admin_bypass') === 'true';
   
   if (isLoading) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  }
+  
+  if (isAdminBypass) {
+    // For admin bypass, check if the stored type matches the required type
+    if (storedUserType !== userType) {
+      return <Navigate to="/" replace />;
+    }
+    
+    return <>{children}</>;
   }
   
   if (!user) {

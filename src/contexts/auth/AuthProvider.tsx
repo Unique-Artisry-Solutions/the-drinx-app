@@ -27,6 +27,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   } = useAuthActions();
 
   const refreshSession = async () => {
+    // Check if admin bypass is enabled
+    const isAdminBypass = localStorage.getItem('admin_bypass') === 'true';
+    
+    if (isAdminBypass) {
+      // Create a pseudo user based on localStorage
+      const bypassEmail = localStorage.getItem('user_email') || 'bypass@example.com';
+      const userType = localStorage.getItem('user_type') || 'individual';
+      
+      const bypassUser = {
+        id: 'admin-bypass-id',
+        email: bypassEmail,
+        user_metadata: {
+          user_type: userType,
+          username: localStorage.getItem('user_username') || 'bypass-user'
+        },
+        app_metadata: {},
+        aud: 'authenticated',
+        created_at: new Date().toISOString()
+      } as unknown as User;
+      
+      setUser(bypassUser);
+      setIsEmailVerified(true);
+      setIsLoading(false);
+      
+      return { 
+        session: null, 
+        user: bypassUser,
+        isEmailVerified: true
+      };
+    }
+    
+    // Normal refresh session logic
     const result = await refreshSessionAction();
     setSession(result.session);
     setUser(result.user);
@@ -49,6 +81,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
+    // Check for admin bypass
+    const isAdminBypass = localStorage.getItem('admin_bypass') === 'true';
+    
+    if (isAdminBypass) {
+      // Create a pseudo user based on localStorage
+      const bypassEmail = localStorage.getItem('user_email') || 'bypass@example.com';
+      const userType = localStorage.getItem('user_type') || 'individual';
+      
+      const bypassUser = {
+        id: 'admin-bypass-id',
+        email: bypassEmail,
+        user_metadata: {
+          user_type: userType,
+          username: localStorage.getItem('user_username') || 'bypass-user'
+        },
+        app_metadata: {},
+        aud: 'authenticated',
+        created_at: new Date().toISOString()
+      } as unknown as User;
+      
+      setUser(bypassUser);
+      setIsEmailVerified(true);
+      setIsLoading(false);
+      
+      // Skip the rest of the auth checks
+      return;
+    }
+    
     // Check for admin session expiry
     const checkAdminSession = () => {
       const adminSessionCreated = localStorage.getItem('admin_session_created');
@@ -181,7 +241,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isEmailVerified,
     signIn: signInAction,
     signUp: signUpAction,
-    signOut: signOutAction,
+    signOut: async () => {
+      // Check if we need to clear admin bypass
+      const isAdminBypass = localStorage.getItem('admin_bypass') === 'true';
+      if (isAdminBypass) {
+        localStorage.removeItem('admin_bypass');
+        localStorage.removeItem('user_authenticated');
+        localStorage.removeItem('user_email');
+        localStorage.removeItem('user_type');
+        localStorage.removeItem('user_username');
+        setUser(null);
+        setIsEmailVerified(false);
+        
+        return;
+      }
+      
+      // Normal signout
+      await signOutAction();
+    },
     updateProfile: updateProfileAction,
     refreshSession,
   };
