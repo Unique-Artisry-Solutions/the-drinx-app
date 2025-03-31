@@ -94,6 +94,17 @@ const MapPage: React.FC = () => {
     // In a real application, we would apply distance and price filters here
     console.log('Applied filters:', filters);
   };
+  
+  const applyFilters = () => {
+    // In a real application, this would apply the filters and search
+    // For now, we'll just call performSearch()
+    performSearch();
+    
+    toast({
+      title: "Filters Applied",
+      description: `Found ${establishments.length} establishments matching your criteria.`
+    });
+  };
 
   const toggleViewMode = () => {
     setViewMode(prevMode => prevMode === ViewMode.MAP ? ViewMode.LIST : ViewMode.MAP);
@@ -153,6 +164,7 @@ const MapPage: React.FC = () => {
           <SearchFilter 
             onSearch={handleSearch}
             onFilterChange={handleFilterChange}
+            onApplyFilters={applyFilters}
             initialSearchTerm={searchTerm}
           />
         </div>

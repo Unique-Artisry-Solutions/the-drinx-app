@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
@@ -71,10 +70,26 @@ const Index = () => {
   
   const handleFilterChange = (newFilters: any) => {
     setFilters(newFilters);
-
+  };
+  
+  const applyFilters = () => {
     // Apply price range filter
-    const filtered = allCocktails.filter(cocktail => cocktail.price >= newFilters.priceRange[0] && cocktail.price <= newFilters.priceRange[1]);
+    const filtered = allCocktails.filter(cocktail => {
+      const cocktailPrice = typeof cocktail.price === 'string' 
+        ? parseFloat(cocktail.price) 
+        : cocktail.price;
+      
+      return !isNaN(cocktailPrice) && 
+        cocktailPrice >= newFilters.priceRange[0] && 
+        cocktailPrice <= newFilters.priceRange[1];
+    });
+    
     setCocktails(filtered);
+    
+    toast({
+      title: "Filters Applied",
+      description: `Found ${filtered.length} cocktails matching your criteria.`
+    });
   };
 
   // Transform establishment data for the map
@@ -98,7 +113,12 @@ const Index = () => {
           </p>
         </div>
 
-        <SearchFilter onSearch={handleSearch} onFilterChange={handleFilterChange} className="mb-6" />
+        <SearchFilter 
+          onSearch={handleSearch} 
+          onFilterChange={handleFilterChange} 
+          onApplyFilters={applyFilters}
+          className="mb-6" 
+        />
 
         <Tabs defaultValue="featured" className="w-full" onValueChange={setActiveTab}>
           <TabsList className="w-full mb-6">

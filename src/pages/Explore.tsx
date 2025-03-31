@@ -50,10 +50,15 @@ const Explore = () => {
       );
     }
     
-    // Apply price filter
-    results = results.filter(cocktail => 
-      cocktail.price <= filters.priceRange[1]
-    );
+    // Apply price filter - make sure to convert price to number if it's a string
+    results = results.filter(cocktail => {
+      // Ensure price is treated as a number
+      const cocktailPrice = typeof cocktail.price === 'string' 
+        ? parseFloat(cocktail.price) 
+        : cocktail.price;
+        
+      return !isNaN(cocktailPrice) && cocktailPrice <= filters.priceRange[1];
+    });
     
     // In a real app, you would filter by distance here
     // This is just a simulation
