@@ -18,14 +18,14 @@ const TEST_CREDENTIALS = {
     password: 'Test123!',
     name: 'Test User',
     username: 'testuser',
-    userType: 'individual'
+    userType: 'individual' as const
   },
   establishment: {
     email: 'testbusiness@spiritless.com',
     password: 'Test123!',
     name: 'Test Bar',
     username: 'testbar',
-    userType: 'establishment'
+    userType: 'establishment' as const
   }
 };
 
