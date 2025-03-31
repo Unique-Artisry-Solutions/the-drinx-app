@@ -1,9 +1,8 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Search, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import SearchSuggestions from './SearchSuggestions';
-import { getSuggestionCompletions } from './AutoCorrectHelper';
+import { getSuggestionCompletions, getAutoCorrectSuggestion } from './AutoCorrectHelper';
 
 interface SearchInputProps {
   value: string;
@@ -28,7 +27,6 @@ const SearchInput: React.FC<SearchInputProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Update auto-complete suggestions when input value changes
   useEffect(() => {
     if (value.length >= 2) {
       const completions = getSuggestionCompletions(value);
@@ -38,9 +36,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
     }
   }, [value]);
 
-  // Enhanced suggestions list combining API suggestions and auto-complete
   const enhancedSuggestions = [
-    // Add auto-complete suggestions at the top if they exist
     ...autoCompleteSuggestions.map(term => ({
       value: term,
       label: term,
@@ -53,28 +49,27 @@ const SearchInput: React.FC<SearchInputProps> = ({
     e.preventDefault();
     setShowSuggestions(false);
     onSearch(value);
+    console.log(`Search submitted: "${value}"`);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     onChange(newValue);
     
-    // Show suggestions if there's text and we have suggestions
     if (newValue.length > 1) {
       setShowSuggestions(true);
       
-      // Debounce search to avoid too many queries while typing
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
       }
       
       debounceTimerRef.current = setTimeout(() => {
+        console.log(`Debounced search for: "${newValue}"`);
         onSearch(newValue);
-      }, 300); // Wait 300ms after typing stops
+      }, 300);
     } else {
       setShowSuggestions(false);
       
-      // If cleared, immediately trigger search with empty value
       if (newValue === '') {
         onSearch('');
       }
@@ -87,7 +82,6 @@ const SearchInput: React.FC<SearchInputProps> = ({
     onSearch(selectedValue);
   };
   
-  // Mouse events to detect slider interactions
   const handleMouseDown = () => {
     setIsDragging(true);
   };
@@ -95,12 +89,10 @@ const SearchInput: React.FC<SearchInputProps> = ({
   const handleMouseUp = () => {
     if (isDragging) {
       setIsDragging(false);
-      // Fire search when mouse is released after interaction
       onSearch(value);
     }
   };
   
-  // Add mouse event listeners to document
   useEffect(() => {
     document.addEventListener('mouseup', handleMouseUp);
     return () => {
@@ -135,7 +127,6 @@ const SearchInput: React.FC<SearchInputProps> = ({
         </div>
       </form>
       
-      {/* Search Suggestions with enhanced suggestions */}
       <SearchSuggestions 
         suggestions={enhancedSuggestions}
         isOpen={showSuggestions}

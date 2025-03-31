@@ -36,14 +36,18 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
 
   // Initialize fuzzy search when cocktails or establishments change
   useEffect(() => {
-    if (cocktails.length > 0 || establishments.length > 0) {
+    // Make sure we have data to work with
+    const cocktailItems = cocktails.length > 0 ? cocktails : []; 
+    const establishmentItems = establishments.length > 0 ? establishments : [];
+    
+    if (cocktailItems.length > 0 || establishmentItems.length > 0) {
       // Combine cocktails and establishments for fuzzy search
       const searchItems = [
-        ...cocktails.map(c => ({
+        ...cocktailItems.map(c => ({
           ...c,
           type: 'cocktail',
         })),
-        ...establishments.map(e => ({
+        ...establishmentItems.map(e => ({
           ...e,
           type: 'establishment',
         })),
@@ -53,7 +57,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
       setFuseInstance(createFuzzySearch(searchItems));
       
       // Extract suggestions
-      const extractedSuggestions = extractSearchSuggestions(cocktails, establishments);
+      const extractedSuggestions = extractSearchSuggestions(cocktailItems, establishmentItems);
       setSuggestions(extractedSuggestions);
     }
   }, [cocktails, establishments]);

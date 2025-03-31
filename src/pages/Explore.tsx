@@ -9,10 +9,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 
 // Sample data - would be fetched from API in a real application
-import { sampleCocktails, sampleBarCrawls } from '@/data/sampleData';
+import { sampleCocktails, sampleEstablishments, sampleBarCrawls } from '@/data/sampleData';
 
 const Explore = () => {
-  const [cocktails, setCocktails] = useState(sampleCocktails);
+  const [cocktails] = useState(sampleCocktails);
   const [filteredCocktails, setFilteredCocktails] = useState(sampleCocktails);
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState({
@@ -22,61 +22,72 @@ const Explore = () => {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  // Remove the automatic filter application on initial load
-  // Only apply filters when search query changes and is not empty
+  // Apply search filter when search query changes
   useEffect(() => {
-    if (searchQuery) {
-      applyFilters();
-    }
+    handleSearchFilter();
   }, [searchQuery]);
 
+  // This function will handle the search now
+  const handleSearchFilter = () => {
+    let results = [...cocktails];
+    
+    // Apply search filter if there's a query
+    if (searchQuery && searchQuery.trim() !== '') {
+      const query = searchQuery.toLowerCase().trim();
+      
+      results = results.filter(cocktail => 
+        cocktail.name.toLowerCase().includes(query) ||
+        cocktail.description.toLowerCase().includes(query) ||
+        cocktail.establishment.name.toLowerCase().includes(query) ||
+        (cocktail.ingredients && cocktail.ingredients.some(ingredient => 
+          ingredient.toLowerCase().includes(query)
+        ))
+      );
+      
+      console.log(`Search query "${query}" found ${results.length} results`);
+    }
+    
+    // Apply price filter
+    results = results.filter(cocktail => {
+      const cocktailPrice = typeof cocktail.price === 'string' 
+        ? parseFloat(cocktail.price.replace('$', '')) 
+        : cocktail.price;
+        
+      return !isNaN(cocktailPrice) && 
+             cocktailPrice >= filters.priceRange[0] && 
+             cocktailPrice <= filters.priceRange[1];
+    });
+    
+    // Store the filtered results
+    setFilteredCocktails(results);
+  };
+
+  // Update search query and trigger filter through useEffect
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    // If query is empty, reset to show all cocktails
-    if (!query) {
-      setFilteredCocktails(cocktails);
-    }
-    // Otherwise, search is handled by the useEffect above
   };
 
   const handleFilterChange = (newFilters: any) => {
     setFilters(newFilters);
-    // Filter changes are only applied when the Apply button is clicked
   };
 
   const applyFilters = () => {
-    let results = [...cocktails];
-    
-    // Apply search filter if there's a query
-    if (searchQuery) {
-      results = results.filter(cocktail => 
-        cocktail.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        cocktail.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        cocktail.establishment.name.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-    
-    // Apply price filter - make sure to convert price to number if it's a string
-    results = results.filter(cocktail => {
-      // Ensure price is treated as a number
-      const cocktailPrice = typeof cocktail.price === 'string' 
-        ? parseFloat(cocktail.price) 
-        : cocktail.price;
-        
-      return !isNaN(cocktailPrice) && cocktailPrice <= filters.priceRange[1];
-    });
-    
-    // In a real app, you would filter by distance here
-    // This is just a simulation
-    const distanceFiltered = results;
-    
-    setFilteredCocktails(distanceFiltered);
+    handleSearchFilter();
     
     // Show a toast notification with the results
     toast({
       title: "Filters Applied",
-      description: `Found ${distanceFiltered.length} cocktails matching your criteria.`
+      description: `Found ${filteredCocktails.length} cocktails matching your criteria.`
     });
+  };
+
+  const resetFilters = () => {
+    setSearchQuery('');
+    setFilters({
+      priceRange: [0, 25],
+      distance: 10,
+    });
+    setFilteredCocktails(cocktails);
   };
 
   return (
@@ -177,12 +188,7 @@ const Explore = () => {
             <Button 
               variant="outline" 
               onClick={() => {
-                setSearchQuery('');
-                setFilters({
-                  priceRange: [0, 25],
-                  distance: 10,
-                });
-                setFilteredCocktails(cocktails);
+                resetFilters();
               }}
             >
               Reset Filters
