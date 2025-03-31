@@ -6,6 +6,7 @@ import MobileNavigation from './navigation/MobileNavigation';
 import AdminTopNavigation from './navigation/AdminTopNavigation';
 import UserTopNavigation from './navigation/UserTopNavigation';
 import GuestTopNavigation from './navigation/GuestTopNavigation';
+import BackButton from './navigation/BackButton';
 import AppFooter from './AppFooter';
 import { useAuth } from '@/contexts/AuthContext';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -45,6 +46,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const isLandingPage = location.pathname === '/' || location.pathname === '/landing';
   const isAdminPage = location.pathname.startsWith('/admin');
   
+  // Determine which pages should not show a back button
+  const shouldShowBackButton = () => {
+    // Don't show back button on landing, home, main app pages, or pages with their own back implementation
+    const topLevelPaths = ['/', '/landing', '/map', '/explore', '/login', '/signup', '/mission', 
+                          '/resources', '/legal', '/admin', '/admin/dashboard', '/profile'];
+    return !topLevelPaths.includes(location.pathname) && !isLandingPage;
+  };
+  
   const getContentPadding = () => {
     if (isLandingPage) {
       return 'pt-16 pb-0 px-0';
@@ -76,6 +85,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       {renderNavigation()}
       
       <main className={`flex-1 w-full max-w-full overflow-x-hidden ${getContentPadding()}`}>
+        {shouldShowBackButton() && (
+          <div className="container max-w-6xl mx-auto px-4 pt-4">
+            <BackButton />
+          </div>
+        )}
         {children}
       </main>
       

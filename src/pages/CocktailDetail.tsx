@@ -1,11 +1,10 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Star, Clock, Heart, Share2, MessageSquare, MapPin, ArrowLeft } from 'lucide-react';
+import { Star, Clock, Heart, Share2, MessageSquare, MapPin } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 // Sample data - would be fetched from API in a real application
@@ -139,11 +138,6 @@ const CocktailDetail = () => {
   return (
     <Layout>
       <div className="animate-fade-in pb-8">
-        <Link to={`/establishment/${cocktail.establishment.id || '1'}`} className="inline-flex items-center text-material-primary mb-4">
-          <ArrowLeft size={16} className="mr-1" />
-          Back to {typeof cocktail.establishment === 'object' ? cocktail.establishment.name : cocktail.establishment}
-        </Link>
-
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-2">
             <div className="mb-6">

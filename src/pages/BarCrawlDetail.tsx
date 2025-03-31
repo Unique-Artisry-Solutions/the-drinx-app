@@ -1,16 +1,13 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Route, ArrowLeft, Calendar, Users, Clock } from 'lucide-react';
+import { Route, Calendar, Users, Clock } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { sampleBarCrawls, sampleEstablishments } from '@/data/sampleData';
-import BackButton from '@/components/navigation/BackButton';
 
-// Updated interface to match the sample data structure
 interface BarCrawlEstablishment {
   id: string;
   name: string;
@@ -42,18 +39,16 @@ const BarCrawlDetail: React.FC = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // In a real app, fetch from API. For now, use sample data.
     const fetchBarCrawl = () => {
       setTimeout(() => {
         const crawl = sampleBarCrawls.find(c => c.id === id);
         
         if (crawl) {
-          // Map establishments to the bar crawl
           const establishments = sampleEstablishments.slice(0, crawl.stops);
           
           setBarCrawl({
             ...crawl,
-            date: crawl.date || new Date().toISOString().split('T')[0], // Ensure date exists
+            date: crawl.date || new Date().toISOString().split('T')[0],
             establishments
           });
         }
@@ -76,7 +71,6 @@ const BarCrawlDetail: React.FC = () => {
     return (
       <Layout>
         <div className="py-4 animate-fade-in">
-          <BackButton className="mb-4" />
           <Skeleton className="h-12 w-2/3 mb-2" />
           <Skeleton className="h-6 w-1/2 mb-6" />
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -93,7 +87,6 @@ const BarCrawlDetail: React.FC = () => {
     return (
       <Layout>
         <div className="py-4 animate-fade-in">
-          <BackButton className="mb-4" />
           <h1 className="text-2xl font-bold mb-2">Bar Crawl Not Found</h1>
           <p className="mb-4 text-gray-600">
             The bar crawl you're looking for doesn't exist or may have been removed.
@@ -111,8 +104,6 @@ const BarCrawlDetail: React.FC = () => {
   return (
     <Layout>
       <div className="py-4 animate-fade-in">
-        <BackButton className="mb-4" />
-        
         <div className="mb-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
             <div>
