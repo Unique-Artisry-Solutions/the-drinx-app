@@ -1,54 +1,39 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/auth';
-import CocktailCard from '@/components/CocktailCard';
-import EstablishmentCard from '@/components/EstablishmentCard';
 import SearchFilter from '@/components/SearchFilter';
-import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import MapView from '@/components/map/MapView';
-import { useUserLocation } from '@/hooks/useUserLocation';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useIndexPageLogic } from '@/hooks/useIndexPageLogic';
 
-// Sample data - would be fetched from API in a real application
-import { sampleCocktails, sampleEstablishments } from '@/data/sampleData';
+// Import the new components
+import FeaturedCocktails from '@/components/home/FeaturedCocktails';
+import NearbyEstablishments from '@/components/home/NearbyEstablishments';
+import AllCocktails from '@/components/home/AllCocktails';
+import MapSection from '@/components/home/MapSection';
 
 const Index = () => {
   const { user, isLoading } = useAuth();
   const navigate = useNavigate();
-  const [cocktails, setCocktails] = useState(sampleCocktails);
-  const [allCocktails, setAllCocktails] = useState(sampleCocktails);
-  const [establishments, setEstablishments] = useState(sampleEstablishments);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filters, setFilters] = useState({
-    priceRange: [0, 25],
-    distance: 10
-  });
-  const [activeTab, setActiveTab] = useState("featured");
   const isMobile = useIsMobile();
+  
   const {
-    toast
-  } = useToast();
-  const {
+    cocktails,
+    establishments,
+    searchQuery,
+    filters,
+    activeTab,
+    setActiveTab,
     userLocation,
-    isLoading: isLoadingLocation,
+    isLoadingLocation,
     refreshLocation,
-    calculateDistance,
-    formatDistance
-  } = useUserLocation();
-
-  // Calculate distances when user location changes
-  useEffect(() => {
-    if (userLocation && establishments.length > 0) {
-      const updatedEstablishments = establishments.map(est => ({
-        ...est,
-        distance: formatDistance(calculateDistance(est.latitude, est.longitude))
-      }));
-      setEstablishments(updatedEstablishments);
-    }
-  }, [userLocation, establishments, calculateDistance, formatDistance]);
+    handleSearch,
+    handleFilterChange,
+    applyFilters,
+    resetFilters
+  } = useIndexPageLogic();
   
   useEffect(() => {
     // If user is authenticated, redirect to explore page
@@ -57,51 +42,6 @@ const Index = () => {
     }
   }, [user, isLoading, navigate]);
 
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-
-    // Filter cocktails based on search query
-    if (query) {
-      const filtered = allCocktails.filter(cocktail => cocktail.name.toLowerCase().includes(query.toLowerCase()) || cocktail.description.toLowerCase().includes(query.toLowerCase()) || cocktail.ingredients.some(i => i.toLowerCase().includes(query.toLowerCase())));
-      setCocktails(filtered);
-    } else {
-      setCocktails(allCocktails);
-    }
-  };
-  
-  const handleFilterChange = (newFilters: any) => {
-    setFilters(newFilters);
-  };
-  
-  const applyFilters = () => {
-    // Apply price range filter
-    const filtered = allCocktails.filter(cocktail => {
-      const cocktailPrice = typeof cocktail.price === 'string' 
-        ? parseFloat(cocktail.price) 
-        : cocktail.price;
-      
-      return !isNaN(cocktailPrice) && 
-        cocktailPrice >= filters.priceRange[0] && 
-        cocktailPrice <= filters.priceRange[1];
-    });
-    
-    setCocktails(filtered);
-    
-    toast({
-      title: "Filters Applied",
-      description: `Found ${filtered.length} cocktails matching your criteria.`
-    });
-  };
-
-  // Transform establishment data for the map
-  const mapEstablishments = establishments.map(e => ({
-    id: e.id,
-    name: e.name,
-    latitude: e.latitude,
-    longitude: e.longitude,
-    cocktailCount: e.cocktailCount
-  }));
-  
   return (
     <Layout>
       <div className="animate-fade-in my-4 sm:my-[30px] px-3 sm:px-6 md:px-[148px]">
@@ -129,117 +69,28 @@ const Index = () => {
           </TabsList>
           
           <TabsContent value="featured">
-            <section className="mb-8">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-medium text-material-on-surface">Featured Cocktails</h2>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {cocktails.slice(0, 4).map(cocktail => (
-                  <CocktailCard 
-                    key={cocktail.id} 
-                    id={cocktail.id} 
-                    name={cocktail.name} 
-                    price={cocktail.price} 
-                    description={cocktail.description} 
-                    ingredients={cocktail.ingredients} 
-                    image={cocktail.image} 
-                    establishment={cocktail.establishment} 
-                  />
-                ))}
-              </div>
-            </section>
-
-            <section>
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-medium text-material-on-surface">Nearby Establishments</h2>
-                <button className="text-sm text-material-primary" onClick={() => setActiveTab("map")}>
-                  View map
-                </button>
-              </div>
-              
-              <div className="space-y-3">
-                {establishments.slice(0, 5).map(establishment => (
-                  <EstablishmentCard 
-                    key={establishment.id} 
-                    id={establishment.id} 
-                    name={establishment.name} 
-                    address={establishment.address} 
-                    distance={establishment.distance} 
-                    cocktailCount={establishment.cocktailCount} 
-                    image={establishment.image} 
-                  />
-                ))}
-              </div>
-            </section>
+            <FeaturedCocktails cocktails={cocktails} />
+            <NearbyEstablishments 
+              establishments={establishments} 
+              onViewMap={() => setActiveTab("map")} 
+            />
           </TabsContent>
           
           <TabsContent value="all">
-            <div className="mb-6">
-              <h2 className="text-lg font-medium text-material-on-surface mb-4">All Cocktails</h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {cocktails.map(cocktail => (
-                  <CocktailCard 
-                    key={cocktail.id} 
-                    id={cocktail.id} 
-                    name={cocktail.name} 
-                    price={cocktail.price} 
-                    description={cocktail.description} 
-                    ingredients={cocktail.ingredients} 
-                    image={cocktail.image} 
-                    establishment={cocktail.establishment} 
-                  />
-                ))}
-              </div>
-              
-              {cocktails.length === 0 && (
-                <div className="text-center py-8 border border-dashed rounded-lg">
-                  <p className="text-material-on-surface-variant">No cocktails found matching your criteria.</p>
-                  <button 
-                    className="text-material-primary mt-2" 
-                    onClick={() => {
-                      setSearchQuery('');
-                      setCocktails(allCocktails);
-                      setFilters({
-                        priceRange: [0, 25],
-                        distance: 10
-                      });
-                    }}
-                  >
-                    Reset filters
-                  </button>
-                </div>
-              )}
-            </div>
+            <AllCocktails 
+              cocktails={cocktails} 
+              onResetFilters={resetFilters} 
+            />
           </TabsContent>
           
           <TabsContent value="map">
-            <div className={isMobile ? "h-[60vh]" : "h-[50vh]"}>
-              <MapView 
-                establishments={mapEstablishments} 
-                userLocation={userLocation} 
-                onRefreshLocation={refreshLocation} 
-                isLoadingLocation={isLoadingLocation} 
-              />
-            </div>
-            
-            <div className="mt-6">
-              <h2 className="text-lg font-medium text-material-on-surface mb-4">Establishments</h2>
-              <div className="space-y-3">
-                {establishments.map(establishment => (
-                  <EstablishmentCard 
-                    key={establishment.id} 
-                    id={establishment.id} 
-                    name={establishment.name} 
-                    address={establishment.address} 
-                    distance={establishment.distance} 
-                    cocktailCount={establishment.cocktailCount} 
-                    image={establishment.image} 
-                  />
-                ))}
-              </div>
-            </div>
+            <MapSection 
+              establishments={establishments}
+              mapHeight={isMobile ? "h-[60vh]" : "h-[50vh]"}
+              userLocation={userLocation}
+              onRefreshLocation={refreshLocation}
+              isLoadingLocation={isLoadingLocation}
+            />
           </TabsContent>
         </Tabs>
       </div>
