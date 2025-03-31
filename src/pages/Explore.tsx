@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import CocktailCard from '@/components/CocktailCard';
@@ -23,14 +22,21 @@ const Explore = () => {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  // Apply filters whenever they change
+  // Remove the automatic filter application on initial load
+  // Only apply filters when search query changes and is not empty
   useEffect(() => {
-    applyFilters();
+    if (searchQuery) {
+      applyFilters();
+    }
   }, [searchQuery]);
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    // Search is handled by the useEffect above
+    // If query is empty, reset to show all cocktails
+    if (!query) {
+      setFilteredCocktails(cocktails);
+    }
+    // Otherwise, search is handled by the useEffect above
   };
 
   const handleFilterChange = (newFilters: any) => {

@@ -68,7 +68,7 @@ export const useIndexPageLogic = () => {
   const handleSearch = (query: string) => {
     setSearchQuery(query);
 
-    // Perform advanced search with fuzzy matching and regex
+    // Perform advanced search only if there is a query
     if (query) {
       // Cast search results back to Cocktail[] to match the expected type
       const searchResults = performAdvancedSearch(
@@ -79,6 +79,7 @@ export const useIndexPageLogic = () => {
       
       setCocktails(searchResults);
     } else {
+      // If no search query, show all cocktails
       setCocktails(allCocktails);
     }
   };
