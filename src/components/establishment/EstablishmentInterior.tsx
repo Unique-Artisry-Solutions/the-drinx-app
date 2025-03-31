@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { MapPin, Phone, Star, Users, Calendar, PlusCircle } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -10,13 +9,14 @@ import { useToast } from '@/hooks/use-toast';
 import CocktailCard from '@/components/CocktailCard';
 import BarCrawlRequestModal from './BarCrawlRequestModal';
 import MapView from '@/components/map/MapView';
-
 interface EstablishmentInteriorProps {
   establishment: any;
   cocktails: any[];
-  userLocation?: { latitude: number; longitude: number } | null;
+  userLocation?: {
+    latitude: number;
+    longitude: number;
+  } | null;
 }
-
 const EstablishmentInterior: React.FC<EstablishmentInteriorProps> = ({
   establishment,
   cocktails,
@@ -25,32 +25,28 @@ const EstablishmentInterior: React.FC<EstablishmentInteriorProps> = ({
   const [isBarCrawlModalOpen, setIsBarCrawlModalOpen] = useState(false);
   const [activeUsers, setActiveUsers] = useState(establishment.activeUsers || Math.floor(Math.random() * 11));
   const [hasCheckedIn, setHasCheckedIn] = useState(false);
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
 
   // Sort cocktails by rating for top-rated display
-  const topRatedCocktails = [...cocktails].sort((a, b) => 
-    (b.rating || 0) - (a.rating || 0)
-  ).slice(0, 3);
-
+  const topRatedCocktails = [...cocktails].sort((a, b) => (b.rating || 0) - (a.rating || 0)).slice(0, 3);
   const handleCheckIn = () => {
     if (!localStorage.getItem('user_authenticated')) {
       toast({
         title: 'Sign in required',
         description: 'Please sign in to check in at this establishment',
-        variant: 'destructive',
+        variant: 'destructive'
       });
       return;
     }
-    
     setHasCheckedIn(true);
     setActiveUsers(prev => prev + 1);
-    
     toast({
       title: 'Checked In!',
-      description: `You've checked in at ${establishment.name}`,
+      description: `You've checked in at ${establishment.name}`
     });
   };
-
   const handleBarCrawlRequest = () => {
     setIsBarCrawlModalOpen(true);
   };
@@ -63,13 +59,10 @@ const EstablishmentInterior: React.FC<EstablishmentInteriorProps> = ({
     longitude: establishment.longitude,
     cocktailCount: establishment.cocktailCount
   }];
-
-  return (
-    <div className="animate-fade-in">
-      <div 
-        className="h-48 md:h-60 bg-material-primary/10 rounded-xl mb-6 bg-cover bg-center relative"
-        style={{ backgroundImage: `url(${establishment.image || '/placeholder.svg'})` }}
-      >
+  return <div className="animate-fade-in">
+      <div className="h-48 md:h-60 bg-material-primary/10 rounded-xl mb-6 bg-cover bg-center relative" style={{
+      backgroundImage: `url(${establishment.image || '/placeholder.svg'})`
+    }}>
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent rounded-xl"></div>
         <div className="absolute bottom-6 left-6 right-6">
           <div className="flex justify-between items-end">
@@ -84,17 +77,10 @@ const EstablishmentInterior: React.FC<EstablishmentInteriorProps> = ({
               </div>
             </div>
             <div className="flex gap-2">
-              {!hasCheckedIn && (
-                <Button size="sm" onClick={handleCheckIn} className="bg-white text-material-primary hover:bg-white/90">
+              {!hasCheckedIn && <Button size="sm" onClick={handleCheckIn} className="bg-white text-material-primary hover:bg-white/90">
                   Check In
-                </Button>
-              )}
-              <Button 
-                size="sm" 
-                variant="outline" 
-                onClick={handleBarCrawlRequest}
-                className="border-white text-white hover:bg-white/20"
-              >
+                </Button>}
+              <Button size="sm" variant="outline" onClick={handleBarCrawlRequest} className="border-white text-white bg-gray-950 hover:bg-gray-800">
                 <PlusCircle className="h-4 w-4 mr-1" />
                 Add to Bar Crawl
               </Button>
@@ -114,26 +100,11 @@ const EstablishmentInterior: React.FC<EstablishmentInteriorProps> = ({
             
             <TabsContent value="menu">
               <div className="space-y-4">
-                {cocktails.length > 0 ? (
-                  cocktails.map((cocktail) => (
-                    <CocktailCard
-                      key={cocktail.id}
-                      id={cocktail.id}
-                      name={cocktail.name}
-                      price={cocktail.price}
-                      description={cocktail.description}
-                      ingredients={cocktail.ingredients}
-                      image={cocktail.image}
-                      establishment={cocktail.establishment}
-                    />
-                  ))
-                ) : (
-                  <Alert>
+                {cocktails.length > 0 ? cocktails.map(cocktail => <CocktailCard key={cocktail.id} id={cocktail.id} name={cocktail.name} price={cocktail.price} description={cocktail.description} ingredients={cocktail.ingredients} image={cocktail.image} establishment={cocktail.establishment} />) : <Alert>
                     <AlertDescription>
                       No mocktails available at this time.
                     </AlertDescription>
-                  </Alert>
-                )}
+                  </Alert>}
               </div>
             </TabsContent>
             
@@ -169,8 +140,7 @@ const EstablishmentInterior: React.FC<EstablishmentInteriorProps> = ({
                     <div className="pt-4">
                       <h3 className="font-medium mb-2">About</h3>
                       <p className="text-sm text-material-on-surface-variant">
-                        {establishment.description || 
-                          `${establishment.name} is a premier destination for non-alcoholic cocktails. 
+                        {establishment.description || `${establishment.name} is a premier destination for non-alcoholic cocktails. 
                           We pride ourselves on creating innovative and delicious mocktails that everyone can enjoy.`}
                       </p>
                     </div>
@@ -181,35 +151,19 @@ const EstablishmentInterior: React.FC<EstablishmentInteriorProps> = ({
             
             <TabsContent value="top-rated">
               <div className="space-y-4">
-                {topRatedCocktails.length > 0 ? (
-                  <>
+                {topRatedCocktails.length > 0 ? <>
                     <h3 className="text-lg font-medium mb-3">Most Popular Mocktails</h3>
-                    {topRatedCocktails.map((cocktail, index) => (
-                      <div key={cocktail.id} className="relative">
-                        {index === 0 && (
-                          <div className="absolute -top-2 -left-2 z-10">
+                    {topRatedCocktails.map((cocktail, index) => <div key={cocktail.id} className="relative">
+                        {index === 0 && <div className="absolute -top-2 -left-2 z-10">
                             <Badge className="bg-yellow-500">Top Pick</Badge>
-                          </div>
-                        )}
-                        <CocktailCard
-                          id={cocktail.id}
-                          name={cocktail.name}
-                          price={cocktail.price}
-                          description={cocktail.description}
-                          ingredients={cocktail.ingredients}
-                          image={cocktail.image}
-                          establishment={cocktail.establishment}
-                        />
-                      </div>
-                    ))}
-                  </>
-                ) : (
-                  <Alert>
+                          </div>}
+                        <CocktailCard id={cocktail.id} name={cocktail.name} price={cocktail.price} description={cocktail.description} ingredients={cocktail.ingredients} image={cocktail.image} establishment={cocktail.establishment} />
+                      </div>)}
+                  </> : <Alert>
                     <AlertDescription>
                       No ratings available yet.
                     </AlertDescription>
-                  </Alert>
-                )}
+                  </Alert>}
               </div>
             </TabsContent>
           </Tabs>
@@ -221,13 +175,7 @@ const EstablishmentInterior: React.FC<EstablishmentInteriorProps> = ({
               <CardTitle className="text-lg">Location</CardTitle>
             </CardHeader>
             <CardContent className="p-0 h-[250px] overflow-hidden rounded-b-lg">
-              <MapView 
-                establishments={mapEstablishments} 
-                userLocation={userLocation}
-                onRefreshLocation={() => {}} 
-                isLoadingLocation={false}
-                singleEstablishmentView={true}
-              />
+              <MapView establishments={mapEstablishments} userLocation={userLocation} onRefreshLocation={() => {}} isLoadingLocation={false} singleEstablishmentView={true} />
             </CardContent>
           </Card>
           
@@ -244,10 +192,7 @@ const EstablishmentInterior: React.FC<EstablishmentInteriorProps> = ({
                   </Badge>
                 </div>
                 
-                <Button 
-                  className="w-full"
-                  onClick={handleBarCrawlRequest}
-                >
+                <Button className="w-full" onClick={handleBarCrawlRequest}>
                   <Calendar className="h-4 w-4 mr-2" />
                   Request to Join Bar Crawl
                 </Button>
@@ -261,13 +206,7 @@ const EstablishmentInterior: React.FC<EstablishmentInteriorProps> = ({
         </div>
       </div>
       
-      <BarCrawlRequestModal
-        isOpen={isBarCrawlModalOpen}
-        onClose={() => setIsBarCrawlModalOpen(false)}
-        establishment={establishment}
-      />
-    </div>
-  );
+      <BarCrawlRequestModal isOpen={isBarCrawlModalOpen} onClose={() => setIsBarCrawlModalOpen(false)} establishment={establishment} />
+    </div>;
 };
-
 export default EstablishmentInterior;
