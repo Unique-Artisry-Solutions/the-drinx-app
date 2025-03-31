@@ -38,7 +38,9 @@ import AdminEstablishmentProfile from "@/pages/admin/AdminEstablishmentProfile";
 const AppRoutes = () => {
   return (
     <>
+      {/* Place EmailVerificationHandler outside of Routes to catch URL parameters regardless of current route */}
       <EmailVerificationHandler />
+      
       <Routes>
         <Route path="/" element={<LandingPage />}>
           <Route index element={<Index />} />
@@ -54,6 +56,7 @@ const AppRoutes = () => {
         <Route path="/legal" element={<LegalPage />} />
         
         <Route path="/explore" element={<Explore />} />
+        
         <Route path="/bar-crawl/:id" element={<BarCrawlDetail />} />
         <Route path="/map" element={
           <ProtectedRoute>
