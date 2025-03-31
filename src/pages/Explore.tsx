@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import CocktailCard from '@/components/CocktailCard';
 import SearchFilter from '@/components/SearchFilter';
@@ -7,27 +7,65 @@ import { Button } from '@/components/ui/button';
 import { Map, Route } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 // Sample data - would be fetched from API in a real application
 import { sampleCocktails, sampleBarCrawls } from '@/data/sampleData';
 
 const Explore = () => {
   const [cocktails, setCocktails] = useState(sampleCocktails);
+  const [filteredCocktails, setFilteredCocktails] = useState(sampleCocktails);
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState({
     priceRange: [0, 25],
     distance: 10,
   });
   const { user } = useAuth();
+  const { toast } = useToast();
+
+  // Apply filters whenever they change
+  useEffect(() => {
+    applyFilters();
+  }, [searchQuery]);
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    // In a real app, this would trigger an API call with the search query
+    // Search is handled by the useEffect above
   };
 
   const handleFilterChange = (newFilters: any) => {
     setFilters(newFilters);
-    // In a real app, this would trigger an API call with the filters
+    // Filter changes are only applied when the Apply button is clicked
+  };
+
+  const applyFilters = () => {
+    let results = [...cocktails];
+    
+    // Apply search filter if there's a query
+    if (searchQuery) {
+      results = results.filter(cocktail => 
+        cocktail.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        cocktail.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        cocktail.establishment.name.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+    
+    // Apply price filter
+    results = results.filter(cocktail => 
+      cocktail.price <= filters.priceRange[1]
+    );
+    
+    // In a real app, you would filter by distance here
+    // This is just a simulation
+    const distanceFiltered = results;
+    
+    setFilteredCocktails(distanceFiltered);
+    
+    // Show a toast notification with the results
+    toast({
+      title: "Filters Applied",
+      description: `Found ${distanceFiltered.length} cocktails matching your criteria.`
+    });
   };
 
   return (
@@ -42,8 +80,10 @@ const Explore = () => {
 
         <SearchFilter 
           onSearch={handleSearch} 
-          onFilterChange={handleFilterChange} 
+          onFilterChange={handleFilterChange}
+          onApplyFilters={applyFilters} 
           className="mb-6"
+          initialSearchTerm={searchQuery}
         />
 
         {/* Bar Crawl Section */}
@@ -100,21 +140,44 @@ const Explore = () => {
         </div>
 
         {/* Cocktails Section - Original content */}
-        <h2 className="text-xl font-semibold mb-4">Featured Cocktails</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {cocktails.map((cocktail) => (
-            <CocktailCard
-              key={cocktail.id}
-              id={cocktail.id}
-              name={cocktail.name}
-              price={cocktail.price}
-              description={cocktail.description}
-              ingredients={cocktail.ingredients}
-              image={cocktail.image}
-              establishment={cocktail.establishment}
-            />
-          ))}
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold">Featured Cocktails</h2>
+          <span className="text-sm text-gray-500">{filteredCocktails.length} results</span>
         </div>
+        
+        {filteredCocktails.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {filteredCocktails.map((cocktail) => (
+              <CocktailCard
+                key={cocktail.id}
+                id={cocktail.id}
+                name={cocktail.name}
+                price={cocktail.price}
+                description={cocktail.description}
+                ingredients={cocktail.ingredients}
+                image={cocktail.image}
+                establishment={cocktail.establishment}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8 border border-dashed rounded-lg">
+            <p className="text-material-on-surface-variant mb-2">No cocktails found matching your criteria.</p>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setSearchQuery('');
+                setFilters({
+                  priceRange: [0, 25],
+                  distance: 10,
+                });
+                setFilteredCocktails(cocktails);
+              }}
+            >
+              Reset Filters
+            </Button>
+          </div>
+        )}
       </div>
     </Layout>
   );

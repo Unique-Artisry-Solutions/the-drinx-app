@@ -2,10 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import { Search, SlidersHorizontal, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 
 export interface SearchFilterProps {
   onSearch: (query: string) => void;
   onFilterChange: (filters: any) => void;
+  onApplyFilters: () => void;
   className?: string;
   initialSearchTerm?: string;
 }
@@ -13,6 +15,7 @@ export interface SearchFilterProps {
 const SearchFilter: React.FC<SearchFilterProps> = ({
   onSearch,
   onFilterChange,
+  onApplyFilters,
   className,
   initialSearchTerm = '',
 }) => {
@@ -37,6 +40,13 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
       priceRange,
       distance,
     });
+  };
+
+  const handleApplyFilters = () => {
+    handleFilterChange();
+    onApplyFilters();
+    // Optionally close the filters after applying
+    setShowFilters(false);
   };
 
   const clearSearch = () => {
@@ -93,7 +103,6 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
                 onChange={(e) => {
                   const newValue = parseInt(e.target.value);
                   setPriceRange([priceRange[0], newValue]);
-                  handleFilterChange();
                 }}
                 className="w-full h-2 bg-material-surface-variant rounded-lg appearance-none cursor-pointer"
               />
@@ -110,19 +119,18 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
                 value={distance}
                 onChange={(e) => {
                   setDistance(parseInt(e.target.value));
-                  handleFilterChange();
                 }}
                 className="w-full h-2 bg-material-surface-variant rounded-lg appearance-none cursor-pointer"
               />
             </div>
             
-            <button
+            <Button
               type="button"
-              onClick={handleFilterChange}
+              onClick={handleApplyFilters}
               className="w-full bg-material-primary text-material-on-primary rounded-full py-2 text-sm font-medium"
             >
               Apply Filters
-            </button>
+            </Button>
           </div>
         )}
       </form>
