@@ -1,8 +1,7 @@
-
 import React, { useState, useRef } from 'react';
 import { Search, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import SearchSuggestions from '../SearchSuggestions';
+import SearchSuggestions from './SearchSuggestions';
 
 interface SearchInputProps {
   value: string;
