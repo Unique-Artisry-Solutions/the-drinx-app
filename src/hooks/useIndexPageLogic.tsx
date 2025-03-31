@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import Fuse from 'fuse.js';
@@ -48,9 +48,23 @@ export const useIndexPageLogic = () => {
     formatDistance
   } = useUserLocation();
 
-  // Create fuzzy search instance for cocktails
+  // Create fuzzy search instance for cocktails with better settings for auto-suggestion
   const fuseInstance = useMemo(() => 
-    createFuzzySearch(allCocktails as SearchableItem[]),
+    createFuzzySearch(allCocktails as SearchableItem[], {
+      // Lower threshold for better fuzzy matching sensitivity
+      threshold: 0.3,
+      // Include score to better rank results
+      includeScore: true,
+      // Ignore location for better partial matches
+      ignoreLocation: true,
+      // Search these fields
+      keys: [
+        { name: 'name', weight: 2 }, // Give name higher priority
+        'description',
+        'ingredients',
+        'establishment.name'
+      ]
+    }),
     [allCocktails]
   );
 
@@ -65,7 +79,8 @@ export const useIndexPageLogic = () => {
     }
   }, [userLocation, establishments, calculateDistance, formatDistance]);
 
-  const handleSearch = (query: string) => {
+  // Memoize the search handler to avoid unnecessary rerenders
+  const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
 
     // Perform advanced search only if there is a query
@@ -78,17 +93,25 @@ export const useIndexPageLogic = () => {
       ) as Cocktail[];
       
       setCocktails(searchResults);
+      
+      // Show toast for search results
+      if (searchResults.length === 0) {
+        toast({
+          title: "No results found",
+          description: `Try a different search term or reset filters.`
+        });
+      }
     } else {
       // If no search query, show all cocktails
       setCocktails(allCocktails);
     }
-  };
+  }, [allCocktails, fuseInstance, toast]);
   
   const handleFilterChange = (newFilters: any) => {
     setFilters(newFilters);
   };
   
-  const applyFilters = () => {
+  const applyFilters = useCallback(() => {
     // Start with all cocktails or current search results
     let filteredCocktails = searchQuery ? 
       performAdvancedSearch(
@@ -115,16 +138,16 @@ export const useIndexPageLogic = () => {
       title: "Filters Applied",
       description: `Found ${filteredCocktails.length} cocktails matching your criteria.`
     });
-  };
+  }, [allCocktails, filters, fuseInstance, searchQuery, toast]);
 
-  const resetFilters = () => {
+  const resetFilters = useCallback(() => {
     setSearchQuery('');
     setCocktails(allCocktails);
     setFilters({
       priceRange: [0, 25],
       distance: 10
     });
-  };
+  }, [allCocktails]);
 
   return {
     cocktails,

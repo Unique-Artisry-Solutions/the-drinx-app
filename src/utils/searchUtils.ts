@@ -16,8 +16,8 @@ export interface SearchableItem {
   [key: string]: any;
 }
 
-// Configure Fuse.js for fuzzy searching
-const fuseOptions = {
+// Default fuse options for fuzzy searching
+const defaultFuseOptions = {
   keys: ['name', 'description', 'ingredients', 'establishment.name'],
   threshold: 0.4, // Lower threshold = stricter matching
   ignoreLocation: true,
@@ -25,10 +25,10 @@ const fuseOptions = {
 };
 
 /**
- * Creates a fuzzy search instance
+ * Creates a fuzzy search instance with custom or default options
  */
-export function createFuzzySearch(items: SearchableItem[]) {
-  return new Fuse(items, fuseOptions);
+export function createFuzzySearch(items: SearchableItem[], customOptions?: Fuse.IFuseOptions<SearchableItem>) {
+  return new Fuse(items, customOptions || defaultFuseOptions);
 }
 
 /**

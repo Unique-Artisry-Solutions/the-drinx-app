@@ -1,13 +1,14 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
+import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
 
 interface FilterPanelProps {
   priceRange: [number, number];
   distance: number;
-  onPriceRangeChange: (range: [number, number]) => void;
-  onDistanceChange: (distance: number) => void;
+  onPriceRangeChange: (value: [number, number]) => void;
+  onDistanceChange: (value: number) => void;
   onApplyFilters: () => void;
   className?: string;
 }
@@ -20,50 +21,75 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   onApplyFilters,
   className
 }) => {
+  // Track when user is currently sliding to prevent firing queries too frequently
+  const [isDragging, setIsDragging] = React.useState(false);
+  
+  // Handle slider mousedown - start of drag
+  const handleDragStart = () => {
+    setIsDragging(true);
+  };
+  
+  // Handle slider mouseup - end of drag
+  const handleDragEnd = () => {
+    if (isDragging) {
+      setIsDragging(false);
+      // Fire query when user lifts mouse button after sliding
+      onApplyFilters();
+    }
+  };
+  
+  // Add mouseup event listener to document to catch all mouseup events
+  React.useEffect(() => {
+    document.addEventListener('mouseup', handleDragEnd);
+    return () => {
+      document.removeEventListener('mouseup', handleDragEnd);
+    };
+  }, [isDragging]);
+
   return (
-    <div className={cn("mt-3 p-4 bg-white rounded-xl elevation-2 animate-slide-down shadow-md z-10", className)}>
-      <h4 className="text-sm font-medium text-material-on-surface mb-3">Filters</h4>
-      
+    <div className={cn("mt-2 p-4 bg-white border rounded-lg shadow-sm", className)}>
       <div className="mb-4">
-        <label className="text-xs text-material-on-surface-variant block mb-2">
-          Maximum Price Range: ${priceRange[1]}
+        <label className="block mb-2 text-sm font-medium">
+          Price Range: ${priceRange[0]} - ${priceRange[1]}
         </label>
-        <input
-          type="range"
-          min="0"
-          max="50"
-          value={priceRange[1]}
-          onChange={(e) => {
-            const newValue = parseInt(e.target.value);
-            onPriceRangeChange([priceRange[0], newValue]);
+        <Slider 
+          onMouseDown={handleDragStart}
+          value={[priceRange[0], priceRange[1]]}
+          min={0}
+          max={50}
+          step={1}
+          onValueChange={(values) => {
+            onPriceRangeChange([values[0], values[1]]);
           }}
-          className="w-full h-2 bg-material-surface-variant rounded-lg appearance-none cursor-pointer"
+          className="my-4"
         />
       </div>
       
       <div className="mb-4">
-        <label className="text-xs text-material-on-surface-variant block mb-2">
-          Maximum Distance: {distance} miles
+        <label className="block mb-2 text-sm font-medium">
+          Distance: {distance} miles
         </label>
-        <input
-          type="range"
-          min="1"
-          max="50"
-          value={distance}
-          onChange={(e) => {
-            onDistanceChange(parseInt(e.target.value));
+        <Slider 
+          onMouseDown={handleDragStart}
+          value={[distance]}
+          min={1}
+          max={20}
+          step={1}
+          onValueChange={(values) => {
+            onDistanceChange(values[0]);
           }}
-          className="w-full h-2 bg-material-surface-variant rounded-lg appearance-none cursor-pointer"
+          className="my-4"
         />
       </div>
       
-      <Button
-        type="button"
-        onClick={onApplyFilters}
-        className="w-full bg-material-primary text-material-on-primary rounded-full py-2 text-sm font-medium"
-      >
-        Apply Filters
-      </Button>
+      <div className="flex justify-end">
+        <Button 
+          onClick={onApplyFilters}
+          size="sm"
+        >
+          Apply Filters
+        </Button>
+      </div>
     </div>
   );
 };
