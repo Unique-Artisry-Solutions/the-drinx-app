@@ -42,7 +42,6 @@ const AppRoutes = () => {
       <Routes>
         <Route path="/" element={<LandingPage />}>
           <Route index element={<Index />} />
-          <Route path="?email_confirmed=true" element={<EmailVerificationHandler />} />
         </Route>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />

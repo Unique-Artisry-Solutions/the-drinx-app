@@ -26,7 +26,7 @@ const EmailVerificationHandler = () => {
           description: 'Your email has been verified. You can now sign in.',
         });
         
-        // Redirect to explore page or login
+        // Redirect to explore page
         navigate('/explore');
       }
       
