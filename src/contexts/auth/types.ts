@@ -7,8 +7,11 @@ export type AuthContextType = {
   isLoading: boolean;
   isEmailVerified: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, metadata?: { [key: string]: any }) => Promise<void>;
+  signUp: (email: string, password: string, options?: { 
+    data?: { [key: string]: any },
+    emailRedirectTo?: string 
+  }) => Promise<void>;
   signOut: () => Promise<void>;
   updateProfile: (data: { [key: string]: any }) => Promise<void>;
-  refreshSession: () => Promise<void>;
+  refreshSession: () => Promise<{ isEmailVerified: boolean }>;
 };

@@ -172,7 +172,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  const value = {
+  const value: AuthContextType = {
     user,
     session,
     isLoading: isLoading || actionLoading,
