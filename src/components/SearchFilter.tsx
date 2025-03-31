@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, SlidersHorizontal, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -7,17 +7,25 @@ export interface SearchFilterProps {
   onSearch: (query: string) => void;
   onFilterChange: (filters: any) => void;
   className?: string;
+  initialSearchTerm?: string;
 }
 
 const SearchFilter: React.FC<SearchFilterProps> = ({
   onSearch,
   onFilterChange,
   className,
+  initialSearchTerm = '',
 }) => {
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState(initialSearchTerm);
   const [showFilters, setShowFilters] = useState(false);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 25]);
   const [distance, setDistance] = useState<number>(10);
+
+  useEffect(() => {
+    if (initialSearchTerm !== query) {
+      setQuery(initialSearchTerm);
+    }
+  }, [initialSearchTerm]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

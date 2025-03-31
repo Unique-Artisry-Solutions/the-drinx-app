@@ -20,7 +20,7 @@ const fetchEstablishmentsFromSupabase = async ({
     .select('*');
   
   if (searchTerm) {
-    query = query.ilike('name', `%${searchTerm}%`);
+    query = query.or(`name.ilike.%${searchTerm}%,address.ilike.%${searchTerm}%`);
   }
   
   const { data, error } = await query;
@@ -61,6 +61,7 @@ const fetchEstablishmentsFromSupabase = async ({
 export const useEstablishments = (options: FetchEstablishmentsOptions = {}) => {
   const [establishments, setEstablishments] = useState<Establishment[]>([]);
   const [filteredEstablishments, setFilteredEstablishments] = useState<Establishment[]>([]);
+  const [searchTerm, setSearchTerm] = useState<string>(options.searchTerm || '');
   
   const { 
     data, 
@@ -69,7 +70,10 @@ export const useEstablishments = (options: FetchEstablishmentsOptions = {}) => {
     refetch 
   } = useQuery({
     queryKey: ['establishments', options],
-    queryFn: () => fetchEstablishmentsFromSupabase(options),
+    queryFn: () => fetchEstablishmentsFromSupabase({
+      ...options,
+      searchTerm: searchTerm || options.searchTerm
+    }),
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
   
@@ -80,18 +84,24 @@ export const useEstablishments = (options: FetchEstablishmentsOptions = {}) => {
     }
   }, [data]);
   
-  const filterEstablishments = (searchTerm: string) => {
-    if (!searchTerm.trim()) {
+  const filterEstablishments = (term: string) => {
+    setSearchTerm(term);
+    
+    if (!term.trim()) {
       setFilteredEstablishments(establishments);
       return;
     }
     
     const filtered = establishments.filter(place =>
-      place.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      place.address.toLowerCase().includes(searchTerm.toLowerCase())
+      place.name.toLowerCase().includes(term.toLowerCase()) ||
+      place.address.toLowerCase().includes(term.toLowerCase())
     );
     
     setFilteredEstablishments(filtered);
+  };
+  
+  const performSearch = () => {
+    refetch();
   };
   
   return {
@@ -99,6 +109,8 @@ export const useEstablishments = (options: FetchEstablishmentsOptions = {}) => {
     isLoading,
     error,
     refetch,
-    filterEstablishments
+    searchTerm,
+    filterEstablishments,
+    performSearch
   };
 };

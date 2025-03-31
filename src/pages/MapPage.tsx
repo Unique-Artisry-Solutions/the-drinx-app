@@ -10,6 +10,7 @@ import { useEstablishments } from '@/hooks/useEstablishments';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Establishment as SupabaseEstablishment } from '@/lib/supabase';
+import { useToast } from '@/hooks/use-toast';
 
 enum ViewMode {
   MAP = 'map',
@@ -44,6 +45,7 @@ const MapPage: React.FC = () => {
   const isMobile = useIsMobile();
   const [viewMode, setViewMode] = useState<ViewMode>(isMobile ? ViewMode.LIST : ViewMode.MAP);
   const [searchTerm, setSearchTerm] = useState('');
+  const { toast } = useToast();
   const { 
     userLocation, 
     isLoading: isLocating, 
@@ -53,9 +55,10 @@ const MapPage: React.FC = () => {
   
   const { 
     establishments: supabaseEstablishments, 
-    isLoading, 
-    error: establishmentsError, 
-    filterEstablishments 
+    isLoading,
+    error: establishmentsError,
+    filterEstablishments,
+    performSearch 
   } = useEstablishments({
     latitude: userLocation?.latitude,
     longitude: userLocation?.longitude,
@@ -75,6 +78,21 @@ const MapPage: React.FC = () => {
   const handleSearch = (term: string) => {
     setSearchTerm(term);
     filterEstablishments(term);
+    performSearch();
+    
+    if (term) {
+      toast({
+        title: "Search results",
+        description: establishments.length > 0 
+          ? `Found ${establishments.length} establishments matching "${term}"` 
+          : `No establishments found matching "${term}"`
+      });
+    }
+  };
+
+  const handleFilterChange = (filters: any) => {
+    // In a real application, we would apply distance and price filters here
+    console.log('Applied filters:', filters);
   };
 
   const toggleViewMode = () => {
@@ -85,12 +103,22 @@ const MapPage: React.FC = () => {
   useEffect(() => {
     if (locationError) {
       console.error('Error getting location:', locationError);
+      toast({
+        title: "Location error",
+        description: "Unable to get your location. Some features may be limited.",
+        variant: "destructive"
+      });
     }
     
     if (establishmentsError) {
       console.error('Error fetching establishments:', establishmentsError);
+      toast({
+        title: "Data loading error",
+        description: "There was a problem fetching establishments.",
+        variant: "destructive"
+      });
     }
-  }, [locationError, establishmentsError]);
+  }, [locationError, establishmentsError, toast]);
 
   // Render loading state
   if (isLoading) {
@@ -124,7 +152,8 @@ const MapPage: React.FC = () => {
           </div>
           <SearchFilter 
             onSearch={handleSearch}
-            onFilterChange={() => {}}
+            onFilterChange={handleFilterChange}
+            initialSearchTerm={searchTerm}
           />
         </div>
         
@@ -146,6 +175,7 @@ const MapPage: React.FC = () => {
                 favoriteEstablishments={[]}
                 onToggleFavorite={() => {}}
                 onEstablishmentClick={() => {}}
+                isLoading={isLoading}
               />
             </div>
           )}
