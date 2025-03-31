@@ -43,7 +43,10 @@ const SignupForm: React.FC<SignupFormProps> = ({
         user_type: userType
       };
       
-      await signUp(email, password, metadata);
+      // Make sure redirectTo is correctly set to use the full URL with the origin
+      const redirectTo = `${window.location.origin}/?email_confirmed=true`;
+      
+      await signUp(email, password, metadata, redirectTo);
       
       // Show confirmation modal instead of redirecting
       setShowConfirmationModal(true);

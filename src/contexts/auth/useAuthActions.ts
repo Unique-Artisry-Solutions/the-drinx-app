@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -67,21 +66,21 @@ export function useAuthActions() {
     }
   };
 
-  const signUp = async (email: string, password: string, metadata?: { [key: string]: any }) => {
+  const signUp = async (email: string, password: string, metadata?: { [key: string]: any }, redirectTo?: string) => {
     try {
       setIsLoading(true);
       console.log('Starting sign up process for:', email);
       
       // Make sure we have a proper redirect URL
-      const redirectTo = `${window.location.origin}/verify-email`;
-      console.log('Using redirect URL:', redirectTo);
+      const finalRedirectTo = redirectTo || `${window.location.origin}/?email_confirmed=true`;
+      console.log('Using redirect URL:', finalRedirectTo);
       
       const { data, error } = await supabase.auth.signUp({ 
         email, 
         password,
         options: {
           data: metadata,
-          emailRedirectTo: redirectTo,
+          emailRedirectTo: finalRedirectTo,
         }
       });
       
