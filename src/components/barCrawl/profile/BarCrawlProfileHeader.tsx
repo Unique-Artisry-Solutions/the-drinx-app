@@ -4,8 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { CalendarDays, UsersRound, Building, MapPin, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { supabaseClient } from '@/lib/supabaseClient';
 import { useAuth } from '@/contexts/auth';
 
 interface BarCrawlProfileHeaderProps {
@@ -37,12 +37,12 @@ const BarCrawlProfileHeader: React.FC<BarCrawlProfileHeaderProps> = ({
       const checkParticipation = async () => {
         try {
           // Check if user has already joined this specific bar crawl
-          const { data: existingParticipation } = await supabase
+          const { data: existingParticipation, error: participationError } = await supabaseClient
             .from('user_bar_crawl_participation')
             .select('*')
             .eq('user_id', user.id)
             .eq('bar_crawl_id', id)
-            .single();
+            .maybeSingle();
 
           if (existingParticipation) {
             setIsAlreadyJoined(true);
@@ -50,7 +50,7 @@ const BarCrawlProfileHeader: React.FC<BarCrawlProfileHeaderProps> = ({
           }
 
           // Check cooldown function to see if user can join a new bar crawl
-          const { data: canJoinResult, error: canJoinError } = await supabase.rpc(
+          const { data: canJoinResult, error: canJoinError } = await supabaseClient.rpc(
             'can_join_bar_crawl',
             { user_id: user.id }
           );
@@ -64,15 +64,15 @@ const BarCrawlProfileHeader: React.FC<BarCrawlProfileHeaderProps> = ({
 
           // If they can't join, get their most recent bar crawl to calculate cooldown
           if (!canJoinResult) {
-            const { data: lastParticipation } = await supabase
+            const { data: lastParticipation, error: lastParticipationError } = await supabaseClient
               .from('user_bar_crawl_participation')
               .select('joined_at')
               .eq('user_id', user.id)
               .order('joined_at', { ascending: false })
               .limit(1)
-              .single();
+              .maybeSingle();
 
-            if (lastParticipation) {
+            if (lastParticipation && lastParticipation.joined_at) {
               // Calculate remaining time in the 12-hour cooldown
               const joinedAt = new Date(lastParticipation.joined_at);
               const cooldownEnds = new Date(joinedAt.getTime() + (12 * 60 * 60 * 1000)); // 12 hours in ms
@@ -126,7 +126,7 @@ const BarCrawlProfileHeader: React.FC<BarCrawlProfileHeaderProps> = ({
 
     try {
       // Insert into the participation table
-      const { error } = await supabase
+      const { error } = await supabaseClient
         .from('user_bar_crawl_participation')
         .insert({
           user_id: user.id,
