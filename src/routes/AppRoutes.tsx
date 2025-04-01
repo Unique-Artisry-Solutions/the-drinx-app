@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { ProtectedRoute, AdminRoute, TypedProtectedRoute } from './protectedRoutes';
@@ -15,7 +16,7 @@ import ProfilePage from "@/pages/ProfilePage";
 import BarCrawlsPage from "@/pages/profile/BarCrawlsPage";
 import FavoritesPage from "@/pages/profile/FavoritesPage";
 import VisitedPage from "@/pages/profile/VisitedPage";
-import MyBarCrawlsPage from "@/pages/profile/MyBarCrawlsPage";
+import MyCreationsPage from "@/pages/profile/MyCreationsPage";
 import CreateBarCrawlPage from "@/pages/profile/CreateBarCrawlPage";
 import CrawlersListPage from "@/pages/profile/CrawlersListPage";
 import BarCrawlProfilePage from "@/pages/BarCrawlProfilePage";
@@ -109,12 +110,12 @@ const AppRoutes = () => {
             <BarCrawlsPage />
           </ProtectedRoute>
         } />
-        <Route path="/profile/my-bar-crawls" element={
+        <Route path="/profile/my-creations" element={
           <ProtectedRoute>
-            <MyBarCrawlsPage />
+            <MyCreationsPage />
           </ProtectedRoute>
         } />
-        <Route path="/profile/my-bar-crawls/:id" element={
+        <Route path="/profile/my-creations/:id" element={
           <ProtectedRoute>
             <BarCrawlManagementPage />
           </ProtectedRoute>

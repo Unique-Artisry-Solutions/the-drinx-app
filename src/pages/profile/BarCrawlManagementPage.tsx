@@ -54,7 +54,7 @@ const BarCrawlManagementPage: React.FC = () => {
   return (
     <Layout>
       <div className="py-4 max-w-5xl mx-auto">
-        <BackButton fallbackPath="/profile/my-bar-crawls" />
+        <BackButton fallbackPath="/profile/my-creations" />
         
         <div className="flex items-center justify-between mb-6">
           <div>
