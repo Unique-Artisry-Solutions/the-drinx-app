@@ -17,6 +17,8 @@ import BarCrawlsPage from "@/pages/profile/BarCrawlsPage";
 import FavoritesPage from "@/pages/profile/FavoritesPage";
 import VisitedPage from "@/pages/profile/VisitedPage";
 import CreateBarCrawlPage from "@/pages/profile/CreateBarCrawlPage";
+import CrawlersListPage from "@/pages/profile/CrawlersListPage";
+import BarCrawlProfilePage from "@/pages/BarCrawlProfilePage";
 import AdminLogin from "@/pages/admin/AdminLogin";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import LandingPage from "@/pages/LandingPage";
@@ -75,6 +77,7 @@ const AppRoutes = () => {
         <Route path="/explore" element={<Explore />} />
         
         <Route path="/bar-crawl/:id" element={<BarCrawlDetail />} />
+        <Route path="/bar-crawl-profile/:id" element={<BarCrawlProfilePage />} />
         <Route path="/map" element={
           <ProtectedRoute>
             <MapPage />
@@ -101,6 +104,11 @@ const AppRoutes = () => {
         <Route path="/profile/bar-crawls" element={
           <ProtectedRoute>
             <BarCrawlsPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/profile/bar-crawls/participants/:id" element={
+          <ProtectedRoute>
+            <CrawlersListPage />
           </ProtectedRoute>
         } />
         <Route path="/profile/favorites" element={

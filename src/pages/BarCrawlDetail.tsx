@@ -8,6 +8,7 @@ import { Route, Calendar, Users, Clock, MapPin } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { sampleBarCrawls, sampleEstablishments } from '@/data/sampleData';
+import BackButton from '@/components/navigation/BackButton';
 
 interface BarCrawlEstablishment {
   id: string;
@@ -71,10 +72,10 @@ const BarCrawlDetail: React.FC = () => {
   if (loading) {
     return (
       <Layout>
-        <div className="py-4 animate-fade-in">
+        <div className="py-4 animate-fade-in max-w-7xl mx-auto">
           <Skeleton className="h-12 w-2/3 mb-2" />
           <Skeleton className="h-6 w-1/2 mb-6" />
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
             <Skeleton className="h-48" />
             <Skeleton className="h-48" />
             <Skeleton className="h-48" />
@@ -88,7 +89,8 @@ const BarCrawlDetail: React.FC = () => {
   if (!barCrawl) {
     return (
       <Layout>
-        <div className="py-4 animate-fade-in">
+        <div className="py-4 animate-fade-in max-w-7xl mx-auto">
+          <BackButton />
           <h1 className="text-2xl font-bold mb-2">Bar Crawl Not Found</h1>
           <p className="mb-4 text-gray-600">
             The bar crawl you're looking for doesn't exist or may have been removed.
@@ -106,11 +108,12 @@ const BarCrawlDetail: React.FC = () => {
   return (
     <Layout>
       <div className="py-4 animate-fade-in max-w-7xl mx-auto">
+        <BackButton />
         <div className="mb-4">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3">
             <div>
-              <h1 className="text-2xl font-bold mb-2">{barCrawl.name}</h1>
-              <div className="flex flex-wrap gap-3 text-gray-600">
+              <h1 className="text-2xl font-bold mb-1">{barCrawl.name}</h1>
+              <div className="flex flex-wrap gap-2 text-gray-600">
                 <div className="flex items-center">
                   <Users className="h-4 w-4 mr-1" />
                   <span>Organizer: {barCrawl.organizer}</span>
@@ -134,18 +137,18 @@ const BarCrawlDetail: React.FC = () => {
           </div>
           
           {barCrawl.description && (
-            <p className="text-gray-700 mb-4">{barCrawl.description}</p>
+            <p className="text-gray-700 mb-3">{barCrawl.description}</p>
           )}
           
-          <div className="bg-gray-50 p-4 rounded-lg border border-gray-100 mb-4">
+          <div className="bg-gray-50 p-4 rounded-lg border border-gray-100 mb-3">
             <h2 className="text-lg font-medium mb-3 flex items-center">
               <Route className="h-5 w-5 mr-2 text-spiritless-pink" />
               Crawl Route
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-1">
               {barCrawl.establishments.map((establishment, index) => (
                 <div key={establishment.id} className="flex items-center py-1">
-                  <div className="flex items-center justify-center bg-spiritless-pink text-white rounded-full h-6 w-6 text-sm mr-3 flex-shrink-0">
+                  <div className="flex items-center justify-center bg-spiritless-pink text-white rounded-full h-6 w-6 text-sm mr-2 flex-shrink-0">
                     {index + 1}
                   </div>
                   <Link to={`/establishment/${establishment.id}`} className="text-material-primary hover:underline truncate">
