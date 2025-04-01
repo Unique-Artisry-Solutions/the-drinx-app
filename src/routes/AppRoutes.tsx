@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { ProtectedRoute, AdminRoute, TypedProtectedRoute } from './protectedRoutes';
@@ -38,6 +37,7 @@ import AdminUsersPage from "@/pages/admin/AdminUsersPage";
 import AdminEstablishmentsPage from "@/pages/admin/AdminEstablishmentsPage";
 import AdminUserProfile from "@/pages/admin/AdminUserProfile";
 import AdminEstablishmentProfile from "@/pages/admin/AdminEstablishmentProfile";
+import BarCrawlDetailsPage from "@/pages/BarCrawlDetailsPage";
 
 // Routes that should redirect to /explore if the user is logged in
 const publicOnlyRoutes = ['/', '/landing', '/login', '/signup'];
@@ -78,6 +78,7 @@ const AppRoutes = () => {
         
         <Route path="/bar-crawl/:id" element={<BarCrawlDetail />} />
         <Route path="/bar-crawl-profile/:id" element={<BarCrawlProfilePage />} />
+        <Route path="/bar-crawl-details/:id" element={<BarCrawlDetailsPage />} />
         <Route path="/map" element={
           <ProtectedRoute>
             <MapPage />

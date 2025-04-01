@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -85,7 +84,7 @@ const BarCrawlTab: React.FC<BarCrawlTabProps> = ({ barCrawlList, shareBarCrawl }
                     </Link>
                   </div>
                   
-                  <Link to={`/bar-crawl-profile/${barCrawlId}`} className="w-full">
+                  <Link to={`/bar-crawl-details/${barCrawlId}`} className="w-full">
                     <Button className="w-full bg-spiritless-pink hover:bg-spiritless-pink/90" size="sm">
                       View Bar Crawl Details
                     </Button>
