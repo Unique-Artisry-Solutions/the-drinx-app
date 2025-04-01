@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { User, Settings, LogOut } from 'lucide-react';
+import { User, Settings, LogOut, Route } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -51,6 +51,14 @@ const UserProfileDropdown: React.FC<UserProfileDropdownProps> = ({
             <span>Profile</span>
           </Link>
         </DropdownMenuItem>
+        {userType === 'individual' && (
+          <DropdownMenuItem asChild>
+            <Link to="/profile/bar-crawls" className="user-profile-item flex items-center gap-2 cursor-pointer">
+              <Route className="h-4 w-4" />
+              <span>My Bar Crawls</span>
+            </Link>
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem asChild>
           <Link to="/settings" className="user-profile-item flex items-center gap-2 cursor-pointer">
             <Settings className="h-4 w-4" />
