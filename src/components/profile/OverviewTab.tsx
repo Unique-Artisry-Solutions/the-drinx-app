@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -117,7 +118,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ userName, userEmail, userJoin
         </Card>
         
         <Card className="hover:shadow-md transition-shadow">
-          <Link to="/profile/my-bar-crawls" className="block p-6">
+          <Link to="/profile/my-creations" className="block p-6">
             <div className="flex flex-col items-center text-center">
               <div className="p-3 bg-blue-100 rounded-full mb-3">
                 <User size={24} className="text-blue-600" />
