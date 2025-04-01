@@ -23,9 +23,9 @@ const BarCrawlsPage: React.FC = () => {
         <div className="mb-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-medium text-material-on-background">Bar Crawls</h1>
+              <h1 className="text-2xl font-medium text-material-on-background">Participated Bar Crawls</h1>
               <p className="text-material-on-surface-variant">
-                Manage your bar crawl plans
+                View bar crawls you've participated in
               </p>
             </div>
           </div>

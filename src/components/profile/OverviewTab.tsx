@@ -111,21 +111,21 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ userName, userEmail, userJoin
               </div>
               <h3 className="font-medium mb-1">Bar Crawls</h3>
               <p className="text-sm text-material-on-surface-variant">
-                Plan and join bar crawls
+                View participated bar crawls
               </p>
             </div>
           </Link>
         </Card>
         
         <Card className="hover:shadow-md transition-shadow">
-          <Link to="/profile/bar-crawls" className="block p-6">
+          <Link to="/profile/my-bar-crawls" className="block p-6">
             <div className="flex flex-col items-center text-center">
               <div className="p-3 bg-blue-100 rounded-full mb-3">
                 <User size={24} className="text-blue-600" />
               </div>
               <h3 className="font-medium mb-1">My Bar Crawls</h3>
               <p className="text-sm text-material-on-surface-variant">
-                View your created crawls
+                Manage created bar crawls
               </p>
             </div>
           </Link>
