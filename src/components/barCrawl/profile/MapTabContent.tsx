@@ -7,7 +7,7 @@ interface MapData {
   name: string;
   latitude: number;
   longitude: number;
-  cocktailCount?: number;
+  cocktailCount: number; // Changed from optional to required
 }
 
 interface MapTabContentProps {
