@@ -75,7 +75,7 @@ const CreateBarCrawlPage: React.FC = () => {
       description: 'Your new bar crawl has been created successfully!',
     });
     
-    // Redirect to the bar crawl management page - FIX: updated path to correct route
+    // Redirect to the bar crawl management page
     navigate(`/profile/my-creations/${newBarCrawlId}`);
   };
 
