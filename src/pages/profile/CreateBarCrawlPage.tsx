@@ -1,23 +1,82 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Calendar } from 'lucide-react';
+import { Calendar, ImagePlus } from 'lucide-react';
 import BackButton from '@/components/navigation/BackButton';
+import { Textarea } from '@/components/ui/textarea';
+import { format, addDays } from 'date-fns';
 
 const CreateBarCrawlPage: React.FC = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const [name, setName] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [description, setDescription] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState('');
+
+  // Auto-calculate end date based on start date (7 days later)
+  useEffect(() => {
+    if (startDate) {
+      const start = new Date(startDate);
+      const end = addDays(start, 7);
+      setEndDate(format(end, 'yyyy-MM-dd'));
+    }
+  }, [startDate]);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setImageFile(file);
+      setPreviewUrl(URL.createObjectURL(file));
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!name || !startDate || !endDate) {
+      toast({
+        title: 'Missing fields',
+        description: 'Please fill out all required fields',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Generate a mock ID for the new bar crawl
+    const newBarCrawlId = `bc-${Date.now()}`;
+    
+    // Store bar crawl data in localStorage (in a real app, this would be saved to a database)
+    const barCrawls = JSON.parse(localStorage.getItem('user_bar_crawls') || '[]');
+    barCrawls.push({
+      id: newBarCrawlId,
+      name,
+      startDate,
+      endDate,
+      description,
+      imageUrl: previewUrl || 'https://placehold.co/600x300',
+      establishments: [],
+      organizer: localStorage.getItem('user_name') || 'User',
+      status: 'planned',
+      created_at: new Date().toISOString(),
+    });
+    localStorage.setItem('user_bar_crawls', JSON.stringify(barCrawls));
+    
     toast({
       title: 'Bar Crawl Created',
       description: 'Your new bar crawl has been created successfully!',
     });
+    
+    // Redirect to the bar crawl management page
+    navigate(`/profile/bar-crawls/${newBarCrawlId}`);
   };
 
   return (
@@ -37,34 +96,101 @@ const CreateBarCrawlPage: React.FC = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="crawlName">Bar Crawl Name</Label>
-                <Input id="crawlName" placeholder="Weekend Mocktail Tour" required />
+                <Input 
+                  id="crawlName" 
+                  placeholder="Weekend Mocktail Tour" 
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required 
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="imageUpload">Bar Crawl Image</Label>
+                <div className="relative border rounded-md overflow-hidden">
+                  {previewUrl ? (
+                    <div className="aspect-video relative">
+                      <img 
+                        src={previewUrl} 
+                        alt="Bar crawl preview" 
+                        className="w-full h-full object-cover" 
+                      />
+                      <Button 
+                        type="button" 
+                        variant="ghost" 
+                        size="sm" 
+                        className="absolute top-2 right-2 bg-white/80"
+                        onClick={() => {
+                          setPreviewUrl('');
+                          setImageFile(null);
+                        }}
+                      >
+                        Change
+                      </Button>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center p-6 cursor-pointer bg-gray-50 aspect-video">
+                      <ImagePlus className="h-10 w-10 text-gray-400 mb-2" />
+                      <span className="text-sm text-gray-500">Click to upload an image</span>
+                      <input 
+                        type="file" 
+                        id="imageUpload" 
+                        className="hidden" 
+                        accept="image/*"
+                        onChange={handleImageChange}
+                      />
+                    </label>
+                  )}
+                </div>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="startDate">Start Date</Label>
-                  <Input id="startDate" type="date" required />
+                  <Input 
+                    id="startDate" 
+                    type="date" 
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    required 
+                  />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="endDate">End Date</Label>
-                  <Input id="endDate" type="date" required />
+                  <Label htmlFor="endDate">End Date (7 days maximum)</Label>
+                  <Input 
+                    id="endDate" 
+                    type="date" 
+                    value={endDate}
+                    readOnly 
+                    className="bg-gray-50"
+                    title="End date is automatically set to 7 days after the start date"
+                  />
+                  <p className="text-xs text-gray-500">
+                    Maximum duration is 7 days
+                  </p>
                 </div>
               </div>
               
               <div className="space-y-2">
                 <Label htmlFor="description">Description</Label>
-                <Input id="description" placeholder="Description of your bar crawl" required />
+                <Textarea 
+                  id="description" 
+                  placeholder="Describe your bar crawl experience" 
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  rows={3}
+                />
               </div>
               
               <div className="space-y-2">
                 <Label>Establishments</Label>
-                <p className="text-sm text-gray-500 mb-2">Select establishments from the map</p>
+                <p className="text-sm text-gray-500 mb-2">You can add establishments after creating the bar crawl</p>
                 
                 <div className="bg-gray-50 p-3 rounded-lg border">
                   <div className="flex justify-between items-center">
                     <span>No establishments selected</span>
                     <Button type="button" variant="outline" size="sm" asChild>
-                      <a href="/map">Select from Map</a>
+                      <a href="/map">Browse Map</a>
                     </Button>
                   </div>
                 </div>

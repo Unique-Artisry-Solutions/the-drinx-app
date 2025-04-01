@@ -40,3 +40,25 @@ export interface VisitedTabProps {
 export interface FavoritesTabProps {
   favoriteCocktails: Cocktail[];
 }
+
+// Bar Crawl management interface
+export interface BarCrawl {
+  id: string;
+  name: string;
+  startDate: string;
+  endDate: string;
+  description?: string;
+  imageUrl?: string;
+  establishments: Establishment[];
+  invitedUsers?: User[];
+  organizer: string;
+  status: 'planned' | 'active' | 'completed';
+}
+
+// User interface for invitations
+export interface User {
+  id: string;
+  name: string;
+  email?: string;
+  avatar?: string;
+}
