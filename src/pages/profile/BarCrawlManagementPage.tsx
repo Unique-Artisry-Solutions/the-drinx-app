@@ -8,7 +8,7 @@ import { Share2 } from 'lucide-react';
 import BackButton from '@/components/navigation/BackButton';
 import { useBarCrawlManagement } from '@/hooks/useBarCrawlManagement';
 
-// Import our new components
+// Import our components
 import LoadingState from '@/components/barCrawl/management/LoadingState';
 import NotFoundState from '@/components/barCrawl/management/NotFoundState';
 import DetailsTab from '@/components/barCrawl/management/DetailsTab';

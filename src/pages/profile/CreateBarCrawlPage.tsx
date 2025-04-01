@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -75,8 +75,8 @@ const CreateBarCrawlPage: React.FC = () => {
       description: 'Your new bar crawl has been created successfully!',
     });
     
-    // Redirect to the bar crawl management page
-    navigate(`/profile/bar-crawls/${newBarCrawlId}`);
+    // Redirect to the bar crawl management page - FIX: updated path to correct route
+    navigate(`/profile/my-creations/${newBarCrawlId}`);
   };
 
   return (
@@ -190,7 +190,7 @@ const CreateBarCrawlPage: React.FC = () => {
                   <div className="flex justify-between items-center">
                     <span>No establishments selected</span>
                     <Button type="button" variant="outline" size="sm" asChild>
-                      <a href="/map">Browse Map</a>
+                      <Link to="/map">Browse Map</Link>
                     </Button>
                   </div>
                 </div>
