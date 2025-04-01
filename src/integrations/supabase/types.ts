@@ -179,12 +179,46 @@ export type Database = {
         }
         Relationships: []
       }
+      user_bar_crawl_participation: {
+        Row: {
+          bar_crawl_id: string
+          id: string
+          joined_at: string
+          user_id: string
+        }
+        Insert: {
+          bar_crawl_id: string
+          id?: string
+          joined_at?: string
+          user_id: string
+        }
+        Update: {
+          bar_crawl_id?: string
+          id?: string
+          joined_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_bar_crawl_participation_bar_crawl_id_fkey"
+            columns: ["bar_crawl_id"]
+            isOneToOne: false
+            referencedRelation: "bar_crawls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      can_join_bar_crawl: {
+        Args: {
+          user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

@@ -108,6 +108,7 @@ const BarCrawlDetail: React.FC = () => {
           date={barCrawl.date}
           stops={barCrawl.stops}
           description={barCrawl.description}
+          id={barCrawl.id}
         />
         
         <CrawlRouteCard establishments={barCrawl.establishments} />
