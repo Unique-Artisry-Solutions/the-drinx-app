@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
@@ -10,7 +9,7 @@ import { useAuth } from '@/contexts/auth';
 import ProfileHeader from '@/components/profile/ProfileHeader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { sampleEstablishments, sampleCocktails } from '@/data/sampleData';
-import { CalendarClock, GlassWater, MapPin, Star, Clock, Route } from 'lucide-react';
+import { CalendarClock, GlassWater, MapPin, Star, Clock, Route, BeerIcon, User } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 
 const ProfilePage: React.FC = () => {
@@ -209,7 +208,7 @@ const ProfilePage: React.FC = () => {
               </Card>
             </div>
             
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
               <Card className="hover:shadow-md transition-shadow">
                 <Link to="/profile/bar-crawls" className="block p-6">
                   <div className="flex flex-col items-center text-center">
@@ -219,6 +218,20 @@ const ProfilePage: React.FC = () => {
                     <h3 className="font-medium mb-1">Bar Crawls</h3>
                     <p className="text-sm text-material-on-surface-variant">
                       Plan and join bar crawls
+                    </p>
+                  </div>
+                </Link>
+              </Card>
+              
+              <Card className="hover:shadow-md transition-shadow">
+                <Link to="/profile/bar-crawls" className="block p-6">
+                  <div className="flex flex-col items-center text-center">
+                    <div className="p-3 bg-blue-100 rounded-full mb-3">
+                      <User size={24} className="text-blue-600" />
+                    </div>
+                    <h3 className="font-medium mb-1">My Bar Crawls</h3>
+                    <p className="text-sm text-material-on-surface-variant">
+                      View your created crawls
                     </p>
                   </div>
                 </Link>
