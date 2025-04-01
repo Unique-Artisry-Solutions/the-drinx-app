@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import Layout from '@/components/Layout';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Calendar } from 'lucide-react';
+import BackButton from '@/components/navigation/BackButton';
 
 const CreateBarCrawlPage: React.FC = () => {
   const { toast } = useToast();
@@ -22,6 +23,7 @@ const CreateBarCrawlPage: React.FC = () => {
   return (
     <Layout>
       <div className="py-4 animate-fade-in max-w-3xl mx-auto">
+        <BackButton />
         <h1 className="text-2xl font-medium text-material-on-background mb-4">Create Bar Crawl</h1>
         
         <Card>
