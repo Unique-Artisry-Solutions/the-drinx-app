@@ -90,7 +90,7 @@ const MyBarCrawlsPage: React.FC = () => {
                     size="sm"
                     asChild
                   >
-                    <Link to={`/profile/bar-crawls/${barCrawl.id}`}>
+                    <Link to={`/profile/my-bar-crawls/${barCrawl.id}`}>
                       <PenSquare className="h-4 w-4 mr-2" /> Edit
                     </Link>
                   </Button>
