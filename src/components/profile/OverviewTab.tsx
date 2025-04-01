@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -109,9 +108,9 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ userName, userEmail, userJoin
               <div className="p-3 bg-purple-100 rounded-full mb-3">
                 <Route size={24} className="text-purple-600" />
               </div>
-              <h3 className="font-medium mb-1">Bar Crawls</h3>
+              <h3 className="font-medium mb-1">Joined Bar Crawls</h3>
               <p className="text-sm text-material-on-surface-variant">
-                View participated bar crawls
+                View bar crawls you've participated in
               </p>
             </div>
           </Link>
@@ -123,9 +122,9 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ userName, userEmail, userJoin
               <div className="p-3 bg-blue-100 rounded-full mb-3">
                 <User size={24} className="text-blue-600" />
               </div>
-              <h3 className="font-medium mb-1">My Bar Crawls</h3>
+              <h3 className="font-medium mb-1">Created Bar Crawls</h3>
               <p className="text-sm text-material-on-surface-variant">
-                Manage created bar crawls
+                Manage your own bar crawls
               </p>
             </div>
           </Link>

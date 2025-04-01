@@ -51,9 +51,9 @@ const MyBarCrawlsPage: React.FC = () => {
         <div className="mb-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-medium text-material-on-background">My Bar Crawls</h1>
+              <h1 className="text-2xl font-medium text-material-on-background">Created Bar Crawls</h1>
               <p className="text-material-on-surface-variant">
-                Manage bar crawls you've created
+                Manage bar crawls you've created and organized
               </p>
             </div>
             <Button asChild>
