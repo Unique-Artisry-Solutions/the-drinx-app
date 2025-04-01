@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -10,6 +9,7 @@ import UserLocationMarker from './UserLocationMarker';
 import MapControls from './MapControls';
 import useMapInitialization from './useMapInitialization';
 import BarCrawlRequestModal from '@/components/establishment/BarCrawlRequestModal';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
 interface Establishment {
   id: string;
@@ -60,7 +60,6 @@ const MapView: React.FC<MapViewProps> = ({
     customToken
   );
 
-  // When in single establishment view, auto-select the establishment
   useEffect(() => {
     if (singleEstablishmentView && establishments.length === 1) {
       setSelectedEstablishment(establishments[0]);
@@ -74,7 +73,6 @@ const MapView: React.FC<MapViewProps> = ({
       onMarkerClick(establishment.id);
     }
     
-    // Center map on establishment
     if (mapInstance) {
       mapInstance.flyTo({
         center: [establishment.longitude, establishment.latitude],
@@ -118,7 +116,6 @@ const MapView: React.FC<MapViewProps> = ({
     });
   };
 
-  // Map control handlers
   const handleZoomIn = () => {
     if (mapInstance) {
       mapInstance.zoomIn();
@@ -138,7 +135,6 @@ const MapView: React.FC<MapViewProps> = ({
         zoom: 13
       });
     } else if (mapInstance && establishments.length > 0) {
-      // If no user location, center on first establishment
       mapInstance.flyTo({
         center: [establishments[0].longitude, establishments[0].latitude],
         zoom: 12
@@ -186,18 +182,20 @@ const MapView: React.FC<MapViewProps> = ({
       )}
       
       {!singleEstablishmentView && (
-        <div className="absolute top-4 right-4 z-10">
-          <Button
-            size="sm"
-            variant="outline" 
-            className="bg-white"
-            onClick={onRefreshLocation}
-            disabled={isLoadingLocation}
-          >
-            <CrosshairIcon className="h-4 w-4 mr-2" />
-            {isLoadingLocation ? 'Locating...' : 'My Location'}
-          </Button>
-        </div>
+        <TooltipProvider>
+          <div className="absolute top-4 right-4 z-10">
+            <Button
+              size="sm"
+              variant="outline" 
+              className="bg-white"
+              onClick={onRefreshLocation}
+              disabled={isLoadingLocation}
+            >
+              <CrosshairIcon className="h-4 w-4 mr-2" />
+              {isLoadingLocation ? 'Locating...' : 'My Location'}
+            </Button>
+          </div>
+        </TooltipProvider>
       )}
       
       {selectedEstablishment && (
@@ -230,15 +228,17 @@ const MapView: React.FC<MapViewProps> = ({
       )}
       
       {!singleEstablishmentView && (
-        <MapControls 
-          onZoomIn={handleZoomIn}
-          onZoomOut={handleZoomOut}
-          onRecenter={handleRecenter}
-          onToggleMapStyle={handleToggleMapStyle}
-          onRefreshLocation={onRefreshLocation}
-          isLoading={isLoadingLocation}
-          mapStyle={mapStyle}
-        />
+        <TooltipProvider>
+          <MapControls 
+            onZoomIn={handleZoomIn}
+            onZoomOut={handleZoomOut}
+            onRecenter={handleRecenter}
+            onToggleMapStyle={handleToggleMapStyle}
+            onRefreshLocation={onRefreshLocation}
+            isLoading={isLoadingLocation}
+            mapStyle={mapStyle}
+          />
+        </TooltipProvider>
       )}
     </div>
   );

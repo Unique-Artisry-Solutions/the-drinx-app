@@ -53,6 +53,7 @@ export interface BarCrawl {
   invitedUsers?: User[];
   organizer: string;
   status: 'planned' | 'active' | 'completed';
+  created_at?: string;
 }
 
 // User interface for invitations

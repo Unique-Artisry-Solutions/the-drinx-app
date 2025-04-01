@@ -25,17 +25,17 @@ interface AppProvidersProps {
 const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
+      <BrowserRouter>
         <AuthProvider>
           <CartProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
+            <TooltipProvider>
               {children}
-            </BrowserRouter>
+              <Toaster />
+              <Sonner />
+            </TooltipProvider>
           </CartProvider>
         </AuthProvider>
-      </TooltipProvider>
+      </BrowserRouter>
     </QueryClientProvider>
   );
 };
