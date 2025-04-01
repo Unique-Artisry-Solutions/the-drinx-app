@@ -4,7 +4,7 @@ import { useParams, Link } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Calendar, MapPin, Users, RoutingVital, Beer } from 'lucide-react';
+import { Calendar, MapPin, Users, Navigation, Beer } from 'lucide-react';
 import { sampleBarCrawls, sampleEstablishments } from '@/data/sampleData';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -182,7 +182,7 @@ const BarCrawlDetailsPage: React.FC<BarCrawlDetailsProps> = () => {
                 <div className="mt-6">
                   <Link to={`/bar-crawl-profile/${id}`}>
                     <Button className="w-full bg-spiritless-pink hover:bg-spiritless-pink/90">
-                      <RoutingVital className="h-4 w-4 mr-1" />
+                      <Navigation className="h-4 w-4 mr-1" />
                       Join This Crawl
                     </Button>
                   </Link>
