@@ -8,6 +8,8 @@ import { Calendar, MapPin, Users, Navigation, Beer } from 'lucide-react';
 import { sampleBarCrawls, sampleEstablishments } from '@/data/sampleData';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface BarCrawlDetailsProps {}
 
@@ -31,26 +33,48 @@ const BarCrawlDetailsPage: React.FC<BarCrawlDetailsProps> = () => {
             establishments
           });
 
-          // Generate sample participants
+          // Generate sample participants with more information
           setParticipants([
             {
               id: '1',
               name: 'Alex Johnson',
               avatar: '/placeholder.svg',
               isActive: true,
-              role: 'Organizer'
+              role: 'Organizer',
+              joinedDate: '2023-10-01',
+              status: 'Confirmed'
             },
             {
               id: '2',
               name: 'Jamie Smith',
               avatar: '/placeholder.svg',
-              isActive: true
+              isActive: true,
+              joinedDate: '2023-10-02',
+              status: 'Confirmed'
             },
             {
               id: '3',
               name: 'Casey Wilson',
               avatar: '/placeholder.svg',
-              isActive: true
+              isActive: true,
+              joinedDate: '2023-10-03',
+              status: 'Confirmed'
+            },
+            {
+              id: '4',
+              name: 'Taylor Rivera',
+              avatar: '/placeholder.svg',
+              isActive: false,
+              joinedDate: '2023-10-04',
+              status: 'Pending'
+            },
+            {
+              id: '5',
+              name: 'Morgan Lee',
+              avatar: '/placeholder.svg',
+              isActive: false,
+              joinedDate: '2023-10-05',
+              status: 'Tentative'
             }
           ]);
         }
@@ -116,7 +140,7 @@ const BarCrawlDetailsPage: React.FC<BarCrawlDetailsProps> = () => {
           </div>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           {/* Crawl Details */}
           <div className="md:col-span-2">
             <Card>
@@ -158,23 +182,26 @@ const BarCrawlDetailsPage: React.FC<BarCrawlDetailsProps> = () => {
             </Card>
           </div>
           
-          {/* Participants */}
+          {/* Participants Preview */}
           <div>
             <Card>
               <CardContent className="p-4">
                 <h2 className="text-xl font-semibold mb-3">Participants</h2>
                 <div className="space-y-2">
-                  {participants.map((participant) => (
+                  {participants.slice(0, 3).map((participant) => (
                     <div key={participant.id} className="flex items-center p-2 border rounded-lg">
                       <div className="w-8 h-8 rounded-full bg-gray-200 mr-2 overflow-hidden">
                         <img src={participant.avatar} alt={participant.name} className="w-full h-full object-cover" />
                       </div>
-                      <div>
+                      <div className="flex-grow">
                         <span className="font-medium">{participant.name}</span>
                         {participant.role && (
                           <Badge className="ml-2 bg-material-primary text-xs">{participant.role}</Badge>
                         )}
                       </div>
+                      <Badge className={`${participant.isActive ? 'bg-green-500' : 'bg-gray-400'}`}>
+                        {participant.isActive ? 'Active' : 'Inactive'}
+                      </Badge>
                     </div>
                   ))}
                 </div>
@@ -191,6 +218,61 @@ const BarCrawlDetailsPage: React.FC<BarCrawlDetailsProps> = () => {
             </Card>
           </div>
         </div>
+
+        {/* Detailed Participants List */}
+        <Card className="mb-6">
+          <CardContent className="p-4">
+            <h2 className="text-xl font-semibold mb-4">Current Participants</h2>
+            
+            <div className="flex flex-wrap gap-3 mb-4">
+              {participants.map((participant) => (
+                <div key={participant.id} className="flex items-center">
+                  <Avatar className="border-2 border-white -ml-2 first:ml-0 h-10 w-10 hover:z-10 transition-all">
+                    <AvatarImage src={participant.avatar} alt={participant.name} />
+                    <AvatarFallback>{participant.name.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                </div>
+              ))}
+            </div>
+            
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Participant</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Joined</TableHead>
+                  <TableHead>Role</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {participants.map((participant) => (
+                  <TableRow key={participant.id}>
+                    <TableCell>
+                      <div className="flex items-center">
+                        <Avatar className="h-8 w-8 mr-2">
+                          <AvatarImage src={participant.avatar} alt={participant.name} />
+                          <AvatarFallback>{participant.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <span>{participant.name}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={`
+                        ${participant.status === 'Confirmed' ? 'bg-green-500' : ''}
+                        ${participant.status === 'Pending' ? 'bg-yellow-500' : ''}
+                        ${participant.status === 'Tentative' ? 'bg-blue-500' : ''}
+                      `}>
+                        {participant.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{new Date(participant.joinedDate).toLocaleDateString()}</TableCell>
+                    <TableCell>{participant.role || 'Participant'}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
       </div>
     </Layout>
   );
