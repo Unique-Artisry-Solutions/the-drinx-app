@@ -1,16 +1,16 @@
+
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import UserAuth from '@/components/UserAuth';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth';
 import ProfileHeader from '@/components/profile/ProfileHeader';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import OverviewTab from '@/components/profile/OverviewTab';
+import ActivityTab from '@/components/profile/ActivityTab';
+import QuickLinksTab from '@/components/profile/QuickLinksTab';
 import { sampleEstablishments, sampleCocktails } from '@/data/sampleData';
-import { CalendarClock, GlassWater, MapPin, Star, Clock, Route, BeerIcon, User } from 'lucide-react';
-import { Progress } from '@/components/ui/progress';
 
 const ProfilePage: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -120,244 +120,20 @@ const ProfilePage: React.FC = () => {
             <TabsTrigger value="favorites">My Favorites</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="overview" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Profile Information</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-center mb-6">
-                    <div className="h-24 w-24 bg-gradient-to-br from-spiritless-pink to-purple-400 rounded-full flex items-center justify-center text-white text-xl font-bold">
-                      {userName.charAt(0).toUpperCase()}
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-3">
-                    <div>
-                      <div className="text-sm font-medium text-material-on-surface-variant">Name</div>
-                      <div className="font-medium">{userName}</div>
-                    </div>
-                    <div>
-                      <div className="text-sm font-medium text-material-on-surface-variant">Email</div>
-                      <div className="font-medium">{userEmail}</div>
-                    </div>
-                    <div>
-                      <div className="text-sm font-medium text-material-on-surface-variant">Member Since</div>
-                      <div className="font-medium">{userJoinDate?.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}</div>
-                    </div>
-                  </div>
-                  
-                  <div className="pt-4">
-                    <Button variant="outline" className="w-full" asChild>
-                      <Link to="/profile/settings">
-                        Edit Profile
-                      </Link>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Your Mocktail Journey</CardTitle>
-                  <CardDescription>Track your spiritless adventure</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="space-y-3">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-material-on-surface-variant flex items-center">
-                        <GlassWater size={16} className="mr-2" />
-                        Mocktails Tried
-                      </span>
-                      <span className="font-medium">8/50</span>
-                    </div>
-                    <Progress value={16} className="h-2" />
-                  </div>
-                  
-                  <div className="space-y-3">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-material-on-surface-variant flex items-center">
-                        <MapPin size={16} className="mr-2" />
-                        Places Visited
-                      </span>
-                      <span className="font-medium">3/25</span>
-                    </div>
-                    <Progress value={12} className="h-2" />
-                  </div>
-                  
-                  <div className="space-y-3">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-material-on-surface-variant flex items-center">
-                        <Route size={16} className="mr-2" />
-                        Bar Crawls
-                      </span>
-                      <span className="font-medium">1/5</span>
-                    </div>
-                    <Progress value={20} className="h-2" />
-                  </div>
-                  
-                  <div className="pt-2">
-                    <Button className="w-full bg-spiritless-pink hover:bg-spiritless-pink/90" asChild>
-                      <Link to="/map">
-                        Explore New Places
-                      </Link>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-              <Card className="hover:shadow-md transition-shadow">
-                <Link to="/profile/bar-crawls" className="block p-6">
-                  <div className="flex flex-col items-center text-center">
-                    <div className="p-3 bg-purple-100 rounded-full mb-3">
-                      <Route size={24} className="text-purple-600" />
-                    </div>
-                    <h3 className="font-medium mb-1">Bar Crawls</h3>
-                    <p className="text-sm text-material-on-surface-variant">
-                      Plan and join bar crawls
-                    </p>
-                  </div>
-                </Link>
-              </Card>
-              
-              <Card className="hover:shadow-md transition-shadow">
-                <Link to="/profile/bar-crawls" className="block p-6">
-                  <div className="flex flex-col items-center text-center">
-                    <div className="p-3 bg-blue-100 rounded-full mb-3">
-                      <User size={24} className="text-blue-600" />
-                    </div>
-                    <h3 className="font-medium mb-1">My Bar Crawls</h3>
-                    <p className="text-sm text-material-on-surface-variant">
-                      View your created crawls
-                    </p>
-                  </div>
-                </Link>
-              </Card>
-              
-              <Card className="hover:shadow-md transition-shadow">
-                <Link to="/profile/favorites" className="block p-6">
-                  <div className="flex flex-col items-center text-center">
-                    <div className="p-3 bg-amber-100 rounded-full mb-3">
-                      <Star size={24} className="text-amber-600" />
-                    </div>
-                    <h3 className="font-medium mb-1">Favorites</h3>
-                    <p className="text-sm text-material-on-surface-variant">
-                      Your favorite mocktails
-                    </p>
-                  </div>
-                </Link>
-              </Card>
-              
-              <Card className="hover:shadow-md transition-shadow">
-                <Link to="/profile/visited" className="block p-6">
-                  <div className="flex flex-col items-center text-center">
-                    <div className="p-3 bg-emerald-100 rounded-full mb-3">
-                      <MapPin size={24} className="text-emerald-600" />
-                    </div>
-                    <h3 className="font-medium mb-1">Visited</h3>
-                    <p className="text-sm text-material-on-surface-variant">
-                      Places you've explored
-                    </p>
-                  </div>
-                </Link>
-              </Card>
-            </div>
+          <TabsContent value="overview">
+            <OverviewTab 
+              userName={userName}
+              userEmail={userEmail}
+              userJoinDate={userJoinDate}
+            />
           </TabsContent>
           
           <TabsContent value="activity">
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Activity</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  {recentActivity.map((activity, index) => (
-                    <div key={index} className="flex">
-                      <div className="mr-4">
-                        {activity.type === 'visit' && (
-                          <div className="h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center">
-                            <MapPin size={20} className="text-emerald-600" />
-                          </div>
-                        )}
-                        {activity.type === 'favorite' && (
-                          <div className="h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center">
-                            <Star size={20} className="text-amber-600" />
-                          </div>
-                        )}
-                        {activity.type === 'barCrawl' && (
-                          <div className="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
-                            <Route size={20} className="text-purple-600" />
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            {activity.type === 'visit' && (
-                              <p className="font-medium">Visited {activity.establishment.name}</p>
-                            )}
-                            {activity.type === 'favorite' && (
-                              <p className="font-medium">Added {activity.cocktail.name} to favorites</p>
-                            )}
-                            {activity.type === 'barCrawl' && (
-                              <p className="font-medium">Joined "{activity.name}" bar crawl</p>
-                            )}
-                          </div>
-                          <div className="text-sm text-material-on-surface-variant flex items-center">
-                            <Clock size={14} className="mr-1" />
-                            {activity.date.toLocaleDateString()}
-                          </div>
-                        </div>
-                        <p className="text-sm text-material-on-surface-variant mt-1">
-                          {activity.type === 'visit' && activity.establishment.address}
-                          {activity.type === 'favorite' && `${typeof activity.cocktail.establishment === 'object' ? activity.cocktail.establishment.name : activity.cocktail.establishment}`}
-                          {activity.type === 'barCrawl' && 'Joined with 5 other participants'}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                  
-                  <div className="pt-4 text-center">
-                    <Button variant="outline">
-                      View All Activity
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <ActivityTab recentActivity={recentActivity} />
           </TabsContent>
           
           <TabsContent value="favorites">
-            <Card>
-              <CardHeader>
-                <CardTitle>Quick Links</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <Button variant="outline" className="h-auto py-6 flex-col" asChild>
-                    <Link to="/profile/favorites">
-                      <Star size={24} className="mb-2 text-amber-500" />
-                      <span>Favorite Mocktails</span>
-                    </Link>
-                  </Button>
-                  <Button variant="outline" className="h-auto py-6 flex-col" asChild>
-                    <Link to="/profile/visited">
-                      <MapPin size={24} className="mb-2 text-emerald-500" />
-                      <span>Visited Places</span>
-                    </Link>
-                  </Button>
-                  <Button variant="outline" className="h-auto py-6 flex-col" asChild>
-                    <Link to="/profile/bar-crawls">
-                      <CalendarClock size={24} className="mb-2 text-purple-500" />
-                      <span>My Bar Crawls</span>
-                    </Link>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <QuickLinksTab />
           </TabsContent>
         </Tabs>
       </div>
