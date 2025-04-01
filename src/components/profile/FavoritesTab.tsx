@@ -21,13 +21,20 @@ const FavoritesTab: React.FC<FavoritesTabProps> = ({ favoriteCocktails }) => {
             {cocktail.establishment && (
               <div className="px-4 py-2 bg-gray-50 border-t flex justify-between items-center">
                 <span className="text-sm text-gray-600">Available at: {typeof cocktail.establishment === 'object' ? cocktail.establishment.name : cocktail.establishment}</span>
-                <Link 
-                  to={`/establishment/${typeof cocktail.establishment === 'object' ? cocktail.establishment.id : ''}`}
-                  className="text-material-primary hover:text-material-primary/80 flex items-center text-sm"
-                >
-                  <span>Visit</span>
-                  <ExternalLink className="h-3 w-3 ml-1" />
-                </Link>
+                {typeof cocktail.establishment === 'object' && 'id' in cocktail.establishment ? (
+                  <Link 
+                    to={`/establishment/${cocktail.establishment.id}`}
+                    className="text-material-primary hover:text-material-primary/80 flex items-center text-sm"
+                  >
+                    <span>Visit</span>
+                    <ExternalLink className="h-3 w-3 ml-1" />
+                  </Link>
+                ) : (
+                  <span className="text-material-primary/50 flex items-center text-sm">
+                    <span>Visit</span>
+                    <ExternalLink className="h-3 w-3 ml-1" />
+                  </span>
+                )}
               </div>
             )}
           </CardContent>

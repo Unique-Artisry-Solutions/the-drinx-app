@@ -16,7 +16,7 @@ export interface Cocktail {
   id: string;
   name: string;
   price: number | string;
-  establishment: string | { name: string };
+  establishment: string | { id?: string; name: string };
 }
 
 // Props for ProfileHeader component

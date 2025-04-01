@@ -7,7 +7,14 @@ import { sampleCocktails } from '@/data/sampleData';
 import BackButton from '@/components/navigation/BackButton';
 
 const FavoritesPage: React.FC = () => {
-  const favoriteCocktails: Cocktail[] = sampleCocktails.slice(0, 3);
+  // Make sure we select cocktails that have establishments with IDs
+  const favoriteCocktails: Cocktail[] = sampleCocktails.slice(0, 3).map(cocktail => ({
+    ...cocktail,
+    // Ensure establishment includes id if it's an object
+    establishment: typeof cocktail.establishment === 'object' 
+      ? cocktail.establishment 
+      : { name: cocktail.establishment as string }
+  }));
 
   return (
     <Layout>
