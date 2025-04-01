@@ -5,11 +5,14 @@ import Layout from '@/components/Layout';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PenSquare, Map, PlusCircle } from 'lucide-react';
+import { PenSquare, Map, PlusCircle, Award } from 'lucide-react';
+import { useRewardsSystem } from '@/hooks/useRewardsSystem';
+import { Badge } from '@/components/ui/badge';
 
 const MyCreationsPage: React.FC = () => {
   const [createdBarCrawls, setCreatedBarCrawls] = useState<any[]>([]);
   const { toast } = useToast();
+  const { userStats, completeBarCrawl } = useRewardsSystem();
 
   // Load user's created bar crawls from localStorage
   useEffect(() => {
@@ -35,6 +38,31 @@ const MyCreationsPage: React.FC = () => {
     });
   };
 
+  const handleCompleteBarCrawl = (id: string) => {
+    // Mark a bar crawl as completed and update rewards
+    completeBarCrawl();
+    
+    // Update the bar crawl status in localStorage
+    const updatedBarCrawls = createdBarCrawls.map(crawl => {
+      if (crawl.id === id) {
+        return {
+          ...crawl,
+          status: 'completed',
+          completed_at: new Date().toISOString()
+        };
+      }
+      return crawl;
+    });
+    
+    localStorage.setItem('user_bar_crawls', JSON.stringify(updatedBarCrawls));
+    setCreatedBarCrawls(updatedBarCrawls);
+    
+    toast({
+      title: 'Bar Crawl Completed!',
+      description: 'You\'ve earned progress toward your next reward tier!',
+    });
+  };
+
   return (
     <Layout>
       <div className="py-4 animate-fade-in">
@@ -55,6 +83,25 @@ const MyCreationsPage: React.FC = () => {
           </div>
         </div>
         
+        {userStats.barCrawlsCompleted >= 5 && (
+          <div className="mb-6 p-4 border rounded-lg bg-blue-50 flex items-center justify-between">
+            <div className="flex items-center">
+              <div className="mr-3 bg-blue-100 p-2 rounded-full">
+                <Award className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <h3 className="font-medium">Rewards Active!</h3>
+                <p className="text-sm text-gray-600">
+                  You've unlocked Tier {userStats.barCrawlsCompleted >= 15 ? '3' : '2'} rewards for completing {userStats.barCrawlsCompleted} bar crawls
+                </p>
+              </div>
+            </div>
+            <Button variant="outline" asChild>
+              <Link to="/profile/rewards">View Rewards</Link>
+            </Button>
+          </div>
+        )}
+        
         <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
           {createdBarCrawls.length > 0 ? (
             <>
@@ -68,7 +115,12 @@ const MyCreationsPage: React.FC = () => {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
                     <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
-                      <h3 className="font-bold text-xl">{barCrawl.name}</h3>
+                      <div className="flex justify-between items-center">
+                        <h3 className="font-bold text-xl">{barCrawl.name}</h3>
+                        {barCrawl.status === 'completed' && (
+                          <Badge className="bg-green-500">Completed</Badge>
+                        )}
+                      </div>
                       <div className="flex justify-between text-sm mt-1">
                         <span>{barCrawl.establishments?.length || 0} stops</span>
                         <span>{barCrawl.startDate ? new Date(barCrawl.startDate).toLocaleDateString() : 'No date'}</span>
@@ -86,13 +138,24 @@ const MyCreationsPage: React.FC = () => {
                           <PenSquare className="h-4 w-4 mr-2" /> Edit
                         </Link>
                       </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => handleShareBarCrawl(barCrawl.id)}
-                      >
-                        <Map className="h-4 w-4 mr-2" /> Share
-                      </Button>
+                      <div className="space-x-2">
+                        {barCrawl.status !== 'completed' && (
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => handleCompleteBarCrawl(barCrawl.id)}
+                          >
+                            <Award className="h-4 w-4 mr-2" /> Complete
+                          </Button>
+                        )}
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => handleShareBarCrawl(barCrawl.id)}
+                        >
+                          <Map className="h-4 w-4 mr-2" /> Share
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

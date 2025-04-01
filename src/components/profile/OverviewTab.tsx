@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { GlassWater, MapPin, Route, Star, User, BeerIcon } from 'lucide-react';
+import { GlassWater, MapPin, Route, Star, User, Award, Badge, Trophy } from 'lucide-react';
 
 interface OverviewTabProps {
   userName: string;
@@ -13,6 +13,29 @@ interface OverviewTabProps {
 }
 
 const OverviewTab: React.FC<OverviewTabProps> = ({ userName, userEmail, userJoinDate }) => {
+  // Get reward stats from localStorage if available (default values if not)
+  const getUserStats = () => {
+    const storedStats = localStorage.getItem('user_rewards_stats');
+    if (storedStats) {
+      return JSON.parse(storedStats);
+    }
+    return {
+      barCrawlsCompleted: 7,
+      establishmentsVisited: 12,
+      mocktailsTried: 15,
+      reviewsWritten: 3
+    };
+  };
+  
+  const userStats = getUserStats();
+  const getTier = () => {
+    if (userStats.barCrawlsCompleted >= 15) return 3;
+    if (userStats.barCrawlsCompleted >= 5) return 2;
+    return 1;
+  };
+  
+  const currentTier = getTier();
+  
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -64,9 +87,9 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ userName, userEmail, userJoin
                   <GlassWater size={16} className="mr-2" />
                   Mocktails Tried
                 </span>
-                <span className="font-medium">8/50</span>
+                <span className="font-medium">{userStats.mocktailsTried}/50</span>
               </div>
-              <Progress value={16} className="h-2" />
+              <Progress value={(userStats.mocktailsTried / 50) * 100} className="h-2" />
             </div>
             
             <div className="space-y-3">
@@ -75,9 +98,9 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ userName, userEmail, userJoin
                   <MapPin size={16} className="mr-2" />
                   Places Visited
                 </span>
-                <span className="font-medium">3/25</span>
+                <span className="font-medium">{userStats.establishmentsVisited}/25</span>
               </div>
-              <Progress value={12} className="h-2" />
+              <Progress value={(userStats.establishmentsVisited / 25) * 100} className="h-2" />
             </div>
             
             <div className="space-y-3">
@@ -86,9 +109,24 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ userName, userEmail, userJoin
                   <Route size={16} className="mr-2" />
                   Bar Crawls
                 </span>
-                <span className="font-medium">1/5</span>
+                <span className="font-medium">{userStats.barCrawlsCompleted}/15</span>
               </div>
-              <Progress value={20} className="h-2" />
+              <Progress value={(userStats.barCrawlsCompleted / 15) * 100} className="h-2" />
+            </div>
+            
+            <div className="space-y-3">
+              <div className="flex justify-between text-sm">
+                <span className="text-material-on-surface-variant flex items-center">
+                  <Trophy size={16} className="mr-2" />
+                  Reward Tier
+                </span>
+                <span className="font-medium">
+                  {currentTier === 1 && "Tier 1: Badge Collector"}
+                  {currentTier === 2 && "Tier 2: Rewards Club"}
+                  {currentTier === 3 && "Tier 3: VIP Experience"}
+                </span>
+              </div>
+              <Progress value={(currentTier / 3) * 100} className="h-2" />
             </div>
             
             <div className="pt-2">
@@ -132,33 +170,72 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ userName, userEmail, userJoin
         </Card>
         
         <Card className="hover:shadow-md transition-shadow">
-          <Link to="/profile/favorites" className="block p-6">
+          <Link to="/profile/rewards" className="block p-6">
             <div className="flex flex-col items-center text-center">
               <div className="p-3 bg-amber-100 rounded-full mb-3">
-                <Star size={24} className="text-amber-600" />
+                <Award size={24} className="text-amber-600" />
               </div>
-              <h3 className="font-medium mb-1">Favorites</h3>
+              <h3 className="font-medium mb-1">Rewards & Badges</h3>
               <p className="text-sm text-material-on-surface-variant">
-                Your favorite mocktails
+                View your rewards and badges
               </p>
             </div>
           </Link>
         </Card>
         
         <Card className="hover:shadow-md transition-shadow">
-          <Link to="/profile/visited" className="block p-6">
+          <Link to="/profile/favorites" className="block p-6">
             <div className="flex flex-col items-center text-center">
               <div className="p-3 bg-emerald-100 rounded-full mb-3">
-                <MapPin size={24} className="text-emerald-600" />
+                <Star size={24} className="text-emerald-600" />
               </div>
-              <h3 className="font-medium mb-1">Visited</h3>
+              <h3 className="font-medium mb-1">Favorites</h3>
               <p className="text-sm text-material-on-surface-variant">
-                Places you've explored
+                Your favorite mocktails and places
               </p>
             </div>
           </Link>
         </Card>
       </div>
+      
+      {/* Display recent badges */}
+      {(currentTier >= 2) && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Badge className="h-5 w-5 mr-2 text-spiritless-pink" />
+              Your Reward Status
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div>
+                <h3 className="font-medium flex items-center">
+                  {currentTier === 2 && (
+                    <>
+                      <Gift className="h-5 w-5 mr-2 text-blue-600" />
+                      Tier 2: Rewards Club Member
+                    </>
+                  )}
+                  {currentTier === 3 && (
+                    <>
+                      <Trophy className="h-5 w-5 mr-2 text-amber-600" />
+                      Tier 3: VIP Experience Member
+                    </>
+                  )}
+                </h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  {currentTier === 2 && "You've unlocked special discounts and offers!"}
+                  {currentTier === 3 && "You've unlocked exclusive VIP experiences and benefits!"}
+                </p>
+              </div>
+              <Button asChild>
+                <Link to="/profile/rewards">View Benefits</Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

@@ -10,6 +10,7 @@ import ProfileHeader from '@/components/profile/ProfileHeader';
 import OverviewTab from '@/components/profile/OverviewTab';
 import ActivityTab from '@/components/profile/ActivityTab';
 import QuickLinksTab from '@/components/profile/QuickLinksTab';
+import BadgesTab from '@/components/profile/BadgesTab';
 import { sampleEstablishments, sampleCocktails } from '@/data/sampleData';
 
 const ProfilePage: React.FC = () => {
@@ -63,6 +64,11 @@ const ProfilePage: React.FC = () => {
         type: 'barCrawl',
         name: 'Weekend Wanders',
         date: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000) // 8 days ago
+      },
+      {
+        type: 'badge',
+        name: 'Explorer',
+        date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) // 3 days ago
       }
     ];
     
@@ -117,6 +123,7 @@ const ProfilePage: React.FC = () => {
           <TabsList>
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="activity">Recent Activity</TabsTrigger>
+            <TabsTrigger value="rewards">Rewards & Badges</TabsTrigger>
             <TabsTrigger value="favorites">My Favorites</TabsTrigger>
           </TabsList>
           
@@ -130,6 +137,10 @@ const ProfilePage: React.FC = () => {
           
           <TabsContent value="activity">
             <ActivityTab recentActivity={recentActivity} />
+          </TabsContent>
+          
+          <TabsContent value="rewards">
+            <BadgesTab />
           </TabsContent>
           
           <TabsContent value="favorites">
