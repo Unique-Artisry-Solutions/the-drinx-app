@@ -1,9 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Route, Calendar, Users, Clock } from 'lucide-react';
+import { Route, Calendar, Users, Clock, MapPin } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { sampleBarCrawls, sampleEstablishments } from '@/data/sampleData';
@@ -73,10 +74,11 @@ const BarCrawlDetail: React.FC = () => {
         <div className="py-4 animate-fade-in">
           <Skeleton className="h-12 w-2/3 mb-2" />
           <Skeleton className="h-6 w-1/2 mb-6" />
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Skeleton className="h-64" />
-            <Skeleton className="h-64" />
-            <Skeleton className="h-64" />
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Skeleton className="h-48" />
+            <Skeleton className="h-48" />
+            <Skeleton className="h-48" />
+            <Skeleton className="h-48" />
           </div>
         </div>
       </Layout>
@@ -103,12 +105,12 @@ const BarCrawlDetail: React.FC = () => {
 
   return (
     <Layout>
-      <div className="py-4 animate-fade-in">
-        <div className="mb-6">
+      <div className="py-4 animate-fade-in max-w-7xl mx-auto">
+        <div className="mb-4">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
             <div>
               <h1 className="text-2xl font-bold mb-2">{barCrawl.name}</h1>
-              <div className="flex flex-wrap gap-4 text-gray-600">
+              <div className="flex flex-wrap gap-3 text-gray-600">
                 <div className="flex items-center">
                   <Users className="h-4 w-4 mr-1" />
                   <span>Organizer: {barCrawl.organizer}</span>
@@ -140,13 +142,13 @@ const BarCrawlDetail: React.FC = () => {
               <Route className="h-5 w-5 mr-2 text-spiritless-pink" />
               Crawl Route
             </h2>
-            <div className="space-y-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-1">
               {barCrawl.establishments.map((establishment, index) => (
-                <div key={establishment.id} className="flex items-center">
-                  <div className="flex items-center justify-center bg-spiritless-pink text-white rounded-full h-6 w-6 text-sm mr-3">
+                <div key={establishment.id} className="flex items-center py-1">
+                  <div className="flex items-center justify-center bg-spiritless-pink text-white rounded-full h-6 w-6 text-sm mr-3 flex-shrink-0">
                     {index + 1}
                   </div>
-                  <Link to={`/establishment/${establishment.id}`} className="text-material-primary hover:underline">
+                  <Link to={`/establishment/${establishment.id}`} className="text-material-primary hover:underline truncate">
                     {establishment.name}
                   </Link>
                 </div>
@@ -155,12 +157,12 @@ const BarCrawlDetail: React.FC = () => {
           </div>
         </div>
         
-        <h2 className="text-xl font-semibold mb-4">Establishments</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <h2 className="text-xl font-semibold mb-3">Establishments</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
           {barCrawl.establishments.map((establishment) => (
-            <Card key={establishment.id} className="overflow-hidden hover:shadow-md transition-shadow">
-              <Link to={`/establishment/${establishment.id}`}>
-                <div className="h-40 bg-gray-200 relative">
+            <Card key={establishment.id} className="overflow-hidden hover:shadow-md transition-shadow h-full">
+              <Link to={`/establishment/${establishment.id}`} className="flex flex-col h-full">
+                <div className="h-32 bg-gray-200 relative">
                   {establishment.image ? (
                     <img 
                       src={establishment.image} 
@@ -173,15 +175,18 @@ const BarCrawlDetail: React.FC = () => {
                     </div>
                   )}
                 </div>
-                <div className="p-4">
-                  <h3 className="font-semibold text-lg mb-1">{establishment.name}</h3>
-                  <p className="text-gray-600 text-sm truncate">{establishment.address}</p>
-                  <div className="flex justify-between items-center mt-2">
-                    <span className="text-sm text-gray-500">
+                <div className="p-3 flex-1 flex flex-col">
+                  <h3 className="font-semibold text-base mb-1 line-clamp-1">{establishment.name}</h3>
+                  <p className="text-gray-600 text-xs flex items-start mb-2">
+                    <MapPin className="h-3 w-3 mr-1 mt-0.5 flex-shrink-0" />
+                    <span className="line-clamp-2">{establishment.address}</span>
+                  </p>
+                  <div className="flex justify-between items-center mt-auto pt-2 text-xs text-gray-500">
+                    <span>
                       {establishment.cocktailCount || 0} cocktails
                     </span>
                     {establishment.distance && (
-                      <span className="text-sm text-gray-500">{establishment.distance} away</span>
+                      <span>{establishment.distance} away</span>
                     )}
                   </div>
                 </div>
