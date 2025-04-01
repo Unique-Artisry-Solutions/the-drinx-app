@@ -1,11 +1,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Clock } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { supabaseClient } from '@/lib/supabaseClient';
 import { useAuth } from '@/contexts/auth';
+import { format } from 'date-fns';
 
 interface JoinBarCrawlButtonProps {
   barCrawlId: string;
@@ -20,14 +21,26 @@ const JoinBarCrawlButton: React.FC<JoinBarCrawlButtonProps> = ({
   const [canJoin, setCanJoin] = useState(true);
   const [isAlreadyJoined, setIsAlreadyJoined] = useState(false);
   const [cooldownTimeRemaining, setCooldownTimeRemaining] = useState<string>('');
+  const [barCrawlDetails, setBarCrawlDetails] = useState<any>(null);
   const { toast } = useToast();
   const { user } = useAuth();
 
-  // Check if user can join the bar crawl
+  // Fetch bar crawl details and check if user can join
   useEffect(() => {
     if (user && barCrawlId) {
-      const checkParticipation = async () => {
+      const fetchBarCrawlInfo = async () => {
         try {
+          // Fetch bar crawl details
+          const { data: barCrawl, error: barCrawlError } = await supabaseClient
+            .from('bar_crawls')
+            .select('*')
+            .eq('id', barCrawlId)
+            .single();
+
+          if (barCrawlError) throw barCrawlError;
+          
+          setBarCrawlDetails(barCrawl);
+
           // Check if user has already joined this specific bar crawl
           const { data: existingParticipation, error: participationError } = await supabaseClient
             .from('user_bar_crawl_participation')
@@ -83,7 +96,7 @@ const JoinBarCrawlButton: React.FC<JoinBarCrawlButtonProps> = ({
         }
       };
 
-      checkParticipation();
+      fetchBarCrawlInfo();
     }
   }, [user, barCrawlId]);
 
@@ -155,6 +168,35 @@ const JoinBarCrawlButton: React.FC<JoinBarCrawlButtonProps> = ({
     }
   };
 
+  // Helper to display bar crawl duration information
+  const getBarCrawlDuration = () => {
+    if (!barCrawlDetails || !barCrawlDetails.start_date) return null;
+    
+    try {
+      const startDate = new Date(barCrawlDetails.start_date);
+      let endDate;
+      
+      if (barCrawlDetails.end_date) {
+        endDate = new Date(barCrawlDetails.end_date);
+      } else {
+        // Default 7 day duration if no end date specified
+        endDate = new Date(startDate);
+        endDate.setDate(endDate.getDate() + 7);
+      }
+      
+      return {
+        startDisplay: format(startDate, 'MMM d, yyyy'),
+        endDisplay: format(endDate, 'MMM d, yyyy'),
+        durationDays: Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
+      };
+    } catch (err) {
+      console.error('Error calculating bar crawl duration:', err);
+      return null;
+    }
+  };
+
+  const duration = getBarCrawlDuration();
+
   return (
     <div>
       <Button 
@@ -182,6 +224,16 @@ const JoinBarCrawlButton: React.FC<JoinBarCrawlButtonProps> = ({
         <Alert className="mt-3" variant="default">
           <AlertDescription>
             You're already participating in this bar crawl. Enjoy the experience!
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {barCrawlDetails && barCrawlDetails.start_date && duration && (
+        <Alert className="mt-3">
+          <Clock className="h-4 w-4 mr-2" />
+          <AlertDescription>
+            This bar crawl runs from {duration.startDisplay} to {duration.endDisplay} ({duration.durationDays} days).
+            {duration.durationDays > 7 && <span className="block text-amber-600 mt-1">Note: This bar crawl has already been extended and cannot be extended further.</span>}
           </AlertDescription>
         </Alert>
       )}
