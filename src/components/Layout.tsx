@@ -51,7 +51,21 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     // Don't show back button on landing, home, main app pages, or pages with their own back implementation
     const topLevelPaths = ['/', '/landing', '/map', '/explore', '/login', '/signup', '/mission', 
                           '/resources', '/legal', '/admin', '/admin/dashboard', '/profile'];
-    return !topLevelPaths.includes(location.pathname) && !isLandingPage;
+                          
+    // Pages that implement their own back buttons
+    const pagesWithOwnBackButtons = [
+      '/profile/bar-crawls',
+      '/bar-crawl-profile',
+      '/profile/favorites',
+      '/profile/visited'
+    ];
+    
+    // Check if the current path is a subpath of any path in pagesWithOwnBackButtons
+    const hasOwnBackButton = pagesWithOwnBackButtons.some(path => 
+      location.pathname.startsWith(path) || location.pathname === path
+    );
+    
+    return !topLevelPaths.includes(location.pathname) && !isLandingPage && !hasOwnBackButton;
   };
   
   const getContentPadding = () => {

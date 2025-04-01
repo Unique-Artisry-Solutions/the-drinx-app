@@ -6,11 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { sampleBarCrawls, sampleEstablishments } from '@/data/sampleData';
-import BackButton from '@/components/navigation/BackButton';
 import BarCrawlProfileHeader from '@/components/barCrawl/profile/BarCrawlProfileHeader';
 import RouteTabContent from '@/components/barCrawl/profile/RouteTabContent';
 import MapTabContent from '@/components/barCrawl/profile/MapTabContent';
 import DetailsTabContent from '@/components/barCrawl/profile/DetailsTabContent';
+import BackButton from '@/components/navigation/BackButton';
 
 interface BarCrawlProfileProps {}
 
@@ -85,7 +85,7 @@ const BarCrawlProfilePage: React.FC<BarCrawlProfileProps> = () => {
     return (
       <Layout>
         <div className="py-4 animate-fade-in max-w-6xl mx-auto">
-          <BackButton />
+          <BackButton fallbackPath="/profile/bar-crawls" />
           <h1 className="text-2xl font-bold mb-2">Bar Crawl Not Found</h1>
           <p className="mb-4 text-gray-600">
             The bar crawl you're looking for doesn't exist or may have been removed.
@@ -112,7 +112,7 @@ const BarCrawlProfilePage: React.FC<BarCrawlProfileProps> = () => {
   return (
     <Layout>
       <div className="py-4 animate-fade-in max-w-6xl mx-auto">
-        <BackButton />
+        <BackButton fallbackPath="/profile/bar-crawls" />
         
         <BarCrawlProfileHeader 
           name={barCrawl.name}
