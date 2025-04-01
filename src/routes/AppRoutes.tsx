@@ -1,6 +1,6 @@
 
 import React, { Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import LandingPage from '@/pages/LandingPage';
 import MapPage from '@/pages/MapPage';
 import NotFound from '@/pages/NotFound';
@@ -41,55 +41,53 @@ const EstablishmentProfilePage = lazy(() => import('@/pages/establishment/Establ
 
 const AppRoutes = () => {
   return (
-    <Router>
-      <Suspense fallback={<div>Loading...</div>}>
-        <Routes>
-          {/* Public routes */}
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/map" element={<MapPage />} />
-          <Route path="/explore" element={<Explore />} />
-          <Route path="/establishment/:id" element={<EstablishmentDetail />} />
-          <Route path="/cocktail/:id" element={<CocktailDetail />} />
-          <Route path="/bar-crawl/:id" element={<BarCrawlDetail />} />
-          <Route path="/bar-crawl-details/:id" element={<BarCrawlProfilePage />} />
-          <Route path="/checkout" element={<CheckoutPage />} />
-          <Route path="/signup" element={<SignupPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/verify-email" element={<VerifyEmail />} />
-          <Route path="/verification" element={<EmailVerificationHandler />} />
-          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-          <Route path="/resources" element={<ResourcesPage />} />
-          <Route path="/mission" element={<MissionPage />} />
-          <Route path="/pricing" element={<PricingPage />} />
-          
-          {/* Profile routes */}
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/profile/favorites" element={<FavoritesPage />} />
-          <Route path="/profile/visited" element={<VisitedPage />} />
-          <Route path="/profile/bar-crawls" element={<BarCrawlsPage />} />
-          <Route path="/profile/my-creations" element={<MyCreationsPage />} />
-          <Route path="/profile/rewards" element={<RewardsPage />} />
-          <Route path="/profile/settings" element={<UserProfilePage />} />
-          <Route path="/create-bar-crawl" element={<CreateBarCrawlPage />} />
-          <Route path="/profile/my-creations/:id" element={<BarCrawlManagementPage />} />
-          
-          {/* Admin routes */}
-          <Route path="/admin/login" element={<AdminLogin />} />
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/admin/users" element={<AdminUsersPage />} />
-          <Route path="/admin/users/:id" element={<AdminUserProfile />} />
-          <Route path="/admin/establishments" element={<AdminEstablishmentsPage />} />
-          <Route path="/admin/establishments/:id" element={<AdminEstablishmentProfile />} />
-          
-          {/* Establishment routes */}
-          <Route path="/establishment/profile" element={<EstablishmentProfilePage />} />
-          
-          {/* Fallback routes */}
-          <Route path="/404" element={<NotFound />} />
-          <Route path="*" element={<Navigate to="/404" replace />} />
-        </Routes>
-      </Suspense>
-    </Router>
+    <Suspense fallback={<div>Loading...</div>}>
+      <Routes>
+        {/* Public routes */}
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/map" element={<MapPage />} />
+        <Route path="/explore" element={<Explore />} />
+        <Route path="/establishment/:id" element={<EstablishmentDetail />} />
+        <Route path="/cocktail/:id" element={<CocktailDetail />} />
+        <Route path="/bar-crawl/:id" element={<BarCrawlDetail />} />
+        <Route path="/bar-crawl-details/:id" element={<BarCrawlProfilePage />} />
+        <Route path="/checkout" element={<CheckoutPage />} />
+        <Route path="/signup" element={<SignupPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route path="/verification" element={<EmailVerificationHandler />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/resources" element={<ResourcesPage />} />
+        <Route path="/mission" element={<MissionPage />} />
+        <Route path="/pricing" element={<PricingPage />} />
+        
+        {/* Profile routes */}
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/profile/favorites" element={<FavoritesPage />} />
+        <Route path="/profile/visited" element={<VisitedPage />} />
+        <Route path="/profile/bar-crawls" element={<BarCrawlsPage />} />
+        <Route path="/profile/my-creations" element={<MyCreationsPage />} />
+        <Route path="/profile/rewards" element={<RewardsPage />} />
+        <Route path="/profile/settings" element={<UserProfilePage />} />
+        <Route path="/create-bar-crawl" element={<CreateBarCrawlPage />} />
+        <Route path="/profile/my-creations/:id" element={<BarCrawlManagementPage />} />
+        
+        {/* Admin routes */}
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/admin/users" element={<AdminUsersPage />} />
+        <Route path="/admin/users/:id" element={<AdminUserProfile />} />
+        <Route path="/admin/establishments" element={<AdminEstablishmentsPage />} />
+        <Route path="/admin/establishments/:id" element={<AdminEstablishmentProfile />} />
+        
+        {/* Establishment routes */}
+        <Route path="/establishment/profile" element={<EstablishmentProfilePage />} />
+        
+        {/* Fallback routes */}
+        <Route path="/404" element={<NotFound />} />
+        <Route path="*" element={<Navigate to="/404" replace />} />
+      </Routes>
+    </Suspense>
   );
 };
 

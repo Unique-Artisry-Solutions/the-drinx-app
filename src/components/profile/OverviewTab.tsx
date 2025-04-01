@@ -1,10 +1,9 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { GlassWater, MapPin, Route, Star, User, Award, Badge, Trophy } from 'lucide-react';
+import { GlassWater, MapPin, Route, Star, User, Award, Badge, Trophy, GiftIcon } from 'lucide-react';
 
 interface OverviewTabProps {
   userName: string;
@@ -213,7 +212,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ userName, userEmail, userJoin
                 <h3 className="font-medium flex items-center">
                   {currentTier === 2 && (
                     <>
-                      <Gift className="h-5 w-5 mr-2 text-blue-600" />
+                      <GiftIcon className="h-5 w-5 mr-2 text-blue-600" />
                       Tier 2: Rewards Club Member
                     </>
                   )}
