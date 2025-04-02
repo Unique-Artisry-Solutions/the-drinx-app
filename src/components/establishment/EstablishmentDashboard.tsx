@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { BarChart, Calendar, Clock, MessageSquare, Star, TrendingUp, UserCheck, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import MetricsVisualization from './MetricsVisualization';
 
 interface EstablishmentDashboardProps {
   establishmentName: string;
@@ -23,6 +24,25 @@ const EstablishmentDashboard: React.FC<EstablishmentDashboardProps> = ({ establi
     topMocktail: "Blue Lagoon",
     topMocktailOrders: 42
   };
+  
+  // Sample data for visualizations
+  const visitorData = [
+    { name: 'Jan', visitors: 140, returningVisitors: 65 },
+    { name: 'Feb', visitors: 156, returningVisitors: 78 },
+    { name: 'Mar', visitors: 190, returningVisitors: 95 },
+    { name: 'Apr', visitors: 205, returningVisitors: 110 },
+    { name: 'May', visitors: 245, returningVisitors: 135 },
+    { name: 'Jun', visitors: 278, returningVisitors: 173 }
+  ];
+  
+  const ratingData = [
+    { name: 'Jan', rating: 4.2 },
+    { name: 'Feb', rating: 4.3 },
+    { name: 'Mar', rating: 4.5 },
+    { name: 'Apr', rating: 4.5 },
+    { name: 'May', rating: 4.6 },
+    { name: 'Jun', rating: 4.7 }
+  ];
   
   // Sample recent activity
   const recentActivity = [
@@ -141,6 +161,13 @@ const EstablishmentDashboard: React.FC<EstablishmentDashboardProps> = ({ establi
           </CardContent>
         </Card>
       </div>
+      
+      {/* Metrics Visualization */}
+      <MetricsVisualization 
+        returningRate={stats.returningRate}
+        visitorData={visitorData}
+        ratingData={ratingData}
+      />
       
       {/* Quick Actions & Pending Items */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
