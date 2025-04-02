@@ -1,4 +1,5 @@
-import React from 'react';
+
+import React, { useEffect, useState } from 'react';
 import Layout from '@/components/Layout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ProfileTab from '@/components/establishment/ProfileTab';
@@ -7,7 +8,13 @@ import MocktailMenuTab from '@/components/establishment/MocktailMenuTab';
 import VisitorStatsTab from '@/components/establishment/VisitorStatsTab';
 import BarCrawlsTab from '@/components/establishment/BarCrawlsTab';
 import { useEstablishmentProfile } from '@/hooks/useEstablishmentProfile';
+import { useSearchParams } from 'react-router-dom';
+
 const EstablishmentProfilePage = () => {
+  const [searchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState('profile');
+  
   const {
     profileState,
     promotionsState,
@@ -15,7 +22,16 @@ const EstablishmentProfilePage = () => {
     visitorStats,
     barCrawlsState
   } = useEstablishmentProfile();
-  return <Layout>
+  
+  // Set the active tab based on URL parameter if it exists
+  useEffect(() => {
+    if (tabParam && ['profile', 'promotions', 'menu', 'visitors', 'barCrawls'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam]);
+  
+  return (
+    <Layout>
       <div className="py-4 animate-fade-in px-0 mx-[10%]">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -26,7 +42,7 @@ const EstablishmentProfilePage = () => {
           </div>
         </div>
 
-        <Tabs defaultValue="profile">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="w-full mb-4">
             <TabsTrigger value="profile">Profile</TabsTrigger>
             <TabsTrigger value="promotions">Promotions</TabsTrigger>
@@ -56,6 +72,8 @@ const EstablishmentProfilePage = () => {
           </TabsContent>
         </Tabs>
       </div>
-    </Layout>;
+    </Layout>
+  );
 };
+
 export default EstablishmentProfilePage;

@@ -32,6 +32,11 @@ const EstablishmentDashboard: React.FC<EstablishmentDashboardProps> = ({ establi
     { id: 4, type: 'order', user: 'Michael R.', content: 'Ordered Blue Lagoon', time: '6h ago' }
   ];
 
+  // Function to navigate to the mocktail menu tab
+  const navigateToMocktailMenu = () => {
+    navigate('/establishment/profile?tab=menu');
+  };
+
   return (
     <div className="animate-fade-in vibrant-bg p-4 space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -43,7 +48,7 @@ const EstablishmentDashboard: React.FC<EstablishmentDashboardProps> = ({ establi
           <Button variant="outline" onClick={() => navigate('/establishment/profile')}>
             Manage Profile
           </Button>
-          <Button variant="gradient" onClick={() => navigate('/establishment/profile')}>
+          <Button variant="gradient" onClick={navigateToMocktailMenu}>
             Add New Mocktail
           </Button>
         </div>
