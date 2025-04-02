@@ -18,7 +18,7 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   
   if (!user) {
     // Non-logged in users should be redirected to the landing page
-    return <Navigate to="/" replace />;
+    return <Navigate to="/landing" replace />;
   }
   
   if (!isEmailVerified) {
@@ -56,14 +56,14 @@ export const TypedProtectedRoute = ({
   if (isAdminBypass) {
     // For admin bypass, check if the stored type matches the required type
     if (storedUserType !== userType) {
-      return <Navigate to="/" replace />;
+      return <Navigate to="/landing" replace />;
     }
     
     return <>{children}</>;
   }
   
   if (!user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/landing" replace />;
   }
   
   if (!isEmailVerified) {
@@ -71,7 +71,7 @@ export const TypedProtectedRoute = ({
   }
   
   if (storedUserType !== userType) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/landing" replace />;
   }
   
   return <>{children}</>;

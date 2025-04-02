@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/auth';
@@ -38,15 +38,14 @@ const Index = () => {
     resetFilters
   } = useIndexPageLogic();
   
-  // Redirect authenticated individual users to explore page, but only once after loading
-  useEffect(() => {
-    if (!isLoading && user && !isEstablishment) {
-      navigate('/explore', { replace: true });
-    }
-  }, [user, isLoading, navigate, isEstablishment]);
+  // Check if user is not authenticated and not loading
+  if (!isLoading && !user) {
+    // Redirect to the landing page
+    navigate('/landing', { replace: true });
+    return null; // Return null to prevent rendering while redirecting
+  }
 
-  // If the user is not authenticated, show the normal index page
-  // If the user is an establishment (including bypass logins), show the dashboard
+  // If the user is authenticated and is an establishment, show the dashboard
   if (user && isEstablishment) {
     return (
       <Layout>
@@ -55,6 +54,12 @@ const Index = () => {
         />
       </Layout>
     );
+  }
+
+  // If user is authenticated and is an individual, redirect to explore
+  if (user && !isEstablishment && !isLoading) {
+    navigate('/explore', { replace: true });
+    return null;
   }
 
   // Show the regular index page for guests

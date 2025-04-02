@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import Hero from '@/components/landing/Hero';
@@ -14,13 +14,19 @@ const LandingPage = () => {
   const { user, isLoading } = useAuth();
   const navigate = useNavigate();
   
-  useEffect(() => {
-    // If user is authenticated, redirect to explore page
+  // If user is already authenticated, redirect to appropriate page
+  React.useEffect(() => {
     if (user && !isLoading) {
-      navigate('/explore');
+      const userType = localStorage.getItem('user_type');
+      if (userType === 'establishment') {
+        navigate('/', { replace: true });
+      } else {
+        navigate('/explore', { replace: true });
+      }
     }
   }, [user, isLoading, navigate]);
 
+  // Only render the landing page if the user is not authenticated or if auth is still loading
   return (
     <Layout>
       <div className="landing-page min-h-screen w-full">
