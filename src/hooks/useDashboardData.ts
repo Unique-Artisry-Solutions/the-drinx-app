@@ -30,11 +30,18 @@ export interface MocktailData {
   color: string;
 }
 
+export interface BarCrawlData {
+  name: string;
+  value: number;
+  color: string;
+}
+
 interface DashboardData {
   stats: DashboardStats;
   visitorData: VisitorData[];
   ratingData: RatingData[];
   mocktailData: MocktailData[];
+  barCrawlData: BarCrawlData[];
   isLoading: boolean;
 }
 
@@ -81,6 +88,14 @@ export const useDashboardData = (): DashboardData => {
     { name: 'Strawberry Daiquiri', orders: 22, color: '#ec4899' },
     { name: 'Piña Colada', orders: 18, color: '#8b5cf6' }
   ];
+  
+  // Sample bar crawl data
+  const barCrawlData: BarCrawlData[] = [
+    { name: 'Downtown Crawl', value: 24, color: '#8b5cf6' },
+    { name: 'Friday Night Tour', value: 18, color: '#f97316' },
+    { name: 'Weekend Warriors', value: 15, color: '#0ea5e9' },
+    { name: 'College Night', value: 12, color: '#ec4899' }
+  ];
 
   useEffect(() => {
     // Simulate loading
@@ -96,6 +111,7 @@ export const useDashboardData = (): DashboardData => {
     visitorData,
     ratingData,
     mocktailData,
+    barCrawlData,
     isLoading
   };
 };

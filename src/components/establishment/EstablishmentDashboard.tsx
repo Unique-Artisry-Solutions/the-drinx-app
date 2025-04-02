@@ -17,13 +17,14 @@ const EstablishmentDashboard: React.FC<EstablishmentDashboardProps> = ({ establi
     stats, 
     visitorData, 
     ratingData, 
-    mocktailData, 
+    mocktailData,
+    barCrawlData,
     isLoading 
   } = useDashboardData();
   
   if (isLoading) {
     return (
-      <div className="animate-fade-in vibrant-bg p-4 space-y-6">
+      <div className="animate-fade-in vibrant-bg p-4 space-y-4">
         <div className="flex justify-center items-center h-64">
           <div className="loader"></div>
         </div>
@@ -32,31 +33,37 @@ const EstablishmentDashboard: React.FC<EstablishmentDashboardProps> = ({ establi
   }
 
   return (
-    <div className="animate-fade-in vibrant-bg p-4 space-y-6">
+    <div className="animate-fade-in vibrant-bg p-4 space-y-4">
       {/* Dashboard Header */}
       <DashboardHeader establishmentName={establishmentName} />
       
       {/* Key Metrics Cards */}
       <KeyMetricsCards stats={stats} />
       
-      {/* Metrics Visualization */}
-      <MetricsVisualization 
-        returningRate={stats.returningRate}
-        visitorData={visitorData}
-        ratingData={ratingData}
-        mocktailData={mocktailData}
-      />
-      
-      {/* Activities and Pending Items */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Recent Activity - now a separate component */}
-        <ActivitiesSection />
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+        {/* Metrics Visualization - Takes 3/4 of the width on large screens */}
+        <div className="lg:col-span-3">
+          <MetricsVisualization 
+            returningRate={stats.returningRate}
+            visitorData={visitorData}
+            ratingData={ratingData}
+            mocktailData={mocktailData}
+            barCrawlData={barCrawlData}
+          />
+        </div>
         
-        {/* Pending Actions */}
-        <PendingActionsCard 
-          pendingBarCrawls={stats.pendingBarCrawls} 
-          pendingReviews={stats.reviewsThisWeek} 
-        />
+        {/* Right Side Content - Takes 1/4 of the width on large screens */}
+        <div className="lg:col-span-1 space-y-4">
+          {/* Pending Actions */}
+          <PendingActionsCard 
+            pendingBarCrawls={stats.pendingBarCrawls} 
+            pendingReviews={stats.reviewsThisWeek} 
+          />
+          
+          {/* Recent Activity */}
+          <ActivitiesSection />
+        </div>
       </div>
     </div>
   );
