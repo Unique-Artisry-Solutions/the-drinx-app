@@ -66,7 +66,7 @@ const EstablishmentDashboard: React.FC<EstablishmentDashboardProps> = ({ establi
           </div>
         </div>
         
-        {/* Recent Activity - Full width section */}
+        {/* Comprehensive Activities Section - Full width */}
         <div className="mb-8">
           <ActivitiesSection />
         </div>
