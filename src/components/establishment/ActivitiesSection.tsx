@@ -4,16 +4,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import RecentActivityCard from './RecentActivityCard';
 import { Activity, useActivitiesData } from '@/hooks/useActivitiesData';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
 
 const ActivitiesSection: React.FC = () => {
   const { activities, isLoadingActivities } = useActivitiesData();
-  const navigate = useNavigate();
-  
-  const handleViewAllActivities = () => {
-    navigate('/establishment/activities');
-  };
 
   if (isLoadingActivities) {
     return (
@@ -39,17 +32,7 @@ const ActivitiesSection: React.FC = () => {
     );
   }
 
-  return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-medium">Recent Activity & Pending Actions</h2>
-        <Button variant="outline" size="sm" onClick={handleViewAllActivities}>
-          View All
-        </Button>
-      </div>
-      <RecentActivityCard activities={activities} />
-    </div>
-  );
+  return <RecentActivityCard activities={activities} />;
 };
 
 export default ActivitiesSection;
