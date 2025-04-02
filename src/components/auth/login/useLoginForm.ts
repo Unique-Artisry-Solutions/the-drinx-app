@@ -112,8 +112,13 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
         if (onSuccess) {
           onSuccess();
         } else {
-          // Redirect to the explore page on successful login
-          navigate('/explore');
+          // Redirect based on user type
+          const storedUserType = localStorage.getItem('user_type');
+          if (storedUserType === 'establishment') {
+            navigate('/', { replace: true });
+          } else {
+            navigate('/explore', { replace: true });
+          }
         }
       }
     } catch (error: any) {

@@ -17,7 +17,8 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   }
   
   if (!user) {
-    return <Navigate to="/login" replace />;
+    // Non-logged in users should be redirected to the landing page
+    return <Navigate to="/" replace />;
   }
   
   if (!isEmailVerified) {

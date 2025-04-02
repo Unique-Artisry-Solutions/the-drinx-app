@@ -36,6 +36,7 @@ import MocktailDetailsPage from '@/pages/establishment/MocktailDetailsPage';
 import EstablishmentAnalyticsPage from '@/pages/establishment/EstablishmentAnalyticsPage';
 import AllActionsPage from '@/pages/establishment/AllActionsPage';
 import MocktailSuggestionsPage from '@/pages/establishment/MocktailSuggestionsPage';
+import { ProtectedRoute, TypedProtectedRoute } from './protectedRoutes';
 
 // Admin pages
 const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
@@ -54,6 +55,7 @@ const AppRoutes = () => {
       <Routes>
         {/* Public routes */}
         <Route path="/" element={<Index />} />
+        <Route path="/landing" element={<LandingPage />} />
         <Route path="/map" element={<MapPage />} />
         <Route path="/explore" element={<Explore />} />
         <Route path="/establishment/:id" element={<EstablishmentDetail />} />
@@ -70,16 +72,16 @@ const AppRoutes = () => {
         <Route path="/mission" element={<MissionPage />} />
         <Route path="/pricing" element={<PricingPage />} />
         
-        {/* Profile routes */}
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/profile/favorites" element={<FavoritesPage />} />
-        <Route path="/profile/visited" element={<VisitedPage />} />
-        <Route path="/profile/bar-crawls" element={<BarCrawlsPage />} />
-        <Route path="/profile/my-creations" element={<MyCreationsPage />} />
-        <Route path="/profile/rewards" element={<RewardsPage />} />
-        <Route path="/profile/settings" element={<UserProfilePage />} />
-        <Route path="/create-bar-crawl" element={<CreateBarCrawlPage />} />
-        <Route path="/profile/my-creations/:id" element={<BarCrawlManagementPage />} />
+        {/* Profile routes - protected */}
+        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        <Route path="/profile/favorites" element={<ProtectedRoute><FavoritesPage /></ProtectedRoute>} />
+        <Route path="/profile/visited" element={<ProtectedRoute><VisitedPage /></ProtectedRoute>} />
+        <Route path="/profile/bar-crawls" element={<ProtectedRoute><BarCrawlsPage /></ProtectedRoute>} />
+        <Route path="/profile/my-creations" element={<ProtectedRoute><MyCreationsPage /></ProtectedRoute>} />
+        <Route path="/profile/rewards" element={<ProtectedRoute><RewardsPage /></ProtectedRoute>} />
+        <Route path="/profile/settings" element={<ProtectedRoute><UserProfilePage /></ProtectedRoute>} />
+        <Route path="/create-bar-crawl" element={<ProtectedRoute><CreateBarCrawlPage /></ProtectedRoute>} />
+        <Route path="/profile/my-creations/:id" element={<ProtectedRoute><BarCrawlManagementPage /></ProtectedRoute>} />
         
         {/* Admin routes */}
         <Route path="/admin/login" element={<AdminLogin />} />
@@ -89,14 +91,42 @@ const AppRoutes = () => {
         <Route path="/admin/establishments" element={<AdminEstablishmentsPage />} />
         <Route path="/admin/establishments/:id" element={<AdminEstablishmentProfile />} />
         
-        {/* Establishment routes */}
-        <Route path="/establishment/profile" element={<EstablishmentProfilePage />} />
-        <Route path="/establishment/bar-crawl-requests" element={<BarCrawlRequestsPage />} />
-        <Route path="/establishment/reviews" element={<EstablishmentReviewsPage />} />
-        <Route path="/establishment/mocktail/:id" element={<MocktailDetailsPage />} />
-        <Route path="/establishment/analytics" element={<EstablishmentAnalyticsPage />} />
-        <Route path="/establishment/all-actions" element={<AllActionsPage />} />
-        <Route path="/establishment/mocktail-suggestions" element={<MocktailSuggestionsPage />} />
+        {/* Establishment routes - protected with type */}
+        <Route path="/establishment/profile" element={
+          <TypedProtectedRoute userType="establishment">
+            <EstablishmentProfilePage />
+          </TypedProtectedRoute>
+        } />
+        <Route path="/establishment/bar-crawl-requests" element={
+          <TypedProtectedRoute userType="establishment">
+            <BarCrawlRequestsPage />
+          </TypedProtectedRoute>
+        } />
+        <Route path="/establishment/reviews" element={
+          <TypedProtectedRoute userType="establishment">
+            <EstablishmentReviewsPage />
+          </TypedProtectedRoute>
+        } />
+        <Route path="/establishment/mocktail/:id" element={
+          <TypedProtectedRoute userType="establishment">
+            <MocktailDetailsPage />
+          </TypedProtectedRoute>
+        } />
+        <Route path="/establishment/analytics" element={
+          <TypedProtectedRoute userType="establishment">
+            <EstablishmentAnalyticsPage />
+          </TypedProtectedRoute>
+        } />
+        <Route path="/establishment/all-actions" element={
+          <TypedProtectedRoute userType="establishment">
+            <AllActionsPage />
+          </TypedProtectedRoute>
+        } />
+        <Route path="/establishment/mocktail-suggestions" element={
+          <TypedProtectedRoute userType="establishment">
+            <MocktailSuggestionsPage />
+          </TypedProtectedRoute>
+        } />
         
         {/* Fallback routes */}
         <Route path="/404" element={<NotFound />} />

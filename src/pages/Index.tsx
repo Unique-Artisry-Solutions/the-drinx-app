@@ -38,15 +38,16 @@ const Index = () => {
     resetFilters
   } = useIndexPageLogic();
   
+  // Redirect authenticated individual users to explore page, but only once after loading
   useEffect(() => {
-    // If user is authenticated but not an establishment, redirect to explore page
-    if (user && !isLoading && !isEstablishment) {
-      navigate('/explore');
+    if (!isLoading && user && !isEstablishment) {
+      navigate('/explore', { replace: true });
     }
   }, [user, isLoading, navigate, isEstablishment]);
 
+  // If the user is not authenticated, show the normal index page
   // If the user is an establishment (including bypass logins), show the dashboard
-  if (isEstablishment) {
+  if (user && isEstablishment) {
     return (
       <Layout>
         <EstablishmentDashboard 
@@ -56,7 +57,7 @@ const Index = () => {
     );
   }
 
-  // Otherwise show the regular index page for individual users or guests
+  // Show the regular index page for guests
   return (
     <Layout>
       <div className="animate-fade-in my-4 sm:my-[30px] px-3 sm:px-6 md:px-[148px]">
