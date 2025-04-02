@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -40,17 +39,11 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ userName, userEmail, userJoin
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card>
+        <Card className="hover:shadow-md transition-shadow">
           <CardHeader>
-            <CardTitle>Profile Information</CardTitle>
+            <CardTitle className="text-xl">Profile Information</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center justify-center mb-6">
-              <div className="h-24 w-24 bg-gradient-to-br from-spiritless-pink to-purple-400 rounded-full flex items-center justify-center text-white text-xl font-bold">
-                {userName.charAt(0).toUpperCase()}
-              </div>
-            </div>
-            
             <div className="space-y-3">
               <div>
                 <div className="text-sm font-medium text-material-on-surface-variant">Name</div>
@@ -76,13 +69,12 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ userName, userEmail, userJoin
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="hover:shadow-md transition-shadow bg-gradient-to-br from-white to-purple-50 dark:from-gray-800 dark:to-gray-900">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
-              <CardTitle>Your Mocktail Journey</CardTitle>
+              <CardTitle className="text-xl">Your Mocktail Journey</CardTitle>
               <CardDescription>Track your spiritless adventure</CardDescription>
             </div>
-            <CreateMocktailButton />
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-3">
@@ -118,34 +110,20 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ userName, userEmail, userJoin
               <Progress value={(userStats.barCrawlsCompleted / 15) * 100} className="h-2" />
             </div>
             
-            <div className="space-y-3">
-              <div className="flex justify-between text-sm">
-                <span className="text-material-on-surface-variant flex items-center">
-                  <Trophy size={16} className="mr-2" />
-                  Reward Tier
-                </span>
-                <span className="font-medium">
-                  {currentTier === 1 && "Tier 1: Badge Collector"}
-                  {currentTier === 2 && "Tier 2: Rewards Club"}
-                  {currentTier === 3 && "Tier 3: VIP Experience"}
-                </span>
-              </div>
-              <Progress value={(currentTier / 3) * 100} className="h-2" />
-            </div>
-            
-            <div className="pt-2">
-              <Button className="w-full bg-spiritless-pink hover:bg-spiritless-pink/90" asChild>
+            <div className="flex justify-between gap-4 pt-4">
+              <Button className="flex-1 bg-spiritless-pink hover:bg-spiritless-pink/90" asChild>
                 <Link to="/map">
-                  Explore New Places
+                  Explore Places
                 </Link>
               </Button>
+              <CreateMocktailButton />
             </div>
           </CardContent>
         </Card>
       </div>
       
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="hover:shadow-md transition-shadow">
+        <Card className="hover:shadow-md transition-shadow bg-gradient-to-br from-white to-purple-50/50 dark:from-gray-800 dark:to-gray-900">
           <Link to="/profile/bar-crawls" className="block p-6">
             <div className="flex flex-col items-center text-center">
               <div className="p-3 bg-purple-100 rounded-full mb-3">
@@ -159,7 +137,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ userName, userEmail, userJoin
           </Link>
         </Card>
         
-        <Card className="hover:shadow-md transition-shadow">
+        <Card className="hover:shadow-md transition-shadow bg-gradient-to-br from-white to-blue-50/50 dark:from-gray-800 dark:to-gray-900">
           <Link to="/profile/my-creations" className="block p-6">
             <div className="flex flex-col items-center text-center">
               <div className="p-3 bg-blue-100 rounded-full mb-3">
@@ -173,7 +151,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ userName, userEmail, userJoin
           </Link>
         </Card>
         
-        <Card className="hover:shadow-md transition-shadow">
+        <Card className="hover:shadow-md transition-shadow bg-gradient-to-br from-white to-amber-50/50 dark:from-gray-800 dark:to-gray-900">
           <Link to="/profile/rewards" className="block p-6">
             <div className="flex flex-col items-center text-center">
               <div className="p-3 bg-amber-100 rounded-full mb-3">
@@ -187,7 +165,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ userName, userEmail, userJoin
           </Link>
         </Card>
         
-        <Card className="hover:shadow-md transition-shadow">
+        <Card className="hover:shadow-md transition-shadow bg-gradient-to-br from-white to-emerald-50/50 dark:from-gray-800 dark:to-gray-900">
           <Link to="/profile/favorites" className="block p-6">
             <div className="flex flex-col items-center text-center">
               <div className="p-3 bg-emerald-100 rounded-full mb-3">
@@ -204,7 +182,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ userName, userEmail, userJoin
       
       {/* Display recent badges */}
       {(currentTier >= 2) && (
-        <Card>
+        <Card className="bg-gradient-to-r from-amber-50 to-pink-50 dark:from-gray-800 dark:to-gray-900 border-l-4 border-amber-400">
           <CardHeader>
             <CardTitle className="flex items-center">
               <Badge className="h-5 w-5 mr-2 text-spiritless-pink" />
@@ -212,7 +190,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ userName, userEmail, userJoin
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+            <div className="flex items-center justify-between p-4 bg-white/70 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg">
               <div>
                 <h3 className="font-medium flex items-center">
                   {currentTier === 2 && (
@@ -233,7 +211,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ userName, userEmail, userJoin
                   {currentTier === 3 && "You've unlocked exclusive VIP experiences and benefits!"}
                 </p>
               </div>
-              <Button asChild>
+              <Button asChild variant="gradient">
                 <Link to="/profile/rewards">View Benefits</Link>
               </Button>
             </div>

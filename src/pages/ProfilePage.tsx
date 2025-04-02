@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
@@ -115,37 +116,39 @@ const ProfilePage: React.FC = () => {
 
   return (
     <Layout>
-      <div className="animate-fade-in">
+      <div className="animate-fade-in max-w-6xl mx-auto px-4">
         <ProfileHeader userName={userName} handleLogout={handleLogout} />
 
-        <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="activity">Recent Activity</TabsTrigger>
-            <TabsTrigger value="rewards">Rewards & Badges</TabsTrigger>
-            <TabsTrigger value="favorites">My Favorites</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="overview">
-            <OverviewTab 
-              userName={userName}
-              userEmail={userEmail}
-              userJoinDate={userJoinDate}
-            />
-          </TabsContent>
-          
-          <TabsContent value="activity">
-            <ActivityTab recentActivity={recentActivity} />
-          </TabsContent>
-          
-          <TabsContent value="rewards">
-            <BadgesTab />
-          </TabsContent>
-          
-          <TabsContent value="favorites">
-            <QuickLinksTab />
-          </TabsContent>
-        </Tabs>
+        <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-gray-800 dark:to-gray-900 p-4 rounded-xl mb-6 shadow-sm">
+          <Tabs defaultValue="overview" className="space-y-4">
+            <TabsList className="w-full flex justify-between sm:justify-start sm:gap-4 bg-white/70 dark:bg-gray-800/50 backdrop-blur-sm p-1 rounded-lg">
+              <TabsTrigger className="flex-1 sm:flex-none data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm" value="overview">Overview</TabsTrigger>
+              <TabsTrigger className="flex-1 sm:flex-none data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm" value="activity">Recent Activity</TabsTrigger>
+              <TabsTrigger className="flex-1 sm:flex-none data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm" value="rewards">Rewards & Badges</TabsTrigger>
+              <TabsTrigger className="flex-1 sm:flex-none data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm" value="favorites">My Favorites</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="overview" className="pt-2">
+              <OverviewTab 
+                userName={userName}
+                userEmail={userEmail}
+                userJoinDate={userJoinDate}
+              />
+            </TabsContent>
+            
+            <TabsContent value="activity" className="pt-2">
+              <ActivityTab recentActivity={recentActivity} />
+            </TabsContent>
+            
+            <TabsContent value="rewards" className="pt-2">
+              <BadgesTab />
+            </TabsContent>
+            
+            <TabsContent value="favorites" className="pt-2">
+              <QuickLinksTab />
+            </TabsContent>
+          </Tabs>
+        </div>
       </div>
     </Layout>
   );
