@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -63,34 +62,33 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				// Bold color palette from image
 				spiritless: {
-					pink: '#D94E8F',      // Pink - #D94E8F (217, 78, 143)
-					'pink-light': '#FF6EAF', // Lighter pink for hover states
-					'pink-dark': '#B43973', // Darker pink for active states
-					green: '#84BF04',     // Green - #84BF04 (132, 191, 4)
-					'green-light': '#A4DF24', // Lighter green for hover states
-					'green-dark': '#648F03', // Darker green for active states
-					orange: '#F29F05',    // Orange - #F29F05 (242, 159, 5)
-					'orange-light': '#FFBF25', // Lighter orange for hover states
-					'orange-dark': '#D28704', // Darker orange for active states
-					'bright-orange': '#F28705', // Bright Orange - #F28705 (242, 135, 5)
-					'bright-orange-light': '#FFA725', // Lighter bright orange for hover
-					'bright-orange-dark': '#D27504', // Darker bright orange for active
-					burgundy: '#590202',  // Burgundy - #590202 (89, 2, 2)
-					'burgundy-light': '#791919', // Lighter burgundy for hover states
-					'burgundy-dark': '#3A0101', // Darker burgundy for active states
+					pink: '#D94E8F',
+					'pink-light': '#FF6EAF',
+					'pink-dark': '#B43973',
+					green: '#84BF04',
+					'green-light': '#A4DF24',
+					'green-dark': '#648F03',
+					orange: '#F29F05',
+					'orange-light': '#FFBF25',
+					'orange-dark': '#D28704',
+					'bright-orange': '#F28705',
+					'bright-orange-light': '#FFA725',
+					'bright-orange-dark': '#D27504',
+					burgundy: '#590202',
+					'burgundy-light': '#791919',
+					'burgundy-dark': '#3A0101',
 				},
 				material: {
-					'primary': '#D94E8F',      // Pink as primary
+					'primary': '#D94E8F',
 					'on-primary': '#FFFFFF',
 					'primary-container': '#FFECF4',
 					'on-primary-container': '#3E1428',
-					'secondary': '#84BF04',    // Green as secondary
+					'secondary': '#84BF04',
 					'on-secondary': '#FFFFFF',
 					'secondary-container': '#F0FFE0',
 					'on-secondary-container': '#253601',
-					'tertiary': '#F29F05',     // Orange as tertiary
+					'tertiary': '#F29F05',
 					'on-tertiary': '#FFFFFF',
 					'tertiary-container': '#FFF0DC',
 					'on-tertiary-container': '#462E01',
@@ -101,7 +99,7 @@ export default {
 					'outline': '#79747E',
 					'background': '#FEF7FF',
 					'on-background': '#1C1B1F',
-					'error': '#590202',        // Burgundy as error
+					'error': '#590202',
 					'on-error': '#FFFFFF',
 				},
 			},
@@ -143,7 +141,7 @@ export default {
 					'100%': { opacity: '0' }
 				},
 				'slide-up': {
-					'0%': { transform: 'translateY(20px)', opacity: '0' },
+					'0%': { transform: 'translateY(10px)', opacity: '0' },
 					'100%': { transform: 'translateY(0)', opacity: '1' }
 				},
 				'slide-down': {
@@ -157,6 +155,10 @@ export default {
 				'float': {
 					'0%, 100%': { transform: 'translateY(0)' },
 					'50%': { transform: 'translateY(-5px)' }
+				},
+				'bounce-subtle': {
+					'0%, 100%': { transform: 'translateY(0)' },
+					'50%': { transform: 'translateY(-3px)' }
 				}
 			},
 			animation: {
@@ -167,7 +169,8 @@ export default {
 				'slide-up': 'slide-up 0.4s ease-out',
 				'slide-down': 'slide-down 0.4s ease-out',
 				'pulse-subtle': 'pulse-subtle 2s ease-in-out infinite',
-				'float': 'float 3s ease-in-out infinite'
+				'float': 'float 3s ease-in-out infinite',
+				'bounce-subtle': 'bounce-subtle 1.5s ease-in-out infinite'
 			},
 			fontFamily: {
 				'roboto': ['Roboto', 'sans-serif'],

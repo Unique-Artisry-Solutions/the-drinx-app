@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { NavigationType } from './NavigationTypes';
@@ -22,7 +21,6 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
   const { user } = useAuth();
   
   useEffect(() => {
-    // Get the user type from localStorage to ensure it's up to date
     const type = localStorage.getItem('user_type');
     if (type === 'establishment') {
       setCurrentUserType('establishment');
@@ -35,22 +33,20 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
     setExpanded(!expanded);
   };
 
-  // Handler for the home button to prevent session issues
   const handleHomeClick = (e: React.MouseEvent) => {
     e.preventDefault();
     
     if (user) {
       if (currentUserType === 'establishment') {
-        navigate('/'); // Establishments go to dashboard
+        navigate('/');
       } else {
-        navigate('/explore'); // Individual users go to explore
+        navigate('/explore');
       }
     } else {
-      navigate('/landing'); // Non-authenticated users go to landing
+      navigate('/landing');
     }
   };
 
-  // Get the correct profile path based on user type
   const getProfilePath = () => {
     return currentUserType === 'establishment' ? '/establishment/profile' : '/profile';
   };
@@ -70,27 +66,24 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
 
   const navItems = getNavItems();
   
-  // Show profile related items if we're on a profile page and the user is logged in
   const shouldShowProfileItems = 
     type === NavigationType.USER && 
     (location.pathname === '/profile' || 
      location.pathname.startsWith('/profile/'));
 
-  // Don't render the mobile nav on landing or admin pages
   if (location.pathname === '/landing' || location.pathname.startsWith('/admin')) {
     return null;
   }
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 w-full bg-white shadow-lg z-50 md:hidden border-t border-gray-100">
+    <nav className="fixed bottom-0 left-0 right-0 w-full bg-white shadow-lg z-50 md:hidden border-t border-gray-100 backdrop-blur-sm bg-white/95 transition-all duration-300">
       <ProfileMenu expanded={shouldShowProfileItems && expanded} />
       <div className="mx-auto w-full">
-        <div className="flex justify-around items-center h-16">
+        <div className="flex justify-around items-center h-16 px-2">
           {navItems.map((item, index) => {
             const isActive = location.pathname === item.path || 
               (item.path === '/profile' && location.pathname.startsWith('/profile/'));
             
-            // Special case for Home button to prevent session problems
             if (item.label === 'Home' && type === NavigationType.USER) {
               return (
                 <HomeButton
@@ -101,7 +94,6 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
               );
             }
             
-            // If this is the profile button and we're on a profile page, make it toggle the menu
             const handleClick = (e: React.MouseEvent) => {
               if (item.path === getProfilePath() && shouldShowProfileItems) {
                 e.preventDefault();

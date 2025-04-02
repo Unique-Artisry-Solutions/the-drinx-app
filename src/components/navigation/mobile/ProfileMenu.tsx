@@ -16,8 +16,8 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({ expanded }) => {
   if (!expanded) return null;
   
   return (
-    <div className="border-t border-gray-200 bg-gray-50">
-      <div className="grid grid-cols-3 gap-1 px-2 py-2">
+    <div className="border-t border-gray-200 bg-white/80 backdrop-blur-sm animate-slide-up transition-all duration-300">
+      <div className="grid grid-cols-3 gap-2 px-4 py-3">
         {profileItems.map((item) => {
           const isActive = location.pathname === item.path;
           return (
@@ -25,14 +25,17 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({ expanded }) => {
               key={item.path}
               to={item.path}
               className={cn(
-                "flex flex-col items-center justify-center py-2 px-1 rounded-md",
+                "flex flex-col items-center justify-center py-2 px-2 rounded-lg transition-all duration-300",
                 isActive 
-                  ? "bg-material-primary/10 text-material-primary" 
-                  : "text-material-on-surface-variant hover:bg-gray-100"
+                  ? "bg-spiritless-pink/10 text-spiritless-pink shadow-sm" 
+                  : "text-gray-600 hover:bg-gray-100"
               )}
             >
-              <item.icon size={20} />
-              <span className="text-xs mt-1">{item.label}</span>
+              <item.icon size={20} className={cn(
+                "mb-1 transition-transform duration-300",
+                isActive ? "scale-110" : "scale-100"
+              )} />
+              <span className="text-xs font-medium">{item.label}</span>
             </Link>
           );
         })}
