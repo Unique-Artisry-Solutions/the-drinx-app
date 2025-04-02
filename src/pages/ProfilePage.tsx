@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
@@ -12,7 +11,6 @@ import ActivityTab from '@/components/profile/ActivityTab';
 import QuickLinksTab from '@/components/profile/QuickLinksTab';
 import BadgesTab from '@/components/profile/BadgesTab';
 import { sampleEstablishments, sampleCocktails } from '@/data/sampleData';
-import CreateMocktailButton from '@/components/mocktail/CreateMocktailButton';
 
 const ProfilePage: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -107,7 +105,7 @@ const ProfilePage: React.FC = () => {
   if (!isAuthenticated) {
     return (
       <Layout>
-        <div className="py-8">
+        <div className="py-4">
           <h1 className="text-2xl font-medium text-material-on-background mb-6">Sign In</h1>
           <UserAuth onSuccess={handleAuthSuccess} />
         </div>
@@ -117,11 +115,8 @@ const ProfilePage: React.FC = () => {
 
   return (
     <Layout>
-      <div className="py-4 animate-fade-in">
-        <div className="flex justify-between items-center mb-4">
-          <ProfileHeader userName={userName} handleLogout={handleLogout} />
-          <CreateMocktailButton />
-        </div>
+      <div className="animate-fade-in">
+        <ProfileHeader userName={userName} handleLogout={handleLogout} />
 
         <Tabs defaultValue="overview" className="space-y-6">
           <TabsList>

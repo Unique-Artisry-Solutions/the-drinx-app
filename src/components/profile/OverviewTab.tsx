@@ -1,9 +1,11 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { GlassWater, MapPin, Route, Star, User, Award, Badge, Trophy, GiftIcon } from 'lucide-react';
+import CreateMocktailButton from '@/components/mocktail/CreateMocktailButton';
 
 interface OverviewTabProps {
   userName: string;
@@ -75,9 +77,12 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ userName, userEmail, userJoin
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Your Mocktail Journey</CardTitle>
-            <CardDescription>Track your spiritless adventure</CardDescription>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle>Your Mocktail Journey</CardTitle>
+              <CardDescription>Track your spiritless adventure</CardDescription>
+            </div>
+            <CreateMocktailButton />
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-3">
