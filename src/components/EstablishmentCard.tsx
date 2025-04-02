@@ -54,19 +54,19 @@ const EstablishmentCard: React.FC<EstablishmentCardProps> = ({
           )}
         </div>
 
-        <div className="flex-1 p-3">
-          <div className="flex justify-between items-start">
+        <div className="flex-1 p-4 sm:p-5">
+          <div className="flex justify-between items-start mb-2">
             <h3 className="text-base font-medium text-material-on-surface">{name}</h3>
             {distance && (
-              <span className="text-xs bg-material-secondary-container text-material-on-secondary-container px-2 py-1 rounded-full flex items-center">
+              <span className="text-xs bg-material-secondary-container text-material-on-secondary-container px-2 py-1 rounded-full flex items-center ml-2">
                 <MapPin size={12} className="mr-1" /> {distance}
               </span>
             )}
           </div>
           
-          <p className="text-xs text-material-on-surface-variant mt-1">{address}</p>
+          <p className="text-xs text-material-on-surface-variant mt-1 mb-3">{address}</p>
           
-          <div className="mt-2 flex justify-between items-end">
+          <div className="mt-auto flex justify-between items-end">
             <div className="text-xs text-material-primary font-medium">
               {cocktailCount} {cocktailCount === 1 ? 'cocktail' : 'cocktails'} available
             </div>

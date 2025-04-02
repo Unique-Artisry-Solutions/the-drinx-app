@@ -105,24 +105,28 @@ const Explore = () => {
           onSearch={handleSearch} 
           onFilterChange={handleFilterChange}
           onApplyFilters={applyFilters} 
-          className="mb-4"
+          className="mb-6"
           initialSearchTerm={searchQuery}
         />
 
-        {/* Featured Establishments Section */}
-        <FeaturedEstablishmentsSection establishments={establishments} />
-
-        {/* Bar Crawl Section */}
+        {/* Bar Crawl Section - Now placed ABOVE Featured Establishments */}
         <BarCrawlSection 
           barCrawls={sampleBarCrawls} 
           isAuthenticated={!!user}
         />
 
+        {/* Featured Establishments Section - Now BELOW Bar Crawls */}
+        <div className="mt-6">
+          <FeaturedEstablishmentsSection establishments={establishments} />
+        </div>
+
         {/* Cocktails Section */}
-        <CocktailsSection 
-          cocktails={filteredCocktails} 
-          resetFilters={resetFilters}
-        />
+        <div className="mt-6">
+          <CocktailsSection 
+            cocktails={filteredCocktails} 
+            resetFilters={resetFilters}
+          />
+        </div>
       </div>
     </Layout>
   );
