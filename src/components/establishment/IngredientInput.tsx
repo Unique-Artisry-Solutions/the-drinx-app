@@ -3,7 +3,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { X, Check } from 'lucide-react';
-import { createFuzzySearch } from '@/utils/searchUtils';
 import Fuse from 'fuse.js';
 
 // Common cocktail ingredients for suggestions
@@ -31,10 +30,9 @@ const IngredientInput: React.FC<IngredientInputProps> = ({ value, onChange }) =>
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
 
-  // Create fuzzy search instance
+  // Create fuzzy search instance directly with Fuse
   const fuse = useRef<Fuse<string>>(
-    createFuzzySearch(COMMON_INGREDIENTS, {
-      keys: [''],  // This treats each ingredient as a single string
+    new Fuse(COMMON_INGREDIENTS, {
       threshold: 0.4,
       includeScore: true,
     })
