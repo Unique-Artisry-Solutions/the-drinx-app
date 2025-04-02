@@ -1,8 +1,7 @@
-
 import { useEffect } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { ToastType } from '@/hooks/use-toast';
+import { toast } from '@/hooks/use-toast';
 
 interface UseAuthSetupProps {
   setSession: (session: Session | null) => void;
@@ -13,7 +12,7 @@ interface UseAuthSetupProps {
   checkAdminBypass: () => { isAdminBypass: boolean; bypassUser?: any };
   checkAdminSession: () => boolean;
   refreshSession: () => Promise<any>;
-  toast: ToastType;
+  toast: typeof toast;
 }
 
 export function useAuthSetup({
