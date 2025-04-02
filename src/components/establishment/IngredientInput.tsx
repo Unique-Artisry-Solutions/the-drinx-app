@@ -2,10 +2,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { X, Check } from 'lucide-react';
+import { X, Check, Info } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { HoverCard, HoverCardTrigger, HoverCardContent } from '@/components/ui/hover-card';
 import Fuse from 'fuse.js';
 
-// Common cocktail ingredients for suggestions
+// Common cocktail ingredients for suggestions with additional details
 const COMMON_INGREDIENTS = [
   'Lemon Juice', 'Lime Juice', 'Orange Juice', 'Pineapple Juice',
   'Cranberry Juice', 'Tomato Juice', 'Grapefruit Juice',
@@ -16,6 +18,39 @@ const COMMON_INGREDIENTS = [
   'Blue Curaçao Syrup', 'Vanilla Extract', 'Cinnamon', 'Nutmeg',
   'Salt', 'Sugar', 'Bitters', 'Angostura Bitters', 'Orange Bitters'
 ];
+
+// Ingredient details lookup - provides extra info about common ingredients
+const INGREDIENT_DETAILS: Record<string, { description: string, category: string }> = {
+  'Lemon Juice': { 
+    description: 'Fresh, tart citrus juice that adds brightness and acidity', 
+    category: 'Juice' 
+  },
+  'Lime Juice': { 
+    description: 'Bright, slightly sweeter than lemon with distinctive flavor', 
+    category: 'Juice' 
+  },
+  'Simple Syrup': { 
+    description: 'Equal parts sugar and water, dissolved to create a sweet base', 
+    category: 'Sweetener' 
+  },
+  'Grenadine': { 
+    description: 'Sweet, tart pomegranate syrup that adds fruity sweetness and color', 
+    category: 'Syrup' 
+  },
+  'Soda Water': { 
+    description: 'Carbonated water that adds fizz without flavor', 
+    category: 'Mixer' 
+  },
+  'Fresh Mint': { 
+    description: 'Aromatic herb that adds cooling freshness and aroma', 
+    category: 'Herb' 
+  },
+  'Ginger Beer': { 
+    description: 'Spicy, fermented beverage with strong ginger flavor', 
+    category: 'Mixer' 
+  }
+  // The rest of the ingredients will use a fallback for details
+};
 
 interface IngredientInputProps {
   value: string[];
@@ -29,6 +64,7 @@ const IngredientInput: React.FC<IngredientInputProps> = ({ value, onChange }) =>
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
 
   // Create fuzzy search instance directly with Fuse
   const fuse = useRef<Fuse<string>>(
@@ -58,6 +94,14 @@ const IngredientInput: React.FC<IngredientInputProps> = ({ value, onChange }) =>
     }
   };
 
+  // Get ingredient details (with fallback for unknown ingredients)
+  const getIngredientDetails = (ingredient: string) => {
+    return INGREDIENT_DETAILS[ingredient] || {
+      description: `A common ingredient in cocktails and mocktails`,
+      category: 'Other'
+    };
+  };
+
   // Add a new ingredient
   const addIngredient = (ingredient: string) => {
     const trimmed = ingredient.trim();
@@ -67,6 +111,13 @@ const IngredientInput: React.FC<IngredientInputProps> = ({ value, onChange }) =>
       setSuggestions([]);
       setShowSuggestions(false);
       inputRef.current?.focus();
+      
+      // Show success toast
+      toast({
+        title: "Ingredient Added",
+        description: `${trimmed} has been added to your mocktail`,
+        variant: "default",
+      });
     }
   };
 
@@ -137,16 +188,32 @@ const IngredientInput: React.FC<IngredientInputProps> = ({ value, onChange }) =>
       <div className="flex flex-wrap gap-2 p-1 bg-background border rounded-md min-h-10 items-center">
         {/* Ingredient tags */}
         {value.map(ingredient => (
-          <Badge key={ingredient} variant="secondary" className="flex items-center gap-1">
-            {ingredient}
-            <button 
-              type="button"
-              onClick={() => removeIngredient(ingredient)}
-              className="rounded-full hover:bg-muted p-0.5"
-            >
-              <X className="h-3 w-3" />
-            </button>
-          </Badge>
+          <HoverCard key={ingredient}>
+            <HoverCardTrigger asChild>
+              <Badge variant="secondary" className="flex items-center gap-1 cursor-default group">
+                {ingredient}
+                <button 
+                  type="button"
+                  onClick={() => removeIngredient(ingredient)}
+                  className="rounded-full hover:bg-muted p-0.5"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+                <span className="opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Info className="h-3 w-3 ml-1 text-muted-foreground" />
+                </span>
+              </Badge>
+            </HoverCardTrigger>
+            <HoverCardContent className="w-64 p-3">
+              <div className="space-y-2">
+                <h4 className="font-medium">{ingredient}</h4>
+                <p className="text-sm text-muted-foreground">{getIngredientDetails(ingredient).description}</p>
+                <Badge variant="outline" className="mt-2">
+                  {getIngredientDetails(ingredient).category}
+                </Badge>
+              </div>
+            </HoverCardContent>
+          </HoverCard>
         ))}
         
         {/* Input field */}
