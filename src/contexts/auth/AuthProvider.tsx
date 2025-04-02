@@ -4,7 +4,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
 import { AuthContextType } from './types';
 import { useAuthActions } from './useAuthActions';
-import { useNavigate } from 'react-router-dom';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
