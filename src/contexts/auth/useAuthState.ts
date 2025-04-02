@@ -84,6 +84,13 @@ export function useAuthState() {
         localStorage.removeItem('admin_username');
         localStorage.removeItem('admin_session_created');
         console.log('Admin session expired due to inactivity');
+        
+        toast({
+          title: "Session Expired",
+          description: "Your admin session has expired. Please log in again.",
+          variant: "destructive"
+        });
+        
         return true;
       }
     }

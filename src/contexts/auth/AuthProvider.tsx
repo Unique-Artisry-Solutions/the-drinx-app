@@ -22,7 +22,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsEmailVerified,
     checkAdminBypass,
     updateLocalStorage,
-    checkAdminSession
+    checkAdminSession,
+    toast
   } = useAuthState();
   
   // Get auth actions
@@ -32,7 +33,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signIn: signInAction,
     signUp: signUpAction,
     signOut: signOutAction,
-    updateProfile: updateProfileAction
+    updateProfile: updateProfileAction,
+    resetPassword: resetPasswordAction
   } = useAuthActions();
 
   // Set up session refresh utility
@@ -53,7 +55,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     updateLocalStorage,
     checkAdminBypass,
     checkAdminSession,
-    refreshSession
+    refreshSession,
+    toast
   });
 
   const handleSignOut = async () => {
@@ -67,6 +70,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.removeItem('user_username');
       setUser(null);
       setIsEmailVerified(false);
+      
+      toast({
+        title: "Logged out",
+        description: "Admin bypass session cleared"
+      });
       
       return;
     }
@@ -85,6 +93,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signOut: handleSignOut,
     updateProfile: updateProfileAction,
     refreshSession,
+    resetPassword: resetPasswordAction
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

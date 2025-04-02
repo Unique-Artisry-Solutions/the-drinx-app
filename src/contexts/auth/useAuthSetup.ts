@@ -2,6 +2,7 @@
 import { useEffect } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { ToastType } from '@/hooks/use-toast';
 
 interface UseAuthSetupProps {
   setSession: (session: Session | null) => void;
@@ -12,6 +13,7 @@ interface UseAuthSetupProps {
   checkAdminBypass: () => { isAdminBypass: boolean; bypassUser?: any };
   checkAdminSession: () => boolean;
   refreshSession: () => Promise<any>;
+  toast: ToastType;
 }
 
 export function useAuthSetup({
@@ -22,7 +24,8 @@ export function useAuthSetup({
   updateLocalStorage,
   checkAdminBypass,
   checkAdminSession,
-  refreshSession
+  refreshSession,
+  toast
 }: UseAuthSetupProps) {
   useEffect(() => {
     console.log('AuthProvider useEffect running');
@@ -53,9 +56,29 @@ export function useAuthSetup({
               // If email is verified, store authentication state in localStorage
               if (currentSession.user.email_confirmed_at) {
                 updateLocalStorage(currentSession.user);
+                
+                toast({
+                  title: "Signed In",
+                  description: `Welcome back, ${currentSession.user.email}!`
+                });
               }
             } else if (event === 'SIGNED_OUT') {
               updateLocalStorage(null);
+              
+              toast({
+                title: "Signed Out",
+                description: "You have been successfully signed out."
+              });
+            } else if (event === 'PASSWORD_RECOVERY') {
+              toast({
+                title: "Password Recovery",
+                description: "Complete the form to reset your password."
+              });
+            } else if (event === 'USER_UPDATED') {
+              toast({
+                title: "Profile Updated",
+                description: "Your user profile has been updated."
+              });
             }
           }
           
@@ -118,7 +141,12 @@ export function useAuthSetup({
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.get('email_confirmed') === 'true') {
         console.log('Email verification detected in URL');
-        refreshSession();
+        refreshSession().then(() => {
+          toast({
+            title: "Email Verified",
+            description: "Your email has been successfully verified!"
+          });
+        });
       }
     };
     

@@ -14,4 +14,5 @@ export type AuthContextType = {
   signOut: () => Promise<void>;
   updateProfile: (data: { [key: string]: any }) => Promise<void>;
   refreshSession: () => Promise<{ isEmailVerified: boolean }>;
+  resetPassword: (email: string) => Promise<void>;
 };

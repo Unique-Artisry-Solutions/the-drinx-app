@@ -87,7 +87,6 @@ export function useAuthActions() {
       console.log('Starting sign up process for:', email);
       
       // Make sure we have a proper redirect URL with the confirmation parameter
-      // Use the explicit form with email_confirmed=true parameter
       const baseUrl = window.location.origin;
       const finalRedirectTo = options?.emailRedirectTo || `${baseUrl}/?email_confirmed=true`;
       console.log('Using redirect URL:', finalRedirectTo);
@@ -206,12 +205,44 @@ export function useAuthActions() {
     }
   };
 
+  const resetPassword = async (email: string) => {
+    try {
+      setIsLoading(true);
+      console.log('Sending password reset email to:', email);
+      
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      
+      if (error) {
+        console.error('Password reset error:', error);
+        throw error;
+      }
+      
+      toast({
+        title: 'Password Reset Email Sent',
+        description: 'Check your email for password reset instructions',
+      });
+      
+    } catch (error: any) {
+      toast({
+        title: 'Password Reset Failed',
+        description: error.message || 'Failed to send password reset email',
+        variant: 'destructive',
+      });
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return {
     isLoading,
     refreshSession,
     signIn,
     signUp,
     signOut,
-    updateProfile
+    updateProfile,
+    resetPassword
   };
 }
