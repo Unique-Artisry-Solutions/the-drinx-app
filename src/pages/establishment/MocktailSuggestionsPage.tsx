@@ -48,7 +48,7 @@ const SAMPLE_SUGGESTIONS: MocktailSuggestion[] = [
     instructions: 'Muddle berries with lemon juice. Add rosemary syrup and top with soda water. Garnish with fresh rosemary.',
     status: 'accepted',
     createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-    feedback: 'Great suggestion! We've added it to our menu.'
+    feedback: "Great suggestion! We've added it to our menu."
   },
   {
     id: '4',
@@ -61,7 +61,7 @@ const SAMPLE_SUGGESTIONS: MocktailSuggestion[] = [
     instructions: 'Mix lemon juice with lavender syrup and honey. Top with soda water. Garnish with fresh lavender.',
     status: 'rejected',
     createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
-    feedback: 'Thanks for your suggestion, but we currently don't have access to fresh lavender for our bar.'
+    feedback: "Thanks for your suggestion, but we currently don't have access to fresh lavender for our bar."
   },
   {
     id: '5',
@@ -91,13 +91,13 @@ const MocktailSuggestionsPage = () => {
 
   const handleAccept = (suggestion: MocktailSuggestion) => {
     setSelectedSuggestion(suggestion);
-    setFeedback('Thank you for your suggestion! We\'ve added it to our menu.');
+    setFeedback("Thank you for your suggestion! We've added it to our menu.");
     setIsDialogOpen(true);
   };
 
   const handleReject = (suggestion: MocktailSuggestion) => {
     setSelectedSuggestion(suggestion);
-    setFeedback('Thank you for your suggestion, but we won\'t be able to add it to our menu at this time.');
+    setFeedback("Thank you for your suggestion, but we won't be able to add it to our menu at this time.");
     setIsDialogOpen(true);
   };
 
@@ -202,7 +202,7 @@ const MocktailSuggestionsPage = () => {
             <DialogHeader>
               <DialogTitle>Provide Feedback</DialogTitle>
               <DialogDescription>
-                Let the user know why you've {selectedSuggestion?.status === 'accepted' ? 'accepted' : 'rejected'} their suggestion.
+                Let the user know why you{"'"}ve {selectedSuggestion?.status === 'accepted' ? 'accepted' : 'rejected'} their suggestion.
               </DialogDescription>
             </DialogHeader>
             
