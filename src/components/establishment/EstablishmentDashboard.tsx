@@ -59,15 +59,16 @@ const EstablishmentDashboard: React.FC<EstablishmentDashboardProps> = ({ establi
           
           {/* Right Side Content - Takes 1/4 of the width on large screens */}
           <div className="lg:col-span-1 space-y-6">
-            {/* Pending Actions */}
             <PendingActionsCard 
               pendingBarCrawls={stats.pendingBarCrawls} 
               pendingReviews={stats.reviewsThisWeek} 
             />
-            
-            {/* Recent Activity */}
-            <ActivitiesSection />
           </div>
+        </div>
+        
+        {/* Recent Activity - Full width section */}
+        <div className="mb-8">
+          <ActivitiesSection />
         </div>
       </div>
       
