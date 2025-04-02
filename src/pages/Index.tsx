@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
@@ -13,11 +12,14 @@ import FeaturedCocktails from '@/components/home/FeaturedCocktails';
 import NearbyEstablishments from '@/components/home/NearbyEstablishments';
 import AllCocktails from '@/components/home/AllCocktails';
 import MapSection from '@/components/home/MapSection';
+import EstablishmentDashboard from '@/components/establishment/EstablishmentDashboard';
 
 const Index = () => {
   const { user, isLoading } = useAuth();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const userType = localStorage.getItem('user_type');
+  const isEstablishment = userType === 'establishment';
   
   const {
     cocktails,
@@ -42,6 +44,18 @@ const Index = () => {
     }
   }, [user, isLoading, navigate]);
 
+  // If the user is an establishment, show the dashboard
+  if (isEstablishment && user && !isLoading) {
+    return (
+      <Layout>
+        <EstablishmentDashboard 
+          establishmentName={localStorage.getItem('user_username') || 'Your Establishment'} 
+        />
+      </Layout>
+    );
+  }
+
+  // Otherwise show the regular index page for individual users or guests
   return (
     <Layout>
       <div className="animate-fade-in my-4 sm:my-[30px] px-3 sm:px-6 md:px-[148px]">

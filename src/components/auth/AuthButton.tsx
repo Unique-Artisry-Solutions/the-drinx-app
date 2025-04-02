@@ -19,11 +19,16 @@ const AuthButton: React.FC<AuthButtonProps> = ({
   className = 'w-full shadow-md hover:shadow-lg transition-all',
   children
 }) => {
+  // Add custom class for gradient buttons
+  const buttonClass = variant === 'gradient' 
+    ? `btn-gradient ${className}`
+    : className;
+    
   return (
     <Button
       type={type}
-      className={className}
-      variant={variant}
+      className={buttonClass}
+      variant={variant === 'gradient' ? 'default' : variant}
       disabled={isLoading}
       onClick={onClick}
     >
