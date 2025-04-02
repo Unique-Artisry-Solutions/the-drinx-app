@@ -1,9 +1,9 @@
 
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { BarChart, LineChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { BarChart, LineChart, PieChart, Bar, Line, Pie, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Cell } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { ArrowUpRight, TrendingUp, Users, Star } from 'lucide-react';
+import { ArrowUpRight, TrendingUp, Users, Star, BarChart as BarChartIcon } from 'lucide-react';
 
 interface MetricsVisualizationProps {
   returningRate: number;
@@ -16,12 +16,18 @@ interface MetricsVisualizationProps {
     name: string;
     rating: number;
   }[];
+  mocktailData?: {
+    name: string;
+    orders: number;
+    color: string;
+  }[];
 }
 
 const MetricsVisualization: React.FC<MetricsVisualizationProps> = ({ 
   returningRate, 
   visitorData, 
-  ratingData 
+  ratingData,
+  mocktailData = [] 
 }) => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
@@ -144,6 +150,104 @@ const MetricsVisualization: React.FC<MetricsVisualizationProps> = ({
           </div>
         </CardContent>
       </Card>
+      
+      {mocktailData.length > 0 && (
+        <Card className="vibrant-card lg:col-span-2">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg flex items-center">
+              <BarChartIcon className="mr-2 h-5 w-5 text-blue-500" />
+              Mocktail Popularity
+            </CardTitle>
+            <CardDescription>
+              Distribution of mocktail orders
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col md:flex-row items-center justify-between mb-4">
+              <div>
+                <p className="text-3xl font-bold">{mocktailData.reduce((sum, item) => sum + item.orders, 0)}</p>
+                <p className="text-xs text-material-on-surface-variant">
+                  total mocktail orders
+                </p>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2 md:mt-0">
+                {mocktailData.slice(0, 3).map((item, index) => (
+                  <div key={index} className="flex items-center space-x-1">
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
+                    <span className="text-xs truncate">{item.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="h-[250px]">
+                <ChartContainer
+                  config={
+                    mocktailData.reduce((config, item) => ({
+                      ...config,
+                      [item.name]: {
+                        label: item.name,
+                        color: item.color,
+                      },
+                    }), {})
+                  }
+                >
+                  <BarChart
+                    data={mocktailData}
+                    margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip content={<ChartTooltipContent />} />
+                    <Legend />
+                    <Bar dataKey="orders" barSize={30}>
+                      {mocktailData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ChartContainer>
+              </div>
+              
+              <div className="h-[250px] flex items-center justify-center">
+                <ChartContainer
+                  config={
+                    mocktailData.reduce((config, item) => ({
+                      ...config,
+                      [item.name]: {
+                        label: item.name,
+                        color: item.color,
+                      },
+                    }), {})
+                  }
+                >
+                  <PieChart>
+                    <Pie
+                      data={mocktailData}
+                      dataKey="orders"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={80}
+                      innerRadius={40}
+                      paddingAngle={2}
+                      label={(entry) => entry.name}
+                    >
+                      {mocktailData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip content={<ChartTooltipContent />} />
+                    <Legend />
+                  </PieChart>
+                </ChartContainer>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };
