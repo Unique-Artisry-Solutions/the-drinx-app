@@ -11,6 +11,10 @@ export interface DashboardStats {
   avgRating: number;
   topMocktail: string;
   topMocktailOrders: number;
+  // Added properties to match StatsData requirements
+  revenue: string;
+  totalRating: number;
+  visitorCount: number;
 }
 
 export interface VisitorData {
@@ -57,7 +61,11 @@ export const useDashboardData = (): DashboardData => {
     reviewsThisWeek: 8,
     avgRating: 4.7,
     topMocktail: "Blue Lagoon",
-    topMocktailOrders: 42
+    topMocktailOrders: 42,
+    // Added new properties to match StatsData requirements
+    revenue: "$2,850",
+    totalRating: 4.7,  // Using avgRating value
+    visitorCount: 278  // Using totalVisits value
   };
   
   // Sample visitor data
