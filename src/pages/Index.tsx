@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
@@ -38,11 +39,11 @@ const Index = () => {
   } = useIndexPageLogic();
   
   useEffect(() => {
-    // If user is authenticated, redirect to explore page
-    if (user && !isLoading) {
+    // If user is authenticated but not an establishment, redirect to explore page
+    if (user && !isLoading && !isEstablishment) {
       navigate('/explore');
     }
-  }, [user, isLoading, navigate]);
+  }, [user, isLoading, navigate, isEstablishment]);
 
   // If the user is an establishment, show the dashboard
   if (isEstablishment && user && !isLoading) {
