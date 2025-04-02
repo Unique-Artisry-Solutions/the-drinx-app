@@ -23,6 +23,11 @@ const PendingActionsCard: React.FC<PendingActionsCardProps> = ({ pendingBarCrawl
     navigate('/establishment/reviews');
   };
 
+  // Function to navigate to the all actions page
+  const navigateToAllActions = () => {
+    navigate('/establishment/all-actions');
+  };
+
   return (
     <Card className="vibrant-card w-full">
       <CardHeader className="pb-2">
@@ -58,7 +63,7 @@ const PendingActionsCard: React.FC<PendingActionsCardProps> = ({ pendingBarCrawl
           </div>
           
           <div className="flex-1 min-w-[200px]">
-            <Button className="w-full" variant="outline" onClick={() => navigate('/establishment/profile')}>
+            <Button className="w-full" variant="outline" onClick={navigateToAllActions}>
               View All Actions
             </Button>
           </div>

@@ -34,6 +34,7 @@ import BarCrawlRequestsPage from '@/pages/establishment/BarCrawlRequestsPage';
 import EstablishmentReviewsPage from '@/pages/establishment/EstablishmentReviewsPage';
 import MocktailDetailsPage from '@/pages/establishment/MocktailDetailsPage';
 import EstablishmentAnalyticsPage from '@/pages/establishment/EstablishmentAnalyticsPage';
+import AllActionsPage from '@/pages/establishment/AllActionsPage';
 
 // Admin pages
 const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
@@ -93,6 +94,7 @@ const AppRoutes = () => {
         <Route path="/establishment/reviews" element={<EstablishmentReviewsPage />} />
         <Route path="/establishment/mocktail/:id" element={<MocktailDetailsPage />} />
         <Route path="/establishment/analytics" element={<EstablishmentAnalyticsPage />} />
+        <Route path="/establishment/all-actions" element={<AllActionsPage />} />
         
         {/* Fallback routes */}
         <Route path="/404" element={<NotFound />} />
