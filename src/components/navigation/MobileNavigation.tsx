@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, Map, Plus, ShoppingCart, User, Star, CheckSquare, Route } from 'lucide-react';
@@ -56,11 +55,9 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
     { icon: Map, label: 'Map', path: '/map' },
   ];
   
-  // Add Create for individuals and Add for establishments
+  // Add Create for individuals only, removed Add for establishments
   if (currentUserType === 'individual') {
     userNavItems.push({ icon: Route, label: 'Create', path: '/create-bar-crawl' });
-  } else {
-    userNavItems.push({ icon: Plus, label: 'Add', path: '/add' });
   }
   
   userNavItems.push({ icon: User, label: 'Profile', path: getProfilePath() });

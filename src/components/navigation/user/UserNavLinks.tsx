@@ -15,10 +15,9 @@ const UserNavLinks: React.FC<UserNavLinksProps> = ({ userType }) => {
     { icon: Map, label: 'Map', path: '/map' },
   ];
   
+  // Only add the "Create" button for individual users, no "Add" button for establishment users
   if (userType === 'individual') {
     userNavItems.push({ icon: Route, label: 'Create', path: '/create-bar-crawl' });
-  } else {
-    userNavItems.push({ icon: Route, label: 'Add', path: '/add' });
   }
 
   return (

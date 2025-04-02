@@ -24,15 +24,29 @@ const routes: Record<string, BreadcrumbConfig> = {
   '/profile/bar-crawls': { path: '/profile/bar-crawls', label: 'Bar Crawls' },
   '/profile/favorites': { path: '/profile/favorites', label: 'Favorites' },
   '/profile/visited': { path: '/profile/visited', label: 'Visited' },
+  '/profile/rewards': { path: '/profile/rewards', label: 'Rewards' },
+  '/profile/my-creations': { path: '/profile/my-creations', label: 'My Creations' },
+  '/profile/settings': { path: '/profile/settings', label: 'Settings' },
   '/bar-crawl': { path: '/bar-crawl', label: 'Bar Crawl' },
+  '/create-bar-crawl': { path: '/create-bar-crawl', label: 'Create Bar Crawl' },
+  
+  // Establishment routes
+  '/establishment/profile': { path: '/establishment/profile', label: 'Establishment Profile' },
+  '/establishment/bar-crawl-requests': { path: '/establishment/bar-crawl-requests', label: 'Bar Crawl Requests' },
+  '/establishment/reviews': { path: '/establishment/reviews', label: 'Reviews' },
+  '/establishment/analytics': { path: '/establishment/analytics', label: 'Analytics' },
+  '/establishment/all-actions': { path: '/establishment/all-actions', label: 'All Actions' },
 };
 
 // Add dynamic path matching patterns
 const dynamicRoutes = [
+  { pattern: /^\/bar-crawl\/(.+)$/, base: '/bar-crawl', label: 'Bar Crawl Details' },
   { pattern: /^\/bar-crawl-profile\/(.+)$/, base: '/bar-crawl-profile', label: 'Crawl Details' },
   { pattern: /^\/bar-crawl-details\/(.+)$/, base: '/bar-crawl-details', label: 'Crawl Details' },
   { pattern: /^\/establishment\/(.+)$/, base: '/establishment', label: 'Establishment' },
+  { pattern: /^\/establishment\/mocktail\/(.+)$/, base: '/establishment/mocktail', label: 'Mocktail Details' },
   { pattern: /^\/cocktail\/(.+)$/, base: '/cocktail', label: 'Cocktail' },
+  { pattern: /^\/profile\/my-creations\/(.+)$/, base: '/profile/my-creations', label: 'Bar Crawl Management' },
 ];
 
 const Breadcrumbs: React.FC = () => {
@@ -40,6 +54,10 @@ const Breadcrumbs: React.FC = () => {
   const pathSegments = location.pathname.split('/').filter(Boolean);
   
   if (pathSegments.length === 0) return null; // Don't show breadcrumbs on homepage
+  
+  // Don't show breadcrumbs on specific pages
+  const excludedPaths = ['/landing', '/login', '/signup', '/mission', '/map', '/explore'];
+  if (excludedPaths.includes(location.pathname)) return null;
   
   // Determine if this is a special route that has a dynamic ID
   const isDynamicRoute = dynamicRoutes.find(route => route.pattern.test(location.pathname));
@@ -53,6 +71,17 @@ const Breadcrumbs: React.FC = () => {
     
     // Handle dynamic routes
     if (isDynamicRoute && i === pathSegments.length - 1) {
+      // Get the base path for the dynamic route
+      const basePath = isDynamicRoute.base;
+      
+      // If we have a configuration for the base path, add it
+      if (routes[basePath]) {
+        // Only add if it's not already in the breadcrumbs
+        if (!breadcrumbs.some(crumb => crumb.path === basePath)) {
+          breadcrumbs.push(routes[basePath]);
+        }
+      }
+      
       breadcrumbs.push({
         path: currentPath,
         label: isDynamicRoute.label,
@@ -63,6 +92,16 @@ const Breadcrumbs: React.FC = () => {
     // Add the route if it exists in our config
     if (routes[currentPath]) {
       breadcrumbs.push(routes[currentPath]);
+    } else {
+      // Try to handle nested routes by checking if the current segment has a parent path
+      const parentPaths = pathSegments.slice(0, i).join('/');
+      if (parentPaths && routes[`/${parentPaths}`]) {
+        const segmentName = pathSegments[i].replace(/-/g, ' ');
+        breadcrumbs.push({
+          path: currentPath,
+          label: segmentName.charAt(0).toUpperCase() + segmentName.slice(1),
+        });
+      }
     }
   }
   
@@ -70,7 +109,7 @@ const Breadcrumbs: React.FC = () => {
   if (breadcrumbs.length < 2) return null;
   
   return (
-    <Breadcrumb className="mb-2">
+    <Breadcrumb className="mb-4">
       <BreadcrumbList>
         {breadcrumbs.map((crumb, index) => {
           const isLast = index === breadcrumbs.length - 1;
@@ -79,13 +118,13 @@ const Breadcrumbs: React.FC = () => {
             <React.Fragment key={crumb.path}>
               <BreadcrumbItem>
                 {isLast ? (
-                  <BreadcrumbPage>
+                  <BreadcrumbPage className="flex items-center">
                     {crumb.icon && crumb.icon}
                     <span className={crumb.icon ? "ml-1" : ""}>{crumb.label}</span>
                   </BreadcrumbPage>
                 ) : (
                   <BreadcrumbLink asChild>
-                    <Link to={crumb.path} className="flex items-center">
+                    <Link to={crumb.path} className="flex items-center hover:text-material-primary transition-colors">
                       {crumb.icon && crumb.icon}
                       <span className={crumb.icon ? "ml-1" : ""}>{crumb.label}</span>
                     </Link>

@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar, MessageSquare, Bell, Clock, ListChecks, Settings } from 'lucide-react';
+import { Calendar, MessageSquare, Bell, Clock, ListChecks, Settings, ChevronsUp, Lightbulb } from 'lucide-react';
 
 const AllActionsPage = () => {
   const navigate = useNavigate();
@@ -33,7 +33,7 @@ const AllActionsPage = () => {
       icon: ListChecks,
       color: 'text-blue-500',
       bgClass: 'bg-gradient-to-r from-blue-500/10 to-indigo-500/10',
-      route: '/establishment/profile'
+      route: '/establishment/profile?tab=menu'
     },
     {
       title: 'Profile Completion',
@@ -57,7 +57,23 @@ const AllActionsPage = () => {
       icon: Clock,
       color: 'text-emerald-500',
       bgClass: 'bg-gradient-to-r from-emerald-500/10 to-green-500/10',
-      route: '/establishment/profile'
+      route: '/establishment/profile?tab=promotions'
+    },
+    {
+      title: 'Mocktail Suggestions',
+      description: '5 new suggestions from users',
+      icon: Lightbulb,
+      color: 'text-yellow-500',
+      bgClass: 'bg-gradient-to-r from-yellow-500/10 to-amber-500/10',
+      route: '/establishment/mocktail-suggestions'
+    },
+    {
+      title: 'Rating Improvements',
+      description: 'Tips to improve your ratings',
+      icon: ChevronsUp,
+      color: 'text-rose-500',
+      bgClass: 'bg-gradient-to-r from-rose-500/10 to-red-500/10',
+      route: '/establishment/analytics'
     }
   ];
 
