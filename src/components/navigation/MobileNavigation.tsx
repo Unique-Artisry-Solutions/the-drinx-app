@@ -123,9 +123,9 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
   }
 
   return (
-    <nav className="spiritless-mobile-nav fixed bottom-0 w-full bg-white shadow-lg z-50 md:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 w-full bg-white shadow-lg z-50 md:hidden border-t border-gray-100">
       {shouldShowProfileItems && expanded && (
-        <div className="spiritless-profile-nav border-t border-gray-200 bg-gray-50">
+        <div className="border-t border-gray-200 bg-gray-50">
           <div className="grid grid-cols-3 gap-1 px-2 py-2">
             {profileItems.map((item) => {
               const isActive = location.pathname === item.path;
@@ -148,8 +148,8 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
           </div>
         </div>
       )}
-      <div className="spiritless-mobile-container max-w-5xl mx-auto">
-        <div className="spiritless-mobile-inner flex justify-around items-center h-16">
+      <div className="mx-auto w-full">
+        <div className="flex justify-around items-center h-16">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path || 
               (item.path === '/profile' && location.pathname.startsWith('/profile/'));
@@ -162,7 +162,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
                   href="#"
                   onClick={handleHomeClick}
                   className={cn(
-                    "spiritless-mobile-link flex flex-col items-center justify-center w-full h-full transition-all-200",
+                    "flex flex-col items-center justify-center w-full h-full py-2",
                     isActive 
                       ? "text-material-primary" 
                       : "text-material-on-surface-variant"
@@ -193,7 +193,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
                 to={item.path}
                 onClick={handleClick}
                 className={cn(
-                  "spiritless-mobile-link flex flex-col items-center justify-center w-full h-full transition-all-200",
+                  "flex flex-col items-center justify-center w-full h-full py-2",
                   isActive 
                     ? "text-material-primary" 
                     : "text-material-on-surface-variant"
