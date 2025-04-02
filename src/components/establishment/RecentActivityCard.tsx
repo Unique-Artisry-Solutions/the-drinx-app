@@ -2,14 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Star, UserPlus, Calendar, BarChart, Clock } from 'lucide-react';
-
-interface Activity {
-  id: number;
-  type: 'review' | 'visit' | 'crawl' | 'order';
-  user: string;
-  content: string;
-  time: string;
-}
+import { Activity } from '@/hooks/useActivitiesData';
 
 interface RecentActivityCardProps {
   activities: Activity[];

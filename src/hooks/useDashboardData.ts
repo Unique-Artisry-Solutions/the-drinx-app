@@ -30,20 +30,11 @@ export interface MocktailData {
   color: string;
 }
 
-export interface Activity {
-  id: number;
-  type: 'review' | 'visit' | 'crawl' | 'order';
-  user: string;
-  content: string;
-  time: string;
-}
-
 interface DashboardData {
   stats: DashboardStats;
   visitorData: VisitorData[];
   ratingData: RatingData[];
   mocktailData: MocktailData[];
-  recentActivity: Activity[];
   isLoading: boolean;
 }
 
@@ -90,14 +81,6 @@ export const useDashboardData = (): DashboardData => {
     { name: 'Strawberry Daiquiri', orders: 22, color: '#ec4899' },
     { name: 'Piña Colada', orders: 18, color: '#8b5cf6' }
   ];
-  
-  // Sample recent activity
-  const recentActivity: Activity[] = [
-    { id: 1, type: 'review', user: 'Sarah J.', content: 'Left a 5-star review', time: '2h ago' },
-    { id: 2, type: 'visit', user: 'James W.', content: 'Checked in', time: '3h ago' },
-    { id: 3, type: 'crawl', user: 'Downtown Crawl', content: 'Added your establishment', time: '5h ago' },
-    { id: 4, type: 'order', user: 'Michael R.', content: 'Ordered Blue Lagoon', time: '6h ago' }
-  ];
 
   useEffect(() => {
     // Simulate loading
@@ -113,7 +96,6 @@ export const useDashboardData = (): DashboardData => {
     visitorData,
     ratingData,
     mocktailData,
-    recentActivity,
     isLoading
   };
 };

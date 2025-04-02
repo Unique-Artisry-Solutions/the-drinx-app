@@ -1,11 +1,10 @@
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
 import MetricsVisualization from './MetricsVisualization';
 import KeyMetricsCards from './KeyMetricsCards';
-import RecentActivityCard from './RecentActivityCard';
 import PendingActionsCard from './PendingActionsCard';
 import DashboardHeader from './DashboardHeader';
+import ActivitiesSection from './ActivitiesSection';
 import { useDashboardData } from '@/hooks/useDashboardData';
 
 interface EstablishmentDashboardProps {
@@ -19,7 +18,6 @@ const EstablishmentDashboard: React.FC<EstablishmentDashboardProps> = ({ establi
     visitorData, 
     ratingData, 
     mocktailData, 
-    recentActivity,
     isLoading 
   } = useDashboardData();
   
@@ -49,10 +47,10 @@ const EstablishmentDashboard: React.FC<EstablishmentDashboardProps> = ({ establi
         mocktailData={mocktailData}
       />
       
-      {/* Quick Actions & Pending Items */}
+      {/* Activities and Pending Items */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Recent Activity */}
-        <RecentActivityCard activities={recentActivity} />
+        {/* Recent Activity - now a separate component */}
+        <ActivitiesSection />
         
         {/* Pending Actions */}
         <PendingActionsCard 
