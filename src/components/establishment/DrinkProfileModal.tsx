@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import PhotoUploadField from '@/components/PhotoUploadField';
+import IngredientInput from './IngredientInput';
 
 interface DrinkProfileModalProps {
   isOpen: boolean;
@@ -33,7 +34,7 @@ const DrinkProfileModal: React.FC<DrinkProfileModalProps> = ({
     name: '',
     description: '',
     price: '',
-    ingredients: '',
+    ingredients: [] as string[],
     photoUrl: ''
   });
 
@@ -44,7 +45,7 @@ const DrinkProfileModal: React.FC<DrinkProfileModalProps> = ({
         name: drink.name || '',
         description: drink.description || '',
         price: drink.price || '',
-        ingredients: drink.ingredients?.join(', ') || '',
+        ingredients: drink.ingredients || [],
         photoUrl: drink.photoUrl || ''
       });
     } else {
@@ -53,7 +54,7 @@ const DrinkProfileModal: React.FC<DrinkProfileModalProps> = ({
         name: '',
         description: '',
         price: '',
-        ingredients: '',
+        ingredients: [],
         photoUrl: ''
       });
     }
@@ -64,6 +65,13 @@ const DrinkProfileModal: React.FC<DrinkProfileModalProps> = ({
     setFormData(prev => ({
       ...prev,
       [id]: value
+    }));
+  };
+  
+  const handleIngredientsChange = (ingredients: string[]) => {
+    setFormData(prev => ({
+      ...prev,
+      ingredients
     }));
   };
   
@@ -83,7 +91,7 @@ const DrinkProfileModal: React.FC<DrinkProfileModalProps> = ({
       name: formData.name,
       description: formData.description,
       price: formData.price,
-      ingredients: formData.ingredients.split(',').map(i => i.trim()).filter(i => i),
+      ingredients: formData.ingredients,
       photoUrl: formData.photoUrl
     };
     
@@ -131,12 +139,10 @@ const DrinkProfileModal: React.FC<DrinkProfileModalProps> = ({
           </div>
           
           <div className="grid gap-2">
-            <Label htmlFor="ingredients">Ingredients (comma separated)</Label>
-            <Input 
-              id="ingredients" 
-              value={formData.ingredients} 
-              onChange={handleChange} 
-              placeholder="ingredient1, ingredient2, ..."
+            <Label htmlFor="ingredients">Ingredients</Label>
+            <IngredientInput 
+              value={formData.ingredients}
+              onChange={handleIngredientsChange}
             />
           </div>
           
