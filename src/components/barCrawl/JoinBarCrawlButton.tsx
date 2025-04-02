@@ -222,11 +222,12 @@ const JoinBarCrawlButton: React.FC<JoinBarCrawlButtonProps> = ({
   const duration = getBarCrawlDuration();
 
   return (
-    <div>
+    <div className="vibrant-bg p-4 rounded-lg">
       <Button 
         onClick={handleJoin}
         disabled={isJoining || (!canJoin && !isAlreadyJoined) || isAlreadyJoined}
-        className={`bg-spiritless-pink hover:bg-spiritless-pink/90 text-white ${className}`}
+        variant="gradient"
+        className={`w-full shadow-md hover:shadow-lg ${className}`}
       >
         {isAlreadyJoined 
           ? "Already Joined!" 
@@ -236,7 +237,7 @@ const JoinBarCrawlButton: React.FC<JoinBarCrawlButtonProps> = ({
       </Button>
       
       {!canJoin && !isAlreadyJoined && (
-        <Alert className="mt-3" variant="destructive">
+        <Alert className="mt-3 border-destructive/50 bg-destructive/10" variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
             You can only join one bar crawl every 12 hours. Please try again in {cooldownTimeRemaining}.
@@ -245,18 +246,18 @@ const JoinBarCrawlButton: React.FC<JoinBarCrawlButtonProps> = ({
       )}
       
       {isAlreadyJoined && (
-        <Alert className="mt-3" variant="default">
-          <AlertDescription>
+        <Alert className="mt-3 border-spiritless-green border-2 bg-spiritless-green/10" variant="default">
+          <AlertDescription className="text-spiritless-green font-medium">
             You're already participating in this bar crawl. Enjoy the experience!
           </AlertDescription>
         </Alert>
       )}
 
       {barCrawlDetails && barCrawlDetails.start_date && duration && (
-        <Alert className="mt-3">
-          <Clock className="h-4 w-4 mr-2" />
-          <AlertDescription>
-            This bar crawl runs from {duration.startDisplay} to {duration.endDisplay} ({duration.durationDays} days).
+        <Alert className="mt-3 border-spiritless-orange/50 bg-spiritless-orange/10">
+          <Clock className="h-4 w-4 mr-2 text-spiritless-orange" />
+          <AlertDescription className="text-spiritless-orange-dark">
+            This bar crawl runs from <span className="font-medium">{duration.startDisplay}</span> to <span className="font-medium">{duration.endDisplay}</span> ({duration.durationDays} days).
             {duration.durationDays > 7 && <span className="block text-amber-600 mt-1">Note: This bar crawl has already been extended and cannot be extended further.</span>}
           </AlertDescription>
         </Alert>

@@ -6,7 +6,7 @@ interface AuthButtonProps {
   isLoading: boolean;
   type: 'submit' | 'button';
   onClick?: () => void;
-  variant?: 'default' | 'outline';
+  variant?: 'default' | 'outline' | 'gradient';
   className?: string;
   children: React.ReactNode;
 }
@@ -15,8 +15,8 @@ const AuthButton: React.FC<AuthButtonProps> = ({
   isLoading,
   type = 'submit',
   onClick,
-  variant = 'default',
-  className = 'w-full bg-spiritless-pink text-white hover:bg-spiritless-pink/90 font-bold shadow-md hover:shadow-lg transition-all',
+  variant = 'gradient',
+  className = 'w-full shadow-md hover:shadow-lg transition-all',
   children
 }) => {
   return (

@@ -159,3 +159,79 @@ a:focus, button:focus, [role="button"]:focus {
 .skip-link:focus {
   top: 0;
 }
+
+/* New vibrant UI elements */
+.vibrant-bg {
+  background: linear-gradient(135deg, #FFF6F9 0%, #FFEEF5 100%);
+}
+
+.vibrant-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px -5px rgba(217, 78, 143, 0.15);
+  border-top: 4px solid #D94E8F;
+  transition: all 0.3s ease;
+}
+
+.vibrant-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 30px -5px rgba(217, 78, 143, 0.25);
+}
+
+.vibrant-header {
+  background: linear-gradient(90deg, #D94E8F 0%, #F28705 100%);
+  color: white;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.vibrant-tab {
+  background: rgba(217, 78, 143, 0.1);
+  color: #D94E8F;
+  font-weight: bold;
+  border-radius: 20px;
+  padding: 0.5rem 1rem;
+  transition: all 0.2s ease;
+}
+
+.vibrant-tab:hover, .vibrant-tab[data-state="active"] {
+  background: #D94E8F;
+  color: white;
+}
+
+.vibrant-badge {
+  background: linear-gradient(90deg, #84BF04 0%, #A4DF24 100%);
+  color: white;
+  font-weight: bold;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  display: inline-block;
+  box-shadow: 0 2px 5px rgba(132, 191, 4, 0.3);
+}
+
+.accent-border-left {
+  border-left: 4px solid #D94E8F;
+  padding-left: 1rem;
+}
+
+.accent-underline {
+  border-bottom: 2px solid #F29F05;
+  padding-bottom: 0.25rem;
+}
+
+.glow-hover {
+  transition: all 0.3s ease;
+}
+
+.glow-hover:hover {
+  box-shadow: 0 0 15px rgba(217, 78, 143, 0.5);
+}
+
+.gradient-text {
+  background: linear-gradient(90deg, #D94E8F 0%, #F28705 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-fill-color: transparent;
+}
