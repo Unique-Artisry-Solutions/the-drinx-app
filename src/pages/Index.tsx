@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/auth';
@@ -38,14 +38,37 @@ const Index = () => {
     resetFilters
   } = useIndexPageLogic();
   
-  // Check if user is not authenticated and not loading
-  if (!isLoading && !user) {
-    // Redirect to the landing page
-    navigate('/landing', { replace: true });
-    return null; // Return null to prevent rendering while redirecting
+  // Use useEffect to handle navigation properly
+  useEffect(() => {
+    // Make sure we're not in a loading state
+    if (isLoading) return;
+    
+    // If user is not authenticated, redirect to landing
+    if (!user) {
+      navigate('/landing', { replace: true });
+      return;
+    }
+    
+    // If user is authenticated and is an individual, redirect to explore
+    if (user && !isEstablishment) {
+      navigate('/explore', { replace: true });
+    }
+    
+    // If user is authenticated and is an establishment, the dashboard will be shown
+  }, [user, isLoading, navigate, isEstablishment]);
+
+  // If we're still loading, show a loading state
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center min-h-screen">
+          Loading...
+        </div>
+      </Layout>
+    );
   }
 
-  // If the user is authenticated and is an establishment, show the dashboard
+  // If user is authenticated and is an establishment, show the dashboard
   if (user && isEstablishment) {
     return (
       <Layout>
@@ -56,13 +79,7 @@ const Index = () => {
     );
   }
 
-  // If user is authenticated and is an individual, redirect to explore
-  if (user && !isEstablishment && !isLoading) {
-    navigate('/explore', { replace: true });
-    return null;
-  }
-
-  // Show the regular index page for guests
+  // This will rarely be shown because of the redirects in useEffect
   return (
     <Layout>
       <div className="animate-fade-in my-4 sm:my-[30px] px-3 sm:px-6 md:px-[148px]">

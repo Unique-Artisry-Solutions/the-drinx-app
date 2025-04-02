@@ -26,6 +26,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   } = useAuthActions();
 
   const refreshSession = async () => {
+    console.log('Refreshing session in AuthProvider');
     // Check if admin bypass is enabled
     const isAdminBypass = localStorage.getItem('admin_bypass') === 'true';
     
@@ -59,6 +60,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     // Normal refresh session logic
     const result = await refreshSessionAction();
+    console.log('Session refresh result:', result);
     setSession(result.session);
     setUser(result.user);
     if (result.isEmailVerified !== undefined) {
@@ -74,12 +76,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (result.user.user_metadata?.user_type) {
         localStorage.setItem('user_type', result.user.user_metadata.user_type);
       }
+      if (result.user.user_metadata?.username) {
+        localStorage.setItem('user_username', result.user.user_metadata.username);
+      }
     }
     
     return { isEmailVerified: result.isEmailVerified };
   };
 
   useEffect(() => {
+    console.log('AuthProvider useEffect running');
     // Check for admin bypass
     const isAdminBypass = localStorage.getItem('admin_bypass') === 'true';
     
@@ -125,10 +131,49 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     };
     
+    // Set up auth listener FIRST, then check current session
+    const setupAuthListener = async () => {
+      console.log('Setting up auth listener');
+      // Set up authentication state listener
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        async (event, currentSession) => {
+          console.log('Auth state changed:', event, currentSession);
+          setSession(currentSession);
+          setUser(currentSession?.user || null);
+          
+          // Update email verification status
+          if (currentSession?.user) {
+            setIsEmailVerified(currentSession.user.email_confirmed_at !== null);
+            
+            if (event === 'SIGNED_IN') {
+              // If email is verified, store authentication state in localStorage
+              if (currentSession.user.email_confirmed_at) {
+                localStorage.setItem('user_authenticated', 'true');
+                localStorage.setItem('user_email', currentSession.user.email || '');
+                if (currentSession.user.user_metadata) {
+                  localStorage.setItem('user_type', currentSession.user.user_metadata.user_type || 'individual');
+                  localStorage.setItem('user_username', currentSession.user.user_metadata.username || '');
+                }
+              }
+            } else if (event === 'SIGNED_OUT') {
+              localStorage.removeItem('user_authenticated');
+              localStorage.removeItem('user_email');
+              localStorage.removeItem('user_type');
+              localStorage.removeItem('user_username');
+            }
+          }
+          
+          setIsLoading(false);
+        }
+      );
+      
+      return subscription;
+    };
+    
     // Check active session
     const checkSession = async () => {
       try {
-        setIsLoading(true);
+        console.log('Checking for existing session');
         const { data, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -175,46 +220,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     };
 
-    checkSession();
-
-    // Set up authentication state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, currentSession) => {
-        console.log('Auth state changed:', event, currentSession);
-        setSession(currentSession);
-        setUser(currentSession?.user || null);
-        
-        // Update email verification status
-        if (currentSession?.user) {
-          setIsEmailVerified(currentSession.user.email_confirmed_at !== null);
-          
-          if (event === 'SIGNED_IN') {
-            // If email is verified, store authentication state in localStorage
-            if (currentSession.user.email_confirmed_at) {
-              localStorage.setItem('user_authenticated', 'true');
-              localStorage.setItem('user_email', currentSession.user.email || '');
-              if (currentSession.user.user_metadata) {
-                localStorage.setItem('user_type', currentSession.user.user_metadata.user_type || 'individual');
-                localStorage.setItem('user_username', currentSession.user.user_metadata.username || '');
-              }
-            }
-          } else if (event === 'SIGNED_OUT') {
-            localStorage.removeItem('user_authenticated');
-            localStorage.removeItem('user_email');
-            localStorage.removeItem('user_type');
-            localStorage.removeItem('user_username');
-          }
-        }
-        
-        setIsLoading(false);
-      }
-    );
-
-    // Set up a periodic session check and refresh
-    const sessionCheckInterval = setInterval(() => {
-      refreshSession();
-      checkAdminSession();
-    }, 15 * 60 * 1000); // Check every 15 minutes
+    // Initialize in the correct order
+    let subscription: { unsubscribe: () => void } | null = null;
+    
+    const initialize = async () => {
+      // 1. Set up listener first
+      subscription = await setupAuthListener();
+      // 2. Then check for existing session
+      await checkSession();
+    };
+    
+    initialize();
 
     // Check for email verification in URL
     const checkEmailVerification = () => {
@@ -226,9 +242,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
     
     checkEmailVerification();
+    
+    // Set up a periodic session check and refresh
+    const sessionCheckInterval = setInterval(() => {
+      refreshSession();
+      checkAdminSession();
+    }, 15 * 60 * 1000); // Check every 15 minutes
 
     return () => {
-      subscription.unsubscribe();
+      if (subscription) {
+        subscription.unsubscribe();
+      }
       clearInterval(sessionCheckInterval);
     };
   }, []);

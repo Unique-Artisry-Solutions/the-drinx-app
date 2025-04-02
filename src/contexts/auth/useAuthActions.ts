@@ -10,7 +10,7 @@ export function useAuthActions() {
 
   const refreshSession = async () => {
     try {
-      console.log('Refreshing session...');
+      console.log('Refreshing session in useAuthActions...');
       const { data, error } = await supabase.auth.refreshSession();
       if (error) {
         console.error('Error refreshing session:', error);
@@ -34,11 +34,15 @@ export function useAuthActions() {
   const signIn = async (email: string, password: string) => {
     try {
       setIsLoading(true);
+      console.log('Signing in user:', email);
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       
       if (error) {
+        console.error('Sign in error:', error);
         throw error;
       }
+      
+      console.log('Sign in successful:', data);
       
       if (data.user && !data.user.email_confirmed_at) {
         toast({
@@ -58,6 +62,9 @@ export function useAuthActions() {
         localStorage.setItem('user_authenticated', 'true');
         localStorage.setItem('user_email', data.user?.email || '');
         localStorage.setItem('user_type', data.user?.user_metadata.user_type || 'individual');
+        if (data.user?.user_metadata.username) {
+          localStorage.setItem('user_username', data.user.user_metadata.username);
+        }
       }
     } catch (error: any) {
       toast({
@@ -125,9 +132,11 @@ export function useAuthActions() {
   const signOut = async () => {
     try {
       setIsLoading(true);
+      console.log('Signing out user...');
       const { error } = await supabase.auth.signOut();
       
       if (error) {
+        console.error('Sign out error:', error);
         throw error;
       }
       
@@ -146,8 +155,9 @@ export function useAuthActions() {
       });
       
       // Force page navigation to landing page
-      window.location.href = '/';
+      window.location.href = '/landing';
     } catch (error: any) {
+      console.error('Sign out error:', error);
       toast({
         title: 'Logout failed',
         description: error.message || 'An error occurred during logout',
@@ -161,12 +171,14 @@ export function useAuthActions() {
   const updateProfile = async (data: { [key: string]: any }) => {
     try {
       setIsLoading(true);
+      console.log('Updating user profile:', data);
       
       const { error } = await supabase.auth.updateUser({
         data
       });
       
       if (error) {
+        console.error('Profile update error:', error);
         throw error;
       }
       
@@ -174,6 +186,14 @@ export function useAuthActions() {
         title: 'Profile updated',
         description: 'Your profile has been successfully updated',
       });
+      
+      // Update localStorage with new profile data
+      if (data.user_type) {
+        localStorage.setItem('user_type', data.user_type);
+      }
+      if (data.username) {
+        localStorage.setItem('user_username', data.username);
+      }
     } catch (error: any) {
       toast({
         title: 'Update failed',

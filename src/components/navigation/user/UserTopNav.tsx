@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
@@ -55,15 +56,34 @@ const UserTopNav: React.FC = () => {
     }
   };
 
+  // Handle home navigation based on user type
+  const handleHomeClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault(); // Prevent default navigation
+    
+    if (user) {
+      if (userType === 'establishment') {
+        navigate('/'); // Establishments go to dashboard
+      } else {
+        navigate('/explore'); // Individual users go to explore
+      }
+    } else {
+      navigate('/landing'); // Non-authenticated users go to landing
+    }
+  };
+
   return (
     <nav className="user-top-nav fixed top-0 left-0 w-full bg-white z-50 shadow-sm">
       <div className="user-nav-container max-w-6xl mx-auto px-4 py-3">
         <div className="user-nav-inner flex items-center justify-between">
           <div className="user-nav-left flex items-center">
-            <Link to="/" className="user-nav-logo text-xl font-semibold text-material-primary mr-6">
+            <a 
+              href="#" 
+              onClick={handleHomeClick}
+              className="user-nav-logo text-xl font-semibold text-material-primary mr-6"
+            >
               {isMobile ? "SL" : "Spirit"}
               {!isMobile && <span>less</span>}
-            </Link>
+            </a>
             
             <UserNavLinks userType={userType} />
           </div>

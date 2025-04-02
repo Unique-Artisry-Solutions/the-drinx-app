@@ -1,8 +1,10 @@
+
 import React, { useEffect, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Home, Map, Plus, ShoppingCart, User, Star, CheckSquare, Route } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { NavigationType } from './NavigationTypes';
+import { useAuth } from '@/contexts/auth';
 
 interface NavItem {
   icon: React.FC<any>;
@@ -20,8 +22,10 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
   userType = 'individual' 
 }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [currentUserType, setCurrentUserType] = useState(userType);
   const [expanded, setExpanded] = useState(false);
+  const { user } = useAuth();
   
   useEffect(() => {
     // Get the user type from localStorage to ensure it's up to date
@@ -35,6 +39,21 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
 
   const toggleExpand = () => {
     setExpanded(!expanded);
+  };
+
+  // Handler for the home button to prevent session issues
+  const handleHomeClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    if (user) {
+      if (currentUserType === 'establishment') {
+        navigate('/'); // Establishments go to dashboard
+      } else {
+        navigate('/explore'); // Individual users go to explore
+      }
+    } else {
+      navigate('/landing'); // Non-authenticated users go to landing
+    }
   };
 
   // Guest Navigation Items
@@ -134,6 +153,31 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
           {navItems.map((item) => {
             const isActive = location.pathname === item.path || 
               (item.path === '/profile' && location.pathname.startsWith('/profile/'));
+            
+            // Special case for Home button to prevent session problems
+            if (item.label === 'Home' && type === NavigationType.USER) {
+              return (
+                <a
+                  key={item.path}
+                  href="#"
+                  onClick={handleHomeClick}
+                  className={cn(
+                    "spiritless-mobile-link flex flex-col items-center justify-center w-full h-full transition-all-200",
+                    isActive 
+                      ? "text-material-primary" 
+                      : "text-material-on-surface-variant"
+                  )}
+                >
+                  <div className={cn(
+                    "flex items-center justify-center",
+                    isActive && "animate-pulse-subtle"
+                  )}>
+                    <item.icon size={24} />
+                  </div>
+                  <span className="text-xs mt-1">{item.label}</span>
+                </a>
+              );
+            }
             
             // If this is the profile button and we're on a profile page, make it toggle the menu
             const handleClick = (e: React.MouseEvent) => {
