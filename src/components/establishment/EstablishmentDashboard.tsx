@@ -37,6 +37,16 @@ const EstablishmentDashboard: React.FC<EstablishmentDashboardProps> = ({ establi
     navigate('/establishment/profile?tab=menu');
   };
 
+  // Function to navigate to the bar crawls tab
+  const navigateToBarCrawls = () => {
+    navigate('/establishment/profile?tab=bar-crawls');
+  };
+
+  // Function to navigate to the reviews tab
+  const navigateToReviews = () => {
+    navigate('/establishment/profile?tab=visitor-stats');
+  };
+
   return (
     <div className="animate-fade-in vibrant-bg p-4 space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -165,7 +175,7 @@ const EstablishmentDashboard: React.FC<EstablishmentDashboardProps> = ({ establi
                     <p className="text-xs text-material-on-surface-variant">{stats.pendingBarCrawls} pending requests</p>
                   </div>
                 </div>
-                <Button variant="ghost" size="sm" onClick={() => navigate('/establishment/profile')}>
+                <Button variant="ghost" size="sm" onClick={navigateToBarCrawls}>
                   Review
                 </Button>
               </div>
@@ -178,7 +188,7 @@ const EstablishmentDashboard: React.FC<EstablishmentDashboardProps> = ({ establi
                     <p className="text-xs text-material-on-surface-variant">{stats.reviewsThisWeek} unread reviews</p>
                   </div>
                 </div>
-                <Button variant="ghost" size="sm" onClick={() => navigate('/establishment/profile')}>
+                <Button variant="ghost" size="sm" onClick={navigateToReviews}>
                   View
                 </Button>
               </div>
