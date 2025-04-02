@@ -30,6 +30,9 @@ import PrivacyPolicy from '@/pages/LegalPage';
 import EstablishmentDashboard from '@/components/establishment/EstablishmentDashboard';
 import Layout from '@/components/Layout';
 import Index from '@/pages/Index';
+import BarCrawlRequestsPage from '@/pages/establishment/BarCrawlRequestsPage';
+import EstablishmentReviewsPage from '@/pages/establishment/EstablishmentReviewsPage';
+import MocktailDetailsPage from '@/pages/establishment/MocktailDetailsPage';
 
 // Admin pages
 const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
@@ -85,6 +88,9 @@ const AppRoutes = () => {
         
         {/* Establishment routes */}
         <Route path="/establishment/profile" element={<EstablishmentProfilePage />} />
+        <Route path="/establishment/bar-crawl-requests" element={<BarCrawlRequestsPage />} />
+        <Route path="/establishment/reviews" element={<EstablishmentReviewsPage />} />
+        <Route path="/establishment/mocktail/:id" element={<MocktailDetailsPage />} />
         
         {/* Fallback routes */}
         <Route path="/404" element={<NotFound />} />

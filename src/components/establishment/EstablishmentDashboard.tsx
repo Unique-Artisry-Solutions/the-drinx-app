@@ -46,6 +46,21 @@ const EstablishmentDashboard: React.FC<EstablishmentDashboardProps> = ({ establi
   const navigateToReviews = () => {
     navigate('/establishment/profile?tab=visitor-stats');
   };
+  
+  // Function to navigate to the new bar crawl requests page
+  const navigateToBarCrawlRequests = () => {
+    navigate('/establishment/bar-crawl-requests');
+  };
+  
+  // Function to navigate to the new reviews page
+  const navigateToAllReviews = () => {
+    navigate('/establishment/reviews');
+  };
+  
+  // Function to navigate to the mocktail details page
+  const navigateToTopMocktail = () => {
+    navigate('/establishment/mocktail/1'); // Using a hardcoded ID for the top mocktail
+  };
 
   return (
     <div className="animate-fade-in vibrant-bg p-4 space-y-6">
@@ -111,7 +126,7 @@ const EstablishmentDashboard: React.FC<EstablishmentDashboardProps> = ({ establi
           </CardContent>
         </Card>
         
-        <Card className="vibrant-card border-blue-400/20">
+        <Card className="vibrant-card border-blue-400/20 cursor-pointer hover:shadow-md transition-shadow" onClick={navigateToTopMocktail}>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center">
               <BarChart className="mr-2 h-4 w-4 text-blue-400" />
@@ -175,7 +190,7 @@ const EstablishmentDashboard: React.FC<EstablishmentDashboardProps> = ({ establi
                     <p className="text-xs text-material-on-surface-variant">{stats.pendingBarCrawls} pending requests</p>
                   </div>
                 </div>
-                <Button variant="ghost" size="sm" onClick={navigateToBarCrawls}>
+                <Button variant="ghost" size="sm" onClick={navigateToBarCrawlRequests}>
                   Review
                 </Button>
               </div>
@@ -188,7 +203,7 @@ const EstablishmentDashboard: React.FC<EstablishmentDashboardProps> = ({ establi
                     <p className="text-xs text-material-on-surface-variant">{stats.reviewsThisWeek} unread reviews</p>
                   </div>
                 </div>
-                <Button variant="ghost" size="sm" onClick={navigateToReviews}>
+                <Button variant="ghost" size="sm" onClick={navigateToAllReviews}>
                   View
                 </Button>
               </div>
