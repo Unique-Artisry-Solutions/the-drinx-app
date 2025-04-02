@@ -122,10 +122,30 @@ const ProfilePage: React.FC = () => {
         <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-gray-800 dark:to-gray-900 p-4 rounded-xl mb-6 shadow-sm">
           <Tabs defaultValue="overview" className="space-y-4">
             <TabsList className="w-full flex justify-between sm:justify-start sm:gap-4 bg-white/70 dark:bg-gray-800/50 backdrop-blur-sm p-1 rounded-lg">
-              <TabsTrigger className="flex-1 sm:flex-none data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm" value="overview">Overview</TabsTrigger>
-              <TabsTrigger className="flex-1 sm:flex-none data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm" value="activity">Recent Activity</TabsTrigger>
-              <TabsTrigger className="flex-1 sm:flex-none data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm" value="rewards">Rewards & Badges</TabsTrigger>
-              <TabsTrigger className="flex-1 sm:flex-none data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm" value="favorites">My Favorites</TabsTrigger>
+              <TabsTrigger 
+                className="flex-1 sm:flex-none data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm transition-all hover:bg-white/90 dark:hover:bg-gray-700/80 hover:-translate-y-0.5 hover:shadow-md"
+                value="overview"
+              >
+                Overview
+              </TabsTrigger>
+              <TabsTrigger 
+                className="flex-1 sm:flex-none data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm transition-all hover:bg-white/90 dark:hover:bg-gray-700/80 hover:-translate-y-0.5 hover:shadow-md"
+                value="activity"
+              >
+                Recent Activity
+              </TabsTrigger>
+              <TabsTrigger 
+                className="flex-1 sm:flex-none data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm transition-all hover:bg-white/90 dark:hover:bg-gray-700/80 hover:-translate-y-0.5 hover:shadow-md"
+                value="rewards"
+              >
+                Rewards & Badges
+              </TabsTrigger>
+              <TabsTrigger 
+                className="flex-1 sm:flex-none data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm transition-all hover:bg-white/90 dark:hover:bg-gray-700/80 hover:-translate-y-0.5 hover:shadow-md"
+                value="favorites"
+              >
+                My Favorites
+              </TabsTrigger>
             </TabsList>
             
             <TabsContent value="overview" className="pt-2">
