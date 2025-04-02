@@ -5,9 +5,10 @@ import { useNavigate } from 'react-router-dom';
 
 interface DashboardHeaderProps {
   establishmentName: string;
+  onAddMocktail?: () => void;
 }
 
-const DashboardHeader: React.FC<DashboardHeaderProps> = ({ establishmentName }) => {
+const DashboardHeader: React.FC<DashboardHeaderProps> = ({ establishmentName, onAddMocktail }) => {
   const navigate = useNavigate();
 
   return (
@@ -20,7 +21,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ establishmentName }) 
         <Button variant="outline" onClick={() => navigate('/establishment/profile')}>
           Manage Profile
         </Button>
-        <Button variant="gradient" onClick={() => navigate('/establishment/profile?tab=menu')}>
+        <Button variant="gradient" onClick={onAddMocktail}>
           Add New Mocktail
         </Button>
       </div>

@@ -131,14 +131,22 @@ export function useAuthActions() {
         throw error;
       }
       
+      // Clear all auth-related localStorage items
       localStorage.removeItem('user_authenticated');
       localStorage.removeItem('user_email');
       localStorage.removeItem('user_type');
+      localStorage.removeItem('user_username');
+      localStorage.removeItem('admin_authenticated');
+      localStorage.removeItem('admin_username');
+      localStorage.removeItem('admin_session_created');
       
       toast({
         title: 'Logged out',
         description: 'You have been successfully logged out',
       });
+      
+      // Force page navigation to landing page
+      window.location.href = '/';
     } catch (error: any) {
       toast({
         title: 'Logout failed',

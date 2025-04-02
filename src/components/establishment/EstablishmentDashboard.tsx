@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import MetricsVisualization from './MetricsVisualization';
 import KeyMetricsCards from './KeyMetricsCards';
 import PendingActionsCard from './PendingActionsCard';
@@ -7,12 +7,19 @@ import DashboardHeader from './DashboardHeader';
 import ActivitiesSection from './ActivitiesSection';
 import AppFooter from '@/components/AppFooter';
 import { useDashboardData } from '@/hooks/useDashboardData';
+import DrinkProfileModal, { Drink } from './DrinkProfileModal';
+import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 interface EstablishmentDashboardProps {
   establishmentName: string;
 }
 
 const EstablishmentDashboard: React.FC<EstablishmentDashboardProps> = ({ establishmentName }) => {
+  const [isAddMocktailModalOpen, setIsAddMocktailModalOpen] = useState(false);
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  
   // Use our custom hook to get all dashboard data
   const { 
     stats, 
@@ -22,6 +29,23 @@ const EstablishmentDashboard: React.FC<EstablishmentDashboardProps> = ({ establi
     barCrawlData,
     isLoading 
   } = useDashboardData();
+  
+  const handleAddMocktail = (drink: Drink) => {
+    // Here you would call an API to save the mocktail
+    toast({
+      title: "Mocktail added",
+      description: `${drink.name} has been added to your menu.`,
+    });
+    setIsAddMocktailModalOpen(false);
+  };
+  
+  const handleViewAllRatings = () => {
+    navigate('/establishment/reviews');
+  };
+  
+  const handleViewAllAnalytics = () => {
+    navigate('/establishment/analytics');
+  };
   
   if (isLoading) {
     return (
@@ -37,11 +61,18 @@ const EstablishmentDashboard: React.FC<EstablishmentDashboardProps> = ({ establi
     <>
       <div className="animate-fade-in vibrant-bg p-6 space-y-8 max-w-7xl mx-auto">
         {/* Dashboard Header */}
-        <DashboardHeader establishmentName={establishmentName} />
+        <DashboardHeader 
+          establishmentName={establishmentName} 
+          onAddMocktail={() => setIsAddMocktailModalOpen(true)}
+        />
         
         {/* Key Metrics Cards */}
         <div className="my-8">
-          <KeyMetricsCards stats={stats} />
+          <KeyMetricsCards 
+            stats={stats} 
+            onViewAllRatings={handleViewAllRatings}
+            onViewAllAnalytics={handleViewAllAnalytics}
+          />
         </div>
         
         {/* Pending Actions - Full width horizontal */}
@@ -71,6 +102,14 @@ const EstablishmentDashboard: React.FC<EstablishmentDashboardProps> = ({ establi
       
       {/* Include the AppFooter */}
       <AppFooter />
+      
+      {/* Add Mocktail Modal */}
+      <DrinkProfileModal
+        isOpen={isAddMocktailModalOpen}
+        onClose={() => setIsAddMocktailModalOpen(false)}
+        drink={null}
+        onSave={handleAddMocktail}
+      />
     </>
   );
 };
