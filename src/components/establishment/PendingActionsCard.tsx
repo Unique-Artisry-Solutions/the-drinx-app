@@ -24,14 +24,14 @@ const PendingActionsCard: React.FC<PendingActionsCardProps> = ({ pendingBarCrawl
   };
 
   return (
-    <Card className="vibrant-card">
-      <CardHeader>
+    <Card className="vibrant-card w-full">
+      <CardHeader className="pb-2">
         <CardTitle>Pending Actions</CardTitle>
         <CardDescription>Items that need your attention</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          <div className="p-3 rounded-md bg-gradient-to-r from-spiritless-pink/10 to-spiritless-orange/10 flex items-center justify-between">
+        <div className="flex gap-4 flex-wrap">
+          <div className="flex-1 min-w-[200px] p-3 rounded-md bg-gradient-to-r from-spiritless-pink/10 to-spiritless-orange/10 flex items-center justify-between">
             <div className="flex items-center">
               <Calendar className="h-5 w-5 text-spiritless-pink mr-2" />
               <div>
@@ -44,7 +44,7 @@ const PendingActionsCard: React.FC<PendingActionsCardProps> = ({ pendingBarCrawl
             </Button>
           </div>
           
-          <div className="p-3 rounded-md bg-gradient-to-r from-spiritless-green/10 to-blue-400/10 flex items-center justify-between">
+          <div className="flex-1 min-w-[200px] p-3 rounded-md bg-gradient-to-r from-spiritless-green/10 to-blue-400/10 flex items-center justify-between">
             <div className="flex items-center">
               <MessageSquare className="h-5 w-5 text-spiritless-green mr-2" />
               <div>
@@ -57,9 +57,11 @@ const PendingActionsCard: React.FC<PendingActionsCardProps> = ({ pendingBarCrawl
             </Button>
           </div>
           
-          <Button className="w-full" variant="outline" onClick={() => navigate('/establishment/profile')}>
-            View All Actions
-          </Button>
+          <div className="flex-1 min-w-[200px]">
+            <Button className="w-full" variant="outline" onClick={() => navigate('/establishment/profile')}>
+              View All Actions
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>

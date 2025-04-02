@@ -44,26 +44,23 @@ const EstablishmentDashboard: React.FC<EstablishmentDashboardProps> = ({ establi
           <KeyMetricsCards stats={stats} />
         </div>
         
-        {/* Main Content Grid with improved spacing */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
-          {/* Metrics Visualization - Takes 3/4 of the width on large screens */}
-          <div className="lg:col-span-3">
-            <MetricsVisualization 
-              returningRate={stats.returningRate}
-              visitorData={visitorData}
-              ratingData={ratingData}
-              mocktailData={mocktailData}
-              barCrawlData={barCrawlData}
-            />
-          </div>
-          
-          {/* Right Side Content - Takes 1/4 of the width on large screens */}
-          <div className="lg:col-span-1 space-y-6">
-            <PendingActionsCard 
-              pendingBarCrawls={stats.pendingBarCrawls} 
-              pendingReviews={stats.reviewsThisWeek} 
-            />
-          </div>
+        {/* Pending Actions - Full width horizontal */}
+        <div className="mb-6">
+          <PendingActionsCard 
+            pendingBarCrawls={stats.pendingBarCrawls} 
+            pendingReviews={stats.reviewsThisWeek} 
+          />
+        </div>
+        
+        {/* Main Content: Metrics Visualization (full width) */}
+        <div className="mb-8">
+          <MetricsVisualization 
+            returningRate={stats.returningRate}
+            visitorData={visitorData}
+            ratingData={ratingData}
+            mocktailData={mocktailData}
+            barCrawlData={barCrawlData}
+          />
         </div>
         
         {/* Recent Activity - Full width section */}
