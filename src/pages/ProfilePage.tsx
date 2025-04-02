@@ -116,14 +116,19 @@ const ProfilePage: React.FC = () => {
 
   return (
     <Layout>
-      <div className="animate-fade-in max-w-6xl mx-auto px-4 relative">
-        {/* Decorative element in top right */}
-        <div className="absolute top-0 right-0 w-64 h-64 rounded-full bg-gradient-to-br from-spiritless-pink/10 to-spiritless-green/20 blur-2xl -z-10 transform translate-x-1/4 -translate-y-1/4"></div>
-        <div className="absolute top-10 right-10 w-32 h-32 rounded-full bg-gradient-to-tr from-spiritless-orange/20 to-purple-300/20 blur-xl -z-10"></div>
+      <div className="animate-fade-in max-w-6xl mx-auto px-4 relative overflow-hidden">
+        {/* Enhanced decorative elements */}
+        <div className="absolute top-0 right-0 w-96 h-96 rounded-full bg-gradient-to-br from-spiritless-pink/20 to-spiritless-green/30 blur-3xl -z-10 transform translate-x-1/3 -translate-y-1/4"></div>
+        <div className="absolute top-20 right-1/4 w-56 h-56 rounded-full bg-gradient-to-tr from-spiritless-orange/25 to-purple-300/25 blur-2xl -z-10"></div>
+        <div className="absolute bottom-10 right-0 w-72 h-72 rounded-full bg-gradient-to-tl from-blue-300/20 to-spiritless-pink/15 blur-2xl -z-10"></div>
+        <div className="absolute top-1/3 left-0 w-48 h-48 rounded-full bg-gradient-to-br from-spiritless-green/15 to-spiritless-orange/10 blur-xl -z-10 transform -translate-x-1/4"></div>
+        
+        {/* Pattern overlay for added texture */}
+        <div className="absolute inset-0 bg-gradient-to-b from-white/50 to-transparent opacity-40 mix-blend-overlay pointer-events-none -z-10"></div>
         
         <ProfileHeader userName={userName} handleLogout={handleLogout} />
 
-        <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-gray-800 dark:to-gray-900 p-4 rounded-xl mb-6 shadow-sm">
+        <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-gray-800 dark:to-gray-900 p-4 rounded-xl mb-6 shadow-sm backdrop-blur-sm bg-white/30">
           <Tabs defaultValue="overview" className="space-y-4">
             <TabsList className="w-full flex justify-between sm:justify-start sm:gap-4 bg-white/70 dark:bg-gray-800/50 backdrop-blur-sm p-1 rounded-lg">
               <TabsTrigger 
