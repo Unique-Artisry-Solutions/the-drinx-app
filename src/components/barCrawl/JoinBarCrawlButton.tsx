@@ -25,11 +25,21 @@ const JoinBarCrawlButton: React.FC<JoinBarCrawlButtonProps> = ({
   const { toast } = useToast();
   const { user } = useAuth();
 
+  // For sample data functionality in current route
+  const isNumericId = !isNaN(Number(barCrawlId));
+
   // Fetch bar crawl details and check if user can join
   useEffect(() => {
     if (user && barCrawlId) {
       const fetchBarCrawlInfo = async () => {
         try {
+          // For sample data handling in demo mode
+          if (isNumericId) {
+            // This is just for demo purposes with sample data
+            setCanJoin(true);
+            return;
+          }
+          
           // Fetch bar crawl details
           const { data: barCrawl, error: barCrawlError } = await supabaseClient
             .from('bar_crawls')
@@ -139,6 +149,20 @@ const JoinBarCrawlButton: React.FC<JoinBarCrawlButtonProps> = ({
     setIsJoining(true);
 
     try {
+      // For sample data handling in demo mode
+      if (isNumericId) {
+        // Simulate joining for sample data
+        setTimeout(() => {
+          setIsAlreadyJoined(true);
+          toast({
+            title: "Successfully joined!",
+            description: "You've been added to this bar crawl",
+          });
+          setIsJoining(false);
+        }, 500);
+        return;
+      }
+
       // Insert into the participation table
       const { error } = await supabaseClient
         .from('user_bar_crawl_participation')
