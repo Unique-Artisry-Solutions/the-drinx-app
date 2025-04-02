@@ -1,3 +1,4 @@
+
 import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import LandingPage from '@/pages/LandingPage';
@@ -28,6 +29,7 @@ import EmailVerificationHandler from '@/routes/EmailVerificationHandler';
 import PrivacyPolicy from '@/pages/LegalPage';
 import EstablishmentDashboard from '@/components/establishment/EstablishmentDashboard';
 import Layout from '@/components/Layout';
+import Index from '@/pages/Index';
 
 // Admin pages
 const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
@@ -45,7 +47,7 @@ const AppRoutes = () => {
     <Suspense fallback={<div>Loading...</div>}>
       <Routes>
         {/* Public routes */}
-        <Route path="/" element={<LandingPage />} />
+        <Route path="/" element={<Index />} />
         <Route path="/map" element={<MapPage />} />
         <Route path="/explore" element={<Explore />} />
         <Route path="/establishment/:id" element={<EstablishmentDetail />} />

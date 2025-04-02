@@ -50,8 +50,12 @@ const LoginForm: React.FC<LoginFormProps> = ({
       description: `You are now logged in as a ${type === 'individual' ? 'user' : 'business'} for testing purposes.`,
     });
     
-    // Redirect to home page (for establishment) or explore page (for individual)
-    navigate(type === 'establishment' ? '/' : '/explore');
+    // Redirect based on user type
+    if (type === 'establishment') {
+      navigate('/');
+    } else {
+      navigate('/explore');
+    }
   };
 
   return (

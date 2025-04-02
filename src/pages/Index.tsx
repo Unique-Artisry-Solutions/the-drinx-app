@@ -45,8 +45,8 @@ const Index = () => {
     }
   }, [user, isLoading, navigate, isEstablishment]);
 
-  // If the user is an establishment, show the dashboard
-  if (isEstablishment && user && !isLoading) {
+  // If the user is an establishment (including bypass logins), show the dashboard
+  if (isEstablishment) {
     return (
       <Layout>
         <EstablishmentDashboard 
