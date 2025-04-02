@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { X, Cocktail, PlusCircle } from 'lucide-react';
+import { X, Wine, PlusCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface CreateMocktailModalProps {
@@ -94,7 +94,7 @@ const CreateMocktailModal: React.FC<CreateMocktailModalProps> = ({
       <DialogContent className="sm:max-w-[550px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Cocktail className="h-5 w-5 text-spiritless-pink" />
+            <Wine className="h-5 w-5 text-spiritless-pink" />
             Create Mocktail Recipe
           </DialogTitle>
           <DialogDescription>
