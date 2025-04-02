@@ -1,21 +1,15 @@
 
 import React, { useEffect, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Map, Plus, ShoppingCart, User, Star, CheckSquare, Route } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { NavigationType } from './NavigationTypes';
 import { useAuth } from '@/contexts/auth';
-
-interface NavItem {
-  icon: React.FC<any>;
-  label: string;
-  path: string;
-}
-
-interface MobileNavigationProps {
-  type: NavigationType;
-  userType?: 'individual' | 'establishment';
-}
+import { MobileNavigationProps } from './mobile/types';
+import { getGuestNavItems } from './mobile/GuestNavItems';
+import { getUserNavItems } from './mobile/UserNavItems';
+import { getAdminNavItems } from './mobile/AdminNavItems';
+import ProfileMenu from './mobile/ProfileMenu';
+import NavItem from './mobile/NavItem';
+import HomeButton from './mobile/HomeButton';
 
 const MobileNavigation: React.FC<MobileNavigationProps> = ({ 
   type, 
@@ -56,56 +50,21 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
     }
   };
 
-  // Guest Navigation Items
-  const guestNavItems: NavItem[] = [
-    { icon: Home, label: 'Home', path: '/landing' },
-    { icon: ShoppingCart, label: 'Cart', path: '/cart' },
-    { icon: User, label: 'Login', path: '/login' },
-  ];
-
   // Get the correct profile path based on user type
   const getProfilePath = () => {
     return currentUserType === 'establishment' ? '/establishment/profile' : '/profile';
   };
 
-  // User Navigation Items (modified to show "Create" for individuals)
-  const userNavItems: NavItem[] = [
-    { icon: Home, label: 'Home', path: '/' },
-    { icon: Map, label: 'Map', path: '/map' },
-  ];
-  
-  // Add Create for individuals only, removed Add for establishments
-  if (currentUserType === 'individual') {
-    userNavItems.push({ icon: Route, label: 'Create', path: '/create-bar-crawl' });
-  }
-  
-  userNavItems.push({ icon: User, label: 'Profile', path: getProfilePath() });
-
-  // Profile Related Items (shown when expanded)
-  const profileItems: NavItem[] = [
-    { icon: Route, label: 'Bar Crawls', path: '/profile/bar-crawls' },
-    { icon: Star, label: 'Favorites', path: '/profile/favorites' },
-    { icon: CheckSquare, label: 'Visited', path: '/profile/visited' },
-  ];
-
-  // Admin Navigation Items
-  const adminNavItems: NavItem[] = [
-    { icon: Home, label: 'Home', path: '/' },
-    { icon: Map, label: 'Map', path: '/map' },
-    { icon: Plus, label: 'Add', path: '/add' },
-    { icon: User, label: 'Admin', path: '/admin' },
-  ];
-
   const getNavItems = () => {
     switch (type) {
       case NavigationType.GUEST:
-        return guestNavItems;
+        return getGuestNavItems();
       case NavigationType.USER:
-        return userNavItems;
+        return getUserNavItems(currentUserType, getProfilePath);
       case NavigationType.ADMIN:
-        return adminNavItems;
+        return getAdminNavItems();
       default:
-        return guestNavItems;
+        return getGuestNavItems();
     }
   };
 
@@ -124,58 +83,21 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 w-full bg-white shadow-lg z-50 md:hidden border-t border-gray-100">
-      {shouldShowProfileItems && expanded && (
-        <div className="border-t border-gray-200 bg-gray-50">
-          <div className="grid grid-cols-3 gap-1 px-2 py-2">
-            {profileItems.map((item) => {
-              const isActive = location.pathname === item.path;
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={cn(
-                    "flex flex-col items-center justify-center py-2 px-1 rounded-md",
-                    isActive 
-                      ? "bg-material-primary/10 text-material-primary" 
-                      : "text-material-on-surface-variant hover:bg-gray-100"
-                  )}
-                >
-                  <item.icon size={20} />
-                  <span className="text-xs mt-1">{item.label}</span>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      )}
+      <ProfileMenu expanded={shouldShowProfileItems && expanded} />
       <div className="mx-auto w-full">
         <div className="flex justify-around items-center h-16">
-          {navItems.map((item) => {
+          {navItems.map((item, index) => {
             const isActive = location.pathname === item.path || 
               (item.path === '/profile' && location.pathname.startsWith('/profile/'));
             
             // Special case for Home button to prevent session problems
             if (item.label === 'Home' && type === NavigationType.USER) {
               return (
-                <a
-                  key={item.path}
-                  href="#"
+                <HomeButton
+                  key="home"
+                  isActive={isActive}
                   onClick={handleHomeClick}
-                  className={cn(
-                    "flex flex-col items-center justify-center w-full h-full py-2",
-                    isActive 
-                      ? "text-material-primary" 
-                      : "text-material-on-surface-variant"
-                  )}
-                >
-                  <div className={cn(
-                    "flex items-center justify-center",
-                    isActive && "animate-pulse-subtle"
-                  )}>
-                    <item.icon size={24} />
-                  </div>
-                  <span className="text-xs mt-1">{item.label}</span>
-                </a>
+                />
               );
             }
             
@@ -188,25 +110,12 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
             };
             
             return (
-              <Link
+              <NavItem
                 key={item.path}
-                to={item.path}
+                item={item}
+                isActive={isActive}
                 onClick={handleClick}
-                className={cn(
-                  "flex flex-col items-center justify-center w-full h-full py-2",
-                  isActive 
-                    ? "text-material-primary" 
-                    : "text-material-on-surface-variant"
-                )}
-              >
-                <div className={cn(
-                  "flex items-center justify-center",
-                  isActive && "animate-pulse-subtle"
-                )}>
-                  <item.icon size={24} />
-                </div>
-                <span className="text-xs mt-1">{item.label}</span>
-              </Link>
+              />
             );
           })}
         </div>
