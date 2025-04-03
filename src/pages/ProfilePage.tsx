@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
@@ -11,6 +10,7 @@ import OverviewTab from '@/components/profile/OverviewTab';
 import ActivityTab from '@/components/profile/ActivityTab';
 import QuickLinksTab from '@/components/profile/QuickLinksTab';
 import BadgesTab from '@/components/profile/BadgesTab';
+import UserRecipesTab from '@/components/profile/UserRecipesTab';
 import { sampleEstablishments, sampleCocktails } from '@/data/sampleData';
 
 const ProfilePage: React.FC = () => {
@@ -117,13 +117,11 @@ const ProfilePage: React.FC = () => {
   return (
     <Layout>
       <div className="animate-fade-in max-w-6xl mx-auto px-4 relative overflow-hidden">
-        {/* Enhanced decorative elements */}
         <div className="absolute top-0 right-0 w-96 h-96 rounded-full bg-gradient-to-br from-spiritless-pink/20 to-spiritless-green/30 blur-3xl -z-10 transform translate-x-1/3 -translate-y-1/4"></div>
         <div className="absolute top-20 right-1/4 w-56 h-56 rounded-full bg-gradient-to-tr from-spiritless-orange/25 to-purple-300/25 blur-2xl -z-10"></div>
         <div className="absolute bottom-10 right-0 w-72 h-72 rounded-full bg-gradient-to-tl from-blue-300/20 to-spiritless-pink/15 blur-2xl -z-10"></div>
         <div className="absolute top-1/3 left-0 w-48 h-48 rounded-full bg-gradient-to-br from-spiritless-green/15 to-spiritless-orange/10 blur-xl -z-10 transform -translate-x-1/4"></div>
         
-        {/* Pattern overlay for added texture */}
         <div className="absolute inset-0 bg-gradient-to-b from-white/50 to-transparent opacity-40 mix-blend-overlay pointer-events-none -z-10"></div>
         
         <ProfileHeader userName={userName} handleLogout={handleLogout} />
@@ -155,6 +153,12 @@ const ProfilePage: React.FC = () => {
               >
                 My Favorites
               </TabsTrigger>
+              <TabsTrigger 
+                className="flex-1 sm:flex-none data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm transition-all hover:bg-white/90 dark:hover:bg-gray-700/80 hover:-translate-y-0.5 hover:shadow-md"
+                value="recipes"
+              >
+                My Recipes
+              </TabsTrigger>
             </TabsList>
             
             <TabsContent value="overview" className="pt-2">
@@ -175,6 +179,10 @@ const ProfilePage: React.FC = () => {
             
             <TabsContent value="favorites" className="pt-2">
               <QuickLinksTab />
+            </TabsContent>
+            
+            <TabsContent value="recipes" className="pt-2">
+              <UserRecipesTab />
             </TabsContent>
           </Tabs>
         </div>

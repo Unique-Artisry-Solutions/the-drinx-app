@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { User, Settings, LogOut, Route } from 'lucide-react';
+import { User, Settings, LogOut, Route, GlassWater } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -114,18 +114,33 @@ const UserProfileDropdown: React.FC<UserProfileDropdownProps> = ({
         )}
         
         {userType === 'individual' && (
-          <DropdownMenuItem asChild>
-            <Link 
-              to="/profile/bar-crawls" 
-              className={cn(
-                "user-profile-item flex items-center gap-2 cursor-pointer rounded-md px-3 py-2 text-sm",
-                "hover:bg-gray-50 transition-colors duration-200"
-              )}
-            >
-              <Route className="h-4 w-4 text-gray-500" />
-              <span>My Bar Crawls</span>
-            </Link>
-          </DropdownMenuItem>
+          <>
+            <DropdownMenuItem asChild>
+              <Link 
+                to="/profile/bar-crawls" 
+                className={cn(
+                  "user-profile-item flex items-center gap-2 cursor-pointer rounded-md px-3 py-2 text-sm",
+                  "hover:bg-gray-50 transition-colors duration-200"
+                )}
+              >
+                <Route className="h-4 w-4 text-gray-500" />
+                <span>My Bar Crawls</span>
+              </Link>
+            </DropdownMenuItem>
+            
+            <DropdownMenuItem asChild>
+              <Link 
+                to="/profile?tab=recipes" 
+                className={cn(
+                  "user-profile-item flex items-center gap-2 cursor-pointer rounded-md px-3 py-2 text-sm",
+                  "hover:bg-gray-50 transition-colors duration-200"
+                )}
+              >
+                <GlassWater className="h-4 w-4 text-gray-500" />
+                <span>My Recipes</span>
+              </Link>
+            </DropdownMenuItem>
+          </>
         )}
         
         <DropdownMenuItem asChild>
