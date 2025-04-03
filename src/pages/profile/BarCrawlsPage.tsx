@@ -12,8 +12,8 @@ const BarCrawlsPage: React.FC = () => {
 
   const shareBarCrawl = () => {
     toast({
-      title: 'Bar Crawl Shared',
-      description: 'Your bar crawl list has been shared with users in your area!',
+      title: 'Swig Circuit Shared',
+      description: 'Your Swig Circuit list has been shared with users in your area!',
     });
   };
 
@@ -23,9 +23,9 @@ const BarCrawlsPage: React.FC = () => {
         <div className="mb-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-medium text-material-on-background">Joined Bar Crawls</h1>
+              <h1 className="text-2xl font-medium text-material-on-background">Joined Swig Circuits</h1>
               <p className="text-material-on-surface-variant">
-                View bar crawls you've joined or participated in
+                View Swig Circuits you've joined or participated in
               </p>
             </div>
           </div>

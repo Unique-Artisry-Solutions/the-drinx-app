@@ -23,9 +23,9 @@ const BarCrawlSection: React.FC<BarCrawlSectionProps> = ({
     <div className="mb-6 p-5 bg-gradient-to-r from-spiritless-pink/10 to-spiritless-green/10 rounded-lg border border-spiritless-pink/20">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
         <div>
-          <h2 className="text-xl font-semibold text-spiritless-pink mb-2">Bar Crawls</h2>
+          <h2 className="text-xl font-semibold text-spiritless-pink mb-2">Swig Circuits</h2>
           <p className="text-sm text-material-on-surface-variant">
-            Discover or create spirit-free bar crawls in your area
+            Discover or create spirit-free Swig Circuits in your area
           </p>
         </div>
         <div className="flex gap-3 mt-3 sm:mt-0">
@@ -56,7 +56,7 @@ const BarCrawlSection: React.FC<BarCrawlSectionProps> = ({
         </div>
       </div>
       
-      {/* Sample Bar Crawls Preview */}
+      {/* Sample Swig Circuit Preview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {barCrawls.slice(0, 3).map((crawl) => (
           <div key={crawl.id} className="bg-white p-4 rounded-md shadow-sm border border-gray-100 hover:shadow-md transition-shadow">

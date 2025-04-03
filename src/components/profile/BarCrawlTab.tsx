@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -30,10 +31,10 @@ const BarCrawlTab: React.FC<BarCrawlTabProps> = ({ barCrawlList, shareBarCrawl }
               <div className="flex justify-between items-start">
                 <div>
                   <h3 className="text-lg font-semibold">Currently Participating</h3>
-                  <p className="text-material-on-surface-variant text-sm">You're checked in to the bar crawl</p>
+                  <p className="text-material-on-surface-variant text-sm">You're checked in to the Swig Circuit</p>
                 </div>
                 <Button variant="outline" size="sm" onClick={toggleParticipation}>
-                  Leave Crawl
+                  Leave Circuit
                 </Button>
               </div>
               
@@ -79,14 +80,14 @@ const BarCrawlTab: React.FC<BarCrawlTabProps> = ({ barCrawlList, shareBarCrawl }
                     <Link to={`/profile/bar-crawls/participants/${barCrawlId}`} className="flex-1">
                       <Button variant="outline" className="w-full justify-start" size="sm">
                         <User size={16} className="mr-1" />
-                        Locate Crawlers
+                        Locate Swiggers
                       </Button>
                     </Link>
                   </div>
                   
                   <Link to={`/bar-crawl-details/${barCrawlId}`} className="w-full">
                     <Button className="w-full bg-spiritless-pink hover:bg-spiritless-pink/90" size="sm">
-                      View Bar Crawl Details
+                      View Swig Circuit Details
                     </Button>
                   </Link>
                 </div>
@@ -98,7 +99,7 @@ const BarCrawlTab: React.FC<BarCrawlTabProps> = ({ barCrawlList, shareBarCrawl }
       
       <div>
         <div className="flex justify-between items-center mb-3">
-          <h3 className="text-lg font-medium">Your Bar Crawl List</h3>
+          <h3 className="text-lg font-medium">Your Swig Circuit List</h3>
           {barCrawlList.length > 0 && (
             <Button size="sm" variant="outline" onClick={shareBarCrawl}>
               <Share2 className="h-4 w-4 mr-1" />
@@ -109,7 +110,7 @@ const BarCrawlTab: React.FC<BarCrawlTabProps> = ({ barCrawlList, shareBarCrawl }
         
         {barCrawlList.length === 0 ? (
           <div className="text-center py-6 border border-dashed rounded-lg bg-gray-50">
-            <p className="text-material-on-surface-variant">No establishments in your bar crawl list yet.</p>
+            <p className="text-material-on-surface-variant">No establishments in your Swig Circuit list yet.</p>
             <Link to="/map">
               <Button variant="link" className="mt-1">
                 Explore Map

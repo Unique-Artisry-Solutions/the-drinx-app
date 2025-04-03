@@ -109,13 +109,13 @@ const Explore = () => {
           initialSearchTerm={searchQuery}
         />
 
-        {/* Bar Crawl Section - Now placed ABOVE Featured Establishments */}
+        {/* Swig Circuit Section - Now placed ABOVE Featured Establishments */}
         <BarCrawlSection 
           barCrawls={sampleBarCrawls} 
           isAuthenticated={!!user}
         />
 
-        {/* Featured Establishments Section - Now BELOW Bar Crawls */}
+        {/* Featured Establishments Section - Now BELOW Swig Circuits */}
         <div className="mt-6">
           <FeaturedEstablishmentsSection establishments={establishments} />
         </div>

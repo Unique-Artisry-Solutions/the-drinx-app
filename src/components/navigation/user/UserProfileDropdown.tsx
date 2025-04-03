@@ -124,7 +124,7 @@ const UserProfileDropdown: React.FC<UserProfileDropdownProps> = ({
                 )}
               >
                 <Route className="h-4 w-4 text-gray-500" />
-                <span>My Bar Crawls</span>
+                <span>My Swig Circuits</span>
               </Link>
             </DropdownMenuItem>
             
