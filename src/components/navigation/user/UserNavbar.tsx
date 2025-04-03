@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth';
@@ -70,18 +69,17 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
     }
   };
 
-  // Handle home navigation based on user type
   const handleHomeClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault(); // Prevent default navigation
     
     if (user) {
       if (userType === 'establishment') {
-        navigate('/'); // Establishments go to dashboard
+        navigate('/');
       } else {
-        navigate('/explore'); // Individual users go to explore
+        navigate('/explore');
       }
     } else {
-      navigate('/landing'); // Non-authenticated users go to landing
+      navigate('/landing');
     }
   };
 
@@ -130,31 +128,13 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
             <UserProfileDropdown 
               username={username} 
               userType={userType} 
-              handleLogout={handleLogout} 
+              handleLogout={handleLogout}
+              activeTab={activeTab}
+              handleTabChange={handleTabChange}
+              tabOptions={tabOptions}
             />
           </div>
         </div>
-        
-        {/* Tab navigation */}
-        {tabOptions && tabOptions.length > 0 && (
-          <div className="tab-navigation border-b mt-3 -mb-3">
-            <div className="flex overflow-x-auto space-x-3 pb-2 hide-scrollbar">
-              {tabOptions.map((tab) => (
-                <button
-                  key={tab.value}
-                  onClick={() => handleTabChange && handleTabChange(tab.value)}
-                  className={`text-sm font-medium whitespace-nowrap px-3 py-2 border-b-2 transition-colors ${
-                    activeTab === tab.value
-                      ? 'border-spiritless-pink text-spiritless-pink'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
         
         <UserMobileMenu 
           isOpen={isMobileMenuOpen} 
