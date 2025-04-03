@@ -50,7 +50,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     if (isLandingPage) {
       return 'pt-16 pb-0 px-0';
     } else if (isMobile) {
-      return 'pt-16 pb-24 px-3'; // Adjusted padding for mobile
+      return 'pt-16 pb-20 px-0'; // Removed horizontal padding and adjusted bottom for mobile
     } else {
       return 'pt-20 pb-20 md:pb-6 px-4';
     }
@@ -79,7 +79,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-material-background w-full">
+    <div className="flex flex-col min-h-screen bg-material-background w-full max-w-full">
       {renderNavigation()}
       
       <main className={`flex-1 w-full max-w-full overflow-x-hidden ${getContentPadding()}`}>

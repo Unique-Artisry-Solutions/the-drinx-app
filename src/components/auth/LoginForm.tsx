@@ -6,6 +6,7 @@ import LoginFormActions from './login/LoginFormActions';
 import { useLoginForm } from './login/useLoginForm';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/auth';
 
 interface LoginFormProps {
   onSuccess?: () => void;
@@ -20,6 +21,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
 }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { refreshSession } = useAuth();
   
   const {
     identifier,
@@ -45,17 +47,20 @@ const LoginForm: React.FC<LoginFormProps> = ({
     localStorage.setItem('user_email', type === 'individual' ? 'bypass-user@example.com' : 'bypass-business@example.com');
     localStorage.setItem('user_username', type === 'individual' ? 'bypass-user' : 'bypass-business');
     
-    toast({
-      title: 'Admin Bypass Enabled',
-      description: `You are now logged in as a ${type === 'individual' ? 'user' : 'business'} for testing purposes.`,
+    // Force a refresh of the session to apply bypass
+    refreshSession().then(() => {
+      toast({
+        title: 'Admin Bypass Enabled',
+        description: `You are now logged in as a ${type === 'individual' ? 'user' : 'business'} for testing purposes.`,
+      });
+      
+      // Redirect based on user type
+      if (type === 'establishment') {
+        navigate('/');
+      } else {
+        navigate('/explore');
+      }
     });
-    
-    // Redirect based on user type
-    if (type === 'establishment') {
-      navigate('/');
-    } else {
-      navigate('/explore');
-    }
   };
 
   return (

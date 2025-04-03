@@ -56,6 +56,7 @@ export const TypedProtectedRoute = ({
   if (isAdminBypass) {
     // For admin bypass, check if the stored type matches the required type
     if (storedUserType !== userType) {
+      // Redirect if user types don't match
       return <Navigate to="/landing" replace />;
     }
     

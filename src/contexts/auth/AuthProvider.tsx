@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { AuthContextType } from './types';
@@ -68,6 +69,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.removeItem('user_type');
       localStorage.removeItem('user_username');
       setUser(null);
+      setSession(null);
       setIsEmailVerified(false);
       
       toast({

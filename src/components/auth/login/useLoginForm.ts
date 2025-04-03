@@ -16,7 +16,7 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
   
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { signIn, isLoading } = useAuth();
+  const { signIn, isLoading, refreshSession } = useAuth();
 
   const toggleAdminLogin = () => {
     setIsAdminLogin(!isAdminLogin);

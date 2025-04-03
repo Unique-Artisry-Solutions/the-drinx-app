@@ -1,3 +1,4 @@
+
 import { useEffect } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -29,11 +30,15 @@ export function useAuthSetup({
   useEffect(() => {
     console.log('AuthProvider useEffect running');
     
-    // Check for admin bypass
+    // Check for admin bypass first
     const { isAdminBypass, bypassUser } = checkAdminBypass();
     
-    if (isAdminBypass) {
-      // Skip the rest of the auth checks
+    if (isAdminBypass && bypassUser) {
+      console.log('Admin bypass active, using bypass user', bypassUser);
+      setUser(bypassUser);
+      setIsEmailVerified(true);
+      setIsLoading(false);
+      // Skip the rest of the auth checks when admin bypass is active
       return;
     }
     
@@ -153,8 +158,11 @@ export function useAuthSetup({
     
     // Set up a periodic session check and refresh
     const sessionCheckInterval = setInterval(() => {
-      refreshSession();
-      checkAdminSession();
+      // Skip session refresh for admin bypass users
+      if (!localStorage.getItem('admin_bypass')) {
+        refreshSession();
+        checkAdminSession();
+      }
     }, 15 * 60 * 1000); // Check every 15 minutes
 
     return () => {
