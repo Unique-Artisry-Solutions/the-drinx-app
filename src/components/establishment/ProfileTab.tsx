@@ -39,7 +39,7 @@ const ProfileTab: React.FC<ProfileTabProps> = ({
   handleSaveProfile
 }) => {
   return (
-    <Card>
+    <Card className="w-full">
       <CardHeader>
         <CardTitle>Establishment Information</CardTitle>
       </CardHeader>
