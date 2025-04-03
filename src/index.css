@@ -1,3 +1,4 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
 
 @tailwind base;
@@ -6,6 +7,47 @@
 
 @layer base {
   :root {
+    --background: 240 10% 8%;
+    --foreground: 0 0% 90%;
+
+    --card: 240 10% 10%;
+    --card-foreground: 0 0% 90%;
+
+    --popover: 240 10% 8%;
+    --popover-foreground: 0 0% 90%;
+
+    --primary: 333 65% 58%; /* Pink #D94E8F */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 83 96% 38%; /* Green #84BF04 */
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 240 10% 15%;
+    --muted-foreground: 0 0% 70%;
+
+    --accent: 38 96% 48%; /* Orange #F29F05 */
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 96% 18%; /* Burgundy #590202 */
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 240 10% 18%;
+    --input: 240 10% 18%;
+    --ring: 333 65% 58%; /* Pink #D94E8F */
+
+    --radius: 20px;
+
+    --sidebar-background: 240 10% 6%;
+    --sidebar-foreground: 0 0% 85%;
+    --sidebar-primary: 333 65% 58%; /* Pink #D94E8F */
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 10% 12%;
+    --sidebar-accent-foreground: 0 0% 90%;
+    --sidebar-border: 240 10% 12%;
+    --sidebar-ring: 333 65% 58%; /* Pink #D94E8F */
+  }
+
+  .light {
     --background: 0 0% 100%;
     --foreground: 335 40% 15%;
 
@@ -44,45 +86,6 @@
     --sidebar-accent-foreground: 335 40% 15%;
     --sidebar-border: 335 20% 91%;
     --sidebar-ring: 333 65% 58%; /* Pink #D94E8F */
-  }
-
-  .dark {
-    --background: 335 40% 12%;
-    --foreground: 0 0% 98%;
-
-    --card: 335 40% 12%;
-    --card-foreground: 0 0% 98%;
-
-    --popover: 335 40% 12%;
-    --popover-foreground: 0 0% 98%;
-
-    --primary: 333 65% 70%; /* Lighter Pink */
-    --primary-foreground: 335 40% 12%;
-
-    --secondary: 83 96% 60%; /* Lighter Green */
-    --secondary-foreground: 335 40% 12%;
-
-    --muted: 335 30% 25%;
-    --muted-foreground: 335 40% 80%;
-
-    --accent: 38 96% 60%; /* Lighter Orange */
-    --accent-foreground: 0 0% 98%;
-
-    --destructive: 0 62.8% 30.6%; /* Lighter Burgundy */
-    --destructive-foreground: 0 0% 98%;
-
-    --border: 335 40% 25%;
-    --input: 335 40% 25%;
-    --ring: 333 65% 70%; /* Lighter Pink */
-
-    --sidebar-background: 335 40% 10%;
-    --sidebar-foreground: 335 40% 95%;
-    --sidebar-primary: 333 65% 70%; /* Lighter Pink */
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 335 30% 16%;
-    --sidebar-accent-foreground: 335 40% 95%;
-    --sidebar-border: 335 40% 16%;
-    --sidebar-ring: 333 65% 70%; /* Lighter Pink */
   }
 }
 
@@ -128,7 +131,7 @@
 
   /* Glass morphism */
   .glass {
-    @apply bg-white/80 backdrop-blur-md border border-white/20;
+    @apply bg-white/10 backdrop-blur-md border border-white/20;
   }
 
   .glass-dark {
@@ -187,11 +190,11 @@
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    @apply bg-gray-300 dark:bg-gray-600 rounded-full;
+    @apply bg-gray-600 dark:bg-gray-400 rounded-full;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    @apply bg-gray-400 dark:bg-gray-500;
+    @apply bg-gray-500 dark:bg-gray-300;
   }
 
   /* Map container */
@@ -218,13 +221,13 @@
 
   /* Bold section backgrounds */
   .bg-pattern-pink {
-    background-color: #ffecf4;
+    background-color: #3A1525;
     background-image: radial-gradient(circle at 1px 1px, #D94E8F 1px, transparent 0);
     background-size: 20px 20px;
   }
   
   .bg-pattern-green {
-    background-color: #f0ffe0;
+    background-color: #253601;
     background-image: radial-gradient(circle at 1px 1px, #84BF04 1px, transparent 0);
     background-size: 20px 20px;
   }

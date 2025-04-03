@@ -20,7 +20,7 @@ const BarCrawlSection: React.FC<BarCrawlSectionProps> = ({
   isAuthenticated
 }) => {
   return (
-    <div className="mb-6 p-5 bg-gradient-to-r from-spiritless-pink/10 to-spiritless-green/10 rounded-lg border border-spiritless-pink/20">
+    <div className="mb-6 p-5 bg-gradient-to-r from-spiritless-pink/20 to-spiritless-green/20 rounded-lg border border-spiritless-pink/30 shadow-md">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
         <div>
           <h2 className="text-xl font-semibold text-spiritless-pink mb-2">Swig Circuits</h2>
@@ -59,10 +59,10 @@ const BarCrawlSection: React.FC<BarCrawlSectionProps> = ({
       {/* Sample Swig Circuit Preview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {barCrawls.slice(0, 3).map((crawl) => (
-          <div key={crawl.id} className="bg-white p-4 rounded-md shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+          <div key={crawl.id} className="bg-card p-4 rounded-md shadow-sm border border-border hover:shadow-md transition-shadow">
             <h3 className="font-medium mb-2 text-lg">{crawl.name}</h3>
             <div className="flex justify-between items-center mt-2">
-              <span className="text-sm text-gray-500">{crawl.stops} stops</span>
+              <span className="text-sm text-muted-foreground">{crawl.stops} stops</span>
               <Button variant="ghost" size="sm" asChild>
                 <Link to={`/bar-crawl/${crawl.id}`}>View</Link>
               </Button>
