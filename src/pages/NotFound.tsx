@@ -14,18 +14,18 @@ const NotFound = () => {
   }, [location.pathname]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-material-background p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gray-900 p-4">
       <div className="text-center max-w-md">
-        <h1 className="text-6xl font-bold mb-4 text-material-primary animate-float">404</h1>
-        <p className="text-xl text-material-on-surface mb-6">
+        <h1 className="text-6xl font-bold mb-4 text-purple-500 animate-float">404</h1>
+        <p className="text-xl text-white mb-6">
           We couldn't find the page you're looking for
         </p>
-        <p className="text-material-on-surface-variant mb-8">
+        <p className="text-gray-400 mb-8">
           The page you requested doesn't exist or may have been moved.
         </p>
         <Link 
           to="/" 
-          className="bg-material-primary text-material-on-primary px-6 py-3 rounded-full inline-block font-medium transition-all hover:bg-opacity-90"
+          className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-full inline-block font-medium transition-all hover:bg-opacity-90 hover:shadow-lg"
         >
           Return Home
         </Link>
