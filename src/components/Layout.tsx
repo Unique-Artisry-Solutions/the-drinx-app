@@ -11,11 +11,24 @@ import AppFooter from './AppFooter';
 import { useAuth } from '@/contexts/AuthContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 
-interface LayoutProps {
-  children: React.ReactNode;
+interface TabOption {
+  value: string;
+  label: string;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children }) => {
+interface LayoutProps {
+  children: React.ReactNode;
+  activeTab?: string;
+  handleTabChange?: (value: string) => void;
+  tabOptions?: TabOption[];
+}
+
+const Layout: React.FC<LayoutProps> = ({ 
+  children, 
+  activeTab, 
+  handleTabChange, 
+  tabOptions 
+}) => {
   const location = useLocation();
   const { user, isEmailVerified } = useAuth();
   const [navigationType, setNavigationType] = React.useState<NavigationType>(NavigationType.GUEST);
@@ -60,14 +73,26 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     if (isAdminPage || isAdmin) {
       return <AdminTopNavigation />;
     } else if (navigationType === NavigationType.USER) {
-      return <UserTopNavigation />;
+      return (
+        <UserTopNavigation 
+          activeTab={activeTab} 
+          handleTabChange={handleTabChange}
+          tabOptions={tabOptions}
+        />
+      );
     } else {
       // Only show GuestTopNavigation on the landing page or for unauthenticated users on non-interior pages
       if (isLandingPage || (!user && (location.pathname === '/login' || location.pathname === '/signup' || location.pathname === '/mission'))) {
         return <GuestTopNavigation />;
       } else {
         // For other interior pages when not authenticated, still show UserTopNavigation
-        return <UserTopNavigation />;
+        return (
+          <UserTopNavigation 
+            activeTab={activeTab} 
+            handleTabChange={handleTabChange}
+            tabOptions={tabOptions}
+          />
+        );
       }
     }
   };

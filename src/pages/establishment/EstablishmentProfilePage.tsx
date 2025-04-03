@@ -1,20 +1,21 @@
 
 import React, { useEffect, useState } from 'react';
 import Layout from '@/components/Layout';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
 import ProfileTab from '@/components/establishment/ProfileTab';
 import PromotionsTab from '@/components/establishment/PromotionsTab';
 import MocktailMenuTab from '@/components/establishment/MocktailMenuTab';
 import VisitorStatsTab from '@/components/establishment/VisitorStatsTab';
 import BarCrawlsTab from '@/components/establishment/BarCrawlsTab';
 import { useEstablishmentProfile } from '@/hooks/useEstablishmentProfile';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 const EstablishmentProfilePage = () => {
   const [searchParams] = useSearchParams();
   const tabParam = searchParams.get('tab');
   const [activeTab, setActiveTab] = useState('profile');
+  const navigate = useNavigate();
   const isMobile = useIsMobile();
   
   const {
@@ -32,8 +33,24 @@ const EstablishmentProfilePage = () => {
     }
   }, [tabParam]);
   
+  // Function to change tabs and update the URL
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    navigate(`/establishment/profile?tab=${value}`);
+  };
+  
   return (
-    <Layout>
+    <Layout 
+      activeTab={activeTab} 
+      handleTabChange={handleTabChange}
+      tabOptions={[
+        { value: 'profile', label: isMobile ? 'Profile' : 'Profile' },
+        { value: 'promotions', label: isMobile ? 'Promos' : 'Promotions' },
+        { value: 'menu', label: isMobile ? 'Menu' : 'Mocktail Menu' },
+        { value: 'visitors', label: isMobile ? 'Stats' : 'Visitor Stats' },
+        { value: 'barCrawls', label: isMobile ? 'Crawls' : 'Bar Crawl Requests' }
+      ]}
+    >
       <div className="py-4 animate-fade-in w-full">
         <div className="flex items-center justify-between mb-6 px-4 md:px-6 lg:mx-[10%]">
           <div>
@@ -44,80 +61,8 @@ const EstablishmentProfilePage = () => {
           </div>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <div className="border-b sticky top-16 bg-white z-10 px-4 md:px-6 lg:mx-[10%]">
-            {isMobile ? (
-              <div className="overflow-x-auto pb-2 -mb-px">
-                <TabsList className="inline-flex w-auto h-10 bg-transparent p-0 space-x-2">
-                  <TabsTrigger 
-                    value="profile" 
-                    className="rounded-t-md rounded-b-none border-b-2 data-[state=active]:border-spiritless-pink data-[state=active]:bg-transparent"
-                  >
-                    Profile
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="promotions"
-                    className="rounded-t-md rounded-b-none border-b-2 data-[state=active]:border-spiritless-pink data-[state=active]:bg-transparent"
-                  >
-                    Promotions
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="menu"
-                    className="rounded-t-md rounded-b-none border-b-2 data-[state=active]:border-spiritless-pink data-[state=active]:bg-transparent"
-                  >
-                    Menu
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="visitors"
-                    className="rounded-t-md rounded-b-none border-b-2 data-[state=active]:border-spiritless-pink data-[state=active]:bg-transparent"
-                  >
-                    Stats
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="barCrawls"
-                    className="rounded-t-md rounded-b-none border-b-2 data-[state=active]:border-spiritless-pink data-[state=active]:bg-transparent"
-                  >
-                    Bar Crawls
-                  </TabsTrigger>
-                </TabsList>
-              </div>
-            ) : (
-              <TabsList className="w-full bg-transparent h-12 p-0">
-                <TabsTrigger 
-                  value="profile" 
-                  className="flex-1 rounded-t-md rounded-b-none border-b-2 data-[state=active]:border-spiritless-pink data-[state=active]:bg-transparent"
-                >
-                  Profile
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="promotions"
-                  className="flex-1 rounded-t-md rounded-b-none border-b-2 data-[state=active]:border-spiritless-pink data-[state=active]:bg-transparent"
-                >
-                  Promotions
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="menu"
-                  className="flex-1 rounded-t-md rounded-b-none border-b-2 data-[state=active]:border-spiritless-pink data-[state=active]:bg-transparent"
-                >
-                  Mocktail Menu
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="visitors"
-                  className="flex-1 rounded-t-md rounded-b-none border-b-2 data-[state=active]:border-spiritless-pink data-[state=active]:bg-transparent"
-                >
-                  Visitor Stats
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="barCrawls"
-                  className="flex-1 rounded-t-md rounded-b-none border-b-2 data-[state=active]:border-spiritless-pink data-[state=active]:bg-transparent"
-                >
-                  Bar Crawl Requests
-                </TabsTrigger>
-              </TabsList>
-            )}
-          </div>
-
-          <div className="px-4 py-6 md:px-6 lg:mx-[10%]">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+          <div className="px-4 py-2 md:px-6 lg:mx-[10%]">
             <TabsContent value="profile">
               <ProfileTab 
                 name={profileState.name} 
