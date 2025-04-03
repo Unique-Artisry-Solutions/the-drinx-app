@@ -35,7 +35,7 @@ const EstablishmentProfilePage = () => {
   return (
     <Layout>
       <div className="py-4 animate-fade-in w-full">
-        <div className={`flex items-center justify-between mb-6 ${isMobile ? 'px-4' : 'mx-[10%]'}`}>
+        <div className="flex items-center justify-between mb-6 px-4 md:px-6 lg:mx-[10%]">
           <div>
             <h1 className="text-2xl font-medium text-material-on-background">Establishment Profile</h1>
             <p className="text-material-on-surface-variant">
@@ -44,18 +44,80 @@ const EstablishmentProfilePage = () => {
           </div>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className={isMobile ? 'px-0' : 'mx-[10%]'}>
-          <div className="overflow-x-auto px-4">
-            <TabsList className="w-full mb-4">
-              <TabsTrigger value="profile">Profile</TabsTrigger>
-              <TabsTrigger value="promotions">Promotions</TabsTrigger>
-              <TabsTrigger value="menu">Mocktail Menu</TabsTrigger>
-              <TabsTrigger value="visitors">Visitor Stats</TabsTrigger>
-              <TabsTrigger value="barCrawls">Bar Crawl Requests</TabsTrigger>
-            </TabsList>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <div className="border-b sticky top-16 bg-white z-10 px-4 md:px-6 lg:mx-[10%]">
+            {isMobile ? (
+              <div className="overflow-x-auto pb-2 -mb-px">
+                <TabsList className="inline-flex w-auto h-10 bg-transparent p-0 space-x-2">
+                  <TabsTrigger 
+                    value="profile" 
+                    className="rounded-t-md rounded-b-none border-b-2 data-[state=active]:border-spiritless-pink data-[state=active]:bg-transparent"
+                  >
+                    Profile
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="promotions"
+                    className="rounded-t-md rounded-b-none border-b-2 data-[state=active]:border-spiritless-pink data-[state=active]:bg-transparent"
+                  >
+                    Promotions
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="menu"
+                    className="rounded-t-md rounded-b-none border-b-2 data-[state=active]:border-spiritless-pink data-[state=active]:bg-transparent"
+                  >
+                    Menu
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="visitors"
+                    className="rounded-t-md rounded-b-none border-b-2 data-[state=active]:border-spiritless-pink data-[state=active]:bg-transparent"
+                  >
+                    Stats
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="barCrawls"
+                    className="rounded-t-md rounded-b-none border-b-2 data-[state=active]:border-spiritless-pink data-[state=active]:bg-transparent"
+                  >
+                    Bar Crawls
+                  </TabsTrigger>
+                </TabsList>
+              </div>
+            ) : (
+              <TabsList className="w-full bg-transparent h-12 p-0">
+                <TabsTrigger 
+                  value="profile" 
+                  className="flex-1 rounded-t-md rounded-b-none border-b-2 data-[state=active]:border-spiritless-pink data-[state=active]:bg-transparent"
+                >
+                  Profile
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="promotions"
+                  className="flex-1 rounded-t-md rounded-b-none border-b-2 data-[state=active]:border-spiritless-pink data-[state=active]:bg-transparent"
+                >
+                  Promotions
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="menu"
+                  className="flex-1 rounded-t-md rounded-b-none border-b-2 data-[state=active]:border-spiritless-pink data-[state=active]:bg-transparent"
+                >
+                  Mocktail Menu
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="visitors"
+                  className="flex-1 rounded-t-md rounded-b-none border-b-2 data-[state=active]:border-spiritless-pink data-[state=active]:bg-transparent"
+                >
+                  Visitor Stats
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="barCrawls"
+                  className="flex-1 rounded-t-md rounded-b-none border-b-2 data-[state=active]:border-spiritless-pink data-[state=active]:bg-transparent"
+                >
+                  Bar Crawl Requests
+                </TabsTrigger>
+              </TabsList>
+            )}
           </div>
 
-          <div className="px-4">
+          <div className="px-4 py-6 md:px-6 lg:mx-[10%]">
             <TabsContent value="profile">
               <ProfileTab 
                 name={profileState.name} 
