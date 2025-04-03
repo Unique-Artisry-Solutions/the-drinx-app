@@ -1,14 +1,10 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Sparkles, Heart, Mail, ExternalLink } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-
 const AppFooter: React.FC = () => {
   const currentYear = new Date().getFullYear();
-  
-  return (
-    <footer className="bg-gray-50 border-t mt-auto py-6">
+  return <footer className="border-t mt-auto py-6 bg-slate-900">
       <div className="container mx-auto px-4">
         <div className="flex flex-col md:flex-row justify-between items-center">
           <div className="flex items-center mb-4 md:mb-0">
@@ -41,8 +37,6 @@ const AppFooter: React.FC = () => {
           <p className="mt-1">Drink responsibly. Not suitable for individuals under the legal drinking age.</p>
         </div>
       </div>
-    </footer>
-  );
+    </footer>;
 };
-
 export default AppFooter;

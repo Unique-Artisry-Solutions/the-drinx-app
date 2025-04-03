@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { NavigationType } from './navigation/NavigationTypes';
@@ -10,39 +9,36 @@ import Breadcrumbs from './navigation/Breadcrumbs';
 import AppFooter from './AppFooter';
 import { useAuth } from '@/contexts/AuthContext';
 import { useIsMobile } from '@/hooks/use-mobile';
-
 interface TabOption {
   value: string;
   label: string;
 }
-
 interface LayoutProps {
   children: React.ReactNode;
   activeTab?: string;
   handleTabChange?: (value: string) => void;
   tabOptions?: TabOption[];
 }
-
-const Layout: React.FC<LayoutProps> = ({ 
-  children, 
-  activeTab, 
-  handleTabChange, 
-  tabOptions 
+const Layout: React.FC<LayoutProps> = ({
+  children,
+  activeTab,
+  handleTabChange,
+  tabOptions
 }) => {
   const location = useLocation();
-  const { user, isEmailVerified } = useAuth();
+  const {
+    user,
+    isEmailVerified
+  } = useAuth();
   const [navigationType, setNavigationType] = React.useState<NavigationType>(NavigationType.GUEST);
   const [userType, setUserType] = React.useState<'individual' | 'establishment'>('individual');
   const [isAdmin, setIsAdmin] = React.useState(false);
   const isMobile = useIsMobile();
-
   useEffect(() => {
     const checkAuth = () => {
       const isAdminAuth = localStorage.getItem('admin_authenticated') === 'true';
       const userTypeStored = localStorage.getItem('user_type');
-
       setIsAdmin(isAdminAuth);
-      
       if (isAdminAuth) {
         setNavigationType(NavigationType.ADMIN);
       } else if (user && isEmailVerified) {
@@ -52,13 +48,10 @@ const Layout: React.FC<LayoutProps> = ({
         setNavigationType(NavigationType.GUEST);
       }
     };
-
     checkAuth();
   }, [user, isEmailVerified, location.pathname]);
-
   const isLandingPage = location.pathname === '/' || location.pathname === '/landing';
   const isAdminPage = location.pathname.startsWith('/admin');
-  
   const getContentPadding = () => {
     if (isLandingPage) {
       return 'pt-16 pb-0 px-0';
@@ -68,31 +61,18 @@ const Layout: React.FC<LayoutProps> = ({
       return 'pt-20 pb-20 md:pb-6 px-4';
     }
   };
-
   const renderNavigation = () => {
     if (isAdminPage || isAdmin) {
       return <AdminTopNavigation />;
     } else if (navigationType === NavigationType.USER) {
-      return (
-        <UserTopNavigation 
-          activeTab={activeTab} 
-          handleTabChange={handleTabChange}
-          tabOptions={tabOptions}
-        />
-      );
+      return <UserTopNavigation activeTab={activeTab} handleTabChange={handleTabChange} tabOptions={tabOptions} />;
     } else {
       // Only show GuestTopNavigation on the landing page or for unauthenticated users on non-interior pages
-      if (isLandingPage || (!user && (location.pathname === '/login' || location.pathname === '/signup' || location.pathname === '/mission'))) {
+      if (isLandingPage || !user && (location.pathname === '/login' || location.pathname === '/signup' || location.pathname === '/mission')) {
         return <GuestTopNavigation />;
       } else {
         // For other interior pages when not authenticated, still show UserTopNavigation
-        return (
-          <UserTopNavigation 
-            activeTab={activeTab} 
-            handleTabChange={handleTabChange}
-            tabOptions={tabOptions}
-          />
-        );
+        return <UserTopNavigation activeTab={activeTab} handleTabChange={handleTabChange} tabOptions={tabOptions} />;
       }
     }
   };
@@ -102,28 +82,20 @@ const Layout: React.FC<LayoutProps> = ({
     const excludedPaths = ['/', '/landing', '/login', '/signup', '/mission', '/map', '/explore'];
     return !excludedPaths.includes(location.pathname) && !isLandingPage && !isAdminPage;
   };
-
-  return (
-    <div className="flex flex-col min-h-screen bg-material-background w-full max-w-full">
+  return <div className="flex flex-col min-h-screen w-full max-w-full bg-[#000a0e]/[0.39]">
       {renderNavigation()}
       
       <main className={`flex-1 w-full max-w-full overflow-x-hidden ${getContentPadding()}`}>
-        {shouldShowBreadcrumbs() && (
-          <div className="container max-w-6xl mx-auto px-4 pt-1">
+        {shouldShowBreadcrumbs() && <div className="container max-w-6xl mx-auto px-4 pt-1">
             <Breadcrumbs />
-          </div>
-        )}
+          </div>}
         {children}
       </main>
       
       {/* Show AppFooter on interior pages, not on landing page */}
       {!isLandingPage && !isMobile && <AppFooter />}
       
-      {!isLandingPage && (
-        <MobileNavigation type={navigationType} userType={userType} />
-      )}
-    </div>
-  );
+      {!isLandingPage && <MobileNavigation type={navigationType} userType={userType} />}
+    </div>;
 };
-
 export default Layout;
