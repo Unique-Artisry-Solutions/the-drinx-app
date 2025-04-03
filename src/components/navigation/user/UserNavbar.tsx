@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth';
@@ -83,6 +84,9 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
     }
   };
 
+  // Check if we're on the establishment profile page to pass down the correct props
+  const isEstablishmentProfile = location.pathname === '/establishment/profile';
+
   return (
     <nav className="user-top-nav fixed top-0 left-0 w-full bg-white z-50 shadow-sm">
       <div className="user-nav-container max-w-6xl mx-auto px-4 py-3">
@@ -129,9 +133,9 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
               username={username} 
               userType={userType} 
               handleLogout={handleLogout}
-              activeTab={activeTab}
-              handleTabChange={handleTabChange}
-              tabOptions={tabOptions}
+              activeTab={isEstablishmentProfile ? activeTab : undefined}
+              handleTabChange={isEstablishmentProfile ? handleTabChange : undefined}
+              tabOptions={isEstablishmentProfile ? tabOptions : undefined}
             />
           </div>
         </div>
@@ -141,6 +145,9 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
           username={username} 
           userType={userType} 
           onClose={() => setIsMobileMenuOpen(false)} 
+          activeTab={isEstablishmentProfile ? activeTab : undefined}
+          handleTabChange={isEstablishmentProfile ? handleTabChange : undefined}
+          tabOptions={isEstablishmentProfile ? tabOptions : undefined}
         />
       </div>
     </nav>

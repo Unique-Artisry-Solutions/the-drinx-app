@@ -1,122 +1,193 @@
 
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Home, Map, Route, User, Settings } from 'lucide-react';
+import { NavLink, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+
+interface TabOption {
+  value: string;
+  label: string;
+}
 
 interface UserMobileMenuProps {
   isOpen: boolean;
   username: string | null;
   userType: 'individual' | 'establishment';
   onClose: () => void;
+  activeTab?: string;
+  handleTabChange?: (value: string) => void;
+  tabOptions?: TabOption[];
 }
 
 const UserMobileMenu: React.FC<UserMobileMenuProps> = ({ 
   isOpen, 
   username, 
   userType, 
-  onClose 
+  onClose,
+  activeTab,
+  handleTabChange,
+  tabOptions
 }) => {
   const location = useLocation();
-  
+  const isEstablishmentProfile = location.pathname === '/establishment/profile';
+
   if (!isOpen) return null;
 
-  const userNavItems = [
-    { icon: Home, label: 'Home', path: '/' },
-    { icon: Map, label: 'Map', path: '/map' },
-  ];
-  
-  if (userType === 'individual') {
-    userNavItems.push({ icon: Route, label: 'Create', path: '/create-bar-crawl' });
-  }
-
-  const getProfilePath = () => {
-    if (userType === 'establishment') {
-      return '/establishment/profile';
+  const handleTabClick = (tab: string) => {
+    if (handleTabChange) {
+      handleTabChange(tab);
+      onClose();
     }
-    return '/profile';
   };
-
+  
   return (
-    <div className="user-mobile-menu md:hidden py-3 space-y-1 animate-slide-down">
-      {username && (
-        <div className="px-4 py-3 text-sm text-gray-600 border-b border-gray-100 mb-2 pb-2 bg-gray-50/50 rounded-md">
-          Welcome, <span className="font-medium text-spiritless-pink">{username}</span>
-        </div>
-      )}
-      <div className="grid gap-1 px-2">
-        {userNavItems.map((item) => {
-          const isActive = location.pathname === item.path;
-          return (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={cn(
-                "user-mobile-link flex items-center px-3 py-2.5 rounded-md transition-all duration-300",
-                isActive 
-                  ? "bg-spiritless-pink/10 text-spiritless-pink font-medium" 
-                  : "text-gray-600 hover:bg-gray-100"
-              )}
-              onClick={onClose}
-            >
-              <item.icon className={cn(
-                "mr-3 h-5 w-5 transition-transform duration-300",
-                isActive ? "scale-110" : ""
-              )} />
-              <span>{item.label}</span>
-            </Link>
-          );
-        })}
-        <Link
-          to={getProfilePath()}
-          className={cn(
-            "user-mobile-link flex items-center px-3 py-2.5 rounded-md transition-all duration-300",
-            location.pathname === getProfilePath()
-              ? "bg-spiritless-pink/10 text-spiritless-pink font-medium" 
-              : "text-gray-600 hover:bg-gray-100"
-          )}
-          onClick={onClose}
-        >
-          <User className={cn(
-            "mr-3 h-5 w-5 transition-transform duration-300",
-            location.pathname === getProfilePath() ? "scale-110" : ""
-          )} />
-          <span>Profile</span>
-        </Link>
-        {userType === 'individual' && (
-          <Link
-            to="/profile/bar-crawls"
-            className={cn(
-              "user-mobile-link flex items-center px-3 py-2.5 rounded-md transition-all duration-300",
-              location.pathname === "/profile/bar-crawls"
-                ? "bg-spiritless-pink/10 text-spiritless-pink font-medium" 
-                : "text-gray-600 hover:bg-gray-100"
-            )}
+    <div className="user-mobile-menu fixed inset-0 z-50 bg-white" onClick={onClose}>
+      <div className="mobile-menu-container h-full overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="mobile-menu-header border-b p-4 flex items-center justify-between">
+          <div className="user-welcome">
+            <p className="text-sm text-gray-500">Welcome,</p>
+            <p className="font-medium text-spiritless-pink">{username || 'Guest'}</p>
+          </div>
+          <button 
+            className="close-button p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
             onClick={onClose}
           >
-            <Route className={cn(
-              "mr-3 h-5 w-5 transition-transform duration-300",
-              location.pathname === "/profile/bar-crawls" ? "scale-110" : ""
-            )} />
-            <span>My Bar Crawls</span>
-          </Link>
-        )}
-        <Link
-          to="/settings"
-          className={cn(
-            "user-mobile-link flex items-center px-3 py-2.5 rounded-md transition-all duration-300",
-            location.pathname === "/settings"
-              ? "bg-spiritless-pink/10 text-spiritless-pink font-medium" 
-              : "text-gray-600 hover:bg-gray-100"
-          )}
-          onClick={onClose}
-        >
-          <Settings className={cn(
-            "mr-3 h-5 w-5 transition-transform duration-300",
-            location.pathname === "/settings" ? "scale-110" : ""
-          )} />
-          <span>Settings</span>
-        </Link>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-x">
+              <path d="M18 6 6 18"/>
+              <path d="m6 6 12 12"/>
+            </svg>
+          </button>
+        </div>
+        
+        <div className="mobile-menu-content p-4">
+          <div className="mobile-menu-section">
+            <h3 className="text-xs uppercase font-semibold text-gray-500 mb-2">Menu</h3>
+            <ul className="space-y-2">
+              <li>
+                <NavLink 
+                  to="/explore" 
+                  className={({ isActive }) => cn(
+                    "block p-3 rounded-md",
+                    isActive ? "bg-gray-100 text-spiritless-pink font-medium" : "text-gray-700"
+                  )}
+                  onClick={onClose}
+                >
+                  Explore
+                </NavLink>
+              </li>
+              
+              <li>
+                <NavLink 
+                  to="/map" 
+                  className={({ isActive }) => cn(
+                    "block p-3 rounded-md",
+                    isActive ? "bg-gray-100 text-spiritless-pink font-medium" : "text-gray-700"
+                  )}
+                  onClick={onClose}
+                >
+                  Map
+                </NavLink>
+              </li>
+              
+              {userType === 'establishment' && (
+                <li>
+                  <NavLink 
+                    to="/establishment/profile" 
+                    className={({ isActive }) => cn(
+                      "block p-3 rounded-md",
+                      isActive ? "bg-gray-100 text-spiritless-pink font-medium" : "text-gray-700"
+                    )}
+                    onClick={onClose}
+                  >
+                    Establishment Profile
+                  </NavLink>
+                </li>
+              )}
+              
+              {isEstablishmentProfile && tabOptions && tabOptions.length > 0 && (
+                <li className="pl-4 border-l border-gray-200 ml-3 mt-2">
+                  <h4 className="text-xs uppercase font-semibold text-gray-500 mb-1 ml-2">Profile Sections</h4>
+                  <ul className="space-y-1">
+                    {tabOptions.map((tab) => (
+                      <li key={tab.value}>
+                        <button 
+                          className={cn(
+                            "w-full text-left p-2 rounded-md text-sm",
+                            activeTab === tab.value 
+                              ? "bg-gray-100 text-spiritless-pink font-medium" 
+                              : "text-gray-700"
+                          )}
+                          onClick={() => handleTabClick(tab.value)}
+                        >
+                          {tab.label}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </li>
+              )}
+            </ul>
+          </div>
+          
+          <div className="mobile-menu-section mt-6">
+            <h3 className="text-xs uppercase font-semibold text-gray-500 mb-2">Account</h3>
+            <ul className="space-y-2">
+              <li>
+                <NavLink 
+                  to={userType === 'establishment' ? '/establishment/profile' : '/profile'} 
+                  className={({ isActive }) => cn(
+                    "block p-3 rounded-md",
+                    isActive ? "bg-gray-100 text-spiritless-pink font-medium" : "text-gray-700"
+                  )}
+                  onClick={onClose}
+                >
+                  Profile
+                </NavLink>
+              </li>
+              
+              {userType === 'individual' && (
+                <li>
+                  <NavLink 
+                    to="/profile/bar-crawls" 
+                    className={({ isActive }) => cn(
+                      "block p-3 rounded-md",
+                      isActive ? "bg-gray-100 text-spiritless-pink font-medium" : "text-gray-700"
+                    )}
+                    onClick={onClose}
+                  >
+                    My Bar Crawls
+                  </NavLink>
+                </li>
+              )}
+              
+              <li>
+                <NavLink 
+                  to="/settings" 
+                  className={({ isActive }) => cn(
+                    "block p-3 rounded-md",
+                    isActive ? "bg-gray-100 text-spiritless-pink font-medium" : "text-gray-700"
+                  )}
+                  onClick={onClose}
+                >
+                  Settings
+                </NavLink>
+              </li>
+              
+              <li>
+                <a 
+                  href="/login" 
+                  className="block p-3 rounded-md text-red-600"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onClose();
+                    // This is just a placeholder - the actual logout logic would be handled in the parent component
+                  }}
+                >
+                  Logout
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
       </div>
     </div>
   );

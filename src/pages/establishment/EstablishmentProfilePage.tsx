@@ -12,7 +12,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 const EstablishmentProfilePage = () => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get('tab');
   const [activeTab, setActiveTab] = useState('profile');
   const navigate = useNavigate();
@@ -30,26 +30,32 @@ const EstablishmentProfilePage = () => {
   useEffect(() => {
     if (tabParam && ['profile', 'promotions', 'menu', 'visitors', 'barCrawls'].includes(tabParam)) {
       setActiveTab(tabParam);
+    } else {
+      // If no valid tab parameter, default to profile and update URL
+      setSearchParams({ tab: 'profile' });
     }
-  }, [tabParam]);
+  }, [tabParam, setSearchParams]);
   
   // Function to change tabs and update the URL
   const handleTabChange = (value: string) => {
     setActiveTab(value);
-    navigate(`/establishment/profile?tab=${value}`);
+    setSearchParams({ tab: value });
   };
+  
+  // Prepare tab options for the dropdown menu
+  const tabOptions = [
+    { value: 'profile', label: isMobile ? 'Profile' : 'Profile' },
+    { value: 'promotions', label: isMobile ? 'Promos' : 'Promotions' },
+    { value: 'menu', label: isMobile ? 'Menu' : 'Mocktail Menu' },
+    { value: 'visitors', label: isMobile ? 'Stats' : 'Visitor Stats' },
+    { value: 'barCrawls', label: isMobile ? 'Crawls' : 'Bar Crawl Requests' }
+  ];
   
   return (
     <Layout 
       activeTab={activeTab} 
       handleTabChange={handleTabChange}
-      tabOptions={[
-        { value: 'profile', label: isMobile ? 'Profile' : 'Profile' },
-        { value: 'promotions', label: isMobile ? 'Promos' : 'Promotions' },
-        { value: 'menu', label: isMobile ? 'Menu' : 'Mocktail Menu' },
-        { value: 'visitors', label: isMobile ? 'Stats' : 'Visitor Stats' },
-        { value: 'barCrawls', label: isMobile ? 'Crawls' : 'Bar Crawl Requests' }
-      ]}
+      tabOptions={tabOptions}
     >
       <div className="py-4 animate-fade-in w-full">
         <div className="flex items-center justify-between mb-6 px-4 md:px-6 lg:mx-[10%]">

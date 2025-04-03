@@ -91,7 +91,7 @@ const UserProfileDropdown: React.FC<UserProfileDropdownProps> = ({
           </Link>
         </DropdownMenuItem>
         
-        {/* Establishment Profile Tabs as sub-menu items */}
+        {/* Establishment Profile Tabs */}
         {isEstablishmentProfile && tabOptions && tabOptions.length > 0 && (
           <DropdownMenuGroup className="px-1 py-1 mt-1 border-t border-gray-100">
             <DropdownMenuLabel className="px-3 py-1 text-xs font-medium text-gray-500">
