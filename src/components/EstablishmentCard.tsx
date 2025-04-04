@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -36,7 +37,7 @@ const EstablishmentCard: React.FC<EstablishmentCardProps> = ({
             </div>}
         </div>
 
-        <div className="flex-1 p-4 sm:p-5 bg-[#02022b]/[0.89]">
+        <div className="establishment-card-content flex-1 p-4 sm:p-5 bg-[#02022b]/[0.89]">
           <div className="flex justify-between items-start mb-2">
             <h3 className="text-base font-medium text-material-on-surface">{name}</h3>
             {distance && <span className="text-xs bg-material-secondary-container text-material-on-secondary-container px-2 py-1 rounded-full flex items-center ml-2">
