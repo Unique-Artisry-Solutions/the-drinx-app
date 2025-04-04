@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth';
@@ -27,6 +26,19 @@ interface UserProfile {
   push_notifications?: boolean;
 }
 
+interface DBProfile {
+  id: string;
+  username: string | null;
+  display_name: string | null;
+  user_type: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+  bio?: string | null;
+  phone?: string | null;
+  email_notifications?: boolean | null;
+  push_notifications?: boolean | null;
+}
+
 const SettingsPage = () => {
   const { user } = useAuth();
   const { theme, toggleTheme } = useTheme();
@@ -44,7 +56,6 @@ const SettingsPage = () => {
     push_notifications: false,
   });
 
-  // Fetch user profile data
   useEffect(() => {
     const fetchProfile = async () => {
       if (!user) return;
@@ -60,15 +71,16 @@ const SettingsPage = () => {
         if (error) throw error;
         
         if (data) {
+          const profileData = data as DBProfile;
           setProfile({
-            username: data.username || '',
-            display_name: data.display_name || '',
-            bio: data.bio || '',
+            username: profileData.username || '',
+            display_name: profileData.display_name || '',
+            bio: profileData.bio || '',
             email: user.email || '',
-            phone: data.phone || '',
-            dark_mode: theme === 'dark',  // Use the current theme state
-            email_notifications: data.email_notifications || true,
-            push_notifications: data.push_notifications || false,
+            phone: profileData.phone || '',
+            dark_mode: theme === 'dark',
+            email_notifications: profileData.email_notifications || true,
+            push_notifications: profileData.push_notifications || false,
           });
         }
       } catch (error) {
@@ -82,7 +94,6 @@ const SettingsPage = () => {
     fetchProfile();
   }, [user, theme]);
 
-  // Update theme when dark_mode is toggled
   useEffect(() => {
     if (profile.dark_mode !== undefined && profile.dark_mode !== (theme === 'dark')) {
       toggleTheme();
@@ -96,7 +107,6 @@ const SettingsPage = () => {
 
   const handleToggle = (name: string, checked: boolean) => {
     if (name === 'dark_mode') {
-      // Toggle theme in context
       toggleTheme();
     }
     setProfile(prev => ({ ...prev, [name]: checked }));
@@ -118,7 +128,7 @@ const SettingsPage = () => {
           phone: profile.phone,
           email_notifications: profile.email_notifications,
           push_notifications: profile.push_notifications,
-          updated_at: new Date(),
+          updated_at: new Date().toISOString()
         })
         .eq('id', user.id);
         
