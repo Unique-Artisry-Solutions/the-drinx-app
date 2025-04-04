@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth';
+import { useTheme } from '@/contexts/ThemeContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,6 +29,7 @@ interface UserProfile {
 
 const SettingsPage = () => {
   const { user } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('account');
@@ -37,7 +39,7 @@ const SettingsPage = () => {
     bio: '',
     email: '',
     phone: '',
-    dark_mode: true,
+    dark_mode: theme === 'dark',
     email_notifications: true,
     push_notifications: false,
   });
@@ -64,7 +66,7 @@ const SettingsPage = () => {
             bio: data.bio || '',
             email: user.email || '',
             phone: data.phone || '',
-            dark_mode: data.dark_mode || true,
+            dark_mode: theme === 'dark',  // Use the current theme state
             email_notifications: data.email_notifications || true,
             push_notifications: data.push_notifications || false,
           });
@@ -78,7 +80,14 @@ const SettingsPage = () => {
     };
     
     fetchProfile();
-  }, [user]);
+  }, [user, theme]);
+
+  // Update theme when dark_mode is toggled
+  useEffect(() => {
+    if (profile.dark_mode !== undefined && profile.dark_mode !== (theme === 'dark')) {
+      toggleTheme();
+    }
+  }, [profile.dark_mode]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -86,6 +95,10 @@ const SettingsPage = () => {
   };
 
   const handleToggle = (name: string, checked: boolean) => {
+    if (name === 'dark_mode') {
+      // Toggle theme in context
+      toggleTheme();
+    }
     setProfile(prev => ({ ...prev, [name]: checked }));
   };
 
@@ -103,7 +116,6 @@ const SettingsPage = () => {
           display_name: profile.display_name,
           bio: profile.bio,
           phone: profile.phone,
-          dark_mode: profile.dark_mode,
           email_notifications: profile.email_notifications,
           push_notifications: profile.push_notifications,
           updated_at: new Date(),
@@ -127,12 +139,12 @@ const SettingsPage = () => {
         <BackButton fallbackPath="/profile" />
         
         <div className="flex flex-col items-start mb-6">
-          <h1 className="text-2xl font-bold mb-2 text-white">Settings</h1>
-          <p className="text-gray-400">Manage your account settings and preferences</p>
+          <h1 className="text-2xl font-bold mb-2">Settings</h1>
+          <p className="text-muted-foreground">Manage your account settings and preferences</p>
         </div>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="w-full flex justify-start bg-gray-800 p-1 mb-6">
+          <TabsList className="w-full flex justify-start p-1 mb-6">
             <TabsTrigger value="account" className="flex items-center gap-2">
               <User size={16} />
               <span>Account</span>
@@ -153,72 +165,69 @@ const SettingsPage = () => {
           
           <form onSubmit={handleSubmit}>
             <TabsContent value="account">
-              <Card className="bg-gray-800 border-gray-700">
+              <Card>
                 <CardHeader>
-                  <CardTitle className="text-white">Account Information</CardTitle>
-                  <CardDescription className="text-gray-400">
+                  <CardTitle>Account Information</CardTitle>
+                  <CardDescription>
                     Update your personal information
                   </CardDescription>
                 </CardHeader>
                 
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="display_name" className="text-white">Display Name</Label>
+                    <Label htmlFor="display_name">Display Name</Label>
                     <Input
                       id="display_name"
                       name="display_name"
                       value={profile.display_name}
                       onChange={handleChange}
                       placeholder="Your display name"
-                      className="bg-gray-700 border-gray-600 text-white"
                     />
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="username" className="text-white">Username</Label>
+                    <Label htmlFor="username">Username</Label>
                     <Input
                       id="username"
                       name="username"
                       value={profile.username}
                       onChange={handleChange}
                       placeholder="Your username"
-                      className="bg-gray-700 border-gray-600 text-white"
                     />
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="bio" className="text-white">Bio</Label>
+                    <Label htmlFor="bio">Bio</Label>
                     <Textarea
                       id="bio"
                       name="bio"
                       value={profile.bio}
                       onChange={handleChange}
                       placeholder="Tell us about yourself"
-                      className="bg-gray-700 border-gray-600 text-white h-24"
+                      className="h-24"
                     />
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="email" className="text-white">Email</Label>
+                    <Label htmlFor="email">Email</Label>
                     <Input
                       id="email"
                       name="email"
                       value={profile.email}
                       disabled
-                      className="bg-gray-700 border-gray-600 text-gray-400"
+                      className="text-muted-foreground"
                     />
-                    <p className="text-xs text-gray-400">Email cannot be changed here</p>
+                    <p className="text-xs text-muted-foreground">Email cannot be changed here</p>
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="phone" className="text-white">Phone</Label>
+                    <Label htmlFor="phone">Phone</Label>
                     <Input
                       id="phone"
                       name="phone"
                       value={profile.phone}
                       onChange={handleChange}
                       placeholder="Your phone number"
-                      className="bg-gray-700 border-gray-600 text-white"
                     />
                   </div>
                 </CardContent>
@@ -226,10 +235,10 @@ const SettingsPage = () => {
             </TabsContent>
             
             <TabsContent value="notifications">
-              <Card className="bg-gray-800 border-gray-700">
+              <Card>
                 <CardHeader>
-                  <CardTitle className="text-white">Notification Preferences</CardTitle>
-                  <CardDescription className="text-gray-400">
+                  <CardTitle>Notification Preferences</CardTitle>
+                  <CardDescription>
                     Manage how you receive notifications
                   </CardDescription>
                 </CardHeader>
@@ -237,8 +246,8 @@ const SettingsPage = () => {
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
-                      <Label className="text-white">Email Notifications</Label>
-                      <p className="text-sm text-gray-400">Receive updates via email</p>
+                      <Label>Email Notifications</Label>
+                      <p className="text-sm text-muted-foreground">Receive updates via email</p>
                     </div>
                     <Switch
                       checked={profile.email_notifications}
@@ -248,8 +257,8 @@ const SettingsPage = () => {
                   
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
-                      <Label className="text-white">Push Notifications</Label>
-                      <p className="text-sm text-gray-400">Receive updates on your device</p>
+                      <Label>Push Notifications</Label>
+                      <p className="text-sm text-muted-foreground">Receive updates on your device</p>
                     </div>
                     <Switch
                       checked={profile.push_notifications}
@@ -261,10 +270,10 @@ const SettingsPage = () => {
             </TabsContent>
             
             <TabsContent value="appearance">
-              <Card className="bg-gray-800 border-gray-700">
+              <Card>
                 <CardHeader>
-                  <CardTitle className="text-white">Appearance Settings</CardTitle>
-                  <CardDescription className="text-gray-400">
+                  <CardTitle>Appearance Settings</CardTitle>
+                  <CardDescription>
                     Customize how the app looks
                   </CardDescription>
                 </CardHeader>
@@ -272,8 +281,8 @@ const SettingsPage = () => {
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
-                      <Label className="text-white">Dark Mode</Label>
-                      <p className="text-sm text-gray-400">Use dark theme throughout the app</p>
+                      <Label>Dark Mode</Label>
+                      <p className="text-sm text-muted-foreground">Use dark theme throughout the app</p>
                     </div>
                     <Switch
                       checked={profile.dark_mode}
@@ -285,16 +294,16 @@ const SettingsPage = () => {
             </TabsContent>
             
             <TabsContent value="privacy">
-              <Card className="bg-gray-800 border-gray-700">
+              <Card>
                 <CardHeader>
-                  <CardTitle className="text-white">Privacy Settings</CardTitle>
-                  <CardDescription className="text-gray-400">
+                  <CardTitle>Privacy Settings</CardTitle>
+                  <CardDescription>
                     Manage your privacy preferences
                   </CardDescription>
                 </CardHeader>
                 
                 <CardContent className="space-y-4">
-                  <p className="text-gray-400">Privacy settings will be available in a future update.</p>
+                  <p className="text-muted-foreground">Privacy settings will be available in a future update.</p>
                 </CardContent>
               </Card>
             </TabsContent>
@@ -304,14 +313,13 @@ const SettingsPage = () => {
                 type="button" 
                 variant="outline" 
                 onClick={() => navigate(-1)}
-                className="border-gray-600 text-white hover:bg-gray-700"
               >
                 Cancel
               </Button>
               <Button 
                 type="submit" 
                 disabled={loading}
-                className="bg-gradient-to-r from-purple-600 to-pink-600 text-white"
+                className="bg-gradient-to-r from-purple-600 to-pink-600"
               >
                 {loading ? 'Saving...' : 'Save Changes'}
               </Button>

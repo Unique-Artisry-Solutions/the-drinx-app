@@ -2,9 +2,11 @@
 import React from "react";
 import { useLocation, Link } from "react-router-dom";
 import { useEffect } from "react";
+import { useTheme } from '@/contexts/ThemeContext';
 
 const NotFound = () => {
   const location = useLocation();
+  const { theme } = useTheme();
 
   useEffect(() => {
     console.error(
@@ -14,13 +16,13 @@ const NotFound = () => {
   }, [location.pathname]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-900 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4 transition-colors duration-300">
       <div className="text-center max-w-md">
-        <h1 className="text-6xl font-bold mb-4 text-purple-500 animate-float">404</h1>
-        <p className="text-xl text-white mb-6">
+        <h1 className="text-6xl font-bold mb-4 text-primary animate-float">404</h1>
+        <p className="text-xl text-foreground mb-6">
           We couldn't find the page you're looking for
         </p>
-        <p className="text-gray-400 mb-8">
+        <p className="text-muted-foreground mb-8">
           The page you requested doesn't exist or may have been moved.
         </p>
         <Link 

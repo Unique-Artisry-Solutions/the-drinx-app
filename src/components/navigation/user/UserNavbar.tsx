@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth';
@@ -6,6 +7,8 @@ import { supabase } from '@/integrations/supabase/client';
 import UserProfileDropdown from './UserProfileDropdown';
 import UserNavLinks from './UserNavLinks';
 import UserMobileMenu from './UserMobileMenu';
+import { useTheme } from '@/contexts/ThemeContext';
+
 interface TabOption {
   value: string;
   label: string;
@@ -25,11 +28,10 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [userType, setUserType] = useState<'individual' | 'establishment'>('individual');
   const [username, setUsername] = useState<string | null>(null);
-  const {
-    signOut,
-    user
-  } = useAuth();
+  const { theme } = useTheme();
+  const { signOut, user } = useAuth();
   const isMobile = useIsMobile();
+
   useEffect(() => {
     const storedUserType = localStorage.getItem('user_type');
     if (storedUserType === 'establishment') {
@@ -40,10 +42,12 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
     const fetchUsername = async () => {
       if (user) {
         try {
-          const {
-            data,
-            error
-          } = await supabase.from('profiles').select('username, display_name').eq('id', user.id).single();
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('username, display_name')
+            .eq('id', user.id)
+            .single();
+            
           if (data && !error) {
             setUsername(data.display_name || data.username || null);
           }
@@ -54,6 +58,7 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
     };
     fetchUsername();
   }, [user]);
+
   const handleLogout = async () => {
     try {
       await signOut();
@@ -62,6 +67,7 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
       console.error('Error during logout:', error);
     }
   };
+
   const handleHomeClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault(); // Prevent default navigation
 
@@ -78,11 +84,17 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
 
   // Check if we're on the establishment profile page to pass down the correct props
   const isEstablishmentProfile = location.pathname === '/establishment/profile';
-  return <nav className="user-top-nav fixed top-0 left-0 w-full z-50 shadow-sm bg-indigo-200">
-      <div className="user-nav-container max-w-6xl mx-auto px-4 py-3 bg-[#000d00]/0">
-        <div className="user-nav-inner flex items-center justify-between bg-[#000d00]/0">
+
+  return (
+    <nav className="user-top-nav fixed top-0 left-0 w-full z-50 shadow-sm">
+      <div className="user-nav-container max-w-6xl mx-auto px-4 py-3">
+        <div className="user-nav-inner flex items-center justify-between">
           <div className="user-nav-left flex items-center">
-            <a href="#" onClick={handleHomeClick} className="user-nav-logo text-xl font-semibold text-material-primary mr-6">
+            <a 
+              href="#" 
+              onClick={handleHomeClick} 
+              className="user-nav-logo text-xl font-semibold mr-6"
+            >
               {isMobile ? "SL" : "Spirit"}
               {!isMobile && <span>less</span>}
             </a>
@@ -91,27 +103,53 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
           </div>
           
           <div className="user-nav-right flex items-center space-x-4">
-            {username && <span className="text-sm hidden md:block text-gray-600">
+            {username && (
+              <span className="text-sm hidden md:block">
                 Welcome, <span className="font-medium text-spiritless-pink">{username}</span>
-              </span>}
+              </span>
+            )}
             
-            <button className="user-menu-button md:hidden bg-transparent border-none flex items-center justify-center p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 focus:outline-none transition-colors" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
-              {isMobileMenuOpen ? <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-x">
+            <button 
+              className="user-menu-button md:hidden bg-transparent border-none flex items-center justify-center p-2 rounded-md focus:outline-none transition-colors" 
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              {isMobileMenuOpen ? (
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-x">
                   <path d="M18 6 6 18" />
                   <path d="m6 6 12 12" />
-                </svg> : <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-menu">
+                </svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-menu">
                   <line x1="4" x2="20" y1="12" y2="12" />
                   <line x1="4" x2="20" y1="6" y2="6" />
                   <line x1="4" x2="20" y1="18" y2="18" />
-                </svg>}
+                </svg>
+              )}
             </button>
             
-            <UserProfileDropdown username={username} userType={userType} handleLogout={handleLogout} activeTab={isEstablishmentProfile ? activeTab : undefined} handleTabChange={isEstablishmentProfile ? handleTabChange : undefined} tabOptions={isEstablishmentProfile ? tabOptions : undefined} />
+            <UserProfileDropdown 
+              username={username} 
+              userType={userType} 
+              handleLogout={handleLogout} 
+              activeTab={isEstablishmentProfile ? activeTab : undefined} 
+              handleTabChange={isEstablishmentProfile ? handleTabChange : undefined} 
+              tabOptions={isEstablishmentProfile ? tabOptions : undefined} 
+            />
           </div>
         </div>
         
-        <UserMobileMenu isOpen={isMobileMenuOpen} username={username} userType={userType} onClose={() => setIsMobileMenuOpen(false)} activeTab={isEstablishmentProfile ? activeTab : undefined} handleTabChange={isEstablishmentProfile ? handleTabChange : undefined} tabOptions={isEstablishmentProfile ? tabOptions : undefined} />
+        <UserMobileMenu 
+          isOpen={isMobileMenuOpen} 
+          username={username} 
+          userType={userType} 
+          onClose={() => setIsMobileMenuOpen(false)} 
+          activeTab={isEstablishmentProfile ? activeTab : undefined} 
+          handleTabChange={isEstablishmentProfile ? handleTabChange : undefined} 
+          tabOptions={isEstablishmentProfile ? tabOptions : undefined} 
+        />
       </div>
-    </nav>;
+    </nav>
+  );
 };
+
 export default UserNavbar;

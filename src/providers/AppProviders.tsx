@@ -1,41 +1,26 @@
 
 import React from 'react';
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter } from "react-router-dom";
-import { CartProvider } from "@/contexts/CartContext";
-import { AuthProvider } from "@/contexts/auth";
+import { BrowserRouter as Router } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AuthProvider } from '@/contexts/auth';
+import { ThemeProvider } from '@/contexts/ThemeContext';
+import { Toaster } from '@/components/ui/toaster';
+import { Toaster as SonnerToaster } from 'sonner';
 
-// Create QueryClient
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      refetchOnWindowFocus: false,
-    },
-  },
-});
+const queryClient = new QueryClient();
 
-interface AppProvidersProps {
-  children: React.ReactNode;
-}
-
-const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
+const AppProviders: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
+      <Router>
         <AuthProvider>
-          <CartProvider>
-            <TooltipProvider>
-              {children}
-              <Toaster />
-              <Sonner />
-            </TooltipProvider>
-          </CartProvider>
+          <ThemeProvider>
+            {children}
+            <Toaster />
+            <SonnerToaster position="top-right" />
+          </ThemeProvider>
         </AuthProvider>
-      </BrowserRouter>
+      </Router>
     </QueryClientProvider>
   );
 };

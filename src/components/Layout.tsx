@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { NavigationType } from './navigation/NavigationTypes';
@@ -9,16 +10,20 @@ import Breadcrumbs from './navigation/Breadcrumbs';
 import AppFooter from './AppFooter';
 import { useAuth } from '@/contexts/AuthContext';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useTheme } from '@/contexts/ThemeContext';
+
 interface TabOption {
   value: string;
   label: string;
 }
+
 interface LayoutProps {
   children: React.ReactNode;
   activeTab?: string;
   handleTabChange?: (value: string) => void;
   tabOptions?: TabOption[];
 }
+
 const Layout: React.FC<LayoutProps> = ({
   children,
   activeTab,
@@ -26,6 +31,7 @@ const Layout: React.FC<LayoutProps> = ({
   tabOptions
 }) => {
   const location = useLocation();
+  const { theme } = useTheme();
   const {
     user,
     isEmailVerified
@@ -34,6 +40,7 @@ const Layout: React.FC<LayoutProps> = ({
   const [userType, setUserType] = React.useState<'individual' | 'establishment'>('individual');
   const [isAdmin, setIsAdmin] = React.useState(false);
   const isMobile = useIsMobile();
+
   useEffect(() => {
     const checkAuth = () => {
       const isAdminAuth = localStorage.getItem('admin_authenticated') === 'true';
@@ -48,10 +55,13 @@ const Layout: React.FC<LayoutProps> = ({
         setNavigationType(NavigationType.GUEST);
       }
     };
+    
     checkAuth();
   }, [user, isEmailVerified, location.pathname]);
+
   const isLandingPage = location.pathname === '/' || location.pathname === '/landing';
   const isAdminPage = location.pathname.startsWith('/admin');
+
   const getContentPadding = () => {
     if (isLandingPage) {
       return 'pt-16 pb-0 px-0';
@@ -61,6 +71,7 @@ const Layout: React.FC<LayoutProps> = ({
       return 'pt-20 pb-20 md:pb-6 px-4';
     }
   };
+
   const renderNavigation = () => {
     if (isAdminPage || isAdmin) {
       return <AdminTopNavigation />;
@@ -82,13 +93,17 @@ const Layout: React.FC<LayoutProps> = ({
     const excludedPaths = ['/', '/landing', '/login', '/signup', '/mission', '/map', '/explore'];
     return !excludedPaths.includes(location.pathname) && !isLandingPage && !isAdminPage;
   };
-  return <div className="flex flex-col min-h-screen w-full max-w-full bg-[#000a0e]/[0.39]">
+
+  return (
+    <div className={`flex flex-col min-h-screen w-full max-w-full bg-background transition-colors duration-300`}>
       {renderNavigation()}
       
       <main className={`flex-1 w-full max-w-full overflow-x-hidden ${getContentPadding()}`}>
-        {shouldShowBreadcrumbs() && <div className="container max-w-6xl mx-auto px-4 pt-1">
+        {shouldShowBreadcrumbs() && (
+          <div className="container max-w-6xl mx-auto px-4 pt-1">
             <Breadcrumbs />
-          </div>}
+          </div>
+        )}
         {children}
       </main>
       
@@ -96,6 +111,8 @@ const Layout: React.FC<LayoutProps> = ({
       {!isLandingPage && !isMobile && <AppFooter />}
       
       {!isLandingPage && <MobileNavigation type={navigationType} userType={userType} />}
-    </div>;
+    </div>
+  );
 };
+
 export default Layout;
