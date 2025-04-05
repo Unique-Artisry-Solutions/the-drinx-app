@@ -27,7 +27,7 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [userType, setUserType] = useState<'individual' | 'establishment'>('individual');
-  const [username, setUsername] = useState<string | null>(null);
+  const [username, setUsername] = useState<string | null>("Guest");
   const { theme } = useTheme();
   const { signOut, user } = useAuth();
   const isMobile = useIsMobile();
@@ -49,14 +49,15 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
             .single();
             
           if (data && !error) {
-            setUsername(data.display_name || data.username || null);
+            setUsername(data.display_name || data.username || "Guest User");
           }
         } catch (error) {
           console.error('Error fetching user data:', error);
+          setUsername("Guest User");
         }
       } else {
         // Set a default username for testing when there's no authenticated user
-        setUsername('Test User');
+        setUsername('Guest User');
       }
     };
     fetchUsername();
