@@ -3,6 +3,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface FilterPanelProps {
   priceRange: [number, number];
@@ -21,6 +22,10 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   onApplyFilters,
   className
 }) => {
+  // Get the current theme
+  const { theme } = useTheme();
+  const isDarkTheme = theme === 'dark';
+  
   // Track when user is currently sliding to prevent firing queries too frequently
   const [isDragging, setIsDragging] = React.useState(false);
   
@@ -47,9 +52,18 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   }, [isDragging]);
 
   return (
-    <div className={cn("mt-2 p-4 bg-white border rounded-lg shadow-sm", className)}>
+    <div className={cn(
+      "mt-2 p-4 rounded-lg shadow-sm", 
+      isDarkTheme 
+        ? "bg-gray-800 border border-gray-700" 
+        : "bg-[#f5f3ed] border border-gray-200",
+      className
+    )}>
       <div className="mb-4">
-        <label className="block mb-2 text-sm font-medium">
+        <label className={cn(
+          "block mb-2 text-sm font-medium",
+          isDarkTheme ? "text-gray-200" : "text-gray-700"
+        )}>
           Price Range: ${priceRange[0]} - ${priceRange[1]}
         </label>
         <Slider 
@@ -66,7 +80,10 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
       </div>
       
       <div className="mb-4">
-        <label className="block mb-2 text-sm font-medium">
+        <label className={cn(
+          "block mb-2 text-sm font-medium",
+          isDarkTheme ? "text-gray-200" : "text-gray-700"
+        )}>
           Distance: {distance} miles
         </label>
         <Slider 
