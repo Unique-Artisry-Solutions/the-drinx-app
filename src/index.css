@@ -279,5 +279,45 @@
 }
 
 .light .card {
-  @apply bg-white border-gray-200 shadow-sm;
+  @apply bg-[#f5f3ed] border-gray-200 shadow-sm;
+}
+
+/* Interior card content styling */
+.light .vibrant-card {
+  @apply bg-[#f5f3ed]/90 backdrop-blur-sm border-gray-200 shadow-sm;
+}
+
+.dark .vibrant-card {
+  @apply bg-gray-800/70 border-gray-700;
+}
+
+.light .vibrant-bg {
+  @apply bg-[#f5f3ed]/80 backdrop-blur-sm;
+}
+
+.dark .vibrant-bg {
+  @apply bg-gray-800/50;
+}
+
+/* Light mode text adjustments */
+.light .text-material-on-surface {
+  @apply text-gray-800;
+}
+
+.light .text-material-on-surface-variant {
+  @apply text-gray-600;
+}
+
+.light .gradient-text {
+  @apply bg-gradient-to-r from-material-primary to-material-tertiary bg-clip-text text-transparent;
+}
+
+/* Light mode tab adjustments */
+.light .vibrant-tab[data-state="active"] {
+  @apply bg-[#f5f3ed] text-material-primary font-medium;
+}
+
+/* Card header adjustments for light mode */
+.light .card-header h3 {
+  @apply text-gray-800;
 }
