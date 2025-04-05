@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
@@ -33,7 +34,7 @@ const ProfileMenuItem: React.FC<ProfileMenuItemProps> = ({
   // If onClick is provided, render a button instead of a Link
   if (onClick) {
     return (
-      <DropdownMenuItem className={itemClasses} onClick={onClick}>
+      <DropdownMenuItem className={itemClasses} onClick={onClick} asChild={false}>
         {itemContent}
       </DropdownMenuItem>
     );
