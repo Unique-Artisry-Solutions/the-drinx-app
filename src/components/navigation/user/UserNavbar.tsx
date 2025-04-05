@@ -54,6 +54,9 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
         } catch (error) {
           console.error('Error fetching user data:', error);
         }
+      } else {
+        // Set a default username for testing when there's no authenticated user
+        setUsername('Test User');
       }
     };
     fetchUsername();
@@ -86,7 +89,7 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
   const isEstablishmentProfile = location.pathname === '/establishment/profile';
 
   return (
-    <nav className="user-top-nav fixed top-0 left-0 w-full z-50 shadow-sm">
+    <nav className={`user-top-nav fixed top-0 left-0 w-full z-50 shadow-sm ${theme === 'dark' ? 'bg-gray-900' : 'bg-white'}`}>
       <div className="user-nav-container max-w-6xl mx-auto px-4 py-3">
         <div className="user-nav-inner flex items-center justify-between">
           <div className="user-nav-left flex items-center">

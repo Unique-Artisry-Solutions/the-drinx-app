@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { DropdownMenu, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent } from "@/components/ui/dropdown-menu";
 import { useTheme } from '@/contexts/ThemeContext';
 import ProfileDropdownButton from './profile-dropdown/ProfileDropdownButton';
 import ProfileContent from './profile-dropdown/ProfileContent';
