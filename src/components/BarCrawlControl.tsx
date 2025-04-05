@@ -34,15 +34,15 @@ const BarCrawlControl: React.FC<BarCrawlControlProps> = ({ establishments, onSav
       // Already added, so remove it
       setSelectedEstablishments(selectedEstablishments.filter(e => e.id !== establishment.id));
       toast({
-        title: "Removed from bar crawl",
-        description: `${establishment.name} removed from your bar crawl.`,
+        title: "Removed from Swig Circuit",
+        description: `${establishment.name} removed from your Swig Circuit.`,
       });
     } else {
       // Add to the list
       setSelectedEstablishments([...selectedEstablishments, establishment]);
       toast({
-        title: "Added to bar crawl",
-        description: `${establishment.name} added to your bar crawl.`,
+        title: "Added to Swig Circuit",
+        description: `${establishment.name} added to your Swig Circuit.`,
       });
     }
   };
@@ -51,7 +51,7 @@ const BarCrawlControl: React.FC<BarCrawlControlProps> = ({ establishments, onSav
     if (selectedEstablishments.length < 2) {
       toast({
         title: "Not enough establishments",
-        description: "Please select at least 2 establishments for your bar crawl.",
+        description: "Please select at least 2 establishments for your Swig Circuit.",
         variant: "destructive",
       });
       return;
@@ -62,8 +62,8 @@ const BarCrawlControl: React.FC<BarCrawlControlProps> = ({ establishments, onSav
     setSelectedEstablishments([]);
     
     toast({
-      title: "Bar crawl saved!",
-      description: `Your bar crawl with ${selectedEstablishments.length} establishments has been saved.`,
+      title: "Swig Circuit saved!",
+      description: `Your Swig Circuit with ${selectedEstablishments.length} establishments has been saved.`,
     });
   };
 
@@ -77,12 +77,12 @@ const BarCrawlControl: React.FC<BarCrawlControlProps> = ({ establishments, onSav
         {barCrawlMode ? (
           <>
             <X className="mr-2 h-4 w-4" />
-            Cancel Bar Crawl
+            Cancel Selection
           </>
         ) : (
           <>
             <Route className="mr-2 h-4 w-4" />
-            Create Bar Crawl
+            Select Venues
           </>
         )}
       </Button>
@@ -90,11 +90,11 @@ const BarCrawlControl: React.FC<BarCrawlControlProps> = ({ establishments, onSav
       {barCrawlMode && (
         <Card className="mb-4 border-2 border-material-primary/20">
           <CardHeader className="pb-2">
-            <CardTitle className="text-lg">Create Your Bar Crawl</CardTitle>
+            <CardTitle className="text-lg">Create Your Swig Circuit</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-material-on-surface-variant mb-4">
-              Select establishments below to add them to your bar crawl route.
+              Select establishments below to add them to your Swig Circuit route.
             </p>
 
             {selectedEstablishments.length > 0 ? (
@@ -102,16 +102,17 @@ const BarCrawlControl: React.FC<BarCrawlControlProps> = ({ establishments, onSav
                 <div className="space-y-2 mb-4">
                   {selectedEstablishments.map((est, index) => (
                     <div key={est.id} className="flex items-center justify-between bg-material-primary-container/30 p-2 rounded-lg">
-                      <div className="flex items-center">
-                        <div className="bg-material-primary text-white w-6 h-6 rounded-full flex items-center justify-center mr-2">
+                      <div className="flex items-center min-w-0">
+                        <div className="bg-material-primary text-white w-6 h-6 rounded-full flex items-center justify-center mr-2 flex-shrink-0">
                           {index + 1}
                         </div>
-                        <span className="font-medium">{est.name}</span>
+                        <span className="font-medium truncate">{est.name}</span>
                       </div>
                       <Button 
                         variant="ghost" 
                         size="sm"
                         onClick={() => addToBarCrawl(est)}
+                        className="flex-shrink-0 ml-2"
                       >
                         <X className="h-4 w-4" />
                       </Button>
@@ -123,12 +124,12 @@ const BarCrawlControl: React.FC<BarCrawlControlProps> = ({ establishments, onSav
                   variant="default"
                   onClick={saveBarCrawl}
                 >
-                  Save Bar Crawl ({selectedEstablishments.length} stops)
+                  Save Swig Circuit ({selectedEstablishments.length} stops)
                 </Button>
               </>
             ) : (
               <p className="text-center py-4 italic text-material-on-surface-variant">
-                Select establishments below to build your bar crawl
+                Select establishments below to build your Swig Circuit
               </p>
             )}
           </CardContent>

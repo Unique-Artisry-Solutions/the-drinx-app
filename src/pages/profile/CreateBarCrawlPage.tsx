@@ -171,8 +171,10 @@ const CreateBarCrawlPage: React.FC = () => {
                         : "hover:bg-gray-100 dark:hover:bg-gray-700"
                     }`}
                   >
-                    <span className="font-medium">{tab.label}</span>
-                    {getCompletionStatus(tab.id)}
+                    <span className="font-medium truncate">{tab.label}</span>
+                    <div className="flex-shrink-0">
+                      {getCompletionStatus(tab.id)}
+                    </div>
                   </button>
                 ))}
               </div>
@@ -359,7 +361,7 @@ const CreateBarCrawlPage: React.FC = () => {
                               <div className="bg-material-primary text-white w-6 h-6 rounded-full flex items-center justify-center mr-2">
                                 {index + 1}
                               </div>
-                              <span>{est.name}</span>
+                              <span className="truncate">{est.name}</span>
                             </div>
                           </div>
                         ))}
