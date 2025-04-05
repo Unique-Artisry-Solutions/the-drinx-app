@@ -35,7 +35,7 @@ const CocktailsSection: React.FC<CocktailsSectionProps> = ({
       </div>
       
       {cocktails.length > 0 ? 
-        <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 ${isLightTheme ? 'bg-[#f5f3ed]' : 'bg-indigo-950'}`}>
+        <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 ${isLightTheme ? 'bg-[#f5f3ed]' : 'bg-indigo-950/30 backdrop-blur-sm'}`}>
           {cocktails.map(cocktail => <CocktailCard key={cocktail.id} id={cocktail.id} name={cocktail.name} price={cocktail.price} description={cocktail.description} ingredients={cocktail.ingredients} image={cocktail.image} establishment={cocktail.establishment} />)}
         </div> : 
         <div className="text-center py-6 border border-dashed rounded-lg">
