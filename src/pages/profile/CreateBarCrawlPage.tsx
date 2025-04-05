@@ -51,10 +51,10 @@ const CreateBarCrawlPage: React.FC = () => {
       return;
     }
 
-    // Generate a mock ID for the new bar crawl
+    // Generate a mock ID for the new swig circuit
     const newBarCrawlId = `bc-${Date.now()}`;
     
-    // Store bar crawl data in localStorage (in a real app, this would be saved to a database)
+    // Store swig circuit data in localStorage (in a real app, this would be saved to a database)
     const barCrawls = JSON.parse(localStorage.getItem('user_bar_crawls') || '[]');
     barCrawls.push({
       id: newBarCrawlId,
@@ -71,11 +71,11 @@ const CreateBarCrawlPage: React.FC = () => {
     localStorage.setItem('user_bar_crawls', JSON.stringify(barCrawls));
     
     toast({
-      title: 'Bar Crawl Created',
-      description: 'Your new bar crawl has been created successfully!',
+      title: 'Swig Circuit Created',
+      description: 'Your new Swig Circuit has been created successfully!',
     });
     
-    // Redirect to the bar crawl management page
+    // Redirect to the swig circuit management page
     navigate(`/profile/my-creations/${newBarCrawlId}`);
   };
 
@@ -83,19 +83,19 @@ const CreateBarCrawlPage: React.FC = () => {
     <Layout>
       <div className="py-4 animate-fade-in max-w-3xl mx-auto">
         <BackButton />
-        <h1 className="text-2xl font-medium text-material-on-background mb-4">Create Bar Crawl</h1>
+        <h1 className="text-2xl font-medium text-material-on-background mb-4">Create Swig Circuit</h1>
         
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
               <Calendar className="h-5 w-5 mr-2 text-spiritless-pink" />
-              New Bar Crawl Details
+              New Swig Circuit Details
             </CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="crawlName">Bar Crawl Name</Label>
+                <Label htmlFor="crawlName">Swig Circuit Name</Label>
                 <Input 
                   id="crawlName" 
                   placeholder="Weekend Mocktail Tour" 
@@ -106,13 +106,13 @@ const CreateBarCrawlPage: React.FC = () => {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="imageUpload">Bar Crawl Image</Label>
+                <Label htmlFor="imageUpload">Swig Circuit Image</Label>
                 <div className="relative border rounded-md overflow-hidden">
                   {previewUrl ? (
                     <div className="aspect-video relative">
                       <img 
                         src={previewUrl} 
-                        alt="Bar crawl preview" 
+                        alt="Swig Circuit preview" 
                         className="w-full h-full object-cover" 
                       />
                       <Button 
@@ -175,7 +175,7 @@ const CreateBarCrawlPage: React.FC = () => {
                 <Label htmlFor="description">Description</Label>
                 <Textarea 
                   id="description" 
-                  placeholder="Describe your bar crawl experience" 
+                  placeholder="Describe your Swig Circuit experience" 
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   rows={3}
@@ -184,7 +184,7 @@ const CreateBarCrawlPage: React.FC = () => {
               
               <div className="space-y-2">
                 <Label>Establishments</Label>
-                <p className="text-sm text-gray-500 mb-2">You can add establishments after creating the bar crawl</p>
+                <p className="text-sm text-gray-500 mb-2">You can add establishments after creating the Swig Circuit</p>
                 
                 <div className="bg-gray-50 p-3 rounded-lg border">
                   <div className="flex justify-between items-center">
@@ -198,7 +198,7 @@ const CreateBarCrawlPage: React.FC = () => {
               
               <div className="flex justify-end space-x-2 pt-2">
                 <Button type="submit" className="bg-spiritless-pink hover:bg-spiritless-pink/90">
-                  Create Bar Crawl
+                  Create Swig Circuit
                 </Button>
               </div>
             </form>

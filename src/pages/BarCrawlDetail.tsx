@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Layout from '@/components/Layout';
@@ -83,13 +82,13 @@ const BarCrawlDetail: React.FC = () => {
       <Layout>
         <div className="py-4 animate-fade-in max-w-7xl mx-auto">
           <BackButton />
-          <h1 className="text-2xl font-bold mb-2">Bar Crawl Not Found</h1>
+          <h1 className="text-2xl font-bold mb-2">Swig Circuit Not Found</h1>
           <p className="mb-4 text-gray-600">
-            The bar crawl you're looking for doesn't exist or may have been removed.
+            The Swig Circuit you're looking for doesn't exist or may have been removed.
           </p>
           <Button asChild variant="default">
             <Link to="/explore">
-              Explore Bar Crawls
+              Explore Swig Circuits
             </Link>
           </Button>
         </div>

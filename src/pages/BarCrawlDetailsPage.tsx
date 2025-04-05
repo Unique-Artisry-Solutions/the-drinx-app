@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Layout from '@/components/Layout';
@@ -40,7 +39,6 @@ const BarCrawlDetailsPage: React.FC<BarCrawlDetailsProps> = () => {
             establishments
           });
 
-          // Generate sample participants with more information
           setParticipants([
             {
               id: '1',
@@ -112,13 +110,13 @@ const BarCrawlDetailsPage: React.FC<BarCrawlDetailsProps> = () => {
     return (
       <Layout>
         <div className="py-4 animate-fade-in max-w-6xl mx-auto">
-          <h1 className="text-2xl font-bold mb-2">Bar Crawl Not Found</h1>
+          <h1 className="text-2xl font-bold mb-2">Swig Circuit Not Found</h1>
           <p className="mb-4 text-gray-600">
-            The bar crawl you're looking for doesn't exist or may have been removed.
+            The Swig Circuit you're looking for doesn't exist or may have been removed.
           </p>
           <Button asChild variant="default">
             <Link to="/profile/bar-crawls">
-              Back to Bar Crawls
+              Back to Swig Circuits
             </Link>
           </Button>
         </div>
@@ -148,7 +146,6 @@ const BarCrawlDetailsPage: React.FC<BarCrawlDetailsProps> = () => {
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          {/* Crawl Details */}
           <div className="md:col-span-2">
             <Card>
               <CardContent className="p-4">
@@ -160,36 +157,31 @@ const BarCrawlDetailsPage: React.FC<BarCrawlDetailsProps> = () => {
                 <h2 className="text-xl font-semibold mt-6 mb-3">Crawl Route</h2>
                 <div className="space-y-3">
                   {barCrawl.establishments.map((establishment: any, index: number) => (
-                    <div 
-                      key={establishment.id} 
-                      className="flex p-3 border rounded-lg relative"
+                    <Link 
+                      key={establishment.id}
+                      to={`/establishment/${establishment.id}`}
+                      className="block"
                     >
-                      <div className="flex items-center justify-center w-8 h-8 bg-material-primary text-white rounded-full mr-3 flex-shrink-0">
-                        {index + 1}
-                      </div>
-                      
-                      <div className="flex-grow">
-                        <h4 className="font-medium">{establishment.name}</h4>
-                        <div className="flex items-center text-sm text-material-on-surface-variant">
-                          <MapPin className="h-3 w-3 mr-1" />
-                          <span>{establishment.address}</span>
+                      <div className="flex p-3 border rounded-lg relative hover:bg-gray-50/10 transition-colors cursor-pointer">
+                        <div className="flex items-center justify-center w-8 h-8 bg-material-primary text-white rounded-full mr-3 flex-shrink-0">
+                          {index + 1}
+                        </div>
+                        
+                        <div className="flex-grow">
+                          <h4 className="font-medium">{establishment.name}</h4>
+                          <div className="flex items-center text-sm text-material-on-surface-variant">
+                            <MapPin className="h-3 w-3 mr-1" />
+                            <span>{establishment.address}</span>
+                          </div>
                         </div>
                       </div>
-                      
-                      <Link 
-                        to={`/establishment/${establishment.id}`}
-                        className="self-center ml-2 text-material-primary text-sm font-medium"
-                      >
-                        View
-                      </Link>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               </CardContent>
             </Card>
           </div>
           
-          {/* Participants Preview */}
           <div>
             <Card>
               <CardContent className="p-4">
@@ -226,7 +218,6 @@ const BarCrawlDetailsPage: React.FC<BarCrawlDetailsProps> = () => {
           </div>
         </div>
 
-        {/* Detailed Participants List */}
         <Card className="mb-6">
           <CardContent className="p-4">
             <h2 className="text-xl font-semibold mb-4">Current Participants</h2>

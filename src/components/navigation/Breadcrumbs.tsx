@@ -21,18 +21,18 @@ const routes: Record<string, BreadcrumbConfig> = {
   '/': { path: '/', label: 'Home', icon: <Home className="h-4 w-4" /> },
   '/explore': { path: '/explore', label: 'Explore' },
   '/profile': { path: '/profile', label: 'Profile' },
-  '/profile/bar-crawls': { path: '/profile/bar-crawls', label: 'Bar Crawls' },
+  '/profile/bar-crawls': { path: '/profile/bar-crawls', label: 'Swig Circuits' },
   '/profile/favorites': { path: '/profile/favorites', label: 'Favorites' },
   '/profile/visited': { path: '/profile/visited', label: 'Visited' },
   '/profile/rewards': { path: '/profile/rewards', label: 'Rewards' },
   '/profile/my-creations': { path: '/profile/my-creations', label: 'My Creations' },
   '/profile/settings': { path: '/profile/settings', label: 'Settings' },
-  '/bar-crawl': { path: '/bar-crawl', label: 'Bar Crawl' },
-  '/create-bar-crawl': { path: '/create-bar-crawl', label: 'Create Bar Crawl' },
+  '/bar-crawl': { path: '/bar-crawl', label: 'Swig Circuit' },
+  '/create-bar-crawl': { path: '/create-bar-crawl', label: 'Create Swig Circuit' },
   
   // Establishment routes
   '/establishment/profile': { path: '/establishment/profile', label: 'Establishment Profile' },
-  '/establishment/bar-crawl-requests': { path: '/establishment/bar-crawl-requests', label: 'Bar Crawl Requests' },
+  '/establishment/bar-crawl-requests': { path: '/establishment/bar-crawl-requests', label: 'Swig Circuit Requests' },
   '/establishment/reviews': { path: '/establishment/reviews', label: 'Reviews' },
   '/establishment/analytics': { path: '/establishment/analytics', label: 'Analytics' },
   '/establishment/all-actions': { path: '/establishment/all-actions', label: 'All Actions' },
@@ -40,13 +40,13 @@ const routes: Record<string, BreadcrumbConfig> = {
 
 // Add dynamic path matching patterns
 const dynamicRoutes = [
-  { pattern: /^\/bar-crawl\/(.+)$/, base: '/bar-crawl', label: 'Bar Crawl Details' },
-  { pattern: /^\/bar-crawl-profile\/(.+)$/, base: '/bar-crawl-profile', label: 'Crawl Details' },
-  { pattern: /^\/bar-crawl-details\/(.+)$/, base: '/bar-crawl-details', label: 'Crawl Details' },
+  { pattern: /^\/bar-crawl\/(.+)$/, base: '/bar-crawl', label: 'Swig Circuit Details' },
+  { pattern: /^\/bar-crawl-profile\/(.+)$/, base: '/bar-crawl-profile', label: 'Swig Circuit Details' },
+  { pattern: /^\/bar-crawl-details\/(.+)$/, base: '/bar-crawl-details', label: 'Swig Circuit Details' },
   { pattern: /^\/establishment\/(.+)$/, base: '/establishment', label: 'Establishment' },
   { pattern: /^\/establishment\/mocktail\/(.+)$/, base: '/establishment/mocktail', label: 'Mocktail Details' },
   { pattern: /^\/cocktail\/(.+)$/, base: '/cocktail', label: 'Cocktail' },
-  { pattern: /^\/profile\/my-creations\/(.+)$/, base: '/profile/my-creations', label: 'Bar Crawl Management' },
+  { pattern: /^\/profile\/my-creations\/(.+)$/, base: '/profile/my-creations', label: 'Swig Circuit Management' },
 ];
 
 const Breadcrumbs: React.FC = () => {

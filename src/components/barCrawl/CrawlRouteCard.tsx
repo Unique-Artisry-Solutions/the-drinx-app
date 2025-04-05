@@ -21,14 +21,18 @@ const CrawlRouteCard: React.FC<CrawlRouteCardProps> = ({ establishments }) => {
       </h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-1">
         {establishments.map((establishment, index) => (
-          <div key={establishment.id} className="flex items-center py-1">
+          <Link 
+            key={establishment.id} 
+            to={`/establishment/${establishment.id}`} 
+            className="flex items-center py-1 hover:text-spiritless-pink transition-colors"
+          >
             <div className="flex items-center justify-center bg-spiritless-pink text-white rounded-full h-6 w-6 text-sm mr-2 flex-shrink-0">
               {index + 1}
             </div>
-            <Link to={`/establishment/${establishment.id}`} className="text-material-primary hover:underline truncate">
+            <span className="text-material-primary hover:underline truncate">
               {establishment.name}
-            </Link>
-          </div>
+            </span>
+          </Link>
         ))}
       </div>
     </div>
