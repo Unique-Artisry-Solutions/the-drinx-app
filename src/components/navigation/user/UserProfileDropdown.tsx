@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { useLocation } from 'react-router-dom';
 import { DropdownMenu, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useTheme } from '@/contexts/ThemeContext';
 import ProfileDropdownButton from './profile-dropdown/ProfileDropdownButton';

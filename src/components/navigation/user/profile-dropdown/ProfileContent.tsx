@@ -2,7 +2,6 @@
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 import { User, Settings, LogOut, Route, GlassWater } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { 
   DropdownMenuContent, 
   DropdownMenuSeparator 
@@ -10,6 +9,7 @@ import {
 import ProfileHeader from './ProfileHeader';
 import ProfileMenuItem from './ProfileMenuItem';
 import ProfileTabOptions from './ProfileTabOptions';
+import { profileDropdownStyles } from './profileDropdownStyles';
 
 interface TabOption {
   value: string;
@@ -48,12 +48,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
   return (
     <DropdownMenuContent 
       align="end" 
-      className={cn(
-        "user-profile-dropdown w-56 backdrop-blur-sm shadow-md p-1 animate-fade-in",
-        isDarkTheme 
-          ? "bg-gray-800/90 border-gray-700" 
-          : "bg-white/95 border border-gray-200"
-      )}
+      className={profileDropdownStyles.dropdownContent(isDarkTheme)}
     >
       <ProfileHeader username={username} isDarkTheme={isDarkTheme} />
       
@@ -102,7 +97,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
         Settings
       </ProfileMenuItem>
       
-      <DropdownMenuSeparator className={isDarkTheme ? "my-1 bg-gray-700" : "my-1 bg-gray-200"} />
+      <DropdownMenuSeparator className={profileDropdownStyles.separator(isDarkTheme)} />
       
       <ProfileMenuItem 
         to="#" 
