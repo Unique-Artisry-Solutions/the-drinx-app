@@ -1,78 +1,85 @@
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
 import { Check } from 'lucide-react';
-
-interface ThemeOption {
-  id: string;
-  name: string;
-  description: string;
-  icon: string;
-}
 
 interface ThemeSelectionProps {
   selectedTheme: string;
-  onThemeSelect: (themeId: string) => void;
+  onThemeSelect: (theme: string) => void;
 }
 
-const ThemeSelection: React.FC<ThemeSelectionProps> = ({ selectedTheme, onThemeSelect }) => {
-  const themeOptions: ThemeOption[] = [
+type Theme = {
+  id: string;
+  name: string;
+  description: string;
+  color: string;
+};
+
+const ThemeSelection: React.FC<ThemeSelectionProps> = ({
+  selectedTheme,
+  onThemeSelect,
+}) => {
+  const themes: Theme[] = [
     {
       id: 'tropical',
       name: 'Tropical Paradise',
-      description: 'Fruity, refreshing drinks with a vacation vibe',
-      icon: '🌴'
+      description: 'Bright, fruity flavors with exotic ingredients',
+      color: 'bg-spiritless-orange',
     },
     {
       id: 'herbal',
       name: 'Herbal Garden',
-      description: 'Botanical-inspired drinks with fresh herbs and spices',
-      icon: '🌿'
+      description: 'Fresh herb-infused mocktails with botanical flavors',
+      color: 'bg-spiritless-green',
     },
     {
       id: 'classic',
-      name: 'Timeless Classics',
-      description: 'Non-alcoholic versions of traditional cocktail favorites',
-      icon: '🥃'
+      name: 'Classic Inspirations',
+      description: 'Non-alcoholic versions of timeless cocktails',
+      color: 'bg-spiritless-pink',
     },
     {
-      id: 'innovative',
-      name: 'Experimental Concoctions',
-      description: 'Cutting-edge mixology and unique flavor combinations',
-      icon: '🧪'
+      id: 'seasonal',
+      name: 'Seasonal Selections',
+      description: 'Drinks that highlight seasonal ingredients',
+      color: 'bg-spiritless-burgundy',
     },
     {
-      id: 'local',
-      name: 'Local Flavors',
-      description: 'Drinks featuring regional ingredients and specialties',
-      icon: '🏙️'
-    }
+      id: 'creative',
+      name: 'Creative Concoctions',
+      description: 'Innovative and experimental flavor combinations',
+      color: 'bg-spiritless-bright-orange',
+    },
   ];
 
   return (
-    <div className="space-y-3">
-      <h3 className="text-lg font-medium">Select a Theme</h3>
-      <p className="text-sm text-muted-foreground mb-3">Define the vibe of your Swig Circuit</p>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-        {themeOptions.map((theme) => (
-          <Button
+    <div className="space-y-4">
+      <p className="text-sm text-muted-foreground">
+        Choose a theme that sets the tone for your Swig Circuit experience.
+      </p>
+      <div className="grid grid-cols-1 gap-3">
+        {themes.map((theme) => (
+          <button
             key={theme.id}
-            variant={selectedTheme === theme.id ? "default" : "outline"}
-            className={`h-auto py-3 px-4 justify-start text-left flex flex-col items-start relative ${
-              selectedTheme === theme.id ? "border-spiritless-pink bg-spiritless-pink/10" : ""
-            }`}
             onClick={() => onThemeSelect(theme.id)}
+            className={`flex items-center p-4 rounded-lg border w-full ${
+              selectedTheme === theme.id
+                ? `border-2 ${theme.color} border-opacity-50 bg-opacity-10 ${theme.color}`
+                : 'border-material-outline hover:bg-material-surface-variant/20'
+            }`}
           >
-            {selectedTheme === theme.id && (
-              <Check size={16} className="absolute right-2 top-2 text-spiritless-pink" />
-            )}
-            <div className="flex items-center mb-1">
-              <span className="text-2xl mr-2">{theme.icon}</span>
-              <span className="font-medium">{theme.name}</span>
+            <div className={`w-3 h-12 rounded-full ${theme.color} mr-3`} />
+            <div className="text-left flex-grow">
+              <div className="font-medium">{theme.name}</div>
+              <div className="text-sm text-muted-foreground truncate">
+                {theme.description}
+              </div>
             </div>
-            <span className="text-xs text-muted-foreground">{theme.description}</span>
-          </Button>
+            {selectedTheme === theme.id && (
+              <div className="ml-3">
+                <Check className="h-5 w-5 text-primary" />
+              </div>
+            )}
+          </button>
         ))}
       </div>
     </div>
