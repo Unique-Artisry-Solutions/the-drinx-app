@@ -1,6 +1,9 @@
+
 import React from 'react';
 import CocktailCard from '@/components/CocktailCard';
 import { Button } from '@/components/ui/button';
+import { useTheme } from '@/contexts/ThemeContext';
+
 interface Cocktail {
   id: string;
   name: string;
@@ -22,16 +25,21 @@ const CocktailsSection: React.FC<CocktailsSectionProps> = ({
   cocktails,
   resetFilters
 }) => {
+  const { theme } = useTheme();
+  const isLightTheme = theme === 'light';
+  
   return <div>
       <div className="flex justify-between items-center mb-3">
-        <h2 className="text-xl font-semibold">Featured Cocktails</h2>
-        <span className="text-sm text-gray-500">{cocktails.length} results</span>
+        <h2 className={`text-xl font-semibold ${isLightTheme ? 'text-gray-800' : 'text-material-on-background'}`}>Featured Cocktails</h2>
+        <span className={`text-sm ${isLightTheme ? 'text-gray-600' : 'text-gray-500'}`}>{cocktails.length} results</span>
       </div>
       
-      {cocktails.length > 0 ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 bg-indigo-950">
+      {cocktails.length > 0 ? 
+        <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 ${isLightTheme ? 'bg-[#f5f3ed]' : 'bg-indigo-950'}`}>
           {cocktails.map(cocktail => <CocktailCard key={cocktail.id} id={cocktail.id} name={cocktail.name} price={cocktail.price} description={cocktail.description} ingredients={cocktail.ingredients} image={cocktail.image} establishment={cocktail.establishment} />)}
-        </div> : <div className="text-center py-6 border border-dashed rounded-lg">
-          <p className="text-material-on-surface-variant mb-2">No cocktails found matching your criteria.</p>
+        </div> : 
+        <div className="text-center py-6 border border-dashed rounded-lg">
+          <p className={`mb-2 ${isLightTheme ? 'text-gray-600' : 'text-material-on-surface-variant'}`}>No cocktails found matching your criteria.</p>
           <Button variant="outline" onClick={resetFilters}>
             Reset Filters
           </Button>
