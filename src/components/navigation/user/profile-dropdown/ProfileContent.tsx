@@ -3,7 +3,6 @@ import React from 'react';
 import { useLocation } from 'react-router-dom';
 import { User, Settings, LogOut, Route, GlassWater } from 'lucide-react';
 import { 
-  DropdownMenuContent, 
   DropdownMenuSeparator 
 } from "@/components/ui/dropdown-menu";
 import ProfileHeader from './ProfileHeader';
@@ -46,10 +45,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
   };
 
   return (
-    <DropdownMenuContent 
-      align="end" 
-      className={profileDropdownStyles.dropdownContent(isDarkTheme)}
-    >
+    <>
       <ProfileHeader username={username} isDarkTheme={isDarkTheme} />
       
       <ProfileMenuItem 
@@ -107,7 +103,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
       >
         <span className="text-red-600">Logout</span>
       </ProfileMenuItem>
-    </DropdownMenuContent>
+    </>
   );
 };
 

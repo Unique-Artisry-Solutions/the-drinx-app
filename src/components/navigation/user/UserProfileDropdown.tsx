@@ -40,15 +40,20 @@ const UserProfileDropdown: React.FC<UserProfileDropdownProps> = ({
         <ProfileDropdownButton isDarkTheme={isDarkTheme} />
       </DropdownMenuTrigger>
       
-      <ProfileContent 
-        username={username}
-        userType={userType}
-        isDarkTheme={isDarkTheme}
-        handleLogout={handleLogout}
-        activeTab={activeTab}
-        handleTabChange={handleTabChange}
-        tabOptions={tabOptions}
-      />
+      <DropdownMenuContent 
+        align="end" 
+        className={`z-50 ${isDarkTheme ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}
+      >
+        <ProfileContent 
+          username={username}
+          userType={userType}
+          isDarkTheme={isDarkTheme}
+          handleLogout={handleLogout}
+          activeTab={activeTab}
+          handleTabChange={handleTabChange}
+          tabOptions={tabOptions}
+        />
+      </DropdownMenuContent>
     </DropdownMenu>
   );
 };
