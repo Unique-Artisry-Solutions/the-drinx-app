@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth';
@@ -16,6 +15,7 @@ import Layout from '@/components/Layout';
 import BackButton from '@/components/navigation/BackButton';
 import { Settings, Bell, User, Shield, Moon, Upload } from 'lucide-react';
 import PhotoUploadField from '@/components/PhotoUploadField';
+import { cn } from '@/lib/utils';
 
 interface UserProfile {
   username?: string;
@@ -130,12 +130,10 @@ const SettingsPage = () => {
     if (!avatarFile || !user) return null;
     
     try {
-      // Create a unique file name using the user ID and timestamp
       const fileExt = avatarFile.name.split('.').pop();
       const fileName = `${user.id}-${Date.now()}.${fileExt}`;
       const filePath = `avatars/${fileName}`;
       
-      // Upload the file to Supabase storage
       const { error: uploadError } = await supabase.storage
         .from('user-avatars')
         .upload(filePath, avatarFile);
@@ -144,7 +142,6 @@ const SettingsPage = () => {
         throw uploadError;
       }
       
-      // Get the public URL for the file
       const { data } = supabase.storage
         .from('user-avatars')
         .getPublicUrl(filePath);
@@ -164,7 +161,6 @@ const SettingsPage = () => {
     try {
       setLoading(true);
       
-      // Upload avatar if selected
       let avatarUrl = profile.avatar_url;
       if (avatarFile) {
         const uploadedUrl = await uploadAvatar();
@@ -189,7 +185,6 @@ const SettingsPage = () => {
         
       if (error) throw error;
       
-      // Update local profile state with new avatar URL
       if (avatarFile && avatarUrl) {
         setProfile(prev => ({ ...prev, avatar_url: avatarUrl }));
         setAvatarFile(null);
