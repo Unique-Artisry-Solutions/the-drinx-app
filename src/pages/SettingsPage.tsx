@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth';
@@ -13,7 +14,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import Layout from '@/components/Layout';
 import BackButton from '@/components/navigation/BackButton';
-import { Settings, Bell, User, Shield, Moon } from 'lucide-react';
+import { Settings, Bell, User, Shield, Moon, Upload } from 'lucide-react';
+import PhotoUploadField from '@/components/PhotoUploadField';
 
 interface UserProfile {
   username?: string;
@@ -24,6 +26,7 @@ interface UserProfile {
   dark_mode?: boolean;
   email_notifications?: boolean;
   push_notifications?: boolean;
+  avatar_url?: string;
 }
 
 interface DBProfile {
@@ -37,6 +40,7 @@ interface DBProfile {
   phone?: string | null;
   email_notifications?: boolean | null;
   push_notifications?: boolean | null;
+  avatar_url?: string | null;
 }
 
 const SettingsPage = () => {
@@ -45,6 +49,7 @@ const SettingsPage = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('account');
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [profile, setProfile] = useState<UserProfile>({
     username: '',
     display_name: '',
@@ -54,6 +59,7 @@ const SettingsPage = () => {
     dark_mode: theme === 'dark',
     email_notifications: true,
     push_notifications: false,
+    avatar_url: '',
   });
 
   useEffect(() => {
@@ -68,7 +74,10 @@ const SettingsPage = () => {
           .eq('id', user.id)
           .single();
           
-        if (error) throw error;
+        if (error) {
+          console.error('Error fetching profile:', error);
+          throw error;
+        }
         
         if (data) {
           const profileData = data as DBProfile;
@@ -81,11 +90,12 @@ const SettingsPage = () => {
             dark_mode: theme === 'dark',
             email_notifications: profileData.email_notifications || true,
             push_notifications: profileData.push_notifications || false,
+            avatar_url: profileData.avatar_url || '',
           });
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching profile:', error);
-        toast.error('Failed to load profile data');
+        toast.error('Failed to load profile data: ' + (error.message || 'Unknown error'));
       } finally {
         setLoading(false);
       }
@@ -112,12 +122,56 @@ const SettingsPage = () => {
     setProfile(prev => ({ ...prev, [name]: checked }));
   };
 
+  const handlePhotoSelect = async (file: File) => {
+    setAvatarFile(file);
+  };
+
+  const uploadAvatar = async () => {
+    if (!avatarFile || !user) return null;
+    
+    try {
+      // Create a unique file name using the user ID and timestamp
+      const fileExt = avatarFile.name.split('.').pop();
+      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+      const filePath = `avatars/${fileName}`;
+      
+      // Upload the file to Supabase storage
+      const { error: uploadError } = await supabase.storage
+        .from('user-avatars')
+        .upload(filePath, avatarFile);
+        
+      if (uploadError) {
+        throw uploadError;
+      }
+      
+      // Get the public URL for the file
+      const { data } = supabase.storage
+        .from('user-avatars')
+        .getPublicUrl(filePath);
+        
+      return data.publicUrl;
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      toast.error('Failed to upload avatar');
+      return null;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
     
     try {
       setLoading(true);
+      
+      // Upload avatar if selected
+      let avatarUrl = profile.avatar_url;
+      if (avatarFile) {
+        const uploadedUrl = await uploadAvatar();
+        if (uploadedUrl) {
+          avatarUrl = uploadedUrl;
+        }
+      }
       
       const { error } = await supabase
         .from('profiles')
@@ -128,33 +182,53 @@ const SettingsPage = () => {
           phone: profile.phone,
           email_notifications: profile.email_notifications,
           push_notifications: profile.push_notifications,
+          avatar_url: avatarUrl,
           updated_at: new Date().toISOString()
         })
         .eq('id', user.id);
         
       if (error) throw error;
       
+      // Update local profile state with new avatar URL
+      if (avatarFile && avatarUrl) {
+        setProfile(prev => ({ ...prev, avatar_url: avatarUrl }));
+        setAvatarFile(null);
+      }
+      
       toast.success('Settings updated successfully');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating profile:', error);
-      toast.error('Failed to update settings');
+      toast.error('Failed to update settings: ' + (error.message || 'Unknown error'));
     } finally {
       setLoading(false);
     }
   };
 
+  const isLightTheme = theme === 'light';
+
   return (
     <Layout>
-      <div className="container mx-auto py-6 px-4 max-w-4xl">
+      <div className={cn(
+        "container mx-auto py-6 px-4 max-w-4xl",
+        isLightTheme ? "text-gray-800" : ""
+      )}>
         <BackButton fallbackPath="/profile" />
         
         <div className="flex flex-col items-start mb-6">
-          <h1 className="text-2xl font-bold mb-2">Settings</h1>
-          <p className="text-muted-foreground">Manage your account settings and preferences</p>
+          <h1 className={cn(
+            "text-2xl font-bold mb-2",
+            isLightTheme ? "text-gray-800" : ""
+          )}>Settings</h1>
+          <p className={cn(
+            isLightTheme ? "text-gray-600" : "text-muted-foreground"
+          )}>Manage your account settings and preferences</p>
         </div>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="w-full flex justify-start p-1 mb-6">
+          <TabsList className={cn(
+            "w-full flex justify-start p-1 mb-6",
+            isLightTheme ? "bg-gray-100" : ""
+          )}>
             <TabsTrigger value="account" className="flex items-center gap-2">
               <User size={16} />
               <span>Account</span>
@@ -175,69 +249,98 @@ const SettingsPage = () => {
           
           <form onSubmit={handleSubmit}>
             <TabsContent value="account">
-              <Card>
+              <Card className={isLightTheme ? "bg-[#f5f3ed] border-gray-200" : ""}>
                 <CardHeader>
-                  <CardTitle>Account Information</CardTitle>
-                  <CardDescription>
+                  <CardTitle className={isLightTheme ? "text-gray-800" : ""}>Account Information</CardTitle>
+                  <CardDescription className={isLightTheme ? "text-gray-600" : ""}>
                     Update your personal information
                   </CardDescription>
                 </CardHeader>
                 
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="display_name">Display Name</Label>
+                    <Label htmlFor="avatar" className={isLightTheme ? "text-gray-700" : ""}>Profile Picture</Label>
+                    <div className="flex items-center gap-4">
+                      {profile.avatar_url && (
+                        <div className="h-16 w-16 rounded-full overflow-hidden border border-gray-200">
+                          <img 
+                            src={profile.avatar_url} 
+                            alt="Avatar" 
+                            className="h-full w-full object-cover" 
+                          />
+                        </div>
+                      )}
+                      <div className="flex-1">
+                        <PhotoUploadField onPhotoSelect={handlePhotoSelect} />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="display_name" className={isLightTheme ? "text-gray-700" : ""}>Display Name</Label>
                     <Input
                       id="display_name"
                       name="display_name"
                       value={profile.display_name}
                       onChange={handleChange}
                       placeholder="Your display name"
+                      className={isLightTheme ? "bg-white border-gray-200" : ""}
                     />
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="username">Username</Label>
+                    <Label htmlFor="username" className={isLightTheme ? "text-gray-700" : ""}>Username</Label>
                     <Input
                       id="username"
                       name="username"
                       value={profile.username}
                       onChange={handleChange}
                       placeholder="Your username"
+                      className={isLightTheme ? "bg-white border-gray-200" : ""}
                     />
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="bio">Bio</Label>
+                    <Label htmlFor="bio" className={isLightTheme ? "text-gray-700" : ""}>Bio</Label>
                     <Textarea
                       id="bio"
                       name="bio"
                       value={profile.bio}
                       onChange={handleChange}
                       placeholder="Tell us about yourself"
-                      className="h-24"
+                      className={cn(
+                        "h-24",
+                        isLightTheme ? "bg-white border-gray-200" : ""
+                      )}
                     />
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="email" className={isLightTheme ? "text-gray-700" : ""}>Email</Label>
                     <Input
                       id="email"
                       name="email"
                       value={profile.email}
                       disabled
-                      className="text-muted-foreground"
+                      className={cn(
+                        isLightTheme ? "bg-gray-100 text-gray-500 border-gray-200" : "text-muted-foreground"
+                      )}
                     />
-                    <p className="text-xs text-muted-foreground">Email cannot be changed here</p>
+                    <p className={cn(
+                      "text-xs", 
+                      isLightTheme ? "text-gray-500" : "text-muted-foreground"
+                    )}>Email cannot be changed here</p>
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="phone">Phone</Label>
+                    <Label htmlFor="phone" className={isLightTheme ? "text-gray-700" : ""}>Phone</Label>
                     <Input
                       id="phone"
                       name="phone"
                       value={profile.phone}
                       onChange={handleChange}
                       placeholder="Your phone number"
+                      className={isLightTheme ? "bg-white border-gray-200" : ""}
                     />
                   </div>
                 </CardContent>
@@ -245,10 +348,10 @@ const SettingsPage = () => {
             </TabsContent>
             
             <TabsContent value="notifications">
-              <Card>
+              <Card className={isLightTheme ? "bg-[#f5f3ed] border-gray-200" : ""}>
                 <CardHeader>
-                  <CardTitle>Notification Preferences</CardTitle>
-                  <CardDescription>
+                  <CardTitle className={isLightTheme ? "text-gray-800" : ""}>Notification Preferences</CardTitle>
+                  <CardDescription className={isLightTheme ? "text-gray-600" : ""}>
                     Manage how you receive notifications
                   </CardDescription>
                 </CardHeader>
@@ -256,8 +359,11 @@ const SettingsPage = () => {
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
-                      <Label>Email Notifications</Label>
-                      <p className="text-sm text-muted-foreground">Receive updates via email</p>
+                      <Label className={isLightTheme ? "text-gray-700" : ""}>Email Notifications</Label>
+                      <p className={cn(
+                        "text-sm", 
+                        isLightTheme ? "text-gray-600" : "text-muted-foreground"
+                      )}>Receive updates via email</p>
                     </div>
                     <Switch
                       checked={profile.email_notifications}
@@ -267,8 +373,11 @@ const SettingsPage = () => {
                   
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
-                      <Label>Push Notifications</Label>
-                      <p className="text-sm text-muted-foreground">Receive updates on your device</p>
+                      <Label className={isLightTheme ? "text-gray-700" : ""}>Push Notifications</Label>
+                      <p className={cn(
+                        "text-sm", 
+                        isLightTheme ? "text-gray-600" : "text-muted-foreground"
+                      )}>Receive updates on your device</p>
                     </div>
                     <Switch
                       checked={profile.push_notifications}
@@ -280,10 +389,10 @@ const SettingsPage = () => {
             </TabsContent>
             
             <TabsContent value="appearance">
-              <Card>
+              <Card className={isLightTheme ? "bg-[#f5f3ed] border-gray-200" : ""}>
                 <CardHeader>
-                  <CardTitle>Appearance Settings</CardTitle>
-                  <CardDescription>
+                  <CardTitle className={isLightTheme ? "text-gray-800" : ""}>Appearance Settings</CardTitle>
+                  <CardDescription className={isLightTheme ? "text-gray-600" : ""}>
                     Customize how the app looks
                   </CardDescription>
                 </CardHeader>
@@ -291,8 +400,11 @@ const SettingsPage = () => {
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
-                      <Label>Dark Mode</Label>
-                      <p className="text-sm text-muted-foreground">Use dark theme throughout the app</p>
+                      <Label className={isLightTheme ? "text-gray-700" : ""}>Dark Mode</Label>
+                      <p className={cn(
+                        "text-sm", 
+                        isLightTheme ? "text-gray-600" : "text-muted-foreground"
+                      )}>Use dark theme throughout the app</p>
                     </div>
                     <Switch
                       checked={profile.dark_mode}
@@ -304,16 +416,18 @@ const SettingsPage = () => {
             </TabsContent>
             
             <TabsContent value="privacy">
-              <Card>
+              <Card className={isLightTheme ? "bg-[#f5f3ed] border-gray-200" : ""}>
                 <CardHeader>
-                  <CardTitle>Privacy Settings</CardTitle>
-                  <CardDescription>
+                  <CardTitle className={isLightTheme ? "text-gray-800" : ""}>Privacy Settings</CardTitle>
+                  <CardDescription className={isLightTheme ? "text-gray-600" : ""}>
                     Manage your privacy preferences
                   </CardDescription>
                 </CardHeader>
                 
                 <CardContent className="space-y-4">
-                  <p className="text-muted-foreground">Privacy settings will be available in a future update.</p>
+                  <p className={cn(
+                    isLightTheme ? "text-gray-600" : "text-muted-foreground"
+                  )}>Privacy settings will be available in a future update.</p>
                 </CardContent>
               </Card>
             </TabsContent>
@@ -323,6 +437,7 @@ const SettingsPage = () => {
                 type="button" 
                 variant="outline" 
                 onClick={() => navigate(-1)}
+                className={isLightTheme ? "border-gray-300 text-gray-700" : ""}
               >
                 Cancel
               </Button>
