@@ -129,9 +129,9 @@ const CreateBarCrawlPage: React.FC = () => {
                       </Button>
                     </div>
                   ) : (
-                    <label className="flex flex-col items-center justify-center p-6 cursor-pointer bg-gray-50 aspect-video">
-                      <ImagePlus className="h-10 w-10 text-gray-400 mb-2" />
-                      <span className="text-sm text-gray-500">Click to upload an image</span>
+                    <label className="flex flex-col items-center justify-center p-6 cursor-pointer bg-gray-50 dark:bg-gray-800 aspect-video">
+                      <ImagePlus className="h-10 w-10 text-gray-400 dark:text-gray-500 mb-2" />
+                      <span className="text-sm text-gray-500 dark:text-gray-400">Click to upload an image</span>
                       <input 
                         type="file" 
                         id="imageUpload" 
@@ -162,10 +162,10 @@ const CreateBarCrawlPage: React.FC = () => {
                     type="date" 
                     value={endDate}
                     readOnly 
-                    className="bg-gray-50"
+                    className="bg-muted cursor-not-allowed"
                     title="End date is automatically set to 7 days after the start date"
                   />
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
                     Maximum duration is 7 days
                   </p>
                 </div>
@@ -184,11 +184,11 @@ const CreateBarCrawlPage: React.FC = () => {
               
               <div className="space-y-2">
                 <Label>Establishments</Label>
-                <p className="text-sm text-gray-500 mb-2">You can add establishments after creating the Swig Circuit</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">You can add establishments after creating the Swig Circuit</p>
                 
-                <div className="bg-gray-50 p-3 rounded-lg border">
+                <div className="bg-muted/50 backdrop-blur-sm p-3 rounded-lg border border-border/50">
                   <div className="flex justify-between items-center">
-                    <span>No establishments selected</span>
+                    <span className="text-foreground/80">No establishments selected</span>
                     <Button type="button" variant="outline" size="sm" asChild>
                       <Link to="/map">Browse Map</Link>
                     </Button>
