@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Layout from '@/components/Layout';
@@ -6,6 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Star, Clock, Heart, Share2, MessageSquare, MapPin } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import CommentForm from '@/components/CommentForm';
+import { StarRating } from '@/components/StarRating';
+import { useAuth } from '@/contexts/auth';
 
 // Sample data - would be fetched from API in a real application
 import { sampleCocktails } from '@/data/sampleData';
@@ -27,7 +31,10 @@ const CocktailDetail = () => {
   const [likeCount, setLikeCount] = useState(0);
   const [lastOrdered, setLastOrdered] = useState<string | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showCommentForm, setShowCommentForm] = useState(false);
   const { toast } = useToast();
+  const { user, isEmailVerified } = useAuth();
 
   useEffect(() => {
     // In a real app, this would fetch data from an API
@@ -52,6 +59,7 @@ const CocktailDetail = () => {
           text: 'Really enjoyed this mocktail! Perfect balance of sweetness and acidity.',
           date: '3 days ago',
           source: 'app',
+          rating: 5,
         },
         {
           id: '2',
@@ -110,6 +118,44 @@ const CocktailDetail = () => {
       title: "Ordered today!",
       description: "We've recorded that you enjoyed this mocktail today.",
     });
+  };
+  
+  const handleAddComment = (data: { text: string; rating: number }) => {
+    setIsSubmitting(true);
+    
+    // Simulate API call delay
+    setTimeout(() => {
+      const newComment: Comment = {
+        id: `new-${Date.now()}`,
+        user: user?.email?.split('@')[0] || 'User',
+        text: data.text,
+        date: 'Just now',
+        source: 'app',
+        rating: data.rating,
+      };
+      
+      setComments([newComment, ...comments]);
+      setIsSubmitting(false);
+      setShowCommentForm(false);
+      
+      toast({
+        title: "Comment posted",
+        description: "Your comment has been added successfully.",
+      });
+    }, 1000);
+  };
+  
+  const toggleCommentForm = () => {
+    if (!user || !isEmailVerified) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to leave a comment.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setShowCommentForm(prev => !prev);
   };
 
   if (loading) {
@@ -201,9 +247,26 @@ const CocktailDetail = () => {
             
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Comments & Reviews</CardTitle>
+                <CardTitle className="text-lg flex justify-between items-center">
+                  <span>Comments & Reviews</span>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={toggleCommentForm}
+                    className="gap-1"
+                  >
+                    <MessageSquare size={16} />
+                    {showCommentForm ? "Cancel" : "Add Comment"}
+                  </Button>
+                </CardTitle>
               </CardHeader>
               <CardContent>
+                {showCommentForm && (
+                  <div className="mb-6 p-4 border rounded-lg bg-background/50">
+                    <CommentForm onSubmit={handleAddComment} isLoading={isSubmitting} />
+                  </div>
+                )}
+                
                 <div className="space-y-4">
                   {comments.map(comment => (
                     <div key={comment.id} className="border-b pb-4 last:border-b-0">
@@ -222,17 +285,6 @@ const CocktailDetail = () => {
                           {comment.source === 'yelp' && (
                             <>
                               <Badge variant="outline" className="mr-2">Yelp</Badge>
-                              {comment.rating && (
-                                <div className="flex">
-                                  {[...Array(5)].map((_, i) => (
-                                    <Star 
-                                      key={i} 
-                                      size={14} 
-                                      className={i < comment.rating! ? "fill-yellow-400 text-yellow-400" : "text-gray-300"} 
-                                    />
-                                  ))}
-                                </div>
-                              )}
                             </>
                           )}
                           
@@ -244,18 +296,23 @@ const CocktailDetail = () => {
                         </div>
                       </div>
                       
-                      <p className="mt-2 text-material-on-surface">
+                      {comment.rating && (
+                        <div className="mt-1 ml-10">
+                          <StarRating rating={comment.rating} interactive={false} size={14} />
+                        </div>
+                      )}
+                      
+                      <p className="mt-2 text-material-on-surface ml-10">
                         {comment.text}
                       </p>
                     </div>
                   ))}
-                </div>
-                
-                <div className="mt-6">
-                  <Button variant="outline" className="w-full">
-                    <MessageSquare size={16} className="mr-2" />
-                    Add Your Comment
-                  </Button>
+                  
+                  {comments.length === 0 && (
+                    <p className="text-center text-material-on-surface-variant py-4">
+                      No comments yet. Be the first to share your thoughts!
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>

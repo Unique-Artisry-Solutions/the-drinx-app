@@ -1,17 +1,23 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Star, TrendingUp, Clock, Tag } from 'lucide-react';
+import { Star, TrendingUp, Clock, Tag, MessageSquare } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { StarRating } from '@/components/StarRating';
+import CommentForm from '@/components/CommentForm';
+import { useToast } from '@/hooks/use-toast';
 
 const MocktailDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const { toast } = useToast();
+  const [showCommentForm, setShowCommentForm] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Sample data - in a real implementation, this would come from Supabase
-  const mocktail = {
+  const [mocktail, setMocktail] = useState({
     id: '1',
     name: 'Blue Lagoon',
     description: 'A refreshing blend of blue curaçao syrup, lemon juice, and sprite, garnished with a lemon wheel and cherry.',
@@ -26,15 +32,38 @@ const MocktailDetailsPage: React.FC = () => {
       { id: '2', user: 'Michael R.', rating: 4, comment: 'Great drink, though a bit sweet for my taste.', date: '2023-11-28' },
       { id: '3', user: 'Emily L.', rating: 5, comment: 'My favorite drink here! Perfect balance of flavors.', date: '2023-11-25' }
     ]
+  });
+  
+  const handleAddComment = (data: { text: string; rating: number }) => {
+    setIsSubmitting(true);
+    
+    // Simulate API call delay
+    setTimeout(() => {
+      const newReview = {
+        id: `new-${Date.now()}`,
+        user: 'Owner',
+        rating: data.rating,
+        comment: data.text,
+        date: new Date().toLocaleDateString()
+      };
+      
+      setMocktail(prev => ({
+        ...prev,
+        reviews: [newReview, ...prev.reviews]
+      }));
+      
+      setIsSubmitting(false);
+      setShowCommentForm(false);
+      
+      toast({
+        title: "Review added",
+        description: "Your review has been posted successfully.",
+      });
+    }, 1000);
   };
 
-  const renderStars = (rating: number) => {
-    return Array(5).fill(0).map((_, i) => (
-      <Star 
-        key={i} 
-        className={`h-4 w-4 ${i < Math.floor(rating) ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`} 
-      />
-    ));
+  const toggleCommentForm = () => {
+    setShowCommentForm(prev => !prev);
   };
 
   return (
@@ -56,7 +85,7 @@ const MocktailDetailsPage: React.FC = () => {
                     <h1 className="text-3xl font-bold gradient-text">{mocktail.name}</h1>
                     <div className="flex items-center mt-2">
                       <div className="flex mr-2">
-                        {renderStars(mocktail.rating)}
+                        <StarRating rating={Math.round(mocktail.rating)} interactive={false} />
                       </div>
                       <span className="text-material-on-surface-variant text-sm">
                         {mocktail.rating} ({mocktail.reviews.length} reviews)
@@ -90,9 +119,26 @@ const MocktailDetailsPage: React.FC = () => {
             
             <Card className="vibrant-card">
               <CardHeader>
-                <CardTitle>Customer Reviews</CardTitle>
+                <div className="flex justify-between items-center">
+                  <CardTitle>Customer Reviews</CardTitle>
+                  <Button 
+                    variant="outline"
+                    size="sm"
+                    onClick={toggleCommentForm}
+                    className="gap-1"
+                  >
+                    <MessageSquare size={16} />
+                    {showCommentForm ? "Cancel" : "Add Review"}
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent className="space-y-4">
+                {showCommentForm && (
+                  <div className="mb-6 p-4 border rounded-lg bg-background/50">
+                    <CommentForm onSubmit={handleAddComment} isLoading={isSubmitting} />
+                  </div>
+                )}
+              
                 {mocktail.reviews.length === 0 ? (
                   <p className="text-material-on-surface-variant">No reviews yet.</p>
                 ) : (
@@ -106,7 +152,7 @@ const MocktailDetailsPage: React.FC = () => {
                           <div className="ml-3">
                             <div className="font-medium">{review.user}</div>
                             <div className="flex mt-1">
-                              {renderStars(review.rating)}
+                              <StarRating rating={review.rating} interactive={false} size={14} />
                             </div>
                           </div>
                         </div>
