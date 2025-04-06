@@ -37,6 +37,7 @@ import EstablishmentAnalyticsPage from '@/pages/establishment/EstablishmentAnaly
 import AllActionsPage from '@/pages/establishment/AllActionsPage';
 import MocktailSuggestionsPage from '@/pages/establishment/MocktailSuggestionsPage';
 import SettingsPage from '@/pages/SettingsPage';
+import UserRecipesPage from '@/pages/profile/UserRecipesPage';
 import { ProtectedRoute, TypedProtectedRoute } from './protectedRoutes';
 
 // Admin pages
@@ -82,6 +83,7 @@ const AppRoutes = () => {
         <Route path="/profile/visited" element={<ProtectedRoute><VisitedPage /></ProtectedRoute>} />
         <Route path="/profile/bar-crawls" element={<ProtectedRoute><BarCrawlsPage /></ProtectedRoute>} />
         <Route path="/profile/my-creations" element={<ProtectedRoute><MyCreationsPage /></ProtectedRoute>} />
+        <Route path="/profile/recipes" element={<ProtectedRoute><UserRecipesPage /></ProtectedRoute>} />
         <Route path="/profile/rewards" element={<ProtectedRoute><RewardsPage /></ProtectedRoute>} />
         <Route path="/profile/settings" element={<ProtectedRoute><UserProfilePage /></ProtectedRoute>} />
         <Route path="/create-swig-circuit" element={<ProtectedRoute><CreateSwigCircuitPage /></ProtectedRoute>} />

@@ -17,6 +17,7 @@ export const routes: Record<string, BreadcrumbConfig> = {
   // Profile section
   '/profile': { path: '/profile', label: 'Profile' },
   '/profile/bar-crawls': { path: '/profile/bar-crawls', label: 'Swig Circuits' },
+  '/profile/recipes': { path: '/profile/recipes', label: 'My Recipes' },
   '/profile/favorites': { path: '/profile/favorites', label: 'Favorites' },
   '/profile/visited': { path: '/profile/visited', label: 'Visited' },
   '/profile/rewards': { path: '/profile/rewards', label: 'Rewards' },

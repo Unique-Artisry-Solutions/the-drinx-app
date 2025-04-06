@@ -95,8 +95,8 @@ const Explore = () => {
     <Layout>
       <div className="animate-fade-in max-w-7xl mx-auto">
         <div className="mb-4">
-          <h1 className="text-2xl font-medium text-material-on-background">Explore Cocktails</h1>
-          <p className="text-material-on-surface-variant">
+          <h1 className="text-2xl font-medium text-foreground">Explore Cocktails</h1>
+          <p className="text-muted-foreground">
             Find your perfect non-alcoholic drink
           </p>
         </div>

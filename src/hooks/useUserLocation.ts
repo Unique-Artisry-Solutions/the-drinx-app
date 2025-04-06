@@ -62,9 +62,10 @@ export const useUserLocation = () => {
           });
           setIsLoading(false);
           
+          // Less prominent toast - removed title and changed to a shorter message
           toast({
-            title: "Location updated",
-            description: "Your current location has been refreshed.",
+            description: "Location refreshed",
+            duration: 3000,
           });
         },
         (error) => {
