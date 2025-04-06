@@ -5,13 +5,12 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import Layout from '@/components/Layout';
-import { Bell, User, Shield, Moon, Settings } from 'lucide-react';
+import { Bell, User, Shield, Moon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import AccountTab from './tabs/AccountTab';
 import NotificationsTab from './tabs/NotificationsTab';
 import AppearanceTab from './tabs/AppearanceTab';
 import PrivacyTab from './tabs/PrivacyTab';
-import { useProfileFormContext } from './hooks/useProfileFormContext';
 import { ProfileFormProvider } from './hooks/useProfileFormContext';
 import { useProfileData } from './hooks/useProfileData';
 import { Form } from '@/components/ui/form';
@@ -77,26 +76,34 @@ const SettingsPage = () => {
               
               {/* Use onSubmit with the form's handleSubmit wrapper around our submit function */}
               <form onSubmit={form.handleSubmit(handleSubmit)}>
-                <AccountTab 
-                  profile={profile} 
-                  isLightTheme={isLightTheme} 
-                  avatarFile={avatarFile}
-                  onPhotoSelect={handlePhotoSelect}
-                />
+                {activeTab === 'account' && (
+                  <AccountTab 
+                    profile={profile} 
+                    isLightTheme={isLightTheme} 
+                    avatarFile={avatarFile}
+                    onPhotoSelect={handlePhotoSelect}
+                  />
+                )}
                 
-                <NotificationsTab 
-                  profile={profile} 
-                  isLightTheme={isLightTheme} 
-                />
+                {activeTab === 'notifications' && (
+                  <NotificationsTab 
+                    profile={profile} 
+                    isLightTheme={isLightTheme} 
+                  />
+                )}
                 
-                <AppearanceTab 
-                  profile={profile} 
-                  isLightTheme={isLightTheme} 
-                />
+                {activeTab === 'appearance' && (
+                  <AppearanceTab 
+                    profile={profile} 
+                    isLightTheme={isLightTheme} 
+                  />
+                )}
                 
-                <PrivacyTab 
-                  isLightTheme={isLightTheme} 
-                />
+                {activeTab === 'privacy' && (
+                  <PrivacyTab 
+                    isLightTheme={isLightTheme} 
+                  />
+                )}
                 
                 <div className="mt-6 flex justify-end gap-4">
                   <Button 

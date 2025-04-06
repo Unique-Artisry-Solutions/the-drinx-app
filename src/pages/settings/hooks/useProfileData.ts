@@ -90,35 +90,12 @@ export const useProfileData = () => {
         if (!data) {
           console.log('No profile found for user, creating default profile');
           
-          // Create the profile record with the current user's ID
-          const defaultProfile = {
-            id: user.id,
+          // Use react-hook-form reset to update form values with default data
+          reset({
             username: user.user_metadata?.username || '',
             display_name: user.user_metadata?.name || '',
-            user_type: user.user_metadata?.user_type || 'individual',
-            email_notifications: true,
-            push_notifications: false,
             bio: '',
-            phone: '',
-            avatar_url: ''
-          };
-          
-          // Insert the default profile
-          const { error: insertError } = await supabase
-            .from('profiles')
-            .insert([defaultProfile]);
-            
-          if (insertError) {
-            console.error('Error creating profile:', insertError);
-            throw insertError;
-          }
-          
-          // Use react-hook-form reset to update form values
-          reset({
-            username: defaultProfile.username,
-            display_name: defaultProfile.display_name,
-            bio: '',
-            email: userEmail, // Use the email from authentication
+            email: userEmail,
             phone: '',
             dark_mode: theme === 'dark',
             email_notifications: true,
@@ -206,21 +183,45 @@ export const useProfileData = () => {
         }
       }
       
-      // Use upsert to handle both creation and update
-      const { error } = await supabase
+      // Create the profile data object
+      const profileData = {
+        id: user.id,
+        username: formData.username,
+        display_name: formData.display_name,
+        bio: formData.bio || '',
+        phone: formData.phone || '',
+        email_notifications: formData.email_notifications,
+        push_notifications: formData.push_notifications,
+        avatar_url: avatarUrl || '',
+        updated_at: new Date().toISOString()
+      };
+      
+      // First check if profile exists
+      const { data: existingProfile } = await supabase
         .from('profiles')
-        .upsert({
-          id: user.id,
-          username: formData.username,
-          display_name: formData.display_name,
-          bio: formData.bio,
-          phone: formData.phone,
-          email_notifications: formData.email_notifications,
-          push_notifications: formData.push_notifications,
-          avatar_url: avatarUrl,
-          updated_at: new Date().toISOString()
-        });
+        .select('id')
+        .eq('id', user.id)
+        .single();
         
+      let error;
+      
+      if (existingProfile) {
+        // Update existing profile
+        const result = await supabase
+          .from('profiles')
+          .update(profileData)
+          .eq('id', user.id);
+          
+        error = result.error;
+      } else {
+        // Insert new profile
+        const result = await supabase
+          .from('profiles')
+          .insert([profileData]);
+          
+        error = result.error;
+      }
+      
       if (error) throw error;
       
       if (avatarFile && avatarUrl) {

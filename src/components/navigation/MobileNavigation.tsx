@@ -11,8 +11,6 @@ import ProfileMenu from './mobile/ProfileMenu';
 import NavItem from './mobile/NavItem';
 import HomeButton from './mobile/HomeButton';
 import { useTheme } from '@/contexts/ThemeContext';
-import BackButton from './BackButton';
-import { ArrowLeft } from 'lucide-react';
 
 const MobileNavigation: React.FC<MobileNavigationProps> = ({ 
   type, 
@@ -62,7 +60,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
   // Determine if we should show the back button
   const shouldShowBackButton = () => {
     // Exclude certain paths
-    const excludedPaths = ['/', '/landing', '/explore', '/map', '/profile'];
+    const excludedPaths = ['/', '/landing', '/explore', '/map', '/profile', '/settings'];
     return !excludedPaths.includes(location.pathname) && !location.pathname.startsWith('/admin');
   };
 
@@ -98,30 +96,13 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
     ? "fixed bottom-0 left-0 right-0 w-full bg-gray-900 shadow-lg z-50 md:hidden border-t border-gray-700 backdrop-blur-sm bg-gray-900/95 transition-all duration-300" 
     : "fixed bottom-0 left-0 right-0 w-full bg-white shadow-lg z-50 md:hidden border-t border-gray-100 backdrop-blur-sm bg-white/95 transition-all duration-300";
 
-  // Top navigation for pages that need a back button
-  const renderTopNav = () => {
-    if (shouldShowBackButton()) {
-      return (
-        <div className={`fixed top-0 left-0 right-0 z-50 md:hidden px-3 py-3 ${theme === 'dark' ? 'bg-gray-900 border-b border-gray-700' : 'bg-white border-b border-gray-100'}`}>
-          <div className="flex items-center">
-            <BackButton 
-              size="icon" 
-              showLabel={false} 
-              className="mr-2" 
-            />
-            <h1 className={`text-lg font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
-              {location.pathname.includes('settings') ? 'Settings' : ''}
-            </h1>
-          </div>
-        </div>
-      );
-    }
-    return null;
-  };
-
   return (
     <>
-      {renderTopNav()}
+      {shouldShowBackButton() && (
+        <div className={`fixed top-0 left-0 right-0 z-50 md:hidden px-3 py-3 ${theme === 'dark' ? 'bg-gray-900 border-b border-gray-700' : 'bg-white border-b border-gray-100'}`}>
+          {/* Empty div for back button - we're removing it from here since it's handled in TopNavigation */}
+        </div>
+      )}
       <nav className={navBarClasses}>
         <ProfileMenu expanded={shouldShowProfileItems && expanded} />
         <div className="mx-auto w-full">
