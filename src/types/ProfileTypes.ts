@@ -9,7 +9,6 @@ export interface Establishment {
   id: string;
   name: string;
   address: string;
-  // Add the missing properties
   phone?: string;
   website?: string;
   description?: string;

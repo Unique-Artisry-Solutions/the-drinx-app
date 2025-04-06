@@ -1,10 +1,10 @@
 
 import React, { useState } from 'react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Edit, Trash } from 'lucide-react';
+import { Plus, Edit, Trash, Camera } from 'lucide-react';
 import DrinkProfileModal, { Drink } from './DrinkProfileModal';
-import { useToast } from '@/hooks/use-toast';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 interface MocktailMenuTabProps {
   drinks: Drink[];
@@ -20,115 +20,139 @@ const MocktailMenuTab: React.FC<MocktailMenuTabProps> = ({
   onDeleteDrink
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedDrink, setSelectedDrink] = useState<Drink | null>(null);
-  const { toast } = useToast();
+  const [currentDrink, setCurrentDrink] = useState<Drink | null>(null);
 
-  const handleOpenAddModal = () => {
-    setSelectedDrink(null);
+  const handleAddClick = () => {
+    setCurrentDrink(null);
     setIsModalOpen(true);
   };
 
-  const handleOpenEditModal = (drink: Drink) => {
-    setSelectedDrink(drink);
+  const handleEditClick = (drink: Drink) => {
+    setCurrentDrink(drink);
     setIsModalOpen(true);
   };
 
   const handleSaveDrink = (drink: Drink) => {
-    if (selectedDrink) {
+    if (currentDrink) {
       onUpdateDrink(drink);
-      toast({
-        title: "Mocktail updated",
-        description: `${drink.name} has been updated successfully.`,
-      });
     } else {
       onAddDrink(drink);
-      toast({
-        title: "Mocktail added",
-        description: `${drink.name} has been added to your menu.`,
-      });
     }
   };
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Mocktail Menu</CardTitle>
-        <Button onClick={handleOpenAddModal}>
-          <Plus className="mr-2 h-4 w-4" /> Add Mocktail
-        </Button>
-      </CardHeader>
-      <CardContent>
-        {drinks.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {drinks.map(drink => (
-              <div key={drink.id} className="border rounded-md overflow-hidden">
-                <div className="aspect-video bg-muted relative">
-                  <img 
-                    src={drink.photoUrl || 'https://placehold.co/300x200'} 
-                    alt={drink.name} 
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute top-2 right-2 flex space-x-2">
-                    <Button 
-                      variant="secondary" 
-                      size="icon"
-                      className="rounded-full h-8 w-8 bg-white/80"
-                      onClick={() => handleOpenEditModal(drink)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button 
-                      variant="destructive" 
-                      size="icon"
-                      className="rounded-full h-8 w-8"
-                      onClick={() => onDeleteDrink(drink.id)}
-                    >
-                      <Trash className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white p-2">
-                    <div className="flex justify-between">
-                      <h3 className="font-medium">{drink.name}</h3>
-                      <span>{drink.price}</span>
+    <>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Mocktail Menu</CardTitle>
+          <Button onClick={handleAddClick}>
+            <Plus className="h-4 w-4 mr-2" /> 
+            Add Mocktail
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {drinks.length === 0 ? (
+            <div className="text-center py-12">
+              <Camera className="h-12 w-12 mx-auto text-muted-foreground" />
+              <h3 className="mt-4 text-lg font-medium">No mocktails yet</h3>
+              <p className="mt-2 text-muted-foreground">
+                Add your first mocktail to your menu.
+              </p>
+              <Button onClick={handleAddClick} className="mt-4">
+                <Plus className="h-4 w-4 mr-2" /> 
+                Add Mocktail
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {drinks.map((drink) => (
+                <Card key={drink.id} className="overflow-hidden">
+                  {drink.photoUrl ? (
+                    <div className="aspect-video w-full overflow-hidden">
+                      <img 
+                        src={drink.photoUrl} 
+                        alt={drink.name}
+                        className="w-full h-full object-cover"
+                      />
                     </div>
+                  ) : (
+                    <div className="aspect-video w-full bg-muted flex items-center justify-center">
+                      <Camera className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                  )}
+                  
+                  <div className="p-4">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="font-medium text-lg">{drink.name}</h3>
+                        <div className="text-left text-sm text-muted-foreground mt-1">
+                          {drink.price}
+                        </div>
+                      </div>
+                      <div className="flex gap-1">
+                        <Button 
+                          variant="outline" 
+                          size="icon" 
+                          onClick={() => handleEditClick(drink)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="outline" size="icon" className="text-destructive">
+                              <Trash className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This will permanently remove "{drink.name}" from your mocktail menu.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => onDeleteDrink(drink.id)}>
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </div>
+                    
+                    {drink.description && (
+                      <p className="text-sm mt-2 text-left">{drink.description}</p>
+                    )}
+                    
+                    {drink.ingredients && drink.ingredients.length > 0 && (
+                      <div className="mt-3">
+                        <h4 className="text-sm font-medium mb-1 text-left">Ingredients:</h4>
+                        <ul className="text-sm text-left">
+                          {drink.ingredients.map((ingredient, index) => (
+                            <li key={index} className="inline-block mr-2 mb-1 bg-muted px-2 py-0.5 rounded-full text-xs">
+                              {ingredient}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                   </div>
-                </div>
-                <div className="p-3">
-                  <p className="text-sm mb-2 line-clamp-2">{drink.description}</p>
-                  <div className="flex flex-wrap gap-1">
-                    {drink.ingredients.map((ingredient, idx) => (
-                      <span 
-                        key={idx} 
-                        className="text-xs bg-material-secondary-container text-material-on-secondary-container px-2 py-1 rounded-full"
-                      >
-                        {ingredient}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-12 border border-dashed rounded-lg">
-            <h3 className="text-lg font-medium mb-2">Your menu is empty</h3>
-            <p className="text-material-on-surface-variant mb-4">
-              Add your first mocktail to start building your menu
-            </p>
-            <Button onClick={handleOpenAddModal}>
-              <Plus className="mr-2 h-4 w-4" /> Add Mocktail
-            </Button>
-          </div>
-        )}
-      </CardContent>
-
+                </Card>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+      
       <DrinkProfileModal 
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        drink={selectedDrink}
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        drink={currentDrink} 
         onSave={handleSaveDrink}
       />
-    </Card>
+    </>
   );
 };
 

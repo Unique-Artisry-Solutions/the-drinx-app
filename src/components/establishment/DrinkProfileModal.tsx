@@ -108,7 +108,7 @@ const DrinkProfileModal: React.FC<DrinkProfileModalProps> = ({
         
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
-            <Label htmlFor="name">Name</Label>
+            <Label htmlFor="name" className="text-left">Name</Label>
             <Input 
               id="name" 
               value={formData.name} 
@@ -118,7 +118,7 @@ const DrinkProfileModal: React.FC<DrinkProfileModalProps> = ({
           </div>
           
           <div className="grid gap-2">
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="description" className="text-left">Description</Label>
             <Textarea 
               id="description"
               value={formData.description}
@@ -129,7 +129,7 @@ const DrinkProfileModal: React.FC<DrinkProfileModalProps> = ({
           </div>
           
           <div className="grid gap-2">
-            <Label htmlFor="price">Price</Label>
+            <Label htmlFor="price" className="text-left">Price</Label>
             <Input 
               id="price" 
               value={formData.price} 
@@ -139,7 +139,7 @@ const DrinkProfileModal: React.FC<DrinkProfileModalProps> = ({
           </div>
           
           <div className="grid gap-2">
-            <Label htmlFor="ingredients">Ingredients</Label>
+            <Label htmlFor="ingredients" className="text-left">Ingredients</Label>
             <IngredientInput 
               value={formData.ingredients}
               onChange={handleIngredientsChange}
@@ -147,7 +147,7 @@ const DrinkProfileModal: React.FC<DrinkProfileModalProps> = ({
           </div>
           
           <div className="grid gap-2">
-            <Label>Photo</Label>
+            <Label className="text-left">Photo</Label>
             {formData.photoUrl ? (
               <div className="relative rounded-md overflow-hidden">
                 <img 

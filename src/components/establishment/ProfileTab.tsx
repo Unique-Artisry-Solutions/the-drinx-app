@@ -65,7 +65,7 @@ const ProfileTab: React.FC<ProfileTabProps> = ({
           {isEditing ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium">Name</label>
+                <label className="text-sm font-medium text-left block">Name</label>
                 <Input 
                   name="name" 
                   value={name} 
@@ -74,7 +74,7 @@ const ProfileTab: React.FC<ProfileTabProps> = ({
               </div>
               
               <div>
-                <label className="text-sm font-medium">Email</label>
+                <label className="text-sm font-medium text-left block">Email</label>
                 <Input 
                   name="email" 
                   type="email" 
@@ -84,7 +84,7 @@ const ProfileTab: React.FC<ProfileTabProps> = ({
               </div>
 
               <div>
-                <label className="text-sm font-medium">Address</label>
+                <label className="text-sm font-medium text-left block">Address</label>
                 <Input 
                   name="address" 
                   value={address} 
@@ -93,7 +93,7 @@ const ProfileTab: React.FC<ProfileTabProps> = ({
               </div>
 
               <div>
-                <label className="text-sm font-medium">Phone</label>
+                <label className="text-sm font-medium text-left block">Phone</label>
                 <Input 
                   name="phone" 
                   value={phone} 
@@ -102,7 +102,7 @@ const ProfileTab: React.FC<ProfileTabProps> = ({
               </div>
 
               <div>
-                <label className="text-sm font-medium">Website</label>
+                <label className="text-sm font-medium text-left block">Website</label>
                 <Input 
                   name="website" 
                   value={website} 
@@ -111,7 +111,7 @@ const ProfileTab: React.FC<ProfileTabProps> = ({
               </div>
 
               <div className="col-span-2">
-                <label className="text-sm font-medium">Description</label>
+                <label className="text-sm font-medium text-left block">Description</label>
                 <Textarea 
                   name="description" 
                   value={description} 
@@ -132,27 +132,27 @@ const ProfileTab: React.FC<ProfileTabProps> = ({
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <h3 className="text-sm font-medium text-gray-500">Name</h3>
+                <h3 className="text-sm font-medium text-gray-500 text-left">Name</h3>
                 <p>{name || 'N/A'}</p>
               </div>
               
               <div>
-                <h3 className="text-sm font-medium text-gray-500">Email</h3>
+                <h3 className="text-sm font-medium text-gray-500 text-left">Email</h3>
                 <p>{email || 'N/A'}</p>
               </div>
 
               <div>
-                <h3 className="text-sm font-medium text-gray-500">Address</h3>
+                <h3 className="text-sm font-medium text-gray-500 text-left">Address</h3>
                 <p>{address || 'N/A'}</p>
               </div>
 
               <div>
-                <h3 className="text-sm font-medium text-gray-500">Phone</h3>
+                <h3 className="text-sm font-medium text-gray-500 text-left">Phone</h3>
                 <p>{phone || 'N/A'}</p>
               </div>
 
               <div>
-                <h3 className="text-sm font-medium text-gray-500">Website</h3>
+                <h3 className="text-sm font-medium text-gray-500 text-left">Website</h3>
                 {website ? (
                   <a 
                     href={website} 
@@ -168,12 +168,12 @@ const ProfileTab: React.FC<ProfileTabProps> = ({
               </div>
 
               <div className="col-span-2">
-                <h3 className="text-sm font-medium text-gray-500">Description</h3>
+                <h3 className="text-sm font-medium text-gray-500 text-left">Description</h3>
                 <p className="whitespace-pre-wrap">{description || 'No description available.'}</p>
               </div>
 
               <div className="col-span-2 mt-4">
-                <h3 className="text-sm font-medium text-gray-500 mb-2">Establishment Photos</h3>
+                <h3 className="text-sm font-medium text-gray-500 mb-2 text-left">Establishment Photos</h3>
                 <div className="border rounded-md p-4">
                   <FileUploader />
                 </div>

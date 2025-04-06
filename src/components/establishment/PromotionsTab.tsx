@@ -1,10 +1,10 @@
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { PlusCircle, Trash } from 'lucide-react';
+import { Trash } from 'lucide-react';
 
 interface Promotion {
   id: string;
@@ -16,8 +16,8 @@ interface PromotionsTabProps {
   promotions: Promotion[];
   newPromoCode: string;
   newPromoDescription: string;
-  setNewPromoCode: (value: string) => void;
-  setNewPromoDescription: (value: string) => void;
+  setNewPromoCode: (code: string) => void;
+  setNewPromoDescription: (desc: string) => void;
   handleAddPromotion: () => void;
   handleDeletePromotion: (id: string) => void;
 }
@@ -34,55 +34,70 @@ const PromotionsTab: React.FC<PromotionsTabProps> = ({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Promotional Codes</CardTitle>
+        <CardTitle>Promotional Offers</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4 mb-6">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Promotion Code</label>
-            <Input 
-              value={newPromoCode} 
-              onChange={(e) => setNewPromoCode(e.target.value)}
-              placeholder="e.g., SUMMER2023" 
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Description</label>
-            <Textarea 
-              value={newPromoDescription} 
-              onChange={(e) => setNewPromoDescription(e.target.value)}
-              placeholder="Describe what this promotion offers" 
-              rows={2}
-            />
-          </div>
-          <Button onClick={handleAddPromotion} className="w-full">
-            <PlusCircle className="mr-2 h-4 w-4" /> Add Promotion
-          </Button>
-        </div>
-
-        <div className="space-y-3">
-          <h3 className="font-medium mb-2">Your Promotions</h3>
-          {promotions.length > 0 ? (
-            promotions.map(promo => (
-              <div key={promo.id} className="border rounded-md p-3 flex justify-between items-start">
-                <div>
-                  <div className="font-medium">{promo.code}</div>
-                  <div className="text-sm text-muted-foreground">{promo.description}</div>
-                </div>
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  onClick={() => handleDeletePromotion(promo.id)}
-                >
-                  <Trash className="h-4 w-4 text-red-500" />
+        <div className="space-y-6">
+          {/* Add new promotion form */}
+          <div className="bg-background rounded-lg border p-4">
+            <h3 className="font-medium mb-3 text-left">Add New Promotion</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium mb-1 text-left block">Promo Code</label>
+                <Input
+                  value={newPromoCode}
+                  onChange={(e) => setNewPromoCode(e.target.value)}
+                  placeholder="e.g. WELCOME10"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 text-left block">Description</label>
+                <Textarea
+                  value={newPromoDescription}
+                  onChange={(e) => setNewPromoDescription(e.target.value)}
+                  placeholder="e.g. 10% off for first-time visitors"
+                  rows={1}
+                />
+              </div>
+              <div className="md:col-span-2 flex justify-end">
+                <Button onClick={handleAddPromotion}>
+                  Add Promotion
                 </Button>
               </div>
-            ))
-          ) : (
-            <p className="text-muted-foreground text-center py-4">
-              No promotions added yet. Create your first one!
-            </p>
-          )}
+            </div>
+          </div>
+          
+          {/* Current promotions */}
+          <div>
+            <h3 className="font-medium mb-3 text-left">Active Promotions</h3>
+            {promotions.length === 0 ? (
+              <p className="text-center py-6 text-muted-foreground">
+                No active promotions. Add a new promotion above.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {promotions.map(promo => (
+                  <div 
+                    key={promo.id} 
+                    className="flex items-center justify-between p-3 bg-background rounded-lg border"
+                  >
+                    <div className="flex-1">
+                      <div className="font-medium text-left">{promo.code}</div>
+                      <div className="text-sm text-muted-foreground text-left">{promo.description}</div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDeletePromotion(promo.id)}
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    >
+                      <Trash className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>

@@ -1,119 +1,181 @@
 
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar, MessageSquare, Bell, Clock, ListChecks, Settings, ChevronsUp, Lightbulb } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { CalendarClock, Users, Award, Cocktail, Clock, TagIcon, ArrowRight } from 'lucide-react';
 
 const AllActionsPage = () => {
-  const navigate = useNavigate();
-  
-  // Sample data - in a real app, this would come from an API
-  const actions = [
-    {
-      title: 'Bar Crawl Requests',
-      description: '3 pending requests',
-      icon: Calendar,
-      color: 'text-spiritless-pink',
-      bgClass: 'bg-gradient-to-r from-spiritless-pink/10 to-spiritless-orange/10',
-      route: '/establishment/bar-crawl-requests'
-    },
-    {
-      title: 'New Reviews',
-      description: '8 unread reviews',
-      icon: MessageSquare,
-      color: 'text-spiritless-green',
-      bgClass: 'bg-gradient-to-r from-spiritless-green/10 to-blue-400/10',
-      route: '/establishment/reviews'
-    },
-    {
-      title: 'Mocktail Updates',
-      description: '2 menu items need updating',
-      icon: ListChecks,
-      color: 'text-blue-500',
-      bgClass: 'bg-gradient-to-r from-blue-500/10 to-indigo-500/10',
-      route: '/establishment/profile?tab=menu'
-    },
-    {
-      title: 'Profile Completion',
-      description: 'Complete your profile details',
-      icon: Settings,
-      color: 'text-amber-500',
-      bgClass: 'bg-gradient-to-r from-amber-500/10 to-orange-500/10',
-      route: '/establishment/profile'
-    },
-    {
-      title: 'Analytics Reports',
-      description: 'Weekly analytics ready to view',
-      icon: Bell,
-      color: 'text-purple-500',
-      bgClass: 'bg-gradient-to-r from-purple-500/10 to-pink-500/10',
-      route: '/establishment/analytics'
-    },
-    {
-      title: 'Scheduled Promotions',
-      description: '1 promotion scheduled this week',
-      icon: Clock,
-      color: 'text-emerald-500',
-      bgClass: 'bg-gradient-to-r from-emerald-500/10 to-green-500/10',
-      route: '/establishment/profile?tab=promotions'
-    },
-    {
-      title: 'Mocktail Suggestions',
-      description: '5 new suggestions from users',
-      icon: Lightbulb,
-      color: 'text-yellow-500',
-      bgClass: 'bg-gradient-to-r from-yellow-500/10 to-amber-500/10',
-      route: '/establishment/mocktail-suggestions'
-    },
-    {
-      title: 'Rating Improvements',
-      description: 'Tips to improve your ratings',
-      icon: ChevronsUp,
-      color: 'text-rose-500',
-      bgClass: 'bg-gradient-to-r from-rose-500/10 to-red-500/10',
-      route: '/establishment/analytics'
-    }
-  ];
-
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold gradient-text">All Pending Actions</h1>
-          <p className="text-material-on-surface-variant">Review and manage all pending tasks for your establishment</p>
+      <div className="container mx-auto p-4">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold">Establishment Actions</h1>
+            <p className="text-muted-foreground">Manage all actions related to your establishment</p>
+          </div>
         </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
-          {actions.map((action, index) => (
-            <Card key={index} className="vibrant-card shadow-sm hover:shadow-md transition-all duration-300">
-              <CardHeader className="pb-2">
-                <div className="flex items-center gap-2">
-                  <action.icon className={`h-5 w-5 ${action.color}`} />
-                  <CardTitle className="text-lg">{action.title}</CardTitle>
-                </div>
-                <CardDescription>{action.description}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className={`p-3 rounded-md ${action.bgClass} mb-3`}>
-                  <p className="text-sm">
-                    Take action on this item to keep your establishment up to date.
-                  </p>
-                </div>
-                <Button 
-                  onClick={() => navigate(action.route)} 
-                  variant="outline" 
-                  className="w-full"
-                >
-                  View Details
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+          <ActionCard 
+            title="Update Profile"
+            description="Complete or update your establishment profile information"
+            icon={<Users className="h-5 w-5" />}
+            to="/establishment/profile?tab=profile"
+            completion={85}
+          />
+          
+          <ActionCard 
+            title="Mocktail Menu"
+            description="Update your mocktail menu offerings"
+            icon={<Cocktail className="h-5 w-5" />}
+            to="/establishment/profile?tab=menu"
+            completion={60}
+          />
+          
+          <ActionCard 
+            title="Promotional Offers"
+            description="Create and manage special promotions"
+            icon={<TagIcon className="h-5 w-5" />}
+            to="/establishment/profile?tab=promotions"
+            count={2}
+          />
+          
+          <ActionCard 
+            title="Swig Circuit Requests"
+            description="Review and manage Swig Circuit participation requests"
+            icon={<CalendarClock className="h-5 w-5" />}
+            to="/establishment/profile?tab=barCrawls"
+            count={1}
+            isHighlighted
+          />
+          
+          <ActionCard 
+            title="View Analytics"
+            description="Check visitor statistics and engagement"
+            icon={<Award className="h-5 w-5" />}
+            to="/establishment/profile?tab=visitors"
+          />
+          
+          <ActionCard 
+            title="Operating Hours"
+            description="Set your establishment's operating hours"
+            icon={<Clock className="h-5 w-5" />}
+            to="/establishment/profile?tab=profile"
+          />
+        </div>
+        
+        <h3 className="text-lg font-medium mb-4 text-left">Recent Notifications</h3>
+        
+        <div className="space-y-4">
+          <NotificationCard
+            title="New Swig Circuit Request"
+            description="Your establishment has been included in 'Holiday Mocktail Crawl'"
+            time="2 hours ago"
+            to="/establishment/profile?tab=barCrawls"
+            isNew
+          />
+          
+          <NotificationCard
+            title="Profile Completion Reminder"
+            description="Complete your profile to increase visibility to potential customers"
+            time="1 day ago"
+            to="/establishment/profile?tab=profile"
+          />
+          
+          <NotificationCard
+            title="New Mocktail Suggestion"
+            description="A customer suggested a new mocktail for your menu"
+            time="3 days ago"
+            to="/establishment/profile?tab=menu"
+          />
         </div>
       </div>
     </Layout>
+  );
+};
+
+interface ActionCardProps {
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+  to: string;
+  completion?: number;
+  count?: number;
+  isHighlighted?: boolean;
+}
+
+const ActionCard = ({ title, description, icon, to, completion, count, isHighlighted }: ActionCardProps) => {
+  return (
+    <Card className={`overflow-hidden border ${isHighlighted ? 'border-primary' : ''}`}>
+      <CardContent className="p-0">
+        <Link to={to} className="block">
+          <div className="p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div className={`p-2 rounded-full ${isHighlighted ? 'bg-primary/20 text-primary' : 'bg-muted text-foreground'}`}>
+                {icon}
+              </div>
+              {count !== undefined && (
+                <div className="bg-primary rounded-full min-w-[28px] h-7 flex items-center justify-center text-white text-sm font-medium">
+                  {count}
+                </div>
+              )}
+            </div>
+            
+            <h3 className="text-lg font-medium mb-1 text-left">{title}</h3>
+            <p className="text-muted-foreground text-sm mb-3 text-left">{description}</p>
+            
+            {completion !== undefined && (
+              <div className="w-full bg-muted rounded-full h-2 mb-3">
+                <div 
+                  className="bg-primary h-2 rounded-full" 
+                  style={{ width: `${completion}%` }}
+                ></div>
+              </div>
+            )}
+            
+            <Button variant="ghost" className="p-0 h-auto text-primary hover:text-primary hover:bg-transparent">
+              <span className="mr-1">Go to section</span>
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </Link>
+      </CardContent>
+    </Card>
+  );
+};
+
+interface NotificationCardProps {
+  title: string;
+  description: string;
+  time: string;
+  to: string;
+  isNew?: boolean;
+}
+
+const NotificationCard = ({ title, description, time, to, isNew }: NotificationCardProps) => {
+  return (
+    <Link to={to}>
+      <Card className={`hover:bg-muted/50 transition-colors ${isNew ? 'border-primary/50' : ''}`}>
+        <CardContent className="p-4">
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="flex items-center">
+                <h4 className="font-medium text-left">{title}</h4>
+                {isNew && (
+                  <span className="ml-2 px-2 py-0.5 bg-primary/20 text-primary text-xs rounded-full">
+                    New
+                  </span>
+                )}
+              </div>
+              <p className="text-sm text-muted-foreground mt-1 text-left">{description}</p>
+            </div>
+            <span className="text-xs text-muted-foreground">{time}</span>
+          </div>
+        </CardContent>
+      </Card>
+    </Link>
   );
 };
 
