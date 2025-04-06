@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import Layout from '@/components/Layout';
@@ -203,277 +202,276 @@ const CreateSwigCircuitPage: React.FC = () => {
           
           {/* Right-side content area */}
           {currentTab === "basics" && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Calendar className="h-5 w-5 mr-2 text-spiritless-pink" />
-                    Basic Swig Circuit Details
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Calendar className="h-5 w-5 mr-2 text-spiritless-pink" />
+                  Basic Swig Circuit Details
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="crawlName">Swig Circuit Name</Label>
+                    <Input 
+                      id="crawlName" 
+                      placeholder="Weekend Mocktail Tour" 
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      required 
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="imageUpload">Swig Circuit Image</Label>
+                    <div className="relative border rounded-md overflow-hidden">
+                      {previewUrl ? (
+                        <div className="aspect-video relative">
+                          <img 
+                            src={previewUrl} 
+                            alt="Swig Circuit preview" 
+                            className="w-full h-full object-cover" 
+                          />
+                          <Button 
+                            type="button" 
+                            variant="ghost" 
+                            size="sm" 
+                            className="absolute top-2 right-2 bg-white/80"
+                            onClick={() => {
+                              setPreviewUrl('');
+                              setImageFile(null);
+                            }}
+                          >
+                            Change
+                          </Button>
+                        </div>
+                      ) : (
+                        <label className="flex flex-col items-center justify-center p-6 cursor-pointer bg-gray-50 dark:bg-gray-800 aspect-video">
+                          <ImagePlus className="h-10 w-10 text-gray-400 dark:text-gray-500 mb-2" />
+                          <span className="text-sm text-gray-500 dark:text-gray-400">Click to upload an image</span>
+                          <input 
+                            type="file" 
+                            id="imageUpload" 
+                            className="hidden" 
+                            accept="image/*"
+                            onChange={handleImageChange}
+                          />
+                        </label>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="crawlName">Swig Circuit Name</Label>
+                      <Label htmlFor="startDate">Start Date</Label>
                       <Input 
-                        id="crawlName" 
-                        placeholder="Weekend Mocktail Tour" 
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
+                        id="startDate" 
+                        type="date" 
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
                         required 
                       />
                     </div>
-                    
                     <div className="space-y-2">
-                      <Label htmlFor="imageUpload">Swig Circuit Image</Label>
-                      <div className="relative border rounded-md overflow-hidden">
-                        {previewUrl ? (
-                          <div className="aspect-video relative">
-                            <img 
-                              src={previewUrl} 
-                              alt="Swig Circuit preview" 
-                              className="w-full h-full object-cover" 
-                            />
-                            <Button 
-                              type="button" 
-                              variant="ghost" 
-                              size="sm" 
-                              className="absolute top-2 right-2 bg-white/80"
-                              onClick={() => {
-                                setPreviewUrl('');
-                                setImageFile(null);
-                              }}
-                            >
-                              Change
-                            </Button>
-                          </div>
-                        ) : (
-                          <label className="flex flex-col items-center justify-center p-6 cursor-pointer bg-gray-50 dark:bg-gray-800 aspect-video">
-                            <ImagePlus className="h-10 w-10 text-gray-400 dark:text-gray-500 mb-2" />
-                            <span className="text-sm text-gray-500 dark:text-gray-400">Click to upload an image</span>
-                            <input 
-                              type="file" 
-                              id="imageUpload" 
-                              className="hidden" 
-                              accept="image/*"
-                              onChange={handleImageChange}
-                            />
-                          </label>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="startDate">Start Date</Label>
-                        <Input 
-                          id="startDate" 
-                          type="date" 
-                          value={startDate}
-                          onChange={(e) => setStartDate(e.target.value)}
-                          required 
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="endDate">End Date (7 days maximum)</Label>
-                        <Input 
-                          id="endDate" 
-                          type="date" 
-                          value={endDate}
-                          readOnly 
-                          className="bg-muted cursor-not-allowed"
-                          title="End date is automatically set to 7 days after the start date"
-                        />
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          Maximum duration is 7 days
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="description">Description</Label>
-                      <Textarea 
-                        id="description" 
-                        placeholder="Describe your Swig Circuit experience" 
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                        rows={3}
+                      <Label htmlFor="endDate">End Date (7 days maximum)</Label>
+                      <Input 
+                        id="endDate" 
+                        type="date" 
+                        value={endDate}
+                        readOnly 
+                        className="bg-muted cursor-not-allowed"
+                        title="End date is automatically set to 7 days after the start date"
                       />
-                    </div>
-                    
-                    <div className="flex justify-end space-x-2 pt-4">
-                      <Button 
-                        type="button" 
-                        onClick={() => setCurrentTab("theme")}
-                        disabled={!name || !startDate}
-                        className="bg-spiritless-pink hover:bg-spiritless-pink/90"
-                      >
-                        Continue to Theme Selection
-                      </Button>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Maximum duration is 7 days
+                      </p>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            )}
-            
-            {/* Theme Selection */}
-            {currentTab === "theme" && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Theme Selection</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <ThemeSelection 
-                    selectedTheme={selectedTheme} 
-                    onThemeSelect={setSelectedTheme} 
-                  />
                   
-                  <div className="flex justify-between space-x-2 pt-4">
-                    <Button 
-                      type="button" 
-                      variant="outline"
-                      onClick={() => setCurrentTab("basics")}
-                    >
-                      Back
-                    </Button>
-                    <Button 
-                      type="button"
-                      onClick={() => setCurrentTab("venues")}
-                      disabled={!selectedTheme}
-                      className="bg-spiritless-pink hover:bg-spiritless-pink/90"
-                    >
-                      Continue to Venue Selection
-                    </Button>
+                  <div className="space-y-2">
+                    <Label htmlFor="description">Description</Label>
+                    <Textarea 
+                      id="description" 
+                      placeholder="Describe your Swig Circuit experience" 
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      rows={3}
+                    />
                   </div>
-                </CardContent>
-              </Card>
-            )}
-            
-            {/* Venue Selection */}
-            {currentTab === "venues" && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Select Venues</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <VenueDiversity 
-                    diversityPreference={diversityPreference}
-                    onDiversityChange={setDiversityPreference}
-                  />
                   
-                  <p className="text-sm text-muted-foreground mt-6">
-                    Choose at least 2 establishments to include in your Swig Circuit.
-                  </p>
-                  
-                  <BarCrawlControl 
-                    establishments={sampleEstablishments}
-                    onSaveBarCrawl={handleSaveEstablishments}
-                  />
-                  
-                  {selectedEstablishments.length > 0 && (
-                    <div className="bg-muted/30 p-3 rounded border">
-                      <h3 className="font-medium mb-2">Selected Venues ({selectedEstablishments.length})</h3>
-                      <div className="space-y-2">
-                        {selectedEstablishments.map((est, index) => (
-                          <div key={est.id} className="bg-background p-2 rounded flex justify-between items-center">
-                            <div className="flex items-center">
-                              <div className="bg-material-primary text-white w-6 h-6 rounded-full flex items-center justify-center mr-2">
-                                {index + 1}
-                              </div>
-                              <span className="truncate">{est.name}</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  
-                  <div className="flex justify-between space-x-2 pt-4">
+                  <div className="flex justify-end space-x-2 pt-4">
                     <Button 
                       type="button" 
-                      variant="outline"
                       onClick={() => setCurrentTab("theme")}
-                    >
-                      Back
-                    </Button>
-                    <Button 
-                      type="button"
-                      onClick={() => setCurrentTab("drinks")}
-                      disabled={selectedEstablishments.length < 2}
+                      disabled={!name || !startDate}
                       className="bg-spiritless-pink hover:bg-spiritless-pink/90"
                     >
-                      Continue to Drink Highlights
+                      Continue to Theme Selection
                     </Button>
                   </div>
-                </CardContent>
-              </Card>
-            )}
-            
-            {/* Drink Highlights */}
-            {currentTab === "drinks" && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Featured Drinks</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <DrinkHighlights 
-                    highlights={drinkHighlights}
-                    onHighlightsChange={setDrinkHighlights}
-                  />
-                  
-                  <div className="flex justify-between space-x-2 pt-4">
-                    <Button 
-                      type="button" 
-                      variant="outline"
-                      onClick={() => setCurrentTab("venues")}
-                    >
-                      Back
-                    </Button>
-                    <Button 
-                      type="button"
-                      onClick={() => setCurrentTab("pairings")}
-                      disabled={drinkHighlights.length === 0}
-                      className="bg-spiritless-pink hover:bg-spiritless-pink/90"
-                    >
-                      Continue to Pairings
-                    </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          
+          {/* Theme Selection */}
+          {currentTab === "theme" && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Theme Selection</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <ThemeSelection 
+                  selectedTheme={selectedTheme} 
+                  onThemeSelect={setSelectedTheme} 
+                />
+                
+                <div className="flex justify-between space-x-2 pt-4">
+                  <Button 
+                    type="button" 
+                    variant="outline"
+                    onClick={() => setCurrentTab("basics")}
+                  >
+                    Back
+                  </Button>
+                  <Button 
+                    type="button"
+                    onClick={() => setCurrentTab("venues")}
+                    disabled={!selectedTheme}
+                    className="bg-spiritless-pink hover:bg-spiritless-pink/90"
+                  >
+                    Continue to Venue Selection
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          
+          {/* Venue Selection */}
+          {currentTab === "venues" && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Select Venues</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <VenueDiversity 
+                  diversityPreference={diversityPreference}
+                  onDiversityChange={setDiversityPreference}
+                />
+                
+                <p className="text-sm text-muted-foreground mt-6">
+                  Choose at least 2 establishments to include in your Swig Circuit.
+                </p>
+                
+                <BarCrawlControl 
+                  establishments={sampleEstablishments}
+                  onSaveBarCrawl={handleSaveEstablishments}
+                />
+                
+                {selectedEstablishments.length > 0 && (
+                  <div className="bg-muted/30 p-3 rounded border">
+                    <h3 className="font-medium mb-2">Selected Venues ({selectedEstablishments.length})</h3>
+                    <div className="space-y-2">
+                      {selectedEstablishments.map((est, index) => (
+                        <div key={est.id} className="bg-background p-2 rounded flex justify-between items-center">
+                          <div className="flex items-center">
+                            <div className="bg-material-primary text-white w-6 h-6 rounded-full flex items-center justify-center mr-2">
+                              {index + 1}
+                            </div>
+                            <span className="truncate">{est.name}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </CardContent>
-              </Card>
-            )}
-            
-            {/* Food Pairings */}
-            {currentTab === "pairings" && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Food & Drink Pairings</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <PairingOptions
-                    pairings={pairings}
-                    onPairingsChange={setPairings}
-                  />
-                  
-                  <div className="flex justify-between space-x-2 pt-4">
-                    <Button 
-                      type="button" 
-                      variant="outline"
-                      onClick={() => setCurrentTab("drinks")}
-                    >
-                      Back
-                    </Button>
-                    <Button 
-                      type="submit" 
-                      onClick={handleSubmit}
-                      disabled={!name || !startDate || !selectedTheme || selectedEstablishments.length < 2}
-                      className="bg-spiritless-pink hover:bg-spiritless-pink/90"
-                    >
-                      Create Swig Circuit
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
+                )}
+                
+                <div className="flex justify-between space-x-2 pt-4">
+                  <Button 
+                    type="button" 
+                    variant="outline"
+                    onClick={() => setCurrentTab("theme")}
+                  >
+                    Back
+                  </Button>
+                  <Button 
+                    type="button"
+                    onClick={() => setCurrentTab("drinks")}
+                    disabled={selectedEstablishments.length < 2}
+                    className="bg-spiritless-pink hover:bg-spiritless-pink/90"
+                  >
+                    Continue to Drink Highlights
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          
+          {/* Drink Highlights */}
+          {currentTab === "drinks" && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Featured Drinks</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <DrinkHighlights 
+                  highlights={drinkHighlights}
+                  onHighlightsChange={setDrinkHighlights}
+                />
+                
+                <div className="flex justify-between space-x-2 pt-4">
+                  <Button 
+                    type="button" 
+                    variant="outline"
+                    onClick={() => setCurrentTab("venues")}
+                  >
+                    Back
+                  </Button>
+                  <Button 
+                    type="button"
+                    onClick={() => setCurrentTab("pairings")}
+                    disabled={drinkHighlights.length === 0}
+                    className="bg-spiritless-pink hover:bg-spiritless-pink/90"
+                  >
+                    Continue to Pairings
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          
+          {/* Food Pairings */}
+          {currentTab === "pairings" && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Food & Drink Pairings</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <PairingOptions
+                  pairings={pairings}
+                  onPairingsChange={setPairings}
+                />
+                
+                <div className="flex justify-between space-x-2 pt-4">
+                  <Button 
+                    type="button" 
+                    variant="outline"
+                    onClick={() => setCurrentTab("drinks")}
+                  >
+                    Back
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    onClick={handleSubmit}
+                    disabled={!name || !startDate || !selectedTheme || selectedEstablishments.length < 2}
+                    className="bg-spiritless-pink hover:bg-spiritless-pink/90"
+                  >
+                    Create Swig Circuit
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </Layout>
