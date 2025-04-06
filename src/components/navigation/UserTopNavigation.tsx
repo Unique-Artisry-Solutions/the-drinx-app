@@ -1,6 +1,6 @@
 
-// Re-export the UserTopNav component from its new location
-import UserTopNav from './user/UserTopNav';
+import React from 'react';
+import UserNavbar from './user/UserNavbar';
 
 interface TabOption {
   value: string;
@@ -13,18 +13,12 @@ interface UserTopNavigationProps {
   tabOptions?: TabOption[];
 }
 
-const UserTopNavigation: React.FC<UserTopNavigationProps> = ({ 
-  activeTab, 
-  handleTabChange, 
-  tabOptions 
+const UserTopNavigation: React.FC<UserTopNavigationProps> = ({
+  activeTab,
+  handleTabChange,
+  tabOptions
 }) => {
-  return (
-    <UserTopNav 
-      activeTab={activeTab} 
-      handleTabChange={handleTabChange} 
-      tabOptions={tabOptions} 
-    />
-  );
+  return <UserNavbar activeTab={activeTab} handleTabChange={handleTabChange} tabOptions={tabOptions} />;
 };
 
 export default UserTopNavigation;

@@ -3,13 +3,10 @@ import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { NavigationType } from '../navigation/NavigationTypes';
 import MobileNavigation from '../navigation/MobileNavigation';
-import AdminTopNavigation from '../navigation/AdminTopNavigation';
-import UserTopNavigation from '../navigation/UserTopNavigation';
-import GuestTopNavigation from '../navigation/GuestTopNavigation';
+import UserNavbar from '../navigation/user/UserNavbar';
 import Breadcrumbs from '../navigation/Breadcrumbs';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
-import TopNavigation from '../TopNavigation';
 
 interface TabOption {
   value: string;
@@ -62,46 +59,12 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
   // Determine page types for specialized navigation
   const isLandingPage = location.pathname === '/' || location.pathname === '/landing';
   const isAdminPage = location.pathname.startsWith('/admin');
-  
-  // These pages use TopNavigation
-  const useTopNavPages = [
-    '/settings',
-    '/profile/recipes',
-    '/create-recipe'
-  ];
-  
-  const shouldUseTopNav = useTopNavPages.includes(location.pathname);
 
   const getContentPadding = () => {
     if (isLandingPage) {
       return 'pt-16 pb-0';
     } else {
       return 'pt-16 pb-20'; // Remove horizontal padding completely
-    }
-  };
-
-  const renderNavigation = () => {
-    // Special pages that always use TopNavigation
-    if (shouldUseTopNav) {
-      return <TopNavigation />;
-    } 
-    // Admin pages use AdminTopNavigation
-    else if (isAdminPage || isAdmin) {
-      return <AdminTopNavigation />;
-    } 
-    // Authenticated users use UserTopNavigation
-    else if (navigationType === NavigationType.USER) {
-      return <UserTopNavigation activeTab={activeTab} handleTabChange={handleTabChange} tabOptions={tabOptions} />;
-    } 
-    // Guest specific pages - landing, login, signup, mission
-    else {
-      const guestSpecificPages = ['/landing', '/login', '/signup', '/mission'];
-      if (isLandingPage || guestSpecificPages.includes(location.pathname)) {
-        return <GuestTopNavigation />;
-      } else {
-        // For other interior pages when not authenticated, still show UserTopNavigation
-        return <UserTopNavigation activeTab={activeTab} handleTabChange={handleTabChange} tabOptions={tabOptions} />;
-      }
     }
   };
 
@@ -138,7 +101,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
 
   return (
     <div className={`flex flex-col min-h-screen w-full max-w-full bg-background transition-colors duration-300`}>
-      {renderNavigation()}
+      <UserNavbar activeTab={activeTab} handleTabChange={handleTabChange} tabOptions={tabOptions} />
       
       <main className={`flex-1 w-full max-w-full overflow-x-hidden ${getContentPadding()}`}>
         {shouldShowBreadcrumbs() && (
