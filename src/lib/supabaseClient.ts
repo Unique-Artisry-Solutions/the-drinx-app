@@ -2,7 +2,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { Database } from '@/integrations/supabase/types';
 
-// Extend the Database type to include our new table
+// Extend the Database type to include our new tables
 interface CustomDatabase extends Database {
   public: Database['public'] & {
     Tables: Database['public']['Tables'] & {
@@ -24,6 +24,32 @@ interface CustomDatabase extends Database {
           user_id?: string;
           bar_crawl_id?: string;
           joined_at?: string;
+        };
+      };
+      bar_crawl_check_ins: {
+        Row: {
+          id: string;
+          bar_crawl_id: string;
+          establishment_id: string;
+          user_id: string;
+          checked_in_at: string;
+          verified_by?: string;
+        };
+        Insert: {
+          id?: string;
+          bar_crawl_id: string;
+          establishment_id: string;
+          user_id: string;
+          checked_in_at?: string;
+          verified_by?: string;
+        };
+        Update: {
+          id?: string;
+          bar_crawl_id?: string;
+          establishment_id?: string;
+          user_id?: string;
+          checked_in_at?: string;
+          verified_by?: string;
         };
       }
     }

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Layout from '@/components/Layout';
@@ -12,7 +13,7 @@ import MapTabContent from '@/components/barCrawl/profile/MapTabContent';
 import DetailsTabContent from '@/components/barCrawl/profile/DetailsTabContent';
 import BackButton from '@/components/navigation/BackButton';
 import { useToast } from '@/hooks/use-toast';
-import { Award } from 'lucide-react';
+import { Award, QrCode } from 'lucide-react';
 
 interface BarCrawlProfileProps {}
 
@@ -144,7 +145,14 @@ const BarCrawlProfilePage: React.FC<BarCrawlProfileProps> = () => {
           id={id || ''}
         />
 
-        <div className="flex justify-end my-4">
+        <div className="flex justify-between items-center my-4">
+          <Link to={`/profile/bar-crawls/checkin-scanner/${id}`}>
+            <Button variant="outline" className="flex items-center">
+              <QrCode className="mr-2 h-4 w-4" />
+              Scan Check-in Code
+            </Button>
+          </Link>
+          
           <Button onClick={markCompleted} className="flex items-center">
             <Award className="mr-2 h-4 w-4" />
             Mark Completed

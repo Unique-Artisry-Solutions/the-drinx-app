@@ -66,7 +66,7 @@ const EstablishmentAnalyticsPage = () => {
 
   return (
     <Layout>
-      <div className="container max-w-6xl mx-auto p-6">
+      <div className="container max-w-6xl mx-auto p-6 pb-12">
         <h1 className="text-3xl font-bold mb-8">Establishment Analytics</h1>
         
         <Tabs defaultValue="overview" className="w-full mb-10">
@@ -77,170 +77,185 @@ const EstablishmentAnalyticsPage = () => {
             <TabsTrigger value="engagement">Engagement</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="overview" className="space-y-6 mt-6">
+          <TabsContent value="overview" className="space-y-8 mt-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card>
+              <Card className="overflow-hidden">
                 <CardHeader>
                   <CardTitle>Visitor Growth</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={visitorData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip />
-                      <Legend />
-                      <Line 
-                        type="monotone" 
-                        dataKey="visitors" 
-                        stroke="#8884d8" 
-                        activeDot={{ r: 8 }} 
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
+                <CardContent className="pb-4">
+                  <div className="h-[280px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={visitorData} margin={{ top: 10, right: 10, left: 0, bottom: 10 }}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" tick={{fontSize: 12}} />
+                        <YAxis tick={{fontSize: 12}} />
+                        <Tooltip />
+                        <Legend />
+                        <Line 
+                          type="monotone" 
+                          dataKey="visitors" 
+                          stroke="#8884d8" 
+                          activeDot={{ r: 8 }} 
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
                 </CardContent>
               </Card>
               
-              <Card>
+              <Card className="overflow-hidden">
                 <CardHeader>
                   <CardTitle>Ratings Overview</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={ratingData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip />
-                      <Legend />
-                      <Bar dataKey="rating" fill="#8884d8" />
-                    </BarChart>
-                  </ResponsiveContainer>
+                <CardContent className="pb-4">
+                  <div className="h-[280px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={ratingData} margin={{ top: 10, right: 10, left: 0, bottom: 10 }}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" tick={{fontSize: 12}} />
+                        <YAxis tick={{fontSize: 12}} />
+                        <Tooltip />
+                        <Legend />
+                        <Bar dataKey="rating" fill="#8884d8" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
                 </CardContent>
               </Card>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card>
+              <Card className="overflow-hidden">
                 <CardHeader>
                   <CardTitle>Popular Mocktails</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart 
-                      data={mocktailData}
-                      layout="vertical"
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis type="number" />
-                      <YAxis type="category" dataKey="name" />
-                      <Tooltip />
-                      <Legend />
-                      <Bar dataKey="orders" fill="#82ca9d" />
-                    </BarChart>
-                  </ResponsiveContainer>
+                <CardContent className="pb-4">
+                  <div className="h-[280px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart 
+                        data={mocktailData}
+                        layout="vertical"
+                        margin={{ top: 10, right: 10, left: 0, bottom: 10 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis type="number" tick={{fontSize: 12}} />
+                        <YAxis type="category" dataKey="name" tick={{fontSize: 12}} width={100} />
+                        <Tooltip />
+                        <Legend />
+                        <Bar dataKey="orders" fill="#82ca9d" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
                 </CardContent>
               </Card>
               
-              <Card>
+              <Card className="overflow-hidden">
                 <CardHeader>
                   <CardTitle>Bar Crawl Participation</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={barCrawlData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" />
-                      <YAxis />
-                      <Tooltip />
-                      <Legend />
-                      <Line type="monotone" dataKey="participants" stroke="#ff7300" />
-                    </LineChart>
-                  </ResponsiveContainer>
+                <CardContent className="pb-4">
+                  <div className="h-[280px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={barCrawlData} margin={{ top: 10, right: 10, left: 0, bottom: 10 }}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="date" tick={{fontSize: 12}} />
+                        <YAxis tick={{fontSize: 12}} />
+                        <Tooltip />
+                        <Legend />
+                        <Line type="monotone" dataKey="participants" stroke="#ff7300" />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
                 </CardContent>
               </Card>
             </div>
           </TabsContent>
           
-          <TabsContent value="visitors" className="space-y-6 mt-6">
+          <TabsContent value="visitors" className="space-y-8 mt-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card>
+              <Card className="overflow-hidden">
                 <CardHeader>
                   <CardTitle>Visitor Demographics - Age</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                      <Pie
-                        data={mockAgeData}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        outerRadius={100}
-                        fill="#8884d8"
-                        dataKey="value"
-                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                      >
-                        {mockAgeData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
+                <CardContent className="pb-4">
+                  <div className="h-[280px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
+                        <Pie
+                          data={mockAgeData}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          outerRadius={100}
+                          fill="#8884d8"
+                          dataKey="value"
+                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                        >
+                          {mockAgeData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
                 </CardContent>
               </Card>
               
-              <Card>
+              <Card className="overflow-hidden">
                 <CardHeader>
                   <CardTitle>Visitor Demographics - Gender</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                      <Pie
-                        data={mockGenderData}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        outerRadius={100}
-                        fill="#8884d8"
-                        dataKey="value"
-                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                      >
-                        {mockGenderData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
+                <CardContent className="pb-4">
+                  <div className="h-[280px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
+                        <Pie
+                          data={mockGenderData}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          outerRadius={100}
+                          fill="#8884d8"
+                          dataKey="value"
+                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                        >
+                          {mockGenderData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
                 </CardContent>
               </Card>
             </div>
             
-            <Card>
+            <Card className="overflow-hidden">
               <CardHeader>
                 <CardTitle>Visit Frequency</CardTitle>
               </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={[
-                    { name: 'First Time', visits: 120 },
-                    { name: 'Occasional', visits: 85 },
-                    { name: 'Regular', visits: 65 },
-                    { name: 'Frequent', visits: 45 },
-                    { name: 'VIP', visits: 25 },
-                  ]}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Bar dataKey="visits" fill="#8884d8" />
-                  </BarChart>
-                </ResponsiveContainer>
+              <CardContent className="pb-4">
+                <div className="h-[280px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={[
+                      { name: 'First Time', visits: 120 },
+                      { name: 'Occasional', visits: 85 },
+                      { name: 'Regular', visits: 65 },
+                      { name: 'Frequent', visits: 45 },
+                      { name: 'VIP', visits: 25 },
+                    ]} margin={{ top: 10, right: 10, left: 0, bottom: 10 }}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" tick={{fontSize: 12}} />
+                      <YAxis tick={{fontSize: 12}} />
+                      <Tooltip />
+                      <Legend />
+                      <Bar dataKey="visits" fill="#8884d8" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

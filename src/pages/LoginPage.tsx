@@ -1,14 +1,23 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import UserAuth from '@/components/UserAuth';
 import { ArrowLeft, Building, User } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
+import { useTheme } from '@/contexts/ThemeContext';
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const [userType, setUserType] = useState<'individual' | 'establishment'>('individual');
+  const { theme, setTheme } = useTheme();
+  
+  // Always force light theme for login page
+  useEffect(() => {
+    if (theme !== 'light') {
+      setTheme('light');
+    }
+  }, [theme, setTheme]);
   
   const handleAuthSuccess = () => {
     // Force page refresh and navigation to index

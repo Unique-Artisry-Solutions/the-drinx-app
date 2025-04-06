@@ -2,7 +2,8 @@
 import { useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast, toast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
+import { v4 as uuidv4 } from '@supabase/supabase-js';
 
 export function useAuthState() {
   const [user, setUser] = useState<User | null>(null);
@@ -20,8 +21,11 @@ export function useAuthState() {
       const bypassEmail = localStorage.getItem('user_email') || 'bypass@example.com';
       const userType = localStorage.getItem('user_type') || 'individual';
       
+      // Generate a valid UUID for the bypass user instead of using a string
+      const bypassUserId = uuidv4();
+      
       const bypassUser = {
-        id: 'admin-bypass-id',
+        id: bypassUserId,
         email: bypassEmail,
         user_metadata: {
           user_type: userType,

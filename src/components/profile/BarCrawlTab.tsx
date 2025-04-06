@@ -3,8 +3,9 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { User, Share2, MapPin, Users, Beer, QrCode, Tag } from 'lucide-react';
+import { User, Share2, MapPin, Users, Beer, Tag } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import QRCodeLightbox from '@/components/qrcode/QRCodeLightbox';
 
 interface BarCrawlTabProps {
   barCrawlList: any[];
@@ -20,6 +21,17 @@ const BarCrawlTab: React.FC<BarCrawlTabProps> = ({ barCrawlList, shareBarCrawl }
 
   const toggleParticipation = () => {
     setIsParticipating(!isParticipating);
+  };
+
+  // Create a unique QR code value for check-ins
+  const generateQRValue = () => {
+    return JSON.stringify({
+      type: 'check-in',
+      barCrawlId,
+      establishmentId: currentEstablishment?.id,
+      userId: localStorage.getItem('user_id') || 'anonymous',
+      timestamp: new Date().toISOString()
+    });
   };
 
   return (
@@ -63,12 +75,12 @@ const BarCrawlTab: React.FC<BarCrawlTabProps> = ({ barCrawlList, shareBarCrawl }
                 </div>
                 
                 <div className="flex flex-col space-y-3">
-                  <div className="flex justify-center items-center p-3 bg-gray-100 rounded-lg h-28">
-                    <div className="text-center">
-                      <QrCode className="h-14 w-14 mx-auto mb-1 text-material-primary" />
-                      <p className="text-xs text-material-on-surface-variant">Scan for special offers</p>
-                    </div>
-                  </div>
+                  {/* Replace static QR code with the new lightbox component */}
+                  <QRCodeLightbox 
+                    value={generateQRValue()} 
+                    title="Check-In QR Code" 
+                    description="Scan this code at the establishment to check in" 
+                  />
 
                   <div className="flex space-x-2">
                     <Link to={`/establishment/${currentEstablishment.id}`} className="flex-1">
@@ -80,7 +92,7 @@ const BarCrawlTab: React.FC<BarCrawlTabProps> = ({ barCrawlList, shareBarCrawl }
                     <Link to={`/profile/bar-crawls/participants/${barCrawlId}`} className="flex-1">
                       <Button variant="outline" className="w-full justify-start" size="sm">
                         <User size={16} className="mr-1" />
-                        Locate Swiggers
+                        Locate Participants 
                       </Button>
                     </Link>
                   </div>

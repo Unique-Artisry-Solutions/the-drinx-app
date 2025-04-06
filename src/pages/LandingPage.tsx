@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import Hero from '@/components/landing/Hero';
@@ -9,10 +9,19 @@ import KeyFeatures from '@/components/landing/KeyFeatures';
 import CallToAction from '@/components/landing/CallToAction';
 import Footer from '@/components/landing/Footer';
 import { useAuth } from '@/contexts/auth';
+import { useTheme } from '@/contexts/ThemeContext';
 
 const LandingPage = () => {
   const { user, isLoading } = useAuth();
   const navigate = useNavigate();
+  const { theme, setTheme } = useTheme();
+  
+  // Always force light theme for landing page
+  useEffect(() => {
+    if (theme !== 'light') {
+      setTheme('light');
+    }
+  }, [theme, setTheme]);
   
   // If user is already authenticated, redirect to appropriate page
   React.useEffect(() => {

@@ -36,8 +36,8 @@ const MetricsVisualization: React.FC<MetricsVisualizationProps> = ({
   barCrawlData = [] 
 }) => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-      <Card className="vibrant-card">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <Card className="vibrant-card overflow-hidden">
         <CardHeader className="pb-2">
           <CardTitle className="text-lg flex items-center">
             <TrendingUp className="mr-2 h-5 w-5 text-spiritless-pink" />
@@ -47,7 +47,7 @@ const MetricsVisualization: React.FC<MetricsVisualizationProps> = ({
             Percentage of customers who return to your establishment
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-0 pb-4">
           <div className="flex items-center justify-between mb-2">
             <div>
               <p className="text-3xl font-bold">{returningRate}%</p>
@@ -61,7 +61,7 @@ const MetricsVisualization: React.FC<MetricsVisualizationProps> = ({
             </div>
           </div>
           
-          <div className="h-[180px]">
+          <div className="h-[160px] w-full">
             <ChartContainer
               config={{
                 returningVisitors: {
@@ -76,27 +76,27 @@ const MetricsVisualization: React.FC<MetricsVisualizationProps> = ({
             >
               <LineChart
                 data={visitorData}
-                margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
+                margin={{ top: 5, right: 5, left: 0, bottom: 5 }}
               >
                 <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                <XAxis dataKey="name" />
-                <YAxis />
+                <XAxis dataKey="name" tick={{fontSize: 10}} />
+                <YAxis tick={{fontSize: 10}} width={25} />
                 <Tooltip content={<ChartTooltipContent />} />
-                <Legend />
+                <Legend wrapperStyle={{fontSize: '10px', marginTop: '-10px'}} />
                 <Line
                   type="monotone"
                   dataKey="returningVisitors"
                   stroke="var(--color-returningVisitors)"
                   strokeWidth={2}
-                  dot={{ r: 3 }}
-                  activeDot={{ r: 5 }}
+                  dot={{ r: 2 }}
+                  activeDot={{ r: 4 }}
                 />
                 <Line
                   type="monotone"
                   dataKey="visitors"
                   stroke="var(--color-visitors)"
                   strokeWidth={2}
-                  dot={{ r: 3 }}
+                  dot={{ r: 2 }}
                 />
               </LineChart>
             </ChartContainer>
@@ -104,7 +104,7 @@ const MetricsVisualization: React.FC<MetricsVisualizationProps> = ({
         </CardContent>
       </Card>
 
-      <Card className="vibrant-card">
+      <Card className="vibrant-card overflow-hidden">
         <CardHeader className="pb-2">
           <CardTitle className="text-lg flex items-center">
             <Star className="mr-2 h-5 w-5 text-yellow-500" />
@@ -114,7 +114,7 @@ const MetricsVisualization: React.FC<MetricsVisualizationProps> = ({
             Customer satisfaction rating over time
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-0 pb-4">
           <div className="flex items-center justify-between mb-2">
             <div>
               <p className="text-3xl font-bold">4.7<span className="text-lg font-normal">/5</span></p>
@@ -128,7 +128,7 @@ const MetricsVisualization: React.FC<MetricsVisualizationProps> = ({
             </div>
           </div>
           
-          <div className="h-[180px]">
+          <div className="h-[160px] w-full">
             <ChartContainer
               config={{
                 rating: {
@@ -139,13 +139,13 @@ const MetricsVisualization: React.FC<MetricsVisualizationProps> = ({
             >
               <BarChart
                 data={ratingData}
-                margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
+                margin={{ top: 5, right: 5, left: 0, bottom: 5 }}
               >
                 <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                <XAxis dataKey="name" />
-                <YAxis domain={[0, 5]} />
+                <XAxis dataKey="name" tick={{fontSize: 10}} />
+                <YAxis domain={[0, 5]} tick={{fontSize: 10}} width={25} />
                 <Tooltip content={<ChartTooltipContent />} />
-                <Legend />
+                <Legend wrapperStyle={{fontSize: '10px', marginTop: '-10px'}} />
                 <Bar
                   dataKey="rating"
                   fill="var(--color-rating)"
@@ -157,7 +157,7 @@ const MetricsVisualization: React.FC<MetricsVisualizationProps> = ({
         </CardContent>
       </Card>
       
-      <Card className="vibrant-card">
+      <Card className="vibrant-card overflow-hidden">
         <CardHeader className="pb-2">
           <CardTitle className="text-lg flex items-center">
             <CakeSlice className="mr-2 h-5 w-5 text-blue-500" />
@@ -167,7 +167,7 @@ const MetricsVisualization: React.FC<MetricsVisualizationProps> = ({
             Distribution of mocktail orders
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-0 pb-4">
           <div className="flex items-center justify-between mb-2">
             <div>
               <p className="text-3xl font-bold">{mocktailData.reduce((sum, item) => sum + item.orders, 0)}</p>
@@ -185,7 +185,7 @@ const MetricsVisualization: React.FC<MetricsVisualizationProps> = ({
             </div>
           </div>
           
-          <div className="h-[180px] flex justify-center">
+          <div className="h-[160px] w-full flex justify-center">
             <ChartContainer
               config={
                 mocktailData.reduce((config, item) => ({
@@ -197,31 +197,32 @@ const MetricsVisualization: React.FC<MetricsVisualizationProps> = ({
                 }), {})
               }
             >
-              <PieChart>
+              <PieChart margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
                 <Pie
                   data={mocktailData}
                   dataKey="orders"
                   nameKey="name"
                   cx="50%"
                   cy="50%"
-                  outerRadius={70}
+                  outerRadius={60}
                   innerRadius={30}
                   paddingAngle={2}
-                  label={(entry) => entry.name}
+                  label={({name}) => name.substring(0, 6) + '...'}
+                  labelLine={false}
                 >
                   {mocktailData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
                 <Tooltip content={<ChartTooltipContent />} />
-                <Legend />
+                <Legend wrapperStyle={{fontSize: '10px', marginTop: '0px'}} />
               </PieChart>
             </ChartContainer>
           </div>
         </CardContent>
       </Card>
       
-      <Card className="vibrant-card">
+      <Card className="vibrant-card overflow-hidden">
         <CardHeader className="pb-2">
           <CardTitle className="text-lg flex items-center">
             <Route className="mr-2 h-5 w-5 text-purple-500" />
@@ -231,7 +232,7 @@ const MetricsVisualization: React.FC<MetricsVisualizationProps> = ({
             Bar crawls featuring your establishment
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-0 pb-4">
           <div className="flex items-center justify-between mb-2">
             <div>
               <p className="text-3xl font-bold">{barCrawlData.reduce((sum, item) => sum + item.value, 0)}</p>
@@ -245,7 +246,7 @@ const MetricsVisualization: React.FC<MetricsVisualizationProps> = ({
             </div>
           </div>
           
-          <div className="h-[180px]">
+          <div className="h-[160px] w-full">
             <ChartContainer
               config={
                 barCrawlData.reduce((config, item) => ({
@@ -259,14 +260,14 @@ const MetricsVisualization: React.FC<MetricsVisualizationProps> = ({
             >
               <BarChart
                 data={barCrawlData}
-                margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
+                margin={{ top: 5, right: 5, left: 0, bottom: 5 }}
               >
                 <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                <XAxis dataKey="name" />
-                <YAxis />
+                <XAxis dataKey="name" tick={{fontSize: 10}} />
+                <YAxis tick={{fontSize: 10}} width={25} />
                 <Tooltip content={<ChartTooltipContent />} />
-                <Legend />
-                <Bar dataKey="value" barSize={25}>
+                <Legend wrapperStyle={{fontSize: '10px', marginTop: '-10px'}} />
+                <Bar dataKey="value" barSize={20}>
                   {barCrawlData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}

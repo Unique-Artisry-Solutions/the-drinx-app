@@ -1,14 +1,21 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import UserAuth from '@/components/UserAuth';
 import { ArrowLeft } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useTheme } from '@/contexts/ThemeContext';
 
 const SignupPage = () => {
   const [selectedUserType, setSelectedUserType] = useState<'individual' | 'establishment'>('individual');
+  const { theme, setTheme } = useTheme();
   
-  // Remove the redirect function, as we want to stay on this page after signup
+  // Always force light theme for signup page
+  useEffect(() => {
+    if (theme !== 'light') {
+      setTheme('light');
+    }
+  }, [theme, setTheme]);
   
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-white to-purple-50">
