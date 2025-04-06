@@ -1,9 +1,10 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { GlassWater, MapPin, Route, Star, User, Award, Badge, Trophy, GiftIcon } from 'lucide-react';
+import { GlassWater, MapPin, Route, Star, User, Award, Badge, Trophy, GiftIcon, ChevronRight } from 'lucide-react';
 import CreateMocktailButton from '@/components/mocktail/CreateMocktailButton';
 
 interface OverviewTabProps {
@@ -211,8 +212,10 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ userName, userEmail, userJoin
                   {currentTier === 3 && "You've unlocked exclusive VIP experiences and benefits!"}
                 </p>
               </div>
-              <Button asChild variant="gradient">
-                <Link to="/profile/rewards">View Benefits</Link>
+              <Button asChild variant="gradient" size="icon">
+                <Link to="/profile/rewards" aria-label="View Benefits">
+                  <ChevronRight />
+                </Link>
               </Button>
             </div>
           </CardContent>

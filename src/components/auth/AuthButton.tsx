@@ -9,6 +9,7 @@ interface AuthButtonProps {
   variant?: 'default' | 'outline' | 'gradient';
   className?: string;
   children: React.ReactNode;
+  size?: 'default' | 'sm' | 'lg' | 'icon' | 'compact';
 }
 
 const AuthButton: React.FC<AuthButtonProps> = ({
@@ -17,7 +18,8 @@ const AuthButton: React.FC<AuthButtonProps> = ({
   onClick,
   variant = 'gradient',
   className = 'w-full shadow-md hover:shadow-lg transition-all text-ellipsis overflow-hidden',
-  children
+  children,
+  size
 }) => {
   // Add custom class for gradient buttons
   const buttonClass = variant === 'gradient' 
@@ -31,7 +33,7 @@ const AuthButton: React.FC<AuthButtonProps> = ({
       variant={variant === 'gradient' ? 'default' : variant}
       disabled={isLoading}
       onClick={onClick}
-      size={typeof children === 'string' && (children as string).length > 10 ? 'compact' : 'default'}
+      size={size || (typeof children === 'string' && (children as string).length > 10 ? 'compact' : 'default')}
     >
       {children}
     </Button>
