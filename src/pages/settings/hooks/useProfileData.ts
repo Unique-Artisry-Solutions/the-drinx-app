@@ -84,6 +84,9 @@ export const useProfileData = () => {
           throw error;
         }
         
+        // Get the email from user authentication
+        const userEmail = user.email || '';
+        
         if (!data) {
           console.log('No profile found for user, creating default profile');
           
@@ -105,7 +108,6 @@ export const useProfileData = () => {
             id: user.id,
             username: user.user_metadata?.username || '',
             display_name: user.user_metadata?.name || '',
-            email: user.email || '',
             user_type: user.user_metadata?.user_type || 'individual',
             email_notifications: true,
             push_notifications: false,
@@ -129,7 +131,7 @@ export const useProfileData = () => {
             username: defaultProfile.username,
             display_name: defaultProfile.display_name,
             bio: '',
-            email: user.email || '',
+            email: userEmail, // Use the email from authentication
             phone: '',
             dark_mode: theme === 'dark',
             email_notifications: true,
@@ -143,7 +145,7 @@ export const useProfileData = () => {
             username: data.username || '',
             display_name: data.display_name || '',
             bio: data.bio || '',
-            email: user.email || '',
+            email: userEmail, // Use the email from authentication, not from profiles table
             phone: data.phone || '',
             dark_mode: theme === 'dark',
             email_notifications: data.email_notifications !== null ? data.email_notifications : true,
