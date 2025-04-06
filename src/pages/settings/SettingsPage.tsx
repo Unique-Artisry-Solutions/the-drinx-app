@@ -105,19 +105,19 @@ const SettingsPage = () => {
                   />
                 )}
                 
-                <div className="mt-6 flex justify-end gap-4">
+                <div className="mt-6 flex justify-between w-full gap-4">
                   <Button 
                     type="button" 
                     variant="outline" 
                     onClick={() => navigate(-1)}
-                    className={isLightTheme ? "border-gray-300 text-gray-700" : ""}
+                    className={cn("flex-1", isLightTheme ? "border-gray-300 text-gray-700" : "")}
                   >
                     Cancel
                   </Button>
                   <Button 
                     type="submit" 
                     disabled={loading}
-                    className="bg-gradient-to-r from-purple-600 to-pink-600"
+                    className="bg-gradient-to-r from-purple-600 to-pink-600 flex-1"
                   >
                     {loading ? 'Saving...' : 'Save Changes'}
                   </Button>
