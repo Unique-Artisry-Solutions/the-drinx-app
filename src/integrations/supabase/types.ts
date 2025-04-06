@@ -9,6 +9,33 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      bar_crawl_check_ins: {
+        Row: {
+          bar_crawl_id: string
+          checked_in_at: string
+          establishment_id: string
+          id: string
+          user_id: string
+          verified_by: string | null
+        }
+        Insert: {
+          bar_crawl_id: string
+          checked_in_at?: string
+          establishment_id: string
+          id?: string
+          user_id: string
+          verified_by?: string | null
+        }
+        Update: {
+          bar_crawl_id?: string
+          checked_in_at?: string
+          establishment_id?: string
+          id?: string
+          user_id?: string
+          verified_by?: string | null
+        }
+        Relationships: []
+      }
       bar_crawl_establishments: {
         Row: {
           bar_crawl_id: string
@@ -51,35 +78,70 @@ export type Database = {
           },
         ]
       }
+      bar_crawl_themes: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       bar_crawls: {
         Row: {
           created_at: string | null
+          description: string | null
           end_date: string | null
           id: string
           name: string
           organizer_id: string
           start_date: string | null
           status: string | null
+          theme_id: string | null
         }
         Insert: {
           created_at?: string | null
+          description?: string | null
           end_date?: string | null
           id?: string
           name: string
           organizer_id: string
           start_date?: string | null
           status?: string | null
+          theme_id?: string | null
         }
         Update: {
           created_at?: string | null
+          description?: string | null
           end_date?: string | null
           id?: string
           name?: string
           organizer_id?: string
           start_date?: string | null
           status?: string | null
+          theme_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "bar_crawls_theme_id_fkey"
+            columns: ["theme_id"]
+            isOneToOne: false
+            referencedRelation: "bar_crawl_themes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       cocktail_reviews: {
         Row: {
@@ -110,6 +172,47 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      cocktails: {
+        Row: {
+          created_at: string
+          description: string
+          establishment_id: string
+          id: string
+          image_url: string | null
+          ingredients: Json | null
+          name: string
+          price: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          establishment_id: string
+          id?: string
+          image_url?: string | null
+          ingredients?: Json | null
+          name: string
+          price: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          establishment_id?: string
+          id?: string
+          image_url?: string | null
+          ingredients?: Json | null
+          name?: string
+          price?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cocktails_establishment_id_fkey"
+            columns: ["establishment_id"]
+            isOneToOne: false
+            referencedRelation: "establishments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       establishments: {
         Row: {

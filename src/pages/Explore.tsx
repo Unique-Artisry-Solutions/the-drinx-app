@@ -2,11 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import SearchFilter from '@/components/SearchFilter';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth';
 import { useToast } from '@/hooks/use-toast';
 import FeaturedEstablishmentsSection from '@/components/explore/FeaturedEstablishmentsSection';
 import BarCrawlSection from '@/components/explore/BarCrawlSection';
 import CocktailsSection from '@/components/explore/CocktailsSection';
+import DataMigration from '@/components/admin/DataMigration';
 
 // Sample data - would be fetched from API in a real application
 import { sampleCocktails, sampleEstablishments, sampleBarCrawls } from '@/data/sampleData';
@@ -108,6 +109,11 @@ const Explore = () => {
           className="mb-6"
           initialSearchTerm={searchQuery}
         />
+        
+        {/* Add the data migration component for admins or development */}
+        <div className="mb-6">
+          <DataMigration />
+        </div>
 
         {/* Swig Circuit Section - Now placed ABOVE Featured Establishments */}
         <BarCrawlSection 

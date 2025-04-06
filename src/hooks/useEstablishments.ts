@@ -1,8 +1,23 @@
 
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { supabase, Establishment } from '@/lib/supabase';
+import { supabaseClient } from '@/lib/supabaseClient';
 import { calculateDistance } from '@/lib/utils';
+
+type Establishment = {
+  id: string;
+  name: string;
+  address: string;
+  image?: string;
+  image_url?: string;
+  latitude: number;
+  longitude: number;
+  cocktail_count?: number;
+  cocktailCount?: number;
+  phone?: string;
+  website?: string;
+  distance?: string;
+};
 
 type FetchEstablishmentsOptions = {
   latitude?: number;
@@ -15,7 +30,7 @@ const fetchEstablishmentsFromSupabase = async ({
   longitude, 
   searchTerm 
 }: FetchEstablishmentsOptions): Promise<Establishment[]> => {
-  let query = supabase
+  let query = supabaseClient
     .from('establishments')
     .select('*');
   

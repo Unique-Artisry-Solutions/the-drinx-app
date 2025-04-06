@@ -13,6 +13,37 @@ export type BarCrawlCheckIn = {
   verified_by?: string;
 };
 
+// Add BarCrawl and Cocktail types
+export type BarCrawl = {
+  id: string;
+  name: string;
+  description?: string;
+  organizer_id: string;
+  start_date?: string;
+  end_date?: string;
+  theme_id?: string;
+  status?: string;
+  created_at?: string;
+};
+
+export type BarCrawlTheme = {
+  id: string;
+  name: string;
+  description?: string;
+  created_at?: string;
+};
+
+export type Cocktail = {
+  id: string;
+  name: string;
+  description: string;
+  price: string;
+  ingredients?: string[];
+  image_url?: string;
+  establishment_id: string;
+  created_at?: string;
+};
+
 // Helper type for comment display
 export interface CommentDisplayItem {
   id: string;
