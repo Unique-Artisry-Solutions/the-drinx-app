@@ -7,6 +7,7 @@ import UserNavbar from '../navigation/user/UserNavbar';
 import Breadcrumbs from '../navigation/Breadcrumbs';
 import { useAuth } from '@/contexts/auth';
 import { useTheme } from '@/contexts/ThemeContext';
+import GuestTopNavigation from '../navigation/GuestTopNavigation';
 
 interface TabOption {
   value: string;
@@ -70,6 +71,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
   const isLandingPage = location.pathname === '/' || location.pathname === '/landing';
   const isAuthPage = location.pathname === '/login' || location.pathname === '/signup';
   const isAdminPage = location.pathname.startsWith('/admin');
+  const isGuestPage = isLandingPage || isAuthPage || location.pathname === '/mission';
 
   const getContentPadding = () => {
     if (isLandingPage) {
@@ -109,10 +111,17 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
   const shouldShowMobileNav = () => {
     return !isAdminPage;
   };
+  
+  // Determine whether to show guest navigation
+  const useGuestNavigation = isGuestPage || !user;
 
   return (
     <div className={`flex flex-col min-h-screen w-full max-w-full bg-background transition-colors duration-300`}>
-      <UserNavbar activeTab={activeTab} handleTabChange={handleTabChange} tabOptions={tabOptions} />
+      {useGuestNavigation ? (
+        <GuestTopNavigation />
+      ) : (
+        <UserNavbar activeTab={activeTab} handleTabChange={handleTabChange} tabOptions={tabOptions} />
+      )}
       
       <main className={`flex-1 w-full max-w-full overflow-x-hidden ${getContentPadding()}`}>
         {shouldShowBreadcrumbs() && (

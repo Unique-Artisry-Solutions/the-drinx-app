@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
@@ -86,7 +85,6 @@ export function useAuthActions() {
       setIsLoading(true);
       console.log('Starting sign up process for:', email);
       
-      // Make sure we have a proper redirect URL with the confirmation parameter
       const baseUrl = window.location.origin;
       const finalRedirectTo = options?.emailRedirectTo || `${baseUrl}/?email_confirmed=true`;
       console.log('Using redirect URL:', finalRedirectTo);
@@ -107,7 +105,6 @@ export function useAuthActions() {
       
       console.log('Signup response:', data);
       
-      // Check if the user was created but needs email verification
       if (data.user && !data.user.email_confirmed_at) {
         console.log('User created, email verification needed');
         toast({
@@ -133,7 +130,6 @@ export function useAuthActions() {
       setIsLoading(true);
       console.log('Signing out user...');
       
-      // Clear all auth-related localStorage items first
       localStorage.removeItem('user_authenticated');
       localStorage.removeItem('user_email');
       localStorage.removeItem('user_type');
@@ -143,7 +139,6 @@ export function useAuthActions() {
       localStorage.removeItem('admin_session_created');
       localStorage.removeItem('admin_bypass');
       
-      // Then perform the actual sign out
       const { error } = await supabase.auth.signOut();
       
       if (error) {
@@ -156,10 +151,7 @@ export function useAuthActions() {
         description: 'You have been successfully logged out',
       });
       
-      // Use hard navigation with setTimeout to ensure the UI updates before redirect
-      setTimeout(() => {
-        window.location.href = '/landing';
-      }, 100);
+      window.location.replace('/landing');
     } catch (error: any) {
       console.error('Sign out error:', error);
       toast({
@@ -191,7 +183,6 @@ export function useAuthActions() {
         description: 'Your profile has been successfully updated',
       });
       
-      // Update localStorage with new profile data
       if (data.user_type) {
         localStorage.setItem('user_type', data.user_type);
       }

@@ -62,8 +62,10 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
   };
 
   const getNavItems = () => {
-    // Special case for landing page, login, signup, and non-authenticated pages
+    // Public paths where we should show guest navigation
     const publicPaths = ['/', '/landing', '/login', '/signup', '/mission'];
+    
+    // Always show guest navigation on public paths or when user is not authenticated
     if (publicPaths.includes(location.pathname) || !user) {
       return getGuestNavItems();
     }
