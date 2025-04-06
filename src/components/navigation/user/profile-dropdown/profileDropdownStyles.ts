@@ -5,7 +5,7 @@ export const profileDropdownStyles = {
     `px-2 py-1.5 text-sm font-medium ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`,
   
   menuItem: (isDarkTheme: boolean, isActive?: boolean) => 
-    `flex items-center gap-2 w-full text-sm px-2 py-1.5 rounded-sm transition-all duration-200 ${
+    `flex items-center gap-2 w-full text-sm px-2 py-2.5 rounded-sm transition-all duration-200 my-1 ${
       isActive 
         ? `${isDarkTheme ? 'bg-gray-700 text-spiritless-pink' : 'bg-gray-100 text-spiritless-pink'}`
         : `${isDarkTheme 
@@ -24,7 +24,7 @@ export const profileDropdownStyles = {
     }`,
   
   separator: (isDarkTheme: boolean) => 
-    `${isDarkTheme ? 'bg-gray-700' : 'bg-gray-200'}`,
+    `${isDarkTheme ? 'bg-gray-700' : 'bg-gray-200'} my-1`,
   
   tabItem: (isDarkTheme: boolean, isActive: boolean) => 
     `flex items-center gap-1.5 px-2 py-1.5 text-xs rounded transition-colors ${

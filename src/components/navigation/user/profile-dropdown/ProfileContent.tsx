@@ -45,7 +45,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
   };
 
   return (
-    <div className="py-1 group">
+    <div className="py-2 group space-y-1">
       <ProfileHeader username={username} isDarkTheme={isDarkTheme} />
       
       <ProfileMenuItem 
