@@ -75,6 +75,7 @@ const SettingsPage = () => {
                 </TabsTrigger>
               </TabsList>
               
+              {/* Use onSubmit with the form's handleSubmit wrapper around our submit function */}
               <form onSubmit={form.handleSubmit(handleSubmit)}>
                 <AccountTab 
                   profile={profile} 

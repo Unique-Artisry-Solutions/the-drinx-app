@@ -185,7 +185,8 @@ export const useProfileData = () => {
     }
   };
 
-  const handleSubmit = form.handleSubmit(async (formData) => {
+  // Modified to handle form data correctly - removing the event handling
+  const handleSubmit = async (formData: UserProfileFormData) => {
     if (!user) return;
     
     try {
@@ -228,7 +229,7 @@ export const useProfileData = () => {
     } finally {
       setLoading(false);
     }
-  });
+  };
 
   return {
     profile: formValues,
