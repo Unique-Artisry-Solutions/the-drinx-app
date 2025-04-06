@@ -59,10 +59,18 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
     checkAuth();
   }, [user, isEmailVerified, location.pathname]);
 
+  // Determine page types for specialized navigation
   const isLandingPage = location.pathname === '/' || location.pathname === '/landing';
   const isAdminPage = location.pathname.startsWith('/admin');
-  const isSettingsPage = location.pathname === '/settings';
-  const isRecipesPage = location.pathname === '/profile/recipes';
+  
+  // These pages use TopNavigation
+  const useTopNavPages = [
+    '/settings',
+    '/profile/recipes',
+    '/create-recipe'
+  ];
+  
+  const shouldUseTopNav = useTopNavPages.includes(location.pathname);
 
   const getContentPadding = () => {
     if (isLandingPage) {
@@ -73,16 +81,22 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
   };
 
   const renderNavigation = () => {
-    // Always use TopNavigation for the recipes page
-    if (isRecipesPage || isSettingsPage) {
+    // Special pages that always use TopNavigation
+    if (shouldUseTopNav) {
       return <TopNavigation />;
-    } else if (isAdminPage || isAdmin) {
+    } 
+    // Admin pages use AdminTopNavigation
+    else if (isAdminPage || isAdmin) {
       return <AdminTopNavigation />;
-    } else if (navigationType === NavigationType.USER) {
+    } 
+    // Authenticated users use UserTopNavigation
+    else if (navigationType === NavigationType.USER) {
       return <UserTopNavigation activeTab={activeTab} handleTabChange={handleTabChange} tabOptions={tabOptions} />;
-    } else {
-      // Only show GuestTopNavigation on the landing page or for unauthenticated users on non-interior pages
-      if (isLandingPage || !user && (location.pathname === '/login' || location.pathname === '/signup' || location.pathname === '/mission')) {
+    } 
+    // Guest specific pages - landing, login, signup, mission
+    else {
+      const guestSpecificPages = ['/landing', '/login', '/signup', '/mission'];
+      if (isLandingPage || guestSpecificPages.includes(location.pathname)) {
         return <GuestTopNavigation />;
       } else {
         // For other interior pages when not authenticated, still show UserTopNavigation
@@ -117,6 +131,11 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
     return true;
   };
 
+  // Determine if mobile navigation bar should be shown
+  const shouldShowMobileNav = () => {
+    return !isLandingPage && !isAdminPage;
+  };
+
   return (
     <div className={`flex flex-col min-h-screen w-full max-w-full bg-background transition-colors duration-300`}>
       {renderNavigation()}
@@ -130,7 +149,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
         {children}
       </main>
       
-      {!isLandingPage && (
+      {shouldShowMobileNav() && (
         <MobileNavigation type={navigationType} userType={userType} />
       )}
     </div>

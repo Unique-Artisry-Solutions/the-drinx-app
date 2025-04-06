@@ -34,15 +34,23 @@ const TopNavigation: React.FC<TopNavigationProps> = () => {
 
   // Determine if we should show the back button
   const shouldShowBackButton = () => {
-    // Exclude certain paths
+    // List paths where back button should NOT appear
     const excludedPaths = ['/', '/landing', '/explore', '/map'];
-    return !excludedPaths.includes(location.pathname) && !location.pathname.startsWith('/admin');
+    
+    // Back button should show on all interior pages except admin and excluded paths
+    const showBackButton = !excludedPaths.includes(location.pathname) && 
+                          !location.pathname.startsWith('/admin');
+                          
+    return showBackButton;
   };
 
-  return <header className="bg-white shadow-sm sticky top-0 z-50">
+  return (
+    <header className="bg-white shadow-sm sticky top-0 z-50">
       <div className="container max-w-6xl mx-auto px-4 py-3 flex items-center justify-between bg-zinc-900">
         <div className="flex items-center gap-2">
-          {shouldShowBackButton() && <BackButton size="icon" showLabel={false} className="mr-2" />}
+          {shouldShowBackButton() && (
+            <BackButton size="icon" showLabel={false} className="mr-2" />
+          )}
           <Link to="/" className="text-xl font-semibold text-material-primary">
             Spiritless
           </Link>
@@ -61,7 +69,8 @@ const TopNavigation: React.FC<TopNavigationProps> = () => {
           <UserProfileDropdown username={username} userType={userType as 'individual' | 'establishment'} handleLogout={handleLogout} />
         </div>
       </div>
-    </header>;
+    </header>
+  );
 };
 
 export default TopNavigation;

@@ -57,13 +57,6 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
     window.scrollTo(0, 0);
   };
 
-  // Determine if we should show the back button
-  const shouldShowBackButton = () => {
-    // Exclude certain paths
-    const excludedPaths = ['/', '/landing', '/explore', '/map', '/profile', '/settings'];
-    return !excludedPaths.includes(location.pathname) && !location.pathname.startsWith('/admin');
-  };
-
   const getProfilePath = () => {
     return currentUserType === 'establishment' ? '/establishment/profile' : '/profile';
   };
@@ -87,8 +80,14 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
     type === NavigationType.USER && 
     (location.pathname === '/profile' || 
      location.pathname.startsWith('/profile/'));
+     
+  // Pages that should not show the mobile navigation
+  const hiddenNavPaths = [
+    '/landing',
+  ];
 
-  if (location.pathname === '/landing' || location.pathname.startsWith('/admin')) {
+  // Check if we should hide the navigation entirely
+  if (location.pathname.startsWith('/admin') || hiddenNavPaths.includes(location.pathname)) {
     return null;
   }
 
@@ -98,13 +97,8 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
 
   return (
     <>
-      {shouldShowBackButton() && (
-        <div className={`fixed top-0 left-0 right-0 z-50 md:hidden px-3 py-3 ${theme === 'dark' ? 'bg-gray-900 border-b border-gray-700' : 'bg-white border-b border-gray-100'}`}>
-          {/* Empty div for back button - we're removing it from here since it's handled in TopNavigation */}
-        </div>
-      )}
+      <ProfileMenu expanded={shouldShowProfileItems && expanded} />
       <nav className={navBarClasses}>
-        <ProfileMenu expanded={shouldShowProfileItems && expanded} />
         <div className="mx-auto w-full">
           <div className="flex justify-around items-center h-16 px-2">
             {navItems.map((item, index) => {
