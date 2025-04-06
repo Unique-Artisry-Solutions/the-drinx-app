@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
@@ -152,7 +153,7 @@ export function useAuthActions() {
         description: 'You have been successfully logged out',
       });
       
-      // Force page navigation to landing page
+      // Use window.location.href for a full page refresh to ensure all state is cleared
       window.location.href = '/landing';
     } catch (error: any) {
       console.error('Sign out error:', error);

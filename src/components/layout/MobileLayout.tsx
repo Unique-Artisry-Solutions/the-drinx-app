@@ -42,10 +42,13 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
     const checkAuth = () => {
       const isAdminAuth = localStorage.getItem('admin_authenticated') === 'true';
       const userTypeStored = localStorage.getItem('user_type');
+      const userAuthenticated = localStorage.getItem('user_authenticated') === 'true';
+      
       setIsAdmin(isAdminAuth);
+      
       if (isAdminAuth) {
         setNavigationType(NavigationType.ADMIN);
-      } else if (user && isEmailVerified) {
+      } else if (user && isEmailVerified && userAuthenticated) {
         setNavigationType(NavigationType.USER);
         setUserType(userTypeStored === 'establishment' ? 'establishment' : 'individual');
       } else {
@@ -58,6 +61,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
 
   // Determine page types for specialized navigation
   const isLandingPage = location.pathname === '/' || location.pathname === '/landing';
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/signup';
   const isAdminPage = location.pathname.startsWith('/admin');
 
   const getContentPadding = () => {

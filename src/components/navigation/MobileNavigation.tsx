@@ -72,6 +72,11 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
       return getCartGuestNavItems();
     }
 
+    // Force guest navigation for login/signup pages
+    if (location.pathname === '/login' || location.pathname === '/signup') {
+      return getGuestNavItems();
+    }
+
     switch (type) {
       case NavigationType.GUEST:
         return getGuestNavItems();

@@ -60,14 +60,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   });
 
   const handleSignOut = async () => {
+    // Clear all authentication-related state before calling signout
+    // This ensures immediate UI update even before the async operation completes
+    localStorage.removeItem('user_authenticated');
+    localStorage.removeItem('user_email');
+    localStorage.removeItem('user_type');
+    localStorage.removeItem('user_username');
+    
     // Check if we need to clear admin bypass
     const isAdminBypass = localStorage.getItem('admin_bypass') === 'true';
     if (isAdminBypass) {
       localStorage.removeItem('admin_bypass');
-      localStorage.removeItem('user_authenticated');
-      localStorage.removeItem('user_email');
-      localStorage.removeItem('user_type');
-      localStorage.removeItem('user_username');
+      localStorage.removeItem('admin_authenticated');
+      
       setUser(null);
       setSession(null);
       setIsEmailVerified(false);
@@ -81,6 +86,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     
     // Normal signout
+    setUser(null);
+    setSession(null);
+    setIsEmailVerified(false);
     await signOutAction();
   };
 
