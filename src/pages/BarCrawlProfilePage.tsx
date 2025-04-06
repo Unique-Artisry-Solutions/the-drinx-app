@@ -84,7 +84,7 @@ const BarCrawlProfilePage: React.FC<BarCrawlProfileProps> = () => {
     }
     
     toast({
-      title: "Bar Crawl Completed!",
+      title: "Swig Circuit Completed!",
       description: "You've earned progress toward your next reward tier!"
     });
   };
@@ -109,13 +109,13 @@ const BarCrawlProfilePage: React.FC<BarCrawlProfileProps> = () => {
       <Layout>
         <div className="py-4 animate-fade-in max-w-6xl mx-auto">
           <BackButton fallbackPath="/profile/bar-crawls" />
-          <h1 className="text-2xl font-bold mb-2">Bar Crawl Not Found</h1>
+          <h1 className="text-2xl font-bold mb-2">Swig Circuit Not Found</h1>
           <p className="mb-4 text-gray-600">
-            The bar crawl you're looking for doesn't exist or may have been removed.
+            The Swig Circuit you're looking for doesn't exist or may have been removed.
           </p>
           <Button asChild variant="default">
             <Link to="/profile/bar-crawls">
-              Back to Bar Crawls
+              Back to Swig Circuits
             </Link>
           </Button>
         </div>
@@ -161,7 +161,7 @@ const BarCrawlProfilePage: React.FC<BarCrawlProfileProps> = () => {
 
         <Tabs defaultValue="route" className="mt-4">
           <TabsList className="mb-4">
-            <TabsTrigger value="route">Crawl Route</TabsTrigger>
+            <TabsTrigger value="route">Circuit Route</TabsTrigger>
             <TabsTrigger value="map">Map View</TabsTrigger>
             <TabsTrigger value="details">Details</TabsTrigger>
             <TabsTrigger value="participants">Participants</TabsTrigger>

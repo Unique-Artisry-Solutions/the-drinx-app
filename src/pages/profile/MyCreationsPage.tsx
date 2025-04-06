@@ -33,7 +33,7 @@ const MyCreationsPage: React.FC = () => {
     navigator.clipboard.writeText(shareableLink);
     
     toast({
-      title: 'Bar Crawl Link Copied',
+      title: 'Swig Circuit Link Copied',
       description: 'Share link has been copied to clipboard!',
     });
   };
@@ -58,7 +58,7 @@ const MyCreationsPage: React.FC = () => {
     setCreatedBarCrawls(updatedBarCrawls);
     
     toast({
-      title: 'Bar Crawl Completed!',
+      title: 'Swig Circuit Completed!',
       description: 'You\'ve earned progress toward your next reward tier!',
     });
   };
@@ -69,15 +69,15 @@ const MyCreationsPage: React.FC = () => {
         <div className="mb-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-medium text-material-on-background">Created Bar Crawls</h1>
+              <h1 className="text-2xl font-medium text-material-on-background">Created Swig Circuits</h1>
               <p className="text-material-on-surface-variant">
-                Manage bar crawls you've created and organized
+                Manage Swig Circuits you've created and organized
               </p>
             </div>
             <Button asChild>
               <Link to="/create-bar-crawl">
                 <PlusCircle className="mr-2 h-4 w-4" />
-                Create New Bar Crawl
+                Create New Swig Circuit
               </Link>
             </Button>
           </div>
@@ -92,7 +92,7 @@ const MyCreationsPage: React.FC = () => {
               <div>
                 <h3 className="font-medium">Rewards Active!</h3>
                 <p className="text-sm text-gray-600">
-                  You've unlocked Tier {userStats.barCrawlsCompleted >= 15 ? '3' : '2'} rewards for completing {userStats.barCrawlsCompleted} bar crawls
+                  You've unlocked Tier {userStats.barCrawlsCompleted >= 15 ? '3' : '2'} rewards for completing {userStats.barCrawlsCompleted} Swig Circuits
                 </p>
               </div>
             </div>
@@ -167,7 +167,7 @@ const MyCreationsPage: React.FC = () => {
             <Link to="/create-bar-crawl" className="w-full h-full">
               <div className="text-center p-4 h-full flex flex-col items-center justify-center">
                 <PlusCircle className="h-12 w-12 mx-auto mb-3 text-material-primary" />
-                <p className="font-medium">Create New Bar Crawl</p>
+                <p className="font-medium">Create New Swig Circuit</p>
                 <p className="text-sm text-muted-foreground mt-1">Plan your next adventure</p>
               </div>
             </Link>
@@ -176,10 +176,10 @@ const MyCreationsPage: React.FC = () => {
         
         {createdBarCrawls.length === 0 && (
           <div className="text-center py-8 border rounded-md bg-gray-50 mt-6">
-            <p className="text-muted-foreground mb-2">No bar crawls created yet</p>
-            <p className="text-sm text-muted-foreground mb-4">Start planning your first bar crawl adventure!</p>
+            <p className="text-muted-foreground mb-2">No Swig Circuits created yet</p>
+            <p className="text-sm text-muted-foreground mb-4">Start planning your first Swig Circuit adventure!</p>
             <Button asChild>
-              <Link to="/create-bar-crawl">Create Your First Bar Crawl</Link>
+              <Link to="/create-bar-crawl">Create Your First Swig Circuit</Link>
             </Button>
           </div>
         )}

@@ -60,7 +60,7 @@ const BarCrawlManagementPage: React.FC = () => {
           <div>
             <h1 className="text-2xl font-medium">{barCrawl.name}</h1>
             <p className="text-material-on-surface-variant">
-              Manage your bar crawl details and participants
+              Manage your Swig Circuit details and participants
             </p>
           </div>
           <Button 
