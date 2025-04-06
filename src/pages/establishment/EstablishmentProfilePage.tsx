@@ -58,15 +58,8 @@ const EstablishmentProfilePage = () => {
       tabOptions={tabOptions}
     >
       <div className="py-4 animate-fade-in w-full">
-        <div className="flex items-center justify-between mb-6 px-4 md:px-6 lg:mx-[10%]">
-          <div>
-            <h1 className="text-2xl font-medium text-material-on-background">Establishment Profile</h1>
-            <p className="text-material-on-surface-variant">
-              Manage your establishment information and offerings
-            </p>
-          </div>
-        </div>
-
+        {/* Removed redundant title here as it's shown in each tab */}
+        
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <div className="px-4 py-2 md:px-6 lg:mx-[10%]">
             <TabsContent value="profile">
@@ -77,13 +70,15 @@ const EstablishmentProfilePage = () => {
                 address={profileState.address} 
                 phone={profileState.phone} 
                 website={profileState.website} 
+                businessHours={profileState.businessHours || []}
                 isLoading={profileState.isLoading} 
                 setName={profileState.setName} 
                 setEmail={profileState.setEmail} 
                 setDescription={profileState.setDescription} 
                 setAddress={profileState.setAddress} 
                 setPhone={profileState.setPhone} 
-                setWebsite={profileState.setWebsite} 
+                setWebsite={profileState.setWebsite}
+                setBusinessHours={profileState.setBusinessHours}
                 handleSaveProfile={profileState.handleSaveProfile} 
               />
             </TabsContent>

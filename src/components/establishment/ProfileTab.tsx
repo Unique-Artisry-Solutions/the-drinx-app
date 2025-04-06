@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { PenIcon } from 'lucide-react';
 import FileUploader from '@/components/common/FileUploader';
+import BusinessHoursEditor, { BusinessHour } from './BusinessHoursEditor';
 
 interface ProfileTabProps {
   name: string;
@@ -15,12 +16,14 @@ interface ProfileTabProps {
   phone: string;
   website: string;
   isLoading: boolean;
+  businessHours: BusinessHour[];
   setName: React.Dispatch<React.SetStateAction<string>>;
   setEmail: React.Dispatch<React.SetStateAction<string>>;
   setDescription: React.Dispatch<React.SetStateAction<string>>;
   setAddress: React.Dispatch<React.SetStateAction<string>>;
   setPhone: React.Dispatch<React.SetStateAction<string>>;
   setWebsite: React.Dispatch<React.SetStateAction<string>>;
+  setBusinessHours: React.Dispatch<React.SetStateAction<BusinessHour[]>>;
   handleSaveProfile: () => void;
 }
 
@@ -31,6 +34,7 @@ const ProfileTab: React.FC<ProfileTabProps> = ({
   address,
   phone,
   website,
+  businessHours,
   isLoading,
   setName,
   setEmail,
@@ -38,6 +42,7 @@ const ProfileTab: React.FC<ProfileTabProps> = ({
   setAddress,
   setPhone,
   setWebsite,
+  setBusinessHours,
   handleSaveProfile
 }) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -120,6 +125,14 @@ const ProfileTab: React.FC<ProfileTabProps> = ({
                 />
               </div>
 
+              <div className="col-span-2">
+                <BusinessHoursEditor 
+                  hours={businessHours}
+                  setHours={setBusinessHours}
+                  isEditing={true}
+                />
+              </div>
+
               <div className="col-span-2 flex justify-end space-x-2">
                 <Button variant="outline" onClick={() => setIsEditing(false)}>
                   Cancel
@@ -170,6 +183,14 @@ const ProfileTab: React.FC<ProfileTabProps> = ({
               <div className="col-span-2">
                 <h3 className="text-sm font-medium text-gray-500 text-left">Description</h3>
                 <p className="whitespace-pre-wrap">{description || 'No description available.'}</p>
+              </div>
+
+              <div className="col-span-2">
+                <BusinessHoursEditor 
+                  hours={businessHours}
+                  setHours={setBusinessHours}
+                  isEditing={false}
+                />
               </div>
 
               <div className="col-span-2 mt-4">

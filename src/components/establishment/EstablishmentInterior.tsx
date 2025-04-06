@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { MapPin, Phone, Star, Users, Calendar, PlusCircle } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -12,6 +11,7 @@ import CocktailCard from '@/components/CocktailCard';
 import BarCrawlRequestModal from './BarCrawlRequestModal';
 import MapView from '@/components/map/MapView';
 import { useTheme } from '@/contexts/ThemeContext';
+import { BusinessHour } from './BusinessHoursEditor';
 
 interface EstablishmentInteriorProps {
   establishment: any;
@@ -66,6 +66,46 @@ const EstablishmentInterior: React.FC<EstablishmentInteriorProps> = ({
     longitude: establishment.longitude,
     cocktailCount: establishment.cocktailCount
   }];
+
+  // Handle business hours display
+  const formatBusinessHours = () => {
+    // First check if we have structured business hours
+    if (establishment.businessHours && Array.isArray(establishment.businessHours)) {
+      const hours = establishment.businessHours as BusinessHour[];
+      
+      // Group days with the same hours
+      const groupedHours: Record<string, string[]> = {};
+      
+      hours.forEach(hour => {
+        const timeString = `${hour.openTime} - ${hour.closeTime}`;
+        if (!groupedHours[timeString]) {
+          groupedHours[timeString] = [];
+        }
+        groupedHours[timeString].push(hour.day);
+      });
+      
+      // Format grouped hours for display
+      return Object.entries(groupedHours).map(([hours, days]) => {
+        // If there are consecutive days with the same hours, group them
+        if (days.length > 1) {
+          return { 
+            days: `${days[0]} - ${days[days.length - 1]}`, 
+            hours 
+          };
+        }
+        return { days: days[0], hours };
+      });
+    }
+    
+    // Fallback to default display if no structured hours
+    return [
+      { days: 'Monday - Thursday', hours: '11:00 AM - 10:00 PM' },
+      { days: 'Friday - Saturday', hours: '11:00 AM - 12:00 AM' },
+      { days: 'Sunday', hours: '12:00 PM - 9:00 PM' }
+    ];
+  };
+  
+  const businessHoursDisplay = formatBusinessHours();
   
   return (
     <div className={cn(
@@ -180,12 +220,12 @@ const EstablishmentInterior: React.FC<EstablishmentInteriorProps> = ({
                         "grid grid-cols-2 gap-2 text-sm",
                         isLightTheme ? "text-gray-700" : ""
                       )}>
-                        <div>Monday - Thursday</div>
-                        <div>11:00 AM - 10:00 PM</div>
-                        <div>Friday - Saturday</div>
-                        <div>11:00 AM - 12:00 AM</div>
-                        <div>Sunday</div>
-                        <div>12:00 PM - 9:00 PM</div>
+                        {businessHoursDisplay.map((hours, index) => (
+                          <React.Fragment key={index}>
+                            <div>{hours.days}</div>
+                            <div>{hours.hours}</div>
+                          </React.Fragment>
+                        ))}
                       </div>
                     </div>
                     

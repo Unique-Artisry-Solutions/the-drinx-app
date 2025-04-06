@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Drink } from '@/components/establishment/DrinkProfileModal';
+import { BusinessHour } from '@/components/establishment/BusinessHoursEditor';
 
 interface Promotion {
   id: string;
@@ -19,6 +20,7 @@ interface BarCrawl {
   endDate: string;
   status: 'accepted' | 'pending';
   otherEstablishments: string[];
+  description?: string;
 }
 
 interface VisitorStats {
@@ -36,6 +38,7 @@ export const useEstablishmentProfile = () => {
   const [phone, setPhone] = useState('');
   const [website, setWebsite] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [businessHours, setBusinessHours] = useState<BusinessHour[]>([]);
   
   // Promotions state
   const [promotions, setPromotions] = useState<Promotion[]>([]);
@@ -68,6 +71,15 @@ export const useEstablishmentProfile = () => {
       setAddress("123 Main St, Anytown USA");
       setPhone("555-123-4567");
       setWebsite("www.yourestablishment.com");
+      setBusinessHours([
+        { day: 'Monday', openTime: '11:00', closeTime: '22:00' },
+        { day: 'Tuesday', openTime: '11:00', closeTime: '22:00' },
+        { day: 'Wednesday', openTime: '11:00', closeTime: '22:00' },
+        { day: 'Thursday', openTime: '11:00', closeTime: '22:00' },
+        { day: 'Friday', openTime: '11:00', closeTime: '00:00' },
+        { day: 'Saturday', openTime: '11:00', closeTime: '00:00' },
+        { day: 'Sunday', openTime: '12:00', closeTime: '21:00' }
+      ]);
       
       // Load promotions
       setPromotions([
@@ -113,7 +125,8 @@ export const useEstablishmentProfile = () => {
           startDate: '2023-11-15',
           endDate: '2023-11-15',
           status: 'accepted',
-          otherEstablishments: []
+          otherEstablishments: [],
+          description: 'A tour of the best mocktail spots downtown.'
         },
         {
           id: '2',
@@ -124,7 +137,8 @@ export const useEstablishmentProfile = () => {
           startDate: '2023-11-20',
           endDate: '2023-11-20',
           status: 'accepted',
-          otherEstablishments: []
+          otherEstablishments: [],
+          description: 'Experience the best alcohol-free drinks in the city.'
         },
         {
           id: '3',
@@ -135,7 +149,8 @@ export const useEstablishmentProfile = () => {
           startDate: '2023-12-15',
           endDate: '2023-12-16',
           status: 'pending',
-          otherEstablishments: ['The Juice Bar', 'Herbal Infusions', 'Tropical Blends']
+          otherEstablishments: ['The Juice Bar', 'Herbal Infusions', 'Tropical Blends'],
+          description: 'Celebrate the holidays with festive non-alcoholic concoctions.'
         }
       ]);
     }, 500);
@@ -243,6 +258,7 @@ export const useEstablishmentProfile = () => {
       address,
       phone,
       website,
+      businessHours,
       isLoading,
       setName,
       setEmail,
@@ -250,6 +266,7 @@ export const useEstablishmentProfile = () => {
       setAddress,
       setPhone,
       setWebsite,
+      setBusinessHours,
       handleSaveProfile
     },
     
