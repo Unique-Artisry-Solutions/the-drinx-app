@@ -19,6 +19,11 @@ export interface Establishment {
     twitter?: string;
   };
   hours?: Record<string, string>;
+  distance?: string;
+  cocktailCount?: number;
+  image?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 // Cocktail type used in FavoritesTab

@@ -4,7 +4,7 @@ import Layout from '@/components/Layout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { CalendarClock, Users, Award, Cocktail, Clock, TagIcon, ArrowRight } from 'lucide-react';
+import { CalendarClock, Users, Award, GlassWater, Clock, TagIcon, ArrowRight } from 'lucide-react';
 
 const AllActionsPage = () => {
   return (
@@ -29,7 +29,7 @@ const AllActionsPage = () => {
           <ActionCard 
             title="Mocktail Menu"
             description="Update your mocktail menu offerings"
-            icon={<Cocktail className="h-5 w-5" />}
+            icon={<GlassWater className="h-5 w-5" />}
             to="/establishment/profile?tab=menu"
             completion={60}
           />
