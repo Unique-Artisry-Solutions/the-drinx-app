@@ -11,6 +11,7 @@ interface Cocktail {
   ingredients: string[];
   image?: string;
   establishment: {
+    id: string;
     name: string;
     distance?: string;
   };
