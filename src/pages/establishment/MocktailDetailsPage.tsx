@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -9,12 +9,15 @@ import { Button } from '@/components/ui/button';
 import { StarRating } from '@/components/StarRating';
 import CommentForm from '@/components/CommentForm';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/auth';
+import { supabase } from '@/integrations/supabase/client';
 
 const MocktailDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { toast } = useToast();
   const [showCommentForm, setShowCommentForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { user } = useAuth();
   
   // Sample data - in a real implementation, this would come from Supabase
   const [mocktail, setMocktail] = useState({
@@ -27,30 +30,71 @@ const MocktailDetailsPage: React.FC = () => {
     totalOrders: 42,
     createdDate: '2023-10-15',
     photoUrl: 'https://placehold.co/600x400',
-    reviews: [
-      { id: '1', user: 'Sarah J.', rating: 5, comment: 'So refreshing! Love the blue color and citrus flavor.', date: '2023-11-29' },
-      { id: '2', user: 'Michael R.', rating: 4, comment: 'Great drink, though a bit sweet for my taste.', date: '2023-11-28' },
-      { id: '3', user: 'Emily L.', rating: 5, comment: 'My favorite drink here! Perfect balance of flavors.', date: '2023-11-25' }
-    ]
+    reviews: []
   });
   
-  const handleAddComment = (data: { text: string; rating: number }) => {
+  useEffect(() => {
+    // Fetch reviews from Supabase
+    fetchReviews();
+  }, [id]);
+  
+  const fetchReviews = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('cocktail_reviews_with_users')
+        .select('*')
+        .eq('cocktail_id', id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      if (data) {
+        const formattedReviews = data.map(review => ({
+          id: review.id,
+          user: review.user_name || 'Anonymous',
+          rating: review.rating,
+          comment: review.text,
+          date: new Date(review.created_at).toLocaleDateString()
+        }));
+        
+        setMocktail(prev => ({
+          ...prev,
+          reviews: formattedReviews
+        }));
+      }
+    } catch (error) {
+      console.error('Error fetching reviews:', error);
+    }
+  };
+  
+  const handleAddComment = async (data: { text: string; rating: number }) => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to leave a review.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsSubmitting(true);
     
-    // Simulate API call delay
-    setTimeout(() => {
-      const newReview = {
-        id: `new-${Date.now()}`,
-        user: 'Owner',
-        rating: data.rating,
-        comment: data.text,
-        date: new Date().toLocaleDateString()
-      };
+    try {
+      // Save comment to Supabase
+      const { error } = await supabase
+        .from('cocktail_reviews')
+        .insert({
+          user_id: user.id,
+          cocktail_id: id,
+          text: data.text,
+          rating: data.rating,
+          source: 'app'
+        });
       
-      setMocktail(prev => ({
-        ...prev,
-        reviews: [newReview, ...prev.reviews]
-      }));
+      if (error) throw error;
+      
+      // Refresh reviews
+      await fetchReviews();
       
       setIsSubmitting(false);
       setShowCommentForm(false);
@@ -59,10 +103,26 @@ const MocktailDetailsPage: React.FC = () => {
         title: "Review added",
         description: "Your review has been posted successfully.",
       });
-    }, 1000);
+    } catch (error) {
+      console.error('Error adding review:', error);
+      setIsSubmitting(false);
+      toast({
+        title: "Error",
+        description: "Failed to post your review. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const toggleCommentForm = () => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to leave a review.",
+        variant: "destructive",
+      });
+      return;
+    }
     setShowCommentForm(prev => !prev);
   };
 

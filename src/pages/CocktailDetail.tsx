@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import CommentForm from '@/components/CommentForm';
 import { StarRating } from '@/components/StarRating';
 import { useAuth } from '@/contexts/auth';
+import { supabase } from '@/integrations/supabase/client';
 
 // Sample data - would be fetched from API in a real application
 import { sampleCocktails } from '@/data/sampleData';
@@ -51,39 +52,42 @@ const CocktailDetail = () => {
       date.setDate(date.getDate() - daysAgo);
       setLastOrdered(date.toLocaleDateString());
       
-      // Simulate comments
-      const sampleComments: Comment[] = [
-        {
-          id: '1',
-          user: 'Alex M.',
-          text: 'Really enjoyed this mocktail! Perfect balance of sweetness and acidity.',
-          date: '3 days ago',
-          source: 'app',
-          rating: 5,
-        },
-        {
-          id: '2',
-          user: 'Sarah J.',
-          text: 'The presentation is beautiful, and the taste doesn\'t disappoint!',
-          date: '1 week ago',
-          source: 'yelp',
-          rating: 5,
-        },
-        {
-          id: '3',
-          user: 'Michael L.',
-          text: 'A bit too sweet for my taste, but still refreshing.',
-          date: '2 weeks ago',
-          source: 'yelp',
-          rating: 3,
-        }
-      ];
-      
-      setComments(sampleComments);
+      fetchComments(id);
     }
     
     setLoading(false);
   }, [id]);
+
+  const fetchComments = async (cocktailId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('cocktail_reviews_with_users')
+        .select('*')
+        .eq('cocktail_id', cocktailId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      if (data) {
+        const formattedComments = data.map(comment => ({
+          id: comment.id,
+          user: comment.user_name || 'Anonymous',
+          text: comment.text,
+          date: new Date(comment.created_at).toLocaleDateString(),
+          source: comment.source as 'app' | 'yelp',
+          rating: comment.rating
+        }));
+        setComments(formattedComments);
+      }
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load comments',
+        variant: 'destructive',
+      });
+    }
+  };
 
   const handleLike = () => {
     if (!liked) {
@@ -120,29 +124,52 @@ const CocktailDetail = () => {
     });
   };
   
-  const handleAddComment = (data: { text: string; rating: number }) => {
+  const handleAddComment = async (data: { text: string; rating: number }) => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to leave a comment.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsSubmitting(true);
     
-    // Simulate API call delay
-    setTimeout(() => {
-      const newComment: Comment = {
-        id: `new-${Date.now()}`,
-        user: user?.email?.split('@')[0] || 'User',
-        text: data.text,
-        date: 'Just now',
-        source: 'app',
-        rating: data.rating,
-      };
+    try {
+      // Save the comment to Supabase
+      const { data: newComment, error } = await supabase
+        .from('cocktail_reviews')
+        .insert({
+          user_id: user.id,
+          cocktail_id: id,
+          text: data.text,
+          rating: data.rating,
+          source: 'app'
+        })
+        .select();
       
-      setComments([newComment, ...comments]);
-      setIsSubmitting(false);
-      setShowCommentForm(false);
+      if (error) throw error;
       
       toast({
         title: "Comment posted",
         description: "Your comment has been added successfully.",
       });
-    }, 1000);
+      
+      // Refresh comments
+      fetchComments(id!);
+      
+      setShowCommentForm(false);
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      toast({
+        title: "Error",
+        description: "Failed to post your comment. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   
   const toggleCommentForm = () => {

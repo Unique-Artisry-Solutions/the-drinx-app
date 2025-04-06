@@ -81,6 +81,36 @@ export type Database = {
         }
         Relationships: []
       }
+      cocktail_reviews: {
+        Row: {
+          cocktail_id: string
+          created_at: string
+          id: string
+          rating: number
+          source: string
+          text: string
+          user_id: string
+        }
+        Insert: {
+          cocktail_id: string
+          created_at?: string
+          id?: string
+          rating: number
+          source?: string
+          text: string
+          user_id: string
+        }
+        Update: {
+          cocktail_id?: string
+          created_at?: string
+          id?: string
+          rating?: number
+          source?: string
+          text?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       establishments: {
         Row: {
           address: string
@@ -225,7 +255,19 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      cocktail_reviews_with_users: {
+        Row: {
+          avatar_url: string | null
+          cocktail_id: string | null
+          created_at: string | null
+          id: string | null
+          rating: number | null
+          source: string | null
+          text: string | null
+          user_name: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       can_join_bar_crawl: {
