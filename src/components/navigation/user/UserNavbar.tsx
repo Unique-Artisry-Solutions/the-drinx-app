@@ -86,8 +86,13 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
     }
   };
 
-  // Check if we're on the establishment profile page to pass down the correct props
-  const isEstablishmentProfile = location.pathname === '/establishment/profile';
+  // Pass the dropdown props based on route
+  const getTabOptions = () => {
+    if (location.pathname === '/establishment/profile' && tabOptions) {
+      return tabOptions;
+    }
+    return undefined;
+  };
 
   return (
     <nav className={`user-top-nav fixed top-0 left-0 w-full z-50 shadow-sm ${theme === 'dark' ? 'bg-gray-900' : 'bg-white'}`}>
@@ -135,9 +140,9 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
               username={username} 
               userType={userType} 
               handleLogout={handleLogout} 
-              activeTab={isEstablishmentProfile ? activeTab : undefined} 
-              handleTabChange={isEstablishmentProfile ? handleTabChange : undefined} 
-              tabOptions={isEstablishmentProfile ? tabOptions : undefined} 
+              activeTab={location.pathname === '/establishment/profile' ? activeTab : undefined} 
+              handleTabChange={location.pathname === '/establishment/profile' ? handleTabChange : undefined} 
+              tabOptions={getTabOptions()} 
             />
           </div>
         </div>
@@ -147,9 +152,9 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
           username={username} 
           userType={userType} 
           onClose={() => setIsMobileMenuOpen(false)} 
-          activeTab={isEstablishmentProfile ? activeTab : undefined} 
-          handleTabChange={isEstablishmentProfile ? handleTabChange : undefined} 
-          tabOptions={isEstablishmentProfile ? tabOptions : undefined} 
+          activeTab={location.pathname === '/establishment/profile' ? activeTab : undefined} 
+          handleTabChange={location.pathname === '/establishment/profile' ? handleTabChange : undefined} 
+          tabOptions={getTabOptions()} 
         />
       </div>
     </nav>

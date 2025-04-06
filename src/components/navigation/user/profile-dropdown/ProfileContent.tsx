@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useLocation } from 'react-router-dom';
-import { User, Settings, LogOut, Route, GlassWater } from 'lucide-react';
+import { User, Settings, LogOut, Route, GlassWater, BarChart4, Store } from 'lucide-react';
 import { 
   DropdownMenuSeparator 
 } from "@/components/ui/dropdown-menu";
@@ -35,7 +35,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
   tabOptions
 }) => {
   const location = useLocation();
-  const isEstablishmentProfile = location.pathname.includes('/establishment/profile');
+  const isEstablishmentPath = location.pathname.includes('/establishment/');
   
   const getProfilePath = () => {
     if (userType === 'establishment') {
@@ -52,11 +52,12 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
         to={getProfilePath()} 
         icon={User} 
         isDarkTheme={isDarkTheme}
+        isActive={location.pathname === getProfilePath()}
       >
         Profile
       </ProfileMenuItem>
       
-      {isEstablishmentProfile && tabOptions && 
+      {userType === 'establishment' && isEstablishmentPath && tabOptions && 
         <ProfileTabOptions 
           tabOptions={tabOptions} 
           activeTab={activeTab} 
@@ -65,12 +66,33 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
         />
       }
       
-      {userType === 'individual' && (
+      {userType === 'establishment' ? (
+        <>
+          <ProfileMenuItem 
+            to="/establishment/all-actions" 
+            icon={Store} 
+            isDarkTheme={isDarkTheme}
+            isActive={location.pathname === '/establishment/all-actions'}
+          >
+            Dashboard
+          </ProfileMenuItem>
+          
+          <ProfileMenuItem 
+            to="/establishment/analytics" 
+            icon={BarChart4} 
+            isDarkTheme={isDarkTheme}
+            isActive={location.pathname === '/establishment/analytics'}
+          >
+            Analytics
+          </ProfileMenuItem>
+        </>
+      ) : (
         <>
           <ProfileMenuItem 
             to="/profile/bar-crawls" 
             icon={Route} 
             isDarkTheme={isDarkTheme}
+            isActive={location.pathname === '/profile/bar-crawls'}
           >
             My Swig Circuits
           </ProfileMenuItem>
@@ -79,6 +101,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
             to="/profile/recipes" 
             icon={GlassWater} 
             isDarkTheme={isDarkTheme}
+            isActive={location.pathname === '/profile/recipes'}
           >
             My Recipes
           </ProfileMenuItem>
@@ -89,6 +112,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
         to="/settings" 
         icon={Settings} 
         isDarkTheme={isDarkTheme}
+        isActive={location.pathname === '/settings'}
       >
         Settings
       </ProfileMenuItem>
