@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -18,7 +17,6 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ userName, userEmail, userJoin
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   
-  // Get reward stats from localStorage if available (default values if not)
   const getUserStats = () => {
     const storedStats = localStorage.getItem('user_rewards_stats');
     if (storedStats) {
@@ -164,9 +162,9 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ userName, userEmail, userJoin
               <div className={`p-3 rounded-full mb-3 ${isDark ? 'bg-purple-900/50' : 'bg-purple-100'}`}>
                 <Route size={24} className={isDark ? 'text-purple-300' : 'text-purple-600'} />
               </div>
-              <h3 className="font-medium mb-1">Joined Bar Crawls</h3>
+              <h3 className="font-medium mb-1">Joined Swig Circuits</h3>
               <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-material-on-surface-variant'}`}>
-                View bar crawls you've participated in
+                View Swig Circuits you've participated in
               </p>
             </div>
           </Link>
@@ -224,7 +222,6 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ userName, userEmail, userJoin
         </Card>
       </div>
       
-      {/* Display recent badges */}
       {(currentTier >= 2) && (
         <Card className={`${isDark 
           ? 'bg-gradient-to-r from-amber-900/20 to-pink-900/20 dark:from-gray-800 dark:to-gray-900 border-l-4 border-amber-700' 
