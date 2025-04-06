@@ -132,14 +132,8 @@ export function useAuthActions() {
     try {
       setIsLoading(true);
       console.log('Signing out user...');
-      const { error } = await supabase.auth.signOut();
       
-      if (error) {
-        console.error('Sign out error:', error);
-        throw error;
-      }
-      
-      // Clear all auth-related localStorage items
+      // Clear all auth-related localStorage items first
       localStorage.removeItem('user_authenticated');
       localStorage.removeItem('user_email');
       localStorage.removeItem('user_type');
@@ -147,14 +141,25 @@ export function useAuthActions() {
       localStorage.removeItem('admin_authenticated');
       localStorage.removeItem('admin_username');
       localStorage.removeItem('admin_session_created');
+      localStorage.removeItem('admin_bypass');
+      
+      // Then perform the actual sign out
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error('Sign out error:', error);
+        throw error;
+      }
       
       toast({
         title: 'Logged out',
         description: 'You have been successfully logged out',
       });
       
-      // Use window.location.href for a full page refresh to ensure all state is cleared
-      window.location.href = '/landing';
+      // Use hard navigation with setTimeout to ensure the UI updates before redirect
+      setTimeout(() => {
+        window.location.href = '/landing';
+      }, 100);
     } catch (error: any) {
       console.error('Sign out error:', error);
       toast({

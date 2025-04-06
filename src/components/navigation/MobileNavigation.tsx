@@ -62,19 +62,15 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
   };
 
   const getNavItems = () => {
-    // Special case for landing page
-    if (location.pathname === '/landing' || location.pathname === '/') {
+    // Special case for landing page, login, signup, and non-authenticated pages
+    const publicPaths = ['/', '/landing', '/login', '/signup', '/mission'];
+    if (publicPaths.includes(location.pathname) || !user) {
       return getGuestNavItems();
     }
 
     // Special case for cart page
     if (location.pathname === '/cart') {
       return getCartGuestNavItems();
-    }
-
-    // Force guest navigation for login/signup pages
-    if (location.pathname === '/login' || location.pathname === '/signup') {
-      return getGuestNavItems();
     }
 
     switch (type) {

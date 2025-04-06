@@ -5,7 +5,7 @@ import { NavigationType } from '../navigation/NavigationTypes';
 import MobileNavigation from '../navigation/MobileNavigation';
 import UserNavbar from '../navigation/user/UserNavbar';
 import Breadcrumbs from '../navigation/Breadcrumbs';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth';
 import { useTheme } from '@/contexts/ThemeContext';
 
 interface TabOption {
@@ -45,6 +45,13 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
       const userAuthenticated = localStorage.getItem('user_authenticated') === 'true';
       
       setIsAdmin(isAdminAuth);
+      
+      // Public paths always use guest navigation
+      const publicPaths = ['/', '/landing', '/login', '/signup', '/mission'];
+      if (publicPaths.includes(location.pathname)) {
+        setNavigationType(NavigationType.GUEST);
+        return;
+      }
       
       if (isAdminAuth) {
         setNavigationType(NavigationType.ADMIN);
