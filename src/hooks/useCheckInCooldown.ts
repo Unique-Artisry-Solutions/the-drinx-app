@@ -1,85 +1,87 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
 interface UseCheckInCooldownProps {
   lastCheckInTime: Date | null;
+  cooldownDuration?: number; // in minutes
 }
 
-export const useCheckInCooldown = ({ lastCheckInTime }: UseCheckInCooldownProps) => {
+export function useCheckInCooldown({ 
+  lastCheckInTime, 
+  cooldownDuration = 5 
+}: UseCheckInCooldownProps) {
   const [canCheckIn, setCanCheckIn] = useState(true);
   const [timeRemaining, setTimeRemaining] = useState(0);
   const { toast } = useToast();
-  
-  // Cooldown period in milliseconds (20 minutes)
-  const COOLDOWN_PERIOD = 20 * 60 * 1000;
-  
+
+  // Calculate time left in cooldown period
   useEffect(() => {
     if (!lastCheckInTime) {
       setCanCheckIn(true);
-      setTimeRemaining(0);
       return;
     }
-    
+
     const checkCooldown = () => {
       const now = new Date();
-      const timeSinceLastCheckIn = now.getTime() - lastCheckInTime.getTime();
+      const cooldownMs = cooldownDuration * 60 * 1000;
+      const nextAvailableTime = new Date(lastCheckInTime.getTime() + cooldownMs);
       
-      if (timeSinceLastCheckIn < COOLDOWN_PERIOD) {
+      if (now < nextAvailableTime) {
+        // Still in cooldown
+        const timeLeftMs = nextAvailableTime.getTime() - now.getTime();
+        setTimeRemaining(Math.ceil(timeLeftMs / 1000));
         setCanCheckIn(false);
-        const remaining = Math.ceil((COOLDOWN_PERIOD - timeSinceLastCheckIn) / 1000);
-        setTimeRemaining(remaining);
       } else {
+        // Cooldown expired
         setCanCheckIn(true);
         setTimeRemaining(0);
       }
     };
-    
-    // Initial check
+
+    // Check immediately
     checkCooldown();
     
-    // Set up timer to update remaining time
-    const timer = setInterval(() => {
-      checkCooldown();
-    }, 1000);
+    // Then set up interval to update
+    const intervalId = setInterval(checkCooldown, 1000);
     
-    return () => clearInterval(timer);
-  }, [lastCheckInTime]);
+    return () => clearInterval(intervalId);
+  }, [lastCheckInTime, cooldownDuration]);
 
-  const formatTimeRemaining = () => {
+  // Format time remaining into minutes:seconds
+  const formatTimeRemaining = useCallback(() => {
     const minutes = Math.floor(timeRemaining / 60);
     const seconds = timeRemaining % 60;
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-  };
-  
-  const attemptCheckIn = (establishmentId: string, establishmentName: string) => {
-    if (canCheckIn) {
-      // Save the current time as the last check-in time
-      const now = new Date();
-      localStorage.setItem('last_check_in_time', now.toISOString());
-      localStorage.setItem('last_checked_in_establishment', establishmentId);
-      
+  }, [timeRemaining]);
+
+  // Function to attempt a check-in (returns boolean to indicate success/failure)
+  const attemptCheckIn = useCallback((establishmentId: string, establishmentName: string) => {
+    if (!canCheckIn) {
       toast({
-        title: 'Check-in Successful',
-        description: `You've checked in to ${establishmentName}.`,
+        title: "Cooldown Period",
+        description: `Please wait ${formatTimeRemaining()} before checking in again`,
+        variant: "destructive",
       });
-      
-      return true;
-    } else {
-      toast({
-        title: 'Check-in Failed',
-        description: `Please wait ${formatTimeRemaining()} before checking in again.`,
-        variant: 'destructive',
-      });
-      
       return false;
     }
-  };
-  
+    
+    // Cooldown is good, record the new check-in time
+    localStorage.setItem('last_check_in_time', new Date().toISOString());
+    localStorage.setItem('last_checked_in_establishment', establishmentId);
+    
+    toast({
+      title: "Checked In!",
+      description: `You've checked in at ${establishmentName}`,
+    });
+    
+    return true;
+  }, [canCheckIn, formatTimeRemaining, toast]);
+
   return {
     canCheckIn,
     timeRemaining,
     formatTimeRemaining,
     attemptCheckIn
   };
-};
+}

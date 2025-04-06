@@ -3,9 +3,12 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Timer } from 'lucide-react';
+import { useCheckIn } from '@/hooks/useCheckIn';
 
 interface CircuitActionsProps {
   circuitId: string;
+  establishmentId?: string;
+  establishmentName?: string;
   hasNextStop: boolean;
   canCheckIn: boolean;
   formatTimeRemaining: () => string;
@@ -14,11 +17,29 @@ interface CircuitActionsProps {
 
 const CircuitActions: React.FC<CircuitActionsProps> = ({
   circuitId,
+  establishmentId,
+  establishmentName,
   hasNextStop,
   canCheckIn,
   formatTimeRemaining,
   onCheckIn
 }) => {
+  const { isCheckingIn, performCheckIn } = useCheckIn();
+  
+  const handleCheckIn = async () => {
+    if (!hasNextStop || !canCheckIn || !establishmentId || !establishmentName) return;
+    
+    const success = await performCheckIn({
+      barCrawlId: circuitId,
+      establishmentId,
+      establishmentName
+    });
+    
+    if (success) {
+      onCheckIn();
+    }
+  };
+  
   if (!hasNextStop) return null;
 
   return (
@@ -32,12 +53,12 @@ const CircuitActions: React.FC<CircuitActionsProps> = ({
       
       <div className="flex gap-2">
         <Button 
-          onClick={onCheckIn} 
-          disabled={!canCheckIn}
+          onClick={handleCheckIn} 
+          disabled={!canCheckIn || isCheckingIn}
           className="flex-1 text-xs py-1 px-2 h-auto bg-spiritless-pink hover:bg-spiritless-pink/90"
           size="sm"
         >
-          {canCheckIn ? 'Check In' : 'Waiting...'}
+          {isCheckingIn ? 'Checking in...' : canCheckIn ? 'Check In' : 'Waiting...'}
         </Button>
         
         <Button asChild variant="outline" size="sm" className="text-xs py-1 px-2 h-auto">

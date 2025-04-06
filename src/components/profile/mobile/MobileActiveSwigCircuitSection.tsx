@@ -7,6 +7,8 @@ import SwigCircuitHeader from './SwigCircuitHeader';
 import CircuitProgress from './CircuitProgress';
 import StopInfo from './StopInfo';
 import CircuitActions from './CircuitActions';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/auth';
 
 interface Establishment {
   id: string;
@@ -36,6 +38,7 @@ const MobileActiveSwigCircuitSection: React.FC = () => {
     theme
   } = useTheme();
   const isDark = theme === 'dark';
+  const { user } = useAuth();
   
   const {
     canCheckIn,
@@ -46,56 +49,78 @@ const MobileActiveSwigCircuitSection: React.FC = () => {
   });
 
   useEffect(() => {
-    const barCrawls = JSON.parse(localStorage.getItem('user_bar_crawls') || '[]');
-    const active = barCrawls.find((bc: any) => bc.status === 'active');
-    
-    if (active) {
-      setActiveCircuit(active);
-    } else {
-      const mockCircuit = {
-        id: 'active-1',
-        name: 'Downtown Delights Tour',
-        startDate: new Date().toISOString().split('T')[0],
-        endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        establishments: [{
-          id: '1',
-          name: 'Mocktail Heaven',
-          address: '123 Main St'
-        }, {
-          id: '2',
-          name: 'Sober Bar',
-          address: '456 Oak Ave'
-        }, {
-          id: '3',
-          name: 'Tropical Vibes',
-          address: '789 Palm Blvd'
-        }, {
-          id: '4',
-          name: 'Zero Proof',
-          address: '101 Pine St'
-        }],
-        organizer: 'Alex Johnson',
-        theme: 'Tropical Escape',
-        status: 'active'
-      };
+    // Load active bar crawl from localStorage for now
+    // In a production app, this would come from Supabase
+    const loadActiveBarCrawl = async () => {
+      const barCrawls = JSON.parse(localStorage.getItem('user_bar_crawls') || '[]');
+      const active = barCrawls.find((bc: any) => bc.status === 'active');
       
-      setActiveCircuit(mockCircuit);
-      const updatedBarCrawls = [...barCrawls, mockCircuit];
-      localStorage.setItem('user_bar_crawls', JSON.stringify(updatedBarCrawls));
-    }
+      if (active) {
+        setActiveCircuit(active);
+      } else {
+        const mockCircuit = {
+          id: 'active-1',
+          name: 'Downtown Delights Tour',
+          startDate: new Date().toISOString().split('T')[0],
+          endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          establishments: [{
+            id: '1',
+            name: 'Mocktail Heaven',
+            address: '123 Main St'
+          }, {
+            id: '2',
+            name: 'Sober Bar',
+            address: '456 Oak Ave'
+          }, {
+            id: '3',
+            name: 'Tropical Vibes',
+            address: '789 Palm Blvd'
+          }, {
+            id: '4',
+            name: 'Zero Proof',
+            address: '101 Pine St'
+          }],
+          organizer: 'Alex Johnson',
+          theme: 'Tropical Escape',
+          status: 'active'
+        };
+        
+        setActiveCircuit(mockCircuit);
+        const updatedBarCrawls = [...barCrawls, mockCircuit];
+        localStorage.setItem('user_bar_crawls', JSON.stringify(updatedBarCrawls));
+      }
+    };
     
-    const lastCheckIn = localStorage.getItem('last_check_in_time');
-    if (lastCheckIn) {
-      setLastCheckInTime(new Date(lastCheckIn));
+    // Load check-in data
+    const loadCheckInData = async () => {
+      const lastCheckIn = localStorage.getItem('last_check_in_time');
+      if (lastCheckIn) {
+        setLastCheckInTime(new Date(lastCheckIn));
+      }
+      
+      // Get last checked in establishment to determine current stop index
       const lastEstId = localStorage.getItem('last_checked_in_establishment');
-      if (lastEstId && active) {
-        const estIndex = active.establishments?.findIndex(est => est.id === lastEstId);
+      
+      if (lastEstId && activeCircuit) {
+        const estIndex = activeCircuit.establishments?.findIndex(est => est.id === lastEstId);
         if (estIndex !== -1 && estIndex !== undefined) {
-          setCurrentStopIndex(estIndex + 1);
+          setCurrentStopIndex(estIndex + 1); // Set to the next stop after the last check-in
         }
       }
-    }
+    };
+    
+    loadActiveBarCrawl();
+    loadCheckInData();
   }, []);
+
+  const handleCheckIn = () => {
+    if (!activeCircuit) return;
+    
+    // The actual check-in logic now happens in CircuitActions component
+    // This function is called after a successful check-in
+    setCurrentStopIndex(prev => Math.min(prev + 1, activeCircuit.establishments.length - 1));
+    setLastCheckInTime(new Date());
+  };
 
   if (!activeCircuit) {
     return null;
@@ -108,15 +133,6 @@ const MobileActiveSwigCircuitSection: React.FC = () => {
     address: 'No address available'
   };
   const nextStop = establishments[currentStopIndex + 1];
-
-  const handleCheckIn = () => {
-    if (!nextStop) return;
-    const checkInSuccess = attemptCheckIn(nextStop.id, nextStop.name);
-    if (checkInSuccess) {
-      setLastCheckInTime(new Date());
-      setCurrentStopIndex(prev => Math.min(prev + 1, establishments.length - 1));
-    }
-  };
 
   // Use navy blue background for the container
   const cardBgClass = isDark ? "from-navy-900 to-navy-800 dark:from-navy-900 dark:to-navy-850" : "from-navy-100 to-navy-200 dark:from-navy-900 dark:to-navy-850";
@@ -142,7 +158,15 @@ const MobileActiveSwigCircuitSection: React.FC = () => {
             </div>
           </div>
           
-          <CircuitActions circuitId={activeCircuit.id} hasNextStop={!!nextStop} canCheckIn={canCheckIn} formatTimeRemaining={formatTimeRemaining} onCheckIn={handleCheckIn} />
+          <CircuitActions 
+            circuitId={activeCircuit.id}
+            establishmentId={nextStop?.id}
+            establishmentName={nextStop?.name}
+            hasNextStop={!!nextStop} 
+            canCheckIn={canCheckIn} 
+            formatTimeRemaining={formatTimeRemaining} 
+            onCheckIn={handleCheckIn} 
+          />
         </div>
       </CardContent>
     </Card>;
