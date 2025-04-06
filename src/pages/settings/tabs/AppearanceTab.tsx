@@ -24,15 +24,9 @@ const AppearanceTab: React.FC<AppearanceTabProps> = ({ profile, isLightTheme }) 
   
   return (
     <TabsContent value="appearance">
-      <Card className={cn(
-        "overflow-hidden",
-        isLightTheme ? "bg-[#f5f3ed] border-gray-200" : ""
-      )}>
-        <CardHeader className="pb-4">
-          <CardTitle className={cn(
-            "text-xl",
-            isLightTheme ? "text-gray-800" : ""
-          )}>
+      <Card className={isLightTheme ? "bg-[#f5f3ed] border-gray-200" : ""}>
+        <CardHeader>
+          <CardTitle className={isLightTheme ? "text-gray-800" : ""}>
             Appearance Settings
           </CardTitle>
           <CardDescription className={isLightTheme ? "text-gray-600" : ""}>
@@ -40,12 +34,12 @@ const AppearanceTab: React.FC<AppearanceTabProps> = ({ profile, isLightTheme }) 
           </CardDescription>
         </CardHeader>
         
-        <CardContent className="py-4">
+        <CardContent className="space-y-4">
           <FormField
             control={form.control}
             name="dark_mode"
             render={({ field }) => (
-              <FormItem className="flex items-center justify-between space-y-0 py-2">
+              <FormItem className="flex items-center justify-between space-y-0">
                 <div className="space-y-0.5">
                   <FormLabel className={isLightTheme ? "text-gray-700" : ""}>
                     Dark Mode

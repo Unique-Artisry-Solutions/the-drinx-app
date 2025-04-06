@@ -11,15 +11,9 @@ interface PrivacyTabProps {
 const PrivacyTab: React.FC<PrivacyTabProps> = ({ isLightTheme }) => {
   return (
     <TabsContent value="privacy">
-      <Card className={cn(
-        "overflow-hidden",
-        isLightTheme ? "bg-[#f5f3ed] border-gray-200" : ""
-      )}>
-        <CardHeader className="pb-4">
-          <CardTitle className={cn(
-            "text-xl",
-            isLightTheme ? "text-gray-800" : ""
-          )}>
+      <Card className={isLightTheme ? "bg-[#f5f3ed] border-gray-200" : ""}>
+        <CardHeader>
+          <CardTitle className={isLightTheme ? "text-gray-800" : ""}>
             Privacy Settings
           </CardTitle>
           <CardDescription className={isLightTheme ? "text-gray-600" : ""}>
@@ -27,9 +21,8 @@ const PrivacyTab: React.FC<PrivacyTabProps> = ({ isLightTheme }) => {
           </CardDescription>
         </CardHeader>
         
-        <CardContent className="py-4">
+        <CardContent className="space-y-4">
           <p className={cn(
-            "text-sm",
             isLightTheme ? "text-gray-600" : "text-muted-foreground"
           )}>
             Privacy settings will be available in a future update.

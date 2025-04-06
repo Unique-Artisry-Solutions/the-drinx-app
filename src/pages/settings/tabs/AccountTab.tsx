@@ -29,15 +29,9 @@ const AccountTab: React.FC<AccountTabProps> = ({ profile, isLightTheme, avatarFi
   
   return (
     <TabsContent value="account">
-      <Card className={cn(
-        "overflow-hidden",
-        isLightTheme ? "bg-[#f5f3ed] border-gray-200" : ""
-      )}>
-        <CardHeader className="pb-4">
-          <CardTitle className={cn(
-            "text-xl",
-            isLightTheme ? "text-gray-800" : ""
-          )}>
+      <Card className={isLightTheme ? "bg-[#f5f3ed] border-gray-200" : ""}>
+        <CardHeader>
+          <CardTitle className={isLightTheme ? "text-gray-800" : ""}>
             Account Information
           </CardTitle>
           <CardDescription className={isLightTheme ? "text-gray-600" : ""}>
@@ -119,7 +113,7 @@ const AccountTab: React.FC<AccountTabProps> = ({ profile, isLightTheme, avatarFi
                     {...field}
                     placeholder="Tell us about yourself"
                     className={cn(
-                      "h-24 resize-none",
+                      "h-24",
                       isLightTheme ? "bg-white border-gray-200" : ""
                     )}
                   />

@@ -36,17 +36,16 @@ const SettingsPage = () => {
   return (
     <Layout>
       <div className={cn(
-        "container mx-auto py-4 sm:py-6 px-2 sm:px-4 max-w-4xl",
+        "container mx-auto py-6 px-4 max-w-4xl",
         isLightTheme ? "text-gray-800" : ""
       )}>
-        <div className="flex flex-col items-start mb-4 sm:mb-6">
+        <div className="flex flex-col items-start mb-6">
           <h1 className={cn(
-            "text-2xl font-bold mb-1 sm:mb-2",
+            "text-2xl font-bold mb-2",
             isLightTheme ? "text-gray-800" : ""
           )}>Settings</h1>
           <p className={cn(
-            isLightTheme ? "text-gray-600" : "text-muted-foreground",
-            "text-sm sm:text-base"
+            isLightTheme ? "text-gray-600" : "text-muted-foreground"
           )}>Manage your account settings and preferences</p>
         </div>
         
@@ -54,29 +53,29 @@ const SettingsPage = () => {
           <Form {...form}>
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className={cn(
-                "w-full flex justify-start p-1 mb-4 sm:mb-6 overflow-x-auto",
+                "w-full flex justify-start p-1 mb-6",
                 isLightTheme ? "bg-gray-100" : ""
               )}>
-                <TabsTrigger value="account" className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                <TabsTrigger value="account" className="flex items-center gap-2">
                   <User size={16} />
-                  <span className={isMobile ? "text-xs" : ""}>Account</span>
+                  <span className={isMobile ? "hidden" : ""}>Account</span>
                 </TabsTrigger>
-                <TabsTrigger value="notifications" className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                <TabsTrigger value="notifications" className="flex items-center gap-2">
                   <Bell size={16} />
-                  <span className={isMobile ? "text-xs" : ""}>Notifications</span>
+                  <span className={isMobile ? "hidden" : ""}>Notifications</span>
                 </TabsTrigger>
-                <TabsTrigger value="appearance" className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                <TabsTrigger value="appearance" className="flex items-center gap-2">
                   <Moon size={16} />
-                  <span className={isMobile ? "text-xs" : ""}>Appearance</span>
+                  <span className={isMobile ? "hidden" : ""}>Appearance</span>
                 </TabsTrigger>
-                <TabsTrigger value="privacy" className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                <TabsTrigger value="privacy" className="flex items-center gap-2">
                   <Shield size={16} />
-                  <span className={isMobile ? "text-xs" : ""}>Privacy</span>
+                  <span className={isMobile ? "hidden" : ""}>Privacy</span>
                 </TabsTrigger>
               </TabsList>
               
               {/* Use onSubmit with the form's handleSubmit wrapper around our submit function */}
-              <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+              <form onSubmit={form.handleSubmit(handleSubmit)}>
                 {activeTab === 'account' && (
                   <AccountTab 
                     profile={profile} 
