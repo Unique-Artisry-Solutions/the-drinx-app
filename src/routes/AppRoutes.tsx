@@ -1,3 +1,4 @@
+
 import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import LandingPage from '@/pages/LandingPage';
@@ -29,7 +30,7 @@ import PrivacyPolicy from '@/pages/LegalPage';
 import EstablishmentDashboard from '@/components/establishment/EstablishmentDashboard';
 import Layout from '@/components/Layout';
 import Index from '@/pages/Index';
-import BarCrawlRequestsPage from '@/pages/establishment/BarCrawlRequestsPage';
+import SwigCircuitRequestsPage from '@/pages/establishment/SwigCircuitRequestsPage';
 import EstablishmentReviewsPage from '@/pages/establishment/EstablishmentReviewsPage';
 import MocktailDetailsPage from '@/pages/establishment/MocktailDetailsPage';
 import EstablishmentAnalyticsPage from '@/pages/establishment/EstablishmentAnalyticsPage';
