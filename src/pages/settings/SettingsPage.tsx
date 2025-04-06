@@ -11,8 +11,9 @@ import AccountTab from './tabs/AccountTab';
 import NotificationsTab from './tabs/NotificationsTab';
 import AppearanceTab from './tabs/AppearanceTab';
 import PrivacyTab from './tabs/PrivacyTab';
-import { useProfileData } from './hooks/useProfileFormContext';
+import { useProfileFormContext } from './hooks/useProfileFormContext';
 import { ProfileFormProvider } from './hooks/useProfileFormContext';
+import { useProfileData } from './hooks/useProfileData'; // Fixed: import from correct file
 import { Form } from '@/components/ui/form';
 import { useIsMobile } from '@/hooks/use-mobile';
 
