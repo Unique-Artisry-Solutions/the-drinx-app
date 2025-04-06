@@ -40,8 +40,8 @@ const TopNavigation: React.FC<TopNavigationProps> = () => {
         </Link>
         
         <div className="flex items-center space-x-4">
-          {/* Map Link for mobile */}
-          <Link to="/map" className="md:hidden text-gray-600 hover:text-gray-800">
+          {/* Map Link for all devices */}
+          <Link to="/map" className="text-gray-600 hover:text-gray-800">
             <Map size={20} />
           </Link>
           

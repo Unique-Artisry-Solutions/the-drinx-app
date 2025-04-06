@@ -1,19 +1,12 @@
 
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { 
-  MapPin, 
-  Route, 
-  Clock, 
-  Users, 
-  CheckCircle2, 
-  Timer
-} from 'lucide-react';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { useCheckInCooldown } from '@/hooks/useCheckInCooldown';
+import { useTheme } from '@/contexts/ThemeContext';
+import SwigCircuitHeader from './SwigCircuitHeader';
+import CircuitProgress from './CircuitProgress';
+import StopInfo from './StopInfo';
+import CircuitActions from './CircuitActions';
 
 interface Establishment {
   id: string;
@@ -38,6 +31,8 @@ const MobileActiveSwigCircuitSection: React.FC = () => {
   const [activeCircuit, setActiveCircuit] = useState<ActiveSwigCircuit | null>(null);
   const [currentStopIndex, setCurrentStopIndex] = useState(0);
   const [lastCheckInTime, setLastCheckInTime] = useState<Date | null>(null);
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   
   const { 
     canCheckIn,
@@ -93,7 +88,6 @@ const MobileActiveSwigCircuitSection: React.FC = () => {
   }
   
   const establishments = activeCircuit.establishments || [];
-  const progress = (currentStopIndex / establishments.length) * 100;
   
   const currentStop = establishments[currentStopIndex] || establishments[0] || { id: '', name: 'Unknown', address: 'No address available' };
   const nextStop = establishments[currentStopIndex + 1];
@@ -108,110 +102,49 @@ const MobileActiveSwigCircuitSection: React.FC = () => {
     }
   };
 
+  // Use navy blue background for the container
+  const cardBgClass = isDark 
+    ? "from-navy-900 to-navy-800 dark:from-navy-900 dark:to-navy-850" 
+    : "from-navy-100 to-navy-200 dark:from-navy-900 dark:to-navy-850";
+
   return (
-    <Card className="bg-gradient-to-br from-purple-100 to-pink-100 dark:from-gray-750 dark:to-gray-850 border-l-4 border-spiritless-pink shadow-md">
+    <Card className={`bg-gradient-to-br ${cardBgClass} border-l-4 border-spiritless-pink shadow-md`}>
       <CardHeader className="pb-2 bg-gradient-to-r from-transparent to-spiritless-pink/10 rounded-tr-lg">
-        <div className="flex justify-between items-start">
-          <CardTitle className="text-base">
-            <div className="flex items-center">
-              <Route className="h-4 w-4 mr-1 text-spiritless-pink" />
-              Active Swig Circuit
-            </div>
-          </CardTitle>
-          <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300 text-xs font-medium">
-            In Progress
-          </Badge>
-        </div>
+        <SwigCircuitHeader />
       </CardHeader>
       
       <CardContent className="pt-0 px-3 pb-3 space-y-3">
-        <div className="bg-white/80 dark:bg-gray-800/60 rounded-lg p-3 backdrop-blur-sm shadow-sm">
-          <div className="flex justify-between items-start mb-2">
-            <h3 className="font-medium text-sm">{activeCircuit?.name || 'Untitled Swig Circuit'}</h3>
-          </div>
-          
-          <div className="flex flex-wrap gap-1 mb-3">
-            {activeCircuit?.theme && (
-              <Badge className="bg-purple-100 text-purple-800 border-purple-300 text-xs">
-                {activeCircuit.theme}
-              </Badge>
-            )}
-            <Badge className="bg-amber-100 text-amber-800 border-amber-300 text-xs">
-              {establishments.length} Stops
-            </Badge>
-          </div>
-          
-          <div className="mb-3">
-            <div className="flex justify-between text-xs mb-1">
-              <span>Progress</span>
-              <span className="font-medium">{currentStopIndex}/{establishments.length} stops</span>
-            </div>
-            <Progress value={progress} className="h-2" />
-          </div>
+        <div className={`${isDark ? 'bg-navy-800/80' : 'bg-white/80'} dark:bg-navy-800/60 rounded-lg p-3 backdrop-blur-sm shadow-sm`}>
+          <CircuitProgress
+            name={activeCircuit.name}
+            theme={activeCircuit.theme}
+            currentStopIndex={currentStopIndex}
+            totalStops={establishments.length}
+          />
           
           <div className="grid gap-3">
             <div className="space-y-1">
               <div className="text-xs font-medium text-left">Current Location</div>
-              <div className="p-2 border rounded-md bg-green-50 dark:bg-green-900/20 flex items-start shadow-sm">
-                <CheckCircle2 className="h-4 w-4 mr-2 text-green-600 dark:text-green-500 flex-shrink-0 mt-0.5" />
-                <div>
-                  <div className="font-medium text-sm">{currentStop.name}</div>
-                  <div className="text-xs text-gray-600 dark:text-gray-400 flex items-center">
-                    <MapPin className="h-2 w-2 mr-1" />
-                    {currentStop.address || 'Address not available'}
-                  </div>
-                </div>
-              </div>
+              <StopInfo type="current" stop={currentStop} />
             </div>
             
             <div className="space-y-1">
               <div className="text-xs font-medium text-left">Next Stop</div>
-              {nextStop ? (
-                <div className="p-2 border rounded-md bg-amber-50 dark:bg-amber-900/20 flex items-start shadow-sm">
-                  <MapPin className="h-4 w-4 mr-2 text-amber-600 dark:text-amber-500 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <div className="font-medium text-sm">{nextStop.name}</div>
-                    <div className="text-xs text-gray-600 dark:text-gray-400 flex items-center">
-                      <MapPin className="h-2 w-2 mr-1" />
-                      {nextStop.address || 'Address not available'}
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="p-2 border rounded-md bg-gray-50 dark:bg-gray-900/20 flex items-center">
-                  <span className="text-xs text-gray-600 dark:text-gray-400">You've reached the last stop!</span>
-                </div>
-              )}
+              <StopInfo 
+                type="next" 
+                stop={nextStop}
+                isLastStop={currentStopIndex === establishments.length - 1}
+              />
             </div>
           </div>
           
-          {nextStop && (
-            <div className="mt-3">
-              {!canCheckIn && (
-                <div className="mb-2 p-2 bg-amber-50 dark:bg-amber-900/20 text-xs border border-amber-200 rounded flex items-center shadow-sm">
-                  <Timer className="h-3 w-3 mr-1 text-amber-600" />
-                  <span>Cooldown: {formatTimeRemaining()}</span>
-                </div>
-              )}
-              
-              <div className="flex gap-2">
-                <Button 
-                  onClick={handleCheckIn} 
-                  disabled={!canCheckIn}
-                  className="flex-1 text-xs py-1 px-2 h-auto bg-spiritless-pink hover:bg-spiritless-pink/90"
-                  size="sm"
-                >
-                  {canCheckIn ? 'Check In' : 'Waiting...'}
-                </Button>
-                
-                <Button asChild variant="outline" size="sm" className="text-xs py-1 px-2 h-auto">
-                  <Link to={`/bar-crawl-details/${activeCircuit.id}`}>
-                    Details
-                  </Link>
-                </Button>
-              </div>
-            </div>
-          )}
+          <CircuitActions
+            circuitId={activeCircuit.id}
+            hasNextStop={!!nextStop}
+            canCheckIn={canCheckIn}
+            formatTimeRemaining={formatTimeRemaining}
+            onCheckIn={handleCheckIn}
+          />
         </div>
       </CardContent>
     </Card>

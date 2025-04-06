@@ -30,8 +30,13 @@ const DesktopActiveSwigCircuitSection: React.FC = () => {
   const currentStop = circuit.establishments[circuit.currentStopIndex];
   const nextStop = circuit.establishments[circuit.currentStopIndex + 1];
 
+  // Use navy blue background for the container
+  const cardBgClass = isDark 
+    ? "from-navy-900 to-navy-800 dark:from-navy-900 dark:to-navy-850" 
+    : "from-navy-100 to-navy-200 dark:from-navy-900 dark:to-navy-850";
+
   return (
-    <Card className="bg-gradient-to-br from-purple-100 to-pink-100 dark:from-gray-750 dark:to-gray-850 border-l-4 border-spiritless-pink shadow-md">
+    <Card className={`bg-gradient-to-br ${cardBgClass} border-l-4 border-spiritless-pink shadow-md`}>
       <CardHeader className="pb-2 bg-gradient-to-r from-transparent to-spiritless-pink/10 rounded-tr-lg">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-lg">
@@ -43,7 +48,7 @@ const DesktopActiveSwigCircuitSection: React.FC = () => {
       </CardHeader>
       
       <CardContent className="pt-3">
-        <div className="bg-white/80 dark:bg-gray-800/60 rounded-lg p-4 shadow-sm backdrop-blur-sm">
+        <div className={`${isDark ? 'bg-navy-800/80' : 'bg-white/80'} dark:bg-navy-800/60 rounded-lg p-4 shadow-sm backdrop-blur-sm`}>
           <div className="flex justify-between items-start mb-3">
             <div>
               <h3 className="font-semibold text-lg">{circuit.name}</h3>

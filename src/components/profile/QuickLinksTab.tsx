@@ -28,7 +28,7 @@ const QuickLinksTab: React.FC = () => {
           <Button variant="outline" className="h-auto py-6 flex-col" asChild>
             <Link to="/profile/my-creations">
               <CalendarClock size={24} className="mb-2 text-purple-500" />
-              <span>My Bar Crawls</span>
+              <span>My Swig Circuits</span>
             </Link>
           </Button>
         </div>
