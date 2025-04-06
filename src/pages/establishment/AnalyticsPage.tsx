@@ -11,11 +11,9 @@ const AnalyticsPage: React.FC = () => {
   return (
     <Layout>
       <div className="container mx-auto px-4 py-6 max-w-7xl">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold">Analytics Dashboard</h1>
-            <p className="text-muted-foreground">Review visitor statistics and engagement metrics</p>
-          </div>
+        <div className="flex flex-col items-start mb-6">
+          <h1 className="text-2xl font-bold">Analytics Dashboard</h1>
+          <p className="text-muted-foreground">Review visitor statistics and engagement metrics</p>
         </div>
         
         <Card>

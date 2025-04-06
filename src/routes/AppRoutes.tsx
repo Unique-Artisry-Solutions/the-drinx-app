@@ -1,4 +1,3 @@
-
 import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import LandingPage from '@/pages/LandingPage';
@@ -126,7 +125,7 @@ const AppRoutes = () => {
         } />
         <Route path="/establishment/bar-crawl-requests" element={
           <TypedProtectedRoute userType="establishment">
-            <BarCrawlRequestsPage />
+            <SwigCircuitRequestsPage />
           </TypedProtectedRoute>
         } />
         <Route path="/establishment/reviews" element={

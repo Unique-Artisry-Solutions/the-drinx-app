@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Layout from '@/components/Layout';
 import { Card, CardContent } from '@/components/ui/card';
@@ -10,11 +9,9 @@ const AllActionsPage = () => {
   return (
     <Layout>
       <div className="container mx-auto p-4">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold">Establishment Actions</h1>
-            <p className="text-muted-foreground">Manage all actions related to your establishment</p>
-          </div>
+        <div className="flex flex-col items-start mb-6">
+          <h1 className="text-2xl font-bold">Establishment Actions</h1>
+          <p className="text-muted-foreground">Manage all actions related to your establishment</p>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
