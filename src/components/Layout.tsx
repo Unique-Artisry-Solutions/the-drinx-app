@@ -90,13 +90,26 @@ const Layout: React.FC<LayoutProps> = ({
 
   // Refined shouldShowBreadcrumbs logic
   const shouldShowBreadcrumbs = () => {
-    const excludedPaths = ['/', '/landing', '/login', '/signup', '/mission', '/map', '/explore'];
+    // List of paths where breadcrumbs should not be shown
+    const excludedPaths = [
+      '/', 
+      '/landing', 
+      '/login', 
+      '/signup', 
+      '/mission', 
+      '/map', 
+      '/explore'
+    ];
     
-    // Don't show on specifically excluded paths
-    if (excludedPaths.includes(location.pathname)) return false;
+    // Don't show breadcrumbs on excluded paths
+    if (excludedPaths.includes(location.pathname)) {
+      return false;
+    }
     
-    // Don't show on landing page or admin pages
-    if (isLandingPage || isAdminPage) return false;
+    // Don't show on landing page or admin login page
+    if (isLandingPage || location.pathname === '/admin/login') {
+      return false;
+    }
     
     return true;
   };

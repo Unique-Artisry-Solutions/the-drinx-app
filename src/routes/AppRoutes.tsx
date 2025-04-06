@@ -49,6 +49,9 @@ const AdminEstablishmentProfile = lazy(() => import('@/pages/admin/AdminEstablis
 
 // Establishment pages
 const EstablishmentProfilePage = lazy(() => import('@/pages/establishment/EstablishmentProfilePage'));
+const MocktailMenuPage = lazy(() => import('@/pages/establishment/MocktailMenuPage'));
+const PromotionsPage = lazy(() => import('@/pages/establishment/PromotionsPage'));
+const AnalyticsPage = lazy(() => import('@/pages/establishment/AnalyticsPage'));
 
 const AppRoutes = () => {
   return (
@@ -96,9 +99,29 @@ const AppRoutes = () => {
         <Route path="/admin/establishments/:id" element={<AdminEstablishmentProfile />} />
         
         {/* Establishment routes - protected with type */}
+        <Route path="/establishment/all-actions" element={
+          <TypedProtectedRoute userType="establishment">
+            <AllActionsPage />
+          </TypedProtectedRoute>
+        } />
         <Route path="/establishment/profile" element={
           <TypedProtectedRoute userType="establishment">
             <EstablishmentProfilePage />
+          </TypedProtectedRoute>
+        } />
+        <Route path="/establishment/mocktail-menu" element={
+          <TypedProtectedRoute userType="establishment">
+            <MocktailMenuPage />
+          </TypedProtectedRoute>
+        } />
+        <Route path="/establishment/promotions" element={
+          <TypedProtectedRoute userType="establishment">
+            <PromotionsPage />
+          </TypedProtectedRoute>
+        } />
+        <Route path="/establishment/analytics" element={
+          <TypedProtectedRoute userType="establishment">
+            <AnalyticsPage />
           </TypedProtectedRoute>
         } />
         <Route path="/establishment/bar-crawl-requests" element={
@@ -114,16 +137,6 @@ const AppRoutes = () => {
         <Route path="/establishment/mocktail/:id" element={
           <TypedProtectedRoute userType="establishment">
             <MocktailDetailsPage />
-          </TypedProtectedRoute>
-        } />
-        <Route path="/establishment/analytics" element={
-          <TypedProtectedRoute userType="establishment">
-            <EstablishmentAnalyticsPage />
-          </TypedProtectedRoute>
-        } />
-        <Route path="/establishment/all-actions" element={
-          <TypedProtectedRoute userType="establishment">
-            <AllActionsPage />
           </TypedProtectedRoute>
         } />
         <Route path="/establishment/mocktail-suggestions" element={

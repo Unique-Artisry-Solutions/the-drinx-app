@@ -22,7 +22,7 @@ const AllActionsPage = () => {
             title="Update Profile"
             description="Complete or update your establishment profile information"
             icon={<Users className="h-5 w-5" />}
-            to="/establishment/profile?tab=profile"
+            to="/establishment/profile"
             completion={85}
           />
           
@@ -30,7 +30,7 @@ const AllActionsPage = () => {
             title="Mocktail Menu"
             description="Update your mocktail menu offerings"
             icon={<GlassWater className="h-5 w-5" />}
-            to="/establishment/profile?tab=menu"
+            to="/establishment/mocktail-menu"
             completion={60}
           />
           
@@ -38,7 +38,7 @@ const AllActionsPage = () => {
             title="Promotional Offers"
             description="Create and manage special promotions"
             icon={<TagIcon className="h-5 w-5" />}
-            to="/establishment/profile?tab=promotions"
+            to="/establishment/promotions"
             count={2}
           />
           
@@ -46,7 +46,7 @@ const AllActionsPage = () => {
             title="Swig Circuit Requests"
             description="Review and manage Swig Circuit participation requests"
             icon={<CalendarClock className="h-5 w-5" />}
-            to="/establishment/profile?tab=barCrawls"
+            to="/establishment/bar-crawl-requests"
             count={1}
             isHighlighted
           />
@@ -55,14 +55,14 @@ const AllActionsPage = () => {
             title="View Analytics"
             description="Check visitor statistics and engagement"
             icon={<Award className="h-5 w-5" />}
-            to="/establishment/profile?tab=visitors"
+            to="/establishment/analytics"
           />
           
           <ActionCard 
             title="Operating Hours"
             description="Set your establishment's operating hours"
             icon={<Clock className="h-5 w-5" />}
-            to="/establishment/profile?tab=profile"
+            to="/establishment/profile"
           />
         </div>
         
@@ -73,7 +73,7 @@ const AllActionsPage = () => {
             title="New Swig Circuit Request"
             description="Your establishment has been included in 'Holiday Mocktail Crawl'"
             time="2 hours ago"
-            to="/establishment/profile?tab=barCrawls"
+            to="/establishment/bar-crawl-requests"
             isNew
           />
           
@@ -81,14 +81,14 @@ const AllActionsPage = () => {
             title="Profile Completion Reminder"
             description="Complete your profile to increase visibility to potential customers"
             time="1 day ago"
-            to="/establishment/profile?tab=profile"
+            to="/establishment/profile"
           />
           
           <NotificationCard
             title="New Mocktail Suggestion"
             description="A customer suggested a new mocktail for your menu"
             time="3 days ago"
-            to="/establishment/profile?tab=menu"
+            to="/establishment/mocktail-suggestions"
           />
         </div>
       </div>

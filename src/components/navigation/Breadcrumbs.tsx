@@ -35,12 +35,14 @@ const routes: Record<string, BreadcrumbConfig> = {
   '/bar-crawl': { path: '/bar-crawl', label: 'Swig Circuit' },
   '/create-bar-crawl': { path: '/create-bar-crawl', label: 'Create Swig Circuit' },
   
-  // Establishment routes
+  // Establishment routes - updated with dedicated pages
+  '/establishment/all-actions': { path: '/establishment/all-actions', label: 'Dashboard' },
   '/establishment/profile': { path: '/establishment/profile', label: 'Profile' },
+  '/establishment/mocktail-menu': { path: '/establishment/mocktail-menu', label: 'Mocktail Menu' },
+  '/establishment/promotions': { path: '/establishment/promotions', label: 'Promotional Offers' },
   '/establishment/bar-crawl-requests': { path: '/establishment/bar-crawl-requests', label: 'Swig Circuit Requests' },
-  '/establishment/reviews': { path: '/establishment/reviews', label: 'Reviews' },
   '/establishment/analytics': { path: '/establishment/analytics', label: 'Analytics' },
-  '/establishment/all-actions': { path: '/establishment/all-actions', label: 'All Actions' },
+  '/establishment/reviews': { path: '/establishment/reviews', label: 'Reviews' },
   '/establishment/mocktail-suggestions': { path: '/establishment/mocktail-suggestions', label: 'Suggestions' },
   
   // Admin routes
@@ -85,31 +87,40 @@ const Breadcrumbs: React.FC = () => {
   // Handle special case for establishment section
   const isEstablishmentSection = location.pathname.startsWith('/establishment/');
   if (isEstablishmentSection && pathSegments.length > 1) {
-    // Add 'Establishment' as a base node for the section
-    breadcrumbs.push({
-      path: '/establishment/all-actions',
-      label: 'Establishment',
-    });
+    // Add 'Establishment' as a base node for the section if not already in breadcrumbs
+    const establishmentBasePath = '/establishment/all-actions';
+    if (!breadcrumbs.some(crumb => crumb.path === establishmentBasePath)) {
+      breadcrumbs.push({
+        path: establishmentBasePath,
+        label: 'Establishment',
+      });
+    }
   }
   
   // Handle special case for admin section
   const isAdminSection = location.pathname.startsWith('/admin/');
   if (isAdminSection && pathSegments.length > 1) {
-    // Add 'Admin' as a base node for the section
-    breadcrumbs.push({
-      path: '/admin',
-      label: 'Admin',
-    });
+    // Add 'Admin' as a base node for the section if not already in breadcrumbs
+    const adminBasePath = '/admin';
+    if (!breadcrumbs.some(crumb => crumb.path === adminBasePath)) {
+      breadcrumbs.push({
+        path: adminBasePath,
+        label: 'Admin',
+      });
+    }
   }
   
   // Handle special case for profile section
   const isProfileSection = location.pathname.startsWith('/profile/');
   if (isProfileSection && pathSegments.length > 1) {
-    // Add 'Profile' as a base node for the section
-    breadcrumbs.push({
-      path: '/profile',
-      label: 'Profile',
-    });
+    // Add 'Profile' as a base node for the section if not already in breadcrumbs
+    const profileBasePath = '/profile';
+    if (!breadcrumbs.some(crumb => crumb.path === profileBasePath)) {
+      breadcrumbs.push({
+        path: profileBasePath,
+        label: 'Profile',
+      });
+    }
   }
   
   // Determine if this is a special route that has a dynamic ID
@@ -119,6 +130,14 @@ const Breadcrumbs: React.FC = () => {
   let currentPath = '';
   for (let i = 0; i < pathSegments.length; i++) {
     currentPath += `/${pathSegments[i]}`;
+    
+    // Skip if this path or a matching path already exists in breadcrumbs
+    const pathAlreadyExists = breadcrumbs.some(crumb => 
+      crumb.path === currentPath || 
+      (crumb.path.startsWith('/establishment/') && currentPath === '/establishment')
+    );
+    
+    if (pathAlreadyExists) continue;
     
     // Handle dynamic routes
     if (isDynamicRoute && i === pathSegments.length - 1) {
@@ -148,10 +167,7 @@ const Breadcrumbs: React.FC = () => {
     
     // Add the route if it exists in our config
     if (routes[currentPath]) {
-      // Skip if this path already exists in breadcrumbs (to avoid duplicates after special section handling)
-      if (!breadcrumbs.some(crumb => crumb.path === currentPath)) {
-        breadcrumbs.push(routes[currentPath]);
-      }
+      breadcrumbs.push(routes[currentPath]);
     } else {
       // Try to handle nested routes not explicitly defined
       const segmentName = pathSegments[i].replace(/-/g, ' ');
@@ -163,14 +179,20 @@ const Breadcrumbs: React.FC = () => {
     }
   }
   
+  // Remove duplicate breadcrumbs (same path or same label next to each other)
+  const uniqueBreadcrumbs = breadcrumbs.filter((crumb, index, array) => {
+    // Keep if it's the first item or if it's different from the previous one by path
+    return index === 0 || crumb.path !== array[index - 1].path;
+  });
+  
   // Only show breadcrumbs if we have at least 2 levels (home + something else)
-  if (breadcrumbs.length < 2) return null;
+  if (uniqueBreadcrumbs.length < 2) return null;
   
   return (
     <Breadcrumb className="mb-4">
       <BreadcrumbList>
-        {breadcrumbs.map((crumb, index) => {
-          const isLast = index === breadcrumbs.length - 1;
+        {uniqueBreadcrumbs.map((crumb, index) => {
+          const isLast = index === uniqueBreadcrumbs.length - 1;
           
           return (
             <React.Fragment key={crumb.path || index}>

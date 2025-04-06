@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { NavigationType } from './NavigationTypes';
@@ -38,7 +39,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
     
     if (user) {
       if (currentUserType === 'establishment') {
-        navigate('/');
+        navigate('/establishment/all-actions');
       } else {
         navigate('/explore');
       }
@@ -82,7 +83,8 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
         <div className="flex justify-around items-center h-16 px-2">
           {navItems.map((item, index) => {
             const isActive = location.pathname === item.path || 
-              (item.path === '/profile' && location.pathname.startsWith('/profile/'));
+              (item.path === '/profile' && location.pathname.startsWith('/profile/')) ||
+              (item.path === '/establishment/all-actions' && location.pathname.startsWith('/establishment/'));
             
             if (item.label === 'Home' && type === NavigationType.USER) {
               return (
