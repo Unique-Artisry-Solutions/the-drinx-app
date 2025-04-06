@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -72,7 +71,6 @@ const BadgesTab: React.FC = () => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   
-  // This would come from user data in a real implementation
   const userStats = {
     barCrawlsCompleted: 7,
     establishmentsVisited: 12,
@@ -82,7 +80,6 @@ const BadgesTab: React.FC = () => {
     mocktailsTryCount: 8
   };
   
-  // Calculate reward tier based on bar crawls completed
   const getTier = () => {
     if (userStats.barCrawlsCompleted >= 15) return 3;
     if (userStats.barCrawlsCompleted >= 5) return 2;
@@ -103,7 +100,6 @@ const BadgesTab: React.FC = () => {
         </Button>
       </div>
       
-      {/* Current Status Card */}
       <Card className={isDark ? "bg-gray-800 border-gray-700" : ""}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -137,7 +133,7 @@ const BadgesTab: React.FC = () => {
           
           <div className={`grid gap-2 text-sm ${isDark ? 'text-gray-300' : ''}`}>
             <div className={`flex justify-between py-1 ${isDark ? 'border-gray-700' : 'border-b'}`}>
-              <span className={isDark ? "text-gray-400" : "text-gray-600"}>Bar Crawls Completed</span>
+              <span className={isDark ? "text-gray-400" : "text-gray-600"}>Swig Circuits Completed</span>
               <span className="font-medium">{userStats.barCrawlsCompleted}</span>
             </div>
             <div className={`flex justify-between py-1 ${isDark ? 'border-gray-700' : 'border-b'}`}>
@@ -157,7 +153,7 @@ const BadgesTab: React.FC = () => {
               <span className="font-medium">{userStats.mocktailsCreated}</span>
             </div>
             <div className="flex justify-between py-1">
-              <span className={isDark ? "text-gray-400" : "text-gray-600"}>Mocktail Try Count</span>
+              <span className={isDark ? "text-gray-400" : "text-gray-600"}>Mocktail Tester Tally</span>
               <span className="font-medium">{userStats.mocktailsTryCount}</span>
             </div>
           </div>
@@ -189,7 +185,6 @@ const BadgesTab: React.FC = () => {
         </CardContent>
       </Card>
       
-      {/* Badges Section */}
       <Card className={isDark ? "bg-gray-800 border-gray-700" : ""}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -202,7 +197,7 @@ const BadgesTab: React.FC = () => {
             <BadgeItem
               icon={<Route className={`h-5 w-5 ${isDark ? 'text-purple-400' : 'text-purple-600'}`} />}
               name="First Crawl"
-              description="Complete your first bar crawl"
+              description="Complete your first swig circuit"
               unlocked={userStats.barCrawlsCompleted >= 1}
             />
             <BadgeItem
@@ -232,7 +227,7 @@ const BadgesTab: React.FC = () => {
             <BadgeItem
               icon={<Sparkles className={`h-5 w-5 ${isDark ? 'text-indigo-400' : 'text-indigo-600'}`} />}
               name="Crawl Enthusiast"
-              description="Complete 5 bar crawls"
+              description="Complete 5 swig circuits"
               unlocked={userStats.barCrawlsCompleted >= 5}
               progress={Math.min(userStats.barCrawlsCompleted, 5)}
               maxProgress={5}
@@ -240,7 +235,7 @@ const BadgesTab: React.FC = () => {
             <BadgeItem
               icon={<Trophy className={`h-5 w-5 ${isDark ? 'text-amber-400' : 'text-amber-600'}`} />}
               name="VIP Crawler"
-              description="Complete 15 bar crawls"
+              description="Complete 15 swig circuits"
               unlocked={userStats.barCrawlsCompleted >= 15}
               progress={Math.min(userStats.barCrawlsCompleted, 15)}
               maxProgress={15}

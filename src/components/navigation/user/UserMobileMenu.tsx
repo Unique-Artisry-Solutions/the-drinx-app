@@ -91,19 +91,6 @@ const UserMobileMenu: React.FC<UserMobileMenuProps> = ({
                 </NavLink>
               </li>
               
-              <li>
-                <NavLink 
-                  to="/map" 
-                  className={({ isActive }) => cn(
-                    "block p-3 rounded-md",
-                    isActive ? `bg-gray-100 text-spiritless-pink font-medium ${isDarkTheme ? 'bg-gray-800' : ''}` : "text-gray-700 dark:text-gray-300"
-                  )}
-                  onClick={onClose}
-                >
-                  Map
-                </NavLink>
-              </li>
-              
               {userType === 'establishment' && (
                 <li>
                   <NavLink 
@@ -170,7 +157,7 @@ const UserMobileMenu: React.FC<UserMobileMenuProps> = ({
                     )}
                     onClick={onClose}
                   >
-                    My Bar Crawls
+                    My Swig Circuits
                   </NavLink>
                 </li>
               )}

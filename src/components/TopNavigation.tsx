@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, LogOut, Settings } from 'lucide-react';
+import { LogOut, Settings, Map } from 'lucide-react';
 import CartButton from './cart/CartButton';
 import { useAuth } from '@/contexts/auth';
 
@@ -10,7 +10,7 @@ interface TopNavigationProps {
   isMenuOpen?: boolean;
 }
 
-const TopNavigation: React.FC<TopNavigationProps> = ({ onMenuToggle, isMenuOpen }) => {
+const TopNavigation: React.FC<TopNavigationProps> = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -40,13 +40,13 @@ const TopNavigation: React.FC<TopNavigationProps> = ({ onMenuToggle, isMenuOpen 
         </Link>
         
         <div className="flex items-center space-x-4">
+          {/* Map Link for mobile */}
+          <Link to="/map" className="md:hidden text-gray-600 hover:text-gray-800">
+            <Map size={20} />
+          </Link>
+          
           {/* Cart Button */}
           <CartButton />
-          
-          {/* Hamburger menu for smaller screens */}
-          <button onClick={onMenuToggle} className="md:hidden text-gray-600 hover:text-gray-800 focus:outline-none">
-            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
           
           {/* Profile dropdown - Hidden on smaller screens, always visible on larger */}
           <div className="relative md:block">

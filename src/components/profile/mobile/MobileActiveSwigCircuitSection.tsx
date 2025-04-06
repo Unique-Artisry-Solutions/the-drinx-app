@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -108,8 +109,8 @@ const MobileActiveSwigCircuitSection: React.FC = () => {
   };
 
   return (
-    <Card className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-gray-800 dark:to-gray-900 border-l-4 border-spiritless-pink">
-      <CardHeader className="pb-2">
+    <Card className="bg-gradient-to-br from-purple-100 to-pink-100 dark:from-gray-750 dark:to-gray-850 border-l-4 border-spiritless-pink shadow-md">
+      <CardHeader className="pb-2 bg-gradient-to-r from-transparent to-spiritless-pink/10 rounded-tr-lg">
         <div className="flex justify-between items-start">
           <CardTitle className="text-base">
             <div className="flex items-center">
@@ -117,14 +118,14 @@ const MobileActiveSwigCircuitSection: React.FC = () => {
               Active Swig Circuit
             </div>
           </CardTitle>
-          <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300 text-xs">
+          <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300 text-xs font-medium">
             In Progress
           </Badge>
         </div>
       </CardHeader>
       
       <CardContent className="pt-0 px-3 pb-3 space-y-3">
-        <div className="bg-white/70 dark:bg-gray-800/50 rounded-lg p-3 backdrop-blur-sm">
+        <div className="bg-white/80 dark:bg-gray-800/60 rounded-lg p-3 backdrop-blur-sm shadow-sm">
           <div className="flex justify-between items-start mb-2">
             <h3 className="font-medium text-sm">{activeCircuit?.name || 'Untitled Swig Circuit'}</h3>
           </div>
@@ -151,7 +152,7 @@ const MobileActiveSwigCircuitSection: React.FC = () => {
           <div className="grid gap-3">
             <div className="space-y-1">
               <div className="text-xs font-medium text-left">Current Location</div>
-              <div className="p-2 border rounded-md bg-green-50 dark:bg-green-900/20 flex items-start">
+              <div className="p-2 border rounded-md bg-green-50 dark:bg-green-900/20 flex items-start shadow-sm">
                 <CheckCircle2 className="h-4 w-4 mr-2 text-green-600 dark:text-green-500 flex-shrink-0 mt-0.5" />
                 <div>
                   <div className="font-medium text-sm">{currentStop.name}</div>
@@ -166,7 +167,7 @@ const MobileActiveSwigCircuitSection: React.FC = () => {
             <div className="space-y-1">
               <div className="text-xs font-medium text-left">Next Stop</div>
               {nextStop ? (
-                <div className="p-2 border rounded-md bg-amber-50 dark:bg-amber-900/20 flex items-start">
+                <div className="p-2 border rounded-md bg-amber-50 dark:bg-amber-900/20 flex items-start shadow-sm">
                   <MapPin className="h-4 w-4 mr-2 text-amber-600 dark:text-amber-500 flex-shrink-0 mt-0.5" />
                   <div>
                     <div className="font-medium text-sm">{nextStop.name}</div>
@@ -187,7 +188,7 @@ const MobileActiveSwigCircuitSection: React.FC = () => {
           {nextStop && (
             <div className="mt-3">
               {!canCheckIn && (
-                <div className="mb-2 p-2 bg-amber-50 dark:bg-amber-900/20 text-xs border border-amber-200 rounded flex items-center">
+                <div className="mb-2 p-2 bg-amber-50 dark:bg-amber-900/20 text-xs border border-amber-200 rounded flex items-center shadow-sm">
                   <Timer className="h-3 w-3 mr-1 text-amber-600" />
                   <span>Cooldown: {formatTimeRemaining()}</span>
                 </div>
@@ -197,7 +198,7 @@ const MobileActiveSwigCircuitSection: React.FC = () => {
                 <Button 
                   onClick={handleCheckIn} 
                   disabled={!canCheckIn}
-                  className="flex-1 text-xs py-1 px-2 h-auto"
+                  className="flex-1 text-xs py-1 px-2 h-auto bg-spiritless-pink hover:bg-spiritless-pink/90"
                   size="sm"
                 >
                   {canCheckIn ? 'Check In' : 'Waiting...'}
