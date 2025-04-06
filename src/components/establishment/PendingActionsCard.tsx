@@ -40,7 +40,7 @@ const PendingActionsCard: React.FC<PendingActionsCardProps> = ({ pendingBarCrawl
             <div className="flex items-center">
               <Calendar className="h-5 w-5 text-spiritless-pink mr-2" />
               <div>
-                <p className="text-sm font-medium">Bar Crawl Requests</p>
+                <p className="text-sm font-medium">Swig Circuit Requests</p>
                 <p className="text-xs text-material-on-surface-variant">{pendingBarCrawls} pending requests</p>
               </div>
             </div>

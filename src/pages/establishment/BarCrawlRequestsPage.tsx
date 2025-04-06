@@ -43,30 +43,30 @@ const BarCrawlRequestsPage: React.FC = () => {
   const handleAcceptRequest = (id: string) => {
     toast({
       title: 'Request Accepted',
-      description: 'You have successfully accepted this bar crawl request.'
+      description: 'You have successfully accepted this Swig Circuit request.'
     });
   };
 
   const handleDeclineRequest = (id: string) => {
     toast({
       title: 'Request Declined',
-      description: 'You have declined this bar crawl request.'
+      description: 'You have declined this Swig Circuit request.'
     });
   };
 
   return (
     <Layout>
       <div className="animate-fade-in p-6 max-w-7xl mx-auto">
-        <h1 className="text-2xl font-bold gradient-text mb-4">Bar Crawl Requests</h1>
+        <h1 className="text-2xl font-bold gradient-text mb-4">Swig Circuit Requests</h1>
         <p className="text-material-on-surface-variant mb-6">
-          Review and manage requests to include your establishment in bar crawls
+          Review and manage requests to include your establishment in Swig Circuits
         </p>
 
         {barCrawlRequests.length === 0 ? (
           <Card className="vibrant-card">
             <CardContent className="p-6 text-center">
               <p className="text-material-on-surface-variant">
-                No pending bar crawl requests at this time.
+                No pending Swig Circuit requests at this time.
               </p>
             </CardContent>
           </Card>

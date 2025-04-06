@@ -32,7 +32,7 @@ const BarCrawlsTab: React.FC<BarCrawlsTabProps> = ({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Bar Crawl Participation</CardTitle>
+        <CardTitle>Swig Circuit Participation</CardTitle>
       </CardHeader>
       <CardContent>
         {barCrawls.length > 0 ? (
@@ -56,7 +56,7 @@ const BarCrawlsTab: React.FC<BarCrawlsTabProps> = ({
           </div>
         ) : (
           <p className="text-center py-8 text-muted-foreground">
-            No bar crawl requests at this time.
+            No Swig Circuit requests at this time.
           </p>
         )}
       </CardContent>

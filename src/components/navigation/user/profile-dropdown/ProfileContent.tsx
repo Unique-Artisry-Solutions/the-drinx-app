@@ -76,7 +76,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
           </ProfileMenuItem>
           
           <ProfileMenuItem 
-            to="/profile?tab=recipes" 
+            to="/profile/recipes" 
             icon={GlassWater} 
             isDarkTheme={isDarkTheme}
           >
