@@ -1,10 +1,11 @@
 
-import React, { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LogOut, Settings, Map } from 'lucide-react';
+import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { Map } from 'lucide-react';
 import CartButton from './cart/CartButton';
 import { useAuth } from '@/contexts/auth';
 import BackButton from './navigation/BackButton';
+import UserProfileDropdown from './navigation/user/UserProfileDropdown';
 
 interface TopNavigationProps {
   onMenuToggle?: () => void;
@@ -13,21 +14,18 @@ interface TopNavigationProps {
 
 const TopNavigation: React.FC<TopNavigationProps> = () => {
   const location = useLocation();
-  const navigate = useNavigate();
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   
-  const toggleProfile = () => {
-    setIsProfileOpen(!isProfileOpen);
-  };
+  // Get user type from local storage
+  const userType = localStorage.getItem('user_type') === 'establishment' ? 
+    'establishment' : 'individual';
 
+  // Get username from local storage
+  const username = localStorage.getItem('user_username') || user?.email || 'User';
+  
   const handleLogout = async () => {
     try {
       await signOut();
-      // Close the profile dropdown
-      setIsProfileOpen(false);
-      // Navigate to home page after logout
-      navigate('/');
     } catch (error) {
       console.error('Logout failed:', error);
     }
@@ -65,29 +63,12 @@ const TopNavigation: React.FC<TopNavigationProps> = () => {
           {/* Cart Button */}
           <CartButton />
           
-          {/* Profile dropdown - Hidden on smaller screens, always visible on larger */}
-          <div className="relative md:block">
-            <button onClick={toggleProfile} className="hidden md:flex items-center gap-2 text-gray-600 hover:text-gray-800 focus:outline-none">
-              <Settings size={20} />
-              Profile
-            </button>
-            
-            {/* Profile dropdown content */}
-            {isProfileOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10">
-                <Link to="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                  View Profile
-                </Link>
-                <button 
-                  onClick={handleLogout}
-                  className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 focus:outline-none"
-                >
-                  <LogOut size={16} className="mr-2" />
-                  Logout
-                </button>
-              </div>
-            )}
-          </div>
+          {/* Profile dropdown */}
+          <UserProfileDropdown 
+            username={username}
+            userType={userType as 'individual' | 'establishment'}
+            handleLogout={handleLogout}
+          />
         </div>
       </div>
     </header>
