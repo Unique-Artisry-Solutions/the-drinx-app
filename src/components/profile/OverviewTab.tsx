@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { GlassWater, MapPin, Route, Star, User, Award, Badge, Trophy, GiftIcon, ChevronRight } from 'lucide-react';
+import { GlassWater, MapPin, Route, Star, User, Award, Badge, Trophy, GiftIcon, ChevronRight, Map } from 'lucide-react';
 import CreateMocktailButton from '@/components/mocktail/CreateMocktailButton';
 
 interface OverviewTabProps {
@@ -114,7 +114,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ userName, userEmail, userJoin
             <div className="flex justify-between gap-4 pt-4">
               <Button className="flex-1 bg-spiritless-pink hover:bg-spiritless-pink/90" asChild>
                 <Link to="/map">
-                  Explore Places
+                  <Map size={20} />
                 </Link>
               </Button>
               <CreateMocktailButton />
