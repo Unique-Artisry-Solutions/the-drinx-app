@@ -30,7 +30,7 @@ const UserNavLinks: React.FC<UserNavLinksProps> = ({ userType }) => {
             key={item.path}
             to={item.path}
             className={cn(
-              "user-nav-link flex items-center space-x-1.5 px-3.5 py-2.5 rounded-md transition-all duration-300",
+              "user-nav-link flex items-center space-x-1 px-3 py-2 rounded-md transition-all duration-300",
               isActive 
                 ? "bg-spiritless-pink/15 text-spiritless-pink font-medium shadow-sm" 
                 : "text-foreground/80 hover:text-spiritless-pink hover:bg-background/80"
@@ -38,11 +38,11 @@ const UserNavLinks: React.FC<UserNavLinksProps> = ({ userType }) => {
             aria-current={isActive ? "page" : undefined}
           >
             <item.icon className={cn(
-              "h-4.5 w-4.5 transition-transform duration-300",
+              "h-4 w-4 transition-transform duration-300",
               isActive ? "scale-110" : ""
             )} />
             <span className={cn(
-              "font-medium",
+              "text-sm font-medium",
               isActive ? "text-spiritless-pink" : ""
             )}>{item.label}</span>
           </Link>

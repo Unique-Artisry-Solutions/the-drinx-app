@@ -10,6 +10,7 @@ import { getAdminNavItems } from './mobile/AdminNavItems';
 import ProfileMenu from './mobile/ProfileMenu';
 import NavItem from './mobile/NavItem';
 import HomeButton from './mobile/HomeButton';
+import { useTheme } from '@/contexts/ThemeContext';
 
 const MobileNavigation: React.FC<MobileNavigationProps> = ({ 
   type, 
@@ -17,6 +18,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { theme } = useTheme();
   const [currentUserType, setCurrentUserType] = useState(userType);
   const [expanded, setExpanded] = useState(false);
   const { user } = useAuth();
@@ -83,8 +85,12 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
     return null;
   }
 
+  const navBarClasses = theme === 'dark' 
+    ? "fixed bottom-0 left-0 right-0 w-full bg-gray-900 shadow-lg z-50 md:hidden border-t border-gray-700 backdrop-blur-sm bg-gray-900/95 transition-all duration-300" 
+    : "fixed bottom-0 left-0 right-0 w-full bg-white shadow-lg z-50 md:hidden border-t border-gray-100 backdrop-blur-sm bg-white/95 transition-all duration-300";
+
   return (
-    <nav className="fixed bottom-0 left-0 right-0 w-full bg-white shadow-lg z-50 md:hidden border-t border-gray-100 backdrop-blur-sm bg-white/95 transition-all duration-300">
+    <nav className={navBarClasses}>
       <ProfileMenu expanded={shouldShowProfileItems && expanded} />
       <div className="mx-auto w-full">
         <div className="flex justify-around items-center h-16 px-2">

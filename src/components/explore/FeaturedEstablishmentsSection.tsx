@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Building } from 'lucide-react';
+import { Building, Map } from 'lucide-react';
 import EstablishmentCard from '@/components/EstablishmentCard';
 
 interface Establishment {
@@ -31,8 +31,13 @@ const FeaturedEstablishmentsSection: React.FC<FeaturedEstablishmentsSectionProps
           <Building className="h-5 w-5 mr-2 text-spiritless-pink" />
           Featured Establishments
         </h2>
-        <Link to="/map" className="text-sm text-spiritless-pink hover:underline" onClick={scrollToTop}>
-          View all
+        <Link 
+          to="/map" 
+          className="flex items-center justify-center h-8 w-8 rounded-full bg-spiritless-pink/10 text-spiritless-pink hover:bg-spiritless-pink/20" 
+          onClick={scrollToTop}
+          aria-label="View all on map"
+        >
+          <Map className="h-4 w-4" />
         </Link>
       </div>
       

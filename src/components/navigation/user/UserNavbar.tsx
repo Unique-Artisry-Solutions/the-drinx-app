@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth';
@@ -92,8 +93,13 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
     return undefined;
   };
 
+  const isDarkTheme = theme === 'dark';
+  const navbarClass = isDarkTheme 
+    ? 'bg-gray-900 shadow-md border-b border-gray-800' 
+    : 'bg-white shadow-sm';
+
   return (
-    <nav className={`user-top-nav fixed top-0 left-0 w-full z-50 shadow-sm ${theme === 'dark' ? 'bg-gray-900' : 'bg-white'}`}>
+    <nav className={`user-top-nav fixed top-0 left-0 w-full z-50 ${navbarClass}`}>
       <div className="user-nav-container max-w-6xl mx-auto px-4 py-3">
         <div className="user-nav-inner flex items-center justify-between">
           <div className="user-nav-left flex items-center">
@@ -117,8 +123,9 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
             )}
             
             <button 
-              className="user-menu-button md:hidden bg-transparent border-none flex items-center justify-center p-2 rounded-md focus:outline-none transition-colors" 
+              className="user-menu-button md:hidden bg-transparent border-none flex items-center justify-center p-2 rounded-md focus:outline-none transition-colors"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
             >
               {isMobileMenuOpen ? (
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-x">
@@ -150,6 +157,7 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
           username={username} 
           userType={userType} 
           onClose={() => setIsMobileMenuOpen(false)} 
+          handleLogout={handleLogout}
           activeTab={location.pathname === '/establishment/profile' ? activeTab : undefined} 
           handleTabChange={location.pathname === '/establishment/profile' ? handleTabChange : undefined} 
           tabOptions={getTabOptions()} 

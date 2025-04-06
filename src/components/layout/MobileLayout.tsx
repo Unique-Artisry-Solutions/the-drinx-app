@@ -63,9 +63,9 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
 
   const getContentPadding = () => {
     if (isLandingPage) {
-      return 'pt-16 pb-0 px-0';
+      return 'pt-16 pb-0';
     } else {
-      return 'pt-16 pb-20 px-0'; // Removed horizontal padding
+      return 'pt-16 pb-20'; // Remove horizontal padding completely
     }
   };
 

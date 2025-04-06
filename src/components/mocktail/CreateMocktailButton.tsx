@@ -12,9 +12,10 @@ const CreateMocktailButton: React.FC = () => {
       <Button 
         onClick={() => setIsModalOpen(true)}
         className="bg-spiritless-pink hover:bg-spiritless-pink/90"
+        size="sm"
       >
-        <Wine className="mr-2 h-4 w-4" />
-        Create Mocktail Recipe
+        <Wine className="mr-1 h-3.5 w-3.5" />
+        <span className="text-xs">Create Mocktail Recipe</span>
       </Button>
 
       <CreateMocktailModal 

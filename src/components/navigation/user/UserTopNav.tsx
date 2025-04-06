@@ -1,4 +1,3 @@
-
 import React from 'react';
 import UserNavbar from './UserNavbar';
 
@@ -18,6 +17,8 @@ const UserTopNav: React.FC<UserTopNavProps> = ({
   handleTabChange, 
   tabOptions 
 }) => {
+  // We'll keep this a simple passthrough component that just renders UserNavbar
+  // The actual consolidation of navigation will happen in the UserNavbar component
   return (
     <UserNavbar 
       activeTab={activeTab} 

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -46,15 +45,12 @@ const MobileActiveSwigCircuitSection: React.FC = () => {
   } = useCheckInCooldown({ lastCheckInTime });
   
   useEffect(() => {
-    // In a real app, this would fetch the active Swig Circuit from the server
-    // For now, we'll get it from localStorage or use a mock
     const barCrawls = JSON.parse(localStorage.getItem('user_bar_crawls') || '[]');
     const active = barCrawls.find((bc: any) => bc.status === 'active');
     
     if (active) {
       setActiveCircuit(active);
     } else {
-      // Use a mock for demonstration purposes
       const mockCircuit = {
         id: 'active-1',
         name: 'Downtown Delights Tour',
@@ -73,22 +69,19 @@ const MobileActiveSwigCircuitSection: React.FC = () => {
       
       setActiveCircuit(mockCircuit);
       
-      // Store this mock in localStorage for persistence
       const updatedBarCrawls = [...barCrawls, mockCircuit];
       localStorage.setItem('user_bar_crawls', JSON.stringify(updatedBarCrawls));
     }
     
-    // Get the last check-in time from localStorage
     const lastCheckIn = localStorage.getItem('last_check_in_time');
     if (lastCheckIn) {
       setLastCheckInTime(new Date(lastCheckIn));
       
-      // Determine current stop index based on check-ins
       const lastEstId = localStorage.getItem('last_checked_in_establishment');
       if (lastEstId && active) {
         const estIndex = active.establishments?.findIndex(est => est.id === lastEstId);
         if (estIndex !== -1 && estIndex !== undefined) {
-          setCurrentStopIndex(estIndex + 1); // Set to next stop
+          setCurrentStopIndex(estIndex + 1);
         }
       }
     }
@@ -98,11 +91,9 @@ const MobileActiveSwigCircuitSection: React.FC = () => {
     return null;
   }
   
-  // Make sure activeCircuit.establishments exists and is an array before accessing length
   const establishments = activeCircuit.establishments || [];
   const progress = (currentStopIndex / establishments.length) * 100;
   
-  // Add safety checks for currentStop and nextStop
   const currentStop = establishments[currentStopIndex] || establishments[0] || { id: '', name: 'Unknown', address: 'No address available' };
   const nextStop = establishments[currentStopIndex + 1];
   
@@ -116,7 +107,6 @@ const MobileActiveSwigCircuitSection: React.FC = () => {
     }
   };
 
-  // Mobile-optimized layout
   return (
     <Card className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-gray-800 dark:to-gray-900 border-l-4 border-spiritless-pink">
       <CardHeader className="pb-2">
@@ -136,11 +126,11 @@ const MobileActiveSwigCircuitSection: React.FC = () => {
       <CardContent className="pt-0 px-3 pb-3 space-y-3">
         <div className="bg-white/70 dark:bg-gray-800/50 rounded-lg p-3 backdrop-blur-sm">
           <div className="flex justify-between items-start mb-2">
-            <h3 className="font-medium">{activeCircuit.name || 'Untitled Swig Circuit'}</h3>
+            <h3 className="font-medium text-sm">{activeCircuit?.name || 'Untitled Swig Circuit'}</h3>
           </div>
           
           <div className="flex flex-wrap gap-1 mb-3">
-            {activeCircuit.theme && (
+            {activeCircuit?.theme && (
               <Badge className="bg-purple-100 text-purple-800 border-purple-300 text-xs">
                 {activeCircuit.theme}
               </Badge>
@@ -160,7 +150,7 @@ const MobileActiveSwigCircuitSection: React.FC = () => {
           
           <div className="grid gap-3">
             <div className="space-y-1">
-              <div className="text-xs font-medium">Current Location</div>
+              <div className="text-xs font-medium text-left">Current Location</div>
               <div className="p-2 border rounded-md bg-green-50 dark:bg-green-900/20 flex items-start">
                 <CheckCircle2 className="h-4 w-4 mr-2 text-green-600 dark:text-green-500 flex-shrink-0 mt-0.5" />
                 <div>
@@ -174,7 +164,7 @@ const MobileActiveSwigCircuitSection: React.FC = () => {
             </div>
             
             <div className="space-y-1">
-              <div className="text-xs font-medium">Next Stop</div>
+              <div className="text-xs font-medium text-left">Next Stop</div>
               {nextStop ? (
                 <div className="p-2 border rounded-md bg-amber-50 dark:bg-amber-900/20 flex items-start">
                   <MapPin className="h-4 w-4 mr-2 text-amber-600 dark:text-amber-500 flex-shrink-0 mt-0.5" />
