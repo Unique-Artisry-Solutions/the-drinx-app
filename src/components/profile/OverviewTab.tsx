@@ -113,7 +113,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ userName, userEmail, userJoin
               <div className="flex justify-between text-sm">
                 <span className={`${isDark ? 'text-gray-400' : 'text-material-on-surface-variant'} flex items-center`}>
                   <ThumbsUp size={16} className="mr-2" />
-                  Mocktail Try Count
+                  Mocktail Tester Tally
                 </span>
                 <span className="font-medium">{userStats.mocktailsTryCount}/20</span>
               </div>
@@ -135,7 +135,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ userName, userEmail, userJoin
               <div className="flex justify-between text-sm">
                 <span className={`${isDark ? 'text-gray-400' : 'text-material-on-surface-variant'} flex items-center`}>
                   <Route size={16} className="mr-2" />
-                  Bar Crawls
+                  Swig Circuits
                 </span>
                 <span className="font-medium">{userStats.barCrawlsCompleted}/15</span>
               </div>
