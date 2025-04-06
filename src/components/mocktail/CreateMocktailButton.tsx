@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Wine } from 'lucide-react';
+import { Wine, Plus } from 'lucide-react';
 import CreateMocktailModal from './CreateMocktailModal';
 import { useTheme } from '@/contexts/ThemeContext';
 
@@ -16,8 +16,8 @@ const CreateMocktailButton: React.FC = () => {
         className="bg-spiritless-pink hover:bg-spiritless-pink/90"
         size="sm"
       >
-        <Wine className="mr-1 h-3.5 w-3.5" />
-        <span className="text-xs font-normal">Create Recipe</span>
+        <Plus className="h-3.5 w-3.5" />
+        <Wine className="h-3.5 w-3.5" />
       </Button>
 
       <CreateMocktailModal 

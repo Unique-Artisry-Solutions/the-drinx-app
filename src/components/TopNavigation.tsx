@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Map } from 'lucide-react';
@@ -5,10 +6,12 @@ import CartButton from './cart/CartButton';
 import { useAuth } from '@/contexts/auth/index';
 import BackButton from './navigation/BackButton';
 import UserProfileDropdown from './navigation/user/UserProfileDropdown';
+
 interface TopNavigationProps {
   onMenuToggle?: () => void;
   isMenuOpen?: boolean;
 }
+
 const TopNavigation: React.FC<TopNavigationProps> = () => {
   const location = useLocation();
   const {
@@ -32,9 +35,10 @@ const TopNavigation: React.FC<TopNavigationProps> = () => {
   // Determine if we should show the back button
   const shouldShowBackButton = () => {
     // Exclude certain paths
-    const excludedPaths = ['/', '/landing', '/explore', '/map', '/profile'];
+    const excludedPaths = ['/', '/landing', '/explore', '/map'];
     return !excludedPaths.includes(location.pathname) && !location.pathname.startsWith('/admin');
   };
+
   return <header className="bg-white shadow-sm sticky top-0 z-50">
       <div className="container max-w-6xl mx-auto px-4 py-3 flex items-center justify-between bg-zinc-900">
         <div className="flex items-center gap-2">
@@ -59,4 +63,5 @@ const TopNavigation: React.FC<TopNavigationProps> = () => {
       </div>
     </header>;
 };
+
 export default TopNavigation;
