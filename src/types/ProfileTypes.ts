@@ -18,7 +18,7 @@ export interface Establishment {
     instagram?: string;
     twitter?: string;
   };
-  hours?: Record<string, string>;
+  hours?: Record<string, string> | string[];
   distance?: string;
   cocktailCount?: number;
   image?: string;
