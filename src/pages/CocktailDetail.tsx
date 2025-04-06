@@ -2,27 +2,14 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Layout from '@/components/Layout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Star, Clock, Heart, Share2, MessageSquare, MapPin } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import CommentForm from '@/components/CommentForm';
-import { StarRating } from '@/components/StarRating';
 import { useAuth } from '@/contexts/auth';
-import { supabase } from '@/integrations/supabase/client';
-
-// Sample data - would be fetched from API in a real application
 import { sampleCocktails } from '@/data/sampleData';
-
-interface Comment {
-  id: string;
-  user: string;
-  text: string;
-  date: string;
-  source: 'app' | 'yelp';
-  rating?: number;
-}
+import CocktailHeader from '@/components/cocktail/CocktailHeader';
+import CocktailActions from '@/components/cocktail/CocktailActions';
+import CommentsSection from '@/components/cocktail/CommentsSection';
+import CocktailSidebar from '@/components/cocktail/CocktailSidebar';
+import { useCocktailComments } from '@/hooks/useCocktailComments';
 
 const CocktailDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -31,11 +18,9 @@ const CocktailDetail = () => {
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [lastOrdered, setLastOrdered] = useState<string | null>(null);
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showCommentForm, setShowCommentForm] = useState(false);
   const { toast } = useToast();
-  const { user, isEmailVerified } = useAuth();
+  const { user } = useAuth();
+  const { comments, refetchComments } = useCocktailComments(id);
 
   useEffect(() => {
     // In a real app, this would fetch data from an API
@@ -51,43 +36,10 @@ const CocktailDetail = () => {
       const date = new Date();
       date.setDate(date.getDate() - daysAgo);
       setLastOrdered(date.toLocaleDateString());
-      
-      fetchComments(id);
     }
     
     setLoading(false);
   }, [id]);
-
-  const fetchComments = async (cocktailId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('cocktail_reviews_with_users')
-        .select('*')
-        .eq('cocktail_id', cocktailId)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      if (data) {
-        const formattedComments = data.map(comment => ({
-          id: comment.id,
-          user: comment.user_name || 'Anonymous',
-          text: comment.text,
-          date: new Date(comment.created_at).toLocaleDateString(),
-          source: comment.source as 'app' | 'yelp',
-          rating: comment.rating
-        }));
-        setComments(formattedComments);
-      }
-    } catch (error) {
-      console.error('Error fetching comments:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load comments',
-        variant: 'destructive',
-      });
-    }
-  };
 
   const handleLike = () => {
     if (!liked) {
@@ -124,67 +76,6 @@ const CocktailDetail = () => {
     });
   };
   
-  const handleAddComment = async (data: { text: string; rating: number }) => {
-    if (!user) {
-      toast({
-        title: "Authentication required",
-        description: "Please sign in to leave a comment.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    setIsSubmitting(true);
-    
-    try {
-      // Save the comment to Supabase
-      const { data: newComment, error } = await supabase
-        .from('cocktail_reviews')
-        .insert({
-          user_id: user.id,
-          cocktail_id: id,
-          text: data.text,
-          rating: data.rating,
-          source: 'app'
-        })
-        .select();
-      
-      if (error) throw error;
-      
-      toast({
-        title: "Comment posted",
-        description: "Your comment has been added successfully.",
-      });
-      
-      // Refresh comments
-      fetchComments(id!);
-      
-      setShowCommentForm(false);
-    } catch (error) {
-      console.error('Error adding comment:', error);
-      toast({
-        title: "Error",
-        description: "Failed to post your comment. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-  
-  const toggleCommentForm = () => {
-    if (!user || !isEmailVerified) {
-      toast({
-        title: "Authentication required",
-        description: "Please sign in to leave a comment.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    setShowCommentForm(prev => !prev);
-  };
-
   if (loading) {
     return (
       <Layout>
@@ -208,195 +99,44 @@ const CocktailDetail = () => {
     );
   }
 
+  const similarCocktails = sampleCocktails
+    .filter(c => c.id !== cocktail.id)
+    .slice(0, 3);
+
   return (
     <Layout>
       <div className="animate-fade-in pb-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-2">
-            <div className="mb-6">
-              <div 
-                className="h-64 w-full rounded-xl bg-cover bg-center mb-4"
-                style={{ backgroundImage: `url(${cocktail.image || '/placeholder.svg'})` }}
-              />
-              
-              <h1 className="text-2xl font-bold mb-2">{cocktail.name}</h1>
-              
-              <div className="flex flex-wrap gap-2 mb-4">
-                {cocktail.ingredients?.map((ingredient: string, i: number) => (
-                  <Badge key={i} variant="outline" className="bg-material-secondary-container/50">
-                    {ingredient}
-                  </Badge>
-                ))}
-              </div>
-              
-              <p className="text-material-on-surface">{cocktail.description}</p>
-              
-              <div className="mt-4 flex items-center text-material-on-surface-variant">
-                <MapPin size={16} className="mr-1" />
-                <span>
-                  {typeof cocktail.establishment === 'object' 
-                    ? cocktail.establishment.name 
-                    : cocktail.establishment}
-                </span>
-                <span className="mx-2 text-material-on-surface-variant">•</span>
-                <span>{cocktail.price}</span>
-              </div>
-            </div>
+            <CocktailHeader 
+              name={cocktail.name} 
+              image={cocktail.image} 
+              ingredients={cocktail.ingredients} 
+              description={cocktail.description} 
+              establishment={cocktail.establishment} 
+              price={cocktail.price}
+            />
             
-            <div className="flex flex-wrap gap-3 mb-6">
-              <Button 
-                variant={liked ? "default" : "outline"} 
-                onClick={handleLike}
-                className="gap-2"
-              >
-                <Heart className={liked ? "fill-white" : ""} size={16} />
-                {liked ? "Favorited" : "Add to Favorites"}
-              </Button>
-              
-              <Button 
-                variant="outline" 
-                onClick={handleShare}
-                className="gap-2"
-              >
-                <Share2 size={16} />
-                Share
-              </Button>
-              
-              <Button 
-                variant="outline" 
-                onClick={handleOrderedToday}
-                className="gap-2"
-              >
-                <Clock size={16} />
-                I Had This Today
-              </Button>
-            </div>
+            <CocktailActions 
+              liked={liked} 
+              onLike={handleLike} 
+              onShare={handleShare} 
+              onOrderedToday={handleOrderedToday}
+            />
             
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex justify-between items-center">
-                  <span>Comments & Reviews</span>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={toggleCommentForm}
-                    className="gap-1"
-                  >
-                    <MessageSquare size={16} />
-                    {showCommentForm ? "Cancel" : "Add Comment"}
-                  </Button>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {showCommentForm && (
-                  <div className="mb-6 p-4 border rounded-lg bg-background/50">
-                    <CommentForm onSubmit={handleAddComment} isLoading={isSubmitting} />
-                  </div>
-                )}
-                
-                <div className="space-y-4">
-                  {comments.map(comment => (
-                    <div key={comment.id} className="border-b pb-4 last:border-b-0">
-                      <div className="flex justify-between items-start">
-                        <div className="flex items-center">
-                          <div className="h-8 w-8 rounded-full bg-material-primary/20 flex items-center justify-center mr-2">
-                            {comment.user.charAt(0)}
-                          </div>
-                          <div>
-                            <p className="font-medium">{comment.user}</p>
-                            <p className="text-xs text-material-on-surface-variant">{comment.date}</p>
-                          </div>
-                        </div>
-                        
-                        <div className="flex items-center">
-                          {comment.source === 'yelp' && (
-                            <>
-                              <Badge variant="outline" className="mr-2">Yelp</Badge>
-                            </>
-                          )}
-                          
-                          {comment.source === 'app' && (
-                            <Badge variant="outline" className="bg-material-primary/10 text-material-primary">
-                              App User
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                      
-                      {comment.rating && (
-                        <div className="mt-1 ml-10">
-                          <StarRating rating={comment.rating} interactive={false} size={14} />
-                        </div>
-                      )}
-                      
-                      <p className="mt-2 text-material-on-surface ml-10">
-                        {comment.text}
-                      </p>
-                    </div>
-                  ))}
-                  
-                  {comments.length === 0 && (
-                    <p className="text-center text-material-on-surface-variant py-4">
-                      No comments yet. Be the first to share your thoughts!
-                    </p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+            <CommentsSection 
+              cocktailId={id!}
+              comments={comments} 
+              onCommentsUpdate={refetchComments}
+            />
           </div>
           
           <div>
-            <Card className="mb-4">
-              <CardContent className="pt-6">
-                <div className="text-center mb-4">
-                  <div className="flex justify-center">
-                    <div className="bg-material-primary/10 rounded-full h-20 w-20 flex items-center justify-center">
-                      <Heart size={32} className="text-material-primary" />
-                    </div>
-                  </div>
-                  <h3 className="text-2xl font-bold mt-2">{likeCount}</h3>
-                  <p className="text-material-on-surface-variant">People love this mocktail</p>
-                </div>
-                
-                {lastOrdered && (
-                  <div className="text-center pt-4 border-t">
-                    <p className="text-material-on-surface-variant">Last ordered</p>
-                    <p className="font-medium">{lastOrdered}</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Similar Mocktails</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {sampleCocktails
-                    .filter(c => c.id !== cocktail.id)
-                    .slice(0, 3)
-                    .map(c => (
-                      <Link key={c.id} to={`/cocktail/${c.id}`}>
-                        <div className="flex items-center p-2 rounded-lg hover:bg-material-primary/5 transition-colors">
-                          <div 
-                            className="h-12 w-12 rounded-md bg-cover bg-center mr-3"
-                            style={{ backgroundImage: `url(${c.image || '/placeholder.svg'})` }}
-                          />
-                          <div>
-                            <h4 className="font-medium">{c.name}</h4>
-                            <p className="text-xs text-material-on-surface-variant">
-                              {typeof c.establishment === 'object' 
-                                ? c.establishment.name 
-                                : c.establishment}
-                            </p>
-                          </div>
-                        </div>
-                      </Link>
-                    ))}
-                </div>
-              </CardContent>
-            </Card>
+            <CocktailSidebar 
+              likeCount={likeCount} 
+              lastOrdered={lastOrdered}
+              similarCocktails={similarCocktails}
+            />
           </div>
         </div>
       </div>

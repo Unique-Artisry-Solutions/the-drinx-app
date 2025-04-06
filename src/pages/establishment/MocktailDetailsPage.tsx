@@ -11,6 +11,7 @@ import CommentForm from '@/components/CommentForm';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth';
 import { supabase } from '@/integrations/supabase/client';
+import { CommentDisplayItem } from '@/types/DatabaseTypes';
 
 const MocktailDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -30,7 +31,7 @@ const MocktailDetailsPage: React.FC = () => {
     totalOrders: 42,
     createdDate: '2023-10-15',
     photoUrl: 'https://placehold.co/600x400',
-    reviews: []
+    reviews: [] as CommentDisplayItem[]
   });
   
   useEffect(() => {
@@ -49,12 +50,13 @@ const MocktailDetailsPage: React.FC = () => {
       if (error) throw error;
 
       if (data) {
-        const formattedReviews = data.map(review => ({
-          id: review.id,
+        const formattedReviews: CommentDisplayItem[] = data.map(review => ({
+          id: review.id || '',
           user: review.user_name || 'Anonymous',
-          rating: review.rating,
-          comment: review.text,
-          date: new Date(review.created_at).toLocaleDateString()
+          rating: review.rating || 0,
+          text: review.text || '',
+          date: review.created_at ? new Date(review.created_at).toLocaleDateString() : '',
+          source: (review.source as 'app' | 'yelp') || 'app'
         }));
         
         setMocktail(prev => ({
