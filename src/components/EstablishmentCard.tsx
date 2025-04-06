@@ -34,6 +34,8 @@ const EstablishmentCard: React.FC<EstablishmentCardProps> = ({
       e.preventDefault();
       onClick();
     }
+    // Scroll to top when clicking
+    window.scrollTo(0, 0);
   };
   
   return (
@@ -61,17 +63,17 @@ const EstablishmentCard: React.FC<EstablishmentCardProps> = ({
         )}>
           <div className="flex justify-between items-start mb-2">
             <h3 className={cn(
-              "text-base font-medium", 
+              "text-base font-medium text-left", 
               isLightTheme ? "text-gray-800" : "text-material-on-surface"
             )}>
               {name}
             </h3>
             {distance && (
               <span className={cn(
-                "text-xs px-2 py-1 rounded-full flex items-center ml-2",
+                "text-xs px-2 py-1 rounded-full flex items-center ml-2 text-white",
                 isLightTheme 
-                  ? "bg-material-secondary-container/60 text-gray-700" 
-                  : "bg-material-secondary-container text-material-on-secondary-container"
+                  ? "text-spiritless-green" 
+                  : "text-spiritless-green-light"
               )}>
                 <MapPin size={12} className="mr-1" /> {distance}
               </span>
@@ -79,7 +81,7 @@ const EstablishmentCard: React.FC<EstablishmentCardProps> = ({
           </div>
           
           <p className={cn(
-            "text-xs mt-1 mb-3",
+            "text-xs mt-1 mb-3 text-left",
             isLightTheme ? "text-gray-600" : "text-material-on-surface-variant"
           )}>
             {address}
@@ -87,7 +89,7 @@ const EstablishmentCard: React.FC<EstablishmentCardProps> = ({
           
           <div className="mt-auto flex justify-between items-end">
             <div className={cn(
-              "text-xs font-medium",
+              "text-xs font-medium text-left",
               isLightTheme ? "text-material-primary" : "text-material-primary"
             )}>
               {cocktailCount} {cocktailCount === 1 ? 'cocktail' : 'cocktails'} available

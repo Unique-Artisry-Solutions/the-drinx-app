@@ -20,6 +20,10 @@ interface FeaturedEstablishmentsSectionProps {
 const FeaturedEstablishmentsSection: React.FC<FeaturedEstablishmentsSectionProps> = ({ 
   establishments 
 }) => {
+  const scrollToTop = () => {
+    window.scrollTo(0, 0);
+  };
+  
   return (
     <div className="mb-6">
       <div className="flex justify-between items-center mb-4">
@@ -27,12 +31,12 @@ const FeaturedEstablishmentsSection: React.FC<FeaturedEstablishmentsSectionProps
           <Building className="h-5 w-5 mr-2 text-spiritless-pink" />
           Featured Establishments
         </h2>
-        <Link to="/map" className="text-sm text-spiritless-pink hover:underline">
+        <Link to="/map" className="text-sm text-spiritless-pink hover:underline" onClick={scrollToTop}>
           View all
         </Link>
       </div>
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {establishments.slice(0, 4).map((establishment) => (
           <EstablishmentCard 
             key={establishment.id}

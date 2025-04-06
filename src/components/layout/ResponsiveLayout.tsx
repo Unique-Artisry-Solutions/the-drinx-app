@@ -1,5 +1,6 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useIsMobile } from '@/hooks/use-mobile';
 import DesktopLayout from './DesktopLayout';
 import MobileLayout from './MobileLayout';
@@ -18,6 +19,12 @@ interface ResponsiveLayoutProps {
 
 const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = (props) => {
   const isMobile = useIsMobile();
+  const location = useLocation();
+  
+  // Scroll to top when route changes
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
   
   if (isMobile) {
     return <MobileLayout {...props} />;

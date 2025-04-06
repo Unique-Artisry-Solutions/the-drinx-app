@@ -35,6 +35,11 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
   const [userType, setUserType] = React.useState<'individual' | 'establishment'>('individual');
   const [isAdmin, setIsAdmin] = React.useState(false);
 
+  // Scroll to top when route changes
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
+
   useEffect(() => {
     const checkAuth = () => {
       const isAdminAuth = localStorage.getItem('admin_authenticated') === 'true';

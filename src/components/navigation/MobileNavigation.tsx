@@ -30,6 +30,11 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
     }
   }, []);
 
+  // Add effect to scroll to top on route change
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
+
   const toggleExpand = () => {
     setExpanded(!expanded);
   };
@@ -46,6 +51,8 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
     } else {
       navigate('/landing');
     }
+    
+    window.scrollTo(0, 0);
   };
 
   const getProfilePath = () => {
@@ -100,6 +107,9 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
               if (item.path === getProfilePath() && shouldShowProfileItems) {
                 e.preventDefault();
                 toggleExpand();
+              } else {
+                // Scroll to top when navigating
+                window.scrollTo(0, 0);
               }
             };
             
