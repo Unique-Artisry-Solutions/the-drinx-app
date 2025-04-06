@@ -72,6 +72,9 @@ export const useProfileData = () => {
         setLoading(true);
         console.log('Fetching profile for user:', user.id);
         
+        // Get the email from user authentication
+        const userEmail = user.email || '';
+        
         // Check if a profile exists for this user
         const { data, error } = await supabase
           .from('profiles')
@@ -84,26 +87,10 @@ export const useProfileData = () => {
           throw error;
         }
         
-        // Get the email from user authentication
-        const userEmail = user.email || '';
-        
         if (!data) {
           console.log('No profile found for user, creating default profile');
           
-          // Use the auth API to update user metadata first
-          const { error: updateError } = await supabase.auth.updateUser({
-            data: {
-              username: user.user_metadata?.username || '',
-              name: user.user_metadata?.name || '',
-              user_type: user.user_metadata?.user_type || 'individual',
-            }
-          });
-          
-          if (updateError) {
-            console.error('Error updating user metadata:', updateError);
-          }
-          
-          // Then create the profile record
+          // Create the profile record with the current user's ID
           const defaultProfile = {
             id: user.id,
             username: user.user_metadata?.username || '',
@@ -119,7 +106,7 @@ export const useProfileData = () => {
           // Insert the default profile
           const { error: insertError } = await supabase
             .from('profiles')
-            .upsert([defaultProfile]); // Use upsert to prevent duplicate key errors
+            .insert([defaultProfile]);
             
           if (insertError) {
             console.error('Error creating profile:', insertError);
@@ -219,7 +206,7 @@ export const useProfileData = () => {
         }
       }
       
-      // Use upsert instead of update to handle both creation and update
+      // Use upsert to handle both creation and update
       const { error } = await supabase
         .from('profiles')
         .upsert({

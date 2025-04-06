@@ -9,6 +9,7 @@ import GuestTopNavigation from '../navigation/GuestTopNavigation';
 import Breadcrumbs from '../navigation/Breadcrumbs';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import TopNavigation from '../TopNavigation'; // Make sure TopNavigation is imported
 
 interface TabOption {
   value: string;
@@ -60,6 +61,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
 
   const isLandingPage = location.pathname === '/' || location.pathname === '/landing';
   const isAdminPage = location.pathname.startsWith('/admin');
+  const isSettingsPage = location.pathname === '/settings';
 
   const getContentPadding = () => {
     if (isLandingPage) {
@@ -70,7 +72,9 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
   };
 
   const renderNavigation = () => {
-    if (isAdminPage || isAdmin) {
+    if (isSettingsPage) {
+      return <TopNavigation />; // Use TopNavigation for settings page
+    } else if (isAdminPage || isAdmin) {
       return <AdminTopNavigation />;
     } else if (navigationType === NavigationType.USER) {
       return <UserTopNavigation activeTab={activeTab} handleTabChange={handleTabChange} tabOptions={tabOptions} />;
