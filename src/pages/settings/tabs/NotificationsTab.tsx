@@ -2,8 +2,6 @@
 import React from 'react';
 import { TabsContent } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import { UserProfileFormData } from '../hooks/useProfileData';
 import { useProfileFormContext } from '../hooks/useProfileFormContext';
@@ -14,6 +12,7 @@ import {
   FormControl,
   FormDescription
 } from '@/components/ui/form';
+import { Switch } from '@/components/ui/switch';
 
 interface NotificationsTabProps {
   profile: UserProfileFormData;

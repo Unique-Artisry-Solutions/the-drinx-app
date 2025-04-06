@@ -6,7 +6,7 @@ import { UserProfileFormData } from './useProfileData';
 // Updated context to work with react-hook-form
 export type ProfileFormContextType = UseFormReturn<UserProfileFormData>;
 
-const ProfileFormContext = createContext<ProfileFormContextType | undefined>(undefined);
+const ProfileFormContext = createContext<ProfileFormContextType | null>(null);
 
 export const ProfileFormProvider: React.FC<{
   children: React.ReactNode;

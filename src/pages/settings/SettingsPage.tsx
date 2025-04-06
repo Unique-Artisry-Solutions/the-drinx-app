@@ -75,35 +75,27 @@ const SettingsPage = () => {
                 </TabsTrigger>
               </TabsList>
               
-              <form onSubmit={handleSubmit}>
-                {activeTab === 'account' && (
-                  <AccountTab 
-                    profile={profile} 
-                    isLightTheme={isLightTheme} 
-                    avatarFile={avatarFile}
-                    onPhotoSelect={handlePhotoSelect}
-                  />
-                )}
+              <form onSubmit={form.handleSubmit(handleSubmit)}>
+                <AccountTab 
+                  profile={profile} 
+                  isLightTheme={isLightTheme} 
+                  avatarFile={avatarFile}
+                  onPhotoSelect={handlePhotoSelect}
+                />
                 
-                {activeTab === 'notifications' && (
-                  <NotificationsTab 
-                    profile={profile} 
-                    isLightTheme={isLightTheme} 
-                  />
-                )}
+                <NotificationsTab 
+                  profile={profile} 
+                  isLightTheme={isLightTheme} 
+                />
                 
-                {activeTab === 'appearance' && (
-                  <AppearanceTab 
-                    profile={profile} 
-                    isLightTheme={isLightTheme} 
-                  />
-                )}
+                <AppearanceTab 
+                  profile={profile} 
+                  isLightTheme={isLightTheme} 
+                />
                 
-                {activeTab === 'privacy' && (
-                  <PrivacyTab 
-                    isLightTheme={isLightTheme} 
-                  />
-                )}
+                <PrivacyTab 
+                  isLightTheme={isLightTheme} 
+                />
                 
                 <div className="mt-6 flex justify-end gap-4">
                   <Button 
