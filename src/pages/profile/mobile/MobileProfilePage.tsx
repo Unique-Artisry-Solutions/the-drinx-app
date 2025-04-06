@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
@@ -147,12 +146,12 @@ const MobileProfilePage: React.FC = () => {
 
         {/* Active Swig Circuit Section - Conditionally rendered */}
         {hasActiveSwigCircuit && (
-          <div className="mb-4 mt-2 px-3">
+          <div className="mb-4 mt-2">
             <ActiveSwigCircuitSection />
           </div>
         )}
 
-        <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-gray-800 dark:to-gray-900 mx-3 p-3 rounded-xl mb-6 shadow-sm backdrop-blur-sm bg-white/30">
+        <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-gray-800 dark:to-gray-900 p-3 rounded-xl mb-6 shadow-sm backdrop-blur-sm bg-white/30">
           <Tabs defaultValue="overview" className="space-y-3">
             <TabsList className="w-full flex justify-between bg-white/70 dark:bg-gray-800/50 backdrop-blur-sm p-1 rounded-lg">
               <TabsTrigger 
