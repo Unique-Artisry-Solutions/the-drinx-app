@@ -223,7 +223,7 @@ const MocktailDetailsPage: React.FC = () => {
                         </div>
                       </div>
                       <div className="mt-2 pl-11">
-                        <p className="text-material-on-surface">{review.comment}</p>
+                        <p className="text-material-on-surface">{review.text}</p>
                       </div>
                     </div>
                   ))
