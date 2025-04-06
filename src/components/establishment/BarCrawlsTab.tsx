@@ -2,21 +2,10 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import BarCrawlCard from './BarCrawlCard';
-
-interface BarCrawl {
-  id: string;
-  name: string;
-  date: string;
-  participants: number;
-  organizer: string;
-  startDate: string;
-  endDate: string;
-  status: 'accepted' | 'pending';
-  otherEstablishments: string[];
-}
+import { BarCrawlRequest } from '@/hooks/useBarCrawlRequests';
 
 interface BarCrawlsTabProps {
-  barCrawls: BarCrawl[];
+  barCrawls: BarCrawlRequest[];
   handleEndParticipation: (id: string) => void;
   handleAcceptRequest: (id: string) => void;
 }

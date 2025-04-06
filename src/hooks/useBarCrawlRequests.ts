@@ -13,8 +13,8 @@ export interface BarCrawlRequest {
   otherEstablishments: string[];
   expectedDuration: string;
   specialRequests?: string;
-  startDate?: string;
-  endDate?: string;
+  startDate: string; // Changed from optional to required
+  endDate: string;   // Changed from optional to required
 }
 
 export const useBarCrawlRequests = () => {

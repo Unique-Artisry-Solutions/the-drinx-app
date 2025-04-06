@@ -1,22 +1,10 @@
 
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-
-interface BarCrawl {
-  id: string;
-  name: string;
-  date: string;
-  participants: number;
-  organizer: string;
-  startDate: string;
-  endDate: string;
-  status: 'accepted' | 'pending';
-  otherEstablishments: string[];
-  description?: string;
-}
+import { BarCrawlRequest } from '@/hooks/useBarCrawlRequests';
 
 export const useEstablishmentBarCrawls = () => {
-  const [barCrawls, setBarCrawls] = useState<BarCrawl[]>([]);
+  const [barCrawls, setBarCrawls] = useState<BarCrawlRequest[]>([]);
   const { toast } = useToast();
   
   useEffect(() => {
@@ -27,37 +15,43 @@ export const useEstablishmentBarCrawls = () => {
           id: '1',
           name: 'Downtown Mocktail Tour',
           date: '2023-11-15',
+          time: '18:00',
           participants: 12,
           organizer: 'John Smith',
           startDate: '2023-11-15',
           endDate: '2023-11-15',
           status: 'accepted',
           otherEstablishments: [],
-          description: 'A tour of the best mocktail spots downtown.'
+          description: 'A tour of the best mocktail spots downtown.',
+          expectedDuration: '3 hours'
         },
         {
           id: '2',
           name: 'Weekend Spirits-Free Adventure',
           date: '2023-11-20',
+          time: '19:00',
           participants: 8,
           organizer: 'Sarah Johnson',
           startDate: '2023-11-20',
           endDate: '2023-11-20',
           status: 'accepted',
           otherEstablishments: [],
-          description: 'Experience the best alcohol-free drinks in the city.'
+          description: 'Experience the best alcohol-free drinks in the city.',
+          expectedDuration: '4 hours'
         },
         {
           id: '3',
           name: 'Holiday Mocktail Crawl',
           date: '2023-12-15',
+          time: '20:00',
           participants: 15,
           organizer: 'Mike Wilson',
           startDate: '2023-12-15',
           endDate: '2023-12-16',
           status: 'pending',
           otherEstablishments: ['The Juice Bar', 'Herbal Infusions', 'Tropical Blends'],
-          description: 'Celebrate the holidays with festive non-alcoholic concoctions.'
+          description: 'Celebrate the holidays with festive non-alcoholic concoctions.',
+          expectedDuration: '6 hours'
         }
       ]);
     }, 500);

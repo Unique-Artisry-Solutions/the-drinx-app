@@ -4,22 +4,10 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CalendarIcon, MapPinIcon, UsersIcon, ChevronDown, ChevronUp } from 'lucide-react';
-
-interface BarCrawl {
-  id: string;
-  name: string;
-  date: string;
-  participants: number;
-  organizer: string;
-  startDate: string;
-  endDate: string;
-  status: 'accepted' | 'pending';
-  otherEstablishments: string[];
-  description?: string;
-}
+import { BarCrawlRequest } from '@/hooks/useBarCrawlRequests';
 
 interface BarCrawlCardProps {
-  crawl: BarCrawl;
+  crawl: BarCrawlRequest;
   handleEndParticipation?: (id: string) => void;
   handleAcceptRequest?: (id: string) => void;
 }
