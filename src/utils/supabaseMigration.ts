@@ -73,13 +73,13 @@ export const migrateCocktails = async () => {
     })
     .map(cocktail => {
       const estName = cocktail.establishment.name.toLowerCase();
-      const price = typeof cocktail.price === 'string' 
+      const priceValue = typeof cocktail.price === 'string' 
         ? cocktail.price 
-        : `$${Number(cocktail.price).toFixed(2)}`;
+        : `$${parseFloat(String(cocktail.price)).toFixed(2)}`;
       
       return {
         name: cocktail.name,
-        price: price,
+        price: priceValue,
         description: cocktail.description,
         ingredients: cocktail.ingredients,
         image_url: cocktail.image,
