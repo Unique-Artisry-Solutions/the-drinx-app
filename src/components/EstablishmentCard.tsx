@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -48,7 +49,7 @@ const EstablishmentCard: React.FC<EstablishmentCardProps> = ({
             <h3 className="text-base font-medium text-left text-foreground">
               {name}
             </h3>
-            {distance && <span className="text-xs px-2 py-1 rounded-full flex items-center ml-2 bg-spiritless-green/10 text-spiritless-green text-left">
+            {distance && <span className="text-xs px-2 py-1 rounded-full flex items-center ml-2 text-muted-foreground text-left">
                 <MapPin size={12} className="mr-1" /> {distance}
               </span>}
           </div>
