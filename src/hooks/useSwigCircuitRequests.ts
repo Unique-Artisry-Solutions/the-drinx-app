@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { BarCrawlRequest } from '@/hooks/useBarCrawlRequests';
@@ -19,7 +18,9 @@ export const useSwigCircuitRequests = () => {
       description: 'A festive tour of the best holiday-themed mocktails around town. Celebrate the season with unique flavors and creative presentations.',
       otherEstablishments: ['The Juice Bar', 'Herbal Infusions', 'Tropical Blends'],
       expectedDuration: '3 hours',
-      specialRequests: 'Looking for establishments to feature at least one holiday-themed mocktail during the event.'
+      specialRequests: 'Looking for establishments to feature at least one holiday-themed mocktail during the event.',
+      startDate: '2023-12-15',
+      endDate: '2023-12-15'
     },
     {
       id: '2',
@@ -32,7 +33,9 @@ export const useSwigCircuitRequests = () => {
       description: 'A health-focused journey through the city\'s best wellness-oriented beverage establishments.',
       otherEstablishments: ['Green Garden', 'Wellness Lounge', 'Pure Refreshment'],
       expectedDuration: '2.5 hours',
-      specialRequests: 'Would appreciate if you could highlight your most nutritious options.'
+      specialRequests: 'Would appreciate if you could highlight your most nutritious options.',
+      startDate: '2023-12-20',
+      endDate: '2023-12-20'
     },
     {
       id: '3',
@@ -45,7 +48,9 @@ export const useSwigCircuitRequests = () => {
       description: 'Ring in the New Year with sophisticated non-alcoholic alternatives. This circuit aims to showcase creative mixology without the alcohol.',
       otherEstablishments: ['Sober Social', 'Mindful Mixes', 'Zero Proof'],
       expectedDuration: '4 hours',
-      specialRequests: 'Looking for upscale presentation and celebratory ambiance suitable for New Year\'s Eve.'
+      specialRequests: 'Looking for upscale presentation and celebratory ambiance suitable for New Year\'s Eve.',
+      startDate: '2023-12-31',
+      endDate: '2024-01-01'
     }
   ];
 
@@ -88,8 +93,8 @@ export const useSwigCircuitRequests = () => {
     date: req.date,
     participants: req.participants,
     organizer: req.organizer,
-    startDate: req.date,
-    endDate: req.date,
+    startDate: req.startDate,
+    endDate: req.endDate,
     status: 'pending' as const,
     otherEstablishments: req.otherEstablishments,
     description: req.description,
