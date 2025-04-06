@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -43,7 +42,7 @@ const BarCrawlRequestsPage: React.FC = () => {
       date: '2023-12-20',
       time: '6:30 PM',
       status: 'pending',
-      description: 'A health-focused journey through the city's best wellness-oriented beverage establishments.',
+      description: 'A health-focused journey through the city\'s best wellness-oriented beverage establishments.',
       otherEstablishments: ['Green Garden', 'Wellness Lounge', 'Pure Refreshment'],
       expectedDuration: '2.5 hours',
       specialRequests: 'Would appreciate if you could highlight your most nutritious options.'
@@ -59,7 +58,7 @@ const BarCrawlRequestsPage: React.FC = () => {
       description: 'Ring in the New Year with sophisticated non-alcoholic alternatives. This circuit aims to showcase creative mixology without the alcohol.',
       otherEstablishments: ['Sober Social', 'Mindful Mixes', 'Zero Proof'],
       expectedDuration: '4 hours',
-      specialRequests: 'Looking for upscale presentation and celebratory ambiance suitable for New Year's Eve.'
+      specialRequests: 'Looking for upscale presentation and celebratory ambiance suitable for New Year\'s Eve.'
     }
   ];
 
