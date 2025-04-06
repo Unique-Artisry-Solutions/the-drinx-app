@@ -88,10 +88,17 @@ const Layout: React.FC<LayoutProps> = ({
     }
   };
 
-  // Don't show breadcrumbs on specific pages
+  // Refined shouldShowBreadcrumbs logic
   const shouldShowBreadcrumbs = () => {
     const excludedPaths = ['/', '/landing', '/login', '/signup', '/mission', '/map', '/explore'];
-    return !excludedPaths.includes(location.pathname) && !isLandingPage && !isAdminPage;
+    
+    // Don't show on specifically excluded paths
+    if (excludedPaths.includes(location.pathname)) return false;
+    
+    // Don't show on landing page or admin pages
+    if (isLandingPage || isAdminPage) return false;
+    
+    return true;
   };
 
   return (
@@ -100,7 +107,7 @@ const Layout: React.FC<LayoutProps> = ({
       
       <main className={`flex-1 w-full max-w-full overflow-x-hidden ${getContentPadding()}`}>
         {shouldShowBreadcrumbs() && (
-          <div className="container max-w-6xl mx-auto px-4 pt-1">
+          <div className="container max-w-6xl mx-auto px-4 pt-2">
             <Breadcrumbs />
           </div>
         )}
