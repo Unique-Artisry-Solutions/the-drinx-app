@@ -1,3 +1,4 @@
+
 import { Home } from 'lucide-react';
 import React from 'react';
 
@@ -9,7 +10,7 @@ export interface BreadcrumbConfig {
 
 // Comprehensive route mapping for the application
 export const routes: Record<string, BreadcrumbConfig> = {
-  '/': { path: '/', label: 'Home', icon: <Home className="h-4 w-4" /> },
+  '/': { path: '/', label: 'Home', icon: React.createElement(Home, { className: "h-4 w-4" }) },
   '/explore': { path: '/explore', label: 'Explore' },
   '/map': { path: '/map', label: 'Map' },
   
