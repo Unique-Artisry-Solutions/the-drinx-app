@@ -96,7 +96,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
 
   // Determine if mobile navigation bar should be shown
   const shouldShowMobileNav = () => {
-    return !isLandingPage && !isAdminPage;
+    return !isAdminPage;
   };
 
   return (

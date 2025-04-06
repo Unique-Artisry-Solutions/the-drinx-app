@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { NavigationType } from './NavigationTypes';
 import { useAuth } from '@/contexts/auth';
 import { MobileNavigationProps } from './mobile/types';
-import { getGuestNavItems } from './mobile/GuestNavItems';
+import { getGuestNavItems, getCartGuestNavItems } from './mobile/GuestNavItems';
 import { getUserNavItems } from './mobile/UserNavItems';
 import { getAdminNavItems } from './mobile/AdminNavItems';
 import ProfileMenu from './mobile/ProfileMenu';
@@ -62,6 +62,16 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
   };
 
   const getNavItems = () => {
+    // Special case for landing page
+    if (location.pathname === '/landing' || location.pathname === '/') {
+      return getGuestNavItems();
+    }
+
+    // Special case for cart page
+    if (location.pathname === '/cart') {
+      return getCartGuestNavItems();
+    }
+
     switch (type) {
       case NavigationType.GUEST:
         return getGuestNavItems();
@@ -82,9 +92,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
      location.pathname.startsWith('/profile/'));
      
   // Pages that should not show the mobile navigation
-  const hiddenNavPaths = [
-    '/landing',
-  ];
+  const hiddenNavPaths = [];
 
   // Check if we should hide the navigation entirely
   if (location.pathname.startsWith('/admin') || hiddenNavPaths.includes(location.pathname)) {
