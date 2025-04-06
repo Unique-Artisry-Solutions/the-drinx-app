@@ -5,14 +5,23 @@ export const profileDropdownStyles = {
     `px-2 py-1.5 text-sm font-medium ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`,
   
   menuItem: (isDarkTheme: boolean, isActive?: boolean) => 
-    `flex items-center gap-2 w-full text-sm px-2 py-1.5 rounded-sm ${
+    `flex items-center gap-2 w-full text-sm px-2 py-1.5 rounded-sm transition-all duration-200 ${
       isActive 
         ? `${isDarkTheme ? 'bg-gray-700 text-spiritless-pink' : 'bg-gray-100 text-spiritless-pink'}`
-        : `${isDarkTheme ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`
-    } transition-colors`,
+        : `${isDarkTheme 
+            ? 'text-gray-200 hover:bg-gray-700/80 hover:text-white focus:bg-gray-700 focus:outline-none active:bg-gray-600' 
+            : 'text-gray-700 hover:bg-gray-100/80 hover:text-spiritless-pink hover:translate-x-1 focus:bg-gray-100 focus:outline-none active:bg-gray-200'
+          }`
+    }`,
   
-  menuItemIcon: (isDarkTheme: boolean) => 
-    `h-4 w-4 ${isDarkTheme ? 'text-gray-400' : 'text-gray-500'}`,
+  menuItemIcon: (isDarkTheme: boolean, isActive?: boolean) => 
+    `h-4 w-4 transition-colors ${
+      isActive
+        ? 'text-spiritless-pink'
+        : isDarkTheme 
+          ? 'text-gray-400 group-hover:text-white' 
+          : 'text-gray-500 group-hover:text-spiritless-pink'
+    }`,
   
   separator: (isDarkTheme: boolean) => 
     `${isDarkTheme ? 'bg-gray-700' : 'bg-gray-200'}`,

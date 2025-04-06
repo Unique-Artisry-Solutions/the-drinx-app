@@ -45,7 +45,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
   };
 
   return (
-    <>
+    <div className="py-1 group">
       <ProfileHeader username={username} isDarkTheme={isDarkTheme} />
       
       <ProfileMenuItem 
@@ -125,9 +125,9 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
         isDarkTheme={isDarkTheme}
         onClick={handleLogout}
       >
-        <span className="text-red-600">Logout</span>
+        <span className="text-red-600 hover:text-red-700">Logout</span>
       </ProfileMenuItem>
-    </>
+    </div>
   );
 };
 

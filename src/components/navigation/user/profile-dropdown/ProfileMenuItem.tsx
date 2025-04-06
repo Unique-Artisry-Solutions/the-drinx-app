@@ -24,8 +24,8 @@ const ProfileMenuItem: React.FC<ProfileMenuItemProps> = ({
 }) => {
   const itemContent = (
     <>
-      {Icon && <Icon className={profileDropdownStyles.menuItemIcon(isDarkTheme)} />}
-      <span className={isActive ? "text-spiritless-pink" : ""}>{children}</span>
+      {Icon && <Icon className={profileDropdownStyles.menuItemIcon(isDarkTheme, isActive)} />}
+      <span className={isActive ? "text-spiritless-pink font-medium" : ""}>{children}</span>
     </>
   );
 
