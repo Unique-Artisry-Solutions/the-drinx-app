@@ -179,9 +179,9 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ userName, userEmail, userJoin
               <div className={`p-3 rounded-full mb-3 ${isDark ? 'bg-blue-900/50' : 'bg-blue-100'}`}>
                 <User size={24} className={isDark ? 'text-blue-300' : 'text-blue-600'} />
               </div>
-              <h3 className="font-medium mb-1">Created Bar Crawls</h3>
+              <h3 className="font-medium mb-1">Created Swig Circuits</h3>
               <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-material-on-surface-variant'}`}>
-                Manage your own bar crawls
+                Manage your own Swig Circuits
               </p>
             </div>
           </Link>
