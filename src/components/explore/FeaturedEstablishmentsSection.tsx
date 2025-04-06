@@ -27,7 +27,7 @@ const FeaturedEstablishmentsSection: React.FC<FeaturedEstablishmentsSectionProps
   return (
     <div className="mb-6">
       <div className="flex justify-between items-center mb-4 px-3">
-        <h2 className="text-xl font-semibold flex items-center">
+        <h2 className="text-xl font-semibold flex items-center text-foreground">
           <Building className="h-5 w-5 mr-2 text-spiritless-pink" />
           Featured Establishments
         </h2>

@@ -93,8 +93,8 @@ const Explore = () => {
 
   return (
     <Layout>
-      <div className="animate-fade-in max-w-7xl mx-auto">
-        <div className="mb-4">
+      <div className="animate-fade-in max-w-7xl mx-auto px-3 py-4">
+        <div className="mb-6">
           <h1 className="text-2xl font-medium text-foreground">Explore Cocktails</h1>
           <p className="text-muted-foreground">
             Find your perfect non-alcoholic drink

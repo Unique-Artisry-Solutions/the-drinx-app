@@ -28,7 +28,7 @@ const BarCrawlSection: React.FC<BarCrawlSectionProps> = ({
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
         <div>
           <h2 className="text-xl font-semibold text-spiritless-pink mb-2">Swig Circuits</h2>
-          <p className="text-sm text-material-on-surface-variant">
+          <p className="text-sm text-muted-foreground">
             Discover or create spirit-free Swig Circuits in your area
           </p>
         </div>
@@ -64,7 +64,7 @@ const BarCrawlSection: React.FC<BarCrawlSectionProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {barCrawls.slice(0, 3).map((crawl) => (
           <div key={crawl.id} className="bg-card p-4 rounded-md shadow-sm border border-border hover:shadow-md transition-shadow">
-            <h3 className="font-medium mb-2 text-lg">{crawl.name}</h3>
+            <h3 className="font-medium mb-2 text-lg text-foreground">{crawl.name}</h3>
             <div className="flex justify-between items-center mt-2">
               <span className="text-sm text-muted-foreground">{crawl.stops} stops</span>
               <Button variant="ghost" size="sm" asChild onClick={scrollToTop}>
