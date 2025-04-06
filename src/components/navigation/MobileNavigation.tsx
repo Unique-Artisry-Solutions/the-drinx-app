@@ -99,7 +99,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
   return (
     <>
       {shouldShowBackButton() && (
-        <div className={`fixed top-0 left-0 right-0 z-50 md:hidden px-3 py-3 ${theme === 'dark' ? 'bg-gray-900 border-b border-gray-700' : 'bg-white border-b border-gray-100'}`}>
+        <div className={`fixed top-0 left-0 right-0 z-40 md:hidden px-3 py-3 ${theme === 'dark' ? 'bg-gray-900 border-b border-gray-700' : 'bg-white border-b border-gray-100'}`}>
           {/* Empty div for back button - we're removing it from here since it's handled in TopNavigation */}
         </div>
       )}

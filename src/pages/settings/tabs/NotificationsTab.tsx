@@ -24,9 +24,15 @@ const NotificationsTab: React.FC<NotificationsTabProps> = ({ profile, isLightThe
   
   return (
     <TabsContent value="notifications">
-      <Card className={isLightTheme ? "bg-[#f5f3ed] border-gray-200" : ""}>
-        <CardHeader>
-          <CardTitle className={isLightTheme ? "text-gray-800" : ""}>
+      <Card className={cn(
+        "overflow-hidden",
+        isLightTheme ? "bg-[#f5f3ed] border-gray-200" : ""
+      )}>
+        <CardHeader className="pb-4">
+          <CardTitle className={cn(
+            "text-xl",
+            isLightTheme ? "text-gray-800" : ""
+          )}>
             Notification Preferences
           </CardTitle>
           <CardDescription className={isLightTheme ? "text-gray-600" : ""}>
@@ -34,12 +40,12 @@ const NotificationsTab: React.FC<NotificationsTabProps> = ({ profile, isLightThe
           </CardDescription>
         </CardHeader>
         
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
           <FormField
             control={form.control}
             name="email_notifications"
             render={({ field }) => (
-              <FormItem className="flex items-center justify-between space-y-0">
+              <FormItem className="flex items-center justify-between space-y-0 py-2">
                 <div className="space-y-0.5">
                   <FormLabel className={isLightTheme ? "text-gray-700" : ""}>
                     Email Notifications
@@ -65,7 +71,7 @@ const NotificationsTab: React.FC<NotificationsTabProps> = ({ profile, isLightThe
             control={form.control}
             name="push_notifications"
             render={({ field }) => (
-              <FormItem className="flex items-center justify-between space-y-0">
+              <FormItem className="flex items-center justify-between space-y-0 py-2">
                 <div className="space-y-0.5">
                   <FormLabel className={isLightTheme ? "text-gray-700" : ""}>
                     Push Notifications
