@@ -9,6 +9,17 @@ export interface Establishment {
   id: string;
   name: string;
   address: string;
+  // Add the missing properties
+  phone?: string;
+  website?: string;
+  description?: string;
+  email?: string;
+  socialMedia?: {
+    facebook?: string;
+    instagram?: string;
+    twitter?: string;
+  };
+  hours?: Record<string, string>;
 }
 
 // Cocktail type used in FavoritesTab
