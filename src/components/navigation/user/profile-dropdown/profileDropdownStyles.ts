@@ -22,5 +22,19 @@ export const profileDropdownStyles = {
       isActive 
         ? `${isDarkTheme ? 'bg-gray-700 text-white' : 'bg-gray-100 text-spiritless-pink font-medium'}`
         : `${isDarkTheme ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-600 hover:bg-gray-50'}`
-    }`
+    }`,
+    
+  // Add missing style functions
+  dropdownButton: (isDarkTheme: boolean) => 
+    `h-8 w-8 rounded-full p-0 border ${
+      isDarkTheme 
+        ? 'border-gray-600 bg-gray-800 text-white hover:border-gray-500 hover:bg-gray-700' 
+        : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-300'
+    }`,
+    
+  tabOptionsContainer: (isDarkTheme: boolean) => 
+    `pt-1 pb-1 ${isDarkTheme ? 'border-t border-gray-700' : 'border-t border-gray-200'}`,
+    
+  tabOptionsLabel: (isDarkTheme: boolean) => 
+    `text-xs font-medium ${isDarkTheme ? 'text-gray-400' : 'text-gray-500'} px-2 py-1`
 };
