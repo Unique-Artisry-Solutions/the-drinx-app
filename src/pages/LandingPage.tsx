@@ -24,7 +24,7 @@ const LandingPage = () => {
   }, [theme, setTheme]);
   
   // If user is already authenticated, redirect to appropriate page
-  React.useEffect(() => {
+  useEffect(() => {
     if (user && !isLoading) {
       const userType = localStorage.getItem('user_type');
       if (userType === 'establishment') {

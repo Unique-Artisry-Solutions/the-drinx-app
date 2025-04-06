@@ -62,7 +62,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
   };
 
   const getNavItems = () => {
-    // Public paths where we should show guest navigation
+    // Define public paths that should always show guest navigation
     const publicPaths = ['/', '/landing', '/login', '/signup', '/mission'];
     
     // Always show guest navigation on public paths or when user is not authenticated
@@ -75,6 +75,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
       return getCartGuestNavItems();
     }
 
+    // Use navigation type based on authentication state
     switch (type) {
       case NavigationType.GUEST:
         return getGuestNavItems();

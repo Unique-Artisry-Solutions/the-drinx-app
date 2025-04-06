@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
@@ -130,6 +131,7 @@ export function useAuthActions() {
       setIsLoading(true);
       console.log('Signing out user...');
       
+      // First clear all auth-related localStorage items
       localStorage.removeItem('user_authenticated');
       localStorage.removeItem('user_email');
       localStorage.removeItem('user_type');
@@ -139,6 +141,7 @@ export function useAuthActions() {
       localStorage.removeItem('admin_session_created');
       localStorage.removeItem('admin_bypass');
       
+      // Then sign out with Supabase
       const { error } = await supabase.auth.signOut();
       
       if (error) {
@@ -151,6 +154,9 @@ export function useAuthActions() {
         description: 'You have been successfully logged out',
       });
       
+      console.log('User successfully signed out, redirecting to landing page');
+      
+      // Use replace to prevent going back to authenticated pages
       window.location.replace('/landing');
     } catch (error: any) {
       console.error('Sign out error:', error);

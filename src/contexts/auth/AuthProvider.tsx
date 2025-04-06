@@ -60,12 +60,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   });
 
   const handleSignOut = async () => {
-    // Clear auth state first for immediate UI response
-    setUser(null);
-    setSession(null);
-    setIsEmailVerified(false);
-    
-    // Let the signOutAction handle localStorage clearing and navigation
+    // Use the signOutAction directly which now handles all cleanup
     await signOutAction();
   };
 

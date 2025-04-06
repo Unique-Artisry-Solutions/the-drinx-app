@@ -7,9 +7,8 @@ import UserTopNavigation from '../navigation/UserTopNavigation';
 import GuestTopNavigation from '../navigation/GuestTopNavigation';
 import Breadcrumbs from '../navigation/Breadcrumbs';
 import AppFooter from '../AppFooter';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth';
 import { useTheme } from '@/contexts/ThemeContext';
-import TopNavigation from '../TopNavigation'; // Make sure TopNavigation is imported
 
 interface TabOption {
   value: string;
@@ -40,12 +39,25 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     const checkAuth = () => {
       const isAdminAuth = localStorage.getItem('admin_authenticated') === 'true';
       const userTypeStored = localStorage.getItem('user_type');
+      
       setIsAdmin(isAdminAuth);
+      setUserType(userTypeStored === 'establishment' ? 'establishment' : 'individual');
+      
+      // Define public paths that always use guest navigation
+      const publicPaths = ['/', '/landing', '/login', '/signup', '/mission'];
+      const isPublicPath = publicPaths.includes(location.pathname);
+      
+      // If on a public path, always use guest navigation
+      if (isPublicPath) {
+        setNavigationType(NavigationType.GUEST);
+        return;
+      }
+      
+      // Determine navigation type based on auth state
       if (isAdminAuth) {
         setNavigationType(NavigationType.ADMIN);
       } else if (user && isEmailVerified) {
         setNavigationType(NavigationType.USER);
-        setUserType(userTypeStored === 'establishment' ? 'establishment' : 'individual');
       } else {
         setNavigationType(NavigationType.GUEST);
       }
@@ -66,21 +78,22 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     }
   };
 
+  // Determine whether to show guest navigation based on public paths and auth state
+  const useGuestNavigation = () => {
+    const publicPaths = ['/', '/landing', '/login', '/signup', '/mission'];
+    return publicPaths.includes(location.pathname) || !user;
+  };
+
   const renderNavigation = () => {
     if (isSettingsPage) {
-      return <TopNavigation />; // Use TopNavigation for settings page
+      return useGuestNavigation() ? <GuestTopNavigation /> : <UserTopNavigation />;
     } else if (isAdminPage || isAdmin) {
       return <AdminTopNavigation />;
-    } else if (navigationType === NavigationType.USER) {
+    } else if (navigationType === NavigationType.USER && user) {
       return <UserTopNavigation activeTab={activeTab} handleTabChange={handleTabChange} tabOptions={tabOptions} />;
     } else {
-      // Only show GuestTopNavigation on the landing page or for unauthenticated users on non-interior pages
-      if (isLandingPage || !user && (location.pathname === '/login' || location.pathname === '/signup' || location.pathname === '/mission')) {
-        return <GuestTopNavigation />;
-      } else {
-        // For other interior pages when not authenticated, still show UserTopNavigation
-        return <UserTopNavigation activeTab={activeTab} handleTabChange={handleTabChange} tabOptions={tabOptions} />;
-      }
+      // Show GuestTopNavigation for public pages or when not authenticated
+      return <GuestTopNavigation />;
     }
   };
 

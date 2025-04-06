@@ -43,22 +43,25 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
     const checkAuth = () => {
       const isAdminAuth = localStorage.getItem('admin_authenticated') === 'true';
       const userTypeStored = localStorage.getItem('user_type');
-      const userAuthenticated = localStorage.getItem('user_authenticated') === 'true';
       
       setIsAdmin(isAdminAuth);
+      setUserType(userTypeStored === 'establishment' ? 'establishment' : 'individual');
       
-      // Public paths always use guest navigation
+      // Define public paths that always use guest navigation
       const publicPaths = ['/', '/landing', '/login', '/signup', '/mission'];
-      if (publicPaths.includes(location.pathname)) {
+      const isPublicPath = publicPaths.includes(location.pathname);
+      
+      // If on a public path, always use guest navigation
+      if (isPublicPath) {
         setNavigationType(NavigationType.GUEST);
         return;
       }
       
+      // Determine navigation type based on auth state
       if (isAdminAuth) {
         setNavigationType(NavigationType.ADMIN);
-      } else if (user && isEmailVerified && userAuthenticated) {
+      } else if (user && isEmailVerified) {
         setNavigationType(NavigationType.USER);
-        setUserType(userTypeStored === 'establishment' ? 'establishment' : 'individual');
       } else {
         setNavigationType(NavigationType.GUEST);
       }
@@ -71,13 +74,13 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
   const isLandingPage = location.pathname === '/' || location.pathname === '/landing';
   const isAuthPage = location.pathname === '/login' || location.pathname === '/signup';
   const isAdminPage = location.pathname.startsWith('/admin');
-  const isGuestPage = isLandingPage || isAuthPage || location.pathname === '/mission';
+  const isPublicPage = isLandingPage || isAuthPage || location.pathname === '/mission';
 
   const getContentPadding = () => {
     if (isLandingPage) {
       return 'pt-16 pb-0';
     } else {
-      return 'pt-16 pb-20'; // Remove horizontal padding completely
+      return 'pt-16 pb-20';
     }
   };
 
@@ -112,12 +115,15 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
     return !isAdminPage;
   };
   
-  // Determine whether to show guest navigation
-  const useGuestNavigation = isGuestPage || !user;
+  // Determine whether to show guest navigation based on public paths and auth state
+  const useGuestNavigation = () => {
+    const publicPaths = ['/', '/landing', '/login', '/signup', '/mission'];
+    return publicPaths.includes(location.pathname) || !user;
+  };
 
   return (
     <div className={`flex flex-col min-h-screen w-full max-w-full bg-background transition-colors duration-300`}>
-      {useGuestNavigation ? (
+      {useGuestNavigation() ? (
         <GuestTopNavigation />
       ) : (
         <UserNavbar activeTab={activeTab} handleTabChange={handleTabChange} tabOptions={tabOptions} />

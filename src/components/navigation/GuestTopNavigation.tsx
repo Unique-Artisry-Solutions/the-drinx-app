@@ -1,11 +1,16 @@
+
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, LogIn, UserPlus, Menu, X, Sparkles, HeartHandshake } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import CartButton from '@/components/cart/CartButton';
+import { useAuth } from '@/contexts/auth';
+
 const GuestTopNavigation: React.FC = () => {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { user } = useAuth();
+
   const guestNavItems = [{
     icon: Home,
     label: 'Home',
@@ -15,6 +20,7 @@ const GuestTopNavigation: React.FC = () => {
     label: 'Our Mission',
     path: '/mission'
   }];
+  
   return <nav className="guest-top-nav fixed top-0 left-0 w-full bg-gradient-to-r from-spiritless-pink to-spiritless-pink-dark z-50 shadow-bold-pink backdrop-blur-sm">
       <div className="guest-nav-container max-w-6xl mx-auto px-4 py-3">
         <div className="guest-nav-inner flex items-center justify-between">
@@ -73,7 +79,7 @@ const GuestTopNavigation: React.FC = () => {
         })}
             <div className="guest-mobile-auth flex space-x-2 px-3 py-2">
               <Link to="/login" className="flex-1">
-                <Button variant="outline" className="guest-mobile-login w-full flex items-center justify-center gap-1 border-white/20 hover:bg-white/10 hover:border-white/30 text-[#320702]">
+                <Button variant="outline" className="guest-mobile-login w-full flex items-center justify-center gap-1 border-white/20 hover:bg-white/10 hover:border-white/30 text-white">
                   <LogIn className="h-4 w-4" />
                   <span>Login</span>
                 </Button>
@@ -89,4 +95,5 @@ const GuestTopNavigation: React.FC = () => {
       </div>
     </nav>;
 };
+
 export default GuestTopNavigation;
