@@ -5,21 +5,22 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import Layout from '@/components/Layout';
-import BackButton from '@/components/navigation/BackButton';
-import { Bell, User, Shield, Moon } from 'lucide-react';
+import { Bell, User, Shield, Moon, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import AccountTab from './tabs/AccountTab';
 import NotificationsTab from './tabs/NotificationsTab';
 import AppearanceTab from './tabs/AppearanceTab';
 import PrivacyTab from './tabs/PrivacyTab';
-import { useProfileData } from './hooks/useProfileData';
+import { useProfileData } from './hooks/useProfileFormContext';
 import { ProfileFormProvider } from './hooks/useProfileFormContext';
 import { Form } from '@/components/ui/form';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const SettingsPage = () => {
   const { theme } = useTheme();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('account');
+  const isMobile = useIsMobile();
   
   const { 
     form,
@@ -38,8 +39,6 @@ const SettingsPage = () => {
         "container mx-auto py-6 px-4 max-w-4xl",
         isLightTheme ? "text-gray-800" : ""
       )}>
-        <BackButton fallbackPath="/profile" />
-        
         <div className="flex flex-col items-start mb-6">
           <h1 className={cn(
             "text-2xl font-bold mb-2",
@@ -59,19 +58,19 @@ const SettingsPage = () => {
               )}>
                 <TabsTrigger value="account" className="flex items-center gap-2">
                   <User size={16} />
-                  <span>Account</span>
+                  <span className={isMobile ? "hidden" : ""}>Account</span>
                 </TabsTrigger>
                 <TabsTrigger value="notifications" className="flex items-center gap-2">
                   <Bell size={16} />
-                  <span>Notifications</span>
+                  <span className={isMobile ? "hidden" : ""}>Notifications</span>
                 </TabsTrigger>
                 <TabsTrigger value="appearance" className="flex items-center gap-2">
                   <Moon size={16} />
-                  <span>Appearance</span>
+                  <span className={isMobile ? "hidden" : ""}>Appearance</span>
                 </TabsTrigger>
                 <TabsTrigger value="privacy" className="flex items-center gap-2">
                   <Shield size={16} />
-                  <span>Privacy</span>
+                  <span className={isMobile ? "hidden" : ""}>Privacy</span>
                 </TabsTrigger>
               </TabsList>
               

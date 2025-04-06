@@ -72,23 +72,40 @@ export const useProfileData = () => {
         setLoading(true);
         console.log('Fetching profile for user:', user.id);
         
+        // Check if a profile exists for this user
         const { data, error } = await supabase
           .from('profiles')
           .select('*')
-          .eq('id', user.id);
+          .eq('id', user.id)
+          .maybeSingle(); // Use maybeSingle instead of single to handle cases where no profile exists
           
         if (error) {
           console.error('Error fetching profile:', error);
           throw error;
         }
         
-        if (!data || data.length === 0) {
+        if (!data) {
           console.log('No profile found for user, creating default profile');
           
+          // Use the auth API to update user metadata first
+          const { error: updateError } = await supabase.auth.updateUser({
+            data: {
+              username: user.user_metadata?.username || '',
+              name: user.user_metadata?.name || '',
+              user_type: user.user_metadata?.user_type || 'individual',
+            }
+          });
+          
+          if (updateError) {
+            console.error('Error updating user metadata:', updateError);
+          }
+          
+          // Then create the profile record
           const defaultProfile = {
             id: user.id,
             username: user.user_metadata?.username || '',
             display_name: user.user_metadata?.name || '',
+            email: user.email || '',
             user_type: user.user_metadata?.user_type || 'individual',
             email_notifications: true,
             push_notifications: false,
@@ -97,9 +114,10 @@ export const useProfileData = () => {
             avatar_url: ''
           };
           
+          // Insert the default profile
           const { error: insertError } = await supabase
             .from('profiles')
-            .insert([defaultProfile]);
+            .upsert([defaultProfile]); // Use upsert to prevent duplicate key errors
             
           if (insertError) {
             console.error('Error creating profile:', insertError);
@@ -119,20 +137,18 @@ export const useProfileData = () => {
             avatar_url: '',
           });
         } else {
-          console.log('Profile found:', data[0]);
-          const profileData = data[0];
-          
+          console.log('Profile found:', data);
           // Use react-hook-form reset to update form values
           reset({
-            username: profileData.username || '',
-            display_name: profileData.display_name || '',
-            bio: profileData.bio || '',
+            username: data.username || '',
+            display_name: data.display_name || '',
+            bio: data.bio || '',
             email: user.email || '',
-            phone: profileData.phone || '',
+            phone: data.phone || '',
             dark_mode: theme === 'dark',
-            email_notifications: profileData.email_notifications !== null ? profileData.email_notifications : true,
-            push_notifications: profileData.push_notifications !== null ? profileData.push_notifications : false,
-            avatar_url: profileData.avatar_url || '',
+            email_notifications: data.email_notifications !== null ? data.email_notifications : true,
+            push_notifications: data.push_notifications !== null ? data.push_notifications : false,
+            avatar_url: data.avatar_url || '',
           });
         }
       } catch (error: any) {
@@ -201,9 +217,11 @@ export const useProfileData = () => {
         }
       }
       
+      // Use upsert instead of update to handle both creation and update
       const { error } = await supabase
         .from('profiles')
-        .update({
+        .upsert({
+          id: user.id,
           username: formData.username,
           display_name: formData.display_name,
           bio: formData.bio,
@@ -212,8 +230,7 @@ export const useProfileData = () => {
           push_notifications: formData.push_notifications,
           avatar_url: avatarUrl,
           updated_at: new Date().toISOString()
-        })
-        .eq('id', user.id);
+        });
         
       if (error) throw error;
       

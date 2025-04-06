@@ -4,6 +4,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { LogOut, Settings, Map } from 'lucide-react';
 import CartButton from './cart/CartButton';
 import { useAuth } from '@/contexts/auth';
+import BackButton from './navigation/BackButton';
 
 interface TopNavigationProps {
   onMenuToggle?: () => void;
@@ -32,12 +33,28 @@ const TopNavigation: React.FC<TopNavigationProps> = () => {
     }
   };
 
+  // Determine if we should show the back button
+  const shouldShowBackButton = () => {
+    // Exclude certain paths
+    const excludedPaths = ['/', '/landing', '/explore', '/map', '/profile'];
+    return !excludedPaths.includes(location.pathname) && !location.pathname.startsWith('/admin');
+  };
+
   return (
     <header className="bg-white shadow-sm sticky top-0 z-50">
       <div className="container max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-        <Link to="/" className="text-xl font-semibold text-material-primary">
-          Spiritless
-        </Link>
+        <div className="flex items-center gap-2">
+          {shouldShowBackButton() && (
+            <BackButton 
+              size="icon" 
+              showLabel={false}
+              className="mr-2"
+            />
+          )}
+          <Link to="/" className="text-xl font-semibold text-material-primary">
+            Spiritless
+          </Link>
+        </div>
         
         <div className="flex items-center space-x-4">
           {/* Map Link for all devices */}

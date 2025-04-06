@@ -15,6 +15,24 @@ import AllCocktails from '@/components/home/AllCocktails';
 import MapSection from '@/components/home/MapSection';
 import EstablishmentDashboard from '@/components/establishment/EstablishmentDashboard';
 
+// Define the establishment interface to match the one used in FeaturedCocktails and AllCocktails
+interface Establishment {
+  id: string;
+  name: string;
+  distance?: string;
+}
+
+// Define the cocktail interface to match
+interface Cocktail {
+  id: string;
+  name: string;
+  price: string | number;
+  description: string;
+  ingredients: string[];
+  image?: string;
+  establishment: Establishment;
+}
+
 const Index = () => {
   const { user, isLoading } = useAuth();
   const navigate = useNavigate();
@@ -107,7 +125,7 @@ const Index = () => {
           </TabsList>
           
           <TabsContent value="featured">
-            <FeaturedCocktails cocktails={cocktails} />
+            <FeaturedCocktails cocktails={cocktails as any} />
             <NearbyEstablishments 
               establishments={establishments} 
               onViewMap={() => setActiveTab("map")} 
@@ -116,7 +134,7 @@ const Index = () => {
           
           <TabsContent value="all">
             <AllCocktails 
-              cocktails={cocktails} 
+              cocktails={cocktails as any} 
               onResetFilters={resetFilters} 
             />
           </TabsContent>

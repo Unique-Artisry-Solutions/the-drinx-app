@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 
@@ -10,6 +10,7 @@ interface BackButtonProps {
   size?: "default" | "sm" | "lg" | "icon";
   label?: string;
   fallbackPath?: string;
+  showLabel?: boolean;
 }
 
 const BackButton: React.FC<BackButtonProps> = ({ 
@@ -17,10 +18,10 @@ const BackButton: React.FC<BackButtonProps> = ({
   variant = "ghost", 
   size = "sm",
   label = "Back",
-  fallbackPath = "/"
+  fallbackPath = "/",
+  showLabel = true
 }) => {
   const navigate = useNavigate();
-  const location = useLocation();
 
   const goBack = () => {
     // If there's history to go back to, use it
@@ -36,12 +37,12 @@ const BackButton: React.FC<BackButtonProps> = ({
     <Button 
       variant={variant} 
       size={size} 
-      className={`mb-4 ${className}`} 
+      className={className} 
       onClick={goBack}
       aria-label="Go back"
     >
-      <ArrowLeft className="h-4 w-4 mr-1" />
-      <span>{label}</span>
+      <ArrowLeft className="h-4 w-4" />
+      {showLabel && <span className="ml-1">{label}</span>}
     </Button>
   );
 };
