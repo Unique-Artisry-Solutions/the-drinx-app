@@ -31,6 +31,7 @@ interface ActiveSwigCircuit {
   establishments: Establishment[];
   organizer: string;
   theme?: string;
+  status?: string;
 }
 
 const ActiveSwigCircuitSection: React.FC = () => {
@@ -85,8 +86,8 @@ const ActiveSwigCircuitSection: React.FC = () => {
       // Determine current stop index based on check-ins
       const lastEstId = localStorage.getItem('last_checked_in_establishment');
       if (lastEstId && active) {
-        const estIndex = active.establishments.findIndex(est => est.id === lastEstId);
-        if (estIndex !== -1) {
+        const estIndex = active.establishments?.findIndex(est => est.id === lastEstId);
+        if (estIndex !== -1 && estIndex !== undefined) {
           setCurrentStopIndex(estIndex + 1); // Set to next stop
         }
       }
@@ -100,7 +101,9 @@ const ActiveSwigCircuitSection: React.FC = () => {
   // Make sure activeCircuit.establishments exists and is an array before accessing length
   const establishments = activeCircuit.establishments || [];
   const progress = (currentStopIndex / establishments.length) * 100;
-  const currentStop = establishments[currentStopIndex] || establishments[0];
+  
+  // Add safety checks for currentStop and nextStop
+  const currentStop = establishments[currentStopIndex] || establishments[0] || { id: '', name: 'Unknown', address: 'No address available' };
   const nextStop = establishments[currentStopIndex + 1];
   
   const handleCheckIn = () => {
@@ -132,10 +135,10 @@ const ActiveSwigCircuitSection: React.FC = () => {
       <CardContent className="space-y-4">
         <div className="bg-white/70 dark:bg-gray-800/50 rounded-lg p-4 backdrop-blur-sm">
           <div className="flex justify-between items-start mb-2">
-            <h3 className="font-medium text-lg">{activeCircuit.name}</h3>
+            <h3 className="font-medium text-lg">{activeCircuit.name || 'Untitled Swig Circuit'}</h3>
             <div className="text-sm text-gray-600 dark:text-gray-400 flex items-center">
               <Users className="h-4 w-4 mr-1" />
-              <span>Organized by {activeCircuit.organizer}</span>
+              <span>Organized by {activeCircuit.organizer || 'Unknown'}</span>
             </div>
           </div>
           
