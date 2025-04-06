@@ -8,10 +8,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { GlassWater, PenSquare, Share2, Trash2, PlusCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
+import { useIsMobile } from '@/hooks/use-mobile';
+
 type Ingredient = {
   name: string;
   amount: string;
 };
+
 type Recipe = {
   id: string;
   name: string;
@@ -21,6 +24,7 @@ type Recipe = {
   image?: string;
   createdAt: Date;
 };
+
 const UserRecipesTab: React.FC = () => {
   const [recipes, setRecipes] = useState<Recipe[]>(() => {
     // Load from localStorage if available
@@ -86,6 +90,7 @@ const UserRecipesTab: React.FC = () => {
       createdAt: new Date('2023-06-22')
     }];
   });
+
   const [newRecipe, setNewRecipe] = useState<Omit<Recipe, 'id' | 'createdAt'>>({
     name: '',
     description: '',
@@ -96,14 +101,19 @@ const UserRecipesTab: React.FC = () => {
     instructions: '',
     image: 'https://placehold.co/300x200/CCCCCC/666666?text=New+Recipe'
   });
+
   const [isCreatingRecipe, setIsCreatingRecipe] = useState(false);
   const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
+
   const {
     toast
   } = useToast();
+  const isMobile = useIsMobile();
+
   const saveToLocalStorage = (updatedRecipes: Recipe[]) => {
     localStorage.setItem('user_recipes', JSON.stringify(updatedRecipes));
   };
+
   const handleAddIngredient = () => {
     if (editingRecipe) {
       setEditingRecipe({
@@ -123,6 +133,7 @@ const UserRecipesTab: React.FC = () => {
       });
     }
   };
+
   const handleIngredientChange = (index: number, field: keyof Ingredient, value: string) => {
     if (editingRecipe) {
       const updatedIngredients = [...editingRecipe.ingredients];
@@ -146,6 +157,7 @@ const UserRecipesTab: React.FC = () => {
       });
     }
   };
+
   const handleRemoveIngredient = (index: number) => {
     if (editingRecipe) {
       const updatedIngredients = [...editingRecipe.ingredients];
@@ -163,8 +175,8 @@ const UserRecipesTab: React.FC = () => {
       });
     }
   };
+
   const handleCreateRecipe = () => {
-    // Validate form
     if (!newRecipe.name || !newRecipe.instructions || newRecipe.ingredients.some(i => !i.name || !i.amount)) {
       toast({
         title: "Missing information",
@@ -175,7 +187,6 @@ const UserRecipesTab: React.FC = () => {
     }
     const recipeToAdd: Recipe = {
       id: Date.now().toString(),
-      // simple ID generation
       ...newRecipe,
       createdAt: new Date()
     };
@@ -183,7 +194,6 @@ const UserRecipesTab: React.FC = () => {
     setRecipes(updatedRecipes);
     saveToLocalStorage(updatedRecipes);
 
-    // Reset form
     setNewRecipe({
       name: '',
       description: '',
@@ -200,10 +210,10 @@ const UserRecipesTab: React.FC = () => {
       description: "Your new recipe has been saved."
     });
   };
+
   const handleUpdateRecipe = () => {
     if (!editingRecipe) return;
 
-    // Validate form
     if (!editingRecipe.name || !editingRecipe.instructions || editingRecipe.ingredients.some(i => !i.name || !i.amount)) {
       toast({
         title: "Missing information",
@@ -221,6 +231,7 @@ const UserRecipesTab: React.FC = () => {
       description: "Your recipe has been updated successfully."
     });
   };
+
   const handleDeleteRecipe = (id: string) => {
     const updatedRecipes = recipes.filter(recipe => recipe.id !== id);
     setRecipes(updatedRecipes);
@@ -230,23 +241,25 @@ const UserRecipesTab: React.FC = () => {
       description: "Your recipe has been deleted."
     });
   };
+
   const handleShareRecipe = (recipe: Recipe) => {
-    // In a real app, this would implement social sharing functionality
     toast({
       title: "Share recipe",
       description: `Sharing ${recipe.name} recipe (this is a demo feature).`
     });
   };
-  return <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-semibold text-material-on-background text-slate-300">My Drink Recipes</h2>
-          <p className="text-material-on-surface-variant mt-1">Create and manage your own mocktail recipes</p>
+
+  return (
+    <div className="space-y-6">
+      <div className="space-y-2 sm:space-y-0 sm:flex sm:items-center sm:justify-between">
+        <div className="space-y-1">
+          <h2 className="text-xl sm:text-2xl font-semibold text-foreground">My Drink Recipes</h2>
+          <p className="text-sm text-muted-foreground">Create and manage your own mocktail recipes</p>
         </div>
         
         <Dialog open={isCreatingRecipe} onOpenChange={setIsCreatingRecipe}>
           <DialogTrigger asChild>
-            <Button className="bg-spiritless-pink hover:bg-spiritless-pink/90">
+            <Button className="w-full sm:w-auto mt-2 sm:mt-0 bg-spiritless-pink hover:bg-spiritless-pink/90">
               <PlusCircle className="mr-2 h-4 w-4" /> Create Recipe
             </Button>
           </DialogTrigger>
@@ -311,7 +324,6 @@ const UserRecipesTab: React.FC = () => {
           </DialogContent>
         </Dialog>
         
-        {/* Edit Recipe Dialog */}
         <Dialog open={!!editingRecipe} onOpenChange={open => !open && setEditingRecipe(null)}>
           <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-y-auto">
             {editingRecipe && <>
@@ -377,62 +389,80 @@ const UserRecipesTab: React.FC = () => {
         </Dialog>
       </div>
       
-      {recipes.length === 0 ? <Card className="border-dashed">
+      {recipes.length === 0 ? (
+        <Card className="border-dashed">
           <CardContent className="pt-6 text-center">
-            <GlassWater className="mx-auto h-12 w-12 text-material-primary/50 mb-4" />
+            <GlassWater className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
             <h3 className="text-lg font-medium">No recipes yet</h3>
-            <p className="text-material-on-surface-variant mt-2 mb-6">You haven't created any mocktail recipes yet.</p>
+            <p className="text-muted-foreground mt-2 mb-6">You haven't created any mocktail recipes yet.</p>
             <Button onClick={() => setIsCreatingRecipe(true)}>Create Your First Recipe</Button>
           </CardContent>
-        </Card> : <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {recipes.map(recipe => <Card key={recipe.id} className="overflow-hidden hover:shadow-md transition-shadow">
-              <div className="aspect-video relative">
-                <img src={recipe.image || 'https://placehold.co/300x200/CCCCCC/666666?text=Recipe+Image'} alt={recipe.name} className="w-full h-full object-cover" />
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 gap-6">
+          {recipes.map(recipe => (
+            <Card key={recipe.id} className="overflow-hidden hover:shadow-md transition-shadow">
+              <div className="sm:flex">
+                <div className="sm:w-1/3">
+                  <img 
+                    src={recipe.image || 'https://placehold.co/300x200/CCCCCC/666666?text=Recipe+Image'} 
+                    alt={recipe.name} 
+                    className="h-40 sm:h-full w-full object-cover"
+                  />
+                </div>
+                <div className="sm:w-2/3">
+                  <CardHeader>
+                    <div className="flex justify-between items-start">
+                      <CardTitle>{recipe.name}</CardTitle>
+                      <Badge variant="outline" className="bg-spiritless-pink/10 text-spiritless-pink">
+                        Mocktail
+                      </Badge>
+                    </div>
+                    <CardDescription>{recipe.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div>
+                        <h4 className="font-medium mb-2">Ingredients:</h4>
+                        <ul className="list-disc pl-5 text-sm space-y-1">
+                          {recipe.ingredients.map((ingredient, idx) => (
+                            <li key={idx}>{ingredient.amount} {ingredient.name}</li>
+                          ))}
+                        </ul>
+                      </div>
+                      
+                      <div>
+                        <h4 className="font-medium mb-2">Instructions:</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {recipe.instructions}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                  <CardFooter className="flex justify-between border-t pt-4 pb-4">
+                    <div className="text-xs text-muted-foreground">
+                      Created: {recipe.createdAt.toLocaleDateString()}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="ghost" size="icon" onClick={() => handleShareRecipe(recipe)}>
+                        <Share2 className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => setEditingRecipe(recipe)}>
+                        <PenSquare className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => handleDeleteRecipe(recipe.id)}>
+                        <Trash2 className="h-4 w-4 text-red-500" />
+                      </Button>
+                    </div>
+                  </CardFooter>
+                </div>
               </div>
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <CardTitle>{recipe.name}</CardTitle>
-                  <Badge variant="outline" className="bg-spiritless-pink/10 text-spiritless-pink">
-                    Mocktail
-                  </Badge>
-                </div>
-                <CardDescription>{recipe.description}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="font-medium mb-2">Ingredients:</h4>
-                    <ul className="list-disc pl-5 text-sm space-y-1">
-                      {recipe.ingredients.map((ingredient, idx) => <li key={idx}>{ingredient.amount} {ingredient.name}</li>)}
-                    </ul>
-                  </div>
-                  
-                  <div>
-                    <h4 className="font-medium mb-2">Instructions:</h4>
-                    <p className="text-sm text-material-on-surface-variant">
-                      {recipe.instructions}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter className="flex justify-between border-t pt-4 pb-4">
-                <div className="text-xs text-material-on-surface-variant">
-                  Created: {recipe.createdAt.toLocaleDateString()}
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="ghost" size="icon" onClick={() => handleShareRecipe(recipe)}>
-                    <Share2 className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="icon" onClick={() => setEditingRecipe(recipe)}>
-                    <PenSquare className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="icon" onClick={() => handleDeleteRecipe(recipe.id)}>
-                    <Trash2 className="h-4 w-4 text-red-500" />
-                  </Button>
-                </div>
-              </CardFooter>
-            </Card>)}
-        </div>}
-    </div>;
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 };
+
 export default UserRecipesTab;
