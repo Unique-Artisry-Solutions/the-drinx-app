@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { v4 as uuidv4 } from '@supabase/supabase-js';
+import { v4 as uuidv4 } from 'uuid';
 
 export function useAuthState() {
   const [user, setUser] = useState<User | null>(null);
