@@ -1,8 +1,7 @@
-
 import React from 'react';
 import Layout from '@/components/Layout';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { useEstablishmentProfile } from '@/hooks/useEstablishmentProfile';
+import { useEstablishmentProfile } from '@/hooks/establishment/useEstablishmentProfile';
 import VisitorStatsTab from '@/components/establishment/VisitorStatsTab';
 
 const AnalyticsPage: React.FC = () => {

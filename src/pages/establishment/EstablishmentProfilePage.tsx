@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import Layout from '@/components/Layout';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
@@ -7,7 +6,7 @@ import PromotionsTab from '@/components/establishment/PromotionsTab';
 import MocktailMenuTab from '@/components/establishment/MocktailMenuTab';
 import VisitorStatsTab from '@/components/establishment/VisitorStatsTab';
 import BarCrawlsTab from '@/components/establishment/BarCrawlsTab';
-import { useEstablishmentProfile } from '@/hooks/useEstablishmentProfile';
+import { useEstablishmentProfile } from '@/hooks/establishment/useEstablishmentProfile';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -26,23 +25,19 @@ const EstablishmentProfilePage = () => {
     barCrawlsState
   } = useEstablishmentProfile();
   
-  // Set the active tab based on URL parameter if it exists
   useEffect(() => {
     if (tabParam && ['profile', 'promotions', 'menu', 'visitors', 'barCrawls'].includes(tabParam)) {
       setActiveTab(tabParam);
     } else {
-      // If no valid tab parameter, default to profile and update URL
       setSearchParams({ tab: 'profile' });
     }
   }, [tabParam, setSearchParams]);
   
-  // Function to change tabs and update the URL
   const handleTabChange = (value: string) => {
     setActiveTab(value);
     setSearchParams({ tab: value });
   };
   
-  // Prepare tab options for the dropdown menu
   const tabOptions = [
     { value: 'profile', label: isMobile ? 'Profile' : 'Profile' },
     { value: 'promotions', label: isMobile ? 'Promos' : 'Promotions' },
@@ -58,8 +53,6 @@ const EstablishmentProfilePage = () => {
       tabOptions={tabOptions}
     >
       <div className="py-4 animate-fade-in w-full">
-        {/* Removed redundant title here as it's shown in each tab */}
-        
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <div className="px-4 py-2 md:px-6 lg:mx-[10%]">
             <TabsContent value="profile">

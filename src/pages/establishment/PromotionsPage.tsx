@@ -1,7 +1,6 @@
-
 import React from 'react';
 import Layout from '@/components/Layout';
-import { useEstablishmentProfile } from '@/hooks/useEstablishmentProfile';
+import { useEstablishmentProfile } from '@/hooks/establishment/useEstablishmentProfile';
 import PromotionsTab from '@/components/establishment/PromotionsTab';
 
 const PromotionsPage: React.FC = () => {
