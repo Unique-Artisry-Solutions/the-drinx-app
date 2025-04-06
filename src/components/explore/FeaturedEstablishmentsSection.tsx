@@ -41,7 +41,7 @@ const FeaturedEstablishmentsSection: React.FC<FeaturedEstablishmentsSectionProps
         </Link>
       </div>
       
-      <div className="grid grid-cols-2 gap-3 px-3">
+      <div className="flex flex-col space-y-3 px-3">
         {establishments.slice(0, 4).map((establishment) => (
           <EstablishmentCard 
             key={establishment.id}
