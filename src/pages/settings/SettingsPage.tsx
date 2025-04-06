@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/auth';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -14,6 +13,8 @@ import NotificationsTab from './tabs/NotificationsTab';
 import AppearanceTab from './tabs/AppearanceTab';
 import PrivacyTab from './tabs/PrivacyTab';
 import { useProfileData } from './hooks/useProfileData';
+import { ProfileFormProvider } from './hooks/useProfileFormContext';
+import { Form } from '@/components/ui/form';
 
 const SettingsPage = () => {
   const { theme } = useTheme();
@@ -21,6 +22,7 @@ const SettingsPage = () => {
   const [activeTab, setActiveTab] = useState('account');
   
   const { 
+    form,
     profile, 
     loading, 
     handleSubmit, 
@@ -48,78 +50,82 @@ const SettingsPage = () => {
           )}>Manage your account settings and preferences</p>
         </div>
         
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className={cn(
-            "w-full flex justify-start p-1 mb-6",
-            isLightTheme ? "bg-gray-100" : ""
-          )}>
-            <TabsTrigger value="account" className="flex items-center gap-2">
-              <User size={16} />
-              <span>Account</span>
-            </TabsTrigger>
-            <TabsTrigger value="notifications" className="flex items-center gap-2">
-              <Bell size={16} />
-              <span>Notifications</span>
-            </TabsTrigger>
-            <TabsTrigger value="appearance" className="flex items-center gap-2">
-              <Moon size={16} />
-              <span>Appearance</span>
-            </TabsTrigger>
-            <TabsTrigger value="privacy" className="flex items-center gap-2">
-              <Shield size={16} />
-              <span>Privacy</span>
-            </TabsTrigger>
-          </TabsList>
-          
-          <form onSubmit={handleSubmit}>
-            {activeTab === 'account' && (
-              <AccountTab 
-                profile={profile} 
-                isLightTheme={isLightTheme} 
-                avatarFile={avatarFile}
-                onPhotoSelect={handlePhotoSelect}
-              />
-            )}
-            
-            {activeTab === 'notifications' && (
-              <NotificationsTab 
-                profile={profile} 
-                isLightTheme={isLightTheme} 
-              />
-            )}
-            
-            {activeTab === 'appearance' && (
-              <AppearanceTab 
-                profile={profile} 
-                isLightTheme={isLightTheme} 
-              />
-            )}
-            
-            {activeTab === 'privacy' && (
-              <PrivacyTab 
-                isLightTheme={isLightTheme} 
-              />
-            )}
-            
-            <div className="mt-6 flex justify-end gap-4">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => navigate(-1)}
-                className={isLightTheme ? "border-gray-300 text-gray-700" : ""}
-              >
-                Cancel
-              </Button>
-              <Button 
-                type="submit" 
-                disabled={loading}
-                className="bg-gradient-to-r from-purple-600 to-pink-600"
-              >
-                {loading ? 'Saving...' : 'Save Changes'}
-              </Button>
-            </div>
-          </form>
-        </Tabs>
+        <ProfileFormProvider value={form}>
+          <Form {...form}>
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className={cn(
+                "w-full flex justify-start p-1 mb-6",
+                isLightTheme ? "bg-gray-100" : ""
+              )}>
+                <TabsTrigger value="account" className="flex items-center gap-2">
+                  <User size={16} />
+                  <span>Account</span>
+                </TabsTrigger>
+                <TabsTrigger value="notifications" className="flex items-center gap-2">
+                  <Bell size={16} />
+                  <span>Notifications</span>
+                </TabsTrigger>
+                <TabsTrigger value="appearance" className="flex items-center gap-2">
+                  <Moon size={16} />
+                  <span>Appearance</span>
+                </TabsTrigger>
+                <TabsTrigger value="privacy" className="flex items-center gap-2">
+                  <Shield size={16} />
+                  <span>Privacy</span>
+                </TabsTrigger>
+              </TabsList>
+              
+              <form onSubmit={handleSubmit}>
+                {activeTab === 'account' && (
+                  <AccountTab 
+                    profile={profile} 
+                    isLightTheme={isLightTheme} 
+                    avatarFile={avatarFile}
+                    onPhotoSelect={handlePhotoSelect}
+                  />
+                )}
+                
+                {activeTab === 'notifications' && (
+                  <NotificationsTab 
+                    profile={profile} 
+                    isLightTheme={isLightTheme} 
+                  />
+                )}
+                
+                {activeTab === 'appearance' && (
+                  <AppearanceTab 
+                    profile={profile} 
+                    isLightTheme={isLightTheme} 
+                  />
+                )}
+                
+                {activeTab === 'privacy' && (
+                  <PrivacyTab 
+                    isLightTheme={isLightTheme} 
+                  />
+                )}
+                
+                <div className="mt-6 flex justify-end gap-4">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => navigate(-1)}
+                    className={isLightTheme ? "border-gray-300 text-gray-700" : ""}
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    disabled={loading}
+                    className="bg-gradient-to-r from-purple-600 to-pink-600"
+                  >
+                    {loading ? 'Saving...' : 'Save Changes'}
+                  </Button>
+                </div>
+              </form>
+            </Tabs>
+          </Form>
+        </ProfileFormProvider>
       </div>
     </Layout>
   );

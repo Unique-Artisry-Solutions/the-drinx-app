@@ -2,19 +2,25 @@
 import React from 'react';
 import { TabsContent } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
-import { UserProfile } from '../hooks/useProfileData';
+import { UserProfileFormData } from '../hooks/useProfileData';
 import { useProfileFormContext } from '../hooks/useProfileFormContext';
+import {
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormDescription
+} from '@/components/ui/form';
 
 interface AppearanceTabProps {
-  profile: UserProfile;
+  profile: UserProfileFormData;
   isLightTheme: boolean;
 }
 
 const AppearanceTab: React.FC<AppearanceTabProps> = ({ profile, isLightTheme }) => {
-  const { handleToggle } = useProfileFormContext();
+  const form = useProfileFormContext();
   
   return (
     <TabsContent value="appearance">
@@ -29,23 +35,31 @@ const AppearanceTab: React.FC<AppearanceTabProps> = ({ profile, isLightTheme }) 
         </CardHeader>
         
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label className={isLightTheme ? "text-gray-700" : ""}>
-                Dark Mode
-              </Label>
-              <p className={cn(
-                "text-sm", 
-                isLightTheme ? "text-gray-600" : "text-muted-foreground"
-              )}>
-                Use dark theme throughout the app
-              </p>
-            </div>
-            <Switch
-              checked={profile.dark_mode}
-              onCheckedChange={(checked) => handleToggle('dark_mode', checked)}
-            />
-          </div>
+          <FormField
+            control={form.control}
+            name="dark_mode"
+            render={({ field }) => (
+              <FormItem className="flex items-center justify-between space-y-0">
+                <div className="space-y-0.5">
+                  <FormLabel className={isLightTheme ? "text-gray-700" : ""}>
+                    Dark Mode
+                  </FormLabel>
+                  <FormDescription className={cn(
+                    "text-sm", 
+                    isLightTheme ? "text-gray-600" : "text-muted-foreground"
+                  )}>
+                    Use dark theme throughout the app
+                  </FormDescription>
+                </div>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
         </CardContent>
       </Card>
     </TabsContent>

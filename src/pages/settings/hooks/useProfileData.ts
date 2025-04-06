@@ -1,10 +1,30 @@
 
 import { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { useAuth } from '@/contexts/auth';
 import { useTheme } from '@/contexts/ThemeContext';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 
+// Define the validation schema using zod
+export const profileSchema = z.object({
+  username: z.string().min(3, 'Username must be at least 3 characters').max(50),
+  display_name: z.string().min(2, 'Display name must be at least 2 characters').max(50),
+  bio: z.string().max(300, 'Bio must be at most 300 characters').optional(),
+  email: z.string().email('Invalid email format'),
+  phone: z.string().regex(/^\+?[0-9\s()-]{0,20}$/, 'Invalid phone number format').optional().or(z.literal('')),
+  dark_mode: z.boolean().default(false),
+  email_notifications: z.boolean().default(true),
+  push_notifications: z.boolean().default(false),
+  avatar_url: z.string().optional().or(z.literal(''))
+});
+
+// Type representing our form data
+export type UserProfileFormData = z.infer<typeof profileSchema>;
+
+// Original UserProfile type for backward compatibility
 export interface UserProfile {
   username?: string;
   display_name?: string;
@@ -22,18 +42,28 @@ export const useProfileData = () => {
   const { theme, toggleTheme } = useTheme();
   const [loading, setLoading] = useState(false);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
-  const [profile, setProfile] = useState<UserProfile>({
-    username: '',
-    display_name: '',
-    bio: '',
-    email: '',
-    phone: '',
-    dark_mode: theme === 'dark',
-    email_notifications: true,
-    push_notifications: false,
-    avatar_url: '',
+  
+  // Initialize the form with react-hook-form
+  const form = useForm<UserProfileFormData>({
+    resolver: zodResolver(profileSchema),
+    defaultValues: {
+      username: '',
+      display_name: '',
+      bio: '',
+      email: '',
+      phone: '',
+      dark_mode: theme === 'dark',
+      email_notifications: true,
+      push_notifications: false,
+      avatar_url: '',
+    },
+    mode: 'onBlur',
   });
 
+  // Extract values and methods from react-hook-form
+  const { reset, watch } = form;
+  const formValues = watch();
+  
   useEffect(() => {
     const fetchProfile = async () => {
       if (!user) return;
@@ -76,7 +106,8 @@ export const useProfileData = () => {
             throw insertError;
           }
           
-          setProfile({
+          // Use react-hook-form reset to update form values
+          reset({
             username: defaultProfile.username,
             display_name: defaultProfile.display_name,
             bio: '',
@@ -90,7 +121,9 @@ export const useProfileData = () => {
         } else {
           console.log('Profile found:', data[0]);
           const profileData = data[0];
-          setProfile({
+          
+          // Use react-hook-form reset to update form values
+          reset({
             username: profileData.username || '',
             display_name: profileData.display_name || '',
             bio: profileData.bio || '',
@@ -111,25 +144,14 @@ export const useProfileData = () => {
     };
     
     fetchProfile();
-  }, [user, theme]);
+  }, [user, theme, reset]);
 
+  // Watch for dark_mode changes and update theme
   useEffect(() => {
-    if (profile.dark_mode !== undefined && profile.dark_mode !== (theme === 'dark')) {
+    if (formValues.dark_mode !== undefined && formValues.dark_mode !== (theme === 'dark')) {
       toggleTheme();
     }
-  }, [profile.dark_mode]);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setProfile(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleToggle = (name: string, checked: boolean) => {
-    if (name === 'dark_mode') {
-      toggleTheme();
-    }
-    setProfile(prev => ({ ...prev, [name]: checked }));
-  };
+  }, [formValues.dark_mode, theme, toggleTheme]);
 
   const handlePhotoSelect = (file: File) => {
     setAvatarFile(file);
@@ -163,15 +185,14 @@ export const useProfileData = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = form.handleSubmit(async (formData) => {
     if (!user) return;
     
     try {
       setLoading(true);
       console.log('Updating profile for user:', user.id);
       
-      let avatarUrl = profile.avatar_url;
+      let avatarUrl = formData.avatar_url;
       if (avatarFile) {
         const uploadedUrl = await uploadAvatar();
         if (uploadedUrl) {
@@ -182,12 +203,12 @@ export const useProfileData = () => {
       const { error } = await supabase
         .from('profiles')
         .update({
-          username: profile.username,
-          display_name: profile.display_name,
-          bio: profile.bio,
-          phone: profile.phone,
-          email_notifications: profile.email_notifications,
-          push_notifications: profile.push_notifications,
+          username: formData.username,
+          display_name: formData.display_name,
+          bio: formData.bio,
+          phone: formData.phone,
+          email_notifications: formData.email_notifications,
+          push_notifications: formData.push_notifications,
           avatar_url: avatarUrl,
           updated_at: new Date().toISOString()
         })
@@ -196,7 +217,7 @@ export const useProfileData = () => {
       if (error) throw error;
       
       if (avatarFile && avatarUrl) {
-        setProfile(prev => ({ ...prev, avatar_url: avatarUrl }));
+        form.setValue('avatar_url', avatarUrl);
         setAvatarFile(null);
       }
       
@@ -207,14 +228,12 @@ export const useProfileData = () => {
     } finally {
       setLoading(false);
     }
-  };
+  });
 
   return {
-    profile,
+    profile: formValues,
     loading,
-    setProfile,
-    handleChange,
-    handleToggle,
+    form,
     handleSubmit,
     avatarFile,
     handlePhotoSelect

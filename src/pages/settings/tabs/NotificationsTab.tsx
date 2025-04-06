@@ -5,16 +5,23 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
-import { UserProfile } from '../hooks/useProfileData';
+import { UserProfileFormData } from '../hooks/useProfileData';
 import { useProfileFormContext } from '../hooks/useProfileFormContext';
+import {
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormDescription
+} from '@/components/ui/form';
 
 interface NotificationsTabProps {
-  profile: UserProfile;
+  profile: UserProfileFormData;
   isLightTheme: boolean;
 }
 
 const NotificationsTab: React.FC<NotificationsTabProps> = ({ profile, isLightTheme }) => {
-  const { handleToggle } = useProfileFormContext();
+  const form = useProfileFormContext();
   
   return (
     <TabsContent value="notifications">
@@ -29,41 +36,57 @@ const NotificationsTab: React.FC<NotificationsTabProps> = ({ profile, isLightThe
         </CardHeader>
         
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label className={isLightTheme ? "text-gray-700" : ""}>
-                Email Notifications
-              </Label>
-              <p className={cn(
-                "text-sm", 
-                isLightTheme ? "text-gray-600" : "text-muted-foreground"
-              )}>
-                Receive updates via email
-              </p>
-            </div>
-            <Switch
-              checked={profile.email_notifications}
-              onCheckedChange={(checked) => handleToggle('email_notifications', checked)}
-            />
-          </div>
+          <FormField
+            control={form.control}
+            name="email_notifications"
+            render={({ field }) => (
+              <FormItem className="flex items-center justify-between space-y-0">
+                <div className="space-y-0.5">
+                  <FormLabel className={isLightTheme ? "text-gray-700" : ""}>
+                    Email Notifications
+                  </FormLabel>
+                  <FormDescription className={cn(
+                    "text-sm", 
+                    isLightTheme ? "text-gray-600" : "text-muted-foreground"
+                  )}>
+                    Receive updates via email
+                  </FormDescription>
+                </div>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
           
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label className={isLightTheme ? "text-gray-700" : ""}>
-                Push Notifications
-              </Label>
-              <p className={cn(
-                "text-sm", 
-                isLightTheme ? "text-gray-600" : "text-muted-foreground"
-              )}>
-                Receive updates on your device
-              </p>
-            </div>
-            <Switch
-              checked={profile.push_notifications}
-              onCheckedChange={(checked) => handleToggle('push_notifications', checked)}
-            />
-          </div>
+          <FormField
+            control={form.control}
+            name="push_notifications"
+            render={({ field }) => (
+              <FormItem className="flex items-center justify-between space-y-0">
+                <div className="space-y-0.5">
+                  <FormLabel className={isLightTheme ? "text-gray-700" : ""}>
+                    Push Notifications
+                  </FormLabel>
+                  <FormDescription className={cn(
+                    "text-sm", 
+                    isLightTheme ? "text-gray-600" : "text-muted-foreground"
+                  )}>
+                    Receive updates on your device
+                  </FormDescription>
+                </div>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
         </CardContent>
       </Card>
     </TabsContent>

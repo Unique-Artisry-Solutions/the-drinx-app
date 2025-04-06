@@ -7,18 +7,25 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import PhotoUploadField from '@/components/PhotoUploadField';
-import { UserProfile } from '../hooks/useProfileData';
+import { UserProfileFormData } from '../hooks/useProfileData';
 import { useProfileFormContext } from '../hooks/useProfileFormContext';
+import { 
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage
+} from '@/components/ui/form';
 
 interface AccountTabProps {
-  profile: UserProfile;
+  profile: UserProfileFormData;
   isLightTheme: boolean;
   avatarFile: File | null;
   onPhotoSelect: (file: File) => void;
 }
 
 const AccountTab: React.FC<AccountTabProps> = ({ profile, isLightTheme, avatarFile, onPhotoSelect }) => {
-  const { handleChange } = useProfileFormContext();
+  const form = useProfileFormContext();
   
   return (
     <TabsContent value="account">
@@ -53,85 +60,115 @@ const AccountTab: React.FC<AccountTabProps> = ({ profile, isLightTheme, avatarFi
             </div>
           </div>
           
-          <div className="space-y-2">
-            <Label htmlFor="display_name" className={isLightTheme ? "text-gray-700" : ""}>
-              Display Name
-            </Label>
-            <Input
-              id="display_name"
-              name="display_name"
-              value={profile.display_name}
-              onChange={handleChange}
-              placeholder="Your display name"
-              className={isLightTheme ? "bg-white border-gray-200" : ""}
-            />
-          </div>
+          <FormField
+            control={form.control}
+            name="display_name"
+            render={({ field }) => (
+              <FormItem className="space-y-2">
+                <FormLabel className={isLightTheme ? "text-gray-700" : ""}>
+                  Display Name
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="Your display name"
+                    className={isLightTheme ? "bg-white border-gray-200" : ""}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           
-          <div className="space-y-2">
-            <Label htmlFor="username" className={isLightTheme ? "text-gray-700" : ""}>
-              Username
-            </Label>
-            <Input
-              id="username"
-              name="username"
-              value={profile.username}
-              onChange={handleChange}
-              placeholder="Your username"
-              className={isLightTheme ? "bg-white border-gray-200" : ""}
-            />
-          </div>
+          <FormField
+            control={form.control}
+            name="username"
+            render={({ field }) => (
+              <FormItem className="space-y-2">
+                <FormLabel className={isLightTheme ? "text-gray-700" : ""}>
+                  Username
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="Your username"
+                    className={isLightTheme ? "bg-white border-gray-200" : ""}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           
-          <div className="space-y-2">
-            <Label htmlFor="bio" className={isLightTheme ? "text-gray-700" : ""}>
-              Bio
-            </Label>
-            <Textarea
-              id="bio"
-              name="bio"
-              value={profile.bio}
-              onChange={handleChange}
-              placeholder="Tell us about yourself"
-              className={cn(
-                "h-24",
-                isLightTheme ? "bg-white border-gray-200" : ""
-              )}
-            />
-          </div>
+          <FormField
+            control={form.control}
+            name="bio"
+            render={({ field }) => (
+              <FormItem className="space-y-2">
+                <FormLabel className={isLightTheme ? "text-gray-700" : ""}>
+                  Bio
+                </FormLabel>
+                <FormControl>
+                  <Textarea
+                    {...field}
+                    placeholder="Tell us about yourself"
+                    className={cn(
+                      "h-24",
+                      isLightTheme ? "bg-white border-gray-200" : ""
+                    )}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           
-          <div className="space-y-2">
-            <Label htmlFor="email" className={isLightTheme ? "text-gray-700" : ""}>
-              Email
-            </Label>
-            <Input
-              id="email"
-              name="email"
-              value={profile.email}
-              disabled
-              className={cn(
-                isLightTheme ? "bg-gray-100 text-gray-500 border-gray-200" : "text-muted-foreground"
-              )}
-            />
-            <p className={cn(
-              "text-xs", 
-              isLightTheme ? "text-gray-500" : "text-muted-foreground"
-            )}>
-              Email cannot be changed here
-            </p>
-          </div>
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem className="space-y-2">
+                <FormLabel className={isLightTheme ? "text-gray-700" : ""}>
+                  Email
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    disabled
+                    className={cn(
+                      isLightTheme ? "bg-gray-100 text-gray-500 border-gray-200" : "text-muted-foreground"
+                    )}
+                  />
+                </FormControl>
+                <p className={cn(
+                  "text-xs", 
+                  isLightTheme ? "text-gray-500" : "text-muted-foreground"
+                )}>
+                  Email cannot be changed here
+                </p>
+              </FormItem>
+            )}
+          />
           
-          <div className="space-y-2">
-            <Label htmlFor="phone" className={isLightTheme ? "text-gray-700" : ""}>
-              Phone
-            </Label>
-            <Input
-              id="phone"
-              name="phone"
-              value={profile.phone}
-              onChange={handleChange}
-              placeholder="Your phone number"
-              className={isLightTheme ? "bg-white border-gray-200" : ""}
-            />
-          </div>
+          <FormField
+            control={form.control}
+            name="phone"
+            render={({ field }) => (
+              <FormItem className="space-y-2">
+                <FormLabel className={isLightTheme ? "text-gray-700" : ""}>
+                  Phone
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="Your phone number"
+                    className={isLightTheme ? "bg-white border-gray-200" : ""}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </CardContent>
       </Card>
     </TabsContent>

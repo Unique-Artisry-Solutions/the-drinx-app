@@ -1,18 +1,16 @@
 
 import React, { createContext, useContext } from 'react';
-import { UserProfile } from './useProfileData';
+import { UseFormReturn } from 'react-hook-form';
+import { UserProfileFormData } from './useProfileData';
 
-interface ProfileFormContextProps {
-  profile: UserProfile;
-  handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-  handleToggle: (name: string, checked: boolean) => void;
-}
+// Updated context to work with react-hook-form
+export type ProfileFormContextType = UseFormReturn<UserProfileFormData>;
 
-const ProfileFormContext = createContext<ProfileFormContextProps | undefined>(undefined);
+const ProfileFormContext = createContext<ProfileFormContextType | undefined>(undefined);
 
 export const ProfileFormProvider: React.FC<{
   children: React.ReactNode;
-  value: ProfileFormContextProps;
+  value: ProfileFormContextType;
 }> = ({ children, value }) => {
   return (
     <ProfileFormContext.Provider value={value}>
