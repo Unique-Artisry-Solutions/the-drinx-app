@@ -83,10 +83,10 @@ const EstablishmentAnalyticsPage = () => {
                 <CardHeader>
                   <CardTitle>Visitor Growth</CardTitle>
                 </CardHeader>
-                <CardContent className="pb-4">
-                  <div className="h-[280px] w-full">
+                <CardContent className="pb-6">
+                  <div className="h-[320px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={visitorData} margin={{ top: 10, right: 10, left: 0, bottom: 10 }}>
+                      <LineChart data={visitorData} margin={{ top: 10, right: 10, left: 5, bottom: 20 }}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="name" tick={{fontSize: 12}} />
                         <YAxis tick={{fontSize: 12}} />
@@ -108,10 +108,10 @@ const EstablishmentAnalyticsPage = () => {
                 <CardHeader>
                   <CardTitle>Ratings Overview</CardTitle>
                 </CardHeader>
-                <CardContent className="pb-4">
-                  <div className="h-[280px] w-full">
+                <CardContent className="pb-6">
+                  <div className="h-[320px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={ratingData} margin={{ top: 10, right: 10, left: 0, bottom: 10 }}>
+                      <BarChart data={ratingData} margin={{ top: 10, right: 10, left: 5, bottom: 20 }}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="name" tick={{fontSize: 12}} />
                         <YAxis tick={{fontSize: 12}} />
@@ -130,17 +130,17 @@ const EstablishmentAnalyticsPage = () => {
                 <CardHeader>
                   <CardTitle>Popular Mocktails</CardTitle>
                 </CardHeader>
-                <CardContent className="pb-4">
-                  <div className="h-[280px] w-full">
+                <CardContent className="pb-6">
+                  <div className="h-[360px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart 
                         data={mocktailData}
                         layout="vertical"
-                        margin={{ top: 10, right: 10, left: 0, bottom: 10 }}
+                        margin={{ top: 10, right: 10, left: 5, bottom: 20 }}
                       >
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis type="number" tick={{fontSize: 12}} />
-                        <YAxis type="category" dataKey="name" tick={{fontSize: 12}} width={100} />
+                        <YAxis type="category" dataKey="name" tick={{fontSize: 12}} width={120} />
                         <Tooltip />
                         <Legend />
                         <Bar dataKey="orders" fill="#82ca9d" />
@@ -154,10 +154,10 @@ const EstablishmentAnalyticsPage = () => {
                 <CardHeader>
                   <CardTitle>Bar Crawl Participation</CardTitle>
                 </CardHeader>
-                <CardContent className="pb-4">
-                  <div className="h-[280px] w-full">
+                <CardContent className="pb-6">
+                  <div className="h-[320px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={barCrawlData} margin={{ top: 10, right: 10, left: 0, bottom: 10 }}>
+                      <LineChart data={barCrawlData} margin={{ top: 10, right: 10, left: 5, bottom: 20 }}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="date" tick={{fontSize: 12}} />
                         <YAxis tick={{fontSize: 12}} />
@@ -178,8 +178,8 @@ const EstablishmentAnalyticsPage = () => {
                 <CardHeader>
                   <CardTitle>Visitor Demographics - Age</CardTitle>
                 </CardHeader>
-                <CardContent className="pb-4">
-                  <div className="h-[280px] w-full">
+                <CardContent className="pb-6">
+                  <div className="h-[340px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
                         <Pie
@@ -187,7 +187,7 @@ const EstablishmentAnalyticsPage = () => {
                           cx="50%"
                           cy="50%"
                           labelLine={false}
-                          outerRadius={100}
+                          outerRadius={120}
                           fill="#8884d8"
                           dataKey="value"
                           label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
@@ -207,8 +207,8 @@ const EstablishmentAnalyticsPage = () => {
                 <CardHeader>
                   <CardTitle>Visitor Demographics - Gender</CardTitle>
                 </CardHeader>
-                <CardContent className="pb-4">
-                  <div className="h-[280px] w-full">
+                <CardContent className="pb-6">
+                  <div className="h-[340px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
                         <Pie
@@ -216,7 +216,7 @@ const EstablishmentAnalyticsPage = () => {
                           cx="50%"
                           cy="50%"
                           labelLine={false}
-                          outerRadius={100}
+                          outerRadius={120}
                           fill="#8884d8"
                           dataKey="value"
                           label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
@@ -237,8 +237,8 @@ const EstablishmentAnalyticsPage = () => {
               <CardHeader>
                 <CardTitle>Visit Frequency</CardTitle>
               </CardHeader>
-              <CardContent className="pb-4">
-                <div className="h-[280px] w-full">
+              <CardContent className="pb-6">
+                <div className="h-[340px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={[
                       { name: 'First Time', visits: 120 },
@@ -246,7 +246,7 @@ const EstablishmentAnalyticsPage = () => {
                       { name: 'Regular', visits: 65 },
                       { name: 'Frequent', visits: 45 },
                       { name: 'VIP', visits: 25 },
-                    ]} margin={{ top: 10, right: 10, left: 0, bottom: 10 }}>
+                    ]} margin={{ top: 10, right: 10, left: 5, bottom: 20 }}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="name" tick={{fontSize: 12}} />
                       <YAxis tick={{fontSize: 12}} />

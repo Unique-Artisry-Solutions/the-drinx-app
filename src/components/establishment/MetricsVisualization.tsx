@@ -47,8 +47,8 @@ const MetricsVisualization: React.FC<MetricsVisualizationProps> = ({
             Percentage of customers who return to your establishment
           </CardDescription>
         </CardHeader>
-        <CardContent className="pt-0 pb-4">
-          <div className="flex items-center justify-between mb-2">
+        <CardContent className="pt-0 pb-6">
+          <div className="flex items-center justify-between mb-4">
             <div>
               <p className="text-3xl font-bold">{returningRate}%</p>
               <p className="text-xs text-material-on-surface-variant">
@@ -61,7 +61,7 @@ const MetricsVisualization: React.FC<MetricsVisualizationProps> = ({
             </div>
           </div>
           
-          <div className="h-[160px] w-full">
+          <div className="h-[220px] w-full">
             <ChartContainer
               config={{
                 returningVisitors: {
@@ -76,13 +76,13 @@ const MetricsVisualization: React.FC<MetricsVisualizationProps> = ({
             >
               <LineChart
                 data={visitorData}
-                margin={{ top: 5, right: 5, left: 0, bottom: 5 }}
+                margin={{ top: 10, right: 10, left: 5, bottom: 20 }}
               >
                 <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
                 <XAxis dataKey="name" tick={{fontSize: 10}} />
-                <YAxis tick={{fontSize: 10}} width={25} />
+                <YAxis tick={{fontSize: 10}} width={30} />
                 <Tooltip content={<ChartTooltipContent />} />
-                <Legend wrapperStyle={{fontSize: '10px', marginTop: '-10px'}} />
+                <Legend wrapperStyle={{fontSize: '10px', marginTop: '10px'}} />
                 <Line
                   type="monotone"
                   dataKey="returningVisitors"
@@ -114,8 +114,8 @@ const MetricsVisualization: React.FC<MetricsVisualizationProps> = ({
             Customer satisfaction rating over time
           </CardDescription>
         </CardHeader>
-        <CardContent className="pt-0 pb-4">
-          <div className="flex items-center justify-between mb-2">
+        <CardContent className="pt-0 pb-6">
+          <div className="flex items-center justify-between mb-4">
             <div>
               <p className="text-3xl font-bold">4.7<span className="text-lg font-normal">/5</span></p>
               <p className="text-xs text-material-on-surface-variant">
@@ -128,7 +128,7 @@ const MetricsVisualization: React.FC<MetricsVisualizationProps> = ({
             </div>
           </div>
           
-          <div className="h-[160px] w-full">
+          <div className="h-[220px] w-full">
             <ChartContainer
               config={{
                 rating: {
@@ -139,13 +139,13 @@ const MetricsVisualization: React.FC<MetricsVisualizationProps> = ({
             >
               <BarChart
                 data={ratingData}
-                margin={{ top: 5, right: 5, left: 0, bottom: 5 }}
+                margin={{ top: 10, right: 10, left: 5, bottom: 20 }}
               >
                 <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
                 <XAxis dataKey="name" tick={{fontSize: 10}} />
-                <YAxis domain={[0, 5]} tick={{fontSize: 10}} width={25} />
+                <YAxis domain={[0, 5]} tick={{fontSize: 10}} width={30} />
                 <Tooltip content={<ChartTooltipContent />} />
-                <Legend wrapperStyle={{fontSize: '10px', marginTop: '-10px'}} />
+                <Legend wrapperStyle={{fontSize: '10px', marginTop: '10px'}} />
                 <Bar
                   dataKey="rating"
                   fill="var(--color-rating)"
@@ -167,8 +167,8 @@ const MetricsVisualization: React.FC<MetricsVisualizationProps> = ({
             Distribution of mocktail orders
           </CardDescription>
         </CardHeader>
-        <CardContent className="pt-0 pb-4">
-          <div className="flex items-center justify-between mb-2">
+        <CardContent className="pt-0 pb-6">
+          <div className="flex items-center justify-between mb-4">
             <div>
               <p className="text-3xl font-bold">{mocktailData.reduce((sum, item) => sum + item.orders, 0)}</p>
               <p className="text-xs text-material-on-surface-variant">
@@ -185,7 +185,7 @@ const MetricsVisualization: React.FC<MetricsVisualizationProps> = ({
             </div>
           </div>
           
-          <div className="h-[160px] w-full flex justify-center">
+          <div className="h-[240px] w-full flex justify-center">
             <ChartContainer
               config={
                 mocktailData.reduce((config, item) => ({
@@ -204,8 +204,8 @@ const MetricsVisualization: React.FC<MetricsVisualizationProps> = ({
                   nameKey="name"
                   cx="50%"
                   cy="50%"
-                  outerRadius={60}
-                  innerRadius={30}
+                  outerRadius={85}
+                  innerRadius={45}
                   paddingAngle={2}
                   label={({name}) => name.substring(0, 6) + '...'}
                   labelLine={false}
@@ -215,7 +215,7 @@ const MetricsVisualization: React.FC<MetricsVisualizationProps> = ({
                   ))}
                 </Pie>
                 <Tooltip content={<ChartTooltipContent />} />
-                <Legend wrapperStyle={{fontSize: '10px', marginTop: '0px'}} />
+                <Legend wrapperStyle={{fontSize: '10px', marginTop: '10px'}} />
               </PieChart>
             </ChartContainer>
           </div>
@@ -232,8 +232,8 @@ const MetricsVisualization: React.FC<MetricsVisualizationProps> = ({
             Bar crawls featuring your establishment
           </CardDescription>
         </CardHeader>
-        <CardContent className="pt-0 pb-4">
-          <div className="flex items-center justify-between mb-2">
+        <CardContent className="pt-0 pb-6">
+          <div className="flex items-center justify-between mb-4">
             <div>
               <p className="text-3xl font-bold">{barCrawlData.reduce((sum, item) => sum + item.value, 0)}</p>
               <p className="text-xs text-material-on-surface-variant">
@@ -246,7 +246,7 @@ const MetricsVisualization: React.FC<MetricsVisualizationProps> = ({
             </div>
           </div>
           
-          <div className="h-[160px] w-full">
+          <div className="h-[200px] w-full">
             <ChartContainer
               config={
                 barCrawlData.reduce((config, item) => ({
@@ -260,13 +260,13 @@ const MetricsVisualization: React.FC<MetricsVisualizationProps> = ({
             >
               <BarChart
                 data={barCrawlData}
-                margin={{ top: 5, right: 5, left: 0, bottom: 5 }}
+                margin={{ top: 10, right: 10, left: 5, bottom: 20 }}
               >
                 <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
                 <XAxis dataKey="name" tick={{fontSize: 10}} />
-                <YAxis tick={{fontSize: 10}} width={25} />
+                <YAxis tick={{fontSize: 10}} width={30} />
                 <Tooltip content={<ChartTooltipContent />} />
-                <Legend wrapperStyle={{fontSize: '10px', marginTop: '-10px'}} />
+                <Legend wrapperStyle={{fontSize: '10px', marginTop: '10px'}} />
                 <Bar dataKey="value" barSize={20}>
                   {barCrawlData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
