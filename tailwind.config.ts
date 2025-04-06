@@ -75,6 +75,7 @@ export default {
           pink: "#FF719A",
           orange: "#FFA99F",
           green: "#8BC34A",
+          burgundy: "#590202", // Adding the missing spiritless-burgundy color
         },
         material: {
           primary: "#FF719A",
