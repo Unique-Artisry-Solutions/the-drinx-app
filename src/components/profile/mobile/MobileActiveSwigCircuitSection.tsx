@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { useCheckInCooldown } from '@/hooks/useCheckInCooldown';
@@ -6,6 +7,7 @@ import SwigCircuitHeader from './SwigCircuitHeader';
 import CircuitProgress from './CircuitProgress';
 import StopInfo from './StopInfo';
 import CircuitActions from './CircuitActions';
+
 interface Establishment {
   id: string;
   name: string;
@@ -13,6 +15,7 @@ interface Establishment {
   latitude?: number;
   longitude?: number;
 }
+
 interface ActiveSwigCircuit {
   id: string;
   name: string;
@@ -23,14 +26,17 @@ interface ActiveSwigCircuit {
   theme?: string;
   status?: string;
 }
+
 const MobileActiveSwigCircuitSection: React.FC = () => {
   const [activeCircuit, setActiveCircuit] = useState<ActiveSwigCircuit | null>(null);
   const [currentStopIndex, setCurrentStopIndex] = useState(0);
   const [lastCheckInTime, setLastCheckInTime] = useState<Date | null>(null);
+  
   const {
     theme
   } = useTheme();
   const isDark = theme === 'dark';
+  
   const {
     canCheckIn,
     formatTimeRemaining,
@@ -38,9 +44,11 @@ const MobileActiveSwigCircuitSection: React.FC = () => {
   } = useCheckInCooldown({
     lastCheckInTime
   });
+
   useEffect(() => {
     const barCrawls = JSON.parse(localStorage.getItem('user_bar_crawls') || '[]');
     const active = barCrawls.find((bc: any) => bc.status === 'active');
+    
     if (active) {
       setActiveCircuit(active);
     } else {
@@ -70,10 +78,12 @@ const MobileActiveSwigCircuitSection: React.FC = () => {
         theme: 'Tropical Escape',
         status: 'active'
       };
+      
       setActiveCircuit(mockCircuit);
       const updatedBarCrawls = [...barCrawls, mockCircuit];
       localStorage.setItem('user_bar_crawls', JSON.stringify(updatedBarCrawls));
     }
+    
     const lastCheckIn = localStorage.getItem('last_check_in_time');
     if (lastCheckIn) {
       setLastCheckInTime(new Date(lastCheckIn));
@@ -86,9 +96,11 @@ const MobileActiveSwigCircuitSection: React.FC = () => {
       }
     }
   }, []);
+
   if (!activeCircuit) {
     return null;
   }
+
   const establishments = activeCircuit.establishments || [];
   const currentStop = establishments[currentStopIndex] || establishments[0] || {
     id: '',
@@ -96,6 +108,7 @@ const MobileActiveSwigCircuitSection: React.FC = () => {
     address: 'No address available'
   };
   const nextStop = establishments[currentStopIndex + 1];
+
   const handleCheckIn = () => {
     if (!nextStop) return;
     const checkInSuccess = attemptCheckIn(nextStop.id, nextStop.name);
@@ -107,6 +120,7 @@ const MobileActiveSwigCircuitSection: React.FC = () => {
 
   // Use navy blue background for the container
   const cardBgClass = isDark ? "from-navy-900 to-navy-800 dark:from-navy-900 dark:to-navy-850" : "from-navy-100 to-navy-200 dark:from-navy-900 dark:to-navy-850";
+  
   return <Card className={`bg-gradient-to-br ${cardBgClass} border-l-4 border-spiritless-pink shadow-md`}>
       <CardHeader className="pb-2 bg-gradient-to-r from-transparent to-spiritless-pink/10 rounded-tr-lg">
         <SwigCircuitHeader />
@@ -133,4 +147,5 @@ const MobileActiveSwigCircuitSection: React.FC = () => {
       </CardContent>
     </Card>;
 };
+
 export default MobileActiveSwigCircuitSection;
