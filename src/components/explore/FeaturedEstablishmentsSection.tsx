@@ -25,8 +25,8 @@ const FeaturedEstablishmentsSection: React.FC<FeaturedEstablishmentsSectionProps
   };
   
   return (
-    <div className="mb-6 px-2">
-      <div className="flex justify-between items-center mb-4">
+    <div className="mb-6">
+      <div className="flex justify-between items-center mb-4 px-3">
         <h2 className="text-xl font-semibold flex items-center">
           <Building className="h-5 w-5 mr-2 text-spiritless-pink" />
           Featured Establishments
@@ -36,7 +36,7 @@ const FeaturedEstablishmentsSection: React.FC<FeaturedEstablishmentsSectionProps
         </Link>
       </div>
       
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 px-3">
         {establishments.slice(0, 4).map((establishment) => (
           <EstablishmentCard 
             key={establishment.id}

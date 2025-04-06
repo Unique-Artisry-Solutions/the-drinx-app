@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import Layout from '@/components/Layout';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
@@ -54,7 +55,7 @@ const EstablishmentProfilePage = () => {
     >
       <div className="py-4 animate-fade-in w-full">
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <div className="px-4 py-2 md:px-6 lg:mx-[10%]">
+          <div className={isMobile ? "px-3" : "px-4 py-2 md:px-6 lg:mx-[10%]"}>
             <TabsContent value="profile">
               <ProfileTab 
                 name={profileState.name} 

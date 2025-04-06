@@ -65,7 +65,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
     if (isLandingPage) {
       return 'pt-16 pb-0 px-0';
     } else {
-      return 'pt-16 pb-20 px-0'; // Adjusted padding for mobile
+      return 'pt-16 pb-20 px-0'; // Removed horizontal padding
     }
   };
 
