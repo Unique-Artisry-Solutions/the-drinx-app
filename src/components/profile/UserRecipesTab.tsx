@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,12 +8,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { GlassWater, PenSquare, Share2, Trash2, PlusCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-
 type Ingredient = {
   name: string;
   amount: string;
 };
-
 type Recipe = {
   id: string;
   name: string;
@@ -24,7 +21,6 @@ type Recipe = {
   image?: string;
   createdAt: Date;
 };
-
 const UserRecipesTab: React.FC = () => {
   const [recipes, setRecipes] = useState<Recipe[]>(() => {
     // Load from localStorage if available
@@ -42,94 +38,131 @@ const UserRecipesTab: React.FC = () => {
         return [];
       }
     }
-    return [
-      {
-        id: '1',
-        name: 'Virgin Mojito',
-        description: 'A refreshing non-alcoholic take on the classic mojito.',
-        ingredients: [
-          { name: 'Lime', amount: '1, cut into wedges' },
-          { name: 'Fresh mint leaves', amount: '10-12 leaves' },
-          { name: 'Sugar', amount: '2 tablespoons' },
-          { name: 'Club soda', amount: '1 cup' },
-          { name: 'Ice cubes', amount: 'as needed' }
-        ],
-        instructions: 'Muddle the mint leaves with sugar and lime in a glass. Fill with ice cubes and top with club soda. Stir gently and garnish with additional mint leaves.',
-        image: 'https://placehold.co/300x200/9DB2BF/FFFFFF?text=Virgin+Mojito',
-        createdAt: new Date('2023-05-15')
-      },
-      {
-        id: '2',
-        name: 'Berry Splash',
-        description: 'A fruity, colorful mocktail perfect for summer days.',
-        ingredients: [
-          { name: 'Mixed berries', amount: '1/2 cup' },
-          { name: 'Lemon juice', amount: '2 tablespoons' },
-          { name: 'Simple syrup', amount: '1 ounce' },
-          { name: 'Sparkling water', amount: '1 cup' },
-          { name: 'Ice cubes', amount: 'as needed' }
-        ],
-        instructions: 'Blend berries, lemon juice, and simple syrup until smooth. Strain into a glass filled with ice and top with sparkling water. Stir gently and garnish with fresh berries.',
-        image: 'https://placehold.co/300x200/A367B1/FFFFFF?text=Berry+Splash',
-        createdAt: new Date('2023-06-22')
-      }
-    ];
+    return [{
+      id: '1',
+      name: 'Virgin Mojito',
+      description: 'A refreshing non-alcoholic take on the classic mojito.',
+      ingredients: [{
+        name: 'Lime',
+        amount: '1, cut into wedges'
+      }, {
+        name: 'Fresh mint leaves',
+        amount: '10-12 leaves'
+      }, {
+        name: 'Sugar',
+        amount: '2 tablespoons'
+      }, {
+        name: 'Club soda',
+        amount: '1 cup'
+      }, {
+        name: 'Ice cubes',
+        amount: 'as needed'
+      }],
+      instructions: 'Muddle the mint leaves with sugar and lime in a glass. Fill with ice cubes and top with club soda. Stir gently and garnish with additional mint leaves.',
+      image: 'https://placehold.co/300x200/9DB2BF/FFFFFF?text=Virgin+Mojito',
+      createdAt: new Date('2023-05-15')
+    }, {
+      id: '2',
+      name: 'Berry Splash',
+      description: 'A fruity, colorful mocktail perfect for summer days.',
+      ingredients: [{
+        name: 'Mixed berries',
+        amount: '1/2 cup'
+      }, {
+        name: 'Lemon juice',
+        amount: '2 tablespoons'
+      }, {
+        name: 'Simple syrup',
+        amount: '1 ounce'
+      }, {
+        name: 'Sparkling water',
+        amount: '1 cup'
+      }, {
+        name: 'Ice cubes',
+        amount: 'as needed'
+      }],
+      instructions: 'Blend berries, lemon juice, and simple syrup until smooth. Strain into a glass filled with ice and top with sparkling water. Stir gently and garnish with fresh berries.',
+      image: 'https://placehold.co/300x200/A367B1/FFFFFF?text=Berry+Splash',
+      createdAt: new Date('2023-06-22')
+    }];
   });
-
   const [newRecipe, setNewRecipe] = useState<Omit<Recipe, 'id' | 'createdAt'>>({
     name: '',
     description: '',
-    ingredients: [{ name: '', amount: '' }],
+    ingredients: [{
+      name: '',
+      amount: ''
+    }],
     instructions: '',
     image: 'https://placehold.co/300x200/CCCCCC/666666?text=New+Recipe'
   });
-
   const [isCreatingRecipe, setIsCreatingRecipe] = useState(false);
   const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
-  const { toast } = useToast();
-
+  const {
+    toast
+  } = useToast();
   const saveToLocalStorage = (updatedRecipes: Recipe[]) => {
     localStorage.setItem('user_recipes', JSON.stringify(updatedRecipes));
   };
-
   const handleAddIngredient = () => {
     if (editingRecipe) {
       setEditingRecipe({
         ...editingRecipe,
-        ingredients: [...editingRecipe.ingredients, { name: '', amount: '' }]
+        ingredients: [...editingRecipe.ingredients, {
+          name: '',
+          amount: ''
+        }]
       });
     } else {
       setNewRecipe({
         ...newRecipe,
-        ingredients: [...newRecipe.ingredients, { name: '', amount: '' }]
+        ingredients: [...newRecipe.ingredients, {
+          name: '',
+          amount: ''
+        }]
       });
     }
   };
-
   const handleIngredientChange = (index: number, field: keyof Ingredient, value: string) => {
     if (editingRecipe) {
       const updatedIngredients = [...editingRecipe.ingredients];
-      updatedIngredients[index] = { ...updatedIngredients[index], [field]: value };
-      setEditingRecipe({ ...editingRecipe, ingredients: updatedIngredients });
+      updatedIngredients[index] = {
+        ...updatedIngredients[index],
+        [field]: value
+      };
+      setEditingRecipe({
+        ...editingRecipe,
+        ingredients: updatedIngredients
+      });
     } else {
       const updatedIngredients = [...newRecipe.ingredients];
-      updatedIngredients[index] = { ...updatedIngredients[index], [field]: value };
-      setNewRecipe({ ...newRecipe, ingredients: updatedIngredients });
+      updatedIngredients[index] = {
+        ...updatedIngredients[index],
+        [field]: value
+      };
+      setNewRecipe({
+        ...newRecipe,
+        ingredients: updatedIngredients
+      });
     }
   };
-
   const handleRemoveIngredient = (index: number) => {
     if (editingRecipe) {
       const updatedIngredients = [...editingRecipe.ingredients];
       updatedIngredients.splice(index, 1);
-      setEditingRecipe({ ...editingRecipe, ingredients: updatedIngredients });
+      setEditingRecipe({
+        ...editingRecipe,
+        ingredients: updatedIngredients
+      });
     } else {
       const updatedIngredients = [...newRecipe.ingredients];
       updatedIngredients.splice(index, 1);
-      setNewRecipe({ ...newRecipe, ingredients: updatedIngredients });
+      setNewRecipe({
+        ...newRecipe,
+        ingredients: updatedIngredients
+      });
     }
   };
-
   const handleCreateRecipe = () => {
     // Validate form
     if (!newRecipe.name || !newRecipe.instructions || newRecipe.ingredients.some(i => !i.name || !i.amount)) {
@@ -140,33 +173,33 @@ const UserRecipesTab: React.FC = () => {
       });
       return;
     }
-
     const recipeToAdd: Recipe = {
-      id: Date.now().toString(), // simple ID generation
+      id: Date.now().toString(),
+      // simple ID generation
       ...newRecipe,
       createdAt: new Date()
     };
-
     const updatedRecipes = [...recipes, recipeToAdd];
     setRecipes(updatedRecipes);
     saveToLocalStorage(updatedRecipes);
-    
+
     // Reset form
     setNewRecipe({
       name: '',
       description: '',
-      ingredients: [{ name: '', amount: '' }],
+      ingredients: [{
+        name: '',
+        amount: ''
+      }],
       instructions: '',
       image: 'https://placehold.co/300x200/CCCCCC/666666?text=New+Recipe'
     });
     setIsCreatingRecipe(false);
-    
     toast({
       title: "Recipe created",
       description: "Your new recipe has been saved."
     });
   };
-
   const handleUpdateRecipe = () => {
     if (!editingRecipe) return;
 
@@ -179,32 +212,24 @@ const UserRecipesTab: React.FC = () => {
       });
       return;
     }
-
-    const updatedRecipes = recipes.map(recipe => 
-      recipe.id === editingRecipe.id ? editingRecipe : recipe
-    );
-    
+    const updatedRecipes = recipes.map(recipe => recipe.id === editingRecipe.id ? editingRecipe : recipe);
     setRecipes(updatedRecipes);
     saveToLocalStorage(updatedRecipes);
     setEditingRecipe(null);
-    
     toast({
       title: "Recipe updated",
       description: "Your recipe has been updated successfully."
     });
   };
-
   const handleDeleteRecipe = (id: string) => {
     const updatedRecipes = recipes.filter(recipe => recipe.id !== id);
     setRecipes(updatedRecipes);
     saveToLocalStorage(updatedRecipes);
-    
     toast({
       title: "Recipe deleted",
       description: "Your recipe has been deleted."
     });
   };
-
   const handleShareRecipe = (recipe: Recipe) => {
     // In a real app, this would implement social sharing functionality
     toast({
@@ -212,12 +237,10 @@ const UserRecipesTab: React.FC = () => {
       description: `Sharing ${recipe.name} recipe (this is a demo feature).`
     });
   };
-
-  return (
-    <div className="space-y-6">
+  return <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-semibold text-material-on-background">My Drink Recipes</h2>
+          <h2 className="text-2xl font-semibold text-material-on-background text-slate-300">My Drink Recipes</h2>
           <p className="text-material-on-surface-variant mt-1">Create and manage your own mocktail recipes</p>
         </div>
         
@@ -238,57 +261,31 @@ const UserRecipesTab: React.FC = () => {
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="name" className="text-right">Name</Label>
-                <Input
-                  id="name"
-                  className="col-span-3"
-                  value={newRecipe.name}
-                  onChange={(e) => setNewRecipe({...newRecipe, name: e.target.value})}
-                />
+                <Input id="name" className="col-span-3" value={newRecipe.name} onChange={e => setNewRecipe({
+                ...newRecipe,
+                name: e.target.value
+              })} />
               </div>
               
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="description" className="text-right">Description</Label>
-                <Textarea
-                  id="description"
-                  className="col-span-3"
-                  value={newRecipe.description}
-                  onChange={(e) => setNewRecipe({...newRecipe, description: e.target.value})}
-                />
+                <Textarea id="description" className="col-span-3" value={newRecipe.description} onChange={e => setNewRecipe({
+                ...newRecipe,
+                description: e.target.value
+              })} />
               </div>
               
               <div className="grid grid-cols-4 gap-4">
                 <Label className="text-right pt-2">Ingredients</Label>
                 <div className="col-span-3 space-y-2">
-                  {newRecipe.ingredients.map((ingredient, index) => (
-                    <div key={index} className="flex gap-2 items-center">
-                      <Input
-                        placeholder="Ingredient"
-                        value={ingredient.name}
-                        onChange={(e) => handleIngredientChange(index, 'name', e.target.value)}
-                        className="flex-1"
-                      />
-                      <Input
-                        placeholder="Amount"
-                        value={ingredient.amount}
-                        onChange={(e) => handleIngredientChange(index, 'amount', e.target.value)}
-                        className="flex-1"
-                      />
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleRemoveIngredient(index)}
-                        disabled={newRecipe.ingredients.length === 1}
-                      >
+                  {newRecipe.ingredients.map((ingredient, index) => <div key={index} className="flex gap-2 items-center">
+                      <Input placeholder="Ingredient" value={ingredient.name} onChange={e => handleIngredientChange(index, 'name', e.target.value)} className="flex-1" />
+                      <Input placeholder="Amount" value={ingredient.amount} onChange={e => handleIngredientChange(index, 'amount', e.target.value)} className="flex-1" />
+                      <Button variant="ghost" size="icon" onClick={() => handleRemoveIngredient(index)} disabled={newRecipe.ingredients.length === 1}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
-                    </div>
-                  ))}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleAddIngredient}
-                    className="mt-2"
-                  >
+                    </div>)}
+                  <Button variant="outline" size="sm" onClick={handleAddIngredient} className="mt-2">
                     Add Ingredient
                   </Button>
                 </div>
@@ -296,26 +293,18 @@ const UserRecipesTab: React.FC = () => {
               
               <div className="grid grid-cols-4 items-start gap-4">
                 <Label htmlFor="instructions" className="text-right pt-2">Instructions</Label>
-                <Textarea
-                  id="instructions"
-                  className="col-span-3"
-                  rows={4}
-                  value={newRecipe.instructions}
-                  onChange={(e) => setNewRecipe({...newRecipe, instructions: e.target.value})}
-                />
+                <Textarea id="instructions" className="col-span-3" rows={4} value={newRecipe.instructions} onChange={e => setNewRecipe({
+                ...newRecipe,
+                instructions: e.target.value
+              })} />
               </div>
             </div>
             
             <DialogFooter>
-              <Button 
-                variant="outline" 
-                onClick={() => setIsCreatingRecipe(false)}
-              >
+              <Button variant="outline" onClick={() => setIsCreatingRecipe(false)}>
                 Cancel
               </Button>
-              <Button 
-                onClick={handleCreateRecipe}
-              >
+              <Button onClick={handleCreateRecipe}>
                 Save Recipe
               </Button>
             </DialogFooter>
@@ -323,10 +312,9 @@ const UserRecipesTab: React.FC = () => {
         </Dialog>
         
         {/* Edit Recipe Dialog */}
-        <Dialog open={!!editingRecipe} onOpenChange={(open) => !open && setEditingRecipe(null)}>
+        <Dialog open={!!editingRecipe} onOpenChange={open => !open && setEditingRecipe(null)}>
           <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-y-auto">
-            {editingRecipe && (
-              <>
+            {editingRecipe && <>
                 <DialogHeader>
                   <DialogTitle>Edit Recipe</DialogTitle>
                   <DialogDescription>
@@ -337,57 +325,31 @@ const UserRecipesTab: React.FC = () => {
                 <div className="grid gap-4 py-4">
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="edit-name" className="text-right">Name</Label>
-                    <Input
-                      id="edit-name"
-                      className="col-span-3"
-                      value={editingRecipe.name}
-                      onChange={(e) => setEditingRecipe({...editingRecipe, name: e.target.value})}
-                    />
+                    <Input id="edit-name" className="col-span-3" value={editingRecipe.name} onChange={e => setEditingRecipe({
+                  ...editingRecipe,
+                  name: e.target.value
+                })} />
                   </div>
                   
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="edit-description" className="text-right">Description</Label>
-                    <Textarea
-                      id="edit-description"
-                      className="col-span-3"
-                      value={editingRecipe.description}
-                      onChange={(e) => setEditingRecipe({...editingRecipe, description: e.target.value})}
-                    />
+                    <Textarea id="edit-description" className="col-span-3" value={editingRecipe.description} onChange={e => setEditingRecipe({
+                  ...editingRecipe,
+                  description: e.target.value
+                })} />
                   </div>
                   
                   <div className="grid grid-cols-4 gap-4">
                     <Label className="text-right pt-2">Ingredients</Label>
                     <div className="col-span-3 space-y-2">
-                      {editingRecipe.ingredients.map((ingredient, index) => (
-                        <div key={index} className="flex gap-2 items-center">
-                          <Input
-                            placeholder="Ingredient"
-                            value={ingredient.name}
-                            onChange={(e) => handleIngredientChange(index, 'name', e.target.value)}
-                            className="flex-1"
-                          />
-                          <Input
-                            placeholder="Amount"
-                            value={ingredient.amount}
-                            onChange={(e) => handleIngredientChange(index, 'amount', e.target.value)}
-                            className="flex-1"
-                          />
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleRemoveIngredient(index)}
-                            disabled={editingRecipe.ingredients.length === 1}
-                          >
+                      {editingRecipe.ingredients.map((ingredient, index) => <div key={index} className="flex gap-2 items-center">
+                          <Input placeholder="Ingredient" value={ingredient.name} onChange={e => handleIngredientChange(index, 'name', e.target.value)} className="flex-1" />
+                          <Input placeholder="Amount" value={ingredient.amount} onChange={e => handleIngredientChange(index, 'amount', e.target.value)} className="flex-1" />
+                          <Button variant="ghost" size="icon" onClick={() => handleRemoveIngredient(index)} disabled={editingRecipe.ingredients.length === 1}>
                             <Trash2 className="h-4 w-4" />
                           </Button>
-                        </div>
-                      ))}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleAddIngredient}
-                        className="mt-2"
-                      >
+                        </div>)}
+                      <Button variant="outline" size="sm" onClick={handleAddIngredient} className="mt-2">
                         Add Ingredient
                       </Button>
                     </div>
@@ -395,54 +357,37 @@ const UserRecipesTab: React.FC = () => {
                   
                   <div className="grid grid-cols-4 items-start gap-4">
                     <Label htmlFor="edit-instructions" className="text-right pt-2">Instructions</Label>
-                    <Textarea
-                      id="edit-instructions"
-                      className="col-span-3"
-                      rows={4}
-                      value={editingRecipe.instructions}
-                      onChange={(e) => setEditingRecipe({...editingRecipe, instructions: e.target.value})}
-                    />
+                    <Textarea id="edit-instructions" className="col-span-3" rows={4} value={editingRecipe.instructions} onChange={e => setEditingRecipe({
+                  ...editingRecipe,
+                  instructions: e.target.value
+                })} />
                   </div>
                 </div>
                 
                 <DialogFooter>
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setEditingRecipe(null)}
-                  >
+                  <Button variant="outline" onClick={() => setEditingRecipe(null)}>
                     Cancel
                   </Button>
-                  <Button 
-                    onClick={handleUpdateRecipe}
-                  >
+                  <Button onClick={handleUpdateRecipe}>
                     Update Recipe
                   </Button>
                 </DialogFooter>
-              </>
-            )}
+              </>}
           </DialogContent>
         </Dialog>
       </div>
       
-      {recipes.length === 0 ? (
-        <Card className="border-dashed">
+      {recipes.length === 0 ? <Card className="border-dashed">
           <CardContent className="pt-6 text-center">
             <GlassWater className="mx-auto h-12 w-12 text-material-primary/50 mb-4" />
             <h3 className="text-lg font-medium">No recipes yet</h3>
             <p className="text-material-on-surface-variant mt-2 mb-6">You haven't created any mocktail recipes yet.</p>
             <Button onClick={() => setIsCreatingRecipe(true)}>Create Your First Recipe</Button>
           </CardContent>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {recipes.map((recipe) => (
-            <Card key={recipe.id} className="overflow-hidden hover:shadow-md transition-shadow">
+        </Card> : <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {recipes.map(recipe => <Card key={recipe.id} className="overflow-hidden hover:shadow-md transition-shadow">
               <div className="aspect-video relative">
-                <img 
-                  src={recipe.image || 'https://placehold.co/300x200/CCCCCC/666666?text=Recipe+Image'}
-                  alt={recipe.name} 
-                  className="w-full h-full object-cover"
-                />
+                <img src={recipe.image || 'https://placehold.co/300x200/CCCCCC/666666?text=Recipe+Image'} alt={recipe.name} className="w-full h-full object-cover" />
               </div>
               <CardHeader>
                 <div className="flex justify-between items-start">
@@ -458,9 +403,7 @@ const UserRecipesTab: React.FC = () => {
                   <div>
                     <h4 className="font-medium mb-2">Ingredients:</h4>
                     <ul className="list-disc pl-5 text-sm space-y-1">
-                      {recipe.ingredients.map((ingredient, idx) => (
-                        <li key={idx}>{ingredient.amount} {ingredient.name}</li>
-                      ))}
+                      {recipe.ingredients.map((ingredient, idx) => <li key={idx}>{ingredient.amount} {ingredient.name}</li>)}
                     </ul>
                   </div>
                   
@@ -477,35 +420,19 @@ const UserRecipesTab: React.FC = () => {
                   Created: {recipe.createdAt.toLocaleDateString()}
                 </div>
                 <div className="flex gap-2">
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    onClick={() => handleShareRecipe(recipe)}
-                  >
+                  <Button variant="ghost" size="icon" onClick={() => handleShareRecipe(recipe)}>
                     <Share2 className="h-4 w-4" />
                   </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    onClick={() => setEditingRecipe(recipe)}
-                  >
+                  <Button variant="ghost" size="icon" onClick={() => setEditingRecipe(recipe)}>
                     <PenSquare className="h-4 w-4" />
                   </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    onClick={() => handleDeleteRecipe(recipe.id)}
-                  >
+                  <Button variant="ghost" size="icon" onClick={() => handleDeleteRecipe(recipe.id)}>
                     <Trash2 className="h-4 w-4 text-red-500" />
                   </Button>
                 </div>
               </CardFooter>
-            </Card>
-          ))}
-        </div>
-      )}
-    </div>
-  );
+            </Card>)}
+        </div>}
+    </div>;
 };
-
 export default UserRecipesTab;
