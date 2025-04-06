@@ -3,7 +3,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Map } from 'lucide-react';
 import CartButton from './cart/CartButton';
-import { useAuth } from '@/contexts/auth';
+import { useAuth } from '@/contexts/auth/index';
 import BackButton from './navigation/BackButton';
 import UserProfileDropdown from './navigation/user/UserProfileDropdown';
 
