@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth';
@@ -8,7 +7,6 @@ import UserProfileDropdown from './UserProfileDropdown';
 import UserNavLinks from './UserNavLinks';
 import UserMobileMenu from './UserMobileMenu';
 import { useTheme } from '@/contexts/ThemeContext';
-
 interface TabOption {
   value: string;
   label: string;
@@ -18,7 +16,6 @@ interface UserNavbarProps {
   handleTabChange?: (value: string) => void;
   tabOptions?: TabOption[];
 }
-
 const UserNavbar: React.FC<UserNavbarProps> = ({
   activeTab,
   handleTabChange,
@@ -29,10 +26,14 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [userType, setUserType] = useState<'individual' | 'establishment'>('individual');
   const [username, setUsername] = useState<string | null>("Guest");
-  const { theme } = useTheme();
-  const { signOut, user } = useAuth();
+  const {
+    theme
+  } = useTheme();
+  const {
+    signOut,
+    user
+  } = useAuth();
   const isMobile = useIsMobile();
-
   useEffect(() => {
     const storedUserType = localStorage.getItem('user_type');
     if (storedUserType === 'establishment') {
@@ -43,12 +44,10 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
     const fetchUsername = async () => {
       if (user) {
         try {
-          const { data, error } = await supabase
-            .from('profiles')
-            .select('username, display_name')
-            .eq('id', user.id)
-            .single();
-            
+          const {
+            data,
+            error
+          } = await supabase.from('profiles').select('username, display_name').eq('id', user.id).single();
           if (data && !error) {
             setUsername(data.display_name || data.username || "Guest User");
           }
@@ -62,7 +61,6 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
     };
     fetchUsername();
   }, [user]);
-
   const handleLogout = async () => {
     try {
       await signOut();
@@ -71,7 +69,6 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
       console.error('Error during logout:', error);
     }
   };
-
   const handleHomeClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault(); // Prevent default navigation
 
@@ -85,29 +82,19 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
       navigate('/landing');
     }
   };
-
   const getTabOptions = () => {
     if (location.pathname === '/establishment/profile' && tabOptions) {
       return tabOptions;
     }
     return undefined;
   };
-
   const isDarkTheme = theme === 'dark';
-  const navbarClass = isDarkTheme 
-    ? 'bg-gray-900 shadow-md border-b border-gray-800' 
-    : 'bg-white shadow-sm';
-
-  return (
-    <nav className={`user-top-nav fixed top-0 left-0 w-full z-50 ${navbarClass}`}>
+  const navbarClass = isDarkTheme ? 'bg-gray-900 shadow-md border-b border-gray-800' : 'bg-white shadow-sm';
+  return <nav className={`user-top-nav fixed top-0 left-0 w-full z-50 ${navbarClass}`}>
       <div className="user-nav-container max-w-6xl mx-auto px-4 py-3">
         <div className="user-nav-inner flex items-center justify-between">
           <div className="user-nav-left flex items-center">
-            <a 
-              href="#" 
-              onClick={handleHomeClick} 
-              className="user-nav-logo text-xl font-semibold mr-6"
-            >
+            <a href="#" onClick={handleHomeClick} className="user-nav-logo text-xl font-semibold mr-6">
               {isMobile ? "SL" : "Spirit"}
               {!isMobile && <span>less</span>}
             </a>
@@ -116,55 +103,18 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
           </div>
           
           <div className="user-nav-right flex items-center space-x-4">
-            {username && (
-              <span className="text-sm hidden md:block">
+            {username && <span className="text-sm hidden md:block">
                 Welcome, <span className="font-medium text-spiritless-pink">{username}</span>
-              </span>
-            )}
+              </span>}
             
-            <button 
-              className="user-menu-button md:hidden bg-transparent border-none flex items-center justify-center p-2 rounded-md focus:outline-none transition-colors"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
-            >
-              {isMobileMenuOpen ? (
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-x">
-                  <path d="M18 6 6 18" />
-                  <path d="m6 6 12 12" />
-                </svg>
-              ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-menu">
-                  <line x1="4" x2="20" y1="12" y2="12" />
-                  <line x1="4" x2="20" y1="6" y2="6" />
-                  <line x1="4" x2="20" y1="18" y2="18" />
-                </svg>
-              )}
-            </button>
             
-            <UserProfileDropdown 
-              username={username} 
-              userType={userType} 
-              handleLogout={handleLogout} 
-              activeTab={location.pathname === '/establishment/profile' ? activeTab : undefined} 
-              handleTabChange={location.pathname === '/establishment/profile' ? handleTabChange : undefined} 
-              tabOptions={getTabOptions()} 
-            />
+            
+            <UserProfileDropdown username={username} userType={userType} handleLogout={handleLogout} activeTab={location.pathname === '/establishment/profile' ? activeTab : undefined} handleTabChange={location.pathname === '/establishment/profile' ? handleTabChange : undefined} tabOptions={getTabOptions()} />
           </div>
         </div>
         
-        <UserMobileMenu 
-          isOpen={isMobileMenuOpen} 
-          username={username} 
-          userType={userType} 
-          onClose={() => setIsMobileMenuOpen(false)} 
-          handleLogout={handleLogout}
-          activeTab={location.pathname === '/establishment/profile' ? activeTab : undefined} 
-          handleTabChange={location.pathname === '/establishment/profile' ? handleTabChange : undefined} 
-          tabOptions={getTabOptions()} 
-        />
+        <UserMobileMenu isOpen={isMobileMenuOpen} username={username} userType={userType} onClose={() => setIsMobileMenuOpen(false)} handleLogout={handleLogout} activeTab={location.pathname === '/establishment/profile' ? activeTab : undefined} handleTabChange={location.pathname === '/establishment/profile' ? handleTabChange : undefined} tabOptions={getTabOptions()} />
       </div>
-    </nav>
-  );
+    </nav>;
 };
-
 export default UserNavbar;
