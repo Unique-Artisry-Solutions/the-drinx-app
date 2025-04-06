@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
@@ -12,6 +13,7 @@ import QuickLinksTab from '@/components/profile/QuickLinksTab';
 import BadgesTab from '@/components/profile/BadgesTab';
 import UserRecipesTab from '@/components/profile/UserRecipesTab';
 import { sampleEstablishments, sampleCocktails } from '@/data/sampleData';
+import ActiveSwigCircuitSection from '@/components/profile/ActiveSwigCircuitSection';
 
 const ProfilePage: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -19,6 +21,7 @@ const ProfilePage: React.FC = () => {
   const [userEmail, setUserEmail] = useState('');
   const [userJoinDate, setUserJoinDate] = useState<Date | null>(null);
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
+  const [hasActiveSwigCircuit, setHasActiveSwigCircuit] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { signOut } = useAuth();
@@ -45,8 +48,24 @@ const ProfilePage: React.FC = () => {
       
       // Generate mock recent activity
       generateMockActivity();
+      
+      // Check if there's an active swig circuit
+      checkForActiveSwigCircuit();
     }
   }, []);
+  
+  const checkForActiveSwigCircuit = () => {
+    // In a real app, this would check the database
+    // For now, we'll check localStorage
+    const barCrawls = JSON.parse(localStorage.getItem('user_bar_crawls') || '[]');
+    const hasActive = barCrawls.some((bc: any) => bc.status === 'active');
+    setHasActiveSwigCircuit(hasActive);
+    
+    // If there's no active one, we'll create a mock for demo purposes
+    if (!hasActive && Math.random() > 0.5) { // 50% chance to show an active circuit
+      setHasActiveSwigCircuit(true);
+    }
+  };
   
   const generateMockActivity = () => {
     const activities = [
@@ -125,6 +144,13 @@ const ProfilePage: React.FC = () => {
         <div className="absolute inset-0 bg-gradient-to-b from-white/50 to-transparent opacity-40 mix-blend-overlay pointer-events-none -z-10"></div>
         
         <ProfileHeader userName={userName} handleLogout={handleLogout} />
+
+        {/* Active Swig Circuit Section */}
+        {hasActiveSwigCircuit && (
+          <div className="mb-6">
+            <ActiveSwigCircuitSection />
+          </div>
+        )}
 
         <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-gray-800 dark:to-gray-900 p-4 rounded-xl mb-6 shadow-sm backdrop-blur-sm bg-white/30">
           <Tabs defaultValue="overview" className="space-y-4">

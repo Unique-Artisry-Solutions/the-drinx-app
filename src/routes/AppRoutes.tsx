@@ -10,7 +10,7 @@ import CocktailDetail from '@/pages/CocktailDetail';
 import BarCrawlDetail from '@/pages/BarCrawlDetail';
 import UserProfilePage from '@/pages/profile/UserProfilePage';
 import MyCreationsPage from '@/pages/profile/MyCreationsPage';
-import CreateBarCrawlPage from '@/pages/profile/CreateBarCrawlPage';
+import CreateSwigCircuitPage from '@/pages/profile/CreateSwigCircuitPage';
 import RewardsPage from '@/pages/profile/RewardsPage';
 import Profile from '@/pages/ProfilePage';
 import CheckoutPage from '@/pages/CheckoutPage';
@@ -84,7 +84,7 @@ const AppRoutes = () => {
         <Route path="/profile/my-creations" element={<ProtectedRoute><MyCreationsPage /></ProtectedRoute>} />
         <Route path="/profile/rewards" element={<ProtectedRoute><RewardsPage /></ProtectedRoute>} />
         <Route path="/profile/settings" element={<ProtectedRoute><UserProfilePage /></ProtectedRoute>} />
-        <Route path="/create-bar-crawl" element={<ProtectedRoute><CreateBarCrawlPage /></ProtectedRoute>} />
+        <Route path="/create-swig-circuit" element={<ProtectedRoute><CreateSwigCircuitPage /></ProtectedRoute>} />
         <Route path="/profile/my-creations/:id" element={<ProtectedRoute><BarCrawlManagementPage /></ProtectedRoute>} />
         
         {/* Settings route */}

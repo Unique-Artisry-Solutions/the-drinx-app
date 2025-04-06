@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import Layout from '@/components/Layout';
@@ -19,7 +18,7 @@ import BarCrawlControl from '@/components/BarCrawlControl';
 import { Establishment } from '@/types/ProfileTypes';
 import { sampleEstablishments } from '@/data/sampleData';
 
-const CreateBarCrawlPage: React.FC = () => {
+const CreateSwigCircuitPage: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [name, setName] = useState('');
@@ -65,12 +64,24 @@ const CreateBarCrawlPage: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Validate mandatory fields for all required steps
     if (!name || !startDate || !endDate) {
       toast({
-        title: 'Missing fields',
-        description: 'Please fill out all required fields',
+        title: 'Missing basic information',
+        description: 'Please fill out all required fields in the Basics tab',
         variant: 'destructive',
       });
+      setCurrentTab("basics");
+      return;
+    }
+    
+    if (!selectedTheme) {
+      toast({
+        title: 'Missing theme',
+        description: 'Please select a theme for your Swig Circuit',
+        variant: 'destructive',
+      });
+      setCurrentTab("theme");
       return;
     }
 
@@ -80,6 +91,7 @@ const CreateBarCrawlPage: React.FC = () => {
         description: 'Please select at least 2 establishments for your Swig Circuit.',
         variant: 'destructive',
       });
+      setCurrentTab("venues");
       return;
     }
 
@@ -134,10 +146,17 @@ const CreateBarCrawlPage: React.FC = () => {
   };
 
   const getCompletionStatus = (tabName: string): React.ReactNode => {
+    const isMandatory = ["basics", "theme", "venues"].includes(tabName);
+    
     if (isTabComplete(tabName)) {
       return <span className="ml-2 text-xs bg-green-500/20 text-green-700 px-1.5 py-0.5 rounded-full">Complete</span>;
     }
-    return <span className="ml-2 text-xs bg-amber-500/20 text-amber-700 px-1.5 py-0.5 rounded-full">Pending</span>;
+    
+    return (
+      <span className={`ml-2 text-xs ${isMandatory ? "bg-red-500/20 text-red-700" : "bg-amber-500/20 text-amber-700"} px-1.5 py-0.5 rounded-full`}>
+        {isMandatory ? "Required" : "Optional"}
+      </span>
+    );
   };
 
   // Available tabs for navigation
@@ -182,9 +201,7 @@ const CreateBarCrawlPage: React.FC = () => {
           </div>
           
           {/* Right-side content area */}
-          <div className="flex-1">
-            {/* Basic Information */}
-            {currentTab === "basics" && (
+          {currentTab === "basics" && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center">
@@ -462,4 +479,4 @@ const CreateBarCrawlPage: React.FC = () => {
   );
 };
 
-export default CreateBarCrawlPage;
+export default CreateSwigCircuitPage;
