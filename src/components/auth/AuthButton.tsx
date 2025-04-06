@@ -16,7 +16,7 @@ const AuthButton: React.FC<AuthButtonProps> = ({
   type = 'submit',
   onClick,
   variant = 'gradient',
-  className = 'w-full shadow-md hover:shadow-lg transition-all',
+  className = 'w-full shadow-md hover:shadow-lg transition-all text-ellipsis overflow-hidden',
   children
 }) => {
   // Add custom class for gradient buttons
@@ -31,6 +31,7 @@ const AuthButton: React.FC<AuthButtonProps> = ({
       variant={variant === 'gradient' ? 'default' : variant}
       disabled={isLoading}
       onClick={onClick}
+      size={typeof children === 'string' && (children as string).length > 10 ? 'compact' : 'default'}
     >
       {children}
     </Button>

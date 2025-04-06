@@ -135,7 +135,7 @@ const MobileProfilePage: React.FC = () => {
 
   return (
     <Layout>
-      <div className="animate-fade-in px-4 relative overflow-hidden">
+      <div className="animate-fade-in px-3 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 rounded-full bg-gradient-to-br from-spiritless-pink/20 to-spiritless-green/30 blur-3xl -z-10 transform translate-x-1/3 -translate-y-1/4"></div>
         <div className="absolute top-20 right-1/4 w-56 h-56 rounded-full bg-gradient-to-tr from-spiritless-orange/25 to-purple-300/25 blur-2xl -z-10"></div>
         <div className="absolute bottom-10 right-0 w-72 h-72 rounded-full bg-gradient-to-tl from-blue-300/20 to-spiritless-pink/15 blur-2xl -z-10"></div>
@@ -156,28 +156,28 @@ const MobileProfilePage: React.FC = () => {
           <Tabs defaultValue="overview" className="space-y-3">
             <TabsList className="w-full flex justify-between bg-white/70 dark:bg-gray-800/50 backdrop-blur-sm p-1 rounded-lg">
               <TabsTrigger 
-                className="flex-1 text-xs data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm transition-all hover:bg-white/90 dark:hover:bg-gray-700/80"
+                className="flex-1 text-[11px] data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm transition-all hover:bg-white/90 dark:hover:bg-gray-700/80"
                 value="overview"
               >
                 Overview
               </TabsTrigger>
               <TabsTrigger 
-                className="flex-1 text-xs data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm transition-all hover:bg-white/90 dark:hover:bg-gray-700/80"
+                className="flex-1 text-[11px] data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm transition-all hover:bg-white/90 dark:hover:bg-gray-700/80"
                 value="activity"
               >
                 Activity
               </TabsTrigger>
               <TabsTrigger 
-                className="flex-1 text-xs data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm transition-all hover:bg-white/90 dark:hover:bg-gray-700/80"
+                className="flex-1 text-[11px] data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm transition-all hover:bg-white/90 dark:hover:bg-gray-700/80"
                 value="rewards"
               >
                 Rewards
               </TabsTrigger>
               <TabsTrigger 
-                className="flex-1 text-xs data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm transition-all hover:bg-white/90 dark:hover:bg-gray-700/80"
+                className="flex-1 text-[11px] data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm transition-all hover:bg-white/90 dark:hover:bg-gray-700/80"
                 value="favorites"
               >
-                Favorites
+                Favs
               </TabsTrigger>
             </TabsList>
             

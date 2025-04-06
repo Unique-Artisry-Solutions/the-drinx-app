@@ -23,7 +23,7 @@ const EstablishmentGrid: React.FC<EstablishmentGridProps> = ({ establishments })
   };
   
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
       {establishments.map((establishment) => (
         <Card key={establishment.id} className="overflow-hidden hover:shadow-md transition-shadow h-full">
           <Link to={`/establishment/${establishment.id}`} className="flex flex-col h-full" onClick={scrollToTop}>
@@ -51,7 +51,9 @@ const EstablishmentGrid: React.FC<EstablishmentGridProps> = ({ establishments })
                   {establishment.cocktailCount || 0} cocktails
                 </span>
                 {establishment.distance && (
-                  <span>{establishment.distance} away</span>
+                  <span className="text-white text-[10px] px-1.5 py-0.5 rounded-full bg-gray-500/50">
+                    {establishment.distance}
+                  </span>
                 )}
               </div>
             </div>

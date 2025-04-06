@@ -117,7 +117,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
       
       <main className={`flex-1 w-full max-w-full overflow-x-hidden ${getContentPadding()}`}>
         {shouldShowBreadcrumbs() && (
-          <div className="container mx-auto px-4 pt-2">
+          <div className="w-full px-3">
             <Breadcrumbs />
           </div>
         )}
