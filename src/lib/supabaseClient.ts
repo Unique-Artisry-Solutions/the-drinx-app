@@ -51,10 +51,95 @@ interface CustomDatabase extends Database {
           checked_in_at?: string;
           verified_by?: string;
         };
-      }
+      };
+      user_recipes: {
+        Row: {
+          id: string;
+          user_id: string;
+          name: string;
+          description?: string;
+          ingredients: Ingredient[];
+          instructions: string;
+          image_url?: string;
+          is_public: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          name: string;
+          description?: string;
+          ingredients: Ingredient[];
+          instructions: string;
+          image_url?: string;
+          is_public: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          name?: string;
+          description?: string;
+          ingredients?: Ingredient[];
+          instructions?: string;
+          image_url?: string;
+          is_public?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      mocktail_suggestions: {
+        Row: {
+          id: string;
+          user_id: string;
+          establishment_id: string;
+          name: string;
+          description?: string;
+          ingredients: Ingredient[];
+          instructions: string;
+          status: 'pending' | 'approved' | 'rejected';
+          feedback?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          establishment_id: string;
+          name: string;
+          description?: string;
+          ingredients: Ingredient[];
+          instructions: string;
+          status?: 'pending' | 'approved' | 'rejected';
+          feedback?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          establishment_id?: string;
+          name?: string;
+          description?: string;
+          ingredients?: Ingredient[];
+          instructions?: string;
+          status?: 'pending' | 'approved' | 'rejected';
+          feedback?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
     }
   }
 }
+
+// Define the Ingredient type that's used in the interface above
+type Ingredient = {
+  name: string;
+  amount: string;
+};
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://dvifibvzwunnpcsihpxq.supabase.co';
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR2aWZpYnZ6d3VubnBjc2locHhxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDMyNzM4MDcsImV4cCI6MjA1ODg0OTgwN30.8nsPh_YwHjoFDJ2_IMQY9tkM9NHVLmu6oFf5Tnwa2FA';
