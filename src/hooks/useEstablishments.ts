@@ -3,21 +3,7 @@ import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabaseClient } from '@/lib/supabaseClient';
 import { calculateDistance } from '@/lib/utils';
-
-type Establishment = {
-  id: string;
-  name: string;
-  address: string;
-  image?: string;
-  image_url?: string;
-  latitude: number;
-  longitude: number;
-  cocktail_count?: number;
-  cocktailCount?: number;
-  phone?: string;
-  website?: string;
-  distance?: string;
-};
+import { Establishment } from '@/types/DatabaseTypes';
 
 type FetchEstablishmentsOptions = {
   latitude?: number;
@@ -60,7 +46,8 @@ const fetchEstablishmentsFromSupabase = async ({
         ...establishment,
         cocktailCount: establishment.cocktail_count,
         image: establishment.image_url,
-        distance: `${distance.toFixed(1)} mi`
+        distance: `${distance.toFixed(1)} mi`,
+        created_at: establishment.created_at
       } as Establishment;
     });
   }

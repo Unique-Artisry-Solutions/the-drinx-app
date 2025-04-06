@@ -73,9 +73,13 @@ export const migrateCocktails = async () => {
     })
     .map(cocktail => {
       const estName = cocktail.establishment.name.toLowerCase();
+      const price = typeof cocktail.price === 'string' 
+        ? cocktail.price 
+        : `$${Number(cocktail.price).toFixed(2)}`;
+      
       return {
         name: cocktail.name,
-        price: typeof cocktail.price === 'number' ? `$${cocktail.price.toFixed(2)}` : cocktail.price,
+        price: price,
         description: cocktail.description,
         ingredients: cocktail.ingredients,
         image_url: cocktail.image,
@@ -176,7 +180,7 @@ export const migrateBarCrawls = async () => {
     return {
       name: crawl.name,
       description: crawl.description || `Explore the best mocktail spots with ${crawl.name}`,
-      organizer_id: crawl.organizerId || '00000000-0000-0000-0000-000000000000',
+      organizer_id: crawl.organizer || '00000000-0000-0000-0000-000000000000',
       start_date: crawl.date || new Date().toISOString().split('T')[0],
       end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       theme_id: randomTheme.id,

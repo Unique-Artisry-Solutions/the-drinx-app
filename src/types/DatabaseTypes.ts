@@ -44,6 +44,23 @@ export type Cocktail = {
   created_at?: string;
 };
 
+// Establishment type with created_at field
+export type Establishment = {
+  id: string;
+  name: string;
+  address: string;
+  image_url?: string;
+  image?: string; // For compatibility with existing code
+  latitude: number;
+  longitude: number;
+  cocktail_count?: number;
+  cocktailCount?: number; // For compatibility with existing code
+  phone?: string;
+  website?: string;
+  distance?: string;
+  created_at?: string; // Added this field
+};
+
 // Helper type for comment display
 export interface CommentDisplayItem {
   id: string;

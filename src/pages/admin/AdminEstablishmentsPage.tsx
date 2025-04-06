@@ -61,6 +61,12 @@ const AdminEstablishmentsPage = () => {
     });
   };
 
+  // Format date or return a placeholder if not available
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString();
+  };
+
   return (
     <div className="min-h-screen bg-material-background">
       <AdminHeader onLogout={handleLogout} />
@@ -109,7 +115,7 @@ const AdminEstablishmentsPage = () => {
                     <TableCell className="font-medium">{est.name}</TableCell>
                     <TableCell>{est.address}</TableCell>
                     <TableCell>{est.cocktailCount}</TableCell>
-                    <TableCell>{new Date(est.created_at).toLocaleDateString()}</TableCell>
+                    <TableCell>{formatDate(est.created_at)}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end space-x-2">
                         <Button
