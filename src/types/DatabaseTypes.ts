@@ -59,6 +59,7 @@ export type Establishment = {
   website?: string;
   distance?: string;
   created_at?: string; // Added this field
+  owner_id?: string; // Added owner_id field
 };
 
 // Helper type for comment display
@@ -70,3 +71,79 @@ export interface CommentDisplayItem {
   source: 'app' | 'yelp';
   rating?: number;
 }
+
+// User profile type
+export type UserProfile = {
+  id: string;
+  username?: string;
+  display_name?: string;
+  bio?: string;
+  avatar_url?: string;
+  created_at?: string;
+  updated_at?: string;
+};
+
+// User recipe type
+export type UserRecipe = {
+  id: string;
+  user_id: string;
+  name: string;
+  description?: string;
+  ingredients: Ingredient[];
+  instructions: string;
+  image_url?: string;
+  is_public: boolean;
+  created_at?: string;
+  updated_at?: string;
+};
+
+// Ingredient type for user recipes
+export type Ingredient = {
+  name: string;
+  amount: string;
+};
+
+// Mocktail suggestion type
+export type MocktailSuggestion = {
+  id: string;
+  user_id: string;
+  establishment_id: string;
+  name: string;
+  description?: string;
+  ingredients: Ingredient[];
+  instructions: string;
+  status: 'pending' | 'approved' | 'rejected';
+  feedback?: string;
+  created_at?: string;
+  updated_at?: string;
+};
+
+// User rewards type
+export type UserReward = {
+  id: string;
+  user_id: string;
+  points: number;
+  level: number;
+  badges: Badge[];
+  created_at?: string;
+  updated_at?: string;
+};
+
+// Badge type for user rewards
+export type Badge = {
+  id: string;
+  name: string;
+  description?: string;
+  image_url?: string;
+  unlocked_at: string;
+};
+
+// Reward history type
+export type RewardHistory = {
+  id: string;
+  user_id: string;
+  action_type: string;
+  points: number;
+  description?: string;
+  created_at: string;
+};

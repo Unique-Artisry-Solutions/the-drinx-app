@@ -7,6 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { PlusCircle, X } from 'lucide-react';
+import { useMocktailSuggestions } from '@/hooks/useMocktailSuggestions';
+import { useAuth } from '@/contexts/auth';
 
 interface SuggestMocktailModalProps {
   isOpen: boolean;
@@ -25,14 +27,25 @@ const SuggestMocktailModal: React.FC<SuggestMocktailModalProps> = ({
   const [description, setDescription] = useState('');
   const [instructions, setInstructions] = useState('');
   const [newIngredient, setNewIngredient] = useState('');
-  const [ingredients, setIngredients] = useState<string[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [newAmount, setNewAmount] = useState('');
+  const [ingredients, setIngredients] = useState<{ name: string; amount: string }[]>([]);
   const { toast } = useToast();
+  const { user } = useAuth();
+  const { suggestMocktail } = useMocktailSuggestions();
 
   const handleAddIngredient = () => {
-    if (newIngredient.trim()) {
-      setIngredients([...ingredients, newIngredient.trim()]);
+    if (newIngredient.trim() && newAmount.trim()) {
+      setIngredients([...ingredients, { 
+        name: newIngredient.trim(), 
+        amount: newAmount.trim() 
+      }]);
       setNewIngredient('');
+      setNewAmount('');
+    } else {
+      toast({ 
+        title: "Missing information", 
+        description: "Please enter both ingredient name and amount."
+      });
     }
   };
 
@@ -55,37 +68,48 @@ const SuggestMocktailModal: React.FC<SuggestMocktailModalProps> = ({
       return;
     }
 
-    setIsSubmitting(true);
+    if (!user) {
+      toast({ 
+        title: "Authentication required", 
+        description: "Please log in to submit your suggestion." 
+      });
+      return;
+    }
 
     try {
-      // In a real app, this would be an API call to submit the suggestion
-      // For now, we'll just simulate a successful submission
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      toast({
-        title: "Suggestion submitted",
-        description: `Your mocktail suggestion has been sent to ${establishmentName}.`
+      await suggestMocktail.mutateAsync({
+        name,
+        description,
+        ingredients,
+        instructions,
+        establishment_id: establishmentId,
+        user_id: user.id
       });
 
       // Clear form and close modal
-      setName('');
-      setDescription('');
-      setInstructions('');
-      setIngredients([]);
+      resetForm();
       onClose();
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "There was an error submitting your suggestion. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSubmitting(false);
+      console.error('Failed to suggest mocktail:', error);
+      // Error is handled by the mutation
     }
   };
 
+  const resetForm = () => {
+    setName('');
+    setDescription('');
+    setInstructions('');
+    setIngredients([]);
+    setNewIngredient('');
+    setNewAmount('');
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={open => {
+      if (!open) {
+        onClose();
+      }
+    }}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Suggest a Mocktail</DialogTitle>
@@ -122,13 +146,14 @@ const SuggestMocktailModal: React.FC<SuggestMocktailModalProps> = ({
               <Input
                 value={newIngredient}
                 onChange={(e) => setNewIngredient(e.target.value)}
-                placeholder="Add an ingredient"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleAddIngredient();
-                  }
-                }}
+                placeholder="Ingredient name"
+                className="flex-1"
+              />
+              <Input
+                value={newAmount}
+                onChange={(e) => setNewAmount(e.target.value)}
+                placeholder="Amount"
+                className="flex-1"
               />
               <Button 
                 type="button" 
@@ -146,8 +171,9 @@ const SuggestMocktailModal: React.FC<SuggestMocktailModalProps> = ({
                     key={index} 
                     className="bg-material-secondary-container text-material-on-secondary-container px-2 py-1 rounded-full text-sm flex items-center"
                   >
-                    {ingredient}
+                    {ingredient.amount} {ingredient.name}
                     <button 
+                      type="button"
                       onClick={() => handleRemoveIngredient(index)}
                       className="ml-1 text-material-on-secondary-container/70 hover:text-material-on-secondary-container"
                     >
@@ -173,8 +199,11 @@ const SuggestMocktailModal: React.FC<SuggestMocktailModalProps> = ({
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={handleSubmit} disabled={isSubmitting}>
-            {isSubmitting ? "Submitting..." : "Submit Suggestion"}
+          <Button 
+            onClick={handleSubmit} 
+            disabled={suggestMocktail.isPending}
+          >
+            {suggestMocktail.isPending ? "Submitting..." : "Submit Suggestion"}
           </Button>
         </DialogFooter>
       </DialogContent>

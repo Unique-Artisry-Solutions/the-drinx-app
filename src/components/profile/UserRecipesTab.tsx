@@ -1,135 +1,69 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { GlassWater, PenSquare, Share2, Trash2, PlusCircle } from 'lucide-react';
+import { GlassWater, PenSquare, Share2, Trash2, PlusCircle, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
-
-type Ingredient = {
-  name: string;
-  amount: string;
-};
-
-type Recipe = {
-  id: string;
-  name: string;
-  description: string;
-  ingredients: Ingredient[];
-  instructions: string;
-  image?: string;
-  createdAt: Date;
-};
+import { useUserRecipes } from '@/hooks/useUserRecipes';
+import { UserRecipe, Ingredient } from '@/types/DatabaseTypes';
+import { useAuth } from '@/contexts/auth';
 
 const UserRecipesTab: React.FC = () => {
-  const [recipes, setRecipes] = useState<Recipe[]>(() => {
-    // Load from localStorage if available
-    const saved = localStorage.getItem('user_recipes');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        // Convert string dates back to Date objects
-        return parsed.map((recipe: any) => ({
-          ...recipe,
-          createdAt: new Date(recipe.createdAt)
-        }));
-      } catch (e) {
-        console.error('Failed to parse saved recipes', e);
-        return [];
-      }
-    }
-    return [{
-      id: '1',
-      name: 'Virgin Mojito',
-      description: 'A refreshing non-alcoholic take on the classic mojito.',
-      ingredients: [{
-        name: 'Lime',
-        amount: '1, cut into wedges'
-      }, {
-        name: 'Fresh mint leaves',
-        amount: '10-12 leaves'
-      }, {
-        name: 'Sugar',
-        amount: '2 tablespoons'
-      }, {
-        name: 'Club soda',
-        amount: '1 cup'
-      }, {
-        name: 'Ice cubes',
-        amount: 'as needed'
-      }],
-      instructions: 'Muddle the mint leaves with sugar and lime in a glass. Fill with ice cubes and top with club soda. Stir gently and garnish with additional mint leaves.',
-      image: 'https://placehold.co/300x200/9DB2BF/FFFFFF?text=Virgin+Mojito',
-      createdAt: new Date('2023-05-15')
-    }, {
-      id: '2',
-      name: 'Berry Splash',
-      description: 'A fruity, colorful mocktail perfect for summer days.',
-      ingredients: [{
-        name: 'Mixed berries',
-        amount: '1/2 cup'
-      }, {
-        name: 'Lemon juice',
-        amount: '2 tablespoons'
-      }, {
-        name: 'Simple syrup',
-        amount: '1 ounce'
-      }, {
-        name: 'Sparkling water',
-        amount: '1 cup'
-      }, {
-        name: 'Ice cubes',
-        amount: 'as needed'
-      }],
-      instructions: 'Blend berries, lemon juice, and simple syrup until smooth. Strain into a glass filled with ice and top with sparkling water. Stir gently and garnish with fresh berries.',
-      image: 'https://placehold.co/300x200/A367B1/FFFFFF?text=Berry+Splash',
-      createdAt: new Date('2023-06-22')
-    }];
-  });
+  const { recipes, isLoading, createRecipe, updateRecipe, deleteRecipe } = useUserRecipes();
+  const [isCreatingRecipe, setIsCreatingRecipe] = useState(false);
+  const [editingRecipe, setEditingRecipe] = useState<UserRecipe | null>(null);
+  const [newIngredient, setNewIngredient] = useState('');
+  const [newAmount, setNewAmount] = useState('');
+  const { toast } = useToast();
+  const isMobile = useIsMobile();
+  const { user } = useAuth();
 
-  const [newRecipe, setNewRecipe] = useState<Omit<Recipe, 'id' | 'createdAt'>>({
+  // New recipe form state
+  const [newRecipe, setNewRecipe] = useState<{
+    name: string;
+    description: string;
+    ingredients: Ingredient[];
+    instructions: string;
+    is_public: boolean;
+  }>({
     name: '',
     description: '',
-    ingredients: [{
-      name: '',
-      amount: ''
-    }],
+    ingredients: [],
     instructions: '',
-    image: 'https://placehold.co/300x200/CCCCCC/666666?text=New+Recipe'
+    is_public: false
   });
 
-  const [isCreatingRecipe, setIsCreatingRecipe] = useState(false);
-  const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
-
-  const {
-    toast
-  } = useToast();
-  const isMobile = useIsMobile();
-
-  const saveToLocalStorage = (updatedRecipes: Recipe[]) => {
-    localStorage.setItem('user_recipes', JSON.stringify(updatedRecipes));
-  };
-
   const handleAddIngredient = () => {
-    if (editingRecipe) {
-      setEditingRecipe({
-        ...editingRecipe,
-        ingredients: [...editingRecipe.ingredients, {
-          name: '',
-          amount: ''
-        }]
-      });
+    if (newIngredient.trim() && newAmount.trim()) {
+      if (editingRecipe) {
+        setEditingRecipe({
+          ...editingRecipe,
+          ingredients: [
+            ...editingRecipe.ingredients,
+            { name: newIngredient.trim(), amount: newAmount.trim() }
+          ]
+        });
+      } else {
+        setNewRecipe({
+          ...newRecipe,
+          ingredients: [
+            ...newRecipe.ingredients,
+            { name: newIngredient.trim(), amount: newAmount.trim() }
+          ]
+        });
+      }
+      setNewIngredient('');
+      setNewAmount('');
     } else {
-      setNewRecipe({
-        ...newRecipe,
-        ingredients: [...newRecipe.ingredients, {
-          name: '',
-          amount: ''
-        }]
+      toast({
+        title: "Missing information",
+        description: "Please enter both ingredient name and amount."
       });
     }
   };
@@ -176,78 +110,113 @@ const UserRecipesTab: React.FC = () => {
     }
   };
 
-  const handleCreateRecipe = () => {
-    if (!newRecipe.name || !newRecipe.instructions || newRecipe.ingredients.some(i => !i.name || !i.amount)) {
+  const handleCreateRecipe = async () => {
+    if (!newRecipe.name || !newRecipe.instructions || newRecipe.ingredients.length === 0) {
       toast({
         title: "Missing information",
-        description: "Please fill in all fields for the recipe.",
+        description: "Please fill in all required fields for the recipe.",
         variant: "destructive"
       });
       return;
     }
-    const recipeToAdd: Recipe = {
-      id: Date.now().toString(),
-      ...newRecipe,
-      createdAt: new Date()
-    };
-    const updatedRecipes = [...recipes, recipeToAdd];
-    setRecipes(updatedRecipes);
-    saveToLocalStorage(updatedRecipes);
 
-    setNewRecipe({
-      name: '',
-      description: '',
-      ingredients: [{
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to save your recipe."
+      });
+      return;
+    }
+
+    try {
+      await createRecipe.mutateAsync({
+        name: newRecipe.name,
+        description: newRecipe.description,
+        ingredients: newRecipe.ingredients,
+        instructions: newRecipe.instructions,
+        is_public: newRecipe.is_public,
+        image_url: `https://placehold.co/300x200/9DB2BF/FFFFFF?text=${encodeURIComponent(newRecipe.name)}`
+      });
+
+      // Reset form and close modal
+      setNewRecipe({
         name: '',
-        amount: ''
-      }],
-      instructions: '',
-      image: 'https://placehold.co/300x200/CCCCCC/666666?text=New+Recipe'
-    });
-    setIsCreatingRecipe(false);
-    toast({
-      title: "Recipe created",
-      description: "Your new recipe has been saved."
-    });
+        description: '',
+        ingredients: [],
+        instructions: '',
+        is_public: false
+      });
+      setIsCreatingRecipe(false);
+    } catch (error) {
+      console.error('Failed to create recipe:', error);
+      // Error is handled by the mutation
+    }
   };
 
-  const handleUpdateRecipe = () => {
+  const handleUpdateRecipe = async () => {
     if (!editingRecipe) return;
 
-    if (!editingRecipe.name || !editingRecipe.instructions || editingRecipe.ingredients.some(i => !i.name || !i.amount)) {
+    if (!editingRecipe.name || !editingRecipe.instructions || editingRecipe.ingredients.length === 0) {
       toast({
         title: "Missing information",
-        description: "Please fill in all fields for the recipe.",
+        description: "Please fill in all required fields for the recipe.",
         variant: "destructive"
       });
       return;
     }
-    const updatedRecipes = recipes.map(recipe => recipe.id === editingRecipe.id ? editingRecipe : recipe);
-    setRecipes(updatedRecipes);
-    saveToLocalStorage(updatedRecipes);
-    setEditingRecipe(null);
-    toast({
-      title: "Recipe updated",
-      description: "Your recipe has been updated successfully."
-    });
+
+    try {
+      await updateRecipe.mutateAsync({
+        id: editingRecipe.id,
+        name: editingRecipe.name,
+        description: editingRecipe.description || '',
+        ingredients: editingRecipe.ingredients,
+        instructions: editingRecipe.instructions,
+        is_public: editingRecipe.is_public,
+        image_url: editingRecipe.image_url
+      });
+
+      setEditingRecipe(null);
+    } catch (error) {
+      console.error('Failed to update recipe:', error);
+      // Error is handled by the mutation
+    }
   };
 
-  const handleDeleteRecipe = (id: string) => {
-    const updatedRecipes = recipes.filter(recipe => recipe.id !== id);
-    setRecipes(updatedRecipes);
-    saveToLocalStorage(updatedRecipes);
-    toast({
-      title: "Recipe deleted",
-      description: "Your recipe has been deleted."
-    });
+  const handleDeleteRecipe = async (recipeId: string) => {
+    if (window.confirm('Are you sure you want to delete this recipe?')) {
+      try {
+        await deleteRecipe.mutateAsync(recipeId);
+      } catch (error) {
+        console.error('Failed to delete recipe:', error);
+        // Error is handled by the mutation
+      }
+    }
   };
 
-  const handleShareRecipe = (recipe: Recipe) => {
+  const handleShareRecipe = (recipe: UserRecipe) => {
     toast({
       title: "Share recipe",
       description: `Sharing ${recipe.name} recipe (this is a demo feature).`
     });
   };
+
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return '';
+    return new Date(dateString).toLocaleDateString();
+  };
+
+  if (!user) {
+    return (
+      <Card className="border-dashed">
+        <CardContent className="pt-6 text-center">
+          <GlassWater className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
+          <h3 className="text-lg font-medium">Authentication Required</h3>
+          <p className="text-muted-foreground mt-2 mb-6">Please log in to view and manage your recipes.</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -274,59 +243,137 @@ const UserRecipesTab: React.FC = () => {
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="name" className="text-right">Name</Label>
-                <Input id="name" className="col-span-3" value={newRecipe.name} onChange={e => setNewRecipe({
-                ...newRecipe,
-                name: e.target.value
-              })} />
+                <Input 
+                  id="name" 
+                  className="col-span-3" 
+                  value={newRecipe.name} 
+                  onChange={e => setNewRecipe({
+                    ...newRecipe,
+                    name: e.target.value
+                  })} 
+                />
               </div>
               
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="description" className="text-right">Description</Label>
-                <Textarea id="description" className="col-span-3" value={newRecipe.description} onChange={e => setNewRecipe({
-                ...newRecipe,
-                description: e.target.value
-              })} />
+                <Textarea 
+                  id="description" 
+                  className="col-span-3" 
+                  value={newRecipe.description} 
+                  onChange={e => setNewRecipe({
+                    ...newRecipe,
+                    description: e.target.value
+                  })} 
+                />
               </div>
               
               <div className="grid grid-cols-4 gap-4">
                 <Label className="text-right pt-2">Ingredients</Label>
                 <div className="col-span-3 space-y-2">
-                  {newRecipe.ingredients.map((ingredient, index) => <div key={index} className="flex gap-2 items-center">
-                      <Input placeholder="Ingredient" value={ingredient.name} onChange={e => handleIngredientChange(index, 'name', e.target.value)} className="flex-1" />
-                      <Input placeholder="Amount" value={ingredient.amount} onChange={e => handleIngredientChange(index, 'amount', e.target.value)} className="flex-1" />
-                      <Button variant="ghost" size="icon" onClick={() => handleRemoveIngredient(index)} disabled={newRecipe.ingredients.length === 1}>
+                  <div className="flex gap-2">
+                    <Input 
+                      placeholder="Ingredient" 
+                      value={newIngredient} 
+                      onChange={e => setNewIngredient(e.target.value)} 
+                      className="flex-1" 
+                    />
+                    <Input 
+                      placeholder="Amount" 
+                      value={newAmount} 
+                      onChange={e => setNewAmount(e.target.value)} 
+                      className="flex-1" 
+                    />
+                    <Button 
+                      variant="outline" 
+                      size="icon" 
+                      onClick={handleAddIngredient}
+                    >
+                      <PlusCircle className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  
+                  {newRecipe.ingredients.map((ingredient, index) => (
+                    <div key={index} className="flex gap-2 items-center">
+                      <Input 
+                        placeholder="Ingredient" 
+                        value={ingredient.name} 
+                        onChange={e => handleIngredientChange(index, 'name', e.target.value)} 
+                        className="flex-1" 
+                      />
+                      <Input 
+                        placeholder="Amount" 
+                        value={ingredient.amount} 
+                        onChange={e => handleIngredientChange(index, 'amount', e.target.value)} 
+                        className="flex-1" 
+                      />
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => handleRemoveIngredient(index)} 
+                        disabled={newRecipe.ingredients.length === 1}
+                      >
                         <Trash2 className="h-4 w-4" />
                       </Button>
-                    </div>)}
-                  <Button variant="outline" size="sm" onClick={handleAddIngredient} className="mt-2">
-                    Add Ingredient
-                  </Button>
+                    </div>
+                  ))}
                 </div>
               </div>
               
               <div className="grid grid-cols-4 items-start gap-4">
                 <Label htmlFor="instructions" className="text-right pt-2">Instructions</Label>
-                <Textarea id="instructions" className="col-span-3" rows={4} value={newRecipe.instructions} onChange={e => setNewRecipe({
-                ...newRecipe,
-                instructions: e.target.value
-              })} />
+                <Textarea 
+                  id="instructions" 
+                  className="col-span-3" 
+                  rows={4} 
+                  value={newRecipe.instructions} 
+                  onChange={e => setNewRecipe({
+                    ...newRecipe,
+                    instructions: e.target.value
+                  })} 
+                />
+              </div>
+
+              <div className="grid grid-cols-4 items-center gap-4">
+                <div className="col-start-2 col-span-3 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="is_public"
+                    checked={newRecipe.is_public}
+                    onChange={(e) => setNewRecipe({
+                      ...newRecipe,
+                      is_public: e.target.checked
+                    })}
+                    className="rounded border-gray-300 text-spiritless-pink"
+                  />
+                  <Label htmlFor="is_public">Make this recipe public for everyone to see</Label>
+                </div>
               </div>
             </div>
             
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsCreatingRecipe(false)}>
+              <Button 
+                variant="outline" 
+                onClick={() => setIsCreatingRecipe(false)}
+              >
                 Cancel
               </Button>
-              <Button onClick={handleCreateRecipe}>
-                Save Recipe
+              <Button 
+                onClick={handleCreateRecipe} 
+                disabled={createRecipe.isPending}
+              >
+                {createRecipe.isPending ? "Saving..." : "Save Recipe"}
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
         
-        <Dialog open={!!editingRecipe} onOpenChange={open => !open && setEditingRecipe(null)}>
+        <Dialog 
+          open={!!editingRecipe} 
+          onOpenChange={(open) => !open && setEditingRecipe(null)}
+        >
           <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-y-auto">
-            {editingRecipe && <>
+            {editingRecipe && (
+              <>
                 <DialogHeader>
                   <DialogTitle>Edit Recipe</DialogTitle>
                   <DialogDescription>
@@ -337,59 +384,138 @@ const UserRecipesTab: React.FC = () => {
                 <div className="grid gap-4 py-4">
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="edit-name" className="text-right">Name</Label>
-                    <Input id="edit-name" className="col-span-3" value={editingRecipe.name} onChange={e => setEditingRecipe({
-                  ...editingRecipe,
-                  name: e.target.value
-                })} />
+                    <Input 
+                      id="edit-name" 
+                      className="col-span-3" 
+                      value={editingRecipe.name} 
+                      onChange={e => setEditingRecipe({
+                        ...editingRecipe,
+                        name: e.target.value
+                      })} 
+                    />
                   </div>
                   
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="edit-description" className="text-right">Description</Label>
-                    <Textarea id="edit-description" className="col-span-3" value={editingRecipe.description} onChange={e => setEditingRecipe({
-                  ...editingRecipe,
-                  description: e.target.value
-                })} />
+                    <Textarea 
+                      id="edit-description" 
+                      className="col-span-3" 
+                      value={editingRecipe.description || ''} 
+                      onChange={e => setEditingRecipe({
+                        ...editingRecipe,
+                        description: e.target.value
+                      })} 
+                    />
                   </div>
                   
                   <div className="grid grid-cols-4 gap-4">
                     <Label className="text-right pt-2">Ingredients</Label>
                     <div className="col-span-3 space-y-2">
-                      {editingRecipe.ingredients.map((ingredient, index) => <div key={index} className="flex gap-2 items-center">
-                          <Input placeholder="Ingredient" value={ingredient.name} onChange={e => handleIngredientChange(index, 'name', e.target.value)} className="flex-1" />
-                          <Input placeholder="Amount" value={ingredient.amount} onChange={e => handleIngredientChange(index, 'amount', e.target.value)} className="flex-1" />
-                          <Button variant="ghost" size="icon" onClick={() => handleRemoveIngredient(index)} disabled={editingRecipe.ingredients.length === 1}>
+                      <div className="flex gap-2">
+                        <Input 
+                          placeholder="Ingredient" 
+                          value={newIngredient} 
+                          onChange={e => setNewIngredient(e.target.value)} 
+                          className="flex-1" 
+                        />
+                        <Input 
+                          placeholder="Amount" 
+                          value={newAmount} 
+                          onChange={e => setNewAmount(e.target.value)} 
+                          className="flex-1" 
+                        />
+                        <Button 
+                          variant="outline" 
+                          size="icon" 
+                          onClick={handleAddIngredient}
+                        >
+                          <PlusCircle className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      
+                      {editingRecipe.ingredients.map((ingredient, index) => (
+                        <div key={index} className="flex gap-2 items-center">
+                          <Input 
+                            placeholder="Ingredient" 
+                            value={ingredient.name} 
+                            onChange={e => handleIngredientChange(index, 'name', e.target.value)} 
+                            className="flex-1" 
+                          />
+                          <Input 
+                            placeholder="Amount" 
+                            value={ingredient.amount} 
+                            onChange={e => handleIngredientChange(index, 'amount', e.target.value)} 
+                            className="flex-1" 
+                          />
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => handleRemoveIngredient(index)} 
+                            disabled={editingRecipe.ingredients.length === 1}
+                          >
                             <Trash2 className="h-4 w-4" />
                           </Button>
-                        </div>)}
-                      <Button variant="outline" size="sm" onClick={handleAddIngredient} className="mt-2">
-                        Add Ingredient
-                      </Button>
+                        </div>
+                      ))}
                     </div>
                   </div>
                   
                   <div className="grid grid-cols-4 items-start gap-4">
                     <Label htmlFor="edit-instructions" className="text-right pt-2">Instructions</Label>
-                    <Textarea id="edit-instructions" className="col-span-3" rows={4} value={editingRecipe.instructions} onChange={e => setEditingRecipe({
-                  ...editingRecipe,
-                  instructions: e.target.value
-                })} />
+                    <Textarea 
+                      id="edit-instructions" 
+                      className="col-span-3" 
+                      rows={4} 
+                      value={editingRecipe.instructions} 
+                      onChange={e => setEditingRecipe({
+                        ...editingRecipe,
+                        instructions: e.target.value
+                      })} 
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <div className="col-start-2 col-span-3 flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id="edit_is_public"
+                        checked={editingRecipe.is_public}
+                        onChange={(e) => setEditingRecipe({
+                          ...editingRecipe,
+                          is_public: e.target.checked
+                        })}
+                        className="rounded border-gray-300 text-spiritless-pink"
+                      />
+                      <Label htmlFor="edit_is_public">Make this recipe public for everyone to see</Label>
+                    </div>
                   </div>
                 </div>
                 
                 <DialogFooter>
-                  <Button variant="outline" onClick={() => setEditingRecipe(null)}>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setEditingRecipe(null)}
+                  >
                     Cancel
                   </Button>
-                  <Button onClick={handleUpdateRecipe}>
-                    Update Recipe
+                  <Button 
+                    onClick={handleUpdateRecipe}
+                    disabled={updateRecipe.isPending}
+                  >
+                    {updateRecipe.isPending ? "Saving..." : "Update Recipe"}
                   </Button>
                 </DialogFooter>
-              </>}
+              </>
+            )}
           </DialogContent>
         </Dialog>
       </div>
       
-      {recipes.length === 0 ? (
+      {isLoading ? (
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-spiritless-pink"></div>
+        </div>
+      ) : recipes.length === 0 ? (
         <Card className="border-dashed">
           <CardContent className="pt-6 text-center">
             <GlassWater className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
@@ -405,7 +531,7 @@ const UserRecipesTab: React.FC = () => {
               <div className="sm:flex">
                 <div className="sm:w-1/3">
                   <img 
-                    src={recipe.image || 'https://placehold.co/300x200/CCCCCC/666666?text=Recipe+Image'} 
+                    src={recipe.image_url || 'https://placehold.co/300x200/CCCCCC/666666?text=Recipe+Image'} 
                     alt={recipe.name} 
                     className="h-40 sm:h-full w-full object-cover"
                   />
@@ -414,8 +540,8 @@ const UserRecipesTab: React.FC = () => {
                   <CardHeader>
                     <div className="flex justify-between items-start">
                       <CardTitle>{recipe.name}</CardTitle>
-                      <Badge variant="outline" className="bg-spiritless-pink/10 text-spiritless-pink">
-                        Mocktail
+                      <Badge variant="outline" className={`${recipe.is_public ? 'bg-green-50 text-green-700' : 'bg-spiritless-pink/10 text-spiritless-pink'}`}>
+                        {recipe.is_public ? 'Public' : 'Private'}
                       </Badge>
                     </div>
                     <CardDescription>{recipe.description}</CardDescription>
@@ -441,16 +567,32 @@ const UserRecipesTab: React.FC = () => {
                   </CardContent>
                   <CardFooter className="flex justify-between border-t pt-4 pb-4">
                     <div className="text-xs text-muted-foreground">
-                      Created: {recipe.createdAt.toLocaleDateString()}
+                      Created: {formatDate(recipe.created_at)}
+                      {recipe.updated_at && recipe.updated_at !== recipe.created_at && (
+                        <> · Updated: {formatDate(recipe.updated_at)}</>
+                      )}
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="ghost" size="icon" onClick={() => handleShareRecipe(recipe)}>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => handleShareRecipe(recipe)}
+                      >
                         <Share2 className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => setEditingRecipe(recipe)}>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => setEditingRecipe(recipe)}
+                      >
                         <PenSquare className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDeleteRecipe(recipe.id)}>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => handleDeleteRecipe(recipe.id)}
+                        disabled={deleteRecipe.isPending && deleteRecipe.variables === recipe.id}
+                      >
                         <Trash2 className="h-4 w-4 text-red-500" />
                       </Button>
                     </div>

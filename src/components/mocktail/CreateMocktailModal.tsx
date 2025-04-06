@@ -7,6 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { X, Wine, PlusCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useUserRecipes } from '@/hooks/useUserRecipes';
+import { useAuth } from '@/contexts/auth';
 
 interface CreateMocktailModalProps {
   isOpen: boolean;
@@ -20,15 +22,27 @@ const CreateMocktailModal: React.FC<CreateMocktailModalProps> = ({
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [newIngredient, setNewIngredient] = useState('');
-  const [ingredients, setIngredients] = useState<string[]>([]);
+  const [newAmount, setNewAmount] = useState('');
+  const [ingredients, setIngredients] = useState<{ name: string; amount: string }[]>([]);
   const [instructions, setInstructions] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isPublic, setIsPublic] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
+  const { createRecipe } = useUserRecipes();
 
   const handleAddIngredient = () => {
-    if (newIngredient.trim()) {
-      setIngredients([...ingredients, newIngredient.trim()]);
+    if (newIngredient.trim() && newAmount.trim()) {
+      setIngredients([...ingredients, { 
+        name: newIngredient.trim(), 
+        amount: newAmount.trim() 
+      }]);
       setNewIngredient('');
+      setNewAmount('');
+    } else {
+      toast({ 
+        title: "Missing information", 
+        description: "Please enter both ingredient name and amount."
+      });
     }
   };
 
@@ -51,29 +65,30 @@ const CreateMocktailModal: React.FC<CreateMocktailModalProps> = ({
       return;
     }
 
-    setIsSubmitting(true);
+    if (!user) {
+      toast({ 
+        title: "Authentication required", 
+        description: "Please log in to save your recipe." 
+      });
+      return;
+    }
 
     try {
-      // In a real app, this would be an API call to save the mocktail recipe
-      // For now, we'll just simulate a successful submission
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      toast({
-        title: "Recipe created",
-        description: "Your mocktail recipe has been saved successfully."
+      await createRecipe.mutateAsync({
+        name,
+        description,
+        ingredients,
+        instructions,
+        is_public: isPublic,
+        image_url: `https://placehold.co/300x200/9DB2BF/FFFFFF?text=${encodeURIComponent(name)}`
       });
 
       // Clear form and close modal
       resetForm();
       onClose();
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "There was an error saving your recipe. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSubmitting(false);
+      console.error('Failed to create recipe:', error);
+      // Error is handled by the mutation
     }
   };
 
@@ -82,7 +97,9 @@ const CreateMocktailModal: React.FC<CreateMocktailModalProps> = ({
     setDescription('');
     setIngredients([]);
     setNewIngredient('');
+    setNewAmount('');
     setInstructions('');
+    setIsPublic(false);
   };
 
   return (
@@ -131,13 +148,14 @@ const CreateMocktailModal: React.FC<CreateMocktailModalProps> = ({
               <Input
                 value={newIngredient}
                 onChange={(e) => setNewIngredient(e.target.value)}
-                placeholder="Add an ingredient"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleAddIngredient();
-                  }
-                }}
+                placeholder="Ingredient name"
+                className="flex-1"
+              />
+              <Input
+                value={newAmount}
+                onChange={(e) => setNewAmount(e.target.value)}
+                placeholder="Amount"
+                className="flex-1"
               />
               <Button 
                 type="button" 
@@ -155,8 +173,9 @@ const CreateMocktailModal: React.FC<CreateMocktailModalProps> = ({
                     key={index} 
                     className="bg-material-secondary-container text-material-on-secondary-container px-2 py-1 rounded-full text-sm flex items-center"
                   >
-                    {ingredient}
+                    {ingredient.amount} {ingredient.name}
                     <button 
+                      type="button"
                       onClick={() => handleRemoveIngredient(index)}
                       className="ml-1 text-material-on-secondary-container/70 hover:text-material-on-secondary-container"
                     >
@@ -178,16 +197,27 @@ const CreateMocktailModal: React.FC<CreateMocktailModalProps> = ({
               className="min-h-[100px]"
             />
           </div>
+
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="isPublic"
+              checked={isPublic}
+              onChange={(e) => setIsPublic(e.target.checked)}
+              className="rounded border-gray-300 text-spiritless-pink focus:ring-spiritless-pink"
+            />
+            <Label htmlFor="isPublic">Make this recipe public for everyone to see</Label>
+          </div>
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
           <Button 
             onClick={handleSubmit} 
-            disabled={isSubmitting}
+            disabled={createRecipe.isPending}
             className="bg-spiritless-pink hover:bg-spiritless-pink/90"
           >
-            {isSubmitting ? "Saving..." : "Save Recipe"}
+            {createRecipe.isPending ? "Saving..." : "Save Recipe"}
           </Button>
         </DialogFooter>
       </DialogContent>
