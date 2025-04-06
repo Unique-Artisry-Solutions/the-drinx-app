@@ -62,10 +62,11 @@ export const useUserLocation = () => {
           });
           setIsLoading(false);
           
-          // Less prominent toast - removed title and changed to a shorter message
+          // Using a subtle toast without a title and shorter duration
           toast({
-            description: "Location refreshed",
-            duration: 3000,
+            description: "Updated location",
+            duration: 2000,
+            className: "bg-opacity-70 text-sm"
           });
         },
         (error) => {

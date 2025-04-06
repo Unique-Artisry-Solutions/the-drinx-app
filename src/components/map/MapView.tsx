@@ -143,17 +143,7 @@ const MapView: React.FC<MapViewProps> = ({
       )}
       
       <TooltipProvider>
-        {!singleEstablishmentView && isMapLoaded && (
-          <div className="absolute top-4 right-4 z-10">
-            <button
-              className="bg-white p-2 rounded-md shadow-md flex items-center text-sm"
-              onClick={onRefreshLocation}
-              disabled={isLoadingLocation}
-            >
-              {isLoadingLocation ? 'Locating...' : 'My Location'}
-            </button>
-          </div>
-        )}
+        {/* Removed separate location button as it's now part of the MapControls component */}
       
         {selectedEstablishment && (
           <EstablishmentInfoCard 

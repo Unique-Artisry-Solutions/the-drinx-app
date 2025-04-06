@@ -108,11 +108,11 @@ const MapControls: React.FC<MapControlsProps> = ({
             onClick={onRefreshLocation}
             disabled={isLoading}
           >
-            <Locate size={16} className={isLoading ? "animate-pulse" : ""} />
+            <Locate size={16} className={isLoading ? "animate-pulse text-blue-500" : ""} />
           </Button>
         </TooltipTrigger>
         <TooltipContent side="left">
-          <p>Refresh location</p>
+          <p>{isLoading ? 'Updating location...' : 'Update location'}</p>
         </TooltipContent>
       </Tooltip>
     </div>
