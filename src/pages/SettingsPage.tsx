@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth';
@@ -68,19 +69,53 @@ const SettingsPage = () => {
       
       try {
         setLoading(true);
+        // First check if the profile exists
         const { data, error } = await supabase
           .from('profiles')
           .select('*')
-          .eq('id', user.id)
-          .single();
+          .eq('id', user.id);
           
         if (error) {
           console.error('Error fetching profile:', error);
           throw error;
         }
         
-        if (data) {
-          const profileData = data as DBProfile;
+        // If no profile exists, create one with default values
+        if (!data || data.length === 0) {
+          console.log('No profile found for user, creating default profile');
+          
+          const defaultProfile = {
+            id: user.id,
+            username: user.user_metadata?.username || '',
+            display_name: user.user_metadata?.name || '',
+            user_type: user.user_metadata?.user_type || 'individual',
+            email_notifications: true,
+            push_notifications: false,
+          };
+          
+          const { error: insertError } = await supabase
+            .from('profiles')
+            .insert([defaultProfile]);
+            
+          if (insertError) {
+            console.error('Error creating profile:', insertError);
+            throw insertError;
+          }
+          
+          setProfile({
+            username: defaultProfile.username,
+            display_name: defaultProfile.display_name,
+            bio: '',
+            email: user.email || '',
+            phone: '',
+            dark_mode: theme === 'dark',
+            email_notifications: true,
+            push_notifications: false,
+            avatar_url: '',
+          });
+        } else {
+          // Profile exists, use it
+          const profileData = data[0] as DBProfile;
           setProfile({
             username: profileData.username || '',
             display_name: profileData.display_name || '',
