@@ -81,6 +81,8 @@ export default {
           "on-primary": "#FFFFFF",
           secondary: "#03DAC6",
           "on-secondary": "#000000",
+          tertiary: "#8B5CF6", // Adding the missing material-tertiary color (using a purple shade)
+          "on-tertiary": "#FFFFFF",
           background: "#FFFFFF", 
           "on-background": "#000000",
           surface: "#FFFFFF",
