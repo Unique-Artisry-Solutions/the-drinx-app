@@ -51,16 +51,10 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
       const publicPaths = ['/', '/landing', '/login', '/signup', '/mission'];
       const isPublicPath = publicPaths.includes(location.pathname);
       
-      // If on a public path, always use guest navigation
-      if (isPublicPath) {
-        setNavigationType(NavigationType.GUEST);
-        return;
-      }
-      
-      // Determine navigation type based on auth state
+      // Determine navigation type based on auth state and path
       if (isAdminAuth) {
         setNavigationType(NavigationType.ADMIN);
-      } else if (user && isEmailVerified) {
+      } else if (user && isEmailVerified && !isPublicPath) {
         setNavigationType(NavigationType.USER);
       } else {
         setNavigationType(NavigationType.GUEST);
@@ -68,6 +62,14 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
     };
     
     checkAuth();
+    
+    // Add a console log to debug navigation type
+    console.log('Mobile Navigation State:', { 
+      user: !!user, 
+      isEmailVerified, 
+      path: location.pathname,
+      navigationType 
+    });
   }, [user, isEmailVerified, location.pathname]);
 
   // Determine page types for specialized navigation
@@ -115,15 +117,18 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
     return !isAdminPage;
   };
   
-  // Determine whether to show guest navigation based on public paths and auth state
+  // Determine whether to show guest navigation
   const useGuestNavigation = () => {
     const publicPaths = ['/', '/landing', '/login', '/signup', '/mission'];
     return publicPaths.includes(location.pathname) || !user;
   };
 
+  // Determine if we should show guest navigation
+  const showGuestNav = useGuestNavigation();
+
   return (
     <div className={`flex flex-col min-h-screen w-full max-w-full bg-background transition-colors duration-300`}>
-      {useGuestNavigation() ? (
+      {showGuestNav ? (
         <GuestTopNavigation />
       ) : (
         <UserNavbar activeTab={activeTab} handleTabChange={handleTabChange} tabOptions={tabOptions} />

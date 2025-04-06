@@ -47,16 +47,10 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
       const publicPaths = ['/', '/landing', '/login', '/signup', '/mission'];
       const isPublicPath = publicPaths.includes(location.pathname);
       
-      // If on a public path, always use guest navigation
-      if (isPublicPath) {
-        setNavigationType(NavigationType.GUEST);
-        return;
-      }
-      
-      // Determine navigation type based on auth state
+      // Determine navigation type based on auth state and path
       if (isAdminAuth) {
         setNavigationType(NavigationType.ADMIN);
-      } else if (user && isEmailVerified) {
+      } else if (user && isEmailVerified && !isPublicPath) {
         setNavigationType(NavigationType.USER);
       } else {
         setNavigationType(NavigationType.GUEST);
@@ -64,6 +58,14 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     };
     
     checkAuth();
+    
+    // Add a console log to debug navigation type
+    console.log('Desktop Navigation State:', { 
+      user: !!user, 
+      isEmailVerified, 
+      path: location.pathname, 
+      navigationType 
+    });
   }, [user, isEmailVerified, location.pathname]);
 
   const isLandingPage = location.pathname === '/' || location.pathname === '/landing';
@@ -78,7 +80,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     }
   };
 
-  // Determine whether to show guest navigation based on public paths and auth state
+  // Determine whether to show guest navigation
   const useGuestNavigation = () => {
     const publicPaths = ['/', '/landing', '/login', '/signup', '/mission'];
     return publicPaths.includes(location.pathname) || !user;

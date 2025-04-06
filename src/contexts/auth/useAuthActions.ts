@@ -154,10 +154,10 @@ export function useAuthActions() {
         description: 'You have been successfully logged out',
       });
       
-      console.log('User successfully signed out, redirecting to landing page');
+      console.log('User successfully signed out');
       
-      // Use replace to prevent going back to authenticated pages
-      window.location.replace('/landing');
+      // Force page reload to clear any remaining state
+      window.location.href = '/landing';
     } catch (error: any) {
       console.error('Sign out error:', error);
       toast({

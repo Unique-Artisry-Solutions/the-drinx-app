@@ -25,15 +25,20 @@ const LandingPage = () => {
   
   // If user is already authenticated, redirect to appropriate page
   useEffect(() => {
-    if (user && !isLoading) {
+    // Only redirect if we're not in a loading state and have a valid user
+    if (!isLoading && user) {
+      console.log('User is authenticated, redirecting from landing page');
       const userType = localStorage.getItem('user_type');
+      
       if (userType === 'establishment') {
-        navigate('/', { replace: true });
+        navigate('/establishment/all-actions', { replace: true });
       } else {
         navigate('/explore', { replace: true });
       }
     }
   }, [user, isLoading, navigate]);
+
+  console.log('LandingPage rendering, auth state:', { user: !!user, isLoading });
 
   // Only render the landing page if the user is not authenticated or if auth is still loading
   return (
