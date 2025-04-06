@@ -82,15 +82,15 @@ const BarCrawlTab: React.FC<BarCrawlTabProps> = ({ barCrawlList, shareBarCrawl }
                     description="Scan this code at the establishment to check in" 
                   />
 
-                  <div className="flex space-x-2">
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <Link to={`/establishment/${currentEstablishment.id}`} className="flex-1">
-                      <Button variant="outline" className="w-full justify-start" size="sm">
+                      <Button variant="outline" className="w-full justify-start" size="compact">
                         <MapPin size={16} className="mr-1" />
                         View Location
                       </Button>
                     </Link>
                     <Link to={`/profile/bar-crawls/participants/${barCrawlId}`} className="flex-1">
-                      <Button variant="outline" className="w-full justify-start" size="sm">
+                      <Button variant="outline" className="w-full justify-start text-xs" size="compact">
                         <User size={16} className="mr-1" />
                         Locate Participants 
                       </Button>
