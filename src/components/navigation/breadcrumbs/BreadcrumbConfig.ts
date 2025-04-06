@@ -32,7 +32,7 @@ export const routes: Record<string, BreadcrumbConfig> = {
   '/establishment/profile': { path: '/establishment/profile', label: 'Profile' },
   '/establishment/mocktail-menu': { path: '/establishment/mocktail-menu', label: 'Mocktail Menu' },
   '/establishment/promotions': { path: '/establishment/promotions', label: 'Promotional Offers' },
-  '/establishment/bar-crawl-requests': { path: '/establishment/bar-crawl-requests', label: 'Swig Circuit Requests' },
+  '/establishment/swig-circuit-requests': { path: '/establishment/swig-circuit-requests', label: 'Swig Circuit Requests' },
   '/establishment/analytics': { path: '/establishment/analytics', label: 'Analytics' },
   '/establishment/reviews': { path: '/establishment/reviews', label: 'Reviews' },
   '/establishment/mocktail-suggestions': { path: '/establishment/mocktail-suggestions', label: 'Suggestions' },

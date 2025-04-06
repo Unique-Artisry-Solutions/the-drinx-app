@@ -1,7 +1,8 @@
+
 import React, { useState } from 'react';
 import Layout from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CalendarIcon, UserIcon, Clock, MapPin, Info } from 'lucide-react';
+import { CalendarIcon, UserIcon, Clock, MapPin, Info, Users, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -14,7 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import BarCrawlCard from '@/components/establishment/BarCrawlCard';
 
-const BarCrawlRequestsPage: React.FC = () => {
+const SwigCircuitRequestsPage: React.FC = () => {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<string>("pending");
 
@@ -149,59 +150,85 @@ const BarCrawlRequestsPage: React.FC = () => {
   return (
     <Layout>
       <div className="animate-fade-in p-6 max-w-7xl mx-auto">
-        <h1 className="text-2xl font-bold gradient-text mb-4">Swig Circuit Requests</h1>
-        <p className="text-material-on-surface-variant mb-6">
-          Review and manage requests to include your establishment in Swig Circuits
-        </p>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-spiritless-pink to-spiritless-orange bg-clip-text text-transparent">
+            Swig Circuit Requests
+          </h1>
+          <p className="text-material-on-surface-variant text-lg">
+            Review and manage requests to include your establishment in Swig Circuits
+          </p>
+        </div>
 
-        <Tabs defaultValue="pending" value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-4">
-            <TabsTrigger value="pending">Pending Requests</TabsTrigger>
-            <TabsTrigger value="accepted">Accepted Circuits</TabsTrigger>
+        <Tabs 
+          defaultValue="pending" 
+          value={activeTab} 
+          onValueChange={setActiveTab} 
+          className="bg-white/50 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-gray-100"
+        >
+          <TabsList className="mb-4 bg-gray-100/80 w-full justify-start gap-2 p-1">
+            <TabsTrigger 
+              value="pending" 
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-spiritless-pink/20 data-[state=active]:to-spiritless-orange/20 data-[state=active]:text-spiritless-pink font-medium"
+            >
+              Pending Requests
+            </TabsTrigger>
+            <TabsTrigger 
+              value="accepted" 
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-spiritless-pink/20 data-[state=active]:to-spiritless-orange/20 data-[state=active]:text-spiritless-pink font-medium"
+            >
+              Accepted Circuits
+            </TabsTrigger>
           </TabsList>
           
-          <TabsContent value="pending">
+          <TabsContent value="pending" className="mt-6">
             {formattedPendingRequests.length === 0 ? (
-              <Card className="vibrant-card">
-                <CardContent className="p-6 text-center">
-                  <p className="text-material-on-surface-variant">
+              <Card className="vibrant-card bg-gradient-to-br from-gray-50 to-gray-100 border-l-4 border-spiritless-pink shadow-md">
+                <CardContent className="p-8 text-center">
+                  <p className="text-material-on-surface-variant text-lg">
                     No pending Swig Circuit requests at this time.
                   </p>
                 </CardContent>
               </Card>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {formattedPendingRequests.map((request) => (
-                  <Card key={request.id} className="vibrant-card hover:shadow-md transition-shadow">
-                    <CardContent className="p-4 pt-5">
+                  <Card 
+                    key={request.id} 
+                    className="vibrant-card hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 bg-white border-l-4 border-spiritless-pink overflow-hidden"
+                  >
+                    <CardHeader className="p-4 pb-0 bg-gradient-to-r from-spiritless-pink/5 to-spiritless-orange/5">
+                      <CardTitle className="text-lg font-medium text-gray-800">
+                        {request.name}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-4">
                       <div className="space-y-4">
                         <div className="flex flex-col md:flex-row justify-between">
-                          <div className="space-y-2">
-                            <h3 className="text-lg font-medium">{request.name}</h3>
-                            
-                            <div className="flex items-center text-sm text-material-on-surface-variant">
-                              <UserIcon className="h-4 w-4 mr-1" />
-                              <span>Organized by {request.organizer}</span>
+                          <div className="space-y-3">
+                            <div className="inline-flex items-center px-3 py-1 rounded-full bg-spiritless-pink/10 text-spiritless-pink">
+                              <UserIcon className="h-4 w-4 mr-2" />
+                              <span className="font-medium">Organized by {request.organizer}</span>
                             </div>
                             
-                            <div className="flex flex-wrap gap-4">
-                              <div className="flex items-center text-sm text-material-on-surface-variant">
-                                <CalendarIcon className="h-4 w-4 mr-1" />
-                                <span>{request.date}</span>
+                            <div className="flex flex-wrap gap-3">
+                              <div className="flex items-center text-sm px-3 py-1 rounded-full bg-gray-100">
+                                <Calendar className="h-4 w-4 mr-2 text-gray-600" />
+                                <span className="font-medium text-gray-700">{request.date}</span>
                               </div>
                               
-                              <div className="flex items-center text-sm text-material-on-surface-variant">
-                                <Clock className="h-4 w-4 mr-1" />
-                                <span>{request.time}</span>
+                              <div className="flex items-center text-sm px-3 py-1 rounded-full bg-gray-100">
+                                <Clock className="h-4 w-4 mr-2 text-gray-600" />
+                                <span className="font-medium text-gray-700">{request.time}</span>
                               </div>
                               
-                              <div className="text-sm text-material-on-surface-variant">
-                                <span>{request.participants} participants</span>
+                              <div className="flex items-center text-sm px-3 py-1 rounded-full bg-gray-100">
+                                <Users className="h-4 w-4 mr-2 text-gray-600" />
+                                <span className="font-medium text-gray-700">{request.participants} participants</span>
                               </div>
                             </div>
                           </div>
                           
-                          <div className="flex gap-2 mt-4 md:mt-0">
+                          <div className="flex gap-3 mt-4 md:mt-0">
                             <Button 
                               variant="outline" 
                               className="border-red-500 text-red-500 hover:bg-red-50" 
@@ -212,30 +239,37 @@ const BarCrawlRequestsPage: React.FC = () => {
                             <Button 
                               variant="gradient" 
                               onClick={() => handleAcceptRequest(request.id)}
+                              className="shadow-md hover:shadow-lg transition-shadow"
                             >
                               Accept
                             </Button>
                           </div>
                         </div>
                         
-                        <Accordion type="single" collapsible className="w-full">
-                          <AccordionItem value="details">
-                            <AccordionTrigger className="text-sm font-medium text-primary">
-                              <Info className="h-4 w-4 mr-1" />
-                              View Circuit Details
+                        <Accordion type="single" collapsible className="w-full border-t border-gray-100 pt-2">
+                          <AccordionItem value="details" className="border-b-0">
+                            <AccordionTrigger className="text-sm font-medium text-primary hover:no-underline py-2">
+                              <div className="flex items-center text-spiritless-pink">
+                                <Info className="h-4 w-4 mr-2" />
+                                View Circuit Details
+                              </div>
                             </AccordionTrigger>
-                            <AccordionContent>
-                              <div className="space-y-4 p-2">
-                                <div>
-                                  <h4 className="text-sm font-medium mb-1">Description</h4>
-                                  <p className="text-sm text-material-on-surface-variant">{request.description}</p>
+                            <AccordionContent className="bg-gray-50 rounded-lg">
+                              <div className="space-y-4 p-4">
+                                <div className="bg-white p-3 rounded-md shadow-sm">
+                                  <h4 className="text-sm font-medium mb-2 text-gray-700">Description</h4>
+                                  <p className="text-sm text-gray-600">{request.description}</p>
                                 </div>
                                 
-                                <div>
-                                  <h4 className="text-sm font-medium mb-1">Other Participating Establishments</h4>
+                                <div className="bg-white p-3 rounded-md shadow-sm">
+                                  <h4 className="text-sm font-medium mb-2 text-gray-700">Other Participating Establishments</h4>
                                   <div className="flex flex-wrap gap-2">
                                     {request.otherEstablishments.map((establishment, idx) => (
-                                      <Badge key={idx} variant="outline" className="bg-material-surface-container-low">
+                                      <Badge 
+                                        key={idx} 
+                                        variant="outline" 
+                                        className="bg-spiritless-orange/10 border-spiritless-orange/20 text-spiritless-orange px-3 py-1"
+                                      >
                                         {establishment}
                                       </Badge>
                                     ))}
@@ -243,14 +277,14 @@ const BarCrawlRequestsPage: React.FC = () => {
                                 </div>
                                 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                  <div>
-                                    <h4 className="text-sm font-medium mb-1">Expected Duration</h4>
-                                    <p className="text-sm text-material-on-surface-variant">{request.expectedDuration}</p>
+                                  <div className="bg-white p-3 rounded-md shadow-sm">
+                                    <h4 className="text-sm font-medium mb-2 text-gray-700">Expected Duration</h4>
+                                    <p className="text-sm text-gray-600 font-medium">{request.expectedDuration}</p>
                                   </div>
                                   
-                                  <div>
-                                    <h4 className="text-sm font-medium mb-1">Special Requests</h4>
-                                    <p className="text-sm text-material-on-surface-variant">{request.specialRequests || 'None'}</p>
+                                  <div className="bg-white p-3 rounded-md shadow-sm">
+                                    <h4 className="text-sm font-medium mb-2 text-gray-700">Special Requests</h4>
+                                    <p className="text-sm text-gray-600">{request.specialRequests || 'None'}</p>
                                   </div>
                                 </div>
                               </div>
@@ -265,23 +299,24 @@ const BarCrawlRequestsPage: React.FC = () => {
             )}
           </TabsContent>
           
-          <TabsContent value="accepted">
+          <TabsContent value="accepted" className="mt-6">
             {formattedAcceptedRequests.length === 0 ? (
-              <Card className="vibrant-card">
-                <CardContent className="p-6 text-center">
-                  <p className="text-material-on-surface-variant">
+              <Card className="vibrant-card bg-gradient-to-br from-gray-50 to-gray-100 border-l-4 border-spiritless-green shadow-md">
+                <CardContent className="p-8 text-center">
+                  <p className="text-material-on-surface-variant text-lg">
                     You haven't accepted any Swig Circuit requests yet.
                   </p>
                 </CardContent>
               </Card>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {formattedAcceptedRequests.map((crawl) => (
-                  <BarCrawlCard 
-                    key={crawl.id}
-                    crawl={crawl}
-                    handleEndParticipation={handleEndParticipation}
-                  />
+                  <div key={crawl.id} className="transform transition-all duration-300 hover:-translate-y-1">
+                    <BarCrawlCard 
+                      crawl={crawl}
+                      handleEndParticipation={handleEndParticipation}
+                    />
+                  </div>
                 ))}
               </div>
             )}
@@ -292,4 +327,4 @@ const BarCrawlRequestsPage: React.FC = () => {
   );
 };
 
-export default BarCrawlRequestsPage;
+export default SwigCircuitRequestsPage;
