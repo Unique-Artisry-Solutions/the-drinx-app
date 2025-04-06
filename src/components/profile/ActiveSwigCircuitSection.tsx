@@ -54,7 +54,7 @@ const ActiveSwigCircuitSection: React.FC = () => {
       setActiveCircuit(active);
     } else {
       // Use a mock for demonstration purposes
-      setActiveCircuit({
+      const mockCircuit = {
         id: 'active-1',
         name: 'Downtown Delights Tour',
         startDate: new Date().toISOString().split('T')[0],
@@ -66,14 +66,14 @@ const ActiveSwigCircuitSection: React.FC = () => {
           { id: '4', name: 'Zero Proof', address: '101 Pine St' }
         ],
         organizer: 'Alex Johnson',
-        theme: 'Tropical Escape'
-      });
+        theme: 'Tropical Escape',
+        status: 'active'
+      };
+      
+      setActiveCircuit(mockCircuit);
       
       // Store this mock in localStorage for persistence
-      const updatedBarCrawls = [...barCrawls, {
-        ...activeCircuit,
-        status: 'active'
-      }];
+      const updatedBarCrawls = [...barCrawls, mockCircuit];
       localStorage.setItem('user_bar_crawls', JSON.stringify(updatedBarCrawls));
     }
     
@@ -97,9 +97,11 @@ const ActiveSwigCircuitSection: React.FC = () => {
     return null;
   }
   
-  const progress = (currentStopIndex / activeCircuit.establishments.length) * 100;
-  const currentStop = activeCircuit.establishments[currentStopIndex] || activeCircuit.establishments[0];
-  const nextStop = activeCircuit.establishments[currentStopIndex + 1];
+  // Make sure activeCircuit.establishments exists and is an array before accessing length
+  const establishments = activeCircuit.establishments || [];
+  const progress = (currentStopIndex / establishments.length) * 100;
+  const currentStop = establishments[currentStopIndex] || establishments[0];
+  const nextStop = establishments[currentStopIndex + 1];
   
   const handleCheckIn = () => {
     if (!nextStop) return;
@@ -107,7 +109,7 @@ const ActiveSwigCircuitSection: React.FC = () => {
     const checkInSuccess = attemptCheckIn(nextStop.id, nextStop.name);
     if (checkInSuccess) {
       setLastCheckInTime(new Date());
-      setCurrentStopIndex(prev => Math.min(prev + 1, activeCircuit.establishments.length - 1));
+      setCurrentStopIndex(prev => Math.min(prev + 1, establishments.length - 1));
     }
   };
   
@@ -148,14 +150,14 @@ const ActiveSwigCircuitSection: React.FC = () => {
               {new Date(activeCircuit.startDate).toLocaleDateString()} - {new Date(activeCircuit.endDate).toLocaleDateString()}
             </Badge>
             <Badge className="bg-amber-100 text-amber-800 border-amber-300">
-              {activeCircuit.establishments.length} Stops
+              {establishments.length} Stops
             </Badge>
           </div>
           
           <div className="mb-4">
             <div className="flex justify-between text-sm mb-2">
               <span>Progress</span>
-              <span className="font-medium">{currentStopIndex}/{activeCircuit.establishments.length} stops</span>
+              <span className="font-medium">{currentStopIndex}/{establishments.length} stops</span>
             </div>
             <Progress value={progress} className="h-2" />
           </div>
