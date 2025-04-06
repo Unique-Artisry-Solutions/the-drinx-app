@@ -10,6 +10,7 @@ export type BarCrawlCheckIn = {
   establishment_id: string;
   user_id: string;
   checked_in_at: string;
+  verified_by?: string;
 };
 
 // Helper type for comment display

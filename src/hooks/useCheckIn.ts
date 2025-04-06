@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { supabaseClient } from '@/lib/supabaseClient';
 import { useAuth } from '@/contexts/auth';
 
 interface CheckInOptions {
@@ -29,7 +29,7 @@ export function useCheckIn() {
       setIsCheckingIn(true);
 
       // Insert record into bar_crawl_check_ins
-      const { error } = await supabase
+      const { error } = await supabaseClient
         .from('bar_crawl_check_ins')
         .insert({
           bar_crawl_id: barCrawlId,
