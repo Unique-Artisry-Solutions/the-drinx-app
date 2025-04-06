@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Layout from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CalendarIcon, UserIcon, Clock, MapPin, Info } from 'lucide-react';
@@ -12,14 +12,12 @@ import {
 } from "@/components/ui/accordion";
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useBarCrawlRequests } from '@/hooks/useBarCrawlRequests';
 import BarCrawlCard from '@/components/establishment/BarCrawlCard';
 
 const BarCrawlRequestsPage: React.FC = () => {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<string>("pending");
 
-  // Sample data - in a real implementation, this would come from Supabase
   const barCrawlRequests = [
     {
       id: '1',
@@ -95,7 +93,6 @@ const BarCrawlRequestsPage: React.FC = () => {
     }
   ];
 
-  // Convert the sample data to the format expected by BarCrawlCard
   const formattedPendingRequests = barCrawlRequests.map(req => ({
     id: req.id,
     name: req.name,
