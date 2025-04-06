@@ -2,10 +2,11 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Award, Badge as BadgeIcon, Trophy, Star, Route, MapPin, GlassWater, Gift, Sparkles } from 'lucide-react';
+import { Award, Badge as BadgeIcon, Trophy, Star, Route, MapPin, GlassWater, Gift, Sparkles, Wine, ThumbsUp } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface BadgeItemProps {
   icon: React.ReactNode;
@@ -24,22 +25,33 @@ const BadgeItem: React.FC<BadgeItemProps> = ({
   progress, 
   maxProgress 
 }) => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+  
   return (
-    <div className={`p-4 border rounded-lg ${unlocked ? 'bg-white' : 'bg-gray-50'}`}>
+    <div className={`p-4 border rounded-lg ${unlocked 
+      ? (isDark ? 'bg-gray-800 border-gray-700' : 'bg-white')
+      : (isDark ? 'bg-gray-900 border-gray-800' : 'bg-gray-50')}`}
+    >
       <div className="flex items-center gap-3">
-        <div className={`p-2 rounded-full ${unlocked ? 'bg-green-100' : 'bg-gray-200'}`}>
+        <div className={`p-2 rounded-full ${unlocked 
+          ? (isDark ? 'bg-green-900' : 'bg-green-100') 
+          : (isDark ? 'bg-gray-800' : 'bg-gray-200')}`}
+        >
           {icon}
         </div>
         <div className="flex-1">
           <div className="flex items-center gap-2">
             <h3 className="font-medium">{name}</h3>
             {unlocked && (
-              <Badge variant="secondary" className="bg-green-100 text-green-800">
+              <Badge variant="secondary" className={isDark 
+                ? "bg-green-900 text-green-100" 
+                : "bg-green-100 text-green-800"}>
                 Unlocked
               </Badge>
             )}
           </div>
-          <p className="text-sm text-gray-500">{description}</p>
+          <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{description}</p>
           
           {progress !== undefined && maxProgress !== undefined && (
             <div className="mt-2">
@@ -57,12 +69,17 @@ const BadgeItem: React.FC<BadgeItemProps> = ({
 };
 
 const BadgesTab: React.FC = () => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+  
   // This would come from user data in a real implementation
   const userStats = {
     barCrawlsCompleted: 7,
     establishmentsVisited: 12,
     mocktailsTried: 15,
-    reviewsWritten: 3
+    reviewsWritten: 3,
+    mocktailsCreated: 2,
+    mocktailsTryCount: 8
   };
   
   // Calculate reward tier based on bar crawls completed
@@ -87,7 +104,7 @@ const BadgesTab: React.FC = () => {
       </div>
       
       {/* Current Status Card */}
-      <Card>
+      <Card className={isDark ? "bg-gray-800 border-gray-700" : ""}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Trophy className="h-5 w-5 text-spiritless-pink" />
@@ -104,7 +121,7 @@ const BadgesTab: React.FC = () => {
                 {currentTier === 3 && "VIP Experience"}
               </span>
             </div>
-            <div className="h-2.5 bg-gray-200 rounded-full overflow-hidden">
+            <div className={`h-2.5 rounded-full overflow-hidden ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
               <div 
                 className="h-full rounded-full bg-gradient-to-r from-purple-500 to-pink-500" 
                 style={{ width: `${Math.min((userStats.barCrawlsCompleted / 15) * 100, 100)}%` }}
@@ -118,38 +135,52 @@ const BadgesTab: React.FC = () => {
             </div>
           </div>
           
-          <div className="grid gap-2 text-sm">
-            <div className="flex justify-between py-1 border-b">
-              <span className="text-gray-600">Bar Crawls Completed</span>
+          <div className={`grid gap-2 text-sm ${isDark ? 'text-gray-300' : ''}`}>
+            <div className={`flex justify-between py-1 ${isDark ? 'border-gray-700' : 'border-b'}`}>
+              <span className={isDark ? "text-gray-400" : "text-gray-600"}>Bar Crawls Completed</span>
               <span className="font-medium">{userStats.barCrawlsCompleted}</span>
             </div>
-            <div className="flex justify-between py-1 border-b">
-              <span className="text-gray-600">Establishments Visited</span>
+            <div className={`flex justify-between py-1 ${isDark ? 'border-gray-700' : 'border-b'}`}>
+              <span className={isDark ? "text-gray-400" : "text-gray-600"}>Establishments Visited</span>
               <span className="font-medium">{userStats.establishmentsVisited}</span>
             </div>
-            <div className="flex justify-between py-1 border-b">
-              <span className="text-gray-600">Mocktails Tried</span>
+            <div className={`flex justify-between py-1 ${isDark ? 'border-gray-700' : 'border-b'}`}>
+              <span className={isDark ? "text-gray-400" : "text-gray-600"}>Mocktails Tried</span>
               <span className="font-medium">{userStats.mocktailsTried}</span>
             </div>
-            <div className="flex justify-between py-1">
-              <span className="text-gray-600">Reviews Written</span>
+            <div className={`flex justify-between py-1 ${isDark ? 'border-gray-700' : 'border-b'}`}>
+              <span className={isDark ? "text-gray-400" : "text-gray-600"}>Reviews Written</span>
               <span className="font-medium">{userStats.reviewsWritten}</span>
+            </div>
+            <div className={`flex justify-between py-1 ${isDark ? 'border-gray-700' : 'border-b'}`}>
+              <span className={isDark ? "text-gray-400" : "text-gray-600"}>Mocktails Created</span>
+              <span className="font-medium">{userStats.mocktailsCreated}</span>
+            </div>
+            <div className="flex justify-between py-1">
+              <span className={isDark ? "text-gray-400" : "text-gray-600"}>Mocktail Try Count</span>
+              <span className="font-medium">{userStats.mocktailsTryCount}</span>
             </div>
           </div>
           
           {currentTier >= 2 && (
-            <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+            <div className={`mt-4 p-3 rounded-lg ${isDark ? 'bg-blue-900/30' : 'bg-blue-50'}`}>
               <h3 className="font-medium flex items-center mb-1">
-                <Gift className="h-4 w-4 mr-2 text-blue-600" />
+                <Gift className={`h-4 w-4 mr-2 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
                 Active Rewards
               </h3>
-              <ul className="text-sm space-y-1">
-                <li className="text-gray-700">• 10% Off Signature Mocktails</li>
-                <li className="text-gray-700">• Free Mocktail (every 3rd visit)</li>
+              <ul className={`text-sm space-y-1 ${isDark ? 'text-gray-300' : ''}`}>
+                <li className={isDark ? "text-gray-400" : "text-gray-700"}>• 10% Off Signature Mocktails</li>
+                <li className={isDark ? "text-gray-400" : "text-gray-700"}>• Free Mocktail (every 3rd visit)</li>
+                {userStats.mocktailsCreated >= 3 && (
+                  <li className={isDark ? "text-gray-400" : "text-gray-700"}>• Featured Creator Badge</li>
+                )}
                 {currentTier >= 3 && (
                   <>
-                    <li className="text-gray-700">• VIP Bar Crawl Access</li>
-                    <li className="text-gray-700">• Exclusive Tasting Invitations</li>
+                    <li className={isDark ? "text-gray-400" : "text-gray-700"}>• VIP Bar Crawl Access</li>
+                    <li className={isDark ? "text-gray-400" : "text-gray-700"}>• Exclusive Tasting Invitations</li>
+                    {userStats.mocktailsTryCount >= 10 && (
+                      <li className={isDark ? "text-gray-400" : "text-gray-700"}>• Recipe Spotlight Feature</li>
+                    )}
                   </>
                 )}
               </ul>
@@ -159,7 +190,7 @@ const BadgesTab: React.FC = () => {
       </Card>
       
       {/* Badges Section */}
-      <Card>
+      <Card className={isDark ? "bg-gray-800 border-gray-700" : ""}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <BadgeIcon className="h-5 w-5 text-spiritless-pink" />
@@ -169,13 +200,13 @@ const BadgesTab: React.FC = () => {
         <CardContent>
           <div className="grid gap-4 sm:grid-cols-2">
             <BadgeItem
-              icon={<Route className="h-5 w-5 text-purple-600" />}
+              icon={<Route className={`h-5 w-5 ${isDark ? 'text-purple-400' : 'text-purple-600'}`} />}
               name="First Crawl"
               description="Complete your first bar crawl"
               unlocked={userStats.barCrawlsCompleted >= 1}
             />
             <BadgeItem
-              icon={<MapPin className="h-5 w-5 text-emerald-600" />}
+              icon={<MapPin className={`h-5 w-5 ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`} />}
               name="Explorer"
               description="Visit 5 different establishments"
               unlocked={userStats.establishmentsVisited >= 5}
@@ -183,7 +214,7 @@ const BadgesTab: React.FC = () => {
               maxProgress={5}
             />
             <BadgeItem
-              icon={<GlassWater className="h-5 w-5 text-amber-600" />}
+              icon={<GlassWater className={`h-5 w-5 ${isDark ? 'text-amber-400' : 'text-amber-600'}`} />}
               name="Mocktail Maven"
               description="Try 10 different mocktails"
               unlocked={userStats.mocktailsTried >= 10}
@@ -191,7 +222,7 @@ const BadgesTab: React.FC = () => {
               maxProgress={10}
             />
             <BadgeItem
-              icon={<Star className="h-5 w-5 text-blue-600" />}
+              icon={<Star className={`h-5 w-5 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />}
               name="Review Star"
               description="Write 3 establishment reviews"
               unlocked={userStats.reviewsWritten >= 3}
@@ -199,7 +230,7 @@ const BadgesTab: React.FC = () => {
               maxProgress={3}
             />
             <BadgeItem
-              icon={<Sparkles className="h-5 w-5 text-indigo-600" />}
+              icon={<Sparkles className={`h-5 w-5 ${isDark ? 'text-indigo-400' : 'text-indigo-600'}`} />}
               name="Crawl Enthusiast"
               description="Complete 5 bar crawls"
               unlocked={userStats.barCrawlsCompleted >= 5}
@@ -207,7 +238,7 @@ const BadgesTab: React.FC = () => {
               maxProgress={5}
             />
             <BadgeItem
-              icon={<Trophy className="h-5 w-5 text-amber-600" />}
+              icon={<Trophy className={`h-5 w-5 ${isDark ? 'text-amber-400' : 'text-amber-600'}`} />}
               name="VIP Crawler"
               description="Complete 15 bar crawls"
               unlocked={userStats.barCrawlsCompleted >= 15}
@@ -215,18 +246,20 @@ const BadgesTab: React.FC = () => {
               maxProgress={15}
             />
             <BadgeItem
-              icon={<Award className="h-5 w-5 text-rose-600" />}
-              name="Mixology Friend"
-              description="Attend a mixology workshop"
-              unlocked={false}
+              icon={<Wine className={`h-5 w-5 ${isDark ? 'text-rose-400' : 'text-rose-600'}`} />}
+              name="Mocktail Creator"
+              description="Create your first mocktail recipe"
+              unlocked={userStats.mocktailsCreated >= 1}
+              progress={Math.min(userStats.mocktailsCreated, 1)}
+              maxProgress={1}
             />
             <BadgeItem
-              icon={<Gift className="h-5 w-5 text-teal-600" />}
+              icon={<ThumbsUp className={`h-5 w-5 ${isDark ? 'text-teal-400' : 'text-teal-600'}`} />}
               name="Social Butterfly"
-              description="Invite 3 friends to bar crawls"
-              unlocked={false}
-              progress={0}
-              maxProgress={3}
+              description="Have 5 users try your mocktails"
+              unlocked={userStats.mocktailsTryCount >= 5}
+              progress={Math.min(userStats.mocktailsTryCount, 5)}
+              maxProgress={5}
             />
           </div>
         </CardContent>

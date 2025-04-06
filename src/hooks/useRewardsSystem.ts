@@ -7,6 +7,8 @@ export interface UserStats {
   establishmentsVisited: number;
   mocktailsTried: number;
   reviewsWritten: number;
+  mocktailsCreated: number;
+  mocktailsTryCount: number;
 }
 
 export interface Badge {
@@ -16,7 +18,7 @@ export interface Badge {
   icon: string;
   unlockedAt: string | null;
   requirement: {
-    type: 'barCrawls' | 'establishments' | 'mocktails' | 'reviews' | 'custom';
+    type: 'barCrawls' | 'establishments' | 'mocktails' | 'reviews' | 'mocktailsCreated' | 'mocktailsTryCount' | 'custom';
     count: number;
   };
 }
@@ -27,7 +29,7 @@ export interface Reward {
   description: string;
   tier: number;
   requirement: {
-    type: 'barCrawls' | 'establishments' | 'mocktails' | 'tier';
+    type: 'barCrawls' | 'establishments' | 'mocktails' | 'tier' | 'mocktailsCreated' | 'mocktailsTryCount';
     count: number;
   };
   unlockedAt: string | null;
@@ -39,7 +41,9 @@ export const useRewardsSystem = () => {
     barCrawlsCompleted: 0,
     establishmentsVisited: 0,
     mocktailsTried: 0,
-    reviewsWritten: 0
+    reviewsWritten: 0,
+    mocktailsCreated: 0,
+    mocktailsTryCount: 0
   });
   
   const [badges, setBadges] = useState<Badge[]>([]);
@@ -59,7 +63,9 @@ export const useRewardsSystem = () => {
           barCrawlsCompleted: 7,
           establishmentsVisited: 12,
           mocktailsTried: 15,
-          reviewsWritten: 3
+          reviewsWritten: 3,
+          mocktailsCreated: 2,
+          mocktailsTryCount: 8
         };
         localStorage.setItem('user_rewards_stats', JSON.stringify(defaultStats));
         setUserStats(defaultStats);
@@ -136,6 +142,22 @@ export const useRewardsSystem = () => {
             icon: 'Gift',
             unlockedAt: null,
             requirement: { type: 'custom', count: 3 }
+          },
+          {
+            id: 'badge-9',
+            name: 'Mocktail Creator',
+            description: 'Create your first mocktail recipe',
+            icon: 'Wine',
+            unlockedAt: null,
+            requirement: { type: 'mocktailsCreated', count: 1 }
+          },
+          {
+            id: 'badge-10',
+            name: 'Recipe Master',
+            description: 'Have 5 users try your mocktails',
+            icon: 'ThumbsUp',
+            unlockedAt: null,
+            requirement: { type: 'mocktailsTryCount', count: 5 }
           }
         ];
         localStorage.setItem('user_badges', JSON.stringify(defaultBadges));
@@ -198,6 +220,22 @@ export const useRewardsSystem = () => {
             tier: 3,
             requirement: { type: 'barCrawls', count: 20 },
             unlockedAt: null
+          },
+          {
+            id: 'reward-7',
+            name: 'Featured Creator Badge',
+            description: 'Get a special badge for your profile',
+            tier: 2,
+            requirement: { type: 'mocktailsCreated', count: 3 },
+            unlockedAt: null
+          },
+          {
+            id: 'reward-8',
+            name: 'Recipe Spotlight',
+            description: 'Your recipes featured on the homepage',
+            tier: 3,
+            requirement: { type: 'mocktailsTryCount', count: 10 },
+            unlockedAt: null
           }
         ];
         localStorage.setItem('user_rewards', JSON.stringify(defaultRewards));
@@ -240,6 +278,12 @@ export const useRewardsSystem = () => {
             break;
           case 'reviews':
             isUnlocked = userStats.reviewsWritten >= badge.requirement.count;
+            break;
+          case 'mocktailsCreated':
+            isUnlocked = userStats.mocktailsCreated >= badge.requirement.count;
+            break;
+          case 'mocktailsTryCount':
+            isUnlocked = userStats.mocktailsTryCount >= badge.requirement.count;
             break;
           default:
             isUnlocked = false;
@@ -284,6 +328,12 @@ export const useRewardsSystem = () => {
             break;
           case 'tier':
             isUnlocked = currentTier >= reward.requirement.count;
+            break;
+          case 'mocktailsCreated':
+            isUnlocked = userStats.mocktailsCreated >= reward.requirement.count;
+            break;
+          case 'mocktailsTryCount':
+            isUnlocked = userStats.mocktailsTryCount >= reward.requirement.count;
             break;
           default:
             isUnlocked = false;
@@ -355,6 +405,28 @@ export const useRewardsSystem = () => {
     setUserStats(newStats);
     localStorage.setItem('user_rewards_stats', JSON.stringify(newStats));
   };
+
+  // Update user stats when a mocktail is created
+  const createMocktail = () => {
+    const newStats = {
+      ...userStats,
+      mocktailsCreated: userStats.mocktailsCreated + 1
+    };
+    
+    setUserStats(newStats);
+    localStorage.setItem('user_rewards_stats', JSON.stringify(newStats));
+  };
+
+  // Update user stats when a user's mocktail is tried by someone
+  const incrementMocktailTries = () => {
+    const newStats = {
+      ...userStats,
+      mocktailsTryCount: userStats.mocktailsTryCount + 1
+    };
+    
+    setUserStats(newStats);
+    localStorage.setItem('user_rewards_stats', JSON.stringify(newStats));
+  };
   
   return {
     userStats,
@@ -364,6 +436,8 @@ export const useRewardsSystem = () => {
     completeBarCrawl,
     visitEstablishment,
     tryMocktail,
-    writeReview
+    writeReview,
+    createMocktail,
+    incrementMocktailTries
   };
 };
