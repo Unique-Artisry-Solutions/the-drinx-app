@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth';
 import { useTheme } from '@/contexts/ThemeContext';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -69,7 +68,8 @@ const SettingsPage = () => {
       
       try {
         setLoading(true);
-        // First check if the profile exists
+        console.log('Fetching profile for user:', user.id);
+        
         const { data, error } = await supabase
           .from('profiles')
           .select('*')
@@ -80,7 +80,6 @@ const SettingsPage = () => {
           throw error;
         }
         
-        // If no profile exists, create one with default values
         if (!data || data.length === 0) {
           console.log('No profile found for user, creating default profile');
           
@@ -91,6 +90,9 @@ const SettingsPage = () => {
             user_type: user.user_metadata?.user_type || 'individual',
             email_notifications: true,
             push_notifications: false,
+            bio: '',
+            phone: '',
+            avatar_url: ''
           };
           
           const { error: insertError } = await supabase
@@ -114,7 +116,7 @@ const SettingsPage = () => {
             avatar_url: '',
           });
         } else {
-          // Profile exists, use it
+          console.log('Profile found:', data[0]);
           const profileData = data[0] as DBProfile;
           setProfile({
             username: profileData.username || '',
@@ -123,8 +125,8 @@ const SettingsPage = () => {
             email: user.email || '',
             phone: profileData.phone || '',
             dark_mode: theme === 'dark',
-            email_notifications: profileData.email_notifications || true,
-            push_notifications: profileData.push_notifications || false,
+            email_notifications: profileData.email_notifications !== null ? profileData.email_notifications : true,
+            push_notifications: profileData.push_notifications !== null ? profileData.push_notifications : false,
             avatar_url: profileData.avatar_url || '',
           });
         }
@@ -195,6 +197,7 @@ const SettingsPage = () => {
     
     try {
       setLoading(true);
+      console.log('Updating profile for user:', user.id);
       
       let avatarUrl = profile.avatar_url;
       if (avatarFile) {

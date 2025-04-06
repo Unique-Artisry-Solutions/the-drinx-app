@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 import UserProfileDropdown from './UserProfileDropdown';
 import UserNavLinks from './UserNavLinks';
 import UserMobileMenu from './UserMobileMenu';
@@ -18,6 +17,7 @@ interface UserNavbarProps {
   handleTabChange?: (value: string) => void;
   tabOptions?: TabOption[];
 }
+
 const UserNavbar: React.FC<UserNavbarProps> = ({
   activeTab,
   handleTabChange,
@@ -56,7 +56,6 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
           setUsername("Guest User");
         }
       } else {
-        // Set a default username for testing when there's no authenticated user
         setUsername('Guest User');
       }
     };
@@ -86,7 +85,6 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
     }
   };
 
-  // Pass the dropdown props based on route
   const getTabOptions = () => {
     if (location.pathname === '/establishment/profile' && tabOptions) {
       return tabOptions;
