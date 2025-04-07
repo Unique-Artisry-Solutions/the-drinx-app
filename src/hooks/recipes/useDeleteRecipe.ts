@@ -21,7 +21,7 @@ export const useDeleteRecipe = (user: User | null) => {
       if (error) throw error;
       return recipeId;
     },
-    onSuccess: (recipeId) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['userRecipes', user?.id] });
       toast({
         title: "Recipe deleted",
