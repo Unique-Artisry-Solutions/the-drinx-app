@@ -17,7 +17,7 @@ export const proposedImprovements: ImprovementItem[] = [
       "Conduct alpha and beta testing with selected users",
       "Release to app stores with marketing campaign"
     ],
-    estimatedEffort: "4-6 months with a dedicated team",
+    estimatedEffort: "6-8 months with Lovable team (requires mobile expertise)",
     businessImpact: "Significantly increased user engagement and retention rates, with potential for new monetization avenues",
     technicalRequirements: "Mobile development expertise, push notification infrastructure, offline data sync capabilities, app store developer accounts"
   },
@@ -36,7 +36,7 @@ export const proposedImprovements: ImprovementItem[] = [
       "Refine algorithm based on user feedback",
       "Full rollout with analytics tracking"
     ],
-    estimatedEffort: "2-3 months",
+    estimatedEffort: "3-4 weeks with Lovable team using AI integrations",
     businessImpact: "20-30% increase in mocktail discovery and user satisfaction, leading to higher establishment engagement",
     technicalRequirements: "Data science expertise, machine learning infrastructure, large dataset of user preferences and mocktail attributes"
   },
@@ -55,7 +55,7 @@ export const proposedImprovements: ImprovementItem[] = [
       "Create export functionality for reports",
       "User testing and optimization"
     ],
-    estimatedEffort: "1-2 months",
+    estimatedEffort: "2-3 weeks with Lovable team",
     businessImpact: "Improved decision-making for establishments and admin team, leading to better business outcomes",
     technicalRequirements: "Time-series data structures, advanced charting libraries, optimization for large datasets"
   },
@@ -74,7 +74,7 @@ export const proposedImprovements: ImprovementItem[] = [
       "Test point accumulation and redemption flows",
       "Launch program with promotional campaign"
     ],
-    estimatedEffort: "2-3 months",
+    estimatedEffort: "3-4 weeks with Lovable team",
     businessImpact: "30-40% increase in customer retention and higher frequency of establishment visits",
     technicalRequirements: "Transaction tracking system, redemption verification process, integration with establishment POS systems where applicable"
   },
@@ -93,7 +93,7 @@ export const proposedImprovements: ImprovementItem[] = [
       "Test sharing flows across different devices",
       "Deploy with user education materials"
     ],
-    estimatedEffort: "2-4 weeks",
+    estimatedEffort: "1-2 weeks with Lovable team",
     businessImpact: "Increased brand visibility and user acquisition through social channels",
     technicalRequirements: "Integration with social media APIs, image processing for different platforms, UTM parameter tracking"
   },
@@ -112,7 +112,7 @@ export const proposedImprovements: ImprovementItem[] = [
       "Create tutorial for users to access AR features",
       "Launch with selected partner establishments"
     ],
-    estimatedEffort: "3-4 months",
+    estimatedEffort: "8-12 weeks with Lovable team (requires AR expertise)",
     businessImpact: "Novel user experience leading to increased engagement and social sharing",
     technicalRequirements: "AR development expertise, 3D modeling capabilities, high-performance mobile devices support"
   }
