@@ -10,19 +10,11 @@ interface FeaturesTableProps {
   title: string;
 }
 
-const FeaturesTable: React.FC<FeaturesTableProps> = ({ features, title }) => {
+const FeaturesTable: React.FC<FeaturesTableProps> = ({ features }) => {
   const [expandedRows, setExpandedRows] = useState<Record<number, boolean>>({});
-  const [expandedAnalysis, setExpandedAnalysis] = useState<Record<number, boolean>>({});
 
   const toggleRow = (index: number) => {
     setExpandedRows(prev => ({
-      ...prev,
-      [index]: !prev[index]
-    }));
-  };
-
-  const toggleAnalysis = (index: number) => {
-    setExpandedAnalysis(prev => ({
       ...prev,
       [index]: !prev[index]
     }));
