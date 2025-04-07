@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -7,6 +6,61 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import AdminFooter from '@/components/admin/AdminFooter';
+
+const MOCK_TEST_USERS: Record<string, any> = {
+  '00000000-0000-0000-0000-000000000001': {
+    id: '00000000-0000-0000-0000-000000000001',
+    email: 'testuser1@example.com',
+    username: 'testuser1',
+    displayName: 'Alex Johnson',
+    userType: 'individual',
+    createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toLocaleDateString(),
+    lastActive: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toLocaleDateString(),
+    bio: 'Mocktail enthusiast',
+    isVerified: true,
+    favorites: [
+      { id: '1', establishment_name: 'Fresh Vibes Bar', created_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000) },
+      { id: '2', establishment_name: 'Zero Proof Lounge', created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000) }
+    ],
+    barCrawls: [
+      { id: '1', name: 'Downtown Mocktail Tour', created_at: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000) }
+    ]
+  },
+  '00000000-0000-0000-0000-000000000002': {
+    id: '00000000-0000-0000-0000-000000000002',
+    email: 'testuser2@example.com',
+    username: 'testuser2',
+    displayName: 'Jamie Smith',
+    userType: 'individual',
+    createdAt: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000).toLocaleDateString(),
+    lastActive: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toLocaleDateString(),
+    bio: 'Looking for the best alcohol-free options',
+    isVerified: true,
+    favorites: [],
+    barCrawls: [
+      { id: '2', name: 'Beach Club Crawl', created_at: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000) }
+    ]
+  },
+  '00000000-0000-0000-0000-00000000000b': {
+    id: '00000000-0000-0000-0000-00000000000b',
+    email: 'mocktailbar1@example.com',
+    username: 'mocktailbar1',
+    displayName: 'Fresh Vibes Bar',
+    userType: 'establishment',
+    createdAt: new Date(Date.now() - 40 * 24 * 60 * 60 * 1000).toLocaleDateString(),
+    lastActive: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toLocaleDateString(),
+    bio: 'Specializing in fresh herb mocktails',
+    isVerified: true,
+    address: '123 Main St, Cityville',
+    phone: '555-123-4567',
+    website: 'www.freshvibesbar.com',
+    cocktails: [
+      { name: 'Herbal Sunrise', ingredients: ['mint', 'cucumber', 'lime'] },
+      { name: 'Rosemary Fizz', ingredients: ['rosemary', 'grapefruit', 'soda'] }
+    ]
+  }
+};
 
 const AdminUserProfile = () => {
   const { id } = useParams<{ id: string }>();
@@ -16,7 +70,12 @@ const AdminUserProfile = () => {
   const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
-    fetchUserData();
+    if (id && MOCK_TEST_USERS[id]) {
+      setUser(MOCK_TEST_USERS[id]);
+      setIsLoading(false);
+    } else {
+      fetchUserData();
+    }
   }, [id]);
 
   const fetchUserData = async () => {
@@ -24,7 +83,6 @@ const AdminUserProfile = () => {
     
     setIsLoading(true);
     try {
-      // Fetch the user profile
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('*')
@@ -35,18 +93,18 @@ const AdminUserProfile = () => {
       
       setUser({
         id: profileData.id,
-        email: `user-${profileData.id.substring(0, 8)}@example.com`, // Privacy protection
+        email: `user-${profileData.id.substring(0, 8)}@example.com`,
         username: profileData.username || 'Anonymous',
         displayName: profileData.display_name || 'Anonymous User',
         userType: profileData.user_type || 'individual',
         createdAt: profileData.created_at ? new Date(profileData.created_at).toLocaleDateString() : 'Unknown',
         lastActive: 'N/A',
+        bio: profileData.bio || 'No bio provided',
         favorites: [],
         barCrawls: [],
         isVerified: true
       });
 
-      // Get user's favorites
       const { data: favoritesData, error: favoritesError } = await supabase
         .from('favorites')
         .select('*')
@@ -59,7 +117,6 @@ const AdminUserProfile = () => {
         }));
       }
 
-      // Get user's bar crawls
       const { data: barCrawlsData, error: barCrawlsError } = await supabase
         .from('bar_crawls')
         .select('*')
@@ -90,23 +147,24 @@ const AdminUserProfile = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-material-background">
+      <div className="min-h-screen bg-material-background flex flex-col">
         <AdminHeader onLogout={handleLogout} />
-        <div className="container max-w-4xl mx-auto p-4 flex justify-center items-center min-h-[70vh]">
+        <div className="container max-w-4xl mx-auto p-4 flex justify-center items-center flex-1">
           <div className="flex flex-col items-center">
             <RefreshCw className="animate-spin h-8 w-8 mb-2" />
             <p>Loading user data...</p>
           </div>
         </div>
+        <AdminFooter />
       </div>
     );
   }
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-material-background">
+      <div className="min-h-screen bg-material-background flex flex-col">
         <AdminHeader onLogout={handleLogout} />
-        <div className="container max-w-4xl mx-auto p-4">
+        <div className="container max-w-4xl mx-auto p-4 flex-1">
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-2xl font-bold">User Profile</h1>
             <Button 
@@ -129,14 +187,15 @@ const AdminUserProfile = () => {
             </CardContent>
           </Card>
         </div>
+        <AdminFooter />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-material-background">
+    <div className="min-h-screen bg-material-background flex flex-col">
       <AdminHeader onLogout={handleLogout} />
-      <div className="container max-w-4xl mx-auto p-4">
+      <div className="container max-w-4xl mx-auto p-4 flex-1">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold">User Profile</h1>
           <Button 
@@ -180,6 +239,10 @@ const AdminUserProfile = () => {
                 <div>{user.createdAt}</div>
               </div>
               <div>
+                <div className="text-sm font-medium text-gray-500">Bio</div>
+                <div className="text-sm">{user.bio || 'No bio provided'}</div>
+              </div>
+              <div>
                 <div className="text-sm font-medium text-gray-500">Email Verified</div>
                 <div className="flex items-center">
                   <span className={`px-2 py-1 rounded-full text-xs ${
@@ -200,17 +263,34 @@ const AdminUserProfile = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
+                <div className="text-sm font-medium text-gray-500">Last Active</div>
+                <div>{user.lastActive || 'N/A'}</div>
+              </div>
+              <div>
                 <div className="text-sm font-medium text-gray-500">Favorites</div>
-                <div className="text-lg font-semibold">{user.favorites.length}</div>
+                <div className="text-lg font-semibold">{user.favorites?.length || 0}</div>
               </div>
               <div>
                 <div className="text-sm font-medium text-gray-500">Bar Crawls</div>
-                <div className="text-lg font-semibold">{user.barCrawls.length}</div>
+                <div className="text-lg font-semibold">{user.barCrawls?.length || 0}</div>
               </div>
-              <div>
-                <div className="text-sm font-medium text-gray-500">Last Active</div>
-                <div>{user.lastActive}</div>
-              </div>
+              
+              {user.userType === 'establishment' && (
+                <>
+                  <div>
+                    <div className="text-sm font-medium text-gray-500">Address</div>
+                    <div>{user.address || 'N/A'}</div>
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-gray-500">Phone</div>
+                    <div>{user.phone || 'N/A'}</div>
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-gray-500">Website</div>
+                    <div>{user.website || 'N/A'}</div>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -232,7 +312,28 @@ const AdminUserProfile = () => {
             </CardContent>
           </Card>
         )}
+
+        {user.userType === 'establishment' && user.cocktails && (
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle>Mocktail Menu</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2">
+                {user.cocktails.map((cocktail: any, index: number) => (
+                  <li key={index} className="border-b pb-2 last:border-0">
+                    <div className="font-medium">{cocktail.name}</div>
+                    <div className="text-sm text-gray-500">
+                      Ingredients: {cocktail.ingredients.join(', ')}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        )}
       </div>
+      <AdminFooter />
     </div>
   );
 };

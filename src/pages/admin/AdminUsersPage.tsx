@@ -9,7 +9,14 @@ import {
 } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Eye, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
+import { Search, Eye, ChevronLeft, ChevronRight, RefreshCw, BadgeInfo } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import AdminFooter from '@/components/admin/AdminFooter';
 
 type UserWithProfile = {
   id: string;
@@ -19,7 +26,111 @@ type UserWithProfile = {
   createdAt: string;
   lastLogin: string | null;
   isVerified: boolean;
+  isMock?: boolean;
 }
+
+const MOCK_TEST_USERS: UserWithProfile[] = [
+  {
+    id: '00000000-0000-0000-0000-000000000001',
+    email: 'testuser1@example.com',
+    username: 'testuser1',
+    userType: 'individual',
+    createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    lastLogin: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    isVerified: true,
+    isMock: true
+  },
+  {
+    id: '00000000-0000-0000-0000-000000000002',
+    email: 'testuser2@example.com',
+    username: 'testuser2',
+    userType: 'individual',
+    createdAt: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    lastLogin: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    isVerified: true,
+    isMock: true
+  },
+  {
+    id: '00000000-0000-0000-0000-000000000003',
+    email: 'testuser3@example.com',
+    username: 'testuser3',
+    userType: 'individual',
+    createdAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    lastLogin: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    isVerified: true,
+    isMock: true
+  },
+  {
+    id: '00000000-0000-0000-0000-000000000004',
+    email: 'testuser4@example.com',
+    username: 'testuser4',
+    userType: 'individual',
+    createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    lastLogin: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    isVerified: false,
+    isMock: true
+  },
+  {
+    id: '00000000-0000-0000-0000-000000000005',
+    email: 'testuser5@example.com',
+    username: 'testuser5',
+    userType: 'individual',
+    createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    lastLogin: null,
+    isVerified: true,
+    isMock: true
+  },
+  {
+    id: '00000000-0000-0000-0000-00000000000b',
+    email: 'mocktailbar1@example.com',
+    username: 'mocktailbar1',
+    userType: 'establishment',
+    createdAt: new Date(Date.now() - 40 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    lastLogin: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    isVerified: true,
+    isMock: true
+  },
+  {
+    id: '00000000-0000-0000-0000-00000000000c',
+    email: 'mocktailbar2@example.com',
+    username: 'mocktailbar2',
+    userType: 'establishment',
+    createdAt: new Date(Date.now() - 35 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    lastLogin: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    isVerified: true,
+    isMock: true
+  },
+  {
+    id: '00000000-0000-0000-0000-00000000000d',
+    email: 'mocktailbar3@example.com',
+    username: 'mocktailbar3',
+    userType: 'establishment',
+    createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    lastLogin: null,
+    isVerified: false,
+    isMock: true
+  },
+  {
+    id: '00000000-0000-0000-0000-00000000000e',
+    email: 'mocktailbar4@example.com',
+    username: 'mocktailbar4',
+    userType: 'establishment',
+    createdAt: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    lastLogin: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    isVerified: true,
+    isMock: true
+  },
+  {
+    id: '00000000-0000-0000-0000-00000000000f',
+    email: 'adminuser@example.com',
+    username: 'adminuser',
+    userType: 'admin',
+    createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    lastLogin: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    isVerified: true,
+    isMock: true
+  }
+];
 
 const AdminUsersPage = () => {
   const [users, setUsers] = useState<UserWithProfile[]>([]);
@@ -27,6 +138,7 @@ const AdminUsersPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [usersPerPage] = useState(10);
   const [isLoading, setIsLoading] = useState(false);
+  const [includeMockUsers, setIncludeMockUsers] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -61,7 +173,12 @@ const AdminUsersPage = () => {
         isVerified: true // Assume verified for simplicity
       }));
 
-      setUsers(processedUsers);
+      // Combine real users with mock users if includeMockUsers is true
+      const combinedUsers = includeMockUsers
+        ? [...processedUsers, ...MOCK_TEST_USERS]
+        : processedUsers;
+      
+      setUsers(combinedUsers);
     } catch (error: any) {
       console.error('Error fetching users:', error);
       toast({
@@ -69,6 +186,11 @@ const AdminUsersPage = () => {
         description: error.message || 'An unexpected error occurred',
         variant: 'destructive',
       });
+      
+      // If there's an error fetching real users, at least show mock users
+      if (includeMockUsers) {
+        setUsers(MOCK_TEST_USERS);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -76,11 +198,15 @@ const AdminUsersPage = () => {
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [includeMockUsers]);
 
   const handleLogout = () => {
     localStorage.removeItem('admin_authenticated');
     navigate('/admin');
+  };
+
+  const toggleMockUsers = () => {
+    setIncludeMockUsers(!includeMockUsers);
   };
 
   const filteredUsers = users.filter(
@@ -108,10 +234,10 @@ const AdminUsersPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-material-background">
+    <div className="min-h-screen bg-material-background flex flex-col">
       <AdminHeader onLogout={handleLogout} />
 
-      <main className="container max-w-5xl mx-auto p-4">
+      <main className="container max-w-5xl mx-auto p-4 flex-1">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold">User Management</h1>
           <Button 
@@ -125,26 +251,48 @@ const AdminUsersPage = () => {
         </div>
 
         <div className="bg-white p-4 rounded-md shadow-sm mb-6">
-          <div className="flex items-center space-x-2">
-            <div className="relative flex-1">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+            <div className="relative flex-1 w-full">
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search users by email or username..."
-                className="pl-9"
+                className="pl-9 w-full"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <Button 
-              variant="outline" 
-              size="icon" 
-              onClick={fetchUsers} 
-              disabled={isLoading}
-              title="Refresh users"
-            >
-              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-              <span className="sr-only">Refresh</span>
-            </Button>
+            
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                size="icon" 
+                onClick={fetchUsers} 
+                disabled={isLoading}
+                title="Refresh users"
+              >
+                <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+                <span className="sr-only">Refresh</span>
+              </Button>
+              
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant={includeMockUsers ? "default" : "outline"}
+                      size="sm"
+                      onClick={toggleMockUsers}
+                      className="flex items-center gap-1"
+                    >
+                      <BadgeInfo className="h-4 w-4 mr-1" />
+                      {includeMockUsers ? "Hide Test Users" : "Show Test Users"}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-xs">Toggle mock test users for admin UI testing</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
           </div>
         </div>
 
@@ -163,16 +311,38 @@ const AdminUsersPage = () => {
             </TableHeader>
             <TableBody>
               {currentUsers.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell className="font-medium">{user.email}</TableCell>
+                <TableRow key={user.id} className={user.isMock ? 'bg-slate-50' : ''}>
+                  <TableCell className="font-medium">
+                    <div className="flex items-center gap-1">
+                      {user.email}
+                      {user.isMock && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <BadgeInfo className="h-3 w-3 text-blue-500" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="text-xs">This is a mock test user</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                    </div>
+                  </TableCell>
                   <TableCell>{user.username || 'N/A'}</TableCell>
                   <TableCell>
                     <span className={`px-2 py-1 rounded-full text-xs ${
                       user.userType === 'establishment' 
                         ? 'bg-spiritless-green/20 text-spiritless-green' 
-                        : 'bg-spiritless-pink/20 text-spiritless-pink'
+                        : user.userType === 'admin'
+                          ? 'bg-spiritless-burgundy/20 text-spiritless-burgundy'
+                          : 'bg-spiritless-pink/20 text-spiritless-pink'
                     }`}>
-                      {user.userType === 'establishment' ? 'Establishment' : 'Individual'}
+                      {user.userType === 'establishment' 
+                        ? 'Establishment' 
+                        : user.userType === 'admin'
+                          ? 'Admin'
+                          : 'Individual'}
                     </span>
                   </TableCell>
                   <TableCell>{user.createdAt}</TableCell>
@@ -248,6 +418,8 @@ const AdminUsersPage = () => {
           )}
         </div>
       </main>
+      
+      <AdminFooter />
     </div>
   );
 };
