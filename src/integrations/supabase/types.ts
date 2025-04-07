@@ -335,6 +335,48 @@ export type Database = {
           },
         ]
       }
+      moderation_photos: {
+        Row: {
+          content_type: string
+          created_at: string
+          id: string
+          moderated_at: string | null
+          moderated_by: string | null
+          rejection_reason: string | null
+          source_id: string
+          source_table: string
+          status: string
+          url: string
+          user_id: string
+        }
+        Insert: {
+          content_type?: string
+          created_at?: string
+          id?: string
+          moderated_at?: string | null
+          moderated_by?: string | null
+          rejection_reason?: string | null
+          source_id: string
+          source_table: string
+          status?: string
+          url: string
+          user_id: string
+        }
+        Update: {
+          content_type?: string
+          created_at?: string
+          id?: string
+          moderated_at?: string | null
+          moderated_by?: string | null
+          rejection_reason?: string | null
+          source_id?: string
+          source_table?: string
+          status?: string
+          url?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

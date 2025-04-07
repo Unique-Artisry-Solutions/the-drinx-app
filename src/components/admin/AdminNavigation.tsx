@@ -44,7 +44,7 @@ const AdminNavigation: React.FC<AdminNavigationProps> = ({
         </li>
         <li>
           <Link to="/admin/photo-moderation">
-            <Button variant="ghost" className="text-white hover:text-white hover:bg-spiritless-burgundy/25" className="flex items-center gap-1">
+            <Button variant="ghost" className="flex items-center gap-1 text-white hover:text-white hover:bg-spiritless-burgundy/25">
               <Image size={16} />
               Photo Moderation
             </Button>
