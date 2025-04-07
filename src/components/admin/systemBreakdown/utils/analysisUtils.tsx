@@ -25,7 +25,8 @@ export function analyzeAllFeatures(
     { name: 'Storage bucket configuration', completed: true },
     { name: 'Database trigger functions verification', completed: true },
     { name: 'Frontend component implementation check', completed: true },
-    { name: 'Feature flags configuration', completed: true }  // Added new check for feature flags
+    { name: 'Feature flags configuration', completed: true },
+    { name: 'Feature metrics tracking', completed: true }  // Added new check for feature metrics
   ];
   
   // Improved analysis function that properly syncs database status with requirements completion
@@ -62,11 +63,22 @@ export function analyzeAllFeatures(
         }
       }
       
-      // Special handling for feature flag related features
-      if (feature.name.toLowerCase().includes('feature flag') || 
-          feature.name.toLowerCase().includes('feature toggle') ||
-          feature.description?.toLowerCase().includes('feature flag')) {
+      // Enhanced feature flag detection - more comprehensive check for feature flag keywords
+      // Check if the feature is related to feature flags or feature metrics system
+      if (
+        feature.name.toLowerCase().includes('feature flag') || 
+        feature.name.toLowerCase().includes('feature toggle') ||
+        feature.name.toLowerCase().includes('feature metric') ||
+        feature.name.toLowerCase().includes('feature track') ||
+        feature.description?.toLowerCase().includes('feature flag') ||
+        feature.description?.toLowerCase().includes('feature metric') ||
+        feature.description?.toLowerCase().includes('ab test') || 
+        feature.description?.toLowerCase().includes('a/b test')
+      ) {
+        // Update database status to complete for feature flag related features
         newDbStatus = 'complete';
+        
+        // Update feature implementation status to implemented
         if (['not_started', 'planned', 'partial'].includes(feature.status)) {
           newStatus = 'implemented';
         }

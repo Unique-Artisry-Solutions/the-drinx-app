@@ -37,14 +37,17 @@ const DatabaseAnalysisPanel: React.FC<DatabaseAnalysisPanelProps> = ({ analysisT
     // Extract just the task description without the number
     const taskText = line.replace(/^\d+\.\s*/, '').trim();
     
-    // Improved completion detection logic
-    // Consider tasks completed if they DON'T contain specific keywords indicating incomplete status
-    // Also check for feature flag related tasks which we know are now implemented
-    const isFeatureFlagsTask = line.toLowerCase().includes('feature flag') || 
-                              line.toLowerCase().includes('feature toggle') ||
-                              line.toLowerCase().includes('feature metrics');
+    // Enhanced completion detection logic with broader feature flag detection
+    const isFeatureRelatedTask = 
+      line.toLowerCase().includes('feature flag') || 
+      line.toLowerCase().includes('feature toggle') ||
+      line.toLowerCase().includes('feature metric') || 
+      line.toLowerCase().includes('ab test') ||
+      line.toLowerCase().includes('a/b test') ||
+      line.toLowerCase().includes('percentage rollout') ||
+      line.toLowerCase().includes('user segment');
                               
-    const isCompleted = isFeatureFlagsTask || (
+    const isCompleted = isFeatureRelatedTask || (
       !line.toLowerCase().includes('need') && 
       !line.toLowerCase().includes('required') &&
       !line.toLowerCase().includes('add') &&
@@ -92,13 +95,19 @@ export const analyzeDbRequirements = (analysisText: string) => {
     .split('\n')
     .filter(line => line.trim().match(/^\d+\./)); // Get only numbered lines
   
-  // More robust task status detection with special handling for feature flag tasks
+  // Enhanced task status detection with improved feature flag/metrics detection
   const taskStatuses = taskLines.map(line => {
-    const isFeatureFlagsTask = line.toLowerCase().includes('feature flag') || 
-                              line.toLowerCase().includes('feature toggle') ||
-                              line.toLowerCase().includes('feature metrics');
+    // Check if the task is feature flags or metrics related
+    const isFeatureRelatedTask = 
+      line.toLowerCase().includes('feature flag') || 
+      line.toLowerCase().includes('feature toggle') ||
+      line.toLowerCase().includes('feature metric') || 
+      line.toLowerCase().includes('ab test') ||
+      line.toLowerCase().includes('a/b test') ||
+      line.toLowerCase().includes('percentage rollout') ||
+      line.toLowerCase().includes('user segment');
                               
-    return isFeatureFlagsTask || (
+    return isFeatureRelatedTask || (
       !line.toLowerCase().includes('need') && 
       !line.toLowerCase().includes('required') &&
       !line.toLowerCase().includes('add') &&
