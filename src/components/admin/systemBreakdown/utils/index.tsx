@@ -3,6 +3,7 @@ import { renderStatusBadge, renderDatabaseStatusBadge, renderAccessIcon } from '
 import { calculateFeatureStatistics } from './statisticsUtils';
 import { generateCSV } from './exportUtils';
 import { analyzeAllFeatures } from './analysisUtils';
+import { analyzeDbRequirements } from '../DatabaseAnalysisPanel';
 
 export {
   renderStatusBadge,
@@ -11,6 +12,7 @@ export {
   calculateFeatureStatistics,
   generateCSV,
   analyzeAllFeatures,
+  analyzeDbRequirements
 };
 
 // Use 'export type' for type exports when isolatedModules is enabled

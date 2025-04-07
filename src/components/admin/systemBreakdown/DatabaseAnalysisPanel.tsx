@@ -1,106 +1,19 @@
 
 import React from 'react';
-import { Check, Circle } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
-
-interface DatabaseAnalysisTaskProps {
-  text: string;
-  isCompleted: boolean;
-}
-
-const DatabaseAnalysisTask: React.FC<DatabaseAnalysisTaskProps> = ({ text, isCompleted }) => (
-  <div className="flex items-start gap-2 py-1">
-    {isCompleted ? (
-      <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-    ) : (
-      <Circle className="h-4 w-4 text-gray-300 mt-0.5 flex-shrink-0" />
-    )}
-    <span className={`text-sm ${isCompleted ? 'text-gray-800' : 'text-gray-500'}`}>{text}</span>
-  </div>
-);
+import DatabaseAnalysisTask from './components/DatabaseAnalysisTask';
+import { parseTaskStatuses } from './utils/analysisHelpers';
+import { analyzeDbRequirements } from './utils/analysisHelpers';
 
 interface DatabaseAnalysisPanelProps {
   analysisText: string;
 }
 
+/**
+ * Panel that displays database analysis information and task completion progress
+ */
 const DatabaseAnalysisPanel: React.FC<DatabaseAnalysisPanelProps> = ({ analysisText }) => {
-  // Parse the analysis text to extract tasks
-  // Format expected: numbered list with each item on a new line
-  // Example: "1. Create user_rewards table\n2. Implement reward_transactions..."
-  const taskLines = analysisText
-    .split('\n')
-    .filter(line => line.trim().match(/^\d+\./)); // Get only numbered lines
-  
-  // For demo purposes, we'll consider tasks completed based on specific keywords
-  // In a real implementation, this would be based on actual database state
-  const taskStatuses = taskLines.map(line => {
-    // Extract just the task description without the number
-    const taskText = line.replace(/^\d+\.\s*/, '').trim();
-    
-    // Enhanced completion detection logic with broader feature flag detection
-    const isFeatureRelatedTask = 
-      line.toLowerCase().includes('feature flag') || 
-      line.toLowerCase().includes('feature toggle') ||
-      line.toLowerCase().includes('feature metric') || 
-      line.toLowerCase().includes('ab test') ||
-      line.toLowerCase().includes('a/b test') ||
-      line.toLowerCase().includes('percentage rollout') ||
-      line.toLowerCase().includes('user segment');
-                               
-    // Enhanced mocktail suggestion detection
-    const isMocktailSuggestionTask =
-      line.toLowerCase().includes('mocktail_suggestion') ||
-      line.toLowerCase().includes('mocktail trend') ||
-      line.toLowerCase().includes('suggestion_feedback') ||
-      line.toLowerCase().includes('ingredient_pairing') ||
-      line.toLowerCase().includes('ai model parameter') ||
-      line.toLowerCase().includes('seasonal_trend_analysis');
-    
-    // Enhanced mocktail trends detection
-    const isMocktailTrendTask = 
-      line.toLowerCase().includes('mocktail_trend') ||
-      line.toLowerCase().includes('ingredient trend') ||
-      line.toLowerCase().includes('trend_analysis') ||
-      line.toLowerCase().includes('seasonal_trend') ||
-      line.toLowerCase().includes('popularity tracking') ||
-      line.toLowerCase().includes('trend score');
-      
-    // Enhanced ingredient pairing detection
-    const isIngredientPairingTask =
-      line.toLowerCase().includes('ingredient_pairing') ||
-      line.toLowerCase().includes('pairing_score') ||
-      line.toLowerCase().includes('complementary ingredient') ||
-      line.toLowerCase().includes('flavor combination');
-      
-    // Enhanced promotion system detection
-    const isPromotionTask = 
-      line.toLowerCase().includes('establishment_promotions') ||
-      line.toLowerCase().includes('promotion_redemptions') ||
-      line.toLowerCase().includes('promotion_analytics') ||
-      line.toLowerCase().includes('promotion') && line.toLowerCase().includes('table') ||
-      line.toLowerCase().includes('discount') ||
-      line.toLowerCase().includes('special offer') ||
-      line.toLowerCase().includes('validation trigger') && line.toLowerCase().includes('promotion') ||
-      line.toLowerCase().includes('notification') && line.toLowerCase().includes('promotion') ||
-      line.toLowerCase().includes('expiring promotion');
-    
-    const isCompleted = isFeatureRelatedTask || isMocktailSuggestionTask || 
-                         isMocktailTrendTask || isIngredientPairingTask || 
-                         isPromotionTask || (
-      !line.toLowerCase().includes('need') && 
-      !line.toLowerCase().includes('required') &&
-      !line.toLowerCase().includes('add') &&
-      !line.toLowerCase().includes('create') &&
-      !line.toLowerCase().includes('implement') &&
-      !line.toLowerCase().includes('todo')
-    );
-    
-    return { 
-      text: taskText,
-      isCompleted 
-    };
-  });
-  
+  const taskStatuses = parseTaskStatuses(analysisText);
   const completedCount = taskStatuses.filter(task => task.isCompleted).length;
   const totalTasks = taskStatuses.length;
   const completionPercentage = totalTasks > 0 ? (completedCount / totalTasks) * 100 : 0;
@@ -126,85 +39,7 @@ const DatabaseAnalysisPanel: React.FC<DatabaseAnalysisPanelProps> = ({ analysisT
   );
 };
 
-// Helper function to analyze database requirements and determine status
-export const analyzeDbRequirements = (analysisText: string) => {
-  if (!analysisText) return { completionPercentage: 0, hasStarted: false, isComplete: false };
-  
-  const taskLines = analysisText
-    .split('\n')
-    .filter(line => line.trim().match(/^\d+\./)); // Get only numbered lines
-  
-  // Enhanced task status detection with improved feature flag/metrics detection
-  const taskStatuses = taskLines.map(line => {
-    // Check if the task is feature flags or metrics related
-    const isFeatureRelatedTask = 
-      line.toLowerCase().includes('feature flag') || 
-      line.toLowerCase().includes('feature toggle') ||
-      line.toLowerCase().includes('feature metric') || 
-      line.toLowerCase().includes('ab test') ||
-      line.toLowerCase().includes('a/b test') ||
-      line.toLowerCase().includes('percentage rollout') ||
-      line.toLowerCase().includes('user segment');
-    
-    // Check if the task is mocktail suggestion related
-    const isMocktailSuggestionTask = 
-      line.toLowerCase().includes('mocktail_suggestion') ||
-      line.toLowerCase().includes('mocktail trend') ||
-      line.toLowerCase().includes('suggestion_feedback') ||
-      line.toLowerCase().includes('ingredient_pairing') ||
-      line.toLowerCase().includes('ai model parameter') ||
-      line.toLowerCase().includes('seasonal_trend_analysis');
-      
-    // Check if the task is mocktail trends related
-    const isMocktailTrendTask = 
-      line.toLowerCase().includes('mocktail_trend') ||
-      line.toLowerCase().includes('ingredient trend') ||
-      line.toLowerCase().includes('trend_analysis') ||
-      line.toLowerCase().includes('seasonal_trend') ||
-      line.toLowerCase().includes('popularity tracking') ||
-      line.toLowerCase().includes('trend score');
-      
-    // Check if the task is ingredient pairing related
-    const isIngredientPairingTask =
-      line.toLowerCase().includes('ingredient_pairing') ||
-      line.toLowerCase().includes('pairing_score') ||
-      line.toLowerCase().includes('complementary ingredient') ||
-      line.toLowerCase().includes('flavor combination');
-      
-    // Enhanced promotion system detection
-    const isPromotionTask = 
-      line.toLowerCase().includes('establishment_promotions') ||
-      line.toLowerCase().includes('promotion_redemptions') ||
-      line.toLowerCase().includes('promotion_analytics') ||
-      line.toLowerCase().includes('promotion') && line.toLowerCase().includes('table') ||
-      line.toLowerCase().includes('discount') ||
-      line.toLowerCase().includes('validation trigger') && line.toLowerCase().includes('promotion') ||
-      line.toLowerCase().includes('notification') && line.toLowerCase().includes('promotion') ||
-      line.toLowerCase().includes('expiring promotion');
-                               
-    return isFeatureRelatedTask || isMocktailSuggestionTask || 
-           isMocktailTrendTask || isIngredientPairingTask || 
-           isPromotionTask || (
-      !line.toLowerCase().includes('need') && 
-      !line.toLowerCase().includes('required') &&
-      !line.toLowerCase().includes('add') &&
-      !line.toLowerCase().includes('create') &&
-      !line.toLowerCase().includes('implement') &&
-      !line.toLowerCase().includes('todo')
-    );
-  });
-  
-  const completedCount = taskStatuses.filter(status => status).length;
-  const totalTasks = taskStatuses.length;
-  const completionPercentage = totalTasks > 0 ? (completedCount / totalTasks) * 100 : 0;
-  
-  return {
-    completionPercentage,
-    // If at least one task is completed, consider it started
-    hasStarted: completedCount > 0,
-    // Only mark as complete if all tasks are completed
-    isComplete: completedCount > 0 && completedCount === totalTasks
-  };
-};
+// Export the analyzeDbRequirements helper function for external use
+export { analyzeDbRequirements };
 
 export default DatabaseAnalysisPanel;
