@@ -1,7 +1,8 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Utensils, MapPin } from 'lucide-react';
 import DistanceFilter from '@/components/barCrawl/VenueDiversity';
 import BarCrawlControlWithSampleData from '@/components/barCrawl/selection/BarCrawlControlWithSampleData';
 import { Establishment } from '@/types/ProfileTypes';
@@ -19,6 +20,54 @@ interface VenuesTabProps {
   onContinue: () => void;
 }
 
+// Sample establishments for demonstration when no venues are found
+const sampleNearbyEstablishments: Establishment[] = [
+  {
+    id: "sample-1",
+    name: "Mocktail Haven",
+    address: "123 Main Street",
+    distance: "0.5 miles",
+    latitude: 37.7749,
+    longitude: -122.4194,
+    cocktail_count: 8,
+    image: "https://placehold.co/200x150?text=Mocktail+Haven",
+    created_at: new Date().toISOString()
+  },
+  {
+    id: "sample-2",
+    name: "Spirit-free Lounge",
+    address: "456 Oak Avenue",
+    distance: "0.8 miles",
+    latitude: 37.7741,
+    longitude: -122.4183,
+    cocktail_count: 12,
+    image: "https://placehold.co/200x150?text=Spirit-free+Lounge",
+    created_at: new Date().toISOString()
+  },
+  {
+    id: "sample-3", 
+    name: "Sober Bar & Grill",
+    address: "789 Market Street",
+    distance: "1.2 miles",
+    latitude: 37.7758,
+    longitude: -122.4205,
+    cocktail_count: 10,
+    image: "https://placehold.co/200x150?text=Sober+Bar",
+    created_at: new Date().toISOString()
+  },
+  {
+    id: "sample-4",
+    name: "Juice Junction",
+    address: "101 Pine Road",
+    distance: "1.5 miles",
+    latitude: 37.7731,
+    longitude: -122.4173,
+    cocktail_count: 15,
+    image: "https://placehold.co/200x150?text=Juice+Junction",
+    created_at: new Date().toISOString()
+  }
+];
+
 const VenuesTab: React.FC<VenuesTabProps> = ({
   maxDistance,
   onDistanceChange,
@@ -31,6 +80,8 @@ const VenuesTab: React.FC<VenuesTabProps> = ({
   onBack,
   onContinue
 }) => {
+  const [useTestData, setUseTestData] = useState(false);
+
   return (
     <Card className="flex-1">
       <CardHeader>
@@ -67,21 +118,40 @@ const VenuesTab: React.FC<VenuesTabProps> = ({
                 <div className="text-center py-8">
                   <p className="text-muted-foreground">Loading venues...</p>
                 </div>
-              ) : availableEstablishments.length === 0 ? (
+              ) : availableEstablishments.length === 0 && !useTestData ? (
                 <div className="text-center py-8 bg-gray-50 border border-gray-200 rounded-lg">
+                  <Utensils className="mx-auto h-8 w-8 text-gray-400 mb-3" />
                   <p className="text-gray-600">
                     No venues found within {maxDistance} miles of your location.
                   </p>
-                  <p className="text-sm text-gray-500 mt-2">
-                    Try increasing the distance or selecting a different location.
-                  </p>
+                  <div className="text-sm text-gray-500 mt-2 mb-4">
+                    Try increasing the distance or use our sample venues for testing.
+                  </div>
+                  <Button 
+                    onClick={() => setUseTestData(true)}
+                    className="bg-spiritless-pink hover:bg-spiritless-pink/90"
+                  >
+                    Use Sample Venues
+                  </Button>
                 </div>
               ) : (
                 <div>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Found {availableEstablishments.length} venues within {maxDistance} miles of your location.
+                    {useTestData 
+                      ? `Showing ${sampleNearbyEstablishments.length} sample venues for testing.` 
+                      : `Found ${availableEstablishments.length} venues within ${maxDistance} miles of your location.`
+                    }
                     Select venues to add to your Swig Circuit.
                   </p>
+                  
+                  {useTestData && (
+                    <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md flex items-center">
+                      <MapPin className="h-4 w-4 text-blue-500 mr-2 flex-shrink-0" />
+                      <p className="text-sm text-blue-700">
+                        Using sample venues for demonstration purposes.
+                      </p>
+                    </div>
+                  )}
                   
                   {/* Using the sample data component for testing */}
                   <BarCrawlControlWithSampleData 
