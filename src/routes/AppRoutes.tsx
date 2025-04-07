@@ -54,6 +54,7 @@ const AdminUserProfile = lazy(() => import('@/pages/admin/AdminUserProfile'));
 const AdminEstablishmentsPage = lazy(() => import('@/pages/admin/AdminEstablishmentsPage'));
 const AdminEstablishmentProfile = lazy(() => import('@/pages/admin/AdminEstablishmentProfile'));
 const SystemFunctionalityBreakdown = lazy(() => import('@/pages/admin/SystemFunctionalityBreakdown'));
+const SystemAnalyticsPage = lazy(() => import('@/pages/admin/SystemAnalyticsPage'));
 const PhotoModerationPage = lazy(() => import('@/pages/admin/PhotoModerationPage'));
 
 const AppRoutes = () => {
@@ -102,6 +103,7 @@ const AppRoutes = () => {
         <Route path="/admin/establishments" element={<AdminEstablishmentsPage />} />
         <Route path="/admin/establishments/:id" element={<AdminEstablishmentProfile />} />
         <Route path="/admin/system-breakdown" element={<SystemFunctionalityBreakdown />} />
+        <Route path="/admin/analytics" element={<SystemAnalyticsPage />} />
         <Route path="/admin/photo-moderation" element={<PhotoModerationPage />} />
         
         <Route path="/establishment/all-actions" element={

@@ -9,6 +9,117 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      analytics_daily_rollup: {
+        Row: {
+          date: string
+          event_count: number
+          event_type: string
+          id: string
+          unique_users: number
+        }
+        Insert: {
+          date: string
+          event_count?: number
+          event_type: string
+          id?: string
+          unique_users?: number
+        }
+        Update: {
+          date?: string
+          event_count?: number
+          event_type?: string
+          id?: string
+          unique_users?: number
+        }
+        Relationships: []
+      }
+      analytics_events: {
+        Row: {
+          event_data: Json | null
+          event_type: string
+          id: string
+          ip_address: string | null
+          page_url: string | null
+          timestamp: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          event_data?: Json | null
+          event_type: string
+          id?: string
+          ip_address?: string | null
+          page_url?: string | null
+          timestamp?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          page_url?: string | null
+          timestamp?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      analytics_monthly_rollup: {
+        Row: {
+          event_count: number
+          event_type: string
+          id: string
+          month: number
+          unique_users: number
+          year: number
+        }
+        Insert: {
+          event_count?: number
+          event_type: string
+          id?: string
+          month: number
+          unique_users?: number
+          year: number
+        }
+        Update: {
+          event_count?: number
+          event_type?: string
+          id?: string
+          month?: number
+          unique_users?: number
+          year?: number
+        }
+        Relationships: []
+      }
+      analytics_weekly_rollup: {
+        Row: {
+          event_count: number
+          event_type: string
+          id: string
+          unique_users: number
+          week: number
+          year: number
+        }
+        Insert: {
+          event_count?: number
+          event_type: string
+          id?: string
+          unique_users?: number
+          week: number
+          year: number
+        }
+        Update: {
+          event_count?: number
+          event_type?: string
+          id?: string
+          unique_users?: number
+          week?: number
+          year?: number
+        }
+        Relationships: []
+      }
       bar_crawl_check_ins: {
         Row: {
           bar_crawl_id: string
@@ -765,9 +876,35 @@ export type Database = {
       }
     }
     Functions: {
+      aggregate_daily_analytics: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       can_join_bar_crawl: {
         Args: { user_id: string }
         Returns: boolean
+      }
+      get_user_retention: {
+        Args: { p_start_date: string; p_end_date: string }
+        Returns: {
+          cohort_date: string
+          total_users: number
+          retained_users_week1: number
+          retained_users_week2: number
+          retained_users_week3: number
+          retained_users_week4: number
+        }[]
+      }
+      track_analytics_event: {
+        Args: {
+          p_user_id: string
+          p_event_type: string
+          p_event_data?: Json
+          p_page_url?: string
+          p_user_agent?: string
+          p_ip_address?: string
+        }
+        Returns: string
       }
     }
     Enums: {
