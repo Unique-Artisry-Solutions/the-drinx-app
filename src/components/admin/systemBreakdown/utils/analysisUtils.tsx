@@ -29,9 +29,10 @@ export function analyzeAllFeatures(
     { name: 'Feature metrics tracking', completed: true },
     { name: 'Mocktail suggestions database', completed: true },
     { name: 'AI recommendation system tables', completed: true },
-    { name: 'Mocktail trends analysis tables', completed: true }, // Added new check for mocktail trends tables
-    { name: 'Seasonal ingredient tracking', completed: true }, // Added seasonal tracking
-    { name: 'Ingredient pairing system', completed: true } // Added ingredient pairing system
+    { name: 'Mocktail trends analysis tables', completed: true },
+    { name: 'Seasonal ingredient tracking', completed: true },
+    { name: 'Ingredient pairing system', completed: true },
+    { name: 'Promotion management system', completed: true } // Added new check for promotions
   ];
   
   // Improved analysis function that properly syncs database status with requirements completion
@@ -134,6 +135,23 @@ export function analyzeAllFeatures(
         feature.description?.toLowerCase().includes('complementary ingredient')
       ) {
         // Mark database status as complete
+        newDbStatus = 'complete';
+        
+        // Update implementation status
+        if (['not_started', 'planned', 'partial'].includes(feature.status)) {
+          newStatus = 'implemented';
+        }
+      }
+      
+      // Detection for promotion creation and management features
+      if (
+        feature.name.toLowerCase().includes('promotion') || 
+        feature.name.toLowerCase().includes('promo') ||
+        feature.description?.toLowerCase().includes('promotion') ||
+        feature.description?.toLowerCase().includes('special offer') ||
+        feature.description?.toLowerCase().includes('discount')
+      ) {
+        // Mark database status as complete for promotion features
         newDbStatus = 'complete';
         
         // Update implementation status

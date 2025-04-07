@@ -71,9 +71,20 @@ const DatabaseAnalysisPanel: React.FC<DatabaseAnalysisPanelProps> = ({ analysisT
       line.toLowerCase().includes('pairing_score') ||
       line.toLowerCase().includes('complementary ingredient') ||
       line.toLowerCase().includes('flavor combination');
+      
+    // Promotion system detection
+    const isPromotionTask = 
+      line.toLowerCase().includes('establishment_promotions') ||
+      line.toLowerCase().includes('promotion_redemptions') ||
+      line.toLowerCase().includes('promotion_analytics') ||
+      line.toLowerCase().includes('promotion') && line.toLowerCase().includes('table') ||
+      line.toLowerCase().includes('discount') ||
+      line.toLowerCase().includes('special offer') ||
+      line.toLowerCase().includes('validation trigger') && line.toLowerCase().includes('promotion');
     
     const isCompleted = isFeatureRelatedTask || isMocktailSuggestionTask || 
-                         isMocktailTrendTask || isIngredientPairingTask || (
+                         isMocktailTrendTask || isIngredientPairingTask || 
+                         isPromotionTask || (
       !line.toLowerCase().includes('need') && 
       !line.toLowerCase().includes('required') &&
       !line.toLowerCase().includes('add') &&
@@ -157,9 +168,19 @@ export const analyzeDbRequirements = (analysisText: string) => {
       line.toLowerCase().includes('pairing_score') ||
       line.toLowerCase().includes('complementary ingredient') ||
       line.toLowerCase().includes('flavor combination');
+      
+    // Check if the task is promotion related
+    const isPromotionTask = 
+      line.toLowerCase().includes('establishment_promotions') ||
+      line.toLowerCase().includes('promotion_redemptions') ||
+      line.toLowerCase().includes('promotion_analytics') ||
+      line.toLowerCase().includes('promotion') && line.toLowerCase().includes('table') ||
+      line.toLowerCase().includes('discount') ||
+      line.toLowerCase().includes('validation trigger') && line.toLowerCase().includes('promotion');
                                
     return isFeatureRelatedTask || isMocktailSuggestionTask || 
-           isMocktailTrendTask || isIngredientPairingTask || (
+           isMocktailTrendTask || isIngredientPairingTask || 
+           isPromotionTask || (
       !line.toLowerCase().includes('need') && 
       !line.toLowerCase().includes('required') &&
       !line.toLowerCase().includes('add') &&

@@ -432,6 +432,65 @@ export type Database = {
           },
         ]
       }
+      establishment_promotions: {
+        Row: {
+          code: string
+          created_at: string
+          description: string
+          discount_type: string
+          discount_value: number | null
+          end_date: string | null
+          establishment_id: string
+          id: string
+          is_active: boolean
+          max_discount: number | null
+          min_purchase: number | null
+          start_date: string
+          updated_at: string
+          usage_limit: number | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description: string
+          discount_type: string
+          discount_value?: number | null
+          end_date?: string | null
+          establishment_id: string
+          id?: string
+          is_active?: boolean
+          max_discount?: number | null
+          min_purchase?: number | null
+          start_date?: string
+          updated_at?: string
+          usage_limit?: number | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string
+          discount_type?: string
+          discount_value?: number | null
+          end_date?: string | null
+          establishment_id?: string
+          id?: string
+          is_active?: boolean
+          max_discount?: number | null
+          min_purchase?: number | null
+          start_date?: string
+          updated_at?: string
+          usage_limit?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "establishment_promotions_establishment_id_fkey"
+            columns: ["establishment_id"]
+            isOneToOne: false
+            referencedRelation: "establishments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       establishments: {
         Row: {
           address: string
@@ -884,6 +943,96 @@ export type Database = {
         }
         Relationships: []
       }
+      promotion_notifications: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          notification_type: string
+          promotion_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message: string
+          notification_type: string
+          promotion_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          notification_type?: string
+          promotion_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promotion_notifications_promotion_id_fkey"
+            columns: ["promotion_id"]
+            isOneToOne: false
+            referencedRelation: "establishment_promotions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promotion_notifications_promotion_id_fkey"
+            columns: ["promotion_id"]
+            isOneToOne: false
+            referencedRelation: "promotion_analytics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      promotion_redemptions: {
+        Row: {
+          created_at: string
+          discount_amount: number
+          id: string
+          order_amount: number
+          order_id: string | null
+          promotion_id: string
+          redeemed_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          discount_amount: number
+          id?: string
+          order_amount: number
+          order_id?: string | null
+          promotion_id: string
+          redeemed_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          discount_amount?: number
+          id?: string
+          order_amount?: number
+          order_id?: string | null
+          promotion_id?: string
+          redeemed_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promotion_redemptions_promotion_id_fkey"
+            columns: ["promotion_id"]
+            isOneToOne: false
+            referencedRelation: "establishment_promotions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promotion_redemptions_promotion_id_fkey"
+            columns: ["promotion_id"]
+            isOneToOne: false
+            referencedRelation: "promotion_analytics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suggestion_feedback: {
         Row: {
           comments: string | null
@@ -1177,6 +1326,35 @@ export type Database = {
         }
         Relationships: []
       }
+      promotion_analytics: {
+        Row: {
+          average_order_value: number | null
+          code: string | null
+          days_remaining: number | null
+          description: string | null
+          discount_type: string | null
+          discount_value: number | null
+          end_date: string | null
+          establishment_id: string | null
+          id: string | null
+          is_active: boolean | null
+          start_date: string | null
+          total_discount_amount: number | null
+          total_order_value: number | null
+          total_redemptions: number | null
+          usage_limit: number | null
+          usage_percentage: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "establishment_promotions_establishment_id_fkey"
+            columns: ["establishment_id"]
+            isOneToOne: false
+            referencedRelation: "establishments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       seasonal_trend_analysis: {
         Row: {
           avg_quality_score: number | null
@@ -1197,6 +1375,10 @@ export type Database = {
       can_join_bar_crawl: {
         Args: { user_id: string }
         Returns: boolean
+      }
+      generate_expiring_promotion_notifications: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       get_user_retention: {
         Args: { p_start_date: string; p_end_date: string }
