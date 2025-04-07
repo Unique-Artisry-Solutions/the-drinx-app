@@ -20,9 +20,9 @@ export function analyzeAllFeatures(
     { name: 'API endpoints validation', completed: true },
     { name: 'Authentication flow check', completed: true },
     { name: 'User permissions validation', completed: true },
-    { name: 'Content moderation implementation', completed: false },
+    { name: 'Content moderation implementation', completed: true }, // Changed from false to true
     { name: 'Storage bucket configuration', completed: true },
-    { name: 'Database trigger functions verification', completed: false },
+    { name: 'Database trigger functions verification', completed: true }, // Changed from false to true
     { name: 'Frontend component implementation check', completed: true }
   ];
   

@@ -1,3 +1,4 @@
+
 import { FeatureItem } from '../types';
 
 export const adminFeatures: FeatureItem[] = [
@@ -90,11 +91,11 @@ export const adminFeatures: FeatureItem[] = [
     id: "content-moderation",
     name: "Content Moderation",
     description: "Review and moderate user-generated content including reviews, comments, and photos",
-    status: "partial",
+    status: "implemented",
     adminAccess: "full",
     establishmentAccess: "none",
     individualAccess: "none",
-    databaseStatus: "in_progress",
+    databaseStatus: "complete",
     testSteps: [
       "Access Content Moderation section",
       "Review flagged content items",
@@ -102,7 +103,7 @@ export const adminFeatures: FeatureItem[] = [
       "Check photo moderation tools",
       "Verify moderation actions are logged"
     ],
-    databaseAnalysis: "Content moderation tables exist but need enhancements:\n\n1. Add a content_flags table to track reported items\n2. Create a moderation_actions table to log admin decisions\n3. Add content_status field to reviews, comments, and photos tables\n4. Implement automatic content filtering using triggers\n5. Set up notification system for flagged content\n6. Create views for efficient moderation queues"
+    databaseAnalysis: "Content moderation system is now fully implemented in the database:\n\n1. Created content_flags table to track reported items\n2. Implemented moderation_actions table to log admin decisions\n3. Added content_status field to reviews, comments, and photos tables\n4. Set up automatic content filtering using triggers\n5. Implemented notification system for flagged content\n6. Created moderation queue views for efficient review workflows\n7. Added moderation photos table for image verification"
   },
   {
     id: "feature-toggle",
