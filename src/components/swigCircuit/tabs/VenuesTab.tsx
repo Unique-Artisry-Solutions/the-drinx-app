@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -30,8 +29,7 @@ const sampleNearbyEstablishments: Establishment[] = [
     latitude: 37.7749,
     longitude: -122.4194,
     cocktailCount: 8,
-    image: "https://placehold.co/200x150?text=Mocktail+Haven",
-    created_at: new Date().toISOString()
+    image: "https://placehold.co/200x150?text=Mocktail+Haven"
   },
   {
     id: "sample-2",
@@ -41,8 +39,7 @@ const sampleNearbyEstablishments: Establishment[] = [
     latitude: 37.7741,
     longitude: -122.4183,
     cocktailCount: 12,
-    image: "https://placehold.co/200x150?text=Spirit-free+Lounge",
-    created_at: new Date().toISOString()
+    image: "https://placehold.co/200x150?text=Spirit-free+Lounge"
   },
   {
     id: "sample-3", 
@@ -52,8 +49,7 @@ const sampleNearbyEstablishments: Establishment[] = [
     latitude: 37.7758,
     longitude: -122.4205,
     cocktailCount: 10,
-    image: "https://placehold.co/200x150?text=Sober+Bar",
-    created_at: new Date().toISOString()
+    image: "https://placehold.co/200x150?text=Sober+Bar"
   },
   {
     id: "sample-4",
@@ -63,8 +59,7 @@ const sampleNearbyEstablishments: Establishment[] = [
     latitude: 37.7731,
     longitude: -122.4173,
     cocktailCount: 15,
-    image: "https://placehold.co/200x150?text=Juice+Junction",
-    created_at: new Date().toISOString()
+    image: "https://placehold.co/200x150?text=Juice+Junction"
   }
 ];
 
