@@ -3,7 +3,8 @@ import React, { useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { FeatureItem } from './types';
 import { renderAccessIcon, renderStatusBadge, renderDatabaseStatusBadge } from './utils';
-import { ChevronDown, ChevronUp, Database, AlertTriangle, List } from 'lucide-react';
+import { ChevronDown, ChevronUp, Database, AlertTriangle, List, CheckCircle2 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface FeaturesTableProps {
   features: FeatureItem[];
@@ -12,6 +13,7 @@ interface FeaturesTableProps {
 
 const FeaturesTable: React.FC<FeaturesTableProps> = ({ features }) => {
   const [expandedRows, setExpandedRows] = useState<Record<number, boolean>>({});
+  const [completedRequirements, setCompletedRequirements] = useState<Record<string, boolean>>({});
 
   const toggleRow = (index: number) => {
     setExpandedRows(prev => ({
@@ -31,6 +33,15 @@ const FeaturesTable: React.FC<FeaturesTableProps> = ({ features }) => {
     return splitText
       .map(item => item.trim())
       .filter(item => item.length > 0);
+  };
+
+  // Handle requirement completion toggle
+  const toggleRequirementCompletion = (featureId: string, reqIndex: number) => {
+    const requirementId = `${featureId}-${reqIndex}`;
+    setCompletedRequirements(prev => ({
+      ...prev,
+      [requirementId]: !prev[requirementId]
+    }));
   };
 
   return (
@@ -125,6 +136,9 @@ const FeaturesTable: React.FC<FeaturesTableProps> = ({ features }) => {
                         <Table>
                           <TableHeader>
                             <TableRow className="bg-blue-100/60">
+                              <TableHead width="50px" className="font-medium text-blue-800 py-2">
+                                Status
+                              </TableHead>
                               <TableHead className="font-medium text-blue-800 py-2">
                                 <div className="flex items-center">
                                   <List className="h-4 w-4 mr-1" />
@@ -134,13 +148,28 @@ const FeaturesTable: React.FC<FeaturesTableProps> = ({ features }) => {
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {parseDbRequirements(feature.databaseAnalysis).map((requirement, reqIndex) => (
-                              <TableRow key={reqIndex} className="border-t border-blue-100">
-                                <TableCell className="py-2 text-sm text-blue-800">
-                                  {requirement}
-                                </TableCell>
-                              </TableRow>
-                            ))}
+                            {parseDbRequirements(feature.databaseAnalysis).map((requirement, reqIndex) => {
+                              const requirementId = `${feature.id}-${reqIndex}`;
+                              const isCompleted = completedRequirements[requirementId] || false;
+                              
+                              return (
+                                <TableRow key={reqIndex} className="border-t border-blue-100">
+                                  <TableCell className="w-[70px]">
+                                    <div className="flex items-center justify-center">
+                                      <Checkbox 
+                                        id={requirementId}
+                                        checked={isCompleted}
+                                        onCheckedChange={() => toggleRequirementCompletion(feature.id, reqIndex)}
+                                        className="mx-auto"
+                                      />
+                                    </div>
+                                  </TableCell>
+                                  <TableCell className={`py-2 text-sm ${isCompleted ? 'text-blue-800/70 line-through' : 'text-blue-800'}`}>
+                                    {requirement}
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            })}
                           </TableBody>
                         </Table>
                       </div>
