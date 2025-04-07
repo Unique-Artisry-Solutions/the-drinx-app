@@ -4,6 +4,7 @@ import { supabaseClient } from '@/lib/supabaseClient';
 import { useAuth } from '@/contexts/auth';
 import { useToast } from '@/hooks/use-toast';
 import { User } from '@supabase/supabase-js';
+import { AuthContextType } from '@/contexts/auth/types';
 
 // Create a proper mockUser that satisfies the User type from Supabase
 export const mockUser: User = {
@@ -35,8 +36,31 @@ export function setupMocks(authUser = mockUser) {
   // Clear localStorage mock
   getLocalStorageMock().clear();
   
-  // Setup auth mock
-  vi.mocked(useAuth).mockReturnValue({ user: authUser });
+  // Create a complete mock auth context
+  const mockAuthContext: AuthContextType = {
+    user: authUser,
+    session: authUser ? { 
+      user: authUser,
+      access_token: 'mock-access-token',
+      refresh_token: 'mock-refresh-token',
+      expires_at: Date.now() + 3600,
+      expires_in: 3600,
+      provider_token: null,
+      provider_refresh_token: null,
+      token_type: 'bearer'
+    } : null,
+    isLoading: false,
+    isEmailVerified: true,
+    signIn: vi.fn().mockResolvedValue({}),
+    signUp: vi.fn().mockResolvedValue({}),
+    signOut: vi.fn().mockResolvedValue({}),
+    updateProfile: vi.fn().mockResolvedValue({}),
+    refreshSession: vi.fn().mockResolvedValue({ isEmailVerified: true }),
+    resetPassword: vi.fn().mockResolvedValue({})
+  };
+  
+  // Setup auth mock with the complete context
+  vi.mocked(useAuth).mockReturnValue(mockAuthContext);
   
   // Setup toast mock
   vi.mocked(useToast).mockReturnValue(mockToast);
