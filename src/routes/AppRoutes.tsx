@@ -48,6 +48,7 @@ const AdminUsersPage = lazy(() => import('@/pages/admin/AdminUsersPage'));
 const AdminUserProfile = lazy(() => import('@/pages/admin/AdminUserProfile'));
 const AdminEstablishmentsPage = lazy(() => import('@/pages/admin/AdminEstablishmentsPage'));
 const AdminEstablishmentProfile = lazy(() => import('@/pages/admin/AdminEstablishmentProfile'));
+const SystemFunctionalityBreakdown = lazy(() => import('@/pages/admin/SystemFunctionalityBreakdown'));
 
 // Establishment pages
 const EstablishmentProfilePage = lazy(() => import('@/pages/establishment/EstablishmentProfilePage'));
@@ -104,6 +105,7 @@ const AppRoutes = () => {
         <Route path="/admin/users/:id" element={<AdminUserProfile />} />
         <Route path="/admin/establishments" element={<AdminEstablishmentsPage />} />
         <Route path="/admin/establishments/:id" element={<AdminEstablishmentProfile />} />
+        <Route path="/admin/system-breakdown" element={<SystemFunctionalityBreakdown />} />
         
         {/* Establishment routes - protected with type */}
         <Route path="/establishment/all-actions" element={
