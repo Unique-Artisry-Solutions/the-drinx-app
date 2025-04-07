@@ -28,9 +28,9 @@ const PhotoDetailModal: React.FC<PhotoDetailModalProps> = ({
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white p-6 rounded-lg max-w-lg w-full max-h-[90vh] overflow-auto">
         <h2 className="text-xl font-bold mb-4">
-          {photo.status === 'rejected' 
+          {photo.content_status === 'rejected' 
             ? 'Rejection Details' 
-            : photo.status === 'approved' 
+            : photo.content_status === 'approved' 
               ? 'Photo Details' 
               : 'Reject Photo'}
         </h2>
@@ -42,7 +42,7 @@ const PhotoDetailModal: React.FC<PhotoDetailModalProps> = ({
             className="w-full h-auto max-h-64 object-contain mb-4 bg-gray-100 rounded"
           />
           
-          {photo.status === 'pending' ? (
+          {photo.content_status === 'pending' ? (
             <div>
               <label className="block mb-2 text-sm font-medium">
                 Reason for rejection:
@@ -62,7 +62,7 @@ const PhotoDetailModal: React.FC<PhotoDetailModalProps> = ({
               {photo.moderated_at && (
                 <div><strong>Moderated:</strong> {formatDate(photo.moderated_at)}</div>
               )}
-              {photo.status === 'rejected' && photo.rejection_reason && (
+              {photo.content_status === 'rejected' && photo.rejection_reason && (
                 <div>
                   <strong>Rejection reason:</strong>
                   <p className="mt-1 p-2 bg-gray-50 rounded">
@@ -82,7 +82,7 @@ const PhotoDetailModal: React.FC<PhotoDetailModalProps> = ({
             Close
           </Button>
           
-          {photo.status === 'pending' && (
+          {photo.content_status === 'pending' && (
             <Button 
               variant="destructive" 
               onClick={() => onReject(photo)}

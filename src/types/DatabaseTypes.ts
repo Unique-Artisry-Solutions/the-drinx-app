@@ -1,4 +1,3 @@
-
 import { Database } from "@/integrations/supabase/types";
 
 // Specific table types
@@ -146,4 +145,52 @@ export type RewardHistory = {
   points: number;
   description?: string;
   created_at: string;
+};
+
+// Content flag type
+export type ContentFlag = {
+  id: string;
+  content_type: string;
+  content_id: string;
+  reporter_id?: string;
+  reason: string;
+  details?: string;
+  status: 'pending' | 'reviewed' | 'dismissed';
+  created_at: string;
+  updated_at: string;
+};
+
+// Moderation action type
+export type ModerationAction = {
+  id: string;
+  content_type: string;
+  content_id: string;
+  moderator_id?: string;
+  action: string;
+  reason?: string;
+  created_at: string;
+};
+
+// Moderation notification type
+export type ModerationNotification = {
+  id: string;
+  recipient_id?: string;
+  content_type: string;
+  content_id: string;
+  message: string;
+  is_read: boolean;
+  created_at: string;
+};
+
+// Flagged content queue item type
+export type FlaggedContentQueueItem = {
+  flag_id: string;
+  content_type: string;
+  content_id: string;
+  reason: string;
+  details?: string;
+  reporter_id?: string;
+  reported_at: string;
+  reporter_name?: string;
+  content_preview?: string;
 };

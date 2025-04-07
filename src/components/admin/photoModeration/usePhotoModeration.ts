@@ -19,7 +19,7 @@ export const usePhotoModeration = (initialTab: string = 'pending') => {
       const { data, error } = await supabase
         .from('moderation_photos' as any) // Using 'any' to bypass type checking
         .select('*')
-        .eq('status', activeTab)
+        .eq('content_status', activeTab)
         .order('created_at', { ascending: false });
         
       if (error) throw error;
@@ -35,13 +35,23 @@ export const usePhotoModeration = (initialTab: string = 'pending') => {
       const { error } = await supabase
         .from('moderation_photos' as any) // Using 'any' to bypass type checking
         .update({ 
-          status: 'approved',
+          content_status: 'approved',
           moderated_at: new Date().toISOString(),
           moderated_by: (await supabase.auth.getUser()).data.user?.id
         })
         .eq('id', photo.id);
       
       if (error) throw error;
+      
+      // Log moderation action
+      await supabase
+        .from('moderation_actions' as any)
+        .insert({
+          content_type: 'photo',
+          content_id: photo.id,
+          moderator_id: (await supabase.auth.getUser()).data.user?.id,
+          action: 'approve'
+        });
       
       toast({
         title: "Photo approved",
@@ -69,7 +79,7 @@ export const usePhotoModeration = (initialTab: string = 'pending') => {
       const { error } = await supabase
         .from('moderation_photos' as any) // Using 'any' to bypass type checking
         .update({ 
-          status: 'rejected',
+          content_status: 'rejected',
           moderated_at: new Date().toISOString(),
           moderated_by: (await supabase.auth.getUser()).data.user?.id,
           rejection_reason: rejectionReason || 'Content policy violation'
@@ -77,6 +87,17 @@ export const usePhotoModeration = (initialTab: string = 'pending') => {
         .eq('id', photo.id);
       
       if (error) throw error;
+      
+      // Log moderation action
+      await supabase
+        .from('moderation_actions' as any)
+        .insert({
+          content_type: 'photo',
+          content_id: photo.id,
+          moderator_id: (await supabase.auth.getUser()).data.user?.id,
+          action: 'reject',
+          reason: rejectionReason || 'Content policy violation'
+        });
       
       toast({
         title: "Photo rejected",

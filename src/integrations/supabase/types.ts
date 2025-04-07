@@ -146,6 +146,7 @@ export type Database = {
       cocktail_reviews: {
         Row: {
           cocktail_id: string
+          content_status: string
           created_at: string
           id: string
           rating: number
@@ -155,6 +156,7 @@ export type Database = {
         }
         Insert: {
           cocktail_id: string
+          content_status?: string
           created_at?: string
           id?: string
           rating: number
@@ -164,6 +166,7 @@ export type Database = {
         }
         Update: {
           cocktail_id?: string
+          content_status?: string
           created_at?: string
           id?: string
           rating?: number
@@ -213,6 +216,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      content_flags: {
+        Row: {
+          content_id: string
+          content_type: string
+          created_at: string | null
+          details: string | null
+          id: string
+          reason: string
+          reporter_id: string | null
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          content_id: string
+          content_type: string
+          created_at?: string | null
+          details?: string | null
+          id?: string
+          reason: string
+          reporter_id?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          content_id?: string
+          content_type?: string
+          created_at?: string | null
+          details?: string | null
+          id?: string
+          reason?: string
+          reporter_id?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       establishments: {
         Row: {
@@ -335,8 +374,69 @@ export type Database = {
           },
         ]
       }
+      moderation_actions: {
+        Row: {
+          action: string
+          content_id: string
+          content_type: string
+          created_at: string | null
+          id: string
+          moderator_id: string | null
+          reason: string | null
+        }
+        Insert: {
+          action: string
+          content_id: string
+          content_type: string
+          created_at?: string | null
+          id?: string
+          moderator_id?: string | null
+          reason?: string | null
+        }
+        Update: {
+          action?: string
+          content_id?: string
+          content_type?: string
+          created_at?: string | null
+          id?: string
+          moderator_id?: string | null
+          reason?: string | null
+        }
+        Relationships: []
+      }
+      moderation_notifications: {
+        Row: {
+          content_id: string
+          content_type: string
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          message: string
+          recipient_id: string | null
+        }
+        Insert: {
+          content_id: string
+          content_type: string
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message: string
+          recipient_id?: string | null
+        }
+        Update: {
+          content_id?: string
+          content_type?: string
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          recipient_id?: string | null
+        }
+        Relationships: []
+      }
       moderation_photos: {
         Row: {
+          content_status: string
           content_type: string
           created_at: string
           id: string
@@ -345,11 +445,11 @@ export type Database = {
           rejection_reason: string | null
           source_id: string
           source_table: string
-          status: string
           url: string
           user_id: string
         }
         Insert: {
+          content_status?: string
           content_type?: string
           created_at?: string
           id?: string
@@ -358,11 +458,11 @@ export type Database = {
           rejection_reason?: string | null
           source_id: string
           source_table: string
-          status?: string
           url: string
           user_id: string
         }
         Update: {
+          content_status?: string
           content_type?: string
           created_at?: string
           id?: string
@@ -371,7 +471,6 @@ export type Database = {
           rejection_reason?: string | null
           source_id?: string
           source_table?: string
-          status?: string
           url?: string
           user_id?: string
         }
@@ -647,6 +746,20 @@ export type Database = {
           source: string | null
           text: string | null
           user_name: string | null
+        }
+        Relationships: []
+      }
+      flagged_content_queue: {
+        Row: {
+          content_id: string | null
+          content_preview: string | null
+          content_type: string | null
+          details: string | null
+          flag_id: string | null
+          reason: string | null
+          reported_at: string | null
+          reporter_id: string | null
+          reporter_name: string | null
         }
         Relationships: []
       }
