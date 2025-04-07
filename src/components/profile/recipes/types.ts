@@ -28,6 +28,8 @@ export interface RecipeFormProps {
   handleAddIngredient: () => void;
   handleIngredientChange: (index: number, field: keyof Ingredient, value: string) => void;
   handleRemoveIngredient: (index: number) => void;
+  newUnit?: string;  // Added this property
+  setNewUnit?: (value: string) => void;  // Added this property
 }
 
 export interface CreateRecipeDialogProps {

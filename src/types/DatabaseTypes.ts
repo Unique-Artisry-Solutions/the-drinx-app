@@ -1,3 +1,4 @@
+
 import { Database } from "@/integrations/supabase/types";
 
 // Specific table types
@@ -100,6 +101,7 @@ export type UserRecipe = {
 export type Ingredient = {
   name: string;
   amount: string;
+  unit?: string; // Added unit property
 };
 
 // Mocktail suggestion type
