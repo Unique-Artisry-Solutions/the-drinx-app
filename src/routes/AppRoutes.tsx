@@ -1,3 +1,4 @@
+
 import React, { lazy, Suspense } from 'react';
 import { Route, Routes, Navigate } from 'react-router-dom';
 import LandingPage from '@/pages/LandingPage';
@@ -39,6 +40,11 @@ import MocktailSuggestionsPage from '@/pages/establishment/MocktailSuggestionsPa
 import SettingsPage from '@/pages/SettingsPage';
 import UserRecipesPage from '@/pages/profile/UserRecipesPage';
 import { ProtectedRoute, TypedProtectedRoute } from './protectedRoutes';
+
+// Import the establishment pages directly instead of using lazy loading
+import EstablishmentProfilePage from '@/pages/establishment/EstablishmentProfilePage';
+import MocktailMenuPage from '@/pages/establishment/MocktailMenuPage';
+import PromotionsPage from '@/pages/establishment/PromotionsPage';
 
 // Admin pages
 const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
@@ -120,7 +126,7 @@ const AppRoutes = () => {
         } />
         <Route path="/establishment/analytics" element={
           <TypedProtectedRoute userType="establishment">
-            <AnalyticsPage />
+            <EstablishmentAnalyticsPage />
           </TypedProtectedRoute>
         } />
         <Route path="/establishment/bar-crawl-requests" element={
