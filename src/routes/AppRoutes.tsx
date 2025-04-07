@@ -1,4 +1,3 @@
-
 import React, { lazy, Suspense } from 'react';
 import { Route, Routes, Navigate } from 'react-router-dom';
 import LandingPage from '@/pages/LandingPage';
@@ -51,17 +50,10 @@ const AdminEstablishmentProfile = lazy(() => import('@/pages/admin/AdminEstablis
 const SystemFunctionalityBreakdown = lazy(() => import('@/pages/admin/SystemFunctionalityBreakdown'));
 const PhotoModerationPage = lazy(() => import('@/pages/admin/PhotoModerationPage'));
 
-// Establishment pages
-const EstablishmentProfilePage = lazy(() => import('@/pages/establishment/EstablishmentProfilePage'));
-const MocktailMenuPage = lazy(() => import('@/pages/establishment/MocktailMenuPage'));
-const PromotionsPage = lazy(() => import('@/pages/establishment/PromotionsPage'));
-const AnalyticsPage = lazy(() => import('@/pages/establishment/AnalyticsPage'));
-
 const AppRoutes = () => {
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <Routes>
-        {/* Public routes */}
         <Route path="/" element={<Index />} />
         <Route path="/landing" element={<LandingPage />} />
         <Route path="/map" element={<MapPage />} />
@@ -71,7 +63,6 @@ const AppRoutes = () => {
         <Route path="/bar-crawl/:id" element={<BarCrawlDetail />} />
         <Route path="/bar-crawl-details/:id" element={<BarCrawlProfilePage />} />
         <Route path="/swig-circuits" element={<SwigCircuitsPage />} />
-        {/* Redirect route for old /bar-crawl path to prevent 404 */}
         <Route path="/bar-crawl" element={<Navigate to="/swig-circuits" replace />} />
         <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/signup" element={<SignupPage />} />
@@ -83,7 +74,6 @@ const AppRoutes = () => {
         <Route path="/mission" element={<MissionPage />} />
         <Route path="/pricing" element={<PricingPage />} />
         
-        {/* Profile routes - protected */}
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="/profile/favorites" element={<ProtectedRoute><FavoritesPage /></ProtectedRoute>} />
         <Route path="/profile/visited" element={<ProtectedRoute><VisitedPage /></ProtectedRoute>} />
@@ -96,12 +86,11 @@ const AppRoutes = () => {
         <Route path="/create-swig-circuit" element={<ProtectedRoute><CreateSwigCircuitPage /></ProtectedRoute>} />
         <Route path="/profile/my-creations/:id" element={<ProtectedRoute><BarCrawlManagementPage /></ProtectedRoute>} />
         
-        {/* Settings route */}
         <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
         
-        {/* Admin routes */}
+        <Route path="/admin" element={<AdminLogin />} />
         <Route path="/admin/login" element={<AdminLogin />} />
-        <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/admin/users" element={<AdminUsersPage />} />
         <Route path="/admin/users/:id" element={<AdminUserProfile />} />
         <Route path="/admin/establishments" element={<AdminEstablishmentsPage />} />
@@ -109,7 +98,6 @@ const AppRoutes = () => {
         <Route path="/admin/system-breakdown" element={<SystemFunctionalityBreakdown />} />
         <Route path="/admin/photo-moderation" element={<PhotoModerationPage />} />
         
-        {/* Establishment routes - protected with type */}
         <Route path="/establishment/all-actions" element={
           <TypedProtectedRoute userType="establishment">
             <AllActionsPage />
@@ -156,7 +144,6 @@ const AppRoutes = () => {
           </TypedProtectedRoute>
         } />
         
-        {/* Fallback routes */}
         <Route path="/404" element={<NotFound />} />
         <Route path="*" element={<Navigate to="/404" replace />} />
       </Routes>

@@ -65,6 +65,9 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
         // Admin login logic
         if (identifier === 'admin@spiritless.com' && password === 'admin123') {
           localStorage.setItem('admin_authenticated', 'true');
+          localStorage.setItem('admin_username', 'Admin');
+          localStorage.setItem('admin_session_created', new Date().toISOString());
+          
           toast({
             title: 'Admin login successful',
             description: 'Welcome to the admin dashboard',
