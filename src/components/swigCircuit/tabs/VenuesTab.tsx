@@ -29,7 +29,7 @@ const sampleNearbyEstablishments: Establishment[] = [
     distance: "0.5 miles",
     latitude: 37.7749,
     longitude: -122.4194,
-    cocktail_count: 8,
+    cocktailCount: 8,
     image: "https://placehold.co/200x150?text=Mocktail+Haven",
     created_at: new Date().toISOString()
   },
@@ -40,7 +40,7 @@ const sampleNearbyEstablishments: Establishment[] = [
     distance: "0.8 miles",
     latitude: 37.7741,
     longitude: -122.4183,
-    cocktail_count: 12,
+    cocktailCount: 12,
     image: "https://placehold.co/200x150?text=Spirit-free+Lounge",
     created_at: new Date().toISOString()
   },
@@ -51,7 +51,7 @@ const sampleNearbyEstablishments: Establishment[] = [
     distance: "1.2 miles",
     latitude: 37.7758,
     longitude: -122.4205,
-    cocktail_count: 10,
+    cocktailCount: 10,
     image: "https://placehold.co/200x150?text=Sober+Bar",
     created_at: new Date().toISOString()
   },
@@ -62,7 +62,7 @@ const sampleNearbyEstablishments: Establishment[] = [
     distance: "1.5 miles",
     latitude: 37.7731,
     longitude: -122.4173,
-    cocktail_count: 15,
+    cocktailCount: 15,
     image: "https://placehold.co/200x150?text=Juice+Junction",
     created_at: new Date().toISOString()
   }
