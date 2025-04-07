@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CircleSlash } from 'lucide-react';
 import MetricsVisualization from './MetricsVisualization';
 import KeyMetricsCards from './KeyMetricsCards';
@@ -11,15 +11,24 @@ import { useDashboardData } from '@/hooks/useDashboardData';
 import DrinkProfileModal, { Drink } from './DrinkProfileModal';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import MocktailSuggestionsCard from './MocktailSuggestionsCard';
+import { supabaseClient } from '@/lib/supabaseClient';
+import { useAuth } from '@/contexts/auth';
 
 interface EstablishmentDashboardProps {
   establishmentName: string;
+  establishmentId: string;
 }
 
-const EstablishmentDashboard: React.FC<EstablishmentDashboardProps> = ({ establishmentName }) => {
+const EstablishmentDashboard: React.FC<EstablishmentDashboardProps> = ({ 
+  establishmentName,
+  establishmentId
+}) => {
   const [isAddMocktailModalOpen, setIsAddMocktailModalOpen] = useState(false);
+  const [pendingSuggestions, setPendingSuggestions] = useState(0);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { user } = useAuth();
   
   // Use our custom hook to get all dashboard data
   const { 
@@ -30,6 +39,52 @@ const EstablishmentDashboard: React.FC<EstablishmentDashboardProps> = ({ establi
     barCrawlData,
     isLoading 
   } = useDashboardData();
+  
+  // Fetch pending mocktail suggestions count
+  useEffect(() => {
+    const fetchPendingSuggestionsCount = async () => {
+      if (!establishmentId) return;
+      
+      try {
+        const { count, error } = await supabaseClient
+          .from('mocktail_suggestions')
+          .select('*', { count: 'exact', head: true })
+          .eq('establishment_id', establishmentId)
+          .eq('status', 'pending');
+          
+        if (error) {
+          console.error('Error fetching pending suggestions:', error);
+          return;
+        }
+        
+        setPendingSuggestions(count || 0);
+      } catch (error) {
+        console.error('Error in fetchPendingSuggestionsCount:', error);
+      }
+    };
+    
+    fetchPendingSuggestionsCount();
+    
+    // Set up a subscription for real-time updates to mocktail suggestions
+    const subscription = supabaseClient
+      .channel('mocktail-suggestions-changes')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'mocktail_suggestions',
+          filter: `establishment_id=eq.${establishmentId}` 
+        }, 
+        () => {
+          fetchPendingSuggestionsCount();
+        }
+      )
+      .subscribe();
+      
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [establishmentId]);
   
   const handleAddMocktail = (drink: Drink) => {
     // Here you would call an API to save the mocktail
@@ -85,6 +140,11 @@ const EstablishmentDashboard: React.FC<EstablishmentDashboardProps> = ({ establi
             pendingBarCrawls={stats.pendingBarCrawls} 
             pendingReviews={stats.reviewsThisWeek} 
           />
+        </div>
+
+        {/* Mocktail Suggestions Card */}
+        <div className="mb-6">
+          <MocktailSuggestionsCard pendingSuggestionCount={pendingSuggestions} />
         </div>
         
         {/* Main Content: Metrics Visualization (full width) */}

@@ -126,19 +126,18 @@ export const establishmentFeatures: FeatureItem[] = [
   {
     id: "mocktail-suggestions",
     name: "Mocktail Suggestions",
-    description: "Receive AI-powered and trend-based suggestions for new mocktail creations",
+    description: "Receive user-submitted suggestions for new mocktail creations",
     status: "implemented",
     adminAccess: "full",
     establishmentAccess: "full",
     individualAccess: "none",
-    databaseStatus: "not_started",
+    databaseStatus: "complete",
     testSteps: [
       "Navigate to Mocktail Suggestions section",
-      "View AI-generated suggestions",
-      "See trend-based recommendations",
-      "Implement a suggestion into menu",
-      "Rate suggestion quality"
-    ],
-    databaseAnalysis: "AI-powered mocktail suggestion feature requires new database structures:\n\n1. Create mocktail_suggestions table linked to establishments\n2. Implement mocktail_trends table for tracking popular ingredients\n3. Set up suggestion_feedback table for quality improvement\n4. Add ingredient_pairing_scores table for AI recommendations\n5. Create seasonal_trend_analysis view\n6. Implement storage for AI model parameters and customization options"
+      "View user-submitted suggestions",
+      "Review suggestion details",
+      "Approve or reject suggestions with feedback",
+      "Add approved suggestions to the menu"
+    ]
   }
 ];

@@ -29,13 +29,14 @@ export const useMocktailSuggestions = () => {
     
     return data.map((suggestion: any) => ({
       ...suggestion,
-      ingredients: suggestion.ingredients as unknown as Ingredient[],
       establishment_name: suggestion.establishments?.name || 'Unknown Establishment'
     })) as (MocktailSuggestion & { establishment_name: string })[];
   };
   
   // Function to fetch establishment's suggestions
   const fetchEstablishmentSuggestions = async (establishmentId: string) => {
+    if (!establishmentId) return [];
+    
     const { data, error } = await supabaseClient
       .from('mocktail_suggestions')
       .select('*, profiles(username, display_name)')
@@ -49,7 +50,6 @@ export const useMocktailSuggestions = () => {
     
     return data.map((suggestion: any) => ({
       ...suggestion,
-      ingredients: suggestion.ingredients as unknown as Ingredient[],
       user_name: suggestion.profiles?.display_name || suggestion.profiles?.username || 'Anonymous User'
     })) as (MocktailSuggestion & { user_name: string })[];
   };
@@ -72,6 +72,7 @@ export const useMocktailSuggestions = () => {
     return useQuery({
       queryKey: ['establishmentMocktailSuggestions', establishmentId],
       queryFn: () => fetchEstablishmentSuggestions(establishmentId),
+      enabled: !!establishmentId,
       staleTime: 1000 * 60 * 5, // 5 minutes
     });
   };
@@ -87,16 +88,16 @@ export const useMocktailSuggestions = () => {
         .from('mocktail_suggestions')
         .insert({
           ...suggestion,
-          user_id: user.id
+          user_id: user.id,
+          status: 'pending'
         })
-        .select()
-        .single();
+        .select();
         
       if (error) {
         throw error;
       }
       
-      return data as MocktailSuggestion;
+      return data[0] as MocktailSuggestion;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['userMocktailSuggestions', user?.id] });
@@ -118,10 +119,6 @@ export const useMocktailSuggestions = () => {
   // Mutation to update a suggestion status (for establishment owners)
   const updateSuggestionStatus = useMutation({
     mutationFn: async ({ id, status, feedback }: { id: string, status: 'approved' | 'rejected', feedback?: string }) => {
-      if (!user) {
-        throw new Error('User not authenticated');
-      }
-      
       const { data, error } = await supabaseClient
         .from('mocktail_suggestions')
         .update({
@@ -130,20 +127,22 @@ export const useMocktailSuggestions = () => {
           updated_at: new Date().toISOString()
         })
         .eq('id', id)
-        .select()
-        .single();
+        .select();
         
       if (error) {
         throw error;
       }
       
-      return data as MocktailSuggestion;
+      return data[0] as MocktailSuggestion;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['establishmentMocktailSuggestions'] });
-      toast({
-        title: `Suggestion ${variables.status}`,
-        description: `The mocktail suggestion has been ${variables.status}.`
+      queryClient.invalidateQueries({ 
+        queryKey: ['establishmentMocktailSuggestions']
+      });
+      
+      // Also invalidate any potential user-specific queries
+      queryClient.invalidateQueries({
+        queryKey: ['userMocktailSuggestions']
       });
     },
     onError: (error) => {
