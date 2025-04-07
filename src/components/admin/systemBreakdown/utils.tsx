@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
+import { CheckCircle2, XCircle, AlertCircle, Database } from 'lucide-react';
 import { FeatureItem } from './types';
 
 // Utility function to render status badges
@@ -28,7 +28,7 @@ export const renderDatabaseStatusBadge = (status?: 'completed' | 'in-progress' |
     case 'not-started':
       return <div className="flex items-center"><XCircle className="h-4 w-4 mr-1 text-gray-400" /> <span>Not Started</span></div>;
     default:
-      return <span className="text-gray-400">Unknown</span>;
+      return <div className="flex items-center"><Database className="h-4 w-4 mr-1 text-blue-400" /> <span>Unknown</span></div>;
   }
 };
 
@@ -54,6 +54,7 @@ export const calculateFeatureStatistics = (
   const dbCompleted = allFeatures.filter(f => f.databaseStatus === 'completed').length;
   const dbInProgress = allFeatures.filter(f => f.databaseStatus === 'in-progress').length;
   const dbNotStarted = allFeatures.filter(f => f.databaseStatus === 'not-started').length;
+  const dbUnknown = totalFeatures - dbCompleted - dbInProgress - dbNotStarted;
   
   const implementationRate = Math.round((implementedFeatures / totalFeatures) * 100);
   const databaseCompletionRate = Math.round((dbCompleted / totalFeatures) * 100);
@@ -66,6 +67,7 @@ export const calculateFeatureStatistics = (
     dbCompleted,
     dbInProgress,
     dbNotStarted,
+    dbUnknown,
     implementationRate,
     databaseCompletionRate
   };
@@ -74,12 +76,16 @@ export const calculateFeatureStatistics = (
 // Generate CSV of all features
 export const generateCSV = (adminFeatures: FeatureItem[], establishmentFeatures: FeatureItem[], individualFeatures: FeatureItem[]) => {
   // Create CSV header
-  let csv = 'Feature,Description,Status,Database Status,Admin Access,Establishment Access,Individual Access,Test Steps\n';
+  let csv = 'Feature,Description,Status,Database Status,Admin Access,Establishment Access,Individual Access,Test Steps,Database Analysis\n';
   
   // Add all features from all categories
   [...adminFeatures, ...establishmentFeatures, ...individualFeatures].forEach(feature => {
     const testStepsFormatted = feature.testSteps ? 
       `"${feature.testSteps.map((step, i) => `${i+1}. ${step}`).join('\n')}"` : 
+      '""';
+      
+    const databaseAnalysisFormatted = feature.databaseAnalysis ?
+      `"${feature.databaseAnalysis.replace(/"/g, '""')}"` :
       '""';
       
     const row = [
@@ -90,7 +96,8 @@ export const generateCSV = (adminFeatures: FeatureItem[], establishmentFeatures:
       feature.adminAccess ? 'Yes' : 'No',
       feature.establishmentAccess ? 'Yes' : 'No',
       feature.individualAccess ? 'Yes' : 'No',
-      testStepsFormatted
+      testStepsFormatted,
+      databaseAnalysisFormatted
     ];
     csv += row.join(',') + '\n';
   });

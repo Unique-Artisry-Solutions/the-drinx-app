@@ -8,4 +8,5 @@ export interface FeatureItem {
   individualAccess: boolean;
   testSteps?: string[];
   databaseStatus?: 'completed' | 'in-progress' | 'not-started';
+  databaseAnalysis?: string; // Adding a field for detailed database analysis
 }

@@ -2,8 +2,8 @@
 import React, { useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { FeatureItem } from './types';
-import { renderAccessIcon, renderStatusBadge } from './utils';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { renderAccessIcon, renderStatusBadge, renderDatabaseStatusBadge } from './utils';
+import { ChevronDown, ChevronUp, Database } from 'lucide-react';
 
 interface FeaturesTableProps {
   features: FeatureItem[];
@@ -12,9 +12,17 @@ interface FeaturesTableProps {
 
 const FeaturesTable: React.FC<FeaturesTableProps> = ({ features, title }) => {
   const [expandedRows, setExpandedRows] = useState<Record<number, boolean>>({});
+  const [expandedAnalysis, setExpandedAnalysis] = useState<Record<number, boolean>>({});
 
   const toggleRow = (index: number) => {
     setExpandedRows(prev => ({
+      ...prev,
+      [index]: !prev[index]
+    }));
+  };
+
+  const toggleAnalysis = (index: number) => {
+    setExpandedAnalysis(prev => ({
       ...prev,
       [index]: !prev[index]
     }));
@@ -37,7 +45,7 @@ const FeaturesTable: React.FC<FeaturesTableProps> = ({ features, title }) => {
           <React.Fragment key={index}>
             <TableRow>
               <TableCell>
-                {(feature.testSteps && feature.testSteps.length > 0) && (
+                {((feature.testSteps && feature.testSteps.length > 0) || feature.databaseAnalysis) && (
                   <button 
                     onClick={() => toggleRow(index)}
                     className="p-1 rounded-full hover:bg-gray-100"
@@ -70,16 +78,32 @@ const FeaturesTable: React.FC<FeaturesTableProps> = ({ features, title }) => {
                 </div>
               </TableCell>
             </TableRow>
-            {expandedRows[index] && feature.testSteps && (
+            {expandedRows[index] && (
               <TableRow className="bg-gray-50">
                 <TableCell colSpan={1}></TableCell>
                 <TableCell colSpan={5} className="p-4">
-                  <div className="mb-2 font-medium">Test Steps:</div>
-                  <ol className="list-decimal pl-5 space-y-1">
-                    {feature.testSteps.map((step, stepIndex) => (
-                      <li key={stepIndex}>{step}</li>
-                    ))}
-                  </ol>
+                  {feature.testSteps && feature.testSteps.length > 0 && (
+                    <>
+                      <div className="mb-2 font-medium">Test Steps:</div>
+                      <ol className="list-decimal pl-5 space-y-1 mb-4">
+                        {feature.testSteps.map((step, stepIndex) => (
+                          <li key={stepIndex}>{step}</li>
+                        ))}
+                      </ol>
+                    </>
+                  )}
+                  
+                  {feature.databaseAnalysis && (
+                    <div className="mt-3">
+                      <div className="mb-2 font-medium flex items-center">
+                        <Database className="h-4 w-4 mr-2" />
+                        Database Analysis:
+                      </div>
+                      <div className="pl-4 border-l-2 border-blue-400 bg-blue-50 p-3 rounded">
+                        {feature.databaseAnalysis}
+                      </div>
+                    </div>
+                  )}
                 </TableCell>
               </TableRow>
             )}
@@ -88,20 +112,6 @@ const FeaturesTable: React.FC<FeaturesTableProps> = ({ features, title }) => {
       </TableBody>
     </Table>
   );
-};
-
-// Function to render database status badges
-const renderDatabaseStatusBadge = (status?: 'completed' | 'in-progress' | 'not-started') => {
-  switch (status) {
-    case 'completed':
-      return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Completed</span>;
-    case 'in-progress':
-      return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">In Progress</span>;
-    case 'not-started':
-      return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Not Started</span>;
-    default:
-      return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Unknown</span>;
-  }
 };
 
 export default FeaturesTable;
