@@ -18,14 +18,32 @@ describe('useBarCrawlParticipation - Leave Functionality', () => {
       data: { id: 'deleted-participation' },
       error: null
     });
-    vi.mocked(supabaseClient.from().delete().eq().eq).mockImplementation(mockDelete);
     
-    // Setup initial state as joined
+    // Setup mock for initial status check
     const mockMaybeSingle = vi.fn().mockResolvedValue({
       data: { id: 'participation-1' },
       error: null
     });
-    vi.mocked(supabaseClient.from().select().eq().eq().maybeSingle).mockImplementation(mockMaybeSingle);
+    
+    // Setup the mock chain properly for select and delete
+    const mockSelectEq = vi.fn().mockReturnValue({
+      eq: vi.fn().mockReturnValue({
+        maybeSingle: mockMaybeSingle
+      })
+    });
+    
+    const mockDeleteEq = vi.fn().mockReturnValue({
+      eq: vi.fn().mockReturnValue(mockDelete)
+    });
+    
+    const mockFrom = vi.fn().mockImplementation((table) => {
+      return {
+        select: vi.fn().mockReturnValue(mockSelectEq),
+        delete: vi.fn().mockReturnValue(mockDeleteEq)
+      };
+    });
+    
+    vi.mocked(supabaseClient.from).mockImplementation(mockFrom);
     
     const { result } = renderHook(() => 
       useBarCrawlParticipation({ barCrawlId: '123e4567-e89b-12d3-a456-426614174000' })
@@ -94,7 +112,6 @@ describe('useBarCrawlParticipation - Leave Functionality', () => {
       data: { id: 'participation-1' },
       error: null
     });
-    vi.mocked(supabaseClient.from().select().eq().eq().maybeSingle).mockImplementation(mockMaybeSingle);
     
     // Setup mock for delete query with error
     const mockError = { message: 'row level security policy error' };
@@ -102,7 +119,26 @@ describe('useBarCrawlParticipation - Leave Functionality', () => {
       data: null,
       error: mockError
     });
-    vi.mocked(supabaseClient.from().delete().eq().eq).mockImplementation(mockDelete);
+    
+    // Setup the mock chain properly for select and delete
+    const mockSelectEq = vi.fn().mockReturnValue({
+      eq: vi.fn().mockReturnValue({
+        maybeSingle: mockMaybeSingle
+      })
+    });
+    
+    const mockDeleteEq = vi.fn().mockReturnValue({
+      eq: vi.fn().mockReturnValue(mockDelete)
+    });
+    
+    const mockFrom = vi.fn().mockImplementation((table) => {
+      return {
+        select: vi.fn().mockReturnValue(mockSelectEq),
+        delete: vi.fn().mockReturnValue(mockDeleteEq)
+      };
+    });
+    
+    vi.mocked(supabaseClient.from).mockImplementation(mockFrom);
     
     const { result } = renderHook(() => 
       useBarCrawlParticipation({ barCrawlId: '123e4567-e89b-12d3-a456-426614174000' })

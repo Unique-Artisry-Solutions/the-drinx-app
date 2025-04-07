@@ -3,10 +3,30 @@ import { vi } from 'vitest';
 import { supabaseClient } from '@/lib/supabaseClient';
 import { useAuth } from '@/contexts/auth';
 import { useToast } from '@/hooks/use-toast';
+import { User } from '@supabase/supabase-js';
 
-// Common mock user
-export const mockUser = { id: 'test-user-id' };
-export const mockToast = { toast: vi.fn() };
+// Create a proper mockUser that satisfies the User type from Supabase
+export const mockUser: User = {
+  id: 'test-user-id',
+  app_metadata: {},
+  user_metadata: {},
+  aud: 'authenticated',
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+  email: 'test@example.com',
+  phone: '',
+  confirmed_at: new Date().toISOString(),
+  last_sign_in_at: new Date().toISOString(),
+  role: '',
+  factors: null
+};
+
+// Create a proper mock toast that satisfies the useToast return type
+export const mockToast = { 
+  toast: vi.fn(),
+  dismiss: vi.fn(),
+  toasts: []
+};
 
 // Setup mock dependencies for tests
 export function setupMocks(authUser = mockUser) {
@@ -25,12 +45,21 @@ export function setupMocks(authUser = mockUser) {
 // Mock the Supabase client
 vi.mock('@/lib/supabaseClient', () => ({
   supabaseClient: {
-    from: vi.fn().mockReturnThis(),
-    select: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
-    maybeSingle: vi.fn(),
-    insert: vi.fn().mockReturnThis(),
-    delete: vi.fn().mockReturnThis()
+    from: vi.fn(() => ({
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            maybeSingle: vi.fn()
+          }))
+        }))
+      })),
+      insert: vi.fn(),
+      delete: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          eq: vi.fn()
+        }))
+      }))
+    }))
   }
 }));
 

@@ -18,7 +18,19 @@ describe('useBarCrawlParticipation - Initial Status Check', () => {
       data: { id: 'participation-1' },
       error: null
     });
-    vi.mocked(supabaseClient.from().select().eq().eq().maybeSingle).mockImplementation(mockMaybeSingle);
+    
+    // Setup the mock chain properly
+    const mockSelectEq = vi.fn().mockReturnValue({
+      eq: vi.fn().mockReturnValue({
+        maybeSingle: mockMaybeSingle
+      })
+    });
+    
+    const mockFrom = vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnValue(mockSelectEq)
+    });
+    
+    vi.mocked(supabaseClient.from).mockImplementation(mockFrom);
     
     const { result } = renderHook(() => 
       useBarCrawlParticipation({ barCrawlId: '123e4567-e89b-12d3-a456-426614174000' })
@@ -33,7 +45,7 @@ describe('useBarCrawlParticipation - Initial Status Check', () => {
     });
     
     expect(result.current.isJoined).toBe(true);
-    expect(supabaseClient.from).toHaveBeenCalledWith('user_bar_crawl_participation');
+    expect(mockFrom).toHaveBeenCalledWith('user_bar_crawl_participation');
   });
   
   it('should check the participation status for a sample bar crawl ID using localStorage', async () => {
@@ -52,7 +64,7 @@ describe('useBarCrawlParticipation - Initial Status Check', () => {
     });
     
     expect(result.current.isJoined).toBe(true);
-    expect(supabaseClient.from).not.toHaveBeenCalled();
+    expect(vi.mocked(supabaseClient.from)).not.toHaveBeenCalled();
   });
   
   it('should handle numeric bar crawl IDs with admin bypass', async () => {
@@ -72,7 +84,7 @@ describe('useBarCrawlParticipation - Initial Status Check', () => {
     });
     
     expect(result.current.isJoined).toBe(true);
-    expect(supabaseClient.from).not.toHaveBeenCalled();
+    expect(vi.mocked(supabaseClient.from)).not.toHaveBeenCalled();
   });
   
   it('should set error for invalid UUIDs without admin bypass', async () => {
