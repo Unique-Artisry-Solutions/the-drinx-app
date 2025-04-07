@@ -12,12 +12,17 @@ type FetchEstablishmentsOptions = {
   maxDistance?: number;
 }
 
+// Extend the Establishment type to include the distance value for filtering
+type EstablishmentWithDistance = Establishment & {
+  distanceValue?: number;
+};
+
 const fetchEstablishmentsFromSupabase = async ({ 
   latitude, 
   longitude, 
   searchTerm,
   maxDistance = 20
-}: FetchEstablishmentsOptions): Promise<Establishment[]> => {
+}: FetchEstablishmentsOptions): Promise<EstablishmentWithDistance[]> => {
   let query = supabaseClient
     .from('establishments')
     .select('*');
@@ -51,7 +56,7 @@ const fetchEstablishmentsFromSupabase = async ({
         distance: `${distance.toFixed(1)} mi`,
         distanceValue: distance, // Add raw distance for filtering
         created_at: establishment.created_at
-      } as Establishment;
+      } as EstablishmentWithDistance;
     }).filter(est => est.distanceValue <= maxDistance); // Filter by distance
   }
   
@@ -60,12 +65,12 @@ const fetchEstablishmentsFromSupabase = async ({
     ...establishment,
     cocktailCount: establishment.cocktail_count,
     image: establishment.image_url,
-  })) as Establishment[] || [];
+  })) as EstablishmentWithDistance[] || [];
 };
 
 export const useEstablishments = (options: FetchEstablishmentsOptions = {}) => {
-  const [establishments, setEstablishments] = useState<Establishment[]>([]);
-  const [filteredEstablishments, setFilteredEstablishments] = useState<Establishment[]>([]);
+  const [establishments, setEstablishments] = useState<EstablishmentWithDistance[]>([]);
+  const [filteredEstablishments, setFilteredEstablishments] = useState<EstablishmentWithDistance[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>(options.searchTerm || '');
   const [maxDistance, setMaxDistance] = useState<number>(options.maxDistance || 20);
   

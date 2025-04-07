@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import Layout from '@/components/Layout';
@@ -37,6 +38,8 @@ const CreateSwigCircuitPage: React.FC = () => {
   const [pairings, setPairings] = useState<Pairing[]>([]);
   const [selectedEstablishments, setSelectedEstablishments] = useState<Establishment[]>([]);
 
+  const { userLocation, isLoading: isLocating } = useUserLocation();
+  
   const { 
     establishments: availableEstablishments, 
     isLoading: isLoadingEstablishments,
@@ -46,8 +49,6 @@ const CreateSwigCircuitPage: React.FC = () => {
     longitude: userLocation?.longitude,
     maxDistance: maxDistance
   });
-
-  const { userLocation, isLoading: isLocating } = useUserLocation();
 
   useEffect(() => {
     if (startDate) {
