@@ -2,8 +2,8 @@
 import { renderStatusBadge, renderDatabaseStatusBadge, renderAccessIcon } from './statusRenderers';
 import { calculateFeatureStatistics } from './statisticsUtils';
 import { generateCSV } from './exportUtils';
-import { analyzeAllFeatures } from './analysisUtils';
-import { analyzeDbRequirements } from '../DatabaseAnalysisPanel';
+import { analyzeAllFeatures } from './featureAnalysis';
+import { analyzeDbRequirements } from './analysisHelpers';
 
 export {
   renderStatusBadge,
