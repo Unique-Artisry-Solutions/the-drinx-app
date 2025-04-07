@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import PairingOptions, { Pairing } from '@/components/barCrawl/PairingOptions';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ChevronRight } from 'lucide-react';
 
 interface PairingsTabProps {
   pairings: Pairing[];
@@ -23,7 +23,7 @@ const PairingsTab: React.FC<PairingsTabProps> = ({
   isSubmitting = false
 }) => {
   return (
-    <Card>
+    <Card className="flex-1">
       <CardHeader>
         <CardTitle>Food & Drink Pairings</CardTitle>
       </CardHeader>
@@ -54,7 +54,10 @@ const PairingsTab: React.FC<PairingsTabProps> = ({
                 Creating...
               </>
             ) : (
-              'Create Swig Circuit'
+              <>
+                Create Swig Circuit
+                <ChevronRight className="ml-2 h-4 w-4" />
+              </>
             )}
           </Button>
         </div>

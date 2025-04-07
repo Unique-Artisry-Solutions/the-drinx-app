@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
 import { useToast } from '@/hooks/use-toast';
+import { fromTable } from '@/lib/typedSupabase';
 
 export interface SwigCircuit {
   id: string;
@@ -39,8 +40,7 @@ export const useSwigCircuits = () => {
         }
 
         // Use Supabase if authenticated
-        const { data: circuits, error } = await supabase
-          .from('swig_circuits')
+        const { data: circuits, error } = await fromTable('swig_circuits')
           .select('*')
           .order('created_at', { ascending: false });
 
@@ -51,21 +51,18 @@ export const useSwigCircuits = () => {
         // Fetch related data for each circuit
         const enhancedCircuits = await Promise.all(circuits.map(async (circuit) => {
           // Fetch venues
-          const { data: venues } = await supabase
-            .from('swig_circuit_venues')
+          const { data: venues } = await fromTable('swig_circuit_venues')
             .select('establishment_id, position')
             .eq('swig_circuit_id', circuit.id)
             .order('position');
 
           // Fetch drink highlights
-          const { data: drinkHighlights } = await supabase
-            .from('swig_circuit_drink_highlights')
+          const { data: drinkHighlights } = await fromTable('swig_circuit_drink_highlights')
             .select('id, name, description')
             .eq('swig_circuit_id', circuit.id);
 
           // Fetch pairings
-          const { data: pairings } = await supabase
-            .from('swig_circuit_pairings')
+          const { data: pairings } = await fromTable('swig_circuit_pairings')
             .select('id, food, drink')
             .eq('swig_circuit_id', circuit.id);
 
@@ -77,7 +74,7 @@ export const useSwigCircuits = () => {
           };
         }));
 
-        setSwigCircuits(enhancedCircuits);
+        setSwigCircuits(enhancedCircuits as SwigCircuit[]);
       } catch (error) {
         console.error('Error fetching swig circuits:', error);
         toast({

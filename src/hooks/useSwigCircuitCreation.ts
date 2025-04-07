@@ -7,6 +7,7 @@ import { DrinkHighlight } from '@/components/barCrawl/DrinkHighlights';
 import { Pairing } from '@/components/barCrawl/PairingOptions';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
+import { fromTable } from '@/lib/typedSupabase';
 
 export const useSwigCircuitCreation = () => {
   const { toast } = useToast();
@@ -121,9 +122,8 @@ export const useSwigCircuitCreation = () => {
         return;
       }
 
-      // If authenticated, save to database
-      const { data: swigCircuit, error: circuitError } = await supabase
-        .from('swig_circuits')
+      // If authenticated, save to database using our type-safe helper
+      const { data: swigCircuit, error: circuitError } = await fromTable('swig_circuits')
         .insert({
           user_id: user.id,
           name,
@@ -149,8 +149,7 @@ export const useSwigCircuitCreation = () => {
           position: index
         }));
 
-        const { error: venuesError } = await supabase
-          .from('swig_circuit_venues')
+        const { error: venuesError } = await fromTable('swig_circuit_venues')
           .insert(venueInserts);
 
         if (venuesError) {
@@ -166,8 +165,7 @@ export const useSwigCircuitCreation = () => {
           description: highlight.description
         }));
 
-        const { error: highlightsError } = await supabase
-          .from('swig_circuit_drink_highlights')
+        const { error: highlightsError } = await fromTable('swig_circuit_drink_highlights')
           .insert(highlightInserts);
 
         if (highlightsError) {
@@ -183,8 +181,7 @@ export const useSwigCircuitCreation = () => {
           drink: pairing.drinkName
         }));
 
-        const { error: pairingsError } = await supabase
-          .from('swig_circuit_pairings')
+        const { error: pairingsError } = await fromTable('swig_circuit_pairings')
           .insert(pairingInserts);
 
         if (pairingsError) {
