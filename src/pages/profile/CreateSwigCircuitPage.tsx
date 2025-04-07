@@ -3,7 +3,7 @@ import React from 'react';
 import Layout from '@/components/Layout';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import { useEstablishments } from '@/hooks/useEstablishments';
-import { useSwigCircuitCreation } from '@/hooks/useSwigCircuitCreation';
+import { useSwigCircuitCreation } from '@/hooks/swigCircuit/useSwigCircuitCreation';
 import CreateSwigCircuitHeader from '@/components/swigCircuit/CreateSwigCircuitHeader';
 import StepsNavigation from '@/components/swigCircuit/StepsNavigation';
 import BasicsTab from '@/components/swigCircuit/tabs/BasicsTab';
