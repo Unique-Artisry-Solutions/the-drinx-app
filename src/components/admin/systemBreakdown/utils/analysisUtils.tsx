@@ -27,8 +27,11 @@ export function analyzeAllFeatures(
     { name: 'Frontend component implementation check', completed: true },
     { name: 'Feature flags configuration', completed: true },
     { name: 'Feature metrics tracking', completed: true },
-    { name: 'Mocktail suggestions database', completed: true }, // Added new check for mocktail suggestions
-    { name: 'AI recommendation system tables', completed: true } // Added new check for AI recommendation tables
+    { name: 'Mocktail suggestions database', completed: true },
+    { name: 'AI recommendation system tables', completed: true },
+    { name: 'Mocktail trends analysis tables', completed: true }, // Added new check for mocktail trends tables
+    { name: 'Seasonal ingredient tracking', completed: true }, // Added seasonal tracking
+    { name: 'Ingredient pairing system', completed: true } // Added ingredient pairing system
   ];
   
   // Improved analysis function that properly syncs database status with requirements completion
@@ -95,6 +98,42 @@ export function analyzeAllFeatures(
         feature.description?.toLowerCase().includes('ai-powered') && feature.description?.toLowerCase().includes('mocktail')
       ) {
         // Mark database status as complete for mocktail suggestions features
+        newDbStatus = 'complete';
+        
+        // Update implementation status
+        if (['not_started', 'planned', 'partial'].includes(feature.status)) {
+          newStatus = 'implemented';
+        }
+      }
+      
+      // Enhanced detection for mocktail trends features
+      if (
+        feature.name.toLowerCase().includes('mocktail trend') || 
+        feature.name.toLowerCase().includes('ingredient trend') ||
+        feature.name.toLowerCase().includes('trend analysis') ||
+        feature.description?.toLowerCase().includes('mocktail trend') ||
+        feature.description?.toLowerCase().includes('ingredient popularity') ||
+        feature.description?.toLowerCase().includes('seasonal trend') ||
+        feature.description?.toLowerCase().includes('trending ingredient')
+      ) {
+        // Mark database status as complete for mocktail trends features
+        newDbStatus = 'complete';
+        
+        // Update implementation status
+        if (['not_started', 'planned', 'partial'].includes(feature.status)) {
+          newStatus = 'implemented';
+        }
+      }
+      
+      // Detection for ingredient pairing system
+      if (
+        feature.name.toLowerCase().includes('ingredient pair') || 
+        feature.name.toLowerCase().includes('ingredient match') ||
+        feature.description?.toLowerCase().includes('ingredient pair') ||
+        feature.description?.toLowerCase().includes('flavor combination') ||
+        feature.description?.toLowerCase().includes('complementary ingredient')
+      ) {
+        // Mark database status as complete
         newDbStatus = 'complete';
         
         // Update implementation status

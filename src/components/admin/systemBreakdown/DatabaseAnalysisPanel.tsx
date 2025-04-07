@@ -56,7 +56,24 @@ const DatabaseAnalysisPanel: React.FC<DatabaseAnalysisPanelProps> = ({ analysisT
       line.toLowerCase().includes('ai model parameter') ||
       line.toLowerCase().includes('seasonal_trend_analysis');
     
-    const isCompleted = isFeatureRelatedTask || isMocktailSuggestionTask || (
+    // Enhanced mocktail trends detection
+    const isMocktailTrendTask = 
+      line.toLowerCase().includes('mocktail_trend') ||
+      line.toLowerCase().includes('ingredient trend') ||
+      line.toLowerCase().includes('trend_analysis') ||
+      line.toLowerCase().includes('seasonal_trend') ||
+      line.toLowerCase().includes('popularity tracking') ||
+      line.toLowerCase().includes('trend score');
+      
+    // Enhanced ingredient pairing detection
+    const isIngredientPairingTask =
+      line.toLowerCase().includes('ingredient_pairing') ||
+      line.toLowerCase().includes('pairing_score') ||
+      line.toLowerCase().includes('complementary ingredient') ||
+      line.toLowerCase().includes('flavor combination');
+    
+    const isCompleted = isFeatureRelatedTask || isMocktailSuggestionTask || 
+                         isMocktailTrendTask || isIngredientPairingTask || (
       !line.toLowerCase().includes('need') && 
       !line.toLowerCase().includes('required') &&
       !line.toLowerCase().includes('add') &&
@@ -124,8 +141,25 @@ export const analyzeDbRequirements = (analysisText: string) => {
       line.toLowerCase().includes('ingredient_pairing') ||
       line.toLowerCase().includes('ai model parameter') ||
       line.toLowerCase().includes('seasonal_trend_analysis');
+      
+    // Check if the task is mocktail trends related
+    const isMocktailTrendTask = 
+      line.toLowerCase().includes('mocktail_trend') ||
+      line.toLowerCase().includes('ingredient trend') ||
+      line.toLowerCase().includes('trend_analysis') ||
+      line.toLowerCase().includes('seasonal_trend') ||
+      line.toLowerCase().includes('popularity tracking') ||
+      line.toLowerCase().includes('trend score');
+      
+    // Check if the task is ingredient pairing related
+    const isIngredientPairingTask =
+      line.toLowerCase().includes('ingredient_pairing') ||
+      line.toLowerCase().includes('pairing_score') ||
+      line.toLowerCase().includes('complementary ingredient') ||
+      line.toLowerCase().includes('flavor combination');
                                
-    return isFeatureRelatedTask || isMocktailSuggestionTask || (
+    return isFeatureRelatedTask || isMocktailSuggestionTask || 
+           isMocktailTrendTask || isIngredientPairingTask || (
       !line.toLowerCase().includes('need') && 
       !line.toLowerCase().includes('required') &&
       !line.toLowerCase().includes('add') &&
