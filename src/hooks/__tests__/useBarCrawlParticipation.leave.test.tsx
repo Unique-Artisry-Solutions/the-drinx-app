@@ -25,7 +25,7 @@ describe('useBarCrawlParticipation - Leave Functionality', () => {
       data: { id: 'participation-1' },
       error: null
     });
-    (supabaseClient.from().select().eq().maybeSingle as unknown as ReturnType<typeof vi.fn>).mockImplementation(mockMaybeSingle);
+    (supabaseClient.from().select().eq().eq().maybeSingle as unknown as ReturnType<typeof vi.fn>).mockImplementation(mockMaybeSingle);
     
     const { result } = renderHook(() => 
       useBarCrawlParticipation({ barCrawlId: '123e4567-e89b-12d3-a456-426614174000' })
@@ -94,7 +94,7 @@ describe('useBarCrawlParticipation - Leave Functionality', () => {
       data: { id: 'participation-1' },
       error: null
     });
-    (supabaseClient.from().select().eq().maybeSingle as unknown as ReturnType<typeof vi.fn>).mockImplementation(mockMaybeSingle);
+    (supabaseClient.from().select().eq().eq().maybeSingle as unknown as ReturnType<typeof vi.fn>).mockImplementation(mockMaybeSingle);
     
     // Setup mock for delete query with error
     const mockError = { message: 'row level security policy error' };
