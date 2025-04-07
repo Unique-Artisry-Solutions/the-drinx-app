@@ -57,7 +57,7 @@ const fetchEstablishmentsFromSupabase = async ({
         distanceValue: distance, // Add raw distance for filtering
         created_at: establishment.created_at
       } as EstablishmentWithDistance;
-    }).filter(est => est.distanceValue <= maxDistance); // Filter by distance
+    }).filter(est => est.distanceValue! <= maxDistance); // Filter by distance
   }
   
   // Return data without distances if no location

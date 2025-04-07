@@ -1,7 +1,6 @@
-
 // Sample data for development purposes
 
-// Sample establishments
+// Sample establishments with locations within 10 miles of user's default location
 export const sampleEstablishments = [
   {
     id: "1",
@@ -84,6 +83,88 @@ export const sampleEstablishments = [
     ],
     latitude: 40.7180,
     longitude: -74.001
+  },
+  {
+    id: "6",
+    name: "Alcohol-Free Atelier",
+    address: "303 Broadway St, Somewhere, USA",
+    distance: "5.2 miles",
+    cocktailCount: 7,
+    image: "https://images.unsplash.com/photo-1595981267035-7b04ca84a82d?auto=format&fit=crop&q=80&w=1000",
+    phone: "(555) 852-9631",
+    website: "https://example.com",
+    hours: [
+      "Wed-Sun: 4pm - 11pm",
+      "Mon-Tue: Closed"
+    ],
+    latitude: 40.7510,
+    longitude: -74.0037
+  },
+  {
+    id: "7",
+    name: "Zero Proof Palace",
+    address: "404 River Rd, Elsewhere, USA",
+    distance: "6.8 miles",
+    cocktailCount: 14,
+    image: "https://images.unsplash.com/photo-1638957773782-f9614cf5fb5d?auto=format&fit=crop&q=80&w=1000",
+    phone: "(555) 369-7412",
+    website: "https://example.com",
+    hours: [
+      "Mon-Thu: 5pm - 12am",
+      "Fri-Sat: 5pm - 2am",
+      "Sun: 5pm - 10pm"
+    ],
+    latitude: 40.6640,
+    longitude: -74.0013
+  },
+  {
+    id: "8",
+    name: "Teetotalers Tavern",
+    address: "505 Beach Ave, Nowhere, USA",
+    distance: "8.3 miles",
+    cocktailCount: 9,
+    image: "https://images.unsplash.com/photo-1551538827-9c037cb4f32a?auto=format&fit=crop&q=80&w=1000",
+    phone: "(555) 963-8512",
+    website: "https://example.com",
+    hours: [
+      "Mon-Fri: 4pm - 1am",
+      "Sat-Sun: 12pm - 1am"
+    ],
+    latitude: 40.8123,
+    longitude: -73.9520
+  },
+  {
+    id: "9",
+    name: "Sober Spirits",
+    address: "606 Highland Ave, Anywhere, USA",
+    distance: "9.1 miles",
+    cocktailCount: 11,
+    image: "https://images.unsplash.com/photo-1563729784474-d77dbb933a9e?auto=format&fit=crop&q=80&w=1000",
+    phone: "(555) 741-2469",
+    website: "https://example.com",
+    hours: [
+      "Tue-Sat: 6pm - 12am",
+      "Sun-Mon: Closed"
+    ],
+    latitude: 40.8212,
+    longitude: -73.9440
+  },
+  {
+    id: "10",
+    name: "Mocktail Mansion",
+    address: "707 Valley Rd, Somewhere, USA",
+    distance: "9.9 miles",
+    cocktailCount: 13,
+    image: "https://images.unsplash.com/photo-1587888637140-849b25d80ef9?auto=format&fit=crop&q=80&w=1000",
+    phone: "(555) 123-9874",
+    website: "https://example.com",
+    hours: [
+      "Mon: Closed",
+      "Tue-Thu: 4pm - 11pm",
+      "Fri-Sun: 12pm - 12am"
+    ],
+    latitude: 40.6520,
+    longitude: -73.9371
   }
 ];
 
