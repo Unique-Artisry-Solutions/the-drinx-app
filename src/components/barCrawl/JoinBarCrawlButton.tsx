@@ -60,7 +60,7 @@ const JoinBarCrawlButton: React.FC<JoinBarCrawlButtonProps> = ({ barCrawlId, cla
     if (!user) {
       toast({
         title: 'Sign in required',
-        description: 'Please sign in to join this bar crawl',
+        description: 'Please sign in to join this Swig Circuit',
         variant: 'destructive',
       });
       return;
@@ -90,8 +90,8 @@ const JoinBarCrawlButton: React.FC<JoinBarCrawlButtonProps> = ({ barCrawlId, cla
         
         // Show success toast
         toast({
-          title: 'Joined Bar Crawl',
-          description: 'You have successfully joined this bar crawl!',
+          title: 'Joined Swig Circuit',
+          description: 'You have successfully joined this Swig Circuit!',
         });
         
         setIsJoined(true);
@@ -111,8 +111,8 @@ const JoinBarCrawlButton: React.FC<JoinBarCrawlButtonProps> = ({ barCrawlId, cla
           localStorage.setItem('user_bar_crawl_participations', JSON.stringify(existingParticipations));
           
           toast({
-            title: 'Joined Bar Crawl',
-            description: 'You have successfully joined this bar crawl!',
+            title: 'Joined Swig Circuit',
+            description: 'You have successfully joined this Swig Circuit!',
           });
           
           setIsJoined(true);
@@ -137,8 +137,8 @@ const JoinBarCrawlButton: React.FC<JoinBarCrawlButtonProps> = ({ barCrawlId, cla
           }
 
           toast({
-            title: 'Joined Bar Crawl',
-            description: 'You have successfully joined this bar crawl!',
+            title: 'Joined Swig Circuit',
+            description: 'You have successfully joined this Swig Circuit!',
           });
           
           setIsJoined(true);
@@ -148,16 +148,16 @@ const JoinBarCrawlButton: React.FC<JoinBarCrawlButtonProps> = ({ barCrawlId, cla
       console.error('Failed to join bar crawl:', error);
       
       // Show error toast with more descriptive message
-      let errorMessage = 'Failed to join bar crawl. Please try again.';
+      let errorMessage = 'Failed to join Swig Circuit. Please try again.';
       
       if (error?.message?.includes('violates row level security policy')) {
-        errorMessage = 'You do not have permission to join this bar crawl.';
+        errorMessage = 'You do not have permission to join this Swig Circuit.';
       } else if (error?.message?.includes('violates foreign key constraint')) {
-        errorMessage = 'This bar crawl does not exist.';
+        errorMessage = 'This Swig Circuit does not exist.';
       } else if (error?.message?.includes('violates unique constraint')) {
-        errorMessage = 'You are already participating in this bar crawl.';
+        errorMessage = 'You are already participating in this Swig Circuit.';
       } else if (error?.message?.includes('invalid input syntax') || error?.message?.includes('Invalid bar crawl ID format')) {
-        errorMessage = 'Invalid bar crawl ID format. Please contact support.';
+        errorMessage = 'Invalid Swig Circuit ID format. Please contact support.';
       }
       
       toast({
@@ -193,8 +193,8 @@ const JoinBarCrawlButton: React.FC<JoinBarCrawlButtonProps> = ({ barCrawlId, cla
         localStorage.setItem('user_bar_crawl_participations', JSON.stringify(updatedParticipations));
         
         toast({
-          title: 'Left Bar Crawl',
-          description: 'You have left this bar crawl.',
+          title: 'Left Swig Circuit',
+          description: 'You have left this Swig Circuit.',
         });
         
         setIsJoined(false);
@@ -211,8 +211,8 @@ const JoinBarCrawlButton: React.FC<JoinBarCrawlButtonProps> = ({ barCrawlId, cla
           localStorage.setItem('user_bar_crawl_participations', JSON.stringify(updatedParticipations));
           
           toast({
-            title: 'Left Bar Crawl',
-            description: 'You have left this bar crawl.',
+            title: 'Left Swig Circuit',
+            description: 'You have left this Swig Circuit.',
           });
           
           setIsJoined(false);
@@ -230,8 +230,8 @@ const JoinBarCrawlButton: React.FC<JoinBarCrawlButtonProps> = ({ barCrawlId, cla
           }
           
           toast({
-            title: 'Left Bar Crawl',
-            description: 'You have left this bar crawl.',
+            title: 'Left Swig Circuit',
+            description: 'You have left this Swig Circuit.',
           });
           
           setIsJoined(false);
@@ -242,7 +242,7 @@ const JoinBarCrawlButton: React.FC<JoinBarCrawlButtonProps> = ({ barCrawlId, cla
       
       toast({
         title: 'Error',
-        description: 'Failed to leave bar crawl. Please try again.',
+        description: 'Failed to leave Swig Circuit. Please try again.',
         variant: 'destructive',
       });
     } finally {
@@ -259,7 +259,7 @@ const JoinBarCrawlButton: React.FC<JoinBarCrawlButtonProps> = ({ barCrawlId, cla
     >
       {isLoading 
         ? (isJoined ? 'Leaving...' : 'Joining...') 
-        : (isJoined ? 'Leave Bar Crawl' : 'Join Bar Crawl')}
+        : (isJoined ? 'Leave Swig Circuit' : 'Join Swig Circuit')}
     </Button>
   );
 };
