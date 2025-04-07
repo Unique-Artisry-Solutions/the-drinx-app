@@ -11,8 +11,11 @@ import ThemeTab from '@/components/swigCircuit/tabs/ThemeTab';
 import VenuesTab from '@/components/swigCircuit/tabs/VenuesTab';
 import DrinksTab from '@/components/swigCircuit/tabs/DrinksTab';
 import PairingsTab from '@/components/swigCircuit/tabs/PairingsTab';
+import { useAuth } from '@/contexts/auth';
 
 const CreateSwigCircuitPage: React.FC = () => {
+  const { user } = useAuth();
+  
   const {
     name,
     setName,
@@ -39,7 +42,8 @@ const CreateSwigCircuitPage: React.FC = () => {
     selectedEstablishments,
     handleSaveEstablishments,
     isTabComplete,
-    handleSubmit
+    handleSubmit,
+    isSubmitting
   } = useSwigCircuitCreation();
 
   const { userLocation, isLoading: isLocating } = useUserLocation();
@@ -71,6 +75,14 @@ const CreateSwigCircuitPage: React.FC = () => {
     <Layout>
       <div className="py-4 animate-fade-in max-w-4xl mx-auto">
         <CreateSwigCircuitHeader />
+        
+        {!user && (
+          <div className="mb-4 p-4 bg-yellow-50 border border-yellow-300 rounded-lg">
+            <p className="text-yellow-800">
+              <strong>Note:</strong> You are not logged in. For testing, your Swig Circuit will be saved to local storage.
+            </p>
+          </div>
+        )}
         
         <div className="flex flex-col md:flex-row gap-4">
           <StepsNavigation 
@@ -138,6 +150,7 @@ const CreateSwigCircuitPage: React.FC = () => {
               onBack={() => setCurrentTab("drinks")}
               onSubmit={handleSubmit}
               isSubmitDisabled={!name || !startDate || !selectedTheme || selectedEstablishments.length < 2}
+              isSubmitting={isSubmitting}
             />
           )}
         </div>

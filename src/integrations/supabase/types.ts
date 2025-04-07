@@ -377,6 +377,154 @@ export type Database = {
         }
         Relationships: []
       }
+      swig_circuit_drink_highlights: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          image_url: string | null
+          name: string
+          swig_circuit_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          name: string
+          swig_circuit_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          name?: string
+          swig_circuit_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "swig_circuit_drink_highlights_swig_circuit_id_fkey"
+            columns: ["swig_circuit_id"]
+            isOneToOne: false
+            referencedRelation: "swig_circuits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      swig_circuit_pairings: {
+        Row: {
+          created_at: string | null
+          drink: string
+          food: string
+          id: string
+          swig_circuit_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          drink: string
+          food: string
+          id?: string
+          swig_circuit_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          drink?: string
+          food?: string
+          id?: string
+          swig_circuit_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "swig_circuit_pairings_swig_circuit_id_fkey"
+            columns: ["swig_circuit_id"]
+            isOneToOne: false
+            referencedRelation: "swig_circuits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      swig_circuit_venues: {
+        Row: {
+          created_at: string | null
+          establishment_id: string | null
+          id: string
+          position: number
+          swig_circuit_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          establishment_id?: string | null
+          id?: string
+          position: number
+          swig_circuit_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          establishment_id?: string | null
+          id?: string
+          position?: number
+          swig_circuit_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "swig_circuit_venues_establishment_id_fkey"
+            columns: ["establishment_id"]
+            isOneToOne: false
+            referencedRelation: "establishments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "swig_circuit_venues_swig_circuit_id_fkey"
+            columns: ["swig_circuit_id"]
+            isOneToOne: false
+            referencedRelation: "swig_circuits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      swig_circuits: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          end_date: string
+          id: string
+          image_url: string | null
+          max_distance: number | null
+          name: string
+          start_date: string
+          theme: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          end_date: string
+          id?: string
+          image_url?: string | null
+          max_distance?: number | null
+          name: string
+          start_date: string
+          theme: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          end_date?: string
+          id?: string
+          image_url?: string | null
+          max_distance?: number | null
+          name?: string
+          start_date?: string
+          theme?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       user_bar_crawl_participation: {
         Row: {
           bar_crawl_id: string

@@ -10,33 +10,34 @@ interface EstablishmentItemProps {
   onRemove: (establishment: Establishment) => void;
 }
 
-// Memoized component to prevent unnecessary re-renders
-const EstablishmentItem = React.memo(({ 
+const EstablishmentItem: React.FC<EstablishmentItemProps> = ({ 
   establishment, 
   index, 
   onRemove 
-}: EstablishmentItemProps) => {
+}) => {
   return (
-    <div className="flex items-center justify-between bg-material-primary-container/30 p-2 rounded-lg">
-      <div className="flex items-center min-w-0">
-        <div className="bg-material-primary text-white w-6 h-6 rounded-full flex items-center justify-center mr-2 flex-shrink-0">
+    <div className="flex items-center justify-between p-2 border rounded-md bg-background">
+      <div className="flex items-center flex-1 min-w-0">
+        <div className="flex-shrink-0 w-6 h-6 rounded-full bg-spiritless-pink text-white flex items-center justify-center mr-2">
           {index + 1}
         </div>
-        <span className="font-medium truncate">{establishment.name}</span>
+        <div className="flex-1 min-w-0">
+          <div className="font-medium truncate">{establishment.name}</div>
+          <div className="text-xs text-muted-foreground truncate">
+            {establishment.distance || establishment.address}
+          </div>
+        </div>
       </div>
       <Button 
         variant="ghost" 
-        size="sm"
-        onClick={() => onRemove(establishment)}
-        className="flex-shrink-0 ml-2"
-        aria-label={`Remove ${establishment.name}`}
+        size="sm" 
+        onClick={() => onRemove(establishment)} 
+        className="ml-2"
       >
         <X className="h-4 w-4" />
       </Button>
     </div>
   );
-});
-
-EstablishmentItem.displayName = 'EstablishmentItem';
+};
 
 export default EstablishmentItem;
