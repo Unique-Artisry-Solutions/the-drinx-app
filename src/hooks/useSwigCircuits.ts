@@ -26,7 +26,7 @@ export interface SwigCircuit {
 
 export const useSwigCircuits = () => {
   const [isLoading, setIsLoading] = useState(true);
-  const [swigCircuits, setSwigCircuits] = useState<SwigCircuit[]>([]);
+  const [swigCircuitsData, setSwigCircuits] = useState<SwigCircuit[]>([]);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -96,7 +96,7 @@ export const useSwigCircuits = () => {
   }, [user, toast]);
 
   return {
-    swigCircuits,
+    swigCircuits: swigCircuitsData,
     isLoading
   };
 };
