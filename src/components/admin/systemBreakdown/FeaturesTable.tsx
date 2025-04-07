@@ -136,7 +136,7 @@ const FeaturesTable: React.FC<FeaturesTableProps> = ({ features }) => {
                         <Table>
                           <TableHeader>
                             <TableRow className="bg-blue-100/60">
-                              <TableHead width="50px" className="font-medium text-blue-800 py-2">
+                              <TableHead className="font-medium text-blue-800 py-2 w-[50px]">
                                 Status
                               </TableHead>
                               <TableHead className="font-medium text-blue-800 py-2">
