@@ -92,6 +92,7 @@ const Index = () => {
       <Layout>
         <EstablishmentDashboard 
           establishmentName={localStorage.getItem('user_username') || 'Your Establishment'} 
+          establishmentId={user.id} // Add the missing establishmentId prop here, using user.id
         />
       </Layout>
     );
