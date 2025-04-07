@@ -52,44 +52,6 @@ interface CustomDatabase extends Database {
           verified_by?: string;
         };
       };
-      user_recipes: {
-        Row: {
-          id: string;
-          user_id: string;
-          name: string;
-          description?: string;
-          ingredients: Ingredient[];
-          instructions: string;
-          image_url?: string;
-          is_public: boolean;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Insert: {
-          id?: string;
-          user_id: string;
-          name: string;
-          description?: string;
-          ingredients: Ingredient[];
-          instructions: string;
-          image_url?: string;
-          is_public: boolean;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          user_id?: string;
-          name?: string;
-          description?: string;
-          ingredients?: Ingredient[];
-          instructions?: string;
-          image_url?: string;
-          is_public?: boolean;
-          created_at?: string;
-          updated_at?: string;
-        };
-      };
     }
   }
 }

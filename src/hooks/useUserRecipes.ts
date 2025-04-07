@@ -18,22 +18,30 @@ export const useUserRecipes = () => {
       return [];
     }
 
-    const { data, error } = await supabaseClient
-      .from('user_recipes')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false });
+    try {
+      console.log('Fetching recipes for user:', user.id);
+      const { data, error } = await supabaseClient
+        .from('user_recipes')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
 
-    if (error) {
-      console.error('Error fetching user recipes:', error);
-      throw new Error('Failed to fetch recipes');
+      if (error) {
+        console.error('Error fetching user recipes:', error);
+        throw new Error('Failed to fetch recipes');
+      }
+
+      console.log('Recipes fetched successfully:', data);
+      
+      // Transform the JSONB ingredients data to our Ingredient type
+      return data.map(recipe => ({
+        ...recipe,
+        ingredients: recipe.ingredients as unknown as Ingredient[]
+      })) as UserRecipe[];
+    } catch (error) {
+      console.error('Exception in fetchUserRecipes:', error);
+      return [];
     }
-
-    // Transform the JSONB ingredients data to our Ingredient type
-    return data.map(recipe => ({
-      ...recipe,
-      ingredients: recipe.ingredients as unknown as Ingredient[]
-    })) as UserRecipe[];
   };
 
   // Use React Query to fetch recipes
@@ -54,6 +62,8 @@ export const useUserRecipes = () => {
     mutationFn: async (newRecipe: Omit<UserRecipe, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
       if (!user) throw new Error('User not authenticated');
       
+      console.log('Creating recipe for user:', user.id, 'Recipe data:', newRecipe);
+      
       const recipeToInsert = {
         ...newRecipe,
         user_id: user.id,
@@ -65,7 +75,12 @@ export const useUserRecipes = () => {
         .select()
         .single();
         
-      if (error) throw error;
+      if (error) {
+        console.error('Error response from Supabase:', error);
+        throw error;
+      }
+      
+      console.log('Recipe created successfully:', data);
       return data as UserRecipe;
     },
     onSuccess: () => {
