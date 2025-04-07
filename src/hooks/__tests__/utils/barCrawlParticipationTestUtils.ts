@@ -16,10 +16,10 @@ export function setupMocks(authUser = mockUser) {
   getLocalStorageMock().clear();
   
   // Setup auth mock
-  (useAuth as unknown as ReturnType<typeof vi.fn>).mockReturnValue({ user: authUser });
+  vi.mocked(useAuth).mockReturnValue({ user: authUser });
   
   // Setup toast mock
-  (useToast as unknown as ReturnType<typeof vi.fn>).mockReturnValue(mockToast);
+  vi.mocked(useToast).mockReturnValue(mockToast);
 }
 
 // Mock the Supabase client

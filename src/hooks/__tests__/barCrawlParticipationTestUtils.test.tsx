@@ -1,5 +1,5 @@
 
-import { vi } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { setupMocks, mockUser } from './utils/barCrawlParticipationTestUtils';
 
 describe('barCrawlParticipationTestUtils', () => {

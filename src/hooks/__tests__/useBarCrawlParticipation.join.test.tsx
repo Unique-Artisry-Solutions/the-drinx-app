@@ -18,7 +18,7 @@ describe('useBarCrawlParticipation - Join Functionality', () => {
       data: { id: 'new-participation' },
       error: null
     });
-    (supabaseClient.from().insert as unknown as ReturnType<typeof vi.fn>).mockImplementation(mockInsert);
+    vi.mocked(supabaseClient.from().insert).mockImplementation(mockInsert);
     
     const { result } = renderHook(() => 
       useBarCrawlParticipation({ barCrawlId: '123e4567-e89b-12d3-a456-426614174000' })
@@ -105,7 +105,7 @@ describe('useBarCrawlParticipation - Join Functionality', () => {
       data: null,
       error: mockError
     });
-    (supabaseClient.from().insert as unknown as ReturnType<typeof vi.fn>).mockImplementation(mockInsert);
+    vi.mocked(supabaseClient.from().insert).mockImplementation(mockInsert);
     
     const { result } = renderHook(() => 
       useBarCrawlParticipation({ barCrawlId: '123e4567-e89b-12d3-a456-426614174000' })

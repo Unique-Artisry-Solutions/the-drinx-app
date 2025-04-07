@@ -18,14 +18,14 @@ describe('useBarCrawlParticipation - Leave Functionality', () => {
       data: { id: 'deleted-participation' },
       error: null
     });
-    (supabaseClient.from().delete().eq().eq as unknown as ReturnType<typeof vi.fn>).mockImplementation(mockDelete);
+    vi.mocked(supabaseClient.from().delete().eq().eq).mockImplementation(mockDelete);
     
     // Setup initial state as joined
     const mockMaybeSingle = vi.fn().mockResolvedValue({
       data: { id: 'participation-1' },
       error: null
     });
-    (supabaseClient.from().select().eq().eq().maybeSingle as unknown as ReturnType<typeof vi.fn>).mockImplementation(mockMaybeSingle);
+    vi.mocked(supabaseClient.from().select().eq().eq().maybeSingle).mockImplementation(mockMaybeSingle);
     
     const { result } = renderHook(() => 
       useBarCrawlParticipation({ barCrawlId: '123e4567-e89b-12d3-a456-426614174000' })
@@ -94,7 +94,7 @@ describe('useBarCrawlParticipation - Leave Functionality', () => {
       data: { id: 'participation-1' },
       error: null
     });
-    (supabaseClient.from().select().eq().eq().maybeSingle as unknown as ReturnType<typeof vi.fn>).mockImplementation(mockMaybeSingle);
+    vi.mocked(supabaseClient.from().select().eq().eq().maybeSingle).mockImplementation(mockMaybeSingle);
     
     // Setup mock for delete query with error
     const mockError = { message: 'row level security policy error' };
@@ -102,7 +102,7 @@ describe('useBarCrawlParticipation - Leave Functionality', () => {
       data: null,
       error: mockError
     });
-    (supabaseClient.from().delete().eq().eq as unknown as ReturnType<typeof vi.fn>).mockImplementation(mockDelete);
+    vi.mocked(supabaseClient.from().delete().eq().eq).mockImplementation(mockDelete);
     
     const { result } = renderHook(() => 
       useBarCrawlParticipation({ barCrawlId: '123e4567-e89b-12d3-a456-426614174000' })

@@ -18,7 +18,7 @@ describe('useBarCrawlParticipation - Initial Status Check', () => {
       data: { id: 'participation-1' },
       error: null
     });
-    (supabaseClient.from().select().eq().eq().maybeSingle as unknown as ReturnType<typeof vi.fn>).mockImplementation(mockMaybeSingle);
+    vi.mocked(supabaseClient.from().select().eq().eq().maybeSingle).mockImplementation(mockMaybeSingle);
     
     const { result } = renderHook(() => 
       useBarCrawlParticipation({ barCrawlId: '123e4567-e89b-12d3-a456-426614174000' })
