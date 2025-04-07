@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { BarChart2, Users, CreditCard, Award, Star } from 'lucide-react';
+import { BarChart2, Users, CreditCard, Award, Star, CircleSlash } from 'lucide-react';
 
 interface StatsData {
   revenue: string;
@@ -10,6 +10,11 @@ interface StatsData {
   totalRating: number;
   visitorCount: number;
   returningRate: number;
+  // Add data availability flags
+  hasRevenueData?: boolean;
+  hasVisitorData?: boolean;
+  hasRatingData?: boolean;
+  hasReturnRateData?: boolean;
 }
 
 interface KeyMetricsCardsProps {
@@ -35,8 +40,19 @@ const KeyMetricsCards: React.FC<KeyMetricsCardsProps> = ({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-material-on-surface-variant">Revenue</p>
-                <h3 className="text-2xl font-bold mt-1 text-material-on-background">{stats.revenue}</h3>
-                <p className="text-xs text-material-on-surface-variant mt-1">This month</p>
+                {stats.hasRevenueData !== false ? (
+                  <>
+                    <h3 className="text-2xl font-bold mt-1 text-material-on-background">{stats.revenue}</h3>
+                    <p className="text-xs text-material-on-surface-variant mt-1">This month</p>
+                  </>
+                ) : (
+                  <div className="flex flex-col items-start">
+                    <div className="flex items-center mt-1 text-material-on-surface-variant">
+                      <CircleSlash className="h-4 w-4 mr-1 text-gray-400" />
+                      <p>No data available</p>
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="p-3 rounded-full bg-blue-500/10">
                 <CreditCard className="h-6 w-6 text-blue-500" />
@@ -56,8 +72,19 @@ const KeyMetricsCards: React.FC<KeyMetricsCardsProps> = ({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-material-on-surface-variant">Visitors</p>
-                <h3 className="text-2xl font-bold mt-1 text-material-on-background">{stats.visitorCount}</h3>
-                <p className="text-xs text-material-on-surface-variant mt-1">This week</p>
+                {stats.hasVisitorData !== false ? (
+                  <>
+                    <h3 className="text-2xl font-bold mt-1 text-material-on-background">{stats.visitorCount}</h3>
+                    <p className="text-xs text-material-on-surface-variant mt-1">This week</p>
+                  </>
+                ) : (
+                  <div className="flex flex-col items-start">
+                    <div className="flex items-center mt-1 text-material-on-surface-variant">
+                      <CircleSlash className="h-4 w-4 mr-1 text-gray-400" />
+                      <p>No data available</p>
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="p-3 rounded-full bg-green-500/10">
                 <Users className="h-6 w-6 text-green-500" />
@@ -77,11 +104,22 @@ const KeyMetricsCards: React.FC<KeyMetricsCardsProps> = ({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-material-on-surface-variant">Rating</p>
-                <div className="flex items-center mt-1">
-                  <h3 className="text-2xl font-bold text-material-on-background">{stats.totalRating.toFixed(1)}</h3>
-                  <Star className="h-4 w-4 ml-1 text-amber-500 fill-amber-500" />
-                </div>
-                <p className="text-xs text-material-on-surface-variant mt-1">{stats.reviewsThisWeek} new reviews</p>
+                {stats.hasRatingData !== false ? (
+                  <>
+                    <div className="flex items-center mt-1">
+                      <h3 className="text-2xl font-bold text-material-on-background">{stats.totalRating.toFixed(1)}</h3>
+                      <Star className="h-4 w-4 ml-1 text-amber-500 fill-amber-500" />
+                    </div>
+                    <p className="text-xs text-material-on-surface-variant mt-1">{stats.reviewsThisWeek} new reviews</p>
+                  </>
+                ) : (
+                  <div className="flex flex-col items-start">
+                    <div className="flex items-center mt-1 text-material-on-surface-variant">
+                      <CircleSlash className="h-4 w-4 mr-1 text-gray-400" />
+                      <p>No ratings yet</p>
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="p-3 rounded-full bg-amber-500/10">
                 <Award className="h-6 w-6 text-amber-500" />
@@ -101,8 +139,19 @@ const KeyMetricsCards: React.FC<KeyMetricsCardsProps> = ({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-material-on-surface-variant">Returning Rate</p>
-                <h3 className="text-2xl font-bold mt-1 text-material-on-background">{stats.returningRate}%</h3>
-                <p className="text-xs text-material-on-surface-variant mt-1">Vs. last month</p>
+                {stats.hasReturnRateData !== false ? (
+                  <>
+                    <h3 className="text-2xl font-bold mt-1 text-material-on-background">{stats.returningRate}%</h3>
+                    <p className="text-xs text-material-on-surface-variant mt-1">Vs. last month</p>
+                  </>
+                ) : (
+                  <div className="flex flex-col items-start">
+                    <div className="flex items-center mt-1 text-material-on-surface-variant">
+                      <CircleSlash className="h-4 w-4 mr-1 text-gray-400" />
+                      <p>Insufficient data</p>
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="p-3 rounded-full bg-purple-500/10">
                 <BarChart2 className="h-6 w-6 text-purple-500" />

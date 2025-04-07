@@ -57,6 +57,9 @@ const EstablishmentDashboard: React.FC<EstablishmentDashboardProps> = ({ establi
     );
   }
 
+  // Check if we have data for visitor metrics visualization
+  const hasEnoughDataForVisualization = visitorData.length > 0 && ratingData.length > 0;
+
   return (
     <>
       <div className="animate-fade-in vibrant-bg p-6 space-y-8 max-w-7xl mx-auto">
@@ -85,13 +88,23 @@ const EstablishmentDashboard: React.FC<EstablishmentDashboardProps> = ({ establi
         
         {/* Main Content: Metrics Visualization (full width) */}
         <div className="mb-8">
-          <MetricsVisualization 
-            returningRate={stats.returningRate}
-            visitorData={visitorData}
-            ratingData={ratingData}
-            mocktailData={mocktailData}
-            barCrawlData={barCrawlData}
-          />
+          {hasEnoughDataForVisualization ? (
+            <MetricsVisualization 
+              returningRate={stats.returningRate}
+              visitorData={visitorData}
+              ratingData={ratingData}
+              mocktailData={mocktailData}
+              barCrawlData={barCrawlData}
+            />
+          ) : (
+            <div className="bg-white p-8 rounded-lg shadow text-center">
+              <CircleSlash className="h-16 w-16 mx-auto text-gray-300 mb-4" />
+              <h3 className="text-xl font-medium mb-2">Not enough data for visualization</h3>
+              <p className="text-material-on-surface-variant mb-4">
+                Start gathering more data to see detailed metrics and visualizations here.
+              </p>
+            </div>
+          )}
         </div>
         
         {/* Recent Activity - Full width section */}
