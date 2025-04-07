@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { CircleSlash } from 'lucide-react';
 import MetricsVisualization from './MetricsVisualization';
 import KeyMetricsCards from './KeyMetricsCards';
 import PendingActionsCard from './PendingActionsCard';
