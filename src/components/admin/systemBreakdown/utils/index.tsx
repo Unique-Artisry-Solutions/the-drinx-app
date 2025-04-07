@@ -4,6 +4,13 @@ import { calculateFeatureStatistics } from './statisticsUtils';
 import { generateCSV } from './exportUtils';
 import { analyzeAllFeatures } from './featureAnalysis';
 import { analyzeDbRequirements } from './analysisHelpers';
+import { 
+  isFeatureFlagRelated,
+  isMocktailSuggestionFeature,
+  isMocktailTrendsFeature, 
+  isIngredientPairingFeature,
+  isPromotionFeature
+} from './featureDetection';
 
 export {
   renderStatusBadge,
@@ -12,7 +19,12 @@ export {
   calculateFeatureStatistics,
   generateCSV,
   analyzeAllFeatures,
-  analyzeDbRequirements
+  analyzeDbRequirements,
+  isFeatureFlagRelated,
+  isMocktailSuggestionFeature,
+  isMocktailTrendsFeature, 
+  isIngredientPairingFeature,
+  isPromotionFeature
 };
 
 // Use 'export type' for type exports when isolatedModules is enabled
