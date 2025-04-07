@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ChevronDown, ChevronUp, Database } from 'lucide-react';
 import { FeatureItem } from './types';
-import { renderAccessBadge, renderStatusBadge, renderDatabaseBadge } from './utils/statusRenderers';
+import { renderStatusBadge, renderDatabaseStatusBadge, renderAccessIcon } from './utils/statusRenderers';
 
 interface FeaturesTableProps {
   features: FeatureItem[];
@@ -38,7 +38,6 @@ const FeaturesTable: React.FC<FeaturesTableProps> = ({ features, title }) => {
         </TableHeader>
         <TableBody>
           {features.map((feature) => (
-            // Use key prop directly on TableRow instead of wrapping in a Fragment
             <React.Fragment key={feature.id}>
               <TableRow 
                 className={feature.statusUpdated ? 'bg-amber-50' : ''}
@@ -55,10 +54,10 @@ const FeaturesTable: React.FC<FeaturesTableProps> = ({ features, title }) => {
                   </div>
                 </TableCell>
                 <TableCell>{renderStatusBadge(feature.status)}</TableCell>
-                <TableCell className="hidden md:table-cell">{renderAccessBadge(feature.adminAccess)}</TableCell>
-                <TableCell className="hidden md:table-cell">{renderAccessBadge(feature.establishmentAccess)}</TableCell>
-                <TableCell className="hidden md:table-cell">{renderAccessBadge(feature.individualAccess)}</TableCell>
-                <TableCell className="hidden md:table-cell">{renderDatabaseBadge(feature.databaseStatus)}</TableCell>
+                <TableCell className="hidden md:table-cell">{renderAccessIcon(feature.adminAccess)}</TableCell>
+                <TableCell className="hidden md:table-cell">{renderAccessIcon(feature.establishmentAccess)}</TableCell>
+                <TableCell className="hidden md:table-cell">{renderAccessIcon(feature.individualAccess)}</TableCell>
+                <TableCell className="hidden md:table-cell">{renderDatabaseStatusBadge(feature.databaseStatus)}</TableCell>
                 <TableCell>
                   <Button variant="ghost" size="icon" onClick={() => toggleRow(feature.id)}>
                     {expandedRows[feature.id] ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
