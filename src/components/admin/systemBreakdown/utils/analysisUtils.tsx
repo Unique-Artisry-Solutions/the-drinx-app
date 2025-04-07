@@ -1,5 +1,6 @@
 
-import { FeatureItem, AnalysisStep, FeatureStatus } from '../types';
+import { FeatureItem, AnalysisStep, FeatureStatus, DatabaseStatus } from '../types';
+import { analyzeDbRequirements } from '../DatabaseAnalysisPanel';
 
 export function analyzeAllFeatures(
   adminFeatures: FeatureItem[],
@@ -26,36 +27,53 @@ export function analyzeAllFeatures(
     { name: 'Frontend component implementation check', completed: true }
   ];
   
-  // Mock analysis that updates some features
-  const randomlyUpdateFeatures = (features: FeatureItem[]) => {
+  // Updated analysis function that syncs database status with requirements completion
+  const updateFeaturesDbStatus = (features: FeatureItem[]) => {
     return features.map(feature => {
-      // Randomly update some features (for demo purposes)
-      const shouldUpdate = Math.random() > 0.7;
-      if (shouldUpdate) {
-        const originalStatus = feature.status;
-        // Ensure we're using the correct FeatureStatus type
-        let newStatus: FeatureStatus = originalStatus;
+      // Capture original status for tracking changes
+      const originalStatus = feature.status;
+      const originalDbStatus = feature.databaseStatus;
+      
+      // If there's database analysis text, analyze the requirements completion
+      let newStatus = feature.status;
+      let newDbStatus = feature.databaseStatus;
+      
+      if (feature.databaseAnalysis) {
+        const dbAnalysis = analyzeDbRequirements(feature.databaseAnalysis);
         
-        // Update status based on current status
-        if (originalStatus === 'not_started') newStatus = 'planned';
-        else if (originalStatus === 'planned') newStatus = 'partial';
-        else if (originalStatus === 'partial') newStatus = 'implemented';
+        // Update database status based on requirement completion
+        if (dbAnalysis.isComplete) {
+          newDbStatus = 'complete';
+        } else if (dbAnalysis.hasStarted) {
+          newDbStatus = 'in_progress';
+        } else {
+          newDbStatus = 'not_started';
+        }
         
-        return {
-          ...feature,
-          status: newStatus,
-          statusUpdated: newStatus !== originalStatus,
-          originalStatus: originalStatus !== newStatus ? originalStatus : undefined
-        };
+        // If any DB requirements are complete and feature isn't implemented, update feature status
+        if (dbAnalysis.hasStarted && feature.status === 'not_started') {
+          newStatus = 'planned';
+        } else if (dbAnalysis.hasStarted && feature.status === 'planned') {
+          newStatus = 'partial';
+        } else if (dbAnalysis.isComplete && feature.status === 'partial') {
+          newStatus = 'implemented';
+        }
       }
-      return feature;
+      
+      return {
+        ...feature,
+        status: newStatus,
+        databaseStatus: newDbStatus,
+        statusUpdated: newStatus !== originalStatus,
+        originalStatus: originalStatus !== newStatus ? originalStatus : undefined
+      };
     });
   };
   
-  // Apply our mock analysis
-  const analyzedAdminFeatures = randomlyUpdateFeatures(updatedAdminFeatures);
-  const analyzedEstablishmentFeatures = randomlyUpdateFeatures(updatedEstablishmentFeatures);
-  const analyzedIndividualFeatures = randomlyUpdateFeatures(updatedIndividualFeatures);
+  // Apply our updated analysis to all feature sets
+  const analyzedAdminFeatures = updateFeaturesDbStatus(updatedAdminFeatures);
+  const analyzedEstablishmentFeatures = updateFeaturesDbStatus(updatedEstablishmentFeatures);
+  const analyzedIndividualFeatures = updateFeaturesDbStatus(updatedIndividualFeatures);
   
   return {
     adminFeatures: analyzedAdminFeatures,

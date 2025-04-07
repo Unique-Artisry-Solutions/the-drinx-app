@@ -73,4 +73,29 @@ const DatabaseAnalysisPanel: React.FC<DatabaseAnalysisPanelProps> = ({ analysisT
   );
 };
 
+// Helper function to analyze database requirements and determine status
+export const analyzeDbRequirements = (analysisText: string) => {
+  if (!analysisText) return { completionPercentage: 0, hasStarted: false, isComplete: false };
+  
+  const taskLines = analysisText
+    .split('\n')
+    .filter(line => line.trim().match(/^\d+\./)); // Get only numbered lines
+  
+  const taskStatuses = taskLines.map(line => {
+    return !line.toLowerCase().includes('need') && 
+           !line.toLowerCase().includes('required') &&
+           !line.toLowerCase().includes('add');
+  });
+  
+  const completedCount = taskStatuses.filter(status => status).length;
+  const totalTasks = taskStatuses.length;
+  const completionPercentage = totalTasks > 0 ? (completedCount / totalTasks) * 100 : 0;
+  
+  return {
+    completionPercentage,
+    hasStarted: completedCount > 0,
+    isComplete: completedCount > 0 && completedCount === totalTasks
+  };
+};
+
 export default DatabaseAnalysisPanel;
