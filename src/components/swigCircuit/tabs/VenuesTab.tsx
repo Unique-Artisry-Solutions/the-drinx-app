@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import DistanceFilter from '@/components/barCrawl/VenueDiversity';
-import BarCrawlControl from '@/components/barCrawl/selection/BarCrawlControl';
+import BarCrawlControlWithSampleData from '@/components/barCrawl/selection/BarCrawlControlWithSampleData';
 import { Establishment } from '@/types/ProfileTypes';
 
 interface VenuesTabProps {
@@ -83,9 +83,11 @@ const VenuesTab: React.FC<VenuesTabProps> = ({
                     Select venues to add to your Swig Circuit.
                   </p>
                   
-                  <BarCrawlControl 
-                    establishments={availableEstablishments}
+                  {/* Using the sample data component for testing */}
+                  <BarCrawlControlWithSampleData 
                     onSaveBarCrawl={onSaveEstablishments}
+                    initialSelections={selectedEstablishments}
+                    minEstablishments={2}
                   />
                   
                   {selectedEstablishments.length > 0 && (
