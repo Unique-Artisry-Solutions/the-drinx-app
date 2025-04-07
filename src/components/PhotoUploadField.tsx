@@ -7,11 +7,15 @@ import { useToast } from '@/hooks/use-toast';
 interface PhotoUploadFieldProps {
   onPhotoSelect: (file: File) => void;
   className?: string;
+  requiresModeration?: boolean;
+  onModerationRequired?: () => void;
 }
 
 const PhotoUploadField: React.FC<PhotoUploadFieldProps> = ({ 
   onPhotoSelect,
   className = "",
+  requiresModeration = false,
+  onModerationRequired
 }) => {
   const [preview, setPreview] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState(false);
@@ -56,10 +60,22 @@ const PhotoUploadField: React.FC<PhotoUploadFieldProps> = ({
     // Pass file to parent component
     onPhotoSelect(file);
     
-    toast({
-      title: 'Photo uploaded',
-      description: 'Your photo has been successfully uploaded.',
-    });
+    // Show appropriate toast message based on moderation requirements
+    if (requiresModeration) {
+      toast({
+        title: "Photo submitted for review",
+        description: "Your photo will be visible after approval.",
+      });
+      
+      if (onModerationRequired) {
+        onModerationRequired();
+      }
+    } else {
+      toast({
+        title: 'Photo uploaded',
+        description: 'Your photo has been successfully uploaded.',
+      });
+    }
   };
 
   const handleDrag = (e: React.DragEvent) => {
@@ -119,6 +135,11 @@ const PhotoUploadField: React.FC<PhotoUploadFieldProps> = ({
           >
             <X size={16} />
           </Button>
+          {requiresModeration && (
+            <div className="absolute bottom-0 left-0 right-0 bg-amber-100 text-amber-800 py-1 px-2 text-xs text-center">
+              Pending approval
+            </div>
+          )}
         </div>
       ) : (
         <div
@@ -141,6 +162,11 @@ const PhotoUploadField: React.FC<PhotoUploadFieldProps> = ({
             <p className="text-xs text-material-on-surface-variant">
               PNG, JPG, GIF up to 5MB
             </p>
+            {requiresModeration && (
+              <p className="text-xs text-amber-500 mt-1">
+                Photos require admin approval before being displayed
+              </p>
+            )}
           </div>
         </div>
       )}

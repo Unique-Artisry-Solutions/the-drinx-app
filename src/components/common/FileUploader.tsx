@@ -6,9 +6,15 @@ import { useToast } from '@/hooks/use-toast';
 
 interface FileUploaderProps {
   onFileSelect?: (file: File) => void;
+  requiresModeration?: boolean;
+  onModerationRequired?: () => void;
 }
 
-const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelect }) => {
+const FileUploader: React.FC<FileUploaderProps> = ({ 
+  onFileSelect,
+  requiresModeration = false,
+  onModerationRequired
+}) => {
   const [files, setFiles] = useState<File[]>([]);
   const { toast } = useToast();
   
@@ -22,10 +28,22 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelect }) => {
         onFileSelect(selectedFiles[0]);
       }
       
-      toast({
-        title: "File uploaded",
-        description: `${selectedFiles.length} file(s) added successfully`,
-      });
+      // Show appropriate toast message based on moderation requirements
+      if (requiresModeration) {
+        toast({
+          title: "File uploaded for review",
+          description: "Your file has been uploaded and will be visible after approval.",
+        });
+        
+        if (onModerationRequired) {
+          onModerationRequired();
+        }
+      } else {
+        toast({
+          title: "File uploaded",
+          description: `${selectedFiles.length} file(s) added successfully`,
+        });
+      }
     }
   };
   
@@ -45,6 +63,11 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelect }) => {
             <p className="text-xs text-gray-500 dark:text-gray-400">
               PNG, JPG, GIF (MAX. 2MB)
             </p>
+            {requiresModeration && (
+              <p className="text-xs text-amber-500 mt-1">
+                Uploaded images require admin approval
+              </p>
+            )}
           </div>
           <input 
             type="file" 
@@ -77,6 +100,11 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelect }) => {
               </div>
             ))}
           </div>
+          {requiresModeration && (
+            <p className="text-xs text-muted-foreground">
+              Files will be visible after admin approval
+            </p>
+          )}
         </div>
       )}
     </div>

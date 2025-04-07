@@ -1,6 +1,5 @@
-
-import React, { Suspense, lazy } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import React from 'react';
+import { Route, Routes } from 'react-router-dom';
 import LandingPage from '@/pages/LandingPage';
 import MapPage from '@/pages/MapPage';
 import NotFound from '@/pages/NotFound';
@@ -49,6 +48,7 @@ const AdminUserProfile = lazy(() => import('@/pages/admin/AdminUserProfile'));
 const AdminEstablishmentsPage = lazy(() => import('@/pages/admin/AdminEstablishmentsPage'));
 const AdminEstablishmentProfile = lazy(() => import('@/pages/admin/AdminEstablishmentProfile'));
 const SystemFunctionalityBreakdown = lazy(() => import('@/pages/admin/SystemFunctionalityBreakdown'));
+const PhotoModerationPage = lazy(() => import('@/pages/admin/PhotoModerationPage'));
 
 // Establishment pages
 const EstablishmentProfilePage = lazy(() => import('@/pages/establishment/EstablishmentProfilePage'));
@@ -106,6 +106,7 @@ const AppRoutes = () => {
         <Route path="/admin/establishments" element={<AdminEstablishmentsPage />} />
         <Route path="/admin/establishments/:id" element={<AdminEstablishmentProfile />} />
         <Route path="/admin/system-breakdown" element={<SystemFunctionalityBreakdown />} />
+        <Route path="/admin/photo-moderation" element={<PhotoModerationPage />} />
         
         {/* Establishment routes - protected with type */}
         <Route path="/establishment/all-actions" element={
