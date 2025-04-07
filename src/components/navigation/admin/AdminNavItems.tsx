@@ -1,5 +1,5 @@
 
-import { Home, Map, Plus, Globe, LayoutDashboard, Database } from 'lucide-react';
+import { Home, Map, Plus, Globe, LayoutDashboard, Database, FileText } from 'lucide-react';
 
 export interface AdminNavItem {
   icon: React.ComponentType<any>;
@@ -14,4 +14,5 @@ export const adminNavItems: AdminNavItem[] = [
   { icon: Globe, label: 'Landing', path: '/landing' },
   { icon: LayoutDashboard, label: 'Admin', path: '/admin/dashboard' },
   { icon: Database, label: 'System Breakdown', path: '/admin/system-breakdown' },
+  { icon: FileText, label: 'Documentation', path: '/admin/documentation' },
 ];
