@@ -388,51 +388,36 @@ const SystemFunctionalityBreakdown: React.FC = () => {
                   <div className="border p-4 rounded-md">
                     <h3 className="text-xl font-semibold mb-3 text-spiritless-pink">Admin Users</h3>
                     <ul className="space-y-2">
-                      {adminFeatures.slice(0, 5).map((feature, index) => (
+                      {adminFeatures.map((feature, index) => (
                         <li key={index} className="flex items-center gap-2">
                           <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
                           <span className="text-sm">{feature.name}</span>
                         </li>
                       ))}
-                      {adminFeatures.length > 5 && (
-                        <li className="text-sm text-gray-500 pl-6">
-                          +{adminFeatures.length - 5} more features
-                        </li>
-                      )}
                     </ul>
                   </div>
                   
                   <div className="border p-4 rounded-md">
                     <h3 className="text-xl font-semibold mb-3 text-spiritless-green">Establishments</h3>
                     <ul className="space-y-2">
-                      {establishmentFeatures.slice(0, 5).map((feature, index) => (
+                      {establishmentFeatures.map((feature, index) => (
                         <li key={index} className="flex items-center gap-2">
                           <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
                           <span className="text-sm">{feature.name}</span>
                         </li>
                       ))}
-                      {establishmentFeatures.length > 5 && (
-                        <li className="text-sm text-gray-500 pl-6">
-                          +{establishmentFeatures.length - 5} more features
-                        </li>
-                      )}
                     </ul>
                   </div>
                   
                   <div className="border p-4 rounded-md">
                     <h3 className="text-xl font-semibold mb-3 text-spiritless-blue">Individual Users</h3>
                     <ul className="space-y-2">
-                      {individualFeatures.slice(0, 5).map((feature, index) => (
+                      {individualFeatures.map((feature, index) => (
                         <li key={index} className="flex items-center gap-2">
                           <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
                           <span className="text-sm">{feature.name}</span>
                         </li>
                       ))}
-                      {individualFeatures.length > 5 && (
-                        <li className="text-sm text-gray-500 pl-6">
-                          +{individualFeatures.length - 5} more features
-                        </li>
-                      )}
                     </ul>
                   </div>
                 </div>
