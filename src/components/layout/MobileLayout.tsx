@@ -8,6 +8,9 @@ import Breadcrumbs from '../navigation/Breadcrumbs';
 import { useAuth } from '@/contexts/auth';
 import { useTheme } from '@/contexts/ThemeContext';
 import GuestTopNavigation from '../navigation/GuestTopNavigation';
+import AdminTopNavigation from '../navigation/AdminTopNavigation';
+import AppFooter from '../AppFooter';
+import AdminFooter from '../admin/AdminFooter';
 
 interface TabOption {
   value: string;
@@ -62,14 +65,6 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
     };
     
     checkAuth();
-    
-    // Add a console log to debug navigation type
-    console.log('Mobile Navigation State:', { 
-      user: !!user, 
-      isEmailVerified, 
-      path: location.pathname,
-      navigationType 
-    });
   }, [user, isEmailVerified, location.pathname]);
 
   // Determine page types for specialized navigation
@@ -125,14 +120,30 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
 
   // Determine if we should show guest navigation
   const showGuestNav = useGuestNavigation();
+  
+  // Render the appropriate navigation
+  const renderNavigation = () => {
+    if (isAdminPage || isAdmin) {
+      return <AdminTopNavigation />;
+    } else if (showGuestNav) {
+      return <GuestTopNavigation />;
+    } else {
+      return <UserNavbar activeTab={activeTab} handleTabChange={handleTabChange} tabOptions={tabOptions} />;
+    }
+  };
+  
+  // Render the appropriate footer
+  const renderFooter = () => {
+    if (isAdminPage || isAdmin) {
+      return <AdminFooter />;
+    }
+    // Only return AppFooter if not showing mobile nav
+    return !shouldShowMobileNav() ? <AppFooter /> : null;
+  };
 
   return (
     <div className={`flex flex-col min-h-screen w-full max-w-full bg-background transition-colors duration-300`}>
-      {showGuestNav ? (
-        <GuestTopNavigation />
-      ) : (
-        <UserNavbar activeTab={activeTab} handleTabChange={handleTabChange} tabOptions={tabOptions} />
-      )}
+      {renderNavigation()}
       
       <main className={`flex-1 w-full max-w-full overflow-x-hidden ${getContentPadding()}`}>
         {shouldShowBreadcrumbs() && (
@@ -142,6 +153,8 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
         )}
         {children}
       </main>
+      
+      {renderFooter()}
       
       {shouldShowMobileNav() && (
         <MobileNavigation type={navigationType} userType={userType} />

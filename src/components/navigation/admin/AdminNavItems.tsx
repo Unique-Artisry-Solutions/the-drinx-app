@@ -1,18 +1,22 @@
 
-import { Home, Map, Plus, Globe, LayoutDashboard, Database, FileText } from 'lucide-react';
+import { Home, Map, Plus, Globe, LayoutDashboard, Database, FileText, UserCheck, Building, Image } from 'lucide-react';
 
 export interface AdminNavItem {
   icon: React.ComponentType<any>;
   label: string;
   path: string;
+  showInNav?: boolean;
 }
 
 export const adminNavItems: AdminNavItem[] = [
-  { icon: Home, label: 'Home', path: '/' },
-  { icon: Map, label: 'Map', path: '/map' },
-  { icon: Plus, label: 'Add', path: '/add' },
-  { icon: Globe, label: 'Landing', path: '/landing' },
-  { icon: LayoutDashboard, label: 'Admin', path: '/admin/dashboard' },
-  { icon: Database, label: 'System Breakdown', path: '/admin/system-breakdown' },
-  { icon: FileText, label: 'Documentation', path: '/admin/documentation' },
+  { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard' },
+  { icon: UserCheck, label: 'Users', path: '/admin/users' },
+  { icon: Building, label: 'Establishments', path: '/admin/establishments' },
+  { icon: Database, label: 'System', path: '/admin/system-breakdown' },
+  { icon: Image, label: 'Photos', path: '/admin/photo-moderation' },
+  { icon: Home, label: 'Home', path: '/', showInNav: false },
+  { icon: Map, label: 'Map', path: '/map', showInNav: false },
+  { icon: Plus, label: 'Add', path: '/add', showInNav: false },
+  { icon: Globe, label: 'Landing', path: '/landing', showInNav: false },
+  { icon: FileText, label: 'Documentation', path: '/admin/documentation', showInNav: false },
 ];

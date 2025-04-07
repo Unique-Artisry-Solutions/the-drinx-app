@@ -7,6 +7,7 @@ import UserTopNavigation from '../navigation/UserTopNavigation';
 import GuestTopNavigation from '../navigation/GuestTopNavigation';
 import Breadcrumbs from '../navigation/Breadcrumbs';
 import AppFooter from '../AppFooter';
+import AdminFooter from '../admin/AdminFooter';
 import { useAuth } from '@/contexts/auth';
 import { useTheme } from '@/contexts/ThemeContext';
 
@@ -58,14 +59,6 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     };
     
     checkAuth();
-    
-    // Add a console log to debug navigation type
-    console.log('Desktop Navigation State:', { 
-      user: !!user, 
-      isEmailVerified, 
-      path: location.pathname, 
-      navigationType 
-    });
   }, [user, isEmailVerified, location.pathname]);
 
   const isLandingPage = location.pathname === '/' || location.pathname === '/landing';
@@ -125,6 +118,14 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     return true;
   };
 
+  // Render the appropriate footer based on the page type
+  const renderFooter = () => {
+    if (isAdminPage || isAdmin) {
+      return <AdminFooter />;
+    }
+    return <AppFooter />;
+  };
+
   return (
     <div className={`flex flex-col min-h-screen w-full max-w-full bg-background transition-colors duration-300`}>
       {renderNavigation()}
@@ -138,7 +139,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
         {children}
       </main>
       
-      <AppFooter />
+      {renderFooter()}
     </div>
   );
 };
