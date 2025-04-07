@@ -435,6 +435,74 @@ export type Database = {
           },
         ]
       }
+      feature_flags: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          percentage_rollout: number | null
+          segment_id: string | null
+          status: boolean
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          percentage_rollout?: number | null
+          segment_id?: string | null
+          status?: boolean
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          percentage_rollout?: number | null
+          segment_id?: string | null
+          status?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feature_flags_segment_id_fkey"
+            columns: ["segment_id"]
+            isOneToOne: false
+            referencedRelation: "feature_segments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      feature_metrics: {
+        Row: {
+          created_at: string
+          event_data: Json | null
+          event_type: string
+          feature_id: string
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_data?: Json | null
+          event_type: string
+          feature_id: string
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_data?: Json | null
+          event_type?: string
+          feature_id?: string
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       feature_segment_mappings: {
         Row: {
           created_at: string

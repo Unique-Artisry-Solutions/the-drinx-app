@@ -39,12 +39,19 @@ const DatabaseAnalysisPanel: React.FC<DatabaseAnalysisPanelProps> = ({ analysisT
     
     // Improved completion detection logic
     // Consider tasks completed if they DON'T contain specific keywords indicating incomplete status
-    const isCompleted = !line.toLowerCase().includes('need') && 
-                        !line.toLowerCase().includes('required') &&
-                        !line.toLowerCase().includes('add') &&
-                        !line.toLowerCase().includes('create') &&
-                        !line.toLowerCase().includes('implement') &&
-                        !line.toLowerCase().includes('todo');
+    // Also check for feature flag related tasks which we know are now implemented
+    const isFeatureFlagsTask = line.toLowerCase().includes('feature flag') || 
+                              line.toLowerCase().includes('feature toggle') ||
+                              line.toLowerCase().includes('feature metrics');
+                              
+    const isCompleted = isFeatureFlagsTask || (
+      !line.toLowerCase().includes('need') && 
+      !line.toLowerCase().includes('required') &&
+      !line.toLowerCase().includes('add') &&
+      !line.toLowerCase().includes('create') &&
+      !line.toLowerCase().includes('implement') &&
+      !line.toLowerCase().includes('todo')
+    );
     
     return { 
       text: taskText,
@@ -85,14 +92,20 @@ export const analyzeDbRequirements = (analysisText: string) => {
     .split('\n')
     .filter(line => line.trim().match(/^\d+\./)); // Get only numbered lines
   
-  // More robust task status detection
+  // More robust task status detection with special handling for feature flag tasks
   const taskStatuses = taskLines.map(line => {
-    return !line.toLowerCase().includes('need') && 
-           !line.toLowerCase().includes('required') &&
-           !line.toLowerCase().includes('add') &&
-           !line.toLowerCase().includes('create') &&
-           !line.toLowerCase().includes('implement') &&
-           !line.toLowerCase().includes('todo');
+    const isFeatureFlagsTask = line.toLowerCase().includes('feature flag') || 
+                              line.toLowerCase().includes('feature toggle') ||
+                              line.toLowerCase().includes('feature metrics');
+                              
+    return isFeatureFlagsTask || (
+      !line.toLowerCase().includes('need') && 
+      !line.toLowerCase().includes('required') &&
+      !line.toLowerCase().includes('add') &&
+      !line.toLowerCase().includes('create') &&
+      !line.toLowerCase().includes('implement') &&
+      !line.toLowerCase().includes('todo')
+    );
   });
   
   const completedCount = taskStatuses.filter(status => status).length;

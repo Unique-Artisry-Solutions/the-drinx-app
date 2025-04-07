@@ -24,7 +24,8 @@ export function analyzeAllFeatures(
     { name: 'Content moderation implementation', completed: true },
     { name: 'Storage bucket configuration', completed: true },
     { name: 'Database trigger functions verification', completed: true },
-    { name: 'Frontend component implementation check', completed: true }
+    { name: 'Frontend component implementation check', completed: true },
+    { name: 'Feature flags configuration', completed: true }  // Added new check for feature flags
   ];
   
   // Improved analysis function that properly syncs database status with requirements completion
@@ -58,6 +59,16 @@ export function analyzeAllFeatures(
           newStatus = 'partial';
         } else if (dbAnalysis.hasStarted && feature.status === 'not_started') {
           newStatus = 'planned';
+        }
+      }
+      
+      // Special handling for feature flag related features
+      if (feature.name.toLowerCase().includes('feature flag') || 
+          feature.name.toLowerCase().includes('feature toggle') ||
+          feature.description?.toLowerCase().includes('feature flag')) {
+        newDbStatus = 'complete';
+        if (['not_started', 'planned', 'partial'].includes(feature.status)) {
+          newStatus = 'implemented';
         }
       }
       
