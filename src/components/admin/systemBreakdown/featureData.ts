@@ -9,7 +9,14 @@ export const adminFeatures: FeatureItem[] = [
     status: "implemented",
     adminAccess: true,
     establishmentAccess: false,
-    individualAccess: false
+    individualAccess: false,
+    databaseStatus: "completed",
+    testSteps: [
+      "Login with admin credentials to access the admin dashboard",
+      "Verify system metrics are displayed correctly",
+      "Check user management tools are functional",
+      "Verify content moderation tools are accessible"
+    ]
   },
   {
     name: "User Management",
@@ -17,7 +24,15 @@ export const adminFeatures: FeatureItem[] = [
     status: "implemented",
     adminAccess: true,
     establishmentAccess: false,
-    individualAccess: false
+    individualAccess: false,
+    databaseStatus: "completed",
+    testSteps: [
+      "Navigate to User Management section",
+      "Search for a specific user",
+      "Edit user type and save changes",
+      "Verify changes are persisted in the database",
+      "Test user account status toggling functionality"
+    ]
   },
   {
     name: "Establishment Management",
@@ -25,7 +40,15 @@ export const adminFeatures: FeatureItem[] = [
     status: "implemented",
     adminAccess: true,
     establishmentAccess: false,
-    individualAccess: false
+    individualAccess: false,
+    databaseStatus: "completed",
+    testSteps: [
+      "Access Establishment Management section",
+      "View detailed information of an establishment",
+      "Edit establishment details and save",
+      "Approve a pending establishment",
+      "Verify changes reflect in the frontend"
+    ]
   },
   {
     name: "Mocktail Management",
@@ -33,7 +56,15 @@ export const adminFeatures: FeatureItem[] = [
     status: "implemented",
     adminAccess: true,
     establishmentAccess: false,
-    individualAccess: false
+    individualAccess: false,
+    databaseStatus: "completed",
+    testSteps: [
+      "Navigate to Mocktail Management",
+      "Review a submitted mocktail recipe",
+      "Approve or reject a pending mocktail",
+      "Edit mocktail details and save changes",
+      "Verify all changes are correctly stored"
+    ]
   },
   {
     name: "System Analytics",
@@ -41,7 +72,15 @@ export const adminFeatures: FeatureItem[] = [
     status: "implemented",
     adminAccess: true,
     establishmentAccess: false,
-    individualAccess: false
+    individualAccess: false,
+    databaseStatus: "in-progress",
+    testSteps: [
+      "Open Analytics dashboard",
+      "Check user growth charts for accurate data",
+      "Verify engagement metrics calculation",
+      "Test date range filter functionality",
+      "Export analytics data and verify CSV format"
+    ]
   },
   {
     name: "Content Moderation",
@@ -49,7 +88,15 @@ export const adminFeatures: FeatureItem[] = [
     status: "partial",
     adminAccess: true,
     establishmentAccess: false,
-    individualAccess: false
+    individualAccess: false,
+    databaseStatus: "in-progress",
+    testSteps: [
+      "Access Content Moderation section",
+      "Review flagged content items",
+      "Approve or reject a flagged review",
+      "Check photo moderation tools",
+      "Verify moderation actions are logged"
+    ]
   },
   {
     name: "Feature Toggle Management",
@@ -57,7 +104,15 @@ export const adminFeatures: FeatureItem[] = [
     status: "planned",
     adminAccess: true,
     establishmentAccess: false,
-    individualAccess: false
+    individualAccess: false,
+    databaseStatus: "not-started",
+    testSteps: [
+      "Navigate to Feature Toggle section",
+      "Toggle a feature on/off",
+      "Set user segment targeting rules",
+      "Verify feature availability for targeted segments",
+      "Test rollback functionality"
+    ]
   },
   {
     name: "Promotion Management",
@@ -65,7 +120,16 @@ export const adminFeatures: FeatureItem[] = [
     status: "partial",
     adminAccess: true,
     establishmentAccess: false,
-    individualAccess: false
+    individualAccess: false,
+    databaseStatus: "in-progress",
+    testSteps: [
+      "Access Promotion Management",
+      "Create a new global promotion",
+      "Set promotion start and end dates",
+      "Target specific user segments",
+      "Verify promotion display on front-end",
+      "Edit existing promotion details"
+    ]
   }
 ];
 

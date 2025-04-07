@@ -42,17 +42,43 @@ const ImplementationOverview: React.FC<ImplementationOverviewProps> = ({
             <div className="text-sm text-gray-500">Planned</div>
           </div>
         </div>
-        <div className="mt-6">
-          <div className="flex justify-between mb-1">
-            <span className="text-sm font-medium">Implementation Progress</span>
-            <span className="text-sm font-medium">{stats.implementationRate}%</span>
+        
+        <div className="mt-4 mb-2 text-lg font-medium">Implementation Progress</div>
+        <div className="flex justify-between mb-1">
+          <span className="text-sm font-medium">Feature Implementation</span>
+          <span className="text-sm font-medium">{stats.implementationRate}%</span>
+        </div>
+        <div className="w-full bg-gray-200 rounded-full h-2.5 mb-4">
+          <div 
+            className="bg-green-600 h-2.5 rounded-full" 
+            style={{ width: `${stats.implementationRate}%` }}
+          ></div>
+        </div>
+        
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-green-50 p-4 rounded-md">
+            <div className="text-2xl font-bold text-green-700">{stats.dbCompleted}</div>
+            <div className="text-sm text-gray-500">Database Complete</div>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-2.5">
-            <div 
-              className="bg-green-600 h-2.5 rounded-full" 
-              style={{ width: `${stats.implementationRate}%` }}
-            ></div>
+          <div className="bg-yellow-50 p-4 rounded-md">
+            <div className="text-2xl font-bold text-yellow-600">{stats.dbInProgress}</div>
+            <div className="text-sm text-gray-500">Database In Progress</div>
           </div>
+          <div className="bg-gray-50 p-4 rounded-md">
+            <div className="text-2xl font-bold text-gray-500">{stats.dbNotStarted}</div>
+            <div className="text-sm text-gray-500">Database Not Started</div>
+          </div>
+        </div>
+        
+        <div className="mt-4 mb-1">
+          <span className="text-sm font-medium">Database Completion</span>
+          <span className="text-sm font-medium float-right">{stats.databaseCompletionRate}%</span>
+        </div>
+        <div className="w-full bg-gray-200 rounded-full h-2.5">
+          <div 
+            className="bg-blue-600 h-2.5 rounded-full" 
+            style={{ width: `${stats.databaseCompletionRate}%` }}
+          ></div>
         </div>
       </CardContent>
     </Card>
