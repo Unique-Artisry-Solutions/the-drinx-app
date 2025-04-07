@@ -58,7 +58,7 @@ export const useDashboardData = (): DashboardData => {
   const [isLoading, setIsLoading] = useState(true);
   
   // Sample data - in a real implementation, this would come from Supabase
-  // Adding data availability flags
+  // Using consistent data availability flags instead of random ones
   const stats: DashboardStats = {
     totalVisits: 278,
     newVisitorsToday: 12,
@@ -72,11 +72,11 @@ export const useDashboardData = (): DashboardData => {
     revenue: "$2,850",
     totalRating: 4.7,  // Using avgRating value
     visitorCount: 278,  // Using totalVisits value
-    // Add data availability flags - in a real app these would be based on API responses
-    hasRevenueData: Math.random() > 0.3, // Simulate 30% chance of no data
-    hasVisitorData: Math.random() > 0.3,
-    hasRatingData: Math.random() > 0.3,
-    hasReturnRateData: Math.random() > 0.3
+    // Using consistent data flags for demo purposes instead of random ones
+    hasRevenueData: true,
+    hasVisitorData: true,
+    hasRatingData: true,
+    hasReturnRateData: true
   };
   
   // Sample visitor data

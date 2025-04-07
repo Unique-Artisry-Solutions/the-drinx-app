@@ -19,8 +19,8 @@ export const useVisitorStats = () => {
   useEffect(() => {
     // Simulating API call to fetch visitor stats
     setTimeout(() => {
-      // 30% chance of having no data (for demo purposes)
-      const hasData = Math.random() > 0.3;
+      // Using consistent data availability instead of random
+      const hasData = true;
       
       setVisitorStats({
         totalVisits: hasData ? 278 : 0,
