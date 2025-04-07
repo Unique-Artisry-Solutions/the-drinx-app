@@ -3,10 +3,12 @@ import React, { useState } from 'react';
 import { useAuth } from '@/contexts/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useUserRecipes } from '@/hooks/useUserRecipes';
-import { UserRecipe, Ingredient } from '@/types/DatabaseTypes';
-import { RecipeFormState } from './recipes/types';
+import { UserRecipe } from '@/types/DatabaseTypes';
 
-// Import the new components
+// Import the new hook
+import { useRecipeForm } from '@/hooks/recipes/useRecipeForm';
+
+// Import the components
 import AuthRequiredState from './recipes/AuthRequiredState';
 import RecipesLoading from './recipes/RecipesLoading';
 import EmptyRecipesState from './recipes/EmptyRecipesState';
@@ -18,91 +20,18 @@ import EditRecipeDialog from './recipes/EditRecipeDialog';
 const UserRecipesTab: React.FC = () => {
   const { recipes, isLoading, createRecipe, updateRecipe, deleteRecipe } = useUserRecipes();
   const [isCreatingRecipe, setIsCreatingRecipe] = useState(false);
-  const [editingRecipe, setEditingRecipe] = useState<UserRecipe | null>(null);
-  const [newIngredient, setNewIngredient] = useState('');
-  const [newAmount, setNewAmount] = useState('');
   const { toast } = useToast();
   const { user } = useAuth();
-
-  // New recipe form state
-  const [newRecipe, setNewRecipe] = useState<RecipeFormState>({
-    name: '',
-    description: '',
-    ingredients: [],
-    instructions: '',
-    is_public: false
-  });
-
-  const handleAddIngredient = () => {
-    if (newIngredient.trim() && newAmount.trim()) {
-      if (editingRecipe) {
-        setEditingRecipe({
-          ...editingRecipe,
-          ingredients: [
-            ...editingRecipe.ingredients,
-            { name: newIngredient.trim(), amount: newAmount.trim() }
-          ]
-        });
-      } else {
-        setNewRecipe({
-          ...newRecipe,
-          ingredients: [
-            ...newRecipe.ingredients,
-            { name: newIngredient.trim(), amount: newAmount.trim() }
-          ]
-        });
-      }
-      setNewIngredient('');
-      setNewAmount('');
-    } else {
-      toast({
-        title: "Missing information",
-        description: "Please enter both ingredient name and amount."
-      });
-    }
-  };
-
-  const handleIngredientChange = (index: number, field: keyof Ingredient, value: string) => {
-    if (editingRecipe) {
-      const updatedIngredients = [...editingRecipe.ingredients];
-      updatedIngredients[index] = {
-        ...updatedIngredients[index],
-        [field]: value
-      };
-      setEditingRecipe({
-        ...editingRecipe,
-        ingredients: updatedIngredients
-      });
-    } else {
-      const updatedIngredients = [...newRecipe.ingredients];
-      updatedIngredients[index] = {
-        ...updatedIngredients[index],
-        [field]: value
-      };
-      setNewRecipe({
-        ...newRecipe,
-        ingredients: updatedIngredients
-      });
-    }
-  };
-
-  const handleRemoveIngredient = (index: number) => {
-    if (editingRecipe) {
-      const updatedIngredients = [...editingRecipe.ingredients];
-      updatedIngredients.splice(index, 1);
-      setEditingRecipe({
-        ...editingRecipe,
-        ingredients: updatedIngredients
-      });
-    } else {
-      const updatedIngredients = [...newRecipe.ingredients];
-      updatedIngredients.splice(index, 1);
-      setNewRecipe({
-        ...newRecipe,
-        ingredients: updatedIngredients
-      });
-    }
-  };
+  
+  // Use our new custom hook for form logic
+  const {
+    newRecipe,
+    editingRecipe,
+    setEditingRecipe,
+    resetForm,
+    createFormProps,
+    getEditFormProps
+  } = useRecipeForm();
 
   const handleCreateRecipe = async () => {
     if (!newRecipe.name || !newRecipe.instructions || newRecipe.ingredients.length === 0) {
@@ -133,13 +62,7 @@ const UserRecipesTab: React.FC = () => {
       });
 
       // Reset form and close modal
-      setNewRecipe({
-        name: '',
-        description: '',
-        ingredients: [],
-        instructions: '',
-        is_public: false
-      });
+      resetForm();
       setIsCreatingRecipe(false);
     } catch (error) {
       console.error('Failed to create recipe:', error);
@@ -195,46 +118,6 @@ const UserRecipesTab: React.FC = () => {
     });
   };
 
-  // Form props for both create and edit forms
-  const createFormProps = {
-    formState: newRecipe,
-    setFormState: setNewRecipe,
-    newIngredient,
-    setNewIngredient,
-    newAmount,
-    setNewAmount,
-    handleAddIngredient,
-    handleIngredientChange,
-    handleRemoveIngredient
-  };
-
-  const editFormProps = editingRecipe ? {
-    formState: {
-      name: editingRecipe.name,
-      description: editingRecipe.description || '',
-      ingredients: editingRecipe.ingredients,
-      instructions: editingRecipe.instructions,
-      is_public: editingRecipe.is_public
-    },
-    setFormState: (formState: RecipeFormState) => {
-      setEditingRecipe({
-        ...editingRecipe,
-        name: formState.name,
-        description: formState.description,
-        ingredients: formState.ingredients,
-        instructions: formState.instructions,
-        is_public: formState.is_public
-      });
-    },
-    newIngredient,
-    setNewIngredient,
-    newAmount,
-    setNewAmount,
-    handleAddIngredient,
-    handleIngredientChange,
-    handleRemoveIngredient
-  } : createFormProps;
-
   if (!user) {
     return <AuthRequiredState />;
   }
@@ -256,7 +139,7 @@ const UserRecipesTab: React.FC = () => {
         onClose={() => setEditingRecipe(null)}
         onUpdate={handleUpdateRecipe}
         isUpdating={updateRecipe.isPending}
-        formProps={editFormProps}
+        formProps={getEditFormProps()}
       />
       
       {isLoading ? (
