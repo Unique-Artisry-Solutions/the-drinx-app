@@ -47,32 +47,32 @@ const AnalysisProgress: React.FC<AnalysisProgressProps> = ({ analyzing, steps, p
           <Progress value={progress} className="h-2" />
         </div>
         
-        <div className="space-y-2 mt-4">
+        <div className="mt-4">
           <div className="text-sm font-medium mb-2">Database Implementation Tasks:</div>
-          {steps.map((step, index) => (
-            <div 
-              key={index} 
-              className={`flex items-center p-2 rounded-md ${step.completed ? 'bg-green-50' : 'bg-gray-50'}`}
-            >
-              <Checkbox 
-                id={`task-${index}`}
-                checked={step.completed} 
-                className="mr-2"
-                disabled={analyzing}
-              />
-              <label 
-                htmlFor={`task-${index}`}
-                className={`text-sm ${step.completed ? 'text-gray-800' : 'text-gray-500'}`}
+          <div className="grid grid-cols-1 gap-2">
+            {steps.map((step, index) => (
+              <div 
+                key={index} 
+                className={`flex items-center p-2 rounded-md ${step.completed ? 'bg-green-50' : 'bg-gray-50'}`}
               >
-                {step.name}
-              </label>
-              {step.completed && (
-                <div className="ml-auto">
-                  <Check className="h-4 w-4 text-green-500" />
-                </div>
-              )}
-            </div>
-          ))}
+                <Checkbox 
+                  id={`task-${index}`}
+                  checked={step.completed} 
+                  className="mr-3"
+                  disabled={analyzing}
+                />
+                <label 
+                  htmlFor={`task-${index}`}
+                  className={`text-sm flex-1 ${step.completed ? 'text-gray-800' : 'text-gray-500'}`}
+                >
+                  {step.name}
+                </label>
+                {step.completed && (
+                  <Check className="h-4 w-4 text-green-500 ml-2" />
+                )}
+              </div>
+            ))}
+          </div>
         </div>
         
         {!analyzing && steps.some(step => !step.completed) && (
