@@ -1,4 +1,5 @@
 
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useBarCrawlParticipation } from '../useBarCrawlParticipation';
 import { supabaseClient } from '@/lib/supabaseClient';
@@ -6,23 +7,23 @@ import { useAuth } from '@/contexts/auth';
 import { useToast } from '@/hooks/use-toast';
 
 // Mock the dependencies
-jest.mock('@/lib/supabaseClient', () => ({
+vi.mock('@/lib/supabaseClient', () => ({
   supabaseClient: {
-    from: jest.fn().mockReturnThis(),
-    select: jest.fn().mockReturnThis(),
-    eq: jest.fn().mockReturnThis(),
-    maybeSingle: jest.fn(),
-    insert: jest.fn().mockReturnThis(),
-    delete: jest.fn().mockReturnThis()
+    from: vi.fn().mockReturnThis(),
+    select: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    maybeSingle: vi.fn(),
+    insert: vi.fn().mockReturnThis(),
+    delete: vi.fn().mockReturnThis()
   }
 }));
 
-jest.mock('@/contexts/auth', () => ({
-  useAuth: jest.fn()
+vi.mock('@/contexts/auth', () => ({
+  useAuth: vi.fn()
 }));
 
-jest.mock('@/hooks/use-toast', () => ({
-  useToast: jest.fn()
+vi.mock('@/hooks/use-toast', () => ({
+  useToast: vi.fn()
 }));
 
 // Mock localStorage
@@ -30,14 +31,14 @@ const localStorageMock = (() => {
   let store: Record<string, string> = {};
   
   return {
-    getItem: jest.fn((key: string) => store[key] || null),
-    setItem: jest.fn((key: string, value: string) => {
+    getItem: vi.fn((key: string) => store[key] || null),
+    setItem: vi.fn((key: string, value: string) => {
       store[key] = value.toString();
     }),
-    clear: jest.fn(() => {
+    clear: vi.fn(() => {
       store = {};
     }),
-    removeItem: jest.fn((key: string) => {
+    removeItem: vi.fn((key: string) => {
       delete store[key];
     }),
     getAll: () => store
@@ -48,24 +49,24 @@ Object.defineProperty(window, 'localStorage', { value: localStorageMock });
 
 describe('useBarCrawlParticipation', () => {
   // Setup common mocks
-  const mockToast = { toast: jest.fn() };
+  const mockToast = { toast: vi.fn() };
   const mockUser = { id: 'test-user-id' };
   
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     localStorageMock.clear();
-    (useAuth as jest.Mock).mockReturnValue({ user: mockUser });
-    (useToast as jest.Mock).mockReturnValue(mockToast);
+    (useAuth as unknown as ReturnType<typeof vi.fn>).mockReturnValue({ user: mockUser });
+    (useToast as unknown as ReturnType<typeof vi.fn>).mockReturnValue(mockToast);
   });
 
   describe('Initial status check', () => {
     it('should check the participation status on mount for a real bar crawl ID', async () => {
       // Setup mock for select query
-      const mockMaybeSingle = jest.fn().mockResolvedValue({
+      const mockMaybeSingle = vi.fn().mockResolvedValue({
         data: { id: 'participation-1' },
         error: null
       });
-      (supabaseClient.from().select().eq().maybeSingle as jest.Mock).mockImplementation(mockMaybeSingle);
+      (supabaseClient.from().select().eq().maybeSingle as unknown as ReturnType<typeof vi.fn>).mockImplementation(mockMaybeSingle);
       
       const { result } = renderHook(() => 
         useBarCrawlParticipation({ barCrawlId: '123e4567-e89b-12d3-a456-426614174000' })
@@ -140,11 +141,11 @@ describe('useBarCrawlParticipation', () => {
   describe('Join functionality', () => {
     it('should handle joining a real bar crawl with valid UUID', async () => {
       // Setup mock for insert query
-      const mockInsert = jest.fn().mockResolvedValue({
+      const mockInsert = vi.fn().mockResolvedValue({
         data: { id: 'new-participation' },
         error: null
       });
-      (supabaseClient.from().insert as jest.Mock).mockImplementation(mockInsert);
+      (supabaseClient.from().insert as unknown as ReturnType<typeof vi.fn>).mockImplementation(mockInsert);
       
       const { result } = renderHook(() => 
         useBarCrawlParticipation({ barCrawlId: '123e4567-e89b-12d3-a456-426614174000' })
@@ -205,7 +206,7 @@ describe('useBarCrawlParticipation', () => {
     
     it('should show error toast if not authenticated', async () => {
       // Mock unauthenticated user
-      (useAuth as jest.Mock).mockReturnValue({ user: null });
+      (useAuth as unknown as ReturnType<typeof vi.fn>).mockReturnValue({ user: null });
       
       const { result } = renderHook(() => 
         useBarCrawlParticipation({ barCrawlId: 'bc-456' })
@@ -227,11 +228,11 @@ describe('useBarCrawlParticipation', () => {
     it('should handle join errors from Supabase', async () => {
       // Setup mock for insert query with error
       const mockError = { message: 'violates unique constraint' };
-      const mockInsert = jest.fn().mockResolvedValue({
+      const mockInsert = vi.fn().mockResolvedValue({
         data: null,
         error: mockError
       });
-      (supabaseClient.from().insert as jest.Mock).mockImplementation(mockInsert);
+      (supabaseClient.from().insert as unknown as ReturnType<typeof vi.fn>).mockImplementation(mockInsert);
       
       const { result } = renderHook(() => 
         useBarCrawlParticipation({ barCrawlId: '123e4567-e89b-12d3-a456-426614174000' })
@@ -265,18 +266,18 @@ describe('useBarCrawlParticipation', () => {
   describe('Leave functionality', () => {
     it('should handle leaving a real bar crawl with valid UUID', async () => {
       // Setup mock for delete query
-      const mockDelete = jest.fn().mockResolvedValue({
+      const mockDelete = vi.fn().mockResolvedValue({
         data: { id: 'deleted-participation' },
         error: null
       });
-      (supabaseClient.from().delete().eq().eq as jest.Mock).mockImplementation(mockDelete);
+      (supabaseClient.from().delete().eq().eq as unknown as ReturnType<typeof vi.fn>).mockImplementation(mockDelete);
       
       // Setup initial state as joined
-      const mockMaybeSingle = jest.fn().mockResolvedValue({
+      const mockMaybeSingle = vi.fn().mockResolvedValue({
         data: { id: 'participation-1' },
         error: null
       });
-      (supabaseClient.from().select().eq().maybeSingle as jest.Mock).mockImplementation(mockMaybeSingle);
+      (supabaseClient.from().select().eq().maybeSingle as unknown as ReturnType<typeof vi.fn>).mockImplementation(mockMaybeSingle);
       
       const { result } = renderHook(() => 
         useBarCrawlParticipation({ barCrawlId: '123e4567-e89b-12d3-a456-426614174000' })
@@ -341,19 +342,19 @@ describe('useBarCrawlParticipation', () => {
     
     it('should handle leave errors from Supabase', async () => {
       // Setup mock for initial check
-      const mockMaybeSingle = jest.fn().mockResolvedValue({
+      const mockMaybeSingle = vi.fn().mockResolvedValue({
         data: { id: 'participation-1' },
         error: null
       });
-      (supabaseClient.from().select().eq().maybeSingle as jest.Mock).mockImplementation(mockMaybeSingle);
+      (supabaseClient.from().select().eq().maybeSingle as unknown as ReturnType<typeof vi.fn>).mockImplementation(mockMaybeSingle);
       
       // Setup mock for delete query with error
       const mockError = { message: 'row level security policy error' };
-      const mockDelete = jest.fn().mockResolvedValue({
+      const mockDelete = vi.fn().mockResolvedValue({
         data: null,
         error: mockError
       });
-      (supabaseClient.from().delete().eq().eq as jest.Mock).mockImplementation(mockDelete);
+      (supabaseClient.from().delete().eq().eq as unknown as ReturnType<typeof vi.fn>).mockImplementation(mockDelete);
       
       const { result } = renderHook(() => 
         useBarCrawlParticipation({ barCrawlId: '123e4567-e89b-12d3-a456-426614174000' })
