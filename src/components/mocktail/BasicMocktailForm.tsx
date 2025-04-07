@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Ingredient } from './IngredientInputSection';
 import IngredientInputSection from './IngredientInputSection';
+import { Asterisk } from 'lucide-react';
 
 interface BasicMocktailFormProps {
   name: string;
@@ -19,6 +20,8 @@ interface BasicMocktailFormProps {
   setNewIngredient: React.Dispatch<React.SetStateAction<string>>;
   newAmount: string;
   setNewAmount: React.Dispatch<React.SetStateAction<string>>;
+  newUnit?: string;
+  setNewUnit?: React.Dispatch<React.SetStateAction<string>>;
 }
 
 const BasicMocktailForm: React.FC<BasicMocktailFormProps> = ({
@@ -33,17 +36,27 @@ const BasicMocktailForm: React.FC<BasicMocktailFormProps> = ({
   newIngredient,
   setNewIngredient,
   newAmount,
-  setNewAmount
+  setNewAmount,
+  newUnit,
+  setNewUnit
 }) => {
+  // Required field indicator component
+  const RequiredField = () => (
+    <Asterisk className="inline-block h-3 w-3 text-red-500 ml-1" />
+  );
+
   return (
     <div className="grid gap-4 py-4">
       <div className="grid gap-2">
-        <Label htmlFor="name">Mocktail Name</Label>
+        <Label htmlFor="name">
+          Mocktail Name <RequiredField />
+        </Label>
         <Input
           id="name"
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Enter a catchy name"
+          required
         />
       </div>
       
@@ -65,16 +78,21 @@ const BasicMocktailForm: React.FC<BasicMocktailFormProps> = ({
         setNewIngredient={setNewIngredient}
         newAmount={newAmount}
         setNewAmount={setNewAmount}
+        newUnit={newUnit}
+        setNewUnit={setNewUnit}
       />
       
       <div className="grid gap-2">
-        <Label htmlFor="instructions">Instructions</Label>
+        <Label htmlFor="instructions">
+          Instructions <RequiredField />
+        </Label>
         <Textarea
           id="instructions"
           value={instructions}
           onChange={(e) => setInstructions(e.target.value)}
           placeholder="How to prepare the mocktail"
           className="min-h-[100px]"
+          required
         />
       </div>
     </div>

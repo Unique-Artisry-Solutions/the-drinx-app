@@ -25,8 +25,9 @@ const SuggestMocktailModal: React.FC<SuggestMocktailModalProps> = ({
   const [description, setDescription] = useState('');
   const [instructions, setInstructions] = useState('');
   const [newIngredient, setNewIngredient] = useState('');
-  const [newAmount, setNewAmount] = useState('');
-  const [ingredients, setIngredients] = useState<{ name: string; amount: string }[]>([]);
+  const [newAmount, setNewAmount] = useState('1');
+  const [newUnit, setNewUnit] = useState('oz');
+  const [ingredients, setIngredients] = useState<{ name: string; amount: string; unit?: string }[]>([]);
   
   const { toast } = useToast();
   const { user } = useAuth();
@@ -71,7 +72,8 @@ const SuggestMocktailModal: React.FC<SuggestMocktailModalProps> = ({
     setInstructions('');
     setIngredients([]);
     setNewIngredient('');
-    setNewAmount('');
+    setNewAmount('1');
+    setNewUnit('oz');
   };
 
   return (
@@ -101,6 +103,8 @@ const SuggestMocktailModal: React.FC<SuggestMocktailModalProps> = ({
           setNewIngredient={setNewIngredient}
           newAmount={newAmount}
           setNewAmount={setNewAmount}
+          newUnit={newUnit}
+          setNewUnit={setNewUnit}
         />
 
         <DialogFooter>

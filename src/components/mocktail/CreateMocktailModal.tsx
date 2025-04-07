@@ -22,8 +22,9 @@ const CreateMocktailModal: React.FC<CreateMocktailModalProps> = ({
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [newIngredient, setNewIngredient] = useState('');
-  const [newAmount, setNewAmount] = useState('');
-  const [ingredients, setIngredients] = useState<{ name: string; amount: string }[]>([]);
+  const [newAmount, setNewAmount] = useState('1');
+  const [newUnit, setNewUnit] = useState('oz');
+  const [ingredients, setIngredients] = useState<{ name: string; amount: string; unit?: string }[]>([]);
   const [instructions, setInstructions] = useState('');
   const [isPublic, setIsPublic] = useState(false);
   const { toast } = useToast();
@@ -68,7 +69,8 @@ const CreateMocktailModal: React.FC<CreateMocktailModalProps> = ({
     setDescription('');
     setIngredients([]);
     setNewIngredient('');
-    setNewAmount('');
+    setNewAmount('1');
+    setNewUnit('oz');
     setInstructions('');
     setIsPublic(false);
   };
@@ -103,6 +105,8 @@ const CreateMocktailModal: React.FC<CreateMocktailModalProps> = ({
           setNewIngredient={setNewIngredient}
           newAmount={newAmount}
           setNewAmount={setNewAmount}
+          newUnit={newUnit}
+          setNewUnit={setNewUnit}
         />
 
         <CreateMocktailFooter

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { RecipeFormState } from '@/components/profile/recipes/types';
@@ -20,31 +19,33 @@ export function useRecipeForm() {
   
   // Form ingredient states
   const [newIngredient, setNewIngredient] = useState('');
-  const [newAmount, setNewAmount] = useState('');
+  const [newAmount, setNewAmount] = useState('1');
+  const [newUnit, setNewUnit] = useState('oz');
   
   const { toast } = useToast();
 
   const handleAddIngredient = () => {
     if (newIngredient.trim() && newAmount.trim()) {
+      const ingredient = { 
+        name: newIngredient.trim(), 
+        amount: newAmount.trim(),
+        unit: newUnit
+      };
+      
       if (editingRecipe) {
         setEditingRecipe({
           ...editingRecipe,
-          ingredients: [
-            ...editingRecipe.ingredients,
-            { name: newIngredient.trim(), amount: newAmount.trim() }
-          ]
+          ingredients: [...editingRecipe.ingredients, ingredient]
         });
       } else {
         setNewRecipe({
           ...newRecipe,
-          ingredients: [
-            ...newRecipe.ingredients,
-            { name: newIngredient.trim(), amount: newAmount.trim() }
-          ]
+          ingredients: [...newRecipe.ingredients, ingredient]
         });
       }
       setNewIngredient('');
-      setNewAmount('');
+      setNewAmount('1');
+      // Keep newUnit as is since users typically use the same unit for multiple ingredients
     } else {
       toast({
         title: "Missing information",
@@ -104,7 +105,8 @@ export function useRecipeForm() {
       is_public: false
     });
     setNewIngredient('');
-    setNewAmount('');
+    setNewAmount('1');
+    setNewUnit('oz');
   };
 
   // Form props for both create and edit forms
@@ -115,6 +117,8 @@ export function useRecipeForm() {
     setNewIngredient,
     newAmount,
     setNewAmount,
+    newUnit,
+    setNewUnit,
     handleAddIngredient,
     handleIngredientChange,
     handleRemoveIngredient
@@ -143,6 +147,8 @@ export function useRecipeForm() {
       setNewIngredient,
       newAmount,
       setNewAmount,
+      newUnit,
+      setNewUnit,
       handleAddIngredient,
       handleIngredientChange,
       handleRemoveIngredient
