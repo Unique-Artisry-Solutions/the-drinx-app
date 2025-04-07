@@ -61,7 +61,8 @@ const FeaturesTable: React.FC<FeaturesTableProps> = ({ features }) => {
       </TableHeader>
       <TableBody>
         {features.map((feature, index) => (
-          <React.Fragment key={index}>
+          // Use key prop on the React.Fragment instead of data-lov-id
+          <React.Fragment key={`feature-${index}`}>
             <TableRow>
               <TableCell>
                 {((feature.testSteps && feature.testSteps.length > 0) || feature.databaseAnalysis) && (
@@ -156,7 +157,7 @@ const FeaturesTable: React.FC<FeaturesTableProps> = ({ features }) => {
                               const isCompleted = completedRequirements[requirementId] || false;
                               
                               return (
-                                <TableRow key={reqIndex} className="border-t border-blue-100">
+                                <TableRow key={`req-${reqIndex}`} className="border-t border-blue-100">
                                   <TableCell className="w-[70px]">
                                     <div className="flex items-center justify-center">
                                       <Checkbox 
