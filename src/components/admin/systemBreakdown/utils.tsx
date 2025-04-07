@@ -73,6 +73,42 @@ export const calculateFeatureStatistics = (
   };
 };
 
+// Analyze feature implementation status based on database status
+export const analyzeFeatureStatus = (feature: FeatureItem): FeatureItem => {
+  const originalStatus = feature.status;
+  let newStatus = feature.status;
+
+  // If feature is marked as implemented but database is not completed, downgrade to partial
+  if (feature.status === 'implemented' && 
+     (feature.databaseStatus === 'in-progress' || 
+      feature.databaseStatus === 'not-started')) {
+    newStatus = 'partial';
+  }
+
+  // If status changed, mark it as updated
+  const statusUpdated = originalStatus !== newStatus;
+  
+  return {
+    ...feature,
+    status: newStatus,
+    originalStatus: statusUpdated ? originalStatus : undefined,
+    statusUpdated
+  };
+};
+
+// Function to analyze all features
+export const analyzeAllFeatures = (
+  adminFeatures: FeatureItem[], 
+  establishmentFeatures: FeatureItem[], 
+  individualFeatures: FeatureItem[]
+) => {
+  return {
+    adminFeatures: adminFeatures.map(analyzeFeatureStatus),
+    establishmentFeatures: establishmentFeatures.map(analyzeFeatureStatus),
+    individualFeatures: individualFeatures.map(analyzeFeatureStatus)
+  };
+};
+
 // Generate CSV of all features
 export const generateCSV = (adminFeatures: FeatureItem[], establishmentFeatures: FeatureItem[], individualFeatures: FeatureItem[]) => {
   // Create CSV header

@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { FeatureItem } from './types';
 import { renderAccessIcon, renderStatusBadge, renderDatabaseStatusBadge } from './utils';
-import { ChevronDown, ChevronUp, Database } from 'lucide-react';
+import { ChevronDown, ChevronUp, Database, AlertTriangle } from 'lucide-react';
 
 interface FeaturesTableProps {
   features: FeatureItem[];
@@ -57,9 +57,25 @@ const FeaturesTable: React.FC<FeaturesTableProps> = ({ features, title }) => {
                   </button>
                 )}
               </TableCell>
-              <TableCell className="font-medium">{feature.name}</TableCell>
+              <TableCell className="font-medium">
+                <div className="flex items-center gap-1">
+                  {feature.name}
+                  {feature.statusUpdated && (
+                    <span title="Status updated during analysis" className="ml-1">
+                      <AlertTriangle className="h-4 w-4 text-amber-500" />
+                    </span>
+                  )}
+                </div>
+              </TableCell>
               <TableCell>{feature.description}</TableCell>
-              <TableCell>{renderStatusBadge(feature.status)}</TableCell>
+              <TableCell>
+                {renderStatusBadge(feature.status)}
+                {feature.statusUpdated && feature.originalStatus && (
+                  <div className="mt-1 text-xs text-gray-500">
+                    Previously: {feature.originalStatus}
+                  </div>
+                )}
+              </TableCell>
               <TableCell>{renderDatabaseStatusBadge(feature.databaseStatus)}</TableCell>
               <TableCell>
                 <div className="flex items-center gap-4">

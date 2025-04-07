@@ -3,19 +3,32 @@ import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { FileDown } from 'lucide-react';
+import { FileDown, RefreshCw, AlertTriangle } from 'lucide-react';
 import AdminHeader from '@/components/admin/AdminHeader';
+import { useToast } from '@/hooks/use-toast';
 
 // Import refactored components
 import ImplementationOverview from '@/components/admin/systemBreakdown/ImplementationOverview';
 import OverviewTab from '@/components/admin/systemBreakdown/OverviewTab';
 import FeatureTab from '@/components/admin/systemBreakdown/FeatureTab';
-import { adminFeatures, establishmentFeatures, individualFeatures } from '@/components/admin/systemBreakdown/featureData';
-import { generateCSV } from '@/components/admin/systemBreakdown/utils';
+import { adminFeatures as initialAdminFeatures, establishmentFeatures as initialEstablishmentFeatures, individualFeatures as initialIndividualFeatures } from '@/components/admin/systemBreakdown/featureData';
+import { generateCSV, analyzeAllFeatures } from '@/components/admin/systemBreakdown/utils';
 
 const SystemFunctionalityBreakdown: React.FC = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<string>('overview');
+  const [adminFeatures, setAdminFeatures] = useState(initialAdminFeatures);
+  const [establishmentFeatures, setEstablishmentFeatures] = useState(initialEstablishmentFeatures);
+  const [individualFeatures, setIndividualFeatures] = useState(initialIndividualFeatures);
+  const [analyzing, setAnalyzing] = useState(false);
+  
+  // Count features with updated status
+  const updatedFeaturesCount = [
+    ...adminFeatures,
+    ...establishmentFeatures,
+    ...individualFeatures
+  ].filter(feature => feature.statusUpdated).length;
 
   // Check if user is authenticated as admin
   React.useEffect(() => {
@@ -33,6 +46,36 @@ const SystemFunctionalityBreakdown: React.FC = () => {
   const handleExportCSV = () => {
     generateCSV(adminFeatures, establishmentFeatures, individualFeatures);
   };
+  
+  const handleAnalyzeFeatures = () => {
+    setAnalyzing(true);
+    
+    // Simulate analysis with a small delay to show loading state
+    setTimeout(() => {
+      const analyzedFeatures = analyzeAllFeatures(
+        initialAdminFeatures,
+        initialEstablishmentFeatures,
+        initialIndividualFeatures
+      );
+      
+      setAdminFeatures(analyzedFeatures.adminFeatures);
+      setEstablishmentFeatures(analyzedFeatures.establishmentFeatures);
+      setIndividualFeatures(analyzedFeatures.individualFeatures);
+      
+      const totalUpdated = [
+        ...analyzedFeatures.adminFeatures,
+        ...analyzedFeatures.establishmentFeatures,
+        ...analyzedFeatures.individualFeatures
+      ].filter(feature => feature.statusUpdated).length;
+      
+      toast({
+        title: "Analysis Complete",
+        description: `${totalUpdated} feature status${totalUpdated !== 1 ? 'es' : ''} updated based on database implementation.`,
+      });
+      
+      setAnalyzing(false);
+    }, 1500);
+  };
 
   return (
     <div className="min-h-screen bg-material-background">
@@ -44,11 +87,31 @@ const SystemFunctionalityBreakdown: React.FC = () => {
             <h1 className="text-3xl font-bold mb-2">System Functionality Breakdown</h1>
             <p className="text-gray-500">Comprehensive overview of all features for marketing and sales campaigns</p>
           </div>
-          <Button onClick={handleExportCSV} className="flex items-center gap-2">
-            <FileDown className="h-4 w-4" />
-            Export to CSV
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              onClick={handleAnalyzeFeatures} 
+              className="flex items-center gap-2"
+              disabled={analyzing}
+              variant="secondary"
+            >
+              <RefreshCw className={`h-4 w-4 ${analyzing ? 'animate-spin' : ''}`} />
+              {analyzing ? 'Analyzing...' : 'Analyze Implementation'}
+            </Button>
+            <Button onClick={handleExportCSV} className="flex items-center gap-2">
+              <FileDown className="h-4 w-4" />
+              Export to CSV
+            </Button>
+          </div>
         </div>
+        
+        {updatedFeaturesCount > 0 && (
+          <div className="bg-amber-50 border border-amber-200 rounded-md p-3 mb-4 flex items-center">
+            <AlertTriangle className="h-5 w-5 text-amber-500 mr-2" />
+            <span>
+              <strong>{updatedFeaturesCount}</strong> feature{updatedFeaturesCount !== 1 ? 's' : ''} {updatedFeaturesCount !== 1 ? 'have' : 'has'} been updated based on database implementation status.
+            </span>
+          </div>
+        )}
 
         <ImplementationOverview 
           adminFeatures={adminFeatures}
