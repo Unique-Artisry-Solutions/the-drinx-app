@@ -56,6 +56,12 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
           >
             Favs
           </TabsTrigger>
+          <TabsTrigger 
+            className="flex-1 text-[11px] data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm transition-all hover:bg-white/90 dark:hover:bg-gray-700/80"
+            value="recipes"
+          >
+            Recipes
+          </TabsTrigger>
         </TabsList>
         
         <TabsContent value="overview" className="pt-2">

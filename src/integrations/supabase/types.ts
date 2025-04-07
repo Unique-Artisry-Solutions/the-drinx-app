@@ -285,6 +285,56 @@ export type Database = {
           },
         ]
       }
+      mocktail_suggestions: {
+        Row: {
+          created_at: string
+          description: string | null
+          establishment_id: string
+          feedback: string | null
+          id: string
+          ingredients: Json
+          instructions: string
+          name: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          establishment_id: string
+          feedback?: string | null
+          id?: string
+          ingredients: Json
+          instructions: string
+          name: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          establishment_id?: string
+          feedback?: string | null
+          id?: string
+          ingredients?: Json
+          instructions?: string
+          name?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mocktail_suggestions_establishment_id_fkey"
+            columns: ["establishment_id"]
+            isOneToOne: false
+            referencedRelation: "establishments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null

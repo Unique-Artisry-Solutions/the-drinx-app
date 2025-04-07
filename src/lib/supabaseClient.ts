@@ -52,6 +52,47 @@ interface CustomDatabase extends Database {
           verified_by?: string;
         };
       };
+      mocktail_suggestions: {
+        Row: {
+          id: string;
+          user_id: string;
+          establishment_id: string;
+          name: string;
+          description?: string;
+          ingredients: Ingredient[];
+          instructions: string;
+          status: 'pending' | 'approved' | 'rejected';
+          feedback?: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          establishment_id: string;
+          name: string;
+          description?: string;
+          ingredients: Ingredient[];
+          instructions: string;
+          status?: 'pending' | 'approved' | 'rejected';
+          feedback?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          establishment_id?: string;
+          name?: string;
+          description?: string;
+          ingredients?: Ingredient[];
+          instructions?: string;
+          status?: 'pending' | 'approved' | 'rejected';
+          feedback?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
     }
   }
 }
