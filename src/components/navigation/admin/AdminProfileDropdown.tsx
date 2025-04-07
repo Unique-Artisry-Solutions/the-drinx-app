@@ -1,33 +1,19 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { User, Settings, LogOut, LayoutDashboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 interface AdminProfileDropdownProps {
   username: string;
   onLogout: () => void;
 }
-
-const AdminProfileDropdown: React.FC<AdminProfileDropdownProps> = ({ 
-  username, 
-  onLogout 
+const AdminProfileDropdown: React.FC<AdminProfileDropdownProps> = ({
+  username,
+  onLogout
 }) => {
-  return (
-    <DropdownMenu>
+  return <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button 
-          variant="outline" 
-          size="icon" 
-          className="admin-profile-button border-white text-white hover:bg-white/20 transition-colors duration-200"
-        >
+        <Button variant="outline" size="icon" className="admin-profile-button border-white text-white transition-colors duration-200 bg-spiritless-burgundy">
           <User size={18} />
         </Button>
       </DropdownMenuTrigger>
@@ -49,16 +35,11 @@ const AdminProfileDropdown: React.FC<AdminProfileDropdownProps> = ({
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem 
-          className="admin-logout-item flex items-center gap-2 text-red-600 cursor-pointer focus:text-red-700 focus:bg-red-50" 
-          onClick={onLogout}
-        >
+        <DropdownMenuItem className="admin-logout-item flex items-center gap-2 text-red-600 cursor-pointer focus:text-red-700 focus:bg-red-50" onClick={onLogout}>
           <LogOut className="h-4 w-4" />
           <span>Logout</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
-    </DropdownMenu>
-  );
+    </DropdownMenu>;
 };
-
 export default AdminProfileDropdown;
