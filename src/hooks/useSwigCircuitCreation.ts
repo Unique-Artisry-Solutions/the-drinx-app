@@ -5,9 +5,14 @@ import { useToast } from '@/hooks/use-toast';
 import { Establishment } from '@/types/ProfileTypes';
 import { DrinkHighlight } from '@/components/barCrawl/DrinkHighlights';
 import { Pairing } from '@/components/barCrawl/PairingOptions';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
-import { fromTable } from '@/lib/typedSupabase';
+import { 
+  swigCircuits, 
+  swigCircuitVenues, 
+  swigCircuitDrinkHighlights, 
+  swigCircuitPairings,
+  getCurrentUserId
+} from '@/lib/typedSupabase';
 
 export const useSwigCircuitCreation = () => {
   const { toast } = useToast();
@@ -90,8 +95,11 @@ export const useSwigCircuitCreation = () => {
     setIsSubmitting(true);
 
     try {
+      // Get current user id for RLS policies
+      const userId = await getCurrentUserId();
+      
       // For testing purposes: if user isn't authenticated, use localStorage fallback
-      if (!user) {
+      if (!userId) {
         const newBarCrawlId = `bc-${Date.now()}`;
         
         const barCrawls = JSON.parse(localStorage.getItem('user_bar_crawls') || '[]');
@@ -123,9 +131,9 @@ export const useSwigCircuitCreation = () => {
       }
 
       // If authenticated, save to database using our type-safe helper
-      const { data: swigCircuit, error: circuitError } = await fromTable('swig_circuits')
+      const { data: swigCircuit, error: circuitError } = await swigCircuits()
         .insert({
-          user_id: user.id,
+          user_id: userId,
           name,
           description,
           start_date: startDate,
@@ -138,6 +146,7 @@ export const useSwigCircuitCreation = () => {
         .single();
 
       if (circuitError) {
+        console.error("Circuit insert error:", circuitError);
         throw new Error(circuitError.message);
       }
 
@@ -149,10 +158,11 @@ export const useSwigCircuitCreation = () => {
           position: index
         }));
 
-        const { error: venuesError } = await fromTable('swig_circuit_venues')
+        const { error: venuesError } = await swigCircuitVenues()
           .insert(venueInserts);
 
         if (venuesError) {
+          console.error("Venues insert error:", venuesError);
           throw new Error(venuesError.message);
         }
       }
@@ -165,10 +175,11 @@ export const useSwigCircuitCreation = () => {
           description: highlight.description
         }));
 
-        const { error: highlightsError } = await fromTable('swig_circuit_drink_highlights')
+        const { error: highlightsError } = await swigCircuitDrinkHighlights()
           .insert(highlightInserts);
 
         if (highlightsError) {
+          console.error("Highlights insert error:", highlightsError);
           throw new Error(highlightsError.message);
         }
       }
@@ -181,10 +192,11 @@ export const useSwigCircuitCreation = () => {
           drink: pairing.drinkName
         }));
 
-        const { error: pairingsError } = await fromTable('swig_circuit_pairings')
+        const { error: pairingsError } = await swigCircuitPairings()
           .insert(pairingInserts);
 
         if (pairingsError) {
+          console.error("Pairings insert error:", pairingsError);
           throw new Error(pairingsError.message);
         }
       }
@@ -196,7 +208,7 @@ export const useSwigCircuitCreation = () => {
       
       navigate(`/profile/my-creations/${swigCircuit.id}`);
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating Swig Circuit:', error);
       toast({
         title: 'Error Creating Swig Circuit',
