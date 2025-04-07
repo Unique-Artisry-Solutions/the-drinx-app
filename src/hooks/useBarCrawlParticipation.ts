@@ -3,32 +3,70 @@ import { useState, useEffect } from 'react';
 import { supabaseClient } from '@/lib/supabaseClient';
 import { useAuth } from '@/contexts/auth';
 import { useToast } from '@/hooks/use-toast';
+import { isValidUUID, formatBarCrawlErrorMessage, isSampleBarCrawlId } from '@/utils/barCrawlUtils';
 
+/**
+ * Props for the useBarCrawlParticipation hook.
+ */
 interface UseBarCrawlParticipationProps {
+  /** The ID of the bar crawl to check participation for */
   barCrawlId: string;
 }
 
+/**
+ * Hook for managing user participation in a bar crawl (Swig Circuit).
+ * Handles checking participation status, joining, and leaving.
+ * 
+ * @param props - The hook properties
+ * @returns Object containing participation state and functions
+ */
 export const useBarCrawlParticipation = ({ barCrawlId }: UseBarCrawlParticipationProps) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [isCheckingStatus, setIsCheckingStatus] = useState(true);
   const [isJoined, setIsJoined] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
 
+  /**
+   * Checks if the current user is participating in the bar crawl.
+   * Handles both sample data and real database records.
+   */
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setIsCheckingStatus(false);
+      return;
+    }
     
     const checkParticipation = async () => {
+      setIsCheckingStatus(true);
+      setError(null);
+      
       try {
         // Check if sample data is being used
-        const isSampleId = typeof barCrawlId === 'string' && barCrawlId.startsWith('bc-');
-        
-        if (isSampleId) {
+        if (isSampleBarCrawlId(barCrawlId)) {
           // For sample data, check localStorage
           const existingParticipations = JSON.parse(localStorage.getItem('user_bar_crawl_participations') || '[]');
           const isAlreadyJoined = existingParticipations.some(
             (p: any) => p.bar_crawl_id === barCrawlId && p.user_id === (user.id || 'sample-user')
           );
           setIsJoined(isAlreadyJoined);
+        } else if (!isValidUUID(barCrawlId)) {
+          // Check if ID is a numeric ID (used in some routes)
+          const isAdminBypass = localStorage.getItem('admin_bypass') === 'true';
+          
+          if (isAdminBypass) {
+            // For bypass accounts, check localStorage even with numeric IDs
+            const existingParticipations = JSON.parse(localStorage.getItem('user_bar_crawl_participations') || '[]');
+            const isAlreadyJoined = existingParticipations.some(
+              (p: any) => p.bar_crawl_id === barCrawlId && p.user_id === (user.id || 'sample-user')
+            );
+            setIsJoined(isAlreadyJoined);
+          } else {
+            // For regular users with invalid UUIDs, set error but don't throw to prevent UI disruption
+            console.error('Invalid bar crawl ID format:', barCrawlId);
+            setError('Invalid bar crawl ID format');
+          }
         } else {
           // For real data, check Supabase
           const { data, error } = await supabaseClient
@@ -40,20 +78,29 @@ export const useBarCrawlParticipation = ({ barCrawlId }: UseBarCrawlParticipatio
           
           if (error) {
             console.error('Error checking participation:', error);
+            setError(`Failed to check participation: ${error.message}`);
             return;
           }
           
           setIsJoined(!!data);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Failed to check participation:', err);
+        setError(`Failed to check participation: ${err.message}`);
+      } finally {
+        setIsCheckingStatus(false);
       }
     };
     
     checkParticipation();
   }, [barCrawlId, user]);
 
-  const handleJoinBarCrawl = async () => {
+  /**
+   * Handles joining a bar crawl.
+   * Shows error toast if user is not authenticated.
+   * Handles different storage methods based on bar crawl ID type.
+   */
+  const handleJoin = async () => {
     // If not authenticated, show sign in message
     if (!user) {
       toast({
@@ -65,14 +112,13 @@ export const useBarCrawlParticipation = ({ barCrawlId }: UseBarCrawlParticipatio
     }
 
     setIsLoading(true);
+    setError(null);
 
     try {
       console.log('Attempting to join bar crawl:', barCrawlId);
       
       // Handle sample data IDs (like bc-123) vs real UUIDs
-      const isSampleId = typeof barCrawlId === 'string' && barCrawlId.startsWith('bc-');
-      
-      if (isSampleId) {
+      if (isSampleBarCrawlId(barCrawlId)) {
         // For sample data, just simulate successful join
         console.log('Sample bar crawl detected, simulating join');
         
@@ -97,8 +143,8 @@ export const useBarCrawlParticipation = ({ barCrawlId }: UseBarCrawlParticipatio
         // Check if this is a bypass account or a regular account
         const isAdminBypass = localStorage.getItem('admin_bypass') === 'true';
         
-        if (isAdminBypass) {
-          // For bypass accounts, use localStorage to simulate joining
+        if (isAdminBypass || !isValidUUID(barCrawlId)) {
+          // For bypass accounts or non-UUID IDs, use localStorage to simulate joining
           const existingParticipations = JSON.parse(localStorage.getItem('user_bar_crawl_participations') || '[]');
           existingParticipations.push({
             id: `participation-${Date.now()}`,
@@ -115,13 +161,7 @@ export const useBarCrawlParticipation = ({ barCrawlId }: UseBarCrawlParticipatio
           
           setIsJoined(true);
         } else {
-          // For real users, use Supabase
-          // Validate UUID format to prevent invalid format errors
-          const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-          if (!uuidRegex.test(barCrawlId)) {
-            throw new Error('Invalid bar crawl ID format');
-          }
-          
+          // For real users with valid UUIDs, use Supabase
           const { error } = await supabaseClient
             .from('user_bar_crawl_participation')
             .insert({
@@ -145,18 +185,8 @@ export const useBarCrawlParticipation = ({ barCrawlId }: UseBarCrawlParticipatio
     } catch (error: any) {
       console.error('Failed to join bar crawl:', error);
       
-      // Show error toast with more descriptive message
-      let errorMessage = 'Failed to join Swig Circuit. Please try again.';
-      
-      if (error?.message?.includes('violates row level security policy')) {
-        errorMessage = 'You do not have permission to join this Swig Circuit.';
-      } else if (error?.message?.includes('violates foreign key constraint')) {
-        errorMessage = 'This Swig Circuit does not exist.';
-      } else if (error?.message?.includes('violates unique constraint')) {
-        errorMessage = 'You are already participating in this Swig Circuit.';
-      } else if (error?.message?.includes('invalid input syntax') || error?.message?.includes('Invalid bar crawl ID format')) {
-        errorMessage = 'Invalid Swig Circuit ID format. Please contact support.';
-      }
+      const errorMessage = formatBarCrawlErrorMessage(error);
+      setError(errorMessage);
       
       toast({
         title: 'Error',
@@ -168,18 +198,21 @@ export const useBarCrawlParticipation = ({ barCrawlId }: UseBarCrawlParticipatio
     }
   };
   
-  const handleLeaveBarCrawl = async () => {
+  /**
+   * Handles leaving a bar crawl.
+   * Updates both localStorage for sample/bypass data and database for real data.
+   */
+  const handleLeave = async () => {
     if (!user) return;
     
     setIsLoading(true);
+    setError(null);
     
     try {
       console.log('Attempting to leave bar crawl:', barCrawlId);
       
       // Handle sample data
-      const isSampleId = typeof barCrawlId === 'string' && barCrawlId.startsWith('bc-');
-      
-      if (isSampleId) {
+      if (isSampleBarCrawlId(barCrawlId)) {
         // For sample data, simulate leaving
         console.log('Sample bar crawl detected, simulating leave');
         
@@ -197,11 +230,11 @@ export const useBarCrawlParticipation = ({ barCrawlId }: UseBarCrawlParticipatio
         
         setIsJoined(false);
       } else {
-        // Check if this is a bypass account
+        // Check if this is a bypass account or non-UUID ID
         const isAdminBypass = localStorage.getItem('admin_bypass') === 'true';
         
-        if (isAdminBypass) {
-          // For bypass accounts, use localStorage
+        if (isAdminBypass || !isValidUUID(barCrawlId)) {
+          // For bypass accounts or non-UUID IDs, use localStorage
           const existingParticipations = JSON.parse(localStorage.getItem('user_bar_crawl_participations') || '[]');
           const updatedParticipations = existingParticipations.filter(
             (p: any) => p.bar_crawl_id !== barCrawlId || p.user_id !== user.id
@@ -215,7 +248,7 @@ export const useBarCrawlParticipation = ({ barCrawlId }: UseBarCrawlParticipatio
           
           setIsJoined(false);
         } else {
-          // For real data, use Supabase
+          // For real data with valid UUIDs, use Supabase
           const { error } = await supabaseClient
             .from('user_bar_crawl_participation')
             .delete()
@@ -238,9 +271,12 @@ export const useBarCrawlParticipation = ({ barCrawlId }: UseBarCrawlParticipatio
     } catch (error: any) {
       console.error('Failed to leave bar crawl:', error);
       
+      const errorMessage = formatBarCrawlErrorMessage(error);
+      setError(errorMessage);
+      
       toast({
         title: 'Error',
-        description: 'Failed to leave Swig Circuit. Please try again.',
+        description: errorMessage,
         variant: 'destructive',
       });
     } finally {
@@ -249,9 +285,11 @@ export const useBarCrawlParticipation = ({ barCrawlId }: UseBarCrawlParticipatio
   };
 
   return {
-    isLoading,
-    isJoined,
-    handleJoin: handleJoinBarCrawl,
-    handleLeave: handleLeaveBarCrawl
+    isLoading,          // Whether a join/leave operation is in progress
+    isCheckingStatus,   // Whether the initial status check is in progress
+    isJoined,           // Whether the user has joined this bar crawl
+    error,              // Any error that occurred during operations
+    handleJoin,         // Function to join the bar crawl
+    handleLeave,        // Function to leave the bar crawl
   };
 };
