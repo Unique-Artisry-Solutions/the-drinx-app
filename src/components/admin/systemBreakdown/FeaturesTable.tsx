@@ -1,192 +1,110 @@
 
 import React, { useState } from 'react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { ChevronDown, ChevronUp, Database } from 'lucide-react';
 import { FeatureItem } from './types';
-import { renderAccessIcon, renderStatusBadge, renderDatabaseStatusBadge } from './utils';
-import { ChevronDown, ChevronUp, Database, AlertTriangle, List, CheckCircle2 } from 'lucide-react';
-import { Checkbox } from '@/components/ui/checkbox';
+import { renderAccessBadge, renderStatusBadge, renderDatabaseBadge } from './utils/statusRenderers';
 
 interface FeaturesTableProps {
   features: FeatureItem[];
   title: string;
 }
 
-const FeaturesTable: React.FC<FeaturesTableProps> = ({ features }) => {
-  const [expandedRows, setExpandedRows] = useState<Record<number, boolean>>({});
-  const [completedRequirements, setCompletedRequirements] = useState<Record<string, boolean>>({});
+const FeaturesTable: React.FC<FeaturesTableProps> = ({ features, title }) => {
+  const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
 
-  const toggleRow = (index: number) => {
-    setExpandedRows(prev => ({
+  const toggleRow = (id: string) => {
+    setExpandedRows((prev) => ({
       ...prev,
-      [index]: !prev[index]
-    }));
-  };
-
-  // Helper function to parse database analysis text into requirement items
-  const parseDbRequirements = (text: string | undefined): string[] => {
-    if (!text) return [];
-    
-    // Split by periods, semicolons, or line breaks that might separate requirements
-    const splitText = text.split(/[.;\n]+/).filter(Boolean);
-    
-    // Clean up each requirement and remove empty ones
-    return splitText
-      .map(item => {
-        // Enhanced regex to remove ALL types of numbering/bullets at the start
-        return item.trim()
-          .replace(/^(\d+[\.\)\]:]|\[\d+\]|Step \d+:?|-\s*|•\s*|\*\s*|\d+\s*[-–—]|\([a-z\d]\)|[a-z]\.|[ivxIVX]+\.|[A-Z][\.\)])\s*/i, '')
-          .replace(/^\s*[–—-]\s*/, ''); // Also remove any dash/hyphen at start
-      })
-      .filter(item => item.length > 0);
-  };
-
-  // Handle requirement completion toggle
-  const toggleRequirementCompletion = (featureId: string, reqIndex: number) => {
-    const requirementId = `${featureId}-${reqIndex}`;
-    setCompletedRequirements(prev => ({
-      ...prev,
-      [requirementId]: !prev[requirementId]
+      [id]: !prev[id],
     }));
   };
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead className="w-[40px]"></TableHead>
-          <TableHead className="w-1/5">Feature</TableHead>
-          <TableHead className="w-1/3">Description</TableHead>
-          <TableHead>Implementation Status</TableHead>
-          <TableHead>Database Status</TableHead>
-          <TableHead>User Access</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {features.map((feature, index) => (
-          <React.Fragment key={`feature-${index}`}>
-            <TableRow>
-              <TableCell>
-                {((feature.testSteps && feature.testSteps.length > 0) || feature.databaseAnalysis) && (
-                  <button 
-                    onClick={() => toggleRow(index)}
-                    className="p-1 rounded-full hover:bg-gray-100"
-                  >
-                    {expandedRows[index] ? 
-                      <ChevronUp className="h-4 w-4" /> : 
-                      <ChevronDown className="h-4 w-4" />
-                    }
-                  </button>
-                )}
-              </TableCell>
-              <TableCell className="font-medium">
-                <div className="flex items-center gap-1">
-                  {feature.name}
-                  {feature.statusUpdated && (
-                    <span title="Status updated during analysis" className="ml-1">
-                      <AlertTriangle className="h-4 w-4 text-amber-500" />
-                    </span>
-                  )}
-                </div>
-              </TableCell>
-              <TableCell>{feature.description}</TableCell>
-              <TableCell>
-                {renderStatusBadge(feature.status)}
-                {feature.statusUpdated && feature.originalStatus && (
-                  <div className="mt-1 text-xs text-gray-500">
-                    Previously: {feature.originalStatus}
+    <div className="overflow-x-auto">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-[250px]">Feature</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead className="hidden md:table-cell">Admin Access</TableHead>
+            <TableHead className="hidden md:table-cell">Establishment Access</TableHead>
+            <TableHead className="hidden md:table-cell">Individual Access</TableHead>
+            <TableHead className="hidden md:table-cell">Database Status</TableHead>
+            <TableHead className="w-[100px]"></TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {features.map((feature) => (
+            // Use key prop directly on TableRow instead of wrapping in a Fragment
+            <React.Fragment key={feature.id}>
+              <TableRow 
+                className={feature.statusUpdated ? 'bg-amber-50' : ''}
+                data-feature-id={feature.id}
+              >
+                <TableCell className="font-medium">
+                  <div className="flex flex-col">
+                    <span>{feature.name}</span>
+                    {feature.statusUpdated && (
+                      <span className="text-xs text-amber-600 mt-1">
+                        Updated from {feature.originalStatus}
+                      </span>
+                    )}
                   </div>
-                )}
-              </TableCell>
-              <TableCell>{renderDatabaseStatusBadge(feature.databaseStatus)}</TableCell>
-              <TableCell>
-                <div className="flex items-center gap-4">
-                  <div className="flex flex-col items-center">
-                    <span className="text-xs text-gray-500 mb-1">Admin</span>
-                    {renderAccessIcon(feature.adminAccess)}
-                  </div>
-                  <div className="flex flex-col items-center">
-                    <span className="text-xs text-gray-500 mb-1">Est.</span>
-                    {renderAccessIcon(feature.establishmentAccess)}
-                  </div>
-                  <div className="flex flex-col items-center">
-                    <span className="text-xs text-gray-500 mb-1">User</span>
-                    {renderAccessIcon(feature.individualAccess)}
-                  </div>
-                </div>
-              </TableCell>
-            </TableRow>
-            {expandedRows[index] && (
-              <TableRow className="bg-gray-50">
-                <TableCell colSpan={1}></TableCell>
-                <TableCell colSpan={5} className="p-4">
-                  {feature.testSteps && feature.testSteps.length > 0 && (
-                    <>
-                      <div className="mb-2 font-medium">Test Steps:</div>
-                      <ol className="list-decimal pl-5 space-y-1 mb-4">
-                        {feature.testSteps.map((step, stepIndex) => (
-                          <li key={stepIndex}>{step}</li>
-                        ))}
-                      </ol>
-                    </>
-                  )}
-                  
-                  {feature.databaseAnalysis && (
-                    <div className="mt-3">
-                      <div className="mb-2 font-medium flex items-center">
-                        <Database className="h-4 w-4 mr-2" />
-                        Database Analysis:
-                      </div>
-                      
-                      <div className="pl-4 border-l-2 border-blue-400 bg-blue-50 p-3 rounded">
-                        <Table>
-                          <TableHeader>
-                            <TableRow className="bg-blue-100/60">
-                              <TableHead className="font-medium text-blue-800 py-2 w-[50px]">
-                                Status
-                              </TableHead>
-                              <TableHead className="font-medium text-blue-800 py-2">
-                                <div className="flex items-center">
-                                  <List className="h-4 w-4 mr-1" />
-                                  Implementation Requirements
-                                </div>
-                              </TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {parseDbRequirements(feature.databaseAnalysis).map((requirement, reqIndex) => {
-                              const requirementId = `${feature.id}-${reqIndex}`;
-                              const isCompleted = completedRequirements[requirementId] || false;
-                              
-                              return (
-                                <TableRow key={`req-${reqIndex}`} className="border-t border-blue-100">
-                                  <TableCell className="w-[70px]">
-                                    <div className="flex items-center justify-center">
-                                      <Checkbox 
-                                        id={requirementId}
-                                        checked={isCompleted}
-                                        onCheckedChange={() => toggleRequirementCompletion(feature.id, reqIndex)}
-                                        className="mx-auto"
-                                      />
-                                    </div>
-                                  </TableCell>
-                                  <TableCell className={`py-2 text-sm ${isCompleted ? 'text-blue-800/70 line-through' : 'text-blue-800'}`}>
-                                    {requirement}
-                                  </TableCell>
-                                </TableRow>
-                              );
-                            })}
-                          </TableBody>
-                        </Table>
-                      </div>
-                    </div>
-                  )}
+                </TableCell>
+                <TableCell>{renderStatusBadge(feature.status)}</TableCell>
+                <TableCell className="hidden md:table-cell">{renderAccessBadge(feature.adminAccess)}</TableCell>
+                <TableCell className="hidden md:table-cell">{renderAccessBadge(feature.establishmentAccess)}</TableCell>
+                <TableCell className="hidden md:table-cell">{renderAccessBadge(feature.individualAccess)}</TableCell>
+                <TableCell className="hidden md:table-cell">{renderDatabaseBadge(feature.databaseStatus)}</TableCell>
+                <TableCell>
+                  <Button variant="ghost" size="icon" onClick={() => toggleRow(feature.id)}>
+                    {expandedRows[feature.id] ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  </Button>
                 </TableCell>
               </TableRow>
-            )}
-          </React.Fragment>
-        ))}
-      </TableBody>
-    </Table>
+              {expandedRows[feature.id] && (
+                <TableRow key={`${feature.id}-details`}>
+                  <TableCell colSpan={7} className="bg-slate-50 p-4">
+                    <div className="space-y-4">
+                      <div>
+                        <h4 className="font-medium mb-1">Description</h4>
+                        <p className="text-sm text-gray-600">{feature.description}</p>
+                      </div>
+                      
+                      {feature.testSteps && feature.testSteps.length > 0 && (
+                        <div>
+                          <h4 className="font-medium mb-1">Testing Steps</h4>
+                          <ul className="list-disc pl-5 text-sm space-y-1">
+                            {feature.testSteps.map((step, i) => (
+                              <li key={i} className="text-gray-600">{step}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      
+                      {feature.databaseAnalysis && (
+                        <div>
+                          <h4 className="font-medium mb-1 flex items-center">
+                            <Database className="h-4 w-4 mr-1" />
+                            Database Analysis
+                          </h4>
+                          <div className="text-sm text-gray-600 bg-gray-100 p-3 rounded whitespace-pre-wrap">
+                            {feature.databaseAnalysis}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )}
+            </React.Fragment>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   );
 };
 
