@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { FeatureItem } from './types';
 import { renderAccessIcon, renderStatusBadge, renderDatabaseStatusBadge } from './utils';
-import { ChevronDown, ChevronUp, Database, AlertTriangle } from 'lucide-react';
+import { ChevronDown, ChevronUp, Database, AlertTriangle, List } from 'lucide-react';
 
 interface FeaturesTableProps {
   features: FeatureItem[];
@@ -18,6 +18,19 @@ const FeaturesTable: React.FC<FeaturesTableProps> = ({ features }) => {
       ...prev,
       [index]: !prev[index]
     }));
+  };
+
+  // Helper function to parse database analysis text into requirement items
+  const parseDbRequirements = (text: string | undefined): string[] => {
+    if (!text) return [];
+    
+    // Split by periods, semicolons, or line breaks that might separate requirements
+    const splitText = text.split(/[.;\n]+/).filter(Boolean);
+    
+    // Clean up each requirement and remove empty ones
+    return splitText
+      .map(item => item.trim())
+      .filter(item => item.length > 0);
   };
 
   return (
@@ -107,8 +120,29 @@ const FeaturesTable: React.FC<FeaturesTableProps> = ({ features }) => {
                         <Database className="h-4 w-4 mr-2" />
                         Database Analysis:
                       </div>
+                      
                       <div className="pl-4 border-l-2 border-blue-400 bg-blue-50 p-3 rounded">
-                        {feature.databaseAnalysis}
+                        <Table>
+                          <TableHeader>
+                            <TableRow className="bg-blue-100/60">
+                              <TableHead className="font-medium text-blue-800 py-2">
+                                <div className="flex items-center">
+                                  <List className="h-4 w-4 mr-1" />
+                                  Implementation Requirements
+                                </div>
+                              </TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {parseDbRequirements(feature.databaseAnalysis).map((requirement, reqIndex) => (
+                              <TableRow key={reqIndex} className="border-t border-blue-100">
+                                <TableCell className="py-2 text-sm text-blue-800">
+                                  {requirement}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
                       </div>
                     </div>
                   )}
