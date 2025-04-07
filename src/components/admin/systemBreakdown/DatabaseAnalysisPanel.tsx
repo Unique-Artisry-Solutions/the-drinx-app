@@ -2,8 +2,7 @@
 import React from 'react';
 import { Progress } from '@/components/ui/progress';
 import DatabaseAnalysisTask from './components/DatabaseAnalysisTask';
-import { parseTaskStatuses } from './utils/analysisHelpers';
-import { analyzeDbRequirements } from './utils/analysisHelpers';
+import { parseTaskStatuses, analyzeDbRequirements } from './utils/analysisHelpers';
 
 interface DatabaseAnalysisPanelProps {
   analysisText: string;

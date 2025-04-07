@@ -1,4 +1,6 @@
 
+import { isTaskCompleted } from './taskDetection';
+
 interface AnalysisResult {
   completionPercentage: number;
   hasStarted: boolean;
@@ -14,9 +16,6 @@ export const analyzeDbRequirements = (analysisText: string): AnalysisResult => {
   const taskLines = analysisText
     .split('\n')
     .filter(line => line.trim().match(/^\d+\./)); // Get only numbered lines
-  
-  // Import isTaskCompleted function from taskDetection.ts
-  const { isTaskCompleted } = require('./taskDetection');
   
   const taskStatuses = taskLines.map(line => isTaskCompleted(line));
   
@@ -38,9 +37,6 @@ export const analyzeDbRequirements = (analysisText: string): AnalysisResult => {
  */
 export const parseTaskStatuses = (analysisText: string) => {
   if (!analysisText) return [];
-
-  // Import isTaskCompleted function from taskDetection.ts
-  const { isTaskCompleted } = require('./taskDetection');
   
   const taskLines = analysisText
     .split('\n')
