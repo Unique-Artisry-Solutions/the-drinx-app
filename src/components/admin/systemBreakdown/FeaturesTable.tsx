@@ -31,7 +31,10 @@ const FeaturesTable: React.FC<FeaturesTableProps> = ({ features }) => {
     
     // Clean up each requirement and remove empty ones
     return splitText
-      .map(item => item.trim())
+      .map(item => {
+        // Remove numbers at the beginning of requirements (like "1.", "2.", etc.)
+        return item.trim().replace(/^\d+\.\s*/, '');
+      })
       .filter(item => item.length > 0);
   };
 
