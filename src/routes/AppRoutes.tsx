@@ -30,6 +30,7 @@ import PrivacyPolicy from '@/pages/LegalPage';
 import EstablishmentDashboard from '@/components/establishment/EstablishmentDashboard';
 import Layout from '@/components/Layout';
 import Index from '@/pages/Index';
+import SwigCircuitsPage from '@/pages/SwigCircuitsPage';
 import SwigCircuitRequestsPage from '@/pages/establishment/SwigCircuitRequestsPage';
 import EstablishmentReviewsPage from '@/pages/establishment/EstablishmentReviewsPage';
 import MocktailDetailsPage from '@/pages/establishment/MocktailDetailsPage';
@@ -67,6 +68,7 @@ const AppRoutes = () => {
         <Route path="/cocktail/:id" element={<CocktailDetail />} />
         <Route path="/bar-crawl/:id" element={<BarCrawlDetail />} />
         <Route path="/bar-crawl-details/:id" element={<BarCrawlProfilePage />} />
+        <Route path="/swig-circuits" element={<SwigCircuitsPage />} />
         <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/login" element={<LoginPage />} />

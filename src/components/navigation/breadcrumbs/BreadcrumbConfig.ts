@@ -26,6 +26,7 @@ export const routes: Record<string, BreadcrumbConfig> = {
   
   // Swig Circuit related routes
   '/bar-crawl': { path: '/bar-crawl', label: 'Swig Circuit' },
+  '/swig-circuits': { path: '/swig-circuits', label: 'Swig Circuits' },
   '/create-bar-crawl': { path: '/create-bar-crawl', label: 'Create Swig Circuit' },
   
   // Establishment routes - updated with dedicated pages
@@ -52,9 +53,9 @@ export const routes: Record<string, BreadcrumbConfig> = {
 
 // Dynamic path matching patterns
 export const dynamicRoutes = [
-  { pattern: /^\/bar-crawl\/(.+)$/, base: '/bar-crawl', label: 'Swig Circuit Details' },
-  { pattern: /^\/bar-crawl-profile\/(.+)$/, base: '/bar-crawl-profile', label: 'Swig Circuit Details' },
-  { pattern: /^\/bar-crawl-details\/(.+)$/, base: '/bar-crawl-details', label: 'Swig Circuit Details' },
+  { pattern: /^\/bar-crawl\/(.+)$/, base: '/swig-circuits', label: 'Swig Circuit Details' },
+  { pattern: /^\/bar-crawl-profile\/(.+)$/, base: '/swig-circuits', label: 'Swig Circuit Details' },
+  { pattern: /^\/bar-crawl-details\/(.+)$/, base: '/swig-circuits', label: 'Swig Circuit Details' },
   { pattern: /^\/establishment\/(\d+)$/, base: '/establishment', label: 'Establishment Details' },
   { pattern: /^\/establishment\/mocktail\/(.+)$/, base: '/establishment/mocktail', label: 'Mocktail Details' },
   { pattern: /^\/cocktail\/(.+)$/, base: '/cocktail', label: 'Cocktail Details' },

@@ -4,7 +4,7 @@ import { useParams, Link } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Calendar, MapPin, Users, Navigation, Beer, AlertTriangle } from 'lucide-react';
+import { Calendar, MapPin, Users, Navigation, Beer, AlertTriangle, Route, Share2 } from 'lucide-react';
 import { sampleBarCrawls, sampleEstablishments } from '@/data/sampleData';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -92,6 +92,14 @@ const BarCrawlDetailsPage: React.FC<BarCrawlDetailsProps> = () => {
     fetchBarCrawl();
   }, [id]);
 
+  const shareCircuit = () => {
+    navigator.clipboard.writeText(`${window.location.origin}/bar-crawl/${id}`);
+    toast({
+      title: "Link copied",
+      description: "Share link has been copied to clipboard",
+    });
+  };
+
   if (loading) {
     return (
       <Layout>
@@ -116,7 +124,7 @@ const BarCrawlDetailsPage: React.FC<BarCrawlDetailsProps> = () => {
             The Swig Circuit you're looking for doesn't exist or may have been removed.
           </p>
           <Button asChild variant="default">
-            <Link to="/profile/bar-crawls">
+            <Link to="/swig-circuits">
               Back to Swig Circuits
             </Link>
           </Button>
@@ -128,34 +136,53 @@ const BarCrawlDetailsPage: React.FC<BarCrawlDetailsProps> = () => {
   return (
     <Layout>
       <div className="py-4 animate-fade-in max-w-6xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold mb-1">{barCrawl.name}</h1>
-          <div className="flex flex-wrap gap-3 text-sm text-material-on-surface-variant">
-            <div className="flex items-center">
-              <Calendar className="mr-1 h-4 w-4" />
-              <span>{new Date(barCrawl.date).toLocaleDateString()}</span>
+        {/* Header Section - Improved with better spacing */}
+        <div className="mb-6 bg-gradient-to-r from-spiritless-pink/20 to-spiritless-green/20 p-6 rounded-lg border border-spiritless-pink/30">
+          <div className="flex flex-col md:flex-row justify-between gap-6">
+            <div>
+              <h1 className="text-2xl font-bold mb-1">{barCrawl.name}</h1>
+              <div className="flex flex-wrap gap-3 text-sm text-material-on-surface-variant">
+                <div className="flex items-center">
+                  <Calendar className="mr-1 h-4 w-4" />
+                  <span>{new Date(barCrawl.date).toLocaleDateString()}</span>
+                </div>
+                <div className="flex items-center">
+                  <Beer className="mr-1 h-4 w-4" />
+                  <span>{barCrawl.stops} stops</span>
+                </div>
+                <div className="flex items-center">
+                  <Users className="mr-1 h-4 w-4" />
+                  <span>{participants.length} participants</span>
+                </div>
+              </div>
+              <p className="mt-3 text-material-on-surface">
+                {barCrawl.description || "Join us for a fun night exploring the best alcohol-free establishments in the area. Enjoy special mocktails, meet new people, and experience the nightlife without the hangover!"}
+              </p>
             </div>
-            <div className="flex items-center">
-              <Beer className="mr-1 h-4 w-4" />
-              <span>{barCrawl.stops} stops</span>
-            </div>
-            <div className="flex items-center">
-              <Users className="mr-1 h-4 w-4" />
-              <span>{participants.length} participants</span>
+            
+            <div className="flex flex-col gap-3">
+              <JoinBarCrawlButton 
+                barCrawlId={id || ''} 
+                className="bg-spiritless-pink hover:bg-spiritless-pink/90"
+              />
+              <Button 
+                variant="outline" 
+                className="flex items-center gap-2"
+                onClick={shareCircuit}
+              >
+                <Share2 size={16} />
+                Share Link
+              </Button>
             </div>
           </div>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          {/* Crawl Route - 2/3 width on desktop */}
           <div className="md:col-span-2">
             <Card>
               <CardContent className="p-4">
-                <h2 className="text-xl font-semibold mb-3">Description</h2>
-                <p className="text-material-on-surface">
-                  {barCrawl.description || "Join us for a fun night exploring the best alcohol-free establishments in the area. Enjoy special mocktails, meet new people, and experience the nightlife without the hangover!"}
-                </p>
-                
-                <h2 className="text-xl font-semibold mt-6 mb-3">Crawl Route</h2>
+                <h2 className="text-xl font-semibold mb-3">Crawl Route</h2>
                 <div className="space-y-3">
                   {barCrawl.establishments.map((establishment: any, index: number) => (
                     <Link 
@@ -183,54 +210,46 @@ const BarCrawlDetailsPage: React.FC<BarCrawlDetailsProps> = () => {
             </Card>
           </div>
           
+          {/* Participants Card */}
           <div>
-            <Card>
+            <Card className="h-full">
               <CardContent className="p-4">
-                <h2 className="text-xl font-semibold mb-3">Participants</h2>
+                <h2 className="text-xl font-semibold mb-3">Active Participants</h2>
                 <div className="space-y-2">
-                  {participants.slice(0, 3).map((participant) => (
+                  {participants.slice(0, 5).map((participant) => (
                     <div key={participant.id} className="flex items-center p-2 border rounded-lg">
-                      <div className="w-8 h-8 rounded-full bg-gray-200 mr-2 overflow-hidden">
-                        <img src={participant.avatar} alt={participant.name} className="w-full h-full object-cover" />
-                      </div>
+                      <Avatar className="h-8 w-8 mr-2">
+                        <AvatarImage src={participant.avatar} alt={participant.name} />
+                        <AvatarFallback>{participant.name.charAt(0)}</AvatarFallback>
+                      </Avatar>
                       <div className="flex-grow">
                         <span className="font-medium">{participant.name}</span>
                         {participant.role && (
                           <Badge className="ml-2 bg-material-primary text-xs">{participant.role}</Badge>
                         )}
                       </div>
-                      <Badge className={`${participant.isActive ? 'bg-green-500' : 'bg-gray-400'}`}>
-                        {participant.isActive ? 'Active' : 'Inactive'}
+                      <Badge className={`${participant.status === 'Confirmed' ? 'bg-green-500' : participant.status === 'Pending' ? 'bg-yellow-500' : 'bg-blue-500'}`}>
+                        {participant.status}
                       </Badge>
                     </div>
                   ))}
-                </div>
-                
-                <div className="mt-6">
-                  {id && (
-                    <JoinBarCrawlButton 
-                      barCrawlId={id} 
-                      className="w-full bg-spiritless-pink hover:bg-spiritless-pink/90"
-                    />
-                  )}
                 </div>
               </CardContent>
             </Card>
           </div>
         </div>
 
+        {/* Full Width Participants Table Card */}
         <Card className="mb-6">
           <CardContent className="p-4">
-            <h2 className="text-xl font-semibold mb-4">Current Participants</h2>
+            <h2 className="text-xl font-semibold mb-4">All Participants</h2>
             
             <div className="flex flex-wrap gap-3 mb-4">
               {participants.map((participant) => (
-                <div key={participant.id} className="flex items-center">
-                  <Avatar className="border-2 border-white -ml-2 first:ml-0 h-10 w-10 hover:z-10 transition-all">
-                    <AvatarImage src={participant.avatar} alt={participant.name} />
-                    <AvatarFallback>{participant.name.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                </div>
+                <Avatar key={participant.id} className="border-2 border-white -ml-2 first:ml-0 h-10 w-10 hover:z-10 transition-all">
+                  <AvatarImage src={participant.avatar} alt={participant.name} />
+                  <AvatarFallback>{participant.name.charAt(0)}</AvatarFallback>
+                </Avatar>
               ))}
             </div>
             
