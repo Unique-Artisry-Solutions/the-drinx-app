@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { ChevronDown, ChevronUp, Database } from 'lucide-react';
 import { FeatureItem } from './types';
 import { renderStatusBadge, renderDatabaseStatusBadge, renderAccessIcon } from './utils/statusRenderers';
+import DatabaseAnalysisPanel from './DatabaseAnalysisPanel';
 
 interface FeaturesTableProps {
   features: FeatureItem[];
@@ -90,8 +91,9 @@ const FeaturesTable: React.FC<FeaturesTableProps> = ({ features, title }) => {
                             <Database className="h-4 w-4 mr-1" />
                             Database Analysis
                           </h4>
-                          <div className="text-sm text-gray-600 bg-gray-100 p-3 rounded whitespace-pre-wrap">
-                            {feature.databaseAnalysis}
+                          <div className="text-sm text-gray-600 bg-gray-100 p-3 rounded">
+                            <div className="whitespace-pre-wrap">{feature.databaseAnalysis}</div>
+                            <DatabaseAnalysisPanel analysisText={feature.databaseAnalysis} />
                           </div>
                         </div>
                       )}
