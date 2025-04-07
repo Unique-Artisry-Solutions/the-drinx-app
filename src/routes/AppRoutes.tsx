@@ -1,5 +1,6 @@
-import React from 'react';
-import { Route, Routes } from 'react-router-dom';
+
+import React, { lazy, Suspense } from 'react';
+import { Route, Routes, Navigate } from 'react-router-dom';
 import LandingPage from '@/pages/LandingPage';
 import MapPage from '@/pages/MapPage';
 import NotFound from '@/pages/NotFound';
