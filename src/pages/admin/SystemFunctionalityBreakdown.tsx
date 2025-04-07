@@ -13,7 +13,8 @@ import OverviewTab from '@/components/admin/systemBreakdown/OverviewTab';
 import FeatureTab from '@/components/admin/systemBreakdown/FeatureTab';
 import ProposedImprovementsTab from '@/components/admin/systemBreakdown/ProposedImprovementsTab';
 import AnalysisProgress from '@/components/admin/systemBreakdown/AnalysisProgress';
-import { adminFeatures as initialAdminFeatures, establishmentFeatures as initialEstablishmentFeatures, individualFeatures as initialIndividualFeatures } from '@/components/admin/systemBreakdown/featureData';
+// Updated import path for feature data
+import { adminFeatures as initialAdminFeatures, establishmentFeatures as initialEstablishmentFeatures, individualFeatures as initialIndividualFeatures } from '@/components/admin/systemBreakdown/features';
 import { proposedImprovements } from '@/components/admin/systemBreakdown/improvementsData';
 import { generateCSV, analyzeAllFeatures, AnalysisStep } from '@/components/admin/systemBreakdown/utils';
 
