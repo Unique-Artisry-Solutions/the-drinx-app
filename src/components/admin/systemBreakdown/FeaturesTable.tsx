@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { FeatureItem } from './types';
@@ -32,8 +31,8 @@ const FeaturesTable: React.FC<FeaturesTableProps> = ({ features }) => {
     // Clean up each requirement and remove empty ones
     return splitText
       .map(item => {
-        // Remove numbers at the beginning of requirements (like "1.", "2.", etc.)
-        return item.trim().replace(/^\d+\.\s*/, '');
+        // More thorough number removal - matches patterns like "1.", "1)", "[1]", "Step 1:", etc.
+        return item.trim().replace(/^(\d+[\.\)\]:]|\[\d+\]|Step \d+:?|\d+\s*[-–—])\s*/i, '');
       })
       .filter(item => item.length > 0);
   };
@@ -61,7 +60,6 @@ const FeaturesTable: React.FC<FeaturesTableProps> = ({ features }) => {
       </TableHeader>
       <TableBody>
         {features.map((feature, index) => (
-          // Use key prop on the React.Fragment instead of data-lov-id
           <React.Fragment key={`feature-${index}`}>
             <TableRow>
               <TableCell>
