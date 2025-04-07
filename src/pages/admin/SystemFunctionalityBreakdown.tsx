@@ -12,9 +12,10 @@ import ImplementationOverview from '@/components/admin/systemBreakdown/Implement
 import OverviewTab from '@/components/admin/systemBreakdown/OverviewTab';
 import FeatureTab from '@/components/admin/systemBreakdown/FeatureTab';
 import ProposedImprovementsTab from '@/components/admin/systemBreakdown/ProposedImprovementsTab';
+import AnalysisProgress from '@/components/admin/systemBreakdown/AnalysisProgress';
 import { adminFeatures as initialAdminFeatures, establishmentFeatures as initialEstablishmentFeatures, individualFeatures as initialIndividualFeatures } from '@/components/admin/systemBreakdown/featureData';
 import { proposedImprovements } from '@/components/admin/systemBreakdown/improvementsData';
-import { generateCSV, analyzeAllFeatures } from '@/components/admin/systemBreakdown/utils';
+import { generateCSV, analyzeAllFeatures, AnalysisStep } from '@/components/admin/systemBreakdown/utils';
 
 const SystemFunctionalityBreakdown: React.FC = () => {
   const navigate = useNavigate();
@@ -24,6 +25,8 @@ const SystemFunctionalityBreakdown: React.FC = () => {
   const [establishmentFeatures, setEstablishmentFeatures] = useState(initialEstablishmentFeatures);
   const [individualFeatures, setIndividualFeatures] = useState(initialIndividualFeatures);
   const [analyzing, setAnalyzing] = useState(false);
+  const [analysisProgress, setAnalysisProgress] = useState(0);
+  const [analysisSteps, setAnalysisSteps] = useState<AnalysisStep[]>([]);
   
   // Count features with updated status
   const updatedFeaturesCount = [
@@ -51,9 +54,45 @@ const SystemFunctionalityBreakdown: React.FC = () => {
   
   const handleAnalyzeFeatures = () => {
     setAnalyzing(true);
+    setAnalysisProgress(0);
     
-    // Simulate analysis with a small delay to show loading state
-    setTimeout(() => {
+    // Create initial steps array with nothing completed
+    const steps: AnalysisStep[] = [
+      { name: 'Database schema verification', completed: false },
+      { name: 'API endpoints validation', completed: false },
+      { name: 'Authentication flow check', completed: false },
+      { name: 'User permissions validation', completed: false },
+      { name: 'Content moderation implementation', completed: false },
+      { name: 'Storage bucket configuration', completed: false },
+      { name: 'Database trigger functions verification', completed: false },
+      { name: 'Frontend component implementation check', completed: false }
+    ];
+    setAnalysisSteps(steps);
+    
+    // Simulate progress updates for each step
+    let currentStep = 0;
+    const totalSteps = steps.length;
+    
+    const progressInterval = setInterval(() => {
+      if (currentStep < totalSteps) {
+        const updatedSteps = [...steps];
+        updatedSteps[currentStep].completed = true;
+        setAnalysisSteps(updatedSteps);
+        
+        currentStep++;
+        setAnalysisProgress((currentStep / totalSteps) * 100);
+        
+        // If we've completed all steps, complete the analysis
+        if (currentStep >= totalSteps) {
+          clearInterval(progressInterval);
+          
+          // Slight delay before completing the analysis to show 100% progress
+          setTimeout(completeAnalysis, 500);
+        }
+      }
+    }, 600); // Update every 600ms
+    
+    const completeAnalysis = () => {
       const analyzedFeatures = analyzeAllFeatures(
         initialAdminFeatures,
         initialEstablishmentFeatures,
@@ -76,7 +115,7 @@ const SystemFunctionalityBreakdown: React.FC = () => {
       });
       
       setAnalyzing(false);
-    }, 1500);
+    };
   };
 
   return (
@@ -114,6 +153,12 @@ const SystemFunctionalityBreakdown: React.FC = () => {
             </span>
           </div>
         )}
+        
+        <AnalysisProgress 
+          analyzing={analyzing}
+          steps={analysisSteps}
+          progress={analysisProgress}
+        />
 
         <ImplementationOverview 
           adminFeatures={adminFeatures}

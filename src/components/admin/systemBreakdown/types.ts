@@ -1,16 +1,22 @@
 
+export type FeatureStatus = 'implemented' | 'partial' | 'planned' | 'not_started';
+export type DatabaseStatus = 'complete' | 'in_progress' | 'not_started';
+export type AccessLevel = 'full' | 'partial' | 'none' | 'planned';
+export type FeatureCategory = 'Admin' | 'Establishment' | 'Individual';
+
 export interface FeatureItem {
+  id: string;
   name: string;
   description: string;
-  status: 'implemented' | 'partial' | 'planned';
-  adminAccess: boolean;
-  establishmentAccess: boolean;
-  individualAccess: boolean;
+  status: FeatureStatus;
+  originalStatus?: FeatureStatus;
+  statusUpdated?: boolean;
+  databaseStatus: DatabaseStatus;
+  adminAccess: AccessLevel;
+  establishmentAccess: AccessLevel;
+  individualAccess: AccessLevel;
   testSteps?: string[];
-  databaseStatus?: 'completed' | 'in-progress' | 'not-started';
   databaseAnalysis?: string;
-  statusUpdated?: boolean; // Track if status was updated during analysis
-  originalStatus?: 'implemented' | 'partial' | 'planned'; // Keep track of original status
 }
 
 export interface ImprovementItem {
@@ -23,4 +29,9 @@ export interface ImprovementItem {
   estimatedEffort: string;
   businessImpact: string;
   technicalRequirements?: string;
+}
+
+export interface AnalysisStep {
+  name: string;
+  completed: boolean;
 }
