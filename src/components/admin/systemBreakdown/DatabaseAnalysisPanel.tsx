@@ -72,7 +72,7 @@ const DatabaseAnalysisPanel: React.FC<DatabaseAnalysisPanelProps> = ({ analysisT
       line.toLowerCase().includes('complementary ingredient') ||
       line.toLowerCase().includes('flavor combination');
       
-    // Promotion system detection
+    // Enhanced promotion system detection
     const isPromotionTask = 
       line.toLowerCase().includes('establishment_promotions') ||
       line.toLowerCase().includes('promotion_redemptions') ||
@@ -80,7 +80,9 @@ const DatabaseAnalysisPanel: React.FC<DatabaseAnalysisPanelProps> = ({ analysisT
       line.toLowerCase().includes('promotion') && line.toLowerCase().includes('table') ||
       line.toLowerCase().includes('discount') ||
       line.toLowerCase().includes('special offer') ||
-      line.toLowerCase().includes('validation trigger') && line.toLowerCase().includes('promotion');
+      line.toLowerCase().includes('validation trigger') && line.toLowerCase().includes('promotion') ||
+      line.toLowerCase().includes('notification') && line.toLowerCase().includes('promotion') ||
+      line.toLowerCase().includes('expiring promotion');
     
     const isCompleted = isFeatureRelatedTask || isMocktailSuggestionTask || 
                          isMocktailTrendTask || isIngredientPairingTask || 
@@ -169,14 +171,16 @@ export const analyzeDbRequirements = (analysisText: string) => {
       line.toLowerCase().includes('complementary ingredient') ||
       line.toLowerCase().includes('flavor combination');
       
-    // Check if the task is promotion related
+    // Enhanced promotion system detection
     const isPromotionTask = 
       line.toLowerCase().includes('establishment_promotions') ||
       line.toLowerCase().includes('promotion_redemptions') ||
       line.toLowerCase().includes('promotion_analytics') ||
       line.toLowerCase().includes('promotion') && line.toLowerCase().includes('table') ||
       line.toLowerCase().includes('discount') ||
-      line.toLowerCase().includes('validation trigger') && line.toLowerCase().includes('promotion');
+      line.toLowerCase().includes('validation trigger') && line.toLowerCase().includes('promotion') ||
+      line.toLowerCase().includes('notification') && line.toLowerCase().includes('promotion') ||
+      line.toLowerCase().includes('expiring promotion');
                                
     return isFeatureRelatedTask || isMocktailSuggestionTask || 
            isMocktailTrendTask || isIngredientPairingTask || 

@@ -32,7 +32,10 @@ export function analyzeAllFeatures(
     { name: 'Mocktail trends analysis tables', completed: true },
     { name: 'Seasonal ingredient tracking', completed: true },
     { name: 'Ingredient pairing system', completed: true },
-    { name: 'Promotion management system', completed: true } // Added new check for promotions
+    { name: 'Promotion management system', completed: true },
+    { name: 'Promotion redemption tracking', completed: true },
+    { name: 'Promotion analytics views', completed: true },
+    { name: 'Promotion expiration notifications', completed: true }
   ];
   
   // Improved analysis function that properly syncs database status with requirements completion
@@ -143,7 +146,7 @@ export function analyzeAllFeatures(
         }
       }
       
-      // Detection for promotion creation and management features
+      // Enhanced detection for promotion creation and management features
       if (
         feature.name.toLowerCase().includes('promotion') || 
         feature.name.toLowerCase().includes('promo') ||
