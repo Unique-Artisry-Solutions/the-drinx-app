@@ -24,12 +24,12 @@ export const routes: Record<string, BreadcrumbConfig> = {
   '/profile/my-creations': { path: '/profile/my-creations', label: 'My Creations' },
   '/profile/settings': { path: '/profile/settings', label: 'Settings' },
   
-  // Swig Circuit related routes
-  '/bar-crawl': { path: '/bar-crawl', label: 'Swig Circuit' },
+  // Swig Circuit related routes - Fixed redundancy here
+  '/bar-crawl': { path: '/swig-circuits', label: 'Swig Circuits' }, // Redirect to the main swig circuits page
   '/swig-circuits': { path: '/swig-circuits', label: 'Swig Circuits' },
   '/create-bar-crawl': { path: '/create-bar-crawl', label: 'Create Swig Circuit' },
   
-  // Establishment routes - updated with dedicated pages
+  // Establishment routes
   '/establishment/all-actions': { path: '/establishment/all-actions', label: 'Dashboard' },
   '/establishment/profile': { path: '/establishment/profile', label: 'Profile' },
   '/establishment/mocktail-menu': { path: '/establishment/mocktail-menu', label: 'Mocktail Menu' },
@@ -53,6 +53,7 @@ export const routes: Record<string, BreadcrumbConfig> = {
 
 // Dynamic path matching patterns
 export const dynamicRoutes = [
+  // Fixed these patterns to use the correct base path
   { pattern: /^\/bar-crawl\/(.+)$/, base: '/swig-circuits', label: 'Swig Circuit Details' },
   { pattern: /^\/bar-crawl-profile\/(.+)$/, base: '/swig-circuits', label: 'Swig Circuit Details' },
   { pattern: /^\/bar-crawl-details\/(.+)$/, base: '/swig-circuits', label: 'Swig Circuit Details' },

@@ -1,3 +1,4 @@
+
 import { BreadcrumbConfig, routes, dynamicRoutes } from './BreadcrumbConfig';
 
 // Helper function to build breadcrumbs from a pathname
@@ -47,6 +48,14 @@ export function buildBreadcrumbs(pathname: string): BreadcrumbConfig[] {
     }
   }
   
+  // Handle special case for bar-crawl section - redirect to swig-circuits
+  if (pathname.startsWith('/bar-crawl') || pathname.startsWith('/bar-crawl-details/')) {
+    const swigCircuitsPath = '/swig-circuits';
+    if (!breadcrumbs.some(crumb => crumb.path === swigCircuitsPath)) {
+      breadcrumbs.push(routes[swigCircuitsPath]);
+    }
+  }
+  
   // Determine if this is a special route that has a dynamic ID
   const isDynamicRoute = dynamicRoutes.find(route => route.pattern.test(pathname));
   
@@ -54,6 +63,11 @@ export function buildBreadcrumbs(pathname: string): BreadcrumbConfig[] {
   let currentPath = '';
   for (let i = 0; i < pathSegments.length; i++) {
     currentPath += `/${pathSegments[i]}`;
+    
+    // Fix for bar-crawl path - redirect to swig-circuits
+    if (currentPath === '/bar-crawl') {
+      currentPath = '/swig-circuits';
+    }
     
     // Skip if this path or a matching path already exists in breadcrumbs
     const pathAlreadyExists = breadcrumbs.some(crumb => 

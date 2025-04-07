@@ -69,6 +69,8 @@ const AppRoutes = () => {
         <Route path="/bar-crawl/:id" element={<BarCrawlDetail />} />
         <Route path="/bar-crawl-details/:id" element={<BarCrawlProfilePage />} />
         <Route path="/swig-circuits" element={<SwigCircuitsPage />} />
+        {/* Redirect route for old /bar-crawl path to prevent 404 */}
+        <Route path="/bar-crawl" element={<Navigate to="/swig-circuits" replace />} />
         <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/login" element={<LoginPage />} />
