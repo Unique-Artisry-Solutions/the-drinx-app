@@ -33,7 +33,7 @@ const BarCrawlControlWithSampleData = ({
     onSave: onSaveBarCrawl
   });
 
-  // Select establishments from the sample data
+  // Convert sample data to Establishment type format
   const testEstablishments = React.useMemo(() => {
     return sampleEstablishments.map(est => ({
       id: est.id,
