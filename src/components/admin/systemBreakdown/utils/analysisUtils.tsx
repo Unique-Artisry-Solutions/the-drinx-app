@@ -21,13 +21,13 @@ export function analyzeAllFeatures(
     { name: 'API endpoints validation', completed: true },
     { name: 'Authentication flow check', completed: true },
     { name: 'User permissions validation', completed: true },
-    { name: 'Content moderation implementation', completed: true }, // Changed from false to true
+    { name: 'Content moderation implementation', completed: true },
     { name: 'Storage bucket configuration', completed: true },
-    { name: 'Database trigger functions verification', completed: true }, // Changed from false to true
+    { name: 'Database trigger functions verification', completed: true },
     { name: 'Frontend component implementation check', completed: true }
   ];
   
-  // Updated analysis function that syncs database status with requirements completion
+  // Improved analysis function that properly syncs database status with requirements completion
   const updateFeaturesDbStatus = (features: FeatureItem[]) => {
     return features.map(feature => {
       // Capture original status for tracking changes
@@ -50,13 +50,14 @@ export function analyzeAllFeatures(
           newDbStatus = 'not_started';
         }
         
-        // If any DB requirements are complete and feature isn't implemented, update feature status
-        if (dbAnalysis.hasStarted && feature.status === 'not_started') {
-          newStatus = 'planned';
-        } else if (dbAnalysis.hasStarted && feature.status === 'planned') {
-          newStatus = 'partial';
-        } else if (dbAnalysis.isComplete && feature.status === 'partial') {
+        // Update feature status based on database requirements completion
+        // Only update the feature status if it's logical to do so
+        if (dbAnalysis.isComplete && ['not_started', 'planned', 'partial'].includes(feature.status)) {
           newStatus = 'implemented';
+        } else if (dbAnalysis.hasStarted && ['not_started', 'planned'].includes(feature.status)) {
+          newStatus = 'partial';
+        } else if (dbAnalysis.hasStarted && feature.status === 'not_started') {
+          newStatus = 'planned';
         }
       }
       
@@ -64,7 +65,7 @@ export function analyzeAllFeatures(
         ...feature,
         status: newStatus,
         databaseStatus: newDbStatus,
-        statusUpdated: newStatus !== originalStatus,
+        statusUpdated: newStatus !== originalStatus || newDbStatus !== originalDbStatus,
         originalStatus: originalStatus !== newStatus ? originalStatus : undefined
       };
     });

@@ -31,16 +31,20 @@ const DatabaseAnalysisPanel: React.FC<DatabaseAnalysisPanelProps> = ({ analysisT
     .split('\n')
     .filter(line => line.trim().match(/^\d+\./)); // Get only numbered lines
   
-  // For demo purposes, we'll assume tasks before "implementation needed" are completed
+  // For demo purposes, we'll consider tasks completed based on specific keywords
+  // In a real implementation, this would be based on actual database state
   const taskStatuses = taskLines.map(line => {
     // Extract just the task description without the number
     const taskText = line.replace(/^\d+\.\s*/, '').trim();
     
-    // Mock logic: Consider tasks completed based on specific keywords
-    // In a real implementation, this would be based on actual database state
+    // Improved completion detection logic
+    // Consider tasks completed if they DON'T contain specific keywords indicating incomplete status
     const isCompleted = !line.toLowerCase().includes('need') && 
                         !line.toLowerCase().includes('required') &&
-                        !line.toLowerCase().includes('add');
+                        !line.toLowerCase().includes('add') &&
+                        !line.toLowerCase().includes('create') &&
+                        !line.toLowerCase().includes('implement') &&
+                        !line.toLowerCase().includes('todo');
     
     return { 
       text: taskText,
@@ -81,10 +85,14 @@ export const analyzeDbRequirements = (analysisText: string) => {
     .split('\n')
     .filter(line => line.trim().match(/^\d+\./)); // Get only numbered lines
   
+  // More robust task status detection
   const taskStatuses = taskLines.map(line => {
     return !line.toLowerCase().includes('need') && 
            !line.toLowerCase().includes('required') &&
-           !line.toLowerCase().includes('add');
+           !line.toLowerCase().includes('add') &&
+           !line.toLowerCase().includes('create') &&
+           !line.toLowerCase().includes('implement') &&
+           !line.toLowerCase().includes('todo');
   });
   
   const completedCount = taskStatuses.filter(status => status).length;
@@ -93,7 +101,9 @@ export const analyzeDbRequirements = (analysisText: string) => {
   
   return {
     completionPercentage,
+    // If at least one task is completed, consider it started
     hasStarted: completedCount > 0,
+    // Only mark as complete if all tasks are completed
     isComplete: completedCount > 0 && completedCount === totalTasks
   };
 };

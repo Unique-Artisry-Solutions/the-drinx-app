@@ -435,6 +435,62 @@ export type Database = {
           },
         ]
       }
+      feature_segment_mappings: {
+        Row: {
+          created_at: string
+          feature_id: string
+          id: string
+          segment_id: string
+        }
+        Insert: {
+          created_at?: string
+          feature_id: string
+          id?: string
+          segment_id: string
+        }
+        Update: {
+          created_at?: string
+          feature_id?: string
+          id?: string
+          segment_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feature_segment_mappings_segment_id_fkey"
+            columns: ["segment_id"]
+            isOneToOne: false
+            referencedRelation: "feature_segments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      feature_segments: {
+        Row: {
+          created_at: string
+          criteria: Json
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          criteria?: Json
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          criteria?: Json
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       mocktail_suggestions: {
         Row: {
           created_at: string
