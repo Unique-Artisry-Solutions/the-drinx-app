@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { FeatureItem } from './types';
@@ -31,8 +32,10 @@ const FeaturesTable: React.FC<FeaturesTableProps> = ({ features }) => {
     // Clean up each requirement and remove empty ones
     return splitText
       .map(item => {
-        // More thorough number removal - matches patterns like "1.", "1)", "[1]", "Step 1:", etc.
-        return item.trim().replace(/^(\d+[\.\)\]:]|\[\d+\]|Step \d+:?|\d+\s*[-–—])\s*/i, '');
+        // Enhanced regex to remove ALL types of numbering/bullets at the start
+        return item.trim()
+          .replace(/^(\d+[\.\)\]:]|\[\d+\]|Step \d+:?|-\s*|•\s*|\*\s*|\d+\s*[-–—]|\([a-z\d]\)|[a-z]\.|[ivxIVX]+\.|[A-Z][\.\)])\s*/i, '')
+          .replace(/^\s*[–—-]\s*/, ''); // Also remove any dash/hyphen at start
       })
       .filter(item => item.length > 0);
   };
