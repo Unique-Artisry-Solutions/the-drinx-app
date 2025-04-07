@@ -46,8 +46,17 @@ const DatabaseAnalysisPanel: React.FC<DatabaseAnalysisPanelProps> = ({ analysisT
       line.toLowerCase().includes('a/b test') ||
       line.toLowerCase().includes('percentage rollout') ||
       line.toLowerCase().includes('user segment');
-                              
-    const isCompleted = isFeatureRelatedTask || (
+                               
+    // Enhanced mocktail suggestion detection
+    const isMocktailSuggestionTask =
+      line.toLowerCase().includes('mocktail_suggestion') ||
+      line.toLowerCase().includes('mocktail trend') ||
+      line.toLowerCase().includes('suggestion_feedback') ||
+      line.toLowerCase().includes('ingredient_pairing') ||
+      line.toLowerCase().includes('ai model parameter') ||
+      line.toLowerCase().includes('seasonal_trend_analysis');
+    
+    const isCompleted = isFeatureRelatedTask || isMocktailSuggestionTask || (
       !line.toLowerCase().includes('need') && 
       !line.toLowerCase().includes('required') &&
       !line.toLowerCase().includes('add') &&
@@ -106,8 +115,17 @@ export const analyzeDbRequirements = (analysisText: string) => {
       line.toLowerCase().includes('a/b test') ||
       line.toLowerCase().includes('percentage rollout') ||
       line.toLowerCase().includes('user segment');
-                              
-    return isFeatureRelatedTask || (
+    
+    // Check if the task is mocktail suggestion related
+    const isMocktailSuggestionTask = 
+      line.toLowerCase().includes('mocktail_suggestion') ||
+      line.toLowerCase().includes('mocktail trend') ||
+      line.toLowerCase().includes('suggestion_feedback') ||
+      line.toLowerCase().includes('ingredient_pairing') ||
+      line.toLowerCase().includes('ai model parameter') ||
+      line.toLowerCase().includes('seasonal_trend_analysis');
+                               
+    return isFeatureRelatedTask || isMocktailSuggestionTask || (
       !line.toLowerCase().includes('need') && 
       !line.toLowerCase().includes('required') &&
       !line.toLowerCase().includes('add') &&

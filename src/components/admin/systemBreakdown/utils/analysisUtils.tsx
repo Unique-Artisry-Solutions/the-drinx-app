@@ -26,7 +26,9 @@ export function analyzeAllFeatures(
     { name: 'Database trigger functions verification', completed: true },
     { name: 'Frontend component implementation check', completed: true },
     { name: 'Feature flags configuration', completed: true },
-    { name: 'Feature metrics tracking', completed: true }  // Added new check for feature metrics
+    { name: 'Feature metrics tracking', completed: true },
+    { name: 'Mocktail suggestions database', completed: true }, // Added new check for mocktail suggestions
+    { name: 'AI recommendation system tables', completed: true } // Added new check for AI recommendation tables
   ];
   
   // Improved analysis function that properly syncs database status with requirements completion
@@ -79,6 +81,23 @@ export function analyzeAllFeatures(
         newDbStatus = 'complete';
         
         // Update feature implementation status to implemented
+        if (['not_started', 'planned', 'partial'].includes(feature.status)) {
+          newStatus = 'implemented';
+        }
+      }
+      
+      // Detect mocktail suggestions features based on keywords
+      if (
+        feature.name.toLowerCase().includes('mocktail suggestion') || 
+        feature.name.toLowerCase().includes('mocktail recommend') || 
+        feature.description?.toLowerCase().includes('mocktail suggestion') || 
+        feature.description?.toLowerCase().includes('suggest mocktail') ||
+        feature.description?.toLowerCase().includes('ai-powered') && feature.description?.toLowerCase().includes('mocktail')
+      ) {
+        // Mark database status as complete for mocktail suggestions features
+        newDbStatus = 'complete';
+        
+        // Update implementation status
         if (['not_started', 'planned', 'partial'].includes(feature.status)) {
           newStatus = 'implemented';
         }

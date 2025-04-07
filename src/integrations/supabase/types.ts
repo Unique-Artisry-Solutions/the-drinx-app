@@ -9,6 +9,39 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      ai_model_parameters: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          model_name: string
+          parameter_name: string
+          parameter_value: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          model_name: string
+          parameter_name: string
+          parameter_value: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          model_name?: string
+          parameter_name?: string
+          parameter_value?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       analytics_daily_rollup: {
         Row: {
           date: string
@@ -364,6 +397,41 @@ export type Database = {
         }
         Relationships: []
       }
+      establishment_ai_customizations: {
+        Row: {
+          created_at: string
+          establishment_id: string
+          id: string
+          preference_key: string
+          preference_value: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          establishment_id: string
+          id?: string
+          preference_key: string
+          preference_value: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          establishment_id?: string
+          id?: string
+          preference_key?: string
+          preference_value?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "establishment_ai_customizations_establishment_id_fkey"
+            columns: ["establishment_id"]
+            isOneToOne: false
+            referencedRelation: "establishments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       establishments: {
         Row: {
           address: string
@@ -559,6 +627,33 @@ export type Database = {
         }
         Relationships: []
       }
+      ingredient_pairing_scores: {
+        Row: {
+          complementary_notes: string | null
+          created_at: string
+          id: string
+          ingredient1: string
+          ingredient2: string
+          pairing_score: number
+        }
+        Insert: {
+          complementary_notes?: string | null
+          created_at?: string
+          id?: string
+          ingredient1: string
+          ingredient2: string
+          pairing_score: number
+        }
+        Update: {
+          complementary_notes?: string | null
+          created_at?: string
+          id?: string
+          ingredient1?: string
+          ingredient2?: string
+          pairing_score?: number
+        }
+        Relationships: []
+      }
       mocktail_suggestions: {
         Row: {
           created_at: string
@@ -608,6 +703,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      mocktail_trends: {
+        Row: {
+          created_at: string
+          id: string
+          ingredient_name: string
+          is_rising: boolean
+          month: number
+          season: string
+          trend_score: number
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ingredient_name: string
+          is_rising?: boolean
+          month: number
+          season: string
+          trend_score?: number
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ingredient_name?: string
+          is_rising?: boolean
+          month?: number
+          season?: string
+          trend_score?: number
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
       }
       moderation_actions: {
         Row: {
@@ -752,6 +883,54 @@ export type Database = {
           username?: string | null
         }
         Relationships: []
+      }
+      suggestion_feedback: {
+        Row: {
+          comments: string | null
+          created_at: string
+          establishment_id: string
+          id: string
+          implementation_feasibility: number
+          popularity_potential: number
+          quality_score: number
+          suggestion_id: string
+        }
+        Insert: {
+          comments?: string | null
+          created_at?: string
+          establishment_id: string
+          id?: string
+          implementation_feasibility: number
+          popularity_potential: number
+          quality_score: number
+          suggestion_id: string
+        }
+        Update: {
+          comments?: string | null
+          created_at?: string
+          establishment_id?: string
+          id?: string
+          implementation_feasibility?: number
+          popularity_potential?: number
+          quality_score?: number
+          suggestion_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suggestion_feedback_establishment_id_fkey"
+            columns: ["establishment_id"]
+            isOneToOne: false
+            referencedRelation: "establishments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suggestion_feedback_suggestion_id_fkey"
+            columns: ["suggestion_id"]
+            isOneToOne: false
+            referencedRelation: "mocktail_suggestions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       swig_circuit_drink_highlights: {
         Row: {
@@ -995,6 +1174,17 @@ export type Database = {
           reported_at: string | null
           reporter_id: string | null
           reporter_name: string | null
+        }
+        Relationships: []
+      }
+      seasonal_trend_analysis: {
+        Row: {
+          avg_quality_score: number | null
+          ingredient_name: string | null
+          season: string | null
+          suggestion_count: number | null
+          trend_score: number | null
+          year: number | null
         }
         Relationships: []
       }
