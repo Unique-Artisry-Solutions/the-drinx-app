@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { FileDown, RefreshCw, AlertTriangle } from 'lucide-react';
+import { FileDown, RefreshCw, AlertTriangle, Lightbulb } from 'lucide-react';
 import AdminHeader from '@/components/admin/AdminHeader';
 import { useToast } from '@/hooks/use-toast';
 
@@ -11,7 +11,9 @@ import { useToast } from '@/hooks/use-toast';
 import ImplementationOverview from '@/components/admin/systemBreakdown/ImplementationOverview';
 import OverviewTab from '@/components/admin/systemBreakdown/OverviewTab';
 import FeatureTab from '@/components/admin/systemBreakdown/FeatureTab';
+import ProposedImprovementsTab from '@/components/admin/systemBreakdown/ProposedImprovementsTab';
 import { adminFeatures as initialAdminFeatures, establishmentFeatures as initialEstablishmentFeatures, individualFeatures as initialIndividualFeatures } from '@/components/admin/systemBreakdown/featureData';
+import { proposedImprovements } from '@/components/admin/systemBreakdown/improvementsData';
 import { generateCSV, analyzeAllFeatures } from '@/components/admin/systemBreakdown/utils';
 
 const SystemFunctionalityBreakdown: React.FC = () => {
@@ -125,6 +127,10 @@ const SystemFunctionalityBreakdown: React.FC = () => {
             <TabsTrigger value="admin">Admin Features</TabsTrigger>
             <TabsTrigger value="establishment">Establishment Features</TabsTrigger>
             <TabsTrigger value="individual">Individual Features</TabsTrigger>
+            <TabsTrigger value="improvements" className="flex items-center gap-1">
+              <Lightbulb className="h-4 w-4" />
+              Proposed Improvements
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview">
@@ -157,6 +163,10 @@ const SystemFunctionalityBreakdown: React.FC = () => {
               title="Individual User Features"
               description="Features available to regular users of the platform"
             />
+          </TabsContent>
+
+          <TabsContent value="improvements">
+            <ProposedImprovementsTab improvements={proposedImprovements} />
           </TabsContent>
         </Tabs>
       </main>

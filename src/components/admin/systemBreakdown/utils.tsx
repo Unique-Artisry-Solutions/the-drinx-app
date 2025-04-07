@@ -2,7 +2,7 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle2, XCircle, AlertCircle, Database } from 'lucide-react';
-import { FeatureItem } from './types';
+import { FeatureItem, ImprovementItem } from './types';
 
 // Utility function to render status badges
 export const renderStatusBadge = (status: 'implemented' | 'partial' | 'planned') => {
@@ -145,6 +145,45 @@ export const generateCSV = (adminFeatures: FeatureItem[], establishmentFeatures:
   a.setAttribute('hidden', '');
   a.setAttribute('href', url);
   a.setAttribute('download', 'spiritless_features.csv');
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+};
+
+// Generate CSV of improvement proposals
+export const generateImprovementsCSV = (improvements: ImprovementItem[]) => {
+  // Create CSV header
+  let csv = 'Name,Description,Priority,Type,Affected Areas,Implementation Steps,Estimated Effort,Business Impact,Technical Requirements\n';
+  
+  // Add all improvement proposals
+  improvements.forEach(item => {
+    const stepsFormatted = `"${item.implementationSteps.map((step, i) => `${i+1}. ${step}`).join('\n')}"`;
+    const areasFormatted = `"${item.affectedAreas.join(', ')}"`;
+    const technicalReqFormatted = item.technicalRequirements ? 
+      `"${item.technicalRequirements.replace(/"/g, '""')}"` : 
+      '""';
+    
+    const row = [
+      `"${item.name}"`,
+      `"${item.description.replace(/"/g, '""')}"`,
+      item.priority,
+      item.type,
+      areasFormatted,
+      stepsFormatted,
+      `"${item.estimatedEffort}"`,
+      `"${item.businessImpact.replace(/"/g, '""')}"`,
+      technicalReqFormatted
+    ];
+    csv += row.join(',') + '\n';
+  });
+  
+  // Create download link
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.setAttribute('hidden', '');
+  a.setAttribute('href', url);
+  a.setAttribute('download', 'spiritless_improvement_proposals.csv');
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
