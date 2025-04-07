@@ -1,5 +1,5 @@
 
-import { supabase } from '@/lib/supabaseClient';
+import { supabaseClient } from '@/lib/supabaseClient';
 
 export type AnalyticsEvent = {
   eventType: string;
@@ -12,7 +12,7 @@ export type AnalyticsEvent = {
  */
 export async function trackEvent(event: AnalyticsEvent): Promise<string | null> {
   try {
-    const { data: session } = await supabase.auth.getSession();
+    const { data: session } = await supabaseClient.auth.getSession();
     const userId = session?.session?.user?.id;
     
     if (!userId) {
@@ -20,7 +20,7 @@ export async function trackEvent(event: AnalyticsEvent): Promise<string | null> 
       return null;
     }
     
-    const { data, error } = await supabase.rpc('track_analytics_event', {
+    const { data, error } = await supabaseClient.rpc('track_analytics_event', {
       p_user_id: userId,
       p_event_type: event.eventType,
       p_event_data: event.eventData || {},
@@ -48,7 +48,7 @@ export async function getAnalyticsData(period: 'daily' | 'weekly' | 'monthly', s
   try {
     const tableName = `analytics_${period}_rollup`;
     
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from(tableName)
       .select('*')
       .gte(period === 'daily' ? 'date' : 'year', period === 'daily' ? startDate.toISOString().split('T')[0] : startDate.getFullYear())
@@ -71,7 +71,7 @@ export async function getAnalyticsData(period: 'daily' | 'weekly' | 'monthly', s
  */
 export async function getUserRetention(startDate: Date, endDate: Date) {
   try {
-    const { data, error } = await supabase.rpc('get_user_retention', {
+    const { data, error } = await supabaseClient.rpc('get_user_retention', {
       p_start_date: startDate.toISOString().split('T')[0],
       p_end_date: endDate.toISOString().split('T')[0]
     });
