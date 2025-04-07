@@ -9,12 +9,14 @@ type FetchEstablishmentsOptions = {
   latitude?: number;
   longitude?: number;
   searchTerm?: string;
+  maxDistance?: number;
 }
 
 const fetchEstablishmentsFromSupabase = async ({ 
   latitude, 
   longitude, 
-  searchTerm 
+  searchTerm,
+  maxDistance = 20
 }: FetchEstablishmentsOptions): Promise<Establishment[]> => {
   let query = supabaseClient
     .from('establishments')
@@ -31,7 +33,7 @@ const fetchEstablishmentsFromSupabase = async ({
     throw new Error(error.message);
   }
   
-  // If we have user location, calculate distances
+  // If we have user location, calculate distances and filter by max distance
   if (latitude && longitude && data) {
     return data.map(establishment => {
       const distance = calculateDistance(
@@ -47,9 +49,10 @@ const fetchEstablishmentsFromSupabase = async ({
         cocktailCount: establishment.cocktail_count,
         image: establishment.image_url,
         distance: `${distance.toFixed(1)} mi`,
+        distanceValue: distance, // Add raw distance for filtering
         created_at: establishment.created_at
       } as Establishment;
-    });
+    }).filter(est => est.distanceValue <= maxDistance); // Filter by distance
   }
   
   // Return data without distances if no location
@@ -64,6 +67,7 @@ export const useEstablishments = (options: FetchEstablishmentsOptions = {}) => {
   const [establishments, setEstablishments] = useState<Establishment[]>([]);
   const [filteredEstablishments, setFilteredEstablishments] = useState<Establishment[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>(options.searchTerm || '');
+  const [maxDistance, setMaxDistance] = useState<number>(options.maxDistance || 20);
   
   const { 
     data, 
@@ -71,10 +75,11 @@ export const useEstablishments = (options: FetchEstablishmentsOptions = {}) => {
     error, 
     refetch 
   } = useQuery({
-    queryKey: ['establishments', options],
+    queryKey: ['establishments', options, maxDistance],
     queryFn: () => fetchEstablishmentsFromSupabase({
       ...options,
-      searchTerm: searchTerm || options.searchTerm
+      searchTerm: searchTerm || options.searchTerm,
+      maxDistance
     }),
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
@@ -102,6 +107,11 @@ export const useEstablishments = (options: FetchEstablishmentsOptions = {}) => {
     setFilteredEstablishments(filtered);
   };
   
+  const updateMaxDistance = (distance: number) => {
+    setMaxDistance(distance);
+    refetch();
+  };
+  
   const performSearch = () => {
     refetch();
   };
@@ -113,6 +123,8 @@ export const useEstablishments = (options: FetchEstablishmentsOptions = {}) => {
     refetch,
     searchTerm,
     filterEstablishments,
-    performSearch
+    performSearch,
+    maxDistance,
+    updateMaxDistance
   };
 };

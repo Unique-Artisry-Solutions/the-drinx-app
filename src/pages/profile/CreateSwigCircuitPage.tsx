@@ -11,12 +11,14 @@ import BackButton from '@/components/navigation/BackButton';
 import { Textarea } from '@/components/ui/textarea';
 import { format, addDays } from 'date-fns';
 import ThemeSelection from '@/components/barCrawl/ThemeSelection';
-import VenueDiversity from '@/components/barCrawl/VenueDiversity';
+import DistanceFilter from '@/components/barCrawl/VenueDiversity';
 import DrinkHighlights, { DrinkHighlight } from '@/components/barCrawl/DrinkHighlights';
 import PairingOptions, { Pairing } from '@/components/barCrawl/PairingOptions';
 import BarCrawlControl from '@/components/BarCrawlControl';
 import { Establishment } from '@/types/ProfileTypes';
-import { sampleEstablishments } from '@/data/sampleData';
+import { useEstablishments } from '@/hooks/useEstablishments';
+import { useUserLocation } from '@/hooks/useUserLocation';
+import EstablishmentGrid from '@/components/barCrawl/EstablishmentGrid';
 
 const CreateSwigCircuitPage: React.FC = () => {
   const { toast } = useToast();
@@ -29,14 +31,24 @@ const CreateSwigCircuitPage: React.FC = () => {
   const [previewUrl, setPreviewUrl] = useState('');
   const [currentTab, setCurrentTab] = useState("basics");
   
-  // New state for features
   const [selectedTheme, setSelectedTheme] = useState('');
-  const [diversityPreference, setDiversityPreference] = useState(50);
+  const [maxDistance, setMaxDistance] = useState(10);
   const [drinkHighlights, setDrinkHighlights] = useState<DrinkHighlight[]>([]);
   const [pairings, setPairings] = useState<Pairing[]>([]);
   const [selectedEstablishments, setSelectedEstablishments] = useState<Establishment[]>([]);
 
-  // Auto-calculate end date based on start date (7 days later)
+  const { 
+    establishments: availableEstablishments, 
+    isLoading: isLoadingEstablishments,
+    updateMaxDistance
+  } = useEstablishments({
+    latitude: userLocation?.latitude,
+    longitude: userLocation?.longitude,
+    maxDistance: maxDistance
+  });
+
+  const { userLocation, isLoading: isLocating } = useUserLocation();
+
   useEffect(() => {
     if (startDate) {
       const start = new Date(startDate);
@@ -53,6 +65,11 @@ const CreateSwigCircuitPage: React.FC = () => {
     }
   };
 
+  const handleDistanceChange = (distance: number) => {
+    setMaxDistance(distance);
+    updateMaxDistance(distance);
+  };
+
   const handleSaveEstablishments = (establishments: Establishment[]) => {
     setSelectedEstablishments(establishments);
     toast({
@@ -64,7 +81,6 @@ const CreateSwigCircuitPage: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate mandatory fields for all required steps
     if (!name || !startDate || !endDate) {
       toast({
         title: 'Missing basic information',
@@ -95,10 +111,8 @@ const CreateSwigCircuitPage: React.FC = () => {
       return;
     }
 
-    // Generate a mock ID for the new swig circuit
     const newBarCrawlId = `bc-${Date.now()}`;
     
-    // Store swig circuit data in localStorage (in a real app, this would be saved to a database)
     const barCrawls = JSON.parse(localStorage.getItem('user_bar_crawls') || '[]');
     barCrawls.push({
       id: newBarCrawlId,
@@ -111,9 +125,8 @@ const CreateSwigCircuitPage: React.FC = () => {
       organizer: localStorage.getItem('user_name') || 'User',
       status: 'planned',
       created_at: new Date().toISOString(),
-      // Properties
       theme: selectedTheme,
-      diversityPreference,
+      maxDistance,
       drinkHighlights,
       pairings
     });
@@ -124,7 +137,6 @@ const CreateSwigCircuitPage: React.FC = () => {
       description: 'Your new Swig Circuit has been created successfully!',
     });
     
-    // Redirect to the swig circuit management page
     navigate(`/profile/my-creations/${newBarCrawlId}`);
   };
 
@@ -159,7 +171,6 @@ const CreateSwigCircuitPage: React.FC = () => {
     );
   };
 
-  // Available tabs for navigation
   const tabs = [
     { id: "basics", label: "Basics" },
     { id: "theme", label: "Theme" },
@@ -175,7 +186,6 @@ const CreateSwigCircuitPage: React.FC = () => {
         <h1 className="text-2xl font-medium text-material-on-background mb-4">Create Swig Circuit</h1>
         
         <div className="flex flex-col md:flex-row gap-4">
-          {/* Left-side navigation menu */}
           <div className="w-full md:w-64 shrink-0">
             <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm">
               <h2 className="text-lg font-medium mb-4">Creation Steps</h2>
@@ -200,7 +210,6 @@ const CreateSwigCircuitPage: React.FC = () => {
             </div>
           </div>
           
-          {/* Right-side content area */}
           {currentTab === "basics" && (
             <Card>
               <CardHeader>
@@ -314,7 +323,6 @@ const CreateSwigCircuitPage: React.FC = () => {
             </Card>
           )}
           
-          {/* Theme Selection */}
           {currentTab === "theme" && (
             <Card>
               <CardHeader>
@@ -347,43 +355,84 @@ const CreateSwigCircuitPage: React.FC = () => {
             </Card>
           )}
           
-          {/* Venue Selection */}
           {currentTab === "venues" && (
-            <Card>
+            <Card className="flex-1">
               <CardHeader>
                 <CardTitle>Select Venues</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                <VenueDiversity 
-                  diversityPreference={diversityPreference}
-                  onDiversityChange={setDiversityPreference}
-                />
-                
-                <p className="text-sm text-muted-foreground mt-6">
-                  Choose at least 2 establishments to include in your Swig Circuit.
-                </p>
-                
-                <BarCrawlControl 
-                  establishments={sampleEstablishments}
-                  onSaveBarCrawl={handleSaveEstablishments}
-                />
-                
-                {selectedEstablishments.length > 0 && (
-                  <div className="bg-muted/30 p-3 rounded border">
-                    <h3 className="font-medium mb-2">Selected Venues ({selectedEstablishments.length})</h3>
-                    <div className="space-y-2">
-                      {selectedEstablishments.map((est, index) => (
-                        <div key={est.id} className="bg-background p-2 rounded flex justify-between items-center">
-                          <div className="flex items-center">
-                            <div className="bg-material-primary text-white w-6 h-6 rounded-full flex items-center justify-center mr-2">
-                              {index + 1}
-                            </div>
-                            <span className="truncate">{est.name}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                {isLocating ? (
+                  <div className="text-center py-4">
+                    <p className="text-muted-foreground">Detecting your location...</p>
                   </div>
+                ) : !userLocation ? (
+                  <div className="text-center py-4 bg-amber-50 border border-amber-200 rounded-lg p-4">
+                    <p className="text-amber-800">
+                      Location services are disabled. Enable location services in your browser to see nearby venues.
+                    </p>
+                    <Button 
+                      variant="outline" 
+                      className="mt-2" 
+                      onClick={() => window.location.reload()}
+                    >
+                      Retry
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <DistanceFilter 
+                      maxDistance={maxDistance}
+                      onDistanceChange={handleDistanceChange}
+                    />
+                    
+                    <div className="mt-6">
+                      <h3 className="text-lg font-medium mb-3">Available Venues</h3>
+                      {isLoadingEstablishments ? (
+                        <div className="text-center py-8">
+                          <p className="text-muted-foreground">Loading venues...</p>
+                        </div>
+                      ) : availableEstablishments.length === 0 ? (
+                        <div className="text-center py-8 bg-gray-50 border border-gray-200 rounded-lg">
+                          <p className="text-gray-600">
+                            No venues found within {maxDistance} miles of your location.
+                          </p>
+                          <p className="text-sm text-gray-500 mt-2">
+                            Try increasing the distance or selecting a different location.
+                          </p>
+                        </div>
+                      ) : (
+                        <div>
+                          <p className="text-sm text-muted-foreground mb-4">
+                            Found {availableEstablishments.length} venues within {maxDistance} miles of your location.
+                            Select venues to add to your Swig Circuit.
+                          </p>
+                          
+                          <BarCrawlControl 
+                            establishments={availableEstablishments}
+                            onSaveBarCrawl={handleSaveEstablishments}
+                          />
+                          
+                          {selectedEstablishments.length > 0 && (
+                            <div className="bg-muted/30 p-3 rounded border mt-4">
+                              <h3 className="font-medium mb-2">Selected Venues ({selectedEstablishments.length})</h3>
+                              <div className="space-y-2">
+                                {selectedEstablishments.map((est, index) => (
+                                  <div key={est.id} className="bg-background p-2 rounded flex justify-between items-center">
+                                    <div className="flex items-center">
+                                      <div className="bg-material-primary text-white w-6 h-6 rounded-full flex items-center justify-center mr-2">
+                                        {index + 1}
+                                      </div>
+                                      <span className="truncate">{est.name}</span>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </>
                 )}
                 
                 <div className="flex justify-between space-x-2 pt-4">
@@ -407,7 +456,6 @@ const CreateSwigCircuitPage: React.FC = () => {
             </Card>
           )}
           
-          {/* Drink Highlights */}
           {currentTab === "drinks" && (
             <Card>
               <CardHeader>
@@ -440,7 +488,6 @@ const CreateSwigCircuitPage: React.FC = () => {
             </Card>
           )}
           
-          {/* Food Pairings */}
           {currentTab === "pairings" && (
             <Card>
               <CardHeader>

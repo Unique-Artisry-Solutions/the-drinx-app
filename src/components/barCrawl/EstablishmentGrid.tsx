@@ -39,6 +39,11 @@ const EstablishmentGrid: React.FC<EstablishmentGridProps> = ({ establishments })
                   No image available
                 </div>
               )}
+              {establishment.distance && (
+                <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-md">
+                  {establishment.distance}
+                </div>
+              )}
             </div>
             <div className="p-3 flex-1 flex flex-col">
               <h3 className="font-semibold text-base mb-1 line-clamp-1 text-left">{establishment.name}</h3>
@@ -50,11 +55,6 @@ const EstablishmentGrid: React.FC<EstablishmentGridProps> = ({ establishments })
                 <span>
                   {establishment.cocktailCount || 0} cocktails
                 </span>
-                {establishment.distance && (
-                  <span className="text-white text-[10px] px-1.5 py-0.5 rounded-full bg-gray-500/50">
-                    {establishment.distance}
-                  </span>
-                )}
               </div>
             </div>
           </Link>
