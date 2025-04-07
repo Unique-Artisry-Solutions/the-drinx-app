@@ -64,6 +64,25 @@ export const useUserRecipes = () => {
       
       console.log('Creating recipe for user:', user.id, 'Recipe data:', newRecipe);
       
+      // Use localStorage for testing when in demo/non-auth mode
+      if (localStorage.getItem('DEMO_MODE') === 'true' || !user.id) {
+        const mockId = `local-${Date.now()}`;
+        const mockRecipe = {
+          ...newRecipe,
+          id: mockId,
+          user_id: 'local-user',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+        
+        // Store in localStorage
+        const existingRecipes = JSON.parse(localStorage.getItem('user_recipes') || '[]');
+        existingRecipes.push(mockRecipe);
+        localStorage.setItem('user_recipes', JSON.stringify(existingRecipes));
+        
+        return mockRecipe;
+      }
+      
       const recipeToInsert = {
         ...newRecipe,
         user_id: user.id,
