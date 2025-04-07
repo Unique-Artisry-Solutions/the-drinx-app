@@ -1,5 +1,5 @@
 
-import { FeatureItem, AnalysisStep } from '../types';
+import { FeatureItem, AnalysisStep, FeatureStatus } from '../types';
 
 export function analyzeAllFeatures(
   adminFeatures: FeatureItem[],
@@ -14,6 +14,18 @@ export function analyzeAllFeatures(
   const updatedEstablishmentFeatures = [...establishmentFeatures];
   const updatedIndividualFeatures = [...individualFeatures];
   
+  // Track completed database tasks
+  const databaseTasks: AnalysisStep[] = [
+    { name: 'Database schema verification', completed: true },
+    { name: 'API endpoints validation', completed: true },
+    { name: 'Authentication flow check', completed: true },
+    { name: 'User permissions validation', completed: true },
+    { name: 'Content moderation implementation', completed: false },
+    { name: 'Storage bucket configuration', completed: true },
+    { name: 'Database trigger functions verification', completed: false },
+    { name: 'Frontend component implementation check', completed: true }
+  ];
+  
   // Mock analysis that updates some features
   const randomlyUpdateFeatures = (features: FeatureItem[]) => {
     return features.map(feature => {
@@ -21,11 +33,13 @@ export function analyzeAllFeatures(
       const shouldUpdate = Math.random() > 0.7;
       if (shouldUpdate) {
         const originalStatus = feature.status;
-        const newStatus = 
-          originalStatus === 'not_started' ? 'planned' :
-          originalStatus === 'planned' ? 'partial' :
-          originalStatus === 'partial' ? 'implemented' :
-          originalStatus;
+        // Ensure we're using the correct FeatureStatus type
+        let newStatus: FeatureStatus = originalStatus;
+        
+        // Update status based on current status
+        if (originalStatus === 'not_started') newStatus = 'planned';
+        else if (originalStatus === 'planned') newStatus = 'partial';
+        else if (originalStatus === 'partial') newStatus = 'implemented';
         
         return {
           ...feature,
@@ -43,22 +57,10 @@ export function analyzeAllFeatures(
   const analyzedEstablishmentFeatures = randomlyUpdateFeatures(updatedEstablishmentFeatures);
   const analyzedIndividualFeatures = randomlyUpdateFeatures(updatedIndividualFeatures);
   
-  // Track completed analysis steps
-  const completedSteps: AnalysisStep[] = [
-    { name: 'Database schema verification', completed: true },
-    { name: 'API endpoints validation', completed: true },
-    { name: 'Authentication flow check', completed: true },
-    { name: 'User permissions validation', completed: true },
-    { name: 'Content moderation implementation', completed: true },
-    { name: 'Storage bucket configuration', completed: true },
-    { name: 'Database trigger functions verification', completed: true },
-    { name: 'Frontend component implementation check', completed: true }
-  ];
-  
   return {
     adminFeatures: analyzedAdminFeatures,
     establishmentFeatures: analyzedEstablishmentFeatures,
     individualFeatures: analyzedIndividualFeatures,
-    completedSteps
+    completedSteps: databaseTasks
   };
 }

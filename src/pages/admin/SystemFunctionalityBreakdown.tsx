@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { FileDown, RefreshCw, AlertTriangle, Lightbulb } from 'lucide-react';
+import { FileDown, RefreshCw, AlertTriangle, Lightbulb, Database, Loader2 } from 'lucide-react';
 import AdminHeader from '@/components/admin/AdminHeader';
 import { useToast } from '@/hooks/use-toast';
 
@@ -16,15 +16,16 @@ import AnalysisProgress from '@/components/admin/systemBreakdown/AnalysisProgres
 // Updated import path for feature data
 import { adminFeatures as initialAdminFeatures, establishmentFeatures as initialEstablishmentFeatures, individualFeatures as initialIndividualFeatures } from '@/components/admin/systemBreakdown/features';
 import { proposedImprovements } from '@/components/admin/systemBreakdown/improvementsData';
-import { generateCSV, analyzeAllFeatures, AnalysisStep } from '@/components/admin/systemBreakdown/utils';
+import { generateCSV, analyzeAllFeatures } from '@/components/admin/systemBreakdown/utils';
+import { AnalysisStep, FeatureItem } from '@/components/admin/systemBreakdown/types';
 
 const SystemFunctionalityBreakdown: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<string>('overview');
-  const [adminFeatures, setAdminFeatures] = useState(initialAdminFeatures);
-  const [establishmentFeatures, setEstablishmentFeatures] = useState(initialEstablishmentFeatures);
-  const [individualFeatures, setIndividualFeatures] = useState(initialIndividualFeatures);
+  const [adminFeatures, setAdminFeatures] = useState<FeatureItem[]>(initialAdminFeatures);
+  const [establishmentFeatures, setEstablishmentFeatures] = useState<FeatureItem[]>(initialEstablishmentFeatures);
+  const [individualFeatures, setIndividualFeatures] = useState<FeatureItem[]>(initialIndividualFeatures);
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [analysisSteps, setAnalysisSteps] = useState<AnalysisStep[]>([]);
@@ -57,8 +58,8 @@ const SystemFunctionalityBreakdown: React.FC = () => {
     setAnalyzing(true);
     setAnalysisProgress(0);
     
-    // Create initial steps array with nothing completed
-    const steps: AnalysisStep[] = [
+    // Create initial database tasks array with default states
+    const initialDatabaseTasks: AnalysisStep[] = [
       { name: 'Database schema verification', completed: false },
       { name: 'API endpoints validation', completed: false },
       { name: 'Authentication flow check', completed: false },
@@ -68,15 +69,17 @@ const SystemFunctionalityBreakdown: React.FC = () => {
       { name: 'Database trigger functions verification', completed: false },
       { name: 'Frontend component implementation check', completed: false }
     ];
-    setAnalysisSteps(steps);
+    setAnalysisSteps(initialDatabaseTasks);
     
-    // Simulate progress updates for each step
+    // Simulate progress updates for each task
     let currentStep = 0;
-    const totalSteps = steps.length;
+    const totalSteps = initialDatabaseTasks.length;
     
     const progressInterval = setInterval(() => {
       if (currentStep < totalSteps) {
-        const updatedSteps = [...steps];
+        const updatedSteps = [...initialDatabaseTasks];
+        
+        // Mark the current task as completed
         updatedSteps[currentStep].completed = true;
         setAnalysisSteps(updatedSteps);
         
@@ -95,14 +98,15 @@ const SystemFunctionalityBreakdown: React.FC = () => {
     
     const completeAnalysis = () => {
       const analyzedFeatures = analyzeAllFeatures(
-        initialAdminFeatures,
-        initialEstablishmentFeatures,
-        initialIndividualFeatures
+        adminFeatures,
+        establishmentFeatures,
+        individualFeatures
       );
       
       setAdminFeatures(analyzedFeatures.adminFeatures);
       setEstablishmentFeatures(analyzedFeatures.establishmentFeatures);
       setIndividualFeatures(analyzedFeatures.individualFeatures);
+      setAnalysisSteps(analyzedFeatures.completedSteps);
       
       const totalUpdated = [
         ...analyzedFeatures.adminFeatures,
@@ -136,7 +140,11 @@ const SystemFunctionalityBreakdown: React.FC = () => {
               disabled={analyzing}
               variant="secondary"
             >
-              <RefreshCw className={`h-4 w-4 ${analyzing ? 'animate-spin' : ''}`} />
+              {analyzing ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Database className="h-4 w-4" />
+              )}
               {analyzing ? 'Analyzing...' : 'Analyze Implementation'}
             </Button>
             <Button onClick={handleExportCSV} className="flex items-center gap-2">

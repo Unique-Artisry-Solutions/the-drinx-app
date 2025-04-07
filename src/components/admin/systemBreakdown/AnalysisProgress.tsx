@@ -1,8 +1,9 @@
 
 import React from 'react';
-import { Check, Loader2 } from 'lucide-react';
+import { Check, Loader2, Database } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface AnalysisStep {
   name: string;
@@ -27,10 +28,13 @@ const AnalysisProgress: React.FC<AnalysisProgressProps> = ({ analyzing, steps, p
           {analyzing ? (
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Analyzing Implementation
+              Analyzing Database Implementation
             </>
           ) : (
-            <>Analysis Complete</>
+            <>
+              <Database className="h-4 w-4 mr-2" />
+              Database Tasks Analysis
+            </>
           )}
         </CardTitle>
       </CardHeader>
@@ -43,23 +47,41 @@ const AnalysisProgress: React.FC<AnalysisProgressProps> = ({ analyzing, steps, p
           <Progress value={progress} className="h-2" />
         </div>
         
-        <div className="space-y-1">
+        <div className="space-y-2 mt-4">
+          <div className="text-sm font-medium mb-2">Database Implementation Tasks:</div>
           {steps.map((step, index) => (
             <div 
               key={index} 
               className={`flex items-center p-2 rounded-md ${step.completed ? 'bg-green-50' : 'bg-gray-50'}`}
             >
-              <div className={`mr-2 h-5 w-5 flex items-center justify-center rounded-full ${
-                step.completed ? 'bg-green-500 text-white' : 'bg-gray-200'
-              }`}>
-                {step.completed && <Check className="h-3.5 w-3.5" />}
-              </div>
-              <span className={step.completed ? 'text-gray-800' : 'text-gray-500'}>
+              <Checkbox 
+                id={`task-${index}`}
+                checked={step.completed} 
+                className="mr-2"
+                disabled={analyzing}
+              />
+              <label 
+                htmlFor={`task-${index}`}
+                className={`text-sm ${step.completed ? 'text-gray-800' : 'text-gray-500'}`}
+              >
                 {step.name}
-              </span>
+              </label>
+              {step.completed && (
+                <div className="ml-auto">
+                  <Check className="h-4 w-4 text-green-500" />
+                </div>
+              )}
             </div>
           ))}
         </div>
+        
+        {!analyzing && steps.some(step => !step.completed) && (
+          <div className="mt-4 pl-4 border-l-2 border-blue-400 bg-blue-50 p-3 rounded">
+            <p className="text-sm text-blue-800">
+              Some database tasks haven't been completed. These might affect the implementation status of certain features.
+            </p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

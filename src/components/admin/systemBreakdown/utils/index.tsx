@@ -3,7 +3,6 @@ import { renderStatusBadge, renderDatabaseStatusBadge, renderAccessIcon } from '
 import { calculateFeatureStatistics } from './statisticsUtils';
 import { generateCSV } from './exportUtils';
 import { analyzeAllFeatures } from './analysisUtils';
-import { AnalysisStep } from '../types';
 
 export {
   renderStatusBadge,
@@ -12,5 +11,7 @@ export {
   calculateFeatureStatistics,
   generateCSV,
   analyzeAllFeatures,
-  AnalysisStep
 };
+
+// Use 'export type' for type exports when isolatedModules is enabled
+export type { AnalysisStep } from '../types';
