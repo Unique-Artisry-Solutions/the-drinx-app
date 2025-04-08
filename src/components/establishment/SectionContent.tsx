@@ -15,12 +15,14 @@ interface SectionContentProps {
     isLoading: boolean;
     error: string | null;
   };
+  establishmentId?: string;
 }
 
 const SectionContent: React.FC<SectionContentProps> = ({ 
   activeSection, 
   handleTabChange,
-  visitorStats
+  visitorStats,
+  establishmentId
 }) => {
   if (!activeSection) return null;
   
@@ -28,7 +30,7 @@ const SectionContent: React.FC<SectionContentProps> = ({
     case 'allActions':
       return <AllActionsSection handleTabChange={handleTabChange} />;
     case 'analytics':
-      return <AnalyticsSection visitorStats={visitorStats} />;
+      return <AnalyticsSection visitorStats={visitorStats} establishmentId={establishmentId} />;
     case 'settings':
       return <SettingsSection handleTabChange={handleTabChange} />;
     default:

@@ -113,6 +113,7 @@ const EstablishmentProfilePage = () => {
           activeSection={activeSection} 
           handleTabChange={handleTabChange}
           visitorStats={visitorStats}
+          establishmentId={establishmentId}
         />
         
         {/* Show tab content only if no section is active */}

@@ -4,6 +4,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AlertCircle } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 
 interface AnalyticsSectionProps {
   visitorStats: {
@@ -18,6 +20,12 @@ interface AnalyticsSectionProps {
 }
 
 const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({ visitorStats, establishmentId }) => {
+  const navigate = useNavigate();
+
+  const goToAnalyticsPage = () => {
+    navigate('/establishment/analytics');
+  };
+  
   if (visitorStats.isLoading) {
     return (
       <Card className="mb-6 mx-4 md:mx-6 lg:mx-[10%]">
@@ -95,6 +103,11 @@ const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({ visitorStats, estab
           </div>
           <div className="h-64 bg-gray-50 rounded flex items-center justify-center dark:bg-gray-800">
             <p className="text-gray-500 dark:text-gray-400">Visitor trend chart would display here</p>
+          </div>
+          <div className="flex justify-center">
+            <Button onClick={goToAnalyticsPage} className="mt-4">
+              View Full Analytics
+            </Button>
           </div>
         </div>
       </CardContent>
