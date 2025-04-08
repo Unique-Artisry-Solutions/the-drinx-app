@@ -2,9 +2,9 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
-  DropdownMenuItem,
-  DropdownMenuSeparator 
+  DropdownMenuItem
 } from '@/components/ui/dropdown/dropdown-items';
+import { DropdownMenuSeparator } from '@/components/ui/dropdown/dropdown-utils';
 import { adminNavItems } from './AdminNavItems';
 import { LogOut } from 'lucide-react';
 
