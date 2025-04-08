@@ -13,13 +13,13 @@ const SystemAnalyticsPage: React.FC = () => {
   }, [trackPage]);
 
   return (
-    <>
+    <div className="space-y-8">
       <AnalyticsService pageView="admin_analytics" />
       
       <div className="container mx-auto p-6">
         <AnalyticsDashboard />
       </div>
-    </>
+    </div>
   );
 };
 

@@ -47,7 +47,7 @@ export async function trackEvent(event: AnalyticsEvent): Promise<string | null> 
 export async function getAnalyticsData(period: 'daily' | 'weekly' | 'monthly', startDate: Date, endDate: Date) {
   try {
     // Use type assertion to tell TypeScript this is a valid table name
-    const tableName = `analytics_${period}_rollup` as "analytics_daily_rollup" | "analytics_weekly_rollup" | "analytics_monthly_rollup";
+    const tableName = `analytics_${period}_rollup` as const;
     
     const { data, error } = await supabaseClient
       .from(tableName)
@@ -90,13 +90,13 @@ export async function getUserRetention(startDate: Date, endDate: Date) {
 }
 
 /**
- * Get event summary statistics - directly querying analytics_events instead of using RPC
+ * Get event summary statistics - using the event_summary table
  */
 export async function getEventSummary(startDate: Date, endDate: Date) {
   try {
     const { data, error } = await supabaseClient
       .from('analytics_events')
-      .select('event_type, count(*)')
+      .select('event_type, count')
       .gte('timestamp', startDate.toISOString())
       .lte('timestamp', endDate.toISOString())
       .order('count', { ascending: false });
