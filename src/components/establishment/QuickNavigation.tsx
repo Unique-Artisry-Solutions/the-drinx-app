@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { buttonVariants } from '@/components/ui/button';
 import { BarChart4, Store, Route, Utensils, Tag, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useNavigate } from 'react-router-dom';
 
 interface QuickNavigationProps {
   activeSection: string | null;
@@ -18,6 +19,8 @@ const QuickNavigation: React.FC<QuickNavigationProps> = ({
   handleTabChange,
   handleQuickLinkClick
 }) => {
+  const navigate = useNavigate();
+
   // Quick navigation links for establishment
   const quickLinks = [
     { label: 'All Actions', section: 'allActions', icon: Store },
@@ -28,6 +31,18 @@ const QuickNavigation: React.FC<QuickNavigationProps> = ({
     { label: 'Settings', section: 'settings', icon: Settings }
   ];
 
+  const handleLinkClick = (link: any) => {
+    if (link.tab) {
+      handleTabChange(link.tab);
+    } else if (link.section === 'allActions') {
+      navigate('/establishment/all-actions');
+    } else if (link.section === 'analytics') {
+      navigate('/establishment/analytics');
+    } else {
+      handleQuickLinkClick(link.section);
+    }
+  };
+
   return (
     <Card className="mb-6 mx-4 md:mx-6 lg:mx-[10%]">
       <CardContent className="py-4">
@@ -36,7 +51,7 @@ const QuickNavigation: React.FC<QuickNavigationProps> = ({
           {quickLinks.map((link) => (
             <button 
               key={link.section}
-              onClick={() => link.tab ? handleTabChange(link.tab) : handleQuickLinkClick(link.section)}
+              onClick={() => handleLinkClick(link)}
               className={cn(
                 buttonVariants({ variant: (activeSection === link.section || activeTab === link.tab) ? "default" : "outline" }),
                 "flex items-center gap-2"

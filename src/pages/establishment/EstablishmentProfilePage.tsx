@@ -8,6 +8,7 @@ import QuickNavigation from '@/components/establishment/QuickNavigation';
 import SectionContent from '@/components/establishment/SectionContent';
 import TabContent from '@/components/establishment/TabContent';
 import { useVisitorStats } from '@/hooks/establishment/useVisitorStats';
+import { useUserEstablishment } from '@/hooks/establishment/useUserEstablishment';
 
 const EstablishmentProfilePage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -17,16 +18,18 @@ const EstablishmentProfilePage = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   
+  // Get the user's establishment ID
+  const { establishmentId, isLoading: isLoadingEstablishment, error: establishmentError } = useUserEstablishment();
+  
   const {
     profileState,
     promotionsState,
     drinksState,
     barCrawlsState
-  } = useEstablishmentProfile();
+  } = useEstablishmentProfile(establishmentId);
   
-  // Use the visitor stats hook to get visitor data
-  // Since we're in a profile page, we use a sample ID for demo purposes
-  const visitorStats = useVisitorStats('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'); // Sample UUID for demo
+  // Use the visitor stats hook with the establishment ID
+  const visitorStats = useVisitorStats(establishmentId || undefined);
   
   useEffect(() => {
     if (tabParam && ['profile', 'promotions', 'menu', 'visitors', 'barCrawls'].includes(tabParam)) {
@@ -58,6 +61,35 @@ const EstablishmentProfilePage = () => {
     // Set this as a custom section
     setActiveSection(section);
   };
+  
+  // Show loading state while we fetch the establishment ID
+  if (isLoadingEstablishment) {
+    return (
+      <Layout activeTab={activeTab} handleTabChange={handleTabChange} tabOptions={tabOptions}>
+        <div className="flex items-center justify-center h-64">
+          <div className="loader">Loading establishment data...</div>
+        </div>
+      </Layout>
+    );
+  }
+  
+  // Show error state if we couldn't get the establishment ID
+  if (establishmentError) {
+    return (
+      <Layout activeTab={activeTab} handleTabChange={handleTabChange} tabOptions={tabOptions}>
+        <div className="p-6 text-center">
+          <h2 className="text-xl font-semibold mb-2">Error Loading Establishment</h2>
+          <p className="text-gray-600 mb-4">{establishmentError}</p>
+          <button 
+            className="px-4 py-2 bg-spiritless-pink text-white rounded" 
+            onClick={() => navigate('/establishment/dashboard')}
+          >
+            Return to Dashboard
+          </button>
+        </div>
+      </Layout>
+    );
+  }
   
   return (
     <Layout 
