@@ -37,16 +37,6 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
     window.scrollTo(0, 0);
   }, [location.pathname]);
 
-  // Debug output to help diagnose navigation issues
-  useEffect(() => {
-    console.log('MobileNavigation Rendered:', { 
-      type, 
-      userType: currentUserType, 
-      user: !!user,
-      path: location.pathname
-    });
-  }, [type, currentUserType, user, location.pathname]);
-
   const toggleExpand = () => {
     setExpanded(!expanded);
   };

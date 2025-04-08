@@ -63,6 +63,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
 
   const isLandingPage = location.pathname === '/' || location.pathname === '/landing';
   const isAdminPage = location.pathname.startsWith('/admin');
+  const isEstablishmentPage = location.pathname.startsWith('/establishment');
   const isSettingsPage = location.pathname === '/settings';
 
   const getContentPadding = () => {
