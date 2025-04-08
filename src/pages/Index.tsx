@@ -3,25 +3,64 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/auth';
+import SearchFilter from '@/components/SearchFilter';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useIsMobile } from '@/hooks/use-mobile';
+import { useIndexPageLogic } from '@/hooks/useIndexPageLogic';
+
+// Import the new components
+import FeaturedCocktails from '@/components/home/FeaturedCocktails';
+import NearbyEstablishments from '@/components/home/NearbyEstablishments';
+import AllCocktails from '@/components/home/AllCocktails';
+import MapSection from '@/components/home/MapSection';
 import EstablishmentDashboard from '@/components/establishment/EstablishmentDashboard';
+
+// Define the establishment interface to match the one used in FeaturedCocktails and AllCocktails
+interface Establishment {
+  id: string;
+  name: string;
+  distance?: string;
+}
+
+// Define the cocktail interface to match
+interface Cocktail {
+  id: string;
+  name: string;
+  price: string | number;
+  description: string;
+  ingredients: string[];
+  image?: string;
+  establishment: Establishment;
+}
 
 const Index = () => {
   const { user, isLoading } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const userType = localStorage.getItem('user_type');
   const isEstablishment = userType === 'establishment';
   const isAdmin = localStorage.getItem('admin_authenticated') === 'true';
+  
+  const {
+    cocktails,
+    establishments,
+    searchQuery,
+    filters,
+    activeTab,
+    setActiveTab,
+    userLocation,
+    isLoadingLocation,
+    refreshLocation,
+    handleSearch,
+    handleFilterChange,
+    applyFilters,
+    resetFilters
+  } = useIndexPageLogic();
   
   // Use useEffect to handle navigation properly
   useEffect(() => {
     // Make sure we're not in a loading state
     if (isLoading) return;
-    
-    // If user is not authenticated, redirect to landing
-    if (!user) {
-      navigate('/landing', { replace: true });
-      return;
-    }
     
     // If admin is authenticated, redirect to system breakdown page
     if (isAdmin) {
@@ -29,10 +68,15 @@ const Index = () => {
       return;
     }
     
+    // If user is not authenticated, redirect to landing
+    if (!user) {
+      navigate('/landing', { replace: true });
+      return;
+    }
+    
     // If user is authenticated and is an individual, redirect to explore
     if (user && !isEstablishment) {
       navigate('/explore', { replace: true });
-      return;
     }
     
     // If user is authenticated and is an establishment, the dashboard will be shown
@@ -61,11 +105,58 @@ const Index = () => {
     );
   }
 
-  // This should rarely be seen because of the redirects in useEffect
+  // This will rarely be shown because of the redirects in useEffect
   return (
     <Layout>
-      <div className="flex items-center justify-center min-h-screen">
-        Redirecting...
+      <div className="animate-fade-in my-4 sm:my-[30px] px-3 sm:px-6 md:px-[148px]">
+        <div className="mb-6 mt-2 text-center">
+          <h1 className="text-2xl sm:text-3xl font-medium text-material-on-background">
+            Spirit<span className="text-material-primary">less</span>
+          </h1>
+          <p className="text-material-on-surface-variant text-sm sm:text-base">
+            Discover non-alcoholic cocktails near you
+          </p>
+        </div>
+
+        <SearchFilter 
+          onSearch={handleSearch} 
+          onFilterChange={handleFilterChange} 
+          onApplyFilters={applyFilters}
+          className="mb-6" 
+        />
+
+        <Tabs defaultValue="featured" className="w-full" onValueChange={setActiveTab}>
+          <TabsList className="w-full mb-6">
+            <TabsTrigger value="featured" className="flex-1">Featured</TabsTrigger>
+            <TabsTrigger value="all" className="flex-1">All Cocktails</TabsTrigger>
+            <TabsTrigger value="map" className="flex-1">Map</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="featured">
+            <FeaturedCocktails cocktails={cocktails as any} />
+            <NearbyEstablishments 
+              establishments={establishments} 
+              onViewMap={() => setActiveTab("map")} 
+            />
+          </TabsContent>
+          
+          <TabsContent value="all">
+            <AllCocktails 
+              cocktails={cocktails as any} 
+              onResetFilters={resetFilters} 
+            />
+          </TabsContent>
+          
+          <TabsContent value="map">
+            <MapSection 
+              establishments={establishments}
+              mapHeight={isMobile ? "h-[60vh]" : "h-[50vh]"}
+              userLocation={userLocation}
+              onRefreshLocation={refreshLocation}
+              isLoadingLocation={isLoadingLocation}
+            />
+          </TabsContent>
+        </Tabs>
       </div>
     </Layout>
   );

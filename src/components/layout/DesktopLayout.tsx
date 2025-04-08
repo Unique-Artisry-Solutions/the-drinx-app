@@ -63,7 +63,6 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
 
   const isLandingPage = location.pathname === '/' || location.pathname === '/landing';
   const isAdminPage = location.pathname.startsWith('/admin');
-  const isEstablishmentPage = location.pathname.startsWith('/establishment');
   const isSettingsPage = location.pathname === '/settings';
 
   const getContentPadding = () => {
@@ -84,15 +83,14 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   };
 
   const renderNavigation = () => {
-    if (isAdmin || isAdminPage) {
+    if (isSettingsPage) {
+      return useGuestNavigation() ? <GuestTopNavigation /> : <UserTopNavigation />;
+    } else if (isAdminPage || isAdmin) {
       return <AdminTopNavigation />;
-    } else if (useGuestNavigation()) {
-      // Show GuestTopNavigation for public pages or when not authenticated
-      return <GuestTopNavigation />;
     } else if (navigationType === NavigationType.USER && user) {
       return <UserTopNavigation activeTab={activeTab} handleTabChange={handleTabChange} tabOptions={tabOptions} />;
     } else {
-      // Fallback to guest navigation
+      // Show GuestTopNavigation for public pages or when not authenticated
       return <GuestTopNavigation />;
     }
   };

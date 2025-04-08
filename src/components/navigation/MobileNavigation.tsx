@@ -37,6 +37,16 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
     window.scrollTo(0, 0);
   }, [location.pathname]);
 
+  // Debug output to help diagnose navigation issues
+  useEffect(() => {
+    console.log('MobileNavigation Rendered:', { 
+      type, 
+      userType: currentUserType, 
+      user: !!user,
+      path: location.pathname
+    });
+  }, [type, currentUserType, user, location.pathname]);
+
   const toggleExpand = () => {
     setExpanded(!expanded);
   };
@@ -45,11 +55,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
     e.preventDefault();
     
     if (user) {
-      const isAdmin = localStorage.getItem('admin_authenticated') === 'true';
-      
-      if (isAdmin) {
-        navigate('/admin/system-breakdown');
-      } else if (currentUserType === 'establishment') {
+      if (currentUserType === 'establishment') {
         navigate('/establishment/all-actions');
       } else {
         navigate('/explore');
