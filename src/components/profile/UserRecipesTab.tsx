@@ -34,7 +34,7 @@ const UserRecipesTab: React.FC = () => {
   } = useRecipeForm();
 
   const handleCreateRecipe = async () => {
-    if (!newRecipe.name || !newRecipe.instructions || newRecipe.ingredients.length === 0) {
+    if (!newRecipe.name || !newRecipe.instructions || !newRecipe.ingredients || newRecipe.ingredients.length === 0) {
       toast({
         title: "Missing information",
         description: "Please fill in all required fields for the recipe.",
@@ -73,7 +73,7 @@ const UserRecipesTab: React.FC = () => {
   const handleUpdateRecipe = async () => {
     if (!editingRecipe) return;
 
-    if (!editingRecipe.name || !editingRecipe.instructions || editingRecipe.ingredients.length === 0) {
+    if (!editingRecipe.name || !editingRecipe.instructions || !editingRecipe.ingredients || editingRecipe.ingredients.length === 0) {
       toast({
         title: "Missing information",
         description: "Please fill in all required fields for the recipe.",

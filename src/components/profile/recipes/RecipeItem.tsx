@@ -19,6 +19,8 @@ const RecipeItem: React.FC<RecipeItemProps> = ({
     return new Date(dateString).toLocaleDateString();
   };
 
+  const ingredients = recipe.ingredients || [];
+
   return (
     <Card key={recipe.id} className="overflow-hidden hover:shadow-md transition-shadow">
       <div className="sm:flex">
@@ -44,7 +46,7 @@ const RecipeItem: React.FC<RecipeItemProps> = ({
               <div>
                 <h4 className="font-medium mb-2">Ingredients:</h4>
                 <ul className="list-disc pl-5 text-sm space-y-1">
-                  {recipe.ingredients.map((ingredient, idx) => (
+                  {ingredients.map((ingredient, idx) => (
                     <li key={idx}>{ingredient.amount} {ingredient.name}</li>
                   ))}
                 </ul>

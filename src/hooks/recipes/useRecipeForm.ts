@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { RecipeFormState } from '@/components/profile/recipes/types';
@@ -33,14 +34,16 @@ export function useRecipeForm() {
       };
       
       if (editingRecipe) {
+        const currentIngredients = editingRecipe.ingredients || [];
         setEditingRecipe({
           ...editingRecipe,
-          ingredients: [...editingRecipe.ingredients, ingredient]
+          ingredients: [...currentIngredients, ingredient]
         });
       } else {
+        const currentIngredients = newRecipe.ingredients || [];
         setNewRecipe({
           ...newRecipe,
-          ingredients: [...newRecipe.ingredients, ingredient]
+          ingredients: [...currentIngredients, ingredient]
         });
       }
       setNewIngredient('');
@@ -56,38 +59,42 @@ export function useRecipeForm() {
 
   const handleIngredientChange = (index: number, field: keyof Ingredient, value: string) => {
     if (editingRecipe) {
-      const updatedIngredients = [...editingRecipe.ingredients];
-      updatedIngredients[index] = {
-        ...updatedIngredients[index],
-        [field]: value
-      };
-      setEditingRecipe({
-        ...editingRecipe,
-        ingredients: updatedIngredients
-      });
+      const updatedIngredients = [...(editingRecipe.ingredients || [])];
+      if (updatedIngredients[index]) {
+        updatedIngredients[index] = {
+          ...updatedIngredients[index],
+          [field]: value
+        };
+        setEditingRecipe({
+          ...editingRecipe,
+          ingredients: updatedIngredients
+        });
+      }
     } else {
-      const updatedIngredients = [...newRecipe.ingredients];
-      updatedIngredients[index] = {
-        ...updatedIngredients[index],
-        [field]: value
-      };
-      setNewRecipe({
-        ...newRecipe,
-        ingredients: updatedIngredients
-      });
+      const updatedIngredients = [...(newRecipe.ingredients || [])];
+      if (updatedIngredients[index]) {
+        updatedIngredients[index] = {
+          ...updatedIngredients[index],
+          [field]: value
+        };
+        setNewRecipe({
+          ...newRecipe,
+          ingredients: updatedIngredients
+        });
+      }
     }
   };
 
   const handleRemoveIngredient = (index: number) => {
     if (editingRecipe) {
-      const updatedIngredients = [...editingRecipe.ingredients];
+      const updatedIngredients = [...(editingRecipe.ingredients || [])];
       updatedIngredients.splice(index, 1);
       setEditingRecipe({
         ...editingRecipe,
         ingredients: updatedIngredients
       });
     } else {
-      const updatedIngredients = [...newRecipe.ingredients];
+      const updatedIngredients = [...(newRecipe.ingredients || [])];
       updatedIngredients.splice(index, 1);
       setNewRecipe({
         ...newRecipe,
@@ -129,7 +136,7 @@ export function useRecipeForm() {
       formState: {
         name: editingRecipe.name,
         description: editingRecipe.description || '',
-        ingredients: editingRecipe.ingredients,
+        ingredients: editingRecipe.ingredients || [],
         instructions: editingRecipe.instructions,
         is_public: editingRecipe.is_public
       },
@@ -138,7 +145,7 @@ export function useRecipeForm() {
           ...editingRecipe,
           name: formState.name,
           description: formState.description,
-          ingredients: formState.ingredients,
+          ingredients: formState.ingredients || [],
           instructions: formState.instructions,
           is_public: formState.is_public
         });

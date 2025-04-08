@@ -20,23 +20,33 @@ export const useFetchRecipes = (user: User | null) => {
 
       // For demo/testing mode with localStorage
       if (localStorage.getItem('DEMO_MODE') === 'true') {
-        const localRecipes = JSON.parse(localStorage.getItem('user_recipes') || '[]');
-        return localRecipes.filter((recipe: UserRecipe) => recipe.user_id === userId);
+        try {
+          const localRecipes = JSON.parse(localStorage.getItem('user_recipes') || '[]');
+          return localRecipes.filter((recipe: UserRecipe) => recipe.user_id === userId);
+        } catch (err) {
+          console.error('Error parsing local recipes:', err);
+          return [];
+        }
       }
 
       // Otherwise fetch from Supabase
-      const { data, error } = await supabaseClient
-        .from('user_recipes')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false });
+      try {
+        const { data, error } = await supabaseClient
+          .from('user_recipes')
+          .select('*')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching recipes:', error);
-        throw error;
+        if (error) {
+          console.error('Error fetching recipes:', error);
+          throw error;
+        }
+
+        return data as UserRecipe[] || [];
+      } catch (error) {
+        console.error('Error in recipe fetch:', error);
+        return [];
       }
-
-      return data as UserRecipe[];
     },
     enabled: !!user || localStorage.getItem('admin_bypass') === 'true'
   });
