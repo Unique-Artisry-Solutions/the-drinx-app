@@ -125,16 +125,16 @@ const EstablishmentProfilePage = () => {
                   <h2 className="text-lg font-semibold mb-2">Visitor Overview</h2>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <Card className="p-4 bg-blue-50">
-                      <h3 className="font-medium">Total Visitors</h3>
-                      <p className="text-2xl font-bold">{visitorStats?.totalVisitors || 278}</p>
+                      <h3 className="font-medium">Total Visits</h3>
+                      <p className="text-2xl font-bold">{visitorStats?.totalVisits || 278}</p>
                     </Card>
                     <Card className="p-4 bg-green-50">
-                      <h3 className="font-medium">New This Month</h3>
-                      <p className="text-2xl font-bold">{visitorStats?.newVisitors || 42}</p>
+                      <h3 className="font-medium">Unique Visitors</h3>
+                      <p className="text-2xl font-bold">{visitorStats?.uniqueVisitors || 153}</p>
                     </Card>
                     <Card className="p-4 bg-amber-50">
-                      <h3 className="font-medium">Return Rate</h3>
-                      <p className="text-2xl font-bold">{visitorStats?.returnRate || '62%'}</p>
+                      <h3 className="font-medium">Returning Visitors</h3>
+                      <p className="text-2xl font-bold">{visitorStats?.returningVisitors || 62}</p>
                     </Card>
                   </div>
                 </div>
