@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { Drink } from '@/components/establishment/DrinkProfileModal';
 import { BusinessHour } from '@/components/establishment/BusinessHoursEditor';
+import { PostgrestError } from '@supabase/supabase-js';
 
 interface Promotion {
   id: string;
@@ -80,41 +81,43 @@ export const useEstablishmentProfile = (establishmentId?: string) => {
         // Parse business hours if available
         if (establishment.hours) {
           try {
-            const hourData = Array.isArray(establishment.hours) 
-              ? establishment.hours 
-              : typeof establishment.hours === 'object' 
-                ? Object.entries(establishment.hours).map(([day, hours]) => ({
-                    day,
-                    openTime: typeof hours === 'string' ? hours.split('-')[0]?.trim() : '09:00',
-                    closeTime: typeof hours === 'string' ? hours.split('-')[1]?.trim() : '17:00'
-                  }))
-                : [];
+            // Type guard to check if hours is an array
+            if (Array.isArray(establishment.hours)) {
+              const formattedHours: BusinessHour[] = establishment.hours.map((hour: any) => ({
+                day: String(hour.day || ''),
+                openTime: String(hour.openTime || '09:00'),
+                closeTime: String(hour.closeTime || '17:00')
+              }));
+              setBusinessHours(formattedHours);
+            } 
+            // Type guard to check if hours is an object
+            else if (typeof establishment.hours === 'object' && establishment.hours !== null) {
+              const hourData: BusinessHour[] = Object.entries(establishment.hours).map(([day, hours]) => {
+                let openTime = '09:00';
+                let closeTime = '17:00';
                 
-            setBusinessHours(hourData);
+                if (typeof hours === 'string' && hours.includes('-')) {
+                  const parts = hours.split('-');
+                  openTime = parts[0]?.trim() || openTime;
+                  closeTime = parts[1]?.trim() || closeTime;
+                }
+                
+                return { day, openTime, closeTime };
+              });
+              setBusinessHours(hourData);
+            }
+            // Default case: fallback to default hours
+            else {
+              setBusinessHours(defaultBusinessHours);
+            }
           } catch (e) {
             console.error('Error parsing hours:', e);
             // Fallback to default hours
-            setBusinessHours([
-              { day: 'Monday', openTime: '11:00', closeTime: '22:00' },
-              { day: 'Tuesday', openTime: '11:00', closeTime: '22:00' },
-              { day: 'Wednesday', openTime: '11:00', closeTime: '22:00' },
-              { day: 'Thursday', openTime: '11:00', closeTime: '22:00' },
-              { day: 'Friday', openTime: '11:00', closeTime: '00:00' },
-              { day: 'Saturday', openTime: '11:00', closeTime: '00:00' },
-              { day: 'Sunday', openTime: '12:00', closeTime: '21:00' }
-            ]);
+            setBusinessHours(defaultBusinessHours);
           }
         } else {
           // Default business hours
-          setBusinessHours([
-            { day: 'Monday', openTime: '11:00', closeTime: '22:00' },
-            { day: 'Tuesday', openTime: '11:00', closeTime: '22:00' },
-            { day: 'Wednesday', openTime: '11:00', closeTime: '22:00' },
-            { day: 'Thursday', openTime: '11:00', closeTime: '22:00' },
-            { day: 'Friday', openTime: '11:00', closeTime: '00:00' },
-            { day: 'Saturday', openTime: '11:00', closeTime: '00:00' },
-            { day: 'Sunday', openTime: '12:00', closeTime: '21:00' }
-          ]);
+          setBusinessHours(defaultBusinessHours);
         }
         
         // Fetch promotions
@@ -136,20 +139,22 @@ export const useEstablishmentProfile = (establishmentId?: string) => {
         if (drinksError) throw drinksError;
         
         // Transform to Drink format
-        const formattedDrinks = (drinksData || []).map(drink => ({
-          id: drink.id,
-          name: drink.name,
-          description: drink.description,
-          price: drink.price,
-          ingredients: Array.isArray(drink.ingredients) 
-            ? drink.ingredients 
-            : typeof drink.ingredients === 'object'
-              ? Object.keys(drink.ingredients || {})
-              : [],
-          photoUrl: drink.image_url || 'https://placehold.co/300x200'
-        }));
-        
-        setDrinks(formattedDrinks);
+        if (drinksData) {
+          const formattedDrinks: Drink[] = drinksData.map(drink => ({
+            id: drink.id,
+            name: drink.name,
+            description: drink.description,
+            price: drink.price,
+            ingredients: Array.isArray(drink.ingredients) 
+              ? drink.ingredients.map(ing => String(ing))
+              : typeof drink.ingredients === 'object' && drink.ingredients !== null
+                ? Object.keys(drink.ingredients)
+                : [],
+            photoUrl: drink.image_url || 'https://placehold.co/300x200'
+          }));
+          
+          setDrinks(formattedDrinks);
+        }
         
         // Fetch bar crawls
         const { data: barCrawlsData, error: barCrawlsError } = await supabase
@@ -163,10 +168,7 @@ export const useEstablishmentProfile = (establishmentId?: string) => {
               description,
               start_date,
               end_date,
-              organizer_id,
-              profiles:organizer_id (
-                display_name
-              )
+              organizer_id
             )
           `)
           .eq('establishment_id', establishmentId);
@@ -175,18 +177,57 @@ export const useEstablishmentProfile = (establishmentId?: string) => {
         
         if (barCrawlsData && barCrawlsData.length > 0) {
           // Format bar crawls
-          const formattedBarCrawls = barCrawlsData.map(item => ({
-            id: item.bar_crawls?.id || '',
-            name: item.bar_crawls?.name || '',
-            date: item.bar_crawls?.start_date || '',
-            participants: 0, // We'd need another query to get actual participants count
-            organizer: item.bar_crawls?.profiles?.display_name || 'Unknown Organizer',
-            startDate: item.bar_crawls?.start_date || '',
-            endDate: item.bar_crawls?.end_date || '',
-            status: item.status as 'accepted' | 'pending',
-            otherEstablishments: [], // We'd need another query to get this
-            description: item.bar_crawls?.description
-          }));
+          const formattedBarCrawls: BarCrawl[] = barCrawlsData.map(item => {
+            // Check if bar_crawls exists and has data
+            if (!item.bar_crawls) {
+              return {
+                id: item.bar_crawl_id || '',
+                name: 'Unknown Bar Crawl',
+                date: '',
+                participants: 0,
+                organizer: 'Unknown Organizer',
+                startDate: '',
+                endDate: '',
+                status: (item.status as 'accepted' | 'pending') || 'pending',
+                otherEstablishments: [],
+              };
+            }
+            
+            // If bar_crawls exists, use its data
+            const crawl = item.bar_crawls;
+            return {
+              id: crawl.id || '',
+              name: crawl.name || '',
+              date: crawl.start_date || '',
+              participants: 0, // We'd need another query to get actual participants count
+              organizer: 'Unknown Organizer', // We'll handle this separately
+              startDate: crawl.start_date || '',
+              endDate: crawl.end_date || '',
+              status: (item.status as 'accepted' | 'pending') || 'pending',
+              otherEstablishments: [], // We'd need another query to get this
+              description: crawl.description
+            };
+          });
+          
+          // Try to get organizer names when possible
+          for (let i = 0; i < formattedBarCrawls.length; i++) {
+            if (barCrawlsData[i].bar_crawls?.organizer_id) {
+              try {
+                const { data: userData } = await supabase
+                  .from('profiles')
+                  .select('display_name')
+                  .eq('id', barCrawlsData[i].bar_crawls?.organizer_id)
+                  .single();
+                  
+                if (userData && userData.display_name) {
+                  formattedBarCrawls[i].organizer = userData.display_name;
+                }
+              } catch (err) {
+                console.error('Error fetching organizer:', err);
+                // Keep the default "Unknown Organizer"
+              }
+            }
+          }
           
           setBarCrawls(formattedBarCrawls);
         } else {
@@ -246,6 +287,17 @@ export const useEstablishmentProfile = (establishmentId?: string) => {
 
     fetchEstablishmentData();
   }, [establishmentId]);
+
+  // Default business hours
+  const defaultBusinessHours: BusinessHour[] = [
+    { day: 'Monday', openTime: '11:00', closeTime: '22:00' },
+    { day: 'Tuesday', openTime: '11:00', closeTime: '22:00' },
+    { day: 'Wednesday', openTime: '11:00', closeTime: '22:00' },
+    { day: 'Thursday', openTime: '11:00', closeTime: '22:00' },
+    { day: 'Friday', openTime: '11:00', closeTime: '00:00' },
+    { day: 'Saturday', openTime: '11:00', closeTime: '00:00' },
+    { day: 'Sunday', openTime: '12:00', closeTime: '21:00' }
+  ];
 
   // Profile handlers
   const handleSaveProfile = () => {
