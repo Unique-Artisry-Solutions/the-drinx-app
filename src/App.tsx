@@ -83,9 +83,10 @@ const AppContent = () => {
         return;
       }
       
-      // If trying to access establishment directly and authenticated as establishment
+      // If trying to access /establishment directly, redirect to all-actions
       if (location.pathname === '/establishment' && user && userType === 'establishment') {
         navigate('/establishment/all-actions', { replace: true });
+        return;
       }
     }
   }, [user, isLoading, navigate, location.pathname]);

@@ -24,12 +24,12 @@ export const routes: Record<string, BreadcrumbConfig> = {
   '/profile/my-creations': { path: '/profile/my-creations', label: 'My Creations' },
   '/profile/settings': { path: '/profile/settings', label: 'Settings' },
   
-  // Swig Circuit related routes - Fixed redundancy here
-  '/bar-crawl': { path: '/swig-circuits', label: 'Swig Circuits' }, // Redirect to the main swig circuits page
+  // Swig Circuit related routes
+  '/bar-crawl': { path: '/swig-circuits', label: 'Swig Circuits' },
   '/swig-circuits': { path: '/swig-circuits', label: 'Swig Circuits' },
   '/create-bar-crawl': { path: '/create-bar-crawl', label: 'Create Swig Circuit' },
   
-  // Establishment routes - Fix for /establishment to redirect to all-actions
+  // Establishment routes - Update establishment route to point to dashboard
   '/establishment': { path: '/establishment/all-actions', label: 'Dashboard' },
   '/establishment/all-actions': { path: '/establishment/all-actions', label: 'Dashboard' },
   '/establishment/profile': { path: '/establishment/profile', label: 'Profile' },

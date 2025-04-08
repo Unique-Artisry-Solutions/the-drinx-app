@@ -106,7 +106,7 @@ const AppRoutes = () => {
         <Route path="/admin/photo-moderation" element={<PhotoModerationPage />} />
         <Route path="/admin/content-moderation" element={<ContentModerationPage />} />
         
-        {/* Add a redirect route for /establishment to point to the all-actions page */}
+        {/* Always redirect /establishment to the dashboard */}
         <Route path="/establishment" element={
           <TypedProtectedRoute userType="establishment">
             <Navigate to="/establishment/all-actions" replace />

@@ -1,4 +1,3 @@
-
 import { BreadcrumbConfig, routes, dynamicRoutes } from './BreadcrumbConfig';
 
 // Helper function to build breadcrumbs from a pathname
@@ -13,7 +12,8 @@ export function buildBreadcrumbs(pathname: string): BreadcrumbConfig[] {
   if (userType === 'establishment') {
     breadcrumbs.push({
       ...routes['/'], 
-      path: '/establishment/all-actions'
+      path: '/establishment/all-actions',
+      label: 'Dashboard'
     });
   } else {
     breadcrumbs.push(routes['/']);
@@ -36,7 +36,7 @@ export function buildBreadcrumbs(pathname: string): BreadcrumbConfig[] {
   
   // Handle special case for establishment section - improved to use routes config
   if (pathname.startsWith('/establishment/')) {
-    handleSpecialBasePath('/establishment', 'Dashboard');
+    handleSpecialBasePath('/establishment/all-actions', 'Dashboard');
   }
   
   // Handle special case for admin section
@@ -71,12 +71,8 @@ export function buildBreadcrumbs(pathname: string): BreadcrumbConfig[] {
     }
     
     // Handle establishment base path special case
-    if (currentPath === '/establishment' && !breadcrumbs.some(crumb => crumb.path === '/establishment')) {
-      // Use the correct route from our config
-      const establishmentRoute = routes['/establishment'];
-      if (establishmentRoute) {
-        breadcrumbs.push(establishmentRoute);
-      }
+    if (currentPath === '/establishment') {
+      // Skip this segment since we're redirecting to /establishment/all-actions
       continue;
     }
     
@@ -144,9 +140,10 @@ export function shouldShowBreadcrumbs(pathname: string): boolean {
     return false;
   }
   
-  // Build breadcrumbs
-  const breadcrumbs = buildBreadcrumbs(pathname);
+  // Don't show breadcrumbs on admin login page
+  if (pathname === '/admin/login') {
+    return false;
+  }
   
-  // Only show breadcrumbs if we have at least 2 levels (home + something else)
-  return breadcrumbs.length >= 2;
+  return true;
 }
