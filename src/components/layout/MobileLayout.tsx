@@ -1,6 +1,6 @@
 
 import React, { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { NavigationType } from '../navigation/NavigationTypes';
 import MobileNavigation from '../navigation/MobileNavigation';
 import UserNavbar from '../navigation/user/UserNavbar';
@@ -31,6 +31,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
   tabOptions
 }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { theme } = useTheme();
   const { user, isEmailVerified } = useAuth();
   const [navigationType, setNavigationType] = React.useState<NavigationType>(NavigationType.GUEST);
@@ -114,8 +115,11 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
   
   // Determine whether to show guest navigation
   const useGuestNavigation = () => {
+    // Always show guest navigation for non-authenticated users
+    if (!user) return true;
+    
     const publicPaths = ['/', '/landing', '/login', '/signup', '/mission'];
-    return publicPaths.includes(location.pathname) || !user;
+    return publicPaths.includes(location.pathname);
   };
 
   // Determine if we should show guest navigation

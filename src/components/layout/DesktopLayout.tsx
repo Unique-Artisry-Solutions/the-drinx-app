@@ -75,8 +75,11 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
 
   // Determine whether to show guest navigation
   const useGuestNavigation = () => {
+    // Always use guest navigation for non-authenticated users
+    if (!user) return true;
+    
     const publicPaths = ['/', '/landing', '/login', '/signup', '/mission'];
-    return publicPaths.includes(location.pathname) || !user;
+    return publicPaths.includes(location.pathname);
   };
 
   const renderNavigation = () => {

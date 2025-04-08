@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
@@ -98,7 +99,7 @@ const Index = () => {
       <Layout>
         <EstablishmentDashboard 
           establishmentName={localStorage.getItem('user_username') || 'Your Establishment'} 
-          establishmentId={user.id} // Add the missing establishmentId prop here, using user.id
+          establishmentId={user.id} 
         />
       </Layout>
     );

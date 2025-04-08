@@ -29,8 +29,11 @@ const LandingPage = () => {
     if (!isLoading && user) {
       console.log('User is authenticated, redirecting from landing page');
       const userType = localStorage.getItem('user_type');
+      const isAdmin = localStorage.getItem('admin_authenticated') === 'true';
       
-      if (userType === 'establishment') {
+      if (isAdmin) {
+        navigate('/admin/system-breakdown', { replace: true });
+      } else if (userType === 'establishment') {
         navigate('/establishment/all-actions', { replace: true });
       } else {
         navigate('/explore', { replace: true });
