@@ -109,19 +109,19 @@
 /* Bold colorful cards */
 @layer components {
   .card-pink {
-    @apply bg-gradient-to-br from-[var(--spiritless-pink)] to-[var(--spiritless-pink)]/80 text-white shadow-lg hover:shadow-xl transition-all border-l-4 border-[var(--spiritless-pink)];
+    @apply bg-gradient-to-br from-[#D94E8F] to-[#D94E8F]/80 text-white shadow-lg hover:shadow-xl transition-all border-l-4 border-[#D94E8F];
   }
   
   .card-green {
-    @apply bg-gradient-to-br from-[var(--spiritless-green)] to-[var(--spiritless-green)]/80 text-white shadow-lg hover:shadow-xl transition-all border-l-4 border-[var(--spiritless-green)];
+    @apply bg-gradient-to-br from-[#84BF04] to-[#84BF04]/80 text-white shadow-lg hover:shadow-xl transition-all border-l-4 border-[#84BF04];
   }
   
   .card-orange {
-    @apply bg-gradient-to-br from-[var(--spiritless-orange)] to-[var(--spiritless-orange)]/80 text-white shadow-lg hover:shadow-xl transition-all border-l-4 border-[var(--spiritless-orange)];
+    @apply bg-gradient-to-br from-[#F29F05] to-[#F29F05]/80 text-white shadow-lg hover:shadow-xl transition-all border-l-4 border-[#F29F05];
   }
   
   .card-burgundy {
-    @apply bg-gradient-to-br from-[var(--spiritless-burgundy)] to-[var(--spiritless-burgundy)]/80 text-white shadow-lg hover:shadow-xl transition-all border-l-4 border-[var(--spiritless-burgundy)];
+    @apply bg-gradient-to-br from-[#590202] to-[#590202]/80 text-white shadow-lg hover:shadow-xl transition-all border-l-4 border-[#590202];
   }
 }
 
@@ -226,10 +226,11 @@ a:focus, button:focus, [role="button"]:focus {
   --green: #48dbaa;
   --green-light: #7aecbf;
   --blue: #7ab8ec;
-  --spiritless-pink: #ff6b6b;
-  --spiritless-orange: #ff9e7d;
-  --spiritless-green: #48dbaa;
+  --spiritless-pink: #D94E8F;
+  --spiritless-orange: #F29F05;
+  --spiritless-green: #84BF04;
   --spiritless-green-light: #7aecbf;
+  --spiritless-burgundy: #590202;
 }
 
 /* Add gradient variants for buttons */
