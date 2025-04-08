@@ -1,22 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState } from 'react';
 import Layout from '@/components/Layout';
-import { 
-  LineChart, 
-  Line, 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Legend, 
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell
-} from 'recharts';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, PieChart, Pie, Cell } from 'recharts';
+import { useVisitorStats } from '@/hooks/establishment/useVisitorStats';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { useEstablishmentAnalytics } from '@/hooks/useEstablishmentAnalytics';
 import { DatePickerWithRange } from '@/components/ui/date-range-picker';
@@ -51,16 +38,13 @@ const EstablishmentAnalyticsPage = () => {
     to: new Date(),
   });
   
-  // Fetch the establishment ID from URL or user profile
   useEffect(() => {
     const fetchEstablishment = async () => {
       setIsEstablishmentLoading(true);
       setEstablishmentError(null);
 
       try {
-        // If establishment ID is provided in URL, use that
         if (urlEstablishmentId) {
-          // Verify the establishment exists
           const { data, error } = await supabase
             .from('establishments')
             .select('id, name')
@@ -76,7 +60,6 @@ const EstablishmentAnalyticsPage = () => {
             throw new Error('Establishment not found');
           }
         } 
-        // Otherwise try to get the user's establishment ID
         else if (user) {
           const { data, error } = await supabase
             .from('establishments')
@@ -115,7 +98,6 @@ const EstablishmentAnalyticsPage = () => {
     isLoading: isDashboardLoading 
   } = useDashboardData();
 
-  // Use our analytics hook with the date range
   const {
     visitorAnalytics,
     visitorTrends,
@@ -132,7 +114,6 @@ const EstablishmentAnalyticsPage = () => {
     }
   });
 
-  // Format visitor data for charts
   const formattedVisitorData = React.useMemo(() => {
     return visitorAnalytics.map(data => ({
       name: format(new Date(data.date), 'MMM d'),
@@ -143,7 +124,6 @@ const EstablishmentAnalyticsPage = () => {
     }));
   }, [visitorAnalytics]);
 
-  // Format revenue data for charts
   const formattedRevenueData = React.useMemo(() => {
     return revenueReports.map(report => ({
       name: format(new Date(report.month), 'MMM yyyy'),
@@ -152,16 +132,13 @@ const EstablishmentAnalyticsPage = () => {
     }));
   }, [revenueReports]);
 
-  // Download analytics as CSV
   const downloadAnalyticsCSV = () => {
-    // Combine all data
     const allData = {
       visitors: formattedVisitorData,
       revenue: formattedRevenueData,
       drinks: popularDrinks
     };
     
-    // Convert to CSV
     const csvContent = 
       "data:text/csv;charset=utf-8," + 
       "Date,Total Visitors,Returning Visitors,Unique Visitors\n" +
@@ -169,7 +146,6 @@ const EstablishmentAnalyticsPage = () => {
         `${row.date},${row.visitors},${row.returningVisitors},${row.uniqueVisitors}`
       ).join("\n");
     
-    // Create download link
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
@@ -478,9 +454,9 @@ const EstablishmentAnalyticsPage = () => {
                         activeDot={{ r: 8 }}
                       />
                     </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
+                  </div>
+                </CardContent>
+              </Card>
             </Card>
           </TabsContent>
           

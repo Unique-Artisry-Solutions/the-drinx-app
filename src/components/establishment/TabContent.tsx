@@ -14,7 +14,14 @@ interface TabContentProps {
   profileState: any;
   promotionsState: any;
   drinksState: any;
-  visitorStats: any;
+  visitorStats: {
+    totalVisits: number;
+    uniqueVisitors: number;
+    returningVisitors: number;
+    hasData: boolean;
+    isLoading: boolean;
+    error: string | null;
+  };
   barCrawlsState: any;
 }
 

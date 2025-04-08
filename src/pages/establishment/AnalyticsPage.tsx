@@ -1,11 +1,14 @@
+
 import React from 'react';
 import Layout from '@/components/Layout';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { useEstablishmentProfile } from '@/hooks/establishment/useEstablishmentProfile';
+import { useVisitorStats } from '@/hooks/establishment/useVisitorStats'; 
 import VisitorStatsTab from '@/components/establishment/VisitorStatsTab';
 
 const AnalyticsPage: React.FC = () => {
-  const { visitorStats } = useEstablishmentProfile();
+  // Use the visitor stats hook to get visitor data
+  // Since we're in an analytics page, we use a sample ID for demo purposes
+  const visitorStats = useVisitorStats('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'); // Sample UUID for demo
 
   return (
     <Layout>

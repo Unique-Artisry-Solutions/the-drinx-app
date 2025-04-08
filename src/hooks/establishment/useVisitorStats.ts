@@ -33,6 +33,17 @@ export const useVisitorStats = (establishmentId?: string) => {
         return;
       }
 
+      // Check if the establishment ID is a valid UUID
+      if (!establishmentId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+        setVisitorStats(prev => ({
+          ...prev,
+          isLoading: false,
+          hasData: false,
+          error: "Invalid establishment ID format"
+        }));
+        return;
+      }
+
       try {
         // In a real implementation, fetch from Supabase
         const yesterday = new Date();

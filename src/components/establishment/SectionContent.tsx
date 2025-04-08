@@ -11,6 +11,9 @@ interface SectionContentProps {
     totalVisits: number;
     uniqueVisitors: number;
     returningVisitors: number;
+    hasData: boolean;
+    isLoading: boolean;
+    error: string | null;
   };
 }
 

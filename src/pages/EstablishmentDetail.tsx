@@ -24,6 +24,13 @@ const EstablishmentDetail = () => {
         return;
       }
 
+      // Check if this is actually an ID or a route name
+      if (id === 'profile' || id === 'analytics' || !id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+        setError("Invalid establishment ID");
+        setIsLoading(false);
+        return;
+      }
+
       try {
         setIsLoading(true);
         setError(null);

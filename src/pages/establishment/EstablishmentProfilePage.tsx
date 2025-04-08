@@ -7,6 +7,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import QuickNavigation from '@/components/establishment/QuickNavigation';
 import SectionContent from '@/components/establishment/SectionContent';
 import TabContent from '@/components/establishment/TabContent';
+import { useVisitorStats } from '@/hooks/establishment/useVisitorStats';
 
 const EstablishmentProfilePage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -20,9 +21,12 @@ const EstablishmentProfilePage = () => {
     profileState,
     promotionsState,
     drinksState,
-    visitorStats,
     barCrawlsState
   } = useEstablishmentProfile();
+  
+  // Use the visitor stats hook to get visitor data
+  // Since we're in a profile page, we use a sample ID for demo purposes
+  const visitorStats = useVisitorStats('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'); // Sample UUID for demo
   
   useEffect(() => {
     if (tabParam && ['profile', 'promotions', 'menu', 'visitors', 'barCrawls'].includes(tabParam)) {
