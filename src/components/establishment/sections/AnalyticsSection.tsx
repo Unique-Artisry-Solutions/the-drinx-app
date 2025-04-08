@@ -20,22 +20,22 @@ const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({ visitorStats }) => 
           <div>
             <h2 className="text-lg font-semibold mb-2">Visitor Overview</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card className="p-4 bg-blue-50">
+              <Card className="p-4" style={{ backgroundColor: 'var(--theme-primary, #FF719A)', color: 'white' }}>
                 <h3 className="font-medium">Total Visits</h3>
                 <p className="text-2xl font-bold">{visitorStats?.totalVisits || 278}</p>
               </Card>
-              <Card className="p-4 bg-green-50">
+              <Card className="p-4" style={{ backgroundColor: 'var(--theme-secondary, #84BF04)', color: 'white' }}>
                 <h3 className="font-medium">Unique Visitors</h3>
                 <p className="text-2xl font-bold">{visitorStats?.uniqueVisitors || 153}</p>
               </Card>
-              <Card className="p-4 bg-amber-50">
+              <Card className="p-4" style={{ backgroundColor: 'var(--theme-accent, #F29F05)', color: 'white' }}>
                 <h3 className="font-medium">Returning Visitors</h3>
                 <p className="text-2xl font-bold">{visitorStats?.returningVisitors || 62}</p>
               </Card>
             </div>
           </div>
-          <div className="h-64 bg-gray-50 rounded flex items-center justify-center">
-            <p className="text-gray-500">Visitor trend chart would display here</p>
+          <div className="h-64 bg-gray-50 rounded flex items-center justify-center dark:bg-gray-800">
+            <p className="text-gray-500 dark:text-gray-400">Visitor trend chart would display here</p>
           </div>
         </div>
       </CardContent>
