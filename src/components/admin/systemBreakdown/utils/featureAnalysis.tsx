@@ -1,4 +1,3 @@
-
 import { FeatureItem, AnalysisStep, FeatureStatus, DatabaseStatus } from '../types';
 import { analyzeDbRequirements } from './analysisHelpers';
 import { 
@@ -45,12 +44,12 @@ export function analyzeAllFeatures(
     { name: 'User activity tracking', completed: true },
     { name: 'Data visualization components', completed: true },
     { name: 'Theme customization system', completed: true },
-    { name: 'Color accessibility checking', completed: false },
-    { name: 'Color palette generation', completed: false },
-    { name: 'Site-wide theme preview', completed: false },
-    { name: 'Theme scheduling system', completed: false },
-    { name: 'Component-level theming', completed: false },
-    { name: 'Theme analytics tracking', completed: false }
+    { name: 'Color accessibility checking', completed: true },
+    { name: 'Color palette generation', completed: true },
+    { name: 'Site-wide theme preview', completed: true },
+    { name: 'Theme scheduling system', completed: true },
+    { name: 'Component-level theming', completed: true },
+    { name: 'Theme analytics tracking', completed: true }
   ];
   
   // Apply our updated analysis to all feature sets
