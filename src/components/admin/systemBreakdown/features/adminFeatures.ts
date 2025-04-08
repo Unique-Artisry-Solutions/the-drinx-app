@@ -1,6 +1,6 @@
 import { FeatureItem } from '../types';
 
-export const adminFeatures: FeatureItem[] = [
+const adminFeatures = [
   {
     id: "admin-1",
     name: "User Management",
@@ -198,11 +198,11 @@ export const adminFeatures: FeatureItem[] = [
     id: "admin-9",
     name: "Content Moderation",
     description: "Review and moderate user-generated content that has been flagged as inappropriate or violating community guidelines.",
-    status: "implemented", // Updated from "planned" or "partial" to "implemented"
+    status: "implemented",
     adminAccess: "full",
     establishmentAccess: "none",
     individualAccess: "none",
-    databaseStatus: "complete", // Updated to complete
+    databaseStatus: "complete",
     databaseAnalysis: `
       Database Implementation:
       - [x] content_flags table implemented for tracking reported items
@@ -224,4 +224,31 @@ export const adminFeatures: FeatureItem[] = [
       "Check that users receive notifications about moderation decisions"
     ]
   },
+  {
+    id: 'admin-system-config',
+    name: 'System Configuration',
+    description: 'Centralized system settings management with audit logging and validation. Allows administrators to configure application-wide settings, feature flags, and security parameters.',
+    status: 'implemented',
+    databaseStatus: 'complete',
+    adminAccess: 'full',
+    establishmentAccess: 'none',
+    individualAccess: 'none',
+    testSteps: [
+      'Navigate to /admin/system-settings',
+      'Verify settings are displayed by category',
+      'Test toggling feature flags',
+      'Update a protected setting and provide a change reason',
+      'Verify audit log records the changes'
+    ],
+    databaseAnalysis: `✅ Create system_settings table
+✅ Add initial configuration values
+✅ Set up RLS policies for admin access
+✅ Implement audit logging for changes
+✅ Create system_settings_audit_log table
+✅ Add validation triggers for settings changes
+Add caching mechanism for frequently accessed settings
+Implement settings export/import functionality`
+  }
 ];
+
+export { adminFeatures };

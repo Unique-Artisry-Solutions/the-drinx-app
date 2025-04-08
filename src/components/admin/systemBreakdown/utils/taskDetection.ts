@@ -18,7 +18,8 @@ export const isTaskCompleted = (taskDescription: string): boolean => {
   if (
     taskDescription.toLowerCase().includes('completed') || 
     taskDescription.toLowerCase().includes('done') ||
-    taskDescription.toLowerCase().includes('finished')
+    taskDescription.toLowerCase().includes('finished') ||
+    taskDescription.toLowerCase().includes('implemented')
   ) {
     return true;
   }

@@ -1,56 +1,74 @@
 
 import { isTaskCompleted } from './taskDetection';
-
-interface AnalysisResult {
-  completionPercentage: number;
-  hasStarted: boolean;
-  isComplete: boolean;
-}
+import { supabase } from '@/lib/supabase';
 
 /**
- * Analyzes the database requirements text and determines the completion status
- */
-export const analyzeDbRequirements = (analysisText: string): AnalysisResult => {
-  if (!analysisText) return { completionPercentage: 0, hasStarted: false, isComplete: false };
-  
-  // Parse tasks with the [x] or [ ] format
-  const taskLines = analysisText
-    .split('\n')
-    .filter(line => line.trim().match(/^\s*-\s*\[[\sx]\]/i));
-  
-  const taskStatuses = taskLines.map(line => isTaskCompleted(line));
-  
-  const completedCount = taskStatuses.filter(status => status).length;
-  const totalTasks = taskStatuses.length;
-  const completionPercentage = totalTasks > 0 ? (completedCount / totalTasks) * 100 : 0;
-  
-  return {
-    completionPercentage,
-    // If at least one task is completed, consider it started
-    hasStarted: completedCount > 0,
-    // Only mark as complete if all tasks are completed
-    isComplete: completedCount > 0 && completedCount === totalTasks
-  };
-};
-
-/**
- * Parses the analysis text and returns task status objects
+ * Parse task statuses from a database analysis text
  */
 export const parseTaskStatuses = (analysisText: string) => {
   if (!analysisText) return [];
   
-  // Parse tasks with the [x] or [ ] format
-  const taskLines = analysisText
-    .split('\n')
-    .filter(line => line.trim().match(/^\s*-\s*\[[\sx]\]/i));
+  // Split by new lines and filter out empty lines
+  const lines = analysisText.split('\n').filter(line => line.trim().length > 0);
   
-  return taskLines.map(line => {
-    // Extract just the task description without the checkbox
-    const taskText = line.replace(/^\s*-\s*\[[\sx]\]\s*/i, '').trim();
+  // Process each line as a potential task
+  return lines.map(line => {
+    const text = line.trim();
+    const isCompleted = isTaskCompleted(text);
     
-    return { 
-      text: taskText,
-      isCompleted: isTaskCompleted(line)
+    return {
+      text,
+      isCompleted
     };
   });
+};
+
+/**
+ * Analyze database requirements for a feature
+ */
+export const analyzeDbRequirements = async (feature: string) => {
+  // This will eventually connect to the database to analyze schema and requirements
+  // For now, we'll return dummy data
+  
+  const baseRequirements = [
+    "✅ Create main table schema",
+    "✅ Set up proper indexes",
+    "✅ Configure RLS policies",
+    "Implement audit logging",
+    "Add validation triggers"
+  ];
+  
+  // Add feature-specific requirements
+  if (feature.toLowerCase().includes('system') && feature.toLowerCase().includes('settings')) {
+    return [
+      ...baseRequirements,
+      "✅ Create settings schema",
+      "✅ Add settings categories",
+      "✅ Implement settings validation",
+      "Add settings cache invalidation"
+    ];
+  }
+  
+  // Check if there are system settings tables in the database
+  try {
+    const { data } = await supabase
+      .from('system_settings')
+      .select('count()', { count: 'exact', head: true });
+    
+    const hasSystemSettings = data && data.count > 0;
+    
+    if (hasSystemSettings && feature.toLowerCase().includes('config')) {
+      return [
+        ...baseRequirements,
+        "✅ Create system_settings table",
+        "✅ Add initial configuration values",
+        "✅ Set up RLS policies for admin access",
+        "✅ Implement audit logging for changes"
+      ];
+    }
+  } catch (error) {
+    console.error("Error checking system settings:", error);
+  }
+  
+  return baseRequirements;
 };

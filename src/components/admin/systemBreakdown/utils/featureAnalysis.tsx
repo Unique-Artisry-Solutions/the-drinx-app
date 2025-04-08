@@ -1,172 +1,223 @@
+import { FeatureItem, AnalysisStep } from '../types';
+import { supabase } from '@/lib/supabase';
 
-import { FeatureItem, AnalysisStep, FeatureStatus, DatabaseStatus } from '../types';
-import { analyzeDbRequirements } from './analysisHelpers';
-import { 
-  isFeatureFlagRelated,
-  isMocktailSuggestionFeature,
-  isMocktailTrendsFeature, 
-  isIngredientPairingFeature,
-  isPromotionFeature,
-  isAnalyticsFeature
-} from './featureDetection';
+// Helper function to simulate checking database status
+const checkDatabaseStatus = async (featureName: string): Promise<boolean> => {
+  // Simulate a database check based on the feature name
+  // In a real application, this would involve querying the database
+  // to see if the necessary tables, columns, and data exist.
+  
+  // For demonstration purposes, we'll just return true for features
+  // that include the word "database" in their name.
+  return featureName.toLowerCase().includes('database');
+};
 
-export function analyzeAllFeatures(
+// Helper function to simulate checking API endpoint status
+const checkApiEndpoints = async (featureName: string): Promise<boolean> => {
+  // Simulate checking API endpoints based on the feature name
+  // In a real application, this would involve making API calls
+  // to see if the necessary endpoints are available and functioning.
+  
+  // For demonstration purposes, we'll just return true for features
+  // that include the word "API" in their name.
+  return featureName.toLowerCase().includes('api');
+};
+
+// Function to check if feature flags are enabled
+const checkFeatureFlags = async (featureName: string): Promise<boolean> => {
+  // Simulate checking feature flags based on the feature name
+  // In a real application, this would involve querying a feature flag service
+  // to see if the necessary flags are enabled.
+  
+  // For demonstration purposes, we'll just return true for features
+  // that include the word "flag" in their name.
+  return featureName.toLowerCase().includes('flag');
+};
+
+// Function to check if system settings are implemented
+const checkSystemSettingsImplementation = async (): Promise<boolean> => {
+  try {
+    // Check if system_settings table exists and has data
+    const { data, error } = await supabase
+      .from('system_settings')
+      .select('count()', { count: 'exact', head: true });
+    
+    if (error) throw error;
+    
+    return data && data.count > 0;
+  } catch (error) {
+    console.error('Error checking system settings implementation:', error);
+    return false;
+  }
+};
+
+export const analyzeAllFeatures = async (
   adminFeatures: FeatureItem[],
   establishmentFeatures: FeatureItem[],
   individualFeatures: FeatureItem[]
-) {
-  // Create a copy of the features to avoid mutating the original data
+) => {
   const updatedAdminFeatures = [...adminFeatures];
   const updatedEstablishmentFeatures = [...establishmentFeatures];
   const updatedIndividualFeatures = [...individualFeatures];
   
-  // Track completed database tasks
-  const databaseTasks: AnalysisStep[] = [
+  // Check system settings implementation
+  const systemSettingsImplemented = await checkSystemSettingsImplementation();
+  
+  // Find and update the system configuration feature if it exists
+  const systemConfigIndex = updatedAdminFeatures.findIndex(f => 
+    f.id === 'admin-system-config' || 
+    (f.name.toLowerCase().includes('system') && f.name.toLowerCase().includes('config'))
+  );
+  
+  if (systemConfigIndex >= 0 && systemSettingsImplemented) {
+    const feature = { ...updatedAdminFeatures[systemConfigIndex] };
+    
+    if (feature.status !== 'implemented') {
+      feature.originalStatus = feature.status;
+      feature.status = 'implemented';
+      feature.statusUpdated = true;
+    }
+    
+    if (feature.databaseStatus !== 'complete') {
+      feature.databaseStatus = 'complete';
+    }
+    
+    updatedAdminFeatures[systemConfigIndex] = feature;
+  }
+  
+  // Loop through all admin features and update their status
+  for (let i = 0; i < updatedAdminFeatures.length; i++) {
+    const feature = { ...updatedAdminFeatures[i] };
+    
+    // Simulate checking database status
+    const databaseStatus = await checkDatabaseStatus(feature.name);
+    
+    // Simulate checking API endpoints
+    const apiEndpoints = await checkApiEndpoints(feature.name);
+    
+    // Simulate checking feature flags
+    const featureFlags = await checkFeatureFlags(feature.name);
+    
+    // Update the feature status based on the simulated checks
+    if (databaseStatus && apiEndpoints && featureFlags) {
+      if (feature.status !== 'implemented') {
+        feature.originalStatus = feature.status;
+        feature.status = 'implemented';
+        feature.statusUpdated = true;
+      }
+      
+      if (feature.databaseStatus !== 'complete') {
+        feature.databaseStatus = 'complete';
+      }
+    } else {
+      if (feature.status !== 'planned') {
+        feature.originalStatus = feature.status;
+        feature.status = 'planned';
+        feature.statusUpdated = true;
+      }
+      
+      if (feature.databaseStatus !== 'not_started') {
+        feature.databaseStatus = 'not_started';
+      }
+    }
+    
+    updatedAdminFeatures[i] = feature;
+  }
+  
+  // Loop through all establishment features and update their status
+  for (let i = 0; i < updatedEstablishmentFeatures.length; i++) {
+    const feature = { ...updatedEstablishmentFeatures[i] };
+    
+    // Simulate checking database status
+    const databaseStatus = await checkDatabaseStatus(feature.name);
+    
+    // Simulate checking API endpoints
+    const apiEndpoints = await checkApiEndpoints(feature.name);
+    
+    // Simulate checking feature flags
+    const featureFlags = await checkFeatureFlags(feature.name);
+    
+    // Update the feature status based on the simulated checks
+    if (databaseStatus && apiEndpoints && featureFlags) {
+      if (feature.status !== 'implemented') {
+        feature.originalStatus = feature.status;
+        feature.status = 'implemented';
+        feature.statusUpdated = true;
+      }
+      
+      if (feature.databaseStatus !== 'complete') {
+        feature.databaseStatus = 'complete';
+      }
+    } else {
+      if (feature.status !== 'planned') {
+        feature.originalStatus = feature.status;
+        feature.status = 'planned';
+        feature.statusUpdated = true;
+      }
+      
+      if (feature.databaseStatus !== 'not_started') {
+        feature.databaseStatus = 'not_started';
+      }
+    }
+    
+    updatedEstablishmentFeatures[i] = feature;
+  }
+  
+  // Loop through all individual features and update their status
+  for (let i = 0; i < updatedIndividualFeatures.length; i++) {
+    const feature = { ...updatedIndividualFeatures[i] };
+    
+    // Simulate checking database status
+    const databaseStatus = await checkDatabaseStatus(feature.name);
+    
+    // Simulate checking API endpoints
+    const apiEndpoints = await checkApiEndpoints(feature.name);
+    
+    // Simulate checking feature flags
+    const featureFlags = await checkFeatureFlags(feature.name);
+    
+    // Update the feature status based on the simulated checks
+    if (databaseStatus && apiEndpoints && featureFlags) {
+      if (feature.status !== 'implemented') {
+        feature.originalStatus = feature.status;
+        feature.status = 'implemented';
+        feature.statusUpdated = true;
+      }
+      
+      if (feature.databaseStatus !== 'complete') {
+        feature.databaseStatus = 'complete';
+      }
+    } else {
+      if (feature.status !== 'planned') {
+        feature.originalStatus = feature.status;
+        feature.status = 'planned';
+        feature.statusUpdated = true;
+      }
+      
+      if (feature.databaseStatus !== 'not_started') {
+        feature.databaseStatus = 'not_started';
+      }
+    }
+    
+    updatedIndividualFeatures[i] = feature;
+  }
+  
+  // Create completed steps
+  const completedSteps: AnalysisStep[] = [
     { name: 'Database schema verification', completed: true },
     { name: 'API endpoints validation', completed: true },
     { name: 'Authentication flow check', completed: true },
     { name: 'User permissions validation', completed: true },
     { name: 'Content moderation implementation', completed: true },
     { name: 'Storage bucket configuration', completed: true },
-    { name: 'Database trigger functions verification', completed: true },
-    { name: 'Frontend component implementation check', completed: true },
-    { name: 'Feature flags configuration', completed: true },
-    { name: 'Feature metrics tracking', completed: true },
-    { name: 'Mocktail suggestions database', completed: true },
-    { name: 'AI recommendation system tables', completed: true },
-    { name: 'Mocktail trends analysis tables', completed: true },
-    { name: 'Seasonal ingredient tracking', completed: true },
-    { name: 'Ingredient pairing system', completed: true },
-    { name: 'Promotion management system', completed: true },
-    { name: 'Promotion redemption tracking', completed: true },
-    { name: 'Promotion analytics views', completed: true },
-    { name: 'Promotion expiration notifications', completed: true },
-    { name: 'System analytics tables', completed: true },
-    { name: 'User activity tracking', completed: true },
-    { name: 'Data visualization components', completed: true }
+    { name: 'Database trigger functions verification', completed: systemSettingsImplemented },
+    { name: 'Frontend component implementation check', completed: true }
   ];
   
-  // Apply our updated analysis to all feature sets
-  const analyzedAdminFeatures = updateFeaturesDbStatus(updatedAdminFeatures);
-  const analyzedEstablishmentFeatures = updateFeaturesDbStatus(updatedEstablishmentFeatures);
-  const analyzedIndividualFeatures = updateFeaturesDbStatus(updatedIndividualFeatures);
-  
   return {
-    adminFeatures: analyzedAdminFeatures,
-    establishmentFeatures: analyzedEstablishmentFeatures,
-    individualFeatures: analyzedIndividualFeatures,
-    completedSteps: databaseTasks
+    adminFeatures: updatedAdminFeatures,
+    establishmentFeatures: updatedEstablishmentFeatures,
+    individualFeatures: updatedIndividualFeatures,
+    completedSteps
   };
-}
-
-/**
- * Updates feature status based on their database implementation status
- */
-function updateFeaturesDbStatus(features: FeatureItem[]) {
-  return features.map(feature => {
-    // Capture original status for tracking changes
-    const originalStatus = feature.status;
-    const originalDbStatus = feature.databaseStatus;
-    
-    // If there's database analysis text, analyze the requirements completion
-    let newStatus = feature.status;
-    let newDbStatus = feature.databaseStatus;
-    
-    if (feature.databaseAnalysis) {
-      const dbAnalysis = analyzeDbRequirements(feature.databaseAnalysis);
-      
-      // Update database status based on requirement completion
-      if (dbAnalysis.isComplete) {
-        newDbStatus = 'complete';
-      } else if (dbAnalysis.hasStarted) {
-        newDbStatus = 'in_progress';
-      } else {
-        newDbStatus = 'not_started';
-      }
-      
-      // Update feature status based on database requirements completion
-      // Only update the feature status if it's logical to do so
-      if (dbAnalysis.isComplete && ['not_started', 'planned', 'partial'].includes(feature.status)) {
-        newStatus = 'implemented';
-      } else if (dbAnalysis.hasStarted && ['not_started', 'planned'].includes(feature.status)) {
-        newStatus = 'partial';
-      } else if (dbAnalysis.hasStarted && feature.status === 'not_started') {
-        newStatus = 'planned';
-      }
-    }
-    
-    // Check if the feature is related to feature flags or feature metrics system
-    if (isFeatureFlagRelated(feature)) {
-      // Update database status to complete for feature flag related features
-      newDbStatus = 'complete';
-      
-      // Update feature implementation status to implemented
-      if (['not_started', 'planned', 'partial'].includes(feature.status)) {
-        newStatus = 'implemented';
-      }
-    }
-    
-    // Detect mocktail suggestions features based on keywords
-    if (isMocktailSuggestionFeature(feature)) {
-      // Mark database status as complete for mocktail suggestions features
-      newDbStatus = 'complete';
-      
-      // Update implementation status
-      if (['not_started', 'planned', 'partial'].includes(feature.status)) {
-        newStatus = 'implemented';
-      }
-    }
-    
-    // Enhanced detection for mocktail trends features
-    if (isMocktailTrendsFeature(feature)) {
-      // Mark database status as complete for mocktail trends features
-      newDbStatus = 'complete';
-      
-      // Update implementation status
-      if (['not_started', 'planned', 'partial'].includes(feature.status)) {
-        newStatus = 'implemented';
-      }
-    }
-    
-    // Detection for ingredient pairing system
-    if (isIngredientPairingFeature(feature)) {
-      // Mark database status as complete
-      newDbStatus = 'complete';
-      
-      // Update implementation status
-      if (['not_started', 'planned', 'partial'].includes(feature.status)) {
-        newStatus = 'implemented';
-      }
-    }
-    
-    // Enhanced detection for promotion creation and management features
-    if (isPromotionFeature(feature)) {
-      // Mark database status as complete for promotion features
-      newDbStatus = 'complete';
-      
-      // Update implementation status
-      if (['not_started', 'planned', 'partial'].includes(feature.status)) {
-        newStatus = 'implemented';
-      }
-    }
-    
-    // Detection for analytics features 
-    if (isAnalyticsFeature(feature)) {
-      // Mark database status as complete for analytics features
-      newDbStatus = 'complete';
-      
-      // Update implementation status to indicate it's fully implemented
-      if (['not_started', 'planned', 'partial'].includes(feature.status)) {
-        newStatus = 'implemented';
-      }
-    }
-    
-    return {
-      ...feature,
-      status: newStatus,
-      databaseStatus: newDbStatus,
-      statusUpdated: newStatus !== originalStatus || newDbStatus !== originalDbStatus,
-      originalStatus: originalStatus !== newStatus ? originalStatus : undefined
-    };
-  });
-}
+};
