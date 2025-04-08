@@ -3,16 +3,20 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Button } from '@/components/ui/button';
+import { Undo } from 'lucide-react';
 
 interface ColorPickerProps {
   label: string;
   value: string;
   onChange: (color: string) => void;
+  description?: string;
 }
 
-const ColorPicker: React.FC<ColorPickerProps> = ({ label, value, onChange }) => {
+const ColorPicker: React.FC<ColorPickerProps> = ({ label, value, onChange, description }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [currentColor, setCurrentColor] = useState<string>(value);
+  const [previousColor, setPreviousColor] = useState<string>(value);
   const colorInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -37,17 +41,35 @@ const ColorPicker: React.FC<ColorPickerProps> = ({ label, value, onChange }) => 
 
   const triggerColorPicker = () => {
     if (colorInputRef.current) {
+      setPreviousColor(currentColor);
       colorInputRef.current.click();
     }
+  };
+
+  const handleUndoClick = () => {
+    setCurrentColor(previousColor);
+    onChange(previousColor);
   };
 
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <Label htmlFor={`color-${label}`}>{label}</Label>
+        <div>
+          <Label htmlFor={`color-${label}`} className="font-medium">{label}</Label>
+          {description && <p className="text-xs text-muted-foreground mt-0.5">{description}</p>}
+        </div>
         <div className="flex items-center gap-2">
+          <Button 
+            size="icon" 
+            variant="ghost" 
+            className="h-7 w-7" 
+            onClick={handleUndoClick}
+            title="Undo color change"
+          >
+            <Undo className="h-3.5 w-3.5" />
+          </Button>
           <div 
-            className="w-8 h-8 rounded border cursor-pointer"
+            className="w-8 h-8 rounded border cursor-pointer shadow-sm transition-all hover:scale-110"
             style={{ backgroundColor: currentColor }}
             onClick={triggerColorPicker}
           />
@@ -55,7 +77,7 @@ const ColorPicker: React.FC<ColorPickerProps> = ({ label, value, onChange }) => 
             <PopoverTrigger asChild>
               <Input 
                 id={`color-${label}`}
-                className="w-24 font-mono"
+                className="w-24 font-mono text-sm"
                 value={currentColor} 
                 onChange={handleInputChange}
                 onClick={() => setIsOpen(true)}
@@ -67,7 +89,7 @@ const ColorPicker: React.FC<ColorPickerProps> = ({ label, value, onChange }) => 
                 type="color" 
                 value={currentColor}
                 onChange={handleColorChange}
-                className="w-32 h-32 cursor-pointer"
+                className="w-36 h-36 cursor-pointer"
               />
             </PopoverContent>
           </Popover>

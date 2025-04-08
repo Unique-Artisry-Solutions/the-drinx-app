@@ -54,6 +54,7 @@ const SystemFunctionalityBreakdown = lazy(() => import('@/pages/admin/SystemFunc
 const SystemAnalyticsPage = lazy(() => import('@/pages/admin/SystemAnalyticsPage'));
 const PhotoModerationPage = lazy(() => import('@/pages/admin/PhotoModerationPage'));
 const ContentModerationPage = lazy(() => import('@/pages/admin/ContentModerationPage'));
+const ThemeCustomizationPage = lazy(() => import('@/pages/admin/ThemeCustomizationPage'));
 
 import EstablishmentDashboardPage from '@/pages/establishment/EstablishmentDashboardPage';
 
@@ -106,8 +107,8 @@ const AppRoutes = () => {
         <Route path="/admin/analytics" element={<SystemAnalyticsPage />} />
         <Route path="/admin/photo-moderation" element={<PhotoModerationPage />} />
         <Route path="/admin/content-moderation" element={<ContentModerationPage />} />
+        <Route path="/admin/theme-customization" element={<ThemeCustomizationPage />} />
         
-        {/* Always redirect /establishment to the dashboard */}
         <Route path="/establishment" element={
           <TypedProtectedRoute userType="establishment">
             <Navigate to="/establishment/dashboard" replace />
