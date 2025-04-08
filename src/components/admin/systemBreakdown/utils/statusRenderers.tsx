@@ -27,7 +27,7 @@ export const renderStatusBadge = (status: FeatureStatus) => {
       );
     case 'planned':
       return <Badge className="bg-blue-500 hover:bg-blue-600">Planned</Badge>;
-    case 'not-started':
+    case 'not_started':
       return (
         <Badge className="bg-gray-500 hover:bg-gray-600">Not Started</Badge>
       );
@@ -36,7 +36,7 @@ export const renderStatusBadge = (status: FeatureStatus) => {
   }
 };
 
-export const renderDatabaseStatusBadge = (status: string) => {
+export const renderDatabaseStatusBadge = (status: DatabaseStatus) => {
   switch (status) {
     case 'complete':
       return (
@@ -64,7 +64,7 @@ export const renderDatabaseStatusBadge = (status: string) => {
   }
 };
 
-export const renderAccessIcon = (access: string) => {
+export const renderAccessIcon = (access: AccessLevel) => {
   switch (access) {
     case 'full':
       return <Check className="h-5 w-5 text-green-500" />;

@@ -1,94 +1,38 @@
 
 import React from 'react';
-import { NavLink } from 'react-router-dom';
-import { 
-  Home, 
-  Users, 
-  Store, 
-  Settings, 
-  Image, 
-  AlertTriangle,
-  BarChart2,
-  Cog 
-} from 'lucide-react';
+import { Home, Store, Users, Image, Flag, Layers, BarChart } from 'lucide-react';
+import NavItem from '@/components/navigation/NavItem';
+import { LucideIcon } from 'lucide-react';
 
 export interface AdminNavItem {
-  href: string;
+  path: string;
+  icon: LucideIcon;
   label: string;
-  icon: React.ElementType;
+  showInNav?: boolean;
 }
 
+// Export the admin navigation items array for use in other components
 export const adminNavItems: AdminNavItem[] = [
-  {
-    href: '/admin/dashboard',
-    label: 'Dashboard',
-    icon: Home,
-  },
-  {
-    href: '/admin/users',
-    label: 'Users',
-    icon: Users,
-  },
-  {
-    href: '/admin/establishments',
-    label: 'Establishments',
-    icon: Store,
-  },
-  {
-    href: '/admin/system-breakdown',
-    label: 'System Breakdown',
-    icon: Settings,
-  },
-  {
-    href: '/admin/system-configuration',
-    label: 'System Configuration',
-    icon: Cog,
-  },
-  {
-    href: '/admin/analytics',
-    label: 'Analytics',
-    icon: BarChart2,
-  },
-  {
-    href: '/admin/photo-moderation',
-    label: 'Photo Moderation',
-    icon: Image,
-  },
-  {
-    href: '/admin/content-moderation',
-    label: 'Content Moderation',
-    icon: AlertTriangle,
-  },
+  { path: '/admin/dashboard', icon: Home, label: 'Dashboard' },
+  { path: '/admin/establishments', icon: Store, label: 'Establishments' },
+  { path: '/admin/users', icon: Users, label: 'Users' },
+  { path: '/admin/photo-moderation', icon: Image, label: 'Photo Moderation' },
+  { path: '/admin/content-moderation', icon: Flag, label: 'Content Moderation' },
+  { path: '/admin/system-breakdown', icon: Layers, label: 'System Breakdown' },
+  { path: '/admin/analytics', icon: BarChart, label: 'Analytics' },
 ];
 
-interface AdminNavItemsProps {
-  currentPath: string;
-}
-
-const AdminNavItems: React.FC<AdminNavItemsProps> = ({ currentPath }) => {
+const AdminNavItems = () => {
   return (
-    <nav className="flex flex-1">
-      <ul className="flex space-x-2">
-        {adminNavItems.map((item) => {
-          const isActive = currentPath.startsWith(item.href);
-          return (
-            <li key={item.href}>
-              <NavLink 
-                to={item.href} 
-                className={({ isActive }) => 
-                  `flex items-center px-3 py-2 rounded-md text-sm font-medium ${
-                    isActive ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground'
-                  }`
-                }
-              >
-                <item.icon className="h-4 w-4 mr-2" />
-                {item.label}
-              </NavLink>
-            </li>
-          );
-        })}
-      </ul>
-    </nav>
+    <>
+      <NavItem href="/admin/dashboard" icon={Home} label="Dashboard" />
+      <NavItem href="/admin/establishments" icon={Store} label="Establishments" />
+      <NavItem href="/admin/users" icon={Users} label="Users" />
+      <NavItem href="/admin/photo-moderation" icon={Image} label="Photo Moderation" />
+      <NavItem href="/admin/content-moderation" icon={Flag} label="Content Moderation" />
+      <NavItem href="/admin/system-breakdown" icon={Layers} label="System Breakdown" />
+      <NavItem href="/admin/analytics" icon={BarChart} label="Analytics" />
+    </>
   );
 };
 

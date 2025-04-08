@@ -44,7 +44,7 @@ const FeaturesTable: React.FC<FeaturesTableProps> = ({ features, title }) => {
                 <TableCell className="font-medium">
                   <div className="flex flex-col">
                     <span>{feature.name}</span>
-                    {feature.statusUpdated && feature.originalStatus && (
+                    {feature.statusUpdated && (
                       <span className="text-xs text-amber-600 mt-1">
                         Updated from {feature.originalStatus}
                       </span>

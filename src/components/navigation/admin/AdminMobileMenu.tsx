@@ -1,43 +1,56 @@
 
 import React from 'react';
-import { NavLink } from 'react-router-dom';
-import { 
-  DropdownMenuItem,
-  DropdownMenuSeparator 
-} from '@/components/ui/dropdown/dropdown-items';
-import { adminNavItems } from './AdminNavItems';
+import { Link } from 'react-router-dom';
 import { LogOut } from 'lucide-react';
+import { AdminNavItem } from './AdminNavItems';
+import { Separator } from '@/components/ui/separator';
 
 interface AdminMobileMenuProps {
-  onLogout?: () => void;
+  isOpen: boolean;
+  username: string;
+  navItems: AdminNavItem[];
+  onItemClick: () => void;
+  onLogout: () => void;
 }
 
-export const AdminMobileMenu: React.FC<AdminMobileMenuProps> = ({ onLogout }) => {
+const AdminMobileMenu: React.FC<AdminMobileMenuProps> = ({
+  isOpen,
+  username,
+  navItems,
+  onItemClick,
+  onLogout
+}) => {
+  if (!isOpen) return null;
+
   return (
-    <div className="py-2">
-      {adminNavItems.map((item) => (
-        <DropdownMenuItem key={item.href} asChild>
-          <NavLink 
-            to={item.href} 
-            className={({ isActive }) => `flex items-center px-2 py-2 text-sm rounded-md ${
-              isActive ? 'bg-accent' : ''
-            }`}
-          >
-            <item.icon className="h-4 w-4 mr-2" />
-            <span>{item.label}</span>
-          </NavLink>
-        </DropdownMenuItem>
+    <div className="admin-mobile-menu md:hidden py-3 space-y-1 animate-fade-in bg-material-primary/95 backdrop-blur-sm border-t border-white/10">
+      <div className="text-sm text-white/90 px-3 py-2 border-b border-white/10 mb-2">
+        <span className="font-medium text-white">Admin: {username}</span>
+      </div>
+      
+      {navItems.filter(item => item.showInNav !== false).map((item) => (
+        <Link
+          key={item.path}
+          to={item.path}
+          className="admin-mobile-link flex items-center px-3 py-2 hover:bg-white/10 transition-colors"
+          onClick={onItemClick}
+        >
+          <item.icon className="mr-2 h-4 w-4" />
+          <span className="text-sm">{item.label}</span>
+        </Link>
       ))}
       
-      {onLogout && (
-        <>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={onLogout} className="text-destructive focus:text-destructive">
-            <LogOut className="h-4 w-4 mr-2" />
-            <span>Sign Out</span>
-          </DropdownMenuItem>
-        </>
-      )}
+      <Separator className="my-2 bg-white/10" />
+      
+      <button
+        className="flex items-center w-full px-3 py-2 text-red-200 hover:bg-red-800/30 transition-colors"
+        onClick={onLogout}
+      >
+        <LogOut className="mr-2 h-4 w-4" />
+        <span className="text-sm">Logout</span>
+      </button>
     </div>
   );
 };
+
+export default AdminMobileMenu;

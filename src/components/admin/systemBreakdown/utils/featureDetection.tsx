@@ -1,3 +1,4 @@
+
 import { FeatureItem } from '../types';
 
 /**
@@ -137,17 +138,3 @@ export function isRevenueTrackingFeature(feature: FeatureItem): boolean {
     feature.description?.toLowerCase().includes('earnings')
   );
 }
-
-/**
- * Checks if a feature is related to system settings
- */
-export const isSystemSettingsFeature = (feature: any): boolean => {
-  const nameMatch = feature.name.toLowerCase().includes('system settings') || 
-                   feature.name.toLowerCase().includes('configuration');
-  const descMatch = feature.description?.toLowerCase().includes('system settings') || 
-                   feature.description?.toLowerCase().includes('configuration');
-  const idMatch = feature.id === 'feature-system-settings' || 
-                 feature.id.includes('system-settings');
-  
-  return nameMatch || descMatch || idMatch;
-};

@@ -1,19 +1,15 @@
 
 import { renderStatusBadge, renderDatabaseStatusBadge, renderAccessIcon } from './statusRenderers';
 import { calculateFeatureStatistics } from './statisticsUtils';
-import { generateCSV, exportFeaturesCSV } from './exportUtils';
-import { analyzeFeatures } from './featureAnalysis';
-import { 
-  parseTaskStatuses,
-  analyzeDbRequirements
-} from './taskDetection';
+import { generateCSV } from './exportUtils';
+import { analyzeAllFeatures } from './featureAnalysis';
+import { analyzeDbRequirements } from './analysisHelpers';
 import { 
   isFeatureFlagRelated,
   isMocktailSuggestionFeature,
   isMocktailTrendsFeature, 
   isIngredientPairingFeature,
-  isPromotionFeature,
-  isSystemSettingsFeature
+  isPromotionFeature
 } from './featureDetection';
 
 export {
@@ -22,16 +18,13 @@ export {
   renderAccessIcon,
   calculateFeatureStatistics,
   generateCSV,
-  exportFeaturesCSV,
-  analyzeFeatures,
-  parseTaskStatuses,
+  analyzeAllFeatures,
   analyzeDbRequirements,
   isFeatureFlagRelated,
   isMocktailSuggestionFeature,
   isMocktailTrendsFeature, 
   isIngredientPairingFeature,
-  isPromotionFeature,
-  isSystemSettingsFeature
+  isPromotionFeature
 };
 
 // Use 'export type' for type exports when isolatedModules is enabled
