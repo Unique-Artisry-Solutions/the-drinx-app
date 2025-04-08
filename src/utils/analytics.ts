@@ -90,15 +90,16 @@ export async function getUserRetention(startDate: Date, endDate: Date) {
 }
 
 /**
- * Get event summary statistics
+ * Get event summary statistics - directly querying analytics_events instead of using RPC
  */
 export async function getEventSummary(startDate: Date, endDate: Date) {
   try {
     const { data, error } = await supabaseClient
-      .rpc('get_event_summary', {
-        p_start_date: startDate.toISOString().split('T')[0],
-        p_end_date: endDate.toISOString().split('T')[0]
-      });
+      .from('analytics_events')
+      .select('event_type, count(*)')
+      .gte('timestamp', startDate.toISOString())
+      .lte('timestamp', endDate.toISOString())
+      .order('count', { ascending: false });
     
     if (error) {
       console.error('Error fetching event summary:', error);
@@ -119,11 +120,10 @@ export async function getPopularPages(startDate: Date, endDate: Date, limit: num
   try {
     const { data, error } = await supabaseClient
       .from('analytics_events')
-      .select('page_url, count(*)')
+      .select('page_url, count')
       .eq('event_type', 'page_view')
       .gte('timestamp', startDate.toISOString())
       .lte('timestamp', endDate.toISOString())
-      .group('page_url')
       .order('count', { ascending: false })
       .limit(limit);
     

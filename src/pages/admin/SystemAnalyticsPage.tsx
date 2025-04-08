@@ -1,16 +1,16 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import AnalyticsService from '@/components/admin/analytics/AnalyticsService';
 import AnalyticsDashboard from '@/components/admin/analytics/AnalyticsDashboard';
 import { useAnalytics } from '@/hooks/useAnalytics';
 
 const SystemAnalyticsPage: React.FC = () => {
-  const { track } = useAnalytics();
+  const { trackPage } = useAnalytics();
   
   // Track page view
-  React.useEffect(() => {
-    track('admin_analytics_page_view');
-  }, [track]);
+  useEffect(() => {
+    trackPage('admin_analytics_page');
+  }, [trackPage]);
 
   return (
     <>

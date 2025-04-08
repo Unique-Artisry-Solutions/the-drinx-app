@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
+  XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer 
 } from 'recharts';
 import { 
   Activity, Users, BarChart as BarChartIcon, 
@@ -30,16 +30,44 @@ interface StatsCard {
   change?: number;
 }
 
+// Define types for our data
+interface AnalyticsDataItem {
+  date?: string;
+  year?: number;
+  month?: number;
+  week?: number;
+  event_type?: string;
+  event_count: number;
+  unique_users: number;
+  name?: string;
+  total?: number;
+  [key: string]: any;
+}
+
+interface RetentionDataItem {
+  cohort_date: string;
+  total_users: number;
+  retained_users_week1: number;
+  retained_users_week2: number;
+  retained_users_week3: number;
+  retained_users_week4: number;
+}
+
+interface EventDistributionItem {
+  name: string;
+  value: number;
+}
+
 const AnalyticsDashboard: React.FC = () => {
   const { toast } = useToast();
   const { track } = useAnalytics();
   const [activeTab, setActiveTab] = useState('overview');
   const [timeframe, setTimeframe] = useState('30d');
   const [isLoading, setIsLoading] = useState(true);
-  const [dailyData, setDailyData] = useState<any[]>([]);
-  const [weeklyData, setWeeklyData] = useState<any[]>([]);
-  const [monthlyData, setMonthlyData] = useState<any[]>([]);
-  const [retentionData, setRetentionData] = useState<any[]>([]);
+  const [dailyData, setDailyData] = useState<AnalyticsDataItem[]>([]);
+  const [weeklyData, setWeeklyData] = useState<AnalyticsDataItem[]>([]);
+  const [monthlyData, setMonthlyData] = useState<AnalyticsDataItem[]>([]);
+  const [retentionData, setRetentionData] = useState<RetentionDataItem[]>([]);
   
   // Prepare date ranges based on selected timeframe
   const getDateRange = () => {
@@ -133,27 +161,28 @@ const AnalyticsDashboard: React.FC = () => {
   };
   
   // Format data for charts
-  const formatEventData = (data: any[]) => {
-    const eventsByDate: Record<string, any> = {};
+  const formatEventData = (data: AnalyticsDataItem[]): AnalyticsDataItem[] => {
+    const eventsByDate: Record<string, AnalyticsDataItem> = {};
     
     data.forEach(item => {
       const dateKey = item.date || `${item.year}-${item.month || item.week}`;
       if (!eventsByDate[dateKey]) {
-        eventsByDate[dateKey] = { name: dateKey };
+        eventsByDate[dateKey] = { name: dateKey, total: 0, unique_users: 0, event_count: 0 };
       }
-      eventsByDate[dateKey][item.event_type] = item.event_count;
+      if (item.event_type) {
+        eventsByDate[dateKey][item.event_type] = item.event_count;
+      }
       
-      if (!eventsByDate[dateKey].total) {
-        eventsByDate[dateKey].total = 0;
-      }
-      eventsByDate[dateKey].total += item.event_count;
+      eventsByDate[dateKey].total = (eventsByDate[dateKey].total || 0) + item.event_count;
       
       if (item.unique_users) {
         eventsByDate[dateKey].unique_users = (eventsByDate[dateKey].unique_users || 0) + item.unique_users;
       }
     });
     
-    return Object.values(eventsByDate).sort((a: any, b: any) => a.name.localeCompare(b.name));
+    return Object.values(eventsByDate).sort((a: AnalyticsDataItem, b: AnalyticsDataItem) => {
+      return a.name && b.name ? a.name.localeCompare(b.name) : 0;
+    });
   };
   
   // Key metrics to display on overview
@@ -174,7 +203,7 @@ const AnalyticsDashboard: React.FC = () => {
     
     const previousEngagement = previousPeriodData.reduce((sum, item) => sum + (item.total || 0), 0);
     const currentEngagement = currentPeriodData.reduce((sum, item) => sum + (item.total || 0), 0);
-    const engagementChange = previousPeriodData.length 
+    const engagementChange = previousPeriodData.length && previousEngagement > 0
       ? ((currentEngagement - previousEngagement) / previousEngagement) * 100
       : 0;
     
@@ -213,14 +242,16 @@ const AnalyticsDashboard: React.FC = () => {
   const formattedMonthlyData = formatEventData(monthlyData);
   
   // Event distribution for pie chart
-  const eventDistribution = dailyData.reduce((acc, item) => {
+  const eventDistribution = dailyData.reduce<Record<string, number>>((acc, item) => {
     const eventType = item.event_type;
-    if (!acc[eventType]) acc[eventType] = 0;
-    acc[eventType] += item.event_count;
+    if (eventType) {
+      if (!acc[eventType]) acc[eventType] = 0;
+      acc[eventType] += item.event_count;
+    }
     return acc;
-  }, {} as Record<string, number>);
+  }, {});
   
-  const pieChartData = Object.entries(eventDistribution).map(([name, value]) => ({ name, value }));
+  const pieChartData: EventDistributionItem[] = Object.entries(eventDistribution).map(([name, value]) => ({ name, value }));
   
   // Colors for pie chart
   const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff8042', '#0088FE', '#00C49F', '#FFBB28'];
@@ -310,9 +341,7 @@ const AnalyticsDashboard: React.FC = () => {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" />
                     <YAxis />
-                    <ChartTooltip>
-                      <ChartTooltipContent />
-                    </ChartTooltip>
+                    <RechartsTooltip content={(props) => <ChartTooltipContent {...props} />} />
                     <Legend />
                     <Line 
                       type="monotone" 
@@ -362,7 +391,7 @@ const AnalyticsDashboard: React.FC = () => {
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value) => [`${value} events`, 'Count']} />
+                    <RechartsTooltip formatter={(value: any) => [`${value} events`, 'Count']} />
                     <Legend />
                   </PieChart>
                 </ResponsiveContainer>
@@ -380,7 +409,7 @@ const AnalyticsDashboard: React.FC = () => {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" />
                     <YAxis />
-                    <Tooltip />
+                    <RechartsTooltip />
                     <Legend />
                     <Bar dataKey="total" name="Total Events" fill="#8884d8" />
                     <Bar dataKey="unique_users" name="Unique Users" fill="#82ca9d" />
@@ -411,7 +440,7 @@ const AnalyticsDashboard: React.FC = () => {
                   <TableBody>
                     {Object.entries(eventDistribution).map(([eventType, count]) => {
                       const totalEvents = Object.values(eventDistribution).reduce((sum, val) => sum + val, 0);
-                      const percentage = (count / totalEvents * 100).toFixed(1);
+                      const percentage = totalEvents > 0 ? (count / totalEvents * 100).toFixed(1) : '0.0';
                       const uniqueUsers = dailyData
                         .filter(item => item.event_type === eventType)
                         .reduce((sum, item) => sum + (item.unique_users || 0), 0);
@@ -512,9 +541,7 @@ const AnalyticsDashboard: React.FC = () => {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" />
                     <YAxis />
-                    <ChartTooltip>
-                      <ChartTooltipContent />
-                    </ChartTooltip>
+                    <RechartsTooltip content={(props) => <ChartTooltipContent {...props} />} />
                     <Legend />
                     <Bar dataKey="total" name="Total Events" fill="#8884d8" />
                     <Bar dataKey="unique_users" name="Unique Users" fill="#82ca9d" />
