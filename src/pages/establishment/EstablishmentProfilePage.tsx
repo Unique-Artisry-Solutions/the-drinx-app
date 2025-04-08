@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import Layout from '@/components/Layout';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
@@ -57,27 +56,29 @@ const EstablishmentProfilePage = () => {
   const quickLinks = [
     { label: 'All Actions', section: 'allActions', icon: Store },
     { label: 'Analytics', section: 'analytics', icon: BarChart4 },
-    { label: 'Mocktail Menu', section: 'menu', icon: Utensils },
-    { label: 'Promotions', section: 'promotions', icon: Tag },
-    { label: 'Bar Crawls', section: 'barCrawls', icon: Route },
-    { label: 'Settings', section: 'settings', icon: Settings },
+    { label: 'Mocktail Menu', section: 'menu', icon: Utensils, tab: 'menu' },
+    { label: 'Promotions', section: 'promotions', icon: Tag, tab: 'promotions' },
+    { label: 'Bar Crawls', section: 'barCrawls', icon: Route, tab: 'barCrawls' },
+    { label: 'Settings', section: 'settings', icon: Settings }
   ];
 
   // Handle quick link click
   const handleQuickLinkClick = (section: string) => {
-    setActiveSection(section);
+    // First clear any active section
+    setActiveSection(null);
     
-    // Map sections to tabs when appropriate
-    if (section === 'menu') {
-      setActiveTab('menu');
-      setSearchParams({ tab: 'menu' });
-    } else if (section === 'promotions') {
-      setActiveTab('promotions');
-      setSearchParams({ tab: 'promotions' });
-    } else if (section === 'barCrawls') {
-      setActiveTab('barCrawls');
-      setSearchParams({ tab: 'barCrawls' });
+    // Find the matching quick link
+    const quickLink = quickLinks.find(link => link.section === section);
+    
+    // If this quick link has a tab associated with it, set it as the active tab
+    if (quickLink && quickLink.tab) {
+      setActiveTab(quickLink.tab);
+      setSearchParams({ tab: quickLink.tab });
+      return;
     }
+    
+    // Otherwise, set this as a custom section
+    setActiveSection(section);
   };
 
   // Render section content based on activeSection
@@ -92,19 +93,19 @@ const EstablishmentProfilePage = () => {
               <h1 className="text-2xl font-bold mb-4">All Actions</h1>
               <p>Quick access to all establishment management actions.</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-6">
-                <Card className="p-4 hover:bg-gray-50 cursor-pointer" onClick={() => handleQuickLinkClick('menu')}>
+                <Card className="p-4 hover:bg-gray-50 cursor-pointer" onClick={() => handleTabChange('menu')}>
                   <h3 className="font-medium flex items-center gap-2">
                     <Utensils className="h-5 w-5" />
                     Update Menu
                   </h3>
                 </Card>
-                <Card className="p-4 hover:bg-gray-50 cursor-pointer" onClick={() => handleQuickLinkClick('promotions')}>
+                <Card className="p-4 hover:bg-gray-50 cursor-pointer" onClick={() => handleTabChange('promotions')}>
                   <h3 className="font-medium flex items-center gap-2">
                     <Tag className="h-5 w-5" />
                     Manage Promotions
                   </h3>
                 </Card>
-                <Card className="p-4 hover:bg-gray-50 cursor-pointer" onClick={() => handleQuickLinkClick('barCrawls')}>
+                <Card className="p-4 hover:bg-gray-50 cursor-pointer" onClick={() => handleTabChange('barCrawls')}>
                   <h3 className="font-medium flex items-center gap-2">
                     <Route className="h-5 w-5" />
                     Review Bar Crawl Requests
@@ -157,7 +158,7 @@ const EstablishmentProfilePage = () => {
                     <h3 className="font-medium">Account Information</h3>
                     <p className="text-sm text-gray-500">Update your establishment details</p>
                   </div>
-                  <button className="text-blue-600" onClick={() => { setActiveSection(null); setActiveTab('profile'); setSearchParams({ tab: 'profile' }); }}>
+                  <button className="text-blue-600" onClick={() => handleTabChange('profile')}>
                     Edit
                   </button>
                 </div>
@@ -199,9 +200,9 @@ const EstablishmentProfilePage = () => {
               {quickLinks.map((link) => (
                 <button 
                   key={link.section}
-                  onClick={() => handleQuickLinkClick(link.section)}
+                  onClick={() => link.tab ? handleTabChange(link.tab) : handleQuickLinkClick(link.section)}
                   className={cn(
-                    buttonVariants({ variant: activeSection === link.section ? "default" : "outline" }),
+                    buttonVariants({ variant: (activeSection === link.section || activeTab === link.tab) ? "default" : "outline" }),
                     "flex items-center gap-2"
                   )}
                 >
