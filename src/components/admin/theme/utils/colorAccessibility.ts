@@ -10,11 +10,16 @@
 export function getLuminance(hexColor: string): number {
   // Remove # if present
   const hex = hexColor.startsWith('#') ? hexColor.slice(1) : hexColor;
+
+  // Handle both 3-digit and 6-digit hex codes
+  const expandedHex = hex.length === 3 
+    ? hex.split('').map(char => char + char).join('') 
+    : hex;
   
   // Convert to RGB
-  const r = parseInt(hex.slice(0, 2), 16) / 255;
-  const g = parseInt(hex.slice(2, 4), 16) / 255;
-  const b = parseInt(hex.slice(4, 6), 16) / 255;
+  const r = parseInt(expandedHex.slice(0, 2), 16) / 255;
+  const g = parseInt(expandedHex.slice(2, 4), 16) / 255;
+  const b = parseInt(expandedHex.slice(4, 6), 16) / 255;
   
   // Calculate luminance
   const R = r <= 0.03928 ? r / 12.92 : Math.pow((r + 0.055) / 1.055, 2.4);
@@ -29,13 +34,18 @@ export function getLuminance(hexColor: string): number {
  * Formula from WCAG 2.0: https://www.w3.org/TR/WCAG20-TECHS/G17.html
  */
 export function getContrastRatio(color1: string, color2: string): number {
-  const luminance1 = getLuminance(color1);
-  const luminance2 = getLuminance(color2);
-  
-  const lighter = Math.max(luminance1, luminance2);
-  const darker = Math.min(luminance1, luminance2);
-  
-  return (lighter + 0.05) / (darker + 0.05);
+  try {
+    const luminance1 = getLuminance(color1);
+    const luminance2 = getLuminance(color2);
+    
+    const lighter = Math.max(luminance1, luminance2);
+    const darker = Math.min(luminance1, luminance2);
+    
+    return (lighter + 0.05) / (darker + 0.05);
+  } catch (e) {
+    console.error('Error calculating contrast ratio:', e);
+    return 1; // Return lowest possible contrast ratio on error
+  }
 }
 
 /**
@@ -44,8 +54,13 @@ export function getContrastRatio(color1: string, color2: string): number {
  * - Large text (>= 18pt): minimum ratio of 3:1
  */
 export function meetsWCAGAA(color1: string, color2: string, isLargeText = false): boolean {
-  const ratio = getContrastRatio(color1, color2);
-  return ratio >= (isLargeText ? 3 : 4.5);
+  try {
+    const ratio = getContrastRatio(color1, color2);
+    return ratio >= (isLargeText ? 3 : 4.5);
+  } catch (e) {
+    console.error('Error checking WCAG AA compliance:', e);
+    return false;
+  }
 }
 
 /**
@@ -54,19 +69,29 @@ export function meetsWCAGAA(color1: string, color2: string, isLargeText = false)
  * - Large text (>= 18pt): minimum ratio of 4.5:1
  */
 export function meetsWCAGAAA(color1: string, color2: string, isLargeText = false): boolean {
-  const ratio = getContrastRatio(color1, color2);
-  return ratio >= (isLargeText ? 4.5 : 7);
+  try {
+    const ratio = getContrastRatio(color1, color2);
+    return ratio >= (isLargeText ? 4.5 : 7);
+  } catch (e) {
+    console.error('Error checking WCAG AAA compliance:', e);
+    return false;
+  }
 }
 
 /**
  * Get WCAG compliance level for a color combination
  */
 export function getComplianceLevel(color1: string, color2: string, isLargeText = false): 'AAA' | 'AA' | 'Fail' {
-  if (meetsWCAGAAA(color1, color2, isLargeText)) {
-    return 'AAA';
-  } else if (meetsWCAGAA(color1, color2, isLargeText)) {
-    return 'AA';
-  } else {
+  try {
+    if (meetsWCAGAAA(color1, color2, isLargeText)) {
+      return 'AAA';
+    } else if (meetsWCAGAA(color1, color2, isLargeText)) {
+      return 'AA';
+    } else {
+      return 'Fail';
+    }
+  } catch (e) {
+    console.error('Error determining compliance level:', e);
     return 'Fail';
   }
 }
@@ -78,16 +103,40 @@ export function checkColorAccessibility(textColor: string, backgroundColor: stri
   normalText: { ratio: number, level: 'AAA' | 'AA' | 'Fail' },
   largeText: { ratio: number, level: 'AAA' | 'AA' | 'Fail' }
 } {
-  const ratio = getContrastRatio(textColor, backgroundColor);
-  
-  return {
-    normalText: {
-      ratio,
-      level: getComplianceLevel(textColor, backgroundColor, false)
-    },
-    largeText: {
-      ratio,
-      level: getComplianceLevel(textColor, backgroundColor, true)
-    }
-  };
+  try {
+    const ratio = getContrastRatio(textColor, backgroundColor);
+    
+    return {
+      normalText: {
+        ratio: parseFloat(ratio.toFixed(2)),
+        level: getComplianceLevel(textColor, backgroundColor, false)
+      },
+      largeText: {
+        ratio: parseFloat(ratio.toFixed(2)),
+        level: getComplianceLevel(textColor, backgroundColor, true)
+      }
+    };
+  } catch (e) {
+    console.error('Error checking color accessibility:', e);
+    return {
+      normalText: { ratio: 1, level: 'Fail' },
+      largeText: { ratio: 1, level: 'Fail' }
+    };
+  }
+}
+
+/**
+ * Determine if a color is light or dark (useful for choosing text color)
+ * @returns true if the color is light, false if dark
+ */
+export function isLightColor(hexColor: string): boolean {
+  const luminance = getLuminance(hexColor);
+  return luminance > 0.5;
+}
+
+/**
+ * Get recommended text color (black or white) based on background color
+ */
+export function getRecommendedTextColor(backgroundColor: string): string {
+  return isLightColor(backgroundColor) ? '#000000' : '#FFFFFF';
 }

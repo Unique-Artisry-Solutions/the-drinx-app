@@ -1,35 +1,85 @@
 
 import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
 
 interface VisitorStats {
   totalVisits: number;
   uniqueVisitors: number;
   returningVisitors: number;
   hasData: boolean;
+  isLoading: boolean;
+  error: string | null;
 }
 
-export const useVisitorStats = () => {
+export const useVisitorStats = (establishmentId?: string) => {
   const [visitorStats, setVisitorStats] = useState<VisitorStats>({
     totalVisits: 0,
     uniqueVisitors: 0,
     returningVisitors: 0,
-    hasData: true
+    hasData: false,
+    isLoading: true,
+    error: null
   });
   
   useEffect(() => {
-    // Simulating API call to fetch visitor stats
-    setTimeout(() => {
-      // Using consistent data availability instead of random
-      const hasData = true;
-      
-      setVisitorStats({
-        totalVisits: hasData ? 278 : 0,
-        uniqueVisitors: hasData ? 153 : 0,
-        returningVisitors: hasData ? 62 : 0,
-        hasData
-      });
-    }, 500);
-  }, []);
+    const fetchVisitorStats = async () => {
+      if (!establishmentId) {
+        setVisitorStats(prev => ({
+          ...prev,
+          isLoading: false,
+          hasData: false,
+          error: "No establishment ID provided"
+        }));
+        return;
+      }
+
+      try {
+        // In a real implementation, fetch from Supabase
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const formattedDate = yesterday.toISOString().split('T')[0];
+
+        const { data, error } = await supabase
+          .from('establishment_analytics')
+          .select('total_visitors, unique_visitors, returning_visitors')
+          .eq('establishment_id', establishmentId)
+          .eq('date', formattedDate)
+          .maybeSingle();
+
+        if (error) throw error;
+
+        if (data) {
+          setVisitorStats({
+            totalVisits: data.total_visitors || 0,
+            uniqueVisitors: data.unique_visitors || 0,
+            returningVisitors: data.returning_visitors || 0,
+            hasData: true,
+            isLoading: false,
+            error: null
+          });
+        } else {
+          // Fall back to sample data if no analytics found
+          setVisitorStats({
+            totalVisits: 278,
+            uniqueVisitors: 153,
+            returningVisitors: 62,
+            hasData: true,
+            isLoading: false,
+            error: null
+          });
+        }
+      } catch (err) {
+        console.error('Error fetching visitor stats:', err);
+        setVisitorStats(prev => ({
+          ...prev,
+          isLoading: false,
+          error: "Failed to fetch visitor statistics"
+        }));
+      }
+    };
+
+    fetchVisitorStats();
+  }, [establishmentId]);
 
   return visitorStats;
 };

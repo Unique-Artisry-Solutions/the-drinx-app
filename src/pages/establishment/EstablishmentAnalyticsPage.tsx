@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Layout from '@/components/Layout';
 import { 
@@ -25,7 +24,7 @@ import { addDays, format } from 'date-fns';
 import { Calendar } from '@/components/ui/calendar';
 import { DateRange } from 'react-day-picker';
 import { Button } from '@/components/ui/button';
-import { CalendarIcon, Download } from 'lucide-react';
+import { CalendarIcon, Download, RefreshCw } from 'lucide-react';
 import {
   Popover,
   PopoverContent,
@@ -33,39 +32,79 @@ import {
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/auth';
+import { useParams } from 'react-router-dom';
+import { supabase } from '@/lib/supabase';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
 const EstablishmentAnalyticsPage = () => {
   const { user } = useAuth();
+  const { id: urlEstablishmentId } = useParams<{ id: string }>();
   const [establishmentId, setEstablishmentId] = useState<string | null>(null);
+  const [isEstablishmentLoading, setIsEstablishmentLoading] = useState(true);
+  const [establishmentError, setEstablishmentError] = useState<string | null>(null);
+  const [establishmentName, setEstablishmentName] = useState<string>('');
+  
   const [date, setDate] = React.useState<DateRange | undefined>({
     from: addDays(new Date(), -30),
     to: new Date(),
   });
   
-  // Fetch the user's establishment ID
-  React.useEffect(() => {
-    if (user) {
-      const fetchEstablishment = async () => {
-        const { data, error } = await fetch('/api/user/establishment')
-          .then(res => res.json());
-        
-        if (error) {
-          console.error('Error fetching establishment:', error);
-          return;
+  // Fetch the establishment ID from URL or user profile
+  useEffect(() => {
+    const fetchEstablishment = async () => {
+      setIsEstablishmentLoading(true);
+      setEstablishmentError(null);
+
+      try {
+        // If establishment ID is provided in URL, use that
+        if (urlEstablishmentId) {
+          // Verify the establishment exists
+          const { data, error } = await supabase
+            .from('establishments')
+            .select('id, name')
+            .eq('id', urlEstablishmentId)
+            .maybeSingle();
+            
+          if (error) throw error;
+          
+          if (data) {
+            setEstablishmentId(data.id);
+            setEstablishmentName(data.name);
+          } else {
+            throw new Error('Establishment not found');
+          }
+        } 
+        // Otherwise try to get the user's establishment ID
+        else if (user) {
+          const { data, error } = await supabase
+            .from('establishments')
+            .select('id, name')
+            .eq('owner_id', user.id)
+            .maybeSingle();
+            
+          if (error) throw error;
+          
+          if (data) {
+            setEstablishmentId(data.id);
+            setEstablishmentName(data.name);
+          } else {
+            throw new Error('No establishment found for this user');
+          }
+        } else {
+          throw new Error('No establishment specified');
         }
-        
-        if (data?.id) {
-          setEstablishmentId(data.id);
-        }
-      };
-      
-      // For demo purposes, use a placeholder ID
-      setEstablishmentId('d290f1ee-6c54-4b01-90e6-d701748f0851');
-      // fetchEstablishment();
-    }
-  }, [user]);
+      } catch (err: any) {
+        console.error('Error fetching establishment:', err);
+        setEstablishmentError(err.message || 'Failed to load establishment');
+      } finally {
+        setIsEstablishmentLoading(false);
+      }
+    };
+    
+    fetchEstablishment();
+  }, [urlEstablishmentId, user]);
   
   const { 
     stats, 
@@ -73,7 +112,7 @@ const EstablishmentAnalyticsPage = () => {
     ratingData, 
     mocktailData,
     barCrawlData,
-    isLoading 
+    isLoading: isDashboardLoading 
   } = useDashboardData();
 
   // Use our analytics hook with the date range
@@ -83,7 +122,8 @@ const EstablishmentAnalyticsPage = () => {
     retentionTrends,
     revenueReports,
     popularDrinks,
-    isLoading: isAnalyticsLoading
+    isLoading: isAnalyticsLoading,
+    error: analyticsError
   } = useEstablishmentAnalytics({
     establishmentId: establishmentId || '',
     range: {
@@ -91,21 +131,6 @@ const EstablishmentAnalyticsPage = () => {
       endDate: date?.to || new Date()
     }
   });
-
-  const mockAgeData = [
-    { name: '18-24', value: 25 },
-    { name: '25-34', value: 35 },
-    { name: '35-44', value: 20 },
-    { name: '45-54', value: 12 },
-    { name: '55+', value: 8 },
-  ];
-
-  const mockGenderData = [
-    { name: 'Female', value: 48 },
-    { name: 'Male', value: 45 },
-    { name: 'Non-binary', value: 5 },
-    { name: 'Prefer not to say', value: 2 },
-  ];
 
   // Format visitor data for charts
   const formattedVisitorData = React.useMemo(() => {
@@ -154,7 +179,7 @@ const EstablishmentAnalyticsPage = () => {
     document.body.removeChild(link);
   };
 
-  if (isLoading || isAnalyticsLoading) {
+  if (isEstablishmentLoading || isAnalyticsLoading || isDashboardLoading) {
     return (
       <Layout>
         <div className="container mx-auto p-6">
@@ -171,11 +196,30 @@ const EstablishmentAnalyticsPage = () => {
     );
   }
 
+  if (establishmentError || analyticsError) {
+    return (
+      <Layout>
+        <div className="container mx-auto p-6">
+          <Alert variant="destructive" className="mb-6">
+            <AlertTitle>Error Loading Analytics</AlertTitle>
+            <AlertDescription>{establishmentError || analyticsError}</AlertDescription>
+          </Alert>
+          <Button onClick={() => window.location.reload()}>
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Retry
+          </Button>
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
       <div className="container max-w-6xl mx-auto p-6 pb-12">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-          <h1 className="text-3xl font-bold mb-4 sm:mb-0">Establishment Analytics</h1>
+          <h1 className="text-3xl font-bold mb-4 sm:mb-0">
+            {establishmentName ? `${establishmentName} - Analytics` : 'Establishment Analytics'}
+          </h1>
           
           <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
             <Popover>
