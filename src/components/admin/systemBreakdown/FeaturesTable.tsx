@@ -89,7 +89,6 @@ const FeaturesTable: React.FC<FeaturesTableProps> = ({ features, title }) => {
                             Database Analysis
                           </h4>
                           <div className="text-sm text-gray-600 bg-gray-100 p-3 rounded">
-                            <div className="whitespace-pre-wrap">{feature.databaseAnalysis}</div>
                             <DatabaseAnalysisPanel analysisText={feature.databaseAnalysis} />
                           </div>
                         </div>
