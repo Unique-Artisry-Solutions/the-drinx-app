@@ -1,3 +1,4 @@
+
 import React, { lazy, Suspense } from 'react';
 import { Route, Routes, Navigate } from 'react-router-dom';
 import LandingPage from '@/pages/LandingPage';
@@ -52,6 +53,7 @@ const AdminEstablishmentsPage = lazy(() => import('@/pages/admin/AdminEstablishm
 const AdminEstablishmentProfile = lazy(() => import('@/pages/admin/AdminEstablishmentProfile'));
 const SystemFunctionalityBreakdown = lazy(() => import('@/pages/admin/SystemFunctionalityBreakdown'));
 const SystemSettingsPage = lazy(() => import('@/pages/admin/SystemSettingsPage'));
+const SystemConfigurationPage = lazy(() => import('@/pages/admin/SystemConfigurationPage'));
 const SystemAnalyticsPage = lazy(() => import('@/pages/admin/SystemAnalyticsPage'));
 const PhotoModerationPage = lazy(() => import('@/pages/admin/PhotoModerationPage'));
 const ContentModerationPage = lazy(() => import('@/pages/admin/ContentModerationPage'));
@@ -103,6 +105,7 @@ const AppRoutes = () => {
         <Route path="/admin/establishments/:id" element={<AdminEstablishmentProfile />} />
         <Route path="/admin/system-breakdown" element={<SystemFunctionalityBreakdown />} />
         <Route path="/admin/system-settings" element={<SystemSettingsPage />} />
+        <Route path="/admin/system-configuration" element={<SystemConfigurationPage />} />
         <Route path="/admin/analytics" element={<SystemAnalyticsPage />} />
         <Route path="/admin/photo-moderation" element={<PhotoModerationPage />} />
         <Route path="/admin/content-moderation" element={<ContentModerationPage />} />

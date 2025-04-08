@@ -1,70 +1,43 @@
 
 import React from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { DropdownMenuItem } from '@/components/ui/dropdown/dropdown-items';
-import { Users, Building, LineChart, Shield, FileText, Image, Cog, BarChart2 } from 'lucide-react';
+import { NavLink } from 'react-router-dom';
+import { 
+  DropdownMenuItem,
+  DropdownMenuSeparator 
+} from '@/components/ui/dropdown/dropdown-items';
+import { adminNavItems } from './AdminNavItems';
+import { LogOut } from 'lucide-react';
 
-export const AdminMobileMenu: React.FC = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
+interface AdminMobileMenuProps {
+  onLogout?: () => void;
+}
 
-  const navItems = [
-    {
-      to: '/admin/dashboard',
-      icon: <LineChart className="h-4 w-4" />,
-      label: 'Dashboard',
-    },
-    {
-      to: '/admin/users',
-      icon: <Users className="h-4 w-4" />,
-      label: 'Users',
-    },
-    {
-      to: '/admin/establishments',
-      icon: <Building className="h-4 w-4" />,
-      label: 'Establishments',
-    },
-    {
-      to: '/admin/system-breakdown',
-      icon: <FileText className="h-4 w-4" />,
-      label: 'System Breakdown',
-    },
-    {
-      to: '/admin/content-moderation',
-      icon: <Shield className="h-4 w-4" />,
-      label: 'Content Moderation',
-    },
-    {
-      to: '/admin/photo-moderation',
-      icon: <Image className="h-4 w-4" />,
-      label: 'Photo Moderation',
-    },
-    {
-      to: '/admin/system-settings',
-      icon: <Cog className="h-4 w-4" />,
-      label: 'System Settings',
-    },
-    {
-      to: '/admin/analytics',
-      icon: <BarChart2 className="h-4 w-4" />,
-      label: 'Analytics',
-    },
-  ];
-
+export const AdminMobileMenu: React.FC<AdminMobileMenuProps> = ({ onLogout }) => {
   return (
-    <div className="flex flex-col gap-1">
-      {navItems.map((item) => (
-        <DropdownMenuItem
-          key={item.to}
-          onClick={() => navigate(item.to)}
-          className={location.pathname === item.to ? "bg-primary/10 text-primary" : ""}
-        >
-          <span className="flex items-center gap-2">
-            {item.icon}
-            {item.label}
-          </span>
+    <div className="py-2">
+      {adminNavItems.map((item) => (
+        <DropdownMenuItem key={item.href} asChild>
+          <NavLink 
+            to={item.href} 
+            className={({ isActive }) => `flex items-center px-2 py-2 text-sm rounded-md ${
+              isActive ? 'bg-accent' : ''
+            }`}
+          >
+            <item.icon className="h-4 w-4 mr-2" />
+            <span>{item.label}</span>
+          </NavLink>
         </DropdownMenuItem>
       ))}
+      
+      {onLogout && (
+        <>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={onLogout} className="text-destructive focus:text-destructive">
+            <LogOut className="h-4 w-4 mr-2" />
+            <span>Sign Out</span>
+          </DropdownMenuItem>
+        </>
+      )}
     </div>
   );
 };

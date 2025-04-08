@@ -1,64 +1,64 @@
 
 import React from 'react';
+import { NavLink } from 'react-router-dom';
 import { 
+  Home, 
   Users, 
-  Building, 
-  LineChart, 
+  Store, 
   Settings, 
-  Shield, 
   Image, 
-  Cog, 
-  BarChart2
+  AlertTriangle,
+  BarChart2,
+  Cog 
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 
-export interface AdminNavItemProps {
-  to: string;
-  icon: React.ReactNode;
+export interface AdminNavItem {
+  href: string;
   label: string;
+  icon: React.ElementType;
 }
 
-const adminNavItems: AdminNavItemProps[] = [
+export const adminNavItems: AdminNavItem[] = [
   {
-    to: '/admin/dashboard',
-    icon: <LineChart className="h-5 w-5" />,
-    label: 'Dashboard'
+    href: '/admin/dashboard',
+    label: 'Dashboard',
+    icon: Home,
   },
   {
-    to: '/admin/users',
-    icon: <Users className="h-5 w-5" />,
-    label: 'Users'
+    href: '/admin/users',
+    label: 'Users',
+    icon: Users,
   },
   {
-    to: '/admin/establishments',
-    icon: <Building className="h-5 w-5" />,
-    label: 'Establishments'
+    href: '/admin/establishments',
+    label: 'Establishments',
+    icon: Store,
   },
   {
-    to: '/admin/system-breakdown',
-    icon: <Settings className="h-5 w-5" />,
-    label: 'System Breakdown'
+    href: '/admin/system-breakdown',
+    label: 'System Breakdown',
+    icon: Settings,
   },
   {
-    to: '/admin/content-moderation',
-    icon: <Shield className="h-5 w-5" />,
-    label: 'Content Moderation'
+    href: '/admin/system-configuration',
+    label: 'System Configuration',
+    icon: Cog,
   },
   {
-    to: '/admin/photo-moderation',
-    icon: <Image className="h-5 w-5" />,
-    label: 'Photo Moderation'
+    href: '/admin/analytics',
+    label: 'Analytics',
+    icon: BarChart2,
   },
   {
-    to: '/admin/system-settings',
-    icon: <Cog className="h-5 w-5" />,
-    label: 'System Settings'
+    href: '/admin/photo-moderation',
+    label: 'Photo Moderation',
+    icon: Image,
   },
   {
-    to: '/admin/analytics',
-    icon: <BarChart2 className="h-5 w-5" />,
-    label: 'Analytics'
-  }
+    href: '/admin/content-moderation',
+    label: 'Content Moderation',
+    icon: AlertTriangle,
+  },
 ];
 
 interface AdminNavItemsProps {
@@ -66,27 +66,30 @@ interface AdminNavItemsProps {
 }
 
 const AdminNavItems: React.FC<AdminNavItemsProps> = ({ currentPath }) => {
-  const navigate = useNavigate();
-  
   return (
-    <div className="hidden md:flex space-x-4">
-      {adminNavItems.map((item) => (
-        <button
-          key={item.to}
-          className={`flex items-center px-3 py-2 text-sm rounded-md transition-colors ${
-            currentPath === item.to
-              ? 'bg-primary/10 text-primary'
-              : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-          }`}
-          onClick={() => navigate(item.to)}
-        >
-          <span className="mr-2">{item.icon}</span>
-          <span>{item.label}</span>
-        </button>
-      ))}
-    </div>
+    <nav className="flex flex-1">
+      <ul className="flex space-x-2">
+        {adminNavItems.map((item) => {
+          const isActive = currentPath.startsWith(item.href);
+          return (
+            <li key={item.href}>
+              <NavLink 
+                to={item.href} 
+                className={({ isActive }) => 
+                  `flex items-center px-3 py-2 rounded-md text-sm font-medium ${
+                    isActive ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground'
+                  }`
+                }
+              >
+                <item.icon className="h-4 w-4 mr-2" />
+                {item.label}
+              </NavLink>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
   );
 };
 
 export default AdminNavItems;
-export { adminNavItems };

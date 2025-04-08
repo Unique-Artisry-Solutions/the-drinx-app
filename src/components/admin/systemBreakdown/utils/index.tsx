@@ -3,13 +3,17 @@ import { renderStatusBadge, renderDatabaseStatusBadge, renderAccessIcon } from '
 import { calculateFeatureStatistics } from './statisticsUtils';
 import { generateCSV, exportFeaturesCSV } from './exportUtils';
 import { analyzeFeatures } from './featureAnalysis';
-import { parseTaskStatuses, analyzeDbRequirements } from './taskDetection';
+import { 
+  parseTaskStatuses,
+  analyzeDbRequirements
+} from './taskDetection';
 import { 
   isFeatureFlagRelated,
   isMocktailSuggestionFeature,
   isMocktailTrendsFeature, 
   isIngredientPairingFeature,
-  isPromotionFeature
+  isPromotionFeature,
+  isSystemSettingsFeature
 } from './featureDetection';
 
 export {
@@ -26,7 +30,8 @@ export {
   isMocktailSuggestionFeature,
   isMocktailTrendsFeature, 
   isIngredientPairingFeature,
-  isPromotionFeature
+  isPromotionFeature,
+  isSystemSettingsFeature
 };
 
 // Use 'export type' for type exports when isolatedModules is enabled
