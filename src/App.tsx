@@ -54,12 +54,26 @@ const AppContent = () => {
       // Always allow access to landing, login, signup, mission pages regardless of auth state
       const publicPaths = ['/landing', '/login', '/signup', '/mission', '/resources', '/pricing'];
       
-      // Admin login page should be accessible without redirects
+      // Specific handling for admin login and routes
       if (location.pathname === '/admin' || location.pathname === '/admin/login') {
+        // If not admin authenticated, allow access to admin login page
+        if (!isAdminAuth) {
+          return;
+        }
+        // If admin authenticated, redirect to admin dashboard
+        else {
+          navigate('/admin/system-breakdown', { replace: true });
+          return;
+        }
+      }
+      
+      // For all other admin routes, require admin authentication
+      if (location.pathname.startsWith('/admin/') && !isAdminAuth) {
+        navigate('/admin', { replace: true });
         return;
       }
       
-      // If user is not authenticated and not on a public path, redirect to landing
+      // If user is not authenticated and not on a public path or admin login, redirect to landing
       if (!user && !publicPaths.includes(location.pathname) && 
           !location.pathname.startsWith('/admin') &&
           location.pathname !== '/') {

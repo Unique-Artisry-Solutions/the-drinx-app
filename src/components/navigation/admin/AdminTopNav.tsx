@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -12,7 +12,6 @@ import AnalyticsService from '@/components/admin/analytics/AnalyticsService';
 
 const AdminTopNav: React.FC = () => {
   const location = useLocation();
-  const navigate = useNavigate();
   const { toast } = useToast();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [adminUsername, setAdminUsername] = useState<string>('Admin');
@@ -29,6 +28,10 @@ const AdminTopNav: React.FC = () => {
       localStorage.removeItem('admin_authenticated');
       localStorage.removeItem('admin_username');
       localStorage.removeItem('admin_session_created');
+      
+      // Clean up any other potential admin-related data
+      localStorage.removeItem('admin_bypass');
+      localStorage.removeItem('bypass_user_id');
       
       await signOut();
       
