@@ -71,3 +71,22 @@ export function isPromotionFeature(feature: FeatureItem): boolean {
     feature.description?.toLowerCase().includes('discount')
   );
 }
+
+/**
+ * Checks if a feature is related to system analytics
+ */
+export function isAnalyticsFeature(feature: FeatureItem): boolean {
+  return (
+    feature.name.toLowerCase().includes('analytics') || 
+    feature.name.toLowerCase().includes('statistics') ||
+    feature.name.toLowerCase().includes('metrics') ||
+    feature.name.toLowerCase().includes('dashboard') ||
+    feature.description?.toLowerCase().includes('analytics') ||
+    feature.description?.toLowerCase().includes('track usage') ||
+    feature.description?.toLowerCase().includes('data visualization') ||
+    feature.description?.toLowerCase().includes('insights') ||
+    feature.description?.toLowerCase().includes('reporting') ||
+    feature.description?.toLowerCase().includes('statistics') ||
+    feature.description?.toLowerCase().includes('metrics dashboard')
+  );
+}

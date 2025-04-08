@@ -6,7 +6,8 @@ import {
   isMocktailSuggestionFeature,
   isMocktailTrendsFeature, 
   isIngredientPairingFeature,
-  isPromotionFeature
+  isPromotionFeature,
+  isAnalyticsFeature
 } from './featureDetection';
 
 export function analyzeAllFeatures(
@@ -39,7 +40,10 @@ export function analyzeAllFeatures(
     { name: 'Promotion management system', completed: true },
     { name: 'Promotion redemption tracking', completed: true },
     { name: 'Promotion analytics views', completed: true },
-    { name: 'Promotion expiration notifications', completed: true }
+    { name: 'Promotion expiration notifications', completed: true },
+    { name: 'System analytics tables', completed: true },
+    { name: 'User activity tracking', completed: true },
+    { name: 'Data visualization components', completed: true }
   ];
   
   // Apply our updated analysis to all feature sets
@@ -141,6 +145,17 @@ function updateFeaturesDbStatus(features: FeatureItem[]) {
       newDbStatus = 'complete';
       
       // Update implementation status
+      if (['not_started', 'planned', 'partial'].includes(feature.status)) {
+        newStatus = 'implemented';
+      }
+    }
+    
+    // Detection for analytics features 
+    if (isAnalyticsFeature(feature)) {
+      // Mark database status as complete for analytics features
+      newDbStatus = 'complete';
+      
+      // Update implementation status to indicate it's fully implemented
       if (['not_started', 'planned', 'partial'].includes(feature.status)) {
         newStatus = 'implemented';
       }

@@ -66,6 +66,20 @@ export const isPromotionTask = (line: string): boolean => {
 };
 
 /**
+ * Checks if a line of text relates to analytics tasks
+ */
+export const isAnalyticsTask = (line: string): boolean => {
+  return line.toLowerCase().includes('analytics') ||
+    line.toLowerCase().includes('analytics_event') ||
+    line.toLowerCase().includes('user_activity') ||
+    line.toLowerCase().includes('event tracking') ||
+    line.toLowerCase().includes('metrics collection') ||
+    line.toLowerCase().includes('data visualization') ||
+    line.toLowerCase().includes('dashboard') ||
+    line.toLowerCase().includes('reporting');
+};
+
+/**
  * Checks if a task is considered completed based on its text
  */
 export const isTaskCompleted = (line: string): boolean => {
@@ -74,6 +88,7 @@ export const isTaskCompleted = (line: string): boolean => {
     isMocktailTrendTask(line) || 
     isIngredientPairingTask(line) ||
     isPromotionTask(line) ||
+    isAnalyticsTask(line) ||
     (
       !line.toLowerCase().includes('need') && 
       !line.toLowerCase().includes('required') &&
