@@ -1,3 +1,4 @@
+
 import { FeatureItem, AnalysisStep } from '../types';
 import { supabase } from '@/lib/supabase';
 
@@ -38,13 +39,11 @@ const checkFeatureFlags = async (featureName: string): Promise<boolean> => {
 const checkSystemSettingsImplementation = async (): Promise<boolean> => {
   try {
     // Check if system_settings table exists and has data
-    const { data, error } = await supabase
+    const { count } = await supabase
       .from('system_settings')
-      .select('count()', { count: 'exact', head: true });
+      .select('*', { count: 'exact', head: true });
     
-    if (error) throw error;
-    
-    return data && data.count > 0;
+    return count !== null && count > 0;
   } catch (error) {
     console.error('Error checking system settings implementation:', error);
     return false;
@@ -55,7 +54,12 @@ export const analyzeAllFeatures = async (
   adminFeatures: FeatureItem[],
   establishmentFeatures: FeatureItem[],
   individualFeatures: FeatureItem[]
-) => {
+): Promise<{
+  adminFeatures: FeatureItem[],
+  establishmentFeatures: FeatureItem[],
+  individualFeatures: FeatureItem[],
+  completedSteps: AnalysisStep[]
+}> => {
   const updatedAdminFeatures = [...adminFeatures];
   const updatedEstablishmentFeatures = [...establishmentFeatures];
   const updatedIndividualFeatures = [...individualFeatures];

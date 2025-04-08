@@ -25,7 +25,7 @@ export function useSystemSettings() {
         throw error;
       }
       
-      setSettings(data || []);
+      setSettings(data as SystemSetting[] || []);
     } catch (err) {
       console.error('Error fetching system settings:', err);
       setError('Failed to load system settings');

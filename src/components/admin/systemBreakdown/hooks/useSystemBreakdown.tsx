@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
@@ -43,7 +44,7 @@ export const useSystemBreakdown = () => {
     });
   };
   
-  const handleAnalyzeFeatures = () => {
+  const handleAnalyzeFeatures = async () => {
     setAnalyzing(true);
     setAnalysisProgress(0);
     
@@ -85,30 +86,39 @@ export const useSystemBreakdown = () => {
       }
     }, 600); // Update every 600ms
     
-    const completeAnalysis = () => {
-      const analyzedFeatures = analyzeAllFeatures(
-        adminFeatures,
-        establishmentFeatures,
-        individualFeatures
-      );
-      
-      setAdminFeatures(analyzedFeatures.adminFeatures);
-      setEstablishmentFeatures(analyzedFeatures.establishmentFeatures);
-      setIndividualFeatures(analyzedFeatures.individualFeatures);
-      setAnalysisSteps(analyzedFeatures.completedSteps);
-      
-      const totalUpdated = [
-        ...analyzedFeatures.adminFeatures,
-        ...analyzedFeatures.establishmentFeatures,
-        ...analyzedFeatures.individualFeatures
-      ].filter(feature => feature.statusUpdated).length;
-      
-      toast({
-        title: "Analysis Complete",
-        description: `${totalUpdated} feature status${totalUpdated !== 1 ? 'es' : ''} updated based on database implementation.`,
-      });
-      
-      setAnalyzing(false);
+    const completeAnalysis = async () => {
+      try {
+        const analyzedFeatures = await analyzeAllFeatures(
+          adminFeatures,
+          establishmentFeatures,
+          individualFeatures
+        );
+        
+        setAdminFeatures(analyzedFeatures.adminFeatures);
+        setEstablishmentFeatures(analyzedFeatures.establishmentFeatures);
+        setIndividualFeatures(analyzedFeatures.individualFeatures);
+        setAnalysisSteps(analyzedFeatures.completedSteps);
+        
+        const totalUpdated = [
+          ...analyzedFeatures.adminFeatures,
+          ...analyzedFeatures.establishmentFeatures,
+          ...analyzedFeatures.individualFeatures
+        ].filter(feature => feature.statusUpdated).length;
+        
+        toast({
+          title: "Analysis Complete",
+          description: `${totalUpdated} feature status${totalUpdated !== 1 ? 'es' : ''} updated based on database implementation.`,
+        });
+      } catch (error) {
+        console.error("Error analyzing features:", error);
+        toast({
+          title: "Analysis Error",
+          description: "There was an error while analyzing features. Please try again.",
+          variant: "destructive"
+        });
+      } finally {
+        setAnalyzing(false);
+      }
     };
   };
 

@@ -51,11 +51,11 @@ export const analyzeDbRequirements = async (feature: string) => {
   
   // Check if there are system settings tables in the database
   try {
-    const { data } = await supabase
+    const { count } = await supabase
       .from('system_settings')
-      .select('count()', { count: 'exact', head: true });
+      .select('*', { count: 'exact', head: true });
     
-    const hasSystemSettings = data && data.count > 0;
+    const hasSystemSettings = count && count > 0;
     
     if (hasSystemSettings && feature.toLowerCase().includes('config')) {
       return [

@@ -1,6 +1,7 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Users, Building, LineChart, Shield, FileText, Image, Cog } from 'lucide-react';
+import { Users, Building, LineChart, Shield, FileText, Image, Cog, BarChart2 } from 'lucide-react';
 
 interface NavItemProps {
   to: string;
