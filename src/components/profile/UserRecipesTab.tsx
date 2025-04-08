@@ -18,7 +18,7 @@ import CreateRecipeDialog from './recipes/CreateRecipeDialog';
 import EditRecipeDialog from './recipes/EditRecipeDialog';
 
 const UserRecipesTab: React.FC = () => {
-  const { recipes, isLoading, createRecipe, updateRecipe, deleteRecipe } = useUserRecipes();
+  const { recipes = [], isLoading, createRecipe, updateRecipe, deleteRecipe } = useUserRecipes();
   const [isCreatingRecipe, setIsCreatingRecipe] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();

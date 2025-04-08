@@ -1,5 +1,4 @@
 
-import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/auth';
 import { RecipeHookReturn } from './recipes/types';
 import { useFetchRecipes } from './recipes/useFetchRecipes';
@@ -11,7 +10,7 @@ export const useUserRecipes = (): RecipeHookReturn => {
   const { user } = useAuth();
   
   // Fetch recipes
-  const { recipes, isLoading, error, refetch } = useFetchRecipes(user);
+  const { data: recipes = [], isLoading, error, refetch } = useFetchRecipes(user);
   
   // Recipe mutations
   const createRecipe = useCreateRecipe(user);
