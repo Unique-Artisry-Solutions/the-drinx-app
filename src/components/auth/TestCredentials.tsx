@@ -3,6 +3,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { enableAdminBypass, disableAdminBypass, checkAdminBypassStatus } from '@/utils/adminBypass';
 
 interface TestUserCredentials {
   email: string;
@@ -31,6 +32,7 @@ const TEST_CREDENTIALS = {
 
 const TestCredentials: React.FC = () => {
   const { toast } = useToast();
+  const { isEnabled: isAdminBypassEnabled } = checkAdminBypassStatus();
 
   const createTestUser = async (credentials: TestUserCredentials) => {
     try {
@@ -95,6 +97,28 @@ const TestCredentials: React.FC = () => {
     });
   };
 
+  const toggleAdminBypass = () => {
+    if (isAdminBypassEnabled) {
+      disableAdminBypass();
+      toast({
+        title: 'Admin Bypass Disabled',
+        description: 'Admin bypass mode has been turned off',
+      });
+    } else {
+      const userType = window.confirm('Enable as establishment user? (Cancel for individual)') 
+        ? 'establishment' 
+        : 'individual';
+      enableAdminBypass(userType);
+      toast({
+        title: 'Admin Bypass Enabled',
+        description: `You're now in admin bypass mode as a ${userType} user`,
+        duration: 5000,
+      });
+    }
+    // Force reload to apply changes
+    window.location.reload();
+  };
+
   return (
     <div className="mt-6 border-t pt-4">
       <h3 className="text-sm font-medium mb-2">Test Credentials</h3>
@@ -106,6 +130,14 @@ const TestCredentials: React.FC = () => {
           onClick={createAllTestUsers}
         >
           Create Test Users
+        </Button>
+        <Button 
+          variant={isAdminBypassEnabled ? "destructive" : "default"}
+          size="sm"
+          className="w-full text-xs"
+          onClick={toggleAdminBypass}
+        >
+          {isAdminBypassEnabled ? "Disable Admin Bypass" : "Enable Admin Bypass"}
         </Button>
         <div className="text-xs text-muted-foreground space-y-1">
           <p><strong>User:</strong> testuser@spiritless.com / Test123!</p>

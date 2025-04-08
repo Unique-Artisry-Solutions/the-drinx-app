@@ -12,12 +12,19 @@ export const useCreateRecipe = (user: User | null) => {
 
   const createRecipe = useMutation({
     mutationFn: async (newRecipe: CreateRecipeInput) => {
-      if (!user) throw new Error('User not authenticated');
+      const isAdminBypass = localStorage.getItem('admin_bypass') === 'true';
       
-      console.log('Creating recipe for user:', user.id, 'Recipe data:', newRecipe);
+      if (!user && !isAdminBypass) {
+        throw new Error('User not authenticated');
+      }
+      
+      // Get the user ID either from the authenticated user or admin bypass
+      const userId = user?.id || localStorage.getItem('bypass_user_id') || 'admin-bypass';
+      
+      console.log('Creating recipe for user:', userId, 'Recipe data:', newRecipe);
       
       // Use localStorage for testing when in demo/non-auth mode
-      if (localStorage.getItem('DEMO_MODE') === 'true' || !user.id) {
+      if (localStorage.getItem('DEMO_MODE') === 'true') {
         const mockId = `local-${Date.now()}`;
         const mockRecipe = {
           ...newRecipe,
@@ -37,7 +44,7 @@ export const useCreateRecipe = (user: User | null) => {
       
       const recipeToInsert = {
         ...newRecipe,
-        user_id: user.id,
+        user_id: userId,
       };
       
       const { data, error } = await supabaseClient
@@ -55,7 +62,8 @@ export const useCreateRecipe = (user: User | null) => {
       return data as UserRecipe;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['userRecipes', user?.id] });
+      const userId = user?.id || localStorage.getItem('bypass_user_id') || 'admin-bypass';
+      queryClient.invalidateQueries({ queryKey: ['userRecipes', userId] });
       toast({
         title: "Recipe created",
         description: "Your mocktail recipe has been saved."

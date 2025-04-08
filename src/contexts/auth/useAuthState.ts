@@ -22,7 +22,10 @@ export function useAuthState() {
       const userType = localStorage.getItem('user_type') || 'individual';
       
       // Generate a valid UUID for the bypass user instead of using a string
-      const bypassUserId = uuidv4();
+      const bypassUserId = localStorage.getItem('bypass_user_id') || uuidv4();
+      
+      // Store the bypass user ID for consistency
+      localStorage.setItem('bypass_user_id', bypassUserId);
       
       const bypassUser = {
         id: bypassUserId,

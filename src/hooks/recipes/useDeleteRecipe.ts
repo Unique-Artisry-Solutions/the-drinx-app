@@ -10,22 +10,29 @@ export const useDeleteRecipe = (user: User | null) => {
 
   const deleteRecipe = useMutation({
     mutationFn: async (recipeId: string) => {
-      if (!user) throw new Error('User not authenticated');
+      const isAdminBypass = localStorage.getItem('admin_bypass') === 'true';
+      
+      if (!user && !isAdminBypass) {
+        throw new Error('User not authenticated');
+      }
+      
+      const userId = user?.id || localStorage.getItem('bypass_user_id') || 'admin-bypass';
       
       const { error } = await supabaseClient
         .from('user_recipes')
         .delete()
         .eq('id', recipeId)
-        .eq('user_id', user.id);
-        
+        .eq('user_id', userId);
+      
       if (error) throw error;
       return recipeId;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['userRecipes', user?.id] });
+    onSuccess: (recipeId) => {
+      const userId = user?.id || localStorage.getItem('bypass_user_id') || 'admin-bypass';
+      queryClient.invalidateQueries({ queryKey: ['userRecipes', userId] });
       toast({
         title: "Recipe deleted",
-        description: "Your mocktail recipe has been deleted."
+        description: "Your mocktail recipe has been removed."
       });
     },
     onError: (error) => {

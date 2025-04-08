@@ -12,7 +12,13 @@ export const useUpdateRecipe = (user: User | null) => {
 
   const updateRecipe = useMutation({
     mutationFn: async (recipe: UpdateRecipeInput) => {
-      if (!user) throw new Error('User not authenticated');
+      const isAdminBypass = localStorage.getItem('admin_bypass') === 'true';
+      
+      if (!user && !isAdminBypass) {
+        throw new Error('User not authenticated');
+      }
+      
+      const userId = user?.id || localStorage.getItem('bypass_user_id') || 'admin-bypass';
       
       const { data, error } = await supabaseClient
         .from('user_recipes')
@@ -26,7 +32,7 @@ export const useUpdateRecipe = (user: User | null) => {
           updated_at: new Date().toISOString()
         })
         .eq('id', recipe.id)
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .select()
         .single();
         
@@ -34,7 +40,8 @@ export const useUpdateRecipe = (user: User | null) => {
       return data as UserRecipe;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['userRecipes', user?.id] });
+      const userId = user?.id || localStorage.getItem('bypass_user_id') || 'admin-bypass';
+      queryClient.invalidateQueries({ queryKey: ['userRecipes', userId] });
       toast({
         title: "Recipe updated",
         description: "Your mocktail recipe has been updated."
