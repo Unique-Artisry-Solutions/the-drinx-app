@@ -1,4 +1,3 @@
-
 import { ImprovementItem } from './types';
 
 export const proposedImprovements: ImprovementItem[] = [
@@ -172,5 +171,62 @@ export const proposedImprovements: ImprovementItem[] = [
     estimatedEffort: "2 weeks with Lovable team",
     businessImpact: "Better decision-making for administrators when applying themes, leading to improved user experience",
     technicalRequirements: "Theme context system, UI components for preview controls, template system for different site sections"
+  },
+  {
+    name: "Theme Scheduling",
+    description: "Implement a scheduling system that allows administrators to set timed theme changes for different seasons or events",
+    priority: "medium",
+    type: "enhancement",
+    affectedAreas: ["admin"],
+    implementationSteps: [
+      "Create a theme scheduling database schema",
+      "Develop a scheduler interface for theme selection",
+      "Implement date and time picker components",
+      "Build scheduling preview calendar",
+      "Create automatic theme switching logic",
+      "Add notification system for upcoming theme changes",
+      "Implement theme transition effects between scheduled changes"
+    ],
+    estimatedEffort: "1-2 weeks with Lovable team",
+    businessImpact: "Enhanced user experience with seasonal themes and improved brand relevance during promotions and events",
+    technicalRequirements: "Scheduling system, cron job implementation, theme transition animations"
+  },
+  {
+    name: "Component-Specific Theming",
+    description: "Enable granular theme customization for individual components rather than applying themes globally",
+    priority: "medium",
+    type: "enhancement",
+    affectedAreas: ["admin"],
+    implementationSteps: [
+      "Refactor theme context to support component-level overrides",
+      "Create component theme selector interface",
+      "Implement theme inheritance system",
+      "Add component theme preview functionality",
+      "Create component theme presets library",
+      "Develop theme conflict resolution system",
+      "Add documentation for component-specific theme API"
+    ],
+    estimatedEffort: "2-3 weeks with Lovable team",
+    businessImpact: "More flexible and powerful theming capabilities allowing for unique sections and standout features",
+    technicalRequirements: "Enhanced theme context system, component-level styling API, theme inheritance mechanism"
+  },
+  {
+    name: "Theme Analytics",
+    description: "Track and analyze user engagement metrics based on different themes to optimize the visual experience",
+    priority: "low",
+    type: "enhancement",
+    affectedAreas: ["admin"],
+    implementationSteps: [
+      "Implement theme usage tracking system",
+      "Create dashboard for theme performance metrics",
+      "Add user session tracking with theme context",
+      "Develop A/B testing capability for themes",
+      "Build visualization of user engagement by theme",
+      "Add theme recommendation engine based on analytics",
+      "Create exportable theme analytics reports"
+    ],
+    estimatedEffort: "2 weeks with Lovable team",
+    businessImpact: "Data-driven theme decisions that can increase user engagement and conversions by optimizing visual appeal",
+    technicalRequirements: "Analytics tracking system, data visualization components, A/B testing framework"
   }
 ];

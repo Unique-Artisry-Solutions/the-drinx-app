@@ -47,7 +47,10 @@ export function analyzeAllFeatures(
     { name: 'Theme customization system', completed: true },
     { name: 'Color accessibility checking', completed: false },
     { name: 'Color palette generation', completed: false },
-    { name: 'Site-wide theme preview', completed: false }
+    { name: 'Site-wide theme preview', completed: false },
+    { name: 'Theme scheduling system', completed: false },
+    { name: 'Component-level theming', completed: false },
+    { name: 'Theme analytics tracking', completed: false }
   ];
   
   // Apply our updated analysis to all feature sets
