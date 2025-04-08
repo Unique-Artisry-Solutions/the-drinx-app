@@ -77,9 +77,11 @@ const Index = () => {
     // If user is authenticated and is an individual, redirect to explore
     if (user && !isEstablishment) {
       navigate('/explore', { replace: true });
+      return;
     }
     
-    // If user is authenticated and is an establishment, the dashboard will be shown
+    // If user is authenticated and is an establishment, show the dashboard
+    // (We'll let the component below handle showing the dashboard)
   }, [user, isLoading, navigate, isEstablishment, isAdmin]);
 
   // If we're still loading, show a loading state

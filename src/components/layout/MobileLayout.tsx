@@ -72,6 +72,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
   const isLandingPage = location.pathname === '/' || location.pathname === '/landing';
   const isAuthPage = location.pathname === '/login' || location.pathname === '/signup';
   const isAdminPage = location.pathname.startsWith('/admin');
+  const isEstablishmentPage = location.pathname.startsWith('/establishment');
   const isPublicPage = isLandingPage || isAuthPage || location.pathname === '/mission';
 
   const getContentPadding = () => {
@@ -118,6 +119,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
     // Always show guest navigation for non-authenticated users
     if (!user) return true;
     
+    // For authenticated users, use guest navigation only on explicit public paths
     const publicPaths = ['/', '/landing', '/login', '/signup', '/mission'];
     return publicPaths.includes(location.pathname);
   };

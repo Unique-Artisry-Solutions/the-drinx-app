@@ -76,7 +76,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
     const publicPaths = ['/', '/landing', '/login', '/signup', '/mission'];
     
     // Always show guest navigation on public paths or when user is not authenticated
-    if (publicPaths.includes(location.pathname) || !user) {
+    if ((publicPaths.includes(location.pathname) && !location.pathname.startsWith('/establishment')) || !user) {
       return getGuestNavItems();
     }
 

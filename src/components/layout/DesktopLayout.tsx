@@ -64,6 +64,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   const isLandingPage = location.pathname === '/' || location.pathname === '/landing';
   const isAdminPage = location.pathname.startsWith('/admin');
   const isSettingsPage = location.pathname === '/settings';
+  const isEstablishmentPage = location.pathname.startsWith('/establishment');
 
   const getContentPadding = () => {
     if (isLandingPage) {
@@ -78,16 +79,17 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     // Always use guest navigation for non-authenticated users
     if (!user) return true;
     
+    // For authenticated users, use guest navigation only on explicit public paths
     const publicPaths = ['/', '/landing', '/login', '/signup', '/mission'];
     return publicPaths.includes(location.pathname);
   };
 
   const renderNavigation = () => {
-    if (isSettingsPage) {
-      return useGuestNavigation() ? <GuestTopNavigation /> : <UserTopNavigation />;
-    } else if (isAdminPage || isAdmin) {
+    if (isAdminPage || isAdmin) {
       return <AdminTopNavigation />;
     } else if (navigationType === NavigationType.USER && user) {
+      // Always use UserTopNavigation for authenticated users on non-public pages
+      // This includes establishment pages
       return <UserTopNavigation activeTab={activeTab} handleTabChange={handleTabChange} tabOptions={tabOptions} />;
     } else {
       // Show GuestTopNavigation for public pages or when not authenticated
