@@ -29,6 +29,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         onClick={handleLogout}
         size="sm"
         className="flex items-center gap-1 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all"
+        title="Logout from all devices"
       >
         <LogOut size={14} />
         Logout

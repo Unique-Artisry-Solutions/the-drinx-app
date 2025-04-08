@@ -93,15 +93,15 @@ export function useProfileData() {
 
   const handleLogout = async () => {
     try {
-      // Use the Auth context signOut method
+      // Use the Auth context signOut method to end all sessions
       await signOut();
       setIsAuthenticated(false);
       toast({
         title: 'Logged out',
-        description: 'You have been successfully logged out',
+        description: 'You have been successfully logged out from all devices',
       });
-      // Navigate to login page
-      navigate('/login');
+      // Navigate to landing page instead of login
+      navigate('/landing');
     } catch (error) {
       console.error('Logout error:', error);
       toast({

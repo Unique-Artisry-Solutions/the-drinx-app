@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, Bell } from 'lucide-react';
@@ -27,19 +26,12 @@ const AdminTopNav: React.FC = () => {
     try {
       await signOut();
       
-      localStorage.removeItem('user_authenticated');
-      localStorage.removeItem('admin_authenticated');
-      localStorage.removeItem('user_email');
-      localStorage.removeItem('user_username');
-      localStorage.removeItem('user_type');
-      localStorage.removeItem('admin_username');
-      
       toast({
         title: 'Logged out',
-        description: 'You have been successfully logged out',
+        description: 'You have been successfully logged out from all devices',
       });
       
-      navigate('/');
+      navigate('/landing');
     } catch (error) {
       console.error('Logout error:', error);
       toast({
@@ -58,7 +50,6 @@ const AdminTopNav: React.FC = () => {
     setIsMobileMenuOpen(false);
   };
 
-  // Check if a navigation item is active
   const isActive = (path: string) => {
     return location.pathname === path || 
       (path === '/admin/dashboard' && location.pathname.startsWith('/admin'));

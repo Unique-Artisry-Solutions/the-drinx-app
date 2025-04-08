@@ -129,20 +129,24 @@ export function useAuthActions() {
   const signOut = async () => {
     try {
       setIsLoading(true);
-      console.log('Signing out user...');
+      console.log('Signing out user and ending all sessions...');
       
       // First clear all auth-related localStorage items
       localStorage.removeItem('user_authenticated');
       localStorage.removeItem('user_email');
       localStorage.removeItem('user_type');
       localStorage.removeItem('user_username');
+      localStorage.removeItem('user_name');
+      localStorage.removeItem('user_join_date');
       localStorage.removeItem('admin_authenticated');
       localStorage.removeItem('admin_username');
       localStorage.removeItem('admin_session_created');
       localStorage.removeItem('admin_bypass');
+      localStorage.removeItem('bypass_user_id');
+      localStorage.removeItem('spiritless-auth-storage');
       
-      // Then sign out with Supabase
-      const { error } = await supabase.auth.signOut();
+      // Use scope: 'global' to terminate all sessions across all devices
+      const { error } = await supabase.auth.signOut({ scope: 'global' });
       
       if (error) {
         console.error('Sign out error:', error);
@@ -151,10 +155,10 @@ export function useAuthActions() {
       
       toast({
         title: 'Logged out',
-        description: 'You have been successfully logged out',
+        description: 'You have been successfully logged out of all devices',
       });
       
-      console.log('User successfully signed out');
+      console.log('User successfully signed out from all sessions');
       
       // Force page reload to clear any remaining state
       window.location.href = '/landing';
