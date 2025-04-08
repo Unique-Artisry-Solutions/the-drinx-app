@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -18,7 +17,7 @@ const AdminLogin: React.FC = () => {
     // Check if admin is already logged in
     const isAdminAuth = localStorage.getItem('admin_authenticated') === 'true';
     if (isAdminAuth) {
-      navigate('/admin/dashboard');
+      navigate('/admin/dashboard', { replace: true });
     }
   }, [navigate]);
 
@@ -40,7 +39,7 @@ const AdminLogin: React.FC = () => {
           title: 'Login successful',
           description: 'Welcome to the admin dashboard',
         });
-        navigate('/admin/dashboard');
+        navigate('/admin/system-breakdown', { replace: true });
       } else {
         toast({
           title: 'Login failed',

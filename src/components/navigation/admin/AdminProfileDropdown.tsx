@@ -1,17 +1,21 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { User, Settings, LogOut, LayoutDashboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+
 interface AdminProfileDropdownProps {
   username: string;
   onLogout: () => void;
 }
+
 const AdminProfileDropdown: React.FC<AdminProfileDropdownProps> = ({
   username,
   onLogout
 }) => {
-  return <DropdownMenu>
+  return (
+    <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="icon" className="admin-profile-button border-white text-white transition-colors duration-200 bg-spiritless-burgundy">
           <User size={18} />
@@ -40,6 +44,8 @@ const AdminProfileDropdown: React.FC<AdminProfileDropdownProps> = ({
           <span>Logout</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
-    </DropdownMenu>;
+    </DropdownMenu>
+  );
 };
+
 export default AdminProfileDropdown;
