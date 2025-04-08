@@ -1,47 +1,54 @@
-
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabaseClient } from '@/lib/supabaseClient';
 import { User } from '@supabase/supabase-js';
 import { UserRecipe } from '@/types/DatabaseTypes';
 import { useToast } from '@/hooks/use-toast';
 import { CreateRecipeInput } from './types';
+import { v4 as uuidv4 } from 'uuid';
 
 export const useCreateRecipe = (user: User | null) => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const isAdminBypass = localStorage.getItem('admin_bypass') === 'true';
+  const bypassUserId = localStorage.getItem('bypass_user_id');
+  
+  // Use either the authenticated user ID or bypass user ID
+  const userId = user?.id || (isAdminBypass ? bypassUserId : null);
 
   const createRecipe = useMutation({
     mutationFn: async (newRecipe: CreateRecipeInput) => {
-      const isAdminBypass = localStorage.getItem('admin_bypass') === 'true';
-      
-      if (!user && !isAdminBypass) {
+      if (!userId) {
         throw new Error('User not authenticated');
       }
       
-      // Get the user ID either from the authenticated user or admin bypass
-      const userId = user?.id || localStorage.getItem('bypass_user_id') || 'admin-bypass';
-      
       console.log('Creating recipe for user:', userId, 'Recipe data:', newRecipe);
       
-      // Use localStorage for testing when in demo/non-auth mode
-      if (localStorage.getItem('DEMO_MODE') === 'true') {
-        const mockId = `local-${Date.now()}`;
-        const mockRecipe = {
+      // For admin bypass or demo mode, use localStorage
+      if (isAdminBypass || localStorage.getItem('DEMO_MODE') === 'true') {
+        console.log('Using localStorage for recipe creation (admin bypass or demo mode)');
+        const mockId = uuidv4();
+        const mockRecipe: UserRecipe = {
           ...newRecipe,
           id: mockId,
-          user_id: 'local-user',
+          user_id: userId,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         };
         
         // Store in localStorage
-        const existingRecipes = JSON.parse(localStorage.getItem('user_recipes') || '[]');
-        existingRecipes.push(mockRecipe);
-        localStorage.setItem('user_recipes', JSON.stringify(existingRecipes));
-        
-        return mockRecipe;
+        try {
+          const existingRecipes = JSON.parse(localStorage.getItem('user_recipes') || '[]');
+          existingRecipes.push(mockRecipe);
+          localStorage.setItem('user_recipes', JSON.stringify(existingRecipes));
+          console.log('Recipe saved to localStorage:', mockRecipe);
+          return mockRecipe;
+        } catch (err) {
+          console.error('Error saving recipe to localStorage:', err);
+          throw new Error('Failed to save recipe to localStorage');
+        }
       }
       
+      // Otherwise use Supabase
       const recipeToInsert = {
         ...newRecipe,
         user_id: userId,
@@ -62,7 +69,6 @@ export const useCreateRecipe = (user: User | null) => {
       return data as UserRecipe;
     },
     onSuccess: () => {
-      const userId = user?.id || localStorage.getItem('bypass_user_id') || 'admin-bypass';
       queryClient.invalidateQueries({ queryKey: ['userRecipes', userId] });
       toast({
         title: "Recipe created",

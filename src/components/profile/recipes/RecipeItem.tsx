@@ -14,6 +14,8 @@ const RecipeItem: React.FC<RecipeItemProps> = ({
   isDeleting,
   deletingId
 }) => {
+  if (!recipe) return null;
+
   const formatDate = (dateString?: string) => {
     if (!dateString) return '';
     return new Date(dateString).toLocaleDateString();
@@ -27,35 +29,41 @@ const RecipeItem: React.FC<RecipeItemProps> = ({
         <div className="sm:w-1/3">
           <img 
             src={recipe.image_url || 'https://placehold.co/300x200/CCCCCC/666666?text=Recipe+Image'} 
-            alt={recipe.name} 
+            alt={recipe.name || 'Recipe'} 
             className="h-40 sm:h-full w-full object-cover"
           />
         </div>
         <div className="sm:w-2/3">
           <CardHeader>
             <div className="flex justify-between items-start">
-              <CardTitle>{recipe.name}</CardTitle>
+              <CardTitle>{recipe.name || 'Untitled Recipe'}</CardTitle>
               <Badge variant="outline" className={`${recipe.is_public ? 'bg-green-50 text-green-700' : 'bg-spiritless-pink/10 text-spiritless-pink'}`}>
                 {recipe.is_public ? 'Public' : 'Private'}
               </Badge>
             </div>
-            <CardDescription>{recipe.description}</CardDescription>
+            <CardDescription>{recipe.description || 'No description'}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div>
                 <h4 className="font-medium mb-2">Ingredients:</h4>
-                <ul className="list-disc pl-5 text-sm space-y-1">
-                  {ingredients.map((ingredient, idx) => (
-                    <li key={idx}>{ingredient.amount} {ingredient.name}</li>
-                  ))}
-                </ul>
+                {ingredients.length > 0 ? (
+                  <ul className="list-disc pl-5 text-sm space-y-1">
+                    {ingredients.map((ingredient, idx) => (
+                      <li key={idx}>
+                        {ingredient.amount} {ingredient.unit || ''} {ingredient.name}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No ingredients added</p>
+                )}
               </div>
               
               <div>
                 <h4 className="font-medium mb-2">Instructions:</h4>
                 <p className="text-sm text-muted-foreground">
-                  {recipe.instructions}
+                  {recipe.instructions || 'No instructions provided'}
                 </p>
               </div>
             </div>

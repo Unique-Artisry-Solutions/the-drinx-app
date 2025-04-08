@@ -1,28 +1,32 @@
+
 import { useQuery } from '@tanstack/react-query';
 import { supabaseClient } from '@/lib/supabaseClient';
 import { User } from '@supabase/supabase-js';
 import { UserRecipe } from '@/types/DatabaseTypes';
 
 export const useFetchRecipes = (user: User | null) => {
+  const isAdminBypass = localStorage.getItem('admin_bypass') === 'true';
+  const bypassUserId = localStorage.getItem('bypass_user_id');
+  
+  // Use either the authenticated user ID or bypass user ID
+  const userId = user?.id || (isAdminBypass ? bypassUserId : null);
+  
   return useQuery({
-    queryKey: ['userRecipes', user?.id || localStorage.getItem('bypass_user_id') || 'admin-bypass'],
+    queryKey: ['userRecipes', userId || 'anonymous'],
     queryFn: async () => {
-      const isAdminBypass = localStorage.getItem('admin_bypass') === 'true';
-      
       // If no authentication and not in admin bypass, return empty array
-      if (!user && !isAdminBypass) {
-        console.log('No authenticated user, returning empty recipes array');
+      if (!userId) {
+        console.log('No authenticated user or bypass ID, returning empty recipes array');
         return [];
       }
 
-      const userId = user?.id || localStorage.getItem('bypass_user_id') || 'admin-bypass';
       console.log('Fetching recipes for user ID:', userId);
 
       // For demo/testing mode with localStorage
       if (localStorage.getItem('DEMO_MODE') === 'true') {
         try {
           const localRecipes = JSON.parse(localStorage.getItem('user_recipes') || '[]');
-          return localRecipes.filter((recipe: UserRecipe) => recipe.user_id === userId);
+          return localRecipes.filter((recipe: UserRecipe) => recipe.user_id === userId) || [];
         } catch (err) {
           console.error('Error parsing local recipes:', err);
           return [];
@@ -31,6 +35,24 @@ export const useFetchRecipes = (user: User | null) => {
 
       // Otherwise fetch from Supabase
       try {
+        // For admin bypass, we'll use local storage since we can't bypass RLS
+        if (isAdminBypass) {
+          console.log('Admin bypass active, using localStorage for recipes');
+          // Initialize recipes array if it doesn't exist
+          if (!localStorage.getItem('user_recipes')) {
+            localStorage.setItem('user_recipes', JSON.stringify([]));
+          }
+          
+          try {
+            const localRecipes = JSON.parse(localStorage.getItem('user_recipes') || '[]');
+            return localRecipes.filter((recipe: UserRecipe) => recipe.user_id === userId) || [];
+          } catch (err) {
+            console.error('Error parsing local recipes:', err);
+            return [];
+          }
+        }
+        
+        // Regular Supabase query for authenticated users
         const { data, error } = await supabaseClient
           .from('user_recipes')
           .select('*')
@@ -48,6 +70,6 @@ export const useFetchRecipes = (user: User | null) => {
         return [];
       }
     },
-    enabled: !!user || localStorage.getItem('admin_bypass') === 'true'
+    enabled: !!userId
   });
 };
