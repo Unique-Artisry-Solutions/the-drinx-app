@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   fetchVisitorAnalytics, 
   fetchTrendData,
@@ -84,28 +84,6 @@ export function useEstablishmentAnalytics({
       loadAnalyticsData();
     }
   }, [establishmentId, range, refreshToken]);
-
-  // Format the data for easy consumption
-  const formattedVisitorData = useMemo(() => {
-    return visitorAnalytics.map(data => ({
-      name: new Date(data.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      visitors: data.total_visitors,
-      returningVisitors: data.returning_visitors,
-      uniqueVisitors: data.unique_visitors,
-      date: data.date
-    }));
-  }, [visitorAnalytics]);
-
-  // Format the revenue data
-  const formattedRevenueData = useMemo(() => {
-    return revenueReports.map(report => ({
-      name: new Date(report.month).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
-      revenue: report.monthly_revenue,
-      transactions: report.transaction_count,
-      average: report.average_transaction,
-      month: report.month
-    }));
-  }, [revenueReports]);
 
   return {
     visitorAnalytics,

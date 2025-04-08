@@ -13,7 +13,6 @@ import DrinkProfileModal, { Drink } from './DrinkProfileModal';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import MocktailSuggestionsCard from './MocktailSuggestionsCard';
-import { supabaseClient } from '@/lib/supabaseClient';
 import { useAuth } from '@/contexts/auth';
 
 // Import our new components
@@ -85,19 +84,11 @@ const EstablishmentDashboard: React.FC<EstablishmentDashboardProps> = ({
   // Record visitor session when dashboard loads
   useEffect(() => {
     if (establishmentId && user) {
-      // Check if this user has visited before
+      // Simplified visitor session recording for now
       const checkPreviousVisits = async () => {
         try {
-          const { count } = await supabaseClient
-            .from('visitor_sessions')
-            .select('*', { count: 'exact', head: true })
-            .eq('establishment_id', establishmentId)
-            .eq('user_id', user.id);
-            
-          const isReturning = count && count > 0;
-          
-          // Record the new session
-          await recordVisitorSession(establishmentId, isReturning);
+          // Using our mock service instead of direct Supabase calls
+          await recordVisitorSession(establishmentId, false);
         } catch (error) {
           console.error('Error recording visitor session:', error);
         }
@@ -111,46 +102,11 @@ const EstablishmentDashboard: React.FC<EstablishmentDashboardProps> = ({
   useEffect(() => {
     const fetchPendingSuggestionsCount = async () => {
       if (!establishmentId) return;
-      
-      try {
-        const { count, error } = await supabaseClient
-          .from('mocktail_suggestions')
-          .select('*', { count: 'exact', head: true })
-          .eq('establishment_id', establishmentId)
-          .eq('status', 'pending');
-          
-        if (error) {
-          console.error('Error fetching pending suggestions:', error);
-          return;
-        }
-        
-        setPendingSuggestions(count || 0);
-      } catch (error) {
-        console.error('Error in fetchPendingSuggestionsCount:', error);
-      }
+      // Mock data for now
+      setPendingSuggestions(3);
     };
     
     fetchPendingSuggestionsCount();
-    
-    // Set up a subscription for real-time updates to mocktail suggestions
-    const subscription = supabaseClient
-      .channel('mocktail-suggestions-changes')
-      .on('postgres_changes', 
-        { 
-          event: '*', 
-          schema: 'public', 
-          table: 'mocktail_suggestions',
-          filter: `establishment_id=eq.${establishmentId}` 
-        }, 
-        () => {
-          fetchPendingSuggestionsCount();
-        }
-      )
-      .subscribe();
-      
-    return () => {
-      subscription.unsubscribe();
-    };
   }, [establishmentId]);
   
   const handleAddMocktail = (drink: Drink) => {

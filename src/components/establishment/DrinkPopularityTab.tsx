@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Glass, Star, CircleSlash } from 'lucide-react';
+import { Glasses, Star, CircleSlash } from 'lucide-react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 
 interface DrinkPopularityProps {
@@ -58,7 +58,7 @@ const DrinkPopularityTab: React.FC<DrinkPopularityProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <div className="bg-amber-50 p-4 rounded-lg">
             <div className="flex items-center mb-2">
-              <Glass className="h-5 w-5 text-amber-500 mr-2" />
+              <Glasses className="h-5 w-5 text-amber-500 mr-2" />
               <h3 className="font-medium">Most Popular Drink</h3>
             </div>
             {topDrink ? (

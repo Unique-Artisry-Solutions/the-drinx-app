@@ -10,11 +10,13 @@ interface StatsData {
   totalRating: number;
   visitorCount: number;
   returningRate: number;
+  totalVisits?: number; // Added this property
   // Add data availability flags
   hasRevenueData?: boolean;
   hasVisitorData?: boolean;
   hasRatingData?: boolean;
   hasReturnRateData?: boolean;
+  hasAnalyticsData?: boolean;
 }
 
 interface KeyMetricsCardsProps {
