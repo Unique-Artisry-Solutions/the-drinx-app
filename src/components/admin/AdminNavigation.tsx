@@ -13,7 +13,7 @@ const AdminNavigation: React.FC<AdminNavigationProps> = ({
 }) => {
   return (
     <nav className="flex-1">
-      <ul className="flex space-x-4">
+      <ul className="flex space-x-6">
         <li>
           <Link to="/admin/dashboard">
             <Button variant="ghost" className="text-white hover:text-white hover:bg-spiritless-burgundy/25">

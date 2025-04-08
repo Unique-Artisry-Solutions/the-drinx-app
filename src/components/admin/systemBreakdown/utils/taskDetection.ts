@@ -4,6 +4,8 @@
  * Supports both [x] format and ✅ format
  */
 export const isTaskCompleted = (taskDescription: string): boolean => {
+  if (!taskDescription) return false;
+  
   // Check for [x] format (case insensitive)
   if (taskDescription.match(/\[x\]/i)) {
     return true;
@@ -24,4 +26,18 @@ export const isTaskCompleted = (taskDescription: string): boolean => {
   }
   
   return false;
+};
+
+/**
+ * Parse tasks from a string, returning an array of task objects
+ */
+export const parseTasks = (taskString: string): { text: string; isCompleted: boolean }[] => {
+  if (!taskString) return [];
+  
+  const tasks = taskString.split('\n').filter(line => line.trim());
+  
+  return tasks.map(task => ({
+    text: task.replace(/\[x\]/i, '').replace('✅', '').trim(),
+    isCompleted: isTaskCompleted(task)
+  }));
 };

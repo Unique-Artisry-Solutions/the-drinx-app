@@ -67,30 +67,30 @@ const AdminTopNav: React.FC = () => {
   return (
     <AnalyticsService pageView="admin_navigation">
       <nav className="admin-top-nav fixed top-0 left-0 w-full bg-material-primary text-white z-50 shadow-md">
-        <div className="admin-nav-container max-w-6xl mx-auto px-4 py-2">
+        <div className="admin-nav-container max-w-7xl mx-auto px-4 py-2">
           <div className="admin-nav-inner flex items-center justify-between">
             <div className="admin-nav-left flex items-center">
-              <Link to="/" className="admin-nav-logo text-lg font-semibold mr-6">
+              <Link to="/" className="admin-nav-logo text-lg font-semibold mr-8">
                 Spirit<span className="text-white">less</span>
               </Link>
               
-              <div className="admin-nav-links hidden md:flex space-x-1">
+              <div className="admin-nav-links hidden md:flex space-x-3">
                 {adminNavItems.filter(item => item.showInNav !== false).map((item) => (
                   <Link
                     key={item.path}
                     to={item.path}
-                    className={`admin-nav-link px-3 py-1.5 rounded-md flex items-center transition-colors ${
+                    className={`admin-nav-link px-4 py-2 rounded-md flex items-center transition-colors ${
                       isActive(item.path) ? 'bg-white/20' : 'hover:bg-white/10'
                     }`}
                   >
-                    <item.icon className="mr-1.5 h-4 w-4" />
-                    <span className="text-sm">{item.label}</span>
+                    <item.icon className="mr-2 h-4 w-4" />
+                    <span className="text-sm font-medium">{item.label}</span>
                   </Link>
                 ))}
               </div>
             </div>
             
-            <div className="admin-nav-right flex items-center space-x-3">
+            <div className="admin-nav-right flex items-center space-x-4">
               <div className="hidden md:block text-sm text-white/80">
                 <span className="font-medium text-white">{adminUsername}</span>
               </div>

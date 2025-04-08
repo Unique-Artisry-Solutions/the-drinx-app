@@ -11,6 +11,7 @@ import {
   isIngredientPairingFeature,
   isPromotionFeature
 } from './featureDetection';
+import { isTaskCompleted, parseTasks } from './taskDetection';
 
 export {
   renderStatusBadge,
@@ -24,7 +25,9 @@ export {
   isMocktailSuggestionFeature,
   isMocktailTrendsFeature, 
   isIngredientPairingFeature,
-  isPromotionFeature
+  isPromotionFeature,
+  isTaskCompleted,
+  parseTasks
 };
 
 // Use 'export type' for type exports when isolatedModules is enabled
