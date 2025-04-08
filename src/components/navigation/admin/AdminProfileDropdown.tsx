@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { User, Settings, LogOut, LayoutDashboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -14,6 +14,18 @@ const AdminProfileDropdown: React.FC<AdminProfileDropdownProps> = ({
   username,
   onLogout
 }) => {
+  const navigate = useNavigate();
+  
+  const handleLogout = () => {
+    // Call the provided logout function
+    onLogout();
+    
+    // Ensure we navigate to landing page
+    setTimeout(() => {
+      navigate('/landing');
+    }, 100);
+  };
+  
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -39,7 +51,10 @@ const AdminProfileDropdown: React.FC<AdminProfileDropdownProps> = ({
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem className="admin-logout-item flex items-center gap-2 text-red-600 cursor-pointer focus:text-red-700 focus:bg-red-50" onClick={onLogout}>
+        <DropdownMenuItem 
+          className="admin-logout-item flex items-center gap-2 text-red-600 cursor-pointer focus:text-red-700 focus:bg-red-50" 
+          onClick={handleLogout}
+        >
           <LogOut className="h-4 w-4" />
           <span>Logout</span>
         </DropdownMenuItem>

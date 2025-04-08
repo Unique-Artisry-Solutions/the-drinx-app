@@ -1,24 +1,50 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { LogOut } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import AdminNavigation from './AdminNavigation';
+
 interface AdminHeaderProps {
   onLogout: () => void;
 }
+
 const AdminHeader: React.FC<AdminHeaderProps> = ({
   onLogout
 }) => {
+  const navigate = useNavigate();
+  
+  const handleLogout = () => {
+    // Clear admin auth data
+    localStorage.removeItem('admin_authenticated');
+    localStorage.removeItem('admin_username');
+    localStorage.removeItem('admin_session_created');
+    localStorage.removeItem('admin_bypass');
+    localStorage.removeItem('bypass_user_id');
+    
+    // Call the provided onLogout prop
+    onLogout();
+    
+    // Navigate to landing page
+    navigate('/landing');
+  };
+  
   return <header className="bg-material-primary text-material-on-primary p-4 shadow-md">
       <div className="container max-w-5xl mx-auto flex justify-between items-center">
         <div className="flex items-center gap-4">
           <h1 className="text-xl font-medium">Admin Dashboard</h1>
-          <AdminNavigation onLogout={onLogout} />
+          <AdminNavigation onLogout={handleLogout} />
         </div>
-        <Button variant="outline" onClick={onLogout} className="border-white text-white hover:text-white transition-colors duration-200 flex items-center gap-2 bg-spiritless-burgundy">
+        <Button 
+          variant="outline" 
+          onClick={handleLogout} 
+          className="border-white text-white hover:text-white transition-colors duration-200 flex items-center gap-2 bg-spiritless-burgundy"
+        >
           <LogOut size={18} />
           <span>Logout</span>
         </Button>
       </div>
     </header>;
 };
+
 export default AdminHeader;

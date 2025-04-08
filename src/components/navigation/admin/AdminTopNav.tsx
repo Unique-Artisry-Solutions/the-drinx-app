@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -12,6 +12,7 @@ import AnalyticsService from '@/components/admin/analytics/AnalyticsService';
 
 const AdminTopNav: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [adminUsername, setAdminUsername] = useState<string>('Admin');
@@ -40,8 +41,8 @@ const AdminTopNav: React.FC = () => {
         description: 'You have been successfully logged out',
       });
       
-      // Force navigate to landing page
-      window.location.href = '/landing';
+      // Explicitly navigate to landing page
+      navigate('/landing');
     } catch (error) {
       console.error('Logout error:', error);
       toast({
@@ -49,6 +50,9 @@ const AdminTopNav: React.FC = () => {
         description: 'There was a problem logging out',
         variant: 'destructive',
       });
+      
+      // Attempt to navigate to landing page even if there's an error
+      navigate('/landing');
     }
   };
 
