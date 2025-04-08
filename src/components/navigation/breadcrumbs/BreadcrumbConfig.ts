@@ -1,4 +1,3 @@
-
 import { Home } from 'lucide-react';
 import React from 'react';
 
@@ -30,11 +29,12 @@ export const routes: Record<string, BreadcrumbConfig> = {
   '/create-bar-crawl': { path: '/create-bar-crawl', label: 'Create Swig Circuit' },
   
   // Establishment routes
+  '/establishment': { path: '/establishment', label: 'Establishment' }, // Add base establishment route
   '/establishment/all-actions': { path: '/establishment/all-actions', label: 'Dashboard' },
   '/establishment/profile': { path: '/establishment/profile', label: 'Profile' },
   '/establishment/mocktail-menu': { path: '/establishment/mocktail-menu', label: 'Mocktail Menu' },
   '/establishment/promotions': { path: '/establishment/promotions', label: 'Promotional Offers' },
-  '/establishment/swig-circuit-requests': { path: '/establishment/swig-circuit-requests', label: 'Swig Circuit Requests' },
+  '/establishment/bar-crawl-requests': { path: '/establishment/bar-crawl-requests', label: 'Swig Circuit Requests' },
   '/establishment/analytics': { path: '/establishment/analytics', label: 'Analytics' },
   '/establishment/reviews': { path: '/establishment/reviews', label: 'Reviews' },
   '/establishment/mocktail-suggestions': { path: '/establishment/mocktail-suggestions', label: 'Suggestions' },
@@ -58,7 +58,7 @@ export const dynamicRoutes = [
   { pattern: /^\/bar-crawl-profile\/(.+)$/, base: '/swig-circuits', label: 'Swig Circuit Details' },
   { pattern: /^\/bar-crawl-details\/(.+)$/, base: '/swig-circuits', label: 'Swig Circuit Details' },
   { pattern: /^\/establishment\/(\d+)$/, base: '/establishment', label: 'Establishment Details' },
-  { pattern: /^\/establishment\/mocktail\/(.+)$/, base: '/establishment/mocktail', label: 'Mocktail Details' },
+  { pattern: /^\/establishment\/mocktail\/(.+)$/, base: '/establishment/mocktail-menu', label: 'Mocktail Details' },
   { pattern: /^\/cocktail\/(.+)$/, base: '/cocktail', label: 'Cocktail Details' },
   { pattern: /^\/profile\/my-creations\/(.+)$/, base: '/profile/my-creations', label: 'Swig Circuit Management' },
   { pattern: /^\/admin\/users\/(.+)$/, base: '/admin/users', label: 'User Details' },

@@ -161,9 +161,6 @@ const MobileNavigation: React.FC<ExtendedMobileNavigationProps> = ({
                 if (item.path === getProfilePath() && shouldShowProfileItems) {
                   e.preventDefault();
                   toggleExpand();
-                } else {
-                  // Scroll to top when navigating
-                  window.scrollTo(0, 0);
                 }
               };
               

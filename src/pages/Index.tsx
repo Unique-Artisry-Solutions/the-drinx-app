@@ -16,6 +16,11 @@ const Index = () => {
     // Make sure we're not in a loading state
     if (isLoading) return;
     
+    // For debugging
+    console.log("Index page navigation check:", { 
+      user, isLoading, userType, isEstablishment, isAdmin 
+    });
+    
     // If admin is authenticated, redirect to system breakdown page
     if (isAdmin) {
       navigate('/admin/system-breakdown', { replace: true });

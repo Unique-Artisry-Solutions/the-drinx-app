@@ -13,7 +13,7 @@ export function buildBreadcrumbs(pathname: string): BreadcrumbConfig[] {
   const isEstablishmentSection = pathname.startsWith('/establishment/');
   if (isEstablishmentSection && pathSegments.length > 1) {
     // Add 'Establishment' as a base node for the section if not already in breadcrumbs
-    const establishmentBasePath = '/establishment/all-actions';
+    const establishmentBasePath = '/establishment';
     if (!breadcrumbs.some(crumb => crumb.path === establishmentBasePath)) {
       breadcrumbs.push({
         path: establishmentBasePath,
@@ -72,7 +72,7 @@ export function buildBreadcrumbs(pathname: string): BreadcrumbConfig[] {
     // Skip if this path or a matching path already exists in breadcrumbs
     const pathAlreadyExists = breadcrumbs.some(crumb => 
       crumb.path === currentPath || 
-      (crumb.path.startsWith('/establishment/') && currentPath === '/establishment')
+      (crumb.path === '/establishment' && currentPath === '/establishment')
     );
     
     if (pathAlreadyExists) continue;

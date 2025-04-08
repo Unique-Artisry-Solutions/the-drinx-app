@@ -2,10 +2,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import type { NavItem } from './types';
+import type { NavItemType } from './types';
 
 interface NavItemProps {
-  item: NavItem;
+  item: NavItemType;
   isActive: boolean;
   onClick?: (e: React.MouseEvent) => void;
 }
