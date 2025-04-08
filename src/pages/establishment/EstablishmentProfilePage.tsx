@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import Layout from '@/components/Layout';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
@@ -12,7 +11,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Card, CardContent } from '@/components/ui/card';
 import { buttonVariants } from '@/components/ui/button';
-import { LayoutDashboard, BarChart4, Store, Route, Settings } from 'lucide-react';
+import { LayoutDashboard, BarChart4, Store, Route, Utensils, Tag, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const EstablishmentProfilePage = () => {
@@ -51,10 +50,14 @@ const EstablishmentProfilePage = () => {
     { value: 'barCrawls', label: isMobile ? 'Crawls' : 'Bar Crawl Requests' }
   ];
 
-  // Quick navigation links for establishment
+  // Quick navigation links for establishment - expanded with more relevant links
   const quickLinks = [
-    { label: 'Dashboard', href: '/establishment/all-actions', icon: LayoutDashboard },
+    { label: 'Dashboard', href: '/establishment/dashboard', icon: LayoutDashboard },
+    { label: 'All Actions', href: '/establishment/all-actions', icon: Store },
     { label: 'Analytics', href: '/establishment/analytics', icon: BarChart4 },
+    { label: 'Mocktail Menu', href: '/establishment/mocktail-menu', icon: Utensils },
+    { label: 'Promotions', href: '/establishment/promotions', icon: Tag },
+    { label: 'Bar Crawls', href: '/establishment/bar-crawl-requests', icon: Route },
     { label: 'Settings', href: '/settings', icon: Settings },
   ];
   
