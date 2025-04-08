@@ -63,7 +63,7 @@ const FeaturesTable: React.FC<FeaturesTableProps> = ({ features, title }) => {
                 </TableCell>
               </TableRow>
               {expandedRows[feature.id] && (
-                <TableRow key={`${feature.id}-details`}>
+                <TableRow>
                   <TableCell colSpan={7} className="bg-slate-50 p-4">
                     <div className="space-y-4">
                       <div>

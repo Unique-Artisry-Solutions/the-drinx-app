@@ -13,9 +13,10 @@ interface AnalysisResult {
 export const analyzeDbRequirements = (analysisText: string): AnalysisResult => {
   if (!analysisText) return { completionPercentage: 0, hasStarted: false, isComplete: false };
   
+  // Parse tasks with the [x] or [ ] format
   const taskLines = analysisText
     .split('\n')
-    .filter(line => line.trim().match(/^\d+\./)); // Get only numbered lines
+    .filter(line => line.trim().match(/^\s*-\s*\[[\sx]\]/i));
   
   const taskStatuses = taskLines.map(line => isTaskCompleted(line));
   
@@ -38,13 +39,14 @@ export const analyzeDbRequirements = (analysisText: string): AnalysisResult => {
 export const parseTaskStatuses = (analysisText: string) => {
   if (!analysisText) return [];
   
+  // Parse tasks with the [x] or [ ] format
   const taskLines = analysisText
     .split('\n')
-    .filter(line => line.trim().match(/^\d+\./)); // Get only numbered lines
+    .filter(line => line.trim().match(/^\s*-\s*\[[\sx]\]/i));
   
   return taskLines.map(line => {
-    // Extract just the task description without the number
-    const taskText = line.replace(/^\d+\.\s*/, '').trim();
+    // Extract just the task description without the checkbox
+    const taskText = line.replace(/^\s*-\s*\[[\sx]\]\s*/i, '').trim();
     
     return { 
       text: taskText,

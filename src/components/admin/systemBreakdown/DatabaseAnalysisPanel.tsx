@@ -38,7 +38,4 @@ const DatabaseAnalysisPanel: React.FC<DatabaseAnalysisPanelProps> = ({ analysisT
   );
 };
 
-// Export the analyzeDbRequirements helper function for external use
-export { analyzeDbRequirements };
-
 export default DatabaseAnalysisPanel;
