@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Share2, PenSquare, Trash2 } from 'lucide-react';
+import { Share2, PenSquare, Trash2, Building2 } from 'lucide-react';
 import { RecipeItemProps } from './types';
 
 const RecipeItem: React.FC<RecipeItemProps> = ({
@@ -11,6 +11,7 @@ const RecipeItem: React.FC<RecipeItemProps> = ({
   onEdit,
   onDelete,
   onShare,
+  onSuggestToEstablishment,
   isDeleting,
   deletingId
 }) => {
@@ -80,13 +81,23 @@ const RecipeItem: React.FC<RecipeItemProps> = ({
                 variant="ghost" 
                 size="icon" 
                 onClick={() => onShare(recipe)}
+                title="Share"
               >
                 <Share2 className="h-4 w-4" />
               </Button>
               <Button 
                 variant="ghost" 
                 size="icon" 
+                onClick={() => onSuggestToEstablishment && onSuggestToEstablishment(recipe)}
+                title="Suggest to Establishment"
+              >
+                <Building2 className="h-4 w-4 text-spiritless-green" />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="icon" 
                 onClick={() => onEdit(recipe)}
+                title="Edit"
               >
                 <PenSquare className="h-4 w-4" />
               </Button>
@@ -95,6 +106,7 @@ const RecipeItem: React.FC<RecipeItemProps> = ({
                 size="icon" 
                 onClick={() => onDelete(recipe.id)}
                 disabled={isDeleting && deletingId === recipe.id}
+                title="Delete"
               >
                 <Trash2 className="h-4 w-4 text-red-500" />
               </Button>

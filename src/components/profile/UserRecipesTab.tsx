@@ -16,15 +16,18 @@ import RecipesHeader from './recipes/RecipesHeader';
 import RecipeItem from './recipes/RecipeItem';
 import CreateRecipeDialog from './recipes/CreateRecipeDialog';
 import EditRecipeDialog from './recipes/EditRecipeDialog';
+import SuggestToEstablishmentModal from './recipes/SuggestToEstablishmentModal';
 
 const UserRecipesTab: React.FC = () => {
   const { recipes = [], isLoading, createRecipe, updateRecipe, deleteRecipe } = useUserRecipes();
   const [isCreatingRecipe, setIsCreatingRecipe] = useState(false);
+  const [isSuggestModalOpen, setIsSuggestModalOpen] = useState(false);
+  const [selectedRecipeForSuggestion, setSelectedRecipeForSuggestion] = useState<UserRecipe | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
   const isAdminBypass = localStorage.getItem('admin_bypass') === 'true';
   
-  // Use our new custom hook for form logic
+  // Use our custom hook for form logic
   const {
     newRecipe,
     editingRecipe,
@@ -119,6 +122,11 @@ const UserRecipesTab: React.FC = () => {
     });
   };
 
+  const handleSuggestToEstablishment = (recipe: UserRecipe) => {
+    setSelectedRecipeForSuggestion(recipe);
+    setIsSuggestModalOpen(true);
+  };
+
   // Allow access for either authenticated users or admin bypass
   if (!user && !isAdminBypass) {
     return <AuthRequiredState />;
@@ -144,6 +152,12 @@ const UserRecipesTab: React.FC = () => {
         formProps={getEditFormProps()}
       />
       
+      <SuggestToEstablishmentModal
+        open={isSuggestModalOpen}
+        onOpenChange={setIsSuggestModalOpen}
+        recipe={selectedRecipeForSuggestion}
+      />
+      
       {isLoading ? (
         <RecipesLoading />
       ) : recipes && recipes.length === 0 ? (
@@ -157,6 +171,7 @@ const UserRecipesTab: React.FC = () => {
               onEdit={setEditingRecipe}
               onDelete={handleDeleteRecipe}
               onShare={handleShareRecipe}
+              onSuggestToEstablishment={handleSuggestToEstablishment}
               isDeleting={deleteRecipe.isPending}
               deletingId={deleteRecipe.variables}
             />
