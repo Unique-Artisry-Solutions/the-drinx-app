@@ -10,7 +10,7 @@ export const getUserNavItems = (
   
   // Add appropriate home path based on user type
   if (userType === 'establishment') {
-    navItems.push({ icon: Home, label: 'Home', path: '/establishment/all-actions' });
+    navItems.push({ icon: Home, label: 'Home', path: '/establishment/dashboard' });
   } else {
     navItems.push({ icon: Home, label: 'Home', path: '/explore' });
   }

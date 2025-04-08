@@ -75,7 +75,7 @@ const AppContent = () => {
         }
         // If establishment is authenticated, redirect to establishment dashboard
         else if (user && userType === 'establishment') {
-          navigate('/establishment/all-actions', { replace: true });
+          navigate('/establishment/dashboard', { replace: true });
         }
         // If individual user is authenticated, redirect to explore page
         else if (user && userType === 'individual') {
@@ -88,9 +88,9 @@ const AppContent = () => {
         return;
       }
       
-      // If trying to access /establishment directly, redirect to all-actions
+      // If trying to access /establishment directly, redirect to dashboard
       if (location.pathname === '/establishment' && user && userType === 'establishment') {
-        navigate('/establishment/all-actions', { replace: true });
+        navigate('/establishment/dashboard', { replace: true });
         return;
       }
     }

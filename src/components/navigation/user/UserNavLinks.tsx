@@ -14,7 +14,7 @@ const UserNavLinks: React.FC<UserNavLinksProps> = ({ userType }) => {
   
   const getHomePath = () => {
     if (userType === 'establishment') {
-      return '/establishment/all-actions';
+      return '/establishment/dashboard';
     } else {
       return '/explore';
     }
@@ -39,7 +39,7 @@ const UserNavLinks: React.FC<UserNavLinksProps> = ({ userType }) => {
     <div className="user-nav-links hidden md:flex space-x-1">
       {userNavItems.map((item) => {
         const isActive = location.pathname === item.path ||
-          (item.path === '/establishment/all-actions' && location.pathname.startsWith('/establishment/'));
+          (item.path === '/establishment/dashboard' && location.pathname.startsWith('/establishment/'));
         
         return (
           <Link

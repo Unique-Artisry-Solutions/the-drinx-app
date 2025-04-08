@@ -13,7 +13,7 @@ export function buildBreadcrumbs(pathname: string): BreadcrumbConfig[] {
   if (userType === 'establishment') {
     breadcrumbs.push({
       ...routes['/'], 
-      path: '/establishment/all-actions',
+      path: '/establishment/dashboard',
       label: 'Dashboard'
     });
   } else {
@@ -37,7 +37,10 @@ export function buildBreadcrumbs(pathname: string): BreadcrumbConfig[] {
   
   // Handle special case for establishment section
   if (pathname.startsWith('/establishment/')) {
-    handleSpecialBasePath('/establishment/all-actions', 'Dashboard');
+    // If we're on the dashboard already, don't add a redundant breadcrumb
+    if (pathname !== '/establishment/dashboard') {
+      handleSpecialBasePath('/establishment/dashboard', 'Dashboard');
+    }
   }
   
   // Handle special case for admin section
@@ -73,7 +76,7 @@ export function buildBreadcrumbs(pathname: string): BreadcrumbConfig[] {
     
     // Handle establishment base path special case
     if (currentPath === '/establishment') {
-      // Skip this segment since we're redirecting to /establishment/all-actions
+      // Skip this segment since we're redirecting to /establishment/dashboard
       continue;
     }
     

@@ -1,4 +1,3 @@
-
 import React, { lazy, Suspense } from 'react';
 import { Route, Routes, Navigate } from 'react-router-dom';
 import LandingPage from '@/pages/LandingPage';
@@ -56,6 +55,8 @@ const SystemAnalyticsPage = lazy(() => import('@/pages/admin/SystemAnalyticsPage
 const PhotoModerationPage = lazy(() => import('@/pages/admin/PhotoModerationPage'));
 const ContentModerationPage = lazy(() => import('@/pages/admin/ContentModerationPage'));
 
+import EstablishmentDashboardPage from '@/pages/establishment/EstablishmentDashboardPage';
+
 const AppRoutes = () => {
   return (
     <Suspense fallback={<div>Loading...</div>}>
@@ -109,7 +110,13 @@ const AppRoutes = () => {
         {/* Always redirect /establishment to the dashboard */}
         <Route path="/establishment" element={
           <TypedProtectedRoute userType="establishment">
-            <Navigate to="/establishment/all-actions" replace />
+            <Navigate to="/establishment/dashboard" replace />
+          </TypedProtectedRoute>
+        } />
+        
+        <Route path="/establishment/dashboard" element={
+          <TypedProtectedRoute userType="establishment">
+            <EstablishmentDashboardPage />
           </TypedProtectedRoute>
         } />
         

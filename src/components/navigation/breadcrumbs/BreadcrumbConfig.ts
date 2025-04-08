@@ -30,8 +30,9 @@ export const routes: Record<string, BreadcrumbConfig> = {
   '/create-bar-crawl': { path: '/create-bar-crawl', label: 'Create Swig Circuit' },
   
   // Establishment routes - Update establishment route to point to dashboard
-  '/establishment': { path: '/establishment/all-actions', label: 'Dashboard' },
-  '/establishment/all-actions': { path: '/establishment/all-actions', label: 'Dashboard' },
+  '/establishment': { path: '/establishment/dashboard', label: 'Dashboard' },
+  '/establishment/dashboard': { path: '/establishment/dashboard', label: 'Dashboard' },
+  '/establishment/all-actions': { path: '/establishment/all-actions', label: 'All Actions' },
   '/establishment/profile': { path: '/establishment/profile', label: 'Profile' },
   '/establishment/mocktail-menu': { path: '/establishment/mocktail-menu', label: 'Mocktail Menu' },
   '/establishment/promotions': { path: '/establishment/promotions', label: 'Promotional Offers' },
@@ -58,7 +59,7 @@ export const dynamicRoutes = [
   { pattern: /^\/bar-crawl\/(.+)$/, base: '/swig-circuits', label: 'Swig Circuit Details' },
   { pattern: /^\/bar-crawl-profile\/(.+)$/, base: '/swig-circuits', label: 'Swig Circuit Details' },
   { pattern: /^\/bar-crawl-details\/(.+)$/, base: '/swig-circuits', label: 'Swig Circuit Details' },
-  { pattern: /^\/establishment\/(\d+)$/, base: '/establishment/all-actions', label: 'Establishment Details' },
+  { pattern: /^\/establishment\/(\d+)$/, base: '/establishment/dashboard', label: 'Establishment Details' },
   { pattern: /^\/establishment\/mocktail\/(.+)$/, base: '/establishment/mocktail-menu', label: 'Mocktail Details' },
   { pattern: /^\/cocktail\/(.+)$/, base: '/cocktail', label: 'Cocktail Details' },
   { pattern: /^\/profile\/my-creations\/(.+)$/, base: '/profile/my-creations', label: 'Swig Circuit Management' },

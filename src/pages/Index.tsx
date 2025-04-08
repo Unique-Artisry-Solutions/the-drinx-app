@@ -31,7 +31,7 @@ const Index = () => {
     
     // If user is authenticated and is an establishment, redirect to establishment dashboard
     if (user && isEstablishment) {
-      navigate('/establishment/all-actions', { replace: true });
+      navigate('/establishment/dashboard', { replace: true });
       return;
     }
     

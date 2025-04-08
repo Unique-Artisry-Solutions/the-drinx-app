@@ -63,7 +63,7 @@ const MobileNavigation: React.FC<ExtendedMobileNavigationProps> = ({
     
     if (user) {
       if (currentUserType === 'establishment') {
-        navigate('/establishment/all-actions');
+        navigate('/establishment/dashboard');
       } else {
         navigate('/explore');
       }
@@ -158,7 +158,7 @@ const MobileNavigation: React.FC<ExtendedMobileNavigationProps> = ({
               const isActive = 
                 location.pathname === item.path || 
                 (item.path === '/profile' && location.pathname.startsWith('/profile/')) ||
-                (item.path === '/establishment/all-actions' && 
+                (item.path === '/establishment/dashboard' && 
                   (location.pathname.startsWith('/establishment/') || location.pathname === '/establishment'));
               
               if (item.label === 'Home' && type === NavigationType.USER) {
