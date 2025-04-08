@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -12,7 +12,6 @@ import AnalyticsService from '@/components/admin/analytics/AnalyticsService';
 
 const AdminTopNav: React.FC = () => {
   const location = useLocation();
-  const navigate = useNavigate();
   const { toast } = useToast();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [adminUsername, setAdminUsername] = useState<string>('Admin');
@@ -25,15 +24,18 @@ const AdminTopNav: React.FC = () => {
   
   const handleLogout = async () => {
     try {
-      // Clear admin-specific localStorage items before calling signOut
+      // Clear all auth data
       localStorage.removeItem('admin_authenticated');
       localStorage.removeItem('admin_username');
       localStorage.removeItem('admin_session_created');
-      
-      // Clean up any other potential admin-related data
       localStorage.removeItem('admin_bypass');
       localStorage.removeItem('bypass_user_id');
+      localStorage.removeItem('user_authenticated');
+      localStorage.removeItem('user_email');
+      localStorage.removeItem('user_type');
+      localStorage.removeItem('user_username');
       
+      // Call signOut to handle any backend cleanup
       await signOut();
       
       toast({
@@ -41,8 +43,8 @@ const AdminTopNav: React.FC = () => {
         description: 'You have been successfully logged out',
       });
       
-      // Explicitly navigate to landing page
-      navigate('/landing');
+      // Force a complete page reload and navigation to landing page
+      window.location.href = '/landing';
     } catch (error) {
       console.error('Logout error:', error);
       toast({
@@ -51,8 +53,8 @@ const AdminTopNav: React.FC = () => {
         variant: 'destructive',
       });
       
-      // Attempt to navigate to landing page even if there's an error
-      navigate('/landing');
+      // Still attempt to redirect even if there's an error
+      window.location.href = '/landing';
     }
   };
 

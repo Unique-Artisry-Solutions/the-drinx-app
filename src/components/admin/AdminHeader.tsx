@@ -21,12 +21,16 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
     localStorage.removeItem('admin_session_created');
     localStorage.removeItem('admin_bypass');
     localStorage.removeItem('bypass_user_id');
+    localStorage.removeItem('user_authenticated');
+    localStorage.removeItem('user_email');
+    localStorage.removeItem('user_type');
+    localStorage.removeItem('user_username');
     
     // Call the provided onLogout prop
     onLogout();
     
-    // Navigate to landing page
-    navigate('/landing');
+    // Force a complete page reload and navigation to landing page
+    window.location.href = '/landing';
   };
   
   return <header className="bg-material-primary text-material-on-primary p-4 shadow-md">

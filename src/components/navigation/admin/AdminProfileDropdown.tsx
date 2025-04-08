@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { User, Settings, LogOut, LayoutDashboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -14,16 +14,23 @@ const AdminProfileDropdown: React.FC<AdminProfileDropdownProps> = ({
   username,
   onLogout
 }) => {
-  const navigate = useNavigate();
-  
   const handleLogout = () => {
+    // Clear all auth data
+    localStorage.removeItem('admin_authenticated');
+    localStorage.removeItem('admin_username');
+    localStorage.removeItem('admin_session_created');
+    localStorage.removeItem('admin_bypass');
+    localStorage.removeItem('bypass_user_id');
+    localStorage.removeItem('user_authenticated');
+    localStorage.removeItem('user_email');
+    localStorage.removeItem('user_type');
+    localStorage.removeItem('user_username');
+    
     // Call the provided logout function
     onLogout();
     
-    // Ensure we navigate to landing page
-    setTimeout(() => {
-      navigate('/landing');
-    }, 100);
+    // Force a complete page reload and navigation to landing page
+    window.location.href = '/landing';
   };
   
   return (
