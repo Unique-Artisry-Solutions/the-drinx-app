@@ -432,6 +432,53 @@ export type Database = {
           },
         ]
       }
+      establishment_analytics: {
+        Row: {
+          average_rating: number | null
+          created_at: string
+          date: string
+          establishment_id: string
+          id: string
+          returning_visitors: number | null
+          total_revenue: number | null
+          total_visitors: number | null
+          unique_visitors: number | null
+          updated_at: string
+        }
+        Insert: {
+          average_rating?: number | null
+          created_at?: string
+          date: string
+          establishment_id: string
+          id?: string
+          returning_visitors?: number | null
+          total_revenue?: number | null
+          total_visitors?: number | null
+          unique_visitors?: number | null
+          updated_at?: string
+        }
+        Update: {
+          average_rating?: number | null
+          created_at?: string
+          date?: string
+          establishment_id?: string
+          id?: string
+          returning_visitors?: number | null
+          total_revenue?: number | null
+          total_visitors?: number | null
+          unique_visitors?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "establishment_analytics_establishment_id_fkey"
+            columns: ["establishment_id"]
+            isOneToOne: false
+            referencedRelation: "establishments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       establishment_promotions: {
         Row: {
           code: string
@@ -502,6 +549,7 @@ export type Database = {
           latitude: number
           longitude: number
           name: string
+          owner_id: string | null
           phone: string | null
           website: string | null
         }
@@ -515,6 +563,7 @@ export type Database = {
           latitude: number
           longitude: number
           name: string
+          owner_id?: string | null
           phone?: string | null
           website?: string | null
         }
@@ -528,6 +577,7 @@ export type Database = {
           latitude?: number
           longitude?: number
           name?: string
+          owner_id?: string | null
           phone?: string | null
           website?: string | null
         }
@@ -1033,6 +1083,47 @@ export type Database = {
           },
         ]
       }
+      revenue_entries: {
+        Row: {
+          amount: number
+          created_at: string
+          entry_date: string
+          establishment_id: string
+          id: string
+          notes: string | null
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          entry_date?: string
+          establishment_id: string
+          id?: string
+          notes?: string | null
+          source: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          entry_date?: string
+          establishment_id?: string
+          id?: string
+          notes?: string | null
+          source?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revenue_entries_establishment_id_fkey"
+            columns: ["establishment_id"]
+            isOneToOne: false
+            referencedRelation: "establishments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suggestion_feedback: {
         Row: {
           comments: string | null
@@ -1229,6 +1320,44 @@ export type Database = {
         }
         Relationships: []
       }
+      trend_data_points: {
+        Row: {
+          created_at: string
+          establishment_id: string
+          id: string
+          metric_name: string
+          metric_value: number
+          tags: Json | null
+          timestamp: string
+        }
+        Insert: {
+          created_at?: string
+          establishment_id: string
+          id?: string
+          metric_name: string
+          metric_value: number
+          tags?: Json | null
+          timestamp?: string
+        }
+        Update: {
+          created_at?: string
+          establishment_id?: string
+          id?: string
+          metric_name?: string
+          metric_value?: number
+          tags?: Json | null
+          timestamp?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trend_data_points_establishment_id_fkey"
+            columns: ["establishment_id"]
+            isOneToOne: false
+            referencedRelation: "establishments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_bar_crawl_participation: {
         Row: {
           bar_crawl_id: string
@@ -1297,6 +1426,47 @@ export type Database = {
         }
         Relationships: []
       }
+      visitor_sessions: {
+        Row: {
+          created_at: string
+          duration_minutes: number | null
+          establishment_id: string
+          id: string
+          is_returning: boolean | null
+          session_end: string | null
+          session_start: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          duration_minutes?: number | null
+          establishment_id: string
+          id?: string
+          is_returning?: boolean | null
+          session_end?: string | null
+          session_start?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          duration_minutes?: number | null
+          establishment_id?: string
+          id?: string
+          is_returning?: boolean | null
+          session_end?: string | null
+          session_start?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visitor_sessions_establishment_id_fkey"
+            columns: ["establishment_id"]
+            isOneToOne: false
+            referencedRelation: "establishments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       cocktail_reviews_with_users: {
@@ -1311,6 +1481,27 @@ export type Database = {
           user_name: string | null
         }
         Relationships: []
+      }
+      drink_popularity_metrics: {
+        Row: {
+          average_rating: number | null
+          cocktail_id: string | null
+          cocktail_name: string | null
+          created_at: string | null
+          establishment_id: string | null
+          month: string | null
+          review_count: number | null
+          unique_reviewers: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cocktails_establishment_id_fkey"
+            columns: ["establishment_id"]
+            isOneToOne: false
+            referencedRelation: "establishments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       flagged_content_queue: {
         Row: {
@@ -1355,6 +1546,26 @@ export type Database = {
           },
         ]
       }
+      revenue_reports: {
+        Row: {
+          average_transaction: number | null
+          establishment_id: string | null
+          month: string | null
+          monthly_revenue: number | null
+          period_end: string | null
+          period_start: string | null
+          transaction_count: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revenue_entries_establishment_id_fkey"
+            columns: ["establishment_id"]
+            isOneToOne: false
+            referencedRelation: "establishments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       seasonal_trend_analysis: {
         Row: {
           avg_quality_score: number | null
@@ -1369,6 +1580,10 @@ export type Database = {
     }
     Functions: {
       aggregate_daily_analytics: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      aggregate_establishment_analytics: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }

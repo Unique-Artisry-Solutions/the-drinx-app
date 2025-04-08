@@ -2,6 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, BarChart, CircleSlash } from 'lucide-react';
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 
 interface VisitorStatsTabProps {
   visitorStats: {
@@ -9,10 +10,21 @@ interface VisitorStatsTabProps {
     uniqueVisitors: number;
     returningVisitors: number;
   };
+  visitorTrends?: Array<{
+    name: string;
+    visitors: number;
+    returningVisitors: number;
+    uniqueVisitors: number;
+    date: string;
+  }>;
   hasData?: boolean;
 }
 
-const VisitorStatsTab: React.FC<VisitorStatsTabProps> = ({ visitorStats, hasData = true }) => {
+const VisitorStatsTab: React.FC<VisitorStatsTabProps> = ({ 
+  visitorStats, 
+  visitorTrends = [], 
+  hasData = true 
+}) => {
   if (!hasData) {
     return (
       <Card>
@@ -62,12 +74,44 @@ const VisitorStatsTab: React.FC<VisitorStatsTabProps> = ({ visitorStats, hasData
         
         <div className="mt-6">
           <h3 className="font-medium mb-4">Visitor Trends</h3>
-          <div className="bg-gray-100 h-48 rounded flex items-center justify-center">
-            <BarChart className="h-8 w-8 text-gray-400 mr-2" />
-            <p className="text-material-on-surface-variant text-sm">
-              Visitor trend charts will be displayed here
-            </p>
-          </div>
+          {visitorTrends && visitorTrends.length > 0 ? (
+            <div className="h-64 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart
+                  data={visitorTrends}
+                  margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Area 
+                    type="monotone" 
+                    dataKey="visitors" 
+                    stackId="1" 
+                    stroke="#8884d8" 
+                    fill="#8884d8" 
+                    fillOpacity={0.6} 
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="returningVisitors" 
+                    stackId="2" 
+                    stroke="#82ca9d" 
+                    fill="#82ca9d" 
+                    fillOpacity={0.6} 
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <div className="bg-gray-100 h-48 rounded flex items-center justify-center">
+              <BarChart className="h-8 w-8 text-gray-400 mr-2" />
+              <p className="text-material-on-surface-variant text-sm">
+                Not enough visitor data to display trends
+              </p>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

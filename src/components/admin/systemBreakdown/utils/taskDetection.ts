@@ -80,6 +80,19 @@ export const isAnalyticsTask = (line: string): boolean => {
 };
 
 /**
+ * Checks if a line of text relates to establishment analytics tasks
+ */
+export const isEstablishmentAnalyticsTask = (line: string): boolean => {
+  return line.toLowerCase().includes('establishment_analytics') ||
+    line.toLowerCase().includes('visitor_sessions') ||
+    line.toLowerCase().includes('revenue_entries') ||
+    line.toLowerCase().includes('trend_data_points') ||
+    line.toLowerCase().includes('drink_popularity_metrics') ||
+    line.toLowerCase().includes('revenue_reports') ||
+    line.toLowerCase().includes('customer_retention_analysis');
+};
+
+/**
  * Checks if a task is considered completed based on its text
  */
 export const isTaskCompleted = (line: string): boolean => {
@@ -89,6 +102,7 @@ export const isTaskCompleted = (line: string): boolean => {
     isIngredientPairingTask(line) ||
     isPromotionTask(line) ||
     isAnalyticsTask(line) ||
+    isEstablishmentAnalyticsTask(line) ||
     (
       !line.toLowerCase().includes('need') && 
       !line.toLowerCase().includes('required') &&

@@ -90,3 +90,51 @@ export function isAnalyticsFeature(feature: FeatureItem): boolean {
     feature.description?.toLowerCase().includes('metrics dashboard')
   );
 }
+
+/**
+ * Checks if a feature is related to establishment analytics
+ */
+export function isEstablishmentAnalyticsFeature(feature: FeatureItem): boolean {
+  return (
+    feature.name.toLowerCase().includes('establishment analytics') || 
+    feature.name.toLowerCase().includes('venue analytics') ||
+    feature.name.toLowerCase().includes('business analytics') ||
+    feature.description?.toLowerCase().includes('establishment analytics') ||
+    feature.description?.toLowerCase().includes('track establishment metrics') ||
+    feature.description?.toLowerCase().includes('visitor analytics') ||
+    feature.description?.toLowerCase().includes('revenue analytics') ||
+    feature.description?.toLowerCase().includes('drink popularity')
+  );
+}
+
+/**
+ * Checks if a feature is related to visitor tracking
+ */
+export function isVisitorTrackingFeature(feature: FeatureItem): boolean {
+  return (
+    feature.name.toLowerCase().includes('visitor tracking') || 
+    feature.name.toLowerCase().includes('visitor analytics') ||
+    feature.name.toLowerCase().includes('visitor metrics') ||
+    feature.description?.toLowerCase().includes('visitor tracking') ||
+    feature.description?.toLowerCase().includes('visitor analytics') ||
+    feature.description?.toLowerCase().includes('track visitors') ||
+    feature.description?.toLowerCase().includes('visitor count') ||
+    feature.description?.toLowerCase().includes('returning visitors')
+  );
+}
+
+/**
+ * Checks if a feature is related to revenue tracking
+ */
+export function isRevenueTrackingFeature(feature: FeatureItem): boolean {
+  return (
+    feature.name.toLowerCase().includes('revenue') || 
+    feature.name.toLowerCase().includes('financial') ||
+    feature.name.toLowerCase().includes('sales tracking') ||
+    feature.description?.toLowerCase().includes('revenue') ||
+    feature.description?.toLowerCase().includes('financial') ||
+    feature.description?.toLowerCase().includes('sales tracking') ||
+    feature.description?.toLowerCase().includes('transaction') ||
+    feature.description?.toLowerCase().includes('earnings')
+  );
+}
