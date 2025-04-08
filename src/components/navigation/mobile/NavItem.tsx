@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { NavItemType as NavItem } from './types';
+import type { NavItem } from './types';
 
 interface NavItemProps {
   item: NavItem;
