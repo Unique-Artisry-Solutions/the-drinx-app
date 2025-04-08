@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer 
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
 } from 'recharts';
 import { 
   Activity, Users, BarChart as BarChartIcon, 
@@ -256,6 +256,23 @@ const AnalyticsDashboard: React.FC = () => {
   // Colors for pie chart
   const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff8042', '#0088FE', '#00C49F', '#FFBB28'];
 
+  // Custom tooltip component for charts
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-background border border-border p-2 rounded-md shadow-md">
+          <p className="text-sm font-medium">{`Date: ${label}`}</p>
+          {payload.map((entry: any, index: number) => (
+            <p key={index} className="text-xs" style={{ color: entry.color }}>
+              {`${entry.name}: ${entry.value.toLocaleString()}`}
+            </p>
+          ))}
+        </div>
+      );
+    }
+    return null;
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -341,7 +358,7 @@ const AnalyticsDashboard: React.FC = () => {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" />
                     <YAxis />
-                    <RechartsTooltip content={(props) => <ChartTooltipContent {...props} />} />
+                    <Tooltip content={<CustomTooltip />} />
                     <Legend />
                     <Line 
                       type="monotone" 
@@ -391,7 +408,7 @@ const AnalyticsDashboard: React.FC = () => {
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
-                    <RechartsTooltip formatter={(value: any) => [`${value} events`, 'Count']} />
+                    <Tooltip formatter={(value: any) => [`${value} events`, 'Count']} />
                     <Legend />
                   </PieChart>
                 </ResponsiveContainer>
@@ -409,7 +426,7 @@ const AnalyticsDashboard: React.FC = () => {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" />
                     <YAxis />
-                    <RechartsTooltip />
+                    <Tooltip content={<CustomTooltip />} />
                     <Legend />
                     <Bar dataKey="total" name="Total Events" fill="#8884d8" />
                     <Bar dataKey="unique_users" name="Unique Users" fill="#82ca9d" />
@@ -541,7 +558,7 @@ const AnalyticsDashboard: React.FC = () => {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" />
                     <YAxis />
-                    <RechartsTooltip content={(props) => <ChartTooltipContent {...props} />} />
+                    <Tooltip content={<CustomTooltip />} />
                     <Legend />
                     <Bar dataKey="total" name="Total Events" fill="#8884d8" />
                     <Bar dataKey="unique_users" name="Unique Users" fill="#82ca9d" />
