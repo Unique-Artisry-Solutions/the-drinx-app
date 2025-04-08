@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import GuestTopNavigation from '@/components/navigation/GuestTopNavigation';
 
 const AdminLogin: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -53,7 +54,7 @@ const AdminLogin: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      {/* Removed TopNavigation from here */}
+      <GuestTopNavigation />
       <div className="flex-1 flex items-center justify-center p-4">
         <Card className="w-full max-w-md shadow-lg">
           <CardHeader className="space-y-1">
@@ -108,12 +109,6 @@ const AdminLogin: React.FC = () => {
             </CardFooter>
           </form>
         </Card>
-      </div>
-      {/* Add a simple link back to landing page */}
-      <div className="text-center pb-4">
-        <a href="/landing" className="text-sm text-gray-500 hover:text-gray-700">
-          Return to Spiritless Home
-        </a>
       </div>
     </div>
   );
