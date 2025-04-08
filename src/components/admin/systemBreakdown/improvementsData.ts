@@ -115,5 +115,62 @@ export const proposedImprovements: ImprovementItem[] = [
     estimatedEffort: "8-12 weeks with Lovable team (requires AR expertise)",
     businessImpact: "Novel user experience leading to increased engagement and social sharing",
     technicalRequirements: "AR development expertise, 3D modeling capabilities, high-performance mobile devices support"
+  },
+  {
+    name: "Color Palette Generator",
+    description: "Add AI-powered and preset color palette generation to help users create harmonious color schemes easily",
+    priority: "medium",
+    type: "enhancement",
+    affectedAreas: ["admin"],
+    implementationSteps: [
+      "Research color theory algorithms for palette generation",
+      "Create a library of preset professional color palettes",
+      "Implement AI-based color suggestion tool",
+      "Design user interface for palette selection and customization",
+      "Add color harmony validation",
+      "Create quick-apply functionality for selected palettes",
+      "Test across various site sections"
+    ],
+    estimatedEffort: "1-2 weeks with Lovable team",
+    businessImpact: "Improved site aesthetics and brand consistency with minimal effort from users",
+    technicalRequirements: "Color theory algorithms, machine learning for suggestions, UI components for color visualization"
+  },
+  {
+    name: "Accessibility Color Checker",
+    description: "Implement WCAG compliance checking for color combinations to ensure site accessibility",
+    priority: "high",
+    type: "enhancement",
+    affectedAreas: ["admin"],
+    implementationSteps: [
+      "Implement color contrast ratio calculator",
+      "Create visual indicators for WCAG compliance levels (AA, AAA)",
+      "Add real-time validation during color selection",
+      "Design warning system for non-compliant color combinations",
+      "Implement suggestions for fixing accessibility issues",
+      "Create comprehensive accessibility report",
+      "Add automated testing for key user interfaces"
+    ],
+    estimatedEffort: "1 week with Lovable team",
+    businessImpact: "Ensured accessibility compliance, reducing legal risks and improving usability for all users",
+    technicalRequirements: "WCAG standards implementation, contrast ratio algorithms, automated testing tools"
+  },
+  {
+    name: "Site-Wide Theme Preview",
+    description: "Create a preview mode that shows the theme applied to different sections of the site before committing changes",
+    priority: "medium",
+    type: "enhancement",
+    affectedAreas: ["admin"],
+    implementationSteps: [
+      "Create a theme context that can be temporarily applied",
+      "Design preview mode toggle UI",
+      "Implement view switching between different site sections",
+      "Add sample content for realistic previews",
+      "Create comparison view (before/after)",
+      "Add persistence option to save theme in progress",
+      "Implement quick navigation between different site templates"
+    ],
+    estimatedEffort: "2 weeks with Lovable team",
+    businessImpact: "Better decision-making for administrators when applying themes, leading to improved user experience",
+    technicalRequirements: "Theme context system, UI components for preview controls, template system for different site sections"
   }
 ];

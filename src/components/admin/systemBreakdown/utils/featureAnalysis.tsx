@@ -43,7 +43,11 @@ export function analyzeAllFeatures(
     { name: 'Promotion expiration notifications', completed: true },
     { name: 'System analytics tables', completed: true },
     { name: 'User activity tracking', completed: true },
-    { name: 'Data visualization components', completed: true }
+    { name: 'Data visualization components', completed: true },
+    { name: 'Theme customization system', completed: true },
+    { name: 'Color accessibility checking', completed: false },
+    { name: 'Color palette generation', completed: false },
+    { name: 'Site-wide theme preview', completed: false }
   ];
   
   // Apply our updated analysis to all feature sets
