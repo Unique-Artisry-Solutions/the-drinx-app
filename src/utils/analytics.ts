@@ -90,15 +90,16 @@ export async function getUserRetention(startDate: Date, endDate: Date) {
 }
 
 /**
- * Get event summary statistics - using the event_summary table
+ * Get event summary statistics
  */
 export async function getEventSummary(startDate: Date, endDate: Date) {
   try {
     const { data, error } = await supabaseClient
       .from('analytics_events')
-      .select('event_type, count')
+      .select('event_type, count(*)')
       .gte('timestamp', startDate.toISOString())
       .lte('timestamp', endDate.toISOString())
+      .group('event_type')
       .order('count', { ascending: false });
     
     if (error) {
@@ -120,10 +121,11 @@ export async function getPopularPages(startDate: Date, endDate: Date, limit: num
   try {
     const { data, error } = await supabaseClient
       .from('analytics_events')
-      .select('page_url, count')
+      .select('page_url, count(*)')
       .eq('event_type', 'page_view')
       .gte('timestamp', startDate.toISOString())
       .lte('timestamp', endDate.toISOString())
+      .group('page_url')
       .order('count', { ascending: false })
       .limit(limit);
     

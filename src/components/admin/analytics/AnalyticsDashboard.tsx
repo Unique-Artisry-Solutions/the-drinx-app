@@ -4,7 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+  TooltipProps
 } from 'recharts';
 import { 
   Activity, Users, BarChart as BarChartIcon, 
@@ -12,7 +13,7 @@ import {
 } from 'lucide-react';
 import { format, subDays, subMonths, startOfMonth, endOfMonth } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { ChartContainer } from '@/components/ui/chart';
 import { 
   Table, TableBody, TableCaption, TableCell, 
   TableHead, TableHeader, TableRow 
@@ -57,6 +58,9 @@ interface EventDistributionItem {
   name: string;
   value: number;
 }
+
+// Type for chart tooltip props
+type ChartTooltipType = TooltipProps<number, string>;
 
 const AnalyticsDashboard: React.FC = () => {
   const { toast } = useToast();
@@ -257,14 +261,14 @@ const AnalyticsDashboard: React.FC = () => {
   const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff8042', '#0088FE', '#00C49F', '#FFBB28'];
 
   // Custom tooltip component for charts
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip: React.FC<ChartTooltipType> = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-background border border-border p-2 rounded-md shadow-md">
           <p className="text-sm font-medium">{`Date: ${label}`}</p>
-          {payload.map((entry: any, index: number) => (
+          {payload.map((entry, index) => (
             <p key={index} className="text-xs" style={{ color: entry.color }}>
-              {`${entry.name}: ${entry.value.toLocaleString()}`}
+              {`${entry.name}: ${entry.value ? entry.value.toLocaleString() : 0}`}
             </p>
           ))}
         </div>
