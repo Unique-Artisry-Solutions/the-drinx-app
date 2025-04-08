@@ -28,14 +28,15 @@ const MobileNavigation: React.FC<ExtendedMobileNavigationProps> = ({
   const [expanded, setExpanded] = useState(false);
   const { user } = useAuth();
   
+  // Update user type from localStorage whenever it changes
   useEffect(() => {
-    const type = localStorage.getItem('user_type');
-    if (type === 'establishment') {
+    const userTypeFromStorage = localStorage.getItem('user_type');
+    if (userTypeFromStorage === 'establishment') {
       setCurrentUserType('establishment');
     } else {
       setCurrentUserType('individual');
     }
-  }, []);
+  }, [user, location.pathname]); // Re-check when user or path changes
 
   // Add effect to scroll to top on route change
   useEffect(() => {
@@ -121,8 +122,9 @@ const MobileNavigation: React.FC<ExtendedMobileNavigationProps> = ({
   
   const shouldShowProfileItems = 
     type === NavigationType.USER && 
-    (location.pathname === '/profile' || 
-     location.pathname.startsWith('/profile/'));
+    ((location.pathname === '/profile' || location.pathname.startsWith('/profile/')) ||
+     (currentUserType === 'establishment' && 
+      (location.pathname === '/establishment' || location.pathname.startsWith('/establishment/'))));
      
   // Pages that should not show the mobile navigation
   const hiddenNavPaths = [];
@@ -143,9 +145,11 @@ const MobileNavigation: React.FC<ExtendedMobileNavigationProps> = ({
         <div className="mx-auto w-full">
           <div className="flex justify-around items-center h-16 px-2">
             {navItems.map((item, index) => {
-              const isActive = location.pathname === item.path || 
+              const isActive = 
+                location.pathname === item.path || 
                 (item.path === '/profile' && location.pathname.startsWith('/profile/')) ||
-                (item.path === '/establishment/all-actions' && location.pathname.startsWith('/establishment/'));
+                (item.path === '/establishment/all-actions' && 
+                  (location.pathname.startsWith('/establishment/') || location.pathname === '/establishment'));
               
               if (item.label === 'Home' && type === NavigationType.USER) {
                 return (

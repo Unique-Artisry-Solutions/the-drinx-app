@@ -45,18 +45,24 @@ const AppContent = () => {
         isAdmin: isAdminAuth
       });
       
-      // If user is not authenticated, redirect to landing page
-      if (!user && !location.pathname.startsWith('/landing') && 
-          !location.pathname.startsWith('/login') && 
-          !location.pathname.startsWith('/signup') &&
+      // If on a 404 page, don't redirect
+      if (location.pathname === '/404') {
+        return;
+      }
+      
+      // Always allow access to landing, login, signup, mission pages regardless of auth state
+      const publicPaths = ['/landing', '/login', '/signup', '/mission', '/resources', '/pricing'];
+      
+      // If user is not authenticated and not on a public path, redirect to landing
+      if (!user && !publicPaths.includes(location.pathname) && 
           !location.pathname.startsWith('/admin') &&
-          !location.pathname.startsWith('/mission') &&
           location.pathname !== '/') {
         navigate('/landing', { replace: true });
+        return;
       }
       
       // Special handling for root path
-      else if (location.pathname === '/') {
+      if (location.pathname === '/') {
         // If admin is authenticated, redirect to admin dashboard
         if (isAdminAuth) {
           navigate('/admin/system-breakdown', { replace: true });
@@ -70,9 +76,15 @@ const AppContent = () => {
           navigate('/explore', { replace: true });
         }
         // Otherwise redirect to landing
-        else if (!user) {
+        else {
           navigate('/landing', { replace: true });
         }
+        return;
+      }
+      
+      // If trying to access establishment path directly and authenticated as establishment
+      if (location.pathname === '/establishment' && user && userType === 'establishment') {
+        navigate('/establishment/all-actions', { replace: true });
       }
     }
   }, [user, isLoading, navigate, location.pathname]);

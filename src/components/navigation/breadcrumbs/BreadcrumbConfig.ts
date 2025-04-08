@@ -1,3 +1,4 @@
+
 import { Home } from 'lucide-react';
 import React from 'react';
 
@@ -28,8 +29,8 @@ export const routes: Record<string, BreadcrumbConfig> = {
   '/swig-circuits': { path: '/swig-circuits', label: 'Swig Circuits' },
   '/create-bar-crawl': { path: '/create-bar-crawl', label: 'Create Swig Circuit' },
   
-  // Establishment routes
-  '/establishment': { path: '/establishment', label: 'Establishment' }, // Add base establishment route
+  // Establishment routes - Fix for /establishment to redirect to all-actions
+  '/establishment': { path: '/establishment/all-actions', label: 'Dashboard' },
   '/establishment/all-actions': { path: '/establishment/all-actions', label: 'Dashboard' },
   '/establishment/profile': { path: '/establishment/profile', label: 'Profile' },
   '/establishment/mocktail-menu': { path: '/establishment/mocktail-menu', label: 'Mocktail Menu' },
@@ -57,7 +58,7 @@ export const dynamicRoutes = [
   { pattern: /^\/bar-crawl\/(.+)$/, base: '/swig-circuits', label: 'Swig Circuit Details' },
   { pattern: /^\/bar-crawl-profile\/(.+)$/, base: '/swig-circuits', label: 'Swig Circuit Details' },
   { pattern: /^\/bar-crawl-details\/(.+)$/, base: '/swig-circuits', label: 'Swig Circuit Details' },
-  { pattern: /^\/establishment\/(\d+)$/, base: '/establishment', label: 'Establishment Details' },
+  { pattern: /^\/establishment\/(\d+)$/, base: '/establishment/all-actions', label: 'Establishment Details' },
   { pattern: /^\/establishment\/mocktail\/(.+)$/, base: '/establishment/mocktail-menu', label: 'Mocktail Details' },
   { pattern: /^\/cocktail\/(.+)$/, base: '/cocktail', label: 'Cocktail Details' },
   { pattern: /^\/profile\/my-creations\/(.+)$/, base: '/profile/my-creations', label: 'Swig Circuit Management' },

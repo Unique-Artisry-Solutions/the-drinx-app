@@ -106,6 +106,13 @@ const AppRoutes = () => {
         <Route path="/admin/photo-moderation" element={<PhotoModerationPage />} />
         <Route path="/admin/content-moderation" element={<ContentModerationPage />} />
         
+        {/* Add a redirect route for /establishment to point to the all-actions page */}
+        <Route path="/establishment" element={
+          <TypedProtectedRoute userType="establishment">
+            <Navigate to="/establishment/all-actions" replace />
+          </TypedProtectedRoute>
+        } />
+        
         <Route path="/establishment/all-actions" element={
           <TypedProtectedRoute userType="establishment">
             <AllActionsPage />

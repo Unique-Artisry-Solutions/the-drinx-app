@@ -7,14 +7,16 @@ import { useAuth } from '@/contexts/auth';
 const Index = () => {
   const { user, isLoading } = useAuth();
   const navigate = useNavigate();
-  const userType = localStorage.getItem('user_type');
-  const isEstablishment = userType === 'establishment';
-  const isAdmin = localStorage.getItem('admin_authenticated') === 'true';
   
   // Use useEffect to handle navigation properly
   useEffect(() => {
     // Make sure we're not in a loading state
     if (isLoading) return;
+    
+    // Read authentication info
+    const userType = localStorage.getItem('user_type');
+    const isEstablishment = userType === 'establishment';
+    const isAdmin = localStorage.getItem('admin_authenticated') === 'true';
     
     // For debugging
     console.log("Index page navigation check:", { 
@@ -24,12 +26,6 @@ const Index = () => {
     // If admin is authenticated, redirect to system breakdown page
     if (isAdmin) {
       navigate('/admin/system-breakdown', { replace: true });
-      return;
-    }
-    
-    // If user is not authenticated, redirect to landing
-    if (!user) {
-      navigate('/landing', { replace: true });
       return;
     }
     
@@ -44,7 +40,13 @@ const Index = () => {
       navigate('/explore', { replace: true });
       return;
     }
-  }, [user, isLoading, navigate, isEstablishment, isAdmin]);
+    
+    // If user is not authenticated, redirect to landing
+    if (!user) {
+      navigate('/landing', { replace: true });
+      return;
+    }
+  }, [user, isLoading, navigate]);
 
   // If we're still loading, show a loading state
   return (
