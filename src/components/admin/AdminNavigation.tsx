@@ -2,7 +2,13 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { LogOut, Image, Palette } from 'lucide-react';
+import { LogOut, Image, Palette, Settings, ChevronDown } from 'lucide-react';
+import { 
+  DropdownMenu, 
+  DropdownMenuTrigger, 
+  DropdownMenuContent, 
+  DropdownMenuItem 
+} from '@/components/ui/dropdown-menu';
 
 interface AdminNavigationProps {
   onLogout: () => void;
@@ -51,12 +57,23 @@ const AdminNavigation: React.FC<AdminNavigationProps> = ({
           </Link>
         </li>
         <li>
-          <Link to="/admin/theme-customization">
-            <Button variant="ghost" className="flex items-center gap-1 text-white hover:text-white hover:bg-spiritless-burgundy/25">
-              <Palette size={16} />
-              Theme Customization
-            </Button>
-          </Link>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="flex items-center gap-1 text-white hover:text-white hover:bg-spiritless-burgundy/25">
+                <Settings size={16} />
+                Settings
+                <ChevronDown size={14} />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="bg-popover z-50">
+              <DropdownMenuItem asChild>
+                <Link to="/admin/theme-customization" className="flex items-center gap-2">
+                  <Palette size={16} />
+                  <span>Theme Customization</span>
+                </Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </li>
       </ul>
     </nav>
