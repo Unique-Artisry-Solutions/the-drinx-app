@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, PieChart, Pie, Cell } from 'recharts';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, PieChart, Pie, Cell, LineChart, Line, CartesianGrid, Area, AreaChart } from 'recharts';
 import { useVisitorStats } from '@/hooks/establishment/useVisitorStats';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { useEstablishmentAnalytics } from '@/hooks/useEstablishmentAnalytics';
@@ -24,6 +25,22 @@ import { supabase } from '@/lib/supabase';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
+
+// Mock data for demographics until we have real data
+const mockAgeData = [
+  { name: '18-24', value: 30 },
+  { name: '25-34', value: 40 },
+  { name: '35-44', value: 15 },
+  { name: '45-54', value: 10 },
+  { name: '55+', value: 5 },
+];
+
+const mockGenderData = [
+  { name: 'Male', value: 48 },
+  { name: 'Female', value: 45 },
+  { name: 'Non-binary', value: 5 },
+  { name: 'Other', value: 2 },
+];
 
 const EstablishmentAnalyticsPage = () => {
   const { user } = useAuth();
@@ -454,9 +471,9 @@ const EstablishmentAnalyticsPage = () => {
                         activeDot={{ r: 8 }}
                       />
                     </LineChart>
-                  </div>
-                </CardContent>
-              </Card>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
             </Card>
           </TabsContent>
           
