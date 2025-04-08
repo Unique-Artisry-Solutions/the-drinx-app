@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import Layout from '@/components/Layout';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
@@ -18,6 +19,7 @@ const EstablishmentProfilePage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get('tab');
   const [activeTab, setActiveTab] = useState('profile');
+  const [activeSection, setActiveSection] = useState<string | null>(null);
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   
@@ -39,6 +41,7 @@ const EstablishmentProfilePage = () => {
   
   const handleTabChange = (value: string) => {
     setActiveTab(value);
+    setActiveSection(null); // Reset section when changing tabs
     setSearchParams({ tab: value });
   };
   
@@ -52,14 +55,137 @@ const EstablishmentProfilePage = () => {
 
   // Quick navigation links for establishment - expanded with more relevant links
   const quickLinks = [
-    { label: 'Dashboard', href: '/establishment/dashboard', icon: LayoutDashboard },
-    { label: 'All Actions', href: '/establishment/all-actions', icon: Store },
-    { label: 'Analytics', href: '/establishment/analytics', icon: BarChart4 },
-    { label: 'Mocktail Menu', href: '/establishment/mocktail-menu', icon: Utensils },
-    { label: 'Promotions', href: '/establishment/promotions', icon: Tag },
-    { label: 'Bar Crawls', href: '/establishment/bar-crawl-requests', icon: Route },
-    { label: 'Settings', href: '/settings', icon: Settings },
+    { label: 'Dashboard', section: 'dashboard', icon: LayoutDashboard },
+    { label: 'All Actions', section: 'allActions', icon: Store },
+    { label: 'Analytics', section: 'analytics', icon: BarChart4 },
+    { label: 'Mocktail Menu', section: 'menu', icon: Utensils },
+    { label: 'Promotions', section: 'promotions', icon: Tag },
+    { label: 'Bar Crawls', section: 'barCrawls', icon: Route },
+    { label: 'Settings', section: 'settings', icon: Settings },
   ];
+
+  // Handle quick link click
+  const handleQuickLinkClick = (section: string) => {
+    setActiveSection(section);
+    
+    // Map sections to tabs when appropriate
+    if (section === 'menu') {
+      setActiveTab('menu');
+      setSearchParams({ tab: 'menu' });
+    } else if (section === 'promotions') {
+      setActiveTab('promotions');
+      setSearchParams({ tab: 'promotions' });
+    } else if (section === 'barCrawls') {
+      setActiveTab('barCrawls');
+      setSearchParams({ tab: 'barCrawls' });
+    }
+  };
+
+  // Render section content based on activeSection
+  const renderSectionContent = () => {
+    if (!activeSection) return null;
+    
+    switch (activeSection) {
+      case 'dashboard':
+        return (
+          <Card className="mb-6 mx-4 md:mx-6 lg:mx-[10%]">
+            <CardContent className="py-6">
+              <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
+              <p>Dashboard content would be loaded here, showing key metrics and recent activities.</p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                <Card className="p-4 bg-blue-50">
+                  <h3 className="font-medium">Today's Visitors</h3>
+                  <p className="text-2xl font-bold">24</p>
+                </Card>
+                <Card className="p-4 bg-green-50">
+                  <h3 className="font-medium">Active Promotions</h3>
+                  <p className="text-2xl font-bold">{promotionsState.promotions.length}</p>
+                </Card>
+                <Card className="p-4 bg-amber-50">
+                  <h3 className="font-medium">Mocktails</h3>
+                  <p className="text-2xl font-bold">{drinksState.drinks.length}</p>
+                </Card>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      case 'allActions':
+        return (
+          <Card className="mb-6 mx-4 md:mx-6 lg:mx-[10%]">
+            <CardContent className="py-6">
+              <h1 className="text-2xl font-bold mb-4">All Actions</h1>
+              <p>Quick access to all establishment management actions.</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-6">
+                <Card className="p-4 hover:bg-gray-50 cursor-pointer">
+                  <h3 className="font-medium flex items-center gap-2">
+                    <Utensils className="h-5 w-5" />
+                    Update Menu
+                  </h3>
+                </Card>
+                <Card className="p-4 hover:bg-gray-50 cursor-pointer">
+                  <h3 className="font-medium flex items-center gap-2">
+                    <Tag className="h-5 w-5" />
+                    Manage Promotions
+                  </h3>
+                </Card>
+                <Card className="p-4 hover:bg-gray-50 cursor-pointer">
+                  <h3 className="font-medium flex items-center gap-2">
+                    <Route className="h-5 w-5" />
+                    Review Bar Crawl Requests
+                  </h3>
+                </Card>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      case 'analytics':
+        return (
+          <Card className="mb-6 mx-4 md:mx-6 lg:mx-[10%]">
+            <CardContent className="py-6">
+              <h1 className="text-2xl font-bold mb-4">Analytics</h1>
+              <p>Visitor statistics and performance metrics would be displayed here.</p>
+              <div className="mt-6 h-64 bg-gray-100 rounded flex items-center justify-center">
+                <p className="text-gray-500">Analytics charts and data visualization</p>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      case 'settings':
+        return (
+          <Card className="mb-6 mx-4 md:mx-6 lg:mx-[10%]">
+            <CardContent className="py-6">
+              <h1 className="text-2xl font-bold mb-4">Settings</h1>
+              <p>Account settings, preferences, and configuration options would appear here.</p>
+              <div className="mt-6 space-y-4">
+                <div className="flex items-center justify-between p-4 border rounded">
+                  <div>
+                    <h3 className="font-medium">Account Information</h3>
+                    <p className="text-sm text-gray-500">Update your account details</p>
+                  </div>
+                  <button className="text-blue-600">Edit</button>
+                </div>
+                <div className="flex items-center justify-between p-4 border rounded">
+                  <div>
+                    <h3 className="font-medium">Notification Preferences</h3>
+                    <p className="text-sm text-gray-500">Manage your notifications</p>
+                  </div>
+                  <button className="text-blue-600">Edit</button>
+                </div>
+                <div className="flex items-center justify-between p-4 border rounded">
+                  <div>
+                    <h3 className="font-medium">Privacy Settings</h3>
+                    <p className="text-sm text-gray-500">Control your privacy options</p>
+                  </div>
+                  <button className="text-blue-600">Edit</button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      default:
+        return null;
+    }
+  };
   
   return (
     <Layout 
@@ -74,79 +200,85 @@ const EstablishmentProfilePage = () => {
             <h2 className="text-lg font-medium mb-3">Quick Navigation</h2>
             <div className="flex flex-wrap gap-3">
               {quickLinks.map((link) => (
-                <a 
-                  key={link.href}
-                  href={link.href}
+                <button 
+                  key={link.section}
+                  onClick={() => handleQuickLinkClick(link.section)}
                   className={cn(
-                    buttonVariants({ variant: "outline" }),
+                    buttonVariants({ variant: activeSection === link.section ? "default" : "outline" }),
                     "flex items-center gap-2"
                   )}
                 >
                   <link.icon className="h-4 w-4" />
                   {link.label}
-                </a>
+                </button>
               ))}
             </div>
           </CardContent>
         </Card>
         
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <div className={isMobile ? "px-3" : "px-4 py-2 md:px-6 lg:mx-[10%]"}>
-            <TabsContent value="profile">
-              <ProfileTab 
-                name={profileState.name} 
-                email={profileState.email} 
-                description={profileState.description} 
-                address={profileState.address} 
-                phone={profileState.phone} 
-                website={profileState.website} 
-                businessHours={profileState.businessHours || []}
-                isLoading={profileState.isLoading} 
-                setName={profileState.setName} 
-                setEmail={profileState.setEmail} 
-                setDescription={profileState.setDescription} 
-                setAddress={profileState.setAddress} 
-                setPhone={profileState.setPhone} 
-                setWebsite={profileState.setWebsite}
-                setBusinessHours={profileState.setBusinessHours}
-                handleSaveProfile={profileState.handleSaveProfile} 
-              />
-            </TabsContent>
+        {/* Show section content if a quick link is active */}
+        {activeSection && renderSectionContent()}
+        
+        {/* Show tab content only if no section is active */}
+        {!activeSection && (
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+            <div className={isMobile ? "px-3" : "px-4 py-2 md:px-6 lg:mx-[10%]"}>
+              <TabsContent value="profile">
+                <ProfileTab 
+                  name={profileState.name} 
+                  email={profileState.email} 
+                  description={profileState.description} 
+                  address={profileState.address} 
+                  phone={profileState.phone} 
+                  website={profileState.website} 
+                  businessHours={profileState.businessHours || []}
+                  isLoading={profileState.isLoading} 
+                  setName={profileState.setName} 
+                  setEmail={profileState.setEmail} 
+                  setDescription={profileState.setDescription} 
+                  setAddress={profileState.setAddress} 
+                  setPhone={profileState.setPhone} 
+                  setWebsite={profileState.setWebsite}
+                  setBusinessHours={profileState.setBusinessHours}
+                  handleSaveProfile={profileState.handleSaveProfile} 
+                />
+              </TabsContent>
 
-            <TabsContent value="promotions">
-              <PromotionsTab 
-                promotions={promotionsState.promotions} 
-                newPromoCode={promotionsState.newPromoCode} 
-                newPromoDescription={promotionsState.newPromoDescription} 
-                setNewPromoCode={promotionsState.setNewPromoCode} 
-                setNewPromoDescription={promotionsState.setNewPromoDescription} 
-                handleAddPromotion={promotionsState.handleAddPromotion} 
-                handleDeletePromotion={promotionsState.handleDeletePromotion} 
-              />
-            </TabsContent>
+              <TabsContent value="promotions">
+                <PromotionsTab 
+                  promotions={promotionsState.promotions} 
+                  newPromoCode={promotionsState.newPromoCode} 
+                  newPromoDescription={promotionsState.newPromoDescription} 
+                  setNewPromoCode={promotionsState.setNewPromoCode} 
+                  setNewPromoDescription={promotionsState.setNewPromoDescription} 
+                  handleAddPromotion={promotionsState.handleAddPromotion} 
+                  handleDeletePromotion={promotionsState.handleDeletePromotion} 
+                />
+              </TabsContent>
 
-            <TabsContent value="menu">
-              <MocktailMenuTab 
-                drinks={drinksState.drinks} 
-                onAddDrink={drinksState.handleAddDrink} 
-                onUpdateDrink={drinksState.handleUpdateDrink} 
-                onDeleteDrink={drinksState.handleDeleteDrink} 
-              />
-            </TabsContent>
+              <TabsContent value="menu">
+                <MocktailMenuTab 
+                  drinks={drinksState.drinks} 
+                  onAddDrink={drinksState.handleAddDrink} 
+                  onUpdateDrink={drinksState.handleUpdateDrink} 
+                  onDeleteDrink={drinksState.handleDeleteDrink} 
+                />
+              </TabsContent>
 
-            <TabsContent value="visitors">
-              <VisitorStatsTab visitorStats={visitorStats} />
-            </TabsContent>
+              <TabsContent value="visitors">
+                <VisitorStatsTab visitorStats={visitorStats} />
+              </TabsContent>
 
-            <TabsContent value="barCrawls">
-              <BarCrawlsTab 
-                barCrawls={barCrawlsState.barCrawls} 
-                handleEndParticipation={barCrawlsState.handleEndParticipation} 
-                handleAcceptRequest={barCrawlsState.handleAcceptRequest} 
-              />
-            </TabsContent>
-          </div>
-        </Tabs>
+              <TabsContent value="barCrawls">
+                <BarCrawlsTab 
+                  barCrawls={barCrawlsState.barCrawls} 
+                  handleEndParticipation={barCrawlsState.handleEndParticipation} 
+                  handleAcceptRequest={barCrawlsState.handleAcceptRequest} 
+                />
+              </TabsContent>
+            </div>
+          </Tabs>
+        )}
       </div>
     </Layout>
   );
