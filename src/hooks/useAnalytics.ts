@@ -49,8 +49,23 @@ export function useAnalytics() {
     }
   }, [track, toast]);
   
+  const trackPage = useCallback((pageName: string) => {
+    return track('page_view', { page: pageName });
+  }, [track]);
+  
+  const trackAction = useCallback((action: string, details?: Record<string, any>) => {
+    return track('user_action', { action, ...details });
+  }, [track]);
+  
+  const trackError = useCallback((errorType: string, errorDetails: Record<string, any>) => {
+    return track('error', { error_type: errorType, ...errorDetails });
+  }, [track]);
+  
   return {
     track,
-    trackWithFeedback
+    trackWithFeedback,
+    trackPage,
+    trackAction,
+    trackError
   };
 }

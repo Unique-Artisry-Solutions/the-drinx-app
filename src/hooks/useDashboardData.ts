@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 
 // Types
@@ -20,6 +19,7 @@ export interface DashboardStats {
   hasVisitorData: boolean;
   hasRatingData: boolean;
   hasReturnRateData: boolean;
+  hasAnalyticsData: boolean; // Added new flag
 }
 
 export interface VisitorData {
@@ -76,7 +76,8 @@ export const useDashboardData = (): DashboardData => {
     hasRevenueData: true,
     hasVisitorData: true,
     hasRatingData: true,
-    hasReturnRateData: true
+    hasReturnRateData: true,
+    hasAnalyticsData: true  // Added new flag
   };
   
   // Sample visitor data

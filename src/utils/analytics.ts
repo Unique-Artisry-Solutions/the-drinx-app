@@ -88,3 +88,53 @@ export async function getUserRetention(startDate: Date, endDate: Date) {
     return null;
   }
 }
+
+/**
+ * Get event summary statistics
+ */
+export async function getEventSummary(startDate: Date, endDate: Date) {
+  try {
+    const { data, error } = await supabaseClient
+      .rpc('get_event_summary', {
+        p_start_date: startDate.toISOString().split('T')[0],
+        p_end_date: endDate.toISOString().split('T')[0]
+      });
+    
+    if (error) {
+      console.error('Error fetching event summary:', error);
+      return null;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Failed to get event summary data:', error);
+    return null;
+  }
+}
+
+/**
+ * Get popular pages based on page views
+ */
+export async function getPopularPages(startDate: Date, endDate: Date, limit: number = 10) {
+  try {
+    const { data, error } = await supabaseClient
+      .from('analytics_events')
+      .select('page_url, count(*)')
+      .eq('event_type', 'page_view')
+      .gte('timestamp', startDate.toISOString())
+      .lte('timestamp', endDate.toISOString())
+      .group('page_url')
+      .order('count', { ascending: false })
+      .limit(limit);
+    
+    if (error) {
+      console.error('Error fetching popular pages:', error);
+      return null;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Failed to get popular pages data:', error);
+    return null;
+  }
+}
