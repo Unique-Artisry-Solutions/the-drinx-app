@@ -55,7 +55,11 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
     e.preventDefault();
     
     if (user) {
-      if (currentUserType === 'establishment') {
+      const isAdmin = localStorage.getItem('admin_authenticated') === 'true';
+      
+      if (isAdmin) {
+        navigate('/admin/system-breakdown');
+      } else if (currentUserType === 'establishment') {
         navigate('/establishment/all-actions');
       } else {
         navigate('/explore');

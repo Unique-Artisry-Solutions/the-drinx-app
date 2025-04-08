@@ -83,14 +83,15 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   };
 
   const renderNavigation = () => {
-    if (isSettingsPage) {
-      return useGuestNavigation() ? <GuestTopNavigation /> : <UserTopNavigation />;
-    } else if (isAdminPage || isAdmin) {
+    if (isAdmin || isAdminPage) {
       return <AdminTopNavigation />;
+    } else if (useGuestNavigation()) {
+      // Show GuestTopNavigation for public pages or when not authenticated
+      return <GuestTopNavigation />;
     } else if (navigationType === NavigationType.USER && user) {
       return <UserTopNavigation activeTab={activeTab} handleTabChange={handleTabChange} tabOptions={tabOptions} />;
     } else {
-      // Show GuestTopNavigation for public pages or when not authenticated
+      // Fallback to guest navigation
       return <GuestTopNavigation />;
     }
   };
