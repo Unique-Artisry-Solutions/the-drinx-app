@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import AppProviders from './providers/AppProviders';
 import AppRoutes from './routes/AppRoutes';
@@ -82,7 +83,7 @@ const AppContent = () => {
         return;
       }
       
-      // If trying to access establishment path directly and authenticated as establishment
+      // If trying to access establishment directly and authenticated as establishment
       if (location.pathname === '/establishment' && user && userType === 'establishment') {
         navigate('/establishment/all-actions', { replace: true });
       }

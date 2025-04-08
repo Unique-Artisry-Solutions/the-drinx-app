@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Home, Map, Route } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -10,9 +10,23 @@ interface UserNavLinksProps {
 
 const UserNavLinks: React.FC<UserNavLinksProps> = ({ userType }) => {
   const location = useLocation();
+  const navigate = useNavigate();
+  
+  const getHomePath = () => {
+    if (userType === 'establishment') {
+      return '/establishment/all-actions';
+    } else {
+      return '/explore';
+    }
+  };
+  
+  const handleHomeClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    navigate(getHomePath());
+  };
   
   const userNavItems = [
-    { icon: Home, label: 'Home', path: '/' },
+    { icon: Home, label: 'Home', path: getHomePath(), onClick: handleHomeClick },
     { icon: Map, label: 'Map', path: '/map' },
   ];
   
@@ -24,11 +38,14 @@ const UserNavLinks: React.FC<UserNavLinksProps> = ({ userType }) => {
   return (
     <div className="user-nav-links hidden md:flex space-x-1">
       {userNavItems.map((item) => {
-        const isActive = location.pathname === item.path;
+        const isActive = location.pathname === item.path ||
+          (item.path === '/establishment/all-actions' && location.pathname.startsWith('/establishment/'));
+        
         return (
           <Link
             key={item.path}
             to={item.path}
+            onClick={item.onClick}
             className={cn(
               "user-nav-link flex items-center space-x-1 px-3 py-2 rounded-md transition-all duration-300",
               isActive 

@@ -1,3 +1,4 @@
+
 import { BreadcrumbConfig, routes, dynamicRoutes } from './BreadcrumbConfig';
 
 // Helper function to build breadcrumbs from a pathname
@@ -5,8 +6,18 @@ export function buildBreadcrumbs(pathname: string): BreadcrumbConfig[] {
   const pathSegments = pathname.split('/').filter(Boolean);
   const breadcrumbs: BreadcrumbConfig[] = [];
   
-  // Always start with home
-  breadcrumbs.push(routes['/']);
+  // Always start with home, but conditional on user type
+  const userType = localStorage.getItem('user_type');
+  
+  // If user is an establishment, home should point to establishment dashboard
+  if (userType === 'establishment') {
+    breadcrumbs.push({
+      ...routes['/'], 
+      path: '/establishment/all-actions'
+    });
+  } else {
+    breadcrumbs.push(routes['/']);
+  }
   
   // Special case handling for base paths
   const handleSpecialBasePath = (basePath: string, section: string) => {
@@ -25,7 +36,7 @@ export function buildBreadcrumbs(pathname: string): BreadcrumbConfig[] {
   
   // Handle special case for establishment section - improved to use routes config
   if (pathname.startsWith('/establishment/')) {
-    handleSpecialBasePath('/establishment', 'Establishment');
+    handleSpecialBasePath('/establishment', 'Dashboard');
   }
   
   // Handle special case for admin section
