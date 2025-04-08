@@ -23,9 +23,12 @@ import SystemFunctionalityBreakdown from './pages/admin/SystemFunctionalityBreak
 import PhotoModerationPage from './pages/admin/PhotoModerationPage';
 import ThemeCustomizationPage from './pages/admin/ThemeCustomizationPage';
 import EstablishmentDashboardPage from './pages/establishment/EstablishmentDashboardPage';
+import EstablishmentProfilePage from './pages/establishment/EstablishmentProfilePage';
 import SettingsPage from './pages/SettingsPage';
 import SwigCircuitsPage from './pages/SwigCircuitsPage';
 import BarCrawlProfilePage from './pages/BarCrawlProfilePage';
+import AllActionsPage from './pages/establishment/AllActionsPage';
+import EstablishmentAnalyticsPage from './pages/establishment/EstablishmentAnalyticsPage';
 
 // Provider
 import AppProviders from './providers/AppProviders';
@@ -78,6 +81,9 @@ function AppContent() {
       
       {/* Establishment Routes */}
       <Route path="/establishment/dashboard" element={user ? <EstablishmentDashboardPage /> : <Navigate to="/login" state={{ from: location }} replace />} />
+      <Route path="/establishment/profile" element={user ? <EstablishmentProfilePage /> : <Navigate to="/login" state={{ from: location }} replace />} />
+      <Route path="/establishment/all-actions" element={user ? <AllActionsPage /> : <Navigate to="/login" state={{ from: location }} replace />} />
+      <Route path="/establishment/analytics" element={user ? <EstablishmentAnalyticsPage /> : <Navigate to="/login" state={{ from: location }} replace />} />
       
       {/* Admin Routes */}
       <Route path="/admin/login" element={<AdminLogin />} />

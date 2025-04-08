@@ -9,6 +9,7 @@ import SectionContent from '@/components/establishment/SectionContent';
 import TabContent from '@/components/establishment/TabContent';
 import { useVisitorStats } from '@/hooks/establishment/useVisitorStats';
 import { useUserEstablishment } from '@/hooks/establishment/useUserEstablishment';
+import { useToast } from '@/hooks/use-toast';
 
 const EstablishmentProfilePage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -17,6 +18,7 @@ const EstablishmentProfilePage = () => {
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const { toast } = useToast();
   
   // Get the user's establishment ID
   const { establishmentId, isLoading: isLoadingEstablishment, error: establishmentError } = useUserEstablishment();
@@ -74,12 +76,12 @@ const EstablishmentProfilePage = () => {
   }
   
   // Show error state if we couldn't get the establishment ID
-  if (establishmentError) {
+  if (establishmentError || !establishmentId) {
     return (
       <Layout activeTab={activeTab} handleTabChange={handleTabChange} tabOptions={tabOptions}>
         <div className="p-6 text-center">
           <h2 className="text-xl font-semibold mb-2">Error Loading Establishment</h2>
-          <p className="text-gray-600 mb-4">{establishmentError}</p>
+          <p className="text-gray-600 mb-4">{establishmentError || "No establishment ID found for this user"}</p>
           <button 
             className="px-4 py-2 bg-spiritless-pink text-white rounded" 
             onClick={() => navigate('/establishment/dashboard')}
