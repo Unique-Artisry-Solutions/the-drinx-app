@@ -1,9 +1,12 @@
 
 import React from 'react';
 import { useLocation } from 'react-router-dom';
-import { AdminProfileDropdown } from './AdminProfileDropdown';
+import AdminProfileDropdown from './AdminProfileDropdown';
 import AdminNavItems from './AdminNavItems';
-import { MobileMenu } from '@/components/ui/dropdown/dropdown-base';
+import { DropdownMenu, DropdownMenuTrigger } from '@/components/ui/dropdown/dropdown-base';
+import { DropdownMenuContent } from '@/components/ui/dropdown/dropdown-content';
+import { Menu } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { AdminMobileMenu } from './AdminMobileMenu';
 
 const AdminTopNav: React.FC = () => {
@@ -13,9 +16,17 @@ const AdminTopNav: React.FC = () => {
     <div className="border-b bg-card">
       <div className="flex h-16 items-center px-4 container max-w-7xl mx-auto">
         <div className="md:hidden">
-          <MobileMenu>
-            <AdminMobileMenu />
-          </MobileMenu>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Menu className="h-5 w-5" />
+                <span className="sr-only">Toggle menu</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-56">
+              <AdminMobileMenu />
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         <div className="px-4 font-bold text-lg hidden md:block">
           Admin Portal
@@ -24,7 +35,7 @@ const AdminTopNav: React.FC = () => {
           <AdminNavItems currentPath={location.pathname} />
         </div>
         <div className="ml-auto flex items-center">
-          <AdminProfileDropdown />
+          <AdminProfileDropdown username="Admin" onLogout={() => {}} />
         </div>
       </div>
     </div>

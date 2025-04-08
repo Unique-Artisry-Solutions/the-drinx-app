@@ -1,8 +1,7 @@
 
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { MenuItem } from '@/components/ui/dropdown/dropdown-items';
-import AdminNavItems from './AdminNavItems';
+import { DropdownMenuItem } from '@/components/ui/dropdown/dropdown-items';
 import { Users, Building, LineChart, Shield, FileText, Image, Cog, BarChart2 } from 'lucide-react';
 
 export const AdminMobileMenu: React.FC = () => {
@@ -55,14 +54,16 @@ export const AdminMobileMenu: React.FC = () => {
   return (
     <div className="flex flex-col gap-1">
       {navItems.map((item) => (
-        <MenuItem
+        <DropdownMenuItem
           key={item.to}
           onClick={() => navigate(item.to)}
-          icon={item.icon}
-          active={location.pathname === item.to}
+          className={location.pathname === item.to ? "bg-primary/10 text-primary" : ""}
         >
-          {item.label}
-        </MenuItem>
+          <span className="flex items-center gap-2">
+            {item.icon}
+            {item.label}
+          </span>
+        </DropdownMenuItem>
       ))}
     </div>
   );

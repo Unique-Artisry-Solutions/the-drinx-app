@@ -1,126 +1,104 @@
 
-import { useState, useEffect } from 'react';
-import { useToast } from '@/hooks/use-toast';
+import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { analyzeAllFeatures } from '../utils';
-import { FeatureItem, AnalysisStep } from '../types';
-import { adminFeatures as initialAdminFeatures, establishmentFeatures as initialEstablishmentFeatures, individualFeatures as initialIndividualFeatures } from '../features';
+import { adminFeatures as initialAdminFeatures } from '../features/adminFeatures';
+import { establishmentFeatures as initialEstablishmentFeatures } from '../features/establishmentFeatures';
+import { individualFeatures as initialIndividualFeatures } from '../features/individualFeatures';
+import { FeatureItem, FeatureStatus, AnalysisStep } from '../types';
+import { analyzeFeatures } from '../utils/featureAnalysis';
+import { exportFeaturesCSV } from '../utils/exportUtils';
+import { useToast } from '@/hooks/use-toast';
 
-export const useSystemBreakdown = () => {
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState<string>('overview');
-  const [adminFeatures, setAdminFeatures] = useState<FeatureItem[]>(initialAdminFeatures);
-  const [establishmentFeatures, setEstablishmentFeatures] = useState<FeatureItem[]>(initialEstablishmentFeatures);
-  const [individualFeatures, setIndividualFeatures] = useState<FeatureItem[]>(initialIndividualFeatures);
+// Helper function to convert string status to FeatureStatus type
+const convertToFeatureStatus = (status: string): FeatureStatus => {
+  switch (status) {
+    case 'implemented':
+      return 'implemented';
+    case 'in-progress':
+      return 'in-progress';
+    case 'planned':
+      return 'planned';
+    case 'not-started':
+      return 'not-started';
+    default:
+      return 'not-started';
+  }
+};
+
+// Convert initial features to proper FeatureItem type
+const convertFeatures = (features: any[]): FeatureItem[] => {
+  return features.map(feature => ({
+    ...feature,
+    status: convertToFeatureStatus(feature.status)
+  }));
+};
+
+export function useSystemBreakdown() {
+  const [activeTab, setActiveTab] = useState('overview');
+  const [adminFeatures, setAdminFeatures] = useState<FeatureItem[]>(convertFeatures(initialAdminFeatures));
+  const [establishmentFeatures, setEstablishmentFeatures] = useState<FeatureItem[]>(convertFeatures(initialEstablishmentFeatures));
+  const [individualFeatures, setIndividualFeatures] = useState<FeatureItem[]>(convertFeatures(initialIndividualFeatures));
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [analysisSteps, setAnalysisSteps] = useState<AnalysisStep[]>([]);
+  const [updatedFeaturesCount, setUpdatedFeaturesCount] = useState(0);
+  
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
-  // Count features with updated status
-  const updatedFeaturesCount = [
-    ...adminFeatures,
-    ...establishmentFeatures,
-    ...individualFeatures
-  ].filter(feature => feature.statusUpdated).length;
-
-  // Check if user is authenticated as admin
-  useEffect(() => {
-    const isAdmin = localStorage.getItem('admin_authenticated') === 'true';
-    if (!isAdmin) {
-      navigate('/admin');
-    }
+  const handleLogout = useCallback(() => {
+    // Logout implementation
+    navigate('/admin/login');
   }, [navigate]);
 
-  const handleLogout = () => {
-    localStorage.removeItem('admin_authenticated');
-    navigate('/admin');
-  };
+  const handleExportCSV = useCallback(() => {
+    try {
+      exportFeaturesCSV({ adminFeatures, establishmentFeatures, individualFeatures });
+      toast({
+        title: "Export successful",
+        description: "System breakdown has been exported to CSV.",
+      });
+    } catch (error) {
+      console.error("Export error:", error);
+      toast({
+        title: "Export failed",
+        description: "Could not export system breakdown data.",
+        variant: "destructive",
+      });
+    }
+  }, [adminFeatures, establishmentFeatures, individualFeatures, toast]);
 
-  const handleExportCSV = () => {
-    // Import the generateCSV function dynamically to keep the bundle size small
-    import('../utils').then(({ generateCSV }) => {
-      generateCSV(adminFeatures, establishmentFeatures, individualFeatures);
-    });
-  };
-  
-  const handleAnalyzeFeatures = async () => {
+  const handleAnalyzeFeatures = useCallback(async () => {
     setAnalyzing(true);
     setAnalysisProgress(0);
+    setAnalysisSteps([]);
     
-    // Create initial database tasks array with default states
-    const initialDatabaseTasks: AnalysisStep[] = [
-      { name: 'Database schema verification', completed: false },
-      { name: 'API endpoints validation', completed: false },
-      { name: 'Authentication flow check', completed: false },
-      { name: 'User permissions validation', completed: false },
-      { name: 'Content moderation implementation', completed: false },
-      { name: 'Storage bucket configuration', completed: false },
-      { name: 'Database trigger functions verification', completed: false },
-      { name: 'Frontend component implementation check', completed: false }
-    ];
-    setAnalysisSteps(initialDatabaseTasks);
-    
-    // Simulate progress updates for each task
-    let currentStep = 0;
-    const totalSteps = initialDatabaseTasks.length;
-    
-    const progressInterval = setInterval(() => {
-      if (currentStep < totalSteps) {
-        const updatedSteps = [...initialDatabaseTasks];
-        
-        // Mark the current task as completed
-        updatedSteps[currentStep].completed = true;
-        setAnalysisSteps(updatedSteps);
-        
-        currentStep++;
-        setAnalysisProgress((currentStep / totalSteps) * 100);
-        
-        // If we've completed all steps, complete the analysis
-        if (currentStep >= totalSteps) {
-          clearInterval(progressInterval);
-          
-          // Slight delay before completing the analysis to show 100% progress
-          setTimeout(completeAnalysis, 500);
-        }
-      }
-    }, 600); // Update every 600ms
-    
-    const completeAnalysis = async () => {
-      try {
-        const analyzedFeatures = await analyzeAllFeatures(
-          adminFeatures,
-          establishmentFeatures,
-          individualFeatures
-        );
-        
-        setAdminFeatures(analyzedFeatures.adminFeatures);
-        setEstablishmentFeatures(analyzedFeatures.establishmentFeatures);
-        setIndividualFeatures(analyzedFeatures.individualFeatures);
-        setAnalysisSteps(analyzedFeatures.completedSteps);
-        
-        const totalUpdated = [
-          ...analyzedFeatures.adminFeatures,
-          ...analyzedFeatures.establishmentFeatures,
-          ...analyzedFeatures.individualFeatures
-        ].filter(feature => feature.statusUpdated).length;
-        
-        toast({
-          title: "Analysis Complete",
-          description: `${totalUpdated} feature status${totalUpdated !== 1 ? 'es' : ''} updated based on database implementation.`,
-        });
-      } catch (error) {
-        console.error("Error analyzing features:", error);
-        toast({
-          title: "Analysis Error",
-          description: "There was an error while analyzing features. Please try again.",
-          variant: "destructive"
-        });
-      } finally {
-        setAnalyzing(false);
-      }
-    };
-  };
+    try {
+      const result = await analyzeFeatures({
+        onProgress: (progress) => setAnalysisProgress(progress),
+        onStep: (step) => setAnalysisSteps(prev => [...prev, step]),
+      });
+      
+      setAdminFeatures(convertFeatures(result.adminFeatures));
+      setEstablishmentFeatures(convertFeatures(result.establishmentFeatures));
+      setIndividualFeatures(convertFeatures(result.individualFeatures));
+      setUpdatedFeaturesCount(result.completedSteps.length);
+      
+      toast({
+        title: "Analysis complete",
+        description: `Analyzed ${result.completedSteps.length} features.`,
+      });
+    } catch (error) {
+      console.error("Analysis error:", error);
+      toast({
+        title: "Analysis failed",
+        description: "Could not complete feature analysis.",
+        variant: "destructive",
+      });
+    } finally {
+      setAnalyzing(false);
+    }
+  }, [toast]);
 
   return {
     activeTab,
@@ -136,4 +114,4 @@ export const useSystemBreakdown = () => {
     handleExportCSV,
     handleAnalyzeFeatures
   };
-};
+}

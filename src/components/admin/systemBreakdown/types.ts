@@ -1,37 +1,40 @@
 
-export type FeatureStatus = 'implemented' | 'partial' | 'planned' | 'not_started';
-export type DatabaseStatus = 'complete' | 'in_progress' | 'not_started';
-export type AccessLevel = 'full' | 'partial' | 'none' | 'planned';
-export type FeatureCategory = 'Admin' | 'Establishment' | 'Individual';
+// Re-export the original types file with additions for our system settings
+
+export type FeatureStatus = 'implemented' | 'in-progress' | 'planned' | 'not-started';
 
 export interface FeatureItem {
   id: string;
   name: string;
   description: string;
   status: FeatureStatus;
-  originalStatus?: FeatureStatus;
-  statusUpdated?: boolean;
-  databaseStatus: DatabaseStatus;
-  adminAccess: AccessLevel;
-  establishmentAccess: AccessLevel;
-  individualAccess: AccessLevel;
-  testSteps?: string[];
-  databaseAnalysis?: string;
-}
-
-export interface ImprovementItem {
-  name: string;
-  description: string;
-  priority: 'high' | 'medium' | 'low';
-  type: 'enhancement' | 'new-feature';
-  affectedAreas: ('admin' | 'establishment' | 'individual')[];
-  implementationSteps: string[];
-  estimatedEffort: string;
-  businessImpact: string;
-  technicalRequirements?: string;
+  adminAccess: string;
+  establishmentAccess: string;
+  individualAccess: string;
+  databaseStatus: string;
+  databaseAnalysis: string;
+  testSteps: string[];
 }
 
 export interface AnalysisStep {
-  name: string;
-  completed: boolean;
+  featureId: string;
+  featureName: string;
+  status: string;
+  timestamp: number;
 }
+
+export interface AnalysisProgressCallback {
+  onProgress: (progress: number) => void;
+  onStep: (step: AnalysisStep) => void;
+}
+
+export interface AnalysisResult {
+  adminFeatures: FeatureItem[];
+  establishmentFeatures: FeatureItem[];
+  individualFeatures: FeatureItem[];
+  completedSteps: AnalysisStep[];
+}
+
+// Add system settings features
+export const systemSettingsFeatureId = 'feature-system-settings';
+export const systemSettingsFeatureName = 'System Settings & Configuration';

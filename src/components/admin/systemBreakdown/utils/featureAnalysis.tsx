@@ -1,227 +1,127 @@
 
-import { FeatureItem, AnalysisStep } from '../types';
 import { supabase } from '@/lib/supabase';
+import { FeatureItem, AnalysisProgressCallback, AnalysisResult, AnalysisStep } from '../types';
+import { adminFeatures as initialAdminFeatures } from '../features/adminFeatures';
+import { establishmentFeatures as initialEstablishmentFeatures } from '../features/establishmentFeatures';
+import { individualFeatures as initialIndividualFeatures } from '../features/individualFeatures';
+import { detectTables } from './analyticsDetection';
+import { detectFeaturesFromCode } from './featureDetection';
+import { checkDatabaseHealthForFeature } from './taskDetection';
 
-// Helper function to simulate checking database status
-const checkDatabaseStatus = async (featureName: string): Promise<boolean> => {
-  // Simulate a database check based on the feature name
-  // In a real application, this would involve querying the database
-  // to see if the necessary tables, columns, and data exist.
-  
-  // For demonstration purposes, we'll just return true for features
-  // that include the word "database" in their name.
-  return featureName.toLowerCase().includes('database');
+// Helper function to create a deep copy of features
+const cloneFeatures = (features: any[]): any[] => {
+  return JSON.parse(JSON.stringify(features));
 };
 
-// Helper function to simulate checking API endpoint status
-const checkApiEndpoints = async (featureName: string): Promise<boolean> => {
-  // Simulate checking API endpoints based on the feature name
-  // In a real application, this would involve making API calls
-  // to see if the necessary endpoints are available and functioning.
+export const analyzeFeatures = async (
+  callbacks: AnalysisProgressCallback
+): Promise<AnalysisResult> => {
+  const { onProgress, onStep } = callbacks;
   
-  // For demonstration purposes, we'll just return true for features
-  // that include the word "API" in their name.
-  return featureName.toLowerCase().includes('api');
-};
-
-// Function to check if feature flags are enabled
-const checkFeatureFlags = async (featureName: string): Promise<boolean> => {
-  // Simulate checking feature flags based on the feature name
-  // In a real application, this would involve querying a feature flag service
-  // to see if the necessary flags are enabled.
+  // Deep clone the initial features to avoid mutation
+  const adminFeatures = cloneFeatures(initialAdminFeatures);
+  const establishmentFeatures = cloneFeatures(initialEstablishmentFeatures);
+  const individualFeatures = cloneFeatures(individualIndividualFeatures);
   
-  // For demonstration purposes, we'll just return true for features
-  // that include the word "flag" in their name.
-  return featureName.toLowerCase().includes('flag');
-};
-
-// Function to check if system settings are implemented
-const checkSystemSettingsImplementation = async (): Promise<boolean> => {
+  const allFeatures = [...adminFeatures, ...establishmentFeatures, ...individualFeatures];
+  const totalFeatures = allFeatures.length;
+  const completedSteps: AnalysisStep[] = [];
+  
+  // Check for system settings feature specifically
   try {
-    // Check if system_settings table exists and has data
-    const { count } = await supabase
+    // Try to query the system_settings table to see if it exists
+    const { data, error } = await supabase
       .from('system_settings')
-      .select('*', { count: 'exact', head: true });
+      .select('count(*)')
+      .limit(1);
     
-    return count !== null && count > 0;
-  } catch (error) {
-    console.error('Error checking system settings implementation:', error);
-    return false;
-  }
-};
-
-export const analyzeAllFeatures = async (
-  adminFeatures: FeatureItem[],
-  establishmentFeatures: FeatureItem[],
-  individualFeatures: FeatureItem[]
-): Promise<{
-  adminFeatures: FeatureItem[],
-  establishmentFeatures: FeatureItem[],
-  individualFeatures: FeatureItem[],
-  completedSteps: AnalysisStep[]
-}> => {
-  const updatedAdminFeatures = [...adminFeatures];
-  const updatedEstablishmentFeatures = [...establishmentFeatures];
-  const updatedIndividualFeatures = [...individualFeatures];
-  
-  // Check system settings implementation
-  const systemSettingsImplemented = await checkSystemSettingsImplementation();
-  
-  // Find and update the system configuration feature if it exists
-  const systemConfigIndex = updatedAdminFeatures.findIndex(f => 
-    f.id === 'admin-system-config' || 
-    (f.name.toLowerCase().includes('system') && f.name.toLowerCase().includes('config'))
-  );
-  
-  if (systemConfigIndex >= 0 && systemSettingsImplemented) {
-    const feature = { ...updatedAdminFeatures[systemConfigIndex] };
-    
-    if (feature.status !== 'implemented') {
-      feature.originalStatus = feature.status;
-      feature.status = 'implemented';
-      feature.statusUpdated = true;
-    }
-    
-    if (feature.databaseStatus !== 'complete') {
-      feature.databaseStatus = 'complete';
-    }
-    
-    updatedAdminFeatures[systemConfigIndex] = feature;
-  }
-  
-  // Loop through all admin features and update their status
-  for (let i = 0; i < updatedAdminFeatures.length; i++) {
-    const feature = { ...updatedAdminFeatures[i] };
-    
-    // Simulate checking database status
-    const databaseStatus = await checkDatabaseStatus(feature.name);
-    
-    // Simulate checking API endpoints
-    const apiEndpoints = await checkApiEndpoints(feature.name);
-    
-    // Simulate checking feature flags
-    const featureFlags = await checkFeatureFlags(feature.name);
-    
-    // Update the feature status based on the simulated checks
-    if (databaseStatus && apiEndpoints && featureFlags) {
-      if (feature.status !== 'implemented') {
-        feature.originalStatus = feature.status;
-        feature.status = 'implemented';
-        feature.statusUpdated = true;
-      }
+    if (!error && data) {
+      const settingsCount = data[0]?.count || 0;
       
-      if (feature.databaseStatus !== 'complete') {
-        feature.databaseStatus = 'complete';
-      }
-    } else {
-      if (feature.status !== 'planned') {
-        feature.originalStatus = feature.status;
-        feature.status = 'planned';
-        feature.statusUpdated = true;
-      }
+      // Look for the system settings feature in admin features and update it
+      const systemSettingsFeature = adminFeatures.find(f => 
+        f.id === 'feature-system-settings' || 
+        f.name.toLowerCase().includes('system settings')
+      );
       
-      if (feature.databaseStatus !== 'not_started') {
-        feature.databaseStatus = 'not_started';
+      if (systemSettingsFeature) {
+        systemSettingsFeature.status = settingsCount > 0 ? 'implemented' : 'planned';
+        systemSettingsFeature.databaseStatus = settingsCount > 0 ? 'active' : 'not-found';
+        systemSettingsFeature.databaseAnalysis = settingsCount > 0 
+          ? `Found ${settingsCount} system settings in the database.` 
+          : 'System settings table exists but contains no settings.';
+          
+        completedSteps.push({
+          featureId: systemSettingsFeature.id,
+          featureName: systemSettingsFeature.name,
+          status: 'Settings database detected',
+          timestamp: Date.now()
+        });
+        
+        onStep({
+          featureId: systemSettingsFeature.id,
+          featureName: systemSettingsFeature.name,
+          status: 'Settings database detected',
+          timestamp: Date.now()
+        });
       }
     }
-    
-    updatedAdminFeatures[i] = feature;
+  } catch (err) {
+    console.error('Error checking system settings:', err);
   }
   
-  // Loop through all establishment features and update their status
-  for (let i = 0; i < updatedEstablishmentFeatures.length; i++) {
-    const feature = { ...updatedEstablishmentFeatures[i] };
+  // Process each feature sequentially
+  for (let i = 0; i < totalFeatures; i++) {
+    const feature = allFeatures[i];
+    const progress = Math.round(((i + 1) / totalFeatures) * 100);
     
-    // Simulate checking database status
-    const databaseStatus = await checkDatabaseStatus(feature.name);
-    
-    // Simulate checking API endpoints
-    const apiEndpoints = await checkApiEndpoints(feature.name);
-    
-    // Simulate checking feature flags
-    const featureFlags = await checkFeatureFlags(feature.name);
-    
-    // Update the feature status based on the simulated checks
-    if (databaseStatus && apiEndpoints && featureFlags) {
-      if (feature.status !== 'implemented') {
-        feature.originalStatus = feature.status;
-        feature.status = 'implemented';
-        feature.statusUpdated = true;
+    try {
+      // Simulate actual analysis with a real check
+      const dbStatus = await checkDatabaseHealthForFeature(feature);
+      if (dbStatus) {
+        feature.databaseStatus = dbStatus.status;
+        feature.databaseAnalysis = dbStatus.analysis;
       }
       
-      if (feature.databaseStatus !== 'complete') {
-        feature.databaseStatus = 'complete';
-      }
-    } else {
-      if (feature.status !== 'planned') {
-        feature.originalStatus = feature.status;
-        feature.status = 'planned';
-        feature.statusUpdated = true;
-      }
+      // Add a completed step
+      const step: AnalysisStep = {
+        featureId: feature.id,
+        featureName: feature.name,
+        status: 'Analyzed',
+        timestamp: Date.now()
+      };
       
-      if (feature.databaseStatus !== 'not_started') {
-        feature.databaseStatus = 'not_started';
-      }
+      completedSteps.push(step);
+      onStep(step);
+      
+      // Update progress
+      onProgress(progress);
+      
+      // Small delay to prevent overwhelming the database
+      await new Promise(resolve => setTimeout(resolve, 100));
+    } catch (error) {
+      console.error(`Error analyzing feature ${feature.name}:`, error);
     }
-    
-    updatedEstablishmentFeatures[i] = feature;
   }
-  
-  // Loop through all individual features and update their status
-  for (let i = 0; i < updatedIndividualFeatures.length; i++) {
-    const feature = { ...updatedIndividualFeatures[i] };
-    
-    // Simulate checking database status
-    const databaseStatus = await checkDatabaseStatus(feature.name);
-    
-    // Simulate checking API endpoints
-    const apiEndpoints = await checkApiEndpoints(feature.name);
-    
-    // Simulate checking feature flags
-    const featureFlags = await checkFeatureFlags(feature.name);
-    
-    // Update the feature status based on the simulated checks
-    if (databaseStatus && apiEndpoints && featureFlags) {
-      if (feature.status !== 'implemented') {
-        feature.originalStatus = feature.status;
-        feature.status = 'implemented';
-        feature.statusUpdated = true;
-      }
-      
-      if (feature.databaseStatus !== 'complete') {
-        feature.databaseStatus = 'complete';
-      }
-    } else {
-      if (feature.status !== 'planned') {
-        feature.originalStatus = feature.status;
-        feature.status = 'planned';
-        feature.statusUpdated = true;
-      }
-      
-      if (feature.databaseStatus !== 'not_started') {
-        feature.databaseStatus = 'not_started';
-      }
-    }
-    
-    updatedIndividualFeatures[i] = feature;
-  }
-  
-  // Create completed steps
-  const completedSteps: AnalysisStep[] = [
-    { name: 'Database schema verification', completed: true },
-    { name: 'API endpoints validation', completed: true },
-    { name: 'Authentication flow check', completed: true },
-    { name: 'User permissions validation', completed: true },
-    { name: 'Content moderation implementation', completed: true },
-    { name: 'Storage bucket configuration', completed: true },
-    { name: 'Database trigger functions verification', completed: systemSettingsImplemented },
-    { name: 'Frontend component implementation check', completed: true }
-  ];
   
   return {
-    adminFeatures: updatedAdminFeatures,
-    establishmentFeatures: updatedEstablishmentFeatures,
-    individualFeatures: updatedIndividualFeatures,
+    adminFeatures,
+    establishmentFeatures,
+    individualFeatures,
     completedSteps
   };
+};
+
+export const updateFeatureStatus = (
+  featureId: string,
+  newStatus: string,
+  allFeatures: FeatureItem[][]
+): FeatureItem[][] => {
+  return allFeatures.map(featureSet => 
+    featureSet.map(feature => 
+      feature.id === featureId 
+        ? { ...feature, status: newStatus as any } 
+        : feature
+    )
+  );
 };
