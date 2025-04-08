@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
@@ -39,6 +38,7 @@ const Index = () => {
   const isMobile = useIsMobile();
   const userType = localStorage.getItem('user_type');
   const isEstablishment = userType === 'establishment';
+  const isAdmin = localStorage.getItem('admin_authenticated') === 'true';
   
   const {
     cocktails,
@@ -61,6 +61,12 @@ const Index = () => {
     // Make sure we're not in a loading state
     if (isLoading) return;
     
+    // If admin is authenticated, redirect to system breakdown page
+    if (isAdmin) {
+      navigate('/admin/system-breakdown', { replace: true });
+      return;
+    }
+    
     // If user is not authenticated, redirect to landing
     if (!user) {
       navigate('/landing', { replace: true });
@@ -73,7 +79,7 @@ const Index = () => {
     }
     
     // If user is authenticated and is an establishment, the dashboard will be shown
-  }, [user, isLoading, navigate, isEstablishment]);
+  }, [user, isLoading, navigate, isEstablishment, isAdmin]);
 
   // If we're still loading, show a loading state
   if (isLoading) {

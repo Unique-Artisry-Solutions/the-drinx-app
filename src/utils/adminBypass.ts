@@ -1,7 +1,6 @@
-
 import { v4 as uuidv4 } from 'uuid';
 
-export function enableAdminBypass(userType: 'individual' | 'establishment' = 'individual') {
+export function enableAdminBypass(userType: 'individual' | 'establishment' | 'admin' = 'individual') {
   const bypassUserId = uuidv4();
   
   localStorage.setItem('admin_bypass', 'true');
@@ -9,6 +8,13 @@ export function enableAdminBypass(userType: 'individual' | 'establishment' = 'in
   localStorage.setItem('user_type', userType);
   localStorage.setItem('user_email', `admin-${userType}@spiritless.com`);
   localStorage.setItem('user_username', `admin-${userType}`);
+  
+  // Set admin authentication flag if it's an admin bypass
+  if (userType === 'admin') {
+    localStorage.setItem('admin_authenticated', 'true');
+    localStorage.setItem('admin_username', 'Admin');
+    localStorage.setItem('admin_session_created', new Date().toISOString());
+  }
   
   console.log(`Admin bypass enabled for ${userType} with ID: ${bypassUserId}`);
   return bypassUserId;

@@ -39,23 +39,35 @@ const LoginForm: React.FC<LoginFormProps> = ({
     handleLogin
   } = useLoginForm(onSuccess, onClose, userType);
 
-  const handleBypassLogin = (type: 'individual' | 'establishment') => {
+  const handleBypassLogin = (type: 'individual' | 'establishment' | 'admin') => {
     // Set admin bypass in localStorage
     localStorage.setItem('admin_bypass', 'true');
     localStorage.setItem('user_authenticated', 'true');
     localStorage.setItem('user_type', type);
-    localStorage.setItem('user_email', type === 'individual' ? 'bypass-user@example.com' : 'bypass-business@example.com');
-    localStorage.setItem('user_username', type === 'individual' ? 'bypass-user' : 'bypass-business');
+    localStorage.setItem('user_email', type === 'admin' ? 'admin@spiritless.com' : 
+      type === 'individual' ? 'bypass-user@example.com' : 'bypass-business@example.com');
+    localStorage.setItem('user_username', type === 'admin' ? 'admin' : 
+      type === 'individual' ? 'bypass-user' : 'bypass-business');
+    
+    // Set admin authentication flag if it's an admin bypass
+    if (type === 'admin') {
+      localStorage.setItem('admin_authenticated', 'true');
+      localStorage.setItem('admin_username', 'Admin');
+      localStorage.setItem('admin_session_created', new Date().toISOString());
+    }
     
     // Force a refresh of the session to apply bypass
     refreshSession().then(() => {
       toast({
         title: 'Admin Bypass Enabled',
-        description: `You are now logged in as a ${type === 'individual' ? 'user' : 'business'} for testing purposes.`,
+        description: `You are now logged in as ${type === 'admin' ? 'an administrator' : 
+          type === 'individual' ? 'a user' : 'a business'} for testing purposes.`,
       });
       
       // Redirect based on user type
-      if (type === 'establishment') {
+      if (type === 'admin') {
+        navigate('/admin/system-breakdown');
+      } else if (type === 'establishment') {
         navigate('/');
       } else {
         navigate('/explore');

@@ -2,7 +2,7 @@
 import React from 'react';
 import AuthButton from '../AuthButton';
 import { Button } from '@/components/ui/button';
-import { Building, User } from 'lucide-react';
+import { Building, User, ShieldCheck } from 'lucide-react';
 
 interface LoginFormActionsProps {
   isLoading: boolean;
@@ -10,7 +10,7 @@ interface LoginFormActionsProps {
   isAdminLogin: boolean;
   userType: 'individual' | 'establishment';
   onClose?: () => void;
-  onBypassLogin?: (type: 'individual' | 'establishment') => void;
+  onBypassLogin?: (type: 'individual' | 'establishment' | 'admin') => void;
 }
 
 const LoginFormActions: React.FC<LoginFormActionsProps> = ({
@@ -46,7 +46,7 @@ const LoginFormActions: React.FC<LoginFormActionsProps> = ({
       {onBypassLogin && (
         <div className="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
           <p className="text-xs text-gray-500 mb-2 text-center">Admin Bypass (Testing Only)</p>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Button
               type="button"
               size="sm"
@@ -66,6 +66,16 @@ const LoginFormActions: React.FC<LoginFormActionsProps> = ({
             >
               <Building size={14} />
               Business
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => onBypassLogin('admin')}
+              className="flex-1 flex items-center justify-center gap-1 border-purple-500 text-purple-500 hover:bg-purple-50"
+            >
+              <ShieldCheck size={14} />
+              Admin
             </Button>
           </div>
         </div>

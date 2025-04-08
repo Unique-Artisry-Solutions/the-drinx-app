@@ -105,13 +105,22 @@ const TestCredentials: React.FC = () => {
         description: 'Admin bypass mode has been turned off',
       });
     } else {
-      const userType = window.confirm('Enable as establishment user? (Cancel for individual)') 
-        ? 'establishment' 
-        : 'individual';
+      const options = ['admin', 'establishment', 'individual'];
+      const userTypeIndex = window.confirm('Select user type:\nOK - Admin\nCancel - Choose Other') 
+        ? 0 
+        : window.confirm('Select user type:\nOK - Establishment\nCancel - Individual')
+          ? 1
+          : 2;
+      
+      const userType = options[userTypeIndex] as 'admin' | 'establishment' | 'individual';
       enableAdminBypass(userType);
+      
       toast({
         title: 'Admin Bypass Enabled',
-        description: `You're now in admin bypass mode as a ${userType} user`,
+        description: `You're now in admin bypass mode as ${
+          userType === 'admin' ? 'an administrator' : 
+          userType === 'establishment' ? 'a business' : 'an individual user'
+        }`,
         duration: 5000,
       });
     }
