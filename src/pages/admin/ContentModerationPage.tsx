@@ -2,7 +2,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminHeader from '@/components/admin/AdminHeader';
-import ContentFlags from '@/components/admin/contentFlags';
+import ContentFlags from '@/components/admin/ContentFlags';
 
 const ContentModerationPage: React.FC = () => {
   const navigate = useNavigate();

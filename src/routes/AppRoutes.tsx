@@ -1,4 +1,3 @@
-
 import React, { lazy, Suspense } from 'react';
 import { Route, Routes, Navigate } from 'react-router-dom';
 import LandingPage from '@/pages/LandingPage';
@@ -41,12 +40,10 @@ import SettingsPage from '@/pages/SettingsPage';
 import UserRecipesPage from '@/pages/profile/UserRecipesPage';
 import { ProtectedRoute, TypedProtectedRoute } from './protectedRoutes';
 
-// Import the establishment pages directly instead of using lazy loading
 import EstablishmentProfilePage from '@/pages/establishment/EstablishmentProfilePage';
 import MocktailMenuPage from '@/pages/establishment/MocktailMenuPage';
 import PromotionsPage from '@/pages/establishment/PromotionsPage';
 
-// Admin pages
 const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
 const AdminLogin = lazy(() => import('@/pages/admin/AdminLogin'));
 const AdminUsersPage = lazy(() => import('@/pages/admin/AdminUsersPage'));
@@ -56,6 +53,7 @@ const AdminEstablishmentProfile = lazy(() => import('@/pages/admin/AdminEstablis
 const SystemFunctionalityBreakdown = lazy(() => import('@/pages/admin/SystemFunctionalityBreakdown'));
 const SystemAnalyticsPage = lazy(() => import('@/pages/admin/SystemAnalyticsPage'));
 const PhotoModerationPage = lazy(() => import('@/pages/admin/PhotoModerationPage'));
+const ContentModerationPage = lazy(() => import('@/pages/admin/ContentModerationPage'));
 
 const AppRoutes = () => {
   return (
@@ -105,6 +103,7 @@ const AppRoutes = () => {
         <Route path="/admin/system-breakdown" element={<SystemFunctionalityBreakdown />} />
         <Route path="/admin/analytics" element={<SystemAnalyticsPage />} />
         <Route path="/admin/photo-moderation" element={<PhotoModerationPage />} />
+        <Route path="/admin/content-moderation" element={<ContentModerationPage />} />
         
         <Route path="/establishment/all-actions" element={
           <TypedProtectedRoute userType="establishment">

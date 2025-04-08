@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth';
 import { supabase } from '@/integrations/supabase/client';
 import { CommentDisplayItem } from '@/types/DatabaseTypes';
+import ReportButton from '@/components/ui/report-button';
 
 interface CommentsSectionProps {
   cocktailId: string;
@@ -53,7 +53,6 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
     setIsSubmitting(true);
     
     try {
-      // Save the comment to Supabase
       const { error } = await supabase
         .from('cocktail_reviews')
         .insert({
@@ -71,7 +70,6 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
         description: "Your comment has been added successfully.",
       });
       
-      // Refresh comments
       onCommentsUpdate();
       setShowCommentForm(false);
     } catch (error) {
@@ -129,10 +127,17 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
                   )}
                   
                   {comment.source === 'app' && (
-                    <Badge variant="outline" className="bg-material-primary/10 text-material-primary">
+                    <Badge variant="outline" className="bg-material-primary/10 text-material-primary mr-2">
                       App User
                     </Badge>
                   )}
+                  
+                  <ReportButton 
+                    contentType="review" 
+                    contentId={comment.id} 
+                    variant="ghost" 
+                    size="sm"
+                  />
                 </div>
               </div>
               

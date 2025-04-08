@@ -1,4 +1,3 @@
-
 import { Database } from "@/integrations/supabase/types";
 
 // Specific table types
@@ -57,7 +56,6 @@ export type Establishment = {
   cocktailCount?: number; // For compatibility with existing code
   phone?: string;
   website?: string;
-  distance?: string;
   created_at?: string; // Added this field
   owner_id?: string; // Added owner_id field
 };
