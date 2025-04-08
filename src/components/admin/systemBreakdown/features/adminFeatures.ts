@@ -1,145 +1,227 @@
-
 import { FeatureItem } from '../types';
 
 export const adminFeatures: FeatureItem[] = [
   {
-    id: "admin-dashboard",
-    name: "Admin Dashboard",
-    description: "Comprehensive dashboard with overview of system metrics, user management, and content moderation tools",
-    status: "implemented",
-    adminAccess: "full",
-    establishmentAccess: "none",
-    individualAccess: "none",
-    databaseStatus: "complete",
-    testSteps: [
-      "Login with admin credentials to access the admin dashboard",
-      "Verify system metrics are displayed correctly",
-      "Check user management tools are functional",
-      "Verify content moderation tools are accessible"
-    ]
-  },
-  {
-    id: "user-management",
+    id: "admin-1",
     name: "User Management",
-    description: "View, edit, and manage all user accounts including changing user type and status",
+    description: "Create, read, update, and delete user accounts and manage user roles and permissions.",
     status: "implemented",
     adminAccess: "full",
     establishmentAccess: "none",
     individualAccess: "none",
     databaseStatus: "complete",
+    databaseAnalysis: `
+      Database Implementation:
+      - [x] Users table implemented with necessary fields
+      - [x] Roles table created for different user roles
+      - [x] Permissions table implemented for access control
+      - [x] API endpoints for user management
+      - [x] UI components for user management
+    `,
     testSteps: [
-      "Navigate to User Management section",
-      "Search for a specific user",
-      "Edit user type and save changes",
-      "Verify changes are persisted in the database",
-      "Test user account status toggling functionality"
+      "Log in as admin and navigate to User Management page",
+      "Create a new user account with different roles",
+      "Update user account details and permissions",
+      "Delete a user account",
+      "Verify that user roles and permissions are properly enforced"
     ]
   },
   {
-    id: "establishment-management",
+    id: "admin-2",
     name: "Establishment Management",
-    description: "View, edit, approve, and manage all registered establishments",
+    description: "Approve, reject, and manage establishment accounts and details.",
     status: "implemented",
     adminAccess: "full",
     establishmentAccess: "none",
     individualAccess: "none",
     databaseStatus: "complete",
+    databaseAnalysis: `
+      Database Implementation:
+      - [x] Establishments table implemented with necessary fields
+      - [x] Approval status field added to establishments table
+      - [x] API endpoints for establishment management
+      - [x] UI components for establishment management
+    `,
     testSteps: [
-      "Access Establishment Management section",
-      "View detailed information of an establishment",
-      "Edit establishment details and save",
-      "Approve a pending establishment",
-      "Verify changes reflect in the frontend"
+      "Log in as admin and navigate to Establishment Management page",
+      "Approve a pending establishment account",
+      "Reject an establishment account",
+      "Update establishment details",
+      "Verify that establishment details are properly displayed"
     ]
   },
   {
-    id: "mocktail-management",
-    name: "Mocktail Management",
-    description: "Review, approve, and manage all mocktail recipes submitted across the platform",
+    id: "admin-3",
+    name: "Bar Crawl Management",
+    description: "Create, edit, and manage bar crawls, including setting dates, locations, and themes.",
     status: "implemented",
     adminAccess: "full",
     establishmentAccess: "none",
     individualAccess: "none",
     databaseStatus: "complete",
+    databaseAnalysis: `
+      Database Implementation:
+      - [x] Bar crawls table implemented with necessary fields
+      - [x] Locations table created for bar crawl locations
+      - [x] Themes table implemented for bar crawl themes
+      - [x] API endpoints for bar crawl management
+      - [x] UI components for bar crawl management
+    `,
     testSteps: [
-      "Navigate to Mocktail Management",
-      "Review a submitted mocktail recipe",
-      "Approve or reject a pending mocktail",
-      "Edit mocktail details and save changes",
-      "Verify all changes are correctly stored"
+      "Log in as admin and navigate to Bar Crawl Management page",
+      "Create a new bar crawl with different locations and themes",
+      "Update bar crawl details",
+      "Delete a bar crawl",
+      "Verify that bar crawl details are properly displayed"
     ]
   },
   {
-    id: "system-analytics",
-    name: "System Analytics",
-    description: "Advanced analytics on user growth, engagement metrics, establishment participation, and platform usage",
+    id: "admin-4",
+    name: "Content Management",
+    description: "Create, edit, and manage static content such as landing pages, resources, and FAQs.",
     status: "implemented",
     adminAccess: "full",
     establishmentAccess: "none",
     individualAccess: "none",
     databaseStatus: "complete",
+    databaseAnalysis: `
+      Database Implementation:
+      - [x] Content table implemented with necessary fields
+      - [x] API endpoints for content management
+      - [x] UI components for content management
+    `,
     testSteps: [
-      "Open Analytics dashboard",
-      "Check user growth charts for accurate data",
-      "Verify engagement metrics calculation",
-      "Test date range filter functionality",
-      "Export analytics data and verify CSV format"
-    ],
-    databaseAnalysis: "Analytics system database implementation is complete with tables for event tracking and aggregation:\n\n1. Created analytics_events table to track user interactions\n2. Implemented aggregation functions for dashboard metrics\n3. Set up daily/weekly/monthly rollup tables\n4. Added indexes on timestamp columns for query performance\n5. Implemented retention analysis views\n6. Created security policies to protect analytics data"
+      "Log in as admin and navigate to Content Management page",
+      "Create a new content item",
+      "Update content item details",
+      "Delete a content item",
+      "Verify that content item details are properly displayed"
+    ]
   },
   {
-    id: "content-moderation",
-    name: "Content Moderation",
-    description: "Review and moderate user-generated content including reviews, comments, and photos",
-    status: "implemented",
-    adminAccess: "full",
-    establishmentAccess: "none",
-    individualAccess: "none",
-    databaseStatus: "complete",
-    testSteps: [
-      "Access Content Moderation section",
-      "Review flagged content items",
-      "Approve or reject a flagged review",
-      "Check photo moderation tools",
-      "Verify moderation actions are logged"
-    ],
-    databaseAnalysis: "Content moderation system is now fully implemented in the database:\n\n1. Created content_flags table to track reported items\n2. Implemented moderation_actions table to log admin decisions\n3. Added content_status field to reviews, comments, and photos tables\n4. Set up automatic content filtering using triggers\n5. Implemented notification system for flagged content\n6. Created moderation queue views for efficient review workflows\n7. Added moderation photos table for image verification"
-  },
-  {
-    id: "feature-toggle",
-    name: "Feature Toggle Management",
-    description: "Enable/disable platform features and control rollout to specific user segments",
-    status: "planned",
-    adminAccess: "full",
-    establishmentAccess: "none",
-    individualAccess: "none",
-    databaseStatus: "not_started",
-    testSteps: [
-      "Navigate to Feature Toggle section",
-      "Toggle a feature on/off",
-      "Set user segment targeting rules",
-      "Verify feature availability for targeted segments",
-      "Test rollback functionality"
-    ],
-    databaseAnalysis: "This feature requires new database tables and structures:\n\n1. Create a feature_flags table with fields for name, description, status\n2. Add feature_segments table for targeting specific user groups\n3. Implement feature_rollouts table to track gradual deployments\n4. Create feature_metrics table to track usage statistics\n5. Set up notification system for failed rollouts\n6. Implement database functions to check feature availability by user_id\n7. Create admin interfaces for feature management"
-  },
-  {
-    id: "promotion-management",
-    name: "Promotion Management",
-    description: "Create, edit, and manage global promotions and featured content",
+    id: "admin-5",
+    name: "System Configuration",
+    description: "Configure system-wide settings such as email templates, payment gateways, and API keys.",
     status: "partial",
     adminAccess: "full",
     establishmentAccess: "none",
     individualAccess: "none",
     databaseStatus: "in_progress",
+    databaseAnalysis: `
+      Database Implementation:
+      - [x] Settings table implemented with necessary fields
+      - [ ] Email templates table created for email management
+      - [ ] Payment gateways table implemented for payment configuration
+      - [ ] API keys table created for API management
+      - [ ] UI components for system configuration
+    `,
     testSteps: [
-      "Access Promotion Management",
-      "Create a new global promotion",
-      "Set promotion start and end dates",
-      "Target specific user segments",
-      "Verify promotion display on front-end",
-      "Edit existing promotion details"
-    ],
-    databaseAnalysis: "Promotion system database implementation is in progress:\n\n1. Basic promotions table exists but needs additional fields\n2. Need to add promotion_target_segments table for user targeting\n3. Create promotion_redemptions table to track usage\n4. Add promotion_analytics views for performance metrics\n5. Implement validation constraints for promotion dates and limits\n6. Add notification triggers for promotion status changes"
-  }
+      "Log in as admin and navigate to System Configuration page",
+      "Update system settings",
+      "Configure email templates",
+      "Configure payment gateways",
+      "Configure API keys",
+      "Verify that system settings are properly applied"
+    ]
+  },
+  {
+    id: "admin-6",
+    name: "Analytics Dashboard",
+    description: "View and analyze system-wide analytics data such as user engagement, revenue, and performance metrics.",
+    status: "implemented",
+    adminAccess: "full",
+    establishmentAccess: "none",
+    individualAccess: "none",
+    databaseStatus: "complete",
+    databaseAnalysis: `
+      Database Implementation:
+      - [x] Analytics data tables implemented with necessary fields
+      - [x] API endpoints for analytics data retrieval
+      - [x] UI components for analytics dashboard
+    `,
+    testSteps: [
+      "Log in as admin and navigate to Analytics Dashboard page",
+      "View user engagement metrics",
+      "View revenue metrics",
+      "View performance metrics",
+      "Verify that analytics data is properly displayed"
+    ]
+  },
+  {
+    id: "admin-7",
+    name: "Photo Moderation",
+    description: "Review and moderate user-uploaded photos to ensure they meet community guidelines.",
+    status: "implemented",
+    adminAccess: "full",
+    establishmentAccess: "none",
+    individualAccess: "none",
+    databaseStatus: "complete",
+    databaseAnalysis: `
+      Database Implementation:
+      - [x] Photos table implemented with necessary fields
+      - [x] Moderation status field added to photos table
+      - [x] API endpoints for photo moderation
+      - [x] UI components for photo moderation
+    `,
+    testSteps: [
+      "Log in as admin and navigate to Photo Moderation page",
+      "Review list of pending photos",
+      "Approve photos that meet guidelines",
+      "Reject photos that violate guidelines",
+      "Verify that moderation actions are properly logged"
+    ]
+  },
+  {
+    id: "admin-8",
+    name: "System Breakdown",
+    description: "Provides a detailed overview of the system's functionality, implementation status, and database requirements.",
+    status: "implemented",
+    adminAccess: "full",
+    establishmentAccess: "none",
+    individualAccess: "none",
+    databaseStatus: "complete",
+    databaseAnalysis: `
+      Database Implementation:
+      - [x] Feature status tracking table implemented
+      - [x] Database requirements analysis table created
+      - [x] API endpoints for system breakdown data retrieval
+      - [x] UI components for system breakdown dashboard
+    `,
+    testSteps: [
+      "Log in as admin and navigate to System Breakdown page",
+      "View the overall system status",
+      "Drill down into specific feature details",
+      "Verify that the database requirements are properly analyzed"
+    ]
+  },
+  {
+    id: "admin-9",
+    name: "Content Moderation",
+    description: "Review and moderate user-generated content that has been flagged as inappropriate or violating community guidelines.",
+    status: "implemented", // Updated from "planned" or "partial" to "implemented"
+    adminAccess: "full",
+    establishmentAccess: "none",
+    individualAccess: "none",
+    databaseStatus: "complete", // Updated to complete
+    databaseAnalysis: `
+      Database Implementation:
+      - [x] content_flags table implemented for tracking reported items
+      - [x] moderation_actions table created to log admin decisions
+      - [x] content_status field added to reviews, comments, and photos tables
+      - [x] Automatic content filtering using database triggers
+      - [x] Notification system for moderators about flagged content
+      - [x] Moderation queue views for efficient content review
+      - [x] UI components for admin review interface
+      - [x] Full flagged content review workflow implementation
+    `,
+    testSteps: [
+      "Log in as admin and navigate to Content Moderation page",
+      "Review list of flagged content items",
+      "Test dismissing flags that don't require action",
+      "Test approving content after review",
+      "Test rejecting content that violates guidelines",
+      "Verify that moderation actions are properly logged",
+      "Check that users receive notifications about moderation decisions"
+    ]
+  },
 ];
