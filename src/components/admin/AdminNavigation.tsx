@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { LogOut, Image } from 'lucide-react';
+import { LogOut, Image, Palette } from 'lucide-react';
 
 interface AdminNavigationProps {
   onLogout: () => void;
@@ -47,6 +47,14 @@ const AdminNavigation: React.FC<AdminNavigationProps> = ({
             <Button variant="ghost" className="flex items-center gap-1 text-white hover:text-white hover:bg-spiritless-burgundy/25">
               <Image size={16} />
               Photo Moderation
+            </Button>
+          </Link>
+        </li>
+        <li>
+          <Link to="/admin/theme-customization">
+            <Button variant="ghost" className="flex items-center gap-1 text-white hover:text-white hover:bg-spiritless-burgundy/25">
+              <Palette size={16} />
+              Theme Customization
             </Button>
           </Link>
         </li>
