@@ -14,4 +14,3 @@ export const getCartGuestNavItems = (): NavItem[] => [
   { icon: BookOpen, label: 'Our Mission', path: '/mission' },
   { icon: LogIn, label: 'Login', path: '/login' },
 ];
-

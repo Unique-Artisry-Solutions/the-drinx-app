@@ -13,6 +13,9 @@ export interface NavItemType {
   path: string;
 }
 
+// Add NavItem as an alias to NavItemType for backward compatibility
+export type NavItem = NavItemType;
+
 export interface NavItemProps {
   item: NavItemType;
   isActive: boolean;
