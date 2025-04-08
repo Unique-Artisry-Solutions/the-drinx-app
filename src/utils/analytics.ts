@@ -94,20 +94,33 @@ export async function getUserRetention(startDate: Date, endDate: Date) {
  */
 export async function getEventSummary(startDate: Date, endDate: Date) {
   try {
+    // Use a raw SQL query with select() to get grouped data
+    // The newer Supabase client versions don't support .group() directly
     const { data, error } = await supabaseClient
       .from('analytics_events')
-      .select('event_type, count(*)')
+      .select('event_type, count')
       .gte('timestamp', startDate.toISOString())
-      .lte('timestamp', endDate.toISOString())
-      .group('event_type')
-      .order('count', { ascending: false });
+      .lte('timestamp', endDate.toISOString());
     
     if (error) {
       console.error('Error fetching event summary:', error);
       return null;
     }
     
-    return data;
+    // If we can't use grouped queries directly, we can process the data client-side
+    const groupedData = data?.reduce((acc: Record<string, number>, item: any) => {
+      if (!acc[item.event_type]) acc[item.event_type] = 0;
+      acc[item.event_type] += 1;
+      return acc;
+    }, {});
+    
+    // Convert to array format expected by consumers
+    const result = Object.entries(groupedData || {}).map(([event_type, count]) => ({
+      event_type,
+      count
+    }));
+    
+    return result;
   } catch (error) {
     console.error('Failed to get event summary data:', error);
     return null;
@@ -119,13 +132,13 @@ export async function getEventSummary(startDate: Date, endDate: Date) {
  */
 export async function getPopularPages(startDate: Date, endDate: Date, limit: number = 10) {
   try {
+    // Use a simpler query approach without group
     const { data, error } = await supabaseClient
       .from('analytics_events')
-      .select('page_url, count(*)')
+      .select('page_url, count')
       .eq('event_type', 'page_view')
       .gte('timestamp', startDate.toISOString())
       .lte('timestamp', endDate.toISOString())
-      .group('page_url')
       .order('count', { ascending: false })
       .limit(limit);
     
@@ -134,7 +147,22 @@ export async function getPopularPages(startDate: Date, endDate: Date, limit: num
       return null;
     }
     
-    return data;
+    // Process data client-side if needed
+    const pageViews: Record<string, number> = {};
+    data?.forEach((item: any) => {
+      if (item.page_url) {
+        if (!pageViews[item.page_url]) pageViews[item.page_url] = 0;
+        pageViews[item.page_url] += 1;
+      }
+    });
+    
+    // Convert to sorted array
+    const result = Object.entries(pageViews)
+      .map(([page_url, count]) => ({ page_url, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, limit);
+    
+    return result;
   } catch (error) {
     console.error('Failed to get popular pages data:', error);
     return null;
