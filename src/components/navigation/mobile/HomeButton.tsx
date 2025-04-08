@@ -36,7 +36,7 @@ const HomeButton: React.FC<HomeButtonProps> = ({ isActive, onClick }) => {
         "text-xs font-medium transition-all duration-300",
         isActive ? "opacity-100" : "opacity-80"
       )}>
-        Home
+        Explore
       </span>
     </a>
   );

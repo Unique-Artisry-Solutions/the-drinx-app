@@ -26,7 +26,7 @@ const UserNavLinks: React.FC<UserNavLinksProps> = ({ userType }) => {
   };
   
   const userNavItems = [
-    { icon: Home, label: 'Home', path: getHomePath(), onClick: handleHomeClick },
+    { icon: Home, label: 'Explore', path: getHomePath(), onClick: handleHomeClick },
     { icon: Map, label: 'Map', path: '/map' },
   ];
   

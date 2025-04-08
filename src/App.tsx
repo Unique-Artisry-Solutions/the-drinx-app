@@ -56,13 +56,13 @@ const AppContent = () => {
       
       // Specific handling for admin login and routes
       if (location.pathname === '/admin' || location.pathname === '/admin/login') {
-        // If not admin authenticated, allow access to admin login page
-        if (!isAdminAuth) {
+        // If already admin authenticated, redirect to admin dashboard
+        if (isAdminAuth) {
+          navigate('/admin/system-breakdown', { replace: true });
           return;
         }
-        // If admin authenticated, redirect to admin dashboard
+        // If not admin authenticated, allow access to admin login page
         else {
-          navigate('/admin/system-breakdown', { replace: true });
           return;
         }
       }
@@ -70,14 +70,6 @@ const AppContent = () => {
       // For all other admin routes, require admin authentication
       if (location.pathname.startsWith('/admin/') && !isAdminAuth) {
         navigate('/admin', { replace: true });
-        return;
-      }
-      
-      // If user is not authenticated and not on a public path or admin login, redirect to landing
-      if (!user && !publicPaths.includes(location.pathname) && 
-          !location.pathname.startsWith('/admin') &&
-          location.pathname !== '/') {
-        navigate('/landing', { replace: true });
         return;
       }
       
@@ -99,6 +91,14 @@ const AppContent = () => {
         else {
           navigate('/landing', { replace: true });
         }
+        return;
+      }
+      
+      // If user is not authenticated and not on a public path or admin login, redirect to landing
+      if (!user && !publicPaths.includes(location.pathname) && 
+          !location.pathname.startsWith('/admin') &&
+          location.pathname !== '/') {
+        navigate('/landing', { replace: true });
         return;
       }
       

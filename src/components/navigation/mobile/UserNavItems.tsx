@@ -12,7 +12,7 @@ export const getUserNavItems = (
   if (userType === 'establishment') {
     navItems.push({ icon: Home, label: 'Home', path: '/establishment/dashboard' });
   } else {
-    navItems.push({ icon: Home, label: 'Home', path: '/explore' });
+    navItems.push({ icon: Home, label: 'Explore', path: '/explore' });
   }
   
   // Add Map for both user types
