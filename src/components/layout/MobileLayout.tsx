@@ -22,13 +22,15 @@ interface MobileLayoutProps {
   activeTab?: string;
   handleTabChange?: (value: string) => void;
   tabOptions?: TabOption[];
+  forceGuestNavigation?: boolean;
 }
 
 const MobileLayout: React.FC<MobileLayoutProps> = ({
   children,
   activeTab,
   handleTabChange,
-  tabOptions
+  tabOptions,
+  forceGuestNavigation = false
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -53,7 +55,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
       
       // Define public paths that always use guest navigation
       const publicPaths = ['/', '/landing', '/login', '/signup', '/mission'];
-      const isPublicPath = publicPaths.includes(location.pathname);
+      const isPublicPath = publicPaths.includes(location.pathname) || forceGuestNavigation;
       
       // Determine navigation type based on auth state and path
       if (isAdminAuth) {
@@ -66,10 +68,10 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
     };
     
     checkAuth();
-  }, [user, isEmailVerified, location.pathname]);
+  }, [user, isEmailVerified, location.pathname, forceGuestNavigation]);
 
   // Determine page types for specialized navigation
-  const isLandingPage = location.pathname === '/' || location.pathname === '/landing';
+  const isLandingPage = location.pathname === '/' || location.pathname === '/landing' || forceGuestNavigation;
   const isAuthPage = location.pathname === '/login' || location.pathname === '/signup';
   const isAdminPage = location.pathname.startsWith('/admin');
   const isEstablishmentPage = location.pathname.startsWith('/establishment');
@@ -116,6 +118,8 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
   
   // Determine whether to show guest navigation
   const useGuestNavigation = () => {
+    if (forceGuestNavigation) return true;
+    
     // Always show guest navigation for non-authenticated users
     if (!user) return true;
     
@@ -167,7 +171,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
       {renderFooter()}
       
       {shouldShowMobileNav() && (
-        <MobileNavigation type={navigationType} userType={userType} />
+        <MobileNavigation type={navigationType} userType={userType} forceGuestNavigation={forceGuestNavigation} />
       )}
     </div>
   );

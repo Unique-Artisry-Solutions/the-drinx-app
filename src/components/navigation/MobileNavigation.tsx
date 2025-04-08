@@ -12,9 +12,14 @@ import NavItem from './mobile/NavItem';
 import HomeButton from './mobile/HomeButton';
 import { useTheme } from '@/contexts/ThemeContext';
 
-const MobileNavigation: React.FC<MobileNavigationProps> = ({ 
+interface ExtendedMobileNavigationProps extends MobileNavigationProps {
+  forceGuestNavigation?: boolean;
+}
+
+const MobileNavigation: React.FC<ExtendedMobileNavigationProps> = ({ 
   type, 
-  userType = 'individual' 
+  userType = 'individual',
+  forceGuestNavigation = false
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -43,9 +48,10 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
       type, 
       userType: currentUserType, 
       user: !!user,
+      forceGuestNavigation,
       path: location.pathname
     });
-  }, [type, currentUserType, user, location.pathname]);
+  }, [type, currentUserType, user, forceGuestNavigation, location.pathname]);
 
   const toggleExpand = () => {
     setExpanded(!expanded);
@@ -72,6 +78,11 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
   };
 
   const getNavItems = () => {
+    // If forceGuestNavigation is true, always show guest navigation
+    if (forceGuestNavigation) {
+      return getGuestNavItems();
+    }
+    
     // If user is not authenticated, always show guest navigation
     if (!user) {
       return getGuestNavItems();

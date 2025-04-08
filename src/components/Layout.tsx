@@ -12,6 +12,7 @@ interface LayoutProps {
   activeTab?: string;
   handleTabChange?: (value: string) => void;
   tabOptions?: TabOption[];
+  forceGuestNavigation?: boolean;
 }
 
 const Layout: React.FC<LayoutProps> = (props) => {

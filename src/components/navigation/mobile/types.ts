@@ -1,14 +1,20 @@
 
-import React from 'react';
 import { NavigationType } from '../NavigationTypes';
 
-export interface NavItem {
-  icon: React.FC<any>;
+export interface MobileNavigationProps {
+  type: NavigationType;
+  userType: 'individual' | 'establishment';
+  forceGuestNavigation?: boolean;
+}
+
+export interface NavItemType {
+  icon: React.ElementType;
   label: string;
   path: string;
 }
 
-export interface MobileNavigationProps {
-  type: NavigationType;
-  userType?: 'individual' | 'establishment';
+export interface NavItemProps {
+  item: NavItemType;
+  isActive: boolean;
+  onClick: (e: React.MouseEvent) => void;
 }

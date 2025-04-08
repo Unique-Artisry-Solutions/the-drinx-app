@@ -15,6 +15,7 @@ interface ResponsiveLayoutProps {
   activeTab?: string;
   handleTabChange?: (value: string) => void;
   tabOptions?: TabOption[];
+  forceGuestNavigation?: boolean;
 }
 
 const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = (props) => {

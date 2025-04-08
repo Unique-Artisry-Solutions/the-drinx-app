@@ -21,13 +21,15 @@ interface DesktopLayoutProps {
   activeTab?: string;
   handleTabChange?: (value: string) => void;
   tabOptions?: TabOption[];
+  forceGuestNavigation?: boolean;
 }
 
 const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   children,
   activeTab,
   handleTabChange,
-  tabOptions
+  tabOptions,
+  forceGuestNavigation = false
 }) => {
   const location = useLocation();
   const { theme } = useTheme();
@@ -46,7 +48,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
       
       // Define public paths that always use guest navigation
       const publicPaths = ['/', '/landing', '/login', '/signup', '/mission'];
-      const isPublicPath = publicPaths.includes(location.pathname);
+      const isPublicPath = publicPaths.includes(location.pathname) || forceGuestNavigation;
       
       // Determine navigation type based on auth state and path
       if (isAdminAuth) {
@@ -59,9 +61,9 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     };
     
     checkAuth();
-  }, [user, isEmailVerified, location.pathname]);
+  }, [user, isEmailVerified, location.pathname, forceGuestNavigation]);
 
-  const isLandingPage = location.pathname === '/' || location.pathname === '/landing';
+  const isLandingPage = location.pathname === '/' || location.pathname === '/landing' || forceGuestNavigation;
   const isAdminPage = location.pathname.startsWith('/admin');
   const isSettingsPage = location.pathname === '/settings';
   const isEstablishmentPage = location.pathname.startsWith('/establishment');
@@ -76,6 +78,8 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
 
   // Determine whether to show guest navigation
   const useGuestNavigation = () => {
+    if (forceGuestNavigation) return true;
+    
     // Always use guest navigation for non-authenticated users
     if (!user) return true;
     

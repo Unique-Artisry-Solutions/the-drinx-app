@@ -43,7 +43,7 @@ const LandingPage = () => {
 
   // Only render the landing page if the user is not authenticated or if auth is still loading
   return (
-    <Layout>
+    <Layout forceGuestNavigation={true}>
       <div className="landing-page min-h-screen w-full">
         {/* Main content for landing page */}
         <main id="main-content" className="landing-main">
