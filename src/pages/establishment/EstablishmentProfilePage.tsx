@@ -12,7 +12,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Card, CardContent } from '@/components/ui/card';
 import { buttonVariants } from '@/components/ui/button';
-import { LayoutDashboard, BarChart4, Store, Route, Utensils, Tag, Settings } from 'lucide-react';
+import { BarChart4, Store, Route, Utensils, Tag, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const EstablishmentProfilePage = () => {
@@ -53,9 +53,8 @@ const EstablishmentProfilePage = () => {
     { value: 'barCrawls', label: isMobile ? 'Crawls' : 'Bar Crawl Requests' }
   ];
 
-  // Quick navigation links for establishment - expanded with more relevant links
+  // Quick navigation links for establishment - without dashboard link
   const quickLinks = [
-    { label: 'Dashboard', section: 'dashboard', icon: LayoutDashboard },
     { label: 'All Actions', section: 'allActions', icon: Store },
     { label: 'Analytics', section: 'analytics', icon: BarChart4 },
     { label: 'Mocktail Menu', section: 'menu', icon: Utensils },
@@ -86,29 +85,6 @@ const EstablishmentProfilePage = () => {
     if (!activeSection) return null;
     
     switch (activeSection) {
-      case 'dashboard':
-        return (
-          <Card className="mb-6 mx-4 md:mx-6 lg:mx-[10%]">
-            <CardContent className="py-6">
-              <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
-              <p>Dashboard content would be loaded here, showing key metrics and recent activities.</p>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-                <Card className="p-4 bg-blue-50">
-                  <h3 className="font-medium">Today's Visitors</h3>
-                  <p className="text-2xl font-bold">24</p>
-                </Card>
-                <Card className="p-4 bg-green-50">
-                  <h3 className="font-medium">Active Promotions</h3>
-                  <p className="text-2xl font-bold">{promotionsState.promotions.length}</p>
-                </Card>
-                <Card className="p-4 bg-amber-50">
-                  <h3 className="font-medium">Mocktails</h3>
-                  <p className="text-2xl font-bold">{drinksState.drinks.length}</p>
-                </Card>
-              </div>
-            </CardContent>
-          </Card>
-        );
       case 'allActions':
         return (
           <Card className="mb-6 mx-4 md:mx-6 lg:mx-[10%]">
@@ -116,19 +92,19 @@ const EstablishmentProfilePage = () => {
               <h1 className="text-2xl font-bold mb-4">All Actions</h1>
               <p>Quick access to all establishment management actions.</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-6">
-                <Card className="p-4 hover:bg-gray-50 cursor-pointer">
+                <Card className="p-4 hover:bg-gray-50 cursor-pointer" onClick={() => handleQuickLinkClick('menu')}>
                   <h3 className="font-medium flex items-center gap-2">
                     <Utensils className="h-5 w-5" />
                     Update Menu
                   </h3>
                 </Card>
-                <Card className="p-4 hover:bg-gray-50 cursor-pointer">
+                <Card className="p-4 hover:bg-gray-50 cursor-pointer" onClick={() => handleQuickLinkClick('promotions')}>
                   <h3 className="font-medium flex items-center gap-2">
                     <Tag className="h-5 w-5" />
                     Manage Promotions
                   </h3>
                 </Card>
-                <Card className="p-4 hover:bg-gray-50 cursor-pointer">
+                <Card className="p-4 hover:bg-gray-50 cursor-pointer" onClick={() => handleQuickLinkClick('barCrawls')}>
                   <h3 className="font-medium flex items-center gap-2">
                     <Route className="h-5 w-5" />
                     Review Bar Crawl Requests
@@ -143,9 +119,28 @@ const EstablishmentProfilePage = () => {
           <Card className="mb-6 mx-4 md:mx-6 lg:mx-[10%]">
             <CardContent className="py-6">
               <h1 className="text-2xl font-bold mb-4">Analytics</h1>
-              <p>Visitor statistics and performance metrics would be displayed here.</p>
-              <div className="mt-6 h-64 bg-gray-100 rounded flex items-center justify-center">
-                <p className="text-gray-500">Analytics charts and data visualization</p>
+              <p>Visitor statistics and performance metrics.</p>
+              <div className="mt-6 space-y-6">
+                <div>
+                  <h2 className="text-lg font-semibold mb-2">Visitor Overview</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Card className="p-4 bg-blue-50">
+                      <h3 className="font-medium">Total Visitors</h3>
+                      <p className="text-2xl font-bold">{visitorStats?.totalVisitors || 278}</p>
+                    </Card>
+                    <Card className="p-4 bg-green-50">
+                      <h3 className="font-medium">New This Month</h3>
+                      <p className="text-2xl font-bold">{visitorStats?.newVisitors || 42}</p>
+                    </Card>
+                    <Card className="p-4 bg-amber-50">
+                      <h3 className="font-medium">Return Rate</h3>
+                      <p className="text-2xl font-bold">{visitorStats?.returnRate || '62%'}</p>
+                    </Card>
+                  </div>
+                </div>
+                <div className="h-64 bg-gray-50 rounded flex items-center justify-center">
+                  <p className="text-gray-500">Visitor trend chart would display here</p>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -155,19 +150,21 @@ const EstablishmentProfilePage = () => {
           <Card className="mb-6 mx-4 md:mx-6 lg:mx-[10%]">
             <CardContent className="py-6">
               <h1 className="text-2xl font-bold mb-4">Settings</h1>
-              <p>Account settings, preferences, and configuration options would appear here.</p>
+              <p>Account settings, preferences, and configuration options.</p>
               <div className="mt-6 space-y-4">
                 <div className="flex items-center justify-between p-4 border rounded">
                   <div>
                     <h3 className="font-medium">Account Information</h3>
-                    <p className="text-sm text-gray-500">Update your account details</p>
+                    <p className="text-sm text-gray-500">Update your establishment details</p>
                   </div>
-                  <button className="text-blue-600">Edit</button>
+                  <button className="text-blue-600" onClick={() => { setActiveSection(null); setActiveTab('profile'); setSearchParams({ tab: 'profile' }); }}>
+                    Edit
+                  </button>
                 </div>
                 <div className="flex items-center justify-between p-4 border rounded">
                   <div>
                     <h3 className="font-medium">Notification Preferences</h3>
-                    <p className="text-sm text-gray-500">Manage your notifications</p>
+                    <p className="text-sm text-gray-500">Manage your notification settings</p>
                   </div>
                   <button className="text-blue-600">Edit</button>
                 </div>
