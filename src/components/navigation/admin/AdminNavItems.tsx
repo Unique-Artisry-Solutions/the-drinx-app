@@ -1,7 +1,14 @@
 
 import { Home, Users, Building2, LayoutDashboard, FileBarChart2, Image, Palette } from 'lucide-react';
 
-export const adminNavItems = [
+type AdminNavItem = {
+  label: string;
+  path: string;
+  icon: typeof Home;
+  showInNav: boolean;
+}
+
+export const adminNavItems: AdminNavItem[] = [
   {
     label: 'Dashboard',
     path: '/admin/dashboard',

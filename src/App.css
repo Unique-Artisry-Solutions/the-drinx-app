@@ -1,3 +1,4 @@
+
 #root {
   max-width: 1280px;
   margin: 0 auto;
@@ -106,20 +107,22 @@
 }
 
 /* Bold colorful cards */
-.card-pink {
-  @apply bg-gradient-to-br from-spiritless-pink to-spiritless-pink/80 text-white shadow-lg hover:shadow-xl transition-all border-l-4 border-spiritless-pink;
-}
-
-.card-green {
-  @apply bg-gradient-to-br from-spiritless-green to-spiritless-green/80 text-white shadow-lg hover:shadow-xl transition-all border-l-4 border-spiritless-green;
-}
-
-.card-orange {
-  @apply bg-gradient-to-br from-spiritless-orange to-spiritless-orange/80 text-white shadow-lg hover:shadow-xl transition-all border-l-4 border-spiritless-orange;
-}
-
-.card-burgundy {
-  @apply bg-gradient-to-br from-spiritless-burgundy to-spiritless-burgundy/80 text-white shadow-lg hover:shadow-xl transition-all border-l-4 border-spiritless-burgundy;
+@layer components {
+  .card-pink {
+    @apply bg-gradient-to-br from-[var(--spiritless-pink)] to-[var(--spiritless-pink)]/80 text-white shadow-lg hover:shadow-xl transition-all border-l-4 border-[var(--spiritless-pink)];
+  }
+  
+  .card-green {
+    @apply bg-gradient-to-br from-[var(--spiritless-green)] to-[var(--spiritless-green)]/80 text-white shadow-lg hover:shadow-xl transition-all border-l-4 border-[var(--spiritless-green)];
+  }
+  
+  .card-orange {
+    @apply bg-gradient-to-br from-[var(--spiritless-orange)] to-[var(--spiritless-orange)]/80 text-white shadow-lg hover:shadow-xl transition-all border-l-4 border-[var(--spiritless-orange)];
+  }
+  
+  .card-burgundy {
+    @apply bg-gradient-to-br from-[var(--spiritless-burgundy)] to-[var(--spiritless-burgundy)]/80 text-white shadow-lg hover:shadow-xl transition-all border-l-4 border-[var(--spiritless-burgundy)];
+  }
 }
 
 /* Bold section backgrounds */
