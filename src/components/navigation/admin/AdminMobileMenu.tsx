@@ -2,13 +2,13 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { LogOut } from 'lucide-react';
-import { AdminNavItem } from './AdminNavItems';
+import { adminNavItems } from './AdminNavItems';
 import { Separator } from '@/components/ui/separator';
 
 interface AdminMobileMenuProps {
   isOpen: boolean;
   username: string;
-  navItems: AdminNavItem[];
+  navItems: typeof adminNavItems[0][];
   onItemClick: () => void;
   onLogout: () => void;
 }
@@ -28,7 +28,7 @@ const AdminMobileMenu: React.FC<AdminMobileMenuProps> = ({
         <span className="font-medium text-white">Admin: {username}</span>
       </div>
       
-      {navItems.filter(item => item.showInNav !== false).map((item) => (
+      {navItems.map((item) => (
         <Link
           key={item.path}
           to={item.path}
