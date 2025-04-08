@@ -4,8 +4,9 @@ import { Check, Loader2, Database } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Checkbox } from '@/components/ui/checkbox';
+import { AnalysisStep } from './types';
 
-interface AnalysisStep {
+interface ProgressStepWithNameAndStatus {
   name: string;
   completed: boolean;
 }
@@ -20,6 +21,12 @@ const AnalysisProgress: React.FC<AnalysisProgressProps> = ({ analyzing, steps, p
   if (!analyzing && steps.length === 0) {
     return null;
   }
+
+  // Convert analysis steps to the format needed for rendering
+  const progressSteps: ProgressStepWithNameAndStatus[] = steps.map(step => ({
+    name: step.status || step.featureName,
+    completed: step.completed || true
+  }));
 
   return (
     <Card className="mb-6">
@@ -50,7 +57,7 @@ const AnalysisProgress: React.FC<AnalysisProgressProps> = ({ analyzing, steps, p
         <div className="mt-4">
           <div className="text-sm font-medium mb-2">Database Implementation Tasks:</div>
           <div className="grid grid-cols-1 gap-2">
-            {steps.map((step, index) => (
+            {progressSteps.map((step, index) => (
               <div 
                 key={index} 
                 className={`flex items-center p-2 rounded-md ${step.completed ? 'bg-green-50' : 'bg-gray-50'}`}
@@ -75,7 +82,7 @@ const AnalysisProgress: React.FC<AnalysisProgressProps> = ({ analyzing, steps, p
           </div>
         </div>
         
-        {!analyzing && steps.some(step => !step.completed) && (
+        {!analyzing && progressSteps.some(step => !step.completed) && (
           <div className="mt-4 pl-4 border-l-2 border-blue-400 bg-blue-50 p-3 rounded">
             <p className="text-sm text-blue-800">
               Some database tasks haven't been completed. These might affect the implementation status of certain features.

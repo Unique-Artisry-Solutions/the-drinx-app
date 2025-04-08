@@ -11,6 +11,7 @@ export const establishmentFeatures: FeatureItem[] = [
     establishmentAccess: "full",
     individualAccess: "none",
     databaseStatus: "complete",
+    databaseAnalysis: "Dashboard database implementation complete.",
     testSteps: [
       "Log in as establishment owner",
       "Verify key metrics are displayed correctly",
@@ -28,6 +29,7 @@ export const establishmentFeatures: FeatureItem[] = [
     establishmentAccess: "full",
     individualAccess: "none",
     databaseStatus: "complete",
+    databaseAnalysis: "Menu management database is fully operational.",
     testSteps: [
       "Navigate to Menu Management section",
       "Create a new mocktail with ingredients and price",
@@ -45,14 +47,14 @@ export const establishmentFeatures: FeatureItem[] = [
     establishmentAccess: "full",
     individualAccess: "none",
     databaseStatus: "in_progress",
+    databaseAnalysis: "Analytics for establishments needs database enhancements:\n\n1. Create establishment_analytics table for pre-aggregated metrics\n2. Add visitor_sessions tracking for accurate visitor counts\n3. Implement drink_popularity_metrics view\n4. Set up revenue_tracking table and reports\n5. Add customer_retention_analysis views\n6. Implement time-series data structures for trending analysis",
     testSteps: [
       "Access Analytics dashboard",
       "Check visitor statistics for accuracy",
       "Review popular drinks report",
       "Test date range filters",
       "Export data and verify format"
-    ],
-    databaseAnalysis: "Analytics for establishments needs database enhancements:\n\n1. Create establishment_analytics table for pre-aggregated metrics\n2. Add visitor_sessions tracking for accurate visitor counts\n3. Implement drink_popularity_metrics view\n4. Set up revenue_tracking table and reports\n5. Add customer_retention_analysis views\n6. Implement time-series data structures for trending analysis"
+    ]
   },
   {
     id: "profile-management",
@@ -63,6 +65,7 @@ export const establishmentFeatures: FeatureItem[] = [
     establishmentAccess: "full",
     individualAccess: "none",
     databaseStatus: "complete",
+    databaseAnalysis: "Profile management database is fully implemented.",
     testSteps: [
       "Navigate to Profile Management",
       "Update business hours",
@@ -80,14 +83,14 @@ export const establishmentFeatures: FeatureItem[] = [
     establishmentAccess: "full",
     individualAccess: "none",
     databaseStatus: "in_progress",
+    databaseAnalysis: "Establishment-specific promotions database work:\n\n1. Enhance establishment_promotions table with additional fields\n2. Create promotion_redemptions tracking system\n3. Implement validation triggers for promotion conflicts\n4. Add promotion_analytics views for performance tracking\n5. Set up notification system for expiring promotions",
     testSteps: [
       "Access Promotion Creation section",
       "Create a new limited-time offer",
       "Set promotion validity dates",
       "Add promotion details and images",
       "Verify promotion appears on establishment page"
-    ],
-    databaseAnalysis: "Establishment-specific promotions database work:\n\n1. Enhance establishment_promotions table with additional fields\n2. Create promotion_redemptions tracking system\n3. Implement validation triggers for promotion conflicts\n4. Add promotion_analytics views for performance tracking\n5. Set up notification system for expiring promotions"
+    ]
   },
   {
     id: "review-response",
@@ -98,6 +101,7 @@ export const establishmentFeatures: FeatureItem[] = [
     establishmentAccess: "full",
     individualAccess: "none",
     databaseStatus: "complete",
+    databaseAnalysis: "Review response system is fully implemented.",
     testSteps: [
       "Navigate to Reviews section",
       "View customer reviews",
@@ -115,6 +119,7 @@ export const establishmentFeatures: FeatureItem[] = [
     establishmentAccess: "full",
     individualAccess: "none",
     databaseStatus: "complete",
+    databaseAnalysis: "Swig circuit management database is fully functional.",
     testSteps: [
       "Access Swig Circuit Management",
       "View pending bar crawl inclusion requests",
@@ -132,6 +137,7 @@ export const establishmentFeatures: FeatureItem[] = [
     establishmentAccess: "full",
     individualAccess: "none",
     databaseStatus: "complete",
+    databaseAnalysis: "Mocktail suggestions database is complete.",
     testSteps: [
       "Navigate to Mocktail Suggestions section",
       "View user-submitted suggestions",

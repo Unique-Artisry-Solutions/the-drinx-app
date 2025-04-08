@@ -48,3 +48,7 @@ export function generateCSV(
   link.click();
   document.body.removeChild(link);
 }
+
+export const exportFeaturesCSV = ({ adminFeatures, establishmentFeatures, individualFeatures }) => {
+  generateCSV(adminFeatures, establishmentFeatures, individualFeatures);
+};

@@ -1,5 +1,5 @@
 
-import { FeatureItem } from '../types';
+import { FeatureItem, FeatureStatus } from '../types';
 
 export const calculateFeatureStatistics = (
   adminFeatures: FeatureItem[],

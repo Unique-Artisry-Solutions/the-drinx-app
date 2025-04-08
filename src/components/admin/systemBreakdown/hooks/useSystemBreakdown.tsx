@@ -20,6 +20,8 @@ const convertToFeatureStatus = (status: string): FeatureStatus => {
       return 'planned';
     case 'not-started':
       return 'not-started';
+    case 'partial':
+      return 'partial';
     default:
       return 'not-started';
   }

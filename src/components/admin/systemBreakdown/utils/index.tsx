@@ -1,9 +1,9 @@
 
 import { renderStatusBadge, renderDatabaseStatusBadge, renderAccessIcon } from './statusRenderers';
 import { calculateFeatureStatistics } from './statisticsUtils';
-import { generateCSV } from './exportUtils';
-import { analyzeAllFeatures } from './featureAnalysis';
-import { analyzeDbRequirements } from './analysisHelpers';
+import { generateCSV, exportFeaturesCSV } from './exportUtils';
+import { analyzeFeatures } from './featureAnalysis';
+import { parseTaskStatuses, analyzeDbRequirements } from './taskDetection';
 import { 
   isFeatureFlagRelated,
   isMocktailSuggestionFeature,
@@ -18,7 +18,9 @@ export {
   renderAccessIcon,
   calculateFeatureStatistics,
   generateCSV,
-  analyzeAllFeatures,
+  exportFeaturesCSV,
+  analyzeFeatures,
+  parseTaskStatuses,
   analyzeDbRequirements,
   isFeatureFlagRelated,
   isMocktailSuggestionFeature,
