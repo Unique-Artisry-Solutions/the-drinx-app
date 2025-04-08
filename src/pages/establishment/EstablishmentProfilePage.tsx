@@ -10,6 +10,10 @@ import BarCrawlsTab from '@/components/establishment/BarCrawlsTab';
 import { useEstablishmentProfile } from '@/hooks/establishment/useEstablishmentProfile';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { Card, CardContent } from '@/components/ui/card';
+import { buttonVariants } from '@/components/ui/button';
+import { LayoutDashboard, BarChart4, Store, Route, Settings } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const EstablishmentProfilePage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -46,6 +50,13 @@ const EstablishmentProfilePage = () => {
     { value: 'visitors', label: isMobile ? 'Stats' : 'Visitor Stats' },
     { value: 'barCrawls', label: isMobile ? 'Crawls' : 'Bar Crawl Requests' }
   ];
+
+  // Quick navigation links for establishment
+  const quickLinks = [
+    { label: 'Dashboard', href: '/establishment/all-actions', icon: LayoutDashboard },
+    { label: 'Analytics', href: '/establishment/analytics', icon: BarChart4 },
+    { label: 'Settings', href: '/settings', icon: Settings },
+  ];
   
   return (
     <Layout 
@@ -54,6 +65,28 @@ const EstablishmentProfilePage = () => {
       tabOptions={tabOptions}
     >
       <div className="py-4 animate-fade-in w-full">
+        {/* Quick Navigation Links */}
+        <Card className="mb-6 mx-4 md:mx-6 lg:mx-[10%]">
+          <CardContent className="py-4">
+            <h2 className="text-lg font-medium mb-3">Quick Navigation</h2>
+            <div className="flex flex-wrap gap-3">
+              {quickLinks.map((link) => (
+                <a 
+                  key={link.href}
+                  href={link.href}
+                  className={cn(
+                    buttonVariants({ variant: "outline" }),
+                    "flex items-center gap-2"
+                  )}
+                >
+                  <link.icon className="h-4 w-4" />
+                  {link.label}
+                </a>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+        
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <div className={isMobile ? "px-3" : "px-4 py-2 md:px-6 lg:mx-[10%]"}>
             <TabsContent value="profile">
