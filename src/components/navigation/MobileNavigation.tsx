@@ -79,6 +79,11 @@ const MobileNavigation: React.FC<ExtendedMobileNavigationProps> = ({
   };
 
   const getNavItems = () => {
+    // Check for admin login page first
+    if (location.pathname === '/admin' || location.pathname === '/admin/login') {
+      return getGuestNavItems();
+    }
+    
     // If forceGuestNavigation is true, always show guest navigation
     if (forceGuestNavigation) {
       return getGuestNavItems();
@@ -100,6 +105,11 @@ const MobileNavigation: React.FC<ExtendedMobileNavigationProps> = ({
     // Special case for cart page
     if (location.pathname === '/cart') {
       return getCartGuestNavItems();
+    }
+
+    // Check for admin routes
+    if (location.pathname.startsWith('/admin/')) {
+      return getAdminNavItems();
     }
 
     // Check for establishment user paths
@@ -127,10 +137,10 @@ const MobileNavigation: React.FC<ExtendedMobileNavigationProps> = ({
       (location.pathname === '/establishment' || location.pathname.startsWith('/establishment/'))));
      
   // Pages that should not show the mobile navigation
-  const hiddenNavPaths = [];
+  const hiddenNavPaths = ['/admin/login'];
 
   // Check if we should hide the navigation entirely
-  if (location.pathname.startsWith('/admin') || hiddenNavPaths.includes(location.pathname)) {
+  if (hiddenNavPaths.includes(location.pathname)) {
     return null;
   }
 

@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth';
@@ -96,12 +95,8 @@ export function useProfileData() {
       // Use the Auth context signOut method to end all sessions
       await signOut();
       setIsAuthenticated(false);
-      toast({
-        title: 'Logged out',
-        description: 'You have been successfully logged out from all devices',
-      });
-      // Navigate to landing page instead of login
-      navigate('/landing');
+      
+      // Note: No need to navigate here as signOut already redirects to landing
     } catch (error) {
       console.error('Logout error:', error);
       toast({
@@ -109,6 +104,9 @@ export function useProfileData() {
         description: 'There was a problem logging out',
         variant: 'destructive',
       });
+      
+      // In case of error, still try to redirect to landing
+      navigate('/landing', { replace: true });
     }
   };
 

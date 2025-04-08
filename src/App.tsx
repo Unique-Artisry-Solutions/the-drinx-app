@@ -54,6 +54,11 @@ const AppContent = () => {
       // Always allow access to landing, login, signup, mission pages regardless of auth state
       const publicPaths = ['/landing', '/login', '/signup', '/mission', '/resources', '/pricing'];
       
+      // Admin login page should be accessible without redirects
+      if (location.pathname === '/admin' || location.pathname === '/admin/login') {
+        return;
+      }
+      
       // If user is not authenticated and not on a public path, redirect to landing
       if (!user && !publicPaths.includes(location.pathname) && 
           !location.pathname.startsWith('/admin') &&

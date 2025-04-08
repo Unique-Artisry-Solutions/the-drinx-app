@@ -1,3 +1,4 @@
+
 import { BreadcrumbConfig, routes, dynamicRoutes } from './BreadcrumbConfig';
 
 // Helper function to build breadcrumbs from a pathname
@@ -34,7 +35,7 @@ export function buildBreadcrumbs(pathname: string): BreadcrumbConfig[] {
     }
   };
   
-  // Handle special case for establishment section - improved to use routes config
+  // Handle special case for establishment section
   if (pathname.startsWith('/establishment/')) {
     handleSpecialBasePath('/establishment/all-actions', 'Dashboard');
   }

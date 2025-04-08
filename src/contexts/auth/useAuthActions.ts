@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
@@ -160,7 +159,7 @@ export function useAuthActions() {
       
       console.log('User successfully signed out from all sessions');
       
-      // Force page reload to clear any remaining state
+      // Explicitly redirect to landing page on logout
       window.location.href = '/landing';
     } catch (error: any) {
       console.error('Sign out error:', error);
@@ -169,6 +168,9 @@ export function useAuthActions() {
         description: error.message || 'An error occurred during logout',
         variant: 'destructive',
       });
+      
+      // Attempt to redirect to landing page even if there's an error
+      window.location.href = '/landing';
     } finally {
       setIsLoading(false);
     }
