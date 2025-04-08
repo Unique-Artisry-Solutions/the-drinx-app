@@ -72,27 +72,35 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
   };
 
   const getNavItems = () => {
+    // If user is not authenticated, always show guest navigation
+    if (!user) {
+      return getGuestNavItems();
+    }
+    
     // Define public paths that should always show guest navigation
     const publicPaths = ['/', '/landing', '/login', '/signup', '/mission'];
     
-    // Always show guest navigation on public paths or when user is not authenticated
-    if ((publicPaths.includes(location.pathname) && !location.pathname.startsWith('/establishment')) || !user) {
+    // Special case for public paths - show guest navigation
+    if (publicPaths.includes(location.pathname)) {
       return getGuestNavItems();
     }
-
+    
     // Special case for cart page
     if (location.pathname === '/cart') {
       return getCartGuestNavItems();
     }
 
+    // Check for establishment user paths
+    if (currentUserType === 'establishment') {
+      return getUserNavItems(currentUserType, getProfilePath);
+    }
+    
     // Use navigation type based on authentication state
     switch (type) {
-      case NavigationType.GUEST:
-        return getGuestNavItems();
-      case NavigationType.USER:
-        return getUserNavItems(currentUserType, getProfilePath);
       case NavigationType.ADMIN:
         return getAdminNavItems();
+      case NavigationType.USER:
+        return getUserNavItems(currentUserType, getProfilePath);
       default:
         return getGuestNavItems();
     }

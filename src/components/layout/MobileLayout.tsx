@@ -124,17 +124,21 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
     return publicPaths.includes(location.pathname);
   };
 
-  // Determine if we should show guest navigation
-  const showGuestNav = useGuestNavigation();
-  
   // Render the appropriate navigation
   const renderNavigation = () => {
+    // Always show admin navigation for admin pages or admin users
     if (isAdminPage || isAdmin) {
       return <AdminTopNavigation />;
-    } else if (showGuestNav) {
-      return <GuestTopNavigation />;
-    } else {
+    } 
+    
+    // For authenticated users on non-public pages, show appropriate navigation
+    else if (user && !useGuestNavigation()) {
       return <UserNavbar activeTab={activeTab} handleTabChange={handleTabChange} tabOptions={tabOptions} />;
+    } 
+    
+    // Default to guest navigation
+    else {
+      return <GuestTopNavigation />;
     }
   };
   

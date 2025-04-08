@@ -80,8 +80,7 @@ const Index = () => {
       return;
     }
     
-    // If user is authenticated and is an establishment, show the dashboard
-    // (We'll let the component below handle showing the dashboard)
+    // If user is authenticated and is an establishment, they will see the dashboard below
   }, [user, isLoading, navigate, isEstablishment, isAdmin]);
 
   // If we're still loading, show a loading state
@@ -107,58 +106,11 @@ const Index = () => {
     );
   }
 
-  // This will rarely be shown because of the redirects in useEffect
+  // This fallback should never be seen because of the redirects in useEffect
   return (
     <Layout>
-      <div className="animate-fade-in my-4 sm:my-[30px] px-3 sm:px-6 md:px-[148px]">
-        <div className="mb-6 mt-2 text-center">
-          <h1 className="text-2xl sm:text-3xl font-medium text-material-on-background">
-            Spirit<span className="text-material-primary">less</span>
-          </h1>
-          <p className="text-material-on-surface-variant text-sm sm:text-base">
-            Discover non-alcoholic cocktails near you
-          </p>
-        </div>
-
-        <SearchFilter 
-          onSearch={handleSearch} 
-          onFilterChange={handleFilterChange} 
-          onApplyFilters={applyFilters}
-          className="mb-6" 
-        />
-
-        <Tabs defaultValue="featured" className="w-full" onValueChange={setActiveTab}>
-          <TabsList className="w-full mb-6">
-            <TabsTrigger value="featured" className="flex-1">Featured</TabsTrigger>
-            <TabsTrigger value="all" className="flex-1">All Cocktails</TabsTrigger>
-            <TabsTrigger value="map" className="flex-1">Map</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="featured">
-            <FeaturedCocktails cocktails={cocktails as any} />
-            <NearbyEstablishments 
-              establishments={establishments} 
-              onViewMap={() => setActiveTab("map")} 
-            />
-          </TabsContent>
-          
-          <TabsContent value="all">
-            <AllCocktails 
-              cocktails={cocktails as any} 
-              onResetFilters={resetFilters} 
-            />
-          </TabsContent>
-          
-          <TabsContent value="map">
-            <MapSection 
-              establishments={establishments}
-              mapHeight={isMobile ? "h-[60vh]" : "h-[50vh]"}
-              userLocation={userLocation}
-              onRefreshLocation={refreshLocation}
-              isLoadingLocation={isLoadingLocation}
-            />
-          </TabsContent>
-        </Tabs>
+      <div className="flex items-center justify-center min-h-screen">
+        Redirecting...
       </div>
     </Layout>
   );

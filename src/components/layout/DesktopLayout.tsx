@@ -85,14 +85,18 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   };
 
   const renderNavigation = () => {
+    // Always show admin navigation for admin pages or admin users
     if (isAdminPage || isAdmin) {
       return <AdminTopNavigation />;
-    } else if (navigationType === NavigationType.USER && user) {
-      // Always use UserTopNavigation for authenticated users on non-public pages
-      // This includes establishment pages
+    } 
+    
+    // For authenticated users on non-public pages, show appropriate navigation
+    else if (user && !useGuestNavigation()) {
       return <UserTopNavigation activeTab={activeTab} handleTabChange={handleTabChange} tabOptions={tabOptions} />;
-    } else {
-      // Show GuestTopNavigation for public pages or when not authenticated
+    } 
+    
+    // Default to guest navigation for public pages or when not authenticated
+    else {
       return <GuestTopNavigation />;
     }
   };

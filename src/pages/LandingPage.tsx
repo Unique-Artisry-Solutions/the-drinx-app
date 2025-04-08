@@ -41,8 +41,6 @@ const LandingPage = () => {
     }
   }, [user, isLoading, navigate]);
 
-  console.log('LandingPage rendering, auth state:', { user: !!user, isLoading });
-
   // Only render the landing page if the user is not authenticated or if auth is still loading
   return (
     <Layout>
