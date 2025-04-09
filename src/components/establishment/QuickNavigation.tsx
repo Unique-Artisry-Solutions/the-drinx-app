@@ -24,24 +24,20 @@ const QuickNavigation: React.FC<QuickNavigationProps> = ({
 
   // Quick navigation links for establishment
   const quickLinks = [
-    { label: 'All Actions', section: 'allActions', icon: Store, path: '/establishment/all-actions' },
-    { label: 'Analytics', section: 'analytics', icon: BarChart4, path: '/establishment/analytics' },
-    { label: 'Mocktail Menu', section: 'menu', icon: Utensils, tab: 'menu', path: '/establishment/mocktail-menu' },
-    { label: 'Promotions', section: 'promotions', icon: Tag, tab: 'promotions', path: '/establishment/promotions' },
+    { label: 'All Actions', section: 'allActions', icon: Store },
+    { label: 'Analytics', section: 'analytics', icon: BarChart4 },
+    { label: 'Mocktail Menu', section: 'menu', icon: Utensils, tab: 'menu' },
+    { label: 'Promotions', section: 'promotions', icon: Tag, tab: 'promotions' },
     { label: 'Bar Crawls', section: 'barCrawls', icon: Route, tab: 'barCrawls' },
-    { label: 'Settings', section: 'settings', icon: Settings, path: '/settings' }
+    { label: 'Settings', section: 'settings', icon: Settings }
   ];
 
   const handleLinkClick = (link: any) => {
-    // If it has a path property, use navigation
-    if (link.path) {
-      navigate(link.path);
-    }
     // If it has a tab property, use the tab change handler
-    else if (link.tab) {
+    if (link.tab) {
       handleTabChange(link.tab);
-    }
-    // Otherwise use the section click handler
+    } 
+    // Otherwise use the section click handler for in-page navigation
     else {
       handleQuickLinkClick(link.section);
     }

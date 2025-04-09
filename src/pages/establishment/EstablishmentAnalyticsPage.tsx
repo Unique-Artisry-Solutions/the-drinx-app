@@ -72,25 +72,29 @@ const EstablishmentAnalyticsPage = () => {
     }
   });
   
-  // Handle tab change
+  // Handle tab change - stay on the same page and just change the tab/content
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
+    // Special case for tabs that need to navigate to a different page
     if (tab === 'menu') {
-      navigate('/establishment/mocktail-menu');
+      navigate('/establishment/mocktail-menu', { replace: true });
     } else if (tab === 'promotions') {
-      navigate('/establishment/promotions');
+      navigate('/establishment/promotions', { replace: true });
     } else if (tab === 'barCrawls') {
-      navigate('/establishment/bar-crawl-requests');
+      navigate('/establishment/bar-crawl-requests', { replace: true });
     }
   };
 
-  // Handle quick link click
+  // Handle quick link click - stay on the same page and just change the section
   const handleQuickLinkClick = (section: string) => {
+    if (section === activeSection) return; // Don't do anything if clicking the already active section
+    
     setActiveSection(section);
+    // Special case for sections that need to navigate to a different page
     if (section === 'settings') {
-      navigate('/settings');
+      navigate('/settings', { replace: true });
     } else if (section === 'allActions') {
-      navigate('/establishment/all-actions');
+      navigate('/establishment/all-actions', { replace: true });
     }
   };
 
