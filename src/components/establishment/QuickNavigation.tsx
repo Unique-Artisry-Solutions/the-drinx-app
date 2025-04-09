@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { buttonVariants } from '@/components/ui/button';
@@ -25,8 +24,8 @@ const QuickNavigation: React.FC<QuickNavigationProps> = ({
 
   // Quick navigation links for establishment
   const quickLinks = [
-    { label: 'All Actions', section: 'allActions', icon: Store },
-    { label: 'Analytics', section: 'analytics', icon: BarChart4 },
+    { label: 'All Actions', section: 'allActions', icon: Store, path: '/establishment/all-actions' },
+    { label: 'Analytics', section: 'analytics', icon: BarChart4, path: '/establishment/analytics' },
     { label: 'Mocktail Menu', section: 'menu', icon: Utensils, tab: 'menu' },
     { label: 'Promotions', section: 'promotions', icon: Tag, tab: 'promotions' },
     { label: 'Bar Crawls', section: 'barCrawls', icon: Route, tab: 'barCrawls' },
@@ -34,18 +33,16 @@ const QuickNavigation: React.FC<QuickNavigationProps> = ({
   ];
 
   const handleLinkClick = (link: any) => {
+    // If it has a tab property, use the tab change handler
     if (link.tab) {
       handleTabChange(link.tab);
-    } else if (link.section === 'allActions') {
-      navigate('/establishment/all-actions');
-    } else if (link.section === 'analytics') {
-      // Navigate to the analytics page with the establishment ID if available
-      if (establishmentId) {
-        navigate(`/establishment/analytics/${establishmentId}`);
-      } else {
-        navigate('/establishment/analytics');
-      }
-    } else {
+    }
+    // If it has a path property, use navigation
+    else if (link.path) {
+      navigate(link.path);
+    }
+    // Otherwise use the section click handler
+    else {
       handleQuickLinkClick(link.section);
     }
   };

@@ -29,6 +29,8 @@ import SwigCircuitsPage from './pages/SwigCircuitsPage';
 import BarCrawlProfilePage from './pages/BarCrawlProfilePage';
 import AllActionsPage from './pages/establishment/AllActionsPage';
 import EstablishmentAnalyticsPage from './pages/establishment/EstablishmentAnalyticsPage';
+import MocktailMenuPage from './pages/establishment/MocktailMenuPage';
+import PromotionsPage from './pages/establishment/PromotionsPage';
 
 // Provider
 import AppProviders from './providers/AppProviders';
@@ -84,6 +86,9 @@ function AppContent() {
       <Route path="/establishment/profile" element={user ? <EstablishmentProfilePage /> : <Navigate to="/login" state={{ from: location }} replace />} />
       <Route path="/establishment/all-actions" element={user ? <AllActionsPage /> : <Navigate to="/login" state={{ from: location }} replace />} />
       <Route path="/establishment/analytics" element={user ? <EstablishmentAnalyticsPage /> : <Navigate to="/login" state={{ from: location }} replace />} />
+      <Route path="/establishment/analytics/:id" element={user ? <EstablishmentAnalyticsPage /> : <Navigate to="/login" state={{ from: location }} replace />} />
+      <Route path="/establishment/mocktail-menu" element={user ? <MocktailMenuPage /> : <Navigate to="/login" state={{ from: location }} replace />} />
+      <Route path="/establishment/promotions" element={user ? <PromotionsPage /> : <Navigate to="/login" state={{ from: location }} replace />} />
       
       {/* Admin Routes */}
       <Route path="/admin/login" element={<AdminLogin />} />

@@ -1,8 +1,14 @@
 
 import { createRoot } from 'react-dom/client'
-import App from './App.tsx'
+import { BrowserRouter } from 'react-router-dom';
+import AppProviders from './providers/AppProviders';
+import AppRoutes from './routes/AppRoutes';
 import './index.css'
 
 createRoot(document.getElementById("root")!).render(
-  <App />
+  <BrowserRouter>
+    <AppProviders>
+      <AppRoutes />
+    </AppProviders>
+  </BrowserRouter>
 );
