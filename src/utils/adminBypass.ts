@@ -46,3 +46,34 @@ export function checkAdminBypassStatus() {
     userType
   };
 }
+
+/**
+ * Completely clears all session information from localStorage
+ * Use this function to reset all authentication state for testing
+ */
+export function clearAllSessions() {
+  // Clear all auth-related localStorage items
+  localStorage.removeItem('user_authenticated');
+  localStorage.removeItem('user_email');
+  localStorage.removeItem('user_type');
+  localStorage.removeItem('user_username');
+  localStorage.removeItem('user_name');
+  localStorage.removeItem('user_join_date');
+  
+  // Clear admin authentication
+  localStorage.removeItem('admin_authenticated');
+  localStorage.removeItem('admin_username');
+  localStorage.removeItem('admin_session_created');
+  
+  // Clear admin bypass
+  localStorage.removeItem('admin_bypass');
+  localStorage.removeItem('bypass_user_id');
+  
+  // Clear Supabase session
+  localStorage.removeItem('spiritless-auth-storage');
+  
+  console.log('All session information has been cleared');
+  
+  // Force a page reload to ensure clean state
+  window.location.href = '/login';
+}
