@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import { 
   Package, 
   Plus, 
@@ -17,7 +18,9 @@ import {
   ChevronDown, 
   ArrowUpDown,
   Trash,
-  Calendar
+  Calendar,
+  Users,
+  Tag
 } from 'lucide-react';
 import { 
   Select, 
@@ -46,6 +49,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -63,6 +72,8 @@ interface ReleasesListProps {
   onFilterChange: (status: ReleaseStatus | 'all') => void;
   onCreateRelease: (release: Omit<Release, 'id' | 'createdAt' | 'updatedAt'>) => void;
   onDeleteRelease: (id: string) => void;
+  getNextVersionNumber: (type: ReleaseType) => string;
+  formatDate: (dateString?: string) => string;
 }
 
 const ReleasesList: React.FC<ReleasesListProps> = ({
@@ -75,7 +86,9 @@ const ReleasesList: React.FC<ReleasesListProps> = ({
   onSortChange,
   onFilterChange,
   onCreateRelease,
-  onDeleteRelease
+  onDeleteRelease,
+  getNextVersionNumber,
+  formatDate
 }) => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newRelease, setNewRelease] = useState({
@@ -86,11 +99,29 @@ const ReleasesList: React.FC<ReleasesListProps> = ({
     plannedReleaseDate: '',
     description: '',
     features: [],
-    releaseNotes: []
+    releaseNotes: [],
+    team: [] as string[],
+    tags: [] as string[]
   });
+  const [tagsInput, setTagsInput] = useState('');
+  const [teamInput, setTeamInput] = useState('');
+
+  const handleReleaseTypeChange = (type: ReleaseType) => {
+    const nextVersion = getNextVersionNumber(type);
+    setNewRelease({ ...newRelease, type, version: nextVersion });
+  };
 
   const handleCreateRelease = () => {
-    onCreateRelease(newRelease);
+    // Process tags and team inputs
+    const tags = tagsInput.split(',').map(tag => tag.trim()).filter(tag => tag);
+    const team = teamInput.split(',').map(member => member.trim()).filter(member => member);
+    
+    onCreateRelease({
+      ...newRelease,
+      tags,
+      team
+    });
+    
     setIsCreateDialogOpen(false);
     setNewRelease({
       version: '',
@@ -100,8 +131,12 @@ const ReleasesList: React.FC<ReleasesListProps> = ({
       plannedReleaseDate: '',
       description: '',
       features: [],
-      releaseNotes: []
+      releaseNotes: [],
+      team: [],
+      tags: []
     });
+    setTagsInput('');
+    setTeamInput('');
   };
 
   const renderStatusBadge = (status: ReleaseStatus) => {
@@ -136,6 +171,15 @@ const ReleasesList: React.FC<ReleasesListProps> = ({
     }
   };
 
+  // Calculate release progress percentage
+  const getFeatureCompletionPercentage = (release: Release) => {
+    const totalFeatures = release.features.length;
+    if (totalFeatures === 0) return 100;
+    
+    const completedFeatures = release.features.filter(f => f.status === 'completed').length;
+    return Math.round((completedFeatures / totalFeatures) * 100);
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -164,7 +208,7 @@ const ReleasesList: React.FC<ReleasesListProps> = ({
               New Release
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
+          <DialogContent className="sm:max-w-[600px]">
             <DialogHeader>
               <DialogTitle>Create New Release</DialogTitle>
               <DialogDescription>
@@ -175,20 +219,10 @@ const ReleasesList: React.FC<ReleasesListProps> = ({
             <div className="space-y-4 py-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="version">Version Number</Label>
-                  <Input 
-                    id="version" 
-                    placeholder="e.g., 1.2.0" 
-                    value={newRelease.version}
-                    onChange={(e) => setNewRelease({...newRelease, version: e.target.value})}
-                  />
-                </div>
-                
-                <div className="space-y-2">
                   <Label htmlFor="type">Release Type</Label>
                   <Select 
                     value={newRelease.type} 
-                    onValueChange={(value) => setNewRelease({...newRelease, type: value as ReleaseType})}
+                    onValueChange={(value) => handleReleaseTypeChange(value as ReleaseType)}
                   >
                     <SelectTrigger id="type">
                       <SelectValue placeholder="Select type" />
@@ -199,6 +233,38 @@ const ReleasesList: React.FC<ReleasesListProps> = ({
                       <SelectItem value="patch">Patch</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <Label htmlFor="version">Version Number</Label>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-5 px-1"
+                            onClick={() => setNewRelease({
+                              ...newRelease, 
+                              version: getNextVersionNumber(newRelease.type)
+                            })}
+                          >
+                            Auto-generate
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Generate next version number based on type</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <Input 
+                    id="version" 
+                    placeholder="e.g., 1.2.0" 
+                    value={newRelease.version}
+                    onChange={(e) => setNewRelease({...newRelease, version: e.target.value})}
+                  />
                 </div>
               </div>
               
@@ -212,30 +278,32 @@ const ReleasesList: React.FC<ReleasesListProps> = ({
                 />
               </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="plannedDate">Planned Release Date</Label>
-                <Input 
-                  id="plannedDate" 
-                  type="date" 
-                  value={newRelease.plannedReleaseDate}
-                  onChange={(e) => setNewRelease({...newRelease, plannedReleaseDate: e.target.value})}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="status">Initial Status</Label>
-                <Select 
-                  value={newRelease.status} 
-                  onValueChange={(value) => setNewRelease({...newRelease, status: value as ReleaseStatus})}
-                >
-                  <SelectTrigger id="status">
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="planned">Planned</SelectItem>
-                    <SelectItem value="in_development">In Development</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="plannedDate">Planned Release Date</Label>
+                  <Input 
+                    id="plannedDate" 
+                    type="date" 
+                    value={newRelease.plannedReleaseDate}
+                    onChange={(e) => setNewRelease({...newRelease, plannedReleaseDate: e.target.value})}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="status">Initial Status</Label>
+                  <Select 
+                    value={newRelease.status} 
+                    onValueChange={(value) => setNewRelease({...newRelease, status: value as ReleaseStatus})}
+                  >
+                    <SelectTrigger id="status">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="planned">Planned</SelectItem>
+                      <SelectItem value="in_development">In Development</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               
               <div className="space-y-2">
@@ -246,6 +314,28 @@ const ReleasesList: React.FC<ReleasesListProps> = ({
                   value={newRelease.description}
                   onChange={(e) => setNewRelease({...newRelease, description: e.target.value})}
                 />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="team">Team Members (comma separated)</Label>
+                  <Input 
+                    id="team" 
+                    placeholder="e.g., John Doe, Jane Smith" 
+                    value={teamInput}
+                    onChange={(e) => setTeamInput(e.target.value)}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="tags">Tags (comma separated)</Label>
+                  <Input 
+                    id="tags" 
+                    placeholder="e.g., ui, performance, bugfix" 
+                    value={tagsInput}
+                    onChange={(e) => setTagsInput(e.target.value)}
+                  />
+                </div>
               </div>
             </div>
             
@@ -343,6 +433,7 @@ const ReleasesList: React.FC<ReleasesListProps> = ({
                   )}
                 </Button>
               </TableHead>
+              <TableHead>Progress</TableHead>
               <TableHead>Features</TableHead>
               <TableHead></TableHead>
             </TableRow>
@@ -350,7 +441,7 @@ const ReleasesList: React.FC<ReleasesListProps> = ({
           <TableBody>
             {releases.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-6">
+                <TableCell colSpan={8} className="text-center py-6">
                   <div className="flex flex-col items-center justify-center">
                     <Package className="h-12 w-12 text-gray-300 mb-3" />
                     <p className="text-gray-500">No releases available</p>
@@ -359,74 +450,121 @@ const ReleasesList: React.FC<ReleasesListProps> = ({
                 </TableCell>
               </TableRow>
             ) : (
-              releases.map((release) => (
-                <TableRow 
-                  key={release.id}
-                  className={selectedReleaseId === release.id ? "bg-blue-50" : ""}
-                  onClick={() => onSelectRelease(release.id)}
-                >
-                  <TableCell className="font-mono font-medium">{release.version}</TableCell>
-                  <TableCell>{release.name}</TableCell>
-                  <TableCell>{renderTypeBadge(release.type)}</TableCell>
-                  <TableCell>{renderStatusBadge(release.status)}</TableCell>
-                  <TableCell>
-                    {release.status === 'released' && release.actualReleaseDate ? (
-                      <div className="flex items-center gap-1 text-sm">
-                        <Calendar className="h-3.5 w-3.5 text-green-600" />
-                        {new Date(release.actualReleaseDate).toLocaleDateString()}
+              releases.map((release) => {
+                const completionPercentage = getFeatureCompletionPercentage(release);
+                
+                return (
+                  <TableRow 
+                    key={release.id}
+                    className={selectedReleaseId === release.id ? "bg-blue-50" : ""}
+                    onClick={() => onSelectRelease(release.id)}
+                  >
+                    <TableCell className="font-mono font-medium">{release.version}</TableCell>
+                    <TableCell>
+                      <div>
+                        <div>{release.name}</div>
+                        {release.tags && release.tags.length > 0 && (
+                          <div className="flex gap-1 mt-1 flex-wrap">
+                            {release.tags.slice(0, 3).map((tag, i) => (
+                              <Badge key={i} variant="outline" className="text-xs py-0">
+                                {tag}
+                              </Badge>
+                            ))}
+                            {release.tags.length > 3 && (
+                              <Badge variant="outline" className="text-xs py-0">
+                                +{release.tags.length - 3}
+                              </Badge>
+                            )}
+                          </div>
+                        )}
                       </div>
-                    ) : release.plannedReleaseDate ? (
-                      <div className="flex items-center gap-1 text-sm text-gray-600">
-                        <Calendar className="h-3.5 w-3.5" />
-                        {new Date(release.plannedReleaseDate).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>{renderTypeBadge(release.type)}</TableCell>
+                    <TableCell>{renderStatusBadge(release.status)}</TableCell>
+                    <TableCell>
+                      {release.status === 'released' && release.actualReleaseDate ? (
+                        <div className="flex items-center gap-1 text-sm">
+                          <Calendar className="h-3.5 w-3.5 text-green-600" />
+                          {formatDate(release.actualReleaseDate)}
+                        </div>
+                      ) : release.plannedReleaseDate ? (
+                        <div className="flex items-center gap-1 text-sm text-gray-600">
+                          <Calendar className="h-3.5 w-3.5" />
+                          {formatDate(release.plannedReleaseDate)}
+                        </div>
+                      ) : (
+                        <span className="text-gray-400 text-sm">Not scheduled</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {release.features.length > 0 ? (
+                        <div className="w-32">
+                          <div className="flex justify-between text-xs mb-1">
+                            <span>{completionPercentage}%</span>
+                          </div>
+                          <Progress value={completionPercentage} className="h-2" />
+                        </div>
+                      ) : (
+                        <span className="text-gray-400 text-xs">No features</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center space-x-2">
+                        <Badge variant="secondary">{release.features.length}</Badge>
+                        {release.team && release.team.length > 0 && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <div className="flex items-center">
+                                  <Users className="h-4 w-4 text-gray-500" />
+                                  <span className="ml-1 text-xs">{release.team.length}</span>
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Team: {release.team.join(', ')}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
                       </div>
-                    ) : (
-                      <span className="text-gray-400 text-sm">Not scheduled</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {release.features.length > 0 ? (
-                      <Badge variant="secondary">{release.features.length}</Badge>
-                    ) : (
-                      <span className="text-gray-400 text-sm">None</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-8 w-8"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <Trash className="h-4 w-4 text-red-500" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Delete Release</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Are you sure you want to delete release {release.version} - {release.name}? This action cannot be undone.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction 
-                            className="bg-red-600 hover:bg-red-700"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onDeleteRelease(release.id);
-                            }}
+                    </TableCell>
+                    <TableCell>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8"
+                            onClick={(e) => e.stopPropagation()}
                           >
-                            Delete
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </TableCell>
-                </TableRow>
-              ))
+                            <Trash className="h-4 w-4 text-red-500" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Release</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete release {release.version} - {release.name}? This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction 
+                              className="bg-red-600 hover:bg-red-700"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onDeleteRelease(release.id);
+                              }}
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
             )}
           </TableBody>
         </Table>

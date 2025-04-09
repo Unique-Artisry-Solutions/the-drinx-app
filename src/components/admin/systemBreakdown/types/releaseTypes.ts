@@ -13,6 +13,9 @@ export interface ReleaseFeature {
   improvementId?: string; // Reference to existing improvement items
   assignedTo?: string;
   notes?: string;
+  startDate?: string;
+  completionDate?: string;
+  percentComplete?: number;
 }
 
 export interface ReleaseNote {
@@ -21,6 +24,8 @@ export interface ReleaseNote {
   description: string;
   technicalDetails?: string;
   userFacing: boolean;
+  author?: string;
+  createdAt?: string;
 }
 
 export interface Release {
@@ -37,6 +42,20 @@ export interface Release {
   createdAt: string;
   updatedAt: string;
   createdBy?: string;
+  team?: string[];
+  tags?: string[];
+  previousVersion?: string;
+  nextVersion?: string;
+  releaseBranch?: string;
+}
+
+export interface ReleaseProgress {
+  totalFeatures: number;
+  completedFeatures: number;
+  inProgressFeatures: number;
+  pendingFeatures: number;
+  deferredFeatures: number;
+  percentComplete: number;
 }
 
 export type ReleaseSortField = 'version' | 'name' | 'status' | 'plannedReleaseDate';

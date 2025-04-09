@@ -1,9 +1,21 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Release, ReleaseStatus } from '../types/releaseTypes';
-import { Calendar, Check, Clock, Package } from 'lucide-react';
+import { 
+  Calendar, 
+  Check, 
+  Clock, 
+  Package, 
+  Users, 
+  Tag,
+  ArrowRight,
+  ArrowLeft,
+  GitBranch
+} from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { format, parseISO, isValid } from 'date-fns';
 
 interface ReleaseTimelineProps {
   releases: Release[];
@@ -14,6 +26,8 @@ const ReleaseTimeline: React.FC<ReleaseTimelineProps> = ({
   releases,
   onSelectRelease
 }) => {
+  const [timeScale, setTimeScale] = useState<'months' | 'quarters' | 'years'>('months');
+  
   // Sort releases by planned or actual release date
   const sortedReleases = [...releases].sort((a, b) => {
     const aDate = a.actualReleaseDate || a.plannedReleaseDate || '';
@@ -21,28 +35,41 @@ const ReleaseTimeline: React.FC<ReleaseTimelineProps> = ({
     return new Date(aDate).getTime() - new Date(bDate).getTime();
   });
   
-  // Group releases by year and quarter
-  const releasesByYearQuarter: Record<string, Release[]> = {};
-  
-  sortedReleases.forEach(release => {
+  // Group releases by time period
+  const releasesByTimePeriod = sortedReleases.reduce<Record<string, Release[]>>((acc, release) => {
     const date = new Date(release.actualReleaseDate || release.plannedReleaseDate || '');
     if (!isNaN(date.getTime())) {
       const year = date.getFullYear();
-      const quarter = Math.floor(date.getMonth() / 3) + 1;
-      const key = `${year}-Q${quarter}`;
+      let key: string;
       
-      if (!releasesByYearQuarter[key]) {
-        releasesByYearQuarter[key] = [];
+      switch (timeScale) {
+        case 'quarters':
+          const quarter = Math.floor(date.getMonth() / 3) + 1;
+          key = `${year}-Q${quarter}`;
+          break;
+        case 'years':
+          key = `${year}`;
+          break;
+        case 'months':
+        default:
+          const month = date.getMonth() + 1;
+          key = `${year}-${month.toString().padStart(2, '0')}`;
+          break;
       }
-      releasesByYearQuarter[key].push(release);
+      
+      if (!acc[key]) {
+        acc[key] = [];
+      }
+      acc[key].push(release);
     }
-  });
+    return acc;
+  }, {});
   
   // Convert to array for rendering
-  const timelineGroups = Object.entries(releasesByYearQuarter)
+  const timelineGroups = Object.entries(releasesByTimePeriod)
     .sort(([a], [b]) => b.localeCompare(a)) // Sort in reverse chronological order
-    .map(([yearQuarter, releases]) => ({
-      yearQuarter,
+    .map(([timePeriod, releases]) => ({
+      timePeriod,
       releases
     }));
     
@@ -77,10 +104,45 @@ const ReleaseTimeline: React.FC<ReleaseTimelineProps> = ({
     }
   };
   
+  const formatTimePeriod = (period: string) => {
+    switch (timeScale) {
+      case 'quarters':
+        return period.replace('-', ' ');
+      case 'years':
+        return period;
+      case 'months':
+      default:
+        const [year, month] = period.split('-');
+        const date = new Date(parseInt(year), parseInt(month) - 1, 1);
+        return format(date, 'MMMM yyyy');
+    }
+  };
+
+  // Calculate feature completion percentage for a release
+  const getFeatureCompletionPercentage = (release: Release) => {
+    const totalFeatures = release.features.length;
+    if (totalFeatures === 0) return 100;
+    
+    const completedFeatures = release.features.filter(f => f.status === 'completed').length;
+    return Math.round((completedFeatures / totalFeatures) * 100);
+  };
+  
+  // Format date for display
+  const formatDate = (dateStr?: string) => {
+    if (!dateStr) return '';
+    
+    try {
+      const date = parseISO(dateStr);
+      return isValid(date) ? format(date, 'MMM d, yyyy') : '';
+    } catch (error) {
+      return '';
+    }
+  };
+  
   return (
     <Card>
       <CardContent className="p-6">
-        <div className="flex items-center justify-center mb-6">
+        <div className="flex justify-between items-center mb-6">
           <div className="flex items-center space-x-6">
             <div className="flex items-center">
               <div className="h-4 w-4 rounded-full bg-green-500 mr-2"></div>
@@ -107,6 +169,30 @@ const ReleaseTimeline: React.FC<ReleaseTimelineProps> = ({
               <span className="text-sm">Planned</span>
             </div>
           </div>
+          
+          <div className="flex space-x-2">
+            <Badge 
+              variant={timeScale === 'months' ? 'default' : 'outline'} 
+              className="cursor-pointer"
+              onClick={() => setTimeScale('months')}
+            >
+              Months
+            </Badge>
+            <Badge 
+              variant={timeScale === 'quarters' ? 'default' : 'outline'} 
+              className="cursor-pointer"
+              onClick={() => setTimeScale('quarters')}
+            >
+              Quarters
+            </Badge>
+            <Badge 
+              variant={timeScale === 'years' ? 'default' : 'outline'} 
+              className="cursor-pointer"
+              onClick={() => setTimeScale('years')}
+            >
+              Years
+            </Badge>
+          </div>
         </div>
         
         <div className="relative">
@@ -114,23 +200,20 @@ const ReleaseTimeline: React.FC<ReleaseTimelineProps> = ({
           <div className="absolute left-1/2 transform -translate-x-1/2 h-full w-1 bg-gray-200"></div>
           
           <div className="space-y-12">
-            {timelineGroups.map(({ yearQuarter, releases }) => (
-              <div key={yearQuarter} className="relative">
+            {timelineGroups.map(({ timePeriod, releases }) => (
+              <div key={timePeriod} className="relative">
                 <div className="flex items-center justify-center mb-6">
                   <div className="px-4 py-1 rounded-full bg-gray-100 text-gray-800 font-medium z-10">
-                    {yearQuarter.replace('-', ' ')}
+                    {formatTimePeriod(timePeriod)}
                   </div>
                 </div>
                 
                 <div className="space-y-8">
                   {releases.map((release, index) => {
                     const isEven = index % 2 === 0;
-                    const date = new Date(release.actualReleaseDate || release.plannedReleaseDate || '');
-                    const formattedDate = date.toLocaleDateString(undefined, { 
-                      year: 'numeric', 
-                      month: 'short', 
-                      day: 'numeric' 
-                    });
+                    const releaseDate = release.actualReleaseDate || release.plannedReleaseDate || '';
+                    const formattedDate = formatDate(releaseDate);
+                    const completionPercentage = getFeatureCompletionPercentage(release);
                     
                     return (
                       <div key={release.id} className="relative">
@@ -158,7 +241,7 @@ const ReleaseTimeline: React.FC<ReleaseTimelineProps> = ({
                           
                           <h3 className="text-lg font-medium mb-1">{release.name}</h3>
                           
-                          <div className="flex flex-wrap gap-1 mt-2">
+                          <div className="flex flex-wrap gap-1 mt-2 mb-3">
                             {release.status === 'released' ? (
                               <Badge className="bg-green-500">Released</Badge>
                             ) : (
@@ -176,11 +259,68 @@ const ReleaseTimeline: React.FC<ReleaseTimelineProps> = ({
                             {release.features.length > 0 && (
                               <Badge variant="secondary">{release.features.length} feature{release.features.length !== 1 ? 's' : ''}</Badge>
                             )}
+                            
+                            <Badge variant="outline" className="border-blue-300 text-blue-500">{release.type}</Badge>
                           </div>
+                          
+                          {/* Progress bar for feature completion */}
+                          {release.features.length > 0 && (
+                            <div className="mb-3">
+                              <div className="flex justify-between text-xs mb-1">
+                                <span>Feature completion</span>
+                                <span>{completionPercentage}%</span>
+                              </div>
+                              <Progress value={completionPercentage} className="h-2" />
+                            </div>
+                          )}
                           
                           {release.description && (
                             <p className="text-gray-600 text-sm mt-2 line-clamp-2">{release.description}</p>
                           )}
+                          
+                          {/* Release metadata */}
+                          <div className="mt-3 pt-3 border-t border-gray-100 grid grid-cols-2 gap-2 text-xs text-gray-500">
+                            {release.team && release.team.length > 0 && (
+                              <div className="flex items-center">
+                                <Users className="h-3 w-3 mr-1" />
+                                <span>{release.team.length} team members</span>
+                              </div>
+                            )}
+                            
+                            {release.tags && release.tags.length > 0 && (
+                              <div className="flex items-center">
+                                <Tag className="h-3 w-3 mr-1" />
+                                <span>{release.tags.length} tags</span>
+                              </div>
+                            )}
+                            
+                            {release.releaseBranch && (
+                              <div className="flex items-center">
+                                <GitBranch className="h-3 w-3 mr-1" />
+                                <span className="truncate">{release.releaseBranch}</span>
+                              </div>
+                            )}
+                            
+                            {(release.previousVersion || release.nextVersion) && (
+                              <div className="flex items-center">
+                                {release.previousVersion && (
+                                  <span className="flex items-center">
+                                    <ArrowLeft className="h-3 w-3" />
+                                    {release.previousVersion}
+                                  </span>
+                                )}
+                                {release.previousVersion && release.nextVersion && (
+                                  <span className="mx-1">|</span>
+                                )}
+                                {release.nextVersion && (
+                                  <span className="flex items-center">
+                                    {release.nextVersion}
+                                    <ArrowRight className="h-3 w-3" />
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     );

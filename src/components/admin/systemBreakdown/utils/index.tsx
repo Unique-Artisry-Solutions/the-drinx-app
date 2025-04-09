@@ -32,3 +32,4 @@ export {
 
 // Use 'export type' for type exports when isolatedModules is enabled
 export type { AnalysisStep } from '../types';
+export type { ReleaseProgress } from '../types/releaseTypes';
