@@ -1,3 +1,4 @@
+
 import { ImprovementItem } from './types';
 
 export const proposedImprovements: ImprovementItem[] = [
@@ -75,6 +76,26 @@ export const proposedImprovements: ImprovementItem[] = [
     estimatedEffort: "1-2 weeks with Lovable team",
     businessImpact: "Better understanding of customer behavior leading to improved service timing and marketing",
     technicalRequirements: "Advanced charting libraries, geospatial visualization components, time-series analysis"
+  },
+  {
+    name: "Visit Duration Analytics Implementation",
+    description: "Create comprehensive visit duration tracking and analysis to understand customer engagement patterns",
+    priority: "high",
+    type: "enhancement",
+    affectedAreas: ["establishment"],
+    implementationSteps: [
+      "Design visitor_sessions database schema for tracking entry/exit times",
+      "Implement check-out mechanism (geofencing, timeout rules, or explicit UI)",
+      "Create visitor session tracking API endpoints",
+      "Develop useRecordVisitorSession hook for client-side integration",
+      "Build data aggregation functions for analytics",
+      "Create visualizations for visit duration patterns",
+      "Add filtering by time periods and customer segments"
+    ],
+    estimatedEffort: "2-3 weeks with Lovable team",
+    businessImpact: "Deeper insights into customer behavior and establishment capacity planning",
+    technicalRequirements: "Real-time tracking system, geolocation capabilities, session management logic, data aggregation pipeline",
+    currentStatus: "Under analysis - Database schema design in progress. Initial research shows we need to implement a reliable check-out mechanism to pair with existing check-in functionality. Data collection alternatives being evaluated between geofencing, timeout rules, and explicit UI buttons."
   },
   {
     name: "Analytics Sales Tab Improvements",
