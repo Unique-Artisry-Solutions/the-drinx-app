@@ -153,6 +153,8 @@ const ReleaseEditor: React.FC<ReleaseEditorProps> = ({
         return <Badge variant="outline" className="border-green-500 text-green-500">Ready for Release</Badge>;
       case 'released':
         return <Badge className="bg-green-500">Released</Badge>;
+      default:
+        return null;
     }
   };
   
@@ -166,6 +168,8 @@ const ReleaseEditor: React.FC<ReleaseEditorProps> = ({
         return <Badge className="bg-green-500">Completed</Badge>;
       case 'deferred':
         return <Badge variant="outline" className="border-red-500 text-red-500">Deferred</Badge>;
+      default:
+        return null;
     }
   };
   
@@ -181,6 +185,8 @@ const ReleaseEditor: React.FC<ReleaseEditorProps> = ({
         return <Badge className="bg-red-500">Security</Badge>;
       case 'other':
         return <Badge className="bg-gray-500">Other</Badge>;
+      default:
+        return null;
     }
   };
 
