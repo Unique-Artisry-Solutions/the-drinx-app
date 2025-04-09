@@ -8,6 +8,7 @@ interface AdminNavItem {
   label: string;
   path: string;
   icon: React.ElementType;
+  showInNav?: boolean;
 }
 
 interface AdminMobileMenuProps {
