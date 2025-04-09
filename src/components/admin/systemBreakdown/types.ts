@@ -29,6 +29,7 @@ export interface ImprovementItem {
   estimatedEffort: string;
   businessImpact: string;
   technicalRequirements?: string;
+  currentStatus?: string;
 }
 
 export interface AnalysisStep {
