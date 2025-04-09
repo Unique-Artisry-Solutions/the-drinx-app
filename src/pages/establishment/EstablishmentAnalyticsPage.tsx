@@ -75,16 +75,22 @@ const EstablishmentAnalyticsPage = () => {
   // Handle tab change
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
-    if (tab === 'menu' || tab === 'promotions' || tab === 'barCrawls') {
-      navigate(`/establishment/profile/${effectiveEstablishmentId}`);
+    if (tab === 'menu') {
+      navigate('/establishment/mocktail-menu');
+    } else if (tab === 'promotions') {
+      navigate('/establishment/promotions');
+    } else if (tab === 'barCrawls') {
+      navigate('/establishment/bar-crawl-requests');
     }
   };
 
   // Handle quick link click
   const handleQuickLinkClick = (section: string) => {
     setActiveSection(section);
-    if (section === 'settings' || section === 'allActions') {
-      navigate(`/establishment/${section === 'allActions' ? 'all-actions' : section}`);
+    if (section === 'settings') {
+      navigate('/settings');
+    } else if (section === 'allActions') {
+      navigate('/establishment/all-actions');
     }
   };
 

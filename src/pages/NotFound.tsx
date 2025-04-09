@@ -1,12 +1,15 @@
 
 import React from "react";
-import { useLocation, Link } from "react-router-dom";
+import { useLocation, Link, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { useTheme } from '@/contexts/ThemeContext';
+import { useAuth } from '@/contexts/auth';
 
 const NotFound = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { theme } = useTheme();
+  const { user } = useAuth();
 
   useEffect(() => {
     console.error(
@@ -14,6 +17,19 @@ const NotFound = () => {
       location.pathname
     );
   }, [location.pathname]);
+
+  const handleGoHome = () => {
+    if (user) {
+      const userType = localStorage.getItem('user_type');
+      if (userType === 'establishment') {
+        navigate('/establishment/dashboard');
+      } else {
+        navigate('/explore');
+      }
+    } else {
+      navigate('/');
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4 transition-colors duration-300">
@@ -25,12 +41,12 @@ const NotFound = () => {
         <p className="text-muted-foreground mb-8">
           The page you requested doesn't exist or may have been moved.
         </p>
-        <Link 
-          to="/" 
+        <button 
+          onClick={handleGoHome}
           className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-full inline-block font-medium transition-all hover:bg-opacity-90 hover:shadow-lg"
         >
           Return Home
-        </Link>
+        </button>
       </div>
     </div>
   );

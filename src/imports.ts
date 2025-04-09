@@ -1,5 +1,5 @@
 
-// Import the new BarCrawlManagementPage component
+// Import the BarCrawlManagementPage component
 import BarCrawlManagementPage from './pages/profile/BarCrawlManagementPage';
 
 // Export it so it can be imported in AppRoutes
