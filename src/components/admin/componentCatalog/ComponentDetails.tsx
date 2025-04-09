@@ -1,0 +1,114 @@
+
+import React from 'react';
+import { Copy, Code } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { ComponentCatalogItem } from './types';
+import { useToast } from '@/hooks/use-toast';
+
+interface ComponentDetailsProps {
+  component: ComponentCatalogItem | null;
+}
+
+const ComponentDetails: React.FC<ComponentDetailsProps> = ({ component }) => {
+  const { toast } = useToast();
+  
+  if (!component) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Component Details</CardTitle>
+          <CardDescription>Select a component to view its details and Lovable prompt</CardDescription>
+        </CardHeader>
+        <CardContent className="text-center py-8">
+          <p className="text-gray-500">No component selected</p>
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  const copyToClipboard = (text: string, message: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+      title: 'Copied!',
+      description: message,
+    });
+  };
+  
+  const generateLovablePrompt = (component: ComponentCatalogItem) => {
+    return `Modify the ${component.name} component in ${component.filePath} which has the following selectors: ${component.selectors.join(', ')}`;
+  };
+  
+  return (
+    <Card className="sticky top-4">
+      <CardHeader>
+        <div className="flex justify-between items-start">
+          <CardTitle>{component.name}</CardTitle>
+          <Badge>{component.type}</Badge>
+        </div>
+        <CardDescription>{component.filePath}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="mb-4">
+          <h4 className="font-medium mb-2">Description</h4>
+          <p className="text-sm">{component.description}</p>
+        </div>
+        
+        <div className="mb-4">
+          <h4 className="font-medium mb-2">Selectors</h4>
+          <div className="space-y-1">
+            {component.selectors.map((selector, idx) => (
+              <div key={idx} className="flex items-center justify-between bg-gray-50 p-2 rounded text-sm">
+                <code className="text-xs">{selector}</code>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => copyToClipboard(selector, 'Selector copied!')}
+                >
+                  <Copy className="h-3 w-3" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        <div className="mb-4">
+          <h4 className="font-medium mb-2">Lovable Prompt</h4>
+          <div className="bg-gray-50 p-3 rounded text-sm relative">
+            <code className="text-xs whitespace-pre-wrap">
+              {generateLovablePrompt(component)}
+            </code>
+            <div className="absolute top-2 right-2">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => copyToClipboard(
+                  generateLovablePrompt(component), 
+                  'Lovable prompt copied!'
+                )}
+              >
+                <Copy className="h-3 w-3" />
+              </Button>
+            </div>
+          </div>
+        </div>
+        
+        <div className="flex gap-2">
+          <Button 
+            variant="default" 
+            className="w-full"
+            onClick={() => {
+              window.open(`/${component.filePath.replace('src/', '')}`, '_blank');
+            }}
+          >
+            <Code className="mr-2 h-4 w-4" />
+            View Source
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+export default ComponentDetails;

@@ -1,5 +1,5 @@
 
-import { Home, Users, Building2, LayoutDashboard, FileBarChart2, Image, Palette } from 'lucide-react';
+import { Home, Users, Building2, LayoutDashboard, FileBarChart2, Image, Palette, Layers } from 'lucide-react';
 
 type AdminNavItem = {
   label: string;
@@ -31,6 +31,12 @@ export const adminNavItems: AdminNavItem[] = [
     label: 'System Breakdown',
     path: '/admin/system-breakdown',
     icon: FileBarChart2,
+    showInNav: true,
+  },
+  {
+    label: 'Component Catalog',
+    path: '/admin/component-catalog',
+    icon: Layers,
     showInNav: true,
   },
   {

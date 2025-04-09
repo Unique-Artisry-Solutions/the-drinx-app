@@ -45,6 +45,7 @@ import EstablishmentProfilePage from '@/pages/establishment/EstablishmentProfile
 import MocktailMenuPage from '@/pages/establishment/MocktailMenuPage';
 import PromotionsPage from '@/pages/establishment/PromotionsPage';
 import SystemFunctionalityBreakdown from '@/pages/admin/SystemFunctionalityBreakdown';
+import ComponentCatalogPage from '@/pages/admin/ComponentCatalogPage';
 
 const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
 const AdminLogin = lazy(() => import('@/pages/admin/AdminLogin'));
@@ -106,6 +107,7 @@ const AppRoutes = () => {
         <Route path="/admin/establishments" element={<AdminEstablishmentsPage />} />
         <Route path="/admin/establishments/:id" element={<AdminEstablishmentProfile />} />
         <Route path="/admin/system-breakdown" element={<SystemFunctionalityBreakdown />} />
+        <Route path="/admin/component-catalog" element={<ComponentCatalogPage />} />
         <Route path="/admin/analytics" element={<SystemAnalyticsPage />} />
         <Route path="/admin/photo-moderation" element={<PhotoModerationPage />} />
         <Route path="/admin/content-moderation" element={<ContentModerationPage />} />
