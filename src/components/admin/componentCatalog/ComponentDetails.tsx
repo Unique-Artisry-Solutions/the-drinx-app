@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Copy, Code } from 'lucide-react';
+import { Copy, Code, Component } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -50,6 +50,26 @@ const ComponentDetails: React.FC<ComponentDetailsProps> = ({ component }) => {
         <CardDescription>{component.filePath}</CardDescription>
       </CardHeader>
       <CardContent>
+        {component.preview && (
+          <div className="mb-6 border rounded-md p-3 bg-gray-50">
+            <h4 className="font-medium mb-2 text-sm">Preview</h4>
+            <div className="flex items-center justify-center p-2 bg-white rounded border h-48">
+              {component.preview.startsWith('http') ? (
+                <img 
+                  src={component.preview} 
+                  alt={`Preview of ${component.name}`} 
+                  className="max-w-full max-h-full object-contain"
+                />
+              ) : (
+                <div className="text-gray-400 flex flex-col items-center">
+                  <Component size={36} className="mb-2" />
+                  <span className="text-xs">Component Preview</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+        
         <div className="mb-4">
           <h4 className="font-medium mb-2">Description</h4>
           <p className="text-sm">{component.description}</p>

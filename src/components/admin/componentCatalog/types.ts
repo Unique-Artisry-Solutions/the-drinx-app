@@ -25,6 +25,7 @@ export interface ComponentCatalogItem {
   props?: Record<string, any>;
   children?: ComponentCatalogItem[];
   lovablePrompt?: string;
+  preview?: string; // URL to preview image or SVG/JSX representation
 }
 
 export interface PageComponentsMap {
