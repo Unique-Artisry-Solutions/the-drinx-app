@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import AdminLayout from '@/components/layout/AdminLayout';
+import Layout from '@/components/Layout';
 import { useSystemBreakdown } from '@/components/admin/systemBreakdown/hooks/useSystemBreakdown';
 import StatusUpdateNotification from '@/components/admin/systemBreakdown/StatusUpdateNotification';
 import SystemHeader from '@/components/admin/systemBreakdown/SystemHeader';
@@ -12,7 +12,7 @@ import AnalysisProgress from '@/components/admin/systemBreakdown/AnalysisProgres
 import ReleaseManagementTab from '@/components/admin/systemBreakdown/ReleaseManagementTab';
 
 // Import improvements data
-import { improvementsData } from '@/components/admin/systemBreakdown/improvementsData';
+import { proposedImprovements as improvementsData } from '@/components/admin/systemBreakdown/improvementsData';
 
 const SystemFunctionalityBreakdown: React.FC = () => {
   const {
@@ -31,7 +31,7 @@ const SystemFunctionalityBreakdown: React.FC = () => {
   } = useSystemBreakdown();
 
   return (
-    <AdminLayout title="System Functionality Breakdown" onLogout={handleLogout}>
+    <Layout title="System Functionality Breakdown" onLogout={handleLogout}>
       <div className="p-4 md:p-8 max-w-7xl mx-auto">
         <SystemHeader
           onAnalyzeFeatures={handleAnalyzeFeatures}
@@ -42,7 +42,8 @@ const SystemFunctionalityBreakdown: React.FC = () => {
         {analyzing && (
           <AnalysisProgress
             progress={analysisProgress}
-            analysisSteps={analysisSteps}
+            steps={analysisSteps}
+            analyzing={analyzing}
           />
         )}
 
@@ -105,7 +106,7 @@ const SystemFunctionalityBreakdown: React.FC = () => {
           </TabsContent>
         </Tabs>
       </div>
-    </AdminLayout>
+    </Layout>
   );
 };
 
