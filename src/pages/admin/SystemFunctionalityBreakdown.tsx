@@ -31,7 +31,7 @@ const SystemFunctionalityBreakdown: React.FC = () => {
   } = useSystemBreakdown();
 
   return (
-    <Layout title="System Functionality Breakdown" onLogout={handleLogout}>
+    <Layout>
       <div className="p-4 md:p-8 max-w-7xl mx-auto">
         <SystemHeader
           onAnalyzeFeatures={handleAnalyzeFeatures}
