@@ -23,7 +23,35 @@ export function useUserEstablishment() {
       }
 
       try {
-        // Fetch the establishment owned by the current user
+        // Check if we're using admin bypass
+        const isAdminBypass = localStorage.getItem('admin_bypass') === 'true';
+        const userType = localStorage.getItem('user_type');
+        
+        if (isAdminBypass && userType === 'establishment') {
+          // For establishment admin bypass, fetch any establishment for demo purposes
+          const { data: anyEstablishment, error: fetchError } = await supabase
+            .from('establishments')
+            .select('id')
+            .limit(1)
+            .maybeSingle();
+
+          if (fetchError) throw fetchError;
+
+          if (anyEstablishment) {
+            console.log("Using sample establishment ID for admin bypass:", anyEstablishment.id);
+            setEstablishmentId(anyEstablishment.id);
+            
+            toast({
+              title: "Using demo establishment",
+              description: "Using sample establishment data for admin bypass mode.",
+              variant: "default"
+            });
+            setIsLoading(false);
+            return;
+          }
+        }
+
+        // Regular flow - fetch the establishment owned by the current user
         const { data, error } = await supabase
           .from('establishments')
           .select('id')
