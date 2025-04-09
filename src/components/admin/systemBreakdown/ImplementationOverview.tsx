@@ -3,24 +3,43 @@ import React from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { FeatureItem } from './types';
 import { calculateFeatureStatistics } from './utils';
+import { Shield } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface ImplementationOverviewProps {
   adminFeatures: FeatureItem[];
   establishmentFeatures: FeatureItem[];
   individualFeatures: FeatureItem[];
+  confidenceScore?: number;
 }
 
 const ImplementationOverview: React.FC<ImplementationOverviewProps> = ({ 
   adminFeatures, 
   establishmentFeatures, 
-  individualFeatures 
+  individualFeatures,
+  confidenceScore
 }) => {
   const stats = calculateFeatureStatistics(adminFeatures, establishmentFeatures, individualFeatures);
 
   return (
     <Card className="mb-6">
       <CardHeader>
-        <CardTitle>Implementation Overview</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle>Implementation Overview</CardTitle>
+          {confidenceScore !== undefined && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger className="flex items-center text-sm text-gray-500 gap-1">
+                  <Shield className="h-4 w-4" /> 
+                  {confidenceScore}% confidence
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Confidence score based on data consistency and analysis quality</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+        </div>
         <CardDescription>Current status of platform features</CardDescription>
       </CardHeader>
       <CardContent>

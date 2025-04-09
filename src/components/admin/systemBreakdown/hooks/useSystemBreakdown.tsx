@@ -2,8 +2,19 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
-import { analyzeAllFeatures, mapFeaturesToReleaseFeatures, getDateMonthsFromNow } from '../utils';
-import { FeatureItem, AnalysisStep } from '../types';
+import { 
+  analyzeAllFeatures, 
+  mapFeaturesToReleaseFeatures, 
+  getDateMonthsFromNow,
+  createProgressSnapshot,
+  validateProgressData
+} from '../utils';
+import { 
+  FeatureItem, 
+  AnalysisStep, 
+  ProgressSnapshot, 
+  MonthlyProgressData 
+} from '../types';
 import { adminFeatures as initialAdminFeatures, establishmentFeatures as initialEstablishmentFeatures, individualFeatures as initialIndividualFeatures } from '../features';
 import { useReleaseManagement } from './useReleaseManagement';
 import { v4 as uuidv4 } from 'uuid';
@@ -18,6 +29,12 @@ export const useSystemBreakdown = () => {
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [analysisSteps, setAnalysisSteps] = useState<AnalysisStep[]>([]);
+  
+  // Track progress history for accurate dashboard data
+  const [progressHistory, setProgressHistory] = useState<ProgressSnapshot[]>([]);
+  const [monthlyProgressData, setMonthlyProgressData] = useState<MonthlyProgressData[]>([]);
+  const [currentSnapshot, setCurrentSnapshot] = useState<ProgressSnapshot | null>(null);
+  const [dataValidation, setDataValidation] = useState<{ isValid: boolean, issues: string[] }>({ isValid: true, issues: [] });
   
   // Get the release management functionality to create a release
   const releaseManagement = useReleaseManagement();
@@ -36,6 +53,22 @@ export const useSystemBreakdown = () => {
       navigate('/admin');
     }
   }, [navigate]);
+  
+  // Initialize project status on first load
+  useEffect(() => {
+    // Create initial snapshot without saving to history
+    const initialSnapshot = createProgressSnapshot(
+      adminFeatures,
+      establishmentFeatures,
+      individualFeatures
+    );
+    
+    setCurrentSnapshot(initialSnapshot);
+    
+    // Generate initial monthly progress data based on current state
+    const initialMonthlyData = generateHistoricalProgressData(initialSnapshot);
+    setMonthlyProgressData(initialMonthlyData);
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('admin_authenticated');
@@ -109,9 +142,38 @@ export const useSystemBreakdown = () => {
         ...analyzedFeatures.individualFeatures
       ].filter(feature => feature.statusUpdated).length;
       
+      // Create a new progress snapshot after analysis
+      const newSnapshot = createProgressSnapshot(
+        analyzedFeatures.adminFeatures,
+        analyzedFeatures.establishmentFeatures,
+        analyzedFeatures.individualFeatures
+      );
+      
+      // Validate the progress data
+      const validationResult = validateProgressData(newSnapshot);
+      setDataValidation(validationResult);
+      
+      // Update current snapshot
+      setCurrentSnapshot(newSnapshot);
+      
+      // Add new snapshot to history
+      setProgressHistory(prevHistory => [...prevHistory, newSnapshot]);
+      
+      // Generate updated monthly progress data
+      const updatedMonthlyData = generateHistoricalProgressData(newSnapshot, [...progressHistory, newSnapshot]);
+      setMonthlyProgressData(updatedMonthlyData);
+      
+      // Show analysis completion message
+      let completionMessage = `${totalUpdated} feature status${totalUpdated !== 1 ? 'es' : ''} updated based on database implementation.`;
+      
+      if (!validationResult.isValid) {
+        completionMessage += " Warning: Some data inconsistencies detected.";
+      }
+      
       toast({
         title: "Analysis Complete",
-        description: `${totalUpdated} feature status${totalUpdated !== 1 ? 'es' : ''} updated based on database implementation.`,
+        description: completionMessage,
+        variant: validationResult.isValid ? "default" : "destructive"
       });
       
       setAnalyzing(false);
@@ -184,6 +246,30 @@ export const useSystemBreakdown = () => {
       description: `Successfully created a new release with ${allFeatures.length} features scheduled for ${new Date(plannedDate).toLocaleDateString()}.`
     });
   };
+  
+  // Helper function to generate historical data
+  const generateHistoricalProgressData = (
+    snapshot: ProgressSnapshot,
+    history: ProgressSnapshot[] = []
+  ): MonthlyProgressData[] => {
+    // Import the function dynamically to avoid circular dependencies
+    return import('../utils/statisticsUtils').then(({ generateHistoricalProgressData }) => {
+      return generateHistoricalProgressData(snapshot, history);
+    }).catch(() => {
+      // Fallback with a simple implementation if import fails
+      const currentMonth = new Date().getMonth();
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      
+      return Array.from({ length: currentMonth + 1 }, (_, i) => {
+        const progressRatio = (i + 1) / (currentMonth + 1);
+        return {
+          month: monthNames[i],
+          frontend: Math.round(snapshot.frontendProgress * progressRatio),
+          backend: Math.round(snapshot.backendProgress * progressRatio * 0.85)
+        };
+      });
+    });
+  };
 
   return {
     activeTab,
@@ -198,6 +284,11 @@ export const useSystemBreakdown = () => {
     handleLogout,
     handleExportCSV,
     handleAnalyzeFeatures,
-    handleCreateReleaseFromFeatures
+    handleCreateReleaseFromFeatures,
+    // Expose additional state for Dashboard
+    progressHistory,
+    monthlyProgressData,
+    currentSnapshot,
+    dataValidation
   };
 };

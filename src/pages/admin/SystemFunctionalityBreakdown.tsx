@@ -29,7 +29,11 @@ const SystemFunctionalityBreakdown: React.FC = () => {
     handleLogout,
     handleExportCSV,
     handleAnalyzeFeatures,
-    handleCreateReleaseFromFeatures
+    handleCreateReleaseFromFeatures,
+    // Additional data for enhanced dashboard
+    monthlyProgressData,
+    currentSnapshot,
+    dataValidation
   } = useSystemBreakdown();
 
   return (
@@ -72,6 +76,9 @@ const SystemFunctionalityBreakdown: React.FC = () => {
               adminFeatures={adminFeatures}
               establishmentFeatures={establishmentFeatures}
               individualFeatures={individualFeatures}
+              monthlyProgressData={monthlyProgressData}
+              currentSnapshot={currentSnapshot}
+              dataValidation={dataValidation}
             />
             <CreateReleaseFromFeaturesButton 
               onClick={handleCreateReleaseFromFeatures} 

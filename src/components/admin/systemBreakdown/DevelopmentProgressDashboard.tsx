@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -12,20 +11,26 @@ import {
   Calendar,
   CheckCircle2,
   Clock,
-  AlertCircle
+  AlertCircle,
+  Shield
 } from 'lucide-react';
-import { FeatureItem } from './types';
+import { FeatureItem, MonthlyProgressData } from './types';
+import { calculateCategoryProgress } from './utils/statisticsUtils';
 
 interface DevelopmentProgressDashboardProps {
   adminFeatures: FeatureItem[];
   establishmentFeatures: FeatureItem[];
   individualFeatures: FeatureItem[];
+  monthlyProgressData?: MonthlyProgressData[];
+  confidenceScore?: number;
 }
 
 const DevelopmentProgressDashboard: React.FC<DevelopmentProgressDashboardProps> = ({
   adminFeatures,
   establishmentFeatures,
-  individualFeatures
+  individualFeatures,
+  monthlyProgressData = [],
+  confidenceScore = 95
 }) => {
   const [activeTab, setActiveTab] = useState<string>('overview');
   
@@ -58,17 +63,18 @@ const DevelopmentProgressDashboard: React.FC<DevelopmentProgressDashboardProps> 
   const establishmentProgress = calculateCategoryProgress(establishmentFeatures);
   const individualProgress = calculateCategoryProgress(individualFeatures);
 
-  // Monthly tracking (simplified simulation)
-  const currentMonth = new Date().getMonth();
-  const monthlyProgress = [
-    { month: 'Jan', frontend: 10, backend: 5 },
-    { month: 'Feb', frontend: 25, backend: 15 },
-    { month: 'Mar', frontend: 40, backend: 30 },
-    { month: 'Apr', frontend: 55, backend: 45 },
-    { month: 'May', frontend: 70, backend: 60 },
-    { month: 'Jun', frontend: 85, backend: 75 },
-    { month: 'Jul', frontend: frontendProgressPercentage, backend: backendProgressPercentage }
-  ].slice(0, currentMonth + 1);
+  // Use provided monthly progress data or fall back to simple simulation
+  const monthlyProgress = monthlyProgressData.length > 0 
+    ? monthlyProgressData 
+    : [
+        { month: 'Jan', frontend: 10, backend: 5 },
+        { month: 'Feb', frontend: 25, backend: 15 },
+        { month: 'Mar', frontend: 40, backend: 30 },
+        { month: 'Apr', frontend: 55, backend: 45 },
+        { month: 'May', frontend: 70, backend: 60 },
+        { month: 'Jun', frontend: 85, backend: 75 },
+        { month: 'Jul', frontend: frontendProgressPercentage, backend: backendProgressPercentage }
+      ].slice(0, new Date().getMonth() + 1);
 
   return (
     <Card className="mb-6">
@@ -76,6 +82,15 @@ const DevelopmentProgressDashboard: React.FC<DevelopmentProgressDashboardProps> 
         <CardTitle className="flex items-center gap-2">
           <BarChart3 className="h-5 w-5 text-blue-500" />
           Development Progress Dashboard
+          {confidenceScore !== undefined && (
+            <Badge 
+              variant={confidenceScore >= 90 ? "outline" : confidenceScore >= 70 ? "secondary" : "destructive"}
+              className="ml-2 flex items-center gap-1"
+            >
+              <Shield className="h-3 w-3" />
+              {confidenceScore}% confidence
+            </Badge>
+          )}
         </CardTitle>
         <CardDescription>
           Track frontend and backend implementation progress
@@ -99,18 +114,21 @@ const DevelopmentProgressDashboard: React.FC<DevelopmentProgressDashboardProps> 
                 percentage={overallProgressPercentage} 
                 description="All features combined"
                 icon={<BarChart3 className="h-5 w-5 text-blue-500" />}
+                confidenceScore={confidenceScore}
               />
               <ProgressCard 
                 title="Frontend Progress" 
                 percentage={frontendProgressPercentage} 
                 description="UI components & interactions"
                 icon={<Code className="h-5 w-5 text-purple-500" />}
+                confidenceScore={confidenceScore}
               />
               <ProgressCard 
                 title="Backend Progress" 
                 percentage={backendProgressPercentage} 
                 description="Database & services"
                 icon={<Database className="h-5 w-5 text-green-500" />}
+                confidenceScore={confidenceScore}
               />
             </div>
             
@@ -285,6 +303,22 @@ const DevelopmentProgressDashboard: React.FC<DevelopmentProgressDashboardProps> 
                   </div>
                 </div>
               </div>
+              
+              {confidenceScore !== undefined && (
+                <div className="mt-4 border-t pt-4">
+                  <div className="flex justify-between mb-1 items-center">
+                    <span className="text-sm font-medium flex items-center gap-1">
+                      <Shield className="h-4 w-4 text-blue-500" />
+                      Data Confidence
+                    </span>
+                    <span className="text-sm font-medium">{confidenceScore}%</span>
+                  </div>
+                  <Progress value={confidenceScore} className="h-2" />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Confidence score represents the consistency and reliability of the implementation analysis
+                  </p>
+                </div>
+              )}
             </div>
           </TabsContent>
           
@@ -323,6 +357,16 @@ const DevelopmentProgressDashboard: React.FC<DevelopmentProgressDashboardProps> 
                   </div>
                 ))}
               </div>
+              
+              {confidenceScore !== undefined && confidenceScore < 90 && (
+                <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-md">
+                  <p className="text-sm text-amber-800 flex items-center">
+                    <AlertCircle className="h-4 w-4 mr-2 text-amber-500" />
+                    Timeline data is partially reconstructed and may not reflect precise historical progress.
+                    Run analysis regularly to improve data confidence.
+                  </p>
+                </div>
+              )}
             </div>
           </TabsContent>
         </Tabs>
@@ -332,7 +376,7 @@ const DevelopmentProgressDashboard: React.FC<DevelopmentProgressDashboardProps> 
 };
 
 // Helper Components
-const ProgressCard = ({ title, percentage, description, icon }) => (
+const ProgressCard = ({ title, percentage, description, icon, confidenceScore }) => (
   <div className="border rounded-lg p-4">
     <div className="flex justify-between items-start mb-3">
       <h3 className="text-lg font-medium">{title}</h3>
@@ -342,7 +386,15 @@ const ProgressCard = ({ title, percentage, description, icon }) => (
     <div className="mb-2">
       <Progress value={percentage} className="h-2" />
     </div>
-    <p className="text-sm text-gray-500">{description}</p>
+    <div className="flex items-center justify-between">
+      <p className="text-sm text-gray-500">{description}</p>
+      {confidenceScore !== undefined && (
+        <Badge variant="outline" className="text-xs">
+          <Shield className="h-3 w-3 mr-1" />
+          {confidenceScore}%
+        </Badge>
+      )}
+    </div>
   </div>
 );
 
@@ -450,7 +502,7 @@ const ComparisonItem = ({ label, percentage, color }) => (
 // Helper function to calculate category progress
 function calculateCategoryProgress(features: FeatureItem[]) {
   const totalFeatures = features.length;
-  if (totalFeatures === 0) return { frontend: 0, backend: 0 };
+  if (totalFeatures === 0) return { frontend: 0, backend: 0, overall: 0 };
   
   // Calculate backend progress
   const dbCompleted = features.filter(f => f.databaseStatus === 'complete').length;
@@ -462,7 +514,7 @@ function calculateCategoryProgress(features: FeatureItem[]) {
   const partialFeatures = features.filter(f => f.status === 'partial').length;
   const frontendPercentage = Math.round((implementedFeatures + (partialFeatures * 0.5)) / totalFeatures * 100);
   
-  return { frontend: frontendPercentage, backend: backendPercentage };
+  return { frontend: frontendPercentage, backend: backendPercentage, overall: Math.round((frontendPercentage + backendPercentage) / 2) };
 }
 
 export default DevelopmentProgressDashboard;

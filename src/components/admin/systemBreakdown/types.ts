@@ -1,3 +1,4 @@
+
 export type FeatureStatus = 'implemented' | 'partial' | 'planned' | 'not_started';
 export type DatabaseStatus = 'complete' | 'in_progress' | 'not_started';
 export type AccessLevel = 'full' | 'partial' | 'none' | 'planned';
@@ -38,4 +39,34 @@ export type SortOrder = 'asc' | 'desc';
 export interface AnalysisStep {
   name: string;
   completed: boolean;
+}
+
+// New types for progress tracking
+export interface ProgressSnapshot {
+  date: string;
+  overallProgress: number;
+  frontendProgress: number;
+  backendProgress: number;
+  adminProgress: CategoryProgress;
+  establishmentProgress: CategoryProgress;
+  individualProgress: CategoryProgress;
+  implementedFeatures: number;
+  partialFeatures: number;
+  plannedFeatures: number;
+  dbComplete: number;
+  dbInProgress: number;
+  dbNotStarted: number;
+  confidenceScore: number;
+}
+
+export interface CategoryProgress {
+  frontend: number;
+  backend: number;
+  overall: number;
+}
+
+export interface MonthlyProgressData {
+  month: string;
+  frontend: number;
+  backend: number;
 }
