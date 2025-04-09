@@ -9,9 +9,14 @@ import {
   isMocktailSuggestionFeature,
   isMocktailTrendsFeature, 
   isIngredientPairingFeature,
-  isPromotionFeature
+  isPromotionFeature,
+  isAnalyticsFeature
 } from './featureDetection';
 import { isTaskCompleted, parseTasks } from './taskDetection';
+import { 
+  mapFeaturesToReleaseFeatures, 
+  mapFeatureStatusToReleaseStatus 
+} from './releaseUtils';
 
 export {
   renderStatusBadge,
@@ -26,8 +31,11 @@ export {
   isMocktailTrendsFeature, 
   isIngredientPairingFeature,
   isPromotionFeature,
+  isAnalyticsFeature,
   isTaskCompleted,
-  parseTasks
+  parseTasks,
+  mapFeaturesToReleaseFeatures,
+  mapFeatureStatusToReleaseStatus
 };
 
 // Use 'export type' for type exports when isolatedModules is enabled

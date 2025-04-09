@@ -176,3 +176,12 @@ function updateFeaturesDbStatus(features: FeatureItem[]) {
     };
   });
 }
+
+export function isAnalyticsFeature(feature: FeatureItem) {
+  const keywords = ['analytics', 'statistics', 'reporting', 'reports', 'metrics', 'dashboard', 'trends'];
+  
+  return keywords.some(keyword => 
+    (feature.name.toLowerCase().includes(keyword) || 
+    (feature.description && feature.description.toLowerCase().includes(keyword)))
+  );
+}

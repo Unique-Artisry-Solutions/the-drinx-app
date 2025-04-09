@@ -10,6 +10,7 @@ import FeatureTab from '@/components/admin/systemBreakdown/FeatureTab';
 import ProposedImprovementsTab from '@/components/admin/systemBreakdown/ProposedImprovementsTab';
 import AnalysisProgress from '@/components/admin/systemBreakdown/AnalysisProgress';
 import ReleaseManagementTab from '@/components/admin/systemBreakdown/ReleaseManagementTab';
+import CreateReleaseFromFeaturesButton from '@/components/admin/systemBreakdown/CreateReleaseFromFeaturesButton';
 
 // Import improvements data
 import { proposedImprovements as improvementsData } from '@/components/admin/systemBreakdown/improvementsData';
@@ -28,6 +29,7 @@ const SystemFunctionalityBreakdown: React.FC = () => {
     handleLogout,
     handleExportCSV,
     handleAnalyzeFeatures,
+    handleCreateReleaseFromFeatures
   } = useSystemBreakdown();
 
   return (
@@ -70,6 +72,9 @@ const SystemFunctionalityBreakdown: React.FC = () => {
               adminFeatures={adminFeatures}
               establishmentFeatures={establishmentFeatures}
               individualFeatures={individualFeatures}
+            />
+            <CreateReleaseFromFeaturesButton 
+              onClick={handleCreateReleaseFromFeatures} 
             />
           </TabsContent>
 
