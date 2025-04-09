@@ -69,7 +69,7 @@ const ComponentDetails: React.FC<ComponentDetailsProps> = ({ component }) => {
   };
   
   return (
-    <Card className="relative z-0"> {/* Lowered z-index to ensure it doesn't interfere with tabs */}
+    <Card className="shadow-md"> {/* Removed relative z-0 positioning and added shadow */}
       <CardHeader>
         <div className="flex justify-between items-start">
           <CardTitle>{component.name}</CardTitle>

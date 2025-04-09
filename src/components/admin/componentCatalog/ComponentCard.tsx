@@ -58,7 +58,7 @@ const ComponentCard: React.FC<ComponentCardProps> = ({ component, onSelectCompon
   
   return (
     <Card 
-      className="hover:shadow-md transition-shadow cursor-pointer"
+      className="hover:shadow-md transition-shadow cursor-pointer h-full flex flex-col"
       onClick={() => onSelectComponent(component)}
     >
       <CardHeader className="pb-2">
@@ -72,13 +72,13 @@ const ComponentCard: React.FC<ComponentCardProps> = ({ component, onSelectCompon
           {component.filePath}
         </CardDescription>
       </CardHeader>
-      <CardContent className="pt-0">
-        {/* Always show preview container, but content differs based on component.preview */}
-        <div className="mb-3 border rounded-md p-2 bg-gray-50 h-24 flex items-center justify-center overflow-hidden">
+      <CardContent className="pt-0 flex-1 flex flex-col">
+        {/* Preview container with consistent height */}
+        <div className="mb-3 border rounded-md p-2 bg-gray-50 h-32 flex items-center justify-center overflow-hidden">
           {renderPreview()}
         </div>
-        <div className="text-sm">{component.description}</div>
-        <div className="flex mt-4">
+        <div className="text-sm mb-4 flex-grow">{component.description}</div>
+        <div className="mt-auto">
           <Button 
             size="sm" 
             variant="outline" 
