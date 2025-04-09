@@ -5,8 +5,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
 import { useAuth } from '@/contexts/auth';
-import { useParams } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
+import { useParams, useNavigate } from 'react-router-dom';
 import { DateRange } from 'react-day-picker';
 import { addDays } from 'date-fns';
 import { AnalyticsHeader } from '@/components/analytics/AnalyticsHeader';
@@ -15,10 +14,17 @@ import { AnalyticsLoadingState } from '@/components/analytics/AnalyticsLoadingSt
 import { useEstablishmentDetails } from '@/hooks/analytics/useEstablishmentDetails';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { useEstablishmentAnalytics } from '@/hooks/useEstablishmentAnalytics';
+import QuickNavigation from '@/components/establishment/QuickNavigation';
+import { useUserEstablishment } from '@/hooks/establishment';
 
 const EstablishmentAnalyticsPage = () => {
   const { user } = useAuth();
   const { id: urlEstablishmentId } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  
+  // For navigation between tabs
+  const [activeTab, setActiveTab] = useState('analytics');
+  const [activeSection, setActiveSection] = useState<string | null>('analytics');
   
   const [date, setDate] = useState<DateRange | undefined>({
     from: addDays(new Date(), -30),
@@ -56,6 +62,25 @@ const EstablishmentAnalyticsPage = () => {
       endDate: date?.to || new Date()
     }
   });
+  
+  // Get user's establishment for QuickNavigation if no establishmentId is provided
+  const { establishmentId: userEstablishmentId } = useUserEstablishment();
+  
+  // Handle tab change
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    if (tab === 'menu' || tab === 'promotions' || tab === 'barCrawls') {
+      navigate(`/establishment/profile/${establishmentId || userEstablishmentId}`);
+    }
+  };
+
+  // Handle quick link click
+  const handleQuickLinkClick = (section: string) => {
+    setActiveSection(section);
+    if (section === 'settings' || section === 'allActions') {
+      navigate(`/establishment/${section === 'allActions' ? 'all-actions' : section}`);
+    }
+  };
 
   if (isEstablishmentLoading || isAnalyticsLoading || isDashboardLoading) {
     return <AnalyticsLoadingState />;
@@ -80,24 +105,34 @@ const EstablishmentAnalyticsPage = () => {
 
   return (
     <Layout>
-      <div className="container max-w-6xl mx-auto p-6 pb-12">
-        <AnalyticsHeader 
-          establishmentName={establishmentName} 
-          date={date} 
-          setDate={setDate} 
-          visitorAnalytics={visitorAnalytics}
-          revenueReports={revenueReports}
-          popularDrinks={popularDrinks}
+      <div className="container max-w-6xl mx-auto pb-12">
+        <QuickNavigation 
+          activeSection={activeSection}
+          activeTab={activeTab}
+          handleTabChange={handleTabChange}
+          handleQuickLinkClick={handleQuickLinkClick}
+          establishmentId={establishmentId || userEstablishmentId}
         />
         
-        <AnalyticsTabContent 
-          visitorAnalytics={visitorAnalytics}
-          visitorTrends={visitorTrends}
-          retentionTrends={retentionTrends}
-          revenueReports={revenueReports}
-          popularDrinks={popularDrinks}
-          ratingData={ratingData}
-        />
+        <div className="px-6">
+          <AnalyticsHeader 
+            establishmentName={establishmentName} 
+            date={date} 
+            setDate={setDate} 
+            visitorAnalytics={visitorAnalytics}
+            revenueReports={revenueReports}
+            popularDrinks={popularDrinks}
+          />
+          
+          <AnalyticsTabContent 
+            visitorAnalytics={visitorAnalytics}
+            visitorTrends={visitorTrends}
+            retentionTrends={retentionTrends}
+            revenueReports={revenueReports}
+            popularDrinks={popularDrinks}
+            ratingData={ratingData}
+          />
+        </div>
       </div>
     </Layout>
   );
