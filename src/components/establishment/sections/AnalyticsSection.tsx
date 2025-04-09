@@ -23,7 +23,12 @@ const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({ visitorStats, estab
   const navigate = useNavigate();
 
   const goToAnalyticsPage = () => {
-    navigate('/establishment/analytics');
+    // If we have an establishment ID, include it in the URL
+    if (establishmentId) {
+      navigate(`/establishment/analytics/${establishmentId}`);
+    } else {
+      navigate('/establishment/analytics');
+    }
   };
   
   if (visitorStats.isLoading) {

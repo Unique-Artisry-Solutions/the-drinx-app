@@ -106,6 +106,7 @@ const EstablishmentProfilePage = () => {
           activeTab={activeTab}
           handleTabChange={handleTabChange}
           handleQuickLinkClick={handleQuickLinkClick}
+          establishmentId={establishmentId}
         />
         
         {/* Show section content if a quick link is active */}

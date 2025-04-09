@@ -11,13 +11,15 @@ interface QuickNavigationProps {
   activeTab: string;
   handleTabChange: (tab: string) => void;
   handleQuickLinkClick: (section: string) => void;
+  establishmentId?: string;
 }
 
 const QuickNavigation: React.FC<QuickNavigationProps> = ({
   activeSection,
   activeTab,
   handleTabChange,
-  handleQuickLinkClick
+  handleQuickLinkClick,
+  establishmentId
 }) => {
   const navigate = useNavigate();
 
@@ -37,7 +39,12 @@ const QuickNavigation: React.FC<QuickNavigationProps> = ({
     } else if (link.section === 'allActions') {
       navigate('/establishment/all-actions');
     } else if (link.section === 'analytics') {
-      navigate('/establishment/analytics');
+      // Navigate to the analytics page with the establishment ID if available
+      if (establishmentId) {
+        navigate(`/establishment/analytics/${establishmentId}`);
+      } else {
+        navigate('/establishment/analytics');
+      }
     } else {
       handleQuickLinkClick(link.section);
     }
