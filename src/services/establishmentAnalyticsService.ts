@@ -46,22 +46,48 @@ export interface DrinkPopularity {
   month: string;
 }
 
+// Cache for mock data to ensure consistency between renders
+const mockDataCache: Record<string, {
+  visitorAnalytics: EstablishmentAnalytics[];
+  trendData: TrendDataPoint[];
+  revenueReports: RevenueReport[];
+  drinkPopularity: DrinkPopularity[];
+}> = {};
+
+// Stable random function using seed
+function seededRandom(seed: string, index: number): number {
+  const seedValue = seed.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  const combinedSeed = seedValue + index * 137;
+  // Simple PRNG using a linear congruential generator
+  const x = Math.sin(combinedSeed) * 10000;
+  return x - Math.floor(x);
+}
+
 // Create mock data for development until types are properly set up
 const createMockData = (establishmentId: string) => {
+  // Check if we already have cached mock data for this establishment
+  if (mockDataCache[establishmentId]) {
+    return mockDataCache[establishmentId];
+  }
+
   // Mock visitor analytics
   const visitorAnalytics: EstablishmentAnalytics[] = Array.from({ length: 30 }, (_, i) => {
     const date = new Date();
     date.setDate(date.getDate() - 30 + i);
-    const visitors = Math.floor(Math.random() * 50) + 10;
+    
+    // Use seeded random to create stable but random-looking data
+    const rand = seededRandom(establishmentId, i);
+    const visitors = Math.floor(rand * 40) + 10;
+    
     return {
-      id: `va-${i}`,
+      id: `va-${establishmentId}-${i}`,
       establishment_id: establishmentId,
       date: date.toISOString().split('T')[0],
       total_visitors: visitors,
-      unique_visitors: Math.floor(visitors * 0.7),
-      returning_visitors: Math.floor(visitors * 0.3),
-      average_rating: 3.5 + Math.random() * 1.5,
-      total_revenue: Math.floor(Math.random() * 1000) + 500
+      unique_visitors: Math.floor(visitors * (0.6 + seededRandom(establishmentId, i + 100) * 0.2)),
+      returning_visitors: Math.floor(visitors * (0.2 + seededRandom(establishmentId, i + 200) * 0.2)),
+      average_rating: 3 + seededRandom(establishmentId, i + 300) * 2,
+      total_revenue: Math.floor(seededRandom(establishmentId, i + 400) * 700) + 300
     };
   });
 
@@ -69,11 +95,12 @@ const createMockData = (establishmentId: string) => {
   const trendData: TrendDataPoint[] = Array.from({ length: 30 }, (_, i) => {
     const date = new Date();
     date.setDate(date.getDate() - 30 + i);
+    
     return {
-      id: `tp-${i}`,
+      id: `tp-${establishmentId}-${i}`,
       establishment_id: establishmentId,
       metric_name: 'visitor_count',
-      metric_value: Math.floor(Math.random() * 50) + 10,
+      metric_value: Math.floor(seededRandom(establishmentId, i + 500) * 40) + 10,
       timestamp: date.toISOString(),
       tags: { date: date.toISOString().split('T')[0] }
     };
@@ -86,8 +113,9 @@ const createMockData = (establishmentId: string) => {
     const startDate = new Date(date);
     startDate.setDate(1);
     const endDate = new Date(date.getFullYear(), date.getMonth() + 1, 0);
-    const revenue = Math.floor(Math.random() * 10000) + 2000;
-    const transactions = Math.floor(Math.random() * 200) + 50;
+    
+    const revenue = Math.floor(seededRandom(establishmentId, i + 600) * 8000) + 2000;
+    const transactions = Math.floor(seededRandom(establishmentId, i + 700) * 150) + 50;
     
     return {
       establishment_id: establishmentId,
@@ -100,61 +128,48 @@ const createMockData = (establishmentId: string) => {
     };
   });
 
-  // Mock drink popularity
-  const drinkPopularity: DrinkPopularity[] = [
-    {
-      establishment_id: establishmentId,
-      cocktail_id: 'c1',
-      cocktail_name: 'Virgin Mojito',
-      review_count: 45,
-      average_rating: 4.7,
-      unique_reviewers: 42,
-      month: new Date().toISOString()
-    },
-    {
-      establishment_id: establishmentId,
-      cocktail_id: 'c2',
-      cocktail_name: 'Sparkling Berry Lemonade',
-      review_count: 38,
-      average_rating: 4.5,
-      unique_reviewers: 36,
-      month: new Date().toISOString()
-    },
-    {
-      establishment_id: establishmentId,
-      cocktail_id: 'c3',
-      cocktail_name: 'Cucumber Mint Cooler',
-      review_count: 32,
-      average_rating: 4.3,
-      unique_reviewers: 31,
-      month: new Date().toISOString()
-    },
-    {
-      establishment_id: establishmentId,
-      cocktail_id: 'c4',
-      cocktail_name: 'Pineapple Ginger Fizz',
-      review_count: 29,
-      average_rating: 4.2,
-      unique_reviewers: 27,
-      month: new Date().toISOString()
-    },
-    {
-      establishment_id: establishmentId,
-      cocktail_id: 'c5',
-      cocktail_name: 'Watermelon Basil Refresher',
-      review_count: 25,
-      average_rating: 4.1,
-      unique_reviewers: 24,
-      month: new Date().toISOString()
-    }
+  // Common mocktail names for consistency
+  const mocktailNames = [
+    'Virgin Mojito',
+    'Sparkling Berry Lemonade',
+    'Cucumber Mint Cooler',
+    'Pineapple Ginger Fizz',
+    'Watermelon Basil Refresher',
+    'Tropical Paradise',
+    'Blue Lagoon',
+    'Peachy Sunrise',
+    'Strawberry Fields',
+    'Citrus Splash'
   ];
 
-  return {
+  // Mock drink popularity with consistent names
+  const drinkPopularity: DrinkPopularity[] = mocktailNames.map((name, i) => {
+    const reviewCount = Math.floor(seededRandom(establishmentId, i + 800) * 30) + 15;
+    
+    return {
+      establishment_id: establishmentId,
+      cocktail_id: `c${i + 1}`,
+      cocktail_name: name,
+      review_count: reviewCount,
+      average_rating: 3.5 + seededRandom(establishmentId, i + 900) * 1.5,
+      unique_reviewers: Math.floor(reviewCount * (0.8 + seededRandom(establishmentId, i + 1000) * 0.2)),
+      month: new Date().toISOString()
+    };
+  });
+
+  // Sort drinks by review count for consistency in visualization
+  drinkPopularity.sort((a, b) => b.review_count - a.review_count);
+
+  // Cache the generated mock data
+  const mockData = {
     visitorAnalytics,
     trendData,
     revenueReports,
-    drinkPopularity
+    drinkPopularity: drinkPopularity.slice(0, 5) // Only use top 5 for consistency
   };
+  
+  mockDataCache[establishmentId] = mockData;
+  return mockData;
 };
 
 /**

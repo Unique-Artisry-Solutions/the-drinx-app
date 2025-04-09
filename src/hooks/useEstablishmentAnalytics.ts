@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { 
   fetchVisitorAnalytics, 
   fetchTrendData,
@@ -28,6 +28,19 @@ interface EstablishmentAnalyticsData {
   refresh: () => void;
 }
 
+// Cache for analytics data to prevent flickering with stable mock data
+const analyticsCache: Record<string, {
+  visitorAnalytics: EstablishmentAnalytics[];
+  visitorTrends: TrendDataPoint[];
+  retentionTrends: TrendDataPoint[];
+  revenueReports: RevenueReport[];
+  popularDrinks: DrinkPopularity[];
+  timestamp: number;
+}> = {};
+
+// Cache expiry time (5 minutes)
+const CACHE_EXPIRY_MS = 5 * 60 * 1000;
+
 export function useEstablishmentAnalytics({
   establishmentId,
   range
@@ -41,37 +54,79 @@ export function useEstablishmentAnalytics({
   const [error, setError] = useState<string | null>(null);
   const [refreshToken, setRefreshToken] = useState<number>(0);
 
+  // Create a cache key based on establishmentId and date range
+  const cacheKey = useMemo(() => {
+    const startDate = range.startDate.toISOString().split('T')[0];
+    const endDate = range.endDate.toISOString().split('T')[0];
+    return `${establishmentId}-${startDate}-${endDate}`;
+  }, [establishmentId, range.startDate, range.endDate]);
+
   // Function to refresh all data
   const refresh = () => {
+    // Invalidate cache for this key
+    if (cacheKey && analyticsCache[cacheKey]) {
+      delete analyticsCache[cacheKey];
+    }
     setRefreshToken(prev => prev + 1);
   };
 
   // Fetch all analytics data
   useEffect(() => {
+    if (!establishmentId) {
+      setIsLoading(false);
+      setError("No establishment ID provided");
+      return;
+    }
+
     async function loadAnalyticsData() {
       setIsLoading(true);
       setError(null);
 
       try {
-        // Fetch visitor analytics
-        const visitors = await fetchVisitorAnalytics(establishmentId, range);
+        // Check if we have valid cached data
+        if (
+          cacheKey && 
+          analyticsCache[cacheKey] && 
+          (Date.now() - analyticsCache[cacheKey].timestamp < CACHE_EXPIRY_MS)
+        ) {
+          console.log("Using cached analytics data");
+          const cachedData = analyticsCache[cacheKey];
+          setVisitorAnalytics(cachedData.visitorAnalytics);
+          setVisitorTrends(cachedData.visitorTrends);
+          setRetentionTrends(cachedData.retentionTrends);
+          setRevenueReports(cachedData.revenueReports);
+          setPopularDrinks(cachedData.popularDrinks);
+          setIsLoading(false);
+          return;
+        }
+
+        // Fetch all data in parallel for better performance
+        const [visitors, visitorTrendData, retentionTrendData, revenue, drinks] = await Promise.all([
+          fetchVisitorAnalytics(establishmentId, range),
+          fetchTrendData(establishmentId, 'visitor_count', range),
+          fetchTrendData(establishmentId, 'retention_rate', range),
+          fetchRevenueReports(establishmentId, range),
+          fetchDrinkPopularity(establishmentId)
+        ]);
+
+        // Update state with fetched data
         setVisitorAnalytics(visitors);
-
-        // Fetch visitor trends
-        const visitorTrendData = await fetchTrendData(establishmentId, 'visitor_count', range);
         setVisitorTrends(visitorTrendData);
-
-        // Fetch retention trends
-        const retentionTrendData = await fetchTrendData(establishmentId, 'retention_rate', range);
         setRetentionTrends(retentionTrendData);
-
-        // Fetch revenue reports
-        const revenue = await fetchRevenueReports(establishmentId, range);
         setRevenueReports(revenue);
-
-        // Fetch popular drinks
-        const drinks = await fetchDrinkPopularity(establishmentId);
         setPopularDrinks(drinks);
+
+        // Cache the results
+        if (cacheKey) {
+          analyticsCache[cacheKey] = {
+            visitorAnalytics: visitors,
+            visitorTrends: visitorTrendData,
+            retentionTrends: retentionTrendData,
+            revenueReports: revenue,
+            popularDrinks: drinks,
+            timestamp: Date.now()
+          };
+        }
       } catch (err) {
         console.error('Error loading analytics data:', err);
         setError('Failed to load analytics data');
@@ -80,10 +135,8 @@ export function useEstablishmentAnalytics({
       }
     }
 
-    if (establishmentId) {
-      loadAnalyticsData();
-    }
-  }, [establishmentId, range, refreshToken]);
+    loadAnalyticsData();
+  }, [establishmentId, cacheKey, refreshToken]);
 
   return {
     visitorAnalytics,

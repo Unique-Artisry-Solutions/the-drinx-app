@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Layout from '@/components/Layout';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -38,6 +38,15 @@ const EstablishmentAnalyticsPage = () => {
     error: establishmentError
   } = useEstablishmentDetails(urlEstablishmentId);
 
+  // Get user's establishment for QuickNavigation if no establishmentId is provided
+  const { establishmentId: userEstablishmentId } = useUserEstablishment();
+
+  // Use the appropriate establishment ID
+  const effectiveEstablishmentId = useMemo(() => 
+    establishmentId || userEstablishmentId || '', 
+    [establishmentId, userEstablishmentId]
+  );
+
   const { 
     stats, 
     visitorData, 
@@ -56,21 +65,18 @@ const EstablishmentAnalyticsPage = () => {
     isLoading: isAnalyticsLoading,
     error: analyticsError
   } = useEstablishmentAnalytics({
-    establishmentId: establishmentId || '',
+    establishmentId: effectiveEstablishmentId,
     range: {
       startDate: date?.from || addDays(new Date(), -30),
       endDate: date?.to || new Date()
     }
   });
   
-  // Get user's establishment for QuickNavigation if no establishmentId is provided
-  const { establishmentId: userEstablishmentId } = useUserEstablishment();
-  
   // Handle tab change
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
     if (tab === 'menu' || tab === 'promotions' || tab === 'barCrawls') {
-      navigate(`/establishment/profile/${establishmentId || userEstablishmentId}`);
+      navigate(`/establishment/profile/${effectiveEstablishmentId}`);
     }
   };
 
@@ -111,7 +117,7 @@ const EstablishmentAnalyticsPage = () => {
           activeTab={activeTab}
           handleTabChange={handleTabChange}
           handleQuickLinkClick={handleQuickLinkClick}
-          establishmentId={establishmentId || userEstablishmentId}
+          establishmentId={effectiveEstablishmentId}
         />
         
         <div className="px-6">
