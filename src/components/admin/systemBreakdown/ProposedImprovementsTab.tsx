@@ -96,9 +96,10 @@ const ProposedImprovementsTab: React.FC<ProposedImprovementsTabProps> = ({ impro
   };
 
   const renderLovableCompatibility = (item: ImprovementItem) => {
+    // Fixed line with proper parentheses
     const isCompatible = item.lovableCompatible ?? 
-      !item.technicalRequirements.toLowerCase().includes('expertise') && 
-      !item.technicalRequirements.toLowerCase().includes('ar ');
+      (!item.technicalRequirements.toLowerCase().includes('expertise') && 
+       !item.technicalRequirements.toLowerCase().includes('ar '));
     
     return (
       <TooltipProvider>
