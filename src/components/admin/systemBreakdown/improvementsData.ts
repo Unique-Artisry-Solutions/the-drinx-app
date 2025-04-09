@@ -1,3 +1,4 @@
+
 import { ImprovementItem } from './types';
 
 export const proposedImprovements: ImprovementItem[] = [
@@ -131,7 +132,87 @@ export const proposedImprovements: ImprovementItem[] = [
     estimatedEffort: "1-2 weeks with Lovable team",
     businessImpact: "Improved customer retention strategies and targeted marketing campaigns",
     technicalRequirements: "Sentiment analysis tools, social media integration, competitive intelligence data sources",
-    currentStatus: "Implemented - Core engagement metrics now available including loyalty program performance, user-generated content analysis, and customer feedback metrics with visualizations."
+    currentStatus: "Implemented - Core engagement metrics now available including loyalty program performance, user-generated content analysis, and customer feedback metrics with visualizations. Database implementation pending for complete functionality. See detailed implementation plan below:"
+  },
+  {
+    name: "Engagement Analytics - Loyalty Program Performance Chart",
+    description: "Implement database structures and API endpoints for comprehensive loyalty program metrics visualization",
+    priority: "high",
+    type: "enhancement",
+    affectedAreas: ["establishment"],
+    implementationSteps: [
+      "Create 'loyalty_program_members' table to track member signups, activity and tier levels",
+      "Add 'loyalty_program_redemptions' table to track rewards claimed by members",
+      "Implement 'loyalty_program_points_transactions' table to record point earning and spending events",
+      "Develop aggregation functions for member acquisition/retention rates",
+      "Create time-series API endpoints for charting loyalty program trends",
+      "Build reactive frontend components using Recharts for visualization",
+      "Implement filtering by date ranges and member segments"
+    ],
+    estimatedEffort: "1 week with Lovable team",
+    businessImpact: "Data-driven insights into loyalty program effectiveness and member behavior patterns",
+    technicalRequirements: "Database schema extension, data aggregation functions, time-series API endpoints",
+    currentStatus: "UI implementation complete. Database tables and API endpoints required for full functionality. Proposed database schema includes three main tables to track membership, redemptions and point transactions with appropriate foreign key relationships."
+  },
+  {
+    name: "Engagement Analytics - User-Generated Content Chart",
+    description: "Track and visualize all user-generated content metrics across the platform",
+    priority: "medium",
+    type: "enhancement",
+    affectedAreas: ["establishment"],
+    implementationSteps: [
+      "Create 'content_type' classification system in existing content tables",
+      "Add 'content_metadata' table for categorization and tagging",
+      "Implement content engagement tracking (views, shares, likes)",
+      "Develop aggregation views for content performance by type and establishment",
+      "Create API endpoints for retrieving UGC analytics data",
+      "Build visualization components for UGC distribution and engagement metrics",
+      "Add content trend analysis functionality"
+    ],
+    estimatedEffort: "1 week with Lovable team",
+    businessImpact: "Better understanding of what content resonates with customers and drives engagement",
+    technicalRequirements: "Content classification system, engagement tracking mechanisms, aggregation views",
+    currentStatus: "UI implementation complete. Database enhancements needed for tracking content types and engagement metrics. Need to modify existing content tables to include engagement metrics and create aggregation views."
+  },
+  {
+    name: "Engagement Analytics - Customer Feedback Sentiment Chart",
+    description: "Implement sentiment analysis and visualization for customer feedback across all channels",
+    priority: "high",
+    type: "enhancement",
+    affectedAreas: ["establishment"],
+    implementationSteps: [
+      "Create 'feedback_sentiment' table with sentiment classification fields",
+      "Implement NLP integration for automated sentiment analysis",
+      "Develop feedback aggregation system across reviews, comments and direct feedback",
+      "Create time-series sentiment tracking by source and category",
+      "Build sentiment trend visualization components",
+      "Add sentiment comparison tools against industry benchmarks",
+      "Implement actionable insights generation from sentiment patterns"
+    ],
+    estimatedEffort: "1-2 weeks with Lovable team",
+    businessImpact: "Deeper insights into customer satisfaction trends and potential issue identification",
+    technicalRequirements: "NLP integration, sentiment classification system, benchmark comparison data",
+    currentStatus: "UI implementation complete. Database implementation needed for sentiment tracking and analysis. Integration with NLP service required for automated sentiment scoring of textual feedback."
+  },
+  {
+    name: "Engagement Analytics - Feedback Response Rate Chart",
+    description: "Track establishment responsiveness to customer feedback across channels",
+    priority: "medium",
+    type: "enhancement",
+    affectedAreas: ["establishment"],
+    implementationSteps: [
+      "Add 'feedback_responses' table to track establishment replies to feedback",
+      "Implement response time tracking mechanisms",
+      "Create response quality classification system",
+      "Develop aggregation functions for response metrics by time period",
+      "Build visualization components for response rates and times",
+      "Implement comparison tools against industry standards",
+      "Add alerting for feedback requiring urgent attention"
+    ],
+    estimatedEffort: "1 week with Lovable team",
+    businessImpact: "Improved customer service through better response tracking and management",
+    technicalRequirements: "Response tracking system, time measurement functions, quality classification",
+    currentStatus: "UI implementation complete. Database schema extension needed for tracking feedback responses and response times. Aggregation functions required for time-series analysis."
   },
   {
     name: "Loyalty Program Integration",
@@ -305,3 +386,4 @@ export const proposedImprovements: ImprovementItem[] = [
     technicalRequirements: "Analytics tracking system, data visualization components, A/B testing framework"
   }
 ];
+
