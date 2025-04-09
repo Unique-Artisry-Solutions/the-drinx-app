@@ -59,6 +59,60 @@ export const proposedImprovements: ImprovementItem[] = [
     technicalRequirements: "Time-series data structures, advanced charting libraries, optimization for large datasets"
   },
   {
+    name: "Analytics Visitors Tab Enhancements",
+    description: "Extend the Visitors tab with detailed demographics, journey mapping, and visitor insights",
+    priority: "medium",
+    type: "enhancement",
+    affectedAreas: ["establishment"],
+    implementationSteps: [
+      "Implement visitor journey mapping visualization",
+      "Create visit duration analysis charts",
+      "Add peak hours visualization component",
+      "Develop visitor source tracking metrics",
+      "Build interactive comparison tools for time periods",
+      "Create geographic visualization of visitor origins"
+    ],
+    estimatedEffort: "1-2 weeks with Lovable team",
+    businessImpact: "Better understanding of customer behavior leading to improved service timing and marketing",
+    technicalRequirements: "Advanced charting libraries, geospatial visualization components, time-series analysis"
+  },
+  {
+    name: "Analytics Sales Tab Improvements",
+    description: "Develop comprehensive sales analytics with menu performance, trends, and forecasting",
+    priority: "medium",
+    type: "enhancement",
+    affectedAreas: ["establishment"],
+    implementationSteps: [
+      "Create menu performance analysis dashboard",
+      "Implement average check size trend visualization",
+      "Add upsell success rate tracking",
+      "Develop promotion ROI analysis tools",
+      "Build revenue forecast visualization",
+      "Create inventory turnover metrics"
+    ],
+    estimatedEffort: "1-2 weeks with Lovable team",
+    businessImpact: "Enhanced revenue management capabilities and data-driven menu optimization",
+    technicalRequirements: "Predictive modeling algorithms, inventory tracking integration, sales trend visualization"
+  },
+  {
+    name: "Analytics Engagement Tab Development",
+    description: "Build comprehensive engagement metrics and visualization tools for customer interaction analysis",
+    priority: "medium",
+    type: "enhancement",
+    affectedAreas: ["establishment"],
+    implementationSteps: [
+      "Implement loyalty program performance metrics",
+      "Create user-generated content analysis tools",
+      "Add event participation visualization",
+      "Develop customer feedback response rate tracking",
+      "Build seasonal engagement pattern analysis",
+      "Create competitor comparison visualization"
+    ],
+    estimatedEffort: "1-2 weeks with Lovable team",
+    businessImpact: "Improved customer retention strategies and targeted marketing campaigns",
+    technicalRequirements: "Sentiment analysis tools, social media integration, competitive intelligence data sources"
+  },
+  {
     name: "Loyalty Program Integration",
     description: "Implement a comprehensive rewards system with points, tiers, and redemption options to increase user retention",
     priority: "medium",
