@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { 
   Card, 
@@ -864,4 +865,120 @@ const ReleaseEditor: React.FC<ReleaseEditorProps> = ({
                         <div className="space-y-2">
                           <Label htmlFor={`edit-note-title-${index}`}>Title</Label>
                           <Input 
-                            id={`edit-note
+                            id={`edit-note-title-${index}`}
+                            defaultValue={note.title}
+                            onChange={(e) => setNewNote({...newNote, title: e.target.value})}
+                          />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label htmlFor={`edit-note-description-${index}`}>Description</Label>
+                          <Textarea 
+                            id={`edit-note-description-${index}`}
+                            defaultValue={note.description}
+                            onChange={(e) => setNewNote({...newNote, description: e.target.value})}
+                            rows={3}
+                          />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label htmlFor={`edit-note-technical-${index}`}>Technical Details</Label>
+                          <Textarea 
+                            id={`edit-note-technical-${index}`}
+                            defaultValue={note.technicalDetails || ''}
+                            onChange={(e) => setNewNote({...newNote, technicalDetails: e.target.value})}
+                            rows={2}
+                          />
+                        </div>
+                        
+                        <div className="flex items-center space-x-2">
+                          <input
+                            id={`edit-user-facing-${index}`}
+                            type="checkbox"
+                            defaultChecked={note.userFacing}
+                            onChange={(e) => setNewNote({...newNote, userFacing: e.target.checked})}
+                            className="rounded border-gray-300"
+                          />
+                          <Label htmlFor={`edit-user-facing-${index}`}>Show in user-facing release notes</Label>
+                        </div>
+                        
+                        <div className="flex justify-end space-x-2 pt-2">
+                          <Button variant="outline" onClick={() => setEditingNoteIndex(null)}>
+                            Cancel
+                          </Button>
+                          <Button 
+                            onClick={() => handleUpdateNote(index, newNote)}
+                            disabled={!newNote.title || !newNote.description}
+                          >
+                            Save Changes
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  ) : (
+                    <CardContent className="p-4">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <div className="flex items-center gap-2 mb-2">
+                            {renderReleaseNoteTypeBadge(note.type)}
+                            <h4 className="text-lg font-medium">{note.title}</h4>
+                          </div>
+                          <p className="text-gray-600">{note.description}</p>
+                          
+                          {note.technicalDetails && (
+                            <div className="mt-3 bg-gray-50 p-3 rounded border border-gray-200">
+                              <h5 className="text-xs font-medium text-gray-500 mb-1">TECHNICAL DETAILS</h5>
+                              <p className="text-sm text-gray-700">{note.technicalDetails}</p>
+                            </div>
+                          )}
+                          
+                          {note.userFacing && (
+                            <Badge variant="outline" className="mt-3 border-green-500 text-green-600">
+                              User-facing
+                            </Badge>
+                          )}
+                        </div>
+                        
+                        <div className="flex items-center space-x-2">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            onClick={() => {
+                              setNewNote({
+                                type: note.type,
+                                title: note.title,
+                                description: note.description,
+                                technicalDetails: note.technicalDetails,
+                                userFacing: note.userFacing,
+                                author: note.author,
+                                createdAt: note.createdAt
+                              });
+                              setEditingNoteIndex(index);
+                            }}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            className="h-8 w-8 p-0 text-red-500 hover:text-red-600"
+                            onClick={() => onRemoveReleaseNote(index)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  )}
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
+
+export default ReleaseEditor;
