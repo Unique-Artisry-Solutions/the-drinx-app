@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   Card, 
@@ -47,10 +46,11 @@ import {
   MessageSquarePlus
 } from 'lucide-react';
 
-import { Release, ReleaseFeature, ReleaseNote, ReleaseStatus, ReleaseType, ReleaseFeatureStatus } from '../types/releaseTypes';
+import { Release, ReleaseFeature, ReleaseNote, ReleaseStatus, ReleaseType, ReleaseFeatureStatus, ReleaseProgress } from '../types/releaseTypes';
 
 interface ReleaseEditorProps {
   release: Release;
+  releaseProgress: ReleaseProgress | null;
   onUpdateRelease: (data: Partial<Release>) => void;
   onUpdateStatus: (id: string, status: ReleaseStatus) => void;
   onAddFeature: (feature: Omit<ReleaseFeature, 'id'>) => void;
@@ -61,10 +61,12 @@ interface ReleaseEditorProps {
   onRemoveReleaseNote: (index: number) => void;
   onGenerateNotes: () => void;
   onExportNotes: () => void;
+  formatDate: (dateString?: string) => string;
 }
 
 const ReleaseEditor: React.FC<ReleaseEditorProps> = ({
   release,
+  releaseProgress,
   onUpdateRelease,
   onUpdateStatus,
   onAddFeature,
@@ -74,8 +76,10 @@ const ReleaseEditor: React.FC<ReleaseEditorProps> = ({
   onUpdateReleaseNote,
   onRemoveReleaseNote,
   onGenerateNotes,
-  onExportNotes
+  onExportNotes,
+  formatDate
 }) => {
+  
   const [isDetailsEditing, setIsDetailsEditing] = useState(false);
   const [editedRelease, setEditedRelease] = useState<Partial<Release>>({});
   
@@ -178,6 +182,31 @@ const ReleaseEditor: React.FC<ReleaseEditorProps> = ({
         return <Badge className="bg-gray-500">Other</Badge>;
     }
   };
+
+  
+  const renderProgressIndicator = () => {
+    if (!releaseProgress) return null;
+    
+    return (
+      <div className="mt-4">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sm font-medium">Release Progress</span>
+          <span className="text-sm font-medium">{releaseProgress.percentComplete}%</span>
+        </div>
+        <div className="h-2 bg-gray-200 rounded-full">
+          <div 
+            className="h-full rounded-full bg-blue-500" 
+            style={{ width: `${releaseProgress.percentComplete}%` }}
+          ></div>
+        </div>
+        <div className="flex justify-between mt-2 text-xs text-gray-500">
+          <div>Completed: {releaseProgress.completedFeatures}/{releaseProgress.totalFeatures}</div>
+          <div>In Progress: {releaseProgress.inProgressFeatures}</div>
+          <div>Pending: {releaseProgress.pendingFeatures}</div>
+        </div>
+      </div>
+    );
+  };
   
   return (
     <div className="space-y-6">
@@ -194,7 +223,7 @@ const ReleaseEditor: React.FC<ReleaseEditorProps> = ({
               <div className="flex items-center gap-1 text-sm text-gray-600">
                 <Calendar className="h-4 w-4" />
                 <span>
-                  Planned: {new Date(release.plannedReleaseDate).toLocaleDateString()}
+                  Planned: {formatDate(release.plannedReleaseDate)}
                 </span>
               </div>
             )}
@@ -202,15 +231,16 @@ const ReleaseEditor: React.FC<ReleaseEditorProps> = ({
               <div className="flex items-center gap-1 text-sm text-green-600">
                 <BadgeCheck className="h-4 w-4" />
                 <span>
-                  Released: {new Date(release.actualReleaseDate).toLocaleDateString()}
+                  Released: {formatDate(release.actualReleaseDate)}
                 </span>
               </div>
             )}
           </div>
+          {renderProgressIndicator()}
         </div>
         
         <div className="flex gap-2">
-          {/* Status update dropdown */}
+          
           <Select 
             value={release.status} 
             onValueChange={(value) => onUpdateStatus(release.id, value as ReleaseStatus)}
@@ -252,7 +282,9 @@ const ReleaseEditor: React.FC<ReleaseEditorProps> = ({
           </TabsTrigger>
         </TabsList>
         
+        
         <TabsContent value="details" className="space-y-4 pt-4">
+          
           {isDetailsEditing ? (
             <Card>
               <CardHeader>
@@ -355,7 +387,7 @@ const ReleaseEditor: React.FC<ReleaseEditorProps> = ({
                     <dt className="text-sm font-medium text-gray-500">Planned Release Date</dt>
                     <dd className="mt-1">
                       {release.plannedReleaseDate ? 
-                        new Date(release.plannedReleaseDate).toLocaleDateString() : 
+                        formatDate(release.plannedReleaseDate) : 
                         <span className="text-gray-400">Not scheduled</span>
                       }
                     </dd>
@@ -365,7 +397,7 @@ const ReleaseEditor: React.FC<ReleaseEditorProps> = ({
                     <div>
                       <dt className="text-sm font-medium text-gray-500">Actual Release Date</dt>
                       <dd className="mt-1 text-green-600">
-                        {new Date(release.actualReleaseDate).toLocaleDateString()}
+                        {formatDate(release.actualReleaseDate)}
                       </dd>
                     </div>
                   )}
@@ -391,6 +423,7 @@ const ReleaseEditor: React.FC<ReleaseEditorProps> = ({
         </TabsContent>
         
         <TabsContent value="features" className="space-y-4 pt-4">
+          
           <div className="flex justify-between">
             <h3 className="text-lg font-medium">Features</h3>
             <div className="flex gap-2">
@@ -672,6 +705,7 @@ const ReleaseEditor: React.FC<ReleaseEditorProps> = ({
         </TabsContent>
         
         <TabsContent value="notes" className="space-y-4 pt-4">
+          
           <div className="flex justify-between">
             <h3 className="text-lg font-medium">Release Notes</h3>
             <div className="flex gap-2">
@@ -830,123 +864,4 @@ const ReleaseEditor: React.FC<ReleaseEditorProps> = ({
                         <div className="space-y-2">
                           <Label htmlFor={`edit-note-title-${index}`}>Title</Label>
                           <Input 
-                            id={`edit-note-title-${index}`}
-                            defaultValue={note.title}
-                            onChange={(e) => setNewNote({...newNote, title: e.target.value})}
-                          />
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <Label htmlFor={`edit-note-description-${index}`}>Description</Label>
-                          <Textarea 
-                            id={`edit-note-description-${index}`}
-                            defaultValue={note.description}
-                            onChange={(e) => setNewNote({...newNote, description: e.target.value})}
-                            rows={3}
-                          />
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <Label htmlFor={`edit-note-technical-${index}`}>Technical Details</Label>
-                          <Textarea 
-                            id={`edit-note-technical-${index}`}
-                            defaultValue={note.technicalDetails || ''}
-                            onChange={(e) => setNewNote({...newNote, technicalDetails: e.target.value})}
-                            rows={2}
-                          />
-                        </div>
-                        
-                        <div className="flex items-center space-x-2">
-                          <input
-                            id={`edit-user-facing-${index}`}
-                            type="checkbox"
-                            defaultChecked={note.userFacing}
-                            onChange={(e) => setNewNote({...newNote, userFacing: e.target.checked})}
-                            className="rounded border-gray-300"
-                          />
-                          <Label htmlFor={`edit-user-facing-${index}`}>Show in user-facing release notes</Label>
-                        </div>
-                        
-                        <div className="flex justify-end space-x-2 pt-2">
-                          <Button variant="outline" onClick={() => setEditingNoteIndex(null)}>
-                            Cancel
-                          </Button>
-                          <Button 
-                            onClick={() => handleUpdateNote(index, newNote)}
-                            disabled={!newNote.title || !newNote.description}
-                          >
-                            Save Changes
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  ) : (
-                    <CardContent className="p-4">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <div className="flex items-center mb-2">
-                            {renderReleaseNoteTypeBadge(note.type)}
-                            {!note.userFacing && (
-                              <span className="ml-2 text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded">
-                                Internal Only
-                              </span>
-                            )}
-                          </div>
-                          <h4 className="text-lg font-medium">{note.title}</h4>
-                          <p className="text-gray-600 mt-1">{note.description}</p>
-                          
-                          {note.technicalDetails && (
-                            <div className="mt-3">
-                              <details className="group">
-                                <summary className="flex items-center cursor-pointer text-sm text-gray-500 hover:text-gray-700">
-                                  <span>Technical Details</span>
-                                </summary>
-                                <div className="mt-2 p-3 bg-gray-50 rounded-md text-sm">
-                                  {note.technicalDetails}
-                                </div>
-                              </details>
-                            </div>
-                          )}
-                        </div>
-                        
-                        <div className="flex items-center space-x-2">
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            className="h-8 w-8 p-0"
-                            onClick={() => {
-                              setNewNote({
-                                type: note.type,
-                                title: note.title,
-                                description: note.description,
-                                technicalDetails: note.technicalDetails,
-                                userFacing: note.userFacing
-                              });
-                              setEditingNoteIndex(index);
-                            }}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            className="h-8 w-8 p-0 text-red-500 hover:text-red-600"
-                            onClick={() => onRemoveReleaseNote(index)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  )}
-                </Card>
-              ))}
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
-};
-
-export default ReleaseEditor;
+                            id={`edit-note
