@@ -18,7 +18,8 @@ export const proposedImprovements: ImprovementItem[] = [
     ],
     estimatedEffort: "6-8 months with Lovable team (requires mobile expertise)",
     businessImpact: "Significantly increased user engagement and retention rates, with potential for new monetization avenues",
-    technicalRequirements: "Mobile development expertise, push notification infrastructure, offline data sync capabilities, app store developer accounts"
+    technicalRequirements: "Mobile development expertise, push notification infrastructure, offline data sync capabilities, app store developer accounts",
+    lovableCompatible: false
   },
   {
     name: "AI-powered Drink Recommendations",
@@ -37,7 +38,8 @@ export const proposedImprovements: ImprovementItem[] = [
     ],
     estimatedEffort: "3-4 weeks with Lovable team using AI integrations",
     businessImpact: "20-30% increase in mocktail discovery and user satisfaction, leading to higher establishment engagement",
-    technicalRequirements: "Data science expertise, machine learning infrastructure, large dataset of user preferences and mocktail attributes"
+    technicalRequirements: "Data science expertise, machine learning infrastructure, large dataset of user preferences and mocktail attributes",
+    lovableCompatible: true
   },
   {
     name: "Enhanced Analytics Dashboard",
@@ -56,7 +58,8 @@ export const proposedImprovements: ImprovementItem[] = [
     ],
     estimatedEffort: "2-3 weeks with Lovable team",
     businessImpact: "Improved decision-making for establishments and admin team, leading to better business outcomes",
-    technicalRequirements: "Time-series data structures, advanced charting libraries, optimization for large datasets"
+    technicalRequirements: "Time-series data structures, advanced charting libraries, optimization for large datasets",
+    lovableCompatible: true
   },
   {
     name: "Analytics Visitors Tab Enhancements",
@@ -74,7 +77,8 @@ export const proposedImprovements: ImprovementItem[] = [
     ],
     estimatedEffort: "1-2 weeks with Lovable team",
     businessImpact: "Better understanding of customer behavior leading to improved service timing and marketing",
-    technicalRequirements: "Advanced charting libraries, geospatial visualization components, time-series analysis"
+    technicalRequirements: "Advanced charting libraries, geospatial visualization components, time-series analysis",
+    lovableCompatible: true
   },
   {
     name: "Visit Duration Analytics Implementation",
@@ -94,7 +98,8 @@ export const proposedImprovements: ImprovementItem[] = [
     estimatedEffort: "2-3 weeks with Lovable team",
     businessImpact: "Deeper insights into customer behavior and establishment capacity planning",
     technicalRequirements: "Real-time tracking system, geolocation capabilities, session management logic, data aggregation pipeline",
-    currentStatus: "Under analysis - Database schema design in progress. Initial research shows we need to implement a reliable check-out mechanism to pair with existing check-in functionality. Data collection alternatives being evaluated between geofencing, timeout rules, and explicit UI buttons."
+    currentStatus: "Under analysis - Database schema design in progress. Initial research shows we need to implement a reliable check-out mechanism to pair with existing check-in functionality. Data collection alternatives being evaluated between geofencing, timeout rules, and explicit UI buttons.",
+    lovableCompatible: false
   },
   {
     name: "Analytics Sales Tab Improvements",
@@ -112,7 +117,8 @@ export const proposedImprovements: ImprovementItem[] = [
     ],
     estimatedEffort: "1-2 weeks with Lovable team",
     businessImpact: "Enhanced revenue management capabilities and data-driven menu optimization",
-    technicalRequirements: "Predictive modeling algorithms, inventory tracking integration, sales trend visualization"
+    technicalRequirements: "Predictive modeling algorithms, inventory tracking integration, sales trend visualization",
+    lovableCompatible: true
   },
   {
     name: "Analytics Engagement Tab Development",
@@ -131,7 +137,8 @@ export const proposedImprovements: ImprovementItem[] = [
     estimatedEffort: "1-2 weeks with Lovable team",
     businessImpact: "Improved customer retention strategies and targeted marketing campaigns",
     technicalRequirements: "Sentiment analysis tools, social media integration, competitive intelligence data sources",
-    currentStatus: "Implemented - Major refactoring complete with modular component architecture. All engagement metrics now separated into dedicated panels including loyalty program performance, user-generated content analysis, and customer feedback metrics with advanced visualizations. Ready for database implementation to complete full functionality."
+    currentStatus: "Implemented - Major refactoring complete with modular component architecture. All engagement metrics now separated into dedicated panels including loyalty program performance, user-generated content analysis, and customer feedback metrics with advanced visualizations. Ready for database implementation to complete full functionality.",
+    lovableCompatible: true
   },
   {
     name: "Engagement Analytics - Loyalty Program Performance Chart",
@@ -151,7 +158,8 @@ export const proposedImprovements: ImprovementItem[] = [
     estimatedEffort: "1 week with Lovable team",
     businessImpact: "Data-driven insights into loyalty program effectiveness and member behavior patterns",
     technicalRequirements: "Database schema extension, data aggregation functions, time-series API endpoints",
-    currentStatus: "UI implementation complete with reusable chart components and custom hooks for data management. Database tables and API endpoints required for full functionality. Proposed database schema includes three main tables to track membership, redemptions and point transactions with appropriate foreign key relationships."
+    currentStatus: "UI implementation complete with reusable chart components and custom hooks for data management. Database tables and API endpoints required for full functionality. Proposed database schema includes three main tables to track membership, redemptions and point transactions with appropriate foreign key relationships.",
+    lovableCompatible: true
   },
   {
     name: "Engagement Analytics - User-Generated Content Chart",
@@ -171,7 +179,8 @@ export const proposedImprovements: ImprovementItem[] = [
     estimatedEffort: "1 week with Lovable team",
     businessImpact: "Better understanding of what content resonates with customers and drives engagement",
     technicalRequirements: "Content classification system, engagement tracking mechanisms, aggregation views",
-    currentStatus: "UI implementation complete with modular ContentAnalyticsPanel component. Implemented pie chart for content distribution and bar chart for trend analysis. Database enhancements needed for tracking content types and engagement metrics. Need to modify existing content tables to include engagement metrics and create aggregation views."
+    currentStatus: "UI implementation complete with modular ContentAnalyticsPanel component. Implemented pie chart for content distribution and bar chart for trend analysis. Database enhancements needed for tracking content types and engagement metrics. Need to modify existing content tables to include engagement metrics and create aggregation views.",
+    lovableCompatible: true
   },
   {
     name: "Engagement Analytics - Customer Feedback Sentiment Chart",
@@ -191,7 +200,8 @@ export const proposedImprovements: ImprovementItem[] = [
     estimatedEffort: "1-2 weeks with Lovable team",
     businessImpact: "Deeper insights into customer satisfaction trends and potential issue identification",
     technicalRequirements: "NLP integration, sentiment classification system, benchmark comparison data",
-    currentStatus: "UI implementation complete with FeedbackAnalyticsPanel component featuring pie chart for sentiment distribution and line chart for trends. Custom hook created for consistent data fetching. Database implementation needed for sentiment tracking and analysis. Integration with NLP service required for automated sentiment scoring of textual feedback."
+    currentStatus: "UI implementation complete with FeedbackAnalyticsPanel component featuring pie chart for sentiment distribution and line chart for trends. Custom hook created for consistent data fetching. Database implementation needed for sentiment tracking and analysis. Integration with NLP service required for automated sentiment scoring of textual feedback.",
+    lovableCompatible: true
   },
   {
     name: "Engagement Analytics - Feedback Response Rate Chart",
@@ -211,7 +221,8 @@ export const proposedImprovements: ImprovementItem[] = [
     estimatedEffort: "1 week with Lovable team",
     businessImpact: "Improved customer service through better response tracking and management",
     technicalRequirements: "Response tracking system, time measurement functions, quality classification",
-    currentStatus: "UI implementation complete as part of the FeedbackAnalyticsPanel with response rate metrics integration. Implemented with reusable AnalyticsMetricCard and AnalyticsLineChart components for consistent UI. Database schema extension needed for tracking feedback responses and response times. Aggregation functions required for time-series analysis."
+    currentStatus: "UI implementation complete as part of the FeedbackAnalyticsPanel with response rate metrics integration. Implemented with reusable AnalyticsMetricCard and AnalyticsLineChart components for consistent UI. Database schema extension needed for tracking feedback responses and response times. Aggregation functions required for time-series analysis.",
+    lovableCompatible: true
   },
   {
     name: "Loyalty Program Integration",
@@ -230,7 +241,8 @@ export const proposedImprovements: ImprovementItem[] = [
     ],
     estimatedEffort: "3-4 weeks with Lovable team",
     businessImpact: "30-40% increase in customer retention and higher frequency of establishment visits",
-    technicalRequirements: "Transaction tracking system, redemption verification process, integration with establishment POS systems where applicable"
+    technicalRequirements: "Transaction tracking system, redemption verification process, integration with establishment POS systems where applicable",
+    lovableCompatible: true
   },
   {
     name: "Social Media Integration",
@@ -249,7 +261,8 @@ export const proposedImprovements: ImprovementItem[] = [
     ],
     estimatedEffort: "1-2 weeks with Lovable team",
     businessImpact: "Increased brand visibility and user acquisition through social channels",
-    technicalRequirements: "Integration with social media APIs, image processing for different platforms, UTM parameter tracking"
+    technicalRequirements: "Integration with social media APIs, image processing for different platforms, UTM parameter tracking",
+    lovableCompatible: true
   },
   {
     name: "AR Mocktail Visualization",
@@ -268,7 +281,8 @@ export const proposedImprovements: ImprovementItem[] = [
     ],
     estimatedEffort: "8-12 weeks with Lovable team (requires AR expertise)",
     businessImpact: "Novel user experience leading to increased engagement and social sharing",
-    technicalRequirements: "AR development expertise, 3D modeling capabilities, high-performance mobile devices support"
+    technicalRequirements: "AR development expertise, 3D modeling capabilities, high-performance mobile devices support",
+    lovableCompatible: false
   },
   {
     name: "Color Palette Generator",
@@ -287,7 +301,8 @@ export const proposedImprovements: ImprovementItem[] = [
     ],
     estimatedEffort: "1-2 weeks with Lovable team",
     businessImpact: "Improved site aesthetics and brand consistency with minimal effort from users",
-    technicalRequirements: "Color theory algorithms, machine learning for suggestions, UI components for color visualization"
+    technicalRequirements: "Color theory algorithms, machine learning for suggestions, UI components for color visualization",
+    lovableCompatible: true
   },
   {
     name: "Accessibility Color Checker",
@@ -306,7 +321,8 @@ export const proposedImprovements: ImprovementItem[] = [
     ],
     estimatedEffort: "1 week with Lovable team",
     businessImpact: "Ensured accessibility compliance, reducing legal risks and improving usability for all users",
-    technicalRequirements: "WCAG standards implementation, contrast ratio algorithms, automated testing tools"
+    technicalRequirements: "WCAG standards implementation, contrast ratio algorithms, automated testing tools",
+    lovableCompatible: true
   },
   {
     name: "Site-Wide Theme Preview",
@@ -325,7 +341,8 @@ export const proposedImprovements: ImprovementItem[] = [
     ],
     estimatedEffort: "2 weeks with Lovable team",
     businessImpact: "Better decision-making for administrators when applying themes, leading to improved user experience",
-    technicalRequirements: "Theme context system, UI components for preview controls, template system for different site sections"
+    technicalRequirements: "Theme context system, UI components for preview controls, template system for different site sections",
+    lovableCompatible: true
   },
   {
     name: "Theme Scheduling",
@@ -344,7 +361,8 @@ export const proposedImprovements: ImprovementItem[] = [
     ],
     estimatedEffort: "1-2 weeks with Lovable team",
     businessImpact: "Enhanced user experience with seasonal themes and improved brand relevance during promotions and events",
-    technicalRequirements: "Scheduling system, cron job implementation, theme transition animations"
+    technicalRequirements: "Scheduling system, cron job implementation, theme transition animations",
+    lovableCompatible: true
   },
   {
     name: "Component-Specific Theming",
@@ -363,7 +381,8 @@ export const proposedImprovements: ImprovementItem[] = [
     ],
     estimatedEffort: "2-3 weeks with Lovable team",
     businessImpact: "More flexible and powerful theming capabilities allowing for unique sections and standout features",
-    technicalRequirements: "Enhanced theme context system, component-level styling API, theme inheritance mechanism"
+    technicalRequirements: "Enhanced theme context system, component-level styling API, theme inheritance mechanism",
+    lovableCompatible: true
   },
   {
     name: "Theme Analytics",
@@ -382,6 +401,7 @@ export const proposedImprovements: ImprovementItem[] = [
     ],
     estimatedEffort: "2 weeks with Lovable team",
     businessImpact: "Data-driven theme decisions that can increase user engagement and conversions by optimizing visual appeal",
-    technicalRequirements: "Analytics tracking system, data visualization components, A/B testing framework"
+    technicalRequirements: "Analytics tracking system, data visualization components, A/B testing framework",
+    lovableCompatible: true
   }
 ];

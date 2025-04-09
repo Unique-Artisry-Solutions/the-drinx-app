@@ -1,4 +1,3 @@
-
 export type FeatureStatus = 'implemented' | 'partial' | 'planned' | 'not_started';
 export type DatabaseStatus = 'complete' | 'in_progress' | 'not_started';
 export type AccessLevel = 'full' | 'partial' | 'none' | 'planned';
@@ -28,9 +27,13 @@ export interface ImprovementItem {
   implementationSteps: string[];
   estimatedEffort: string;
   businessImpact: string;
-  technicalRequirements?: string;
+  technicalRequirements: string;
   currentStatus?: string;
+  lovableCompatible?: boolean;
 }
+
+export type SortField = 'name' | 'priority' | 'type' | 'lovableCompatible';
+export type SortOrder = 'asc' | 'desc';
 
 export interface AnalysisStep {
   name: string;
