@@ -1,3 +1,4 @@
+
 import React, { lazy, Suspense } from 'react';
 import { Route, Routes, Navigate } from 'react-router-dom';
 import LandingPage from '@/pages/LandingPage';
@@ -43,6 +44,7 @@ import { ProtectedRoute, TypedProtectedRoute } from './protectedRoutes';
 import EstablishmentProfilePage from '@/pages/establishment/EstablishmentProfilePage';
 import MocktailMenuPage from '@/pages/establishment/MocktailMenuPage';
 import PromotionsPage from '@/pages/establishment/PromotionsPage';
+import SystemFunctionalityBreakdown from '@/pages/admin/SystemFunctionalityBreakdown';
 
 const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
 const AdminLogin = lazy(() => import('@/pages/admin/AdminLogin'));
@@ -50,7 +52,7 @@ const AdminUsersPage = lazy(() => import('@/pages/admin/AdminUsersPage'));
 const AdminUserProfile = lazy(() => import('@/pages/admin/AdminUserProfile'));
 const AdminEstablishmentsPage = lazy(() => import('@/pages/admin/AdminEstablishmentsPage'));
 const AdminEstablishmentProfile = lazy(() => import('@/pages/admin/AdminEstablishmentProfile'));
-const SystemFunctionalityBreakdown = lazy(() => import('@/pages/admin/SystemFunctionalityBreakdown'));
+// Removed lazy loading for SystemFunctionalityBreakdown
 const SystemAnalyticsPage = lazy(() => import('@/pages/admin/SystemAnalyticsPage'));
 const PhotoModerationPage = lazy(() => import('@/pages/admin/PhotoModerationPage'));
 const ContentModerationPage = lazy(() => import('@/pages/admin/ContentModerationPage'));
