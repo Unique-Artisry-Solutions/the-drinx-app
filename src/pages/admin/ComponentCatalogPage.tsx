@@ -54,33 +54,19 @@ const ComponentCatalogPage: React.FC = () => {
                   <div className="text-lg text-gray-500">Loading components...</div>
                 </div>
               ) : (
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
-                  <TabsList>
-                    <TabsTrigger value="all">All Pages</TabsTrigger>
-                    {Object.keys(componentsByPage).map((pagePath) => (
-                      <TabsTrigger key={pagePath} value={pagePath}>
-                        {componentsByPage[pagePath].pageName}
-                      </TabsTrigger>
-                    ))}
-                  </TabsList>
-                  
-                  {Object.keys(componentsByPage).map((pagePath) => (
-                    <TabsContent key={pagePath} value={pagePath} className="pt-4">
-                      <h2 className="text-2xl font-bold mb-4">{componentsByPage[pagePath].pageName}</h2>
-                      <p className="text-gray-500 mb-6">{componentsByPage[pagePath].description}</p>
-                      {componentsByPage[pagePath].components.map((group) => (
-                        <ComponentGroupSection 
-                          key={group.name} 
-                          group={group} 
-                          onSelectComponent={setSelectedComponent} 
-                        />
+                <div className="relative z-10"> {/* Added z-index to ensure tab navigation stays above details panel */}
+                  <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
+                    <TabsList className="mb-2">
+                      <TabsTrigger value="all">All Pages</TabsTrigger>
+                      {Object.keys(componentsByPage).map((pagePath) => (
+                        <TabsTrigger key={pagePath} value={pagePath}>
+                          {componentsByPage[pagePath].pageName}
+                        </TabsTrigger>
                       ))}
-                    </TabsContent>
-                  ))}
-                  
-                  <TabsContent value="all" className="pt-4">
+                    </TabsList>
+                    
                     {Object.keys(componentsByPage).map((pagePath) => (
-                      <div key={pagePath} className="mb-12">
+                      <TabsContent key={pagePath} value={pagePath} className="pt-4">
                         <h2 className="text-2xl font-bold mb-4">{componentsByPage[pagePath].pageName}</h2>
                         <p className="text-gray-500 mb-6">{componentsByPage[pagePath].description}</p>
                         {componentsByPage[pagePath].components.map((group) => (
@@ -90,15 +76,33 @@ const ComponentCatalogPage: React.FC = () => {
                             onSelectComponent={setSelectedComponent} 
                           />
                         ))}
-                      </div>
+                      </TabsContent>
                     ))}
-                  </TabsContent>
-                </Tabs>
+                    
+                    <TabsContent value="all" className="pt-4">
+                      {Object.keys(componentsByPage).map((pagePath) => (
+                        <div key={pagePath} className="mb-12">
+                          <h2 className="text-2xl font-bold mb-4">{componentsByPage[pagePath].pageName}</h2>
+                          <p className="text-gray-500 mb-6">{componentsByPage[pagePath].description}</p>
+                          {componentsByPage[pagePath].components.map((group) => (
+                            <ComponentGroupSection 
+                              key={group.name} 
+                              group={group} 
+                              onSelectComponent={setSelectedComponent} 
+                            />
+                          ))}
+                        </div>
+                      ))}
+                    </TabsContent>
+                  </Tabs>
+                </div>
               )}
             </div>
             
             <div className="w-full lg:w-1/3">
-              <ComponentDetails component={selectedComponent} />
+              <div className="lg:sticky lg:top-4"> {/* Added sticky positioning within container */}
+                <ComponentDetails component={selectedComponent} />
+              </div>
             </div>
           </div>
         </div>

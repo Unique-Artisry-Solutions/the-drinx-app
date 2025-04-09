@@ -16,7 +16,7 @@ const ComponentDetails: React.FC<ComponentDetailsProps> = ({ component }) => {
   
   if (!component) {
     return (
-      <Card>
+      <Card className="h-full">
         <CardHeader>
           <CardTitle>Component Details</CardTitle>
           <CardDescription>Select a component to view its details and Lovable prompt</CardDescription>
@@ -40,8 +40,36 @@ const ComponentDetails: React.FC<ComponentDetailsProps> = ({ component }) => {
     return `Modify the ${component.name} component in ${component.filePath} which has the following selectors: ${component.selectors.join(', ')}`;
   };
   
+  // Function to render the appropriate preview based on the component's preview property
+  const renderPreview = () => {
+    if (!component.preview) {
+      return (
+        <div className="flex flex-col items-center justify-center h-full text-gray-400">
+          <Component size={36} className="mb-2" />
+          <span className="text-xs">No Preview Available</span>
+        </div>
+      );
+    }
+    
+    if (component.preview.startsWith('http') || component.preview.startsWith('/')) {
+      return (
+        <img 
+          src={component.preview} 
+          alt={`Preview of ${component.name}`} 
+          className="max-w-full max-h-full object-contain"
+        />
+      );
+    }
+    
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div dangerouslySetInnerHTML={{ __html: component.preview }} />
+      </div>
+    );
+  };
+  
   return (
-    <Card className="sticky top-4">
+    <Card className="relative z-0"> {/* Lowered z-index to ensure it doesn't interfere with tabs */}
       <CardHeader>
         <div className="flex justify-between items-start">
           <CardTitle>{component.name}</CardTitle>
@@ -50,25 +78,12 @@ const ComponentDetails: React.FC<ComponentDetailsProps> = ({ component }) => {
         <CardDescription>{component.filePath}</CardDescription>
       </CardHeader>
       <CardContent>
-        {component.preview && (
-          <div className="mb-6 border rounded-md p-3 bg-gray-50">
-            <h4 className="font-medium mb-2 text-sm">Preview</h4>
-            <div className="flex items-center justify-center p-2 bg-white rounded border h-48">
-              {component.preview.startsWith('http') ? (
-                <img 
-                  src={component.preview} 
-                  alt={`Preview of ${component.name}`} 
-                  className="max-w-full max-h-full object-contain"
-                />
-              ) : (
-                <div className="text-gray-400 flex flex-col items-center">
-                  <Component size={36} className="mb-2" />
-                  <span className="text-xs">Component Preview</span>
-                </div>
-              )}
-            </div>
+        <div className="mb-6 border rounded-md p-3 bg-gray-50">
+          <h4 className="font-medium mb-2 text-sm">Preview</h4>
+          <div className="flex items-center justify-center p-2 bg-white rounded border h-48">
+            {renderPreview()}
           </div>
-        )}
+        </div>
         
         <div className="mb-4">
           <h4 className="font-medium mb-2">Description</h4>
@@ -77,7 +92,7 @@ const ComponentDetails: React.FC<ComponentDetailsProps> = ({ component }) => {
         
         <div className="mb-4">
           <h4 className="font-medium mb-2">Selectors</h4>
-          <div className="space-y-1">
+          <div className="space-y-1 max-h-[200px] overflow-y-auto">
             {component.selectors.map((selector, idx) => (
               <div key={idx} className="flex items-center justify-between bg-gray-50 p-2 rounded text-sm">
                 <code className="text-xs">{selector}</code>

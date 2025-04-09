@@ -25,6 +25,37 @@ const ComponentCard: React.FC<ComponentCardProps> = ({ component, onSelectCompon
     });
   };
   
+  // Function to render the appropriate preview based on the component's preview property
+  const renderPreview = () => {
+    // If no preview property, render a default preview with the component icon
+    if (!component.preview) {
+      return (
+        <div className="flex flex-col items-center justify-center h-full text-gray-400">
+          <Component size={24} className="mb-1" />
+          <span className="text-xs">Component Preview</span>
+        </div>
+      );
+    }
+    
+    // If the preview is a URL, render an image
+    if (component.preview.startsWith('http') || component.preview.startsWith('/')) {
+      return (
+        <img 
+          src={component.preview} 
+          alt={`Preview of ${component.name}`} 
+          className="max-w-full max-h-full object-contain"
+        />
+      );
+    }
+    
+    // If the preview is something else (like JSX or SVG as string), render it as-is
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div dangerouslySetInnerHTML={{ __html: component.preview }} />
+      </div>
+    );
+  };
+  
   return (
     <Card 
       className="hover:shadow-md transition-shadow cursor-pointer"
@@ -42,22 +73,10 @@ const ComponentCard: React.FC<ComponentCardProps> = ({ component, onSelectCompon
         </CardDescription>
       </CardHeader>
       <CardContent className="pt-0">
-        {component.preview ? (
-          <div className="mb-3 border rounded-md p-2 bg-gray-50 h-24 flex items-center justify-center overflow-hidden">
-            {component.preview.startsWith('http') ? (
-              <img 
-                src={component.preview} 
-                alt={`Preview of ${component.name}`} 
-                className="max-w-full max-h-full object-contain"
-              />
-            ) : (
-              <div className="text-gray-400 flex flex-col items-center">
-                <Component size={24} className="mb-1" />
-                <span className="text-xs">Component Preview</span>
-              </div>
-            )}
-          </div>
-        ) : null}
+        {/* Always show preview container, but content differs based on component.preview */}
+        <div className="mb-3 border rounded-md p-2 bg-gray-50 h-24 flex items-center justify-center overflow-hidden">
+          {renderPreview()}
+        </div>
         <div className="text-sm">{component.description}</div>
         <div className="flex mt-4">
           <Button 

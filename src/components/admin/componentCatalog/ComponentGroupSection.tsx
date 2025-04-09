@@ -13,7 +13,7 @@ const ComponentGroupSection: React.FC<ComponentGroupSectionProps> = ({ group, on
     <div className="mb-8">
       <h3 className="text-lg font-semibold mb-2">{group.name}</h3>
       <p className="text-gray-500 mb-4">{group.description}</p>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
         {group.components.map((component) => (
           <ComponentCard 
             key={component.id} 
