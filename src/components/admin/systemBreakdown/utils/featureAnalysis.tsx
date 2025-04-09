@@ -1,3 +1,4 @@
+
 import { FeatureItem, AnalysisStep, FeatureStatus, DatabaseStatus } from '../types';
 import { analyzeDbRequirements } from './analysisHelpers';
 import { 
@@ -175,13 +176,4 @@ function updateFeaturesDbStatus(features: FeatureItem[]) {
       originalStatus: originalStatus !== newStatus ? originalStatus : undefined
     };
   });
-}
-
-export function isAnalyticsFeature(feature: FeatureItem) {
-  const keywords = ['analytics', 'statistics', 'reporting', 'reports', 'metrics', 'dashboard', 'trends'];
-  
-  return keywords.some(keyword => 
-    (feature.name.toLowerCase().includes(keyword) || 
-    (feature.description && feature.description.toLowerCase().includes(keyword)))
-  );
 }

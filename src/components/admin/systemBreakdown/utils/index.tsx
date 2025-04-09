@@ -18,6 +18,15 @@ import {
   mapFeatureStatusToReleaseStatus 
 } from './releaseUtils';
 
+/**
+ * Creates a date string that is X months from now (for planned release date)
+ */
+export function getDateMonthsFromNow(months: number): string {
+  const date = new Date();
+  date.setMonth(date.getMonth() + months);
+  return date.toISOString().split('T')[0]; // YYYY-MM-DD format
+}
+
 export {
   renderStatusBadge,
   renderDatabaseStatusBadge,
