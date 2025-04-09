@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Bell } from 'lucide-react';
+import { Menu, X, Bell, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth';
@@ -9,6 +9,12 @@ import { adminNavItems } from './AdminNavItems';
 import AdminProfileDropdown from './AdminProfileDropdown';
 import AdminMobileMenu from './AdminMobileMenu';
 import AnalyticsService from '@/components/admin/analytics/AnalyticsService';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
 
 const AdminTopNav: React.FC = () => {
   const location = useLocation();
@@ -71,6 +77,11 @@ const AdminTopNav: React.FC = () => {
       (path === '/admin/dashboard' && location.pathname.startsWith('/admin'));
   };
 
+  // Find the active nav item
+  const activeNavItem = adminNavItems.find(item => 
+    isActive(item.path) || location.pathname.startsWith(item.path)
+  ) || adminNavItems[0];
+
   return (
     <AnalyticsService pageView="admin_navigation">
       <nav className="admin-top-nav fixed top-0 left-0 w-full bg-material-primary text-white z-50 shadow-md">
@@ -81,19 +92,38 @@ const AdminTopNav: React.FC = () => {
                 Spirit<span className="text-white">less</span>
               </Link>
               
-              <div className="admin-nav-links hidden md:flex space-x-3">
-                {adminNavItems.filter(item => item.showInNav !== false).map((item) => (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    className={`admin-nav-link px-4 py-2 rounded-md flex items-center transition-colors ${
-                      isActive(item.path) ? 'bg-white/20' : 'hover:bg-white/10'
-                    }`}
-                  >
-                    <item.icon className="mr-2 h-4 w-4" />
-                    <span className="text-sm font-medium">{item.label}</span>
-                  </Link>
-                ))}
+              <div className="admin-nav-links hidden md:flex">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      className="border-white text-white hover:bg-white/20 flex items-center gap-2"
+                    >
+                      {activeNavItem && (
+                        <>
+                          <activeNavItem.icon className="h-4 w-4" />
+                          <span className="text-sm font-medium">{activeNavItem.label}</span>
+                        </>
+                      )}
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="bg-white text-gray-800 w-56">
+                    {adminNavItems.filter(item => item.showInNav !== false).map((item) => (
+                      <DropdownMenuItem key={item.path} asChild>
+                        <Link
+                          to={item.path}
+                          className={`flex items-center px-3 py-2 rounded-md w-full ${
+                            isActive(item.path) ? 'bg-gray-100' : 'hover:bg-gray-50'
+                          }`}
+                        >
+                          <item.icon className="mr-2 h-4 w-4" />
+                          <span className="text-sm font-medium">{item.label}</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
             

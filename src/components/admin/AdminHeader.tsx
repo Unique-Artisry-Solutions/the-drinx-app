@@ -33,7 +33,8 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
     window.location.href = '/landing';
   };
   
-  return <header className="bg-material-primary text-material-on-primary p-4 shadow-md">
+  return (
+    <header className="bg-material-primary text-material-on-primary p-4 shadow-md">
       <div className="container max-w-5xl mx-auto flex justify-between items-center">
         <div className="flex items-center gap-4">
           <h1 className="text-xl font-medium">Admin Dashboard</h1>
@@ -48,7 +49,8 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
           <span>Logout</span>
         </Button>
       </div>
-    </header>;
+    </header>
+  );
 };
 
 export default AdminHeader;

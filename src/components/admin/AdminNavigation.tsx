@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { LogOut, Menu } from 'lucide-react';
+import { LogOut, Menu, ChevronDown } from 'lucide-react';
 import { adminNavItems } from '@/components/navigation/admin/AdminNavItems';
 import {
   DropdownMenu,
@@ -22,11 +22,13 @@ const AdminNavigation: React.FC<AdminNavigationProps> = ({
   const location = useLocation();
   
   const isActive = (path: string) => {
-    return location.pathname === path;
+    return location.pathname === path || location.pathname.startsWith(path);
   };
   
   // Find the active navigation item (if any)
-  const activeNavItem = adminNavItems.find(item => isActive(item.path));
+  const activeNavItem = adminNavItems.find(item => 
+    isActive(item.path) || location.pathname.startsWith(item.path)
+  ) || adminNavItems[0];
   
   return (
     <nav className="flex-1">
@@ -38,13 +40,16 @@ const AdminNavigation: React.FC<AdminNavigationProps> = ({
               size="sm"
               className="border-white text-white hover:text-white hover:bg-white/10 flex items-center gap-2"
             >
-              <Menu size={16} />
-              <span className="text-sm">
-                {activeNavItem ? activeNavItem.label : 'Navigation'}
-              </span>
+              {activeNavItem && (
+                <>
+                  <activeNavItem.icon size={16} className="mr-1" />
+                  <span className="text-sm">{activeNavItem.label}</span>
+                </>
+              )}
+              <ChevronDown size={14} className="ml-1" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56 bg-white">
+          <DropdownMenuContent className="w-56 bg-white z-50">
             {adminNavItems.filter(item => item.showInNav).map((item) => (
               <DropdownMenuItem key={item.path} asChild>
                 <Link
