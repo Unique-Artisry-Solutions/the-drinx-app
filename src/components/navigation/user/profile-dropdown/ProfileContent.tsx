@@ -69,10 +69,10 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
       {userType === 'establishment' ? (
         <>
           <ProfileMenuItem 
-            to="/establishment/all-actions" 
+            to="/establishment/dashboard" 
             icon={Store} 
             isDarkTheme={isDarkTheme}
-            isActive={location.pathname === '/establishment/all-actions'}
+            isActive={location.pathname === '/establishment/dashboard'}
           >
             Dashboard
           </ProfileMenuItem>
