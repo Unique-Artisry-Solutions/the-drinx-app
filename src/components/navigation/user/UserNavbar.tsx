@@ -80,7 +80,7 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
 
     if (user) {
       if (userType === 'establishment') {
-        navigate('/establishment/all-actions');
+        navigate('/establishment/dashboard');
       } else {
         navigate('/explore');
       }
