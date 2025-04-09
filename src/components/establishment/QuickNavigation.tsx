@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { buttonVariants } from '@/components/ui/button';
@@ -43,6 +44,18 @@ const QuickNavigation: React.FC<QuickNavigationProps> = ({
     }
   };
 
+  // Helper function to determine if a link is active
+  const isLinkActive = (link: any) => {
+    // Check both section and tab to determine if active
+    if (link.section && activeSection === link.section) {
+      return true;
+    }
+    if (link.tab && activeTab === link.tab) {
+      return true;
+    }
+    return false;
+  };
+
   return (
     <Card className="mb-6 mx-4 md:mx-6 lg:mx-[10%]">
       <CardContent className="py-4">
@@ -53,7 +66,7 @@ const QuickNavigation: React.FC<QuickNavigationProps> = ({
               key={link.section}
               onClick={() => handleLinkClick(link)}
               className={cn(
-                buttonVariants({ variant: (activeSection === link.section || activeTab === link.tab) ? "default" : "outline" }),
+                buttonVariants({ variant: isLinkActive(link) ? "default" : "outline" }),
                 "flex items-center gap-2"
               )}
             >

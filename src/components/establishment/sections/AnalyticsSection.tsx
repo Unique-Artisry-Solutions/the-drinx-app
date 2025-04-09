@@ -1,11 +1,15 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AlertCircle } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
+import { addDays } from 'date-fns';
+import { DateRange } from 'react-day-picker';
+
+import { AnalyticsHeader } from '@/components/analytics/AnalyticsHeader';
+import { AnalyticsTabContent } from '@/components/analytics/AnalyticsTabContent';
+import { useEstablishmentAnalytics } from '@/hooks/useEstablishmentAnalytics';
 
 interface AnalyticsSectionProps {
   visitorStats: {
@@ -20,18 +24,28 @@ interface AnalyticsSectionProps {
 }
 
 const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({ visitorStats, establishmentId }) => {
-  const navigate = useNavigate();
+  const [date, setDate] = useState<DateRange | undefined>({
+    from: addDays(new Date(), -30),
+    to: new Date(),
+  });
 
-  const goToAnalyticsPage = () => {
-    // If we have an establishment ID, include it in the URL
-    if (establishmentId) {
-      navigate(`/establishment/analytics/${establishmentId}`);
-    } else {
-      navigate('/establishment/analytics');
+  const {
+    visitorAnalytics,
+    visitorTrends,
+    retentionTrends,
+    revenueReports,
+    popularDrinks,
+    isLoading,
+    error
+  } = useEstablishmentAnalytics({
+    establishmentId: establishmentId || '',
+    range: {
+      startDate: date?.from || addDays(new Date(), -30),
+      endDate: date?.to || new Date()
     }
-  };
+  });
   
-  if (visitorStats.isLoading) {
+  if (isLoading || visitorStats.isLoading) {
     return (
       <Card className="mb-6 mx-4 md:mx-6 lg:mx-[10%]">
         <CardContent className="py-6">
@@ -39,19 +53,15 @@ const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({ visitorStats, estab
           <Skeleton className="h-4 w-2/3 mb-6" />
           
           <div className="mt-6 space-y-6">
-            <Skeleton className="h-6 w-1/4 mb-2" />
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Skeleton className="h-24 w-full" />
-              <Skeleton className="h-24 w-full" />
-              <Skeleton className="h-24 w-full" />
-            </div>
+            <Skeleton className="h-64 w-full" />
+            <Skeleton className="h-64 w-full" />
           </div>
         </CardContent>
       </Card>
     );
   }
 
-  if (visitorStats.error) {
+  if (error || visitorStats.error) {
     return (
       <Card className="mb-6 mx-4 md:mx-6 lg:mx-[10%]">
         <CardContent className="py-6">
@@ -59,7 +69,7 @@ const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({ visitorStats, estab
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Error</AlertTitle>
-            <AlertDescription>{visitorStats.error}</AlertDescription>
+            <AlertDescription>{error || visitorStats.error}</AlertDescription>
           </Alert>
         </CardContent>
       </Card>
@@ -86,35 +96,25 @@ const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({ visitorStats, estab
   return (
     <Card className="mb-6 mx-4 md:mx-6 lg:mx-[10%]">
       <CardContent className="py-6">
-        <h1 className="text-2xl font-bold mb-4">Analytics</h1>
-        <p>Visitor statistics and performance metrics.</p>
-        <div className="mt-6 space-y-6">
-          <div>
-            <h2 className="text-lg font-semibold mb-2">Visitor Overview</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card className="p-4" style={{ backgroundColor: 'var(--theme-primary, #FF719A)', color: 'white' }}>
-                <h3 className="font-medium">Total Visits</h3>
-                <p className="text-2xl font-bold">{visitorStats.totalVisits}</p>
-              </Card>
-              <Card className="p-4" style={{ backgroundColor: 'var(--theme-secondary, #84BF04)', color: 'white' }}>
-                <h3 className="font-medium">Unique Visitors</h3>
-                <p className="text-2xl font-bold">{visitorStats.uniqueVisitors}</p>
-              </Card>
-              <Card className="p-4" style={{ backgroundColor: 'var(--theme-accent, #F29F05)', color: 'white' }}>
-                <h3 className="font-medium">Returning Visitors</h3>
-                <p className="text-2xl font-bold">{visitorStats.returningVisitors}</p>
-              </Card>
-            </div>
-          </div>
-          <div className="h-64 bg-gray-50 rounded flex items-center justify-center dark:bg-gray-800">
-            <p className="text-gray-500 dark:text-gray-400">Visitor trend chart would display here</p>
-          </div>
-          <div className="flex justify-center">
-            <Button onClick={goToAnalyticsPage} className="mt-4">
-              View Full Analytics
-            </Button>
-          </div>
-        </div>
+        <h1 className="text-2xl font-bold mb-4">Analytics Dashboard</h1>
+        
+        <AnalyticsHeader 
+          establishmentName={establishmentId ? `Your Establishment` : 'Establishment'} 
+          date={date} 
+          setDate={setDate} 
+          visitorAnalytics={visitorAnalytics}
+          revenueReports={revenueReports}
+          popularDrinks={popularDrinks}
+        />
+        
+        <AnalyticsTabContent 
+          visitorAnalytics={visitorAnalytics}
+          visitorTrends={visitorTrends}
+          retentionTrends={retentionTrends}
+          revenueReports={revenueReports}
+          popularDrinks={popularDrinks}
+          ratingData={[]}
+        />
       </CardContent>
     </Card>
   );
