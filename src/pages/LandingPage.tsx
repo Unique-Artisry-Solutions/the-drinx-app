@@ -34,7 +34,7 @@ const LandingPage = () => {
       if (isAdmin) {
         navigate('/admin/system-breakdown', { replace: true });
       } else if (userType === 'establishment') {
-        navigate('/establishment/all-actions', { replace: true });
+        navigate('/establishment/dashboard', { replace: true });
       } else {
         navigate('/explore', { replace: true });
       }

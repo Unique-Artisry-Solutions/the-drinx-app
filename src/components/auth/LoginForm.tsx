@@ -49,6 +49,11 @@ const LoginForm: React.FC<LoginFormProps> = ({
     localStorage.setItem('user_username', type === 'admin' ? 'admin' : 
       type === 'individual' ? 'bypass-user' : 'bypass-business');
     
+    // Set establishment name for establishment users
+    if (type === 'establishment') {
+      localStorage.setItem('establishment_name', 'Bypass Establishment');
+    }
+    
     // Set admin authentication flag if it's an admin bypass
     if (type === 'admin') {
       localStorage.setItem('admin_authenticated', 'true');
@@ -68,7 +73,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
       if (type === 'admin') {
         navigate('/admin/system-breakdown');
       } else if (type === 'establishment') {
-        navigate('/');
+        navigate('/establishment/dashboard');
       } else {
         navigate('/explore');
       }

@@ -7,8 +7,14 @@ export function enableAdminBypass(userType: 'individual' | 'establishment' | 'ad
   localStorage.setItem('admin_bypass', 'true');
   localStorage.setItem('bypass_user_id', bypassUserId);
   localStorage.setItem('user_type', userType);
+  localStorage.setItem('user_authenticated', 'true'); // Ensure this is always set
   localStorage.setItem('user_email', `admin-${userType}@spiritless.com`);
   localStorage.setItem('user_username', `admin-${userType}`);
+  
+  // Set establishment name for establishment users
+  if (userType === 'establishment') {
+    localStorage.setItem('establishment_name', 'Bypass Establishment');
+  }
   
   // Set admin authentication flag if it's an admin bypass
   if (userType === 'admin') {
@@ -59,6 +65,7 @@ export function clearAllSessions() {
   localStorage.removeItem('user_username');
   localStorage.removeItem('user_name');
   localStorage.removeItem('user_join_date');
+  localStorage.removeItem('establishment_name');
   
   // Clear admin authentication
   localStorage.removeItem('admin_authenticated');

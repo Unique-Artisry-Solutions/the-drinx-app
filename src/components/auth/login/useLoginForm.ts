@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 
 export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userType: 'individual' | 'establishment' = 'individual') => {
   const [identifier, setIdentifier] = useState('');
@@ -118,7 +118,7 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
           // Redirect based on user type
           const storedUserType = localStorage.getItem('user_type');
           if (storedUserType === 'establishment') {
-            navigate('/', { replace: true });
+            navigate('/establishment/dashboard', { replace: true });
           } else {
             navigate('/explore', { replace: true });
           }
