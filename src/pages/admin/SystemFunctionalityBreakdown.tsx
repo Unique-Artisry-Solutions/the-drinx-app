@@ -14,7 +14,7 @@ import CreateReleaseFromFeaturesButton from '@/components/admin/systemBreakdown/
 import FeatureShowcaseTab from '@/components/admin/systemBreakdown/FeatureShowcaseTab';
 import PromoterRequirementsTab from '@/components/admin/systemBreakdown/PromoterRequirementsTab';
 import SystemBreakdownNavigation, { MobileSystemBreakdownNavigation } from '@/components/admin/systemBreakdown/SystemBreakdownNavigation';
-import { useMediaQuery } from '@/hooks/use-mobile';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 // Import improvements data
 import { proposedImprovements as improvementsData } from '@/components/admin/systemBreakdown/improvementsData';
@@ -42,7 +42,7 @@ const SystemFunctionalityBreakdown: React.FC = () => {
   } = useSystemBreakdown();
   
   // Use mobile hook to determine if we're on mobile
-  const isMobile = useMediaQuery('(max-width: 768px)');
+  const isMobile = useIsMobile();
 
   return (
     <Layout>
