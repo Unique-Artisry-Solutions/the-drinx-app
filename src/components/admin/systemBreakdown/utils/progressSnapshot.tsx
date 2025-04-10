@@ -16,24 +16,31 @@ export function createProgressSnapshot(
     individualFeatures
   );
   
-  const adminProgress = calculateCategoryProgress(adminFeatures);
-  const establishmentProgress = calculateCategoryProgress(establishmentFeatures);
-  const individualProgress = calculateCategoryProgress(individualFeatures);
+  const adminProgressObj = calculateCategoryProgress(adminFeatures);
+  const establishmentProgressObj = calculateCategoryProgress(establishmentFeatures);
+  const individualProgressObj = calculateCategoryProgress(individualFeatures);
   
   return {
+    timestamp: new Date().toISOString(),
     date: new Date().toISOString().split('T')[0], // YYYY-MM-DD
-    overallProgress: stats.implementationRate,
+    totalFeatures: stats.totalFeatures,
+    implementedFeatures: stats.implementedFeatures,
+    inProgressFeatures: stats.plannedFeatures,
+    plannedFeatures: stats.plannedFeatures,
+    blockedFeatures: 0,
+    averageImplementationProgress: stats.implementationRate,
     frontendProgress: stats.frontendImplementationRate,
     backendProgress: stats.databaseCompletionRate,
-    adminProgress,
-    establishmentProgress,
-    individualProgress,
-    implementedFeatures: stats.implementedFeatures,
-    partialFeatures: stats.partialFeatures,
-    plannedFeatures: stats.plannedFeatures,
+    adminFeatureCount: adminFeatures.length,
+    establishmentFeatureCount: establishmentFeatures.length,
+    individualFeatureCount: individualFeatures.length,
+    promoterFeatureCount: 0,
+    adminImplementationRate: adminProgressObj.overall,
+    establishmentImplementationRate: establishmentProgressObj.overall,
+    individualImplementationRate: individualProgressObj.overall,
+    promoterImplementationRate: 0,
+    overallProgress: stats.implementationRate,
     dbComplete: stats.dbCompleted,
-    dbInProgress: stats.dbInProgress,
-    dbNotStarted: stats.dbNotStarted,
     confidenceScore: stats.confidenceScore
   };
 }

@@ -1,15 +1,13 @@
-
 import { 
   FeatureItem, 
   FeatureShowcaseData, 
-  FeatureBusinessValue, 
+  FeatureBusinessValueType,
   FeatureComplexity,
-  FeatureShowcaseCategory
+  FeatureShowcaseCategoryType
 } from '../types';
 import {
   isAIFeature,
   isAnalyticsFeature,
-  isBarCrawlFeature,
   isMapFeature,
   isExplorationFeature,
   isIngredientPairingFeature,
@@ -30,13 +28,12 @@ import {
 } from './featureDetection';
 
 // Map features to business value based on their characteristics
-const determineBusinessValue = (feature: FeatureItem): FeatureBusinessValue => {
+const determineBusinessValue = (feature: FeatureItem): FeatureBusinessValueType => {
   if (
     isRewardProgramFeature(feature) ||
     isPromotionFeature(feature) ||
     isAIFeature(feature) ||
     isAnalyticsFeature(feature) ||
-    isBarCrawlFeature(feature) ||
     isVisitTrackingFeature(feature)
   ) {
     return 'high';
@@ -58,8 +55,7 @@ const determineComplexity = (feature: FeatureItem): FeatureComplexity => {
   if (
     isAIFeature(feature) ||
     isAnalyticsFeature(feature) ||
-    isBarCrawlFeature(feature) ||
-    isPromotionFeature(feature) && (feature.databaseStatus === 'complete')
+    isPromotionFeature(feature) && (feature.dbStatus === 'complete')
   ) {
     return 'high';
   } else if (
@@ -75,7 +71,7 @@ const determineComplexity = (feature: FeatureItem): FeatureComplexity => {
 };
 
 // Categorize features for the showcase
-const determineShowcaseCategory = (feature: FeatureItem): FeatureShowcaseCategory => {
+const determineShowcaseCategory = (feature: FeatureItem): FeatureShowcaseCategoryType => {
   if (isAIFeature(feature) || isMocktailSuggestionFeature(feature) || isMocktailTrendsFeature(feature)) {
     return 'AI & Recommendations';
   } else if (isSocialFeature(feature) || isBarCrawlFeature(feature)) {
@@ -170,7 +166,6 @@ const determineFeatureIcon = (feature: FeatureItem): string => {
 
 // Mock implementation statistics - in a real app would come from analytics
 const generateMockImplementationStats = (feature: FeatureItem): { implementations: number; avgRating: number } => {
-  // Generate consistent but random-looking numbers based on feature id
   const hash = feature.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
   
   // Signature features get higher stats
@@ -261,4 +256,3 @@ export const generateFeatureReport = (
   
   return report;
 };
-

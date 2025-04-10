@@ -4,7 +4,7 @@ import { BarChart3, Code, Database } from 'lucide-react';
 import { CheckCircle2, Clock, AlertCircle } from 'lucide-react';
 import ProgressCard from '../components/ProgressCard';
 import StatusProgressBar from '../components/StatusProgressBar';
-import { FeatureItem } from '../types';
+import { FeatureItem, ProgressSnapshot } from '../types';
 
 interface OverviewTabProps {
   overallProgressPercentage: number;
@@ -14,6 +14,7 @@ interface OverviewTabProps {
   partialFeatures: number;
   totalFeatures: number;
   confidenceScore?: number;
+  currentSnapshot?: ProgressSnapshot;
 }
 
 const OverviewTab: React.FC<OverviewTabProps> = ({
@@ -23,7 +24,8 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
   implementedFeatures,
   partialFeatures,
   totalFeatures,
-  confidenceScore
+  confidenceScore,
+  currentSnapshot
 }) => {
   return (
     <div className="space-y-4">

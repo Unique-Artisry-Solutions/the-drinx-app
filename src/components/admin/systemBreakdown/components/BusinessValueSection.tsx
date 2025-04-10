@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Star } from 'lucide-react';
-import { FeatureBusinessValueObject, FeatureShowcaseData } from '../types';
+import { FeatureBusinessValueObject } from '../types';
 
 interface BusinessValueSectionProps {
   values: FeatureBusinessValueObject[];
@@ -73,7 +73,7 @@ const BusinessValueSection: React.FC<BusinessValueSectionProps> = ({ values }) =
                 {value.features.map((feature) => (
                   <div key={feature.id} className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      {feature.isSignature && (
+                      {feature.tags?.includes('signature') && (
                         <Star className="h-4 w-4 text-yellow-500" />
                       )}
                       <span className="font-medium">{feature.name}</span>

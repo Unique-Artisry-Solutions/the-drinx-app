@@ -1,5 +1,6 @@
 
-import { FeatureItem, FeatureStatus, ReleaseFeature, ReleaseStatus } from '../types';
+import { FeatureItem, FeatureStatus } from '../types';
+import { ReleaseFeature, ReleaseStatus } from '../types/releaseTypes';
 
 /**
  * Maps feature status to release status
@@ -14,8 +15,6 @@ export function mapFeatureStatusToReleaseStatus(status: FeatureStatus): ReleaseS
       return 'planned';
     case 'blocked':
       return 'planned';
-    case 'partial':
-      return 'in_development';
     default:
       return 'planned';
   }
@@ -53,9 +52,7 @@ export function groupFeaturesByStatus(features: FeatureItem[]): Record<string, F
     implemented: [],
     in_progress: [],
     planned: [],
-    blocked: [],
-    partial: [],
-    not_started: []
+    blocked: []
   };
   
   features.forEach(feature => {
@@ -67,11 +64,9 @@ export function groupFeaturesByStatus(features: FeatureItem[]): Record<string, F
       result.planned.push(feature);
     } else if (feature.status === 'blocked') {
       result.blocked.push(feature);
-    } else if (feature.status === 'partial') {
-      result.partial.push(feature);
     } else {
-      // For any unexpected status values, default to not_started
-      result.not_started.push(feature);
+      // For any unexpected status values, default to planned
+      result.planned.push(feature);
     }
   });
   

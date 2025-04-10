@@ -1,10 +1,9 @@
 
 import React from 'react';
-import { FeatureItem, ProgressSnapshot } from './types';
+import { FeatureItem, ProgressSnapshot, MonthlyProgressData } from './types';
 import { Card } from '@/components/ui/card';
 import ImplementationOverview from './ImplementationOverview';
 import DevelopmentProgressDashboard from './DevelopmentProgressDashboard';
-import { MonthlyProgressData } from './types';
 
 interface OverviewTabProps {
   adminFeatures: FeatureItem[];
@@ -48,6 +47,10 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
       />
       
       <DevelopmentProgressDashboard 
+        adminFeatures={adminFeatures}
+        establishmentFeatures={establishmentFeatures}
+        individualFeatures={individualFeatures}
+        promoterFeatures={promoterFeatures}
         monthlyProgressData={monthlyProgressData}
         currentSnapshot={currentSnapshot}
       />

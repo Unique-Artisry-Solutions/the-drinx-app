@@ -31,7 +31,7 @@ export const useReleaseFeatures = (
       (feature.status === 'in_progress' || feature.status === 'implemented')
     );
     
-    // Map features to release features format - fix the argument count
+    // Map features to release features format
     const releaseFeatures = mapFeaturesToReleaseFeatures(readyFeatures, releaseDate);
     
     // In a real implementation, this would save to Supabase

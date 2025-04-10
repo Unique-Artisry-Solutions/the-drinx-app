@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Star } from 'lucide-react';
-import { FeatureShowcaseData, FeatureItem } from '../types';
+import { FeatureShowcaseData, FeatureItem, FeatureBusinessValueType } from '../types';
 import * as Icons from 'lucide-react';
 
 // Interface for the component when used with FeatureShowcaseData
@@ -112,11 +112,13 @@ function mapFeatureItemToShowcaseData(feature: FeatureItem): FeatureShowcaseData
     complexity: feature.complexity || 'medium',
     implementationStatus: feature.status,
     showcaseCategory: 'Management Tools', // Default category
-    isSignature: true,
+    isSignature: feature.tags?.includes('signature') || false,
     icon: 'Star',
     implementations: 0,
     avgRating: 0,
-    marketingPoints: []
+    marketingPoints: [],
+    categories: [],
+    businessValues: []
   };
 }
 

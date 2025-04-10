@@ -1,8 +1,6 @@
 
 // Export specific functions from each detection module to avoid ambiguity
-export { 
-  isFeatureFlagRelated 
-} from './featureFlagDetection';
+export { isFeatureFlagRelated } from './coreDetection';
 
 export {
   isIngredientPairingFeature as isIngredientPairingDetection,
@@ -32,13 +30,8 @@ export {
   isProfileFeature,
   isContentFeature,
   isContentModerationFeature,
-  isEstablishmentFeature,
-  isEstablishmentManagementFeature,
-  isReviewFeature,
   isPhotoFeature,
-  isPhotoModerationFeature,
-  isBarCrawlFeature,
-  isBarCrawlManagementFeature
+  isPhotoModerationFeature
 } from './userContentDetection';
 
 export {
@@ -54,18 +47,6 @@ export {
   isThemeFeature as isThemeDetectionFeature,
   isSwigCircuitFeature,
   isSignatureFeature as isSignatureDetectionFeature,
-  isSearchFeature,
-  isFavoriteFeature,
-  isVisitTrackingFeature,
-  isSchedulingFeature,
-  isTicketManagementFeature,
-  isSponsorshipFeature,
-  isVenuePartnershipFeature,
-  isMerchandiseFeature,
-  isPromoterAnalyticsFeature,
-  isAdvertisingToolsFeature,
-  isVIPFeature,
-  isFeedbackFeature
 } from './venueDetection';
 
 // Re-export the core detection functions with their original names

@@ -8,43 +8,53 @@ interface CategoriesTabProps {
   adminFeatures: FeatureItem[];
   establishmentFeatures: FeatureItem[];
   individualFeatures: FeatureItem[];
+  promoterFeatures?: FeatureItem[];
   adminProgress: { frontend: number; backend: number; overall: number };
   establishmentProgress: { frontend: number; backend: number; overall: number };
   individualProgress: { frontend: number; backend: number; overall: number };
+  promoterProgress?: { frontend: number; backend: number; overall: number };
 }
 
 const CategoriesTab: React.FC<CategoriesTabProps> = ({
   adminFeatures,
   establishmentFeatures,
   individualFeatures,
+  promoterFeatures = [],
   adminProgress,
   establishmentProgress,
-  individualProgress
+  individualProgress,
+  promoterProgress = { frontend: 0, backend: 0, overall: 0 }
 }) => {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Create CategoryCard components with the correct prop structure */}
         <CategoryCard 
-          title="Admin Features"
-          totalFeatures={adminFeatures.length}
-          frontendPercentage={adminProgress.frontend}
-          backendPercentage={adminProgress.backend}
-          completedCount={adminFeatures.filter(f => f.status === 'implemented').length}
+          category={{
+            name: "Admin Features",
+            description: "Features for system administrators",
+            featureCount: adminFeatures.length,
+            implementationRate: adminProgress.overall,
+            features: adminFeatures
+          }}
         />
         <CategoryCard 
-          title="Establishment Features"
-          totalFeatures={establishmentFeatures.length}
-          frontendPercentage={establishmentProgress.frontend}
-          backendPercentage={establishmentProgress.backend}
-          completedCount={establishmentFeatures.filter(f => f.status === 'implemented').length}
+          category={{
+            name: "Establishment Features",
+            description: "Features for establishment owners",
+            featureCount: establishmentFeatures.length,
+            implementationRate: establishmentProgress.overall,
+            features: establishmentFeatures
+          }}
         />
         <CategoryCard 
-          title="Individual Features"
-          totalFeatures={individualFeatures.length}
-          frontendPercentage={individualProgress.frontend}
-          backendPercentage={individualProgress.backend}
-          completedCount={individualFeatures.filter(f => f.status === 'implemented').length}
+          category={{
+            name: "Individual Features",
+            description: "Features for regular users",
+            featureCount: individualFeatures.length,
+            implementationRate: individualProgress.overall,
+            features: individualFeatures
+          }}
         />
       </div>
       
