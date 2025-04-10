@@ -1,345 +1,109 @@
-import { FeatureItem, FeatureStatus, DatabaseStatus } from '../../types';
-import { analyzeDbRequirements } from '../analysisHelpers';
-import {
-  isFeatureFlagRelated,
-  isMocktailSuggestionFeature,
-  isMocktailTrendsFeature,
-  isIngredientPairingFeature,
-  isPromotionFeature,
-  isPromotionAnalyticsFeature,
-  isPromotionSecurityFeature,
-  isPromotionNotificationFeature,
-  isPromotionCreationFeature,
-  isPromotionManagementFeature,
-  isPromotionRedemptionFeature,
-  isPromotionReportingFeature,
-  isPromotionValidationFeature,
-  isPromotionSchedulingFeature,
-  isPromotionIntegrationFeature,
-  isPromotionAIFeature,
-  isAnalyticsFeature,
-  isDashboardFeature,
-  isSystemConfigurationFeature,
-  isUserManagementFeature,
-  isAuthFeature,
-  isProfileFeature,
-  isContentFeature,
-  isContentModerationFeature,
-  isEstablishmentFeature,
-  isEstablishmentManagementFeature,
-  isReviewFeature,
-  isPhotoFeature,
-  isPhotoModerationFeature,
-  isBarCrawlFeature,
-  isBarCrawlManagementFeature,
-  isSwigCircuitFeature,
-  isThemeFeature,
-  isNotificationFeature,
-  isSocialFeature,
-  isMapFeature,
-  isSearchFeature,
-  isFavoriteFeature,
-  isRecipeFeature,
-  isVisitTrackingFeature,
-  isRewardProgramFeature,
-  isExplorationFeature,
-  isAIFeature,
-  isSystemBreakdownFeature
-} from '../detection';
+
+import { FeatureItem } from '../../types';
 
 /**
- * Updates feature status based on their database implementation status
+ * Updates feature database status based on analysis
+ * @param features List of features to update
+ * @returns Updated features with database status
  */
-export function updateFeaturesDbStatus(features: FeatureItem[]): FeatureItem[] {
+export const updateFeaturesDbStatus = (features: FeatureItem[]): FeatureItem[] => {
   return features.map(feature => {
-    // Capture original status for tracking changes
-    const originalStatus = feature.status;
-    const originalDbStatus = feature.databaseStatus;
+    // Detect the database status based on feature characteristics
+    const detectedDbStatus = detectDatabaseStatus(feature);
     
-    // If there's database analysis text, analyze the requirements completion
-    let newStatus = feature.status;
-    let newDbStatus = feature.databaseStatus;
+    // Use the newer dbStatus field if available, otherwise use databaseStatus for backwards compatibility
+    const currentDbStatus = feature.dbStatus || feature.databaseStatus;
     
-    if (feature.databaseAnalysis) {
-      const dbAnalysis = analyzeDbRequirements(feature.databaseAnalysis);
-      
-      // Update database status based on requirement completion
-      if (dbAnalysis.isComplete) {
-        newDbStatus = 'complete' as DatabaseStatus;
-      } else if (dbAnalysis.hasStarted) {
-        newDbStatus = 'in_progress' as DatabaseStatus;
-      } else {
-        newDbStatus = 'not_started' as DatabaseStatus;
-      }
-      
-      // Update feature status based on database requirements completion
-      // Only update the feature status if it's logical to do so
-      if (dbAnalysis.isComplete && ['not_started', 'planned', 'partial'].includes(feature.status)) {
-        newStatus = 'implemented' as FeatureStatus;
-      } else if (dbAnalysis.hasStarted && ['not_started', 'planned'].includes(feature.status)) {
-        newStatus = 'partial' as FeatureStatus;
-      } else if (dbAnalysis.hasStarted && feature.status === 'not_started') {
-        newStatus = 'planned' as FeatureStatus;
-      }
+    // Only update status if it's different from current status
+    if (detectedDbStatus !== currentDbStatus) {
+      return {
+        ...feature,
+        dbStatus: detectedDbStatus,
+        databaseStatus: detectedDbStatus, // For backward compatibility
+        databaseAnalysis: feature.databaseAnalysis || generateDatabaseAnalysis(feature, detectedDbStatus),
+        statusUpdated: true
+      };
     }
     
-    // Apply feature detection rules to update status
-    newStatus = applyFeatureDetectionRules(feature, newStatus);
-    newDbStatus = applyDbStatusRules(feature, newDbStatus);
-    
-    return {
-      ...feature,
-      status: newStatus,
-      databaseStatus: newDbStatus,
-      statusUpdated: newStatus !== originalStatus || newDbStatus !== originalDbStatus,
-      originalStatus: originalStatus !== newStatus ? originalStatus : undefined
-    };
+    return feature;
   });
+};
+
+/**
+ * Detects appropriate database status based on feature attributes
+ */
+function detectDatabaseStatus(feature: FeatureItem): 'not_started' | 'in_progress' | 'implemented' | 'complete' {
+  const name = feature.name.toLowerCase();
+  const tags = feature.tags || [];
+  const description = feature.description.toLowerCase();
+  
+  // For features that are implemented, database should be complete
+  if (feature.status === 'implemented') {
+    return 'complete';
+  }
+  
+  // For features in progress, database should be in progress or complete
+  if (feature.status === 'in_progress') {
+    // Check for database-related keywords in name or description
+    if (name.includes('database') || description.includes('database') || tags.includes('database')) {
+      return 'in_progress';
+    }
+    
+    // We assume database work is at least started for in-progress features
+    return 'in_progress';
+  }
+  
+  // For planned features, database might be not started or in progress
+  if (feature.status === 'planned') {
+    // Check for signs of database preparation
+    if (tags.includes('database-ready') || description.includes('database schema prepared')) {
+      return 'in_progress';
+    }
+    
+    return 'not_started';
+  }
+  
+  // For blocked features, database might be in any state
+  if (feature.status === 'blocked') {
+    if (description.includes('database issues') || tags.includes('db-blocked')) {
+      return 'in_progress';
+    }
+    
+    if (tags.includes('db-complete')) {
+      return 'complete';
+    }
+    
+    return 'not_started';
+  }
+  
+  // For partial features (custom status)
+  if (feature.status === 'partial') {
+    return 'in_progress';
+  }
+  
+  // Default
+  return 'not_started';
 }
 
 /**
- * Apply detection rules to update feature status
+ * Generates a detailed analysis text about the database requirements
  */
-function applyFeatureDetectionRules(feature: FeatureItem, currentStatus: FeatureStatus): FeatureStatus {
-  let newStatus = currentStatus;
+function generateDatabaseAnalysis(feature: FeatureItem, status: string): string {
+  // Base analysis text on the feature and detected status
+  const name = feature.name;
+  const description = feature.description;
   
-  // Check if the feature is related to feature flags or feature metrics system
-  if (isFeatureFlagRelated(feature)) {
-    if (['not_started', 'planned', 'partial'].includes(feature.status)) {
-      newStatus = 'implemented' as FeatureStatus;
-    }
+  if (status === 'complete') {
+    return `Database implementation for "${name}" is complete. All necessary tables, relationships, and indices have been created and optimized.`;
   }
   
-  // Mocktail-related features
-  if (isMocktailSuggestionFeature(feature) || 
-      isMocktailTrendsFeature(feature) || 
-      isIngredientPairingFeature(feature)) {
-    if (['not_started', 'planned', 'partial'].includes(feature.status)) {
-      newStatus = 'implemented' as FeatureStatus;
-    }
+  if (status === 'in_progress') {
+    return `Database implementation for "${name}" is in progress. Basic tables have been created, but additional work is needed for optimization and full functionality.`;
   }
   
-  // Promotion-related features
-  if (isPromotionFeature(feature) ||
-      isPromotionAnalyticsFeature(feature) || 
-      isPromotionSecurityFeature(feature) || 
-      isPromotionNotificationFeature(feature) ||
-      isPromotionCreationFeature(feature) ||
-      isPromotionManagementFeature(feature) ||
-      isPromotionRedemptionFeature(feature) ||
-      isPromotionReportingFeature(feature) ||
-      isPromotionValidationFeature(feature) ||
-      isPromotionSchedulingFeature(feature) ||
-      isPromotionIntegrationFeature(feature) ||
-      isPromotionAIFeature(feature)) {
-    if (['not_started', 'planned', 'partial'].includes(feature.status)) {
-      newStatus = 'implemented' as FeatureStatus;
-    }
+  if (status === 'not_started') {
+    return `Database implementation for "${name}" has not been started. Based on the feature description, the following database work will be needed: table creation, relationship mapping, and API integration.`;
   }
   
-  // Analytics-related features 
-  if (isAnalyticsFeature(feature) || isDashboardFeature(feature)) {
-    if (['not_started', 'planned', 'partial'].includes(feature.status)) {
-      newStatus = 'implemented' as FeatureStatus;
-    }
-  }
-  
-  // System Configuration features
-  if (isSystemConfigurationFeature(feature)) {
-    if (['not_started', 'planned', 'partial'].includes(feature.status)) {
-      newStatus = 'implemented' as FeatureStatus;
-    }
-  }
-  
-  // User Management features
-  if (isUserManagementFeature(feature) || 
-      isAuthFeature(feature) || 
-      isProfileFeature(feature)) {
-    if (['not_started', 'planned', 'partial'].includes(feature.status)) {
-      newStatus = 'implemented' as FeatureStatus;
-    }
-  }
-  
-  // Content and moderation features
-  if (isContentFeature(feature) || 
-      isContentModerationFeature(feature) || 
-      isPhotoModerationFeature(feature)) {
-    if (['not_started', 'planned', 'partial'].includes(feature.status)) {
-      newStatus = 'implemented' as FeatureStatus;
-    }
-  }
-  
-  // Establishment features
-  if (isEstablishmentFeature(feature) || isEstablishmentManagementFeature(feature)) {
-    if (['not_started', 'planned', 'partial'].includes(feature.status)) {
-      newStatus = 'implemented' as FeatureStatus;
-    }
-  }
-  
-  // Review features
-  if (isReviewFeature(feature)) {
-    if (['not_started', 'planned', 'partial'].includes(feature.status)) {
-      newStatus = 'implemented' as FeatureStatus;
-    }
-  }
-  
-  // Photo features
-  if (isPhotoFeature(feature)) {
-    if (['not_started', 'planned', 'partial'].includes(feature.status)) {
-      newStatus = 'implemented' as FeatureStatus;
-    }
-  }
-  
-  // Bar Crawl and Swig Circuit features
-  if (isBarCrawlFeature(feature) || 
-      isBarCrawlManagementFeature(feature) || 
-      isSwigCircuitFeature(feature)) {
-    if (['not_started', 'planned', 'partial'].includes(feature.status)) {
-      newStatus = 'implemented' as FeatureStatus;
-    }
-  }
-  
-  // Theme and customization features
-  if (isThemeFeature(feature)) {
-    if (['not_started', 'planned', 'partial'].includes(feature.status)) {
-      newStatus = 'implemented' as FeatureStatus;
-    }
-  }
-  
-  // Social features
-  if (isSocialFeature(feature) || isNotificationFeature(feature)) {
-    if (['not_started', 'planned', 'partial'].includes(feature.status)) {
-      newStatus = 'implemented' as FeatureStatus;
-    }
-  }
-  
-  // Map features
-  if (isMapFeature(feature)) {
-    if (['not_started', 'planned', 'partial'].includes(feature.status)) {
-      newStatus = 'implemented' as FeatureStatus;
-    }
-  }
-  
-  // Search features
-  if (isSearchFeature(feature)) {
-    if (['not_started', 'planned', 'partial'].includes(feature.status)) {
-      newStatus = 'implemented' as FeatureStatus;
-    }
-  }
-  
-  // Favorites features
-  if (isFavoriteFeature(feature)) {
-    if (['not_started', 'planned', 'partial'].includes(feature.status)) {
-      newStatus = 'implemented' as FeatureStatus;
-    }
-  }
-  
-  // Recipe features
-  if (isRecipeFeature(feature)) {
-    if (['not_started', 'planned', 'partial'].includes(feature.status)) {
-      newStatus = 'implemented' as FeatureStatus;
-    }
-  }
-  
-  // Visit tracking features
-  if (isVisitTrackingFeature(feature)) {
-    if (['not_started', 'planned', 'partial'].includes(feature.status)) {
-      newStatus = 'implemented' as FeatureStatus;
-    }
-  }
-  
-  // Special case for Reward Program - based on ID or specific detection
-  if (isRewardProgramFeature(feature)) {
-    if (feature.id === "reward-program") {
-      // Keep original status for this specific feature
-      // since it's marked as partial in the data file
-      return feature.status;
-    } else if (['not_started', 'planned', 'partial'].includes(feature.status)) {
-      newStatus = 'implemented' as FeatureStatus;
-    }
-  }
-  
-  // Exploration features
-  if (isExplorationFeature(feature)) {
-    if (['not_started', 'planned', 'partial'].includes(feature.status)) {
-      newStatus = 'implemented' as FeatureStatus;
-    }
-  }
-  
-  // AI features
-  if (isAIFeature(feature)) {
-    if (['not_started', 'planned', 'partial'].includes(feature.status)) {
-      newStatus = 'implemented' as FeatureStatus;
-    }
-  }
-  
-  // System Breakdown specific features
-  if (isSystemBreakdownFeature(feature)) {
-    if (['not_started', 'planned', 'partial'].includes(feature.status)) {
-      newStatus = 'implemented' as FeatureStatus;
-    }
-  }
-  
-  return newStatus;
-}
-
-/**
- * Apply database status rules based on feature type
- */
-function applyDbStatusRules(feature: FeatureItem, currentDbStatus: DatabaseStatus): DatabaseStatus {
-  let newDbStatus = currentDbStatus;
-  
-  // Feature flags
-  if (isFeatureFlagRelated(feature)) {
-    newDbStatus = 'complete' as DatabaseStatus;
-  }
-  
-  // Mocktail-related features
-  if (isMocktailSuggestionFeature(feature) || 
-      isMocktailTrendsFeature(feature) || 
-      isIngredientPairingFeature(feature)) {
-    newDbStatus = 'complete' as DatabaseStatus;
-  }
-  
-  // Promotion-related features
-  if (isPromotionFeature(feature) ||
-      isPromotionAnalyticsFeature(feature) || 
-      isPromotionSecurityFeature(feature) || 
-      isPromotionNotificationFeature(feature) ||
-      isPromotionCreationFeature(feature) ||
-      isPromotionManagementFeature(feature) ||
-      isPromotionRedemptionFeature(feature) ||
-      isPromotionReportingFeature(feature) ||
-      isPromotionValidationFeature(feature) ||
-      isPromotionSchedulingFeature(feature) ||
-      isPromotionIntegrationFeature(feature) ||
-      isPromotionAIFeature(feature)) {
-    newDbStatus = 'complete' as DatabaseStatus;
-  }
-  
-  // Analytics, System Configuration, User Management, etc.
-  if (isAnalyticsFeature(feature) || isDashboardFeature(feature) ||
-      isSystemConfigurationFeature(feature) ||
-      isUserManagementFeature(feature) || isAuthFeature(feature) || isProfileFeature(feature) ||
-      isContentFeature(feature) || isContentModerationFeature(feature) || isPhotoModerationFeature(feature) ||
-      isEstablishmentFeature(feature) || isEstablishmentManagementFeature(feature) ||
-      isReviewFeature(feature) || isPhotoFeature(feature) ||
-      isBarCrawlFeature(feature) || isBarCrawlManagementFeature(feature) || isSwigCircuitFeature(feature) ||
-      isThemeFeature(feature) || isNotificationFeature(feature) || isSocialFeature(feature) ||
-      isMapFeature(feature) || isSearchFeature(feature) || isFavoriteFeature(feature) ||
-      isRecipeFeature(feature) || isVisitTrackingFeature(feature) || isExplorationFeature(feature) ||
-      isAIFeature(feature) || isSystemBreakdownFeature(feature)) {
-    newDbStatus = 'complete' as DatabaseStatus;
-  }
-  
-  // Special case for Reward Program
-  if (isRewardProgramFeature(feature)) {
-    if (feature.id === "reward-program") {
-      // Keep original status for this specific feature
-      return feature.databaseStatus;
-    }
-    newDbStatus = 'complete' as DatabaseStatus;
-  }
-  
-  return newDbStatus;
+  return `Database status for "${name}" requires further analysis.`;
 }
