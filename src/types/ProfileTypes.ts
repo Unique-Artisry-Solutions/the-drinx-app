@@ -1,4 +1,3 @@
-
 /**
  * ProfileTypes.ts
  * Centralized type definitions for profile-related components
@@ -8,22 +7,16 @@
 export interface Establishment {
   id: string;
   name: string;
-  address: string;
-  phone?: string;
-  website?: string;
-  description?: string;
-  email?: string;
-  socialMedia?: {
-    facebook?: string;
-    instagram?: string;
-    twitter?: string;
-  };
-  hours?: Record<string, string> | string[];
-  distance?: string;
-  cocktailCount?: number;
-  image?: string;
+  address?: string;
+  image_url?: string;
+  image?: string; // For compatibility with existing code
   latitude?: number;
   longitude?: number;
+  cocktail_count?: number;
+  cocktailCount?: number; // For compatibility with existing code
+  phone?: string;
+  website?: string;
+  created_at?: string;
 }
 
 // Cocktail type used in FavoritesTab
@@ -78,3 +71,12 @@ export interface User {
   email?: string;
   avatar?: string;
 }
+
+// Export the visit related types for convenience
+export {
+  UserVisit,
+  VisitNote,
+  TriedMocktail,
+  UserVisitAchievement,
+  UserNotification
+};
