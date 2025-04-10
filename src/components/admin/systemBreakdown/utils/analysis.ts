@@ -6,6 +6,7 @@ import {
   analyzePromoterSystem,
   updateFeaturesDbStatus as analyzeDbRequirements
 } from './analysis/index';
+import { groupFeaturesByCategory } from './featureStatistics';
 
 /**
  * Analyzes all features and updates their implementation and database status
@@ -88,12 +89,21 @@ export function analyzeAllFeatures(
   updatedIndividualFeatures = markStatusChanges(updatedIndividualFeatures, originalIndividualFeatures);
   updatedPromoterFeatures = markStatusChanges(updatedPromoterFeatures, originalPromoterFeatures);
   
+  // Analyze promoter feature categories and requirements
+  const promoterCategories = groupFeaturesByCategory(updatedPromoterFeatures);
+  completedSteps.push({
+    name: 'Categorized promoter features',
+    completed: true,
+    details: `Found ${Object.keys(promoterCategories).length} feature categories`
+  });
+  
   return {
     adminFeatures: updatedAdminFeatures,
     establishmentFeatures: updatedEstablishmentFeatures,
     individualFeatures: updatedIndividualFeatures,
     promoterFeatures: updatedPromoterFeatures,
-    completedSteps
+    completedSteps,
+    promoterCategories
   };
 }
 

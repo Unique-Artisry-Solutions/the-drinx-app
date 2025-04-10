@@ -1,5 +1,6 @@
 
 import { FeatureItem } from '../types';
+import { getNormalizedDbStatus } from './statusRenderers';
 
 /**
  * Calculates comprehensive statistics about feature implementation status
@@ -19,12 +20,10 @@ export const calculateFeatureStatistics = (
   const inProgressFeatures = allFeatures.filter(f => f.status === 'in_progress').length;
   const blockedFeatures = allFeatures.filter(f => f.status === 'blocked').length;
   
-  // Ensure we're checking both databaseStatus and dbStatus fields for backward compatibility
-  const dbCompleted = allFeatures.filter(f => f.databaseStatus === 'complete' || f.dbStatus === 'complete').length;
-  const dbInProgress = allFeatures.filter(f => f.databaseStatus === 'in_progress' || f.dbStatus === 'in_progress').length;
-  const dbNotStarted = allFeatures.filter(f => 
-    (f.databaseStatus === 'not_started' || f.dbStatus === 'not_started') || 
-    (!f.databaseStatus && !f.dbStatus)).length;
+  // Use getNormalizedDbStatus to ensure consistent database status
+  const dbCompleted = allFeatures.filter(f => getNormalizedDbStatus(f) === 'complete').length;
+  const dbInProgress = allFeatures.filter(f => getNormalizedDbStatus(f) === 'in_progress').length;
+  const dbNotStarted = allFeatures.filter(f => getNormalizedDbStatus(f) === 'not_started').length;
   
   // Calculate the implementation rate using a weighted approach
   const implementationRate = totalFeatures > 0 
@@ -66,6 +65,26 @@ export const calculateFeatureStatistics = (
   const averageImplementation = totalFeatures > 0
     ? totalImplementationProgress / totalFeatures
     : 0;
+
+  // Calculate specific promoter statistics
+  const promoterFeatureCount = promoterFeatures.length;
+  const promoterImplementedCount = promoterFeatures.filter(f => f.status === 'implemented').length;
+  const promoterInProgressCount = promoterFeatures.filter(f => f.status === 'in_progress').length;
+  const promoterImplementationRate = promoterFeatureCount > 0
+    ? Math.round((promoterImplementedCount + (promoterInProgressCount * 0.5)) / promoterFeatureCount * 100)
+    : 0;
+    
+  // Get promoter feature categories based on tags
+  const promoterCategories = promoterFeatures.reduce((categories, feature) => {
+    if (feature.tags) {
+      feature.tags.forEach(tag => {
+        if (tag !== 'promoter') { // Skip the general 'promoter' tag
+          categories[tag] = (categories[tag] || 0) + 1;
+        }
+      });
+    }
+    return categories;
+  }, {} as Record<string, number>);
     
   return {
     totalFeatures,
@@ -87,6 +106,14 @@ export const calculateFeatureStatistics = (
       frontend: frontendImplementationRate,
       backend: databaseCompletionRate,
       overall: Math.round((frontendImplementationRate + databaseCompletionRate) / 2)
+    },
+    // Add promoter specific metrics
+    promoterMetrics: {
+      featureCount: promoterFeatureCount,
+      implemented: promoterImplementedCount,
+      inProgress: promoterInProgressCount,
+      implementationRate: promoterImplementationRate,
+      categories: promoterCategories
     }
   };
 };
@@ -113,9 +140,9 @@ export function calculateCategoryProgress(features: FeatureItem[]) {
   
   const frontendProgress = Math.round(totalImplementationProgress / totalFeatures);
   
-  // Backend progress - check both databaseStatus and dbStatus for backward compatibility
-  const dbCompleted = features.filter(f => f.databaseStatus === 'complete' || f.dbStatus === 'complete').length;
-  const dbInProgress = features.filter(f => f.databaseStatus === 'in_progress' || f.dbStatus === 'in_progress').length;
+  // Backend progress - use getNormalizedDbStatus for consistent database status
+  const dbCompleted = features.filter(f => getNormalizedDbStatus(f) === 'complete').length;
+  const dbInProgress = features.filter(f => getNormalizedDbStatus(f) === 'in_progress').length;
   const backendProgress = Math.round((dbCompleted + (dbInProgress * 0.5)) / totalFeatures * 100);
   
   // Overall progress
@@ -126,4 +153,43 @@ export function calculateCategoryProgress(features: FeatureItem[]) {
     backend: backendProgress,
     overall: overallProgress
   };
+}
+
+/**
+ * Group features by category based on their tags
+ */
+export function groupFeaturesByCategory(features: FeatureItem[]): Record<string, FeatureItem[]> {
+  const categories: Record<string, FeatureItem[]> = {};
+  
+  features.forEach(feature => {
+    if (feature.tags && feature.tags.length > 0) {
+      // Find the most specific category tag (excluding 'promoter' which is too general)
+      const categoryTags = feature.tags.filter(tag => tag !== 'promoter');
+      
+      if (categoryTags.length > 0) {
+        // Use the first category tag found
+        const primaryCategory = categoryTags[0];
+        
+        if (!categories[primaryCategory]) {
+          categories[primaryCategory] = [];
+        }
+        
+        categories[primaryCategory].push(feature);
+      } else {
+        // If no specific category found, put in 'other'
+        if (!categories['other']) {
+          categories['other'] = [];
+        }
+        categories['other'].push(feature);
+      }
+    } else {
+      // If no tags, put in 'uncategorized'
+      if (!categories['uncategorized']) {
+        categories['uncategorized'] = [];
+      }
+      categories['uncategorized'].push(feature);
+    }
+  });
+  
+  return categories;
 }

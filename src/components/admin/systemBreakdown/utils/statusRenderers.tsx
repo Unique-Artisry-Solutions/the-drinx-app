@@ -28,17 +28,19 @@ export const renderStatusBadge = (status: FeatureStatus) => {
 };
 
 /**
+ * Get normalized database status, handling both databaseStatus and dbStatus fields
+ * and providing a default value if neither is defined
+ */
+export const getNormalizedDbStatus = (feature: {databaseStatus?: DatabaseStatus, dbStatus?: DatabaseStatus}): DatabaseStatus => {
+  return feature.databaseStatus || feature.dbStatus || 'not_started';
+};
+
+/**
  * Renders a database status badge with appropriate color
  */
 export const renderDatabaseStatusBadge = (status: DatabaseStatus | undefined) => {
   // If status is undefined or null, use a default
-  if (!status) {
-    return (
-      <Badge className="bg-gray-100 text-gray-800" variant="outline">
-        Not started
-      </Badge>
-    );
-  }
+  const safeStatus: DatabaseStatus = status || 'not_started';
   
   // Define badge variants based on database status
   const variants: Record<DatabaseStatus, { color: string; icon: React.ReactNode }> = {
@@ -48,12 +50,12 @@ export const renderDatabaseStatusBadge = (status: DatabaseStatus | undefined) =>
     complete: { color: 'bg-green-100 text-green-800', icon: <Check className="w-3 h-3 mr-1" /> }
   };
   
-  const variant = variants[status] || variants.not_started;
+  const variant = variants[safeStatus];
   
   return (
     <Badge className={variant.color} variant="outline">
       {variant.icon}
-      {status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ')}
+      {safeStatus.charAt(0).toUpperCase() + safeStatus.slice(1).replace('_', ' ')}
     </Badge>
   );
 };

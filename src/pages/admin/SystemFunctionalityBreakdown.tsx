@@ -12,7 +12,8 @@ import AnalysisProgress from '@/components/admin/systemBreakdown/AnalysisProgres
 import ReleaseManagementTab from '@/components/admin/systemBreakdown/ReleaseManagementTab';
 import CreateReleaseFromFeaturesButton from '@/components/admin/systemBreakdown/CreateReleaseFromFeaturesButton';
 import FeatureShowcaseTab from '@/components/admin/systemBreakdown/FeatureShowcaseTab';
-import { Award } from 'lucide-react';
+import PromoterRequirementsTab from '@/components/admin/systemBreakdown/PromoterRequirementsTab';
+import { Award, Megaphone } from 'lucide-react';
 
 // Import improvements data
 import { proposedImprovements as improvementsData } from '@/components/admin/systemBreakdown/improvementsData';
@@ -71,6 +72,10 @@ const SystemFunctionalityBreakdown: React.FC = () => {
             <TabsTrigger value="establishment">Establishment Features</TabsTrigger>
             <TabsTrigger value="individual">Individual Features</TabsTrigger>
             <TabsTrigger value="promoter">Promoter Features</TabsTrigger>
+            <TabsTrigger value="promoter-requirements" className="flex items-center gap-1">
+              <Megaphone className="h-4 w-4" />
+              Promoter Requirements
+            </TabsTrigger>
             <TabsTrigger value="improvements">Proposed Improvements</TabsTrigger>
             <TabsTrigger value="releases">Release Management</TabsTrigger>
             <TabsTrigger value="showcase" className="flex items-center gap-1">
@@ -124,6 +129,10 @@ const SystemFunctionalityBreakdown: React.FC = () => {
               title="Promoter Features"
               description="Features accessible to event promoters and organizers"
             />
+          </TabsContent>
+          
+          <TabsContent value="promoter-requirements" className="space-y-4">
+            <PromoterRequirementsTab features={promoterFeatures} />
           </TabsContent>
 
           <TabsContent value="improvements" className="space-y-4">
