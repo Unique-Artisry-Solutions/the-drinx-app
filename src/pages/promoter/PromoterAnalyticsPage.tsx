@@ -1,91 +1,122 @@
 
 import React from 'react';
 import Layout from '@/components/Layout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CalendarIcon, BarChart4 } from 'lucide-react';
+import { BarChart4, TrendingUp, Users, Calendar } from 'lucide-react';
 
-const PromoterAnalyticsPage = () => {
+const PromoterAnalyticsPage: React.FC = () => {
   return (
     <Layout>
       <div className="max-w-6xl mx-auto px-4 py-8 mt-16">
-        <h1 className="text-2xl font-bold mb-6">Promoter Analytics</h1>
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold">Analytics</h1>
+            <p className="text-muted-foreground">Track your promotion performance</p>
+          </div>
+        </div>
         
         <Tabs defaultValue="overview" className="space-y-4">
-          <TabsList className="grid w-full max-w-md grid-cols-3">
+          <TabsList>
             <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="performance">Performance</TabsTrigger>
-            <TabsTrigger value="revenue">Revenue</TabsTrigger>
+            <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
+            <TabsTrigger value="audience">Audience</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="overview">
+          <TabsContent value="overview" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardDescription>Total Promotions</CardDescription>
+                  <CardTitle className="text-2xl flex items-center">
+                    0 <BarChart4 className="h-4 w-4 ml-1 text-purple-600" />
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-xs text-muted-foreground">No active promotions</p>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardDescription>Engagement</CardDescription>
+                  <CardTitle className="text-2xl flex items-center">
+                    0% <TrendingUp className="h-4 w-4 ml-1 text-purple-600" />
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-xs text-muted-foreground">No data available</p>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardDescription>Audience Reach</CardDescription>
+                  <CardTitle className="text-2xl flex items-center">
+                    0 <Users className="h-4 w-4 ml-1 text-purple-600" />
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-xs text-muted-foreground">No data available</p>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardDescription>Period</CardDescription>
+                  <CardTitle className="text-2xl flex items-center">
+                    30 days <Calendar className="h-4 w-4 ml-1 text-purple-600" />
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-xs text-muted-foreground">Last 30 days</p>
+                </CardContent>
+              </Card>
+            </div>
+            
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <BarChart4 className="h-5 w-5 mr-2 text-purple-600" />
-                  Activity Overview
-                </CardTitle>
+                <CardTitle>Performance Overview</CardTitle>
+                <CardDescription>Create promotions to see data here</CardDescription>
               </CardHeader>
-              <CardContent className="pt-2">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                  <Card>
-                    <CardContent className="py-4">
-                      <div className="text-center">
-                        <p className="text-sm text-gray-500 mb-1">Active Promotions</p>
-                        <p className="text-2xl font-bold text-purple-600">0</p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="py-4">
-                      <div className="text-center">
-                        <p className="text-sm text-gray-500 mb-1">Total Clicks</p>
-                        <p className="text-2xl font-bold text-purple-600">0</p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="py-4">
-                      <div className="text-center">
-                        <p className="text-sm text-gray-500 mb-1">Venue Visits</p>
-                        <p className="text-2xl font-bold text-purple-600">0</p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-                
-                <div className="text-center py-8 border-t border-gray-100">
-                  <CalendarIcon className="mx-auto h-8 w-8 text-gray-300 mb-2" />
-                  <p className="text-gray-500">No analytics data available yet.</p>
-                  <p className="text-sm text-gray-400 mt-2">
-                    Create and run promotions to start seeing analytics data here.
+              <CardContent className="h-80 flex items-center justify-center">
+                <div className="text-center">
+                  <p className="text-muted-foreground mb-2">No analytics data available yet</p>
+                  <p className="text-sm text-muted-foreground">
+                    Analytics will appear here once you create and run promotions
                   </p>
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
           
-          <TabsContent value="performance">
+          <TabsContent value="campaigns" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Performance Metrics</CardTitle>
+                <CardTitle>Campaign Performance</CardTitle>
+                <CardDescription>No campaigns found</CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="text-center py-8">
-                  <p className="text-gray-500">No performance data available yet.</p>
+              <CardContent className="h-80 flex items-center justify-center">
+                <div className="text-center">
+                  <p className="text-muted-foreground">
+                    You haven't created any promotional campaigns yet
+                  </p>
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
           
-          <TabsContent value="revenue">
+          <TabsContent value="audience" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Revenue Analytics</CardTitle>
+                <CardTitle>Audience Insights</CardTitle>
+                <CardDescription>No audience data available</CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="text-center py-8">
-                  <p className="text-gray-500">No revenue data available yet.</p>
+              <CardContent className="h-80 flex items-center justify-center">
+                <div className="text-center">
+                  <p className="text-muted-foreground">
+                    Audience data will appear once you have active promotions
+                  </p>
                 </div>
               </CardContent>
             </Card>

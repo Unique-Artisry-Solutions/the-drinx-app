@@ -1,49 +1,43 @@
 
-// Define styles for profile dropdown components
 export const profileDropdownStyles = {
-  header: (isDarkTheme: boolean) => 
-    `px-2 py-1.5 text-sm font-medium ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`,
-  
-  menuItem: (isDarkTheme: boolean, isActive?: boolean) => 
-    `flex items-center gap-2 w-full text-sm px-2 py-2.5 rounded-sm transition-all duration-200 my-1 ${
-      isActive 
-        ? `${isDarkTheme ? 'bg-gray-700 text-spiritless-pink' : 'bg-gray-100 text-spiritless-pink'}`
-        : `${isDarkTheme 
-            ? 'text-gray-200 hover:bg-gray-700/80 hover:text-white focus:bg-gray-700 focus:outline-none active:bg-gray-600' 
-            : 'text-gray-700 hover:bg-gray-100/80 hover:text-spiritless-pink hover:translate-x-1 focus:bg-gray-100 focus:outline-none active:bg-gray-200'
-          }`
-    }`,
-  
-  menuItemIcon: (isDarkTheme: boolean, isActive?: boolean) => 
-    `h-4 w-4 transition-colors ${
-      isActive
-        ? 'text-spiritless-pink'
-        : isDarkTheme 
-          ? 'text-gray-400 group-hover:text-white' 
-          : 'text-gray-500 group-hover:text-spiritless-pink'
-    }`,
-  
-  separator: (isDarkTheme: boolean) => 
-    `${isDarkTheme ? 'bg-gray-700' : 'bg-gray-200'} my-1`,
-  
-  tabItem: (isDarkTheme: boolean, isActive: boolean) => 
-    `flex items-center gap-1.5 px-2 py-1.5 text-xs rounded transition-colors ${
-      isActive 
-        ? `${isDarkTheme ? 'bg-gray-700 text-white' : 'bg-gray-100 text-spiritless-pink font-medium'}`
-        : `${isDarkTheme ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-600 hover:bg-gray-50'}`
-    }`,
-    
-  // Add missing style functions
   dropdownButton: (isDarkTheme: boolean) => 
-    `h-8 w-8 rounded-full p-0 border ${
-      isDarkTheme 
-        ? 'border-gray-600 bg-gray-800 text-white hover:border-gray-500 hover:bg-gray-700' 
-        : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-300'
-    }`,
+    isDarkTheme 
+      ? 'border-gray-700 hover:border-gray-600 text-gray-300 hover:text-white bg-gray-800'
+      : 'border-gray-200 hover:border-gray-300 text-gray-700 hover:text-gray-900 bg-white',
+  
+  header: (isDarkTheme: boolean) =>
+    isDarkTheme
+      ? 'border-b border-gray-700 bg-gray-800'
+      : 'border-b border-gray-200',
+  
+  separator: (isDarkTheme: boolean) =>
+    isDarkTheme
+      ? 'bg-gray-700'
+      : 'bg-gray-200',
+  
+  menuItem: (isDarkTheme: boolean, isActive?: boolean, customColor?: string) => {
+    // Base classes
+    const baseClasses = 'flex items-center px-2 py-1.5 rounded-md text-sm transition-colors';
     
-  tabOptionsContainer: (isDarkTheme: boolean) => 
-    `pt-1 pb-1 ${isDarkTheme ? 'border-t border-gray-700' : 'border-t border-gray-200'}`,
+    // Default active and hover states
+    let stateClasses = '';
     
-  tabOptionsLabel: (isDarkTheme: boolean) => 
-    `text-xs font-medium ${isDarkTheme ? 'text-gray-400' : 'text-gray-500'} px-2 py-1`
+    if (customColor) {
+      // Custom color states (for promoter)
+      stateClasses = isActive 
+        ? `bg-purple-50 ${customColor} font-medium` 
+        : `hover:bg-purple-50 hover:${customColor}`;
+    } else {
+      // Standard states
+      stateClasses = isActive
+        ? isDarkTheme
+          ? 'bg-gray-700 text-white font-medium'
+          : 'bg-gray-100 text-gray-900 font-medium'
+        : isDarkTheme
+          ? 'hover:bg-gray-700 hover:text-white'
+          : 'hover:bg-gray-100 hover:text-gray-900';
+    }
+    
+    return `${baseClasses} ${stateClasses}`;
+  }
 };

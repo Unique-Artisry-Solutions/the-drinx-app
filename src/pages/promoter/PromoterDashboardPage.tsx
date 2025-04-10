@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Megaphone, BarChart, PlusCircle } from 'lucide-react';
 
-const PromoterDashboardPage = () => {
+const PromoterDashboardPage: React.FC = () => {
   return (
     <Layout>
       <div className="max-w-6xl mx-auto px-4 py-8 mt-16">

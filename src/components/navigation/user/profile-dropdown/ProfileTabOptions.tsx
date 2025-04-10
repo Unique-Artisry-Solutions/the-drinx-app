@@ -1,7 +1,5 @@
 
 import React from 'react';
-import { DropdownMenuGroup, DropdownMenuLabel, DropdownMenuItem } from "@/components/ui/dropdown-menu";
-import { profileDropdownStyles } from './profileDropdownStyles';
 
 interface TabOption {
   value: string;
@@ -21,30 +19,33 @@ const ProfileTabOptions: React.FC<ProfileTabOptionsProps> = ({
   handleTabChange,
   isDarkTheme
 }) => {
-  if (!tabOptions || tabOptions.length === 0) return null;
-
-  const handleTabClick = (tabValue: string) => {
-    if (handleTabChange) {
-      handleTabChange(tabValue);
-    }
-  };
+  if (!handleTabChange || tabOptions.length === 0) {
+    return null;
+  }
 
   return (
-    <DropdownMenuGroup className={profileDropdownStyles.tabOptionsContainer(isDarkTheme)}>
-      <DropdownMenuLabel className={profileDropdownStyles.tabOptionsLabel(isDarkTheme)}>
-        Profile Sections
-      </DropdownMenuLabel>
-      
-      {tabOptions.map(tab => (
-        <DropdownMenuItem 
-          key={tab.value} 
-          className={profileDropdownStyles.menuItem(isDarkTheme, activeTab === tab.value)} 
-          onClick={() => handleTabClick(tab.value)}
-        >
-          <span className="pl-2">{tab.label}</span>
-        </DropdownMenuItem>
-      ))}
-    </DropdownMenuGroup>
+    <div className={`px-2 py-1 ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'}`}>
+      <div className="text-xs font-medium mb-1 text-muted-foreground">Tabs</div>
+      <div className="flex flex-col gap-1">
+        {tabOptions.map((tab) => (
+          <button
+            key={tab.value}
+            onClick={() => handleTabChange(tab.value)}
+            className={`text-sm px-2 py-1 rounded-md transition-colors ${
+              activeTab === tab.value
+                ? isDarkTheme
+                  ? 'bg-gray-700 text-white'
+                  : 'bg-gray-100 text-gray-900'
+                : isDarkTheme
+                ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+    </div>
   );
 };
 

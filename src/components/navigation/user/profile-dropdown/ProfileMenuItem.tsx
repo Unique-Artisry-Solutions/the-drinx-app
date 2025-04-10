@@ -2,7 +2,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { LucideIcon } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { profileDropdownStyles } from './profileDropdownStyles';
 
 interface ProfileMenuItemProps {
@@ -11,47 +10,49 @@ interface ProfileMenuItemProps {
   children: React.ReactNode;
   isDarkTheme: boolean;
   isActive?: boolean;
-  onClick?: () => void;
+  onClick?: (e: React.MouseEvent) => void;
   customColor?: string;
 }
 
-const ProfileMenuItem: React.FC<ProfileMenuItemProps> = ({ 
-  to, 
-  icon: Icon, 
-  children, 
+const ProfileMenuItem: React.FC<ProfileMenuItemProps> = ({
+  to,
+  icon: Icon,
+  children,
   isDarkTheme,
-  isActive,
+  isActive = false,
   onClick,
   customColor
 }) => {
+  const handleClick = (e: React.MouseEvent) => {
+    if (onClick) {
+      onClick(e);
+    }
+  };
+  
   const content = (
-    <>
-      <Icon className={cn(
-        profileDropdownStyles.menuItemIcon(isDarkTheme, isActive),
-        customColor
-      )} />
-      <span className={cn(customColor)}>{children}</span>
-    </>
+    <div className={profileDropdownStyles.menuItem(isDarkTheme, isActive, customColor)}>
+      <Icon 
+        className={`mr-2 h-4 w-4 ${isActive && customColor ? customColor : ''}`} 
+      />
+      <span>{children}</span>
+    </div>
   );
-
-  return (
-    <li className="group">
-      {onClick ? (
-        <button 
-          onClick={onClick} 
-          className={profileDropdownStyles.menuItem(isDarkTheme, isActive)}
-        >
-          {content}
-        </button>
-      ) : (
-        <Link 
-          to={to} 
-          className={profileDropdownStyles.menuItem(isDarkTheme, isActive)}
-        >
-          {content}
-        </Link>
-      )}
-    </li>
+  
+  return to === "#" ? (
+    <button 
+      type="button" 
+      className="w-full text-left"
+      onClick={handleClick}
+    >
+      {content}
+    </button>
+  ) : (
+    <Link 
+      to={to}
+      onClick={handleClick}
+    >
+      {content}
+    </Link>
   );
 };
 
