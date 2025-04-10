@@ -1,5 +1,6 @@
 
-import PhotoModeration from './photoModeration';
+// Re-export the component with correct case
+import PhotoModerationComponent from './photoModeration/index';
 
-// Re-export for backward compatibility
-export default PhotoModeration;
+// Provide consistent naming for backward compatibility
+export default PhotoModerationComponent;
