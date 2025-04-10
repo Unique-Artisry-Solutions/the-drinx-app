@@ -6,6 +6,7 @@ import OverviewTabContent from './tabs/OverviewTabContent';
 import ActivityTabContent from './tabs/ActivityTabContent';
 import PromotionsTabContent from './tabs/PromotionsTabContent';
 import RecipesTabContent from './tabs/RecipesTabContent';
+import BadgesTabContent from './tabs/BadgesTabContent';
 
 interface ProfileTabsProps {
   userName: string;
@@ -41,25 +42,26 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
       <TabsList className={tabContainerClass}>
         <TabsTrigger 
           value="overview"
-          className={(value) => tabTriggerClass(value === 'overview')}
+          className={tabTriggerClass(true)}
+          data-state="active"
         >
           Overview
         </TabsTrigger>
         <TabsTrigger 
           value="activity"
-          className={(value) => tabTriggerClass(value === 'activity')}
+          className={tabTriggerClass(false)}
         >
           Activity
         </TabsTrigger>
         <TabsTrigger 
           value={isPromoter ? "promotions" : "badges"}
-          className={(value) => tabTriggerClass(value === (isPromoter ? "promotions" : "badges"))}
+          className={tabTriggerClass(false)}
         >
           {isPromoter ? "Promos" : "Badges"}
         </TabsTrigger>
         <TabsTrigger 
           value="recipes"
-          className={(value) => tabTriggerClass(value === 'recipes')}
+          className={tabTriggerClass(false)}
         >
           Recipes
         </TabsTrigger>
@@ -85,10 +87,7 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
           </TabsContent>
         ) : (
           <TabsContent value="badges">
-            <div className="card bg-white p-4 rounded-lg shadow-sm">
-              <h3 className="text-lg font-medium mb-2">Your Badges</h3>
-              <p className="text-gray-500">You haven't earned any badges yet.</p>
-            </div>
+            <BadgesTabContent />
           </TabsContent>
         )}
         
