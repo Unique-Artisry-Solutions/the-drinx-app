@@ -1,5 +1,4 @@
 
-
 // Custom type definitions for database tables that aren't in the auto-generated Supabase types
 
 export interface UserVisitTable {
@@ -132,3 +131,116 @@ export interface FeatureToggleTable {
   updated_at: string;
 }
 
+// Type definitions for the promotion system
+export interface Promotion {
+  id: string;
+  code: string;
+  description: string;
+  discount_type: 'percentage' | 'fixed' | 'free_item';
+  discount_value: number | null;
+  start_date: string;
+  end_date?: string | null;
+  min_purchase?: number | null;
+  max_discount?: number | null;
+  usage_limit?: number | null;
+  establishment_id: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  usage_count?: number;
+}
+
+export interface PromotionRedemption {
+  id: string;
+  promotion_id: string;
+  user_id: string;
+  order_id?: string;
+  order_amount: number;
+  discount_amount: number;
+  redeemed_at: string;
+  created_at: string;
+}
+
+export interface PromotionAnalytics {
+  id: string;
+  code: string;
+  description: string;
+  discount_type: string;
+  discount_value: number;
+  start_date: string;
+  end_date?: string;
+  is_active: boolean;
+  usage_limit?: number;
+  total_redemptions: number;
+  usage_percentage: number;
+  average_order_value: number;
+  total_order_value: number;
+  total_discount_amount: number;
+  days_remaining: number;
+}
+
+// System types for configuration management
+export interface SystemSetting {
+  id: string;
+  key: string;
+  value: any;
+  category: string;
+  description?: string;
+  is_protected: boolean;
+  created_at: string;
+  updated_at: string;
+  updated_by?: string;
+}
+
+export interface SystemSettingAuditLog {
+  id: string;
+  setting_key: string;
+  old_value?: any;
+  new_value: any;
+  changed_by?: string;
+  changed_at: string;
+  change_reason?: string;
+}
+
+export interface SystemEmailTemplate {
+  id: string;
+  name: string;
+  subject: string;
+  body_html: string;
+  body_text: string;
+  variables: string[];
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  last_updated_by?: string;
+}
+
+export interface ApiKeyConfiguration {
+  id: string;
+  service_name: string;
+  api_key_name: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  last_verified_at?: string;
+  metadata?: Record<string, any>;
+}
+
+export interface PaymentGatewayConfig {
+  id: string;
+  gateway_name: string;
+  is_active: boolean;
+  configuration: Record<string, any>;
+  test_mode: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FeatureToggle {
+  id: string;
+  name: string;
+  status: boolean;
+  description?: string;
+  created_at: string;
+  updated_at: string;
+}

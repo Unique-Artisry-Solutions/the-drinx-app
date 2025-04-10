@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Promotion, PromotionAnalytics } from '@/types/DatabaseTypes';
+import { Promotion, PromotionAnalytics } from '@/types/SupabaseTables';
 
 export interface PromotionFormData {
   code: string;
@@ -36,11 +36,12 @@ export const useEstablishmentPromotions = (establishmentId: string) => {
         
       if (error) throw new Error(error.message);
       
-      // Process the data to add usage count
+      // Process the data to add usage count and ensure correct typing
       const processedData = data.map(promo => ({
         ...promo,
+        discount_type: promo.discount_type as 'percentage' | 'fixed' | 'free_item',
         usage_count: promo.promotion_redemptions?.[0]?.count || 0
-      }));
+      })) as Promotion[];
       
       setPromotions(processedData);
     } catch (err) {
@@ -78,14 +79,20 @@ export const useEstablishmentPromotions = (establishmentId: string) => {
         
       if (error) throw new Error(error.message);
       
-      setPromotions(prevPromotions => [data, ...prevPromotions]);
+      // Cast the returned data to the correct type
+      const typedData = {
+        ...data,
+        discount_type: data.discount_type as 'percentage' | 'fixed' | 'free_item'
+      } as Promotion;
+      
+      setPromotions(prevPromotions => [typedData, ...prevPromotions]);
       
       toast({
         title: 'Success',
         description: `Your promotion "${formData.code}" has been added successfully`,
       });
       
-      return data;
+      return typedData;
     } catch (err) {
       console.error('Error adding promotion:', err);
       toast({
@@ -109,9 +116,15 @@ export const useEstablishmentPromotions = (establishmentId: string) => {
         
       if (error) throw new Error(error.message);
       
+      // Cast the returned data to the correct type
+      const typedData = {
+        ...data,
+        discount_type: data.discount_type as 'percentage' | 'fixed' | 'free_item'
+      } as Promotion;
+      
       setPromotions(prevPromotions => 
         prevPromotions.map(promo => 
-          promo.id === id ? { ...promo, ...data } : promo
+          promo.id === id ? typedData : promo
         )
       );
       
@@ -120,7 +133,7 @@ export const useEstablishmentPromotions = (establishmentId: string) => {
         description: 'Promotion updated successfully',
       });
       
-      return data;
+      return typedData;
     } catch (err) {
       console.error('Error updating promotion:', err);
       toast({
@@ -173,9 +186,15 @@ export const useEstablishmentPromotions = (establishmentId: string) => {
         
       if (error) throw new Error(error.message);
       
+      // Cast the returned data to the correct type
+      const typedData = {
+        ...data,
+        discount_type: data.discount_type as 'percentage' | 'fixed' | 'free_item'
+      } as Promotion;
+      
       setPromotions(prevPromotions => 
         prevPromotions.map(promo => 
-          promo.id === id ? { ...promo, is_active: !currentStatus } : promo
+          promo.id === id ? typedData : promo
         )
       );
       
@@ -184,7 +203,7 @@ export const useEstablishmentPromotions = (establishmentId: string) => {
         description: `Promotion ${!currentStatus ? 'activated' : 'deactivated'} successfully`,
       });
       
-      return data;
+      return typedData;
     } catch (err) {
       console.error('Error toggling promotion status:', err);
       toast({
@@ -198,7 +217,7 @@ export const useEstablishmentPromotions = (establishmentId: string) => {
   
   const getPromotionAnalytics = async (promotionId: string): Promise<PromotionAnalytics> => {
     try {
-      // Query the promotion_analytics view directly instead of using an RPC call
+      // Query the promotion_analytics view directly 
       const { data, error } = await supabase
         .from('promotion_analytics')
         .select('*')
@@ -208,7 +227,7 @@ export const useEstablishmentPromotions = (establishmentId: string) => {
         
       if (error) throw new Error(error.message);
       
-      return data;
+      return data as PromotionAnalytics;
     } catch (err) {
       console.error('Error fetching promotion analytics:', err);
       toast({

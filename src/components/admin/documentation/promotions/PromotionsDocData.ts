@@ -1,5 +1,5 @@
 
-import { DocSection, PromotionDoc } from '../types';
+import { DocSection, PromotionDoc, PromotionTypeDoc } from '../types';
 
 export const promotionsDocData: DocSection = {
   id: "promotions",
@@ -68,21 +68,24 @@ export const promotionsDocData: DocSection = {
       ],
       promotionTypes: [
         {
+          id: "percentage-discount",
           name: "Percentage Discount",
           description: "Reduces the price by a percentage of the original price",
-          exampleUse: "20% off all mocktails during happy hour",
+          example: "20% off all mocktails during happy hour",
           bestFor: ["Driving higher average order values", "Seasonal promotions", "New customer acquisition"]
         },
         {
+          id: "fixed-amount",
           name: "Fixed Amount Discount",
           description: "Reduces the price by a specific dollar amount",
-          exampleUse: "$5 off your purchase of $25 or more",
+          example: "$5 off your purchase of $25 or more",
           bestFor: ["Clear value communication", "Gift with purchase promotions", "Minimum order value incentives"]
         },
         {
+          id: "free-item",
           name: "Free Item",
           description: "Offers a complimentary item with qualifying purchase",
-          exampleUse: "Free mocktail with any food purchase",
+          example: "Free mocktail with any food purchase",
           bestFor: ["Product sampling", "Introducing new menu items", "Building customer loyalty"]
         }
       ],
@@ -90,34 +93,19 @@ export const promotionsDocData: DocSection = {
         {
           name: "Happy Hour Promotions",
           description: "Time-limited discounts during typically slower business hours",
-          implementation: [
-            "Set specific hours for the promotion",
-            "Create percentage-based discounts",
-            "Limit to specific days of the week",
-            "Promote through social media channels"
-          ],
+          implementation: "Set specific hours for the promotion, create percentage-based discounts, limit to specific days of the week, promote through social media channels",
           metrics: ["Traffic increase during promotion hours", "Revenue comparison to non-promotion periods", "Customer retention rate"]
         },
         {
           name: "Loyalty Rewards",
           description: "Special promotions for repeat customers",
-          implementation: [
-            "Create customer-specific promotion codes",
-            "Set up progressive rewards based on visit frequency",
-            "Implement tiered discount structure",
-            "Send personalized notifications"
-          ],
+          implementation: "Create customer-specific promotion codes, set up progressive rewards based on visit frequency, implement tiered discount structure, send personalized notifications",
           metrics: ["Repeat visit frequency", "Customer lifetime value", "Promotion redemption rate"]
         },
         {
           name: "Seasonal Campaigns",
           description: "Promotions tied to holidays, events, or seasons",
-          implementation: [
-            "Schedule promotions to align with seasonal events",
-            "Create themed discount packages",
-            "Use limited-time language to drive urgency",
-            "Refresh creative assets to match the theme"
-          ],
+          implementation: "Schedule promotions to align with seasonal events, create themed discount packages, use limited-time language to drive urgency, refresh creative assets to match the theme",
           metrics: ["Year-over-year seasonal comparison", "Social media engagement", "New vs. returning customer ratio"]
         }
       ],

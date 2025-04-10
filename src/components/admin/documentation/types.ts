@@ -4,7 +4,7 @@ export interface DocFeature {
   id: string;
   title: string;
   description: string;
-  status: 'implemented' | 'in-progress' | 'planned';
+  status: 'implemented' | 'in-progress' | 'planned' | 'partial';
   statusText?: string;
   documentation?: string;
   icon?: string;
@@ -17,6 +17,26 @@ export interface DocFeature {
   tables?: TableDocumentation[];
   flows?: FlowDocumentation[];
   promotionTypes?: PromotionTypeDoc[]; // For promotion specific documentation
+  
+  // Additional fields needed for DocFeatureDetails
+  path?: string;
+  externalUrl?: string;
+  screenshot?: string;
+  screenshotCaption?: string;
+  steps?: { title: string; description: string; screenshot?: string }[];
+  quickTips?: string[];
+  bestPractices?: string[];
+  troubleshooting?: { problem: string; solution: string }[];
+  faq?: { question: string; answer: string }[];
+}
+
+// Section containing multiple features
+export interface DocSection {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  features: DocFeature[];
 }
 
 // API Documentation
@@ -134,13 +154,15 @@ export interface PromotionDoc extends DocFeature {
 }
 
 export interface PromotionTypeDoc {
-  id: string;
+  id?: string;
   name: string;
   description: string;
-  discountType: string;
+  discountType?: string;
   constraints?: string[];
-  implementation: string;
+  implementation?: string;
   example?: string;
+  bestFor?: string[];
+  exampleUse?: string;
 }
 
 // System configuration documentation
