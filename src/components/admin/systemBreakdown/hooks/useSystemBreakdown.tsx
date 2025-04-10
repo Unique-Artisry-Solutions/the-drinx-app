@@ -7,7 +7,8 @@ import {
   mapFeaturesToReleaseFeatures, 
   getDateMonthsFromNow,
   createProgressSnapshot,
-  validateProgressData
+  validateProgressData,
+  generateHistoricalProgressData
 } from '../utils';
 import { 
   FeatureItem, 
@@ -66,9 +67,38 @@ export const useSystemBreakdown = () => {
     setCurrentSnapshot(initialSnapshot);
     
     // Generate initial monthly progress data based on current state
-    const initialMonthlyData = generateHistoricalProgressData(initialSnapshot);
-    setMonthlyProgressData(initialMonthlyData);
+    generateHistoricalProgressDataAndUpdate(initialSnapshot);
   }, []);
+
+  // Helper function to generate historical data and update state
+  const generateHistoricalProgressDataAndUpdate = (
+    snapshot: ProgressSnapshot,
+    history: ProgressSnapshot[] = []
+  ) => {
+    // Import and call the function
+    generateHistoricalProgressData(snapshot, history)
+      .then(data => {
+        // Update the state with the resulting data
+        setMonthlyProgressData(data);
+      })
+      .catch(error => {
+        console.error("Error generating historical progress data:", error);
+        // Fallback with a simple implementation if import fails
+        const currentMonth = new Date().getMonth();
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        
+        const fallbackData = Array.from({ length: currentMonth + 1 }, (_, i) => {
+          const progressRatio = (i + 1) / (currentMonth + 1);
+          return {
+            month: monthNames[i],
+            frontend: Math.round(snapshot.frontendProgress * progressRatio),
+            backend: Math.round(snapshot.backendProgress * progressRatio * 0.85)
+          };
+        });
+        
+        setMonthlyProgressData(fallbackData);
+      });
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('admin_authenticated');
@@ -160,8 +190,7 @@ export const useSystemBreakdown = () => {
       setProgressHistory(prevHistory => [...prevHistory, newSnapshot]);
       
       // Generate updated monthly progress data
-      const updatedMonthlyData = generateHistoricalProgressData(newSnapshot, [...progressHistory, newSnapshot]);
-      setMonthlyProgressData(updatedMonthlyData);
+      generateHistoricalProgressDataAndUpdate(newSnapshot, [...progressHistory, newSnapshot]);
       
       // Show analysis completion message
       let completionMessage = `${totalUpdated} feature status${totalUpdated !== 1 ? 'es' : ''} updated based on database implementation.`;
