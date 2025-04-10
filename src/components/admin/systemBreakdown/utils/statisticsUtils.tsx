@@ -13,7 +13,7 @@ export function calculateFeatureStatistics(features: FeatureItem[]) {
   
   const averageImplementation = features.reduce((sum, feature) => {
     return sum + (feature.implementationProgress || 0);
-  }, 0) / totalFeatures;
+  }, 0) / (totalFeatures || 1);
   
   return {
     totalFeatures,
@@ -21,7 +21,7 @@ export function calculateFeatureStatistics(features: FeatureItem[]) {
     inProgressFeatures,
     implementedFeatures,
     blockedFeatures,
-    averageImplementation
+    averageImplementation: isNaN(averageImplementation) ? 0 : averageImplementation
   };
 }
 
@@ -44,12 +44,12 @@ export function createProgressSnapshot(
   const overallStats = calculateFeatureStatistics(allFeatures);
   
   // Calculate database status stats
-  const dbImplemented = allFeatures.filter(f => f.dbStatus === 'implemented').length;
-  const dbInProgress = allFeatures.filter(f => f.dbStatus === 'in_progress').length;
-  const dbNotStarted = allFeatures.filter(f => f.dbStatus === 'not_started').length;
+  const dbImplemented = allFeatures.filter(f => f.dbStatus === 'implemented' || f.databaseStatus === 'complete').length;
+  const dbInProgress = allFeatures.filter(f => f.dbStatus === 'in_progress' || f.databaseStatus === 'in_progress').length;
+  const dbNotStarted = allFeatures.filter(f => f.dbStatus === 'not_started' || f.databaseStatus === 'not_started').length;
   
   const frontendProgress = overallStats.averageImplementation;
-  const backendProgress = ((dbImplemented * 100) + (dbInProgress * 50)) / allFeatures.length;
+  const backendProgress = ((dbImplemented * 100) + (dbInProgress * 50)) / (allFeatures.length || 1);
   
   const snapshot: ProgressSnapshot = {
     timestamp: new Date().toISOString(),
@@ -68,7 +68,9 @@ export function createProgressSnapshot(
     adminImplementationRate: adminStats.averageImplementation,
     establishmentImplementationRate: establishmentStats.averageImplementation,
     individualImplementationRate: individualStats.averageImplementation,
-    promoterImplementationRate: promoterStats.averageImplementation
+    promoterImplementationRate: promoterStats.averageImplementation,
+    overallProgress: Math.round((frontendProgress + backendProgress) / 2),
+    dbComplete: dbImplemented
   };
   
   return snapshot;
@@ -79,6 +81,10 @@ export function createProgressSnapshot(
  */
 export function validateProgressData(snapshot: ProgressSnapshot) {
   const issues: string[] = [];
+  
+  if (!snapshot) {
+    return { isValid: false, issues: ['No snapshot data available'] };
+  }
   
   // Check if total feature count matches the sum of implementation statuses
   const statusTotal = 
@@ -122,6 +128,11 @@ export async function generateHistoricalProgressData(
 ): Promise<MonthlyProgressData[]> {
   // In a production app, this might fetch historical data from an API
   // For now, we simulate historical data based on the current snapshot
+  
+  if (!currentSnapshot) {
+    console.log('No current snapshot available');
+    return [];
+  }
   
   const currentMonth = new Date().getMonth();
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];

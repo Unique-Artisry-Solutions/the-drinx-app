@@ -23,7 +23,17 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
   monthlyProgressData,
   currentSnapshot,
   dataValidation
-}) => {  
+}) => {
+  console.log("MainOverviewTab props:", {
+    adminCount: adminFeatures.length,
+    establishmentCount: establishmentFeatures.length,
+    individualCount: individualFeatures.length,
+    promoterCount: promoterFeatures.length,
+    monthlyProgressDataLength: monthlyProgressData.length,
+    hasCurrentSnapshot: !!currentSnapshot,
+    dataValid: dataValidation.isValid
+  });
+  
   return (
     <div className="space-y-8">
       <h2 className="text-2xl font-semibold mb-4">System Overview</h2>

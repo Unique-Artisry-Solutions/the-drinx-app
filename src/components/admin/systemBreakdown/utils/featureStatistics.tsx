@@ -7,14 +7,17 @@ import { FeatureItem } from '../types';
 export const calculateFeatureStatistics = (
   adminFeatures: FeatureItem[],
   establishmentFeatures: FeatureItem[],
-  individualFeatures: FeatureItem[]
+  individualFeatures: FeatureItem[],
+  promoterFeatures: FeatureItem[] = []
 ) => {
-  const allFeatures = [...adminFeatures, ...establishmentFeatures, ...individualFeatures];
+  const allFeatures = [...adminFeatures, ...establishmentFeatures, ...individualFeatures, ...promoterFeatures];
   
   const totalFeatures = allFeatures.length;
   const implementedFeatures = allFeatures.filter(f => f.status === 'implemented').length;
   const partialFeatures = allFeatures.filter(f => f.status === 'partial').length;
   const plannedFeatures = allFeatures.filter(f => f.status === 'planned').length;
+  const inProgressFeatures = allFeatures.filter(f => f.status === 'in_progress').length;
+  const blockedFeatures = allFeatures.filter(f => f.status === 'blocked').length;
   
   const dbCompleted = allFeatures.filter(f => f.databaseStatus === 'complete').length;
   const dbInProgress = allFeatures.filter(f => f.databaseStatus === 'in_progress').length;
@@ -44,12 +47,19 @@ export const calculateFeatureStatistics = (
   const confidenceScore = Math.round(
     (1 - Math.abs(expectedDbImplementedRatio - actualDbImplementedRatio)) * 100
   );
+  
+  // Calculate average implementation progress
+  const averageImplementation = totalFeatures > 0
+    ? implementedFeatures * 100 / totalFeatures
+    : 0;
     
   return {
     totalFeatures,
     implementedFeatures,
     partialFeatures,
     plannedFeatures,
+    inProgressFeatures,
+    blockedFeatures,
     dbCompleted,
     dbInProgress,
     dbNotStarted,
@@ -57,6 +67,7 @@ export const calculateFeatureStatistics = (
     databaseCompletionRate,
     frontendImplementationRate,
     confidenceScore,
+    averageImplementation,
     // Add development metrics
     developmentMetrics: {
       frontend: frontendImplementationRate,

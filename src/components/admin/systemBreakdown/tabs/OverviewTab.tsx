@@ -1,10 +1,14 @@
 
 import React from 'react';
-import { BarChart3, Code, Database } from 'lucide-react';
+
+import { ProgressSnapshot } from '../types';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import { CheckCircle2, Clock, AlertCircle } from 'lucide-react';
-import ProgressCard from '../components/ProgressCard';
+import { BarChart3, Code, Database } from 'lucide-react';
+
 import StatusProgressBar from '../components/StatusProgressBar';
-import { FeatureItem, ProgressSnapshot } from '../types';
 
 interface OverviewTabProps {
   overallProgressPercentage: number;
@@ -27,30 +31,77 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
   confidenceScore,
   currentSnapshot
 }) => {
+  console.log("OverviewTab props:", { 
+    overallProgressPercentage,
+    frontendProgressPercentage,
+    backendProgressPercentage,
+    implementedFeatures,
+    partialFeatures,
+    totalFeatures
+  });
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <ProgressCard 
-          title="Overall Progress" 
-          percentage={overallProgressPercentage} 
-          description="All features combined"
-          icon={<BarChart3 className="h-5 w-5 text-blue-500" />}
-          confidenceScore={confidenceScore}
-        />
-        <ProgressCard 
-          title="Frontend Progress" 
-          percentage={frontendProgressPercentage} 
-          description="UI components & interactions"
-          icon={<Code className="h-5 w-5 text-purple-500" />}
-          confidenceScore={confidenceScore}
-        />
-        <ProgressCard 
-          title="Backend Progress" 
-          percentage={backendProgressPercentage} 
-          description="Database & services"
-          icon={<Database className="h-5 w-5 text-green-500" />}
-          confidenceScore={confidenceScore}
-        />
+        <div className="border rounded-lg p-4">
+          <div className="flex justify-between items-start mb-3">
+            <h3 className="text-lg font-medium">Overall Progress</h3>
+            <BarChart3 className="h-5 w-5 text-blue-500" />
+          </div>
+          <div className="text-3xl font-bold mb-2">{overallProgressPercentage}%</div>
+          <div className="mb-2">
+            <Progress value={overallProgressPercentage} className="h-2" />
+          </div>
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-gray-500">All features combined</p>
+            {confidenceScore !== undefined && (
+              <Badge variant="outline" className="text-xs">
+                <Shield className="h-3 w-3 mr-1" />
+                {confidenceScore}%
+              </Badge>
+            )}
+          </div>
+        </div>
+        
+        <div className="border rounded-lg p-4">
+          <div className="flex justify-between items-start mb-3">
+            <h3 className="text-lg font-medium">Frontend Progress</h3>
+            <Code className="h-5 w-5 text-purple-500" />
+          </div>
+          <div className="text-3xl font-bold mb-2">{frontendProgressPercentage}%</div>
+          <div className="mb-2">
+            <Progress value={frontendProgressPercentage} className="h-2" />
+          </div>
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-gray-500">UI components & interactions</p>
+            {confidenceScore !== undefined && (
+              <Badge variant="outline" className="text-xs">
+                <Shield className="h-3 w-3 mr-1" />
+                {confidenceScore}%
+              </Badge>
+            )}
+          </div>
+        </div>
+        
+        <div className="border rounded-lg p-4">
+          <div className="flex justify-between items-start mb-3">
+            <h3 className="text-lg font-medium">Backend Progress</h3>
+            <Database className="h-5 w-5 text-green-500" />
+          </div>
+          <div className="text-3xl font-bold mb-2">{backendProgressPercentage}%</div>
+          <div className="mb-2">
+            <Progress value={backendProgressPercentage} className="h-2" />
+          </div>
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-gray-500">Database & services</p>
+            {confidenceScore !== undefined && (
+              <Badge variant="outline" className="text-xs">
+                <Shield className="h-3 w-3 mr-1" />
+                {confidenceScore}%
+              </Badge>
+            )}
+          </div>
+        </div>
       </div>
       
       <div className="mt-6 border rounded-lg p-4">

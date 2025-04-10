@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -30,8 +31,8 @@ function calculateCategoryProgress(features: FeatureItem[]) {
   if (totalFeatures === 0) return { frontend: 0, backend: 0, overall: 0 };
   
   // Calculate backend progress
-  const dbCompleted = features.filter(f => f.databaseStatus === 'complete').length;
-  const dbInProgress = features.filter(f => f.databaseStatus === 'in_progress').length;
+  const dbCompleted = features.filter(f => f.databaseStatus === 'complete' || f.dbStatus === 'implemented').length;
+  const dbInProgress = features.filter(f => f.databaseStatus === 'in_progress' || f.dbStatus === 'in_progress').length;
   const backendPercentage = Math.round((dbCompleted + (dbInProgress * 0.5)) / totalFeatures * 100);
   
   // Calculate frontend progress
@@ -57,6 +58,15 @@ const DevelopmentProgressDashboard: React.FC<DevelopmentProgressDashboardProps> 
 }) => {
   const [activeTab, setActiveTab] = useState<string>('overview');
   
+  console.log("Dashboard props:", { 
+    adminFeatures: adminFeatures?.length,
+    establishmentFeatures: establishmentFeatures?.length,
+    individualFeatures: individualFeatures?.length,
+    promoterFeatures: promoterFeatures?.length,
+    monthlyProgressData: monthlyProgressData?.length,
+    currentSnapshot: currentSnapshot?.timestamp
+  });
+  
   // Combine all features for analysis
   const allFeatures = [...adminFeatures, ...establishmentFeatures, ...individualFeatures, ...promoterFeatures];
   
@@ -67,16 +77,16 @@ const DevelopmentProgressDashboard: React.FC<DevelopmentProgressDashboardProps> 
   const overallProgressPercentage = Math.round((implementedFeatures + (partialFeatures * 0.5)) / totalFeatures * 100);
   
   // Calculate backend implementation progress (based on database status)
-  const dbCompleted = allFeatures.filter(f => f.databaseStatus === 'complete').length;
-  const dbInProgress = allFeatures.filter(f => f.databaseStatus === 'in_progress').length;
+  const dbCompleted = allFeatures.filter(f => f.databaseStatus === 'complete' || f.dbStatus === 'implemented').length;
+  const dbInProgress = allFeatures.filter(f => f.databaseStatus === 'in_progress' || f.dbStatus === 'in_progress').length;
   const backendProgressPercentage = Math.round((dbCompleted + (dbInProgress * 0.5)) / totalFeatures * 100);
   
   // Infer frontend implementation progress
   const frontendCompletedFeatures = allFeatures.filter(f => 
-    f.status === 'implemented' || (f.status === 'partial' && f.databaseStatus !== 'complete')
+    f.status === 'implemented' || (f.status === 'partial' && (f.databaseStatus !== 'complete' && f.dbStatus !== 'implemented'))
   ).length;
   const frontendPartialFeatures = allFeatures.filter(f => 
-    f.status === 'partial' && f.databaseStatus !== 'not_started'
+    f.status === 'partial' && (f.databaseStatus !== 'not_started' && f.dbStatus !== 'not_started')
   ).length;
   const frontendProgressPercentage = Math.round((frontendCompletedFeatures + (frontendPartialFeatures * 0.5)) / totalFeatures * 100);
 
