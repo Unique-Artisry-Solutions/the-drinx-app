@@ -24,6 +24,5 @@ export const clearAllSessions = () => {
   
   console.log('All session information has been cleared');
   
-  // Redirect to landing page
-  window.location.href = '/landing';
+  // Removed: window.location.href = '/landing';
 };
