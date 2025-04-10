@@ -1,3 +1,4 @@
+
 import React, { lazy, Suspense } from 'react';
 import { Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import LandingPage from '@/pages/LandingPage';
@@ -47,6 +48,10 @@ import SystemFunctionalityBreakdown from '@/pages/admin/SystemFunctionalityBreak
 import ComponentCatalogPage from '@/pages/admin/ComponentCatalogPage';
 import AdminDocumentationPage from '@/pages/admin/AdminDocumentationPage';
 import SystemConfigurationPage from '@/pages/admin/SystemConfigurationPage';
+
+// Import the new promoter pages
+import PromoterDashboardPage from '@/pages/promoter/PromoterDashboardPage';
+import PromoterAnalyticsPage from '@/pages/promoter/PromoterAnalyticsPage';
 
 const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
 const AdminLogin = lazy(() => import('@/pages/admin/AdminLogin'));
@@ -101,8 +106,9 @@ const AppRoutes = () => {
         
         <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
         
-        <Route path="/promotions" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-        <Route path="/analytics" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        {/* Updated promoter routes to point to actual pages */}
+        <Route path="/promotions" element={<TypedProtectedRoute userType="promoter"><PromoterDashboardPage /></TypedProtectedRoute>} />
+        <Route path="/analytics" element={<TypedProtectedRoute userType="promoter"><PromoterAnalyticsPage /></TypedProtectedRoute>} />
         
         <Route path="/admin" element={<AdminLogin />} />
         <Route path="/admin/login" element={<AdminLogin />} />
