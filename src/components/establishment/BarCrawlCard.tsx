@@ -5,11 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CalendarIcon, MapPinIcon, UsersIcon, ChevronDown, ChevronUp } from 'lucide-react';
 import { BarCrawlRequest } from '@/hooks/useBarCrawlRequests';
+
 interface BarCrawlCardProps {
   crawl: BarCrawlRequest;
   handleEndParticipation?: (id: string) => void;
   handleAcceptRequest?: (id: string) => void;
 }
+
 const BarCrawlCard: React.FC<BarCrawlCardProps> = ({
   crawl,
   handleEndParticipation,
@@ -17,6 +19,7 @@ const BarCrawlCard: React.FC<BarCrawlCardProps> = ({
 }) => {
   const [showDetails, setShowDetails] = useState(false);
   const isPending = crawl.status === 'pending';
+  
   return <Card className="hover:shadow transition-shadow">
       <CardContent className="p-4">
         <div className="flex justify-between items-start my-0 py-[8px]">
@@ -75,4 +78,5 @@ const BarCrawlCard: React.FC<BarCrawlCardProps> = ({
       </CardFooter>
     </Card>;
 };
+
 export default BarCrawlCard;
