@@ -86,7 +86,8 @@ const LoginForm: React.FC<LoginFormProps> = ({
       } else if (type === 'establishment') {
         navigate('/establishment/dashboard');
       } else if (type === 'promoter') {
-        navigate('/promoter/dashboard');
+        // Redirect to explore page for promoters since promoter dashboard doesn't exist yet
+        navigate('/explore');
       } else {
         navigate('/explore');
       }
