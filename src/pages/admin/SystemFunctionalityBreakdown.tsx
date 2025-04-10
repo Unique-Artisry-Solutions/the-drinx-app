@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { TabsContent } from '@/components/ui/tabs';
 import Layout from '@/components/Layout';
 import { useSystemBreakdown } from '@/components/admin/systemBreakdown/hooks/useSystemBreakdown';
 import StatusUpdateNotification from '@/components/admin/systemBreakdown/StatusUpdateNotification';
@@ -13,7 +13,8 @@ import ReleaseManagementTab from '@/components/admin/systemBreakdown/ReleaseMana
 import CreateReleaseFromFeaturesButton from '@/components/admin/systemBreakdown/CreateReleaseFromFeaturesButton';
 import FeatureShowcaseTab from '@/components/admin/systemBreakdown/FeatureShowcaseTab';
 import PromoterRequirementsTab from '@/components/admin/systemBreakdown/PromoterRequirementsTab';
-import { Award, Megaphone } from 'lucide-react';
+import SystemBreakdownNavigation, { MobileSystemBreakdownNavigation } from '@/components/admin/systemBreakdown/SystemBreakdownNavigation';
+import { useMediaQuery } from '@/hooks/use-mobile';
 
 // Import improvements data
 import { proposedImprovements as improvementsData } from '@/components/admin/systemBreakdown/improvementsData';
@@ -39,6 +40,9 @@ const SystemFunctionalityBreakdown: React.FC = () => {
     currentSnapshot,
     dataValidation
   } = useSystemBreakdown();
+  
+  // Use mobile hook to determine if we're on mobile
+  const isMobile = useMediaQuery('(max-width: 768px)');
 
   return (
     <Layout>
@@ -61,29 +65,15 @@ const SystemFunctionalityBreakdown: React.FC = () => {
           <StatusUpdateNotification updatedFeaturesCount={updatedFeaturesCount} />
         )}
 
-        <Tabs
-          value={activeTab}
-          onValueChange={setActiveTab}
-          className="space-y-4"
-        >
-          <TabsList>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="admin">Admin Features</TabsTrigger>
-            <TabsTrigger value="establishment">Establishment Features</TabsTrigger>
-            <TabsTrigger value="individual">Individual Features</TabsTrigger>
-            <TabsTrigger value="promoter">Promoter Features</TabsTrigger>
-            <TabsTrigger value="promoter-requirements" className="flex items-center gap-1">
-              <Megaphone className="h-4 w-4" />
-              Promoter Requirements
-            </TabsTrigger>
-            <TabsTrigger value="improvements">Proposed Improvements</TabsTrigger>
-            <TabsTrigger value="releases">Release Management</TabsTrigger>
-            <TabsTrigger value="showcase" className="flex items-center gap-1">
-              <Award className="h-4 w-4" />
-              Feature Showcase
-            </TabsTrigger>
-          </TabsList>
+        {/* Use appropriate navigation based on screen size */}
+        {isMobile ? (
+          <MobileSystemBreakdownNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
+        ) : (
+          <SystemBreakdownNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
+        )}
 
+        <div className="space-y-4">
+          {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
             <OverviewTab
               adminFeatures={adminFeatures}
@@ -99,6 +89,7 @@ const SystemFunctionalityBreakdown: React.FC = () => {
             />
           </TabsContent>
 
+          {/* Admin Features Tab */}
           <TabsContent value="admin" className="space-y-4">
             <FeatureTab
               features={adminFeatures}
@@ -107,6 +98,7 @@ const SystemFunctionalityBreakdown: React.FC = () => {
             />
           </TabsContent>
 
+          {/* Establishment Features Tab */}
           <TabsContent value="establishment" className="space-y-4">
             <FeatureTab
               features={establishmentFeatures}
@@ -115,6 +107,7 @@ const SystemFunctionalityBreakdown: React.FC = () => {
             />
           </TabsContent>
 
+          {/* Individual Features Tab */}
           <TabsContent value="individual" className="space-y-4">
             <FeatureTab
               features={individualFeatures}
@@ -123,6 +116,7 @@ const SystemFunctionalityBreakdown: React.FC = () => {
             />
           </TabsContent>
 
+          {/* Promoter Features Tab */}
           <TabsContent value="promoter" className="space-y-4">
             <FeatureTab
               features={promoterFeatures}
@@ -131,18 +125,22 @@ const SystemFunctionalityBreakdown: React.FC = () => {
             />
           </TabsContent>
           
+          {/* Promoter Requirements Tab */}
           <TabsContent value="promoter-requirements" className="space-y-4">
             <PromoterRequirementsTab features={promoterFeatures} />
           </TabsContent>
 
+          {/* Proposed Improvements Tab */}
           <TabsContent value="improvements" className="space-y-4">
             <ProposedImprovementsTab improvements={improvementsData} />
           </TabsContent>
           
+          {/* Release Management Tab */}
           <TabsContent value="releases" className="space-y-4">
             <ReleaseManagementTab />
           </TabsContent>
 
+          {/* Feature Showcase Tab */}
           <TabsContent value="showcase" className="space-y-4">
             <FeatureShowcaseTab
               adminFeatures={adminFeatures}
@@ -151,7 +149,7 @@ const SystemFunctionalityBreakdown: React.FC = () => {
               promoterFeatures={promoterFeatures}
             />
           </TabsContent>
-        </Tabs>
+        </div>
       </div>
     </Layout>
   );
