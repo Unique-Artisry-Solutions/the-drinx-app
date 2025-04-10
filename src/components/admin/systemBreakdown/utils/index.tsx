@@ -7,7 +7,7 @@ import {
   generateHistoricalProgressData
 } from './statisticsUtils';
 import { generateCSV } from './exportUtils';
-import { analyzeAllFeatures } from './featureAnalysis';
+import { analyzeAllFeatures } from './analysis';
 import { analyzeDbRequirements } from './analysisHelpers';
 import { 
   isFeatureFlagRelated,
