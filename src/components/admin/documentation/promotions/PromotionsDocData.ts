@@ -141,7 +141,8 @@ export const promotionsDocData: DocSection = {
         "A/B testing of different promotion strategies",
         "ROI calculation based on customer acquisition cost"
       ]
-    },
+    } as PromotionDoc,
+    // Rest of features as regular DocFeatures (not PromotionDocs)
     {
       id: "promotion-management",
       title: "Promotion Management",

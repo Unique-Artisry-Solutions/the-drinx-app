@@ -213,11 +213,13 @@ export const useEstablishmentPromotions = (establishmentId: string) => {
   
   const getPromotionAnalytics = async (promotionId: string) => {
     try {
+      // Instead of using rpc, fetch from the promotion_analytics view
       const { data, error } = await supabase
-        .rpc('get_promotion_analytics', { 
-          p_promotion_id: promotionId,
-          p_establishment_id: establishmentId 
-        });
+        .from('promotion_analytics')
+        .select('*')
+        .eq('id', promotionId)
+        .eq('establishment_id', establishmentId)
+        .single();
         
       if (error) throw new Error(error.message);
       
