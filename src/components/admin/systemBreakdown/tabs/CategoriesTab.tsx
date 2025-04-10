@@ -56,12 +56,21 @@ const CategoriesTab: React.FC<CategoriesTabProps> = ({
             features: individualFeatures
           }}
         />
+        <CategoryCard 
+          category={{
+            name: "Promoter Features",
+            description: "Features for event promoters",
+            featureCount: promoterFeatures.length,
+            implementationRate: promoterProgress.overall,
+            features: promoterFeatures
+          }}
+        />
       </div>
       
       {/* Top Features in Each Category */}
       <div className="mt-6">
         <h3 className="text-lg font-medium mb-3">Recently Updated Features</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <RecentFeaturesList 
             title="Admin"
             features={adminFeatures
@@ -77,6 +86,12 @@ const CategoriesTab: React.FC<CategoriesTabProps> = ({
           <RecentFeaturesList 
             title="Individual"
             features={individualFeatures
+              .filter(f => f.statusUpdated)
+              .slice(0, 3)}
+          />
+          <RecentFeaturesList 
+            title="Promoter"
+            features={promoterFeatures
               .filter(f => f.statusUpdated)
               .slice(0, 3)}
           />
