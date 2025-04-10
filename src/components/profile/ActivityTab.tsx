@@ -1,128 +1,70 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { format } from 'date-fns';
 import { MapPin, Star, Route, Award } from 'lucide-react';
 
 interface ActivityTabProps {
   recentActivity: any[];
+  isPromoter?: boolean;
 }
 
-const ActivityTab: React.FC<ActivityTabProps> = ({ recentActivity }) => {
+const ActivityTab: React.FC<ActivityTabProps> = ({ 
+  recentActivity,
+  isPromoter = false
+}) => {
+  const accentColor = isPromoter ? "text-purple-600" : "text-spiritless-pink";
+  const borderColor = isPromoter ? "border-purple-200" : "border-gray-200";
+
+  if (!recentActivity || recentActivity.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-gray-500">No recent activity found.</p>
+      </div>
+    );
+  }
+
   const getActivityIcon = (type: string) => {
     switch (type) {
       case 'visit':
-        return <MapPin className="h-5 w-5 text-emerald-500" />;
+        return <MapPin className={`h-4 w-4 ${accentColor}`} />;
       case 'favorite':
-        return <Star className="h-5 w-5 text-amber-500" />;
+        return <Star className={`h-4 w-4 ${accentColor}`} />;
       case 'barCrawl':
-        return <Route className="h-5 w-5 text-purple-500" />;
+        return <Route className={`h-4 w-4 ${accentColor}`} />;
       case 'badge':
-        return <Award className="h-5 w-5 text-blue-500" />;
+        return <Award className={`h-4 w-4 ${accentColor}`} />;
       default:
-        return <MapPin className="h-5 w-5 text-gray-500" />;
+        return null;
     }
   };
-  
-  const getActivityDescription = (activity: any) => {
-    switch (activity.type) {
-      case 'visit':
-        return `You visited ${activity.establishment.name}`;
-      case 'favorite':
-        return `You added ${activity.cocktail.name} to your favorites`;
-      case 'barCrawl':
-        return `You participated in the "${activity.name}" bar crawl`;
-      case 'badge':
-        return `You earned the "${activity.name}" badge`;
-      default:
-        return 'Activity';
-    }
-  };
-  
-  const formatDate = (date: Date) => {
-    const now = new Date();
-    const diffInDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
-    
-    if (diffInDays === 0) {
-      return 'Today';
-    } else if (diffInDays === 1) {
-      return 'Yesterday';
-    } else if (diffInDays < 7) {
-      return `${diffInDays} days ago`;
-    } else {
-      return date.toLocaleDateString();
-    }
-  };
-  
+
   return (
-    <Card>
+    <Card className={`border-${borderColor}`}>
       <CardHeader>
         <CardTitle>Recent Activity</CardTitle>
       </CardHeader>
-      <CardContent>
-        {recentActivity.length > 0 ? (
-          <div className="space-y-4">
-            {recentActivity.map((activity, index) => (
-              <div key={index} className="flex items-start space-x-4">
-                <div className="bg-gray-100 p-2 rounded-full">
-                  {getActivityIcon(activity.type)}
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium">{getActivityDescription(activity)}</p>
-                  <p className="text-sm text-muted-foreground">{formatDate(activity.date)}</p>
-                  
-                  {activity.type === 'visit' && (
-                    <div className="mt-1">
-                      <Link 
-                        to={`/establishment/${activity.establishment.id}`} 
-                        className="text-sm text-blue-600 hover:underline"
-                      >
-                        View Establishment
-                      </Link>
-                    </div>
-                  )}
-                  
-                  {activity.type === 'favorite' && (
-                    <div className="mt-1">
-                      <Link 
-                        to={`/cocktail/${activity.cocktail.id}`} 
-                        className="text-sm text-blue-600 hover:underline"
-                      >
-                        View Cocktail
-                      </Link>
-                    </div>
-                  )}
-                  
-                  {activity.type === 'barCrawl' && (
-                    <div className="mt-1">
-                      <Link 
-                        to="/profile/bar-crawls" 
-                        className="text-sm text-blue-600 hover:underline"
-                      >
-                        View Bar Crawls
-                      </Link>
-                    </div>
-                  )}
-                  
-                  {activity.type === 'badge' && (
-                    <div className="mt-1">
-                      <Link 
-                        to="/profile/rewards" 
-                        className="text-sm text-blue-600 hover:underline"
-                      >
-                        View Badges
-                      </Link>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
+      <CardContent className="space-y-6">
+        {recentActivity.map((activity, index) => (
+          <div key={index} className="flex items-start space-x-4 pb-4 last:pb-0 border-b last:border-0 border-gray-100">
+            <div className="p-2 rounded-full bg-gray-100">
+              {getActivityIcon(activity.type)}
+            </div>
+            <div className="flex-1 space-y-1">
+              <p className="font-medium">
+                {activity.type === 'visit' && `Visited ${activity.establishment?.name}`}
+                {activity.type === 'favorite' && `Added ${activity.cocktail?.name} to favorites`}
+                {activity.type === 'barCrawl' && `Created bar crawl: ${activity.name}`}
+                {activity.type === 'badge' && `Earned badge: ${activity.name}`}
+              </p>
+              {activity.date && (
+                <p className="text-sm text-gray-500">
+                  {format(activity.date, 'PPP')}
+                </p>
+              )}
+            </div>
           </div>
-        ) : (
-          <div className="text-center py-6">
-            <p className="text-muted-foreground">No recent activity</p>
-          </div>
-        )}
+        ))}
       </CardContent>
     </Card>
   );

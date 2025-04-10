@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { NavigationType } from './NavigationTypes';
 import { useAuth } from '@/contexts/auth';
+import { useTheme } from '@/contexts/ThemeContext';
 import { MobileNavigationProps } from './mobile/types';
 import { getGuestNavItems, getCartGuestNavItems } from './mobile/GuestNavItems';
 import { getUserNavItems } from './mobile/UserNavItems';
@@ -10,7 +11,6 @@ import { getAdminNavItems } from './mobile/AdminNavItems';
 import ProfileMenu from './mobile/ProfileMenu';
 import NavItem from './mobile/NavItem';
 import HomeButton from './mobile/HomeButton';
-import { useTheme } from '@/contexts/ThemeContext';
 
 interface ExtendedMobileNavigationProps extends MobileNavigationProps {
   forceGuestNavigation?: boolean;
@@ -24,7 +24,7 @@ const MobileNavigation: React.FC<ExtendedMobileNavigationProps> = ({
   const location = useLocation();
   const navigate = useNavigate();
   const { theme } = useTheme();
-  const [currentUserType, setCurrentUserType] = useState(userType);
+  const [currentUserType, setCurrentUserType] = useState<'individual' | 'establishment' | 'promoter'>(userType);
   const [expanded, setExpanded] = useState(false);
   const { user } = useAuth();
   

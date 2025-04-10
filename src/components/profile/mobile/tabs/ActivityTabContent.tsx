@@ -1,7 +1,8 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Activity } from 'lucide-react';
+import { Calendar } from 'lucide-react';
+import { format } from 'date-fns';
 
 interface ActivityTabContentProps {
   recentActivity: any[];
@@ -12,52 +13,49 @@ const ActivityTabContent: React.FC<ActivityTabContentProps> = ({
   recentActivity,
   isPromoter = false
 }) => {
-  const emptyStateMessage = isPromoter
-    ? "No recent promoter activity to display. Your promotion activities will appear here."
-    : "No recent activity to display. Your activities will appear here as you explore.";
+  if (!recentActivity || recentActivity.length === 0) {
+    return (
+      <Card className={isPromoter ? "border-purple-100" : ""}>
+        <CardContent className="p-5">
+          <div className="text-center py-4">
+            <p className="text-gray-500">No recent activity found.</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-4">
       <Card className={isPromoter ? "border-purple-100" : ""}>
-        <CardHeader>
-          <CardTitle className={`text-lg flex items-center gap-2 ${isPromoter ? "text-purple-800" : ""}`}>
-            <Activity className={`h-5 w-5 ${isPromoter ? "text-purple-600" : ""}`} />
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg flex items-center">
+            <Calendar className={`h-4 w-4 mr-2 ${isPromoter ? "text-purple-600" : "text-spiritless-pink"}`} />
             Recent Activity
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {recentActivity.length > 0 ? (
-            <div className="space-y-3">
-              {recentActivity.map((activity, index) => (
-                <div 
-                  key={index} 
-                  className={`p-3 rounded-lg border ${isPromoter ? "border-purple-100 bg-purple-50/50" : "border-gray-100"}`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium">
-                      {activity.type === 'visit' && 'Visited Establishment'}
-                      {activity.type === 'favorite' && 'Favorited Cocktail'}
-                      {activity.type === 'barCrawl' && 'Started Bar Crawl'}
-                      {activity.type === 'badge' && 'Earned Badge'}
-                    </span>
-                    <span className="text-xs text-gray-500">
-                      {activity.date.toLocaleDateString()}
-                    </span>
-                  </div>
-                  <div className="mt-1 text-sm">
-                    {activity.type === 'visit' && activity.establishment.name}
-                    {activity.type === 'favorite' && activity.cocktail.name}
-                    {activity.type === 'barCrawl' && activity.name}
-                    {activity.type === 'badge' && activity.name}
+          <div className="space-y-4 pt-2">
+            {recentActivity.map((activity, index) => (
+              <div key={index} className="border-b border-gray-100 pb-3 last:border-0">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="font-medium">
+                      {activity.type === 'visit' && `Visited ${activity.establishment?.name}`}
+                      {activity.type === 'favorite' && `Added ${activity.cocktail?.name} to favorites`}
+                      {activity.type === 'barCrawl' && `Created bar crawl: ${activity.name}`}
+                      {activity.type === 'badge' && `Earned badge: ${activity.name}`}
+                    </p>
+                    {activity.date && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        {format(activity.date, 'MMM d, yyyy')}
+                      </p>
+                    )}
                   </div>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-6">
-              <p className="text-gray-500">{emptyStateMessage}</p>
-            </div>
-          )}
+              </div>
+            ))}
+          </div>
         </CardContent>
       </Card>
     </div>

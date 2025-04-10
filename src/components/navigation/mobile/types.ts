@@ -3,7 +3,7 @@ import { NavigationType } from '../NavigationTypes';
 
 export interface MobileNavigationProps {
   type: NavigationType;
-  userType: 'individual' | 'establishment';
+  userType: 'individual' | 'establishment' | 'promoter';
   forceGuestNavigation?: boolean;
 }
 
