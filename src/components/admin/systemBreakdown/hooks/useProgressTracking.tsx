@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { ProgressSnapshot, MonthlyProgressData, FeatureItem } from '../types';
-import { createProgressSnapshot, validateProgressData } from '../utils';
+import { createProgressSnapshot, validateProgressData, generateHistoricalProgressData } from '../utils';
 
 /**
  * Hook to track system implementation progress
@@ -65,19 +65,15 @@ export const useProgressTracking = (
     snapshot: ProgressSnapshot,
     history: ProgressSnapshot[] = []
   ) => {
-    // Import and call the function
-    import('../utils/statisticsUtils')
-      .then(({ generateHistoricalProgressData }) => {
-        // Call the function, which returns a Promise
-        return generateHistoricalProgressData(snapshot, history);
-      })
+    // Call the function, which returns a Promise
+    generateHistoricalProgressData(snapshot, history)
       .then(data => {
         // Update the state with the resulting data
         setMonthlyProgressData(data);
       })
       .catch(error => {
         console.error("Error generating historical progress data:", error);
-        // Fallback with a simple implementation if import fails
+        // Fallback with a simple implementation if there's an error
         const currentMonth = new Date().getMonth();
         const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         
