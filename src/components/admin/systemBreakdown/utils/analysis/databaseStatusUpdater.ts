@@ -65,21 +65,21 @@ export function updateFeaturesDbStatus(features: FeatureItem[]): FeatureItem[] {
       
       // Update database status based on requirement completion
       if (dbAnalysis.isComplete) {
-        newDbStatus = 'complete';
+        newDbStatus = 'complete' as DatabaseStatus;
       } else if (dbAnalysis.hasStarted) {
-        newDbStatus = 'in_progress';
+        newDbStatus = 'in_progress' as DatabaseStatus;
       } else {
-        newDbStatus = 'not_started';
+        newDbStatus = 'not_started' as DatabaseStatus;
       }
       
       // Update feature status based on database requirements completion
       // Only update the feature status if it's logical to do so
       if (dbAnalysis.isComplete && ['not_started', 'planned', 'partial'].includes(feature.status)) {
-        newStatus = 'implemented';
+        newStatus = 'implemented' as FeatureStatus;
       } else if (dbAnalysis.hasStarted && ['not_started', 'planned'].includes(feature.status)) {
-        newStatus = 'partial';
+        newStatus = 'partial' as FeatureStatus;
       } else if (dbAnalysis.hasStarted && feature.status === 'not_started') {
-        newStatus = 'planned';
+        newStatus = 'planned' as FeatureStatus;
       }
     }
     
@@ -89,8 +89,8 @@ export function updateFeaturesDbStatus(features: FeatureItem[]): FeatureItem[] {
     
     return {
       ...feature,
-      status: newStatus as FeatureStatus,
-      databaseStatus: newDbStatus as DatabaseStatus,
+      status: newStatus,
+      databaseStatus: newDbStatus,
       statusUpdated: newStatus !== originalStatus || newDbStatus !== originalDbStatus,
       originalStatus: originalStatus !== newStatus ? originalStatus : undefined
     };
@@ -100,13 +100,13 @@ export function updateFeaturesDbStatus(features: FeatureItem[]): FeatureItem[] {
 /**
  * Apply detection rules to update feature status
  */
-function applyFeatureDetectionRules(feature: FeatureItem, currentStatus: string): string {
+function applyFeatureDetectionRules(feature: FeatureItem, currentStatus: FeatureStatus): FeatureStatus {
   let newStatus = currentStatus;
   
   // Check if the feature is related to feature flags or feature metrics system
   if (isFeatureFlagRelated(feature)) {
     if (['not_started', 'planned', 'partial'].includes(feature.status)) {
-      newStatus = 'implemented';
+      newStatus = 'implemented' as FeatureStatus;
     }
   }
   
@@ -115,7 +115,7 @@ function applyFeatureDetectionRules(feature: FeatureItem, currentStatus: string)
       isMocktailTrendsFeature(feature) || 
       isIngredientPairingFeature(feature)) {
     if (['not_started', 'planned', 'partial'].includes(feature.status)) {
-      newStatus = 'implemented';
+      newStatus = 'implemented' as FeatureStatus;
     }
   }
   
@@ -133,21 +133,21 @@ function applyFeatureDetectionRules(feature: FeatureItem, currentStatus: string)
       isPromotionIntegrationFeature(feature) ||
       isPromotionAIFeature(feature)) {
     if (['not_started', 'planned', 'partial'].includes(feature.status)) {
-      newStatus = 'implemented';
+      newStatus = 'implemented' as FeatureStatus;
     }
   }
   
   // Analytics-related features 
   if (isAnalyticsFeature(feature) || isDashboardFeature(feature)) {
     if (['not_started', 'planned', 'partial'].includes(feature.status)) {
-      newStatus = 'implemented';
+      newStatus = 'implemented' as FeatureStatus;
     }
   }
   
   // System Configuration features
   if (isSystemConfigurationFeature(feature)) {
     if (['not_started', 'planned', 'partial'].includes(feature.status)) {
-      newStatus = 'implemented';
+      newStatus = 'implemented' as FeatureStatus;
     }
   }
   
@@ -156,7 +156,7 @@ function applyFeatureDetectionRules(feature: FeatureItem, currentStatus: string)
       isAuthFeature(feature) || 
       isProfileFeature(feature)) {
     if (['not_started', 'planned', 'partial'].includes(feature.status)) {
-      newStatus = 'implemented';
+      newStatus = 'implemented' as FeatureStatus;
     }
   }
   
@@ -165,28 +165,28 @@ function applyFeatureDetectionRules(feature: FeatureItem, currentStatus: string)
       isContentModerationFeature(feature) || 
       isPhotoModerationFeature(feature)) {
     if (['not_started', 'planned', 'partial'].includes(feature.status)) {
-      newStatus = 'implemented';
+      newStatus = 'implemented' as FeatureStatus;
     }
   }
   
   // Establishment features
   if (isEstablishmentFeature(feature) || isEstablishmentManagementFeature(feature)) {
     if (['not_started', 'planned', 'partial'].includes(feature.status)) {
-      newStatus = 'implemented';
+      newStatus = 'implemented' as FeatureStatus;
     }
   }
   
   // Review features
   if (isReviewFeature(feature)) {
     if (['not_started', 'planned', 'partial'].includes(feature.status)) {
-      newStatus = 'implemented';
+      newStatus = 'implemented' as FeatureStatus;
     }
   }
   
   // Photo features
   if (isPhotoFeature(feature)) {
     if (['not_started', 'planned', 'partial'].includes(feature.status)) {
-      newStatus = 'implemented';
+      newStatus = 'implemented' as FeatureStatus;
     }
   }
   
@@ -195,56 +195,56 @@ function applyFeatureDetectionRules(feature: FeatureItem, currentStatus: string)
       isBarCrawlManagementFeature(feature) || 
       isSwigCircuitFeature(feature)) {
     if (['not_started', 'planned', 'partial'].includes(feature.status)) {
-      newStatus = 'implemented';
+      newStatus = 'implemented' as FeatureStatus;
     }
   }
   
   // Theme and customization features
   if (isThemeFeature(feature)) {
     if (['not_started', 'planned', 'partial'].includes(feature.status)) {
-      newStatus = 'implemented';
+      newStatus = 'implemented' as FeatureStatus;
     }
   }
   
   // Social features
   if (isSocialFeature(feature) || isNotificationFeature(feature)) {
     if (['not_started', 'planned', 'partial'].includes(feature.status)) {
-      newStatus = 'implemented';
+      newStatus = 'implemented' as FeatureStatus;
     }
   }
   
   // Map features
   if (isMapFeature(feature)) {
     if (['not_started', 'planned', 'partial'].includes(feature.status)) {
-      newStatus = 'implemented';
+      newStatus = 'implemented' as FeatureStatus;
     }
   }
   
   // Search features
   if (isSearchFeature(feature)) {
     if (['not_started', 'planned', 'partial'].includes(feature.status)) {
-      newStatus = 'implemented';
+      newStatus = 'implemented' as FeatureStatus;
     }
   }
   
   // Favorites features
   if (isFavoriteFeature(feature)) {
     if (['not_started', 'planned', 'partial'].includes(feature.status)) {
-      newStatus = 'implemented';
+      newStatus = 'implemented' as FeatureStatus;
     }
   }
   
   // Recipe features
   if (isRecipeFeature(feature)) {
     if (['not_started', 'planned', 'partial'].includes(feature.status)) {
-      newStatus = 'implemented';
+      newStatus = 'implemented' as FeatureStatus;
     }
   }
   
   // Visit tracking features
   if (isVisitTrackingFeature(feature)) {
     if (['not_started', 'planned', 'partial'].includes(feature.status)) {
-      newStatus = 'implemented';
+      newStatus = 'implemented' as FeatureStatus;
     }
   }
   
@@ -255,28 +255,28 @@ function applyFeatureDetectionRules(feature: FeatureItem, currentStatus: string)
       // since it's marked as partial in the data file
       return feature.status;
     } else if (['not_started', 'planned', 'partial'].includes(feature.status)) {
-      newStatus = 'implemented';
+      newStatus = 'implemented' as FeatureStatus;
     }
   }
   
   // Exploration features
   if (isExplorationFeature(feature)) {
     if (['not_started', 'planned', 'partial'].includes(feature.status)) {
-      newStatus = 'implemented';
+      newStatus = 'implemented' as FeatureStatus;
     }
   }
   
   // AI features
   if (isAIFeature(feature)) {
     if (['not_started', 'planned', 'partial'].includes(feature.status)) {
-      newStatus = 'implemented';
+      newStatus = 'implemented' as FeatureStatus;
     }
   }
   
   // System Breakdown specific features
   if (isSystemBreakdownFeature(feature)) {
     if (['not_started', 'planned', 'partial'].includes(feature.status)) {
-      newStatus = 'implemented';
+      newStatus = 'implemented' as FeatureStatus;
     }
   }
   
@@ -286,19 +286,19 @@ function applyFeatureDetectionRules(feature: FeatureItem, currentStatus: string)
 /**
  * Apply database status rules based on feature type
  */
-function applyDbStatusRules(feature: FeatureItem, currentDbStatus: string): string {
+function applyDbStatusRules(feature: FeatureItem, currentDbStatus: DatabaseStatus): DatabaseStatus {
   let newDbStatus = currentDbStatus;
   
   // Feature flags
   if (isFeatureFlagRelated(feature)) {
-    newDbStatus = 'complete';
+    newDbStatus = 'complete' as DatabaseStatus;
   }
   
   // Mocktail-related features
   if (isMocktailSuggestionFeature(feature) || 
       isMocktailTrendsFeature(feature) || 
       isIngredientPairingFeature(feature)) {
-    newDbStatus = 'complete';
+    newDbStatus = 'complete' as DatabaseStatus;
   }
   
   // Promotion-related features
@@ -314,7 +314,7 @@ function applyDbStatusRules(feature: FeatureItem, currentDbStatus: string): stri
       isPromotionSchedulingFeature(feature) ||
       isPromotionIntegrationFeature(feature) ||
       isPromotionAIFeature(feature)) {
-    newDbStatus = 'complete';
+    newDbStatus = 'complete' as DatabaseStatus;
   }
   
   // Analytics, System Configuration, User Management, etc.
@@ -329,7 +329,7 @@ function applyDbStatusRules(feature: FeatureItem, currentDbStatus: string): stri
       isMapFeature(feature) || isSearchFeature(feature) || isFavoriteFeature(feature) ||
       isRecipeFeature(feature) || isVisitTrackingFeature(feature) || isExplorationFeature(feature) ||
       isAIFeature(feature) || isSystemBreakdownFeature(feature)) {
-    newDbStatus = 'complete';
+    newDbStatus = 'complete' as DatabaseStatus;
   }
   
   // Special case for Reward Program
@@ -338,7 +338,7 @@ function applyDbStatusRules(feature: FeatureItem, currentDbStatus: string): stri
       // Keep original status for this specific feature
       return feature.databaseStatus;
     }
-    newDbStatus = 'complete';
+    newDbStatus = 'complete' as DatabaseStatus;
   }
   
   return newDbStatus;
