@@ -16,3 +16,9 @@ export const matchesMultipleKeywords = (feature: FeatureItem, keywords: string[]
 export const matchesAnyKeyword = (feature: FeatureItem, keywords: string[]): boolean => {
   return keywords.some(keyword => containsKeyword(feature, keyword));
 };
+
+// Add the missing function
+export const isFeatureFlagRelated = (feature: FeatureItem): boolean => {
+  return feature.name.toLowerCase().includes('feature flag') || 
+         feature.description.toLowerCase().includes('feature flag');
+};

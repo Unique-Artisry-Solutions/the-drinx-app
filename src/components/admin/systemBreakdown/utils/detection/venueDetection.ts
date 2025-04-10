@@ -1,4 +1,3 @@
-
 import { FeatureItem } from '../../types';
 
 /**
@@ -48,8 +47,16 @@ export const isMapFeature = (feature: FeatureItem): boolean => {
   );
 };
 
+/**
+ * Checks if a feature is related to bar crawls
+ */
 export const isBarCrawlFeature = (feature: FeatureItem): boolean => {
-  return isSwigCircuitFeature(feature);
+  return (
+    feature.name.toLowerCase().includes('bar crawl') ||
+    feature.description.toLowerCase().includes('bar crawl') ||
+    (Array.isArray(feature.tags) && feature.tags.includes('bar-crawl')) ||
+    isSwigCircuitFeature(feature)
+  );
 };
 
 export const isExplorationFeature = (feature: FeatureItem): boolean => {

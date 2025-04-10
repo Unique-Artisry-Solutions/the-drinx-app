@@ -24,7 +24,8 @@ import {
   isVisitTrackingFeature,
   isRecipeFeature,
   isDashboardFeature,
-  isEstablishmentManagementFeature
+  isEstablishmentManagementFeature,
+  isBarCrawlFeature
 } from './featureDetection';
 
 // Map features to business value based on their characteristics

@@ -1,7 +1,6 @@
-
 import { ImprovementItem } from './types';
 
-export const proposedImprovements: ImprovementItem[] = [
+export const improvementsData: ImprovementItem[] = [
   {
     id: 'imp-001',
     title: 'Advanced AI Recommendations',
@@ -140,3 +139,6 @@ export const proposedImprovements: ImprovementItem[] = [
     affectedAreas: ['individual']
   }
 ];
+
+// Alias for backward compatibility
+export const proposedImprovements = improvementsData;
