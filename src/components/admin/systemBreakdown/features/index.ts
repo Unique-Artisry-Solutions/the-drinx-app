@@ -1,10 +1,5 @@
 
-import { adminFeatures } from './adminFeatures';
-import { establishmentFeatures } from './establishmentFeatures';
-import { individualFeatures } from './individualFeatures';
-
-export {
-  adminFeatures,
-  establishmentFeatures,
-  individualFeatures
-};
+export { adminFeatures } from './adminFeatures';
+export { establishmentFeatures } from './establishmentFeatures';
+export { individualFeatures } from './individualFeatures';
+export { promoterFeatures } from './promoterFeatures';

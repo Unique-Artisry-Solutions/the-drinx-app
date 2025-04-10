@@ -1,4 +1,5 @@
 
-export { analyzeAllFeatures } from './featureAnalyzer';
-export { updateFeaturesDbStatus } from './databaseStatusUpdater';
-export { analyzeSwigCircuitFeatures } from './swigCircuitAnalyzer';
+export * from './databaseStatusUpdater';
+export * from './featureAnalyzer';
+export * from './swigCircuitAnalyzer';
+export * from './promoterSystemAnalyzer';

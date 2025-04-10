@@ -71,6 +71,7 @@ export function clearAllSessions() {
   localStorage.removeItem('user_name');
   localStorage.removeItem('user_join_date');
   localStorage.removeItem('establishment_name');
+  localStorage.removeItem('promoter_name');
   
   // Clear admin authentication
   localStorage.removeItem('admin_authenticated');

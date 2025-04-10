@@ -11,9 +11,11 @@ export const useAnalysisProcess = (
   adminFeatures: FeatureItem[],
   establishmentFeatures: FeatureItem[],
   individualFeatures: FeatureItem[],
+  promoterFeatures: FeatureItem[],
   setAdminFeatures: (features: FeatureItem[]) => void,
   setEstablishmentFeatures: (features: FeatureItem[]) => void,
-  setIndividualFeatures: (features: FeatureItem[]) => void
+  setIndividualFeatures: (features: FeatureItem[]) => void,
+  setPromoterFeatures: (features: FeatureItem[]) => void
 ) => {
   const { toast } = useToast();
   const [analyzing, setAnalyzing] = useState(false);
@@ -67,19 +69,22 @@ export const useAnalysisProcess = (
       const analyzedFeatures = analyzeAllFeatures(
         adminFeatures,
         establishmentFeatures,
-        individualFeatures
+        individualFeatures,
+        promoterFeatures
       );
       
       // Important: Update the state with the analyzed features
       setAdminFeatures([...analyzedFeatures.adminFeatures]);
       setEstablishmentFeatures([...analyzedFeatures.establishmentFeatures]);
       setIndividualFeatures([...analyzedFeatures.individualFeatures]);
+      setPromoterFeatures([...analyzedFeatures.promoterFeatures]);
       setAnalysisSteps(analyzedFeatures.completedSteps);
       
       const totalUpdated = [
         ...analyzedFeatures.adminFeatures,
         ...analyzedFeatures.establishmentFeatures,
-        ...analyzedFeatures.individualFeatures
+        ...analyzedFeatures.individualFeatures,
+        ...analyzedFeatures.promoterFeatures
       ].filter(feature => feature.statusUpdated).length;
       
       // Show a toast notification about the analysis results

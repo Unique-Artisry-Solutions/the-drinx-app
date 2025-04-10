@@ -3,7 +3,7 @@ import { Home, Map, User, Route } from 'lucide-react';
 import { NavItem } from './types';
 
 export const getUserNavItems = (
-  userType: 'individual' | 'establishment', 
+  userType: 'individual' | 'establishment' | 'promoter', 
   getProfilePath: () => string
 ): NavItem[] => {
   const navItems: NavItem[] = [];
@@ -11,6 +11,8 @@ export const getUserNavItems = (
   // Add appropriate home path based on user type
   if (userType === 'establishment') {
     navItems.push({ icon: Home, label: 'Home', path: '/establishment/dashboard' });
+  } else if (userType === 'promoter') {
+    navItems.push({ icon: Home, label: 'Home', path: '/promoter/dashboard' });
   } else {
     navItems.push({ icon: Home, label: 'Explore', path: '/explore' });
   }

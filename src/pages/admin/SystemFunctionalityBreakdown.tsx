@@ -24,6 +24,7 @@ const SystemFunctionalityBreakdown: React.FC = () => {
     adminFeatures,
     establishmentFeatures,
     individualFeatures,
+    promoterFeatures,
     analyzing,
     analysisProgress,
     analysisSteps,
@@ -69,6 +70,7 @@ const SystemFunctionalityBreakdown: React.FC = () => {
             <TabsTrigger value="admin">Admin Features</TabsTrigger>
             <TabsTrigger value="establishment">Establishment Features</TabsTrigger>
             <TabsTrigger value="individual">Individual Features</TabsTrigger>
+            <TabsTrigger value="promoter">Promoter Features</TabsTrigger>
             <TabsTrigger value="improvements">Proposed Improvements</TabsTrigger>
             <TabsTrigger value="releases">Release Management</TabsTrigger>
             <TabsTrigger value="showcase" className="flex items-center gap-1">
@@ -82,6 +84,7 @@ const SystemFunctionalityBreakdown: React.FC = () => {
               adminFeatures={adminFeatures}
               establishmentFeatures={establishmentFeatures}
               individualFeatures={individualFeatures}
+              promoterFeatures={promoterFeatures}
               monthlyProgressData={monthlyProgressData}
               currentSnapshot={currentSnapshot}
               dataValidation={dataValidation}
@@ -115,6 +118,14 @@ const SystemFunctionalityBreakdown: React.FC = () => {
             />
           </TabsContent>
 
+          <TabsContent value="promoter" className="space-y-4">
+            <FeatureTab
+              features={promoterFeatures}
+              title="Promoter Features"
+              description="Features accessible to event promoters and organizers"
+            />
+          </TabsContent>
+
           <TabsContent value="improvements" className="space-y-4">
             <ProposedImprovementsTab improvements={improvementsData} />
           </TabsContent>
@@ -128,6 +139,7 @@ const SystemFunctionalityBreakdown: React.FC = () => {
               adminFeatures={adminFeatures}
               establishmentFeatures={establishmentFeatures}
               individualFeatures={individualFeatures}
+              promoterFeatures={promoterFeatures}
             />
           </TabsContent>
         </Tabs>

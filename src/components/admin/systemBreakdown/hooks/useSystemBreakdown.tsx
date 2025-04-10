@@ -19,9 +19,11 @@ export const useSystemBreakdown = () => {
     adminFeatures, 
     establishmentFeatures, 
     individualFeatures,
+    promoterFeatures,
     setAdminFeatures,
     setEstablishmentFeatures,
     setIndividualFeatures,
+    setPromoterFeatures,
     updatedFeaturesCount 
   } = useFeatureStatus();
   
@@ -31,7 +33,7 @@ export const useSystemBreakdown = () => {
     currentSnapshot,
     dataValidation,
     updateProgressTracking
-  } = useProgressTracking(adminFeatures, establishmentFeatures, individualFeatures);
+  } = useProgressTracking(adminFeatures, establishmentFeatures, individualFeatures, promoterFeatures);
   
   const {
     analyzing,
@@ -42,15 +44,18 @@ export const useSystemBreakdown = () => {
     adminFeatures, 
     establishmentFeatures, 
     individualFeatures,
+    promoterFeatures,
     setAdminFeatures,
     setEstablishmentFeatures,
-    setIndividualFeatures
+    setIndividualFeatures,
+    setPromoterFeatures
   );
   
   const { handleCreateReleaseFromFeatures } = useReleaseFeatures(
     adminFeatures, 
     establishmentFeatures, 
-    individualFeatures, 
+    individualFeatures,
+    promoterFeatures,
     setActiveTab
   );
 
@@ -79,6 +84,7 @@ export const useSystemBreakdown = () => {
     adminFeatures,
     establishmentFeatures,
     individualFeatures,
+    promoterFeatures,
     analyzing,
     analysisProgress,
     analysisSteps,

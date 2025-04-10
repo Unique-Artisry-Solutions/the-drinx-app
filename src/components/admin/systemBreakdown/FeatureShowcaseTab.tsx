@@ -1,206 +1,145 @@
 
-import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState, useMemo } from 'react';
+import { 
+  Card, 
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle 
+} from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Award, BarChart, Download, Filter, Search, Star } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { FeatureShowcaseData, FeatureShowcaseCategory, FeatureBusinessValue } from './types';
+import { FeatureItem } from './types';
+import { isSignatureFeature, prepareFeatureShowcaseData } from './utils';
 import SignatureFeatureSpotlight from './components/SignatureFeatureSpotlight';
-import FeatureCategoriesDashboard from './components/FeatureCategoriesDashboard';
+import CategoryCard from './components/CategoryCard';
 import BusinessValueSection from './components/BusinessValueSection';
-import FeatureTable from './components/showcase/FeatureTable';
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { prepareFeatureShowcaseData, generateFeatureReport } from './utils/featureShowcaseUtils';
-import { useToast } from '@/hooks/use-toast';
 
 interface FeatureShowcaseTabProps {
-  adminFeatures: any[];
-  establishmentFeatures: any[];
-  individualFeatures: any[];
+  adminFeatures: FeatureItem[];
+  establishmentFeatures: FeatureItem[];
+  individualFeatures: FeatureItem[];
+  promoterFeatures: FeatureItem[];
 }
 
-const FeatureShowcaseTab: React.FC<FeatureShowcaseTabProps> = ({ 
+const FeatureShowcaseTab: React.FC<FeatureShowcaseTabProps> = ({
   adminFeatures,
   establishmentFeatures,
-  individualFeatures
+  individualFeatures,
+  promoterFeatures
 }) => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [selectedValue, setSelectedValue] = useState<string>('all');
-  const [activeTab, setActiveTab] = useState('spotlight');
-  const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState('categories');
   
-  // Transform features for showcase display
-  const showcaseFeatures = prepareFeatureShowcaseData(
-    adminFeatures, 
-    establishmentFeatures, 
-    individualFeatures
-  );
+  // Get all signature features across all user types
+  const signatureFeatures = useMemo(() => [
+    ...adminFeatures,
+    ...establishmentFeatures,
+    ...individualFeatures,
+    ...promoterFeatures
+  ].filter(isSignatureFeature), [adminFeatures, establishmentFeatures, individualFeatures, promoterFeatures]);
   
-  // Filter features based on search and filters
-  const filteredFeatures = showcaseFeatures.filter(feature => {
-    // Search filter
-    const matchesSearch = 
-      searchQuery === '' || 
-      feature.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      feature.description.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    // Category filter
-    const matchesCategory = 
-      selectedCategory === 'all' || 
-      feature.showcaseCategory === selectedCategory;
-    
-    // Value filter
-    const matchesValue = 
-      selectedValue === 'all' || 
-      feature.businessValue === selectedValue.toLowerCase();
-    
-    return matchesSearch && matchesCategory && matchesValue;
-  });
+  // Organize features by category and business value
+  const showcaseData = useMemo(() => 
+    prepareFeatureShowcaseData([
+      ...adminFeatures,
+      ...establishmentFeatures, 
+      ...individualFeatures,
+      ...promoterFeatures
+    ]),
+  [adminFeatures, establishmentFeatures, individualFeatures, promoterFeatures]);
   
-  // Get signature features
-  const signatureFeatures = showcaseFeatures.filter(feature => feature.isSignature);
+  // Calculate implementation percentage for signature features
+  const signatureImplementationRate = useMemo(() => {
+    if (signatureFeatures.length === 0) return 0;
+    const sum = signatureFeatures.reduce((acc, feature) => acc + (feature.implementationProgress || 0), 0);
+    return Math.round(sum / signatureFeatures.length);
+  }, [signatureFeatures]);
   
-  // Extract unique categories for the filter
-  const categories = Array.from(
-    new Set(showcaseFeatures.map(feature => feature.showcaseCategory))
-  );
-  
-  // Handle export feature report
-  const handleExportReport = () => {
-    const report = generateFeatureReport(showcaseFeatures, false);
-    
-    // Create and download the report as a markdown file
-    const blob = new Blob([report], { type: 'text/markdown' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'spiritless-feature-report.md';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    
-    toast({
-      title: "Feature Report Generated",
-      description: "The feature report has been exported as a Markdown file.",
-    });
-  };
-
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex justify-between items-center">
-            <div>
-              <CardTitle className="text-2xl font-bold">Feature Showcase</CardTitle>
-              <CardDescription>
-                Highlight the platform's capabilities to demonstrate value to potential clients
-              </CardDescription>
-            </div>
-            <Button 
-              onClick={handleExportReport}
-              variant="outline"
-              className="flex items-center gap-2"
-            >
-              <Download className="h-4 w-4" />
-              Export Report
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col md:flex-row gap-4 mb-6">
-            <div className="relative flex-grow">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-              <Input
-                placeholder="Search features..."
-                className="pl-9"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h2 className="text-2xl font-semibold">Feature Showcase</h2>
+          <p className="text-muted-foreground">
+            Highlighting the platform's key capabilities and implementation status
+          </p>
+        </div>
+        
+        <div className="flex items-center gap-3">
+          <Badge variant="outline" className="px-3 py-1">
+            <span className="mr-1">Signature Features:</span>
+            <span className="font-semibold">{signatureFeatures.length}</span>
+          </Badge>
+          
+          <Badge className={`px-3 py-1 ${
+            signatureImplementationRate >= 75 ? 'bg-green-500' : 
+            signatureImplementationRate >= 50 ? 'bg-yellow-500' : 
+            'bg-orange-500'
+          }`}>
+            {signatureImplementationRate}% Implemented
+          </Badge>
+        </div>
+      </div>
+      
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="mb-6">
+          <TabsTrigger value="categories">Categories</TabsTrigger>
+          <TabsTrigger value="business">Business Value</TabsTrigger>
+          <TabsTrigger value="signature">Signature Features</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="categories" className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {showcaseData.categories.map(category => (
+              <CategoryCard 
+                key={category.name}
+                category={category}
               />
-            </div>
-            
-            <div className="flex gap-2">
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger className="w-[180px]">
-                  <Filter className="mr-2 h-4 w-4" />
-                  <SelectValue placeholder="Category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="all">All Categories</SelectItem>
-                    {categories.map((category) => (
-                      <SelectItem key={category} value={category}>{category}</SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-
-              <Select value={selectedValue} onValueChange={setSelectedValue}>
-                <SelectTrigger className="w-[180px]">
-                  <BarChart className="mr-2 h-4 w-4" />
-                  <SelectValue placeholder="Business Value" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="all">All Values</SelectItem>
-                    <SelectItem value="high">High Value</SelectItem>
-                    <SelectItem value="medium">Medium Value</SelectItem>
-                    <SelectItem value="low">Low Value</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </div>
+            ))}
           </div>
-
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid grid-cols-3 mb-8">
-              <TabsTrigger value="spotlight" className="flex gap-2 items-center">
-                <Award className="h-4 w-4" /> 
-                Signature Features
-              </TabsTrigger>
-              <TabsTrigger value="categories" className="flex gap-2 items-center">
-                <BarChart className="h-4 w-4" /> 
-                Feature Categories
-              </TabsTrigger>
-              <TabsTrigger value="business" className="flex gap-2 items-center">
-                <Star className="h-4 w-4" /> 
-                Business Value
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="spotlight">
-              <SignatureFeatureSpotlight features={signatureFeatures} />
-            </TabsContent>
-            
-            <TabsContent value="categories">
-              <FeatureCategoriesDashboard features={filteredFeatures} />
-            </TabsContent>
-            
-            <TabsContent value="business">
-              <BusinessValueSection features={filteredFeatures} />
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-        <CardFooter className="border-t pt-6 pb-2 px-6">
-          <div className="w-full">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-medium">All Features ({filteredFeatures.length})</h3>
-              <div className="flex gap-2">
-                <Badge variant="outline" className="bg-green-50">
-                  Implemented: {filteredFeatures.filter(f => f.implementationStatus === 'implemented').length}
-                </Badge>
-                <Badge variant="outline" className="bg-amber-50">
-                  Partial: {filteredFeatures.filter(f => f.implementationStatus === 'partial').length}
-                </Badge>
+        </TabsContent>
+        
+        <TabsContent value="business">
+          <BusinessValueSection businessValues={showcaseData.businessValues} />
+        </TabsContent>
+        
+        <TabsContent value="signature" className="space-y-6">
+          {signatureFeatures.length === 0 ? (
+            <Card className="text-center p-6">
+              <CardContent>
+                <p className="text-lg text-muted-foreground pt-6">
+                  No signature features have been defined yet.
+                </p>
+                <Button className="mt-4">Define Signature Features</Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              <Card className="mb-6">
+                <CardHeader>
+                  <CardTitle>Signature Features</CardTitle>
+                  <CardDescription>
+                    These features represent the core value proposition of the platform
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Signature features are the differentiating capabilities that set our platform apart
+                    from competitors and deliver exceptional value to users.
+                  </p>
+                </CardContent>
+              </Card>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {signatureFeatures.map(feature => (
+                  <SignatureFeatureSpotlight key={feature.id} feature={feature} />
+                ))}
               </div>
-            </div>
-            <FeatureTable features={filteredFeatures} />
-          </div>
-        </CardFooter>
-      </Card>
+            </>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

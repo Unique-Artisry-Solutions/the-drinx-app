@@ -55,7 +55,15 @@ import {
   isDashboardFeature,
   isSchedulingFeature,
   isSystemBreakdownFeature,
-  isSignatureFeature
+  isSignatureFeature,
+  isTicketManagementFeature,
+  isSponsorshipFeature,
+  isVenuePartnershipFeature,
+  isMerchandiseFeature,
+  isPromoterAnalyticsFeature,
+  isAdvertisingToolsFeature,
+  isVIPFeature,
+  isFeedbackFeature
 } from './featureDetection';
 import { isTaskCompleted, parseTasks } from './taskDetection';
 import { 
@@ -130,6 +138,14 @@ export {
   isSchedulingFeature,
   isSystemBreakdownFeature,
   isSignatureFeature,
+  isTicketManagementFeature,
+  isSponsorshipFeature,
+  isVenuePartnershipFeature,
+  isMerchandiseFeature,
+  isPromoterAnalyticsFeature,
+  isAdvertisingToolsFeature,
+  isVIPFeature,
+  isFeedbackFeature,
   isTaskCompleted,
   parseTasks,
   mapFeaturesToReleaseFeatures,

@@ -9,7 +9,8 @@ import { createProgressSnapshot, validateProgressData, generateHistoricalProgres
 export const useProgressTracking = (
   adminFeatures: FeatureItem[],
   establishmentFeatures: FeatureItem[],
-  individualFeatures: FeatureItem[]
+  individualFeatures: FeatureItem[],
+  promoterFeatures: FeatureItem[]
 ) => {
   // Track progress history for accurate dashboard data
   const [progressHistory, setProgressHistory] = useState<ProgressSnapshot[]>([]);
@@ -23,7 +24,8 @@ export const useProgressTracking = (
     const initialSnapshot = createProgressSnapshot(
       adminFeatures,
       establishmentFeatures,
-      individualFeatures
+      individualFeatures,
+      promoterFeatures
     );
     
     setCurrentSnapshot(initialSnapshot);
@@ -38,7 +40,8 @@ export const useProgressTracking = (
     const newSnapshot = createProgressSnapshot(
       adminFeatures,
       establishmentFeatures,
-      individualFeatures
+      individualFeatures,
+      promoterFeatures
     );
     
     // Validate the progress data

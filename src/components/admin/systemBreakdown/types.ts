@@ -1,100 +1,87 @@
 
-export type FeatureStatus = 'implemented' | 'partial' | 'planned' | 'not_started';
-export type DatabaseStatus = 'complete' | 'in_progress' | 'not_started';
-export type AccessLevel = 'full' | 'partial' | 'none' | 'planned';
-export type FeatureCategory = 'Admin' | 'Establishment' | 'Individual';
+import { LucideIcon } from "lucide-react";
 
+// Status types
+export type FeatureStatus = 'planned' | 'in_progress' | 'implemented' | 'blocked';
+export type DatabaseStatus = 'not_started' | 'in_progress' | 'implemented';
+export type FeatureComplexity = 'low' | 'medium' | 'high';
+export type FeatureImpact = 'low' | 'medium' | 'high';
+
+// Main feature item definition
 export interface FeatureItem {
   id: string;
   name: string;
   description: string;
   status: FeatureStatus;
-  originalStatus?: FeatureStatus;
-  statusUpdated?: boolean;
-  databaseStatus: DatabaseStatus;
-  adminAccess: AccessLevel;
-  establishmentAccess: AccessLevel;
-  individualAccess: AccessLevel;
-  testSteps?: string[];
-  databaseAnalysis?: string;
+  userImpact: FeatureImpact;
+  complexity: FeatureComplexity;
+  scheduledFor?: string;
+  dependsOn?: string[];
+  implementationProgress?: number; // 0-100
+  statusUpdated?: boolean; // Used to mark when status has been updated
+  dbStatus?: DatabaseStatus;
+  dbRequirementsText?: string; // Free text describing DB requirements
+  tags?: string[]; // Used to categorize features
 }
 
-export interface ImprovementItem {
-  name: string;
-  description: string;
-  priority: 'high' | 'medium' | 'low';
-  type: 'enhancement' | 'new-feature';
-  affectedAreas: ('admin' | 'establishment' | 'individual')[];
-  implementationSteps: string[];
-  estimatedEffort: string;
-  businessImpact: string;
-  technicalRequirements: string;
-  currentStatus?: string;
-  lovableCompatible?: boolean;
-}
-
-export type SortField = 'name' | 'priority' | 'type' | 'lovableCompatible';
-export type SortOrder = 'asc' | 'desc';
-
+// Analysis and progress tracking
 export interface AnalysisStep {
   name: string;
   completed: boolean;
+  details?: string;
 }
 
-// New types for progress tracking
 export interface ProgressSnapshot {
-  date: string;
-  overallProgress: number;
+  timestamp: string;
+  totalFeatures: number;
+  implementedFeatures: number;
+  inProgressFeatures: number;
+  plannedFeatures: number;
+  blockedFeatures: number;
+  averageImplementationProgress: number;
   frontendProgress: number;
   backendProgress: number;
-  adminProgress: CategoryProgress;
-  establishmentProgress: CategoryProgress;
-  individualProgress: CategoryProgress;
-  implementedFeatures: number;
-  partialFeatures: number;
-  plannedFeatures: number;
-  dbComplete: number;
-  dbInProgress: number;
-  dbNotStarted: number;
-  confidenceScore: number;
+  
+  // Feature counts by user type
+  adminFeatureCount: number;
+  establishmentFeatureCount: number;
+  individualFeatureCount: number;
+  promoterFeatureCount: number;
+  
+  // Implementation rates by user type
+  adminImplementationRate: number;
+  establishmentImplementationRate: number;
+  individualImplementationRate: number;
+  promoterImplementationRate: number;
 }
 
-export interface CategoryProgress {
-  frontend: number;
-  backend: number;
-  overall: number;
-}
-
+// Used for the historical progress chart
 export interface MonthlyProgressData {
   month: string;
   frontend: number;
   backend: number;
+  snapshots?: number; // Used only internally for calculation
 }
 
-// New types for feature showcase
-export type FeatureBusinessValue = 'high' | 'medium' | 'low';
-export type FeatureComplexity = 'high' | 'medium' | 'low';
-export type FeatureShowcaseCategory = 
-  | 'AI & Recommendations' 
-  | 'Social Experience'
-  | 'Business Analytics'
-  | 'User Engagement'
-  | 'Management Tools'
-  | 'Customization'
-  | 'Loyalty & Rewards';
-
-export interface FeatureShowcaseData {
-  id: string;
+// Data for the feature showcase
+export interface FeatureShowcaseCategory {
   name: string;
   description: string;
-  businessValue: FeatureBusinessValue;
-  complexity: FeatureComplexity;
-  implementationStatus: FeatureStatus;
-  showcaseCategory: FeatureShowcaseCategory;
-  marketingPoints?: string[];
-  isSignature: boolean;
-  implementations?: number;
-  avgRating?: number;
-  icon?: string;
+  featureCount: number;
+  implementationRate: number;
+  icon?: LucideIcon;
+  features: FeatureItem[];
 }
 
+export interface FeatureBusinessValue {
+  name: string;
+  description: string;
+  featureCount: number;
+  implementationRate: number;
+  features: FeatureItem[];
+}
+
+export interface FeatureShowcaseData {
+  categories: FeatureShowcaseCategory[];
+  businessValues: FeatureBusinessValue[];
+}
