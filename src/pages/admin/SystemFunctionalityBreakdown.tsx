@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { TabsContent } from '@/components/ui/tabs';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
 import Layout from '@/components/Layout';
 import { useSystemBreakdown } from '@/components/admin/systemBreakdown/hooks/useSystemBreakdown';
 import StatusUpdateNotification from '@/components/admin/systemBreakdown/StatusUpdateNotification';
@@ -72,7 +72,7 @@ const SystemFunctionalityBreakdown: React.FC = () => {
           <SystemBreakdownNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
         )}
 
-        <div className="space-y-4">
+        <Tabs value={activeTab} className="space-y-4">
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
             <OverviewTab
@@ -149,7 +149,7 @@ const SystemFunctionalityBreakdown: React.FC = () => {
               promoterFeatures={promoterFeatures}
             />
           </TabsContent>
-        </div>
+        </Tabs>
       </div>
     </Layout>
   );
