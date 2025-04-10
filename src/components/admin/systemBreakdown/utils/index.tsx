@@ -1,6 +1,11 @@
 
 import { renderStatusBadge, renderDatabaseStatusBadge, renderAccessIcon } from './statusRenderers';
-import { calculateFeatureStatistics } from './statisticsUtils';
+import { 
+  calculateFeatureStatistics,
+  createProgressSnapshot,
+  validateProgressData,
+  generateHistoricalProgressData
+} from './statisticsUtils';
 import { generateCSV } from './exportUtils';
 import { analyzeAllFeatures } from './featureAnalysis';
 import { analyzeDbRequirements } from './analysisHelpers';
@@ -44,9 +49,13 @@ export {
   isTaskCompleted,
   parseTasks,
   mapFeaturesToReleaseFeatures,
-  mapFeatureStatusToReleaseStatus
+  mapFeatureStatusToReleaseStatus,
+  createProgressSnapshot,
+  validateProgressData,
+  generateHistoricalProgressData
 };
 
 // Use 'export type' for type exports when isolatedModules is enabled
 export type { AnalysisStep } from '../types';
 export type { ReleaseProgress } from '../types/releaseTypes';
+export type { MonthlyProgressData } from '../types';

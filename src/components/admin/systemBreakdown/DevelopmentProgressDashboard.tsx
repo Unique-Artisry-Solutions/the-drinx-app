@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -15,7 +16,8 @@ import {
   Shield
 } from 'lucide-react';
 import { FeatureItem, MonthlyProgressData } from './types';
-import { calculateCategoryProgress } from './utils/statisticsUtils';
+// Remove the duplicated import, as we're defining it locally
+// import { calculateCategoryProgress } from './utils/statisticsUtils';
 
 interface DevelopmentProgressDashboardProps {
   adminFeatures: FeatureItem[];

@@ -1,5 +1,5 @@
 
-import { FeatureItem, CategoryProgress, ProgressSnapshot } from '../types';
+import { FeatureItem, CategoryProgress, ProgressSnapshot, MonthlyProgressData } from '../types';
 
 export const calculateFeatureStatistics = (
   adminFeatures: FeatureItem[],
