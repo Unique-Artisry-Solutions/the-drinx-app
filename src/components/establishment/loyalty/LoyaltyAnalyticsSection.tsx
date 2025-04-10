@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, Award, TrendingUp, Zap } from 'lucide-react';
-import { ComparisonItem } from '@/components/admin/systemBreakdown/components/ComparisonItem';
+import ComparisonItem from '@/components/admin/systemBreakdown/components/ComparisonItem';
 import AnalyticsMetricCard from '@/components/charts/AnalyticsMetricCard';
 import AnalyticsLineChart from '@/components/charts/AnalyticsLineChart';
 
