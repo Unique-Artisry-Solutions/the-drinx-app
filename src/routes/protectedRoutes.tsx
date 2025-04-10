@@ -42,7 +42,7 @@ export const TypedProtectedRoute = ({
   userType, 
   children 
 }: { 
-  userType: 'individual' | 'establishment', 
+  userType: 'individual' | 'establishment' | 'promoter', 
   children: React.ReactNode 
 }) => {
   const { user, isLoading, isEmailVerified } = useAuth();

@@ -10,7 +10,7 @@ interface TestUserCredentials {
   password: string;
   name: string;
   username: string;
-  userType: 'individual' | 'establishment';
+  userType: 'individual' | 'establishment' | 'promoter';
 }
 
 const TEST_CREDENTIALS = {
@@ -27,6 +27,13 @@ const TEST_CREDENTIALS = {
     name: 'Test Bar',
     username: 'testbar',
     userType: 'establishment' as const
+  },
+  promoter: {
+    email: 'testpromoter@spiritless.com',
+    password: 'Test123!',
+    name: 'Test Promoter',
+    username: 'testpromoter',
+    userType: 'promoter' as const
   }
 };
 
@@ -48,7 +55,7 @@ const TestCredentials: React.FC = () => {
 
       if (existingUsers && existingUsers.length > 0) {
         toast({
-          title: `${credentials.userType === 'individual' ? 'User' : 'Business'} already exists`,
+          title: `${credentials.userType === 'individual' ? 'User' : credentials.userType === 'establishment' ? 'Business' : 'Promoter'} already exists`,
           description: `You can log in with ${credentials.email} / ${credentials.password}`,
         });
         return;
@@ -73,7 +80,7 @@ const TestCredentials: React.FC = () => {
       }
 
       toast({
-        title: `Test ${credentials.userType === 'individual' ? 'User' : 'Business'} created`,
+        title: `Test ${credentials.userType === 'individual' ? 'User' : credentials.userType === 'establishment' ? 'Business' : 'Promoter'} created`,
         description: `Email: ${credentials.email} | Password: ${credentials.password}`,
         duration: 10000,
       });
@@ -90,6 +97,7 @@ const TestCredentials: React.FC = () => {
   const createAllTestUsers = async () => {
     await createTestUser(TEST_CREDENTIALS.individual);
     await createTestUser(TEST_CREDENTIALS.establishment);
+    await createTestUser(TEST_CREDENTIALS.promoter);
     
     toast({
       title: 'Test credentials created',
@@ -105,21 +113,28 @@ const TestCredentials: React.FC = () => {
         description: 'Admin bypass mode has been turned off',
       });
     } else {
-      const options = ['admin', 'establishment', 'individual'];
-      const userTypeIndex = window.confirm('Select user type:\nOK - Admin\nCancel - Choose Other') 
-        ? 0 
-        : window.confirm('Select user type:\nOK - Establishment\nCancel - Individual')
-          ? 1
-          : 2;
+      const options = ['admin', 'establishment', 'individual', 'promoter'];
       
-      const userType = options[userTypeIndex] as 'admin' | 'establishment' | 'individual';
+      let userTypeIndex;
+      if (window.confirm('Select user type:\nOK - Admin\nCancel - Choose Other')) {
+        userTypeIndex = 0;
+      } else if (window.confirm('Select user type:\nOK - Establishment\nCancel - Choose Other')) {
+        userTypeIndex = 1;
+      } else if (window.confirm('Select user type:\nOK - Individual\nCancel - Promoter')) {
+        userTypeIndex = 2;
+      } else {
+        userTypeIndex = 3;
+      }
+      
+      const userType = options[userTypeIndex] as 'admin' | 'establishment' | 'individual' | 'promoter';
       enableAdminBypass(userType);
       
       toast({
         title: 'Admin Bypass Enabled',
         description: `You're now in admin bypass mode as ${
           userType === 'admin' ? 'an administrator' : 
-          userType === 'establishment' ? 'a business' : 'an individual user'
+          userType === 'establishment' ? 'a business' : 
+          userType === 'individual' ? 'an individual user' : 'a promoter'
         }`,
         duration: 5000,
       });
@@ -151,6 +166,7 @@ const TestCredentials: React.FC = () => {
         <div className="text-xs text-muted-foreground space-y-1">
           <p><strong>User:</strong> testuser@spiritless.com / Test123!</p>
           <p><strong>Business:</strong> testbusiness@spiritless.com / Test123!</p>
+          <p><strong>Promoter:</strong> testpromoter@spiritless.com / Test123!</p>
         </div>
       </div>
     </div>

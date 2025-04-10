@@ -1,7 +1,7 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
-export function enableAdminBypass(userType: 'individual' | 'establishment' | 'admin' = 'individual') {
+export function enableAdminBypass(userType: 'individual' | 'establishment' | 'admin' | 'promoter' = 'individual') {
   const bypassUserId = uuidv4();
   
   localStorage.setItem('admin_bypass', 'true');
@@ -14,6 +14,11 @@ export function enableAdminBypass(userType: 'individual' | 'establishment' | 'ad
   // Set establishment name for establishment users
   if (userType === 'establishment') {
     localStorage.setItem('establishment_name', 'Bypass Establishment');
+  }
+  
+  // Set promoter name for promoter users
+  if (userType === 'promoter') {
+    localStorage.setItem('promoter_name', 'Bypass Promoter');
   }
   
   // Set admin authentication flag if it's an admin bypass

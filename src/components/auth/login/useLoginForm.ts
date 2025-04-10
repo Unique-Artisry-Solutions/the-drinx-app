@@ -5,7 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 
-export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userType: 'individual' | 'establishment' = 'individual') => {
+export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userType: 'individual' | 'establishment' | 'promoter' = 'individual') => {
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [formError, setFormError] = useState('');
@@ -119,6 +119,8 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
           const storedUserType = localStorage.getItem('user_type');
           if (storedUserType === 'establishment') {
             navigate('/establishment/dashboard', { replace: true });
+          } else if (storedUserType === 'promoter') {
+            navigate('/promoter/dashboard', { replace: true });
           } else {
             navigate('/explore', { replace: true });
           }
