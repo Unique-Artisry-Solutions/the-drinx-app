@@ -19,9 +19,12 @@ import {
   Calendar, 
   ArrowRight,
   Database,
-  Layout
+  Layout,
+  ChevronRight,
+  Filter
 } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 // Map category names to icons
 const categoryIcons: Record<string, React.ReactNode> = {
@@ -300,18 +303,44 @@ const PromoterRequirementsTab: React.FC<PromoterRequirementsTabProps> = ({ featu
             {/* Category View */}
             <TabsContent value="categories">
               <Tabs value={activeCategory} onValueChange={setActiveCategory}>
-                <TabsList className="mb-4 flex flex-wrap">
-                  <TabsTrigger value="all">All Features</TabsTrigger>
-                  {orderedCategories.map(category => (
-                    <TabsTrigger key={category} value={category} className="flex items-center gap-1">
-                      {categoryIcons[category]}
-                      {categoryDisplayNames[category] || category}
-                      <Badge variant="outline" className="ml-1 text-xs">
-                        {categorizedFeatures[category].length}
-                      </Badge>
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
+                {/* Refactored menu UI: Use ScrollArea for horizontal scrolling and better styling */}
+                <div className="relative mb-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-sm font-medium flex items-center gap-1">
+                      <Filter className="h-4 w-4" />
+                      Filter by Category
+                    </h3>
+                  </div>
+                  <ScrollArea className="w-full whitespace-nowrap pb-2" orientation="horizontal">
+                    <div className="inline-flex space-x-1 pb-1">
+                      <TabsTrigger 
+                        value="all" 
+                        className="rounded-md px-3 py-1.5 text-xs font-medium"
+                      >
+                        All Features
+                        <Badge variant="outline" className="ml-1.5 text-[10px] px-1">
+                          {features.length}
+                        </Badge>
+                      </TabsTrigger>
+                      
+                      {orderedCategories.map(category => (
+                        <TabsTrigger 
+                          key={category} 
+                          value={category} 
+                          className="flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-medium"
+                        >
+                          <span className="flex items-center gap-1">
+                            {categoryIcons[category]}
+                            {categoryDisplayNames[category] || category}
+                          </span>
+                          <Badge variant="outline" className="ml-1.5 text-[10px] px-1">
+                            {categorizedFeatures[category].length}
+                          </Badge>
+                        </TabsTrigger>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </div>
                 
                 <TabsContent value="all" className="space-y-4">
                   {renderFeatures(features)}
@@ -346,11 +375,11 @@ const PromoterRequirementsTab: React.FC<PromoterRequirementsTabProps> = ({ featu
                   
                   return (
                     <AccordionItem key={`phase-${phase}`} value={`phase-${phase}`}>
-                      <AccordionTrigger className="hover:bg-slate-50 px-4">
-                        <div className="flex items-center gap-2">
+                      <AccordionTrigger className="hover:bg-slate-50 px-4 py-3 rounded-md">
+                        <div className="flex items-center gap-2 w-full">
                           <Badge variant={phase === 1 ? "default" : "outline"}>Phase {phase}</Badge>
                           <span>{phaseTitle}</span>
-                          <Badge variant="outline" className="ml-auto mr-6">
+                          <Badge variant="outline" className="ml-auto">
                             {(phaseFeatures[phase] || []).length} features
                           </Badge>
                         </div>
