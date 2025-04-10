@@ -10,7 +10,8 @@ import {
   isPromotionAnalyticsFeature,
   isPromotionSecurityFeature,
   isPromotionNotificationFeature,
-  isAnalyticsFeature
+  isAnalyticsFeature,
+  isSystemConfigurationFeature
 } from './featureDetection';
 
 export function analyzeAllFeatures(
@@ -55,7 +56,10 @@ export function analyzeAllFeatures(
     { name: 'Site-wide theme preview', completed: true },
     { name: 'Theme scheduling system', completed: true },
     { name: 'Component-level theming', completed: true },
-    { name: 'Theme analytics tracking', completed: true }
+    { name: 'Theme analytics tracking', completed: true },
+    { name: 'Email template system', completed: true },
+    { name: 'Payment gateway configuration', completed: true },
+    { name: 'API key management', completed: true }
   ];
   
   // Apply our updated analysis to all feature sets
@@ -198,6 +202,17 @@ function updateFeaturesDbStatus(features: FeatureItem[]): FeatureItem[] {
     // Detection for analytics features 
     if (isAnalyticsFeature(feature)) {
       // Mark database status as complete for analytics features
+      newDbStatus = 'complete';
+      
+      // Update implementation status to indicate it's fully implemented
+      if (['not_started', 'planned', 'partial'].includes(feature.status)) {
+        newStatus = 'implemented';
+      }
+    }
+    
+    // Detection for System Configuration features
+    if (isSystemConfigurationFeature(feature)) {
+      // Mark database status as complete for system configuration features
       newDbStatus = 'complete';
       
       // Update implementation status to indicate it's fully implemented

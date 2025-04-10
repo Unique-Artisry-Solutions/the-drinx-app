@@ -153,6 +153,39 @@ export type Database = {
         }
         Relationships: []
       }
+      api_key_configurations: {
+        Row: {
+          api_key_name: string
+          created_at: string
+          id: string
+          is_active: boolean
+          last_verified_at: string | null
+          metadata: Json | null
+          service_name: string
+          updated_at: string
+        }
+        Insert: {
+          api_key_name: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_verified_at?: string | null
+          metadata?: Json | null
+          service_name: string
+          updated_at?: string
+        }
+        Update: {
+          api_key_name?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_verified_at?: string | null
+          metadata?: Json | null
+          service_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bar_crawl_check_ins: {
         Row: {
           bar_crawl_id: string
@@ -394,6 +427,45 @@ export type Database = {
           reporter_id?: string | null
           status?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      email_templates: {
+        Row: {
+          body_html: string
+          body_text: string
+          created_at: string
+          id: string
+          is_active: boolean
+          last_updated_by: string | null
+          name: string
+          subject: string
+          updated_at: string
+          variables: string[]
+        }
+        Insert: {
+          body_html: string
+          body_text: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_updated_by?: string | null
+          name: string
+          subject: string
+          updated_at?: string
+          variables?: string[]
+        }
+        Update: {
+          body_html?: string
+          body_text?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_updated_by?: string | null
+          name?: string
+          subject?: string
+          updated_at?: string
+          variables?: string[]
         }
         Relationships: []
       }
@@ -948,6 +1020,36 @@ export type Database = {
           source_table?: string
           url?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      payment_gateway_configs: {
+        Row: {
+          configuration: Json
+          created_at: string
+          gateway_name: string
+          id: string
+          is_active: boolean
+          test_mode: boolean
+          updated_at: string
+        }
+        Insert: {
+          configuration?: Json
+          created_at?: string
+          gateway_name: string
+          id?: string
+          is_active?: boolean
+          test_mode?: boolean
+          updated_at?: string
+        }
+        Update: {
+          configuration?: Json
+          created_at?: string
+          gateway_name?: string
+          id?: string
+          is_active?: boolean
+          test_mode?: boolean
+          updated_at?: string
         }
         Relationships: []
       }

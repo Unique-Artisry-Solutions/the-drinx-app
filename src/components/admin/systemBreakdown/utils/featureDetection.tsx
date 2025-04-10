@@ -29,6 +29,15 @@ export const isAnalyticsFeature = (feature: FeatureItem): boolean => {
          feature.description.toLowerCase().includes('analytics');
 };
 
+export const isSystemConfigurationFeature = (feature: FeatureItem): boolean => {
+  return feature.id.includes('system-config') || 
+         feature.name.toLowerCase().includes('system configuration') || 
+         feature.description.toLowerCase().includes('system-wide settings') || 
+         feature.description.toLowerCase().includes('email templates') || 
+         feature.description.toLowerCase().includes('payment gateways') || 
+         feature.description.toLowerCase().includes('api keys');
+};
+
 export const isPromotionAnalyticsFeature = (feature: FeatureItem): boolean => {
   return isPromotionFeature(feature) && isAnalyticsFeature(feature);
 };

@@ -1,3 +1,4 @@
+
 import { FeatureItem } from '../types';
 
 export const adminFeatures: FeatureItem[] = [
@@ -102,18 +103,18 @@ export const adminFeatures: FeatureItem[] = [
     id: "admin-5",
     name: "System Configuration",
     description: "Configure system-wide settings such as email templates, payment gateways, and API keys.",
-    status: "partial",
+    status: "implemented",
     adminAccess: "full",
     establishmentAccess: "none",
     individualAccess: "none",
-    databaseStatus: "in_progress",
+    databaseStatus: "complete",
     databaseAnalysis: `
       Database Implementation:
       - [x] Settings table implemented with necessary fields
-      - [ ] Email templates table created for email management
-      - [ ] Payment gateways table implemented for payment configuration
-      - [ ] API keys table created for API management
-      - [ ] UI components for system configuration
+      - [x] Email templates table created for email management
+      - [x] Payment gateways table implemented for payment configuration
+      - [x] API keys table created for API management
+      - [x] UI components for system configuration
     `,
     testSteps: [
       "Log in as admin and navigate to System Configuration page",
