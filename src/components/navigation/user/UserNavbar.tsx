@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth';
@@ -27,7 +28,7 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [userType, setUserType] = useState<'individual' | 'establishment'>('individual');
+  const [userType, setUserType] = useState<'individual' | 'establishment' | 'promoter'>('individual');
   const [username, setUsername] = useState<string | null>("Guest");
   const { theme } = useTheme();
   const { signOut, user } = useAuth();
@@ -37,6 +38,8 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
     const storedUserType = localStorage.getItem('user_type');
     if (storedUserType === 'establishment') {
       setUserType('establishment');
+    } else if (storedUserType === 'promoter') {
+      setUserType('promoter');
     } else {
       setUserType('individual');
     }
@@ -96,16 +99,24 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
   };
   
   const isDarkTheme = theme === 'dark';
-  const navbarClass = isDarkTheme ? 'bg-gray-900 shadow-md border-b border-gray-800' : 'bg-white shadow-sm';
+  let navbarClass = isDarkTheme ? 'bg-gray-900 shadow-md border-b border-gray-800' : 'bg-white shadow-sm';
+  
+  // Add a custom class for promoter navigation
+  if (userType === 'promoter') {
+    navbarClass = isDarkTheme 
+      ? 'bg-gray-900 shadow-md border-b border-gray-800' 
+      : 'bg-white shadow-sm border-b-2 border-purple-200';
+  }
   
   return (
     <nav className={`user-top-nav fixed top-0 left-0 w-full z-50 ${navbarClass}`}>
       <div className="user-nav-container max-w-6xl mx-auto px-4 py-3">
         <div className="user-nav-inner flex items-center justify-between">
           <div className="user-nav-left flex items-center">
-            <a href="#" onClick={handleHomeClick} className="user-nav-logo text-xl font-semibold mr-6">
+            <a href="#" onClick={handleHomeClick} className={`user-nav-logo text-xl font-semibold mr-6 ${userType === 'promoter' ? 'text-purple-600' : ''}`}>
               {isMobile ? "SL" : "Spirit"}
               {!isMobile && <span>less</span>}
+              {userType === 'promoter' && !isMobile && <span className="ml-1 text-xs px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded-md">Promoter</span>}
             </a>
             
             <UserNavLinks userType={userType} />
@@ -114,7 +125,7 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
           <div className="user-nav-right flex items-center space-x-4">
             {username && (
               <span className="text-sm hidden md:block">
-                Welcome, <span className="font-medium text-spiritless-pink">{username}</span>
+                Welcome, <span className={`font-medium ${userType === 'promoter' ? 'text-purple-600' : 'text-spiritless-pink'}`}>{username}</span>
               </span>
             )}
             

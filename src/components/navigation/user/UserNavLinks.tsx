@@ -1,11 +1,11 @@
 
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Map, Route } from 'lucide-react';
+import { Home, Map, Route, Megaphone } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface UserNavLinksProps {
-  userType: 'individual' | 'establishment';
+  userType: 'individual' | 'establishment' | 'promoter';
 }
 
 const UserNavLinks: React.FC<UserNavLinksProps> = ({ userType }) => {
@@ -30,9 +30,11 @@ const UserNavLinks: React.FC<UserNavLinksProps> = ({ userType }) => {
     { icon: Map, label: 'Map', path: '/map' },
   ];
   
-  // Only add the "Create" button for individual users, no "Add" button for establishment users
+  // Add different items based on user type
   if (userType === 'individual') {
     userNavItems.push({ icon: Route, label: 'Create', path: '/create-bar-crawl' });
+  } else if (userType === 'promoter') {
+    userNavItems.push({ icon: Megaphone, label: 'Promotions', path: '/promotions' });
   }
 
   return (
@@ -48,9 +50,13 @@ const UserNavLinks: React.FC<UserNavLinksProps> = ({ userType }) => {
             onClick={item.onClick}
             className={cn(
               "user-nav-link flex items-center space-x-1 px-3 py-2 rounded-md transition-all duration-300",
-              isActive 
-                ? "bg-spiritless-pink/15 text-spiritless-pink font-medium shadow-sm" 
-                : "text-foreground/80 hover:text-spiritless-pink hover:bg-background/80"
+              userType === 'promoter' 
+                ? (isActive 
+                    ? "bg-purple-100 text-purple-600 font-medium shadow-sm" 
+                    : "text-foreground/80 hover:text-purple-600 hover:bg-purple-50")
+                : (isActive 
+                    ? "bg-spiritless-pink/15 text-spiritless-pink font-medium shadow-sm" 
+                    : "text-foreground/80 hover:text-spiritless-pink hover:bg-background/80")
             )}
             aria-current={isActive ? "page" : undefined}
           >
@@ -60,7 +66,9 @@ const UserNavLinks: React.FC<UserNavLinksProps> = ({ userType }) => {
             )} />
             <span className={cn(
               "text-sm font-medium",
-              isActive ? "text-spiritless-pink" : ""
+              userType === 'promoter'
+                ? (isActive ? "text-purple-600" : "")
+                : (isActive ? "text-spiritless-pink" : "")
             )}>{item.label}</span>
           </Link>
         );

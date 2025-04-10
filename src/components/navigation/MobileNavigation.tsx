@@ -33,6 +33,8 @@ const MobileNavigation: React.FC<ExtendedMobileNavigationProps> = ({
     const userTypeFromStorage = localStorage.getItem('user_type');
     if (userTypeFromStorage === 'establishment') {
       setCurrentUserType('establishment');
+    } else if (userTypeFromStorage === 'promoter') {
+      setCurrentUserType('promoter');
     } else {
       setCurrentUserType('individual');
     }
@@ -112,8 +114,8 @@ const MobileNavigation: React.FC<ExtendedMobileNavigationProps> = ({
       return getAdminNavItems();
     }
 
-    // Check for establishment user paths
-    if (currentUserType === 'establishment') {
+    // Check for establishment or promoter user paths
+    if (currentUserType === 'establishment' || currentUserType === 'promoter') {
       return getUserNavItems(currentUserType, getProfilePath);
     }
     
@@ -146,11 +148,13 @@ const MobileNavigation: React.FC<ExtendedMobileNavigationProps> = ({
 
   const navBarClasses = theme === 'dark' 
     ? "fixed bottom-0 left-0 right-0 w-full bg-gray-900 shadow-lg z-50 md:hidden border-t border-gray-700 backdrop-blur-sm bg-gray-900/95 transition-all duration-300" 
-    : "fixed bottom-0 left-0 right-0 w-full bg-white shadow-lg z-50 md:hidden border-t border-gray-100 backdrop-blur-sm bg-white/95 transition-all duration-300";
+    : currentUserType === 'promoter'
+      ? "fixed bottom-0 left-0 right-0 w-full bg-white shadow-lg z-50 md:hidden border-t border-purple-200 backdrop-blur-sm bg-white/95 transition-all duration-300"
+      : "fixed bottom-0 left-0 right-0 w-full bg-white shadow-lg z-50 md:hidden border-t border-gray-100 backdrop-blur-sm bg-white/95 transition-all duration-300";
 
   return (
     <>
-      <ProfileMenu expanded={shouldShowProfileItems && expanded} />
+      <ProfileMenu expanded={shouldShowProfileItems && expanded} userType={currentUserType} />
       <nav className={navBarClasses}>
         <div className="mx-auto w-full">
           <div className="flex justify-around items-center h-16 px-2">
@@ -167,6 +171,7 @@ const MobileNavigation: React.FC<ExtendedMobileNavigationProps> = ({
                     key="home"
                     isActive={isActive}
                     onClick={handleHomeClick}
+                    isPromoter={currentUserType === 'promoter'}
                   />
                 );
               }
@@ -184,6 +189,7 @@ const MobileNavigation: React.FC<ExtendedMobileNavigationProps> = ({
                   item={item}
                   isActive={isActive}
                   onClick={handleClick}
+                  isPromoter={currentUserType === 'promoter'}
                 />
               );
             })}

@@ -1,94 +1,100 @@
 
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useTheme } from '@/contexts/ThemeContext';
-import OverviewTab from '@/components/profile/OverviewTab';
-import ActivityTab from '@/components/profile/ActivityTab';
-import QuickLinksTab from '@/components/profile/QuickLinksTab';
-import BadgesTab from '@/components/profile/BadgesTab';
-import UserRecipesTab from '@/components/profile/UserRecipesTab';
+import { cn } from '@/lib/utils';
+import OverviewTabContent from './tabs/OverviewTabContent';
+import ActivityTabContent from './tabs/ActivityTabContent';
+import BadgesTabContent from './tabs/BadgesTabContent';
+import RecipesTabContent from './tabs/RecipesTabContent';
+import PromotionsTabContent from './tabs/PromotionsTabContent';
 
 interface ProfileTabsProps {
   userName: string;
   userEmail: string;
   userJoinDate: Date | null;
   recentActivity: any[];
+  isPromoter?: boolean;
 }
 
 const ProfileTabs: React.FC<ProfileTabsProps> = ({
   userName,
   userEmail,
   userJoinDate,
-  recentActivity
+  recentActivity,
+  isPromoter = false
 }) => {
-  const { theme } = useTheme();
-  const isDarkMode = theme === 'dark';
+  const tabContainerClass = isPromoter 
+    ? "grid grid-cols-4 gap-px bg-purple-100 rounded-xl p-0.5" 
+    : "grid grid-cols-4 gap-px bg-gray-100 rounded-xl p-0.5";
+    
+  const tabTriggerClass = (isActive: boolean) => 
+    cn(
+      "text-xs py-2 rounded-lg transition-all",
+      isActive 
+        ? isPromoter
+          ? "bg-white text-purple-700 shadow-sm font-medium"
+          : "bg-white text-spiritless-pink shadow-sm font-medium" 
+        : "bg-transparent text-gray-600 hover:text-gray-800"
+    );
   
-  const bgGradientClass = isDarkMode 
-    ? "from-gray-800 to-gray-900" 
-    : "from-purple-50 to-pink-50";
-
   return (
-    <div className={`bg-gradient-to-r ${bgGradientClass} dark:from-gray-800 dark:to-gray-900 p-3 rounded-xl mb-6 shadow-sm backdrop-blur-sm bg-white/30`}>
-      <Tabs defaultValue="overview" className="space-y-3">
-        <TabsList className="w-full flex justify-between bg-white/70 dark:bg-gray-800/50 backdrop-blur-sm p-1 rounded-lg">
-          <TabsTrigger 
-            className="flex-1 text-[11px] data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm transition-all hover:bg-white/90 dark:hover:bg-gray-700/80"
-            value="overview"
-          >
-            Overview
-          </TabsTrigger>
-          <TabsTrigger 
-            className="flex-1 text-[11px] data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm transition-all hover:bg-white/90 dark:hover:bg-gray-700/80"
-            value="activity"
-          >
-            Activity
-          </TabsTrigger>
-          <TabsTrigger 
-            className="flex-1 text-[11px] data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm transition-all hover:bg-white/90 dark:hover:bg-gray-700/80"
-            value="rewards"
-          >
-            Rewards
-          </TabsTrigger>
-          <TabsTrigger 
-            className="flex-1 text-[11px] data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm transition-all hover:bg-white/90 dark:hover:bg-gray-700/80"
-            value="favorites"
-          >
-            Favs
-          </TabsTrigger>
-          <TabsTrigger 
-            className="flex-1 text-[11px] data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm transition-all hover:bg-white/90 dark:hover:bg-gray-700/80"
-            value="recipes"
-          >
-            Recipes
-          </TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="overview" className="pt-2">
-          <OverviewTab 
-            userName={userName}
-            userEmail={userEmail}
-            userJoinDate={userJoinDate}
+    <Tabs defaultValue="overview" className="px-4">
+      <TabsList className={tabContainerClass}>
+        <TabsTrigger 
+          value="overview"
+          className={value => tabTriggerClass(value === 'overview')}
+        >
+          Overview
+        </TabsTrigger>
+        <TabsTrigger 
+          value="activity"
+          className={value => tabTriggerClass(value === 'activity')}
+        >
+          Activity
+        </TabsTrigger>
+        <TabsTrigger 
+          value={isPromoter ? "promotions" : "badges"}
+          className={value => tabTriggerClass(value === (isPromoter ? "promotions" : "badges"))}
+        >
+          {isPromoter ? "Promos" : "Badges"}
+        </TabsTrigger>
+        <TabsTrigger 
+          value="recipes"
+          className={value => tabTriggerClass(value === 'recipes')}
+        >
+          Recipes
+        </TabsTrigger>
+      </TabsList>
+      
+      <div className="pt-4 animate-fade-in">
+        <TabsContent value="overview">
+          <OverviewTabContent 
+            userName={userName} 
+            userEmail={userEmail} 
+            userJoinDate={userJoinDate} 
+            isPromoter={isPromoter}
           />
         </TabsContent>
         
-        <TabsContent value="activity" className="pt-2">
-          <ActivityTab recentActivity={recentActivity} />
+        <TabsContent value="activity">
+          <ActivityTabContent recentActivity={recentActivity} isPromoter={isPromoter} />
         </TabsContent>
         
-        <TabsContent value="rewards" className="pt-2">
-          <BadgesTab />
-        </TabsContent>
+        {isPromoter ? (
+          <TabsContent value="promotions">
+            <PromotionsTabContent />
+          </TabsContent>
+        ) : (
+          <TabsContent value="badges">
+            <BadgesTabContent />
+          </TabsContent>
+        )}
         
-        <TabsContent value="favorites" className="pt-2">
-          <QuickLinksTab />
+        <TabsContent value="recipes">
+          <RecipesTabContent isPromoter={isPromoter} />
         </TabsContent>
-        
-        <TabsContent value="recipes" className="pt-2">
-          <UserRecipesTab />
-        </TabsContent>
-      </Tabs>
-    </div>
+      </div>
+    </Tabs>
   );
 };
 

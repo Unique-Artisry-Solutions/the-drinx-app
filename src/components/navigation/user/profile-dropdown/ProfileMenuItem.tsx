@@ -1,52 +1,57 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { LucideIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { profileDropdownStyles } from './profileDropdownStyles';
 
 interface ProfileMenuItemProps {
   to: string;
-  icon?: LucideIcon;
+  icon: LucideIcon;
+  children: React.ReactNode;
   isDarkTheme: boolean;
   isActive?: boolean;
   onClick?: () => void;
-  children: React.ReactNode;
+  customColor?: string;
 }
 
 const ProfileMenuItem: React.FC<ProfileMenuItemProps> = ({ 
   to, 
   icon: Icon, 
-  isDarkTheme, 
+  children, 
+  isDarkTheme,
   isActive,
   onClick,
-  children 
+  customColor
 }) => {
-  const itemContent = (
+  const content = (
     <>
-      {Icon && <Icon className={profileDropdownStyles.menuItemIcon(isDarkTheme, isActive)} />}
-      <span className={isActive ? "text-spiritless-pink font-medium" : ""}>{children}</span>
+      <Icon className={cn(
+        profileDropdownStyles.menuItemIcon(isDarkTheme, isActive),
+        customColor
+      )} />
+      <span className={cn(customColor)}>{children}</span>
     </>
   );
 
-  const itemClasses = profileDropdownStyles.menuItem(isDarkTheme, isActive);
-
-  // If onClick is provided, render a button instead of a Link
-  if (onClick) {
-    return (
-      <DropdownMenuItem className={itemClasses} onClick={onClick} asChild={false}>
-        {itemContent}
-      </DropdownMenuItem>
-    );
-  }
-
-  // Otherwise render a Link
   return (
-    <DropdownMenuItem asChild>
-      <Link to={to} className={itemClasses}>
-        {itemContent}
-      </Link>
-    </DropdownMenuItem>
+    <li className="group">
+      {onClick ? (
+        <button 
+          onClick={onClick} 
+          className={profileDropdownStyles.menuItem(isDarkTheme, isActive)}
+        >
+          {content}
+        </button>
+      ) : (
+        <Link 
+          to={to} 
+          className={profileDropdownStyles.menuItem(isDarkTheme, isActive)}
+        >
+          {content}
+        </Link>
+      )}
+    </li>
   );
 };
 

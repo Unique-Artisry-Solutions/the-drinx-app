@@ -16,7 +16,7 @@ interface TabOption {
 
 interface UserProfileDropdownProps {
   username: string | null;
-  userType: 'individual' | 'establishment';
+  userType: 'individual' | 'establishment' | 'promoter';
   handleLogout: () => Promise<void>;
   activeTab?: string;
   handleTabChange?: (value: string) => void;
@@ -37,12 +37,12 @@ const UserProfileDropdown: React.FC<UserProfileDropdownProps> = ({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <ProfileDropdownButton isDarkTheme={isDarkTheme} />
+        <ProfileDropdownButton isDarkTheme={isDarkTheme} isPromoter={userType === 'promoter'} />
       </DropdownMenuTrigger>
       
       <DropdownMenuContent 
         align="end" 
-        className={`z-50 ${isDarkTheme ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}
+        className={`z-50 ${isDarkTheme ? 'bg-gray-800 border-gray-700' : userType === 'promoter' ? 'bg-white border-purple-200' : 'bg-white border-gray-200'}`}
       >
         <ProfileContent 
           username={username}

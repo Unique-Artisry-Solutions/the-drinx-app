@@ -12,12 +12,12 @@ export const getUserNavItems = (
   if (userType === 'establishment') {
     navItems.push({ icon: Home, label: 'Home', path: '/establishment/dashboard' });
   } else if (userType === 'promoter') {
-    navItems.push({ icon: Home, label: 'Home', path: '/promoter/dashboard' });
+    navItems.push({ icon: Home, label: 'Home', path: '/explore' });
   } else {
     navItems.push({ icon: Home, label: 'Explore', path: '/explore' });
   }
   
-  // Add Map for both user types
+  // Add Map for all user types
   navItems.push({ icon: Map, label: 'Map', path: '/map' });
   
   // Add Create for individuals only
@@ -25,7 +25,7 @@ export const getUserNavItems = (
     navItems.push({ icon: Route, label: 'Create', path: '/create-bar-crawl' });
   }
   
-  // Add Profile for both user types
+  // Add Profile for all user types
   navItems.push({ icon: User, label: 'Profile', path: getProfilePath() });
   
   return navItems;

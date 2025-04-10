@@ -1,29 +1,32 @@
 
-import React, { forwardRef } from 'react';
-import { User } from 'lucide-react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
+import { ChevronDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { profileDropdownStyles } from './profileDropdownStyles';
 
 interface ProfileDropdownButtonProps {
   isDarkTheme: boolean;
+  isPromoter?: boolean;
 }
 
-const ProfileDropdownButton = forwardRef<HTMLButtonElement, ProfileDropdownButtonProps & React.ButtonHTMLAttributes<HTMLButtonElement>>(
-  ({ isDarkTheme, ...props }, ref) => {
-    return (
-      <Button 
-        ref={ref}
-        variant="outline" 
-        size="icon" 
-        className={profileDropdownStyles.dropdownButton(isDarkTheme)}
-        {...props}
-      >
-        <User size={18} className="transition-transform duration-300 hover:scale-110" />
-      </Button>
-    );
-  }
-);
+const ProfileDropdownButton: React.FC<ProfileDropdownButtonProps> = ({ 
+  isDarkTheme,
+  isPromoter = false
+}) => {
+  const baseClasses = profileDropdownStyles.dropdownButton(isDarkTheme);
+  const promoterClasses = isPromoter ? 'border-purple-300 hover:border-purple-400' : '';
 
-ProfileDropdownButton.displayName = 'ProfileDropdownButton';
+  return (
+    <Button 
+      variant="outline" 
+      size="icon" 
+      className={cn(baseClasses, promoterClasses)}
+    >
+      <ChevronDown className={`h-4 w-4 ${isPromoter ? 'text-purple-600' : ''}`} />
+      <span className="sr-only">Toggle profile menu</span>
+    </Button>
+  );
+};
 
 export default ProfileDropdownButton;

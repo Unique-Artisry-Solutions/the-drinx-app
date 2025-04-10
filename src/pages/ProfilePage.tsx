@@ -6,8 +6,10 @@ import DesktopProfilePage from './profile/desktop/DesktopProfilePage';
 
 const ProfilePage: React.FC = () => {
   const isMobile = useIsMobile();
+  const userType = localStorage.getItem('user_type') || 'individual';
   
-  return isMobile ? <MobileProfilePage /> : <DesktopProfilePage />;
+  // Return the appropriate profile page based on device and user type
+  return isMobile ? <MobileProfilePage userType={userType} /> : <DesktopProfilePage userType={userType} />;
 };
 
 export default ProfilePage;

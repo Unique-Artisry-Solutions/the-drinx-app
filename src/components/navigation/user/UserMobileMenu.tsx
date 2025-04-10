@@ -2,7 +2,7 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { LogOut } from 'lucide-react';
+import { LogOut, Megaphone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/contexts/ThemeContext';
 
@@ -14,7 +14,7 @@ interface TabOption {
 interface UserMobileMenuProps {
   isOpen: boolean;
   username: string | null;
-  userType: 'individual' | 'establishment';
+  userType: 'individual' | 'establishment' | 'promoter';
   onClose: () => void;
   handleLogout: () => Promise<void>; // Added logout handler
   activeTab?: string;
@@ -38,7 +38,26 @@ const UserMobileMenu: React.FC<UserMobileMenuProps> = ({
   
   const isDarkTheme = theme === 'dark';
   const bgClass = isDarkTheme ? 'bg-gray-900 text-white' : 'bg-white text-gray-900';
-  const borderClass = isDarkTheme ? 'border-gray-700' : 'border-gray-200';
+  const borderClass = isDarkTheme 
+    ? 'border-gray-700' 
+    : userType === 'promoter' ? 'border-purple-200' : 'border-gray-200';
+  
+  // Custom classes for promoter UI
+  const activeClass = userType === 'promoter'
+    ? isDarkTheme 
+      ? 'bg-gray-800 text-purple-400' 
+      : 'bg-purple-50 text-purple-600 font-medium'
+    : isDarkTheme 
+      ? 'bg-gray-800 text-spiritless-pink' 
+      : 'bg-gray-100 text-spiritless-pink font-medium';
+
+  const hoverClass = userType === 'promoter'
+    ? isDarkTheme 
+      ? 'hover:bg-gray-800 hover:text-purple-400' 
+      : 'hover:bg-purple-50 hover:text-purple-600'
+    : isDarkTheme 
+      ? 'hover:bg-gray-800 hover:text-white' 
+      : 'hover:bg-gray-100 hover:text-gray-900';
 
   if (!isOpen) return null;
 
@@ -61,7 +80,10 @@ const UserMobileMenu: React.FC<UserMobileMenuProps> = ({
         <div className={`mobile-menu-header ${borderClass} border-b p-4 flex items-center justify-between`}>
           <div className="user-welcome">
             <p className="text-sm text-gray-500 dark:text-gray-400">Welcome,</p>
-            <p className="font-medium text-spiritless-pink">{username || 'Guest'}</p>
+            <p className={`font-medium ${userType === 'promoter' ? 'text-purple-600' : 'text-spiritless-pink'}`}>
+              {username || 'Guest'}
+              {userType === 'promoter' && <span className="ml-2 text-xs py-0.5 px-1.5 bg-purple-100 text-purple-700 rounded">Promoter</span>}
+            </p>
           </div>
           <button 
             className="close-button p-2 rounded-md text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
@@ -83,7 +105,7 @@ const UserMobileMenu: React.FC<UserMobileMenuProps> = ({
                   to="/explore" 
                   className={({ isActive }) => cn(
                     "block p-3 rounded-md",
-                    isActive ? `bg-gray-100 text-spiritless-pink font-medium ${isDarkTheme ? 'bg-gray-800' : ''}` : "text-gray-700 dark:text-gray-300"
+                    isActive ? activeClass : "text-gray-700 dark:text-gray-300"
                   )}
                   onClick={onClose}
                 >
@@ -91,13 +113,31 @@ const UserMobileMenu: React.FC<UserMobileMenuProps> = ({
                 </NavLink>
               </li>
               
+              {userType === 'promoter' && (
+                <li>
+                  <NavLink 
+                    to="/promotions" 
+                    className={({ isActive }) => cn(
+                      "block p-3 rounded-md",
+                      isActive ? activeClass : "text-gray-700 dark:text-gray-300"
+                    )}
+                    onClick={onClose}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Megaphone size={16} />
+                      <span>Promotions</span>
+                    </div>
+                  </NavLink>
+                </li>
+              )}
+              
               {userType === 'establishment' && (
                 <li>
                   <NavLink 
                     to="/establishment/profile" 
                     className={({ isActive }) => cn(
                       "block p-3 rounded-md",
-                      isActive ? `bg-gray-100 text-spiritless-pink font-medium ${isDarkTheme ? 'bg-gray-800' : ''}` : "text-gray-700 dark:text-gray-300"
+                      isActive ? activeClass : "text-gray-700 dark:text-gray-300"
                     )}
                     onClick={onClose}
                   >
@@ -115,9 +155,7 @@ const UserMobileMenu: React.FC<UserMobileMenuProps> = ({
                         <button 
                           className={cn(
                             "w-full text-left p-2 rounded-md text-sm",
-                            activeTab === tab.value 
-                              ? `bg-gray-100 text-spiritless-pink font-medium ${isDarkTheme ? 'bg-gray-800' : ''}` 
-                              : "text-gray-700 dark:text-gray-300"
+                            activeTab === tab.value ? activeClass : "text-gray-700 dark:text-gray-300"
                           )}
                           onClick={() => handleTabClick(tab.value)}
                         >
@@ -139,7 +177,7 @@ const UserMobileMenu: React.FC<UserMobileMenuProps> = ({
                   to={userType === 'establishment' ? '/establishment/profile' : '/profile'} 
                   className={({ isActive }) => cn(
                     "block p-3 rounded-md",
-                    isActive ? `bg-gray-100 text-spiritless-pink font-medium ${isDarkTheme ? 'bg-gray-800' : ''}` : "text-gray-700 dark:text-gray-300"
+                    isActive ? activeClass : "text-gray-700 dark:text-gray-300"
                   )}
                   onClick={onClose}
                 >
@@ -153,7 +191,7 @@ const UserMobileMenu: React.FC<UserMobileMenuProps> = ({
                     to="/profile/bar-crawls" 
                     className={({ isActive }) => cn(
                       "block p-3 rounded-md",
-                      isActive ? `bg-gray-100 text-spiritless-pink font-medium ${isDarkTheme ? 'bg-gray-800' : ''}` : "text-gray-700 dark:text-gray-300"
+                      isActive ? activeClass : "text-gray-700 dark:text-gray-300"
                     )}
                     onClick={onClose}
                   >
@@ -167,7 +205,7 @@ const UserMobileMenu: React.FC<UserMobileMenuProps> = ({
                   to="/settings" 
                   className={({ isActive }) => cn(
                     "block p-3 rounded-md",
-                    isActive ? `bg-gray-100 text-spiritless-pink font-medium ${isDarkTheme ? 'bg-gray-800' : ''}` : "text-gray-700 dark:text-gray-300"
+                    isActive ? activeClass : "text-gray-700 dark:text-gray-300"
                   )}
                   onClick={onClose}
                 >

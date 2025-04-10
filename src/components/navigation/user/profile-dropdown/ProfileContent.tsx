@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useLocation } from 'react-router-dom';
-import { User, Settings, LogOut, Route, GlassWater, BarChart4, Store } from 'lucide-react';
+import { User, Settings, LogOut, Route, GlassWater, BarChart4, Store, Megaphone } from 'lucide-react';
 import { 
   DropdownMenuSeparator 
 } from "@/components/ui/dropdown-menu";
@@ -17,7 +17,7 @@ interface TabOption {
 
 interface ProfileContentProps {
   username: string | null;
-  userType: 'individual' | 'establishment';
+  userType: 'individual' | 'establishment' | 'promoter';
   isDarkTheme: boolean;
   handleLogout: () => Promise<void>;
   activeTab?: string;
@@ -82,6 +82,27 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
             icon={BarChart4} 
             isDarkTheme={isDarkTheme}
             isActive={location.pathname === '/establishment/analytics'}
+          >
+            Analytics
+          </ProfileMenuItem>
+        </>
+      ) : userType === 'promoter' ? (
+        <>
+          <ProfileMenuItem 
+            to="/promotions" 
+            icon={Megaphone} 
+            isDarkTheme={isDarkTheme}
+            isActive={location.pathname === '/promotions'}
+            customColor="text-purple-600"
+          >
+            My Promotions
+          </ProfileMenuItem>
+          
+          <ProfileMenuItem 
+            to="/analytics" 
+            icon={BarChart4} 
+            isDarkTheme={isDarkTheme}
+            isActive={location.pathname === '/analytics'}
           >
             Analytics
           </ProfileMenuItem>

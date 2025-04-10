@@ -13,8 +13,13 @@ import BadgesTab from '@/components/profile/BadgesTab';
 import UserRecipesTab from '@/components/profile/UserRecipesTab';
 import { sampleEstablishments, sampleCocktails } from '@/data/sampleData';
 import ActiveSwigCircuitSection from '@/components/profile/ActiveSwigCircuitSection';
+import { Megaphone } from 'lucide-react';
 
-const DesktopProfilePage: React.FC = () => {
+interface DesktopProfilePageProps {
+  userType?: string;
+}
+
+const DesktopProfilePage: React.FC<DesktopProfilePageProps> = ({ userType = 'individual' }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userName, setUserName] = useState('');
   const [userEmail, setUserEmail] = useState('');
@@ -24,6 +29,8 @@ const DesktopProfilePage: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { signOut } = useAuth();
+  
+  const isPromoter = userType === 'promoter';
 
   useEffect(() => {
     const auth = localStorage.getItem('user_authenticated') === 'true';
@@ -132,58 +139,114 @@ const DesktopProfilePage: React.FC = () => {
     );
   }
 
+  const backgroundGradients = isPromoter ? (
+    <>
+      <div className="absolute top-0 right-0 w-96 h-96 rounded-full bg-gradient-to-br from-purple-300/20 to-indigo-300/30 blur-3xl -z-10 transform translate-x-1/3 -translate-y-1/4"></div>
+      <div className="absolute top-20 right-1/4 w-56 h-56 rounded-full bg-gradient-to-tr from-purple-400/25 to-blue-300/25 blur-2xl -z-10"></div>
+      <div className="absolute bottom-10 right-0 w-72 h-72 rounded-full bg-gradient-to-tl from-indigo-300/20 to-purple-400/15 blur-2xl -z-10"></div>
+      <div className="absolute top-1/3 left-0 w-48 h-48 rounded-full bg-gradient-to-br from-blue-300/15 to-purple-300/10 blur-xl -z-10 transform -translate-x-1/4"></div>
+    </>
+  ) : (
+    <>
+      <div className="absolute top-0 right-0 w-96 h-96 rounded-full bg-gradient-to-br from-spiritless-pink/20 to-spiritless-green/30 blur-3xl -z-10 transform translate-x-1/3 -translate-y-1/4"></div>
+      <div className="absolute top-20 right-1/4 w-56 h-56 rounded-full bg-gradient-to-tr from-spiritless-orange/25 to-purple-300/25 blur-2xl -z-10"></div>
+      <div className="absolute bottom-10 right-0 w-72 h-72 rounded-full bg-gradient-to-tl from-blue-300/20 to-spiritless-pink/15 blur-2xl -z-10"></div>
+      <div className="absolute top-1/3 left-0 w-48 h-48 rounded-full bg-gradient-to-br from-spiritless-green/15 to-spiritless-orange/10 blur-xl -z-10 transform -translate-x-1/4"></div>
+    </>
+  );
+
+  const tabsContainerClass = isPromoter 
+    ? "bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-gray-800 dark:to-gray-900 p-4 rounded-xl mb-6 shadow-sm backdrop-blur-sm bg-white/30"
+    : "bg-gradient-to-r from-purple-50 to-pink-50 dark:from-gray-800 dark:to-gray-900 p-4 rounded-xl mb-6 shadow-sm backdrop-blur-sm bg-white/30";
+
+  const tabTriggerClass = isPromoter
+    ? "flex-1 sm:flex-none data-[state=active]:bg-purple-100 dark:data-[state=active]:bg-gray-700 data-[state=active]:text-purple-700 data-[state=active]:shadow-sm transition-all hover:bg-white/90 dark:hover:bg-gray-700/80 hover:-translate-y-0.5 hover:shadow-md"
+    : "flex-1 sm:flex-none data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm transition-all hover:bg-white/90 dark:hover:bg-gray-700/80 hover:-translate-y-0.5 hover:shadow-md";
+
   return (
     <Layout>
       <div className="animate-fade-in max-w-6xl mx-auto px-4 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 rounded-full bg-gradient-to-br from-spiritless-pink/20 to-spiritless-green/30 blur-3xl -z-10 transform translate-x-1/3 -translate-y-1/4"></div>
-        <div className="absolute top-20 right-1/4 w-56 h-56 rounded-full bg-gradient-to-tr from-spiritless-orange/25 to-purple-300/25 blur-2xl -z-10"></div>
-        <div className="absolute bottom-10 right-0 w-72 h-72 rounded-full bg-gradient-to-tl from-blue-300/20 to-spiritless-pink/15 blur-2xl -z-10"></div>
-        <div className="absolute top-1/3 left-0 w-48 h-48 rounded-full bg-gradient-to-br from-spiritless-green/15 to-spiritless-orange/10 blur-xl -z-10 transform -translate-x-1/4"></div>
+        {backgroundGradients}
         
         <div className="absolute inset-0 bg-gradient-to-b from-white/50 to-transparent opacity-40 mix-blend-overlay pointer-events-none -z-10"></div>
         
-        <ProfileHeader userName={userName} handleLogout={handleLogout} />
+        <ProfileHeader 
+          userName={userName} 
+          handleLogout={handleLogout} 
+          isPromoter={isPromoter} 
+        />
 
         {/* Active Swig Circuit Section - Conditionally rendered */}
-        {hasActiveSwigCircuit && (
+        {hasActiveSwigCircuit && !isPromoter && (
           <div className="mb-6">
             <ActiveSwigCircuitSection />
           </div>
         )}
 
-        <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-gray-800 dark:to-gray-900 p-4 rounded-xl mb-6 shadow-sm backdrop-blur-sm bg-white/30">
+        {/* Promoter notification section */}
+        {isPromoter && (
+          <div className="mb-6 p-4 rounded-xl bg-purple-50 border border-purple-200 shadow-sm">
+            <div className="flex items-start gap-3">
+              <div className="bg-purple-100 p-2 rounded-full">
+                <Megaphone className="w-5 h-5 text-purple-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-medium text-purple-800">Promoter Dashboard</h3>
+                <p className="text-purple-600 mt-1">
+                  Welcome to your promoter dashboard. From here, you can manage your promotions and track their performance.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className={tabsContainerClass}>
           <Tabs defaultValue="overview" className="space-y-4">
             <TabsList className="w-full flex justify-between sm:justify-start sm:gap-4 bg-white/70 dark:bg-gray-800/50 backdrop-blur-sm p-1 rounded-lg">
               <TabsTrigger 
-                className="flex-1 sm:flex-none data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm transition-all hover:bg-white/90 dark:hover:bg-gray-700/80 hover:-translate-y-0.5 hover:shadow-md"
+                className={tabTriggerClass}
                 value="overview"
               >
                 Overview
               </TabsTrigger>
               <TabsTrigger 
-                className="flex-1 sm:flex-none data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm transition-all hover:bg-white/90 dark:hover:bg-gray-700/80 hover:-translate-y-0.5 hover:shadow-md"
+                className={tabTriggerClass}
                 value="activity"
               >
                 Recent Activity
               </TabsTrigger>
+              
+              {isPromoter ? (
+                <TabsTrigger 
+                  className={tabTriggerClass}
+                  value="promotions"
+                >
+                  Promotions
+                </TabsTrigger>
+              ) : (
+                <TabsTrigger 
+                  className={tabTriggerClass}
+                  value="rewards"
+                >
+                  Rewards & Badges
+                </TabsTrigger>
+              )}
+              
               <TabsTrigger 
-                className="flex-1 sm:flex-none data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm transition-all hover:bg-white/90 dark:hover:bg-gray-700/80 hover:-translate-y-0.5 hover:shadow-md"
-                value="rewards"
-              >
-                Rewards & Badges
-              </TabsTrigger>
-              <TabsTrigger 
-                className="flex-1 sm:flex-none data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm transition-all hover:bg-white/90 dark:hover:bg-gray-700/80 hover:-translate-y-0.5 hover:shadow-md"
+                className={tabTriggerClass}
                 value="favorites"
               >
                 My Favorites
               </TabsTrigger>
-              <TabsTrigger 
-                className="flex-1 sm:flex-none data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm transition-all hover:bg-white/90 dark:hover:bg-gray-700/80 hover:-translate-y-0.5 hover:shadow-md"
-                value="recipes"
-              >
-                My Recipes
-              </TabsTrigger>
+              
+              {!isPromoter && (
+                <TabsTrigger 
+                  className={tabTriggerClass}
+                  value="recipes"
+                >
+                  My Recipes
+                </TabsTrigger>
+              )}
             </TabsList>
             
             <TabsContent value="overview" className="pt-2">
@@ -191,24 +254,43 @@ const DesktopProfilePage: React.FC = () => {
                 userName={userName}
                 userEmail={userEmail}
                 userJoinDate={userJoinDate}
+                isPromoter={isPromoter}
               />
             </TabsContent>
             
             <TabsContent value="activity" className="pt-2">
-              <ActivityTab recentActivity={recentActivity} />
+              <ActivityTab recentActivity={recentActivity} isPromoter={isPromoter} />
             </TabsContent>
             
-            <TabsContent value="rewards" className="pt-2">
-              <BadgesTab />
-            </TabsContent>
+            {isPromoter ? (
+              <TabsContent value="promotions" className="pt-2">
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-lg">
+                  <h3 className="text-xl font-semibold text-purple-700 mb-4">My Promotions</h3>
+                  <p className="text-gray-600 dark:text-gray-300">
+                    Manage and track your promotional campaigns here. Create new promotions, view analytics, and boost your venue's visibility.
+                  </p>
+                  <div className="mt-4 p-4 bg-purple-50 dark:bg-gray-700 rounded-lg border border-purple-100 dark:border-gray-600">
+                    <p className="text-sm text-purple-700 dark:text-purple-300">
+                      This feature is coming soon. Check back for updates!
+                    </p>
+                  </div>
+                </div>
+              </TabsContent>
+            ) : (
+              <TabsContent value="rewards" className="pt-2">
+                <BadgesTab />
+              </TabsContent>
+            )}
             
             <TabsContent value="favorites" className="pt-2">
-              <QuickLinksTab />
+              <QuickLinksTab isPromoter={isPromoter} />
             </TabsContent>
             
-            <TabsContent value="recipes" className="pt-2">
-              <UserRecipesTab />
-            </TabsContent>
+            {!isPromoter && (
+              <TabsContent value="recipes" className="pt-2">
+                <UserRecipesTab />
+              </TabsContent>
+            )}
           </Tabs>
         </div>
       </div>
