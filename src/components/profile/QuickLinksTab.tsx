@@ -5,7 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Star, MapPin, CalendarClock } from 'lucide-react';
 
-const QuickLinksTab: React.FC = () => {
+interface QuickLinksTabProps {
+  isPromoter?: boolean;
+}
+
+const QuickLinksTab: React.FC<QuickLinksTabProps> = ({ isPromoter = false }) => {
   return (
     <Card>
       <CardHeader>
