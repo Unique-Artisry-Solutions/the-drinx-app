@@ -1,5 +1,5 @@
 
-import { Home, Users, Building2, LayoutDashboard, FileBarChart2, Image, Palette, Layers } from 'lucide-react';
+import { Home, Users, Building2, LayoutDashboard, FileBarChart2, Image, Palette, Layers, BookOpen } from 'lucide-react';
 
 type AdminNavItem = {
   label: string;
@@ -49,6 +49,12 @@ export const adminNavItems: AdminNavItem[] = [
     label: 'Theme Customization',
     path: '/admin/theme-customization',
     icon: Palette,
+    showInNav: true,
+  },
+  {
+    label: 'Documentation',
+    path: '/admin/documentation',
+    icon: BookOpen,
     showInNav: true,
   }
 ];

@@ -46,6 +46,7 @@ import MocktailMenuPage from '@/pages/establishment/MocktailMenuPage';
 import PromotionsPage from '@/pages/establishment/PromotionsPage';
 import SystemFunctionalityBreakdown from '@/pages/admin/SystemFunctionalityBreakdown';
 import ComponentCatalogPage from '@/pages/admin/ComponentCatalogPage';
+import AdminDocumentationPage from '@/pages/admin/AdminDocumentationPage';
 
 const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
 const AdminLogin = lazy(() => import('@/pages/admin/AdminLogin'));
@@ -112,6 +113,7 @@ const AppRoutes = () => {
         <Route path="/admin/photo-moderation" element={<PhotoModerationPage />} />
         <Route path="/admin/content-moderation" element={<ContentModerationPage />} />
         <Route path="/admin/theme-customization" element={<ThemeCustomizationPage />} />
+        <Route path="/admin/documentation" element={<AdminDocumentationPage />} />
         
         <Route path="/establishment" element={
           <TypedProtectedRoute userType="establishment">
