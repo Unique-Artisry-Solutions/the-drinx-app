@@ -5,7 +5,7 @@ import { ProgressSnapshot } from '../types';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { CheckCircle2, Clock, AlertCircle } from 'lucide-react';
+import { CheckCircle2, Clock, AlertCircle, Shield } from 'lucide-react';
 import { BarChart3, Code, Database } from 'lucide-react';
 
 import StatusProgressBar from '../components/StatusProgressBar';
