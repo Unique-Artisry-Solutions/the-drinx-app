@@ -83,7 +83,8 @@ export interface User {
 }
 
 // Export the visit related types for convenience
-export {
+// Fix: Use 'export type' instead of just 'export' for re-exporting types
+export type { 
   UserVisit,
   VisitNote,
   TriedMocktail,
