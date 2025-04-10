@@ -70,3 +70,31 @@ export interface MonthlyProgressData {
   frontend: number;
   backend: number;
 }
+
+// New types for feature showcase
+export type FeatureBusinessValue = 'high' | 'medium' | 'low';
+export type FeatureComplexity = 'high' | 'medium' | 'low';
+export type FeatureShowcaseCategory = 
+  | 'AI & Recommendations' 
+  | 'Social Experience'
+  | 'Business Analytics'
+  | 'User Engagement'
+  | 'Management Tools'
+  | 'Customization'
+  | 'Loyalty & Rewards';
+
+export interface FeatureShowcaseData {
+  id: string;
+  name: string;
+  description: string;
+  businessValue: FeatureBusinessValue;
+  complexity: FeatureComplexity;
+  implementationStatus: FeatureStatus;
+  showcaseCategory: FeatureShowcaseCategory;
+  marketingPoints?: string[];
+  isSignature: boolean;
+  implementations?: number;
+  avgRating?: number;
+  icon?: string;
+}
+

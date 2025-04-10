@@ -11,6 +11,8 @@ import ProposedImprovementsTab from '@/components/admin/systemBreakdown/Proposed
 import AnalysisProgress from '@/components/admin/systemBreakdown/AnalysisProgress';
 import ReleaseManagementTab from '@/components/admin/systemBreakdown/ReleaseManagementTab';
 import CreateReleaseFromFeaturesButton from '@/components/admin/systemBreakdown/CreateReleaseFromFeaturesButton';
+import FeatureShowcaseTab from '@/components/admin/systemBreakdown/FeatureShowcaseTab';
+import { Award } from 'lucide-react';
 
 // Import improvements data
 import { proposedImprovements as improvementsData } from '@/components/admin/systemBreakdown/improvementsData';
@@ -69,6 +71,10 @@ const SystemFunctionalityBreakdown: React.FC = () => {
             <TabsTrigger value="individual">Individual Features</TabsTrigger>
             <TabsTrigger value="improvements">Proposed Improvements</TabsTrigger>
             <TabsTrigger value="releases">Release Management</TabsTrigger>
+            <TabsTrigger value="showcase" className="flex items-center gap-1">
+              <Award className="h-4 w-4" />
+              Feature Showcase
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
@@ -115,6 +121,14 @@ const SystemFunctionalityBreakdown: React.FC = () => {
           
           <TabsContent value="releases" className="space-y-4">
             <ReleaseManagementTab />
+          </TabsContent>
+
+          <TabsContent value="showcase" className="space-y-4">
+            <FeatureShowcaseTab
+              adminFeatures={adminFeatures}
+              establishmentFeatures={establishmentFeatures}
+              individualFeatures={individualFeatures}
+            />
           </TabsContent>
         </Tabs>
       </div>

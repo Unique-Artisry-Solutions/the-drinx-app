@@ -242,3 +242,21 @@ export const isSystemBreakdownFeature = (feature: FeatureItem): boolean => {
   return matchesAnyKeyword(feature, ['system breakdown', 'system-breakdown', 
                                      'system status', 'system overview']);
 };
+
+// Signature feature detection - helps identify features to showcase
+export const isSignatureFeature = (feature: FeatureItem): boolean => {
+  // Check if this is a key feature that would be appealing for showcasing
+  return isAIFeature(feature) || 
+         isBarCrawlFeature(feature) || 
+         isSwigCircuitFeature(feature) ||
+         isMocktailSuggestionFeature(feature) ||
+         isMocktailTrendsFeature(feature) ||
+         isIngredientPairingFeature(feature) ||
+         isVisitTrackingFeature(feature) || 
+         isRewardProgramFeature(feature) ||
+         (isAnalyticsFeature(feature) && feature.status === 'implemented') ||
+         (isThemeFeature(feature) && feature.status === 'implemented') ||
+         (isPromotionFeature(feature) && feature.status === 'implemented') ||
+         (isMapFeature(feature) && feature.status === 'implemented');
+};
+

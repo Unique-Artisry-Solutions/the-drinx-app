@@ -54,13 +54,18 @@ import {
   isAIFeature,
   isDashboardFeature,
   isSchedulingFeature,
-  isSystemBreakdownFeature
+  isSystemBreakdownFeature,
+  isSignatureFeature
 } from './featureDetection';
 import { isTaskCompleted, parseTasks } from './taskDetection';
 import { 
   mapFeaturesToReleaseFeatures, 
   mapFeatureStatusToReleaseStatus 
 } from './releaseUtils';
+import { 
+  prepareFeatureShowcaseData, 
+  generateFeatureReport 
+} from './featureShowcaseUtils';
 
 /**
  * Creates a date string that is X months from now (for planned release date)
@@ -124,16 +129,20 @@ export {
   isDashboardFeature,
   isSchedulingFeature,
   isSystemBreakdownFeature,
+  isSignatureFeature,
   isTaskCompleted,
   parseTasks,
   mapFeaturesToReleaseFeatures,
   mapFeatureStatusToReleaseStatus,
   createProgressSnapshot,
   validateProgressData,
-  generateHistoricalProgressData
+  generateHistoricalProgressData,
+  prepareFeatureShowcaseData,
+  generateFeatureReport
 };
 
 // Use 'export type' for type exports when isolatedModules is enabled
 export type { AnalysisStep } from '../types';
 export type { ReleaseProgress } from '../types/releaseTypes';
 export type { MonthlyProgressData } from '../types';
+export type { FeatureShowcaseData, FeatureShowcaseCategory, FeatureBusinessValue } from '../types';
