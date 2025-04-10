@@ -55,11 +55,11 @@ export function analyzeAllFeatures(
   updatedPromoterFeatures = promoterSystemResult.updatedFeatures;
   completedSteps.push(...promoterSystemResult.updatedSteps);
   
-  // Calculate implementation progress from database status
-  updatedAdminFeatures = calculateImplementationProgress(updatedAdminFeatures);
-  updatedEstablishmentFeatures = calculateImplementationProgress(updatedEstablishmentFeatures);
-  updatedIndividualFeatures = calculateImplementationProgress(updatedIndividualFeatures);
-  updatedPromoterFeatures = calculateImplementationProgress(updatedPromoterFeatures);
+  // Calculate implementation progress from database status and feature status
+  updatedAdminFeatures = setImplementationProgress(updatedAdminFeatures);
+  updatedEstablishmentFeatures = setImplementationProgress(updatedEstablishmentFeatures);
+  updatedIndividualFeatures = setImplementationProgress(updatedIndividualFeatures);
+  updatedPromoterFeatures = setImplementationProgress(updatedPromoterFeatures);
   
   // Analyze status changes
   updatedAdminFeatures = markStatusChanges(updatedAdminFeatures, originalAdminFeatures);
@@ -77,40 +77,29 @@ export function analyzeAllFeatures(
 }
 
 /**
- * Calculate implementation progress based on database status and other factors
+ * Sets implementation progress based on feature status
  */
-function calculateImplementationProgress(features: FeatureItem[]): FeatureItem[] {
+function setImplementationProgress(features: FeatureItem[]): FeatureItem[] {
   return features.map(feature => {
-    let progress = 0;
+    let progress = feature.implementationProgress;
     
-    // Base progress on database status
-    if (feature.dbStatus === 'implemented') {
-      progress = 90; // Database complete is 90% of the way there
-    } else if (feature.dbStatus === 'in_progress') {
-      progress = 50; // Database in progress is halfway there
-    } else {
-      progress = 10; // Planning phase
+    // Set default implementation progress based on status if not already set
+    if (feature.status === 'implemented' && (!progress || progress < 90)) {
+      progress = 100;
+    } else if (feature.status === 'partial' && (!progress || progress < 40)) {
+      progress = 65;
+    } else if (feature.status === 'in_progress' && (!progress || progress < 20)) {
+      progress = 45;
+    } else if (feature.status === 'blocked' && (!progress || progress > 60)) {
+      progress = 30;
+    } else if (!progress) {
+      progress = 10; // Default for planned features
     }
     
-    // If feature is marked as implemented, ensure progress is at least 90%
-    if (feature.status === 'implemented' && progress < 90) {
-      progress = 90;
-    }
-    
-    // If feature is blocked, cap progress
-    if (feature.status === 'blocked' && progress > 60) {
-      progress = 60;
-    }
-    
-    // Only update if value has changed
-    if (feature.implementationProgress !== progress) {
-      return {
-        ...feature,
-        implementationProgress: progress,
-      };
-    }
-    
-    return feature;
+    return {
+      ...feature,
+      implementationProgress: progress
+    };
   });
 }
 

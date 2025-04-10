@@ -23,7 +23,7 @@ export const calculateFeatureStatistics = (
   const dbInProgress = allFeatures.filter(f => f.databaseStatus === 'in_progress').length;
   const dbNotStarted = allFeatures.filter(f => f.databaseStatus === 'not_started').length;
   
-  // Calculate the implementation rate
+  // Calculate the implementation rate using a weighted approach
   const implementationRate = totalFeatures > 0 
     ? Math.round((implementedFeatures + (partialFeatures * 0.5)) / totalFeatures * 100)
     : 0;
@@ -48,9 +48,20 @@ export const calculateFeatureStatistics = (
     (1 - Math.abs(expectedDbImplementedRatio - actualDbImplementedRatio)) * 100
   );
   
-  // Calculate average implementation progress
+  // Calculate average implementation progress using actual implementation progress values
+  const totalImplementationProgress = allFeatures.reduce((sum, feature) => {
+    // Use the implementationProgress value if available, or infer from status
+    const progress = feature.implementationProgress ?? (
+      feature.status === 'implemented' ? 100 :
+      feature.status === 'partial' ? 65 :
+      feature.status === 'in_progress' ? 45 :
+      feature.status === 'blocked' ? 30 : 10
+    );
+    return sum + progress;
+  }, 0);
+  
   const averageImplementation = totalFeatures > 0
-    ? implementedFeatures * 100 / totalFeatures
+    ? totalImplementationProgress / totalFeatures
     : 0;
     
   return {
@@ -85,10 +96,19 @@ export function calculateCategoryProgress(features: FeatureItem[]) {
   
   const totalFeatures = features.length;
   
-  // Frontend progress
-  const implementedFeatures = features.filter(f => f.status === 'implemented').length;
-  const partialFeatures = features.filter(f => f.status === 'partial').length;
-  const frontendProgress = Math.round((implementedFeatures + (partialFeatures * 0.5)) / totalFeatures * 100);
+  // Frontend progress - use implementation progress values where available
+  const totalImplementationProgress = features.reduce((sum, feature) => {
+    // Use the implementationProgress value if available, or infer from status
+    const progress = feature.implementationProgress ?? (
+      feature.status === 'implemented' ? 100 :
+      feature.status === 'partial' ? 65 :
+      feature.status === 'in_progress' ? 45 :
+      feature.status === 'blocked' ? 30 : 10
+    );
+    return sum + progress;
+  }, 0);
+  
+  const frontendProgress = Math.round(totalImplementationProgress / totalFeatures);
   
   // Backend progress
   const dbCompleted = features.filter(f => f.databaseStatus === 'complete').length;

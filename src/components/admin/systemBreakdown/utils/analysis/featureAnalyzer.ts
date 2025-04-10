@@ -66,10 +66,42 @@ export function analyzeAllFeatures(
   const analyzedEstablishmentFeatures = updateFeaturesDbStatus(updatedEstablishmentFeatures);
   const analyzedIndividualFeatures = updateFeaturesDbStatus(updatedIndividualFeatures);
   
+  // Add implementation progress values based on status
+  const finalAdminFeatures = setImplementationProgress(analyzedAdminFeatures);
+  const finalEstablishmentFeatures = setImplementationProgress(analyzedEstablishmentFeatures);
+  const finalIndividualFeatures = setImplementationProgress(analyzedIndividualFeatures);
+  
   return {
-    adminFeatures: analyzedAdminFeatures,
-    establishmentFeatures: analyzedEstablishmentFeatures,
-    individualFeatures: analyzedIndividualFeatures,
+    adminFeatures: finalAdminFeatures,
+    establishmentFeatures: finalEstablishmentFeatures,
+    individualFeatures: finalIndividualFeatures,
     completedSteps: databaseTasks
   };
+}
+
+/**
+ * Sets implementation progress based on feature status
+ */
+function setImplementationProgress(features: FeatureItem[]): FeatureItem[] {
+  return features.map(feature => {
+    let progress = feature.implementationProgress;
+    
+    // Set default implementation progress based on status if not already set
+    if (feature.status === 'implemented' && (!progress || progress < 90)) {
+      progress = 100;
+    } else if (feature.status === 'partial' && (!progress || progress < 40)) {
+      progress = 65;
+    } else if (feature.status === 'in_progress' && (!progress || progress < 20)) {
+      progress = 45;
+    } else if (feature.status === 'blocked' && (!progress || progress > 60)) {
+      progress = 30;
+    } else if (!progress) {
+      progress = 10; // Default for planned features
+    }
+    
+    return {
+      ...feature,
+      implementationProgress: progress
+    };
+  });
 }

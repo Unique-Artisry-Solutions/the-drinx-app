@@ -11,9 +11,22 @@ export function calculateFeatureStatistics(features: FeatureItem[]) {
   const implementedFeatures = features.filter(f => f.status === 'implemented').length;
   const blockedFeatures = features.filter(f => f.status === 'blocked').length;
   
-  const averageImplementation = features.reduce((sum, feature) => {
-    return sum + (feature.implementationProgress || 0);
-  }, 0) / (totalFeatures || 1);
+  // Calculate average implementation progress using both implementationProgress and status
+  let totalImplementationProgress = 0;
+  features.forEach(feature => {
+    // Use the implementationProgress value if available, or infer from status
+    const progress = feature.implementationProgress ?? (
+      feature.status === 'implemented' ? 100 :
+      feature.status === 'partial' ? 65 :
+      feature.status === 'in_progress' ? 45 :
+      feature.status === 'blocked' ? 30 : 10
+    );
+    totalImplementationProgress += progress;
+  });
+  
+  const averageImplementation = totalFeatures > 0 
+    ? totalImplementationProgress / totalFeatures 
+    : 0;
   
   return {
     totalFeatures,
@@ -50,6 +63,16 @@ export function createProgressSnapshot(
   
   const frontendProgress = overallStats.averageImplementation;
   const backendProgress = ((dbImplemented * 100) + (dbInProgress * 50)) / (allFeatures.length || 1);
+  
+  console.log("Creating snapshot with progress:", {
+    frontendProgress,
+    backendProgress,
+    adminAvgImpl: adminStats.averageImplementation,
+    establishmentAvgImpl: establishmentStats.averageImplementation,
+    individualAvgImpl: individualStats.averageImplementation,
+    promoterAvgImpl: promoterStats.averageImplementation,
+    overallAvgImpl: overallStats.averageImplementation
+  });
   
   const snapshot: ProgressSnapshot = {
     timestamp: new Date().toISOString(),
@@ -111,6 +134,11 @@ export function validateProgressData(snapshot: ProgressSnapshot) {
   // Check for unrealistic implementation rates
   if (snapshot.averageImplementationProgress > 100) {
     issues.push(`Average implementation progress (${snapshot.averageImplementationProgress}) exceeds 100%`);
+  }
+  
+  // Check for very low progress on implemented features
+  if (snapshot.implementedFeatures > 0 && snapshot.averageImplementationProgress < 50) {
+    issues.push(`Low average implementation progress (${snapshot.averageImplementationProgress}) despite having implemented features`);
   }
   
   return {

@@ -35,10 +35,19 @@ function calculateCategoryProgress(features: FeatureItem[]) {
   const dbInProgress = features.filter(f => f.databaseStatus === 'in_progress' || f.dbStatus === 'in_progress').length;
   const backendPercentage = Math.round((dbCompleted + (dbInProgress * 0.5)) / totalFeatures * 100);
   
-  // Calculate frontend progress
-  const implementedFeatures = features.filter(f => f.status === 'implemented').length;
-  const partialFeatures = features.filter(f => f.status === 'partial').length;
-  const frontendPercentage = Math.round((implementedFeatures + (partialFeatures * 0.5)) / totalFeatures * 100);
+  // Calculate frontend progress using implementation progress values
+  const totalImplementationProgress = features.reduce((sum, feature) => {
+    // Use the implementationProgress value if available, or infer from status
+    const progress = feature.implementationProgress ?? (
+      feature.status === 'implemented' ? 100 :
+      feature.status === 'partial' ? 65 :
+      feature.status === 'in_progress' ? 45 :
+      feature.status === 'blocked' ? 30 : 10
+    );
+    return sum + progress;
+  }, 0);
+  
+  const frontendPercentage = Math.round(totalImplementationProgress / totalFeatures);
   
   return { 
     frontend: frontendPercentage, 
@@ -74,21 +83,36 @@ const DevelopmentProgressDashboard: React.FC<DevelopmentProgressDashboardProps> 
   const totalFeatures = allFeatures.length;
   const implementedFeatures = allFeatures.filter(f => f.status === 'implemented').length;
   const partialFeatures = allFeatures.filter(f => f.status === 'partial').length;
-  const overallProgressPercentage = Math.round((implementedFeatures + (partialFeatures * 0.5)) / totalFeatures * 100);
+  
+  // Use implementation progress values where available for a more accurate calculation
+  const totalImplementationProgress = allFeatures.reduce((sum, feature) => {
+    // Use the implementationProgress value if available, or infer from status
+    const progress = feature.implementationProgress ?? (
+      feature.status === 'implemented' ? 100 :
+      feature.status === 'partial' ? 65 :
+      feature.status === 'in_progress' ? 45 :
+      feature.status === 'blocked' ? 30 : 10
+    );
+    return sum + progress;
+  }, 0);
+  
+  const overallProgressPercentage = Math.round(totalImplementationProgress / totalFeatures);
+  
+  console.log("Progress calculation:", {
+    totalFeatures,
+    implementedFeatures,
+    partialFeatures,
+    totalImplementationProgress,
+    overallProgressPercentage
+  });
   
   // Calculate backend implementation progress (based on database status)
   const dbCompleted = allFeatures.filter(f => f.databaseStatus === 'complete' || f.dbStatus === 'implemented').length;
   const dbInProgress = allFeatures.filter(f => f.databaseStatus === 'in_progress' || f.dbStatus === 'in_progress').length;
   const backendProgressPercentage = Math.round((dbCompleted + (dbInProgress * 0.5)) / totalFeatures * 100);
   
-  // Infer frontend implementation progress
-  const frontendCompletedFeatures = allFeatures.filter(f => 
-    f.status === 'implemented' || (f.status === 'partial' && (f.databaseStatus !== 'complete' && f.dbStatus !== 'implemented'))
-  ).length;
-  const frontendPartialFeatures = allFeatures.filter(f => 
-    f.status === 'partial' && (f.databaseStatus !== 'not_started' && f.dbStatus !== 'not_started')
-  ).length;
-  const frontendProgressPercentage = Math.round((frontendCompletedFeatures + (frontendPartialFeatures * 0.5)) / totalFeatures * 100);
+  // Calculate frontend progress using implementation progress
+  const frontendProgressPercentage = Math.round(totalImplementationProgress / totalFeatures);
 
   // Calculate feature category implementation
   const adminProgress = calculateCategoryProgress(adminFeatures);
