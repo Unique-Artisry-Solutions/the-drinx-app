@@ -19,9 +19,12 @@ export const calculateFeatureStatistics = (
   const inProgressFeatures = allFeatures.filter(f => f.status === 'in_progress').length;
   const blockedFeatures = allFeatures.filter(f => f.status === 'blocked').length;
   
-  const dbCompleted = allFeatures.filter(f => f.databaseStatus === 'complete').length;
-  const dbInProgress = allFeatures.filter(f => f.databaseStatus === 'in_progress').length;
-  const dbNotStarted = allFeatures.filter(f => f.databaseStatus === 'not_started').length;
+  // Ensure we're checking both databaseStatus and dbStatus fields for backward compatibility
+  const dbCompleted = allFeatures.filter(f => f.databaseStatus === 'complete' || f.dbStatus === 'complete').length;
+  const dbInProgress = allFeatures.filter(f => f.databaseStatus === 'in_progress' || f.dbStatus === 'in_progress').length;
+  const dbNotStarted = allFeatures.filter(f => 
+    (f.databaseStatus === 'not_started' || f.dbStatus === 'not_started') || 
+    (!f.databaseStatus && !f.dbStatus)).length;
   
   // Calculate the implementation rate using a weighted approach
   const implementationRate = totalFeatures > 0 
@@ -110,9 +113,9 @@ export function calculateCategoryProgress(features: FeatureItem[]) {
   
   const frontendProgress = Math.round(totalImplementationProgress / totalFeatures);
   
-  // Backend progress
-  const dbCompleted = features.filter(f => f.databaseStatus === 'complete').length;
-  const dbInProgress = features.filter(f => f.databaseStatus === 'in_progress').length;
+  // Backend progress - check both databaseStatus and dbStatus for backward compatibility
+  const dbCompleted = features.filter(f => f.databaseStatus === 'complete' || f.dbStatus === 'complete').length;
+  const dbInProgress = features.filter(f => f.databaseStatus === 'in_progress' || f.dbStatus === 'in_progress').length;
   const backendProgress = Math.round((dbCompleted + (dbInProgress * 0.5)) / totalFeatures * 100);
   
   // Overall progress

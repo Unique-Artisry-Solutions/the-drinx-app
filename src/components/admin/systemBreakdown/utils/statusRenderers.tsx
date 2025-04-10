@@ -30,7 +30,16 @@ export const renderStatusBadge = (status: FeatureStatus) => {
 /**
  * Renders a database status badge with appropriate color
  */
-export const renderDatabaseStatusBadge = (status: DatabaseStatus) => {
+export const renderDatabaseStatusBadge = (status: DatabaseStatus | undefined) => {
+  // If status is undefined or null, use a default
+  if (!status) {
+    return (
+      <Badge className="bg-gray-100 text-gray-800" variant="outline">
+        Not started
+      </Badge>
+    );
+  }
+  
   // Define badge variants based on database status
   const variants: Record<DatabaseStatus, { color: string; icon: React.ReactNode }> = {
     implemented: { color: 'bg-green-100 text-green-800', icon: <Check className="w-3 h-3 mr-1" /> },

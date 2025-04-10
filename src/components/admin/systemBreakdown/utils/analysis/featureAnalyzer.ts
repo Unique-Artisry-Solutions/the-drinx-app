@@ -66,15 +66,31 @@ export function analyzeAllFeatures(
   const analyzedEstablishmentFeatures = updateFeaturesDbStatus(updatedEstablishmentFeatures);
   const analyzedIndividualFeatures = updateFeaturesDbStatus(updatedIndividualFeatures);
   
+  // Ensure all features have a valid databaseStatus
+  const finalAdminFeatures = analyzedAdminFeatures.map(feature => ({
+    ...feature,
+    databaseStatus: feature.databaseStatus || feature.dbStatus || 'not_started'
+  }));
+  
+  const finalEstablishmentFeatures = analyzedEstablishmentFeatures.map(feature => ({
+    ...feature,
+    databaseStatus: feature.databaseStatus || feature.dbStatus || 'not_started'
+  }));
+  
+  const finalIndividualFeatures = analyzedIndividualFeatures.map(feature => ({
+    ...feature,
+    databaseStatus: feature.databaseStatus || feature.dbStatus || 'not_started'
+  }));
+  
   // Add implementation progress values based on status
-  const finalAdminFeatures = setImplementationProgress(analyzedAdminFeatures);
-  const finalEstablishmentFeatures = setImplementationProgress(analyzedEstablishmentFeatures);
-  const finalIndividualFeatures = setImplementationProgress(analyzedIndividualFeatures);
+  const processedAdminFeatures = setImplementationProgress(finalAdminFeatures);
+  const processedEstablishmentFeatures = setImplementationProgress(finalEstablishmentFeatures);
+  const processedIndividualFeatures = setImplementationProgress(finalIndividualFeatures);
   
   return {
-    adminFeatures: finalAdminFeatures,
-    establishmentFeatures: finalEstablishmentFeatures,
-    individualFeatures: finalIndividualFeatures,
+    adminFeatures: processedAdminFeatures,
+    establishmentFeatures: processedEstablishmentFeatures,
+    individualFeatures: processedIndividualFeatures,
     completedSteps: databaseTasks
   };
 }

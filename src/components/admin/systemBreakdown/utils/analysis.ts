@@ -46,6 +46,27 @@ export function analyzeAllFeatures(
   const promoterDatabaseResult = analyzeDatabaseStatus(promoterFeatures);
   let updatedPromoterFeatures = promoterDatabaseResult;
   
+  // Ensure all features have a valid databaseStatus
+  updatedAdminFeatures = updatedAdminFeatures.map(feature => ({
+    ...feature,
+    databaseStatus: feature.databaseStatus || feature.dbStatus || 'not_started'
+  }));
+  
+  updatedEstablishmentFeatures = updatedEstablishmentFeatures.map(feature => ({
+    ...feature,
+    databaseStatus: feature.databaseStatus || feature.dbStatus || 'not_started'
+  }));
+  
+  updatedIndividualFeatures = updatedIndividualFeatures.map(feature => ({
+    ...feature,
+    databaseStatus: feature.databaseStatus || feature.dbStatus || 'not_started'
+  }));
+  
+  updatedPromoterFeatures = updatedPromoterFeatures.map(feature => ({
+    ...feature,
+    databaseStatus: feature.databaseStatus || feature.dbStatus || 'not_started'
+  }));
+  
   // Step 3: Analyze specific systems for more detailed status
   const swigCircuitResult = analyzeSwigCircuitSystem(updatedIndividualFeatures);
   updatedIndividualFeatures = swigCircuitResult;
