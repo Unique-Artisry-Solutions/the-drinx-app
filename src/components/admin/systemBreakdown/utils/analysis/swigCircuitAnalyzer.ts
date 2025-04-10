@@ -14,13 +14,8 @@ export const analyzeSwigCircuitFeatures = (features: FeatureItem[]): FeatureItem
         ...feature,
         // Create a new object with the Swig Circuit type and priority
         // without directly accessing a non-existent metadata property
-        databaseAnalysis: feature.databaseAnalysis || 'Swig Circuit functionality requires proper database schema',
-        statusUpdated: feature.statusUpdated || false,
-        testSteps: [
-          ...(feature.testSteps || []),
-          'Verify Swig Circuit integration',
-          'Test venue selection in circuit'
-        ]
+        dbStatus: feature.dbStatus || 'not_started',
+        statusUpdated: feature.statusUpdated || false
       };
     }
     return feature;

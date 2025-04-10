@@ -1,11 +1,11 @@
 
 import { AnalysisStep, FeatureItem } from '../types';
-import { analyzeDbRequirements } from './analysisHelpers';
-import {
-  analyzeDatabaseStatus,
-  analyzeSwigCircuitSystem,
-  analyzePromoterSystem
-} from './analysis';
+import { 
+  analyzeDatabaseStatus, 
+  analyzeSwigCircuitSystem, 
+  analyzePromoterSystem,
+  updateFeaturesDbStatus as analyzeDbRequirements
+} from './analysis/index';
 
 /**
  * Analyzes all features and updates their implementation and database status
@@ -26,33 +26,29 @@ export function analyzeAllFeatures(
   const completedSteps: AnalysisStep[] = [];
   
   // Step 1: Analyze database requirements
-  const dbRequirementsResult = analyzeDbRequirements(
-    [...adminFeatures, ...establishmentFeatures, ...individualFeatures, ...promoterFeatures],
-    completedSteps
-  );
-  completedSteps.push(...dbRequirementsResult.updatedSteps);
+  const allFeatures = [
+    ...adminFeatures, 
+    ...establishmentFeatures, 
+    ...individualFeatures, 
+    ...promoterFeatures
+  ];
   
   // Step 2: Update database status based on detected tables
-  const adminDatabaseResult = analyzeDatabaseStatus(adminFeatures, completedSteps);
-  let updatedAdminFeatures = adminDatabaseResult.updatedFeatures;
-  completedSteps.push(...adminDatabaseResult.updatedSteps);
+  const adminDatabaseResult = analyzeDatabaseStatus(adminFeatures);
+  let updatedAdminFeatures = adminDatabaseResult;
   
-  const establishmentDatabaseResult = analyzeDatabaseStatus(establishmentFeatures, completedSteps);
-  let updatedEstablishmentFeatures = establishmentDatabaseResult.updatedFeatures;
-  completedSteps.push(...establishmentDatabaseResult.updatedSteps);
+  const establishmentDatabaseResult = analyzeDatabaseStatus(establishmentFeatures);
+  let updatedEstablishmentFeatures = establishmentDatabaseResult;
   
-  const individualDatabaseResult = analyzeDatabaseStatus(individualFeatures, completedSteps);
-  let updatedIndividualFeatures = individualDatabaseResult.updatedFeatures;
-  completedSteps.push(...individualDatabaseResult.updatedSteps);
+  const individualDatabaseResult = analyzeDatabaseStatus(individualFeatures);
+  let updatedIndividualFeatures = individualDatabaseResult;
   
-  const promoterDatabaseResult = analyzeDatabaseStatus(promoterFeatures, completedSteps);
-  let updatedPromoterFeatures = promoterDatabaseResult.updatedFeatures;
-  completedSteps.push(...promoterDatabaseResult.updatedSteps);
+  const promoterDatabaseResult = analyzeDatabaseStatus(promoterFeatures);
+  let updatedPromoterFeatures = promoterDatabaseResult;
   
   // Step 3: Analyze specific systems for more detailed status
-  const swigCircuitResult = analyzeSwigCircuitSystem(updatedIndividualFeatures, completedSteps);
-  updatedIndividualFeatures = swigCircuitResult.updatedFeatures;
-  completedSteps.push(...swigCircuitResult.updatedSteps);
+  const swigCircuitResult = analyzeSwigCircuitSystem(updatedIndividualFeatures);
+  updatedIndividualFeatures = swigCircuitResult;
   
   // Step 4: Analyze promoter system
   const promoterSystemResult = analyzePromoterSystem(updatedPromoterFeatures, completedSteps);
