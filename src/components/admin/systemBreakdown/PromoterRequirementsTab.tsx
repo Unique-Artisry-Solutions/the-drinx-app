@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -7,7 +6,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { FeatureItem } from './types';
 import { groupFeaturesByCategory, calculateCategoryProgress } from './utils/featureStatistics';
 import { renderStatusBadge, renderDatabaseStatusBadge } from './utils/statusRenderers';
-import { Ticket, Users, Warehouse, PresentationChart, Store, Award, MessagesSquare, BadgeDollarSign } from 'lucide-react';
+import { Ticket, Users, Warehouse, Presentation, Store, Award, MessagesSquare, BadgeDollarSign } from 'lucide-react';
 
 // Map category names to icons
 const categoryIcons: Record<string, React.ReactNode> = {
@@ -15,8 +14,8 @@ const categoryIcons: Record<string, React.ReactNode> = {
   'sponsorship': <BadgeDollarSign className="h-5 w-5 text-emerald-500" />,
   'venue-partnership': <Users className="h-5 w-5 text-blue-500" />,
   'merchandise': <Store className="h-5 w-5 text-orange-500" />,
-  'analytics': <PresentationChart className="h-5 w-5 text-indigo-500" />,
-  'advertising': <PresentationChart className="h-5 w-5 text-red-500" />,
+  'analytics': <Presentation className="h-5 w-5 text-indigo-500" />,
+  'advertising': <Presentation className="h-5 w-5 text-red-500" />,
   'vip': <Award className="h-5 w-5 text-amber-500" />,
   'feedback': <MessagesSquare className="h-5 w-5 text-cyan-500" />,
   'integration': <Warehouse className="h-5 w-5 text-gray-500" />
