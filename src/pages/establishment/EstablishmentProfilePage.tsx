@@ -27,14 +27,15 @@ const EstablishmentProfilePage = () => {
     profileState,
     promotionsState,
     drinksState,
-    barCrawlsState
+    barCrawlsState,
+    loyaltyProgramState
   } = useEstablishmentProfile(establishmentId);
   
   // Use the visitor stats hook with the establishment ID
   const visitorStats = useVisitorStats(establishmentId || undefined);
   
   useEffect(() => {
-    if (tabParam && ['profile', 'promotions', 'menu', 'visitors', 'barCrawls'].includes(tabParam)) {
+    if (tabParam && ['profile', 'promotions', 'menu', 'visitors', 'barCrawls', 'loyalty'].includes(tabParam)) {
       setActiveTab(tabParam);
     } else {
       setSearchParams({ tab: 'profile' });
@@ -52,7 +53,8 @@ const EstablishmentProfilePage = () => {
     { value: 'promotions', label: isMobile ? 'Promos' : 'Promotions' },
     { value: 'menu', label: isMobile ? 'Menu' : 'Mocktail Menu' },
     { value: 'visitors', label: isMobile ? 'Stats' : 'Visitor Stats' },
-    { value: 'barCrawls', label: isMobile ? 'Crawls' : 'Bar Crawl Requests' }
+    { value: 'barCrawls', label: isMobile ? 'Crawls' : 'Bar Crawl Requests' },
+    { value: 'loyalty', label: isMobile ? 'Loyalty' : 'Loyalty Program' }
   ];
 
   // Handle quick link click
@@ -128,6 +130,7 @@ const EstablishmentProfilePage = () => {
             drinksState={drinksState}
             visitorStats={visitorStats}
             barCrawlsState={barCrawlsState}
+            loyaltyProgramState={loyaltyProgramState}
           />
         )}
       </div>

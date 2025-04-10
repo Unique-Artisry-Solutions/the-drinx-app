@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
@@ -24,6 +25,36 @@ interface BarCrawl {
   description?: string;
 }
 
+interface LoyaltyProgram {
+  id?: string;
+  name: string;
+  description: string;
+  pointsPerPurchase: number;
+  pointsPerDollar: number;
+  isActive: boolean;
+  enrollmentBonus: number;
+  referralBonus: number;
+  birthMonthBonus: number;
+}
+
+interface LoyaltyReward {
+  id: string;
+  name: string;
+  description: string;
+  pointsRequired: number;
+  isActive: boolean;
+  imageUrl?: string;
+  expirationDays?: number;
+}
+
+interface LoyaltyStats {
+  memberCount: number;
+  activeMembers: number;
+  redemptionRate: number;
+  averagePoints: number;
+  memberRetentionRate: number;
+}
+
 export const useEstablishmentProfile = (establishmentId?: string) => {
   // Profile state
   const [name, setName] = useState('');
@@ -46,6 +77,28 @@ export const useEstablishmentProfile = (establishmentId?: string) => {
   
   // Bar crawls state
   const [barCrawls, setBarCrawls] = useState<BarCrawl[]>([]);
+  
+  // Loyalty Program state
+  const [loyaltyProgram, setLoyaltyProgram] = useState<LoyaltyProgram>({
+    name: '',
+    description: '',
+    pointsPerPurchase: 10,
+    pointsPerDollar: 1,
+    isActive: false,
+    enrollmentBonus: 100,
+    referralBonus: 50,
+    birthMonthBonus: 200
+  });
+  const [loyaltyRewards, setLoyaltyRewards] = useState<LoyaltyReward[]>([]);
+  const [loyaltyStats, setLoyaltyStats] = useState<LoyaltyStats>({
+    memberCount: 0,
+    activeMembers: 0,
+    redemptionRate: 0,
+    averagePoints: 0,
+    memberRetentionRate: 0
+  });
+  const [loyaltyIsLoading, setLoyaltyIsLoading] = useState(false);
+  const [loyaltyError, setLoyaltyError] = useState<string | null>(null);
   
   const { toast } = useToast();
 
@@ -235,6 +288,11 @@ export const useEstablishmentProfile = (establishmentId?: string) => {
           setBarCrawls([]);
         }
         
+        // For now, fetch the loyalty program from local sample data
+        // In a real implementation, this would be fetched from the database
+        // We'll simulate this with a timeout
+        fetchLoyaltyProgramData(establishmentId);
+        
       } catch (err: any) {
         console.error('Error fetching establishment data:', err);
         setError(err.message || 'Failed to load establishment data');
@@ -287,6 +345,70 @@ export const useEstablishmentProfile = (establishmentId?: string) => {
 
     fetchEstablishmentData();
   }, [establishmentId]);
+
+  // Fetch loyalty program data
+  const fetchLoyaltyProgramData = (establishmentId: string) => {
+    setLoyaltyIsLoading(true);
+    setLoyaltyError(null);
+
+    // Simulate API call
+    setTimeout(() => {
+      // Sample loyalty program data
+      const sampleProgram: LoyaltyProgram = {
+        id: `loyalty-${establishmentId}`,
+        name: "Mocktail Rewards",
+        description: "Earn points on every purchase to redeem for special rewards and exclusive offers.",
+        pointsPerPurchase: 10,
+        pointsPerDollar: 1,
+        isActive: true,
+        enrollmentBonus: 100,
+        referralBonus: 50,
+        birthMonthBonus: 200
+      };
+
+      // Sample rewards
+      const sampleRewards: LoyaltyReward[] = [
+        {
+          id: '1',
+          name: 'Free Signature Mocktail',
+          description: 'Enjoy a complimentary signature mocktail of your choice.',
+          pointsRequired: 150,
+          isActive: true,
+          imageUrl: 'https://placehold.co/300x200?text=Mocktail'
+        },
+        {
+          id: '2',
+          name: 'Buy One Get One Free',
+          description: 'Purchase any mocktail and get another one free.',
+          pointsRequired: 250,
+          isActive: true,
+          imageUrl: 'https://placehold.co/300x200?text=BOGO'
+        },
+        {
+          id: '3',
+          name: 'VIP Experience',
+          description: 'Skip the line, get a reserved table and exclusive mocktail tasting.',
+          pointsRequired: 500,
+          isActive: true,
+          imageUrl: 'https://placehold.co/300x200?text=VIP'
+        }
+      ];
+
+      // Sample statistics
+      const sampleStats: LoyaltyStats = {
+        memberCount: 178,
+        activeMembers: 93,
+        redemptionRate: 42,
+        averagePoints: 215,
+        memberRetentionRate: 78
+      };
+
+      setLoyaltyProgram(sampleProgram);
+      setLoyaltyRewards(sampleRewards);
+      setLoyaltyStats(sampleStats);
+      setLoyaltyIsLoading(false);
+    }, 800);
+  };
 
   // Default business hours
   const defaultBusinessHours: BusinessHour[] = [
@@ -392,6 +514,56 @@ export const useEstablishmentProfile = (establishmentId?: string) => {
     });
   };
 
+  // Loyalty Program handlers
+  const handleSaveProgram = (updatedProgram: LoyaltyProgram) => {
+    setLoyaltyIsLoading(true);
+    
+    // Simulate API call
+    setTimeout(() => {
+      setLoyaltyProgram(updatedProgram);
+      setLoyaltyIsLoading(false);
+      
+      toast({
+        title: 'Loyalty Program Updated',
+        description: 'Your loyalty program settings have been saved successfully.',
+      });
+    }, 800);
+  };
+
+  const handleAddReward = (newReward: Omit<LoyaltyReward, 'id'>) => {
+    const rewardWithId: LoyaltyReward = {
+      ...newReward,
+      id: Date.now().toString()
+    };
+    
+    setLoyaltyRewards([...loyaltyRewards, rewardWithId]);
+    
+    toast({
+      title: 'Reward Added',
+      description: `The reward "${newReward.name}" has been added successfully.`,
+    });
+  };
+
+  const handleUpdateReward = (updatedReward: LoyaltyReward) => {
+    setLoyaltyRewards(loyaltyRewards.map(reward => 
+      reward.id === updatedReward.id ? updatedReward : reward
+    ));
+    
+    toast({
+      title: 'Reward Updated',
+      description: `The reward "${updatedReward.name}" has been updated successfully.`,
+    });
+  };
+
+  const handleDeleteReward = (id: string) => {
+    setLoyaltyRewards(loyaltyRewards.filter(reward => reward.id !== id));
+    
+    toast({
+      title: 'Reward Removed',
+      description: 'The reward has been removed successfully.',
+    });
+  };
+
   return {
     // Profile state and handlers
     profileState: {
@@ -438,6 +610,19 @@ export const useEstablishmentProfile = (establishmentId?: string) => {
       barCrawls,
       handleEndParticipation,
       handleAcceptRequest
+    },
+    
+    // Loyalty program state and handlers
+    loyaltyProgramState: {
+      program: loyaltyProgram,
+      rewards: loyaltyRewards,
+      stats: loyaltyStats,
+      isLoading: loyaltyIsLoading,
+      error: loyaltyError,
+      handleSaveProgram,
+      handleAddReward,
+      handleUpdateReward,
+      handleDeleteReward
     }
   };
 };

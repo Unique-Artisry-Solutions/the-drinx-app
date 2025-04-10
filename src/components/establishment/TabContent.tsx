@@ -6,6 +6,7 @@ import PromotionsTab from '@/components/establishment/PromotionsTab';
 import MocktailMenuTab from '@/components/establishment/MocktailMenuTab';
 import VisitorStatsTab from '@/components/establishment/VisitorStatsTab';
 import BarCrawlsTab from '@/components/establishment/BarCrawlsTab';
+import LoyaltyProgramTab from '@/components/establishment/LoyaltyProgramTab';
 
 interface TabContentProps {
   activeTab: string;
@@ -23,6 +24,7 @@ interface TabContentProps {
     error: string | null;
   };
   barCrawlsState: any;
+  loyaltyProgramState?: any;
 }
 
 const TabContent: React.FC<TabContentProps> = ({
@@ -33,7 +35,8 @@ const TabContent: React.FC<TabContentProps> = ({
   promotionsState,
   drinksState,
   visitorStats,
-  barCrawlsState
+  barCrawlsState,
+  loyaltyProgramState
 }) => {
   const isMobile = useIsMobile();
 
@@ -91,6 +94,20 @@ const TabContent: React.FC<TabContentProps> = ({
             barCrawls={barCrawlsState.barCrawls} 
             handleEndParticipation={barCrawlsState.handleEndParticipation} 
             handleAcceptRequest={barCrawlsState.handleAcceptRequest} 
+          />
+        </TabsContent>
+
+        <TabsContent value="loyalty">
+          <LoyaltyProgramTab 
+            loyaltyProgram={loyaltyProgramState?.program || {}}
+            rewards={loyaltyProgramState?.rewards || []}
+            stats={loyaltyProgramState?.stats || {}}
+            isLoading={loyaltyProgramState?.isLoading || false}
+            error={loyaltyProgramState?.error || null}
+            onSaveProgram={loyaltyProgramState?.handleSaveProgram}
+            onAddReward={loyaltyProgramState?.handleAddReward}
+            onUpdateReward={loyaltyProgramState?.handleUpdateReward}
+            onDeleteReward={loyaltyProgramState?.handleDeleteReward}
           />
         </TabsContent>
       </div>
