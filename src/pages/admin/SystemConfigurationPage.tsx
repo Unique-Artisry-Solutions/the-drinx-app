@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Settings, Server, Bell, Shield, CreditCard, Toggle } from 'lucide-react';
+import { Settings, Server, Bell, Shield, CreditCard, ToggleLeft } from 'lucide-react';
 
 const SystemConfigurationPage: React.FC = () => {
   const [category, setCategory] = useState<string>('general');
@@ -101,7 +101,7 @@ const SystemConfigurationPage: React.FC = () => {
             <span className="hidden sm:inline">Payment</span>
           </TabsTrigger>
           <TabsTrigger value="features" className="flex items-center gap-2">
-            <Toggle size={16} />
+            <ToggleLeft size={16} />
             <span className="hidden sm:inline">Features</span>
           </TabsTrigger>
         </TabsList>
