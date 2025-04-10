@@ -15,7 +15,10 @@ import {
   isMocktailTrendsFeature, 
   isIngredientPairingFeature,
   isPromotionFeature,
-  isAnalyticsFeature
+  isAnalyticsFeature,
+  isPromotionAnalyticsFeature,
+  isPromotionSecurityFeature,
+  isPromotionNotificationFeature
 } from './featureDetection';
 import { isTaskCompleted, parseTasks } from './taskDetection';
 import { 
@@ -46,6 +49,9 @@ export {
   isIngredientPairingFeature,
   isPromotionFeature,
   isAnalyticsFeature,
+  isPromotionAnalyticsFeature,
+  isPromotionSecurityFeature,
+  isPromotionNotificationFeature,
   isTaskCompleted,
   parseTasks,
   mapFeaturesToReleaseFeatures,

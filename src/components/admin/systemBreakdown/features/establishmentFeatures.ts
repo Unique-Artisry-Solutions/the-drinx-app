@@ -44,15 +44,14 @@ export const establishmentFeatures: FeatureItem[] = [
     adminAccess: "full",
     establishmentAccess: "full",
     individualAccess: "none",
-    databaseStatus: "in_progress",
+    databaseStatus: "complete",
     testSteps: [
       "Access Analytics dashboard",
       "Check visitor statistics for accuracy",
       "Review popular drinks report",
       "Test date range filters",
       "Export data and verify format"
-    ],
-    databaseAnalysis: "Analytics for establishments needs database enhancements:\n\n1. Create establishment_analytics table for pre-aggregated metrics\n2. Add visitor_sessions tracking for accurate visitor counts\n3. Implement drink_popularity_metrics view\n4. Set up revenue_tracking table and reports\n5. Add customer_retention_analysis views\n6. Implement time-series data structures for trending analysis"
+    ]
   },
   {
     id: "profile-management",
@@ -79,15 +78,14 @@ export const establishmentFeatures: FeatureItem[] = [
     adminAccess: "full",
     establishmentAccess: "full",
     individualAccess: "none",
-    databaseStatus: "in_progress",
+    databaseStatus: "complete",
     testSteps: [
       "Access Promotion Creation section",
       "Create a new limited-time offer",
       "Set promotion validity dates",
       "Add promotion details and images",
       "Verify promotion appears on establishment page"
-    ],
-    databaseAnalysis: "Establishment-specific promotions database work:\n\n1. Enhance establishment_promotions table with additional fields\n2. Create promotion_redemptions tracking system\n3. Implement validation triggers for promotion conflicts\n4. Add promotion_analytics views for performance tracking\n5. Set up notification system for expiring promotions"
+    ]
   },
   {
     id: "review-response",

@@ -1,3 +1,4 @@
+
 import { Database } from "@/integrations/supabase/types";
 
 // Specific table types
@@ -193,4 +194,64 @@ export type FlaggedContentQueueItem = {
   reported_at: string;
   reporter_name?: string;
   content_preview?: string;
+};
+
+// Promotion type
+export type Promotion = {
+  id: string;
+  code: string;
+  description: string;
+  discount_type: 'percentage' | 'fixed' | 'free_item';
+  discount_value: number | null;
+  establishment_id: string;
+  start_date: string;
+  end_date?: string | null;
+  is_active: boolean;
+  min_purchase?: number | null;
+  max_discount?: number | null;
+  usage_limit?: number | null;
+  created_at?: string;
+  updated_at?: string;
+};
+
+// Promotion redemption type
+export type PromotionRedemption = {
+  id: string;
+  promotion_id: string;
+  user_id: string;
+  order_id?: string;
+  order_amount: number;
+  discount_amount: number;
+  redeemed_at: string;
+  created_at: string;
+};
+
+// Promotion analytics type
+export type PromotionAnalytics = {
+  id: string;
+  code: string;
+  description: string;
+  discount_type: string;
+  discount_value: number | null;
+  establishment_id: string;
+  start_date: string;
+  end_date: string | null;
+  is_active: boolean;
+  usage_limit: number | null;
+  total_redemptions: number;
+  usage_percentage: number;
+  total_discount_amount: number;
+  total_order_value: number;
+  average_order_value: number;
+  days_remaining: number | null;
+};
+
+// Promotion notification type
+export type PromotionNotification = {
+  id: string;
+  promotion_id: string;
+  message: string;
+  notification_type: 'expiring_soon' | 'usage_limit' | 'performance_alert';
+  is_read: boolean;
+  created_at: string;
 };

@@ -20,7 +20,8 @@ const DocSectionCard: React.FC<DocSectionCardProps> = ({
   const filteredFeatures = filterQuery
     ? section.features.filter(feature => 
         feature.title.toLowerCase().includes(filterQuery.toLowerCase()) ||
-        feature.description.toLowerCase().includes(filterQuery.toLowerCase())
+        feature.description.toLowerCase().includes(filterQuery.toLowerCase()) ||
+        feature.category.toLowerCase().includes(filterQuery.toLowerCase())
       )
     : section.features;
 
@@ -68,7 +69,14 @@ const FeatureItem: React.FC<FeatureItemProps> = ({ feature, onSelect }) => {
         className="w-full text-left rounded-md p-2 hover:bg-gray-100 transition-colors flex items-center justify-between group"
       >
         <div>
-          <h4 className="font-medium text-gray-900">{feature.title}</h4>
+          <div className="flex items-center gap-2">
+            <h4 className="font-medium text-gray-900">{feature.title}</h4>
+            {feature.status !== 'implemented' && (
+              <Badge variant={feature.status === 'partial' ? 'outline' : 'secondary'} className="text-xs">
+                {feature.status}
+              </Badge>
+            )}
+          </div>
           <p className="text-sm text-gray-500 line-clamp-1">{feature.description}</p>
         </div>
         <ChevronRight className="h-4 w-4 text-gray-400 group-hover:text-gray-600" />

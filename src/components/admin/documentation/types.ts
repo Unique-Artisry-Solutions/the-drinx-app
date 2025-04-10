@@ -37,6 +37,28 @@ export interface DocSection {
   id: string;
   title: string;
   description: string;
-  category: 'overview' | 'users' | 'content' | 'analytics' | 'settings' | 'tools';
+  category: 'overview' | 'users' | 'content' | 'analytics' | 'settings' | 'tools' | 'promotions';
   features: DocFeature[];
+}
+
+export interface PromotionType {
+  name: string;
+  description: string;
+  exampleUse: string;
+  bestFor: string[];
+}
+
+export interface PromotionStrategy {
+  name: string;
+  description: string;
+  implementation: string[];
+  metrics: string[];
+}
+
+export interface PromotionDoc extends DocFeature {
+  promotionTypes?: PromotionType[];
+  strategies?: PromotionStrategy[];
+  integrations?: string[];
+  securityMeasures?: string[];
+  analyticsCapabilities?: string[];
 }

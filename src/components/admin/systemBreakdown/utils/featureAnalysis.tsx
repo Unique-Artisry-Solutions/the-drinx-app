@@ -7,6 +7,9 @@ import {
   isMocktailTrendsFeature, 
   isIngredientPairingFeature,
   isPromotionFeature,
+  isPromotionAnalyticsFeature,
+  isPromotionSecurityFeature,
+  isPromotionNotificationFeature,
   isAnalyticsFeature
 } from './featureDetection';
 
@@ -41,6 +44,8 @@ export function analyzeAllFeatures(
     { name: 'Promotion redemption tracking', completed: true },
     { name: 'Promotion analytics views', completed: true },
     { name: 'Promotion expiration notifications', completed: true },
+    { name: 'Promotion security measures implementation', completed: true },
+    { name: 'Promotion validation triggers', completed: true },
     { name: 'System analytics tables', completed: true },
     { name: 'User activity tracking', completed: true },
     { name: 'Data visualization components', completed: true },
@@ -149,6 +154,39 @@ function updateFeaturesDbStatus(features: FeatureItem[]) {
     // Enhanced detection for promotion creation and management features
     if (isPromotionFeature(feature)) {
       // Mark database status as complete for promotion features
+      newDbStatus = 'complete';
+      
+      // Update implementation status
+      if (['not_started', 'planned', 'partial'].includes(feature.status)) {
+        newStatus = 'implemented';
+      }
+    }
+    
+    // Detection for promotion analytics features
+    if (isPromotionAnalyticsFeature(feature)) {
+      // Mark database status as complete for promotion analytics features
+      newDbStatus = 'complete';
+      
+      // Update implementation status
+      if (['not_started', 'planned', 'partial'].includes(feature.status)) {
+        newStatus = 'implemented';
+      }
+    }
+    
+    // Detection for promotion security features
+    if (isPromotionSecurityFeature(feature)) {
+      // Mark database status as complete for promotion security features
+      newDbStatus = 'complete';
+      
+      // Update implementation status
+      if (['not_started', 'planned', 'partial'].includes(feature.status)) {
+        newStatus = 'implemented';
+      }
+    }
+    
+    // Detection for promotion notification features
+    if (isPromotionNotificationFeature(feature)) {
+      // Mark database status as complete for promotion notification features
       newDbStatus = 'complete';
       
       // Update implementation status
