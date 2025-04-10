@@ -18,10 +18,10 @@ export function analyzeAllFeatures(
   establishmentFeatures: FeatureItem[],
   individualFeatures: FeatureItem[]
 ) {
-  // Create a copy of the features to avoid mutating the original data
-  const updatedAdminFeatures = [...adminFeatures];
-  const updatedEstablishmentFeatures = [...establishmentFeatures];
-  const updatedIndividualFeatures = [...individualFeatures];
+  // Create deep copies of the features arrays to avoid mutating the original data
+  const updatedAdminFeatures = JSON.parse(JSON.stringify(adminFeatures));
+  const updatedEstablishmentFeatures = JSON.parse(JSON.stringify(establishmentFeatures));
+  const updatedIndividualFeatures = JSON.parse(JSON.stringify(individualFeatures));
   
   // Track completed database tasks
   const databaseTasks: AnalysisStep[] = [
@@ -74,7 +74,7 @@ export function analyzeAllFeatures(
 /**
  * Updates feature status based on their database implementation status
  */
-function updateFeaturesDbStatus(features: FeatureItem[]) {
+function updateFeaturesDbStatus(features: FeatureItem[]): FeatureItem[] {
   return features.map(feature => {
     // Capture original status for tracking changes
     const originalStatus = feature.status;
@@ -208,8 +208,8 @@ function updateFeaturesDbStatus(features: FeatureItem[]) {
     
     return {
       ...feature,
-      status: newStatus,
-      databaseStatus: newDbStatus,
+      status: newStatus as FeatureStatus,
+      databaseStatus: newDbStatus as DatabaseStatus,
       statusUpdated: newStatus !== originalStatus || newDbStatus !== originalDbStatus,
       originalStatus: originalStatus !== newStatus ? originalStatus : undefined
     };

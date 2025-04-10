@@ -62,18 +62,15 @@ export const useSystemBreakdown = () => {
       // Update progress tracking with new feature states
       const result = updateProgressTracking();
       
-      // Show analysis completion message
-      let completionMessage = `${totalUpdated} feature status${totalUpdated !== 1 ? 'es' : ''} updated based on database implementation.`;
-      
+      // Toast notification already happens in the handleAnalyzeFeatures function
+      // We just need to add validation warning if needed
       if (!result.validation.isValid) {
-        completionMessage += " Warning: Some data inconsistencies detected.";
+        toast({
+          title: "Data Validation Warning",
+          description: "Some data inconsistencies were detected in the progress tracking.",
+          variant: "destructive"
+        });
       }
-      
-      toast({
-        title: "Analysis Complete",
-        description: completionMessage,
-        variant: result.validation.isValid ? "default" : "destructive"
-      });
     });
   };
 

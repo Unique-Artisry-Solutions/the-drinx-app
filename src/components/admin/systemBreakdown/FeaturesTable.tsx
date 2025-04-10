@@ -40,7 +40,7 @@ const FeaturesTable: React.FC<FeaturesTableProps> = ({ features, title }) => {
         <TableBody>
           {features.map((feature) => (
             <React.Fragment key={feature.id}>
-              <TableRow className={feature.statusUpdated ? 'bg-amber-50' : ''}>
+              <TableRow className={feature.statusUpdated ? 'bg-amber-50' : undefined}>
                 <TableCell className="font-medium">
                   <div className="flex flex-col">
                     <span>{feature.name}</span>

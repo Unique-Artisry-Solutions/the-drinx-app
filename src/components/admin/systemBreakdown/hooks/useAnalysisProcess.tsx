@@ -63,15 +63,17 @@ export const useAnalysisProcess = (
     }, 600); // Update every 600ms
     
     const completeAnalysis = () => {
+      // Apply the actual analysis to the features
       const analyzedFeatures = analyzeAllFeatures(
         adminFeatures,
         establishmentFeatures,
         individualFeatures
       );
       
-      setAdminFeatures(analyzedFeatures.adminFeatures);
-      setEstablishmentFeatures(analyzedFeatures.establishmentFeatures);
-      setIndividualFeatures(analyzedFeatures.individualFeatures);
+      // Important: Update the state with the analyzed features
+      setAdminFeatures([...analyzedFeatures.adminFeatures]);
+      setEstablishmentFeatures([...analyzedFeatures.establishmentFeatures]);
+      setIndividualFeatures([...analyzedFeatures.individualFeatures]);
       setAnalysisSteps(analyzedFeatures.completedSteps);
       
       const totalUpdated = [
@@ -79,6 +81,13 @@ export const useAnalysisProcess = (
         ...analyzedFeatures.establishmentFeatures,
         ...analyzedFeatures.individualFeatures
       ].filter(feature => feature.statusUpdated).length;
+      
+      // Show a toast notification about the analysis results
+      toast({
+        title: "Analysis Complete",
+        description: `${totalUpdated} feature status${totalUpdated !== 1 ? 'es' : ''} updated based on database implementation.`,
+        duration: 5000,
+      });
       
       if (onAnalysisComplete) {
         onAnalysisComplete(totalUpdated);
