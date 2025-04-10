@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -6,7 +7,21 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { FeatureItem } from './types';
 import { groupFeaturesByCategory, calculateCategoryProgress } from './utils/featureStatistics';
 import { renderStatusBadge, renderDatabaseStatusBadge } from './utils/statusRenderers';
-import { Ticket, Users, Warehouse, Presentation, Store, Award, MessagesSquare, BadgeDollarSign } from 'lucide-react';
+import { 
+  Ticket, 
+  Users, 
+  Warehouse, 
+  BarChart3, 
+  Store, 
+  Award, 
+  MessagesSquare, 
+  BadgeDollarSign, 
+  Calendar, 
+  ArrowRight,
+  Database,
+  Layout
+} from 'lucide-react';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 // Map category names to icons
 const categoryIcons: Record<string, React.ReactNode> = {
@@ -14,11 +29,12 @@ const categoryIcons: Record<string, React.ReactNode> = {
   'sponsorship': <BadgeDollarSign className="h-5 w-5 text-emerald-500" />,
   'venue-partnership': <Users className="h-5 w-5 text-blue-500" />,
   'merchandise': <Store className="h-5 w-5 text-orange-500" />,
-  'analytics': <Presentation className="h-5 w-5 text-indigo-500" />,
-  'advertising': <Presentation className="h-5 w-5 text-red-500" />,
+  'analytics': <BarChart3 className="h-5 w-5 text-indigo-500" />,
+  'advertising': <BarChart3 className="h-5 w-5 text-red-500" />,
   'vip': <Award className="h-5 w-5 text-amber-500" />,
   'feedback': <MessagesSquare className="h-5 w-5 text-cyan-500" />,
-  'integration': <Warehouse className="h-5 w-5 text-gray-500" />
+  'integration': <Warehouse className="h-5 w-5 text-gray-500" />,
+  'marketing': <Calendar className="h-5 w-5 text-pink-500" />
 };
 
 // Map category names to friendly display names
@@ -34,7 +50,22 @@ const categoryDisplayNames: Record<string, string> = {
   'integration': 'Integrations',
   'marketplace': 'Marketplace',
   'communication': 'Communication',
-  'real-time': 'Real-time Features'
+  'real-time': 'Real-time Features',
+  'marketing': 'Marketing Tools'
+};
+
+// Implementation phases mapping
+const implementationPhases: Record<string, number> = {
+  '6001': 1, '6002': 1, '6008': 1, '6021': 1,  // Phase 1: Basic functionality
+  '6003': 2, '6007': 2, '6009': 2, '6019': 2, '6022': 2, // Phase 2: Core features
+  '6004': 3, '6013': 3, '6015': 3, '6016': 3, '6020': 3, // Phase 3: Advanced features
+  '6005': 4, '6006': 4, '6014': 4, '6017': 4, '6023': 4, // Phase 4: Enhancement features
+  '6010': 5, '6011': 5, '6012': 5, '6018': 5  // Phase 5: Optional features
+};
+
+// Define what phase a feature belongs to based on its ID
+const getImplementationPhase = (featureId: string): number => {
+  return implementationPhases[featureId] || 5; // Default to phase 5 if not found
 };
 
 interface PromoterRequirementsTabProps {
@@ -43,6 +74,7 @@ interface PromoterRequirementsTabProps {
 
 const PromoterRequirementsTab: React.FC<PromoterRequirementsTabProps> = ({ features }) => {
   const [activeCategory, setActiveCategory] = useState<string>('all');
+  const [activeView, setActiveView] = useState<string>('categories');
   
   // Group features by category
   const categorizedFeatures = groupFeaturesByCategory(features);
@@ -60,75 +92,121 @@ const PromoterRequirementsTab: React.FC<PromoterRequirementsTabProps> = ({ featu
   const orderedCategories = Object.keys(categorizedFeatures).sort((a, b) => {
     return categoryProgress[b].overall - categoryProgress[a].overall;
   });
+
+  // Group features by implementation phase
+  const phaseFeatures: Record<number, FeatureItem[]> = {};
+  features.forEach(feature => {
+    const phase = getImplementationPhase(feature.id);
+    if (!phaseFeatures[phase]) phaseFeatures[phase] = [];
+    phaseFeatures[phase].push(feature);
+  });
   
   const renderFeatures = (categoryFeatures: FeatureItem[]) => {
-    return categoryFeatures.map(feature => (
+    // Sort features by implementation phase
+    const sortedFeatures = [...categoryFeatures].sort((a, b) => 
+      getImplementationPhase(a.id) - getImplementationPhase(b.id)
+    );
+    
+    return sortedFeatures.map(feature => (
       <div key={feature.id} className="mb-6 border rounded-lg p-4">
         <div className="flex justify-between items-start mb-2">
           <div>
-            <h4 className="text-lg font-medium">{feature.name}</h4>
+            <div className="flex items-center gap-2">
+              <h4 className="text-lg font-medium">{feature.name}</h4>
+              <Badge variant="outline" className="bg-blue-50">Phase {getImplementationPhase(feature.id)}</Badge>
+            </div>
             <p className="text-sm text-gray-600 mt-1">{feature.description}</p>
           </div>
           <div className="flex gap-2">
             {renderStatusBadge(feature.status)}
-            {renderDatabaseStatusBadge(feature.databaseStatus)}
+            {renderDatabaseStatusBadge(feature.databaseStatus || feature.dbStatus)}
           </div>
         </div>
         
-        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Database Requirements */}
-          <div className="bg-slate-50 p-3 rounded-md">
-            <h5 className="font-medium text-sm mb-2">Database Requirements</h5>
-            <p className="text-xs text-slate-700">{feature.dbRequirementsText || 'No specific database requirements defined.'}</p>
-          </div>
+        <Accordion type="single" collapsible className="w-full">
+          <AccordionItem value="implementation-details">
+            <AccordionTrigger className="text-sm font-medium">Implementation Details</AccordionTrigger>
+            <AccordionContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                {/* Database Requirements */}
+                <div className="bg-slate-50 p-3 rounded-md">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Database className="h-4 w-4 text-slate-700" />
+                    <h5 className="font-medium text-sm">Database Requirements</h5>
+                  </div>
+                  <p className="text-xs text-slate-700">{feature.dbRequirementsText || 'No specific database requirements defined.'}</p>
+                </div>
+                
+                {/* UI Implementation */}
+                <div className="bg-slate-50 p-3 rounded-md">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Layout className="h-4 w-4 text-slate-700" />
+                    <h5 className="font-medium text-sm">UI Implementation</h5>
+                  </div>
+                  <p className="text-xs text-slate-700">
+                    {feature.tags?.includes('signature') 
+                      ? 'Signature feature requiring custom UI components and detailed design attention.' 
+                      : 'Standard UI components with form controls and data visualization.'}
+                  </p>
+                </div>
+                
+                {/* Implementation Steps */}
+                <div className="bg-slate-50 p-3 rounded-md col-span-1 md:col-span-2">
+                  <h5 className="font-medium text-sm mb-2">Implementation Steps</h5>
+                  <div className="space-y-1">
+                    {feature.testSteps && feature.testSteps.map((step, idx) => (
+                      <div key={idx} className="text-xs text-slate-700 flex items-start gap-2">
+                        <ArrowRight className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                        <span>{step}</span>
+                      </div>
+                    ))}
+                    {(!feature.testSteps || feature.testSteps.length === 0) && (
+                      <p className="text-xs text-slate-700">No implementation steps defined.</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
           
-          {/* Implementation Steps */}
-          <div className="bg-slate-50 p-3 rounded-md">
-            <h5 className="font-medium text-sm mb-2">Implementation Steps</h5>
-            <div className="space-y-1">
-              {feature.testSteps && feature.testSteps.map((step, idx) => (
-                <div key={idx} className="text-xs text-slate-700">• {step}</div>
-              ))}
-              {(!feature.testSteps || feature.testSteps.length === 0) && (
-                <p className="text-xs text-slate-700">No implementation steps defined.</p>
-              )}
-            </div>
-          </div>
-        </div>
-        
-        {/* Dependencies and Timeline */}
-        <div className="mt-4 flex flex-col sm:flex-row gap-4">
-          <div className="flex-1">
-            <h5 className="font-medium text-xs mb-1">Dependencies</h5>
-            <div className="flex flex-wrap gap-1">
-              {feature.dependsOn && feature.dependsOn.length > 0 ? (
-                feature.dependsOn.map(depId => {
-                  const depFeature = features.find(f => f.id === depId);
-                  return (
-                    <Badge key={depId} variant="outline" className="bg-blue-50">
-                      {depFeature ? depFeature.name : `Feature ${depId}`}
-                    </Badge>
-                  );
-                })
-              ) : (
-                <span className="text-xs text-slate-500">No dependencies</span>
-              )}
-            </div>
-          </div>
-          
-          <div className="flex-1">
-            <h5 className="font-medium text-xs mb-1">Scheduled For</h5>
-            <span className="text-xs">{feature.scheduledFor || 'Not scheduled'}</span>
-          </div>
-          
-          <div className="flex-1">
-            <h5 className="font-medium text-xs mb-1">Implementation Progress</h5>
-            <div className="flex items-center gap-2">
-              <Progress value={feature.implementationProgress || 0} className="h-2" />
-              <span className="text-xs">{feature.implementationProgress || 0}%</span>
-            </div>
-          </div>
-        </div>
+          <AccordionItem value="dependencies">
+            <AccordionTrigger className="text-sm font-medium">Dependencies & Timeline</AccordionTrigger>
+            <AccordionContent>
+              <div className="mt-2 flex flex-col sm:flex-row gap-4">
+                <div className="flex-1">
+                  <h5 className="font-medium text-xs mb-1">Dependencies</h5>
+                  <div className="flex flex-wrap gap-1">
+                    {feature.dependsOn && feature.dependsOn.length > 0 ? (
+                      feature.dependsOn.map(depId => {
+                        const depFeature = features.find(f => f.id === depId);
+                        return (
+                          <Badge key={depId} variant="outline" className="bg-blue-50">
+                            {depFeature ? depFeature.name : `Feature ${depId}`}
+                          </Badge>
+                        );
+                      })
+                    ) : (
+                      <span className="text-xs text-slate-500">No dependencies</span>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="flex-1">
+                  <h5 className="font-medium text-xs mb-1">Scheduled For</h5>
+                  <span className="text-xs">{feature.scheduledFor || 'Not scheduled'}</span>
+                </div>
+                
+                <div className="flex-1">
+                  <h5 className="font-medium text-xs mb-1">Implementation Progress</h5>
+                  <div className="flex items-center gap-2">
+                    <Progress value={feature.implementationProgress || 0} className="h-2" />
+                    <span className="text-xs">{feature.implementationProgress || 0}%</span>
+                  </div>
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </div>
     ));
   };
@@ -163,27 +241,27 @@ const PromoterRequirementsTab: React.FC<PromoterRequirementsTabProps> = ({ featu
             </div>
             
             <div className="bg-slate-50 p-4 rounded-lg">
-              <h3 className="font-medium mb-2">Feature Status</h3>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs">Implemented:</span>
-                    <span className="text-xs font-medium">{features.filter(f => f.status === 'implemented').length}</span>
-                  </div>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs">In Progress:</span>
-                    <span className="text-xs font-medium">{features.filter(f => f.status === 'in_progress').length}</span>
-                  </div>
+              <h3 className="font-medium mb-2">Implementation Phases</h3>
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs">Phase 1 (Basic):</span>
+                  <span className="text-xs font-medium">{(phaseFeatures[1] || []).length} features</span>
                 </div>
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs">Planned:</span>
-                    <span className="text-xs font-medium">{features.filter(f => f.status === 'planned').length}</span>
-                  </div>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs">Blocked:</span>
-                    <span className="text-xs font-medium">{features.filter(f => f.status === 'blocked').length}</span>
-                  </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs">Phase 2 (Core):</span>
+                  <span className="text-xs font-medium">{(phaseFeatures[2] || []).length} features</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs">Phase 3 (Advanced):</span>
+                  <span className="text-xs font-medium">{(phaseFeatures[3] || []).length} features</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs">Phase 4 (Enhancement):</span>
+                  <span className="text-xs font-medium">{(phaseFeatures[4] || []).length} features</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs">Phase 5 (Optional):</span>
+                  <span className="text-xs font-medium">{(phaseFeatures[5] || []).length} features</span>
                 </div>
               </div>
             </div>
@@ -206,44 +284,174 @@ const PromoterRequirementsTab: React.FC<PromoterRequirementsTabProps> = ({ featu
         </CardContent>
       </Card>
       
-      {/* Features by category */}
+      {/* Implementation Views */}
       <Card>
         <CardHeader>
-          <CardTitle>Feature Categories</CardTitle>
-          <CardDescription>Browse promoter features by category</CardDescription>
+          <CardTitle>Promoter System Development Plan</CardTitle>
+          <CardDescription>View implementation details by category or implementation phase</CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs value={activeCategory} onValueChange={setActiveCategory}>
-            <TabsList className="mb-4 flex flex-wrap">
-              <TabsTrigger value="all">All Features</TabsTrigger>
-              {orderedCategories.map(category => (
-                <TabsTrigger key={category} value={category} className="flex items-center gap-1">
-                  {categoryIcons[category]}
-                  {categoryDisplayNames[category] || category}
-                  <Badge variant="outline" className="ml-1 text-xs">
-                    {categorizedFeatures[category].length}
-                  </Badge>
-                </TabsTrigger>
-              ))}
+          <Tabs value={activeView} onValueChange={setActiveView} className="mb-6">
+            <TabsList className="mb-2">
+              <TabsTrigger value="categories">By Category</TabsTrigger>
+              <TabsTrigger value="phases">By Implementation Phase</TabsTrigger>
             </TabsList>
             
-            <TabsContent value="all" className="space-y-4">
-              {renderFeatures(features)}
+            {/* Category View */}
+            <TabsContent value="categories">
+              <Tabs value={activeCategory} onValueChange={setActiveCategory}>
+                <TabsList className="mb-4 flex flex-wrap">
+                  <TabsTrigger value="all">All Features</TabsTrigger>
+                  {orderedCategories.map(category => (
+                    <TabsTrigger key={category} value={category} className="flex items-center gap-1">
+                      {categoryIcons[category]}
+                      {categoryDisplayNames[category] || category}
+                      <Badge variant="outline" className="ml-1 text-xs">
+                        {categorizedFeatures[category].length}
+                      </Badge>
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+                
+                <TabsContent value="all" className="space-y-4">
+                  {renderFeatures(features)}
+                </TabsContent>
+                
+                {orderedCategories.map(category => (
+                  <TabsContent key={category} value={category} className="space-y-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        {categoryIcons[category] || <div className="w-6 h-6" />}
+                        <h3 className="font-medium">{categoryDisplayNames[category] || category}</h3>
+                      </div>
+                      <Progress value={categoryProgress[category].overall} className="w-32 h-2" />
+                    </div>
+                    {renderFeatures(categorizedFeatures[category])}
+                  </TabsContent>
+                ))}
+              </Tabs>
             </TabsContent>
             
-            {orderedCategories.map(category => (
-              <TabsContent key={category} value={category} className="space-y-4">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    {categoryIcons[category] || <div className="w-6 h-6" />}
-                    <h3 className="font-medium">{categoryDisplayNames[category] || category}</h3>
-                  </div>
-                  <Progress value={categoryProgress[category].overall} className="w-32 h-2" />
-                </div>
-                {renderFeatures(categorizedFeatures[category])}
-              </TabsContent>
-            ))}
+            {/* Phase View */}
+            <TabsContent value="phases">
+              <Accordion type="single" collapsible defaultValue="phase-1">
+                {[1, 2, 3, 4, 5].map(phase => {
+                  const phaseTitle = [
+                    "Basic Functionality", 
+                    "Core Features", 
+                    "Advanced Features",
+                    "Enhancement Features",
+                    "Optional Features"
+                  ][phase-1];
+                  
+                  return (
+                    <AccordionItem key={`phase-${phase}`} value={`phase-${phase}`}>
+                      <AccordionTrigger className="hover:bg-slate-50 px-4">
+                        <div className="flex items-center gap-2">
+                          <Badge variant={phase === 1 ? "default" : "outline"}>Phase {phase}</Badge>
+                          <span>{phaseTitle}</span>
+                          <Badge variant="outline" className="ml-auto mr-6">
+                            {(phaseFeatures[phase] || []).length} features
+                          </Badge>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="px-4">
+                        {phaseFeatures[phase] && phaseFeatures[phase].length > 0 ? (
+                          renderFeatures(phaseFeatures[phase])
+                        ) : (
+                          <p className="text-sm text-gray-500 py-2">No features in this phase.</p>
+                        )}
+                      </AccordionContent>
+                    </AccordionItem>
+                  );
+                })}
+              </Accordion>
+            </TabsContent>
           </Tabs>
+        </CardContent>
+      </Card>
+      
+      {/* Database Schema & Integration Plan */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Database Schema & Integration Plan</CardTitle>
+          <CardDescription>Database development strategy for promoter features</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-medium mb-3">Database Tables</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="border rounded-lg p-4">
+                  <h4 className="font-medium mb-2 flex items-center gap-2">
+                    <Ticket className="h-5 w-5 text-purple-500" />
+                    Ticket Management Tables
+                  </h4>
+                  <ul className="space-y-2 text-sm">
+                    <li><Badge variant="outline" className="mr-2">ticket_tiers</Badge> For various ticket levels and pricing</li>
+                    <li><Badge variant="outline" className="mr-2">ticket_sales</Badge> Track all ticket sales transactions</li>
+                    <li><Badge variant="outline" className="mr-2">ticket_redemptions</Badge> Track ticket usage at events</li>
+                  </ul>
+                </div>
+                
+                <div className="border rounded-lg p-4">
+                  <h4 className="font-medium mb-2 flex items-center gap-2">
+                    <BadgeDollarSign className="h-5 w-5 text-emerald-500" />
+                    Sponsorship Tables
+                  </h4>
+                  <ul className="space-y-2 text-sm">
+                    <li><Badge variant="outline" className="mr-2">sponsor_relationships</Badge> Track promoter-sponsor connections</li>
+                    <li><Badge variant="outline" className="mr-2">sponsor_assets</Badge> Brand logos and marketing materials</li>
+                    <li><Badge variant="outline" className="mr-2">sponsor_campaigns</Badge> Track sponsorship campaigns</li>
+                  </ul>
+                </div>
+                
+                <div className="border rounded-lg p-4">
+                  <h4 className="font-medium mb-2 flex items-center gap-2">
+                    <Users className="h-5 w-5 text-blue-500" />
+                    Venue Partnership Tables
+                  </h4>
+                  <ul className="space-y-2 text-sm">
+                    <li><Badge variant="outline" className="mr-2">promoter_venue_agreements</Badge> Revenue sharing agreements</li>
+                    <li><Badge variant="outline" className="mr-2">venue_communications</Badge> Communication history</li>
+                    <li><Badge variant="outline" className="mr-2">venue_bookings</Badge> Event scheduling at venues</li>
+                  </ul>
+                </div>
+                
+                <div className="border rounded-lg p-4">
+                  <h4 className="font-medium mb-2 flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5 text-indigo-500" />
+                    Analytics Tables
+                  </h4>
+                  <ul className="space-y-2 text-sm">
+                    <li><Badge variant="outline" className="mr-2">event_analytics</Badge> Performance metrics for events</li>
+                    <li><Badge variant="outline" className="mr-2">audience_metrics</Badge> Demographic and attendance data</li>
+                    <li><Badge variant="outline" className="mr-2">campaign_performance</Badge> Marketing campaign results</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            
+            <div>
+              <h3 className="text-lg font-medium mb-3">Integration Points</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="border rounded-lg p-4">
+                  <h4 className="font-medium mb-2">Payment Systems</h4>
+                  <p className="text-sm text-gray-600">Integrate with payment gateways for ticket sales and sponsor payments.</p>
+                </div>
+                
+                <div className="border rounded-lg p-4">
+                  <h4 className="font-medium mb-2">Notification System</h4>
+                  <p className="text-sm text-gray-600">Connect with the platform's notification service for alerts and updates.</p>
+                </div>
+                
+                <div className="border rounded-lg p-4">
+                  <h4 className="font-medium mb-2">User Authentication</h4>
+                  <p className="text-sm text-gray-600">Extend existing authentication to include promoter-specific permissions.</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>
