@@ -1,11 +1,9 @@
-
 import React, { useState } from 'react';
 import { Check, MapPin, X } from 'lucide-react';
 import { useUserVisits } from '@/hooks/useUserVisits';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 
@@ -20,7 +18,7 @@ const CheckInButton: React.FC<CheckInButtonProps> = ({ establishmentId, establis
   const [note, setNote] = useState('');
   const [isCheckingIn, setIsCheckingIn] = useState(false);
   const { recordVisit, verifyLocationAndRecordVisit } = useUserVisits();
-  const { location, isLoading: locationLoading, error: locationError } = useUserLocation();
+  const { userLocation: location, isLoading: locationLoading, error: locationError } = useUserLocation();
   const { toast } = useToast();
 
   const handleCheckIn = async () => {

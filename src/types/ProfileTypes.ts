@@ -1,7 +1,16 @@
+
 /**
  * ProfileTypes.ts
  * Centralized type definitions for profile-related components
  */
+
+import { 
+  UserVisit, 
+  VisitNote, 
+  TriedMocktail, 
+  UserVisitAchievement, 
+  UserNotification 
+} from './VisitTypes';
 
 // Basic establishment type
 export interface Establishment {
@@ -17,6 +26,7 @@ export interface Establishment {
   phone?: string;
   website?: string;
   created_at?: string;
+  distance?: string; // Add distance property for compatibility
 }
 
 // Cocktail type used in FavoritesTab
