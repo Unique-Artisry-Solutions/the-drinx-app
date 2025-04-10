@@ -1,8 +1,8 @@
 
 import React from 'react';
-import CategoryCard from '../components/CategoryCard';
-import RecentFeaturesList from '../components/RecentFeaturesList';
-import { FeatureItem } from '../types';
+import CategoryCard from './components/CategoryCard';
+import RecentFeaturesList from './components/RecentFeaturesList';
+import { FeatureItem } from './types';
 import { Ticket, Users, Shield, BarChart3 } from 'lucide-react';
 
 interface CategoriesTabProps {
