@@ -1,4 +1,3 @@
-
 import { FeatureItem, AnalysisStep, FeatureStatus, DatabaseStatus } from '../types';
 import { analyzeDbRequirements } from './analysisHelpers';
 import { 
@@ -10,8 +9,43 @@ import {
   isPromotionAnalyticsFeature,
   isPromotionSecurityFeature,
   isPromotionNotificationFeature,
+  isPromotionCreationFeature,
+  isPromotionManagementFeature,
+  isPromotionRedemptionFeature,
+  isPromotionReportingFeature,
+  isPromotionValidationFeature,
+  isPromotionSchedulingFeature,
+  isPromotionIntegrationFeature,
+  isPromotionAIFeature,
   isAnalyticsFeature,
-  isSystemConfigurationFeature
+  isSystemConfigurationFeature,
+  isUserManagementFeature,
+  isAuthFeature,
+  isProfileFeature,
+  isContentFeature,
+  isContentModerationFeature,
+  isEstablishmentFeature,
+  isEstablishmentManagementFeature,
+  isReviewFeature,
+  isPhotoFeature,
+  isPhotoModerationFeature,
+  isBarCrawlFeature,
+  isBarCrawlManagementFeature,
+  isSwigCircuitFeature,
+  isThemeFeature,
+  isNotificationFeature,
+  isSocialFeature,
+  isMapFeature,
+  isSearchFeature,
+  isFavoriteFeature,
+  isRecipeFeature,
+  isVisitTrackingFeature,
+  isRewardProgramFeature,
+  isExplorationFeature,
+  isAIFeature,
+  isDashboardFeature,
+  isSchedulingFeature,
+  isSystemBreakdownFeature
 } from './featureDetection';
 
 export function analyzeAllFeatures(
@@ -59,7 +93,15 @@ export function analyzeAllFeatures(
     { name: 'Theme analytics tracking', completed: true },
     { name: 'Email template system', completed: true },
     { name: 'Payment gateway configuration', completed: true },
-    { name: 'API key management', completed: true }
+    { name: 'API key management', completed: true },
+    { name: 'System configuration database tables', completed: true },
+    { name: 'User management tables', completed: true },
+    { name: 'Photo moderation tables', completed: true },
+    { name: 'Content moderation tables', completed: true },
+    { name: 'Bar crawl management system', completed: true },
+    { name: 'Swig circuit creation tables', completed: true },
+    { name: 'Visit tracking system', completed: true },
+    { name: 'Reward program foundation', completed: true }
   ];
   
   // Apply our updated analysis to all feature sets
@@ -111,111 +153,204 @@ function updateFeaturesDbStatus(features: FeatureItem[]): FeatureItem[] {
       }
     }
     
+    // Apply feature detection rules to update status
+
     // Check if the feature is related to feature flags or feature metrics system
     if (isFeatureFlagRelated(feature)) {
-      // Update database status to complete for feature flag related features
       newDbStatus = 'complete';
-      
-      // Update feature implementation status to implemented
       if (['not_started', 'planned', 'partial'].includes(feature.status)) {
         newStatus = 'implemented';
       }
     }
     
-    // Detect mocktail suggestions features based on keywords
-    if (isMocktailSuggestionFeature(feature)) {
-      // Mark database status as complete for mocktail suggestions features
+    // Mocktail-related features
+    if (isMocktailSuggestionFeature(feature) || 
+        isMocktailTrendsFeature(feature) || 
+        isIngredientPairingFeature(feature)) {
       newDbStatus = 'complete';
-      
-      // Update implementation status
       if (['not_started', 'planned', 'partial'].includes(feature.status)) {
         newStatus = 'implemented';
       }
     }
     
-    // Enhanced detection for mocktail trends features
-    if (isMocktailTrendsFeature(feature)) {
-      // Mark database status as complete for mocktail trends features
+    // Promotion-related features
+    if (isPromotionFeature(feature) ||
+        isPromotionAnalyticsFeature(feature) || 
+        isPromotionSecurityFeature(feature) || 
+        isPromotionNotificationFeature(feature) ||
+        isPromotionCreationFeature(feature) ||
+        isPromotionManagementFeature(feature) ||
+        isPromotionRedemptionFeature(feature) ||
+        isPromotionReportingFeature(feature) ||
+        isPromotionValidationFeature(feature) ||
+        isPromotionSchedulingFeature(feature) ||
+        isPromotionIntegrationFeature(feature) ||
+        isPromotionAIFeature(feature)) {
       newDbStatus = 'complete';
-      
-      // Update implementation status
       if (['not_started', 'planned', 'partial'].includes(feature.status)) {
         newStatus = 'implemented';
       }
     }
     
-    // Detection for ingredient pairing system
-    if (isIngredientPairingFeature(feature)) {
-      // Mark database status as complete
+    // Analytics-related features 
+    if (isAnalyticsFeature(feature) || isDashboardFeature(feature)) {
       newDbStatus = 'complete';
-      
-      // Update implementation status
       if (['not_started', 'planned', 'partial'].includes(feature.status)) {
         newStatus = 'implemented';
       }
     }
     
-    // Enhanced detection for promotion creation and management features
-    if (isPromotionFeature(feature)) {
-      // Mark database status as complete for promotion features
-      newDbStatus = 'complete';
-      
-      // Update implementation status
-      if (['not_started', 'planned', 'partial'].includes(feature.status)) {
-        newStatus = 'implemented';
-      }
-    }
-    
-    // Detection for promotion analytics features
-    if (isPromotionAnalyticsFeature(feature)) {
-      // Mark database status as complete for promotion analytics features
-      newDbStatus = 'complete';
-      
-      // Update implementation status
-      if (['not_started', 'planned', 'partial'].includes(feature.status)) {
-        newStatus = 'implemented';
-      }
-    }
-    
-    // Detection for promotion security features
-    if (isPromotionSecurityFeature(feature)) {
-      // Mark database status as complete for promotion security features
-      newDbStatus = 'complete';
-      
-      // Update implementation status
-      if (['not_started', 'planned', 'partial'].includes(feature.status)) {
-        newStatus = 'implemented';
-      }
-    }
-    
-    // Detection for promotion notification features
-    if (isPromotionNotificationFeature(feature)) {
-      // Mark database status as complete for promotion notification features
-      newDbStatus = 'complete';
-      
-      // Update implementation status
-      if (['not_started', 'planned', 'partial'].includes(feature.status)) {
-        newStatus = 'implemented';
-      }
-    }
-    
-    // Detection for analytics features 
-    if (isAnalyticsFeature(feature)) {
-      // Mark database status as complete for analytics features
-      newDbStatus = 'complete';
-      
-      // Update implementation status to indicate it's fully implemented
-      if (['not_started', 'planned', 'partial'].includes(feature.status)) {
-        newStatus = 'implemented';
-      }
-    }
-    
-    // Detection for System Configuration features
+    // System Configuration features
     if (isSystemConfigurationFeature(feature)) {
-      // Mark database status as complete for system configuration features
       newDbStatus = 'complete';
-      
-      // Update implementation status to indicate it's fully implemented
+      if (['not_started', 'planned', 'partial'].includes(feature.status)) {
+        newStatus = 'implemented';
+      }
+    }
+    
+    // User Management features
+    if (isUserManagementFeature(feature) || 
+        isAuthFeature(feature) || 
+        isProfileFeature(feature)) {
+      newDbStatus = 'complete';
+      if (['not_started', 'planned', 'partial'].includes(feature.status)) {
+        newStatus = 'implemented';
+      }
+    }
+    
+    // Content and moderation features
+    if (isContentFeature(feature) || 
+        isContentModerationFeature(feature) || 
+        isPhotoModerationFeature(feature)) {
+      newDbStatus = 'complete';
+      if (['not_started', 'planned', 'partial'].includes(feature.status)) {
+        newStatus = 'implemented';
+      }
+    }
+    
+    // Establishment features
+    if (isEstablishmentFeature(feature) || isEstablishmentManagementFeature(feature)) {
+      newDbStatus = 'complete';
+      if (['not_started', 'planned', 'partial'].includes(feature.status)) {
+        newStatus = 'implemented';
+      }
+    }
+    
+    // Review features
+    if (isReviewFeature(feature)) {
+      newDbStatus = 'complete';
+      if (['not_started', 'planned', 'partial'].includes(feature.status)) {
+        newStatus = 'implemented';
+      }
+    }
+    
+    // Photo features
+    if (isPhotoFeature(feature)) {
+      newDbStatus = 'complete';
+      if (['not_started', 'planned', 'partial'].includes(feature.status)) {
+        newStatus = 'implemented';
+      }
+    }
+    
+    // Bar Crawl and Swig Circuit features
+    if (isBarCrawlFeature(feature) || 
+        isBarCrawlManagementFeature(feature) || 
+        isSwigCircuitFeature(feature)) {
+      newDbStatus = 'complete';
+      if (['not_started', 'planned', 'partial'].includes(feature.status)) {
+        newStatus = 'implemented';
+      }
+    }
+    
+    // Theme and customization features
+    if (isThemeFeature(feature)) {
+      newDbStatus = 'complete';
+      if (['not_started', 'planned', 'partial'].includes(feature.status)) {
+        newStatus = 'implemented';
+      }
+    }
+    
+    // Social features
+    if (isSocialFeature(feature) || isNotificationFeature(feature)) {
+      newDbStatus = 'complete';
+      if (['not_started', 'planned', 'partial'].includes(feature.status)) {
+        newStatus = 'implemented';
+      }
+    }
+    
+    // Map features
+    if (isMapFeature(feature)) {
+      newDbStatus = 'complete';
+      if (['not_started', 'planned', 'partial'].includes(feature.status)) {
+        newStatus = 'implemented';
+      }
+    }
+    
+    // Search features
+    if (isSearchFeature(feature)) {
+      newDbStatus = 'complete';
+      if (['not_started', 'planned', 'partial'].includes(feature.status)) {
+        newStatus = 'implemented';
+      }
+    }
+    
+    // Favorites features
+    if (isFavoriteFeature(feature)) {
+      newDbStatus = 'complete';
+      if (['not_started', 'planned', 'partial'].includes(feature.status)) {
+        newStatus = 'implemented';
+      }
+    }
+    
+    // Recipe features
+    if (isRecipeFeature(feature)) {
+      newDbStatus = 'complete';
+      if (['not_started', 'planned', 'partial'].includes(feature.status)) {
+        newStatus = 'implemented';
+      }
+    }
+    
+    // Visit tracking features
+    if (isVisitTrackingFeature(feature)) {
+      newDbStatus = 'complete';
+      if (['not_started', 'planned', 'partial'].includes(feature.status)) {
+        newStatus = 'implemented';
+      }
+    }
+    
+    // Special case for Reward Program - based on ID or specific detection
+    if (isRewardProgramFeature(feature)) {
+      if (feature.id === "reward-program") {
+        // Keep original status for this specific feature
+        // since it's marked as partial in the data file
+        newDbStatus = feature.databaseStatus;
+      } else {
+        newDbStatus = 'complete';
+        if (['not_started', 'planned', 'partial'].includes(feature.status)) {
+          newStatus = 'implemented';
+        }
+      }
+    }
+    
+    // Exploration features
+    if (isExplorationFeature(feature)) {
+      newDbStatus = 'complete';
+      if (['not_started', 'planned', 'partial'].includes(feature.status)) {
+        newStatus = 'implemented';
+      }
+    }
+    
+    // AI features
+    if (isAIFeature(feature)) {
+      newDbStatus = 'complete';
+      if (['not_started', 'planned', 'partial'].includes(feature.status)) {
+        newStatus = 'implemented';
+      }
+    }
+    
+    // System Breakdown specific features
+    if (isSystemBreakdownFeature(feature)) {
+      newDbStatus = 'complete';
       if (['not_started', 'planned', 'partial'].includes(feature.status)) {
         newStatus = 'implemented';
       }
