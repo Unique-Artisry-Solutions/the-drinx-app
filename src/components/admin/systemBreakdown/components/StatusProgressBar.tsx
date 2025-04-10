@@ -13,15 +13,15 @@ const StatusProgressBar: React.FC<StatusProgressBarProps> = ({ label, count, tot
   const percentage = Math.round((count / total) * 100);
   
   return (
-    <div>
+    <div className="mb-3">
       <div className="flex justify-between mb-1">
         <div className="flex items-center">
-          {icon}
-          <span className="text-sm font-medium ml-2">{label}</span>
+          <span className="mr-2">{icon}</span>
+          <span className="text-sm font-medium">{label}</span>
         </div>
         <span className="text-sm font-medium">{count}/{total} ({percentage}%)</span>
       </div>
-      <div className="h-2 w-full bg-gray-100 rounded-full">
+      <div className="h-2 w-full bg-gray-200 rounded-full">
         <div 
           className={`${color} h-2 rounded-full`} 
           style={{ width: `${percentage}%` }}

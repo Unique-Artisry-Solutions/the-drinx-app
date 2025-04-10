@@ -8,12 +8,12 @@ interface ComparisonItemProps {
 }
 
 const ComparisonItem: React.FC<ComparisonItemProps> = ({ label, percentage, color }) => (
-  <div>
+  <div className="mb-3">
     <div className="flex justify-between mb-1">
-      <span className="text-sm">{label}</span>
+      <span className="text-sm font-medium">{label}</span>
       <span className="text-sm font-medium">{percentage}%</span>
     </div>
-    <div className="h-2 w-full bg-gray-100 rounded-full">
+    <div className="h-2 w-full bg-gray-200 rounded-full">
       <div 
         className={`${color} h-2 rounded-full`} 
         style={{ width: `${percentage}%` }}
