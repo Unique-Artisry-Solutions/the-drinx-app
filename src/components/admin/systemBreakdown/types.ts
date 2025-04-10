@@ -7,8 +7,6 @@ export type DatabaseStatus = 'not_started' | 'in_progress' | 'implemented' | 'co
 export type FeatureComplexity = 'low' | 'medium' | 'high';
 export type FeatureImpact = 'low' | 'medium' | 'high';
 export type AccessLevel = 'none' | 'read' | 'write' | 'full';
-export type FeatureBusinessValue = 'low' | 'medium' | 'high';
-export type FeatureShowcaseCategory = 'AI & Recommendations' | 'Social Experience' | 'Business Analytics' | 'User Engagement' | 'Management Tools' | 'Customization' | 'Loyalty & Rewards';
 export type FeatureCategory = 'admin' | 'establishment' | 'individual' | 'promoter';
 
 // Main feature item definition
@@ -24,15 +22,15 @@ export interface FeatureItem {
   implementationProgress?: number; // 0-100
   statusUpdated?: boolean; // Used to mark when status has been updated
   dbStatus?: DatabaseStatus;
+  databaseStatus?: DatabaseStatus; // Legacy property, use dbStatus instead
   originalStatus?: FeatureStatus;
   dbRequirementsText?: string; // Free text describing DB requirements
   tags?: string[]; // Used to categorize features
   
-  // Additional properties used in components
+  // Additional properties
   adminAccess?: AccessLevel;
   establishmentAccess?: AccessLevel;
   individualAccess?: AccessLevel;
-  databaseStatus?: DatabaseStatus; // Legacy property, use dbStatus instead
   databaseAnalysis?: string; // Analysis text for database status
   testSteps?: string[]; // Steps to test the feature
 }
@@ -67,11 +65,14 @@ export interface ProgressSnapshot {
   individualImplementationRate: number;
   promoterImplementationRate: number;
   
-  // Additional properties used in components
+  // Additional properties
   date?: string;
   dbComplete?: number;
   overallProgress?: number;
   confidenceScore?: number;
+  adminProgress?: number;
+  establishmentProgress?: number;
+  individualProgress?: number;
 }
 
 // Used for the historical progress chart
@@ -82,40 +83,45 @@ export interface MonthlyProgressData {
   snapshots?: number; // Used only internally for calculation
 }
 
-// Data for the feature showcase
-export interface FeatureShowcaseCategory {
+// Feature showcase category object
+export interface FeatureShowcaseCategoryObject {
   name: string;
   description: string;
   featureCount: number;
   implementationRate: number;
-  icon?: LucideIcon;
+  icon?: LucideIcon | { name: string };
   features: FeatureItem[];
 }
 
-export interface FeatureBusinessValue {
+// Feature business value object
+export interface FeatureBusinessValueObject {
   name: string;
   description: string;
   featureCount: number;
   implementationRate: number;
   features: FeatureItem[];
 }
+
+// Feature showcase types
+export type FeatureShowcaseCategoryType = 'AI & Recommendations' | 'Social Experience' | 'Business Analytics' | 'User Engagement' | 'Management Tools' | 'Customization' | 'Loyalty & Rewards';
+export type FeatureBusinessValueType = 'low' | 'medium' | 'high';
 
 // Feature showcase data type
 export interface FeatureShowcaseData {
   id: string;
   name: string;
   description: string;
-  businessValue: FeatureBusinessValue;
+  businessValue: FeatureBusinessValueType;
   complexity: FeatureComplexity;
   implementationStatus: FeatureStatus;
-  showcaseCategory: FeatureShowcaseCategory;
+  showcaseCategory: FeatureShowcaseCategoryType;
   marketingPoints?: string[];
   isSignature: boolean;
   implementations?: number;
   avgRating?: number;
   icon?: string;
-  categories?: FeatureShowcaseCategory[];
-  businessValues?: FeatureBusinessValue[];
+  categories?: FeatureShowcaseCategoryObject[];
+  businessValues?: FeatureBusinessValueObject[];
 }
 
 // For improvements tab
@@ -130,7 +136,19 @@ export interface ImprovementItem {
   votes: number;
   submittedBy: string;
   submittedDate: string;
+  
+  // Additional properties
+  type: 'enhancement' | 'new-feature';
+  name?: string; // Alias for title for compatibility
+  priority?: FeatureImpact; // Alias for impact for compatibility
+  lovableCompatible?: boolean;
+  technicalRequirements?: string;
+  implementationSteps: string[];
+  estimatedEffort: string;
+  businessImpact: string;
+  currentStatus?: string;
+  affectedAreas: ('admin' | 'establishment' | 'individual')[];
 }
 
-export type SortField = 'title' | 'impact' | 'effort' | 'status' | 'votes' | 'submittedDate';
+export type SortField = 'title' | 'impact' | 'effort' | 'status' | 'votes' | 'submittedDate' | 'name' | 'priority' | 'type' | 'lovableCompatible';
 export type SortOrder = 'asc' | 'desc';

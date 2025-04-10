@@ -1,4 +1,3 @@
-
 import { FeatureItem } from '../types';
 
 export const adminFeatures: FeatureItem[] = [
@@ -11,6 +10,8 @@ export const adminFeatures: FeatureItem[] = [
     establishmentAccess: "none",
     individualAccess: "none",
     databaseStatus: "complete",
+    userImpact: "high",
+    complexity: "medium",
     databaseAnalysis: `
       Database Implementation:
       - [x] Users table implemented with necessary fields
@@ -36,6 +37,8 @@ export const adminFeatures: FeatureItem[] = [
     establishmentAccess: "none",
     individualAccess: "none",
     databaseStatus: "complete",
+    userImpact: "high",
+    complexity: "medium",
     databaseAnalysis: `
       Database Implementation:
       - [x] Establishments table implemented with necessary fields
@@ -60,6 +63,8 @@ export const adminFeatures: FeatureItem[] = [
     establishmentAccess: "none",
     individualAccess: "none",
     databaseStatus: "complete",
+    userImpact: "high",
+    complexity: "medium",
     databaseAnalysis: `
       Database Implementation:
       - [x] Bar crawls table implemented with necessary fields
@@ -85,6 +90,8 @@ export const adminFeatures: FeatureItem[] = [
     establishmentAccess: "none",
     individualAccess: "none",
     databaseStatus: "complete",
+    userImpact: "high",
+    complexity: "medium",
     databaseAnalysis: `
       Database Implementation:
       - [x] Content table implemented with necessary fields
@@ -108,6 +115,8 @@ export const adminFeatures: FeatureItem[] = [
     establishmentAccess: "none",
     individualAccess: "none",
     databaseStatus: "complete",
+    userImpact: "high",
+    complexity: "medium",
     databaseAnalysis: `
       Database Implementation:
       - [x] Settings table implemented with necessary fields
@@ -134,6 +143,8 @@ export const adminFeatures: FeatureItem[] = [
     establishmentAccess: "none",
     individualAccess: "none",
     databaseStatus: "complete",
+    userImpact: "high",
+    complexity: "medium",
     databaseAnalysis: `
       Database Implementation:
       - [x] Analytics data tables implemented with necessary fields
@@ -157,6 +168,8 @@ export const adminFeatures: FeatureItem[] = [
     establishmentAccess: "none",
     individualAccess: "none",
     databaseStatus: "complete",
+    userImpact: "high",
+    complexity: "medium",
     databaseAnalysis: `
       Database Implementation:
       - [x] Photos table implemented with necessary fields
@@ -181,6 +194,8 @@ export const adminFeatures: FeatureItem[] = [
     establishmentAccess: "none",
     individualAccess: "none",
     databaseStatus: "complete",
+    userImpact: "high",
+    complexity: "medium",
     databaseAnalysis: `
       Database Implementation:
       - [x] Feature status tracking table implemented
@@ -199,11 +214,13 @@ export const adminFeatures: FeatureItem[] = [
     id: "admin-9",
     name: "Content Moderation",
     description: "Review and moderate user-generated content that has been flagged as inappropriate or violating community guidelines.",
-    status: "implemented", // Updated from "planned" or "partial" to "implemented"
+    status: "implemented",
     adminAccess: "full",
     establishmentAccess: "none",
     individualAccess: "none",
-    databaseStatus: "complete", // Updated to complete
+    databaseStatus: "complete",
+    userImpact: "high",
+    complexity: "medium",
     databaseAnalysis: `
       Database Implementation:
       - [x] content_flags table implemented for tracking reported items

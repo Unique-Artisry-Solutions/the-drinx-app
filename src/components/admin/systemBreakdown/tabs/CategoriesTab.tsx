@@ -24,6 +24,7 @@ const CategoriesTab: React.FC<CategoriesTabProps> = ({
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Create CategoryCard components with the correct prop structure */}
         <CategoryCard 
           title="Admin Features"
           totalFeatures={adminFeatures.length}

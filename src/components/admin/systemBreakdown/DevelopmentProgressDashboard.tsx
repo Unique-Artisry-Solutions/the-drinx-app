@@ -1,11 +1,10 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { BarChart3, LineChart } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Shield } from 'lucide-react';
-import { FeatureItem, MonthlyProgressData } from './types';
+import { FeatureItem, MonthlyProgressData, ProgressSnapshot } from './types';
 
 // Import our new tab components
 import OverviewTab from './tabs/OverviewTab';
@@ -17,8 +16,10 @@ interface DevelopmentProgressDashboardProps {
   adminFeatures: FeatureItem[];
   establishmentFeatures: FeatureItem[];
   individualFeatures: FeatureItem[];
+  promoterFeatures?: FeatureItem[];
   monthlyProgressData?: MonthlyProgressData[];
   confidenceScore?: number;
+  currentSnapshot?: ProgressSnapshot;
 }
 
 /**
@@ -49,13 +50,15 @@ const DevelopmentProgressDashboard: React.FC<DevelopmentProgressDashboardProps> 
   adminFeatures,
   establishmentFeatures,
   individualFeatures,
+  promoterFeatures = [],
   monthlyProgressData = [],
-  confidenceScore = 95
+  confidenceScore = 95,
+  currentSnapshot
 }) => {
   const [activeTab, setActiveTab] = useState<string>('overview');
   
   // Combine all features for analysis
-  const allFeatures = [...adminFeatures, ...establishmentFeatures, ...individualFeatures];
+  const allFeatures = [...adminFeatures, ...establishmentFeatures, ...individualFeatures, ...promoterFeatures];
   
   // Calculate overall implementation progress
   const totalFeatures = allFeatures.length;
@@ -81,6 +84,7 @@ const DevelopmentProgressDashboard: React.FC<DevelopmentProgressDashboardProps> 
   const adminProgress = calculateCategoryProgress(adminFeatures);
   const establishmentProgress = calculateCategoryProgress(establishmentFeatures);
   const individualProgress = calculateCategoryProgress(individualFeatures);
+  const promoterProgress = calculateCategoryProgress(promoterFeatures);
 
   // Use provided monthly progress data or fall back to simple simulation
   const monthlyProgress = monthlyProgressData.length > 0 
@@ -135,6 +139,7 @@ const DevelopmentProgressDashboard: React.FC<DevelopmentProgressDashboardProps> 
               partialFeatures={partialFeatures}
               totalFeatures={totalFeatures}
               confidenceScore={confidenceScore}
+              currentSnapshot={currentSnapshot}
             />
           </TabsContent>
           
@@ -144,9 +149,11 @@ const DevelopmentProgressDashboard: React.FC<DevelopmentProgressDashboardProps> 
               adminFeatures={adminFeatures}
               establishmentFeatures={establishmentFeatures}
               individualFeatures={individualFeatures}
+              promoterFeatures={promoterFeatures}
               adminProgress={adminProgress}
               establishmentProgress={establishmentProgress}
               individualProgress={individualProgress}
+              promoterProgress={promoterProgress}
             />
           </TabsContent>
           

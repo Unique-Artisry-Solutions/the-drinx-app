@@ -1,71 +1,78 @@
 
-import { FeatureItem, FeatureStatus } from '../types';
-import { ReleaseFeature, ReleaseFeatureStatus } from '../types/releaseTypes';
-import { v4 as uuidv4 } from 'uuid';
+import { FeatureItem, FeatureStatus, ReleaseFeature, ReleaseStatus } from '../types';
 
 /**
- * Maps system feature status to release feature status
+ * Maps feature status to release status
  */
-export function mapFeatureStatusToReleaseStatus(status: FeatureStatus): ReleaseFeatureStatus {
+export function mapFeatureStatusToReleaseStatus(status: FeatureStatus): ReleaseStatus {
   switch (status) {
     case 'implemented':
-      return 'completed';
-    case 'partial':
-      return 'in_progress';
+      return 'released';
+    case 'in_progress':
+      return 'in_development';
     case 'planned':
-    case 'not_started':
-      return 'pending';
+      return 'planned';
+    case 'blocked':
+      return 'planned';
+    case 'partial':
+      return 'in_development';
     default:
-      return 'pending';
+      return 'planned';
   }
 }
 
 /**
- * Maps system features to release features format
+ * Converts a list of feature items to release features
  */
 export function mapFeaturesToReleaseFeatures(
-  features: FeatureItem[], 
-  skipStatuses?: FeatureStatus[]
+  features: FeatureItem[],
+  releaseDate: string
 ): ReleaseFeature[] {
-  return features
-    .filter(feature => !skipStatuses || !skipStatuses.includes(feature.status))
-    .map(feature => ({
-      id: `feature-${uuidv4().slice(0, 8)}`,
+  return features.map(feature => {
+    const completeDate = new Date(releaseDate);
+    completeDate.setDate(completeDate.getDate() + 14); // Two weeks after release date
+    
+    return {
+      id: feature.id,
       name: feature.name,
-      description: feature.description || '',
-      status: mapFeatureStatusToReleaseStatus(feature.status),
-      notes: feature.databaseAnalysis || undefined
-    }));
+      description: feature.description,
+      status: feature.status === 'implemented' ? 'completed' : 'in_progress',
+      notes: feature.databaseAnalysis,
+      startDate: new Date().toISOString().split('T')[0],
+      completionDate: completeDate.toISOString().split('T')[0],
+      percentComplete: feature.implementationProgress || 0
+    };
+  });
 }
 
 /**
- * Creates a date string that is X months from now (for planned release date)
+ * Groups features by their implementation status
  */
-export function getDateMonthsFromNow(months: number): string {
-  const date = new Date();
-  date.setMonth(date.getMonth() + months);
-  return date.toISOString().split('T')[0]; // YYYY-MM-DD format
-}
-
-/**
- * Groups features by status
- */
-export function groupFeaturesByStatus(
-  adminFeatures: FeatureItem[],
-  establishmentFeatures: FeatureItem[],
-  individualFeatures: FeatureItem[]
-): Record<FeatureStatus, FeatureItem[]> {
-  const result: Record<FeatureStatus, FeatureItem[]> = {
+export function groupFeaturesByStatus(features: FeatureItem[]): Record<string, FeatureItem[]> {
+  const result: Record<string, FeatureItem[]> = {
     implemented: [],
-    partial: [],
+    in_progress: [],
     planned: [],
+    blocked: [],
+    partial: [],
     not_started: []
   };
   
-  const allFeatures = [...adminFeatures, ...establishmentFeatures, ...individualFeatures];
-  
-  allFeatures.forEach(feature => {
-    result[feature.status].push(feature);
+  features.forEach(feature => {
+    if (feature.status === 'implemented') {
+      result.implemented.push(feature);
+    } else if (feature.status === 'in_progress') {
+      result.in_progress.push(feature);
+    } else if (feature.status === 'planned') {
+      result.planned.push(feature);
+    } else if (feature.status === 'blocked') {
+      result.blocked.push(feature);
+    } else if (feature.status === 'partial') {
+      result.partial.push(feature);
+    } else {
+      // For any unexpected status values, default to not_started
+      result.not_started.push(feature);
+    }
   });
   
   return result;

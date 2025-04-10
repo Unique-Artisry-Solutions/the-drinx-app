@@ -1,4 +1,3 @@
-
 import { FeatureItem } from '../types';
 
 export const establishmentFeatures: FeatureItem[] = [
@@ -11,6 +10,8 @@ export const establishmentFeatures: FeatureItem[] = [
     establishmentAccess: "full",
     individualAccess: "none",
     databaseStatus: "complete",
+    userImpact: "high",
+    complexity: "medium",
     testSteps: [
       "Log in as establishment owner",
       "Verify key metrics are displayed correctly",
@@ -28,6 +29,8 @@ export const establishmentFeatures: FeatureItem[] = [
     establishmentAccess: "full",
     individualAccess: "none",
     databaseStatus: "complete",
+    userImpact: "medium",
+    complexity: "low",
     testSteps: [
       "Navigate to Menu Management section",
       "Create a new mocktail with ingredients and price",
@@ -45,6 +48,8 @@ export const establishmentFeatures: FeatureItem[] = [
     establishmentAccess: "full",
     individualAccess: "none",
     databaseStatus: "complete",
+    userImpact: "medium",
+    complexity: "low",
     testSteps: [
       "Access Analytics dashboard",
       "Check visitor statistics for accuracy",
@@ -62,6 +67,8 @@ export const establishmentFeatures: FeatureItem[] = [
     establishmentAccess: "full",
     individualAccess: "none",
     databaseStatus: "complete",
+    userImpact: "medium",
+    complexity: "low",
     testSteps: [
       "Navigate to Profile Management",
       "Update business hours",
@@ -79,6 +86,8 @@ export const establishmentFeatures: FeatureItem[] = [
     establishmentAccess: "full",
     individualAccess: "none",
     databaseStatus: "complete",
+    userImpact: "medium",
+    complexity: "low",
     testSteps: [
       "Access Promotion Creation section",
       "Create a new limited-time offer",
@@ -96,6 +105,8 @@ export const establishmentFeatures: FeatureItem[] = [
     establishmentAccess: "full",
     individualAccess: "none",
     databaseStatus: "complete",
+    userImpact: "medium",
+    complexity: "low",
     testSteps: [
       "Navigate to Reviews section",
       "View customer reviews",
@@ -113,6 +124,8 @@ export const establishmentFeatures: FeatureItem[] = [
     establishmentAccess: "full",
     individualAccess: "none",
     databaseStatus: "complete",
+    userImpact: "medium",
+    complexity: "low",
     testSteps: [
       "Access Swig Circuit Management",
       "View pending bar crawl inclusion requests",
@@ -130,6 +143,8 @@ export const establishmentFeatures: FeatureItem[] = [
     establishmentAccess: "full",
     individualAccess: "none",
     databaseStatus: "complete",
+    userImpact: "medium",
+    complexity: "low",
     testSteps: [
       "Navigate to Mocktail Suggestions section",
       "View user-submitted suggestions",

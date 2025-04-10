@@ -1,141 +1,93 @@
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { FeatureShowcaseData } from '../types';
-import * as Icons from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { Star } from 'lucide-react';
+import { FeatureBusinessValueObject, FeatureShowcaseData } from '../types';
 
 interface BusinessValueSectionProps {
-  features: FeatureShowcaseData[];
+  values: FeatureBusinessValueObject[];
 }
 
-interface BusinessValueConfig {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  color: string;
-}
-
-const BusinessValueSection: React.FC<BusinessValueSectionProps> = ({ features }) => {
-  // Group features by business value
-  const highValueFeatures = features.filter(f => f.businessValue === 'high');
-  const mediumValueFeatures = features.filter(f => f.businessValue === 'medium');
-  const lowValueFeatures = features.filter(f => f.businessValue === 'low');
-  
-  // Configuration for each business value level
-  const valueConfigs: Record<string, BusinessValueConfig> = {
+const BusinessValueSection: React.FC<BusinessValueSectionProps> = ({ values }) => {
+  const priorityColorClasses = {
     high: {
-      icon: <Icons.TrendingUp className="h-6 w-6 text-purple-600" />,
-      title: "High Business Value",
-      description: "Features with significant impact on revenue, user engagement, and competitive advantage",
-      color: "border-purple-200 bg-purple-50"
+      card: 'border-purple-200',
+      badge: 'bg-purple-100 text-purple-800',
+      icon: 'text-purple-500',
     },
     medium: {
-      icon: <Icons.BarChart2 className="h-6 w-6 text-blue-600" />,
-      title: "Medium Business Value",
-      description: "Features that provide moderate benefits to user experience and business operations",
-      color: "border-blue-200 bg-blue-50"
+      card: 'border-blue-200',
+      badge: 'bg-blue-100 text-blue-800',
+      icon: 'text-blue-500',
     },
     low: {
-      icon: <Icons.CircleDot className="h-6 w-6 text-green-600" />,
-      title: "Supporting Features",
-      description: "Features that round out the platform and provide incremental improvements",
-      color: "border-green-200 bg-green-50"
-    }
+      card: 'border-gray-200',
+      badge: 'bg-gray-100 text-gray-800',
+      icon: 'text-gray-500',
+    },
   };
-  
-  // If we have no features to display
-  if (features.length === 0) {
+
+  // If no values are provided, show a message
+  if (!values || values.length === 0) {
     return (
       <div className="text-center py-12">
-        <Icons.BarChart className="h-12 w-12 mx-auto text-gray-300 mb-3" />
-        <h3 className="text-lg font-medium text-gray-600">No features to display</h3>
-        <p className="text-gray-500 mt-2">Try changing your search or filter criteria.</p>
+        <Star className="h-12 w-12 mx-auto text-gray-300 mb-3" />
+        <h3 className="text-lg font-medium text-gray-600">No business value data available</h3>
+        <p className="text-gray-500 mt-2">Try analyzing features to generate business value insights.</p>
       </div>
     );
   }
 
-  // Helper to render the features for a specific value level
-  const renderFeatureList = (valueFeatures: FeatureShowcaseData[]) => {
-    if (valueFeatures.length === 0) {
-      return <p className="text-gray-500 italic">No features in this category</p>;
-    }
-    
-    return (
-      <div className="space-y-3 mt-4">
-        {valueFeatures.map(feature => (
-          <div key={feature.id} className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              {feature.isSignature && (
-                <Icons.Star className="h-4 w-4 text-yellow-500" />
-              )}
-              <span className="font-medium">{feature.name}</span>
-              <span className="text-sm text-gray-500 hidden md:inline">— {feature.description.slice(0, 60)}{feature.description.length > 60 ? '...' : ''}</span>
-            </div>
-            <Badge className={feature.implementationStatus === 'implemented' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'}>
-              {feature.implementationStatus}
-            </Badge>
-          </div>
-        ))}
-      </div>
-    );
-  };
-
   return (
     <div className="space-y-6">
-      {/* High Value Features */}
-      <Card className={`${valueConfigs.high.color} border-2`}>
-        <CardHeader className="pb-2">
-          <div className="flex items-center gap-3">
-            <div className="bg-white bg-opacity-50 p-2 rounded-lg">
-              {valueConfigs.high.icon}
-            </div>
-            <div>
-              <CardTitle>{valueConfigs.high.title}</CardTitle>
-              <p className="text-sm text-gray-600">{valueConfigs.high.description}</p>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {renderFeatureList(highValueFeatures)}
-        </CardContent>
-      </Card>
-      
-      {/* Medium Value Features */}
-      <Card className={`${valueConfigs.medium.color} border-2`}>
-        <CardHeader className="pb-2">
-          <div className="flex items-center gap-3">
-            <div className="bg-white bg-opacity-50 p-2 rounded-lg">
-              {valueConfigs.medium.icon}
-            </div>
-            <div>
-              <CardTitle>{valueConfigs.medium.title}</CardTitle>
-              <p className="text-sm text-gray-600">{valueConfigs.medium.description}</p>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {renderFeatureList(mediumValueFeatures)}
-        </CardContent>
-      </Card>
-      
-      {/* Low Value Features */}
-      <Card className={`${valueConfigs.low.color} border-2`}>
-        <CardHeader className="pb-2">
-          <div className="flex items-center gap-3">
-            <div className="bg-white bg-opacity-50 p-2 rounded-lg">
-              {valueConfigs.low.icon}
-            </div>
-            <div>
-              <CardTitle>{valueConfigs.low.title}</CardTitle>
-              <p className="text-sm text-gray-600">{valueConfigs.low.description}</p>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {renderFeatureList(lowValueFeatures)}
-        </CardContent>
-      </Card>
+      {values.map((value) => {
+        // Convert value.name to lowercase to match our keys
+        const priority = value.name.toLowerCase().includes('high') ? 'high' : 
+                         value.name.toLowerCase().includes('medium') ? 'medium' : 'low';
+        const colors = priorityColorClasses[priority as keyof typeof priorityColorClasses];
+        
+        return (
+          <Card key={value.name} className={`${colors.card} border`}>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Badge className={`mr-2 ${colors.badge}`}>
+                  {priority.charAt(0).toUpperCase() + priority.slice(1)} Value
+                </Badge>
+                {value.name}
+              </CardTitle>
+              <CardDescription>{value.description}</CardDescription>
+            </CardHeader>
+            
+            <CardContent>
+              <div className="mb-4">
+                <div className="flex justify-between mb-1">
+                  <span className="text-sm font-medium">Implementation Progress</span>
+                  <span className="text-sm font-medium">{value.implementationRate}%</span>
+                </div>
+                <Progress value={value.implementationRate} className="h-2" />
+              </div>
+              
+              <div className="space-y-3">
+                {value.features.map((feature) => (
+                  <div key={feature.id} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      {feature.isSignature && (
+                        <Star className="h-4 w-4 text-yellow-500" />
+                      )}
+                      <span className="font-medium">{feature.name}</span>
+                    </div>
+                    <Badge className={feature.status === 'implemented' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'}>
+                      {feature.status}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })}
     </div>
   );
 };

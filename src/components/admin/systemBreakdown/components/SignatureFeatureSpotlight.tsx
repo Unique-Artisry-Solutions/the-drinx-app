@@ -3,14 +3,26 @@ import React from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Star } from 'lucide-react';
-import { FeatureShowcaseData } from '../types';
+import { FeatureShowcaseData, FeatureItem } from '../types';
 import * as Icons from 'lucide-react';
 
+// Interface for the component when used with FeatureShowcaseData
 interface SignatureFeatureSpotlightProps {
   features: FeatureShowcaseData[];
 }
 
-const SignatureFeatureSpotlight: React.FC<SignatureFeatureSpotlightProps> = ({ features }) => {
+// Interface for the component when used with FeatureItem
+interface LegacySignatureFeatureSpotlightProps {
+  feature: FeatureItem;
+}
+
+type Props = SignatureFeatureSpotlightProps | LegacySignatureFeatureSpotlightProps;
+
+const SignatureFeatureSpotlight: React.FC<Props> = (props) => {
+  // Check which type of props we received
+  const isLegacy = 'feature' in props;
+  const features = isLegacy ? [mapFeatureItemToShowcaseData(props.feature)] : props.features;
+  
   // If we have no signature features, show a message
   if (features.length === 0) {
     return (
@@ -89,5 +101,23 @@ const SignatureFeatureSpotlight: React.FC<SignatureFeatureSpotlightProps> = ({ f
     </div>
   );
 };
+
+// Helper function to map a FeatureItem to FeatureShowcaseData
+function mapFeatureItemToShowcaseData(feature: FeatureItem): FeatureShowcaseData {
+  return {
+    id: feature.id,
+    name: feature.name,
+    description: feature.description,
+    businessValue: (feature.userImpact as FeatureBusinessValueType) || 'medium',
+    complexity: feature.complexity || 'medium',
+    implementationStatus: feature.status,
+    showcaseCategory: 'Management Tools', // Default category
+    isSignature: true,
+    icon: 'Star',
+    implementations: 0,
+    avgRating: 0,
+    marketingPoints: []
+  };
+}
 
 export default SignatureFeatureSpotlight;

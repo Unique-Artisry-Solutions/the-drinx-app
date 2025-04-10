@@ -19,7 +19,6 @@ export const useReleaseFeatures = (
   const handleCreateReleaseFromFeatures = () => {
     // Create a simulated release from ready features
     const releaseDate = getDateMonthsFromNow(1);
-    const completionDate = getDateMonthsFromNow(2);
     
     // Get all ready features (implemented >= 80%)
     const readyFeatures = [
@@ -32,8 +31,8 @@ export const useReleaseFeatures = (
       (feature.status === 'in_progress' || feature.status === 'implemented')
     );
     
-    // Map features to release features format
-    const releaseFeatures = mapFeaturesToReleaseFeatures(readyFeatures, releaseDate, completionDate);
+    // Map features to release features format - fix the argument count
+    const releaseFeatures = mapFeaturesToReleaseFeatures(readyFeatures, releaseDate);
     
     // In a real implementation, this would save to Supabase
     console.log('Creating release with features:', releaseFeatures);

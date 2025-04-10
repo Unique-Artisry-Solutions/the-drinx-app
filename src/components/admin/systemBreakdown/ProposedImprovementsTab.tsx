@@ -7,15 +7,16 @@ import { Button } from '@/components/ui/button';
 import { ChevronDown, ChevronUp, PlusCircle, Rocket, Star, ArrowUpDown, Check, AlertTriangle } from 'lucide-react';
 import { ImprovementItem, SortField, SortOrder } from './types';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { improvementsData } from './improvementsData';
 
 interface ProposedImprovementsTabProps {
-  improvements: ImprovementItem[];
+  improvements?: ImprovementItem[];
 }
 
-const ProposedImprovementsTab: React.FC<ProposedImprovementsTabProps> = ({ improvements }) => {
+const ProposedImprovementsTab: React.FC<ProposedImprovementsTabProps> = ({ improvements = improvementsData }) => {
   const [expandedRows, setExpandedRows] = useState<Record<number, boolean>>({});
-  const [sortField, setSortField] = useState<SortField>('priority');
-  const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
+  const [sortField, setSortField] = useState<SortField>('votes');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
 
   const toggleRow = (index: number) => {
     setExpandedRows(prev => ({
@@ -38,12 +39,25 @@ const ProposedImprovementsTab: React.FC<ProposedImprovementsTabProps> = ({ impro
       let comparison = 0;
       
       switch (sortField) {
-        case 'name':
-          comparison = a.name.localeCompare(b.name);
+        case 'title':
+          comparison = a.title.localeCompare(b.title);
           break;
-        case 'priority':
-          const priorityOrder = { high: 3, medium: 2, low: 1 };
-          comparison = priorityOrder[a.priority] - priorityOrder[b.priority];
+        case 'impact':
+          const impactOrder = { high: 3, medium: 2, low: 1 };
+          comparison = impactOrder[a.impact] - impactOrder[b.impact];
+          break;
+        case 'effort':
+          const effortOrder = { high: 3, medium: 2, low: 1 };
+          comparison = effortOrder[a.effort] - effortOrder[b.effort];
+          break;
+        case 'status':
+          comparison = a.status.localeCompare(b.status);
+          break;
+        case 'votes':
+          comparison = a.votes - b.votes;
+          break;
+        case 'submittedDate':
+          comparison = new Date(a.submittedDate).getTime() - new Date(b.submittedDate).getTime();
           break;
         case 'type':
           comparison = a.type.localeCompare(b.type);
@@ -53,14 +67,22 @@ const ProposedImprovementsTab: React.FC<ProposedImprovementsTabProps> = ({ impro
           const bCompatible = b.lovableCompatible ?? false;
           comparison = Number(aCompatible) - Number(bCompatible);
           break;
+        // Add support for the renamed fields
+        case 'name':
+          comparison = a.title.localeCompare(b.title); // Use title since name is an alias
+          break;
+        case 'priority':
+          const priorityOrder = { high: 3, medium: 2, low: 1 };
+          comparison = priorityOrder[a.impact] - priorityOrder[b.impact]; // Use impact since priority is an alias
+          break;
       }
       
       return sortOrder === 'asc' ? comparison : -comparison;
     });
   }, [improvements, sortField, sortOrder]);
 
-  const renderPriorityBadge = (priority: 'high' | 'medium' | 'low') => {
-    switch (priority) {
+  const renderImpactBadge = (impact: 'high' | 'medium' | 'low') => {
+    switch (impact) {
       case 'high':
         return <Badge className="bg-red-500 hover:bg-red-600">High</Badge>;
       case 'medium':
@@ -98,8 +120,8 @@ const ProposedImprovementsTab: React.FC<ProposedImprovementsTabProps> = ({ impro
   const renderLovableCompatibility = (item: ImprovementItem) => {
     // Fixed line with proper parentheses
     const isCompatible = item.lovableCompatible ?? (
-      !item.technicalRequirements.toLowerCase().includes('expertise') && 
-      !item.technicalRequirements.toLowerCase().includes('ar ')
+      !item.technicalRequirements?.toLowerCase().includes('expertise') && 
+      !item.technicalRequirements?.toLowerCase().includes('ar ')
     );
     
     return (
@@ -175,11 +197,11 @@ const ProposedImprovementsTab: React.FC<ProposedImprovementsTabProps> = ({ impro
             <TableRow>
               <TableHead className="w-[40px]"></TableHead>
               <TableHead className="w-1/5">
-                <SortButton field="name" label="Improvement" />
+                <SortButton field="title" label="Improvement" />
               </TableHead>
               <TableHead className="w-1/3">Description</TableHead>
               <TableHead>
-                <SortButton field="priority" label="Priority" />
+                <SortButton field="impact" label="Impact" />
               </TableHead>
               <TableHead>
                 <SortButton field="type" label="Type" />
@@ -211,11 +233,11 @@ const ProposedImprovementsTab: React.FC<ProposedImprovementsTabProps> = ({ impro
                         <Star className="h-4 w-4 text-amber-400 mr-1" /> : 
                         <span></span>
                       }
-                      {improvement.name}
+                      {improvement.title}
                     </div>
                   </TableCell>
                   <TableCell>{improvement.description}</TableCell>
-                  <TableCell>{renderPriorityBadge(improvement.priority)}</TableCell>
+                  <TableCell>{renderImpactBadge(improvement.impact)}</TableCell>
                   <TableCell>{renderTypeBadge(improvement.type)}</TableCell>
                   <TableCell>{renderAffectedAreas(improvement.affectedAreas)}</TableCell>
                   <TableCell>{renderLovableCompatibility(improvement)}</TableCell>
