@@ -62,8 +62,7 @@ export const useSystemBreakdown = () => {
       // Update progress tracking with new feature states
       const result = updateProgressTracking();
       
-      // Toast notification already happens in the handleAnalyzeFeatures function
-      // We just need to add validation warning if needed
+      // Show validation warning if needed
       if (!result.validation.isValid) {
         toast({
           title: "Data Validation Warning",

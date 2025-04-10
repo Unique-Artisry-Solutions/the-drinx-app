@@ -89,11 +89,13 @@ export const useAnalysisProcess = (
         duration: 5000,
       });
       
+      // Set analyzing to false to remove the progress bar
+      setAnalyzing(false);
+      
+      // Call the callback if provided
       if (onAnalysisComplete) {
         onAnalysisComplete(totalUpdated);
       }
-      
-      setAnalyzing(false);
     };
   };
 
