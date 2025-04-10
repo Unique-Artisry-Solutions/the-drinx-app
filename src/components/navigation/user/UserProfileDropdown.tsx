@@ -33,16 +33,17 @@ const UserProfileDropdown: React.FC<UserProfileDropdownProps> = ({
 }) => {
   const { theme } = useTheme();
   const isDarkTheme = theme === 'dark';
+  const isPromoter = userType === 'promoter';
   
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <ProfileDropdownButton isDarkTheme={isDarkTheme} isPromoter={userType === 'promoter'} />
+        <ProfileDropdownButton isDarkTheme={isDarkTheme} isPromoter={isPromoter} />
       </DropdownMenuTrigger>
       
       <DropdownMenuContent 
         align="end" 
-        className={`z-50 ${isDarkTheme ? 'bg-gray-800 border-gray-700' : userType === 'promoter' ? 'bg-white border-purple-200' : 'bg-white border-gray-200'}`}
+        className={`w-56 ${isDarkTheme ? 'bg-gray-800 border-gray-700' : isPromoter ? 'bg-white border-purple-200' : 'bg-white border-gray-200'}`}
       >
         <ProfileContent 
           username={username}

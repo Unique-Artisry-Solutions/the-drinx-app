@@ -8,7 +8,7 @@ import { Megaphone, BarChart, PlusCircle } from 'lucide-react';
 const PromoterDashboardPage = () => {
   return (
     <Layout>
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="max-w-6xl mx-auto px-4 py-8 mt-16">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold">Promotions Dashboard</h1>
           <Button className="bg-purple-600 hover:bg-purple-700">

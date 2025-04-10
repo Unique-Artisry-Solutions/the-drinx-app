@@ -8,7 +8,7 @@ import { CalendarIcon, BarChart4 } from 'lucide-react';
 const PromoterAnalyticsPage = () => {
   return (
     <Layout>
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="max-w-6xl mx-auto px-4 py-8 mt-16">
         <h1 className="text-2xl font-bold mb-6">Promoter Analytics</h1>
         
         <Tabs defaultValue="overview" className="space-y-4">
