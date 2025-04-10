@@ -1,9 +1,11 @@
+
 import { useState } from 'react';
 import { useAuthCheck } from './useAuthCheck';
 import { useFeatureStatus } from './useFeatureStatus';
 import { useProgressTracking } from './useProgressTracking';
 import { useAnalysisProcess } from './useAnalysisProcess';
 import { useReleaseFeatures } from './useReleaseFeatures';
+import { useExportFunctions } from './useExportFunctions';
 import { useToast } from '@/hooks/use-toast';
 
 export const useSystemBreakdown = () => {
@@ -52,13 +54,7 @@ export const useSystemBreakdown = () => {
     setActiveTab
   );
 
-  // Handle CSV export
-  const handleExportCSV = () => {
-    // Import the generateCSV function dynamically to keep the bundle size small
-    import('../utils').then(({ generateCSV }) => {
-      generateCSV(adminFeatures, establishmentFeatures, individualFeatures);
-    });
-  };
+  const { handleExportCSV } = useExportFunctions();
   
   // Wrap the analysis function to also update progress tracking
   const handleAnalyzeAndUpdateProgress = () => {
