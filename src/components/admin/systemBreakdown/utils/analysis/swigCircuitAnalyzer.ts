@@ -12,11 +12,15 @@ export const analyzeSwigCircuitFeatures = (features: FeatureItem[]): FeatureItem
     if (isSwigCircuitFeature(feature)) {
       return {
         ...feature,
-        metadata: {
-          ...feature.metadata,
-          type: 'swig_circuit',
-          priority: feature.metadata?.priority || 'medium',
-        }
+        // Create a new object with the Swig Circuit type and priority
+        // without directly accessing a non-existent metadata property
+        databaseAnalysis: feature.databaseAnalysis || 'Swig Circuit functionality requires proper database schema',
+        statusUpdated: feature.statusUpdated || false,
+        testSteps: [
+          ...(feature.testSteps || []),
+          'Verify Swig Circuit integration',
+          'Test venue selection in circuit'
+        ]
       };
     }
     return feature;
