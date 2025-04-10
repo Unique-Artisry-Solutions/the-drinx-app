@@ -1,4 +1,5 @@
 
+
 // Custom type definitions for database tables that aren't in the auto-generated Supabase types
 
 export interface UserVisitTable {
@@ -64,3 +65,70 @@ export interface UserVisitAnalyticsTable {
   total_mocktails_tried: number;
   visited_establishments: string[];
 }
+
+// System configuration tables
+export interface SystemSettingsTable {
+  id: string;
+  key: string;
+  value: any;
+  category: string;
+  description?: string;
+  is_protected: boolean;
+  created_at: string;
+  updated_at: string;
+  updated_by?: string;
+}
+
+export interface SystemSettingsAuditLogTable {
+  id: string;
+  setting_key: string;
+  old_value?: any;
+  new_value: any;
+  changed_by?: string;
+  changed_at: string;
+  change_reason?: string;
+}
+
+export interface EmailTemplateTable {
+  id: string;
+  name: string;
+  subject: string;
+  body_html: string;
+  body_text: string;
+  variables: string[];
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  last_updated_by?: string;
+}
+
+export interface ApiKeyConfigurationTable {
+  id: string;
+  service_name: string;
+  api_key_name: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  last_verified_at?: string;
+  metadata?: Record<string, any>;
+}
+
+export interface PaymentGatewayConfigTable {
+  id: string;
+  gateway_name: string;
+  is_active: boolean;
+  configuration: Record<string, any>;
+  test_mode: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FeatureToggleTable {
+  id: string;
+  name: string;
+  status: boolean;
+  description?: string;
+  created_at: string;
+  updated_at: string;
+}
+

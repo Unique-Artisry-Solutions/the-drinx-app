@@ -2,22 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-
-export interface Promotion {
-  id: string;
-  code: string;
-  description: string;
-  discount_type: string;
-  discount_value: number | null;
-  start_date: string;
-  end_date: string | null;
-  is_active: boolean;
-  min_purchase: number | null;
-  max_discount: number | null;
-  usage_limit: number | null;
-  usage_count?: number;
-  establishment_id: string;
-}
+import { Promotion, PromotionAnalytics } from '@/types/DatabaseTypes';
 
 export interface PromotionFormData {
   code: string;
@@ -211,9 +196,9 @@ export const useEstablishmentPromotions = (establishmentId: string) => {
     }
   };
   
-  const getPromotionAnalytics = async (promotionId: string) => {
+  const getPromotionAnalytics = async (promotionId: string): Promise<PromotionAnalytics> => {
     try {
-      // Instead of using rpc, fetch from the promotion_analytics view
+      // Query the promotion_analytics view directly instead of using an RPC call
       const { data, error } = await supabase
         .from('promotion_analytics')
         .select('*')

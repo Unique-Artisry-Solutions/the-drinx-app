@@ -255,3 +255,69 @@ export type PromotionNotification = {
   is_read: boolean;
   created_at: string;
 };
+
+// System Configuration Types
+export type SystemSetting = {
+  id: string;
+  key: string;
+  value: any;
+  category: string;
+  description?: string;
+  is_protected: boolean;
+  created_at: string;
+  updated_at: string;
+  updated_by?: string;
+};
+
+export type SystemSettingAuditLog = {
+  id: string;
+  setting_key: string;
+  old_value?: any;
+  new_value: any;
+  changed_by?: string;
+  changed_at: string;
+  change_reason?: string;
+};
+
+export type SystemEmailTemplate = {
+  id: string;
+  name: string;
+  subject: string;
+  body_html: string;
+  body_text: string;
+  variables: string[];
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  last_updated_by?: string;
+};
+
+export type ApiKeyConfiguration = {
+  id: string;
+  service_name: string;
+  api_key_name: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  last_verified_at?: string;
+  metadata?: Record<string, any>;
+};
+
+export type PaymentGatewayConfig = {
+  id: string;
+  gateway_name: string;
+  is_active: boolean;
+  configuration: Record<string, any>;
+  test_mode: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type FeatureToggle = {
+  id: string;
+  name: string;
+  status: boolean;
+  description?: string;
+  created_at: string;
+  updated_at: string;
+};
