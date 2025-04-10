@@ -29,10 +29,14 @@ const ProfileMenuItem: React.FC<ProfileMenuItemProps> = ({
     }
   };
   
+  const iconClass = customColor && isActive 
+    ? customColor 
+    : '';
+  
   const content = (
     <div className={profileDropdownStyles.menuItem(isDarkTheme, isActive, customColor)}>
       <Icon 
-        className={`mr-2 h-4 w-4 ${isActive && customColor ? customColor : ''}`} 
+        className={`mr-2 h-4 w-4 ${iconClass}`} 
       />
       <span>{children}</span>
     </div>

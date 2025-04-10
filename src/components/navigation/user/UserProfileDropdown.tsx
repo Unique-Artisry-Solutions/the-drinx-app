@@ -1,13 +1,15 @@
 
 import React from 'react';
-import { 
-  DropdownMenu, 
-  DropdownMenuTrigger, 
-  DropdownMenuContent 
-} from "@/components/ui/dropdown-menu";
 import { useTheme } from '@/contexts/ThemeContext';
-import ProfileDropdownButton from './profile-dropdown/ProfileDropdownButton';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { User } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import ProfileContent from './profile-dropdown/ProfileContent';
+import ProfileDropdownButton from './profile-dropdown/ProfileDropdownButton';
 
 interface TabOption {
   value: string;
@@ -34,21 +36,42 @@ const UserProfileDropdown: React.FC<UserProfileDropdownProps> = ({
   const { theme } = useTheme();
   const isDarkTheme = theme === 'dark';
   const isPromoter = userType === 'promoter';
-  
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <ProfileDropdownButton isDarkTheme={isDarkTheme} isPromoter={isPromoter} />
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="icon"
+            className={`w-9 h-9 rounded-full ${
+              isPromoter 
+                ? isDarkTheme 
+                  ? 'bg-gray-800 border-gray-700 hover:bg-gray-700' 
+                  : 'bg-purple-50 border-purple-200 hover:bg-purple-100 hover:border-purple-300' 
+                : isDarkTheme 
+                  ? 'bg-gray-800 border-gray-700 hover:bg-gray-700' 
+                  : 'bg-background border-border hover:bg-accent'
+            }`}
+          >
+            <User className={`h-4 w-4 ${isPromoter ? 'text-purple-600' : ''}`} />
+            <span className="sr-only">Open user menu</span>
+          </Button>
+          <ProfileDropdownButton isDarkTheme={isDarkTheme} isPromoter={isPromoter} />
+        </div>
       </DropdownMenuTrigger>
-      
       <DropdownMenuContent 
         align="end" 
-        className={`w-56 ${isDarkTheme ? 'bg-gray-800 border-gray-700' : isPromoter ? 'bg-white border-purple-200' : 'bg-white border-gray-200'}`}
+        className={`w-72 p-0 ${
+          isDarkTheme 
+            ? 'bg-gray-900 border-gray-700' 
+            : 'bg-white'
+        }`}
       >
         <ProfileContent 
-          username={username}
-          userType={userType}
-          isDarkTheme={isDarkTheme}
+          username={username} 
+          userType={userType} 
+          isDarkTheme={isDarkTheme} 
           handleLogout={handleLogout}
           activeTab={activeTab}
           handleTabChange={handleTabChange}

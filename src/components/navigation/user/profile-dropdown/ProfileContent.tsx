@@ -36,6 +36,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
 }) => {
   const location = useLocation();
   const isEstablishmentPath = location.pathname.includes('/establishment/');
+  const isPromoter = userType === 'promoter';
   
   const getProfilePath = () => {
     if (userType === 'establishment') {
@@ -48,7 +49,11 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
 
   return (
     <div className="py-2 group space-y-1">
-      <ProfileHeader username={username} isDarkTheme={isDarkTheme} />
+      <ProfileHeader 
+        username={username} 
+        isDarkTheme={isDarkTheme} 
+        isPromoter={isPromoter} 
+      />
       
       <ProfileMenuItem 
         to={getProfilePath()} 

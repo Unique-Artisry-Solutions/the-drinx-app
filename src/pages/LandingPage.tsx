@@ -10,6 +10,7 @@ import CallToAction from '@/components/landing/CallToAction';
 import Footer from '@/components/landing/Footer';
 import { useAuth } from '@/contexts/auth';
 import { useTheme } from '@/contexts/ThemeContext';
+import { clearAllSessions } from '@/utils/sessionCleaner';
 
 const LandingPage = () => {
   const { user, isLoading } = useAuth();
@@ -35,11 +36,20 @@ const LandingPage = () => {
         navigate('/admin/system-breakdown', { replace: true });
       } else if (userType === 'establishment') {
         navigate('/establishment/dashboard', { replace: true });
+      } else if (userType === 'promoter') {
+        navigate('/promotions', { replace: true });
       } else {
         navigate('/explore', { replace: true });
       }
     }
   }, [user, isLoading, navigate]);
+
+  // Clear sessions when landing page loads
+  useEffect(() => {
+    // Run once on initial load
+    console.log('Landing page loaded, clearing sessions...');
+    clearAllSessions();
+  }, []);
 
   // Only render the landing page if the user is not authenticated or if auth is still loading
   return (

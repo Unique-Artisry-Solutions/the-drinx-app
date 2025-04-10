@@ -35,7 +35,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   const { theme } = useTheme();
   const { user, isEmailVerified } = useAuth();
   const [navigationType, setNavigationType] = React.useState<NavigationType>(NavigationType.GUEST);
-  const [userType, setUserType] = React.useState<'individual' | 'establishment'>('individual');
+  const [userType, setUserType] = React.useState<'individual' | 'establishment' | 'promoter'>('individual');
   const [isAdmin, setIsAdmin] = React.useState(false);
 
   useEffect(() => {
@@ -44,7 +44,14 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
       const userTypeStored = localStorage.getItem('user_type');
       
       setIsAdmin(isAdminAuth);
-      setUserType(userTypeStored === 'establishment' ? 'establishment' : 'individual');
+      
+      if (userTypeStored === 'establishment') {
+        setUserType('establishment');
+      } else if (userTypeStored === 'promoter') {
+        setUserType('promoter');
+      } else {
+        setUserType('individual');
+      }
       
       // Define public paths that always use guest navigation
       const publicPaths = ['/', '/landing', '/login', '/signup', '/mission'];
@@ -67,6 +74,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   const isAdminPage = location.pathname.startsWith('/admin');
   const isSettingsPage = location.pathname === '/settings';
   const isEstablishmentPage = location.pathname.startsWith('/establishment');
+  const isPromoterPage = location.pathname.startsWith('/promotion') || location.pathname === '/analytics';
 
   const getContentPadding = () => {
     if (isLandingPage) {

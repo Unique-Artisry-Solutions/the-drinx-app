@@ -37,7 +37,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
   const { theme } = useTheme();
   const { user, isEmailVerified } = useAuth();
   const [navigationType, setNavigationType] = React.useState<NavigationType>(NavigationType.GUEST);
-  const [userType, setUserType] = React.useState<'individual' | 'establishment'>('individual');
+  const [userType, setUserType] = React.useState<'individual' | 'establishment' | 'promoter'>('individual');
   const [isAdmin, setIsAdmin] = React.useState(false);
 
   // Scroll to top when route changes
@@ -51,7 +51,14 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
       const userTypeStored = localStorage.getItem('user_type');
       
       setIsAdmin(isAdminAuth);
-      setUserType(userTypeStored === 'establishment' ? 'establishment' : 'individual');
+      
+      if (userTypeStored === 'establishment') {
+        setUserType('establishment');
+      } else if (userTypeStored === 'promoter') {
+        setUserType('promoter');
+      } else {
+        setUserType('individual');
+      }
       
       // Define public paths that always use guest navigation
       const publicPaths = ['/', '/landing', '/login', '/signup', '/mission'];
@@ -75,6 +82,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
   const isAuthPage = location.pathname === '/login' || location.pathname === '/signup';
   const isAdminPage = location.pathname.startsWith('/admin');
   const isEstablishmentPage = location.pathname.startsWith('/establishment');
+  const isPromoterPage = location.pathname.startsWith('/promotion') || location.pathname === '/analytics';
   const isPublicPage = isLandingPage || isAuthPage || location.pathname === '/mission';
 
   const getContentPadding = () => {
