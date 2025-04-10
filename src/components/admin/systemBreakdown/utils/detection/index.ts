@@ -46,7 +46,7 @@ export {
   isSocialFeature as isSocialDetectionFeature,
   isThemeFeature as isThemeDetectionFeature,
   isSwigCircuitFeature,
-  isBarCrawlFeature, // Export this for featureShowcaseUtils.tsx
+  isBarCrawlFeature as isBarCrawlDetectionFeature,
   isSignatureFeature as isSignatureDetectionFeature,
 } from './venueDetection';
 
