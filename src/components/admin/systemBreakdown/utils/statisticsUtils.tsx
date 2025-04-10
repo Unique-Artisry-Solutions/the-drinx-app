@@ -160,7 +160,7 @@ export function validateProgressData(snapshot: ProgressSnapshot): { isValid: boo
 
 /**
  * Generate synthetic historical data for timeline view when it doesn't exist
- * Returns a Promise to ensure proper async handling
+ * Returns a Promise that resolves to MonthlyProgressData[]
  */
 export function generateHistoricalProgressData(
   currentSnapshot: ProgressSnapshot,
