@@ -39,19 +39,28 @@ const LoginForm: React.FC<LoginFormProps> = ({
     handleLogin
   } = useLoginForm(onSuccess, onClose, userType);
 
-  const handleBypassLogin = (type: 'individual' | 'establishment' | 'admin') => {
+  const handleBypassLogin = (type: 'individual' | 'establishment' | 'admin' | 'promoter') => {
     // Set admin bypass in localStorage
     localStorage.setItem('admin_bypass', 'true');
     localStorage.setItem('user_authenticated', 'true');
     localStorage.setItem('user_type', type);
     localStorage.setItem('user_email', type === 'admin' ? 'admin@spiritless.com' : 
-      type === 'individual' ? 'bypass-user@example.com' : 'bypass-business@example.com');
+      type === 'individual' ? 'bypass-user@example.com' : 
+      type === 'promoter' ? 'bypass-promoter@spiritless.com' :
+      'bypass-business@example.com');
     localStorage.setItem('user_username', type === 'admin' ? 'admin' : 
-      type === 'individual' ? 'bypass-user' : 'bypass-business');
+      type === 'individual' ? 'bypass-user' : 
+      type === 'promoter' ? 'bypass-promoter' :
+      'bypass-business');
     
     // Set establishment name for establishment users
     if (type === 'establishment') {
       localStorage.setItem('establishment_name', 'Bypass Establishment');
+    }
+    
+    // Set promoter name for promoter users
+    if (type === 'promoter') {
+      localStorage.setItem('promoter_name', 'Bypass Promoter');
     }
     
     // Set admin authentication flag if it's an admin bypass
@@ -66,7 +75,9 @@ const LoginForm: React.FC<LoginFormProps> = ({
       toast({
         title: 'Admin Bypass Enabled',
         description: `You are now logged in as ${type === 'admin' ? 'an administrator' : 
-          type === 'individual' ? 'a user' : 'a business'} for testing purposes.`,
+          type === 'individual' ? 'a user' : 
+          type === 'promoter' ? 'a promoter' :
+          'a business'} for testing purposes.`,
       });
       
       // Redirect based on user type
@@ -74,6 +85,8 @@ const LoginForm: React.FC<LoginFormProps> = ({
         navigate('/admin/system-breakdown');
       } else if (type === 'establishment') {
         navigate('/establishment/dashboard');
+      } else if (type === 'promoter') {
+        navigate('/promoter/dashboard');
       } else {
         navigate('/explore');
       }

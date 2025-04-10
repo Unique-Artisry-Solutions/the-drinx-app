@@ -2,7 +2,7 @@
 import React from 'react';
 import AuthButton from '../AuthButton';
 import { Button } from '@/components/ui/button';
-import { Building, User, ShieldCheck } from 'lucide-react';
+import { Building, User, ShieldCheck, Megaphone } from 'lucide-react';
 
 interface LoginFormActionsProps {
   isLoading: boolean;
@@ -10,7 +10,7 @@ interface LoginFormActionsProps {
   isAdminLogin: boolean;
   userType: 'individual' | 'establishment';
   onClose?: () => void;
-  onBypassLogin?: (type: 'individual' | 'establishment' | 'admin') => void;
+  onBypassLogin?: (type: 'individual' | 'establishment' | 'admin' | 'promoter') => void;
 }
 
 const LoginFormActions: React.FC<LoginFormActionsProps> = ({
@@ -76,6 +76,16 @@ const LoginFormActions: React.FC<LoginFormActionsProps> = ({
             >
               <ShieldCheck size={14} />
               Admin
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => onBypassLogin('promoter')}
+              className="flex-1 flex items-center justify-center gap-1 border-orange-500 text-orange-500 hover:bg-orange-50"
+            >
+              <Megaphone size={14} />
+              Promoter
             </Button>
           </div>
         </div>
