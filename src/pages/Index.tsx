@@ -16,11 +16,12 @@ const Index = () => {
     // Read authentication info
     const userType = localStorage.getItem('user_type');
     const isEstablishment = userType === 'establishment';
+    const isPromoter = userType === 'promoter';
     const isAdmin = localStorage.getItem('admin_authenticated') === 'true';
     
     // For debugging
     console.log("Index page navigation check:", { 
-      user, isLoading, userType, isEstablishment, isAdmin 
+      user, isLoading, userType, isEstablishment, isPromoter, isAdmin 
     });
     
     // If admin is authenticated, redirect to system breakdown page
@@ -35,8 +36,14 @@ const Index = () => {
       return;
     }
     
+    // If user is authenticated and is a promoter, redirect to promoter dashboard/page
+    if (user && isPromoter) {
+      navigate('/promotions', { replace: true });
+      return;
+    }
+    
     // If user is authenticated and is an individual, redirect to explore
-    if (user && !isEstablishment) {
+    if (user && !isEstablishment && !isPromoter) {
       navigate('/explore', { replace: true });
       return;
     }

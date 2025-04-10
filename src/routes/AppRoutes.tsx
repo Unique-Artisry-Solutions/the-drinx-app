@@ -1,6 +1,5 @@
-
 import React, { lazy, Suspense } from 'react';
-import { Route, Routes, Navigate } from 'react-router-dom';
+import { Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import LandingPage from '@/pages/LandingPage';
 import MapPage from '@/pages/MapPage';
 import NotFound from '@/pages/NotFound';
@@ -55,7 +54,6 @@ const AdminUsersPage = lazy(() => import('@/pages/admin/AdminUsersPage'));
 const AdminUserProfile = lazy(() => import('@/pages/admin/AdminUserProfile'));
 const AdminEstablishmentsPage = lazy(() => import('@/pages/admin/AdminEstablishmentsPage'));
 const AdminEstablishmentProfile = lazy(() => import('@/pages/admin/AdminEstablishmentProfile'));
-// Removed lazy loading for SystemFunctionalityBreakdown
 const SystemAnalyticsPage = lazy(() => import('@/pages/admin/SystemAnalyticsPage'));
 const PhotoModerationPage = lazy(() => import('@/pages/admin/PhotoModerationPage'));
 const ContentModerationPage = lazy(() => import('@/pages/admin/ContentModerationPage'));
@@ -64,6 +62,8 @@ const ThemeCustomizationPage = lazy(() => import('@/pages/admin/ThemeCustomizati
 import EstablishmentDashboardPage from '@/pages/establishment/EstablishmentDashboardPage';
 
 const AppRoutes = () => {
+  const location = useLocation();
+  
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <Routes>
@@ -100,6 +100,9 @@ const AppRoutes = () => {
         <Route path="/profile/my-creations/:id" element={<ProtectedRoute><BarCrawlManagementPage /></ProtectedRoute>} />
         
         <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+        
+        <Route path="/promotions" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        <Route path="/analytics" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         
         <Route path="/admin" element={<AdminLogin />} />
         <Route path="/admin/login" element={<AdminLogin />} />

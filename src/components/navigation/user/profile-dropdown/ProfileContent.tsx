@@ -40,6 +40,8 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
   const getProfilePath = () => {
     if (userType === 'establishment') {
       return '/establishment/profile';
+    } else if (userType === 'promoter') {
+      return '/promotions'; // For promoters, their main profile page is promotions
     }
     return '/profile';
   };
@@ -50,11 +52,12 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
       
       <ProfileMenuItem 
         to={getProfilePath()} 
-        icon={User} 
+        icon={userType === 'promoter' ? Megaphone : User} 
         isDarkTheme={isDarkTheme}
         isActive={location.pathname === getProfilePath()}
+        customColor={userType === 'promoter' ? "text-purple-600" : undefined}
       >
-        Profile
+        {userType === 'promoter' ? 'My Promotions' : 'Profile'}
       </ProfileMenuItem>
       
       {userType === 'establishment' && isEstablishmentPath && tabOptions && 
@@ -89,20 +92,11 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
       ) : userType === 'promoter' ? (
         <>
           <ProfileMenuItem 
-            to="/promotions" 
-            icon={Megaphone} 
-            isDarkTheme={isDarkTheme}
-            isActive={location.pathname === '/promotions'}
-            customColor="text-purple-600"
-          >
-            My Promotions
-          </ProfileMenuItem>
-          
-          <ProfileMenuItem 
             to="/analytics" 
             icon={BarChart4} 
             isDarkTheme={isDarkTheme}
             isActive={location.pathname === '/analytics'}
+            customColor="text-purple-600"
           >
             Analytics
           </ProfileMenuItem>
