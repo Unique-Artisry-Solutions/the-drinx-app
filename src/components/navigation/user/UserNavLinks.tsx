@@ -42,6 +42,13 @@ const UserNavLinks: React.FC<UserNavLinksProps> = ({ userType }) => {
     userNavItems.push({ icon: Route, label: 'Create', path: '/create-swig-circuit' });
   }
 
+  // Debug console log to check items being rendered
+  console.log('UserNavLinks: Rendering nav items for', { 
+    userType, 
+    itemsCount: userNavItems.length,
+    items: userNavItems.map(item => item.label)
+  });
+
   return (
     <div className="user-nav-links hidden md:flex space-x-1">
       {userNavItems.map((item) => {
