@@ -15,6 +15,8 @@ const UserNavLinks: React.FC<UserNavLinksProps> = ({ userType }) => {
   const getHomePath = () => {
     if (userType === 'establishment') {
       return '/establishment/dashboard';
+    } else if (userType === 'promoter') {
+      return '/promoter/dashboard'; // Updated to use correct promoter dashboard path
     } else {
       return '/explore';
     }
@@ -26,7 +28,7 @@ const UserNavLinks: React.FC<UserNavLinksProps> = ({ userType }) => {
   };
   
   const userNavItems = [
-    { icon: Home, label: 'Explore', path: getHomePath(), onClick: handleHomeClick },
+    { icon: Home, label: 'Home', path: getHomePath(), onClick: handleHomeClick },
     { icon: Map, label: 'Map', path: '/map' },
   ];
   
@@ -34,14 +36,15 @@ const UserNavLinks: React.FC<UserNavLinksProps> = ({ userType }) => {
   if (userType === 'individual') {
     userNavItems.push({ icon: Route, label: 'Create', path: '/create-bar-crawl' });
   } else if (userType === 'promoter') {
-    userNavItems.push({ icon: Megaphone, label: 'Promotions', path: '/promotions' });
+    userNavItems.push({ icon: Megaphone, label: 'Promotions', path: '/promoter/dashboard' }); // Updated to use correct promoter dashboard path
   }
 
   return (
     <div className="user-nav-links hidden md:flex space-x-1">
       {userNavItems.map((item) => {
         const isActive = location.pathname === item.path ||
-          (item.path === '/establishment/dashboard' && location.pathname.startsWith('/establishment/'));
+          (item.path === '/establishment/dashboard' && location.pathname.startsWith('/establishment/')) ||
+          (item.path === '/promoter/dashboard' && location.pathname.startsWith('/promoter/'));
         
         return (
           <Link

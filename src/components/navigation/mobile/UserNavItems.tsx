@@ -1,5 +1,5 @@
 
-import { Home, Map, User, Route } from 'lucide-react';
+import { Home, Map, User, Route, Megaphone } from 'lucide-react';
 import { NavItem } from './types';
 
 export const getUserNavItems = (
@@ -12,7 +12,7 @@ export const getUserNavItems = (
   if (userType === 'establishment') {
     navItems.push({ icon: Home, label: 'Home', path: '/establishment/dashboard' });
   } else if (userType === 'promoter') {
-    navItems.push({ icon: Home, label: 'Home', path: '/explore' });
+    navItems.push({ icon: Home, label: 'Home', path: '/promoter/dashboard' }); // Updated to correct promoter dashboard path
   } else {
     navItems.push({ icon: Home, label: 'Explore', path: '/explore' });
   }
@@ -23,6 +23,11 @@ export const getUserNavItems = (
   // Add Create for individuals only
   if (userType === 'individual') {
     navItems.push({ icon: Route, label: 'Create', path: '/create-bar-crawl' });
+  }
+  
+  // Add Promotions for promoters only
+  if (userType === 'promoter') {
+    navItems.push({ icon: Megaphone, label: 'Promotions', path: '/promoter/dashboard' });
   }
   
   // Add Profile for all user types

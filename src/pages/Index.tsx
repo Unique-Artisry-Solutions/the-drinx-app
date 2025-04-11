@@ -21,7 +21,8 @@ const Index = () => {
     
     // For debugging
     console.log("Index page navigation check:", { 
-      user, isLoading, userType, isEstablishment, isPromoter, isAdmin 
+      user, isLoading, userType, isEstablishment, isPromoter, isAdmin,
+      redirectPath: isPromoter ? '/promoter/dashboard' : (isEstablishment ? '/establishment/dashboard' : '/explore')
     });
     
     // If admin is authenticated, redirect to system breakdown page
