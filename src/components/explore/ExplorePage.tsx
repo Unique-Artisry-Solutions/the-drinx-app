@@ -1,22 +1,65 @@
 
 import React from 'react';
+import { useIndexPageLogic } from '@/hooks/useIndexPageLogic';
+import { useAuth } from '@/contexts/auth';
 import BarCrawlSection from '@/components/explore/BarCrawlSection';
 import CocktailsSection from '@/components/explore/CocktailsSection';
 import FeaturedEstablishmentsSection from '@/components/explore/FeaturedEstablishmentsSection';
+import { supabase } from '@/lib/supabase';
 
 const ExplorePage = () => {
+  // Get data from the useIndexPageLogic hook
+  const { 
+    establishments, 
+    cocktails,
+    resetFilters
+  } = useIndexPageLogic();
+  
+  // Check if user is authenticated
+  const [isAuthenticated, setIsAuthenticated] = React.useState(false);
+  
+  React.useEffect(() => {
+    const checkAuth = async () => {
+      const { data } = await supabase.auth.getSession();
+      setIsAuthenticated(!!data.session);
+    };
+    
+    checkAuth();
+  }, []);
+  
+  // Sample bar crawls data (could be fetched from API in the future)
+  const barCrawls = React.useMemo(() => {
+    return [
+      {
+        id: "1",
+        name: "Downtown Mocktail Tour",
+        stops: 4
+      },
+      {
+        id: "2",
+        name: "Uptown Refreshment Walk",
+        stops: 3
+      },
+      {
+        id: "3",
+        name: "Harbor Breeze Crawl",
+        stops: 5
+      }
+    ];
+  }, []);
+
   return (
     <div className="container mx-auto max-w-6xl px-4 py-6">
       <h1 className="text-3xl font-bold mb-8">Explore</h1>
       
-      <FeaturedEstablishmentsSection />
+      <FeaturedEstablishmentsSection establishments={establishments} />
       
       <div className="my-10">
-        <BarCrawlSection />
+        <BarCrawlSection barCrawls={barCrawls} isAuthenticated={isAuthenticated} />
       </div>
       
       <div className="my-10">
-        <CocktailsSection />
+        <CocktailsSection cocktails={cocktails} resetFilters={resetFilters} />
       </div>
     </div>
   );
