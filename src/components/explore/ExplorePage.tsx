@@ -11,7 +11,7 @@ const ExplorePage = () => {
   // Get data from the useIndexPageLogic hook
   const { 
     establishments, 
-    cocktails,
+    cocktails: hookCocktails,
     resetFilters
   } = useIndexPageLogic();
   
@@ -26,6 +26,14 @@ const ExplorePage = () => {
     
     checkAuth();
   }, []);
+  
+  // Convert cocktails to ensure price is always a string
+  const cocktails = React.useMemo(() => {
+    return hookCocktails.map(cocktail => ({
+      ...cocktail,
+      price: typeof cocktail.price === 'number' ? cocktail.price.toString() : cocktail.price
+    }));
+  }, [hookCocktails]);
   
   // Sample bar crawls data (could be fetched from API in the future)
   const barCrawls = React.useMemo(() => {
