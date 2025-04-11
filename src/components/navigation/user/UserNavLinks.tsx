@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Map, Route, Megaphone } from 'lucide-react';
+import { Home, Map, Route, Megaphone, BarChart2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface UserNavLinksProps {
@@ -36,7 +36,8 @@ const UserNavLinks: React.FC<UserNavLinksProps> = ({ userType }) => {
   if (userType === 'individual') {
     userNavItems.push({ icon: Route, label: 'Create', path: '/create-bar-crawl' });
   } else if (userType === 'promoter') {
-    userNavItems.push({ icon: Megaphone, label: 'Promotions', path: '/promoter/dashboard' }); // Updated to use correct promoter dashboard path
+    userNavItems.push({ icon: Megaphone, label: 'Promotions', path: '/promoter/dashboard' });
+    userNavItems.push({ icon: BarChart2, label: 'Analytics', path: '/promoter/analytics' });
   }
 
   return (

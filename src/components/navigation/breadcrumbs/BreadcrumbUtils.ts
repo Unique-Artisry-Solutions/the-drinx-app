@@ -16,6 +16,13 @@ export function buildBreadcrumbs(pathname: string): BreadcrumbConfig[] {
       path: '/establishment/dashboard',
       label: 'Dashboard'
     });
+  } else if (userType === 'promoter') {
+    // If user is a promoter, home should point to promoter dashboard
+    breadcrumbs.push({
+      ...routes['/'],
+      path: '/promoter/dashboard',
+      label: 'Dashboard'
+    });
   } else {
     breadcrumbs.push(routes['/']);
   }
@@ -40,6 +47,14 @@ export function buildBreadcrumbs(pathname: string): BreadcrumbConfig[] {
     // If we're on the dashboard already, don't add a redundant breadcrumb
     if (pathname !== '/establishment/dashboard') {
       handleSpecialBasePath('/establishment/dashboard', 'Dashboard');
+    }
+  }
+  
+  // Handle special case for promoter section
+  if (pathname.startsWith('/promoter/')) {
+    // If we're on the dashboard already, don't add a redundant breadcrumb
+    if (pathname !== '/promoter/dashboard') {
+      handleSpecialBasePath('/promoter/dashboard', 'Dashboard');
     }
   }
   
@@ -77,6 +92,12 @@ export function buildBreadcrumbs(pathname: string): BreadcrumbConfig[] {
     // Handle establishment base path special case
     if (currentPath === '/establishment') {
       // Skip this segment since we're redirecting to /establishment/dashboard
+      continue;
+    }
+    
+    // Handle promoter base path special case 
+    if (currentPath === '/promoter') {
+      // Skip this segment since we're redirecting to /promoter/dashboard
       continue;
     }
     

@@ -41,6 +41,11 @@ export const routes: Record<string, BreadcrumbConfig> = {
   '/establishment/reviews': { path: '/establishment/reviews', label: 'Reviews' },
   '/establishment/mocktail-suggestions': { path: '/establishment/mocktail-suggestions', label: 'Suggestions' },
   
+  // Promoter routes
+  '/promoter': { path: '/promoter/dashboard', label: 'Dashboard' },
+  '/promoter/dashboard': { path: '/promoter/dashboard', label: 'Dashboard' },
+  '/promoter/analytics': { path: '/promoter/analytics', label: 'Analytics' },
+  
   // Admin routes
   '/admin': { path: '/admin', label: 'Admin' },
   '/admin/users': { path: '/admin/users', label: 'Users Management' },
@@ -65,4 +70,5 @@ export const dynamicRoutes = [
   { pattern: /^\/profile\/my-creations\/(.+)$/, base: '/profile/my-creations', label: 'Swig Circuit Management' },
   { pattern: /^\/admin\/users\/(.+)$/, base: '/admin/users', label: 'User Details' },
   { pattern: /^\/admin\/establishments\/(.+)$/, base: '/admin/establishments', label: 'Establishment Details' },
+  { pattern: /^\/promoter\/analytics\/(.+)$/, base: '/promoter/analytics', label: 'Analytics Details' },
 ];

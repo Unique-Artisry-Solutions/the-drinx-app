@@ -106,10 +106,16 @@ const AppRoutes = () => {
         
         <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
         
-        {/* Updated promoter routes */}
+        {/* Promoter routes */}
+        <Route path="/promoter" element={
+          <TypedProtectedRoute userType="promoter">
+            <Navigate to="/promoter/dashboard" replace />
+          </TypedProtectedRoute>
+        } />
         <Route path="/promoter/dashboard" element={<TypedProtectedRoute userType="promoter"><PromoterDashboardPage /></TypedProtectedRoute>} />
+        <Route path="/promoter/analytics" element={<TypedProtectedRoute userType="promoter"><PromoterAnalyticsPage /></TypedProtectedRoute>} />
         <Route path="/promotions" element={<Navigate to="/promoter/dashboard" replace />} /> {/* Redirect old path to new path */}
-        <Route path="/analytics" element={<TypedProtectedRoute userType="promoter"><PromoterAnalyticsPage /></TypedProtectedRoute>} />
+        <Route path="/analytics" element={<Navigate to="/promoter/analytics" replace />} /> {/* Redirect old path to new path */}
         
         <Route path="/admin" element={<AdminLogin />} />
         <Route path="/admin/login" element={<AdminLogin />} />

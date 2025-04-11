@@ -1,5 +1,5 @@
 
-import { Home, Map, User, Route, Megaphone } from 'lucide-react';
+import { Home, Map, User, Route, Megaphone, BarChart2 } from 'lucide-react';
 import { NavItem } from './types';
 
 export const getUserNavItems = (
@@ -28,6 +28,7 @@ export const getUserNavItems = (
   // Add Promotions for promoters only
   if (userType === 'promoter') {
     navItems.push({ icon: Megaphone, label: 'Promotions', path: '/promoter/dashboard' });
+    navItems.push({ icon: BarChart2, label: 'Analytics', path: '/promoter/analytics' });
   }
   
   // Add Profile for all user types

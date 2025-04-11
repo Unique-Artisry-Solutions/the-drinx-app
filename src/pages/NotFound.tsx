@@ -23,6 +23,8 @@ const NotFound = () => {
       const userType = localStorage.getItem('user_type');
       if (userType === 'establishment') {
         navigate('/establishment/dashboard');
+      } else if (userType === 'promoter') {
+        navigate('/promoter/dashboard');
       } else {
         navigate('/explore');
       }
