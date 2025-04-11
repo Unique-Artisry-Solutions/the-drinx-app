@@ -23,6 +23,7 @@ const LoginPage = () => {
   
   const handleAuthSuccess = () => {
     // Force page refresh and navigation to index
+    console.log("Login successful, forcing navigation to index");
     window.location.href = '/';
   };
 

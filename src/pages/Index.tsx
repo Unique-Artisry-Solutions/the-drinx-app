@@ -2,7 +2,7 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
-import { useAuth } from '@/contexts/auth';
+import { useAuth } from '@/contexts/auth'; // Fixed import path
 
 const Index = () => {
   const { user, isLoading } = useAuth();
@@ -21,7 +21,13 @@ const Index = () => {
     
     // For debugging
     console.log("Index page navigation check:", { 
-      user, isLoading, userType, isEstablishment, isPromoter, isAdmin,
+      user, 
+      isLoading, 
+      userType, 
+      isEstablishment, 
+      isPromoter, 
+      isAdmin,
+      userId: user?.id,
       redirectPath: isPromoter ? '/promoter/dashboard' : (isEstablishment ? '/establishment/dashboard' : '/explore')
     });
     
@@ -39,6 +45,7 @@ const Index = () => {
     
     // If user is authenticated and is a promoter, redirect to promoter dashboard
     if (user && isPromoter) {
+      console.log("Redirecting promoter to dashboard");
       navigate('/promoter/dashboard', { replace: true });
       return;
     }

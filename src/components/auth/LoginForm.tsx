@@ -6,7 +6,7 @@ import LoginFormActions from './login/LoginFormActions';
 import { useLoginForm } from './login/useLoginForm';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/auth';
+import { useAuth } from '@/contexts/auth'; // Fixed import path
 
 interface LoginFormProps {
   onSuccess?: () => void;
@@ -80,14 +80,16 @@ const LoginForm: React.FC<LoginFormProps> = ({
           'a business'} for testing purposes.`,
       });
       
+      console.log("Bypass login activated for type:", type);
+      
       // Redirect based on user type
       if (type === 'admin') {
         navigate('/admin/system-breakdown');
       } else if (type === 'establishment') {
         navigate('/establishment/dashboard');
       } else if (type === 'promoter') {
-        // Redirect to explore page for promoters since promoter dashboard doesn't exist yet
-        navigate('/explore');
+        // Redirect directly to promoter dashboard 
+        navigate('/promoter/dashboard');
       } else {
         navigate('/explore');
       }

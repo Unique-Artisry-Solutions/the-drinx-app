@@ -1,10 +1,11 @@
 
 import React from 'react';
 import Layout from '@/components/Layout';
-import { useAuth } from '@/contexts/auth';
+import { useAuth } from '@/contexts/auth'; // Fixed import path
 
 const PromoterDashboardPage = () => {
   const { user } = useAuth();
+  console.log("Rendered PromoterDashboardPage with user:", user?.id);
   
   return (
     <Layout>

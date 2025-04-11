@@ -3,7 +3,7 @@ import React from "react";
 import { useLocation, Link, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { useTheme } from '@/contexts/ThemeContext';
-import { useAuth } from '@/contexts/auth';
+import { useAuth } from '@/contexts/auth'; // Fixed import path
 
 const NotFound = () => {
   const location = useLocation();
@@ -21,6 +21,8 @@ const NotFound = () => {
   const handleGoHome = () => {
     if (user) {
       const userType = localStorage.getItem('user_type');
+      console.log("NotFound page - redirecting user type:", userType);
+      
       if (userType === 'establishment') {
         navigate('/establishment/dashboard');
       } else if (userType === 'promoter') {

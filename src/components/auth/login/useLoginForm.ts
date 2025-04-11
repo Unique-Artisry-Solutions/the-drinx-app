@@ -1,8 +1,7 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth';
 import { supabase } from '@/lib/supabase';
 
 export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userType: 'individual' | 'establishment' | 'promoter' = 'individual') => {
@@ -62,7 +61,6 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
     
     try {
       if (isAdminLogin) {
-        // Admin login logic
         if (identifier === 'admin@spiritless.com' && password === 'admin123') {
           localStorage.setItem('admin_authenticated', 'true');
           localStorage.setItem('admin_username', 'Admin');
@@ -78,14 +76,11 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
           throw new Error('Invalid admin credentials');
         }
       } else {
-        // Check if identifier is an email or username
         const isEmail = identifier.includes('@');
         
         if (isEmail) {
-          // Regular email login
           await signIn(identifier, password);
         } else {
-          // Username login - first get the email associated with the username
           const { data, error } = await supabase
             .from('profiles')
             .select('id')
@@ -96,14 +91,12 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
             throw new Error('Username not found');
           }
             
-          // Get the user's email from auth.users using the id
           const { data: userData, error: userError } = await supabase.auth.admin.getUserById(data.id);
           
           if (userError || !userData.user) {
             throw new Error('User not found');
           }
             
-          // Now sign in with the email
           await signIn(userData.user.email || '', password);
         }
         
@@ -115,7 +108,6 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
         if (onSuccess) {
           onSuccess();
         } else {
-          // Redirect based on user type
           const storedUserType = localStorage.getItem('user_type');
           console.log("Login redirect - user type:", storedUserType);
           
@@ -132,7 +124,6 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
       console.error('Login error:', error);
       setFormError(error.message || 'Failed to login');
       
-      // Show resend verification option if email not verified
       if (error.message.includes('Email not verified')) {
         setShowResendVerification(true);
       }
