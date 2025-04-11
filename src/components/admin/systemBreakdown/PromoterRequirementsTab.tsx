@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -26,7 +25,6 @@ import {
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-// Map category names to icons
 const categoryIcons: Record<string, React.ReactNode> = {
   'ticket-management': <Ticket className="h-5 w-5 text-purple-500" />,
   'sponsorship': <BadgeDollarSign className="h-5 w-5 text-emerald-500" />,
@@ -40,7 +38,6 @@ const categoryIcons: Record<string, React.ReactNode> = {
   'marketing': <Calendar className="h-5 w-5 text-pink-500" />
 };
 
-// Map category names to friendly display names
 const categoryDisplayNames: Record<string, string> = {
   'ticket-management': 'Ticket Management',
   'sponsorship': 'Sponsorship System',
@@ -57,7 +54,6 @@ const categoryDisplayNames: Record<string, string> = {
   'marketing': 'Marketing Tools'
 };
 
-// Implementation phases mapping
 const implementationPhases: Record<string, number> = {
   '6001': 1, '6002': 1, '6008': 1, '6021': 1,  // Phase 1: Basic functionality
   '6003': 2, '6007': 2, '6009': 2, '6019': 2, '6022': 2, // Phase 2: Core features
@@ -66,7 +62,6 @@ const implementationPhases: Record<string, number> = {
   '6010': 5, '6011': 5, '6012': 5, '6018': 5  // Phase 5: Optional features
 };
 
-// Define what phase a feature belongs to based on its ID
 const getImplementationPhase = (featureId: string): number => {
   return implementationPhases[featureId] || 5; // Default to phase 5 if not found
 };
@@ -79,24 +74,19 @@ const PromoterRequirementsTab: React.FC<PromoterRequirementsTabProps> = ({ featu
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [activeView, setActiveView] = useState<string>('categories');
   
-  // Group features by category
   const categorizedFeatures = groupFeaturesByCategory(features);
   
-  // Calculate overall progress
   const overallProgress = calculateCategoryProgress(features);
   
-  // Calculate progress for each category
   const categoryProgress: Record<string, { frontend: number, backend: number, overall: number }> = {};
   Object.keys(categorizedFeatures).forEach(category => {
     categoryProgress[category] = calculateCategoryProgress(categorizedFeatures[category]);
   });
   
-  // Order categories by overall progress (descending)
   const orderedCategories = Object.keys(categorizedFeatures).sort((a, b) => {
     return categoryProgress[b].overall - categoryProgress[a].overall;
   });
 
-  // Group features by implementation phase
   const phaseFeatures: Record<number, FeatureItem[]> = {};
   features.forEach(feature => {
     const phase = getImplementationPhase(feature.id);
@@ -105,7 +95,6 @@ const PromoterRequirementsTab: React.FC<PromoterRequirementsTabProps> = ({ featu
   });
   
   const renderFeatures = (categoryFeatures: FeatureItem[]) => {
-    // Sort features by implementation phase
     const sortedFeatures = [...categoryFeatures].sort((a, b) => 
       getImplementationPhase(a.id) - getImplementationPhase(b.id)
     );
@@ -131,7 +120,6 @@ const PromoterRequirementsTab: React.FC<PromoterRequirementsTabProps> = ({ featu
             <AccordionTrigger className="text-sm font-medium">Implementation Details</AccordionTrigger>
             <AccordionContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-                {/* Database Requirements */}
                 <div className="bg-slate-50 p-3 rounded-md">
                   <div className="flex items-center gap-2 mb-2">
                     <Database className="h-4 w-4 text-slate-700" />
@@ -140,7 +128,6 @@ const PromoterRequirementsTab: React.FC<PromoterRequirementsTabProps> = ({ featu
                   <p className="text-xs text-slate-700">{feature.dbRequirementsText || 'No specific database requirements defined.'}</p>
                 </div>
                 
-                {/* UI Implementation */}
                 <div className="bg-slate-50 p-3 rounded-md">
                   <div className="flex items-center gap-2 mb-2">
                     <Layout className="h-4 w-4 text-slate-700" />
@@ -153,7 +140,6 @@ const PromoterRequirementsTab: React.FC<PromoterRequirementsTabProps> = ({ featu
                   </p>
                 </div>
                 
-                {/* Implementation Steps */}
                 <div className="bg-slate-50 p-3 rounded-md col-span-1 md:col-span-2">
                   <h5 className="font-medium text-sm mb-2">Implementation Steps</h5>
                   <div className="space-y-1">
@@ -216,7 +202,6 @@ const PromoterRequirementsTab: React.FC<PromoterRequirementsTabProps> = ({ featu
 
   return (
     <div className="space-y-6">
-      {/* Overview card */}
       <Card>
         <CardHeader>
           <CardTitle>Promoter System Implementation Plan</CardTitle>
@@ -287,7 +272,6 @@ const PromoterRequirementsTab: React.FC<PromoterRequirementsTabProps> = ({ featu
         </CardContent>
       </Card>
       
-      {/* Implementation Views */}
       <Card>
         <CardHeader>
           <CardTitle>Promoter System Development Plan</CardTitle>
@@ -300,10 +284,8 @@ const PromoterRequirementsTab: React.FC<PromoterRequirementsTabProps> = ({ featu
               <TabsTrigger value="phases">By Implementation Phase</TabsTrigger>
             </TabsList>
             
-            {/* Category View */}
             <TabsContent value="categories">
               <Tabs value={activeCategory} onValueChange={setActiveCategory}>
-                {/* Refactored menu UI: Use ScrollArea for horizontal scrolling and better styling */}
                 <div className="relative mb-4">
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="text-sm font-medium flex items-center gap-1">
@@ -311,7 +293,7 @@ const PromoterRequirementsTab: React.FC<PromoterRequirementsTabProps> = ({ featu
                       Filter by Category
                     </h3>
                   </div>
-                  <ScrollArea className="w-full whitespace-nowrap pb-2" orientation="horizontal">
+                  <ScrollArea className="w-full whitespace-nowrap pb-2">
                     <div className="inline-flex space-x-1 pb-1">
                       <TabsTrigger 
                         value="all" 
@@ -361,7 +343,6 @@ const PromoterRequirementsTab: React.FC<PromoterRequirementsTabProps> = ({ featu
               </Tabs>
             </TabsContent>
             
-            {/* Phase View */}
             <TabsContent value="phases">
               <Accordion type="single" collapsible defaultValue="phase-1">
                 {[1, 2, 3, 4, 5].map(phase => {
@@ -400,7 +381,6 @@ const PromoterRequirementsTab: React.FC<PromoterRequirementsTabProps> = ({ featu
         </CardContent>
       </Card>
       
-      {/* Database Schema & Integration Plan */}
       <Card>
         <CardHeader>
           <CardTitle>Database Schema & Integration Plan</CardTitle>
