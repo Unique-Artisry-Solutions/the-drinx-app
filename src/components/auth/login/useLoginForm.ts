@@ -117,6 +117,8 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
         } else {
           // Redirect based on user type
           const storedUserType = localStorage.getItem('user_type');
+          console.log("Login redirect - user type:", storedUserType);
+          
           if (storedUserType === 'establishment') {
             navigate('/establishment/dashboard', { replace: true });
           } else if (storedUserType === 'promoter') {

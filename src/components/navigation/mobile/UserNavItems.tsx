@@ -12,7 +12,7 @@ export const getUserNavItems = (
   if (userType === 'establishment') {
     navItems.push({ icon: Home, label: 'Home', path: '/establishment/dashboard' });
   } else if (userType === 'promoter') {
-    navItems.push({ icon: Home, label: 'Home', path: '/promoter/dashboard' }); // Updated to correct promoter dashboard path
+    navItems.push({ icon: Home, label: 'Home', path: '/promoter/dashboard' });
   } else {
     navItems.push({ icon: Home, label: 'Explore', path: '/explore' });
   }

@@ -16,7 +16,7 @@ const UserNavLinks: React.FC<UserNavLinksProps> = ({ userType }) => {
     if (userType === 'establishment') {
       return '/establishment/dashboard';
     } else if (userType === 'promoter') {
-      return '/promoter/dashboard'; // Updated to use correct promoter dashboard path
+      return '/promoter/dashboard';
     } else {
       return '/explore';
     }
