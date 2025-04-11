@@ -39,7 +39,7 @@ import AllActionsPage from '@/pages/establishment/AllActionsPage';
 import MocktailSuggestionsPage from '@/pages/establishment/MocktailSuggestionsPage';
 import SettingsPage from '@/pages/SettingsPage';
 import UserRecipesPage from '@/pages/profile/UserRecipesPage';
-import { ProtectedRoute, TypedProtectedRoute } from './protectedRoutes';
+import { ProtectedRoute, TypedProtectedRoute, SwigCircuitCreationRoute } from './protectedRoutes';
 
 import EstablishmentProfilePage from '@/pages/establishment/EstablishmentProfilePage';
 import MocktailMenuPage from '@/pages/establishment/MocktailMenuPage';
@@ -100,8 +100,10 @@ const AppRoutes = () => {
         <Route path="/profile/recipes" element={<ProtectedRoute><UserRecipesPage /></ProtectedRoute>} />
         <Route path="/profile/rewards" element={<ProtectedRoute><RewardsPage /></ProtectedRoute>} />
         <Route path="/profile/settings" element={<ProtectedRoute><UserProfilePage /></ProtectedRoute>} />
-        <Route path="/create-bar-crawl" element={<ProtectedRoute><CreateSwigCircuitPage /></ProtectedRoute>} />
-        <Route path="/create-swig-circuit" element={<ProtectedRoute><CreateSwigCircuitPage /></ProtectedRoute>} />
+        
+        {/* Update these routes to use SwigCircuitCreationRoute */}
+        <Route path="/create-bar-crawl" element={<SwigCircuitCreationRoute><CreateSwigCircuitPage /></SwigCircuitCreationRoute>} />
+        <Route path="/create-swig-circuit" element={<SwigCircuitCreationRoute><CreateSwigCircuitPage /></SwigCircuitCreationRoute>} />
         <Route path="/profile/my-creations/:id" element={<ProtectedRoute><BarCrawlManagementPage /></ProtectedRoute>} />
         
         <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />

@@ -12,9 +12,20 @@ import VenuesTab from '@/components/swigCircuit/tabs/VenuesTab';
 import DrinksTab from '@/components/swigCircuit/tabs/DrinksTab';
 import PairingsTab from '@/components/swigCircuit/tabs/PairingsTab';
 import { useAuth } from '@/contexts/auth';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Info } from 'lucide-react';
+import { Navigate } from 'react-router-dom';
 
 const CreateSwigCircuitPage: React.FC = () => {
   const { user } = useAuth();
+  const userType = localStorage.getItem('user_type');
+  
+  // Restrict access to promoters only
+  if (user && userType !== 'promoter') {
+    // Set redirect message and navigate away
+    localStorage.setItem('redirect_message', 'Only promoter accounts can create Swig Circuits');
+    return <Navigate to="/explore" replace />;
+  }
   
   const {
     name,
@@ -77,11 +88,13 @@ const CreateSwigCircuitPage: React.FC = () => {
         <CreateSwigCircuitHeader />
         
         {!user && (
-          <div className="mb-4 p-4 bg-yellow-50 border border-yellow-300 rounded-lg">
-            <p className="text-yellow-800">
-              <strong>Note:</strong> You are not logged in. For testing, your Swig Circuit will be saved to local storage.
-            </p>
-          </div>
+          <Alert className="mb-4 bg-yellow-50 border border-yellow-300 text-yellow-800">
+            <Info className="h-4 w-4" />
+            <AlertTitle>Testing Mode</AlertTitle>
+            <AlertDescription>
+              You are not logged in. For testing, your Swig Circuit will be saved to local storage.
+            </AlertDescription>
+          </Alert>
         )}
         
         <div className="flex flex-col md:flex-row gap-4">
