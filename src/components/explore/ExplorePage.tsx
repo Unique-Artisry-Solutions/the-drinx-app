@@ -31,17 +31,17 @@ const ExplorePage = () => {
   const cocktails = React.useMemo(() => {
     return hookCocktails.map(cocktail => {
       // We need to safely handle the case when establishment might not have an ID
-      const establishmentId = cocktail.establishment && 
+      const establishmentId: string = cocktail.establishment && 
         typeof cocktail.establishment === 'object' && 
         'id' in cocktail.establishment ? 
-        cocktail.establishment.id : 
+        cocktail.establishment.id as string : 
         cocktail.id;
         
       return {
         ...cocktail,
         price: typeof cocktail.price === 'number' ? cocktail.price.toString() : cocktail.price,
         establishment: {
-          id: establishmentId, // Use establishment ID if available, fallback to cocktail ID
+          id: establishmentId, // Now explicitly typed as string
           name: cocktail.establishment.name,
           distance: cocktail.establishment.distance
         }
