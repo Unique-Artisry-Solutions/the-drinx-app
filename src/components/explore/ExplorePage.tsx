@@ -29,15 +29,24 @@ const ExplorePage = () => {
   
   // Convert cocktails to ensure price is always a string and establishment has id
   const cocktails = React.useMemo(() => {
-    return hookCocktails.map(cocktail => ({
-      ...cocktail,
-      price: typeof cocktail.price === 'number' ? cocktail.price.toString() : cocktail.price,
-      establishment: {
-        id: cocktail.establishment.id || cocktail.id, // Use establishment ID if available, fallback to cocktail ID
-        name: cocktail.establishment.name,
-        distance: cocktail.establishment.distance
-      }
-    }));
+    return hookCocktails.map(cocktail => {
+      // We need to safely handle the case when establishment might not have an ID
+      const establishmentId = cocktail.establishment && 
+        typeof cocktail.establishment === 'object' && 
+        'id' in cocktail.establishment ? 
+        cocktail.establishment.id : 
+        cocktail.id;
+        
+      return {
+        ...cocktail,
+        price: typeof cocktail.price === 'number' ? cocktail.price.toString() : cocktail.price,
+        establishment: {
+          id: establishmentId, // Use establishment ID if available, fallback to cocktail ID
+          name: cocktail.establishment.name,
+          distance: cocktail.establishment.distance
+        }
+      };
+    });
   }, [hookCocktails]);
   
   // Sample bar crawls data (could be fetched from API in the future)
