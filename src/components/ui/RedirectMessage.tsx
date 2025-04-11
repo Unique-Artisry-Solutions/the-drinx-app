@@ -16,8 +16,7 @@ const RedirectMessage = () => {
       toast({
         title: "Access Restricted",
         description: redirectMessage,
-        variant: "destructive",
-        icon: <AlertTriangle className="h-4 w-4" />
+        variant: "destructive"
       });
       
       // Clear the message
