@@ -20,7 +20,7 @@ export const getUserNavItems = (
   // Add Map for all user types
   navItems.push({ icon: Map, label: 'Map', path: '/map' });
   
-  // Add Create option for individual users to view Swig Circuits
+  // Add Swig Circuits option for individual users
   if (userType === 'individual') {
     navItems.push({ icon: Route, label: 'Swig Circuits', path: '/swig-circuits' });
   }

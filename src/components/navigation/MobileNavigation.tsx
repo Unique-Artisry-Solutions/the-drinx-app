@@ -42,9 +42,10 @@ const MobileNavigation: React.FC<ExtendedMobileNavigationProps> = ({
     console.log('MobileNavigation: userType updated', { 
       fromStorage: userTypeFromStorage, 
       current: currentUserType,
-      user: !!user
+      user: !!user,
+      type: type
     });
-  }, [user, location.pathname]); // Re-check when user or path changes
+  }, [user, location.pathname, type]); // Re-check when user or path changes
 
   // Add effect to scroll to top on route change
   useEffect(() => {
@@ -58,7 +59,8 @@ const MobileNavigation: React.FC<ExtendedMobileNavigationProps> = ({
       userType: currentUserType, 
       user: !!user,
       forceGuestNavigation,
-      path: location.pathname
+      path: location.pathname,
+      navItems: getNavItems().map(item => item.label)
     });
   }, [type, currentUserType, user, forceGuestNavigation, location.pathname]);
 
@@ -72,6 +74,8 @@ const MobileNavigation: React.FC<ExtendedMobileNavigationProps> = ({
     if (user) {
       if (currentUserType === 'establishment') {
         navigate('/establishment/dashboard');
+      } else if (currentUserType === 'promoter') {
+        navigate('/promoter/dashboard');
       } else {
         navigate('/explore');
       }
@@ -125,15 +129,8 @@ const MobileNavigation: React.FC<ExtendedMobileNavigationProps> = ({
       return getUserNavItems(currentUserType, getProfilePath);
     }
     
-    // Use navigation type based on authentication state
-    switch (type) {
-      case NavigationType.ADMIN:
-        return getAdminNavItems();
-      case NavigationType.USER:
-        return getUserNavItems(currentUserType, getProfilePath);
-      default:
-        return getGuestNavItems();
-    }
+    // For individual users and other cases, always use the user type
+    return getUserNavItems(currentUserType, getProfilePath);
   };
 
   const navItems = getNavItems();
