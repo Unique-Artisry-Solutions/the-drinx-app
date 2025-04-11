@@ -38,6 +38,12 @@ const MobileNavigation: React.FC<ExtendedMobileNavigationProps> = ({
     } else {
       setCurrentUserType('individual');
     }
+    
+    console.log('MobileNavigation: userType updated', { 
+      fromStorage: userTypeFromStorage, 
+      current: currentUserType,
+      user: !!user
+    });
   }, [user, location.pathname]); // Re-check when user or path changes
 
   // Add effect to scroll to top on route change
