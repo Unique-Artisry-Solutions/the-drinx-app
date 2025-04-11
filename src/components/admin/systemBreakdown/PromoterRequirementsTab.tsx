@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -294,10 +293,10 @@ const PromoterRequirementsTab: React.FC<PromoterRequirementsTabProps> = ({ featu
                       Filter by Category
                     </h3>
                   </div>
-                  <ScrollArea className="w-full whitespace-nowrap pb-2">
-                    <div className="inline-flex space-x-1 pb-1">
+                  <div className="overflow-x-auto pb-2 w-full">
+                    <div className="flex space-x-1 pb-1 min-w-max">
                       <Tabs value={activeCategory} onValueChange={setActiveCategory}>
-                        <TabsList>
+                        <TabsList className="flex-wrap h-auto p-1 bg-transparent">
                           <TabsTrigger 
                             value="all" 
                             className="rounded-md px-3 py-1.5 text-xs font-medium"
@@ -326,7 +325,7 @@ const PromoterRequirementsTab: React.FC<PromoterRequirementsTabProps> = ({ featu
                         </TabsList>
                       </Tabs>
                     </div>
-                  </ScrollArea>
+                  </div>
                 </div>
                 
                 <TabsContent value="all" className="space-y-4">
