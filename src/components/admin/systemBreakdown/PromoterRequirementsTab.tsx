@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -285,7 +286,7 @@ const PromoterRequirementsTab: React.FC<PromoterRequirementsTabProps> = ({ featu
             </TabsList>
             
             <TabsContent value="categories">
-              <Tabs value={activeCategory} onValueChange={setActiveCategory}>
+              <div>
                 <div className="relative mb-4">
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="text-sm font-medium flex items-center gap-1">
@@ -295,31 +296,35 @@ const PromoterRequirementsTab: React.FC<PromoterRequirementsTabProps> = ({ featu
                   </div>
                   <ScrollArea className="w-full whitespace-nowrap pb-2">
                     <div className="inline-flex space-x-1 pb-1">
-                      <TabsTrigger 
-                        value="all" 
-                        className="rounded-md px-3 py-1.5 text-xs font-medium"
-                      >
-                        All Features
-                        <Badge variant="outline" className="ml-1.5 text-[10px] px-1">
-                          {features.length}
-                        </Badge>
-                      </TabsTrigger>
-                      
-                      {orderedCategories.map(category => (
-                        <TabsTrigger 
-                          key={category} 
-                          value={category} 
-                          className="flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-medium"
-                        >
-                          <span className="flex items-center gap-1">
-                            {categoryIcons[category]}
-                            {categoryDisplayNames[category] || category}
-                          </span>
-                          <Badge variant="outline" className="ml-1.5 text-[10px] px-1">
-                            {categorizedFeatures[category].length}
-                          </Badge>
-                        </TabsTrigger>
-                      ))}
+                      <Tabs value={activeCategory} onValueChange={setActiveCategory}>
+                        <TabsList>
+                          <TabsTrigger 
+                            value="all" 
+                            className="rounded-md px-3 py-1.5 text-xs font-medium"
+                          >
+                            All Features
+                            <Badge variant="outline" className="ml-1.5 text-[10px] px-1">
+                              {features.length}
+                            </Badge>
+                          </TabsTrigger>
+                          
+                          {orderedCategories.map(category => (
+                            <TabsTrigger 
+                              key={category} 
+                              value={category} 
+                              className="flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-medium"
+                            >
+                              <span className="flex items-center gap-1">
+                                {categoryIcons[category]}
+                                {categoryDisplayNames[category] || category}
+                              </span>
+                              <Badge variant="outline" className="ml-1.5 text-[10px] px-1">
+                                {categorizedFeatures[category].length}
+                              </Badge>
+                            </TabsTrigger>
+                          ))}
+                        </TabsList>
+                      </Tabs>
                     </div>
                   </ScrollArea>
                 </div>
@@ -340,7 +345,7 @@ const PromoterRequirementsTab: React.FC<PromoterRequirementsTabProps> = ({ featu
                     {renderFeatures(categorizedFeatures[category])}
                   </TabsContent>
                 ))}
-              </Tabs>
+              </div>
             </TabsContent>
             
             <TabsContent value="phases">
