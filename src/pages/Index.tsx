@@ -36,9 +36,9 @@ const Index = () => {
       return;
     }
     
-    // If user is authenticated and is a promoter, redirect to promoter dashboard/page
+    // If user is authenticated and is a promoter, redirect to promoter dashboard
     if (user && isPromoter) {
-      navigate('/promotions', { replace: true });
+      navigate('/promoter/dashboard', { replace: true });
       return;
     }
     
