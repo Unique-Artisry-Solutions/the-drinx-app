@@ -27,11 +27,16 @@ const ExplorePage = () => {
     checkAuth();
   }, []);
   
-  // Convert cocktails to ensure price is always a string
+  // Convert cocktails to ensure price is always a string and establishment has id
   const cocktails = React.useMemo(() => {
     return hookCocktails.map(cocktail => ({
       ...cocktail,
-      price: typeof cocktail.price === 'number' ? cocktail.price.toString() : cocktail.price
+      price: typeof cocktail.price === 'number' ? cocktail.price.toString() : cocktail.price,
+      establishment: {
+        id: cocktail.establishment.id || cocktail.id, // Use establishment ID if available, fallback to cocktail ID
+        name: cocktail.establishment.name,
+        distance: cocktail.establishment.distance
+      }
     }));
   }, [hookCocktails]);
   
