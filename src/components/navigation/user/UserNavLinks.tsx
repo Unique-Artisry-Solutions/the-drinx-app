@@ -27,13 +27,16 @@ const UserNavLinks: React.FC<UserNavLinksProps> = ({ userType }) => {
     navigate(getHomePath());
   };
   
+  // Start with common navigation items
   const userNavItems = [
     { icon: Home, label: 'Home', path: getHomePath(), onClick: handleHomeClick },
     { icon: Map, label: 'Map', path: '/map' },
   ];
   
   // Add different items based on user type
-  if (userType === 'promoter') {
+  if (userType === 'individual') {
+    userNavItems.push({ icon: Route, label: 'Swig Circuits', path: '/swig-circuits' });
+  } else if (userType === 'promoter') {
     userNavItems.push({ icon: Megaphone, label: 'Promotions', path: '/promoter/dashboard' });
     userNavItems.push({ icon: BarChart2, label: 'Analytics', path: '/promoter/analytics' });
     userNavItems.push({ icon: Route, label: 'Create', path: '/create-swig-circuit' });
