@@ -43,13 +43,6 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
     } else {
       setUserType('individual');
     }
-
-    console.log('UserNavbar: userType updated', {
-      fromStorage: storedUserType,
-      current: userType,
-      user: !!user,
-      path: location.pathname
-    });
     
     const fetchUsername = async () => {
       if (user) {
@@ -73,7 +66,7 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
     };
     
     fetchUsername();
-  }, [user, location.pathname]);
+  }, [user]);
   
   const handleLogout = async () => {
     try {

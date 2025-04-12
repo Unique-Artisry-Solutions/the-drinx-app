@@ -72,16 +72,6 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
       } else {
         setNavigationType(NavigationType.GUEST);
       }
-
-      console.log('MobileLayout: Navigation detection', {
-        isAdminAuth,
-        userTypeStored,
-        user: !!user,
-        isEmailVerified,
-        path: location.pathname,
-        navigationType: isAdminAuth ? 'ADMIN' : (user && isEmailVerified && !isPublicPath ? 'USER' : 'GUEST'),
-        detectedUserType: userTypeStored || 'individual'
-      });
     };
     
     checkAuth();
@@ -189,11 +179,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
       {renderFooter()}
       
       {shouldShowMobileNav() && (
-        <MobileNavigation 
-          type={navigationType} 
-          userType={userType} 
-          forceGuestNavigation={forceGuestNavigation} 
-        />
+        <MobileNavigation type={navigationType} userType={userType} forceGuestNavigation={forceGuestNavigation} />
       )}
     </div>
   );

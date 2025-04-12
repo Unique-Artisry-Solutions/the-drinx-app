@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Home, Map, Route, Megaphone, BarChart2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -11,30 +11,11 @@ interface UserNavLinksProps {
 const UserNavLinks: React.FC<UserNavLinksProps> = ({ userType }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [currentUserType, setCurrentUserType] = useState<'individual' | 'establishment' | 'promoter'>(userType);
-  
-  // Update the local state when the prop changes or when localStorage changes
-  useEffect(() => {
-    const storedUserType = localStorage.getItem('user_type');
-    if (storedUserType === 'establishment') {
-      setCurrentUserType('establishment');
-    } else if (storedUserType === 'promoter') {
-      setCurrentUserType('promoter');
-    } else {
-      setCurrentUserType('individual');
-    }
-    
-    console.log('UserNavLinks: userType updated from props/storage', {
-      fromProps: userType,
-      fromStorage: storedUserType,
-      currentState: currentUserType
-    });
-  }, [userType, location.pathname]);
   
   const getHomePath = () => {
-    if (currentUserType === 'establishment') {
+    if (userType === 'establishment') {
       return '/establishment/dashboard';
-    } else if (currentUserType === 'promoter') {
+    } else if (userType === 'promoter') {
       return '/promoter/dashboard';
     } else {
       return '/explore';
@@ -46,27 +27,18 @@ const UserNavLinks: React.FC<UserNavLinksProps> = ({ userType }) => {
     navigate(getHomePath());
   };
   
-  // Start with common navigation items
   const userNavItems = [
     { icon: Home, label: 'Home', path: getHomePath(), onClick: handleHomeClick },
     { icon: Map, label: 'Map', path: '/map' },
   ];
   
   // Add different items based on user type
-  if (currentUserType === 'individual') {
-    userNavItems.push({ icon: Route, label: 'Swig Circuits', path: '/swig-circuits' });
-  } else if (currentUserType === 'promoter') {
+  if (userType === 'individual') {
+    userNavItems.push({ icon: Route, label: 'Create', path: '/create-bar-crawl' });
+  } else if (userType === 'promoter') {
     userNavItems.push({ icon: Megaphone, label: 'Promotions', path: '/promoter/dashboard' });
     userNavItems.push({ icon: BarChart2, label: 'Analytics', path: '/promoter/analytics' });
-    userNavItems.push({ icon: Route, label: 'Create', path: '/create-swig-circuit' });
   }
-
-  // Debug console log to check items being rendered
-  console.log('UserNavLinks: Rendering nav items for', { 
-    userType: currentUserType, 
-    itemsCount: userNavItems.length,
-    items: userNavItems.map(item => item.label)
-  });
 
   return (
     <div className="user-nav-links hidden md:flex space-x-1">
@@ -82,7 +54,7 @@ const UserNavLinks: React.FC<UserNavLinksProps> = ({ userType }) => {
             onClick={item.onClick}
             className={cn(
               "user-nav-link flex items-center space-x-1 px-3 py-2 rounded-md transition-all duration-300",
-              currentUserType === 'promoter' 
+              userType === 'promoter' 
                 ? (isActive 
                     ? "bg-purple-100 text-purple-600 font-medium shadow-sm" 
                     : "text-foreground/80 hover:text-purple-600 hover:bg-purple-50")
@@ -98,7 +70,7 @@ const UserNavLinks: React.FC<UserNavLinksProps> = ({ userType }) => {
             )} />
             <span className={cn(
               "text-sm font-medium",
-              currentUserType === 'promoter'
+              userType === 'promoter'
                 ? (isActive ? "text-purple-600" : "")
                 : (isActive ? "text-spiritless-pink" : "")
             )}>{item.label}</span>

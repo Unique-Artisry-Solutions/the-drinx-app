@@ -77,23 +77,3 @@ export const TypedProtectedRoute = ({
   
   return <>{children}</>;
 };
-
-// New route specifically for Swig Circuit creation that restricts to promoter users
-export const SwigCircuitCreationRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, isLoading } = useAuth();
-  const userType = localStorage.getItem('user_type');
-  const isAdminBypass = localStorage.getItem('admin_bypass') === 'true';
-  
-  if (isLoading) {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
-  }
-  
-  // Allow access only for promoter accounts or admin bypass as promoter
-  if ((user && userType === 'promoter') || (isAdminBypass && userType === 'promoter')) {
-    return <>{children}</>;
-  }
-  
-  // Redirect individual users to explore page with a message
-  localStorage.setItem('redirect_message', 'Only promoter accounts can create Swig Circuits');
-  return <Navigate to="/explore" replace />;
-};

@@ -5,16 +5,14 @@ import Layout from '@/components/Layout';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PenSquare, Map, PlusCircle, Award, Info } from 'lucide-react';
+import { PenSquare, Map, PlusCircle, Award } from 'lucide-react';
 import { useRewardsSystem } from '@/hooks/useRewardsSystem';
 import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const MyCreationsPage: React.FC = () => {
   const [createdBarCrawls, setCreatedBarCrawls] = useState<any[]>([]);
   const { toast } = useToast();
   const { userStats, completeBarCrawl } = useRewardsSystem();
-  const userType = localStorage.getItem('user_type');
 
   // Load user's created bar crawls from localStorage
   useEffect(() => {
@@ -65,8 +63,6 @@ const MyCreationsPage: React.FC = () => {
     });
   };
 
-  const isPromoter = userType === 'promoter';
-
   return (
     <Layout>
       <div className="py-4 animate-fade-in">
@@ -78,29 +74,14 @@ const MyCreationsPage: React.FC = () => {
                 Manage Swig Circuits you've created and organized
               </p>
             </div>
-            {isPromoter && (
-              <Button asChild>
-                <Link to="/create-bar-crawl">
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Create New Swig Circuit
-                </Link>
-              </Button>
-            )}
+            <Button asChild>
+              <Link to="/create-bar-crawl">
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Create New Swig Circuit
+              </Link>
+            </Button>
           </div>
         </div>
-        
-        {!isPromoter && (
-          <Alert className="mb-6 border-amber-500 bg-amber-50 text-amber-900">
-            <Info className="h-4 w-4 text-amber-500" />
-            <AlertTitle>Feature Update</AlertTitle>
-            <AlertDescription>
-              Swig Circuit creation is now exclusively available for promoter accounts. 
-              <Link to="/signup" className="text-amber-700 font-medium ml-1 underline">
-                Sign up as a promoter
-              </Link> to create your own Swig Circuits.
-            </AlertDescription>
-          </Alert>
-        )}
         
         {userStats.barCrawlsCompleted >= 5 && (
           <div className="mb-6 p-4 border rounded-lg bg-blue-50 flex items-center justify-between">
@@ -182,34 +163,24 @@ const MyCreationsPage: React.FC = () => {
             </>
           ) : null}
           
-          {isPromoter && (
-            <Card className="border-dashed flex items-center justify-center min-h-[220px] cursor-pointer">
-              <Link to="/create-bar-crawl" className="w-full h-full">
-                <div className="text-center p-4 h-full flex flex-col items-center justify-center">
-                  <PlusCircle className="h-12 w-12 mx-auto mb-3 text-material-primary" />
-                  <p className="font-medium">Create New Swig Circuit</p>
-                  <p className="text-sm text-muted-foreground mt-1">Plan your next adventure</p>
-                </div>
-              </Link>
-            </Card>
-          )}
+          <Card className="border-dashed flex items-center justify-center min-h-[220px] cursor-pointer">
+            <Link to="/create-bar-crawl" className="w-full h-full">
+              <div className="text-center p-4 h-full flex flex-col items-center justify-center">
+                <PlusCircle className="h-12 w-12 mx-auto mb-3 text-material-primary" />
+                <p className="font-medium">Create New Swig Circuit</p>
+                <p className="text-sm text-muted-foreground mt-1">Plan your next adventure</p>
+              </div>
+            </Link>
+          </Card>
         </div>
         
         {createdBarCrawls.length === 0 && (
           <div className="text-center py-8 border rounded-md bg-gray-50 mt-6">
             <p className="text-muted-foreground mb-2">No Swig Circuits created yet</p>
-            {isPromoter ? (
-              <>
-                <p className="text-sm text-muted-foreground mb-4">Start planning your first Swig Circuit adventure!</p>
-                <Button asChild>
-                  <Link to="/create-bar-crawl">Create Your First Swig Circuit</Link>
-                </Button>
-              </>
-            ) : (
-              <p className="text-sm text-muted-foreground mb-4">
-                Swig Circuit creation is now exclusively available for promoter accounts.
-              </p>
-            )}
+            <p className="text-sm text-muted-foreground mb-4">Start planning your first Swig Circuit adventure!</p>
+            <Button asChild>
+              <Link to="/create-bar-crawl">Create Your First Swig Circuit</Link>
+            </Button>
           </div>
         )}
       </div>

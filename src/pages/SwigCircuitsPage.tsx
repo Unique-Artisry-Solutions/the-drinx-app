@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Layout from '@/components/Layout';
@@ -11,7 +10,6 @@ import { Badge } from '@/components/ui/badge';
 import { sampleBarCrawls, sampleEstablishments } from '@/data/sampleData';
 import { useAuth } from '@/contexts/auth';
 import { useTheme } from '@/contexts/ThemeContext';
-import RedirectMessage from '@/components/ui/RedirectMessage';
 
 const SwigCircuitsPage: React.FC = () => {
   const [circuits, setCircuits] = useState<any[]>([]);
@@ -21,7 +19,6 @@ const SwigCircuitsPage: React.FC = () => {
   const { user } = useAuth();
   const { theme } = useTheme();
   const isDark = theme === 'dark';
-  const userType = localStorage.getItem('user_type');
 
   useEffect(() => {
     // Simulate data fetching
@@ -71,11 +68,8 @@ const SwigCircuitsPage: React.FC = () => {
     }
   };
 
-  const canCreateCircuit = user && userType === 'promoter';
-
   return (
     <Layout>
-      <RedirectMessage />
       <div className="py-4 animate-fade-in max-w-6xl mx-auto">
         <div className="mb-6">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
@@ -89,7 +83,7 @@ const SwigCircuitsPage: React.FC = () => {
               </p>
             </div>
             
-            {canCreateCircuit && (
+            {user && (
               <Button asChild className="bg-spiritless-pink hover:bg-spiritless-pink/90">
                 <Link to="/create-bar-crawl" className="flex items-center gap-2">
                   <PlusCircle size={16} />
