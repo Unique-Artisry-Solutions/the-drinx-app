@@ -8,6 +8,8 @@ export const getUserNavItems = (
 ): NavItem[] => {
   const navItems: NavItem[] = [];
   
+  console.log('getUserNavItems called with userType:', userType);
+  
   // Add appropriate home path based on user type
   if (userType === 'establishment') {
     navItems.push({ icon: Home, label: 'Home', path: '/establishment/dashboard' });
@@ -35,6 +37,12 @@ export const getUserNavItems = (
   
   // Add Profile for all user types
   navItems.push({ icon: User, label: 'Profile', path: getProfilePath() });
+  
+  console.log('getUserNavItems returning:', {
+    userType,
+    items: navItems.map(item => item.label),
+    itemCount: navItems.length
+  });
   
   return navItems;
 };

@@ -43,7 +43,8 @@ const MobileNavigation: React.FC<ExtendedMobileNavigationProps> = ({
       fromStorage: userTypeFromStorage, 
       current: currentUserType,
       user: !!user,
-      type: type
+      type: type,
+      path: location.pathname
     });
   }, [user, location.pathname, type]); // Re-check when user or path changes
 
@@ -129,7 +130,7 @@ const MobileNavigation: React.FC<ExtendedMobileNavigationProps> = ({
       return getUserNavItems(currentUserType, getProfilePath);
     }
     
-    // For individual users and other cases, always use the user type
+    // For individual users and other cases, always use the current user type
     return getUserNavItems(currentUserType, getProfilePath);
   };
 

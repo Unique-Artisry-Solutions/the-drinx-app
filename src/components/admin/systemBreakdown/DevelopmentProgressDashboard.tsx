@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Shield } from 'lucide-react';
 import { FeatureItem, MonthlyProgressData, ProgressSnapshot } from './types';
 
-// Import our new tab components
+// Import our tab components
 import OverviewTab from './tabs/OverviewTab';
 import CategoriesTab from './tabs/CategoriesTab';
 import ComparisonTab from './tabs/ComparisonTab';
@@ -97,14 +97,6 @@ const DevelopmentProgressDashboard: React.FC<DevelopmentProgressDashboardProps> 
   }, 0);
   
   const overallProgressPercentage = Math.round(totalImplementationProgress / totalFeatures);
-  
-  console.log("Progress calculation:", {
-    totalFeatures,
-    implementedFeatures,
-    partialFeatures,
-    totalImplementationProgress,
-    overallProgressPercentage
-  });
   
   // Calculate backend implementation progress (based on database status)
   const dbCompleted = allFeatures.filter(f => f.databaseStatus === 'complete' || f.dbStatus === 'implemented').length;
