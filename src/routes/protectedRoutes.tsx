@@ -25,6 +25,18 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/verify-email" replace />;
   }
   
+  // Check if user is trying to access Create Swig Circuit page but is not a promoter
+  const isCreatingSwigCircuit = window.location.pathname === '/create-bar-crawl' || 
+                               window.location.pathname === '/create-swig-circuit';
+  
+  if (isCreatingSwigCircuit) {
+    const userType = localStorage.getItem('user_type');
+    if (userType !== 'promoter') {
+      // Redirect non-promoters away from circuit creation
+      return <Navigate to="/explore" replace />;
+    }
+  }
+  
   return <>{children}</>;
 };
 

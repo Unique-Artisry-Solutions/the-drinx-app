@@ -23,13 +23,18 @@ const BarCrawlSection: React.FC<BarCrawlSectionProps> = ({
     window.scrollTo(0, 0);
   };
   
+  // Check if user is a promoter to show the Create button
+  const userType = localStorage.getItem('user_type');
+  const isPromoter = userType === 'promoter';
+  
   return (
     <div className="mb-6 p-5 bg-gradient-to-r from-spiritless-pink/20 to-spiritless-green/20 rounded-lg border border-spiritless-pink/30 shadow-md">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
         <div>
           <h2 className="text-xl font-semibold text-spiritless-pink mb-2">Swig Circuits</h2>
           <p className="text-sm text-muted-foreground">
-            Discover or create spirit-free Swig Circuits in your area
+            Discover spirit-free Swig Circuits in your area
+            {isPromoter && " or create your own"}
           </p>
         </div>
         <div className="flex gap-2 mt-3 sm:mt-0 w-full sm:w-auto">
@@ -44,7 +49,7 @@ const BarCrawlSection: React.FC<BarCrawlSectionProps> = ({
               <span>Find</span>
             </Link>
           </Button>
-          {isAuthenticated && (
+          {isAuthenticated && isPromoter && (
             <Button 
               variant="default" 
               size="sm" 

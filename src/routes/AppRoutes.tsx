@@ -100,8 +100,10 @@ const AppRoutes = () => {
         <Route path="/profile/recipes" element={<ProtectedRoute><UserRecipesPage /></ProtectedRoute>} />
         <Route path="/profile/rewards" element={<ProtectedRoute><RewardsPage /></ProtectedRoute>} />
         <Route path="/profile/settings" element={<ProtectedRoute><UserProfilePage /></ProtectedRoute>} />
-        <Route path="/create-bar-crawl" element={<ProtectedRoute><CreateSwigCircuitPage /></ProtectedRoute>} />
-        <Route path="/create-swig-circuit" element={<ProtectedRoute><CreateSwigCircuitPage /></ProtectedRoute>} />
+        
+        {/* Update the routes to use TypedProtectedRoute for promoters only */}
+        <Route path="/create-bar-crawl" element={<TypedProtectedRoute userType="promoter"><CreateSwigCircuitPage /></TypedProtectedRoute>} />
+        <Route path="/create-swig-circuit" element={<TypedProtectedRoute userType="promoter"><CreateSwigCircuitPage /></TypedProtectedRoute>} />
         <Route path="/profile/my-creations/:id" element={<ProtectedRoute><BarCrawlManagementPage /></ProtectedRoute>} />
         
         <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />

@@ -13,6 +13,8 @@ const MyCreationsPage: React.FC = () => {
   const [createdBarCrawls, setCreatedBarCrawls] = useState<any[]>([]);
   const { toast } = useToast();
   const { userStats, completeBarCrawl } = useRewardsSystem();
+  const userType = localStorage.getItem('user_type');
+  const isPromoter = userType === 'promoter';
 
   // Load user's created bar crawls from localStorage
   useEffect(() => {
@@ -71,15 +73,19 @@ const MyCreationsPage: React.FC = () => {
             <div>
               <h1 className="text-2xl font-medium text-material-on-background">Created Swig Circuits</h1>
               <p className="text-material-on-surface-variant">
-                Manage Swig Circuits you've created and organized
+                {isPromoter 
+                  ? "Manage Swig Circuits you've created and organized" 
+                  : "View Swig Circuits you've participated in"}
               </p>
             </div>
-            <Button asChild>
-              <Link to="/create-bar-crawl">
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Create New Swig Circuit
-              </Link>
-            </Button>
+            {isPromoter && (
+              <Button asChild>
+                <Link to="/create-bar-crawl">
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Create New Swig Circuit
+                </Link>
+              </Button>
+            )}
           </div>
         </div>
         
@@ -129,15 +135,17 @@ const MyCreationsPage: React.FC = () => {
                   </div>
                   <CardContent className="p-4">
                     <div className="flex justify-between">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        asChild
-                      >
-                        <Link to={`/profile/my-creations/${barCrawl.id}`}>
-                          <PenSquare className="h-4 w-4 mr-2" /> Edit
-                        </Link>
-                      </Button>
+                      {isPromoter && (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          asChild
+                        >
+                          <Link to={`/profile/my-creations/${barCrawl.id}`}>
+                            <PenSquare className="h-4 w-4 mr-2" /> Edit
+                          </Link>
+                        </Button>
+                      )}
                       <div className="space-x-2">
                         {barCrawl.status !== 'completed' && (
                           <Button 
@@ -163,24 +171,32 @@ const MyCreationsPage: React.FC = () => {
             </>
           ) : null}
           
-          <Card className="border-dashed flex items-center justify-center min-h-[220px] cursor-pointer">
-            <Link to="/create-bar-crawl" className="w-full h-full">
-              <div className="text-center p-4 h-full flex flex-col items-center justify-center">
-                <PlusCircle className="h-12 w-12 mx-auto mb-3 text-material-primary" />
-                <p className="font-medium">Create New Swig Circuit</p>
-                <p className="text-sm text-muted-foreground mt-1">Plan your next adventure</p>
-              </div>
-            </Link>
-          </Card>
+          {isPromoter && (
+            <Card className="border-dashed flex items-center justify-center min-h-[220px] cursor-pointer">
+              <Link to="/create-bar-crawl" className="w-full h-full">
+                <div className="text-center p-4 h-full flex flex-col items-center justify-center">
+                  <PlusCircle className="h-12 w-12 mx-auto mb-3 text-material-primary" />
+                  <p className="font-medium">Create New Swig Circuit</p>
+                  <p className="text-sm text-muted-foreground mt-1">Plan your next adventure</p>
+                </div>
+              </Link>
+            </Card>
+          )}
         </div>
         
         {createdBarCrawls.length === 0 && (
           <div className="text-center py-8 border rounded-md bg-gray-50 mt-6">
             <p className="text-muted-foreground mb-2">No Swig Circuits created yet</p>
-            <p className="text-sm text-muted-foreground mb-4">Start planning your first Swig Circuit adventure!</p>
-            <Button asChild>
-              <Link to="/create-bar-crawl">Create Your First Swig Circuit</Link>
-            </Button>
+            <p className="text-sm text-muted-foreground mb-4">
+              {isPromoter 
+                ? "Start planning your first Swig Circuit adventure!" 
+                : "You haven't participated in any Swig Circuits yet."}
+            </p>
+            {isPromoter && (
+              <Button asChild>
+                <Link to="/create-bar-crawl">Create Your First Swig Circuit</Link>
+              </Button>
+            )}
           </div>
         )}
       </div>

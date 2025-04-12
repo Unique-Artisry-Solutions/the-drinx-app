@@ -32,10 +32,9 @@ const UserNavLinks: React.FC<UserNavLinksProps> = ({ userType }) => {
     { icon: Map, label: 'Map', path: '/map' },
   ];
   
-  // Add different items based on user type
-  if (userType === 'individual') {
+  // Add different items based on user type - removed Create for individual users
+  if (userType === 'promoter') {
     userNavItems.push({ icon: Route, label: 'Create', path: '/create-bar-crawl' });
-  } else if (userType === 'promoter') {
     userNavItems.push({ icon: Megaphone, label: 'Promotions', path: '/promoter/dashboard' });
     userNavItems.push({ icon: BarChart2, label: 'Analytics', path: '/promoter/analytics' });
   }
