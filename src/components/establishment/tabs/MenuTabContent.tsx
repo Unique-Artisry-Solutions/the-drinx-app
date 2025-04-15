@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Info } from 'lucide-react';  // Changed from InfoCircle to Info
+import { Info } from 'lucide-react';
 import CocktailCard from '@/components/CocktailCard';
 
 interface MenuTabContentProps {
