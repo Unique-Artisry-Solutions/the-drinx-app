@@ -54,8 +54,10 @@ const EstablishmentDetail = () => {
           }
         }
         
-        // Proceed with normal UUID lookup
-        if (!id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+        // Check if ID looks like a valid UUID before proceeding
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (!uuidRegex.test(id)) {
+          console.error("Invalid UUID format:", id);
           throw new Error("Invalid establishment ID format");
         }
 
@@ -64,10 +66,17 @@ const EstablishmentDetail = () => {
           .from('establishments')
           .select('*')
           .eq('id', id)
-          .single();
+          .maybeSingle(); // Changed from .single() to .maybeSingle()
 
-        if (estError) throw estError;
-        if (!estData) throw new Error('Establishment not found');
+        if (estError) {
+          console.error("Error fetching establishment:", estError);
+          throw estError;
+        }
+        
+        if (!estData) {
+          console.log("No establishment found with ID:", id);
+          throw new Error('Establishment not found');
+        }
         
         setEstablishment(estData);
         
@@ -77,7 +86,11 @@ const EstablishmentDetail = () => {
           .select('*')
           .eq('establishment_id', id);
           
-        if (cocktailsError) throw cocktailsError;
+        if (cocktailsError) {
+          console.error("Error fetching cocktails:", cocktailsError);
+          throw cocktailsError;
+        }
+        
         setCocktails(cocktailsData || []);
       } catch (err: any) {
         console.error('Error fetching establishment details:', err);
@@ -93,8 +106,15 @@ const EstablishmentDetail = () => {
   // Helper function to find a sample establishment by legacy numeric ID
   const findSampleEstablishmentByLegacyId = async (numericId: string) => {
     // Import sample data dynamically to prevent circular dependencies
-    const { sampleEstablishments, sampleCocktails } = await import('@/data/sampleData');
+    const { sampleEstablishments, legacyIdMap } = await import('@/data/sampleData');
     
+    // First check if this ID maps to a UUID in our legacyIdMap
+    const mappedId = legacyIdMap[numericId];
+    if (mappedId) {
+      return sampleEstablishments.find(est => est.id === mappedId);
+    }
+    
+    // Fallback to direct numeric ID match
     return sampleEstablishments.find(est => est.id === numericId || est.id === `${numericId}`);
   };
 

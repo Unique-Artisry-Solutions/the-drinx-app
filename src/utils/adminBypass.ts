@@ -2,6 +2,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
 export function enableAdminBypass(userType: 'individual' | 'establishment' | 'admin' | 'promoter' = 'individual') {
+  // Generate a proper UUID for the bypass user ID
   const bypassUserId = uuidv4();
   
   localStorage.setItem('admin_bypass', 'true');
