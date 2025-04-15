@@ -64,7 +64,7 @@ export const dynamicRoutes = [
   { pattern: /^\/bar-crawl\/(.+)$/, base: '/swig-circuits', label: 'Swig Circuit Details' },
   { pattern: /^\/bar-crawl-profile\/(.+)$/, base: '/swig-circuits', label: 'Swig Circuit Details' },
   { pattern: /^\/bar-crawl-details\/(.+)$/, base: '/swig-circuits', label: 'Swig Circuit Details' },
-  { pattern: /^\/establishment\/(\d+)$/, base: '/establishment/dashboard', label: 'Establishment Details' },
+  { pattern: /^\/establishment\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|\d+)$/, base: '/explore', label: 'Establishment Details' },
   { pattern: /^\/establishment\/mocktail\/(.+)$/, base: '/establishment/mocktail-menu', label: 'Mocktail Details' },
   { pattern: /^\/cocktail\/(.+)$/, base: '/cocktail', label: 'Cocktail Details' },
   { pattern: /^\/profile\/my-creations\/(.+)$/, base: '/profile/my-creations', label: 'Swig Circuit Management' },
