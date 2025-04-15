@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { MapPin, Phone, Star, Users, Calendar, PlusCircle } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -30,9 +31,16 @@ const EstablishmentInterior: React.FC<EstablishmentInteriorProps> = ({
   const [isBarCrawlModalOpen, setIsBarCrawlModalOpen] = useState(false);
   const [activeUsers, setActiveUsers] = useState(establishment.activeUsers || Math.floor(Math.random() * 11));
   const [hasCheckedIn, setHasCheckedIn] = useState(false);
+  const [isPromoter, setIsPromoter] = useState(false);
   const { toast } = useToast();
   const { theme } = useTheme();
   const isLightTheme = theme === 'light';
+
+  // Check if the user is a promoter on component mount
+  useEffect(() => {
+    const userType = localStorage.getItem('user_type');
+    setIsPromoter(userType === 'promoter');
+  }, []);
 
   // Sort cocktails by rating for top-rated display
   const topRatedCocktails = [...cocktails].sort((a, b) => (b.rating || 0) - (a.rating || 0)).slice(0, 3);
@@ -135,15 +143,18 @@ const EstablishmentInterior: React.FC<EstablishmentInteriorProps> = ({
                   Check In
                 </Button>
               )}
-              <Button 
-                size="sm" 
-                variant="outline" 
-                onClick={handleBarCrawlRequest} 
-                className="border-white text-white bg-black/50 backdrop-blur-sm hover:bg-black/60"
-              >
-                <PlusCircle className="h-4 w-4 mr-1" />
-                Add to Bar Crawl
-              </Button>
+              {/* Only show the Add to Bar Crawl button for promoters */}
+              {isPromoter && (
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={handleBarCrawlRequest} 
+                  className="border-white text-white bg-black/50 backdrop-blur-sm hover:bg-black/60"
+                >
+                  <PlusCircle className="h-4 w-4 mr-1" />
+                  Add to Bar Crawl
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -311,43 +322,46 @@ const EstablishmentInterior: React.FC<EstablishmentInteriorProps> = ({
             </CardContent>
           </Card>
           
-          <Card className="vibrant-card">
-            <CardHeader>
-              <CardTitle className={cn(
-                "text-lg",
-                isLightTheme ? "text-gray-800" : "gradient-text"
-              )}>
-                Bar Crawl Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className={cn(
-                    "text-sm",
-                    isLightTheme ? "text-gray-700" : ""
-                  )}>
-                    Currently participating:
-                  </span>
-                  <Badge variant="outline" className={establishment.inBarCrawl ? "bg-green-50 text-green-700 border-green-200" : "bg-gray-100"}>
-                    {establishment.inBarCrawl ? "Yes" : "No"}
-                  </Badge>
-                </div>
-                
-                <Button className="w-full" variant="gradient" onClick={handleBarCrawlRequest}>
-                  <Calendar className="h-4 w-4 mr-2" />
-                  Request to Join Bar Crawl
-                </Button>
-                
-                <div className={cn(
-                  "text-xs mt-2",
-                  isLightTheme ? "text-gray-600" : "text-material-on-surface-variant"
+          {/* Only show the Bar Crawl Information card for promoters */}
+          {isPromoter && (
+            <Card className="vibrant-card">
+              <CardHeader>
+                <CardTitle className={cn(
+                  "text-lg",
+                  isLightTheme ? "text-gray-800" : "gradient-text"
                 )}>
-                  Request this establishment to participate in upcoming bar crawls. The venue will receive your request and respond accordingly.
+                  Bar Crawl Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className={cn(
+                      "text-sm",
+                      isLightTheme ? "text-gray-700" : ""
+                    )}>
+                      Currently participating:
+                    </span>
+                    <Badge variant="outline" className={establishment.inBarCrawl ? "bg-green-50 text-green-700 border-green-200" : "bg-gray-100"}>
+                      {establishment.inBarCrawl ? "Yes" : "No"}
+                    </Badge>
+                  </div>
+                  
+                  <Button className="w-full" variant="gradient" onClick={handleBarCrawlRequest}>
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Request to Join Bar Crawl
+                  </Button>
+                  
+                  <div className={cn(
+                    "text-xs mt-2",
+                    isLightTheme ? "text-gray-600" : "text-material-on-surface-variant"
+                  )}>
+                    Request this establishment to participate in upcoming bar crawls. The venue will receive your request and respond accordingly.
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
       
