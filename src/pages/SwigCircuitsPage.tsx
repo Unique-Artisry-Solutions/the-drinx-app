@@ -75,10 +75,7 @@ const SwigCircuitsPage: React.FC = () => {
             </div>
             
             {user && <Button asChild className="bg-spiritless-pink hover:bg-spiritless-pink/90">
-                <Link to="/create-bar-crawl" className="flex items-center gap-2">
-                  <PlusCircle size={16} />
-                  Create New Circuit
-                </Link>
+                
               </Button>}
           </div>
           
