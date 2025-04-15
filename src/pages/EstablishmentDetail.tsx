@@ -19,6 +19,7 @@ const EstablishmentDetail = () => {
   useEffect(() => {
     const fetchEstablishmentData = async () => {
       if (!id) {
+        console.error("No establishment ID provided");
         setError("No establishment ID provided");
         setIsLoading(false);
         return;
@@ -27,7 +28,7 @@ const EstablishmentDetail = () => {
       // Check if this is a special route or an invalid UUID format
       if (id === 'profile' || id === 'analytics' || id === 'bar-crawl-requests' || 
           id === 'reviews' || id === 'mocktail-suggestions' || 
-          id === 'mocktail-menu' || id === 'promotions') {
+          id === 'mocktail-menu' || id === 'promotions' || id === 'dashboard') {
         // These are valid routes within the establishment section, not actual IDs
         console.log("Received a special route, not an establishment ID:", id);
         setError("Invalid establishment ID");
@@ -38,59 +39,77 @@ const EstablishmentDetail = () => {
       try {
         setIsLoading(true);
         setError(null);
+        console.log("Fetching establishment with ID:", id);
         
-        // If the ID is numeric, try to find the establishment by its numeric ID in sample data
-        if (/^\d+$/.test(id)) {
-          console.log("Received numeric ID, looking for corresponding establishment in sample data");
-          // For sample numeric IDs, map them to the sample data
-          const sampleEstablishment = await findSampleEstablishmentByLegacyId(id);
-          if (sampleEstablishment) {
-            setEstablishment(sampleEstablishment);
-            setCocktails(findSampleCocktailsForEstablishment(sampleEstablishment.id));
-            setIsLoading(false);
-            return;
-          } else {
-            throw new Error(`No establishment found with numeric ID: ${id}`);
+        let establishmentData = null;
+        let cocktailsData = [];
+
+        // First try to find the establishment in Supabase
+        if (isValidUUID(id) || /^\d+$/.test(id)) {
+          // Check database for UUID or numeric ID
+          const { data: estData, error: estError } = await supabase
+            .from('establishments')
+            .select('*')
+            .eq('id', id)
+            .maybeSingle();
+          
+          if (estError) {
+            console.error("Error fetching from Supabase:", estError);
+          } else if (estData) {
+            console.log("Found establishment in Supabase:", estData);
+            establishmentData = estData;
+            
+            // Fetch cocktails from Supabase
+            const { data: cocktailsResult, error: cocktailsError } = await supabase
+              .from('cocktails')
+              .select('*')
+              .eq('establishment_id', id);
+              
+            if (!cocktailsError && cocktailsResult) {
+              cocktailsData = cocktailsResult;
+              console.log("Found cocktails in Supabase:", cocktailsData.length);
+            }
           }
         }
         
-        // Check if ID looks like a valid UUID before proceeding
-        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-        if (!uuidRegex.test(id)) {
-          console.error("Invalid UUID format:", id);
-          throw new Error("Invalid establishment ID format");
+        // If we couldn't find it in Supabase, try sample data
+        if (!establishmentData) {
+          console.log("Looking for establishment in sample data");
+          if (/^\d+$/.test(id)) {
+            // If numeric ID, check sample data with legacy ID mapping
+            const sampleEstablishment = await findSampleEstablishmentByLegacyId(id);
+            if (sampleEstablishment) {
+              console.log("Found establishment in sample data by legacy ID:", sampleEstablishment);
+              establishmentData = sampleEstablishment;
+              cocktailsData = findSampleCocktailsForEstablishment(sampleEstablishment.id);
+            }
+          } else if (isValidUUID(id)) {
+            // If UUID, check directly in sample data
+            const { sampleEstablishments } = await import('@/data/sampleData');
+            const foundEstablishment = sampleEstablishments.find(est => est.id === id);
+            if (foundEstablishment) {
+              console.log("Found establishment in sample data by UUID:", foundEstablishment);
+              establishmentData = foundEstablishment;
+              cocktailsData = findSampleCocktailsForEstablishment(id);
+            }
+          }
         }
 
-        // Fetch establishment
-        const { data: estData, error: estError } = await supabase
-          .from('establishments')
-          .select('*')
-          .eq('id', id)
-          .maybeSingle(); // Changed from .single() to .maybeSingle()
-
-        if (estError) {
-          console.error("Error fetching establishment:", estError);
-          throw estError;
-        }
-        
-        if (!estData) {
-          console.log("No establishment found with ID:", id);
+        // If we still don't have an establishment, it doesn't exist
+        if (!establishmentData) {
+          console.error("Establishment not found with ID:", id);
           throw new Error('Establishment not found');
         }
         
-        setEstablishment(estData);
-        
-        // Fetch cocktails for this establishment
-        const { data: cocktailsData, error: cocktailsError } = await supabase
-          .from('cocktails')
-          .select('*')
-          .eq('establishment_id', id);
-          
-        if (cocktailsError) {
-          console.error("Error fetching cocktails:", cocktailsError);
-          throw cocktailsError;
-        }
-        
+        // Ensure the establishment has the expected format
+        const formattedEstablishment = {
+          ...establishmentData,
+          // Ensure these fields exist for compatibility with components
+          cocktailCount: establishmentData.cocktail_count || establishmentData.cocktailCount || 0,
+          image: establishmentData.image_url || establishmentData.image || null
+        };
+
+        setEstablishment(formattedEstablishment);
         setCocktails(cocktailsData || []);
       } catch (err: any) {
         console.error('Error fetching establishment details:', err);
@@ -102,6 +121,12 @@ const EstablishmentDetail = () => {
 
     fetchEstablishmentData();
   }, [id]);
+
+  // Helper function to validate UUID format
+  const isValidUUID = (uuid: string) => {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(uuid);
+  };
 
   // Helper function to find a sample establishment by legacy numeric ID
   const findSampleEstablishmentByLegacyId = async (numericId: string) => {
@@ -120,12 +145,20 @@ const EstablishmentDetail = () => {
 
   // Helper function to get sample cocktails for an establishment
   const findSampleCocktailsForEstablishment = (establishmentId: string) => {
-    // We need to reimport here to ensure we're using the same data
-    const { sampleCocktails } = require('@/data/sampleData');
-    
-    return sampleCocktails.filter(
-      cocktail => cocktail.establishment && cocktail.establishment.id === establishmentId
-    );
+    try {
+      // We need to reimport here to ensure we're using the same data
+      const { sampleCocktails } = require('@/data/sampleData');
+      console.log(`Finding sample cocktails for establishment ${establishmentId}. Total sample cocktails: ${sampleCocktails.length}`);
+      
+      const matchedCocktails = sampleCocktails.filter(
+        cocktail => cocktail.establishment && cocktail.establishment.id === establishmentId
+      );
+      console.log(`Found ${matchedCocktails.length} matching cocktails`);
+      return matchedCocktails;
+    } catch (err) {
+      console.error('Error loading sample cocktails:', err);
+      return [];
+    }
   };
 
   if (isLoading) {
