@@ -24,8 +24,12 @@ const EstablishmentDetail = () => {
         return;
       }
 
-      // Check if this is actually an ID or a route name
-      if (id === 'profile' || id === 'analytics' || !id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+      // Check if this is a special route or an invalid UUID format
+      if (id === 'profile' || id === 'analytics' || id === 'bar-crawl-requests' || 
+          id === 'reviews' || id === 'mocktail-suggestions' || 
+          id === 'mocktail-menu' || id === 'promotions') {
+        // These are valid routes within the establishment section, not actual IDs
+        console.log("Received a special route, not an establishment ID:", id);
         setError("Invalid establishment ID");
         setIsLoading(false);
         return;
@@ -35,6 +39,26 @@ const EstablishmentDetail = () => {
         setIsLoading(true);
         setError(null);
         
+        // If the ID is numeric, try to find the establishment by its numeric ID in sample data
+        if (/^\d+$/.test(id)) {
+          console.log("Received numeric ID, looking for corresponding establishment in sample data");
+          // For sample numeric IDs, map them to the sample data
+          const sampleEstablishment = await findSampleEstablishmentByLegacyId(id);
+          if (sampleEstablishment) {
+            setEstablishment(sampleEstablishment);
+            setCocktails(findSampleCocktailsForEstablishment(sampleEstablishment.id));
+            setIsLoading(false);
+            return;
+          } else {
+            throw new Error(`No establishment found with numeric ID: ${id}`);
+          }
+        }
+        
+        // Proceed with normal UUID lookup
+        if (!id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+          throw new Error("Invalid establishment ID format");
+        }
+
         // Fetch establishment
         const { data: estData, error: estError } = await supabase
           .from('establishments')
@@ -66,6 +90,24 @@ const EstablishmentDetail = () => {
     fetchEstablishmentData();
   }, [id]);
 
+  // Helper function to find a sample establishment by legacy numeric ID
+  const findSampleEstablishmentByLegacyId = async (numericId: string) => {
+    // Import sample data dynamically to prevent circular dependencies
+    const { sampleEstablishments, sampleCocktails } = await import('@/data/sampleData');
+    
+    return sampleEstablishments.find(est => est.id === numericId || est.id === `${numericId}`);
+  };
+
+  // Helper function to get sample cocktails for an establishment
+  const findSampleCocktailsForEstablishment = (establishmentId: string) => {
+    // We need to reimport here to ensure we're using the same data
+    const { sampleCocktails } = require('@/data/sampleData');
+    
+    return sampleCocktails.filter(
+      cocktail => cocktail.establishment && cocktail.establishment.id === establishmentId
+    );
+  };
+
   if (isLoading) {
     return (
       <Layout>
@@ -87,10 +129,10 @@ const EstablishmentDetail = () => {
         <div className="py-8 text-center">
           <p className="text-red-500 mb-4">{error || 'Establishment not found'}</p>
           <button 
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/explore')}
             className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90"
           >
-            Return to Home
+            Return to Explore
           </button>
         </div>
       </Layout>

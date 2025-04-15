@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Heart } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+
 interface Establishment {
   id: string;
   name: string;
@@ -15,6 +16,7 @@ interface Establishment {
   latitude: number;
   longitude: number;
 }
+
 interface EstablishmentListProps {
   establishments: Establishment[];
   selectedEstablishment: string | null;
@@ -23,6 +25,7 @@ interface EstablishmentListProps {
   onEstablishmentClick: (establishmentId: string) => void;
   isLoading?: boolean;
 }
+
 const EstablishmentList: React.FC<EstablishmentListProps> = ({
   establishments,
   selectedEstablishment,
@@ -32,10 +35,13 @@ const EstablishmentList: React.FC<EstablishmentListProps> = ({
   isLoading = false
 }) => {
   const navigate = useNavigate();
+  
   const handleEstablishmentClick = (establishmentId: string) => {
+    console.log("Navigating to establishment with ID:", establishmentId);
     onEstablishmentClick(establishmentId);
     navigate(`/establishment/${establishmentId}`);
   };
+  
   if (isLoading) {
     return <div className="mt-6">
         <div className="flex justify-between items-center mb-3">
@@ -60,6 +66,7 @@ const EstablishmentList: React.FC<EstablishmentListProps> = ({
         </div>
       </div>;
   }
+  
   return <div className="mt-6">
       <div className="flex justify-between items-center mb-3">
         <h2 className="text-lg font-medium text-material-on-surface text-gray-300">
@@ -72,24 +79,53 @@ const EstablishmentList: React.FC<EstablishmentListProps> = ({
       </div>
       
       <div className="space-y-3">
-        {establishments.map(establishment => <div id={`establishment-${establishment.id}`} key={establishment.id} className={`relative ${selectedEstablishment === establishment.id ? 'animate-pulse-subtle' : ''}`}>
-            <EstablishmentCard id={establishment.id} name={establishment.name} address={establishment.address} distance={establishment.distance} cocktailCount={establishment.cocktailCount} image={establishment.image} onClick={() => handleEstablishmentClick(establishment.id)} />
-            
-            <Button variant="ghost" size="sm" className="absolute top-3 right-3 h-8 w-8 p-0 rounded-full bg-white/80 hover:bg-white" onClick={e => {
-          e.stopPropagation();
-          onToggleFavorite(establishment.id);
-        }}>
-              <Heart size={16} className={favoriteEstablishments.includes(establishment.id) ? "fill-red-500 text-red-500" : ""} />
-            </Button>
-          </div>)}
+        {establishments.map(establishment => {
+          console.log("Rendering establishment:", establishment.id, establishment.name);
+          
+          return (
+            <div 
+              id={`establishment-${establishment.id}`} 
+              key={establishment.id} 
+              className={`relative ${selectedEstablishment === establishment.id ? 'animate-pulse-subtle' : ''}`}
+            >
+              <EstablishmentCard 
+                id={establishment.id} 
+                name={establishment.name} 
+                address={establishment.address} 
+                distance={establishment.distance} 
+                cocktailCount={establishment.cocktailCount} 
+                image={establishment.image} 
+                onClick={() => handleEstablishmentClick(establishment.id)} 
+              />
+              
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="absolute top-3 right-3 h-8 w-8 p-0 rounded-full bg-white/80 hover:bg-white" 
+                onClick={e => {
+                  e.stopPropagation();
+                  onToggleFavorite(establishment.id);
+                }}
+              >
+                <Heart 
+                  size={16} 
+                  className={favoriteEstablishments.includes(establishment.id) ? "fill-red-500 text-red-500" : ""} 
+                />
+              </Button>
+            </div>
+          );
+        })}
         
-        {establishments.length === 0 && <div className="text-center py-8 border border-dashed rounded-lg">
+        {establishments.length === 0 && (
+          <div className="text-center py-8 border border-dashed rounded-lg">
             <p className="text-material-on-surface-variant">No establishments found matching your criteria.</p>
             <Button variant="link" onClick={() => window.location.reload()}>
               Reset filters
             </Button>
-          </div>}
+          </div>
+        )}
       </div>
     </div>;
 };
+
 export default EstablishmentList;
