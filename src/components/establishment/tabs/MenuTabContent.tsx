@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { InfoCircle } from 'lucide-react';
+import { Info } from 'lucide-react';  // Changed from InfoCircle to Info
 import CocktailCard from '@/components/CocktailCard';
 
 interface MenuTabContentProps {
@@ -26,7 +26,7 @@ const MenuTabContent: React.FC<MenuTabContentProps> = ({ cocktails }) => {
         ))
       ) : (
         <Alert className="bg-amber-50 border-amber-200">
-          <InfoCircle className="h-4 w-4 text-amber-500 mr-2" />
+          <Info className="h-4 w-4 text-amber-500 mr-2" />
           <AlertDescription className="text-amber-800">
             No mocktails are currently available at this establishment. Check back later for updates to the menu.
           </AlertDescription>
