@@ -18,8 +18,8 @@ const EstablishmentHero: React.FC<EstablishmentHeroProps> = ({ establishment }) 
   // Handle both image and image_url (from database)
   const imageUrl = establishment.image || establishment.image_url || '/placeholder.svg';
   
-  // Handle both cocktailCount (frontend property) and cocktail_count (database property)
-  const mocktailCount = establishment.cocktailCount || establishment.cocktail_count || 0;
+  // Use only the database cocktail_count for consistency
+  const mocktailCount = establishment.cocktail_count || 0;
   
   return (
     <div className="h-48 md:h-64 bg-material-primary/10 rounded-xl bg-cover bg-center relative glow-hover" 

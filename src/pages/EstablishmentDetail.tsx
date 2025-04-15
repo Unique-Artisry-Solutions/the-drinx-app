@@ -72,7 +72,7 @@ const EstablishmentDetail = () => {
           }
         }
         
-        // If we couldn't find it in Supabase, try sample data
+        // If we couldn't find it in Supabase or we don't have an establishment yet
         if (!establishmentData) {
           console.log("Looking for establishment in sample data");
           if (/^\d+$/.test(id)) {
@@ -81,7 +81,7 @@ const EstablishmentDetail = () => {
             if (sampleEstablishment) {
               console.log("Found establishment in sample data by legacy ID:", sampleEstablishment);
               establishmentData = sampleEstablishment;
-              cocktailsData = findSampleCocktailsForEstablishment(sampleEstablishment.id);
+              cocktailsData = [];  // Don't use sample cocktails to ensure real data only
             }
           } else if (isValidUUID(id)) {
             // If UUID, check directly in sample data
@@ -90,7 +90,7 @@ const EstablishmentDetail = () => {
             if (foundEstablishment) {
               console.log("Found establishment in sample data by UUID:", foundEstablishment);
               establishmentData = foundEstablishment;
-              cocktailsData = findSampleCocktailsForEstablishment(id);
+              cocktailsData = [];  // Don't use sample cocktails to ensure real data only
             }
           }
         }
@@ -101,14 +101,19 @@ const EstablishmentDetail = () => {
           throw new Error('Establishment not found');
         }
         
-        // Ensure the establishment has the expected format
+        // Calculate the actual cocktail count from the fetched data, not from sample data
+        const actualCocktailCount = cocktailsData ? cocktailsData.length : 0;
+        
+        // Ensure the establishment has the expected format with correct cocktail count
         const formattedEstablishment = {
           ...establishmentData,
-          // Ensure these fields exist for compatibility with components
-          cocktailCount: establishmentData.cocktail_count || establishmentData.cocktailCount || 0,
+          // Set cocktail_count to the actual count from database
+          cocktail_count: actualCocktailCount,
+          // Ensure image field exists
           image: establishmentData.image_url || establishmentData.image || null
         };
 
+        console.log("Setting establishment with correct cocktail count:", actualCocktailCount);
         setEstablishment(formattedEstablishment);
         setCocktails(cocktailsData || []);
       } catch (err: any) {
@@ -143,7 +148,7 @@ const EstablishmentDetail = () => {
     return sampleEstablishments.find(est => est.id === numericId || est.id === `${numericId}`);
   };
 
-  // Helper function to get sample cocktails for an establishment
+  // This function is no longer used to avoid mixing real and sample data
   const findSampleCocktailsForEstablishment = (establishmentId: string) => {
     try {
       // We need to reimport here to ensure we're using the same data

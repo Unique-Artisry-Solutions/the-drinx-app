@@ -24,7 +24,7 @@ const EstablishmentInfoCard: React.FC<EstablishmentInfoCardProps> = ({
   onRequestBarCrawl
 }) => {
   // Handle both cocktailCount (frontend property) and cocktail_count (database property)
-  const mocktailCount = establishment.cocktailCount || establishment.cocktail_count || 0;
+  const mocktailCount = establishment.cocktail_count || 0;
   
   return (
     <div className="absolute bottom-4 left-4 right-4 z-10">
