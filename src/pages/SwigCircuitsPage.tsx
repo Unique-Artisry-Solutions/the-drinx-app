@@ -10,16 +10,18 @@ import { Badge } from '@/components/ui/badge';
 import { sampleBarCrawls, sampleEstablishments } from '@/data/sampleData';
 import { useAuth } from '@/contexts/auth';
 import { useTheme } from '@/contexts/ThemeContext';
-
 const SwigCircuitsPage: React.FC = () => {
   const [circuits, setCircuits] = useState<any[]>([]);
   const [filteredCircuits, setFilteredCircuits] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const { user } = useAuth();
-  const { theme } = useTheme();
+  const {
+    user
+  } = useAuth();
+  const {
+    theme
+  } = useTheme();
   const isDark = theme === 'dark';
-
   useEffect(() => {
     // Simulate data fetching
     setTimeout(() => {
@@ -32,7 +34,6 @@ const SwigCircuitsPage: React.FC = () => {
           theme: ['Urban Exploration', 'Weekend Getaway', 'Cocktail Masters', 'Local Gems'][Math.floor(Math.random() * 4)]
         };
       });
-      
       setCircuits(formattedCircuits);
       setFilteredCircuits(formattedCircuits);
       setIsLoading(false);
@@ -42,16 +43,12 @@ const SwigCircuitsPage: React.FC = () => {
   // Handle search
   useEffect(() => {
     if (searchTerm) {
-      const filtered = circuits.filter(circuit => 
-        circuit.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        circuit.theme?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+      const filtered = circuits.filter(circuit => circuit.name.toLowerCase().includes(searchTerm.toLowerCase()) || circuit.theme?.toLowerCase().includes(searchTerm.toLowerCase()));
       setFilteredCircuits(filtered);
     } else {
       setFilteredCircuits(circuits);
     }
   }, [searchTerm, circuits]);
-
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
   };
@@ -61,15 +58,11 @@ const SwigCircuitsPage: React.FC = () => {
     if (category === 'all') {
       setFilteredCircuits(circuits);
     } else {
-      const filtered = circuits.filter(circuit => 
-        circuit.theme?.toLowerCase() === category.toLowerCase()
-      );
+      const filtered = circuits.filter(circuit => circuit.theme?.toLowerCase() === category.toLowerCase());
       setFilteredCircuits(filtered);
     }
   };
-
-  return (
-    <Layout>
+  return <Layout>
       <div className="py-4 animate-fade-in max-w-6xl mx-auto">
         <div className="mb-6">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
@@ -78,31 +71,22 @@ const SwigCircuitsPage: React.FC = () => {
                 <Route className="inline mr-2 h-8 w-8 text-spiritless-pink" />
                 Swig Circuits
               </h1>
-              <p className="text-material-on-surface-variant">
-                Discover and join exciting alcohol-free bar crawls in your area
-              </p>
+              <p className="text-material-on-surface-variant">Discover and join exciting alcohol-free swig circuits in your area</p>
             </div>
             
-            {user && (
-              <Button asChild className="bg-spiritless-pink hover:bg-spiritless-pink/90">
+            {user && <Button asChild className="bg-spiritless-pink hover:bg-spiritless-pink/90">
                 <Link to="/create-bar-crawl" className="flex items-center gap-2">
                   <PlusCircle size={16} />
                   Create New Circuit
                 </Link>
-              </Button>
-            )}
+              </Button>}
           </div>
           
           <div className="bg-gradient-to-r from-spiritless-pink/20 to-spiritless-green/20 p-4 rounded-lg border border-spiritless-pink/30 mb-6">
             <div className="flex flex-col md:flex-row gap-3">
               <div className="relative flex-grow">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input 
-                  placeholder="Search circuits by name or theme..." 
-                  className="pl-10"
-                  value={searchTerm}
-                  onChange={handleSearch}
-                />
+                <Input placeholder="Search circuits by name or theme..." className="pl-10" value={searchTerm} onChange={handleSearch} />
               </div>
               <Button variant="outline" className="flex items-center gap-2">
                 <Filter size={16} />
@@ -121,34 +105,14 @@ const SwigCircuitsPage: React.FC = () => {
           </TabsList>
           
           <TabsContent value="all" className="mt-0">
-            {isLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {[1, 2, 3, 4, 5, 6].map((item) => (
-                  <Card key={item} className="animate-pulse">
+            {isLoading ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[1, 2, 3, 4, 5, 6].map(item => <Card key={item} className="animate-pulse">
                     <CardContent className="h-48"></CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : filteredCircuits.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredCircuits.map((circuit) => (
-                  <Link 
-                    key={circuit.id}
-                    to={`/bar-crawl/${circuit.id}`}
-                    className="block hover-scale"
-                  >
-                    <Card className={`overflow-hidden border-l-4 ${
-                      circuit.theme === 'Urban Exploration' ? 'border-l-blue-500' : 
-                      circuit.theme === 'Weekend Getaway' ? 'border-l-purple-500' :
-                      circuit.theme === 'Cocktail Masters' ? 'border-l-amber-500' :
-                      'border-l-green-500'
-                    }`}>
-                      <div className={`h-2 bg-gradient-to-r ${
-                        circuit.theme === 'Urban Exploration' ? 'from-blue-500 to-blue-600' : 
-                        circuit.theme === 'Weekend Getaway' ? 'from-purple-500 to-purple-600' :
-                        circuit.theme === 'Cocktail Masters' ? 'from-amber-500 to-amber-600' :
-                        'from-green-500 to-green-600'
-                      }`}></div>
+                  </Card>)}
+              </div> : filteredCircuits.length > 0 ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredCircuits.map(circuit => <Link key={circuit.id} to={`/bar-crawl/${circuit.id}`} className="block hover-scale">
+                    <Card className={`overflow-hidden border-l-4 ${circuit.theme === 'Urban Exploration' ? 'border-l-blue-500' : circuit.theme === 'Weekend Getaway' ? 'border-l-purple-500' : circuit.theme === 'Cocktail Masters' ? 'border-l-amber-500' : 'border-l-green-500'}`}>
+                      <div className={`h-2 bg-gradient-to-r ${circuit.theme === 'Urban Exploration' ? 'from-blue-500 to-blue-600' : circuit.theme === 'Weekend Getaway' ? 'from-purple-500 to-purple-600' : circuit.theme === 'Cocktail Masters' ? 'from-amber-500 to-amber-600' : 'from-green-500 to-green-600'}`}></div>
                       <CardContent className="p-4">
                         <div className="flex justify-between items-start mb-2">
                           <h3 className="font-semibold text-lg truncate">{circuit.name}</h3>
@@ -172,25 +136,19 @@ const SwigCircuitsPage: React.FC = () => {
                             <span>{circuit.participants} participants</span>
                           </div>
                           
-                          {circuit.establishments && circuit.establishments[0] && (
-                            <div className="flex items-center text-sm text-material-on-surface-variant">
+                          {circuit.establishments && circuit.establishments[0] && <div className="flex items-center text-sm text-material-on-surface-variant">
                               <MapPin className="mr-2 h-4 w-4" />
                               <span>Starting: {circuit.establishments[0].name}</span>
-                            </div>
-                          )}
+                            </div>}
                         </div>
                       </CardContent>
                     </Card>
-                  </Link>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12">
+                  </Link>)}
+              </div> : <div className="text-center py-12">
                 <Route className="mx-auto h-12 w-12 text-gray-300 mb-2" />
                 <h3 className="text-lg font-medium">No circuits found</h3>
                 <p className="text-gray-500">Try adjusting your search or filters</p>
-              </div>
-            )}
+              </div>}
           </TabsContent>
           
           {/* Other tab contents will show the same content through the filter function */}
@@ -205,8 +163,6 @@ const SwigCircuitsPage: React.FC = () => {
           </TabsContent>
         </Tabs>
       </div>
-    </Layout>
-  );
+    </Layout>;
 };
-
 export default SwigCircuitsPage;
