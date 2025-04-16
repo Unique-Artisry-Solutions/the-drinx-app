@@ -14,7 +14,8 @@ export const useSwigCircuitCreation = (): UseSwigCircuitCreationReturn => {
     startDate: formState.startDate,
     endDate: formState.endDate,
     selectedTheme: formState.selectedTheme,
-    selectedEstablishments: formState.selectedEstablishments
+    selectedEstablishments: formState.selectedEstablishments,
+    ticketTiers: formState.ticketTiers
   }, formState.setCurrentTab);
   
   // Get submission logic
@@ -30,7 +31,10 @@ export const useSwigCircuitCreation = (): UseSwigCircuitCreationReturn => {
     maxDistance: formState.maxDistance,
     drinkHighlights: formState.drinkHighlights,
     pairings: formState.pairings,
-    selectedEstablishments: formState.selectedEstablishments
+    selectedEstablishments: formState.selectedEstablishments,
+    ticketTiers: formState.ticketTiers,
+    projectedAttendance: formState.projectedAttendance,
+    projectedRevenue: formState.projectedRevenue
   });
 
   // Create wrapper for submit that validates first

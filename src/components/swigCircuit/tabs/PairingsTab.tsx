@@ -3,24 +3,20 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import PairingOptions, { Pairing } from '@/components/barCrawl/PairingOptions';
-import { Loader2, ChevronRight } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
 interface PairingsTabProps {
   pairings: Pairing[];
   setPairings: (pairings: Pairing[]) => void;
   onBack: () => void;
-  onSubmit: (e: React.FormEvent) => void;
-  isSubmitDisabled: boolean;
-  isSubmitting?: boolean;
+  onContinue: () => void;
 }
 
 const PairingsTab: React.FC<PairingsTabProps> = ({
   pairings,
   setPairings,
   onBack,
-  onSubmit,
-  isSubmitDisabled,
-  isSubmitting = false
+  onContinue
 }) => {
   return (
     <Card className="flex-1">
@@ -38,27 +34,15 @@ const PairingsTab: React.FC<PairingsTabProps> = ({
             type="button" 
             variant="outline"
             onClick={onBack}
-            disabled={isSubmitting}
           >
             Back
           </Button>
           <Button 
-            type="submit" 
-            onClick={onSubmit}
-            disabled={isSubmitDisabled || isSubmitting}
+            type="button" 
+            onClick={onContinue}
             className="bg-spiritless-pink hover:bg-spiritless-pink/90"
           >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating...
-              </>
-            ) : (
-              <>
-                Create Swig Circuit
-                <ChevronRight className="ml-2 h-4 w-4" />
-              </>
-            )}
+            Continue
           </Button>
         </div>
       </CardContent>

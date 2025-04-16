@@ -14,7 +14,7 @@ export const promoterFeatures: FeatureItem[] = [
     scheduledFor: getDateMonthsFromNow(1),
     dependsOn: [],
     implementationProgress: 100,
-    dbStatus: 'completed',
+    dbStatus: 'complete',
     tags: ['promoter', 'ticket-management']
   },
   {
@@ -191,7 +191,7 @@ export const promoterFeatures: FeatureItem[] = [
     scheduledFor: getDateMonthsFromNow(3),
     dependsOn: ['6013'],
     implementationProgress: 100,
-    dbStatus: 'completed',
+    dbStatus: 'complete',
     tags: ['promoter', 'analytics', 'AI']
   },
   {
