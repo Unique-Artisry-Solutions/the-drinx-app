@@ -1,23 +1,16 @@
-
 import { FeatureItem } from '../types';
 import { getDateMonthsFromNow } from '../utils';
+import { matchesAnyKeyword } from '../utils/detection/coreDetection';
 
 /**
  * Checks if a feature is related to Promoter functionality
  */
 export const isPromoterFeature = (feature: FeatureItem): boolean => {
-  // Check name or tags for promoter-related keywords
-  const isInName = feature.name.toLowerCase().includes('promoter') || 
-                  feature.name.toLowerCase().includes('event creation');
-                  
-  const isInTags = Array.isArray(feature.tags) && 
-    (feature.tags.includes('promoter') || 
-     feature.tags.includes('event-management'));
-     
-  const isInDescription = feature.description.toLowerCase().includes('promoter') ||
-                         feature.description.toLowerCase().includes('event');
-  
-  return isInName || isInTags || isInDescription;
+  // Check using the common helper function
+  return matchesAnyKeyword(feature, ['promoter', 'event creation']) ||
+         (Array.isArray(feature.tags) && 
+           (feature.tags.includes('promoter') || 
+            feature.tags.includes('event-management')));
 };
 
 /**

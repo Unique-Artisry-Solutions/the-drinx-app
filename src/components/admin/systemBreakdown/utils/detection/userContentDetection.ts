@@ -1,6 +1,6 @@
 
 import { FeatureItem } from '../../types';
-import { matchesAnyKeyword, matchesMultipleKeywords, containsKeyword } from './coreDetection';
+import { matchesAnyKeyword, matchesMultipleKeywords } from './coreDetection';
 
 // System Configuration feature detection
 export const isSystemConfigurationFeature = (feature: FeatureItem): boolean => {
@@ -17,7 +17,7 @@ export const isSystemConfigurationFeature = (feature: FeatureItem): boolean => {
 // User Management feature detection
 export const isUserManagementFeature = (feature: FeatureItem): boolean => {
   return matchesAnyKeyword(feature, ['user management', 'user-management', 'account']) && 
-         !containsKeyword(feature, 'profile');
+         !matchesAnyKeyword(feature, ['profile']);
 };
 
 // Authentication-related features
@@ -38,7 +38,7 @@ export const isContentFeature = (feature: FeatureItem): boolean => {
 // Content moderation features
 export const isContentModerationFeature = (feature: FeatureItem): boolean => {
   return matchesMultipleKeywords(feature, ['content', 'moderation']) || 
-         containsKeyword(feature, 'content-moderation');
+         matchesAnyKeyword(feature, ['content-moderation']);
 };
 
 // Photo and media related features
@@ -47,5 +47,5 @@ export const isPhotoFeature = (feature: FeatureItem): boolean => {
 };
 
 export const isPhotoModerationFeature = (feature: FeatureItem): boolean => {
-  return isPhotoFeature(feature) && containsKeyword(feature, 'moderation');
+  return isPhotoFeature(feature) && matchesAnyKeyword(feature, ['moderation']);
 };
