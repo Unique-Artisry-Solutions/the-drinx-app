@@ -10,6 +10,16 @@ export interface TicketTier {
   description: string;
   limit?: number;
   benefits: string[];
+  isVip?: boolean;
+  vipPerks?: {
+    skipLines?: boolean;
+    prioritySeating?: boolean;
+    freeDrinks?: number;
+    exclusiveAccess?: boolean;
+    merchandise?: boolean;
+    meetAndGreet?: boolean;
+    customPerks?: string[];
+  };
 }
 
 export interface SwigCircuitFormState {

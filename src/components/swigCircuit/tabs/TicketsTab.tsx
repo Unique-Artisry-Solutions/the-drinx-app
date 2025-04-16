@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Trash2, Plus, Ticket, Info } from 'lucide-react';
+import { Trash2, Plus, Ticket, Info, Crown } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/tooltip";
 import { TicketTier } from '@/hooks/swigCircuit/types';
 import { Badge } from '@/components/ui/badge';
+import CreateVipPackageButton from '../vipWizard/CreateVipPackageButton';
 
 interface TicketsTabProps {
   ticketTiers: TicketTier[];
@@ -47,6 +48,16 @@ const TicketsTab: React.FC<TicketsTabProps> = ({
     
     addTicketTier(newTier);
     setNewTier(emptyTier);
+  };
+
+  const handleSaveVipPackage = (vipPackage: TicketTier) => {
+    const existingVipIndex = ticketTiers.findIndex(tier => tier.isVip && tier.id === vipPackage.id);
+    
+    if (existingVipIndex >= 0) {
+      updateTicketTier(existingVipIndex, vipPackage);
+    } else {
+      addTicketTier(vipPackage);
+    }
   };
 
   const handleBenefitChange = (value: string, index: number) => {
@@ -97,6 +108,10 @@ const TicketsTab: React.FC<TicketsTabProps> = ({
       benefits: updatedBenefits
     });
   };
+
+  const editVipPackage = (tier: TicketTier) => {
+    console.log("Edit VIP package", tier);
+  };
   
   return (
     <Card className="p-6 w-full">
@@ -110,22 +125,41 @@ const TicketsTab: React.FC<TicketsTabProps> = ({
           Configure different ticket options for your Swig Circuit. Set prices, descriptions, and benefits for each tier.
         </div>
 
-        {/* Existing ticket tiers */}
+        <div className="flex justify-center my-6">
+          <CreateVipPackageButton onSaveVipPackage={handleSaveVipPackage} />
+        </div>
+
         {ticketTiers.length > 0 && (
           <div className="space-y-6 mb-8">
             <h3 className="text-lg font-medium">Current Ticket Tiers</h3>
             <div className="space-y-4">
               {ticketTiers.map((tier, tierIndex) => (
-                <div key={tier.id} className="border rounded-md p-4">
+                <div 
+                  key={tier.id} 
+                  className={`border rounded-md p-4 ${tier.isVip ? 'border-2 border-purple-300 bg-purple-50' : ''}`}
+                >
                   <div className="flex justify-between items-start mb-4">
                     <div>
-                      <h4 className="font-medium">{tier.name}</h4>
+                      <div className="flex items-center">
+                        <h4 className="font-medium">{tier.name}</h4>
+                        {tier.isVip && (
+                          <Badge variant="secondary" className="ml-2 bg-purple-100 text-purple-700 border-purple-200">
+                            <Crown className="h-3 w-3 mr-1" />
+                            VIP
+                          </Badge>
+                        )}
+                      </div>
                       <div className="text-sm text-muted-foreground">{tier.description}</div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="bg-green-50 text-green-700">
+                      <Badge variant="outline" className={tier.isVip ? "bg-purple-100 text-purple-700" : "bg-green-50 text-green-700"}>
                         ${tier.price.toFixed(2)}
                       </Badge>
+                      {tier.limit && (
+                        <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+                          Limit: {tier.limit}
+                        </Badge>
+                      )}
                       <Button 
                         variant="ghost" 
                         size="icon"
@@ -145,35 +179,48 @@ const TicketsTab: React.FC<TicketsTabProps> = ({
                           onChange={(e) => updateExistingTierBenefit(tierIndex, benefitIndex, e.target.value)}
                           placeholder="Benefit description"
                           className="text-sm"
+                          disabled={tier.isVip}
                         />
                         <Button
                           variant="ghost"
                           size="icon"
                           onClick={() => removeExistingTierBenefit(tierIndex, benefitIndex)}
-                          disabled={tier.benefits.length <= 1}
+                          disabled={tier.benefits.length <= 1 || tier.isVip}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     ))}
+                    {!tier.isVip && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => addExistingTierBenefit(tierIndex)}
+                        className="mt-2 text-xs"
+                      >
+                        <Plus className="h-3 w-3 mr-1" /> Add Benefit
+                      </Button>
+                    )}
+                  </div>
+                  
+                  {tier.isVip && (
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => addExistingTierBenefit(tierIndex)}
-                      className="mt-2 text-xs"
+                      onClick={() => editVipPackage(tier)}
+                      className="mt-4 bg-purple-100 hover:bg-purple-200 text-purple-700 border-purple-300"
                     >
-                      <Plus className="h-3 w-3 mr-1" /> Add Benefit
+                      <Crown className="h-4 w-4 mr-2" /> Edit VIP Package
                     </Button>
-                  </div>
+                  )}
                 </div>
               ))}
             </div>
           </div>
         )}
 
-        {/* Add new ticket tier form */}
         <div className="border rounded-md p-4">
-          <h3 className="text-lg font-medium mb-4">Add New Ticket Tier</h3>
+          <h3 className="text-lg font-medium mb-4">Add Standard Ticket Tier</h3>
           
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -183,7 +230,7 @@ const TicketsTab: React.FC<TicketsTabProps> = ({
                   id="tierName"
                   value={newTier.name}
                   onChange={(e) => setNewTier({ ...newTier, name: e.target.value })}
-                  placeholder="VIP, Early Bird, etc."
+                  placeholder="General Admission, Early Bird, etc."
                 />
               </div>
               
