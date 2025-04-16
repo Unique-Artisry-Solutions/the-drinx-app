@@ -1341,6 +1341,47 @@ export type Database = {
           },
         ]
       }
+      swig_circuit_ticket_tiers: {
+        Row: {
+          benefits: string[]
+          created_at: string | null
+          description: string
+          id: string
+          name: string
+          price: number
+          swig_circuit_id: string | null
+          ticket_limit: number | null
+        }
+        Insert: {
+          benefits?: string[]
+          created_at?: string | null
+          description: string
+          id?: string
+          name: string
+          price: number
+          swig_circuit_id?: string | null
+          ticket_limit?: number | null
+        }
+        Update: {
+          benefits?: string[]
+          created_at?: string | null
+          description?: string
+          id?: string
+          name?: string
+          price?: number
+          swig_circuit_id?: string | null
+          ticket_limit?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "swig_circuit_ticket_tiers_swig_circuit_id_fkey"
+            columns: ["swig_circuit_id"]
+            isOneToOne: false
+            referencedRelation: "swig_circuits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       swig_circuit_venues: {
         Row: {
           created_at: string | null
@@ -1389,6 +1430,8 @@ export type Database = {
           image_url: string | null
           max_distance: number | null
           name: string
+          projected_attendance: number | null
+          projected_revenue: number | null
           start_date: string
           theme: string
           updated_at: string | null
@@ -1402,6 +1445,8 @@ export type Database = {
           image_url?: string | null
           max_distance?: number | null
           name: string
+          projected_attendance?: number | null
+          projected_revenue?: number | null
           start_date: string
           theme: string
           updated_at?: string | null
@@ -1415,6 +1460,8 @@ export type Database = {
           image_url?: string | null
           max_distance?: number | null
           name?: string
+          projected_attendance?: number | null
+          projected_revenue?: number | null
           start_date?: string
           theme?: string
           updated_at?: string | null

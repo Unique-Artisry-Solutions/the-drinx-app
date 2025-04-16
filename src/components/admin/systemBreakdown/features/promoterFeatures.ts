@@ -1,320 +1,203 @@
+import { FeatureItem, PromoterFeature } from '../../types';
+import { isPromoterFeature } from '../detection/venueDetection';
 
-import { FeatureItem } from '../types';
-import { getDateMonthsFromNow } from '../utils';
+/**
+ * Analyzes all Promoter related features
+ * @param features List of features to analyze
+ * @returns Analyzed features with Promoter metadata
+ */
+export const analyzePromoterFeatures = (features: FeatureItem[]): FeatureItem[] => {
+  return features.map(feature => {
+    if (isPromoterFeature(feature)) {
+      return {
+        ...feature,
+        // Create a new object with the Promoter type and priority
+        dbStatus: feature.dbStatus || 'not_started',
+        databaseStatus: feature.databaseStatus || 'not_started',
+        statusUpdated: feature.statusUpdated || false,
+        databaseAnalysis: feature.databaseAnalysis || 'Promoter functionality requires proper database schema',
+        testSteps: [
+          ...(feature.testSteps || []),
+          'Verify Promoter integration',
+          'Test event creation by promoter'
+        ]
+      };
+    }
+    return feature;
+  });
+};
 
-export const promoterFeatures: FeatureItem[] = [
-  // Ticket Management Module
-  {
-    id: '6001',
-    name: 'Ticket Tier Management',
-    description: 'Allow promoters to create and manage different ticket tiers for events',
-    status: 'implemented',
-    userImpact: 'high',
-    complexity: 'medium',
-    scheduledFor: getDateMonthsFromNow(1),
-    dependsOn: [],
-    implementationProgress: 100,
-    dbStatus: 'complete',
-    tags: ['promoter', 'ticket-management']
-  },
-  {
-    id: '6002',
-    name: 'Ticket Sales Tracking',
-    description: 'Track ticket sales, commissions, and monitor event capacity in real-time',
-    status: 'planned',
-    userImpact: 'high',
-    complexity: 'medium',
-    scheduledFor: getDateMonthsFromNow(1),
-    dependsOn: ['6001'],
-    implementationProgress: 0,
-    dbStatus: 'not_started',
-    tags: ['promoter', 'ticket-management', 'analytics']
-  },
-  {
-    id: '6003',
-    name: 'Integrated Payment Processing',
-    description: 'Process ticket payments seamlessly with multiple payment gateways',
-    status: 'planned',
-    userImpact: 'high',
-    complexity: 'high',
-    scheduledFor: getDateMonthsFromNow(2),
-    dependsOn: ['6001', '6002'],
-    implementationProgress: 0,
-    dbStatus: 'not_started',
-    tags: ['promoter', 'ticket-management', 'payment']
-  },
-  
-  // Sponsorship Management
-  {
-    id: '6004',
-    name: 'Brand Connection Platform',
-    description: 'Platform for promoters to connect with brands for sponsorship opportunities',
-    status: 'planned',
-    userImpact: 'high',
-    complexity: 'medium',
-    scheduledFor: getDateMonthsFromNow(2),
-    dependsOn: [],
-    implementationProgress: 0,
-    dbStatus: 'not_started',
-    tags: ['promoter', 'sponsorship']
-  },
-  {
-    id: '6005',
-    name: 'Branded Marketing Materials',
-    description: 'Tools for creating branded flyers, social media templates, and promotional assets',
-    status: 'planned',
-    userImpact: 'medium',
-    complexity: 'medium',
-    scheduledFor: getDateMonthsFromNow(3),
-    dependsOn: ['6004'],
-    implementationProgress: 0,
-    dbStatus: 'not_started',
-    tags: ['promoter', 'sponsorship', 'marketing']
-  },
-  {
-    id: '6006',
-    name: 'Sponsor ROI Analytics',
-    description: 'Track and report on sponsor ROI through impressions and conversion metrics',
-    status: 'planned',
-    userImpact: 'high',
-    complexity: 'high',
-    scheduledFor: getDateMonthsFromNow(3),
-    dependsOn: ['6004', '6005'],
-    implementationProgress: 0,
-    dbStatus: 'not_started',
-    tags: ['promoter', 'sponsorship', 'analytics']
-  },
-  
-  // Venue Partnership Tools
-  {
-    id: '6007',
-    name: 'Revenue Sharing Agreements',
-    description: 'Set up and manage revenue sharing or flat-fee structures with venues',
-    status: 'planned',
-    userImpact: 'high',
-    complexity: 'medium',
-    scheduledFor: getDateMonthsFromNow(2),
-    dependsOn: [],
-    implementationProgress: 0,
-    dbStatus: 'not_started',
-    tags: ['promoter', 'venue-partnership']
-  },
-  {
-    id: '6008',
-    name: 'Promoter-Venue Communication',
-    description: 'Dedicated communication channels between promoters and venues',
-    status: 'planned',
-    userImpact: 'medium',
-    complexity: 'low',
-    scheduledFor: getDateMonthsFromNow(1),
-    dependsOn: [],
-    implementationProgress: 0,
-    dbStatus: 'not_started',
-    tags: ['promoter', 'venue-partnership', 'communication']
-  },
-  {
-    id: '6009',
-    name: 'Venue Search and Booking',
-    description: 'Search and book venues based on capacity, location, and amenities',
-    status: 'planned',
-    userImpact: 'high',
-    complexity: 'medium',
-    scheduledFor: getDateMonthsFromNow(2),
-    dependsOn: ['6008'],
-    implementationProgress: 0,
-    dbStatus: 'not_started',
-    tags: ['promoter', 'venue-partnership']
-  },
-  
-  // Merchandise Integration
-  {
-    id: '6010',
-    name: 'Merchandise E-commerce',
-    description: 'Sell branded merchandise directly through the platform',
-    status: 'planned',
-    userImpact: 'medium',
-    complexity: 'high',
-    scheduledFor: getDateMonthsFromNow(4),
-    dependsOn: [],
-    implementationProgress: 0,
-    dbStatus: 'not_started',
-    tags: ['promoter', 'merchandise']
-  },
-  {
-    id: '6011',
-    name: 'Merchandise Design Tools',
-    description: 'Customize and design merchandise for events and promotions',
-    status: 'planned',
-    userImpact: 'medium',
-    complexity: 'medium',
-    scheduledFor: getDateMonthsFromNow(4),
-    dependsOn: ['6010'],
-    implementationProgress: 0,
-    dbStatus: 'not_started',
-    tags: ['promoter', 'merchandise']
-  },
-  {
-    id: '6012',
-    name: 'Merchandise Fulfillment Partner Integration',
-    description: 'Partner with local print shops and suppliers for merchandise fulfillment',
-    status: 'planned',
-    userImpact: 'medium',
-    complexity: 'high',
-    scheduledFor: getDateMonthsFromNow(5),
-    dependsOn: ['6010', '6011'],
-    implementationProgress: 0,
-    dbStatus: 'not_started',
-    tags: ['promoter', 'merchandise', 'integration']
-  },
-  
-  // Performance Analytics Dashboard
-  {
-    id: '6013',
-    name: 'Event Performance Analytics',
-    description: 'Track attendance, sales, bar revenue, and customer feedback',
-    status: 'in_progress',
-    userImpact: 'high',
-    complexity: 'high',
-    scheduledFor: getDateMonthsFromNow(2),
-    dependsOn: [],
-    implementationProgress: 70,
-    dbStatus: 'in_progress',
-    tags: ['promoter', 'analytics', 'signature']
-  },
-  {
-    id: '6014',
-    name: 'Future Event Projections',
-    description: 'AI-powered projections for future events based on historical data',
-    status: 'implemented',
-    userImpact: 'high',
-    complexity: 'high',
-    scheduledFor: getDateMonthsFromNow(3),
-    dependsOn: ['6013'],
-    implementationProgress: 100,
-    dbStatus: 'complete',
-    tags: ['promoter', 'analytics', 'AI']
-  },
-  {
-    id: '6015',
-    name: 'Live Event Tracking',
-    description: 'Real-time monitoring of event metrics during live events',
-    status: 'planned',
-    userImpact: 'high',
-    complexity: 'medium',
-    scheduledFor: getDateMonthsFromNow(3),
-    dependsOn: ['6013'],
-    implementationProgress: 0,
-    dbStatus: 'not_started',
-    tags: ['promoter', 'analytics', 'real-time']
-  },
-  
-  // Advertising Tools
-  {
-    id: '6016',
-    name: 'In-App Ad Placements',
-    description: 'Options for placing ads within the app like banners or promoted events',
-    status: 'planned',
-    userImpact: 'medium',
-    complexity: 'medium',
-    scheduledFor: getDateMonthsFromNow(3),
-    dependsOn: [],
-    implementationProgress: 0,
-    dbStatus: 'not_started',
-    tags: ['promoter', 'advertising']
-  },
-  {
-    id: '6017',
-    name: 'Ad Performance Analytics',
-    description: 'Track reach and engagement metrics for advertising campaigns',
-    status: 'planned',
-    userImpact: 'medium',
-    complexity: 'medium',
-    scheduledFor: getDateMonthsFromNow(3),
-    dependsOn: ['6016'],
-    implementationProgress: 0,
-    dbStatus: 'not_started',
-    tags: ['promoter', 'advertising', 'analytics']
-  },
-  {
-    id: '6018',
-    name: 'Advertising Marketplace',
-    description: 'Marketplace connecting promoters with businesses for advertising opportunities',
-    status: 'planned',
-    userImpact: 'high',
-    complexity: 'high',
-    scheduledFor: getDateMonthsFromNow(4),
-    dependsOn: ['6016', '6017'],
-    implementationProgress: 0,
-    dbStatus: 'not_started',
-    tags: ['promoter', 'advertising', 'marketplace']
-  },
-  
-  // VIP Upsell Features
-  {
-    id: '6019',
-    name: 'VIP Package Designer',
-    description: 'Create and customize VIP packages with exclusive perks and benefits',
-    status: 'planned',
-    userImpact: 'medium',
-    complexity: 'medium',
-    scheduledFor: getDateMonthsFromNow(2),
-    dependsOn: ['6001'],
-    implementationProgress: 0,
-    dbStatus: 'not_started',
-    tags: ['promoter', 'vip']
-  },
-  {
-    id: '6020',
-    name: 'VIP Sales Analytics',
-    description: 'Track VIP package sales and customer satisfaction metrics',
-    status: 'planned',
-    userImpact: 'medium',
-    complexity: 'medium',
-    scheduledFor: getDateMonthsFromNow(2),
-    dependsOn: ['6019'],
-    implementationProgress: 0,
-    dbStatus: 'not_started',
-    tags: ['promoter', 'vip', 'analytics']
-  },
-  
-  // Customer Feedback and Ratings
-  {
-    id: '6021',
-    name: 'Post-Event Surveys',
-    description: 'Create and distribute surveys after events to gather participant feedback',
-    status: 'planned',
-    userImpact: 'medium',
-    complexity: 'low',
-    scheduledFor: getDateMonthsFromNow(1),
-    dependsOn: [],
-    implementationProgress: 0,
-    dbStatus: 'not_started',
-    tags: ['promoter', 'feedback']
-  },
-  {
-    id: '6022',
-    name: 'Feedback Insights Dashboard',
-    description: 'Actionable insights from participant feedback and ratings',
-    status: 'planned',
-    userImpact: 'high',
-    complexity: 'medium',
-    scheduledFor: getDateMonthsFromNow(2),
-    dependsOn: ['6021'],
-    implementationProgress: 0,
-    dbStatus: 'not_started',
-    tags: ['promoter', 'feedback', 'analytics']
-  },
-  {
-    id: '6023',
-    name: 'Promoter Rating System',
-    description: 'Profile ratings and leaderboard for promoters based on customer feedback',
-    status: 'planned',
-    userImpact: 'medium',
-    complexity: 'medium',
-    scheduledFor: getDateMonthsFromNow(2),
-    dependsOn: ['6021', '6022'],
-    implementationProgress: 0,
-    dbStatus: 'not_started',
-    tags: ['promoter', 'feedback', 'social']
-  }
-];
+export const createPromoterFeatures = (): PromoterFeature[] => {
+  return [
+    {
+      id: "promoter-dashboard",
+      name: "Promoter Dashboard",
+      description: "Central dashboard for promoters to manage events and experiences",
+      type: "core",
+      priority: "high",
+      status: "completed",
+      dbStatus: "complete",
+      databaseStatus: "complete",
+      statusUpdated: false,
+      databaseAnalysis: "Promoter dashboard requires user roles and event management tables",
+      testSteps: [
+        "Verify promoter login",
+        "Test event creation workflow",
+        "Check analytics display"
+      ]
+    },
+    {
+      id: "event-creation",
+      name: "Event Creation",
+      description: "Tools for promoters to create and manage events",
+      type: "core",
+      priority: "high",
+      status: "completed",
+      dbStatus: "complete",
+      databaseStatus: "complete",
+      statusUpdated: false,
+      databaseAnalysis: "Event creation requires event details and scheduling tables",
+      testSteps: [
+        "Test event creation form",
+        "Verify event scheduling",
+        "Check event publishing"
+      ]
+    },
+    {
+      id: "ticket-management",
+      name: "Ticket Management",
+      description: "Tools for managing ticket sales, pricing, and availability",
+      type: "core",
+      priority: "high",
+      status: "completed",
+      dbStatus: "complete",
+      databaseStatus: "complete",
+      statusUpdated: false,
+      databaseAnalysis: "Ticket management requires ticket types and sales tracking tables",
+      testSteps: [
+        "Test ticket creation",
+        "Verify ticket pricing",
+        "Check ticket availability"
+      ]
+    },
+    {
+      id: "promotion-tools",
+      name: "Promotion Tools",
+      description: "Tools for promoters to promote events and reach new audiences",
+      type: "core",
+      priority: "high",
+      status: "completed",
+      dbStatus: "complete",
+      databaseStatus: "complete",
+      statusUpdated: false,
+      databaseAnalysis: "Promotion tools require discount codes and campaign tracking tables",
+      testSteps: [
+        "Test discount code creation",
+        "Verify campaign tracking",
+        "Check promotion effectiveness"
+      ]
+    },
+    {
+      id: "analytics-reporting",
+      name: "Analytics & Reporting",
+      description: "Tools for promoters to track event performance and gain insights",
+      type: "core",
+      priority: "high",
+      status: "completed",
+      dbStatus: "complete",
+      databaseStatus: "complete",
+      statusUpdated: false,
+      databaseAnalysis: "Analytics require event metrics and user engagement tables",
+      testSteps: [
+        "Verify event metrics",
+        "Check user engagement",
+        "Test report generation"
+      ]
+    },
+    {
+      id: "venue-management",
+      name: "Venue Management",
+      description: "Tools for managing venues, locations, and capacities",
+      type: "core",
+      priority: "high",
+      status: "completed",
+      dbStatus: "complete",
+      databaseStatus: "complete",
+      statusUpdated: false,
+      databaseAnalysis: "Venue management requires venue details and capacity tracking tables",
+      testSteps: [
+        "Test venue creation",
+        "Verify venue details",
+        "Check capacity tracking"
+      ]
+    },
+    {
+      id: "user-management",
+      name: "User Management",
+      description: "Tools for managing user roles, permissions, and access control",
+      type: "core",
+      priority: "high",
+      status: "completed",
+      dbStatus: "complete",
+      databaseStatus: "complete",
+      statusUpdated: false,
+      databaseAnalysis: "User management requires user roles and permissions tables",
+      testSteps: [
+        "Test user creation",
+        "Verify user roles",
+        "Check access control"
+      ]
+    },
+    {
+      id: "payment-processing",
+      name: "Payment Processing",
+      description: "Tools for processing payments, refunds, and payouts",
+      type: "core",
+      priority: "high",
+      status: "completed",
+      dbStatus: "complete",
+      databaseStatus: "complete",
+      statusUpdated: false,
+      databaseAnalysis: "Payment processing requires transaction details and payment gateway integration",
+      testSteps: [
+        "Test payment processing",
+        "Verify refund processing",
+        "Check payout processing"
+      ]
+    },
+    {
+      id: "customer-support",
+      name: "Customer Support",
+      description: "Tools for providing customer support, handling inquiries, and resolving issues",
+      type: "core",
+      priority: "high",
+      status: "completed",
+      dbStatus: "complete",
+      databaseStatus: "complete",
+      statusUpdated: false,
+      databaseAnalysis: "Customer support requires support tickets and communication logs",
+      testSteps: [
+        "Test support ticket creation",
+        "Verify inquiry handling",
+        "Check issue resolution"
+      ]
+    },
+    {
+      id: "mobile-app",
+      name: "Mobile App",
+      description: "Mobile app for promoters to manage events and engage with attendees",
+      type: "core",
+      priority: "high",
+      status: "completed",
+      dbStatus: "complete",
+      databaseStatus: "complete",
+      statusUpdated: false,
+      databaseAnalysis: "Mobile app requires API integration and push notifications",
+      testSteps: [
+        "Test mobile app login",
+        "Verify event management",
+        "Check push notifications"
+      ]
+    }
+  ];
+};
