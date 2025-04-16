@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Star } from 'lucide-react';
 
@@ -65,28 +64,28 @@ export const useSwigCircuitsTheme = () => {
     }
   };
 
-  // Get difficulty icon
-  const getDifficultyIcon = (difficulty: string) => {
+  // Get difficulty icon with explicit type annotation
+  const getDifficultyIcon = (difficulty: string): React.ReactNode => {
     switch (difficulty) {
       case 'Easy':
-        return <Star className="mr-1 h-3 w-3" />;
+        return <Star key="easy-star" className="mr-1 h-3 w-3" />;
       case 'Moderate':
         return (
           <>
-            <Star className="mr-0 h-3 w-3" />
-            <Star className="mr-1 h-3 w-3" />
+            <Star key="moderate-star-1" className="mr-0 h-3 w-3" />
+            <Star key="moderate-star-2" className="mr-1 h-3 w-3" />
           </>
         );
       case 'Challenging':
         return (
           <>
-            <Star className="mr-0 h-3 w-3" />
-            <Star className="mr-0 h-3 w-3" />
-            <Star className="mr-1 h-3 w-3" />
+            <Star key="challenging-star-1" className="mr-0 h-3 w-3" />
+            <Star key="challenging-star-2" className="mr-0 h-3 w-3" />
+            <Star key="challenging-star-3" className="mr-1 h-3 w-3" />
           </>
         );
       default:
-        return <Star className="mr-1 h-3 w-3" />;
+        return <Star key="default-star" className="mr-1 h-3 w-3" />;
     }
   };
 
