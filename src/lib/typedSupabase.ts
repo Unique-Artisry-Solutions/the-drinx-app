@@ -1,6 +1,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { Establishment } from '@/types/ProfileTypes';
+import { TicketTier } from '@/hooks/swigCircuit/types';
 
 const SUPABASE_URL = "https://dvifibvzwunnpcsihpxq.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR2aWZpYnZ6d3VubnBjc2locHhxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDMyNzM4MDcsImV4cCI6MjA1ODg0OTgwN30.8nsPh_YwHjoFDJ2_IMQY9tkM9NHVLmu6oFf5Tnwa2FA";
@@ -21,6 +22,8 @@ export type Database = {
           theme: string;
           max_distance: number;
           created_at: string;
+          projected_attendance?: number;
+          projected_revenue?: number;
         };
         Insert: {
           id?: string;
@@ -32,6 +35,8 @@ export type Database = {
           image_url?: string;
           theme: string;
           max_distance?: number;
+          projected_attendance?: number;
+          projected_revenue?: number;
         };
       };
       swig_circuit_venues: {
@@ -76,6 +81,26 @@ export type Database = {
           drink: string;
         };
       };
+      swig_circuit_ticket_tiers: {
+        Row: {
+          id: string;
+          swig_circuit_id: string;
+          name: string;
+          price: number;
+          description: string;
+          ticket_limit?: number;
+          benefits: string[];
+        };
+        Insert: {
+          id?: string;
+          swig_circuit_id: string;
+          name: string;
+          price: number;
+          description: string;
+          ticket_limit?: number;
+          benefits: string[];
+        };
+      };
       establishments: {
         Row: Establishment & {
           id: string;
@@ -113,6 +138,11 @@ export const swigCircuitDrinkHighlights = () => {
 // Type-safe function to access swig_circuit_pairings table
 export const swigCircuitPairings = () => {
   return supabaseTyped.from('swig_circuit_pairings');
+};
+
+// Type-safe function to access swig_circuit_ticket_tiers table
+export const swigCircuitTicketTiers = () => {
+  return supabaseTyped.from('swig_circuit_ticket_tiers');
 };
 
 // Type-safe function to access establishments table

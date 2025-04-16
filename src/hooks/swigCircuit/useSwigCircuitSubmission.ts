@@ -9,6 +9,7 @@ import {
   swigCircuitVenues, 
   swigCircuitDrinkHighlights, 
   swigCircuitPairings,
+  swigCircuitTicketTiers,
   getCurrentUserId
 } from '@/lib/typedSupabase';
 
@@ -36,7 +37,10 @@ export const useSwigCircuitSubmission = (formState: SwigCircuitFormState) => {
       theme: formState.selectedTheme,
       maxDistance: formState.maxDistance,
       drinkHighlights: formState.drinkHighlights,
-      pairings: formState.pairings
+      pairings: formState.pairings,
+      ticketTiers: formState.ticketTiers,
+      projectedAttendance: formState.projectedAttendance,
+      projectedRevenue: formState.projectedRevenue
     });
     localStorage.setItem('user_bar_crawls', JSON.stringify(barCrawls));
     
@@ -67,7 +71,9 @@ export const useSwigCircuitSubmission = (formState: SwigCircuitFormState) => {
         end_date: formState.endDate,
         image_url: formState.previewUrl,
         theme: formState.selectedTheme,
-        max_distance: formState.maxDistance
+        max_distance: formState.maxDistance,
+        projected_attendance: formState.projectedAttendance,
+        projected_revenue: formState.projectedRevenue
       })
       .select()
       .single();
@@ -125,6 +131,26 @@ export const useSwigCircuitSubmission = (formState: SwigCircuitFormState) => {
       if (pairingsError) {
         console.error("Pairings insert error:", pairingsError);
         throw new Error(pairingsError.message);
+      }
+    }
+    
+    // Insert ticket tiers
+    if (formState.ticketTiers.length > 0) {
+      const ticketTierInserts = formState.ticketTiers.map(tier => ({
+        swig_circuit_id: swigCircuit.id,
+        name: tier.name,
+        price: tier.price,
+        description: tier.description,
+        ticket_limit: tier.limit || null,
+        benefits: tier.benefits
+      }));
+
+      const { error: ticketTiersError } = await swigCircuitTicketTiers()
+        .insert(ticketTierInserts);
+
+      if (ticketTiersError) {
+        console.error("Ticket tiers insert error:", ticketTiersError);
+        throw new Error(ticketTiersError.message);
       }
     }
 

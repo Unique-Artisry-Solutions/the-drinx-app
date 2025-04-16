@@ -11,6 +11,8 @@ import ThemeTab from '@/components/swigCircuit/tabs/ThemeTab';
 import VenuesTab from '@/components/swigCircuit/tabs/VenuesTab';
 import DrinksTab from '@/components/swigCircuit/tabs/DrinksTab';
 import PairingsTab from '@/components/swigCircuit/tabs/PairingsTab';
+import TicketsTab from '@/components/swigCircuit/tabs/TicketsTab';
+import ProjectionsTab from '@/components/swigCircuit/tabs/ProjectionsTab';
 import { useAuth } from '@/contexts/auth';
 
 const CreateSwigCircuitPage: React.FC = () => {
@@ -41,6 +43,14 @@ const CreateSwigCircuitPage: React.FC = () => {
     setPairings,
     selectedEstablishments,
     handleSaveEstablishments,
+    ticketTiers,
+    setTicketTiers,
+    addTicketTier,
+    updateTicketTier,
+    removeTicketTier,
+    projectedAttendance,
+    projectedRevenue,
+    calculateProjections,
     isTabComplete,
     handleSubmit,
     isSubmitting
@@ -69,6 +79,8 @@ const CreateSwigCircuitPage: React.FC = () => {
     { id: "venues", label: "Venues" },
     { id: "drinks", label: "Drinks" },
     { id: "pairings", label: "Pairings" },
+    { id: "tickets", label: "Tickets" },
+    { id: "projections", label: "Projections" },
   ];
 
   return (
@@ -148,8 +160,32 @@ const CreateSwigCircuitPage: React.FC = () => {
               pairings={pairings}
               setPairings={setPairings}
               onBack={() => setCurrentTab("drinks")}
+              onContinue={() => setCurrentTab("tickets")}
+            />
+          )}
+
+          {currentTab === "tickets" && (
+            <TicketsTab 
+              ticketTiers={ticketTiers}
+              setTicketTiers={setTicketTiers}
+              addTicketTier={addTicketTier}
+              updateTicketTier={updateTicketTier}
+              removeTicketTier={removeTicketTier}
+              onBack={() => setCurrentTab("pairings")}
+              onContinue={() => setCurrentTab("projections")}
+            />
+          )}
+          
+          {currentTab === "projections" && (
+            <ProjectionsTab 
+              ticketTiers={ticketTiers}
+              selectedEstablishments={selectedEstablishments}
+              projectedAttendance={projectedAttendance}
+              projectedRevenue={projectedRevenue}
+              calculateProjections={calculateProjections}
+              onBack={() => setCurrentTab("tickets")}
               onSubmit={handleSubmit}
-              isSubmitDisabled={!name || !startDate || !selectedTheme || selectedEstablishments.length < 2}
+              isSubmitDisabled={!name || !startDate || !selectedTheme || selectedEstablishments.length < 2 || ticketTiers.length === 0}
               isSubmitting={isSubmitting}
             />
           )}
