@@ -54,7 +54,7 @@ export const promoterFeatures = (): FeatureItem[] => {
       description: "Central dashboard for promoters to manage events and experiences",
       type: "core",
       priority: "high",
-      status: "completed",
+      status: "implemented",
       dbStatus: "complete",
       databaseStatus: "complete",
       statusUpdated: false,
@@ -71,7 +71,7 @@ export const promoterFeatures = (): FeatureItem[] => {
       description: "Tools for promoters to create and manage events",
       type: "core",
       priority: "high",
-      status: "completed",
+      status: "implemented",
       dbStatus: "complete",
       databaseStatus: "complete",
       statusUpdated: false,
@@ -88,7 +88,7 @@ export const promoterFeatures = (): FeatureItem[] => {
       description: "Tools for managing ticket sales, pricing, and availability",
       type: "core",
       priority: "high",
-      status: "completed",
+      status: "implemented",
       dbStatus: "complete",
       databaseStatus: "complete",
       statusUpdated: false,
@@ -105,7 +105,7 @@ export const promoterFeatures = (): FeatureItem[] => {
       description: "Tools for promoters to promote events and reach new audiences",
       type: "core",
       priority: "high",
-      status: "completed",
+      status: "implemented",
       dbStatus: "complete",
       databaseStatus: "complete",
       statusUpdated: false,
@@ -122,7 +122,7 @@ export const promoterFeatures = (): FeatureItem[] => {
       description: "Tools for promoters to track event performance and gain insights",
       type: "core",
       priority: "high",
-      status: "completed",
+      status: "implemented",
       dbStatus: "complete",
       databaseStatus: "complete",
       statusUpdated: false,
@@ -139,7 +139,7 @@ export const promoterFeatures = (): FeatureItem[] => {
       description: "Tools for managing venues, locations, and capacities",
       type: "core",
       priority: "high",
-      status: "completed",
+      status: "implemented",
       dbStatus: "complete",
       databaseStatus: "complete",
       statusUpdated: false,
@@ -156,7 +156,7 @@ export const promoterFeatures = (): FeatureItem[] => {
       description: "Tools for managing user roles, permissions, and access control",
       type: "core",
       priority: "high",
-      status: "completed",
+      status: "implemented",
       dbStatus: "complete",
       databaseStatus: "complete",
       statusUpdated: false,
@@ -173,7 +173,7 @@ export const promoterFeatures = (): FeatureItem[] => {
       description: "Tools for processing payments, refunds, and payouts",
       type: "core",
       priority: "high",
-      status: "completed",
+      status: "implemented",
       dbStatus: "complete",
       databaseStatus: "complete",
       statusUpdated: false,
@@ -190,7 +190,7 @@ export const promoterFeatures = (): FeatureItem[] => {
       description: "Tools for providing customer support, handling inquiries, and resolving issues",
       type: "core",
       priority: "high",
-      status: "completed",
+      status: "implemented",
       dbStatus: "complete",
       databaseStatus: "complete",
       statusUpdated: false,
@@ -207,7 +207,7 @@ export const promoterFeatures = (): FeatureItem[] => {
       description: "Mobile app for promoters to manage events and engage with attendees",
       type: "core",
       priority: "high",
-      status: "completed",
+      status: "implemented",
       dbStatus: "complete",
       databaseStatus: "complete",
       statusUpdated: false,
@@ -223,3 +223,135 @@ export const promoterFeatures = (): FeatureItem[] => {
 
 // Backward compatibility for functions that expect createPromoterFeatures
 export const createPromoterFeatures = promoterFeatures;
+
+// Update the utils/index.tsx file to include the isPromoterFeature function
+<lov-write file_path="src/components/admin/systemBreakdown/utils/index.tsx">
+import { renderStatusBadge, renderDatabaseStatusBadge, renderAccessIcon } from './statusRenderers';
+import { 
+  calculateFeatureStatistics,
+  createProgressSnapshot,
+  validateProgressData,
+  generateHistoricalProgressData
+} from './statisticsUtils';
+import { generateCSV } from './exportUtils';
+import { analyzeAllFeatures } from './analysis';
+import { analyzeDbRequirements } from './analysisHelpers';
+import { 
+  isFeatureFlagRelated,
+  isMocktailSuggestionFeature,
+  isMocktailTrendsFeature, 
+  isIngredientPairingFeature,
+  isPromotionFeature,
+  isAnalyticsFeature,
+  isPromotionAnalyticsFeature,
+  isPromotionSecurityFeature,
+  isPromotionNotificationFeature,
+  isPromotionCreationFeature,
+  isPromotionManagementFeature,
+  isPromotionRedemptionFeature,
+  isPromotionReportingFeature,
+  isPromotionValidationFeature,
+  isPromotionSchedulingFeature,
+  isPromotionIntegrationFeature,
+  isPromotionAIFeature,
+  isSystemConfigurationFeature,
+  isUserManagementFeature,
+  isAuthFeature,
+  isProfileFeature,
+  isContentFeature,
+  isContentModerationFeature,
+  isSwigCircuitFeature,
+  isThemeFeature,
+  isNotificationFeature,
+  isSocialFeature,
+  isMapFeature,
+  isRecipeFeature,
+  isRewardProgramFeature,
+  isExplorationFeature,
+  isAIFeature,
+  isDashboardFeature,
+  isSystemBreakdownFeature,
+  isSignatureFeature
+} from './featureDetection';
+import { isTaskCompleted, parseTasks } from './taskDetection';
+import { 
+  mapFeaturesToReleaseFeatures, 
+  mapFeatureStatusToReleaseStatus 
+} from './releaseUtils';
+import { 
+  prepareFeatureShowcaseData, 
+  generateFeatureReport 
+} from './featureShowcaseUtils';
+
+// Import from the promoter features directly
+import { isPromoterFeature } from '../features/promoterFeatures';
+
+/**
+ * Creates a date string that is X months from now (for planned release date)
+ */
+export function getDateMonthsFromNow(months: number): string {
+  const date = new Date();
+  date.setMonth(date.getMonth() + months);
+  return date.toISOString().split('T')[0]; // YYYY-MM-DD format
+}
+
+export {
+  renderStatusBadge,
+  renderDatabaseStatusBadge,
+  renderAccessIcon,
+  calculateFeatureStatistics,
+  generateCSV,
+  analyzeAllFeatures,
+  analyzeDbRequirements,
+  isFeatureFlagRelated,
+  isMocktailSuggestionFeature,
+  isMocktailTrendsFeature, 
+  isIngredientPairingFeature,
+  isPromotionFeature,
+  isAnalyticsFeature,
+  isPromotionAnalyticsFeature,
+  isPromotionSecurityFeature,
+  isPromotionNotificationFeature,
+  isPromotionCreationFeature,
+  isPromotionManagementFeature,
+  isPromotionRedemptionFeature,
+  isPromotionReportingFeature,
+  isPromotionValidationFeature,
+  isPromotionSchedulingFeature,
+  isPromotionIntegrationFeature,
+  isPromotionAIFeature,
+  isSystemConfigurationFeature,
+  isUserManagementFeature,
+  isAuthFeature,
+  isProfileFeature,
+  isContentFeature,
+  isContentModerationFeature,
+  isThemeFeature,
+  isNotificationFeature,
+  isSocialFeature,
+  isMapFeature,
+  isRecipeFeature,
+  isRewardProgramFeature,
+  isExplorationFeature,
+  isAIFeature,
+  isDashboardFeature,
+  isSystemBreakdownFeature,
+  isSignatureFeature,
+  isSwigCircuitFeature,
+  isPromoterFeature,
+  isTaskCompleted,
+  parseTasks,
+  mapFeaturesToReleaseFeatures,
+  mapFeatureStatusToReleaseStatus,
+  createProgressSnapshot,
+  validateProgressData,
+  generateHistoricalProgressData,
+  prepareFeatureShowcaseData,
+  generateFeatureReport
+};
+
+// Use 'export type' for type exports when isolatedModules is enabled
+export type { AnalysisStep } from '../types';
+export type { ReleaseProgress } from '../types/releaseTypes';
+export type { MonthlyProgressData } from '../types';
+export type { FeatureShowcaseData, FeatureShowcaseCategoryType, FeatureBusinessValueType } from '../types';

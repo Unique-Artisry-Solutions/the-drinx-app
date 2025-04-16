@@ -1,4 +1,6 @@
+
 import { FeatureItem } from '../../types';
+import { isPromoterFeature } from '../../features/promoterFeatures';
 
 /**
  * Checks if a feature is related to the Swig Circuit functionality
@@ -18,6 +20,9 @@ export const isSwigCircuitFeature = (feature: FeatureItem): boolean => {
   
   return isInName || isInTags || isInDescription;
 };
+
+// Re-export the isPromoterFeature function from the promoterFeatures.ts file
+export { isPromoterFeature };
 
 /**
  * Feature detection utilities for various feature types
