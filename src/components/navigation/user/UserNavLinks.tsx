@@ -30,11 +30,12 @@ const UserNavLinks: React.FC<UserNavLinksProps> = ({ userType }) => {
   const userNavItems = [
     { icon: Home, label: 'Home', path: getHomePath(), onClick: handleHomeClick },
     { icon: Map, label: 'Map', path: '/map' },
+    { icon: Route, label: 'Circuits', path: '/swig-circuits' },
   ];
   
   // Add different items based on user type - removed Create for individual users
   if (userType === 'promoter') {
-    userNavItems.push({ icon: Route, label: 'Create', path: '/create-bar-crawl' });
+    userNavItems.push({ icon: Route, label: 'Create', path: '/create-swig-circuit' });
     userNavItems.push({ icon: Megaphone, label: 'Promotions', path: '/promoter/dashboard' });
     userNavItems.push({ icon: BarChart2, label: 'Analytics', path: '/promoter/analytics' });
   }
@@ -44,7 +45,8 @@ const UserNavLinks: React.FC<UserNavLinksProps> = ({ userType }) => {
       {userNavItems.map((item) => {
         const isActive = location.pathname === item.path ||
           (item.path === '/establishment/dashboard' && location.pathname.startsWith('/establishment/')) ||
-          (item.path === '/promoter/dashboard' && location.pathname.startsWith('/promoter/'));
+          (item.path === '/promoter/dashboard' && location.pathname.startsWith('/promoter/')) ||
+          (item.path === '/swig-circuits' && location.pathname.startsWith('/swig-circuits/'));
         
         return (
           <Link

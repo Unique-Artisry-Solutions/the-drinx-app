@@ -24,7 +24,7 @@ const SwigCircuitsHeader: React.FC<SwigCircuitsHeaderProps> = ({ user }) => {
       
       {user && (
         <Button asChild className="bg-spiritless-pink hover:bg-spiritless-pink/90 shadow-md">
-          <Link to="/create-bar-crawl" className="flex items-center gap-2">
+          <Link to="/create-swig-circuit" className="flex items-center gap-2">
             <PlusCircle size={18} />
             Create Circuit
           </Link>

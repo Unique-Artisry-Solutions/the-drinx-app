@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Map, Route } from 'lucide-react';
+import { Map, Route, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface BarCrawl {
@@ -49,6 +49,18 @@ const BarCrawlSection: React.FC<BarCrawlSectionProps> = ({
               <span>Find</span>
             </Link>
           </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-1 border-spiritless-pink text-spiritless-pink flex-1 sm:flex-none"
+            asChild
+          >
+            <Link to="/swig-circuits" onClick={scrollToTop}>
+              <Route className="h-4 w-4" />
+              <span>View All</span>
+              <ArrowRight className="h-3 w-3 ml-1" />
+            </Link>
+          </Button>
           {isAuthenticated && isPromoter && (
             <Button 
               variant="default" 
@@ -56,7 +68,7 @@ const BarCrawlSection: React.FC<BarCrawlSectionProps> = ({
               className="flex items-center gap-1 bg-spiritless-pink text-white hover:bg-spiritless-pink/90 flex-1 sm:flex-none"
               asChild
             >
-              <Link to="/create-bar-crawl" onClick={scrollToTop}>
+              <Link to="/create-swig-circuit" onClick={scrollToTop}>
                 <Route className="h-4 w-4" />
                 <span>Create</span>
               </Link>
@@ -73,7 +85,7 @@ const BarCrawlSection: React.FC<BarCrawlSectionProps> = ({
             <div className="flex justify-between items-center mt-2">
               <span className="text-sm text-muted-foreground">{crawl.stops} stops</span>
               <Button variant="ghost" size="sm" asChild onClick={scrollToTop}>
-                <Link to={`/bar-crawl/${crawl.id}`}>View</Link>
+                <Link to={`/swig-circuits/${crawl.id}`}>View</Link>
               </Button>
             </div>
           </div>

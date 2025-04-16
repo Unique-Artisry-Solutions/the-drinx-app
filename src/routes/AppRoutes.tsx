@@ -1,4 +1,3 @@
-
 import React, { lazy, Suspense } from 'react';
 import { Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import LandingPage from '@/pages/LandingPage';
@@ -81,6 +80,7 @@ const AppRoutes = () => {
         <Route path="/bar-crawl/:id" element={<BarCrawlDetail />} />
         <Route path="/bar-crawl-details/:id" element={<BarCrawlProfilePage />} />
         <Route path="/swig-circuits" element={<SwigCircuitsPage />} />
+        <Route path="/swig-circuits/:id" element={<BarCrawlDetail />} />
         <Route path="/bar-crawl" element={<Navigate to="/swig-circuits" replace />} />
         <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/signup" element={<SignupPage />} />
@@ -102,7 +102,7 @@ const AppRoutes = () => {
         <Route path="/profile/settings" element={<ProtectedRoute><UserProfilePage /></ProtectedRoute>} />
         
         {/* Update the routes to use TypedProtectedRoute for promoters only */}
-        <Route path="/create-bar-crawl" element={<TypedProtectedRoute userType="promoter"><CreateSwigCircuitPage /></TypedProtectedRoute>} />
+        <Route path="/create-bar-crawl" element={<Navigate to="/create-swig-circuit" replace />} />
         <Route path="/create-swig-circuit" element={<TypedProtectedRoute userType="promoter"><CreateSwigCircuitPage /></TypedProtectedRoute>} />
         <Route path="/profile/my-creations/:id" element={<ProtectedRoute><BarCrawlManagementPage /></ProtectedRoute>} />
         
