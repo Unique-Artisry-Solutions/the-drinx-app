@@ -34,28 +34,47 @@ export {
   isPhotoModerationFeature
 } from './userContentDetection';
 
+// Export from the new detection files
 export {
   isAnalyticsFeature as isAnalyticsDetectionFeature,
-  isDashboardFeature as isDashboardDetectionFeature, 
-  isMapFeature as isMapDetectionFeature,
-  isSystemBreakdownFeature as isSystemBreakdownDetectionFeature,
-  isAIFeature as isAIDetectionFeature,
+  isDashboardFeature as isDashboardDetectionFeature,
+  isSystemBreakdownFeature as isSystemBreakdownDetectionFeature
+} from './analyticsDetection';
+
+export {
+  isMapFeature as isMapDetectionFeature
+} from './mapDetection';
+
+export {
+  isAIFeature as isAIDetectionFeature
+} from './aiDetection';
+
+export {
   isExplorationFeature as isExplorationDetectionFeature,
   isNotificationFeature as isNotificationDetectionFeature,
   isRewardProgramFeature as isRewardProgramDetectionFeature,
-  isSocialFeature as isSocialDetectionFeature,
-  isThemeFeature as isThemeDetectionFeature,
+  isSocialFeature as isSocialDetectionFeature
+} from './engagementDetection';
+
+export {
+  isThemeFeature as isThemeDetectionFeature
+} from './themeDetection';
+
+export {
   isSwigCircuitFeature,
-  isBarCrawlFeature as isBarCrawlDetectionFeature,
-  isSignatureFeature as isSignatureDetectionFeature,
-} from './venueDetection';
+  isBarCrawlFeature as isBarCrawlDetectionFeature
+} from './circuitDetection';
+
+export {
+  isSignatureFeature as isSignatureDetectionFeature
+} from './signatureFeatureDetection';
 
 // Re-export the core detection functions with their original names
 export { isIngredientPairingFeature, isMocktailSuggestionFeature, isMocktailTrendsFeature, isRecipeFeature } from './mocktailDetection';
 export { isPromotionFeature } from './promotionDetection';
 export { isUserManagementFeature } from './userContentDetection';
 export { 
-  isAnalyticsFeature, isDashboardFeature, isMapFeature, isSystemBreakdownFeature,
-  isAIFeature, isExplorationFeature, isNotificationFeature, isRewardProgramFeature,
-  isSocialFeature, isThemeFeature, isSignatureFeature, isBarCrawlFeature 
+  isAnalyticsFeature, isDashboardFeature, isSystemBreakdownFeature, isAIFeature, isExplorationFeature,
+  isNotificationFeature, isRewardProgramFeature, isSocialFeature, isThemeFeature, isMapFeature,
+  isSignatureFeature, isBarCrawlFeature
 } from './venueDetection';
