@@ -71,9 +71,20 @@ export const useSwigCircuitsTheme = () => {
       case 'Easy':
         return <Star className="mr-1 h-3 w-3" />;
       case 'Moderate':
-        return <><Star className="mr-0 h-3 w-3" /><Star className="mr-1 h-3 w-3" /></>;
+        return (
+          <>
+            <Star className="mr-0 h-3 w-3" />
+            <Star className="mr-1 h-3 w-3" />
+          </>
+        );
       case 'Challenging':
-        return <><Star className="mr-0 h-3 w-3" /><Star className="mr-0 h-3 w-3" /><Star className="mr-1 h-3 w-3" /></>;
+        return (
+          <>
+            <Star className="mr-0 h-3 w-3" />
+            <Star className="mr-0 h-3 w-3" />
+            <Star className="mr-1 h-3 w-3" />
+          </>
+        );
       default:
         return <Star className="mr-1 h-3 w-3" />;
     }
