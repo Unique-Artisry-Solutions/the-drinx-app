@@ -1,5 +1,24 @@
-import { FeatureItem, PromoterFeature } from '../../types';
-import { isPromoterFeature } from '../detection/venueDetection';
+
+import { FeatureItem } from '../types';
+import { getDateMonthsFromNow } from '../utils';
+
+/**
+ * Checks if a feature is related to Promoter functionality
+ */
+export const isPromoterFeature = (feature: FeatureItem): boolean => {
+  // Check name or tags for promoter-related keywords
+  const isInName = feature.name.toLowerCase().includes('promoter') || 
+                  feature.name.toLowerCase().includes('event creation');
+                  
+  const isInTags = Array.isArray(feature.tags) && 
+    (feature.tags.includes('promoter') || 
+     feature.tags.includes('event-management'));
+     
+  const isInDescription = feature.description.toLowerCase().includes('promoter') ||
+                         feature.description.toLowerCase().includes('event');
+  
+  return isInName || isInTags || isInDescription;
+};
 
 /**
  * Analyzes all Promoter related features
@@ -27,7 +46,7 @@ export const analyzePromoterFeatures = (features: FeatureItem[]): FeatureItem[] 
   });
 };
 
-export const createPromoterFeatures = (): PromoterFeature[] => {
+export const promoterFeatures = (): FeatureItem[] => {
   return [
     {
       id: "promoter-dashboard",
@@ -201,3 +220,6 @@ export const createPromoterFeatures = (): PromoterFeature[] => {
     }
   ];
 };
+
+// Backward compatibility for functions that expect createPromoterFeatures
+export const createPromoterFeatures = promoterFeatures;
