@@ -1,6 +1,11 @@
 
-import { Feature, FeatureItem } from '../../types';
-import { matchesAnyKeyword } from './index';
+import { FeatureItem } from '../../types';
+import { containsKeyword } from './coreDetection';
+
+// Use our own implementation of matchesAnyKeyword since it's not exported from index
+const matchesAnyKeyword = (feature: FeatureItem, keywords: string[]): boolean => {
+  return keywords.some(keyword => containsKeyword(feature, keyword));
+};
 
 export const isSwigCircuitFeature = (feature: FeatureItem): boolean => {
   const keywords = [

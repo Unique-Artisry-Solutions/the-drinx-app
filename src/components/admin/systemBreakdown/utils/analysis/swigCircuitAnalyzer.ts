@@ -1,6 +1,6 @@
 
 import { FeatureItem } from '../../types';
-import { isSwigCircuitFeature, isVipFeature } from '../detection/venueDetection';
+import { isSwigCircuitFeature, isVipFeature } from '../detection/circuitDetection';
 
 /**
  * Analyzes all Swig Circuit related features
