@@ -8,37 +8,40 @@ import { calculateFeatureStatistics, calculateCategoryProgress } from './feature
 export function createProgressSnapshot(
   adminFeatures: FeatureItem[],
   establishmentFeatures: FeatureItem[],
-  individualFeatures: FeatureItem[]
+  individualFeatures: FeatureItem[],
+  promoterFeatures: FeatureItem[] = []
 ): ProgressSnapshot {
   const stats = calculateFeatureStatistics(
     adminFeatures,
     establishmentFeatures,
-    individualFeatures
+    individualFeatures,
+    promoterFeatures
   );
   
   const adminProgressObj = calculateCategoryProgress(adminFeatures);
   const establishmentProgressObj = calculateCategoryProgress(establishmentFeatures);
   const individualProgressObj = calculateCategoryProgress(individualFeatures);
+  const promoterProgressObj = calculateCategoryProgress(promoterFeatures);
   
   return {
     timestamp: new Date().toISOString(),
     date: new Date().toISOString().split('T')[0], // YYYY-MM-DD
     totalFeatures: stats.totalFeatures,
     implementedFeatures: stats.implementedFeatures,
-    inProgressFeatures: stats.plannedFeatures,
+    inProgressFeatures: stats.inProgressFeatures,
     plannedFeatures: stats.plannedFeatures,
-    blockedFeatures: 0,
-    averageImplementationProgress: stats.implementationRate,
+    blockedFeatures: stats.blockedFeatures || 0,
+    averageImplementationProgress: stats.averageImplementation,
     frontendProgress: stats.frontendImplementationRate,
     backendProgress: stats.databaseCompletionRate,
     adminFeatureCount: adminFeatures.length,
     establishmentFeatureCount: establishmentFeatures.length,
     individualFeatureCount: individualFeatures.length,
-    promoterFeatureCount: 0,
+    promoterFeatureCount: promoterFeatures.length,
     adminImplementationRate: adminProgressObj.overall,
     establishmentImplementationRate: establishmentProgressObj.overall,
     individualImplementationRate: individualProgressObj.overall,
-    promoterImplementationRate: 0,
+    promoterImplementationRate: promoterProgressObj.overall,
     overallProgress: stats.implementationRate,
     dbComplete: stats.dbCompleted,
     confidenceScore: stats.confidenceScore

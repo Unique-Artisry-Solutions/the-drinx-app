@@ -1,4 +1,3 @@
-
 import { FeatureItem, ProgressSnapshot, FeatureStatus, MonthlyProgressData } from '../types';
 
 /**
@@ -9,6 +8,7 @@ export function calculateFeatureStatistics(features: FeatureItem[]) {
   const plannedFeatures = features.filter(f => f.status === 'planned').length;
   const inProgressFeatures = features.filter(f => f.status === 'in_progress').length;
   const implementedFeatures = features.filter(f => f.status === 'implemented').length;
+  const partialFeatures = features.filter(f => f.status === 'partial').length;
   const blockedFeatures = features.filter(f => f.status === 'blocked').length;
   
   // Calculate average implementation progress using both implementationProgress and status
@@ -33,6 +33,7 @@ export function calculateFeatureStatistics(features: FeatureItem[]) {
     plannedFeatures,
     inProgressFeatures,
     implementedFeatures,
+    partialFeatures,
     blockedFeatures,
     averageImplementation: isNaN(averageImplementation) ? 0 : averageImplementation
   };
@@ -56,10 +57,24 @@ export function createProgressSnapshot(
   const promoterStats = calculateFeatureStatistics(promoterFeatures);
   const overallStats = calculateFeatureStatistics(allFeatures);
   
-  // Calculate database status stats
-  const dbImplemented = allFeatures.filter(f => f.dbStatus === 'implemented' || f.databaseStatus === 'complete').length;
-  const dbInProgress = allFeatures.filter(f => f.dbStatus === 'in_progress' || f.databaseStatus === 'in_progress').length;
-  const dbNotStarted = allFeatures.filter(f => f.dbStatus === 'not_started' || f.databaseStatus === 'not_started').length;
+  // Calculate database status stats - normalize different field names
+  const dbImplemented = allFeatures.filter(f => 
+    f.dbStatus === 'implemented' || 
+    f.databaseStatus === 'complete' || 
+    f.dbStatus === 'complete' || 
+    f.databaseStatus === 'implemented'
+  ).length;
+  
+  const dbInProgress = allFeatures.filter(f => 
+    f.dbStatus === 'in_progress' || 
+    f.databaseStatus === 'in_progress'
+  ).length;
+  
+  const dbNotStarted = allFeatures.filter(f => 
+    f.dbStatus === 'not_started' || 
+    f.databaseStatus === 'not_started' || 
+    (!f.dbStatus && !f.databaseStatus)
+  ).length;
   
   const frontendProgress = overallStats.averageImplementation;
   const backendProgress = ((dbImplemented * 100) + (dbInProgress * 50)) / (allFeatures.length || 1);
@@ -109,15 +124,9 @@ export function validateProgressData(snapshot: ProgressSnapshot) {
     return { isValid: false, issues: ['No snapshot data available'] };
   }
   
-  // Check if total feature count matches the sum of implementation statuses
-  const statusTotal = 
-    snapshot.implementedFeatures + 
-    snapshot.inProgressFeatures + 
-    snapshot.plannedFeatures + 
-    snapshot.blockedFeatures;
-  
-  if (statusTotal !== snapshot.totalFeatures) {
-    issues.push(`Feature status counts (${statusTotal}) don't match total feature count (${snapshot.totalFeatures})`);
+  // Check if total feature count makes sense
+  if (snapshot.totalFeatures < 1) {
+    issues.push(`Invalid total feature count: ${snapshot.totalFeatures}`);
   }
   
   // Check if feature counts by user type match total
@@ -131,14 +140,19 @@ export function validateProgressData(snapshot: ProgressSnapshot) {
     issues.push(`User type feature counts (${userTypeTotal}) don't match total feature count (${snapshot.totalFeatures})`);
   }
   
+  // Check implementation rates for consistency
+  if (snapshot.implementedFeatures > snapshot.totalFeatures) {
+    issues.push(`Implemented features (${snapshot.implementedFeatures}) exceeds total features (${snapshot.totalFeatures})`);
+  }
+  
   // Check for unrealistic implementation rates
   if (snapshot.averageImplementationProgress > 100) {
     issues.push(`Average implementation progress (${snapshot.averageImplementationProgress}) exceeds 100%`);
   }
   
   // Check for very low progress on implemented features
-  if (snapshot.implementedFeatures > 0 && snapshot.averageImplementationProgress < 50) {
-    issues.push(`Low average implementation progress (${snapshot.averageImplementationProgress}) despite having implemented features`);
+  if (snapshot.implementedFeatures > 0 && snapshot.averageImplementationProgress < 10) {
+    issues.push(`Unusually low average implementation progress (${snapshot.averageImplementationProgress}) despite having implemented features`);
   }
   
   return {

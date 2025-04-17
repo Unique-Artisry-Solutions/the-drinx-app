@@ -1,6 +1,10 @@
-
 import { DocFeature, DocSection } from './types';
-import { adminFeatures, establishmentFeatures, individualFeatures } from '@/components/admin/systemBreakdown/features';
+import { 
+  adminFeatures, 
+  establishmentFeatures, 
+  individualFeatures,
+  promoterFeatures 
+} from '@/components/admin/systemBreakdown/features';
 
 // Helper function to convert system breakdown features to doc features
 const convertSystemFeatureToDocFeature = (feature: any, category: string): DocFeature => {
@@ -30,6 +34,11 @@ const establishmentDocFeatures: DocFeature[] = establishmentFeatures.map(feature
 
 const individualDocFeatures: DocFeature[] = individualFeatures.map(feature => 
   convertSystemFeatureToDocFeature(feature, 'user')
+);
+
+// Add promoter doc features
+const promoterDocFeatures: DocFeature[] = promoterFeatures.map(feature =>
+  convertSystemFeatureToDocFeature(feature, 'promoter')
 );
 
 // Additional detailed documentation features
@@ -358,6 +367,13 @@ export const featureSections: DocSection[] = [
     description: "Features available to regular users",
     category: "overview",
     features: individualDocFeatures
+  },
+  {
+    id: "promoter-features",
+    title: "Promoter Features",
+    description: "Features for event promoters",
+    category: "overview",
+    features: promoterDocFeatures
   },
   {
     id: "system-tools",

@@ -30,9 +30,13 @@ export const useProgressTracking = (
     
     setCurrentSnapshot(initialSnapshot);
     
+    // Validate the initial snapshot
+    const validationResult = validateProgressData(initialSnapshot);
+    setDataValidation(validationResult);
+    
     // Generate initial monthly progress data based on current state
     generateHistoricalProgressDataAndUpdate(initialSnapshot);
-  }, []);
+  }, [adminFeatures, establishmentFeatures, individualFeatures, promoterFeatures]);
   
   // Update progress tracking when features change
   const updateProgressTracking = () => {

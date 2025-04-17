@@ -1,8 +1,10 @@
 
-import React from 'react';
-import { Progress } from '@/components/ui/progress';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { BarChart, PieChart, LineChart } from 'lucide-react';
 import { FeatureItem } from './types';
+import SystemHealthCheck from './components/SystemHealthCheck';
 import { calculateFeatureStatistics } from './utils';
 
 interface ImplementationOverviewProps {
@@ -12,120 +14,194 @@ interface ImplementationOverviewProps {
   promoterFeatures: FeatureItem[];
 }
 
-const ImplementationOverview: React.FC<ImplementationOverviewProps> = ({ 
-  adminFeatures, 
-  establishmentFeatures, 
+const ImplementationOverview: React.FC<ImplementationOverviewProps> = ({
+  adminFeatures,
+  establishmentFeatures,
   individualFeatures,
   promoterFeatures
 }) => {
-  // Calculate statistics
-  const adminStats = calculateFeatureStatistics(adminFeatures);
+  const [chartType, setChartType] = useState<'bar' | 'pie' | 'line'>('bar');
+  
+  // Calculate feature statistics
+  const adminStats = calculateFeatureStatistics(adminFeatures, establishmentFeatures, individualFeatures);
   const establishmentStats = calculateFeatureStatistics(establishmentFeatures);
   const individualStats = calculateFeatureStatistics(individualFeatures);
   const promoterStats = calculateFeatureStatistics(promoterFeatures);
-  
-  // Calculate totals
+
+  // Combine all features for overall statistics
   const allFeatures = [...adminFeatures, ...establishmentFeatures, ...individualFeatures, ...promoterFeatures];
-  const totalStats = calculateFeatureStatistics(allFeatures);
+  const overallStats = calculateFeatureStatistics(allFeatures);
   
-  // Count planned, in progress, implemented, and blocked features
-  const totalPlanned = adminStats.plannedFeatures + establishmentStats.plannedFeatures + individualStats.plannedFeatures + promoterStats.plannedFeatures;
-  const totalInProgress = adminStats.inProgressFeatures + establishmentStats.inProgressFeatures + individualStats.inProgressFeatures + promoterStats.inProgressFeatures;
-  const totalImplemented = adminStats.implementedFeatures + establishmentStats.implementedFeatures + individualStats.implementedFeatures + promoterStats.implementedFeatures;
-  const totalBlocked = adminStats.blockedFeatures + establishmentStats.blockedFeatures + individualStats.blockedFeatures + promoterStats.blockedFeatures;
+  // Get feature counts by status
+  const totalFeatures = allFeatures.length;
+  const implementedFeatures = allFeatures.filter(f => f.status === 'implemented').length;
+  const partialFeatures = allFeatures.filter(f => f.status === 'partial').length;
+  const inProgressFeatures = allFeatures.filter(f => f.status === 'in_progress').length;
+  const plannedFeatures = allFeatures.filter(f => f.status === 'planned').length;
+  const blockedFeatures = allFeatures.filter(f => f.status === 'blocked').length;
   
-  return (
-    <div className="space-y-6">
-      <h3 className="text-lg font-semibold">Implementation Progress</h3>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <Card>
-          <CardHeader className="py-3">
-            <CardTitle className="text-sm font-medium">Admin Features</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{Math.round(adminStats.averageImplementation)}%</div>
-            <Progress value={adminStats.averageImplementation} className="h-2 mt-2" />
-            <div className="text-xs text-muted-foreground mt-2">
-              {adminStats.totalFeatures} features | {adminStats.implementedFeatures} completed
-            </div>
-          </CardContent>
-        </Card>
+  // Calculate percentages for the progress bars
+  const implementedPercentage = Math.round((implementedFeatures / totalFeatures) * 100);
+  const partialPercentage = Math.round((partialFeatures / totalFeatures) * 100);
+  const inProgressPercentage = Math.round((inProgressFeatures / totalFeatures) * 100);
+  const plannedPercentage = Math.round((plannedFeatures / totalFeatures) * 100);
+  const blockedPercentage = Math.round((blockedFeatures / totalFeatures) * 100);
+
+  // Render bar chart with basic CSS
+  const renderBarChart = () => (
+    <div className="mt-6">
+      <div className="space-y-3">
+        <div>
+          <div className="flex justify-between text-sm mb-1">
+            <span>Implemented ({implementedFeatures})</span>
+            <span>{implementedPercentage}%</span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div
+              className="bg-green-500 h-2 rounded-full"
+              style={{ width: `${implementedPercentage}%` }}
+            ></div>
+          </div>
+        </div>
         
-        <Card>
-          <CardHeader className="py-3">
-            <CardTitle className="text-sm font-medium">Establishment Features</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{Math.round(establishmentStats.averageImplementation)}%</div>
-            <Progress value={establishmentStats.averageImplementation} className="h-2 mt-2" />
-            <div className="text-xs text-muted-foreground mt-2">
-              {establishmentStats.totalFeatures} features | {establishmentStats.implementedFeatures} completed
-            </div>
-          </CardContent>
-        </Card>
+        <div>
+          <div className="flex justify-between text-sm mb-1">
+            <span>Partial ({partialFeatures})</span>
+            <span>{partialPercentage}%</span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div
+              className="bg-blue-500 h-2 rounded-full"
+              style={{ width: `${partialPercentage}%` }}
+            ></div>
+          </div>
+        </div>
         
-        <Card>
-          <CardHeader className="py-3">
-            <CardTitle className="text-sm font-medium">Individual User Features</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{Math.round(individualStats.averageImplementation)}%</div>
-            <Progress value={individualStats.averageImplementation} className="h-2 mt-2" />
-            <div className="text-xs text-muted-foreground mt-2">
-              {individualStats.totalFeatures} features | {individualStats.implementedFeatures} completed
-            </div>
-          </CardContent>
-        </Card>
+        <div>
+          <div className="flex justify-between text-sm mb-1">
+            <span>In Progress ({inProgressFeatures})</span>
+            <span>{inProgressPercentage}%</span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div
+              className="bg-yellow-500 h-2 rounded-full"
+              style={{ width: `${inProgressPercentage}%` }}
+            ></div>
+          </div>
+        </div>
         
-        <Card>
-          <CardHeader className="py-3">
-            <CardTitle className="text-sm font-medium">Promoter Features</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{Math.round(promoterStats.averageImplementation)}%</div>
-            <Progress value={promoterStats.averageImplementation} className="h-2 mt-2" />
-            <div className="text-xs text-muted-foreground mt-2">
-              {promoterStats.totalFeatures} features | {promoterStats.implementedFeatures} completed
+        <div>
+          <div className="flex justify-between text-sm mb-1">
+            <span>Planned ({plannedFeatures})</span>
+            <span>{plannedPercentage}%</span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div
+              className="bg-purple-500 h-2 rounded-full"
+              style={{ width: `${plannedPercentage}%` }}
+            ></div>
+          </div>
+        </div>
+        
+        {blockedFeatures > 0 && (
+          <div>
+            <div className="flex justify-between text-sm mb-1">
+              <span>Blocked ({blockedFeatures})</span>
+              <span>{blockedPercentage}%</span>
             </div>
-          </CardContent>
-        </Card>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div
+                className="bg-red-500 h-2 rounded-full"
+                style={{ width: `${blockedPercentage}%` }}
+              ></div>
+            </div>
+          </div>
+        )}
       </div>
       
-      <Card>
-        <CardHeader>
-          <CardTitle>Overall Progress</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center mb-2">
-            <div className="text-3xl font-bold">{Math.round(totalStats.averageImplementation)}%</div>
-            <div className="ml-auto text-sm text-muted-foreground">
-              {totalStats.totalFeatures} total features
-            </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+        <div className="bg-gray-100 p-4 rounded-lg">
+          <div className="text-lg font-medium">{adminFeatures.length}</div>
+          <div className="text-sm text-gray-600">Admin Features</div>
+          <div className="text-xs mt-2">
+            {Math.round(adminStats.implementationRate)}% implemented
           </div>
-          <Progress value={totalStats.averageImplementation} className="h-3 mb-4" />
-          
-          <div className="grid grid-cols-4 gap-4 text-center">
-            <div>
-              <div className="text-sm font-medium">Planned</div>
-              <div className="text-2xl font-bold mt-1 text-yellow-500">{totalPlanned}</div>
-            </div>
-            <div>
-              <div className="text-sm font-medium">In Progress</div>
-              <div className="text-2xl font-bold mt-1 text-blue-500">{totalInProgress}</div>
-            </div>
-            <div>
-              <div className="text-sm font-medium">Implemented</div>
-              <div className="text-2xl font-bold mt-1 text-green-500">{totalImplemented}</div>
-            </div>
-            <div>
-              <div className="text-sm font-medium">Blocked</div>
-              <div className="text-2xl font-bold mt-1 text-red-500">{totalBlocked}</div>
-            </div>
+        </div>
+        
+        <div className="bg-gray-100 p-4 rounded-lg">
+          <div className="text-lg font-medium">{establishmentFeatures.length}</div>
+          <div className="text-sm text-gray-600">Establishment Features</div>
+          <div className="text-xs mt-2">
+            {Math.round(establishmentStats.averageImplementation)}% implemented
           </div>
-        </CardContent>
-      </Card>
+        </div>
+        
+        <div className="bg-gray-100 p-4 rounded-lg">
+          <div className="text-lg font-medium">{individualFeatures.length}</div>
+          <div className="text-sm text-gray-600">Individual Features</div>
+          <div className="text-xs mt-2">
+            {Math.round(individualStats.averageImplementation)}% implemented
+          </div>
+        </div>
+        
+        <div className="bg-gray-100 p-4 rounded-lg">
+          <div className="text-lg font-medium">{promoterFeatures.length}</div>
+          <div className="text-sm text-gray-600">Promoter Features</div>
+          <div className="text-xs mt-2">
+            {Math.round(promoterStats.averageImplementation)}% implemented
+          </div>
+        </div>
+      </div>
     </div>
+  );
+
+  return (
+    <Card>
+      <CardHeader className="pb-2 flex flex-row items-center justify-between">
+        <CardTitle>Feature Implementation Overview</CardTitle>
+        <Tabs
+          defaultValue="bar"
+          value={chartType}
+          onValueChange={(value) => setChartType(value as 'bar' | 'pie' | 'line')}
+          className="w-fit"
+        >
+          <TabsList className="grid grid-cols-3 h-8 w-fit">
+            <TabsTrigger value="bar" className="px-3">
+              <BarChart className="h-4 w-4" />
+            </TabsTrigger>
+            <TabsTrigger value="pie" className="px-3">
+              <PieChart className="h-4 w-4" />
+            </TabsTrigger>
+            <TabsTrigger value="line" className="px-3">
+              <LineChart className="h-4 w-4" />
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </CardHeader>
+      <CardContent>
+        <div className="text-3xl font-bold">
+          {Math.round(overallStats.averageImplementation)}%
+          <span className="text-sm ml-2 font-normal text-gray-500">implemented</span>
+        </div>
+        <div className="text-sm text-gray-500 mb-6">
+          {implementedFeatures} of {totalFeatures} features completed
+          {partialFeatures > 0 && `, ${partialFeatures} partial`}
+          {inProgressFeatures > 0 && `, ${inProgressFeatures} in progress`}
+        </div>
+        
+        {chartType === 'bar' && renderBarChart()}
+        {chartType === 'pie' && (
+          <div className="flex justify-center items-center h-48 text-gray-400">
+            Pie chart visualization (upgrade to Pro)
+          </div>
+        )}
+        {chartType === 'line' && (
+          <div className="flex justify-center items-center h-48 text-gray-400">
+            Line chart visualization (upgrade to Pro)
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 

@@ -14,6 +14,7 @@ import CreateReleaseFromFeaturesButton from '@/components/admin/systemBreakdown/
 import FeatureShowcaseTab from '@/components/admin/systemBreakdown/FeatureShowcaseTab';
 import PromoterRequirementsTab from '@/components/admin/systemBreakdown/PromoterRequirementsTab';
 import SystemBreakdownNavigation, { MobileSystemBreakdownNavigation } from '@/components/admin/systemBreakdown/SystemBreakdownNavigation';
+import SystemHealthCheck from '@/components/admin/systemBreakdown/components/SystemHealthCheck';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 // Import improvements data
@@ -75,15 +76,25 @@ const SystemFunctionalityBreakdown: React.FC = () => {
         <Tabs value={activeTab} className="space-y-4">
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
-            <OverviewTab
-              adminFeatures={adminFeatures}
-              establishmentFeatures={establishmentFeatures}
-              individualFeatures={individualFeatures}
-              promoterFeatures={promoterFeatures}
-              monthlyProgressData={monthlyProgressData}
-              currentSnapshot={currentSnapshot}
-              dataValidation={dataValidation}
-            />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2">
+                <OverviewTab
+                  adminFeatures={adminFeatures}
+                  establishmentFeatures={establishmentFeatures}
+                  individualFeatures={individualFeatures}
+                  promoterFeatures={promoterFeatures}
+                  monthlyProgressData={monthlyProgressData}
+                  currentSnapshot={currentSnapshot}
+                  dataValidation={dataValidation}
+                />
+              </div>
+              <div>
+                <SystemHealthCheck
+                  dataValidation={dataValidation}
+                  currentSnapshot={currentSnapshot}
+                />
+              </div>
+            </div>
             <CreateReleaseFromFeaturesButton 
               onClick={handleCreateReleaseFromFeatures} 
             />

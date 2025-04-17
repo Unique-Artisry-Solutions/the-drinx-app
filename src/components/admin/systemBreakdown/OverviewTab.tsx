@@ -24,7 +24,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
   currentSnapshot,
   dataValidation
 }) => {
-  console.log("MainOverviewTab props:", {
+  console.log("OverviewTab props:", {
     adminCount: adminFeatures.length,
     establishmentCount: establishmentFeatures.length,
     individualCount: individualFeatures.length,
