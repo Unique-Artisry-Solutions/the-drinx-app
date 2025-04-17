@@ -1,54 +1,51 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Crown, Sparkles } from 'lucide-react';
-import VipPackageWizard from './VipPackageWizard';
+import { Crown } from 'lucide-react';
 import { TicketTier } from '@/hooks/swigCircuit/types';
+import VipPackageWizard from './VipPackageWizard';
 
 interface CreateVipPackageButtonProps {
   onSaveVipPackage: (vipPackage: TicketTier) => void;
-  className?: string;
   initialPackage?: TicketTier | null;
   isOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
 }
 
-const CreateVipPackageButton: React.FC<CreateVipPackageButtonProps> = ({ 
+const CreateVipPackageButton: React.FC<CreateVipPackageButtonProps> = ({
   onSaveVipPackage,
-  className = '',
-  initialPackage = null,
+  initialPackage,
   isOpen = false,
   onOpenChange
 }) => {
-  const [isWizardOpen, setIsWizardOpen] = useState(isOpen);
+  const [open, setOpen] = useState(isOpen);
 
-  // Sync external isOpen prop with internal state
+  // Sync with parent component's open state if provided
   React.useEffect(() => {
-    if (isWizardOpen !== isOpen) {
-      setIsWizardOpen(isOpen);
+    if (onOpenChange && isOpen !== open) {
+      setOpen(isOpen);
     }
-  }, [isOpen]);
+  }, [isOpen, open, onOpenChange]);
 
-  const handleOpenChange = (open: boolean) => {
-    setIsWizardOpen(open);
+  const handleOpenChange = (newOpen: boolean) => {
+    setOpen(newOpen);
     if (onOpenChange) {
-      onOpenChange(open);
+      onOpenChange(newOpen);
     }
   };
 
   return (
     <>
-      <Button 
+      <Button
         onClick={() => handleOpenChange(true)}
-        className={`bg-gradient-to-r from-purple-600 to-spiritless-pink hover:opacity-90 text-white ${className}`}
+        className="bg-purple-600 hover:bg-purple-700 text-white"
       >
         <Crown className="mr-2 h-4 w-4" />
         Create VIP Package
-        <Sparkles className="ml-2 h-3 w-3" />
       </Button>
       
       <VipPackageWizard
-        open={isWizardOpen}
+        open={open}
         onOpenChange={handleOpenChange}
         onSave={onSaveVipPackage}
         initialPackage={initialPackage}

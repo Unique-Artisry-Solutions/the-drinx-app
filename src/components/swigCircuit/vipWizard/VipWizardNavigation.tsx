@@ -21,7 +21,7 @@ const VipWizardNavigation: React.FC<VipWizardNavigationProps> = ({
   isFinalStep
 }) => {
   return (
-    <div className="flex justify-between mt-4">
+    <div className="flex justify-between w-full">
       <Button
         variant="outline"
         onClick={onBack}
@@ -30,20 +30,17 @@ const VipWizardNavigation: React.FC<VipWizardNavigationProps> = ({
         <ArrowLeft className="mr-2 h-4 w-4" />
         Back
       </Button>
-
+      
       {isFinalStep ? (
         <Button
           onClick={onComplete}
-          className="bg-spiritless-pink hover:bg-spiritless-pink/90"
+          className="bg-purple-600 hover:bg-purple-700 text-white"
         >
           <Check className="mr-2 h-4 w-4" />
-          Create VIP Package
+          Complete
         </Button>
       ) : (
-        <Button
-          onClick={onNext}
-          className="bg-spiritless-pink hover:bg-spiritless-pink/90"
-        >
+        <Button onClick={onNext}>
           Next
           <ArrowRight className="ml-2 h-4 w-4" />
         </Button>

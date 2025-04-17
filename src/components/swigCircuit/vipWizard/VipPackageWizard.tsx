@@ -7,6 +7,7 @@ import VipBasicDetailsStep from './steps/VipBasicDetailsStep';
 import VipPerksStep from './steps/VipPerksStep';
 import VipSummaryStep from './steps/VipSummaryStep';
 import VipWizardNavigation from './VipWizardNavigation';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface VipPackageWizardProps {
   open: boolean;
@@ -57,8 +58,8 @@ const VipPackageWizard: React.FC<VipPackageWizardProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-2xl">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-2xl sm:max-h-[90vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="text-xl flex items-center gap-2">
             <span className="bg-gradient-to-r from-purple-600 to-spiritless-pink bg-clip-text text-transparent font-bold">
               VIP Package Wizard
@@ -67,18 +68,22 @@ const VipPackageWizard: React.FC<VipPackageWizardProps> = ({
           </DialogTitle>
         </DialogHeader>
         
-        <div className="py-4">
-          {renderStepContent()}
-        </div>
+        <ScrollArea className="flex-grow overflow-auto py-4">
+          <div className="px-1">
+            {renderStepContent()}
+          </div>
+        </ScrollArea>
         
-        <VipWizardNavigation 
-          currentStep={vipWizard.currentStep}
-          onNext={vipWizard.nextStep}
-          onBack={vipWizard.prevStep}
-          onComplete={vipWizard.saveVipPackage}
-          isFirstBasicStep={vipWizard.currentStep === 1}
-          isFinalStep={vipWizard.currentStep === 3}
-        />
+        <div className="flex-shrink-0 pt-4 border-t mt-2">
+          <VipWizardNavigation 
+            currentStep={vipWizard.currentStep}
+            onNext={vipWizard.nextStep}
+            onBack={vipWizard.prevStep}
+            onComplete={vipWizard.saveVipPackage}
+            isFirstBasicStep={vipWizard.currentStep === 1}
+            isFinalStep={vipWizard.currentStep === 3}
+          />
+        </div>
       </DialogContent>
     </Dialog>
   );

@@ -23,15 +23,16 @@ const VipPerksStep: React.FC<VipPerksStepProps> = ({ vipWizard }) => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <p className="text-muted-foreground">
         Customize the VIP experience by selecting the perks that will be included.
       </p>
       
-      <div className="space-y-5">
+      <div className="space-y-4">
         <h3 className="text-lg font-medium">Standard VIP Perks</h3>
         
         <div className="space-y-4">
+          {/* Skip Lines */}
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label htmlFor="skipLines" className="text-base">Skip Lines</Label>
@@ -44,6 +45,7 @@ const VipPerksStep: React.FC<VipPerksStepProps> = ({ vipWizard }) => {
             />
           </div>
           
+          {/* Priority Seating */}
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label htmlFor="prioritySeating" className="text-base">Priority Seating</Label>
@@ -56,6 +58,7 @@ const VipPerksStep: React.FC<VipPerksStepProps> = ({ vipWizard }) => {
             />
           </div>
           
+          {/* Complimentary Drinks */}
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label htmlFor="freeDrinks" className="text-base">Complimentary Drinks</Label>
@@ -72,6 +75,7 @@ const VipPerksStep: React.FC<VipPerksStepProps> = ({ vipWizard }) => {
             />
           </div>
           
+          {/* Exclusive Areas */}
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label htmlFor="exclusiveAccess" className="text-base">Exclusive Areas</Label>
@@ -84,6 +88,7 @@ const VipPerksStep: React.FC<VipPerksStepProps> = ({ vipWizard }) => {
             />
           </div>
           
+          {/* Merchandise */}
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label htmlFor="merchandise" className="text-base">Merchandise</Label>
@@ -96,6 +101,7 @@ const VipPerksStep: React.FC<VipPerksStepProps> = ({ vipWizard }) => {
             />
           </div>
           
+          {/* Meet & Greet */}
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label htmlFor="meetAndGreet" className="text-base">Meet & Greet</Label>
