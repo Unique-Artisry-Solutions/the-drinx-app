@@ -1,6 +1,7 @@
 
 import { FeatureItem } from '../../types';
 import { isSwigCircuitFeature, isVipFeature } from '../detection/circuitDetection';
+import { isThemeCustomizationFeature } from '../detection/themeDetection';
 
 /**
  * Analyzes all Swig Circuit related features
@@ -37,6 +38,22 @@ export const analyzeSwigCircuitFeatures = (features: FeatureItem[]): FeatureItem
           'Test VIP package creation wizard',
           'Verify VIP package benefits are saved correctly',
           'Test editing existing VIP packages'
+        ]
+      };
+    }
+    
+    if (isThemeCustomizationFeature(feature)) {
+      return {
+        ...feature,
+        dbStatus: feature.dbStatus || 'completed',
+        databaseStatus: feature.databaseStatus || 'completed',
+        statusUpdated: feature.statusUpdated || true,
+        databaseAnalysis: feature.databaseAnalysis || 'Theme customization uses localStorage for persistence',
+        testSteps: [
+          ...(feature.testSteps || []),
+          'Test theme creation with color picker',
+          'Verify saved themes are accessible',
+          'Test theme application to Swig Circuit'
         ]
       };
     }

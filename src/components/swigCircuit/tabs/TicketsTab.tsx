@@ -1,16 +1,27 @@
+
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Trash2, Plus, Ticket, Info, Crown } from 'lucide-react';
+import { Trash2, Plus, Ticket, Info, Crown, Edit, AlertCircle } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { TicketTier } from '@/hooks/swigCircuit/types';
 import { Badge } from '@/components/ui/badge';
 import CreateVipPackageButton from '../vipWizard/CreateVipPackageButton';
@@ -44,12 +55,26 @@ const TicketsTab: React.FC<TicketsTabProps> = ({
   const [newTier, setNewTier] = useState<TicketTier>(emptyTier);
   const [editingVipPackage, setEditingVipPackage] = useState<TicketTier | null>(null);
   const [isWizardOpen, setIsWizardOpen] = useState(false);
+  const [benefitError, setBenefitError] = useState<string | null>(null);
+  const [tierToRemove, setTierToRemove] = useState<number | null>(null);
+  const [editingTier, setEditingTier] = useState<number | null>(null);
 
   const handleAddTier = () => {
     if (!newTier.name) return;
     
-    addTicketTier(newTier);
+    // Validate that all benefits have content
+    if (newTier.benefits.some(benefit => !benefit.trim())) {
+      setBenefitError("All benefits must have content. Please fill in or remove empty benefits.");
+      return;
+    }
+    
+    // Filter out any empty benefits (shouldn't happen due to validation, but just in case)
+    const filteredBenefits = newTier.benefits.filter(benefit => benefit.trim());
+    const tierToAdd = {...newTier, benefits: filteredBenefits};
+    
+    addTicketTier(tierToAdd);
     setNewTier(emptyTier);
+    setBenefitError(null);
   };
 
   const handleSaveVipPackage = (vipPackage: TicketTier) => {
@@ -68,19 +93,31 @@ const TicketsTab: React.FC<TicketsTabProps> = ({
     const updatedBenefits = [...newTier.benefits];
     updatedBenefits[index] = value;
     setNewTier({ ...newTier, benefits: updatedBenefits });
+    
+    // Clear any error when user starts typing
+    if (benefitError) setBenefitError(null);
   };
 
   const addBenefit = () => {
+    // Only add new benefit if last one is not empty
+    const lastBenefit = newTier.benefits[newTier.benefits.length - 1];
+    if (!lastBenefit.trim()) {
+      setBenefitError("Please fill in the current benefit before adding a new one");
+      return;
+    }
+    
     setNewTier({
       ...newTier,
       benefits: [...newTier.benefits, '']
     });
+    setBenefitError(null);
   };
 
   const removeBenefit = (index: number) => {
     const updatedBenefits = [...newTier.benefits];
     updatedBenefits.splice(index, 1);
     setNewTier({ ...newTier, benefits: updatedBenefits });
+    setBenefitError(null);
   };
 
   const updateExistingTierBenefit = (tierIndex: number, benefitIndex: number, value: string) => {
@@ -96,10 +133,19 @@ const TicketsTab: React.FC<TicketsTabProps> = ({
 
   const addExistingTierBenefit = (tierIndex: number) => {
     const tier = ticketTiers[tierIndex];
+    
+    // Check if the last benefit is empty
+    const lastBenefit = tier.benefits[tier.benefits.length - 1];
+    if (!lastBenefit || !lastBenefit.trim()) {
+      setBenefitError("Please fill in the current benefit before adding a new one");
+      return;
+    }
+    
     updateTicketTier(tierIndex, {
       ...tier,
       benefits: [...tier.benefits, '']
     });
+    setBenefitError(null);
   };
 
   const removeExistingTierBenefit = (tierIndex: number, benefitIndex: number) => {
@@ -116,6 +162,49 @@ const TicketsTab: React.FC<TicketsTabProps> = ({
   const editVipPackage = (tier: TicketTier) => {
     setEditingVipPackage(tier);
     setIsWizardOpen(true);
+  };
+
+  const confirmRemoveTier = (index: number) => {
+    setTierToRemove(index);
+  };
+
+  const handleConfirmRemove = () => {
+    if (tierToRemove !== null) {
+      removeTicketTier(tierToRemove);
+      setTierToRemove(null);
+    }
+  };
+
+  const startEditingTier = (index: number) => {
+    // Don't allow editing VIP packages through regular editing
+    if (ticketTiers[index].isVip) {
+      editVipPackage(ticketTiers[index]);
+      return;
+    }
+    
+    setEditingTier(index);
+    setNewTier({...ticketTiers[index]});
+  };
+
+  const saveEditedTier = () => {
+    if (editingTier === null) return;
+    
+    // Validate that all benefits have content
+    if (newTier.benefits.some(benefit => !benefit.trim())) {
+      setBenefitError("All benefits must have content. Please fill in or remove empty benefits.");
+      return;
+    }
+    
+    updateTicketTier(editingTier, newTier);
+    setEditingTier(null);
+    setNewTier(emptyTier);
+    setBenefitError(null);
+  };
+
+  const cancelEditing = () => {
+    setEditingTier(null);
+    setNewTier(emptyTier);
+    setBenefitError(null);
   };
   
   return (
@@ -182,7 +271,14 @@ const TicketsTab: React.FC<TicketsTabProps> = ({
                       <Button 
                         variant="ghost" 
                         size="icon"
-                        onClick={() => removeTicketTier(tierIndex)}
+                        onClick={() => startEditingTier(tierIndex)}
+                      >
+                        <Edit className="h-4 w-4 text-blue-500" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        onClick={() => confirmRemoveTier(tierIndex)}
                       >
                         <Trash2 className="h-4 w-4 text-red-500" />
                       </Button>
@@ -238,8 +334,17 @@ const TicketsTab: React.FC<TicketsTabProps> = ({
           </div>
         )}
 
+        {benefitError && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded flex items-center gap-2">
+            <AlertCircle className="h-4 w-4" />
+            <span className="text-sm">{benefitError}</span>
+          </div>
+        )}
+
         <div className="border rounded-md p-4">
-          <h3 className="text-lg font-medium mb-4">Add Standard Ticket Tier</h3>
+          <h3 className="text-lg font-medium mb-4">
+            {editingTier !== null ? `Edit Ticket Tier` : `Add ${editingTier !== null ? 'Another' : 'Standard'} Ticket Tier`}
+          </h3>
           
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -337,13 +442,32 @@ const TicketsTab: React.FC<TicketsTabProps> = ({
               />
             </div>
             
-            <Button
-              onClick={handleAddTier}
-              disabled={!newTier.name}
-              className="w-full bg-spiritless-pink hover:bg-spiritless-pink/90"
-            >
-              <Plus className="h-4 w-4 mr-2" /> Add Ticket Tier
-            </Button>
+            {editingTier !== null ? (
+              <div className="flex gap-2">
+                <Button
+                  onClick={saveEditedTier}
+                  disabled={!newTier.name}
+                  className="w-full bg-blue-500 hover:bg-blue-600"
+                >
+                  Save Changes
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={cancelEditing}
+                  className="w-full"
+                >
+                  Cancel
+                </Button>
+              </div>
+            ) : (
+              <Button
+                onClick={handleAddTier}
+                disabled={!newTier.name}
+                className="w-full bg-spiritless-pink hover:bg-spiritless-pink/90"
+              >
+                <Plus className="h-4 w-4 mr-2" /> Add Ticket Tier
+              </Button>
+            )}
           </div>
         </div>
 
@@ -362,6 +486,27 @@ const TicketsTab: React.FC<TicketsTabProps> = ({
           </Button>
         </div>
       </div>
+
+      {/* Confirmation Dialog for Removing Tiers */}
+      <AlertDialog
+        open={tierToRemove !== null}
+        onOpenChange={(open) => !open && setTierToRemove(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Removal</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove this ticket tier? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmRemove} className="bg-red-500 hover:bg-red-600">
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 };
