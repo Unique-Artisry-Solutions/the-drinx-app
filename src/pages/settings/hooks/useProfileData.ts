@@ -18,7 +18,8 @@ export const profileSchema = z.object({
   dark_mode: z.boolean().default(false),
   email_notifications: z.boolean().default(true),
   push_notifications: z.boolean().default(false),
-  avatar_url: z.string().optional().or(z.literal(''))
+  avatar_url: z.string().optional().or(z.literal('')),
+  user_type: z.string().optional() // Added user_type to the schema
 });
 
 // Type representing our form data
@@ -35,6 +36,7 @@ export interface UserProfile {
   email_notifications?: boolean;
   push_notifications?: boolean;
   avatar_url?: string;
+  user_type?: string; // Added user_type to the interface
 }
 
 export const useProfileData = () => {
@@ -56,6 +58,7 @@ export const useProfileData = () => {
       email_notifications: true,
       push_notifications: false,
       avatar_url: '',
+      user_type: 'individual' // Default user type
     },
     mode: 'onBlur',
   });
@@ -101,6 +104,7 @@ export const useProfileData = () => {
             email_notifications: true,
             push_notifications: false,
             avatar_url: '',
+            user_type: 'individual' // Default to individual
           });
         } else {
           console.log('Profile found:', data);
@@ -115,6 +119,7 @@ export const useProfileData = () => {
             email_notifications: data.email_notifications !== null ? data.email_notifications : true,
             push_notifications: data.push_notifications !== null ? data.push_notifications : false,
             avatar_url: data.avatar_url || '',
+            user_type: data.user_type || 'individual' // Get existing user_type or default
           });
         }
       } catch (error: any) {
@@ -193,7 +198,8 @@ export const useProfileData = () => {
         email_notifications: formData.email_notifications,
         push_notifications: formData.push_notifications,
         avatar_url: avatarUrl || '',
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        user_type: formData.user_type || 'individual' // Include user_type in the profile data
       };
       
       // First check if profile exists
