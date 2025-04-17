@@ -1,4 +1,3 @@
-
 import { FeatureItem } from '../types';
 
 export const promoterFeatures: FeatureItem[] = [
@@ -50,13 +49,61 @@ export const promoterFeatures: FeatureItem[] = [
   {
     id: "event-management",
     name: "Event Management",
-    description: "Create and manage promoter events with venues",
+    description: "Comprehensive system for creating and managing promoter events with venues, including setup, ticketing, attendee management, and analytics",
     status: "partial",
     databaseStatus: "in_progress",
     userImpact: "high",
     complexity: "high",
     implementationProgress: 40,
-    tags: ["promoter", "events"]
+    tags: ["promoter", "events"],
+    dbRequirementsText: `
+      - events: Core event details and configuration
+      - event_tickets: Ticket types, pricing, and inventory
+      - event_attendees: Attendee registration and check-in
+      - event_transactions: Financial transactions and settlements
+      - event_promotions: Marketing campaigns and promotional codes
+      - event_analytics: Performance metrics and reporting
+    `,
+    testSteps: [
+      "Phase 1 - Core Event Features:",
+      "- Implement event creation with basic details (name, date, venue, description)",
+      "- Add event status management (draft, published, cancelled)",
+      "- Create venue selection and capacity management",
+      "- Implement event scheduling and duration settings",
+      
+      "Phase 2 - Event Details and Setup:",
+      "- Add detailed event configuration options",
+      "- Implement media upload for event banners and galleries",
+      "- Create event preview functionality",
+      "- Add custom fields for additional event information",
+      
+      "Phase 3 - Ticketing and Financial:",
+      "- Implement ticket type creation and management",
+      "- Add pricing tiers and early bird settings",
+      "- Create inventory management system",
+      "- Implement payment processing integration",
+      "- Add revenue sharing calculations",
+      
+      "Phase 4 - Attendee Management:",
+      "- Create attendee registration system",
+      "- Implement check-in functionality",
+      "- Add attendee communications",
+      "- Create guest list management",
+      
+      "Phase 5 - Promotional Tools:",
+      "- Implement promotional code generation",
+      "- Add social media integration",
+      "- Create email campaign functionality",
+      "- Implement affiliate tracking",
+      
+      "Phase 6 - Analytics and Reporting:",
+      "- Create real-time sales dashboard",
+      "- Implement attendance tracking",
+      "- Add revenue analytics",
+      "- Create marketing performance reports"
+    ],
+    dependsOn: ["venue-communication-system", "promoter-notification-system"],
+    scheduledFor: "2025-Q2"
   },
   {
     id: "promoter-analytics",
