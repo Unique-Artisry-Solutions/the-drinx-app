@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 
 interface VisitorStats {
-  totalVisits: number;
+  totalVisitors: number;
   uniqueVisitors: number;
   returningVisitors: number;
   hasData: boolean;
@@ -13,7 +12,7 @@ interface VisitorStats {
 
 export const useVisitorStats = (establishmentId?: string) => {
   const [visitorStats, setVisitorStats] = useState<VisitorStats>({
-    totalVisits: 0,
+    totalVisitors: 0,
     uniqueVisitors: 0,
     returningVisitors: 0,
     hasData: false,
@@ -33,7 +32,6 @@ export const useVisitorStats = (establishmentId?: string) => {
         return;
       }
 
-      // Check if the establishment ID is a valid UUID
       if (!establishmentId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
         setVisitorStats(prev => ({
           ...prev,
@@ -45,7 +43,6 @@ export const useVisitorStats = (establishmentId?: string) => {
       }
 
       try {
-        // In a real implementation, fetch from Supabase
         const yesterday = new Date();
         yesterday.setDate(yesterday.getDate() - 1);
         const formattedDate = yesterday.toISOString().split('T')[0];
@@ -61,7 +58,7 @@ export const useVisitorStats = (establishmentId?: string) => {
 
         if (data) {
           setVisitorStats({
-            totalVisits: data.total_visitors || 0,
+            totalVisitors: data.total_visitors || 0,
             uniqueVisitors: data.unique_visitors || 0,
             returningVisitors: data.returning_visitors || 0,
             hasData: true,
@@ -69,9 +66,8 @@ export const useVisitorStats = (establishmentId?: string) => {
             error: null
           });
         } else {
-          // Fall back to sample data if no analytics found
           setVisitorStats({
-            totalVisits: 278,
+            totalVisitors: 278,
             uniqueVisitors: 153,
             returningVisitors: 62,
             hasData: true,

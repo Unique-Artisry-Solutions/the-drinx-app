@@ -43,8 +43,9 @@ const EstablishmentInbox = () => {
           return;
         }
 
-        // Fetch threads for this establishment using fromTable helper
-        const { data: threadData, error: threadError } = await fromTable<PromoterVenueThread[]>('promoter_venue_threads')
+        // Fetch threads for this establishment
+        const { data: threadData, error: threadError } = await supabase
+          .from('promoter_venue_threads')
           .select(`
             id,
             created_at,
@@ -80,7 +81,8 @@ const EstablishmentInbox = () => {
         }
 
         // Get unread counts
-        const { data: unreadData, error: unreadError } = await fromTable<UnreadMessageCount[]>('message_read_status')
+        const { data: unreadData, error: unreadError } = await supabase
+          .from('message_read_status')
           .select('thread_id, last_read_at')
           .eq('user_id', user.id);
 

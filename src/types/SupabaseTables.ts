@@ -193,6 +193,15 @@ export interface PromoterVenueThread {
     username?: string;
   };
   promoter_venue_messages?: PromoterVenueMessage[];
+  venues?: {
+    id?: string;
+    name?: string;
+  };
+  promoters?: {
+    id?: string;
+    display_name?: string;
+    username?: string;
+  };
 }
 
 export interface PromoterVenueMessage {

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,8 +8,6 @@ import { useToast } from '@/hooks/use-toast';
 import { supabaseClient as supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/contexts/auth';
 import { Message } from '@/hooks/promoter/types';
-import { fromTable } from '@/lib/supabaseClient';
-import { PromoterVenueThread, PromoterVenueMessage } from '@/types/SupabaseTables';
 
 interface MessageThreadProps {
   threadId: string;
@@ -38,7 +35,8 @@ const MessageThread: React.FC<MessageThreadProps> = ({ threadId, userType = 'pro
       setLoading(true);
       try {
         // First fetch thread info
-        const { data: threadData, error: threadError } = await fromTable<PromoterVenueThread>('promoter_venue_threads')
+        const { data: threadData, error: threadError } = await supabase
+          .from('promoter_venue_threads')
           .select(`
             id, subject,
             venues:establishments(id, name),
@@ -58,14 +56,19 @@ const MessageThread: React.FC<MessageThreadProps> = ({ threadId, userType = 'pro
           return;
         }
 
+        // Access the venue and promoter data safely
+        const venues = threadData?.venues || {};
+        const promoters = threadData?.promoters || {};
+
         setThreadInfo({
-          venueName: threadData?.venues?.name,
-          promoterName: threadData?.promoters?.display_name || threadData?.promoters?.username,
+          venueName: venues.name,
+          promoterName: promoters.display_name || promoters.username,
           subject: threadData?.subject
         });
 
         // Then fetch messages
-        const { data: messageData, error: messageError } = await fromTable<PromoterVenueMessage[]>('promoter_venue_messages')
+        const { data: messageData, error: messageError } = await supabase
+          .from('promoter_venue_messages')
           .select(`
             id,
             content,
@@ -89,7 +92,10 @@ const MessageThread: React.FC<MessageThreadProps> = ({ threadId, userType = 'pro
         }
 
         const formattedMessages: Message[] = messageData.map(message => {
-          const senderName = message.sender?.display_name || message.sender?.username || 'Unknown';
+          // Access sender data safely
+          const sender = message.sender || {};
+          const senderName = sender.display_name || sender.username || 'Unknown';
+          
           return {
             id: message.id,
             text: message.content,
@@ -115,7 +121,8 @@ const MessageThread: React.FC<MessageThreadProps> = ({ threadId, userType = 'pro
             },
             async (payload) => {
               // When a new message arrives, fetch its details
-              const { data: newMessage, error } = await fromTable<PromoterVenueMessage>('promoter_venue_messages')
+              const { data: newMessage, error } = await supabase
+                .from('promoter_venue_messages')
                 .select(`
                   id,
                   content,
@@ -132,12 +139,16 @@ const MessageThread: React.FC<MessageThreadProps> = ({ threadId, userType = 'pro
                 return;
               }
               
+              // Access sender data safely for the new message
+              const sender = newMessage.sender || {};
+              const senderName = sender.display_name || sender.username || 'Unknown';
+              
               // Add the new message to state
               const formattedMessage: Message = {
                 id: newMessage.id,
                 text: newMessage.content,
                 timestamp: newMessage.sent_at,
-                senderName: newMessage.sender?.display_name || newMessage.sender?.username || 'Unknown',
+                senderName: senderName,
                 isFromPromoter: newMessage.is_from_promoter,
                 senderId: newMessage.sender_id
               };
@@ -198,7 +209,8 @@ const MessageThread: React.FC<MessageThreadProps> = ({ threadId, userType = 'pro
       const isFromPromoter = userType === 'promoter';
       
       // Send the message
-      const { error } = await fromTable('promoter_venue_messages')
+      const { error } = await supabase
+        .from('promoter_venue_messages')
         .insert({
           thread_id: threadId,
           sender_id: user.id,
@@ -229,7 +241,8 @@ const MessageThread: React.FC<MessageThreadProps> = ({ threadId, userType = 'pro
     if (!threadId) return;
     
     try {
-      const { error } = await fromTable('promoter_venue_threads')
+      const { error } = await supabase
+        .from('promoter_venue_threads')
         .update({ is_archived: true })
         .eq('id', threadId);
 

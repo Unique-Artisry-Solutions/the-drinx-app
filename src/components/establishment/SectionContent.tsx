@@ -9,7 +9,7 @@ interface SectionContentProps {
   activeSection: string | null;
   handleTabChange: (tab: string) => void;
   visitorStats: {
-    totalVisitors: number;
+    totalVisitors: number; // This matches our hook now
     uniqueVisitors: number;
     returningVisitors: number;
     hasData: boolean;
