@@ -150,9 +150,9 @@ const FeatureTab: React.FC<FeatureTabProps> = ({ features, title, description })
                 <TableCell className="hidden md:table-cell capitalize">{feature.userImpact}</TableCell>
                 <TableCell className="hidden lg:table-cell">
                   <div className="flex space-x-1">
-                    {renderAccessIcon(feature.adminAccess, <Database className="h-4 w-4" />, "Admin")}
-                    {renderAccessIcon(feature.establishmentAccess, <Server className="h-4 w-4" />, "Establishment")}
-                    {renderAccessIcon(feature.individualAccess, <Users className="h-4 w-4" />, "Individual")}
+                    {renderAccessIcon(feature.adminAccess)}
+                    {renderAccessIcon(feature.establishmentAccess)}
+                    {renderAccessIcon(feature.individualAccess)}
                   </div>
                 </TableCell>
               </TableRow>
