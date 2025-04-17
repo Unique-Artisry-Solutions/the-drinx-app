@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
@@ -55,8 +54,25 @@ interface LoyaltyStats {
   memberRetentionRate: number;
 }
 
+interface BarCrawlResponse {
+  bar_crawl_id: string;
+  status: 'accepted' | 'pending';
+  bar_crawls: {
+    id: string;
+    name: string;
+    description: string | null;
+    start_date: string;
+    end_date: string;
+    organizer_id: string;
+  };
+}
+
+interface UserProfile {
+  id: string;
+  display_name: string;
+}
+
 export const useEstablishmentProfile = (establishmentId?: string) => {
-  // Profile state
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [description, setDescription] = useState('');
@@ -67,18 +83,14 @@ export const useEstablishmentProfile = (establishmentId?: string) => {
   const [error, setError] = useState<string | null>(null);
   const [businessHours, setBusinessHours] = useState<BusinessHour[]>([]);
   
-  // Promotions state
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [newPromoCode, setNewPromoCode] = useState('');
   const [newPromoDescription, setNewPromoDescription] = useState('');
   
-  // Drinks state
   const [drinks, setDrinks] = useState<Drink[]>([]);
   
-  // Bar crawls state
   const [barCrawls, setBarCrawls] = useState<BarCrawl[]>([]);
   
-  // Loyalty Program state
   const [loyaltyProgram, setLoyaltyProgram] = useState<LoyaltyProgram>({
     name: '',
     description: '',
@@ -102,7 +114,6 @@ export const useEstablishmentProfile = (establishmentId?: string) => {
   
   const { toast } = useToast();
 
-  // Load initial data
   useEffect(() => {
     const fetchEstablishmentData = async () => {
       if (!establishmentId) {
@@ -115,7 +126,6 @@ export const useEstablishmentProfile = (establishmentId?: string) => {
       setError(null);
       
       try {
-        // Fetch establishment details
         const { data: establishment, error: estError } = await supabase
           .from('establishments')
           .select('*')
@@ -125,16 +135,13 @@ export const useEstablishmentProfile = (establishmentId?: string) => {
         if (estError) throw estError;
         if (!establishment) throw new Error("Establishment not found");
         
-        // Set basic profile data
         setName(establishment.name || '');
         setAddress(establishment.address || '');
         setPhone(establishment.phone || '');
         setWebsite(establishment.website || '');
         
-        // Parse business hours if available
         if (establishment.hours) {
           try {
-            // Type guard to check if hours is an array
             if (Array.isArray(establishment.hours)) {
               const formattedHours: BusinessHour[] = establishment.hours.map((hour: any) => ({
                 day: String(hour.day || ''),
@@ -143,7 +150,6 @@ export const useEstablishmentProfile = (establishmentId?: string) => {
               }));
               setBusinessHours(formattedHours);
             } 
-            // Type guard to check if hours is an object
             else if (typeof establishment.hours === 'object' && establishment.hours !== null) {
               const hourData: BusinessHour[] = Object.entries(establishment.hours).map(([day, hours]) => {
                 let openTime = '09:00';
@@ -159,21 +165,17 @@ export const useEstablishmentProfile = (establishmentId?: string) => {
               });
               setBusinessHours(hourData);
             }
-            // Default case: fallback to default hours
             else {
               setBusinessHours(defaultBusinessHours);
             }
           } catch (e) {
             console.error('Error parsing hours:', e);
-            // Fallback to default hours
             setBusinessHours(defaultBusinessHours);
           }
         } else {
-          // Default business hours
           setBusinessHours(defaultBusinessHours);
         }
         
-        // Fetch promotions
         const { data: promoData, error: promoError } = await supabase
           .from('establishment_promotions')
           .select('id, code, description')
@@ -183,7 +185,6 @@ export const useEstablishmentProfile = (establishmentId?: string) => {
         if (promoError) throw promoError;
         setPromotions(promoData || []);
         
-        // Fetch drinks (cocktails)
         const { data: drinksData, error: drinksError } = await supabase
           .from('cocktails')
           .select('*')
@@ -191,7 +192,6 @@ export const useEstablishmentProfile = (establishmentId?: string) => {
           
         if (drinksError) throw drinksError;
         
-        // Transform to Drink format
         if (drinksData) {
           const formattedDrinks: Drink[] = drinksData.map(drink => ({
             id: drink.id,
@@ -209,10 +209,9 @@ export const useEstablishmentProfile = (establishmentId?: string) => {
           setDrinks(formattedDrinks);
         }
         
-        // Fetch bar crawls
         const { data: barCrawlsData, error: barCrawlsError } = await supabase
           .from('bar_crawl_establishments')
-          .select(`
+          .select<string, BarCrawlResponse>(`
             bar_crawl_id,
             status,
             bar_crawls (
@@ -229,76 +228,47 @@ export const useEstablishmentProfile = (establishmentId?: string) => {
         if (barCrawlsError) throw barCrawlsError;
         
         if (barCrawlsData && barCrawlsData.length > 0) {
-          // Format bar crawls
-          const formattedBarCrawls: BarCrawl[] = barCrawlsData.map(item => {
-            // Check if bar_crawls exists and has data
-            if (!item.bar_crawls) {
-              return {
-                id: item.bar_crawl_id || '',
-                name: 'Unknown Bar Crawl',
-                date: '',
-                participants: 0,
-                organizer: 'Unknown Organizer',
-                startDate: '',
-                endDate: '',
-                status: (item.status as 'accepted' | 'pending') || 'pending',
-                otherEstablishments: [],
-              };
-            }
-            
-            // If bar_crawls exists, use its data
-            const crawl = item.bar_crawls;
-            return {
-              id: crawl.id || '',
-              name: crawl.name || '',
-              date: crawl.start_date || '',
-              participants: 0, // We'd need another query to get actual participants count
-              organizer: 'Unknown Organizer', // We'll handle this separately
-              startDate: crawl.start_date || '',
-              endDate: crawl.end_date || '',
-              status: (item.status as 'accepted' | 'pending') || 'pending',
-              otherEstablishments: [], // We'd need another query to get this
-              description: crawl.description
-            };
-          });
+          const formattedBarCrawls: BarCrawl[] = barCrawlsData.map(item => ({
+            id: item.bar_crawls.id || '',
+            name: item.bar_crawls.name || '',
+            date: item.bar_crawls.start_date || '',
+            participants: 0,
+            organizer: 'Unknown Organizer',
+            startDate: item.bar_crawls.start_date || '',
+            endDate: item.bar_crawls.end_date || '',
+            status: item.status || 'pending',
+            otherEstablishments: [],
+            description: item.bar_crawls.description || undefined
+          }));
           
-          // Try to get organizer names when possible
           for (let i = 0; i < formattedBarCrawls.length; i++) {
-            // Make sure we have the data we need and it's accessible
-            if (barCrawlsData[i] && barCrawlsData[i].bar_crawls && barCrawlsData[i].bar_crawls.organizer_id) {
+            if (barCrawlsData[i]?.bar_crawls?.organizer_id) {
               try {
                 const { data: userData } = await supabase
                   .from('profiles')
-                  .select('display_name')
+                  .select<string, UserProfile>('display_name')
                   .eq('id', barCrawlsData[i].bar_crawls.organizer_id)
                   .single();
                   
-                if (userData && userData.display_name) {
+                if (userData?.display_name) {
                   formattedBarCrawls[i].organizer = userData.display_name;
                 }
               } catch (err) {
                 console.error('Error fetching organizer:', err);
-                // Keep the default "Unknown Organizer"
               }
             }
           }
           
           setBarCrawls(formattedBarCrawls);
         } else {
-          // Empty array if no bar crawls
           setBarCrawls([]);
         }
         
-        // For now, fetch the loyalty program from local sample data
-        // In a real implementation, this would be fetched from the database
-        // We'll simulate this with a timeout
         fetchLoyaltyProgramData(establishmentId);
-        
       } catch (err: any) {
         console.error('Error fetching establishment data:', err);
         setError(err.message || 'Failed to load establishment data');
         
-        // Fallback to sample data
         setName("Your Establishment");
         setAddress("123 Main St, Anytown USA");
         setPhone("555-123-4567");
@@ -347,14 +317,11 @@ export const useEstablishmentProfile = (establishmentId?: string) => {
     fetchEstablishmentData();
   }, [establishmentId]);
 
-  // Fetch loyalty program data
   const fetchLoyaltyProgramData = (establishmentId: string) => {
     setLoyaltyIsLoading(true);
     setLoyaltyError(null);
 
-    // Simulate API call
     setTimeout(() => {
-      // Sample loyalty program data
       const sampleProgram: LoyaltyProgram = {
         id: `loyalty-${establishmentId}`,
         name: "Mocktail Rewards",
@@ -367,7 +334,6 @@ export const useEstablishmentProfile = (establishmentId?: string) => {
         birthMonthBonus: 200
       };
 
-      // Sample rewards
       const sampleRewards: LoyaltyReward[] = [
         {
           id: '1',
@@ -395,7 +361,6 @@ export const useEstablishmentProfile = (establishmentId?: string) => {
         }
       ];
 
-      // Sample statistics
       const sampleStats: LoyaltyStats = {
         memberCount: 178,
         activeMembers: 93,
@@ -411,7 +376,6 @@ export const useEstablishmentProfile = (establishmentId?: string) => {
     }, 800);
   };
 
-  // Default business hours
   const defaultBusinessHours: BusinessHour[] = [
     { day: 'Monday', openTime: '11:00', closeTime: '22:00' },
     { day: 'Tuesday', openTime: '11:00', closeTime: '22:00' },
@@ -422,11 +386,9 @@ export const useEstablishmentProfile = (establishmentId?: string) => {
     { day: 'Sunday', openTime: '12:00', closeTime: '21:00' }
   ];
 
-  // Profile handlers
   const handleSaveProfile = () => {
     setIsLoading(true);
     
-    // Simulate API call to save profile data
     setTimeout(() => {
       toast({
         title: 'Profile updated',
@@ -436,7 +398,6 @@ export const useEstablishmentProfile = (establishmentId?: string) => {
     }, 1000);
   };
 
-  // Promotions handlers
   const handleAddPromotion = () => {
     if (!newPromoCode || !newPromoDescription) {
       toast({
@@ -472,7 +433,6 @@ export const useEstablishmentProfile = (establishmentId?: string) => {
     });
   };
 
-  // Drink handlers
   const handleAddDrink = (drink: Drink) => {
     setDrinks([...drinks, drink]);
   };
@@ -492,7 +452,6 @@ export const useEstablishmentProfile = (establishmentId?: string) => {
     });
   };
 
-  // Bar crawl handlers
   const handleEndParticipation = (crawlId: string) => {
     setBarCrawls(barCrawls.filter(crawl => crawl.id !== crawlId));
     
@@ -515,11 +474,9 @@ export const useEstablishmentProfile = (establishmentId?: string) => {
     });
   };
 
-  // Loyalty Program handlers
   const handleSaveProgram = (updatedProgram: LoyaltyProgram) => {
     setLoyaltyIsLoading(true);
     
-    // Simulate API call
     setTimeout(() => {
       setLoyaltyProgram(updatedProgram);
       setLoyaltyIsLoading(false);
@@ -566,7 +523,6 @@ export const useEstablishmentProfile = (establishmentId?: string) => {
   };
 
   return {
-    // Profile state and handlers
     profileState: {
       name,
       email,
@@ -587,7 +543,6 @@ export const useEstablishmentProfile = (establishmentId?: string) => {
       handleSaveProfile
     },
     
-    // Promotions state and handlers
     promotionsState: {
       promotions,
       newPromoCode,
@@ -598,7 +553,6 @@ export const useEstablishmentProfile = (establishmentId?: string) => {
       handleDeletePromotion
     },
     
-    // Drinks state and handlers
     drinksState: {
       drinks,
       handleAddDrink,
@@ -606,14 +560,12 @@ export const useEstablishmentProfile = (establishmentId?: string) => {
       handleDeleteDrink
     },
     
-    // Bar crawls state and handlers
     barCrawlsState: {
       barCrawls,
       handleEndParticipation,
       handleAcceptRequest
     },
     
-    // Loyalty program state and handlers
     loyaltyProgramState: {
       program: loyaltyProgram,
       rewards: loyaltyRewards,
