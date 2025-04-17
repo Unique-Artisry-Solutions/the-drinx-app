@@ -12,6 +12,7 @@ import OverviewTab from './tabs/OverviewTab';
 import CategoriesTab from './tabs/CategoriesTab';
 import ComparisonTab from './tabs/ComparisonTab';
 import TimelineTab from './tabs/TimelineTab';
+import { getStatusPriority } from './utils/statusRenderers';
 
 interface DevelopmentProgressDashboardProps {
   adminFeatures: FeatureItem[];
@@ -56,6 +57,15 @@ function calculateCategoryProgress(features: FeatureItem[]) {
   };
 }
 
+/**
+ * Get features that need attention (not fully implemented)
+ */
+function getNeedsAttentionFeatures(features: FeatureItem[]): FeatureItem[] {
+  return features
+    .filter(f => f.status === 'partial' || f.status === 'planned' || f.status === 'blocked' || f.status === 'in_progress')
+    .sort((a, b) => getStatusPriority(b.status) - getStatusPriority(a.status));
+}
+
 const DevelopmentProgressDashboard: React.FC<DevelopmentProgressDashboardProps> = ({
   adminFeatures,
   establishmentFeatures,
@@ -83,6 +93,9 @@ const DevelopmentProgressDashboard: React.FC<DevelopmentProgressDashboardProps> 
   const totalFeatures = allFeatures.length;
   const implementedFeatures = allFeatures.filter(f => f.status === 'implemented').length;
   const partialFeatures = allFeatures.filter(f => f.status === 'partial').length;
+  const plannedFeatures = allFeatures.filter(f => f.status === 'planned').length;
+  const blockedFeatures = allFeatures.filter(f => f.status === 'blocked').length;
+  const inProgressFeatures = allFeatures.filter(f => f.status === 'in_progress').length;
   
   // Use implementation progress values where available for a more accurate calculation
   const totalImplementationProgress = allFeatures.reduce((sum, feature) => {
@@ -102,6 +115,9 @@ const DevelopmentProgressDashboard: React.FC<DevelopmentProgressDashboardProps> 
     totalFeatures,
     implementedFeatures,
     partialFeatures,
+    plannedFeatures,
+    blockedFeatures,
+    inProgressFeatures,
     totalImplementationProgress,
     overallProgressPercentage
   });
@@ -119,6 +135,9 @@ const DevelopmentProgressDashboard: React.FC<DevelopmentProgressDashboardProps> 
   const establishmentProgress = calculateCategoryProgress(establishmentFeatures);
   const individualProgress = calculateCategoryProgress(individualFeatures);
   const promoterProgress = calculateCategoryProgress(promoterFeatures);
+
+  // Get features that need attention
+  const needsAttentionFeatures = getNeedsAttentionFeatures(allFeatures);
 
   // Use provided monthly progress data or fall back to simple simulation
   const monthlyProgress = monthlyProgressData.length > 0 
@@ -171,9 +190,12 @@ const DevelopmentProgressDashboard: React.FC<DevelopmentProgressDashboardProps> 
               backendProgressPercentage={backendProgressPercentage}
               implementedFeatures={implementedFeatures}
               partialFeatures={partialFeatures}
+              plannedFeatures={plannedFeatures}
+              blockedFeatures={blockedFeatures}
               totalFeatures={totalFeatures}
               confidenceScore={confidenceScore}
               currentSnapshot={currentSnapshot}
+              needsAttentionFeatures={needsAttentionFeatures}
             />
           </TabsContent>
           

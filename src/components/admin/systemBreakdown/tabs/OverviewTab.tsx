@@ -1,14 +1,15 @@
 
 import React from 'react';
 
-import { ProgressSnapshot } from '../types';
+import { ProgressSnapshot, FeatureItem } from '../types';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { CheckCircle2, Clock, AlertCircle, Shield } from 'lucide-react';
+import { CheckCircle2, Clock, AlertCircle, Shield, AlertTriangle } from 'lucide-react';
 import { BarChart3, Code, Database } from 'lucide-react';
 
 import StatusProgressBar from '../components/StatusProgressBar';
+import { getStatusPriority, getAttentionLabel } from '../utils/statusRenderers';
 
 interface OverviewTabProps {
   overallProgressPercentage: number;
@@ -19,6 +20,10 @@ interface OverviewTabProps {
   totalFeatures: number;
   confidenceScore?: number;
   currentSnapshot?: ProgressSnapshot;
+  // New props for needs attention section
+  plannedFeatures?: number;
+  blockedFeatures?: number;
+  needsAttentionFeatures?: FeatureItem[];
 }
 
 const OverviewTab: React.FC<OverviewTabProps> = ({
@@ -29,7 +34,10 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
   partialFeatures,
   totalFeatures,
   confidenceScore,
-  currentSnapshot
+  currentSnapshot,
+  plannedFeatures = 0,
+  blockedFeatures = 0,
+  needsAttentionFeatures = []
 }) => {
   console.log("OverviewTab props:", { 
     overallProgressPercentage,
@@ -37,8 +45,19 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
     backendProgressPercentage,
     implementedFeatures,
     partialFeatures,
-    totalFeatures
+    totalFeatures,
+    plannedFeatures,
+    blockedFeatures
   });
+
+  // Calculate counts for remaining features
+  const remainingFeatures = totalFeatures - implementedFeatures;
+  const needsAttentionCount = partialFeatures + plannedFeatures + blockedFeatures;
+
+  // Sort needs attention features by priority
+  const sortedNeedsAttention = [...needsAttentionFeatures]
+    .sort((a, b) => getStatusPriority(b.status) - getStatusPriority(a.status))
+    .slice(0, 5); // Show top 5 most important
 
   return (
     <div className="space-y-4">
@@ -119,17 +138,71 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
             count={partialFeatures}
             total={totalFeatures}
             color="bg-amber-500"
-            icon={<Clock className="h-4 w-4 text-amber-500" />}
+            icon={<AlertTriangle className="h-4 w-4 text-amber-500" />}
           />
           <StatusProgressBar 
             label="Planned/Not Started"
-            count={totalFeatures - implementedFeatures - partialFeatures}
+            count={plannedFeatures}
             total={totalFeatures}
             color="bg-gray-300"
-            icon={<AlertCircle className="h-4 w-4 text-gray-500" />}
+            icon={<Clock className="h-4 w-4 text-gray-500" />}
           />
+          {blockedFeatures > 0 && (
+            <StatusProgressBar 
+              label="Blocked"
+              count={blockedFeatures}
+              total={totalFeatures}
+              color="bg-red-400"
+              icon={<AlertCircle className="h-4 w-4 text-red-500" />}
+            />
+          )}
         </div>
       </div>
+
+      {/* New Needs Attention Section */}
+      {needsAttentionCount > 0 && (
+        <div className="mt-6 border border-amber-200 rounded-lg p-4 bg-amber-50">
+          <h3 className="text-lg font-medium mb-3 text-amber-800 flex items-center gap-2">
+            <AlertCircle className="h-5 w-5" />
+            Needs Attention ({needsAttentionCount} features)
+          </h3>
+
+          {sortedNeedsAttention.length > 0 ? (
+            <div className="space-y-3">
+              {sortedNeedsAttention.map(feature => (
+                <div key={feature.id} className="p-3 bg-white border rounded-md">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h4 className="font-medium">{feature.name}</h4>
+                      <p className="text-sm text-gray-600">{feature.description.slice(0, 80)}...</p>
+                      {getAttentionLabel(feature.status) && (
+                        <Badge className="mt-2" variant={feature.status === 'blocked' ? 'destructive' : 'outline'}>
+                          {getAttentionLabel(feature.status)}
+                        </Badge>
+                      )}
+                    </div>
+                    <Badge className={
+                      feature.status === 'blocked' ? 'bg-red-500' : 
+                      feature.status === 'partial' ? 'bg-amber-500' : 
+                      feature.status === 'planned' ? 'bg-gray-500' : 'bg-blue-500'
+                    }>
+                      {feature.status}
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+              
+              {needsAttentionCount > sortedNeedsAttention.length && (
+                <div className="text-center text-sm text-amber-700 mt-2">
+                  + {needsAttentionCount - sortedNeedsAttention.length} more features need attention
+                </div>
+              )}
+            </div>
+          ) : (
+            <p className="text-gray-500">No features currently need attention.</p>
+          )}
+        </div>
+      )}
     </div>
   );
 };
