@@ -1,8 +1,8 @@
 
 import React from 'react';
-import { format } from 'date-fns';
+import { formatDistanceToNow } from 'date-fns';
 import { Bell, Check } from 'lucide-react';
-import { Notification } from '@/hooks/useNotifications';
+import { Notification } from '@/hooks/useNotificationSystem';
 import { Button } from '@/components/ui/button';
 
 interface NotificationItemProps {
@@ -36,7 +36,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
         <h4 className="font-medium">{notification.title}</h4>
         <p className="text-sm text-gray-600">{notification.content}</p>
         <p className="text-xs text-gray-500 mt-1">
-          {format(new Date(notification.created_at), 'MMM d, yyyy, h:mm a')}
+          {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
           {notification.notification_categories && (
             <span className="ml-2 px-2 py-0.5 bg-gray-100 rounded-full">
               {notification.notification_categories.name}
