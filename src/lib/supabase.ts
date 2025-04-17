@@ -92,6 +92,100 @@ interface CustomDatabase extends Database {
           created_at?: string;
           updated_at?: string;
         };
+      };
+      push_notification_subscriptions: {
+        Row: {
+          id: string;
+          user_id: string;
+          endpoint: string;
+          p256dh: string;
+          auth: string;
+          device_info?: {
+            userAgent?: string;
+            language?: string;
+          };
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          endpoint: string;
+          p256dh: string;
+          auth: string;
+          device_info?: {
+            userAgent?: string;
+            language?: string;
+          };
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          endpoint?: string;
+          p256dh?: string;
+          auth?: string;
+          device_info?: {
+            userAgent?: string;
+            language?: string;
+          };
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      notifications: {
+        Row: {
+          id: string;
+          recipient_id: string;
+          title: string;
+          content: string;
+          priority: 'low' | 'medium' | 'high' | 'urgent';
+          category_id?: string;
+          metadata?: Record<string, any>;
+          delivery_status?: {
+            push?: { success: boolean; timestamp: string };
+            email?: { success: boolean; timestamp: string };
+          };
+          delivery_attempts?: number;
+          is_read: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          recipient_id: string;
+          title: string;
+          content: string;
+          priority?: 'low' | 'medium' | 'high' | 'urgent';
+          category_id?: string;
+          metadata?: Record<string, any>;
+          delivery_status?: {
+            push?: { success: boolean; timestamp: string };
+            email?: { success: boolean; timestamp: string };
+          };
+          delivery_attempts?: number;
+          is_read?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          recipient_id?: string;
+          title?: string;
+          content?: string;
+          priority?: 'low' | 'medium' | 'high' | 'urgent';
+          category_id?: string;
+          metadata?: Record<string, any>;
+          delivery_status?: {
+            push?: { success: boolean; timestamp: string };
+            email?: { success: boolean; timestamp: string };
+          };
+          delivery_attempts?: number;
+          is_read?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
       }
     }
   }

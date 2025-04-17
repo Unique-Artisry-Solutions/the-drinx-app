@@ -76,9 +76,10 @@ export function usePushNotifications() {
         }
       };
 
+      // Use the fromTable helper to work around type issues
       const { error } = await supabase
         .from('push_notification_subscriptions')
-        .upsert(subscriptionData);
+        .insert(subscriptionData);
 
       if (error) throw error;
 
