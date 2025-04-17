@@ -1052,6 +1052,115 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      notification_preferences: {
+        Row: {
+          category_id: string
+          channels: Database["public"]["Enums"]["notification_channel"][]
+          created_at: string
+          id: string
+          is_enabled: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category_id: string
+          channels?: Database["public"]["Enums"]["notification_channel"][]
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category_id?: string
+          channels?: Database["public"]["Enums"]["notification_channel"][]
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_preferences_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "notification_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          category_id: string | null
+          content: string
+          created_at: string
+          id: string
+          is_read: boolean
+          metadata: Json | null
+          priority: Database["public"]["Enums"]["notification_priority"]
+          recipient_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category_id?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          metadata?: Json | null
+          priority?: Database["public"]["Enums"]["notification_priority"]
+          recipient_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          metadata?: Json | null
+          priority?: Database["public"]["Enums"]["notification_priority"]
+          recipient_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "notification_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_gateway_configs: {
         Row: {
           configuration: Json
@@ -1945,7 +2054,8 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      notification_channel: "in_app" | "email" | "push"
+      notification_priority: "low" | "medium" | "high" | "urgent"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2060,6 +2170,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      notification_channel: ["in_app", "email", "push"],
+      notification_priority: ["low", "medium", "high", "urgent"],
+    },
   },
 } as const

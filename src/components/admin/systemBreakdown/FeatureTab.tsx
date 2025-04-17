@@ -29,7 +29,6 @@ const FeatureTab: React.FC<FeatureTabProps> = ({ features, title, description })
     );
   };
 
-  // Filter features based on search term and status filter
   const filteredFeatures = features.filter(feature => {
     const matchesSearch = feature.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          feature.description.toLowerCase().includes(searchTerm.toLowerCase());
@@ -49,6 +48,36 @@ const FeatureTab: React.FC<FeatureTabProps> = ({ features, title, description })
             {tag}
           </Badge>
         ))}
+      </div>
+    );
+  };
+
+  const renderDatabaseDetails = (feature: FeatureItem) => {
+    if (!feature.dbRequirementsText) return null;
+    
+    return (
+      <div>
+        <h4 className="font-medium mb-2">Database Requirements</h4>
+        <pre className="text-sm bg-slate-50 p-3 rounded-md whitespace-pre-wrap">
+          {feature.dbRequirementsText}
+        </pre>
+      </div>
+    );
+  };
+
+  const renderTestSteps = (steps?: string[]) => {
+    if (!steps || steps.length === 0) return null;
+    
+    return (
+      <div>
+        <h4 className="font-medium mb-2">Test Steps</h4>
+        <ul className="space-y-2">
+          {steps.map((step, index) => (
+            <li key={index} className="text-sm">
+              {step}
+            </li>
+          ))}
+        </ul>
       </div>
     );
   };
@@ -130,27 +159,8 @@ const FeatureTab: React.FC<FeatureTabProps> = ({ features, title, description })
                 {hasDetails(feature) && (
                   <CollapsibleContent>
                     <div className="mt-4 pt-4 border-t space-y-4">
-                      {feature.testSteps && feature.testSteps.length > 0 && (
-                        <div>
-                          <h4 className="font-medium mb-2">Test Steps</h4>
-                          <ul className="space-y-2">
-                            {feature.testSteps.map((step, index) => (
-                              <li key={index} className="text-sm">
-                                {step}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                      
-                      {feature.dbRequirementsText && (
-                        <div>
-                          <h4 className="font-medium mb-2">Database Requirements</h4>
-                          <pre className="text-sm bg-slate-50 p-3 rounded-md whitespace-pre-wrap">
-                            {feature.dbRequirementsText}
-                          </pre>
-                        </div>
-                      )}
+                      {renderTestSteps(feature.testSteps)}
+                      {renderDatabaseDetails(feature)}
                     </div>
                   </CollapsibleContent>
                 )}
