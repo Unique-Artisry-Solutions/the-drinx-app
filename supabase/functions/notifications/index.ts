@@ -1,6 +1,6 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import webpush from 'https://esm.sh/web-push@3.6.6'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -52,6 +52,12 @@ serve(async (req) => {
   }
 })
 
+webpush.setVapidDetails(
+  'mailto:' + Deno.env.get('VAPID_MAILTO'),
+  Deno.env.get('VAPID_PUBLIC_KEY') || '',
+  Deno.env.get('VAPID_PRIVATE_KEY') || ''
+);
+
 async function handleCreateNotification(params: NotificationData) {
   const supabaseClient = createClient(
     Deno.env.get('SUPABASE_URL') ?? '',
@@ -67,7 +73,7 @@ async function handleCreateNotification(params: NotificationData) {
     .single()
 
   // Create in-app notification
-  const { data, error } = await supabaseClient
+  const { data: notification, error } = await supabaseClient
     .from('notifications')
     .insert({
       recipient_id: params.recipientId,
@@ -75,12 +81,69 @@ async function handleCreateNotification(params: NotificationData) {
       content: params.content,
       priority: params.priority || 'medium',
       category_id: params.categoryId,
-      metadata: params.metadata || {}
+      metadata: params.metadata || {},
+      delivery_status: {},
+      delivery_attempts: 0
     })
     .select()
     .single()
 
   if (error) throw error
+
+  // Handle push notifications if enabled
+  if (preferences?.channels?.includes('push')) {
+    try {
+      const { data: subscriptions } = await supabaseClient
+        .from('push_notification_subscriptions')
+        .select('*')
+        .eq('user_id', params.recipientId);
+
+      if (subscriptions) {
+        for (const sub of subscriptions) {
+          try {
+            await webpush.sendNotification({
+              endpoint: sub.endpoint,
+              keys: {
+                p256dh: atob(sub.p256dh),
+                auth: atob(sub.auth)
+              }
+            }, JSON.stringify({
+              title: params.title,
+              content: params.content,
+              id: notification.id,
+              metadata: params.metadata
+            }));
+
+            // Update delivery status
+            const newStatus = {
+              ...notification.delivery_status,
+              push: { success: true, timestamp: new Date().toISOString() }
+            };
+
+            await supabaseClient
+              .from('notifications')
+              .update({
+                delivery_status: newStatus,
+                delivery_attempts: notification.delivery_attempts + 1
+              })
+              .eq('id', notification.id);
+
+          } catch (error) {
+            console.error('Push notification failed:', error);
+            if (error.statusCode === 410 || error.statusCode === 404) {
+              // Subscription is no longer valid, remove it
+              await supabaseClient
+                .from('push_notification_subscriptions')
+                .delete()
+                .eq('id', sub.id);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error sending push notification:', error);
+    }
+  }
 
   // Handle email notifications if enabled
   if (preferences?.channels?.includes('email')) {
@@ -88,14 +151,8 @@ async function handleCreateNotification(params: NotificationData) {
     console.log('Email notification should be sent:', params)
   }
 
-  // Handle push notifications if enabled
-  if (preferences?.channels?.includes('push')) {
-    // Here you would integrate with your push notification service
-    console.log('Push notification should be sent:', params)
-  }
-
   return new Response(
-    JSON.stringify({ data }),
+    JSON.stringify({ data: notification }),
     {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     }
