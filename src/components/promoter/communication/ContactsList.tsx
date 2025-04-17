@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -26,13 +27,6 @@ const ContactsList: React.FC<ContactsListProps> = ({ onThreadCreated }) => {
       setContacts(initialContacts);
     }
   }, [initialContacts]);
-  
-  useEffect(() => {
-    if (newContact && !contacts.some(c => c.venueId === newContact.venueId)) {
-      setContacts(prev => [...prev, newContact]);
-      navigate('/promoter/communication', { replace: true });
-    }
-  }, [newContact, contacts, navigate]);
 
   const filteredContacts = contacts.filter(
     contact => contact.name.toLowerCase().includes(searchQuery.toLowerCase()) ||

@@ -7,6 +7,7 @@ import ContactsList from '@/components/promoter/communication/ContactsList';
 import MessageThread from '@/components/promoter/communication/MessageThread';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import { VenueContact } from '@/hooks/promoter/types';
+import { Card, CardContent } from '@/components/ui/card';
 
 const PromoterCommunicationPage: React.FC = () => {
   const [searchParams] = useSearchParams();
