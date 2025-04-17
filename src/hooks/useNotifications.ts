@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/auth';
 import { supabase } from '@/lib/supabase';
@@ -28,7 +27,6 @@ export const useNotifications = () => {
     if (!user?.id) return;
 
     try {
-      // First get the session
       const { data: sessionData } = await supabase.auth.getSession();
       const accessToken = sessionData.session?.access_token;
 
@@ -67,7 +65,6 @@ export const useNotifications = () => {
 
   const markAsRead = async (notificationId: string) => {
     try {
-      // First get the session
       const { data: sessionData } = await supabase.auth.getSession();
       const accessToken = sessionData.session?.access_token;
 
