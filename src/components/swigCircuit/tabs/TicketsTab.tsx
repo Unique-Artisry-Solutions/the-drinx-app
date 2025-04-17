@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -47,7 +46,7 @@ const TicketsTab: React.FC<TicketsTabProps> = ({
   const [isWizardOpen, setIsWizardOpen] = useState(false);
 
   const handleAddTier = () => {
-    if (!newTier.name || newTier.price <= 0) return;
+    if (!newTier.name) return;
     
     addTicketTier(newTier);
     setNewTier(emptyTier);
@@ -159,12 +158,21 @@ const TicketsTab: React.FC<TicketsTabProps> = ({
                             VIP
                           </Badge>
                         )}
+                        {tier.price === 0 && (
+                          <Badge variant="secondary" className="ml-2 bg-green-100 text-green-700 border-green-200">
+                            Free
+                          </Badge>
+                        )}
                       </div>
                       <div className="text-sm text-muted-foreground">{tier.description}</div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline" className={tier.isVip ? "bg-purple-100 text-purple-700" : "bg-green-50 text-green-700"}>
-                        ${tier.price.toFixed(2)}
+                      <Badge variant="outline" className={
+                        tier.isVip ? "bg-purple-100 text-purple-700" : 
+                        tier.price === 0 ? "bg-green-50 text-green-700" : 
+                        "bg-blue-50 text-blue-700"
+                      }>
+                        {tier.price === 0 ? 'Free' : `$${tier.price.toFixed(2)}`}
                       </Badge>
                       {tier.limit && (
                         <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
@@ -254,7 +262,7 @@ const TicketsTab: React.FC<TicketsTabProps> = ({
                         <Info className="h-4 w-4 ml-2 text-muted-foreground" />
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>Set the price for this ticket tier</p>
+                        <p>Set the price for this ticket tier. Use 0 for free tickets.</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -331,7 +339,7 @@ const TicketsTab: React.FC<TicketsTabProps> = ({
             
             <Button
               onClick={handleAddTier}
-              disabled={!newTier.name || newTier.price <= 0}
+              disabled={!newTier.name}
               className="w-full bg-spiritless-pink hover:bg-spiritless-pink/90"
             >
               <Plus className="h-4 w-4 mr-2" /> Add Ticket Tier
