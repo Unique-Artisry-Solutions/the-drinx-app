@@ -90,6 +90,8 @@ export type Database = {
           description: string;
           ticket_limit?: number;
           benefits: string[];
+          is_vip: boolean;
+          vip_perks?: Record<string, any>;
         };
         Insert: {
           id?: string;
@@ -99,6 +101,8 @@ export type Database = {
           description: string;
           ticket_limit?: number;
           benefits: string[];
+          is_vip?: boolean;
+          vip_perks?: Record<string, any>;
         };
       };
       establishments: {

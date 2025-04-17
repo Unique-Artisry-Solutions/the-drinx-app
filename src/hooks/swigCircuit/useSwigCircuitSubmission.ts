@@ -142,7 +142,9 @@ export const useSwigCircuitSubmission = (formState: SwigCircuitFormState) => {
         price: tier.price,
         description: tier.description,
         ticket_limit: tier.limit || null,
-        benefits: tier.benefits
+        benefits: tier.benefits,
+        is_vip: tier.isVip || false,
+        vip_perks: tier.isVip ? tier.vipPerks : null
       }));
 
       const { error: ticketTiersError } = await swigCircuitTicketTiers()

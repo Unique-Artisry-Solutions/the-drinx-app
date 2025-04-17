@@ -1347,30 +1347,36 @@ export type Database = {
           created_at: string | null
           description: string
           id: string
+          is_vip: boolean | null
           name: string
           price: number
           swig_circuit_id: string | null
           ticket_limit: number | null
+          vip_perks: Json | null
         }
         Insert: {
           benefits?: string[]
           created_at?: string | null
           description: string
           id?: string
+          is_vip?: boolean | null
           name: string
           price: number
           swig_circuit_id?: string | null
           ticket_limit?: number | null
+          vip_perks?: Json | null
         }
         Update: {
           benefits?: string[]
           created_at?: string | null
           description?: string
           id?: string
+          is_vip?: boolean | null
           name?: string
           price?: number
           swig_circuit_id?: string | null
           ticket_limit?: number | null
+          vip_perks?: Json | null
         }
         Relationships: [
           {
