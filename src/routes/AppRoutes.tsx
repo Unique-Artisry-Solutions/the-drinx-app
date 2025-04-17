@@ -48,9 +48,8 @@ import ComponentCatalogPage from '@/pages/admin/ComponentCatalogPage';
 import AdminDocumentationPage from '@/pages/admin/AdminDocumentationPage';
 import SystemConfigurationPage from '@/pages/admin/SystemConfigurationPage';
 
-// Import the new promoter pages
 import PromoterDashboardPage from '@/pages/promoter/PromoterDashboardPage';
-import PromoterAnalyticsPage from '@/pages/promoter/PromoterAnalyticsPage';
+import PromoterCommunicationPage from '@/pages/promoter/PromoterCommunicationPage';
 
 const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
 const AdminLogin = lazy(() => import('@/pages/admin/AdminLogin'));
@@ -101,23 +100,21 @@ const AppRoutes = () => {
         <Route path="/profile/rewards" element={<ProtectedRoute><RewardsPage /></ProtectedRoute>} />
         <Route path="/profile/settings" element={<ProtectedRoute><UserProfilePage /></ProtectedRoute>} />
         
-        {/* Update the routes to use TypedProtectedRoute for promoters only */}
         <Route path="/create-bar-crawl" element={<Navigate to="/create-swig-circuit" replace />} />
         <Route path="/create-swig-circuit" element={<TypedProtectedRoute userType="promoter"><CreateSwigCircuitPage /></TypedProtectedRoute>} />
         <Route path="/profile/my-creations/:id" element={<ProtectedRoute><BarCrawlManagementPage /></ProtectedRoute>} />
         
         <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
         
-        {/* Promoter routes */}
         <Route path="/promoter" element={
           <TypedProtectedRoute userType="promoter">
             <Navigate to="/promoter/dashboard" replace />
           </TypedProtectedRoute>
         } />
-        <Route path="/promoter/dashboard" element={<TypedProtectedRoute userType="promoter"><PromoterDashboardPage /></TypedProtectedRoute>} />
-        <Route path="/promoter/analytics" element={<TypedProtectedRoute userType="promoter"><PromoterAnalyticsPage /></TypedProtectedRoute>} />
-        <Route path="/promotions" element={<Navigate to="/promoter/dashboard" replace />} /> {/* Redirect old path to new path */}
-        <Route path="/analytics" element={<Navigate to="/promoter/analytics" replace />} /> {/* Redirect old path to new path */}
+        <Route path="/promoter/dashboard" element={<PromoterDashboardPage />} />
+        <Route path="/promoter/communication" element={<PromoterCommunicationPage />} />
+        <Route path="/promotions" element={<Navigate to="/promoter/dashboard" replace />} />
+        <Route path="/analytics" element={<Navigate to="/promoter/analytics" replace />} />
         
         <Route path="/admin" element={<AdminLogin />} />
         <Route path="/admin/login" element={<AdminLogin />} />

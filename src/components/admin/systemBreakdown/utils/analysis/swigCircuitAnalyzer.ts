@@ -2,6 +2,7 @@
 import { FeatureItem } from '../../types';
 import { isSwigCircuitFeature, isVipFeature } from '../detection/circuitDetection';
 import { isThemeCustomizationFeature } from '../detection/themeDetection';
+import { isPromoterCommunicationFeature } from '../detection/promoterDetection';
 
 /**
  * Analyzes all Swig Circuit related features
@@ -59,6 +60,28 @@ export const analyzeSwigCircuitFeatures = (features: FeatureItem[]): FeatureItem
           'Test theme creation with color picker',
           'Verify saved themes are accessible',
           'Test theme application to Swig Circuit'
+        ]
+      };
+    }
+
+    // Add promoter communication feature detection
+    if (isPromoterCommunicationFeature(feature)) {
+      return {
+        ...feature,
+        status: 'implemented',
+        dbStatus: feature.dbStatus || 'in_progress',
+        databaseStatus: feature.databaseStatus || 'in_progress',
+        statusUpdated: true,
+        implementationProgress: Math.max(feature.implementationProgress || 0, 85),
+        databaseAnalysis: feature.databaseAnalysis || 'Promoter-Venue communication requires message tables for persistent storage',
+        testSteps: [
+          ...(feature.testSteps || []),
+          'Verify message thread display',
+          'Test sending and receiving messages',
+          'Verify read/unread status',
+          'Test message archiving functionality',
+          'Verify contact list display and filtering',
+          'Test responsive design of messaging interface'
         ]
       };
     }
