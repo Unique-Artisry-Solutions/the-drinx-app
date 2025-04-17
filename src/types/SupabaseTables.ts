@@ -1,4 +1,3 @@
-
 // Custom type definitions for database tables that aren't in the auto-generated Supabase types
 
 export interface UserVisitTable {
@@ -177,6 +176,51 @@ export interface PromotionAnalytics {
   total_order_value: number;
   total_discount_amount: number;
   days_remaining: number;
+}
+
+// Communication system types
+export interface PromoterVenueThread {
+  id: string;
+  promoter_id: string;
+  venue_id: string;
+  created_at: string;
+  updated_at: string;
+  last_message_at: string;
+  is_archived: boolean;
+  subject?: string;
+  profiles?: {
+    display_name?: string;
+    username?: string;
+  };
+  promoter_venue_messages?: PromoterVenueMessage[];
+}
+
+export interface PromoterVenueMessage {
+  id: string;
+  thread_id: string;
+  sender_id: string;
+  content: string;
+  sent_at: string;
+  is_from_promoter: boolean;
+  sender?: {
+    display_name?: string;
+    username?: string;
+  };
+}
+
+export interface MessageReadStatus {
+  id: string;
+  thread_id: string;
+  user_id: string;
+  last_read_at: string;
+}
+
+export interface UnreadMessageCount {
+  thread_id: string;
+  promoter_id: string;
+  venue_id: string;
+  user_id: string;
+  unread_count: number;
 }
 
 // System types for configuration management

@@ -6,9 +6,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Send, Archive, Clock } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/lib/supabase';
+import { supabaseClient as supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/contexts/auth';
 import { Message } from '@/hooks/promoter/types';
+import { fromTable } from '@/lib/supabaseClient';
+import { PromoterVenueThread, PromoterVenueMessage } from '@/types/SupabaseTables';
 
 interface MessageThreadProps {
   threadId: string;
@@ -36,8 +38,7 @@ const MessageThread: React.FC<MessageThreadProps> = ({ threadId, userType = 'pro
       setLoading(true);
       try {
         // First fetch thread info
-        const { data: threadData, error: threadError } = await supabase
-          .from('promoter_venue_threads')
+        const { data: threadData, error: threadError } = await fromTable<PromoterVenueThread>('promoter_venue_threads')
           .select(`
             id, subject,
             venues:establishments(id, name),
@@ -58,14 +59,13 @@ const MessageThread: React.FC<MessageThreadProps> = ({ threadId, userType = 'pro
         }
 
         setThreadInfo({
-          venueName: threadData.venues?.name,
-          promoterName: threadData.promoters?.display_name || threadData.promoters?.username,
-          subject: threadData.subject
+          venueName: threadData?.venues?.name,
+          promoterName: threadData?.promoters?.display_name || threadData?.promoters?.username,
+          subject: threadData?.subject
         });
 
         // Then fetch messages
-        const { data: messageData, error: messageError } = await supabase
-          .from('promoter_venue_messages')
+        const { data: messageData, error: messageError } = await fromTable<PromoterVenueMessage[]>('promoter_venue_messages')
           .select(`
             id,
             content,
@@ -115,8 +115,7 @@ const MessageThread: React.FC<MessageThreadProps> = ({ threadId, userType = 'pro
             },
             async (payload) => {
               // When a new message arrives, fetch its details
-              const { data: newMessage, error } = await supabase
-                .from('promoter_venue_messages')
+              const { data: newMessage, error } = await fromTable<PromoterVenueMessage>('promoter_venue_messages')
                 .select(`
                   id,
                   content,
@@ -199,8 +198,7 @@ const MessageThread: React.FC<MessageThreadProps> = ({ threadId, userType = 'pro
       const isFromPromoter = userType === 'promoter';
       
       // Send the message
-      const { error } = await supabase
-        .from('promoter_venue_messages')
+      const { error } = await fromTable('promoter_venue_messages')
         .insert({
           thread_id: threadId,
           sender_id: user.id,
@@ -231,8 +229,7 @@ const MessageThread: React.FC<MessageThreadProps> = ({ threadId, userType = 'pro
     if (!threadId) return;
     
     try {
-      const { error } = await supabase
-        .from('promoter_venue_threads')
+      const { error } = await fromTable('promoter_venue_threads')
         .update({ is_archived: true })
         .eq('id', threadId);
 

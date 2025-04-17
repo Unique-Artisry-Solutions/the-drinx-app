@@ -3,11 +3,13 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { supabaseClient } from '@/lib/supabaseClient'; // Using the typed client
+import { supabaseClient as supabase } from '@/lib/supabaseClient'; // Using the typed client
 import { useAuth } from '@/contexts/auth';
 import MessageThreadList from '@/components/promoter/communication/MessageThreadList';
 import MessageThread from '@/components/promoter/communication/MessageThread';
 import { MessageThread as MessageThreadType } from '@/hooks/promoter/types';
+import { fromTable } from '@/lib/supabaseClient';
+import { PromoterVenueThread, UnreadMessageCount } from '@/types/SupabaseTables';
 
 const EstablishmentInbox = () => {
   const [activeTab, setActiveTab] = useState('all');
@@ -24,7 +26,7 @@ const EstablishmentInbox = () => {
       setLoading(true);
       try {
         // Get the establishment ID for the current user
-        const { data: establishment, error: establishmentError } = await supabaseClient
+        const { data: establishment, error: establishmentError } = await supabase
           .from('establishments')
           .select('id')
           .eq('owner_id', user.id)
@@ -42,8 +44,7 @@ const EstablishmentInbox = () => {
         }
 
         // Fetch threads for this establishment using fromTable helper
-        const { data: threadData, error: threadError } = await supabaseClient
-          .from('promoter_venue_threads')
+        const { data: threadData, error: threadError } = await fromTable<PromoterVenueThread[]>('promoter_venue_threads')
           .select(`
             id,
             created_at,
@@ -79,8 +80,7 @@ const EstablishmentInbox = () => {
         }
 
         // Get unread counts
-        const { data: unreadData, error: unreadError } = await supabaseClient
-          .from('message_read_status')
+        const { data: unreadData, error: unreadError } = await fromTable<UnreadMessageCount[]>('message_read_status')
           .select('thread_id, last_read_at')
           .eq('user_id', user.id);
 
@@ -98,12 +98,14 @@ const EstablishmentInbox = () => {
 
         // Format the threads for our component
         const formattedThreads: MessageThreadType[] = threadData.map(thread => {
-          const promoterName = thread.profiles?.display_name || thread.profiles?.username || 'Promoter';
+          // Access profile data safely
+          const promoterProfile = thread.profiles || {};
+          const promoterName = promoterProfile.display_name || promoterProfile.username || 'Promoter';
           
           // Get the last message
           const messages = thread.promoter_venue_messages || [];
           const lastMessage = messages.length > 0 
-            ? messages.sort((a: any, b: any) => 
+            ? messages.sort((a, b) => 
                 new Date(b.sent_at).getTime() - new Date(a.sent_at).getTime()
               )[0].content
             : 'No messages yet';
@@ -147,7 +149,7 @@ const EstablishmentInbox = () => {
     // Mark thread as read
     if (user) {
       try {
-        await supabaseClient.rpc('mark_thread_as_read', {
+        await supabase.rpc('mark_thread_as_read', {
           _thread_id: threadId,
           _user_id: user.id
         });

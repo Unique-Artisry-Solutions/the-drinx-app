@@ -33,8 +33,7 @@ const SectionContent: React.FC<SectionContentProps> = ({
     case 'analytics':
       return <AnalyticsSection 
         visitorStats={{
-          // Map totalVisitors to totalVisits for compatibility
-          totalVisits: visitorStats.totalVisitors, 
+          totalVisits: visitorStats.totalVisitors, // Map totalVisitors to totalVisits for compatibility
           uniqueVisitors: visitorStats.uniqueVisitors,
           returningVisitors: visitorStats.returningVisitors,
           hasData: visitorStats.hasData,
