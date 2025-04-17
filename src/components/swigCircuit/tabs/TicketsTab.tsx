@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Trash2, Plus, Ticket, Info, Crown, Edit, AlertCircle } from 'lucide-react';
+import { Trash2, Plus, Ticket, Info, Crown, Edit, AlertCircle, Save, X } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -58,23 +58,39 @@ const TicketsTab: React.FC<TicketsTabProps> = ({
   const [benefitError, setBenefitError] = useState<string | null>(null);
   const [tierToRemove, setTierToRemove] = useState<number | null>(null);
   const [editingTier, setEditingTier] = useState<number | null>(null);
+  const [editingBenefitIndex, setEditingBenefitIndex] = useState<number | null>(null);
+  const [validationErrors, setValidationErrors] = useState<{[key: string]: string}>({});
 
-  const handleAddTier = () => {
-    if (!newTier.name) return;
+  const validateTier = (tier: TicketTier): boolean => {
+    const errors: {[key: string]: string} = {};
     
-    // Validate that all benefits have content
-    if (newTier.benefits.some(benefit => !benefit.trim())) {
-      setBenefitError("All benefits must have content. Please fill in or remove empty benefits.");
-      return;
+    if (!tier.name.trim()) {
+      errors.name = "Name is required";
     }
     
-    // Filter out any empty benefits (shouldn't happen due to validation, but just in case)
+    if (tier.price < 0) {
+      errors.price = "Price cannot be negative";
+    }
+    
+    if (tier.benefits.some(benefit => !benefit.trim())) {
+      errors.benefits = "All benefits must have content";
+    }
+    
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleAddTier = () => {
+    if (!validateTier(newTier)) return;
+    
+    // Filter out any empty benefits
     const filteredBenefits = newTier.benefits.filter(benefit => benefit.trim());
     const tierToAdd = {...newTier, benefits: filteredBenefits};
     
     addTicketTier(tierToAdd);
     setNewTier(emptyTier);
     setBenefitError(null);
+    setValidationErrors({});
   };
 
   const handleSaveVipPackage = (vipPackage: TicketTier) => {
@@ -96,6 +112,10 @@ const TicketsTab: React.FC<TicketsTabProps> = ({
     
     // Clear any error when user starts typing
     if (benefitError) setBenefitError(null);
+    if (validationErrors.benefits) {
+      const { benefits, ...rest } = validationErrors;
+      setValidationErrors(rest);
+    }
   };
 
   const addBenefit = () => {
@@ -129,6 +149,8 @@ const TicketsTab: React.FC<TicketsTabProps> = ({
       ...tier,
       benefits: updatedBenefits
     });
+    
+    setEditingBenefitIndex(null);
   };
 
   const addExistingTierBenefit = (tierIndex: number) => {
@@ -184,27 +206,44 @@ const TicketsTab: React.FC<TicketsTabProps> = ({
     
     setEditingTier(index);
     setNewTier({...ticketTiers[index]});
+    setValidationErrors({});
   };
 
   const saveEditedTier = () => {
     if (editingTier === null) return;
     
-    // Validate that all benefits have content
-    if (newTier.benefits.some(benefit => !benefit.trim())) {
-      setBenefitError("All benefits must have content. Please fill in or remove empty benefits.");
-      return;
-    }
+    if (!validateTier(newTier)) return;
     
-    updateTicketTier(editingTier, newTier);
+    // Filter out any empty benefits
+    const filteredBenefits = newTier.benefits.filter(benefit => benefit.trim());
+    const updatedTier = {...newTier, benefits: filteredBenefits};
+    
+    updateTicketTier(editingTier, updatedTier);
     setEditingTier(null);
     setNewTier(emptyTier);
     setBenefitError(null);
+    setValidationErrors({});
   };
 
   const cancelEditing = () => {
     setEditingTier(null);
     setNewTier(emptyTier);
     setBenefitError(null);
+    setValidationErrors({});
+  };
+
+  const handleTierFieldChange = (field: keyof TicketTier, value: any) => {
+    setNewTier({ ...newTier, [field]: value });
+    
+    // Clear field-specific validation error
+    if (validationErrors[field]) {
+      const { [field]: _, ...rest } = validationErrors;
+      setValidationErrors(rest);
+    }
+  };
+  
+  const startEditingBenefit = (tierIndex: number, benefitIndex: number) => {
+    setEditingBenefitIndex(benefitIndex);
   };
   
   return (
@@ -235,53 +274,140 @@ const TicketsTab: React.FC<TicketsTabProps> = ({
               {ticketTiers.map((tier, tierIndex) => (
                 <div 
                   key={tier.id} 
-                  className={`border rounded-md p-4 ${tier.isVip ? 'border-2 border-purple-300 bg-purple-50' : ''}`}
+                  className={`border rounded-md p-4 ${tier.isVip ? 'border-2 border-purple-300 bg-purple-50' : ''} ${editingTier === tierIndex ? 'border-blue-300 bg-blue-50' : ''}`}
                 >
                   <div className="flex justify-between items-start mb-4">
                     <div>
-                      <div className="flex items-center">
-                        <h4 className="font-medium">{tier.name}</h4>
-                        {tier.isVip && (
-                          <Badge variant="secondary" className="ml-2 bg-purple-100 text-purple-700 border-purple-200">
-                            <Crown className="h-3 w-3 mr-1" />
-                            VIP
-                          </Badge>
-                        )}
-                        {tier.price === 0 && (
-                          <Badge variant="secondary" className="ml-2 bg-green-100 text-green-700 border-green-200">
-                            Free
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="text-sm text-muted-foreground">{tier.description}</div>
+                      {editingTier === tierIndex ? (
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <Label htmlFor={`edit-tier-${tierIndex}-name`}>Tier Name</Label>
+                            <Input
+                              id={`edit-tier-${tierIndex}-name`}
+                              value={newTier.name}
+                              onChange={(e) => handleTierFieldChange('name', e.target.value)}
+                              placeholder="General Admission, Early Bird, etc."
+                              className={validationErrors.name ? "border-red-500" : ""}
+                            />
+                            {validationErrors.name && (
+                              <p className="text-sm text-red-500">{validationErrors.name}</p>
+                            )}
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label htmlFor={`edit-tier-${tierIndex}-price`}>Price ($)</Label>
+                            <Input
+                              id={`edit-tier-${tierIndex}-price`}
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={newTier.price}
+                              onChange={(e) => handleTierFieldChange('price', parseFloat(e.target.value) || 0)}
+                              placeholder="0.00"
+                              className={validationErrors.price ? "border-red-500" : ""}
+                            />
+                            {validationErrors.price && (
+                              <p className="text-sm text-red-500">{validationErrors.price}</p>
+                            )}
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label htmlFor={`edit-tier-${tierIndex}-description`}>Description</Label>
+                            <Textarea
+                              id={`edit-tier-${tierIndex}-description`}
+                              value={newTier.description}
+                              onChange={(e) => handleTierFieldChange('description', e.target.value)}
+                              placeholder="Describe what's included in this ticket tier"
+                              rows={2}
+                            />
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label htmlFor={`edit-tier-${tierIndex}-limit`}>Ticket Limit (Optional)</Label>
+                            <Input
+                              id={`edit-tier-${tierIndex}-limit`}
+                              type="number"
+                              min="0"
+                              value={newTier.limit || ''}
+                              onChange={(e) => handleTierFieldChange('limit', parseInt(e.target.value) || undefined)}
+                              placeholder="Leave empty for unlimited tickets"
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="flex items-center">
+                            <h4 className="font-medium">{tier.name}</h4>
+                            {tier.isVip && (
+                              <Badge variant="secondary" className="ml-2 bg-purple-100 text-purple-700 border-purple-200">
+                                <Crown className="h-3 w-3 mr-1" />
+                                VIP
+                              </Badge>
+                            )}
+                            {tier.price === 0 && (
+                              <Badge variant="secondary" className="ml-2 bg-green-100 text-green-700 border-green-200">
+                                Free
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="text-sm text-muted-foreground">{tier.description}</div>
+                        </>
+                      )}
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline" className={
-                        tier.isVip ? "bg-purple-100 text-purple-700" : 
-                        tier.price === 0 ? "bg-green-50 text-green-700" : 
-                        "bg-blue-50 text-blue-700"
-                      }>
-                        {tier.price === 0 ? 'Free' : `$${tier.price.toFixed(2)}`}
-                      </Badge>
-                      {tier.limit && (
-                        <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
-                          Limit: {tier.limit}
-                        </Badge>
+                      {editingTier === tierIndex ? (
+                        <>
+                          <div className="flex gap-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={saveEditedTier}
+                              className="bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
+                            >
+                              <Save className="h-4 w-4 mr-1" />
+                              Save
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={cancelEditing}
+                              className="bg-red-50 border-red-200 text-red-700 hover:bg-red-100"
+                            >
+                              <X className="h-4 w-4 mr-1" />
+                              Cancel
+                            </Button>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <Badge variant="outline" className={
+                            tier.isVip ? "bg-purple-100 text-purple-700" : 
+                            tier.price === 0 ? "bg-green-50 text-green-700" : 
+                            "bg-blue-50 text-blue-700"
+                          }>
+                            {tier.price === 0 ? 'Free' : `$${tier.price.toFixed(2)}`}
+                          </Badge>
+                          {tier.limit && (
+                            <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+                              Limit: {tier.limit}
+                            </Badge>
+                          )}
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={() => startEditingTier(tierIndex)}
+                          >
+                            <Edit className="h-4 w-4 text-blue-500" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={() => confirmRemoveTier(tierIndex)}
+                          >
+                            <Trash2 className="h-4 w-4 text-red-500" />
+                          </Button>
+                        </>
                       )}
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        onClick={() => startEditingTier(tierIndex)}
-                      >
-                        <Edit className="h-4 w-4 text-blue-500" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        onClick={() => confirmRemoveTier(tierIndex)}
-                      >
-                        <Trash2 className="h-4 w-4 text-red-500" />
-                      </Button>
                     </div>
                   </div>
                   
@@ -289,24 +415,59 @@ const TicketsTab: React.FC<TicketsTabProps> = ({
                     <h5 className="text-sm font-medium">Benefits:</h5>
                     {tier.benefits.map((benefit, benefitIndex) => (
                       <div key={benefitIndex} className="flex items-center gap-2">
-                        <Input
-                          value={benefit}
-                          onChange={(e) => updateExistingTierBenefit(tierIndex, benefitIndex, e.target.value)}
-                          placeholder="Benefit description"
-                          className="text-sm"
-                          disabled={tier.isVip}
-                        />
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => removeExistingTierBenefit(tierIndex, benefitIndex)}
-                          disabled={tier.benefits.length <= 1 || tier.isVip}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {(editingTier === tierIndex) ? (
+                          <Input
+                            value={newTier.benefits[benefitIndex] || ''}
+                            onChange={(e) => handleBenefitChange(e.target.value, benefitIndex)}
+                            placeholder="Benefit description"
+                            className={`text-sm ${validationErrors.benefits ? "border-red-500" : ""}`}
+                          />
+                        ) : (
+                          <div className="flex-1 border rounded-md px-3 py-2 bg-white text-sm">
+                            {benefit}
+                          </div>
+                        )}
+                        
+                        {editingTier === tierIndex && !tier.isVip && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => removeBenefit(benefitIndex)}
+                            disabled={newTier.benefits.length <= 1}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                        
+                        {editingTier !== tierIndex && !tier.isVip && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => removeExistingTierBenefit(tierIndex, benefitIndex)}
+                            disabled={tier.benefits.length <= 1}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     ))}
-                    {!tier.isVip && (
+                    
+                    {validationErrors.benefits && editingTier === tierIndex && (
+                      <p className="text-sm text-red-500">{validationErrors.benefits}</p>
+                    )}
+                    
+                    {editingTier === tierIndex && !tier.isVip && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={addBenefit}
+                        className="mt-2 text-xs"
+                      >
+                        <Plus className="h-3 w-3 mr-1" /> Add Benefit
+                      </Button>
+                    )}
+                    
+                    {editingTier !== tierIndex && !tier.isVip && (
                       <Button
                         variant="outline"
                         size="sm"
@@ -318,7 +479,7 @@ const TicketsTab: React.FC<TicketsTabProps> = ({
                     )}
                   </div>
                   
-                  {tier.isVip && (
+                  {tier.isVip && editingTier !== tierIndex && (
                     <Button
                       variant="outline"
                       size="sm"
@@ -341,125 +502,121 @@ const TicketsTab: React.FC<TicketsTabProps> = ({
           </div>
         )}
 
-        <div className="border rounded-md p-4">
-          <h3 className="text-lg font-medium mb-4">
-            {editingTier !== null ? `Edit Ticket Tier` : `Add ${editingTier !== null ? 'Another' : 'Standard'} Ticket Tier`}
-          </h3>
-          
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="tierName">Tier Name</Label>
-                <Input
-                  id="tierName"
-                  value={newTier.name}
-                  onChange={(e) => setNewTier({ ...newTier, name: e.target.value })}
-                  placeholder="General Admission, Early Bird, etc."
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <div className="flex items-center">
-                  <Label htmlFor="tierPrice">Price ($)</Label>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Info className="h-4 w-4 ml-2 text-muted-foreground" />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Set the price for this ticket tier. Use 0 for free tickets.</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+        {editingTier === null && (
+          <div className="border rounded-md p-4">
+            <h3 className="text-lg font-medium mb-4">
+              Add Standard Ticket Tier
+            </h3>
+            
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="tierName">Tier Name</Label>
+                  <Input
+                    id="tierName"
+                    value={newTier.name}
+                    onChange={(e) => handleTierFieldChange('name', e.target.value)}
+                    placeholder="General Admission, Early Bird, etc."
+                    className={validationErrors.name ? "border-red-500" : ""}
+                  />
+                  {validationErrors.name && (
+                    <p className="text-sm text-red-500">{validationErrors.name}</p>
+                  )}
                 </div>
-                <Input
-                  id="tierPrice"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={newTier.price}
-                  onChange={(e) => setNewTier({ ...newTier, price: parseFloat(e.target.value) || 0 })}
-                  placeholder="0.00"
+                
+                <div className="space-y-2">
+                  <div className="flex items-center">
+                    <Label htmlFor="tierPrice">Price ($)</Label>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="h-4 w-4 ml-2 text-muted-foreground" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Set the price for this ticket tier. Use 0 for free tickets.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <Input
+                    id="tierPrice"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={newTier.price}
+                    onChange={(e) => handleTierFieldChange('price', parseFloat(e.target.value) || 0)}
+                    placeholder="0.00"
+                    className={validationErrors.price ? "border-red-500" : ""}
+                  />
+                  {validationErrors.price && (
+                    <p className="text-sm text-red-500">{validationErrors.price}</p>
+                  )}
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="tierDescription">Description</Label>
+                <Textarea
+                  id="tierDescription"
+                  value={newTier.description}
+                  onChange={(e) => handleTierFieldChange('description', e.target.value)}
+                  placeholder="Describe what's included in this ticket tier"
+                  rows={2}
                 />
               </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="tierDescription">Description</Label>
-              <Textarea
-                id="tierDescription"
-                value={newTier.description}
-                onChange={(e) => setNewTier({ ...newTier, description: e.target.value })}
-                placeholder="Describe what's included in this ticket tier"
-                rows={2}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label>Benefits</Label>
-              </div>
               
-              <div className="space-y-3">
-                {newTier.benefits.map((benefit, index) => (
-                  <div key={index} className="flex items-center gap-2">
-                    <Input
-                      value={benefit}
-                      onChange={(e) => handleBenefitChange(e.target.value, index)}
-                      placeholder="e.g., Priority entry, Free welcome drink"
-                    />
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removeBenefit(index)}
-                      disabled={newTier.benefits.length <= 1}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-              
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={addBenefit}
-                className="mt-2"
-              >
-                <Plus className="h-4 w-4 mr-1" /> Add Benefit
-              </Button>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="tierLimit">Ticket Limit (Optional)</Label>
-              <Input
-                id="tierLimit"
-                type="number"
-                min="0"
-                value={newTier.limit || ''}
-                onChange={(e) => setNewTier({ ...newTier, limit: parseInt(e.target.value) || undefined })}
-                placeholder="Leave empty for unlimited tickets"
-              />
-            </div>
-            
-            {editingTier !== null ? (
-              <div className="flex gap-2">
-                <Button
-                  onClick={saveEditedTier}
-                  disabled={!newTier.name}
-                  className="w-full bg-blue-500 hover:bg-blue-600"
-                >
-                  Save Changes
-                </Button>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>Benefits</Label>
+                </div>
+                
+                <div className="space-y-3">
+                  {newTier.benefits.map((benefit, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <Input
+                        value={benefit}
+                        onChange={(e) => handleBenefitChange(e.target.value, index)}
+                        placeholder="e.g., Priority entry, Free welcome drink"
+                        className={validationErrors.benefits ? "border-red-500" : ""}
+                      />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeBenefit(index)}
+                        disabled={newTier.benefits.length <= 1}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  
+                  {validationErrors.benefits && (
+                    <p className="text-sm text-red-500">{validationErrors.benefits}</p>
+                  )}
+                </div>
+                
                 <Button
                   variant="outline"
-                  onClick={cancelEditing}
-                  className="w-full"
+                  size="sm"
+                  onClick={addBenefit}
+                  className="mt-2"
                 >
-                  Cancel
+                  <Plus className="h-4 w-4 mr-1" /> Add Benefit
                 </Button>
               </div>
-            ) : (
+              
+              <div className="space-y-2">
+                <Label htmlFor="tierLimit">Ticket Limit (Optional)</Label>
+                <Input
+                  id="tierLimit"
+                  type="number"
+                  min="0"
+                  value={newTier.limit || ''}
+                  onChange={(e) => handleTierFieldChange('limit', parseInt(e.target.value) || undefined)}
+                  placeholder="Leave empty for unlimited tickets"
+                />
+              </div>
+              
               <Button
                 onClick={handleAddTier}
                 disabled={!newTier.name}
@@ -467,9 +624,9 @@ const TicketsTab: React.FC<TicketsTabProps> = ({
               >
                 <Plus className="h-4 w-4 mr-2" /> Add Ticket Tier
               </Button>
-            )}
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="flex justify-between mt-6">
           <Button
