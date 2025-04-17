@@ -1,58 +1,89 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { VenueContact } from './types';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/contexts/auth';
 
 export const usePromoterContacts = () => {
   const [contacts, setContacts] = useState<VenueContact[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
+
+  const fetchContacts = useCallback(async () => {
+    if (!user) {
+      setContacts([]);
+      setIsLoading(false);
+      return;
+    }
+    
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      // Get establishments
+      const { data: establishments, error: establishmentsError } = await supabase
+        .from('establishments')
+        .select('id, name, owner_id')
+        .order('name');
+        
+      if (establishmentsError) throw establishmentsError;
+      
+      // Get venue owner profiles
+      const ownerIds = establishments
+        .map(e => e.owner_id)
+        .filter(Boolean) as string[];
+      
+      let ownerProfiles: Record<string, { name: string, role: string }> = {};
+      
+      if (ownerIds.length > 0) {
+        const { data: profiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, display_name, username')
+          .in('id', ownerIds);
+          
+        if (profilesError) throw profilesError;
+        
+        ownerProfiles = (profiles || []).reduce((acc, profile) => {
+          acc[profile.id] = {
+            name: profile.display_name || profile.username || 'Unknown',
+            role: 'Venue Manager'
+          };
+          return acc;
+        }, {} as Record<string, { name: string, role: string }>);
+      }
+      
+      // Transform to contacts format
+      const venueContacts: VenueContact[] = establishments.map((establishment, index) => {
+        const ownerId = establishment.owner_id;
+        const ownerInfo = ownerId ? ownerProfiles[ownerId] : null;
+        
+        return {
+          id: `contact-${index}-${establishment.id}`,
+          name: ownerInfo?.name || 'Venue Manager',
+          role: ownerInfo?.role || 'Manager',
+          venueId: establishment.id,
+          venueName: establishment.name
+        };
+      });
+      
+      setContacts(venueContacts);
+    } catch (err) {
+      console.error('Error fetching promoter contacts:', err);
+      setError('Failed to load venue contacts');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user]);
 
   useEffect(() => {
-    // In a real implementation, this would fetch from API/database
-    // For now, we're using mock data
-    const mockContacts: VenueContact[] = [
-      {
-        id: 'contact1',
-        name: 'Alex Johnson',
-        role: 'Event Manager',
-        venueId: 'venue1',
-        venueName: 'Downtown Club'
-      },
-      {
-        id: 'contact2',
-        name: 'Jamie Smith',
-        role: 'Operations Director',
-        venueId: 'venue2',
-        venueName: 'Skyline Lounge'
-      },
-      {
-        id: 'contact3',
-        name: 'Taylor Wilson',
-        role: 'Venue Owner',
-        venueId: 'venue3',
-        venueName: 'Harbor View'
-      },
-      {
-        id: 'contact4',
-        name: 'Morgan Lee',
-        role: 'Events Coordinator',
-        venueId: 'venue4',
-        venueName: 'The Grand Hall'
-      },
-      {
-        id: 'contact5',
-        name: 'Casey Rodriguez',
-        role: 'Marketing Manager',
-        venueId: 'venue5',
-        venueName: 'Sunset Terrace'
-      }
-    ];
-
-    setContacts(mockContacts);
-    setIsLoading(false);
-  }, []);
+    fetchContacts();
+  }, [fetchContacts]);
 
   return {
     contacts,
-    isLoading
+    isLoading,
+    error,
+    refetch: fetchContacts
   };
 };

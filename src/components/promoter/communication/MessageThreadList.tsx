@@ -3,20 +3,48 @@ import React from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { MessageThread } from '@/hooks/messages/useMessageSystem';
+import { AlertCircle } from 'lucide-react';
 
 interface MessageThreadListProps {
   conversations: MessageThread[];
   onSelectConversation: (threadId: string) => void;
+  isLoading?: boolean;
+  error?: string | null;
 }
 
 const MessageThreadList: React.FC<MessageThreadListProps> = ({ 
   conversations, 
-  onSelectConversation 
+  onSelectConversation,
+  isLoading = false,
+  error = null
 }) => {
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center py-8">
+        <div className="animate-pulse flex flex-col gap-3 w-full">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-20 bg-gray-100 rounded-md w-full"></div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center py-8 text-center">
+        <AlertCircle className="h-10 w-10 text-red-500 mb-2" />
+        <p className="text-gray-600 mb-1">{error}</p>
+        <p className="text-sm text-gray-500">Please try again later or contact support.</p>
+      </div>
+    );
+  }
+
   if (conversations.length === 0) {
     return (
-      <div className="text-center py-6 text-gray-500">
-        <p>No messages found</p>
+      <div className="text-center py-8">
+        <p className="text-gray-500 mb-2">No messages found</p>
+        <p className="text-sm text-gray-400">Start a conversation with a venue from the Contacts tab</p>
       </div>
     );
   }

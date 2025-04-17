@@ -1,9 +1,10 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, MessageSquarePlus } from 'lucide-react';
+import { Search, MessageSquarePlus, RefreshCw } from 'lucide-react';
 import MessageThreadList from './MessageThreadList';
 import { useMessageSystem } from '@/hooks/messages/useMessageSystem';
 import { useAuth } from '@/contexts/auth';
@@ -21,7 +22,9 @@ const PromoterInbox: React.FC<PromoterInboxProps> = ({ onSelectThread }) => {
   const {
     threads,
     loading,
+    error,
     markThreadAsRead,
+    refetchThreads
   } = useMessageSystem('promoter');
 
   const filteredThreads = threads.filter(
@@ -41,6 +44,10 @@ const PromoterInbox: React.FC<PromoterInboxProps> = ({ onSelectThread }) => {
     navigate('/promoter/communication?tab=contacts');
   };
 
+  const handleRefresh = () => {
+    refetchThreads();
+  };
+
   if (!user) {
     return (
       <Alert>
@@ -54,12 +61,16 @@ const PromoterInbox: React.FC<PromoterInboxProps> = ({ onSelectThread }) => {
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
             <MessageSquarePlus className="h-5 w-5" />
             <span>Venue Communications</span>
-          </div>
-        </CardTitle>
+          </CardTitle>
+          <Button variant="ghost" size="sm" onClick={handleRefresh} disabled={loading}>
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            <span className="sr-only">Refresh</span>
+          </Button>
+        </div>
         <div className="relative">
           <Search className="absolute left-2 top-3 h-4 w-4 text-muted-foreground" />
           <Input
@@ -80,20 +91,20 @@ const PromoterInbox: React.FC<PromoterInboxProps> = ({ onSelectThread }) => {
           </TabsList>
           
           <TabsContent value="all">
-            {loading ? (
-              <div className="text-center py-6">Loading conversations...</div>
-            ) : (
-              <MessageThreadList 
-                conversations={filteredThreads} 
-                onSelectConversation={handleSelectConversation}
-              />
-            )}
+            <MessageThreadList 
+              conversations={filteredThreads} 
+              onSelectConversation={handleSelectConversation}
+              isLoading={loading}
+              error={error}
+            />
           </TabsContent>
 
           <TabsContent value="unread">
             <MessageThreadList 
               conversations={filteredThreads.filter(c => !c.isRead)} 
               onSelectConversation={handleSelectConversation}
+              isLoading={loading}
+              error={error}
             />
           </TabsContent>
 
@@ -101,6 +112,8 @@ const PromoterInbox: React.FC<PromoterInboxProps> = ({ onSelectThread }) => {
             <MessageThreadList 
               conversations={filteredThreads.filter(c => c.isArchived)} 
               onSelectConversation={handleSelectConversation}
+              isLoading={loading}
+              error={error}
             />
           </TabsContent>
           

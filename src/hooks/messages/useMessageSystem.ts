@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/contexts/auth';
 import { supabase } from '@/lib/supabase';
@@ -16,6 +17,7 @@ export interface MessageThread {
 export const useMessageSystem = (userType: 'promoter' | 'establishment' = 'promoter') => {
   const [threads, setThreads] = useState<MessageThread[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
@@ -24,7 +26,10 @@ export const useMessageSystem = (userType: 'promoter' | 'establishment' = 'promo
     if (!user) return;
 
     try {
-      const { data: threadsData, error } = await supabase
+      setLoading(true);
+      setError(null);
+      
+      const { data: threadsData, error: threadError } = await supabase
         .from('promoter_venue_threads')
         .select(`
           id, 
@@ -39,9 +44,15 @@ export const useMessageSystem = (userType: 'promoter' | 'establishment' = 'promo
         .order('last_message_at', { ascending: false })
         .eq(userType === 'promoter' ? 'promoter_id' : 'venue_id', user.id);
 
-      if (error) throw error;
+      if (threadError) throw threadError;
 
-      const venueIds = threadsData.map(thread => thread.venue_id);
+      if (!threadsData || threadsData.length === 0) {
+        setThreads([]);
+        setLoading(false);
+        return;
+      }
+
+      const venueIds = threadsData.map(thread => thread.venue_id).filter(Boolean);
       const { data: venueData, error: venueError } = await supabase
         .from('establishments')
         .select('id, name')
@@ -49,7 +60,7 @@ export const useMessageSystem = (userType: 'promoter' | 'establishment' = 'promo
       
       if (venueError) throw venueError;
 
-      const promoterIds = threadsData.map(thread => thread.promoter_id);
+      const promoterIds = threadsData.map(thread => thread.promoter_id).filter(Boolean);
       const { data: promoterData, error: promoterError } = await supabase
         .from('profiles')
         .select('id, display_name, username')
@@ -74,41 +85,48 @@ export const useMessageSystem = (userType: 'promoter' | 'establishment' = 'promo
 
       if (readStatusError) throw readStatusError;
 
+      // Create lookup maps from the data
       const venueMap = venueData?.reduce((acc, venue) => {
-        acc[venue.id] = venue;
+        if (venue && venue.id) {
+          acc[venue.id] = venue;
+        }
         return acc;
-      }, {} as Record<string, any>);
+      }, {} as Record<string, any>) || {};
 
       const promoterMap = promoterData?.reduce((acc, promoter) => {
-        acc[promoter.id] = promoter;
+        if (promoter && promoter.id) {
+          acc[promoter.id] = promoter;
+        }
         return acc;
-      }, {} as Record<string, any>);
+      }, {} as Record<string, any>) || {};
 
       const messageMap = messagesData?.reduce((acc, msg) => {
-        if (!acc[msg.thread_id]) {
+        if (msg && msg.thread_id && !acc[msg.thread_id]) {
           acc[msg.thread_id] = msg;
         }
         return acc;
-      }, {} as Record<string, any>);
+      }, {} as Record<string, any>) || {};
 
       const readStatusMap = readStatusData?.reduce((acc, status) => {
-        acc[status.thread_id] = status;
+        if (status && status.thread_id) {
+          acc[status.thread_id] = status;
+        }
         return acc;
-      }, {} as Record<string, any>);
+      }, {} as Record<string, any>) || {};
 
       const formattedThreads: MessageThread[] = threadsData.map(thread => {
         let venueName = "Unknown Venue";
-        if (venueMap && thread.venue_id && venueMap[thread.venue_id]) {
+        if (thread.venue_id && venueMap[thread.venue_id]) {
           venueName = venueMap[thread.venue_id].name;
         }
         
         let promoterName = "Unknown Promoter";
-        if (promoterMap && thread.promoter_id && promoterMap[thread.promoter_id]) {
+        if (thread.promoter_id && promoterMap[thread.promoter_id]) {
           const promoter = promoterMap[thread.promoter_id];
           promoterName = promoter.display_name || promoter.username || "Unknown Promoter";
         }
 
-        const lastMessage = messageMap?.[thread.id]?.content || "No messages yet";
+        const lastMessage = messageMap[thread.id]?.content || "No messages yet";
         const timestamp = thread.last_message_at || thread.created_at;
         
         let isRead = false;
@@ -132,9 +150,10 @@ export const useMessageSystem = (userType: 'promoter' | 'establishment' = 'promo
       setThreads(formattedThreads);
     } catch (error) {
       console.error('Error fetching threads:', error);
+      setError('Failed to load message threads. Please try again later.');
       toast({
         title: "Error",
-        description: "Failed to load message threads",
+        description: "Failed to load message threads. Please try again later.",
         variant: "destructive",
       });
     } finally {
@@ -208,6 +227,11 @@ export const useMessageSystem = (userType: 'promoter' | 'establishment' = 'promo
       return thread.id;
     } catch (error) {
       console.error('Error creating thread:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create conversation with venue. Please try again.",
+        variant: "destructive",
+      });
       throw error;
     }
   };
@@ -237,12 +261,18 @@ export const useMessageSystem = (userType: 'promoter' | 'establishment' = 'promo
   }, [user, selectedThreadId, fetchThreads]);
 
   useEffect(() => {
-    fetchThreads();
-  }, [fetchThreads]);
+    if (user) {
+      fetchThreads();
+    } else {
+      setThreads([]);
+      setLoading(false);
+    }
+  }, [fetchThreads, user]);
 
   return {
     threads,
     loading,
+    error,
     markThreadAsRead,
     sendMessage,
     selectedThreadId,
