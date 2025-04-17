@@ -99,7 +99,7 @@ const FeatureTab: React.FC<FeatureTabProps> = ({ features, title, description })
                   {renderTags(feature.tags)}
                 </div>
                 <div className="flex items-center gap-2">
-                  {feature.testSteps && (
+                  {feature.testSteps && feature.testSteps.length > 0 && (
                     <Button 
                       variant="outline" 
                       onClick={() => setSelectedFeature(feature)}
@@ -126,3 +126,4 @@ const FeatureTab: React.FC<FeatureTabProps> = ({ features, title, description })
 };
 
 export default FeatureTab;
+

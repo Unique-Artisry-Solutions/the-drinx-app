@@ -5,7 +5,7 @@ import {
   adminFeatures as initialAdminFeatures, 
   establishmentFeatures as initialEstablishmentFeatures, 
   individualFeatures as initialIndividualFeatures,
-  promoterFeatures as initialPromoterFeatures
+  promoterFeatures as initialPromoterFeatures 
 } from '../features';
 
 /**
@@ -37,3 +37,4 @@ export const useFeatureStatus = () => {
     updatedFeaturesCount
   };
 };
+
