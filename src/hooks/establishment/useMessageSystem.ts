@@ -1,6 +1,5 @@
-
 import { useEffect, useState } from 'react';
-import { supabaseClient as supabase } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/auth';
 import { useToast } from '@/hooks/use-toast';
 
@@ -117,110 +116,176 @@ export const useMessageSystem = (userType: 'establishment' | 'promoter'): UseMes
   const fetchEstablishmentThreads = async () => {
     if (!user) return;
     
-    const { data: establishment, error: establishmentError } = await supabase
-      .from('establishments')
-      .select('id')
-      .eq('owner_id', user.id)
-      .single();
+    try {
+      // Check if we're using admin bypass
+      const isAdminBypass = localStorage.getItem('admin_bypass') === 'true';
+      const userType = localStorage.getItem('user_type');
+      let establishmentId;
+      
+      if (isAdminBypass && userType === 'establishment') {
+        // For establishment admin bypass, fetch any establishment for demo purposes
+        const { data: anyEstablishment, error: sampleError } = await supabase
+          .from('establishments')
+          .select('id')
+          .limit(1)
+          .maybeSingle();
 
-    if (establishmentError || !establishment) {
-      console.error('Error fetching establishment:', establishmentError);
+        if (sampleError) throw sampleError;
+
+        if (anyEstablishment) {
+          console.log("Using sample establishment ID for admin bypass:", anyEstablishment.id);
+          establishmentId = anyEstablishment.id;
+          
+          toast({
+            title: "Using demo establishment",
+            description: "Using sample establishment data for admin bypass mode.",
+            variant: "default"
+          });
+        } else {
+          throw new Error("No establishments found in the database");
+        }
+      } else {
+        // Regular flow - fetch the establishment owned by the current user
+        const { data: establishment, error: establishmentError } = await supabase
+          .from('establishments')
+          .select('id')
+          .eq('owner_id', user.id)
+          .maybeSingle();
+
+        if (establishmentError) throw establishmentError;
+
+        if (establishment) {
+          console.log("Found user's establishment:", establishment.id);
+          establishmentId = establishment.id;
+        } else {
+          console.log("No establishment found for user, looking for a sample establishment");
+          // For demo purposes, use a default ID if no establishment is found
+          const { data: anyEstablishment, error: fetchError } = await supabase
+            .from('establishments')
+            .select('id')
+            .limit(1)
+            .maybeSingle();
+
+          if (fetchError) throw fetchError;
+
+          if (anyEstablishment) {
+            console.log("Using sample establishment ID for demo:", anyEstablishment.id);
+            establishmentId = anyEstablishment.id;
+            
+            toast({
+              title: "Using demo establishment",
+              description: "No establishment found for your account. Using sample data instead.",
+              variant: "default"
+            });
+          } else {
+            throw new Error("No establishments found in the database");
+          }
+        }
+      }
+      
+      if (!establishmentId) {
+        throw new Error("Could not determine establishment ID");
+      }
+
+      const { data: threadData, error: threadError } = await supabase
+        .from('promoter_venue_threads')
+        .select(`
+          id,
+          created_at,
+          updated_at,
+          subject,
+          last_message_at,
+          is_archived,
+          promoter_id,
+          promoter_venue_messages (
+            id,
+            content,
+            sent_at,
+            is_from_promoter,
+            sender_id
+          ),
+          profiles!promoter_venue_threads_promoter_id_fkey (
+            display_name,
+            username
+          )
+        `)
+        .eq('venue_id', establishmentId)
+        .order('last_message_at', { ascending: false });
+
+      if (threadError) {
+        console.error('Error fetching threads:', threadError);
+        toast({
+          title: 'Error',
+          description: 'Failed to load messages',
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      const { data: unreadData } = await supabase
+        .from('message_read_status')
+        .select('thread_id, last_read_at')
+        .eq('user_id', user.id);
+
+      const readStatusMap = new Map();
+      if (unreadData) {
+        unreadData.forEach(item => {
+          readStatusMap.set(item.thread_id, item.last_read_at);
+        });
+      }
+
+      const formattedThreads: FormattedThread[] = (threadData as ThreadData[]).map(thread => {
+        const promoterProfile = thread.profiles || {};
+        // Access properties safely
+        let promoterName = 'Promoter';
+        
+        // Handle array or single object structure for profiles
+        if (Array.isArray(promoterProfile)) {
+          const profile = promoterProfile[0] || {};
+          promoterName = (profile.display_name as string) || 
+                        (profile.username as string) || 
+                        'Promoter';
+        } else {
+          promoterName = (promoterProfile.display_name as string) || 
+                        (promoterProfile.username as string) || 
+                        'Promoter';
+        }
+        
+        const messages = thread.promoter_venue_messages || [];
+        const lastMessage = messages.length > 0 
+          ? messages.sort((a, b) => 
+              new Date(b.sent_at).getTime() - new Date(a.sent_at).getTime()
+            )[0].content
+          : 'No messages yet';
+        
+        const lastReadAt = readStatusMap.get(thread.id);
+        const lastMessageAt = thread.last_message_at;
+        const isRead = !lastMessageAt || (lastReadAt && new Date(lastReadAt) >= new Date(lastMessageAt));
+        
+        return {
+          id: thread.id,
+          venueName: promoterName,
+          eventName: thread.subject || undefined,
+          lastMessage,
+          timestamp: thread.last_message_at,
+          isRead: isRead,
+          isArchived: thread.is_archived,
+          messages: []
+        };
+      });
+
+      setThreads(formattedThreads);
+      
+    } catch (error) {
+      console.error('Error fetching establishment:', error);
       toast({
         title: 'Error',
         description: 'Could not find your establishment profile',
         variant: 'destructive'
       });
-      return;
+      // Set empty threads array to prevent UI from waiting indefinitely
+      setThreads([]);
     }
-
-    const { data: threadData, error: threadError } = await supabase
-      .from('promoter_venue_threads')
-      .select(`
-        id,
-        created_at,
-        updated_at,
-        subject,
-        last_message_at,
-        is_archived,
-        promoter_id,
-        promoter_venue_messages (
-          id,
-          content,
-          sent_at,
-          is_from_promoter,
-          sender_id
-        ),
-        profiles!promoter_venue_threads_promoter_id_fkey (
-          display_name,
-          username
-        )
-      `)
-      .eq('venue_id', establishment.id)
-      .order('last_message_at', { ascending: false });
-
-    if (threadError) {
-      console.error('Error fetching threads:', threadError);
-      toast({
-        title: 'Error',
-        description: 'Failed to load messages',
-        variant: 'destructive'
-      });
-      return;
-    }
-
-    const { data: unreadData } = await supabase
-      .from('message_read_status')
-      .select('thread_id, last_read_at')
-      .eq('user_id', user.id);
-
-    const readStatusMap = new Map();
-    if (unreadData) {
-      unreadData.forEach(item => {
-        readStatusMap.set(item.thread_id, item.last_read_at);
-      });
-    }
-
-    const formattedThreads: FormattedThread[] = (threadData as ThreadData[]).map(thread => {
-      const promoterProfile = thread.profiles || {};
-      // Access properties safely
-      let promoterName = 'Promoter';
-      
-      // Handle array or single object structure for profiles
-      if (Array.isArray(promoterProfile)) {
-        const profile = promoterProfile[0] || {};
-        promoterName = (profile.display_name as string) || 
-                      (profile.username as string) || 
-                      'Promoter';
-      } else {
-        promoterName = (promoterProfile.display_name as string) || 
-                      (promoterProfile.username as string) || 
-                      'Promoter';
-      }
-      
-      const messages = thread.promoter_venue_messages || [];
-      const lastMessage = messages.length > 0 
-        ? messages.sort((a, b) => 
-            new Date(b.sent_at).getTime() - new Date(a.sent_at).getTime()
-          )[0].content
-        : 'No messages yet';
-      
-      const lastReadAt = readStatusMap.get(thread.id);
-      const lastMessageAt = thread.last_message_at;
-      const isRead = !lastMessageAt || (lastReadAt && new Date(lastReadAt) >= new Date(lastMessageAt));
-      
-      return {
-        id: thread.id,
-        venueName: promoterName,
-        eventName: thread.subject || undefined,
-        lastMessage,
-        timestamp: thread.last_message_at,
-        isRead: isRead,
-        isArchived: thread.is_archived,
-        messages: []
-      };
-    });
-
-    setThreads(formattedThreads);
   };
 
   const fetchPromoterThreads = async () => {
