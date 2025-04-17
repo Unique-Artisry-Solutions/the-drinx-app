@@ -1,6 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { Resend } from "npm:resend@2.0.0"
 import webpush from 'https://esm.sh/web-push@3.6.6'
+
+const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -22,7 +25,6 @@ interface UpdateNotificationParams {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
@@ -64,13 +66,20 @@ async function handleCreateNotification(params: NotificationData) {
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
   )
 
-  // Get user's notification preferences
-  const { data: preferences } = await supabaseClient
-    .from('notification_preferences')
-    .select('*')
-    .eq('user_id', params.recipientId)
-    .eq('category_id', params.categoryId)
-    .single()
+  // Get user's notification preferences and profile
+  const [{ data: preferences }, { data: userProfile }] = await Promise.all([
+    supabaseClient
+      .from('notification_preferences')
+      .select('*')
+      .eq('user_id', params.recipientId)
+      .eq('category_id', params.categoryId)
+      .single(),
+    supabaseClient
+      .from('profiles')
+      .select('email')
+      .eq('id', params.recipientId)
+      .single()
+  ]);
 
   // Create in-app notification
   const { data: notification, error } = await supabaseClient
@@ -89,6 +98,8 @@ async function handleCreateNotification(params: NotificationData) {
     .single()
 
   if (error) throw error
+
+  let deliveryStatus = {};
 
   // Handle push notifications if enabled
   if (preferences?.channels?.includes('push')) {
@@ -114,24 +125,14 @@ async function handleCreateNotification(params: NotificationData) {
               metadata: params.metadata
             }));
 
-            // Update delivery status
-            const newStatus = {
-              ...notification.delivery_status,
+            deliveryStatus = {
+              ...deliveryStatus,
               push: { success: true, timestamp: new Date().toISOString() }
             };
-
-            await supabaseClient
-              .from('notifications')
-              .update({
-                delivery_status: newStatus,
-                delivery_attempts: notification.delivery_attempts + 1
-              })
-              .eq('id', notification.id);
 
           } catch (error) {
             console.error('Push notification failed:', error);
             if (error.statusCode === 410 || error.statusCode === 404) {
-              // Subscription is no longer valid, remove it
               await supabaseClient
                 .from('push_notification_subscriptions')
                 .delete()
@@ -142,14 +143,61 @@ async function handleCreateNotification(params: NotificationData) {
       }
     } catch (error) {
       console.error('Error sending push notification:', error);
+      deliveryStatus = {
+        ...deliveryStatus,
+        push: { success: false, error: error.message, timestamp: new Date().toISOString() }
+      };
     }
   }
 
   // Handle email notifications if enabled
-  if (preferences?.channels?.includes('email')) {
-    // Here you would integrate with your email service
-    console.log('Email notification should be sent:', params)
+  if (preferences?.channels?.includes('email') && userProfile?.email) {
+    try {
+      await resend.emails.send({
+        from: 'notifications@yourdomain.com',
+        to: userProfile.email,
+        subject: params.title,
+        html: `
+          <h2>${params.title}</h2>
+          <p>${params.content}</p>
+          ${params.metadata?.actionUrl ? `<p><a href="${params.metadata.actionUrl}">Take Action</a></p>` : ''}
+        `,
+      });
+
+      deliveryStatus = {
+        ...deliveryStatus,
+        email: { success: true, timestamp: new Date().toISOString() }
+      };
+    } catch (error) {
+      console.error('Error sending email:', error);
+      deliveryStatus = {
+        ...deliveryStatus,
+        email: { success: false, error: error.message, timestamp: new Date().toISOString() }
+      };
+    }
   }
+
+  // Update notification with delivery status
+  await supabaseClient
+    .from('notifications')
+    .update({
+      delivery_status: deliveryStatus,
+      delivery_attempts: notification.delivery_attempts + 1
+    })
+    .eq('id', notification.id);
+
+  // Log delivery attempt
+  await supabaseClient
+    .from('notification_delivery_logs')
+    .insert({
+      notification_id: notification.id,
+      delivery_type: Object.keys(deliveryStatus).join(','),
+      status: Object.values(deliveryStatus).every((d: any) => d.success) ? 'success' : 'partial_failure',
+      error_message: Object.values(deliveryStatus)
+        .filter((d: any) => !d.success)
+        .map((d: any) => d.error)
+        .join(', ') || null
+    });
 
   return new Response(
     JSON.stringify({ data: notification }),

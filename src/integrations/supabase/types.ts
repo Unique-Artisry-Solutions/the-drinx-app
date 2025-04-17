@@ -1076,6 +1076,41 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_delivery_logs: {
+        Row: {
+          created_at: string | null
+          delivery_type: string
+          error_message: string | null
+          id: string
+          notification_id: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string | null
+          delivery_type: string
+          error_message?: string | null
+          id?: string
+          notification_id?: string | null
+          status: string
+        }
+        Update: {
+          created_at?: string | null
+          delivery_type?: string
+          error_message?: string | null
+          id?: string
+          notification_id?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_delivery_logs_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "notifications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_preferences: {
         Row: {
           category_id: string
@@ -1398,6 +1433,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      push_notification_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string | null
+          device_info: Json | null
+          endpoint: string
+          id: string
+          p256dh: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string | null
+          device_info?: Json | null
+          endpoint: string
+          id?: string
+          p256dh: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string | null
+          device_info?: Json | null
+          endpoint?: string
+          id?: string
+          p256dh?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       revenue_entries: {
         Row: {
