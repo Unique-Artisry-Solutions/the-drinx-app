@@ -10,5 +10,5 @@ export { isThemeFeature } from './themeDetection';
 export { isEstablishmentManagementFeature, isVisitTrackingFeature } from './establishmentDetection';
 export { isSignatureFeature } from './signatureFeatureDetection';
 
-// Re-export the isPromoterFeature function from the promoterFeatures module
-export { isPromoterFeature } from '../../features/promoterFeatures';
+// Export promoterFeatures rather than isPromoterFeature since it doesn't exist
+export { promoterFeatures } from '../../features';

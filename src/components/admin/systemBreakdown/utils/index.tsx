@@ -56,6 +56,9 @@ import {
   generateFeatureReport 
 } from './featureShowcaseUtils';
 
+// Also import from our featureStatistics module to fix import errors
+import { calculateCategoryProgress, groupFeaturesByCategory } from './featureStatistics';
+
 /**
  * Creates a date string that is X months from now (for planned release date)
  */
@@ -70,6 +73,8 @@ export {
   renderDatabaseStatusBadge,
   renderAccessIcon,
   calculateFeatureStatistics,
+  calculateCategoryProgress,
+  groupFeaturesByCategory,
   generateCSV,
   analyzeAllFeatures,
   analyzeDbRequirements,

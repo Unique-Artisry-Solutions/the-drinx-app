@@ -23,7 +23,7 @@ const ImplementationOverview: React.FC<ImplementationOverviewProps> = ({
   const [chartType, setChartType] = useState<'bar' | 'pie' | 'line'>('bar');
   
   // Calculate feature statistics
-  const adminStats = calculateFeatureStatistics(adminFeatures, establishmentFeatures, individualFeatures);
+  const adminStats = calculateFeatureStatistics(adminFeatures);
   const establishmentStats = calculateFeatureStatistics(establishmentFeatures);
   const individualStats = calculateFeatureStatistics(individualFeatures);
   const promoterStats = calculateFeatureStatistics(promoterFeatures);
@@ -124,7 +124,7 @@ const ImplementationOverview: React.FC<ImplementationOverviewProps> = ({
           <div className="text-lg font-medium">{adminFeatures.length}</div>
           <div className="text-sm text-gray-600">Admin Features</div>
           <div className="text-xs mt-2">
-            {Math.round(adminStats.implementationRate)}% implemented
+            {Math.round(adminStats.averageImplementation)}% implemented
           </div>
         </div>
         

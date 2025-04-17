@@ -6,24 +6,31 @@ import { getNormalizedDbStatus } from './statusRenderers';
  * Calculates comprehensive statistics about feature implementation status
  */
 export const calculateFeatureStatistics = (
-  adminFeatures: FeatureItem[],
-  establishmentFeatures: FeatureItem[],
-  individualFeatures: FeatureItem[],
+  adminFeatures: FeatureItem[] = [],
+  establishmentFeatures: FeatureItem[] = [],
+  individualFeatures: FeatureItem[] = [],
   promoterFeatures: FeatureItem[] = []
 ) => {
-  const allFeatures = [...adminFeatures, ...establishmentFeatures, ...individualFeatures, ...promoterFeatures];
+  // Convert arguments to array when multiple arguments provided
+  let features: FeatureItem[] = [];
   
-  const totalFeatures = allFeatures.length;
-  const implementedFeatures = allFeatures.filter(f => f.status === 'implemented').length;
-  const partialFeatures = allFeatures.filter(f => f.status === 'partial').length;
-  const plannedFeatures = allFeatures.filter(f => f.status === 'planned').length;
-  const inProgressFeatures = allFeatures.filter(f => f.status === 'in_progress').length;
-  const blockedFeatures = allFeatures.filter(f => f.status === 'blocked').length;
+  if (arguments.length === 1 && Array.isArray(arguments[0])) {
+    features = arguments[0];
+  } else {
+    features = [...adminFeatures, ...establishmentFeatures, ...individualFeatures, ...promoterFeatures];
+  }
+  
+  const totalFeatures = features.length;
+  const implementedFeatures = features.filter(f => f.status === 'implemented').length;
+  const partialFeatures = features.filter(f => f.status === 'partial').length;
+  const plannedFeatures = features.filter(f => f.status === 'planned').length;
+  const inProgressFeatures = features.filter(f => f.status === 'in_progress').length;
+  const blockedFeatures = features.filter(f => f.status === 'blocked').length;
   
   // Use getNormalizedDbStatus to ensure consistent database status
-  const dbCompleted = allFeatures.filter(f => getNormalizedDbStatus(f) === 'complete').length;
-  const dbInProgress = allFeatures.filter(f => getNormalizedDbStatus(f) === 'in_progress').length;
-  const dbNotStarted = allFeatures.filter(f => getNormalizedDbStatus(f) === 'not_started').length;
+  const dbCompleted = features.filter(f => getNormalizedDbStatus(f) === 'complete').length;
+  const dbInProgress = features.filter(f => getNormalizedDbStatus(f) === 'in_progress').length;
+  const dbNotStarted = features.filter(f => getNormalizedDbStatus(f) === 'not_started').length;
   
   // Calculate the implementation rate using a weighted approach
   const implementationRate = totalFeatures > 0 
@@ -51,7 +58,7 @@ export const calculateFeatureStatistics = (
   );
   
   // Calculate average implementation progress using actual implementation progress values
-  const totalImplementationProgress = allFeatures.reduce((sum, feature) => {
+  const totalImplementationProgress = features.reduce((sum, feature) => {
     // Use the implementationProgress value if available, or infer from status
     const progress = feature.implementationProgress ?? (
       feature.status === 'implemented' ? 100 :
@@ -66,26 +73,60 @@ export const calculateFeatureStatistics = (
     ? totalImplementationProgress / totalFeatures
     : 0;
 
-  // Calculate specific promoter statistics
-  const promoterFeatureCount = promoterFeatures.length;
-  const promoterImplementedCount = promoterFeatures.filter(f => f.status === 'implemented').length;
-  const promoterInProgressCount = promoterFeatures.filter(f => f.status === 'in_progress').length;
-  const promoterImplementationRate = promoterFeatureCount > 0
-    ? Math.round((promoterImplementedCount + (promoterInProgressCount * 0.5)) / promoterFeatureCount * 100)
-    : 0;
-    
-  // Get promoter feature categories based on tags
-  const promoterCategories = promoterFeatures.reduce((categories, feature) => {
-    if (feature.tags) {
-      feature.tags.forEach(tag => {
-        if (tag !== 'promoter') { // Skip the general 'promoter' tag
-          categories[tag] = (categories[tag] || 0) + 1;
-        }
-      });
-    }
-    return categories;
-  }, {} as Record<string, number>);
-    
+  // Calculate specific promoter statistics for the full version
+  if (promoterFeatures.length > 0) {
+    const promoterFeatureCount = promoterFeatures.length;
+    const promoterImplementedCount = promoterFeatures.filter(f => f.status === 'implemented').length;
+    const promoterInProgressCount = promoterFeatures.filter(f => f.status === 'in_progress').length;
+    const promoterImplementationRate = promoterFeatureCount > 0
+      ? Math.round((promoterImplementedCount + (promoterInProgressCount * 0.5)) / promoterFeatureCount * 100)
+      : 0;
+      
+    // Get promoter feature categories based on tags
+    const promoterCategories = promoterFeatures.reduce((categories, feature) => {
+      if (feature.tags) {
+        feature.tags.forEach(tag => {
+          if (tag !== 'promoter') { // Skip the general 'promoter' tag
+            categories[tag] = (categories[tag] || 0) + 1;
+          }
+        });
+      }
+      return categories;
+    }, {} as Record<string, number>);
+      
+    return {
+      totalFeatures,
+      implementedFeatures,
+      partialFeatures,
+      plannedFeatures,
+      inProgressFeatures,
+      blockedFeatures,
+      dbCompleted,
+      dbInProgress,
+      dbNotStarted,
+      implementationRate,
+      databaseCompletionRate,
+      frontendImplementationRate,
+      confidenceScore,
+      averageImplementation,
+      // Add development metrics
+      developmentMetrics: {
+        frontend: frontendImplementationRate,
+        backend: databaseCompletionRate,
+        overall: Math.round((frontendImplementationRate + databaseCompletionRate) / 2)
+      },
+      // Add promoter specific metrics
+      promoterMetrics: {
+        featureCount: promoterFeatureCount,
+        implemented: promoterImplementedCount,
+        inProgress: promoterInProgressCount,
+        implementationRate: promoterImplementationRate,
+        categories: promoterCategories
+      }
+    };
+  }
+  
+  // Basic version for single feature arrays
   return {
     totalFeatures,
     implementedFeatures,
@@ -93,28 +134,11 @@ export const calculateFeatureStatistics = (
     plannedFeatures,
     inProgressFeatures,
     blockedFeatures,
-    dbCompleted,
-    dbInProgress,
-    dbNotStarted,
     implementationRate,
     databaseCompletionRate,
     frontendImplementationRate,
     confidenceScore,
     averageImplementation,
-    // Add development metrics
-    developmentMetrics: {
-      frontend: frontendImplementationRate,
-      backend: databaseCompletionRate,
-      overall: Math.round((frontendImplementationRate + databaseCompletionRate) / 2)
-    },
-    // Add promoter specific metrics
-    promoterMetrics: {
-      featureCount: promoterFeatureCount,
-      implemented: promoterImplementedCount,
-      inProgress: promoterInProgressCount,
-      implementationRate: promoterImplementationRate,
-      categories: promoterCategories
-    }
   };
 };
 
