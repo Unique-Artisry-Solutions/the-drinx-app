@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
+import type { PushSubscription } from '@/types/NotificationTypes';
 
 export function usePushNotifications() {
   const [subscription, setSubscription] = useState<PushSubscription | null>(null);
@@ -43,41 +44,51 @@ export function usePushNotifications() {
       // Get push subscription
       const existingSubscription = await registration.pushManager.getSubscription();
       if (existingSubscription) {
-        setSubscription(existingSubscription);
+        const subData: PushSubscription = {
+          user_id: (await supabase.auth.getUser()).data.user?.id || '',
+          endpoint: existingSubscription.endpoint,
+          p256dh: btoa(String.fromCharCode.apply(null, 
+            new Uint8Array(existingSubscription.getKey('p256dh') as ArrayBuffer))),
+          auth: btoa(String.fromCharCode.apply(null, 
+            new Uint8Array(existingSubscription.getKey('auth') as ArrayBuffer)))
+        };
+        setSubscription(subData);
         return existingSubscription;
       }
 
       // Create new subscription
-      const subscription = await registration.pushManager.subscribe({
+      const pushSubscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: import.meta.env.VITE_VAPID_PUBLIC_KEY
       });
 
       // Save subscription to database
+      const subscriptionData: PushSubscription = {
+        user_id: (await supabase.auth.getUser()).data.user?.id || '',
+        endpoint: pushSubscription.endpoint,
+        p256dh: btoa(String.fromCharCode.apply(null, 
+          new Uint8Array(pushSubscription.getKey('p256dh') as ArrayBuffer))),
+        auth: btoa(String.fromCharCode.apply(null, 
+          new Uint8Array(pushSubscription.getKey('auth') as ArrayBuffer))),
+        device_info: {
+          userAgent: navigator.userAgent,
+          language: navigator.language
+        }
+      };
+
       const { error } = await supabase
         .from('push_notification_subscriptions')
-        .upsert({
-          user_id: (await supabase.auth.getUser()).data.user?.id,
-          endpoint: subscription.endpoint,
-          p256dh: btoa(String.fromCharCode.apply(null, 
-            new Uint8Array(subscription.getKey('p256dh') as ArrayBuffer))),
-          auth: btoa(String.fromCharCode.apply(null, 
-            new Uint8Array(subscription.getKey('auth') as ArrayBuffer))),
-          device_info: {
-            userAgent: navigator.userAgent,
-            language: navigator.language
-          }
-        });
+        .upsert(subscriptionData);
 
       if (error) throw error;
 
-      setSubscription(subscription);
+      setSubscription(subscriptionData);
       toast({
         title: "Success",
         description: "Push notifications have been enabled",
       });
 
-      return subscription;
+      return pushSubscription;
     } catch (error) {
       console.error('Error subscribing to push notifications:', error);
       toast({
@@ -93,15 +104,20 @@ export function usePushNotifications() {
     try {
       if (!subscription) return;
 
-      await subscription.unsubscribe();
-      
-      // Remove subscription from database
+      // Delete from database first
       const { error } = await supabase
         .from('push_notification_subscriptions')
         .delete()
         .eq('endpoint', subscription.endpoint);
 
       if (error) throw error;
+
+      // Get the service worker registration and unsubscribe
+      const registration = await navigator.serviceWorker.ready;
+      const pushSubscription = await registration.pushManager.getSubscription();
+      if (pushSubscription) {
+        await pushSubscription.unsubscribe();
+      }
 
       setSubscription(null);
       toast({
