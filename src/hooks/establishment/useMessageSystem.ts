@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/auth';
@@ -469,11 +468,19 @@ export const useMessageSystem = (userType: 'establishment' | 'promoter'): UseMes
     if (!user) return;
     
     try {
-      // Use the RPC function to mark the thread as read
-      await supabase.rpc('mark_thread_as_read', {
-        _thread_id: threadId,
-        _user_id: user.id
-      });
+      // Instead of using the RPC function, insert/update directly into the message_read_status table
+      const { error } = await fromTable('message_read_status')
+        .upsert({
+          thread_id: threadId,
+          user_id: user.id,
+          last_read_at: new Date().toISOString()
+        }, {
+          onConflict: 'thread_id,user_id'
+        });
+
+      if (error) {
+        throw error;
+      }
 
       setThreads(current => 
         current.map(thread => 
