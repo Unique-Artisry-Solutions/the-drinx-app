@@ -11,6 +11,7 @@ export const isPromoterCommunicationFeature = (feature: FeatureItem): boolean =>
   // - Communication inbox and contacts list 
   // - Ability to start new conversations with venues
   // - Navigation link to venues in promoter interface
+  // - Establishment communication hub for receiving and responding to messages
   
   return matchesAnyKeyword(feature, [
     'promoter communication', 

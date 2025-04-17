@@ -7,6 +7,7 @@ import MocktailMenuTab from '@/components/establishment/MocktailMenuTab';
 import VisitorStatsTab from '@/components/establishment/VisitorStatsTab';
 import BarCrawlsTab from '@/components/establishment/BarCrawlsTab';
 import LoyaltyProgramTab from '@/components/establishment/LoyaltyProgramTab';
+import EstablishmentInbox from '@/components/establishment/communication/EstablishmentInbox';
 
 interface TabContentProps {
   activeTab: string;
@@ -109,6 +110,16 @@ const TabContent: React.FC<TabContentProps> = ({
             onUpdateReward={loyaltyProgramState?.handleUpdateReward}
             onDeleteReward={loyaltyProgramState?.handleDeleteReward}
           />
+        </TabsContent>
+        
+        <TabsContent value="communication">
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold">Promoter Communication</h2>
+            <p className="text-gray-600">
+              Manage messages from promoters interested in organizing events at your venue.
+            </p>
+            <EstablishmentInbox />
+          </div>
         </TabsContent>
       </div>
     </Tabs>

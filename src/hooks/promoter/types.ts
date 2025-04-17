@@ -1,4 +1,13 @@
 
+export interface Message {
+  id: string;
+  text: string;
+  timestamp: string;
+  senderName: string;
+  isFromPromoter: boolean;
+  senderId?: string;
+}
+
 export interface MessageThread {
   id: string;
   venueName: string;
@@ -10,18 +19,10 @@ export interface MessageThread {
   messages: Message[];
 }
 
-export interface Message {
-  id: string;
-  text: string;
-  timestamp: string;
-  isFromPromoter: boolean;
-  senderName: string;
-}
-
-export type VenueContact = {
+export interface VenueContact {
   id: string;
   name: string;
   role: string;
   venueId: string;
   venueName: string;
-};
+}
