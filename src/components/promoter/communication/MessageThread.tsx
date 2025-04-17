@@ -1,36 +1,37 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { format } from 'date-fns';
-import { Send, ArrowLeft, Archive } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Send, Archive, MoreHorizontal } from 'lucide-react';
+import { usePromoterMessages } from '@/hooks/promoter/usePromoterMessages';
 import { Message } from '@/hooks/promoter/types';
 
 interface MessageThreadProps {
-  venueName: string;
-  messages: Message[];
-  onBack: () => void;
-  onSendMessage: (text: string) => void;
-  onArchive: () => void;
-  eventName?: string;
+  threadId: string;
 }
 
-const MessageThread: React.FC<MessageThreadProps> = ({
-  venueName,
-  messages,
-  onBack,
-  onSendMessage,
-  onArchive,
-  eventName
-}) => {
+const MessageThread: React.FC<MessageThreadProps> = ({ threadId }) => {
+  const { getMessageThread, sendMessage, archiveThread } = usePromoterMessages();
+  const [thread, setThread] = useState<any>(null);
   const [newMessage, setNewMessage] = useState('');
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messageEndRef = useRef<HTMLDivElement>(null);
+  
+  useEffect(() => {
+    if (threadId) {
+      const currentThread = getMessageThread(threadId);
+      setThread(currentThread);
+    }
+  }, [threadId, getMessageThread]);
 
-  const handleSend = () => {
-    if (newMessage.trim()) {
-      onSendMessage(newMessage.trim());
+  useEffect(() => {
+    // Scroll to bottom when messages change
+    messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [thread?.messages]);
+
+  const handleSendMessage = () => {
+    if (newMessage.trim() && thread) {
+      sendMessage(threadId, newMessage);
       setNewMessage('');
     }
   };
@@ -38,72 +39,85 @@ const MessageThread: React.FC<MessageThreadProps> = ({
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSend();
+      handleSendMessage();
     }
   };
 
-  // Scroll to the bottom when messages change
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  if (!thread) {
+    return (
+      <Card>
+        <CardContent className="p-6 text-center text-gray-500">
+          <p>Select a conversation to view messages</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
-    <Card className="flex flex-col h-[600px]">
-      <CardHeader className="pb-3 border-b">
+    <Card className="flex flex-col h-[70vh]">
+      <CardHeader className="border-b">
         <div className="flex items-center justify-between">
-          <Button variant="ghost" size="icon" onClick={onBack} className="mr-2">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          
-          <CardTitle className="flex-1">
-            <div className="flex flex-col">
-              <span>{venueName}</span>
-              {eventName && (
-                <span className="text-xs text-muted-foreground">Re: {eventName}</span>
-              )}
-            </div>
+          <CardTitle className="text-lg">
+            {thread.venueName}
+            {thread.eventName && ` - ${thread.eventName}`}
           </CardTitle>
-          
-          <Button variant="ghost" size="icon" onClick={onArchive} title="Archive conversation">
-            <Archive className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center space-x-2">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => archiveThread(threadId)}
+              title="Archive conversation"
+            >
+              <Archive className="h-4 w-4" />
+              <span className="sr-only">Archive</span>
+            </Button>
+            <Button variant="ghost" size="sm" title="More options">
+              <MoreHorizontal className="h-4 w-4" />
+              <span className="sr-only">More</span>
+            </Button>
+          </div>
         </div>
       </CardHeader>
-      
-      <CardContent className="flex-1 overflow-y-auto py-4 px-4 space-y-4">
-        {messages.map(message => (
+      <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
+        {thread.messages.map((message: Message) => (
           <div 
-            key={message.id}
+            key={message.id} 
             className={`flex ${message.isFromPromoter ? 'justify-end' : 'justify-start'}`}
           >
             <div 
-              className={`max-w-[70%] rounded-lg px-3 py-2 ${
+              className={`max-w-[80%] p-3 rounded-lg ${
                 message.isFromPromoter 
-                  ? 'bg-primary text-primary-foreground' 
-                  : 'bg-muted text-foreground'
+                  ? 'bg-purple-100 text-purple-900' 
+                  : 'bg-gray-100 text-gray-900'
               }`}
             >
-              <div className="text-xs mb-1">
-                {message.senderName} • {format(new Date(message.timestamp), 'h:mm a')}
+              <div className="text-xs text-gray-500 mb-1">
+                {message.isFromPromoter ? 'You' : message.senderName}
               </div>
-              <div className="text-sm">{message.text}</div>
+              <div className="whitespace-pre-wrap">{message.text}</div>
+              <div className="text-xs text-gray-500 mt-1 text-right">
+                {new Date(message.timestamp).toLocaleTimeString([], { 
+                  hour: '2-digit', 
+                  minute: '2-digit' 
+                })}
+              </div>
             </div>
           </div>
         ))}
-        <div ref={messagesEndRef} />
+        <div ref={messageEndRef} />
       </CardContent>
-      
-      <div className="p-3 border-t">
-        <div className="flex gap-2">
-          <Input
-            placeholder="Type your message..."
+      <div className="border-t p-4">
+        <div className="flex space-x-2">
+          <Input 
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyDown={handleKeyPress}
+            placeholder="Type your message..."
             className="flex-1"
           />
-          <Button onClick={handleSend} disabled={!newMessage.trim()}>
-            <Send className="h-4 w-4" />
+          <Button onClick={handleSendMessage} disabled={!newMessage.trim()}>
+            <Send className="h-4 w-4 mr-2" />
+            Send
           </Button>
         </div>
       </div>

@@ -1,58 +1,57 @@
 
 import React from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { Badge } from '@/components/ui/badge';
 import { MessageThread } from '@/hooks/promoter/types';
+import { cn } from '@/lib/utils';
 
 interface MessageThreadListProps {
   conversations: MessageThread[];
-  onSelectConversation: (id: string) => void;
+  onSelectConversation: (threadId: string) => void;
 }
 
 const MessageThreadList: React.FC<MessageThreadListProps> = ({ 
-  conversations,
-  onSelectConversation
+  conversations, 
+  onSelectConversation 
 }) => {
   if (conversations.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-8 text-center">
-        <p className="text-muted-foreground mb-2">No messages found</p>
-        <p className="text-sm text-muted-foreground">Messages with venues will appear here</p>
+      <div className="text-center py-6 text-gray-500">
+        <p>No messages found</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 overflow-y-auto max-h-[500px]">
       {conversations.map((conversation) => (
         <div 
           key={conversation.id}
-          onClick={() => onSelectConversation(conversation.id)} 
-          className={`p-3 rounded-lg flex items-start justify-between cursor-pointer border ${
-            !conversation.isRead ? 'bg-muted/30 border-muted-foreground/20' : 'bg-card border-border'
-          } hover:bg-muted/50 transition-colors`}
+          onClick={() => onSelectConversation(conversation.id)}
+          className={cn(
+            "p-3 rounded-md transition-colors duration-200 cursor-pointer border",
+            conversation.isRead 
+              ? "bg-white hover:bg-gray-50" 
+              : "bg-purple-50 border-purple-200 hover:bg-purple-100"
+          )}
         >
-          <div className="flex-1">
-            <div className="flex items-center gap-2">
-              <h4 className={`font-medium ${!conversation.isRead ? 'font-semibold' : ''}`}>
-                {conversation.venueName}
-              </h4>
-              {!conversation.isRead && (
-                <Badge variant="secondary" className="bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200">New</Badge>
-              )}
-              {conversation.eventName && (
-                <Badge variant="outline" className="ml-2">{conversation.eventName}</Badge>
-              )}
-            </div>
-            
-            <p className={`text-sm line-clamp-1 mt-1 ${!conversation.isRead ? 'text-foreground' : 'text-muted-foreground'}`}>
-              {conversation.lastMessage}
-            </p>
+          <div className="flex justify-between items-start">
+            <h3 className={cn(
+              "font-medium",
+              !conversation.isRead && "font-semibold text-purple-700"
+            )}>
+              {conversation.venueName}
+              {conversation.eventName && <span className="text-gray-500 text-sm ml-2">({conversation.eventName})</span>}
+            </h3>
+            <span className="text-xs text-gray-500">
+              {formatDistanceToNow(new Date(conversation.timestamp), { addSuffix: true })}
+            </span>
           </div>
-          
-          <div className="text-xs text-muted-foreground whitespace-nowrap ml-4">
-            {formatDistanceToNow(new Date(conversation.timestamp), { addSuffix: true })}
-          </div>
+          <p className={cn(
+            "text-sm mt-1 line-clamp-2",
+            conversation.isRead ? "text-gray-600" : "text-gray-900"
+          )}>
+            {conversation.lastMessage}
+          </p>
         </div>
       ))}
     </div>

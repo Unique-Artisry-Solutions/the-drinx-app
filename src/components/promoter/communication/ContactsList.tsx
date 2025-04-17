@@ -1,34 +1,56 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Search, UserPlus } from 'lucide-react';
+import { Search, Plus, Users } from 'lucide-react';
 import { usePromoterContacts } from '@/hooks/promoter/usePromoterContacts';
+import { VenueContact } from '@/hooks/promoter/types';
+import { useNavigate } from 'react-router-dom';
 
 interface ContactsListProps {
-  onSelectContact: (contactId: string) => void;
+  newContact?: VenueContact | null;
 }
 
-const ContactsList: React.FC<ContactsListProps> = ({ onSelectContact }) => {
+const ContactsList: React.FC<ContactsListProps> = ({ newContact }) => {
+  const { contacts: initialContacts, isLoading } = usePromoterContacts();
+  const [contacts, setContacts] = useState<VenueContact[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const { contacts, isLoading } = usePromoterContacts();
+  const navigate = useNavigate();
   
-  const filteredContacts = contacts.filter(contact => 
-    contact.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    contact.venueName.toLowerCase().includes(searchQuery.toLowerCase())
+  useEffect(() => {
+    if (initialContacts) {
+      setContacts(initialContacts);
+    }
+  }, [initialContacts]);
+  
+  // Handle new contact if provided
+  useEffect(() => {
+    if (newContact && !contacts.some(c => c.venueId === newContact.venueId)) {
+      setContacts(prev => [...prev, newContact]);
+      // Clear the URL parameter after processing
+      navigate('/promoter/communication', { replace: true });
+    }
+  }, [newContact, contacts, navigate]);
+
+  const filteredContacts = contacts.filter(
+    contact => contact.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+               contact.venueName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const handleStartConversation = (contact: VenueContact) => {
+    // Here you would typically create a new message thread and redirect to it
+    console.log('Starting conversation with:', contact);
+    // For now, just redirect to the inbox
+    navigate('/promoter/communication');
+  };
+
   return (
-    <Card>
+    <Card className="w-full">
       <CardHeader>
-        <CardTitle className="flex items-center justify-between">
+        <CardTitle className="flex items-center gap-2">
+          <Users className="h-5 w-5" />
           <span>Venue Contacts</span>
-          <Button size="sm" variant="outline" className="h-8">
-            <UserPlus className="h-4 w-4 mr-2" />
-            Add Contact
-          </Button>
         </CardTitle>
         <div className="relative">
           <Search className="absolute left-2 top-3 h-4 w-4 text-muted-foreground" />
@@ -42,32 +64,40 @@ const ContactsList: React.FC<ContactsListProps> = ({ onSelectContact }) => {
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <div className="py-8 text-center">Loading contacts...</div>
+          <div className="flex justify-center p-4">
+            <p>Loading contacts...</p>
+          </div>
         ) : filteredContacts.length === 0 ? (
-          <div className="py-8 text-center">
-            <p className="text-muted-foreground">No contacts found</p>
+          <div className="text-center p-4">
+            <p className="text-gray-500">No contacts found</p>
           </div>
         ) : (
           <div className="space-y-2">
-            {filteredContacts.map(contact => (
-              <div 
+            {filteredContacts.map((contact) => (
+              <div
                 key={contact.id}
-                onClick={() => onSelectContact(contact.id)}
-                className="p-3 rounded-lg border border-border flex items-center gap-3 cursor-pointer hover:bg-muted/50 transition-colors"
+                className="flex items-center justify-between p-3 rounded-md border hover:bg-gray-50 cursor-pointer"
+                onClick={() => handleStartConversation(contact)}
               >
-                <Avatar>
-                  <AvatarFallback>
-                    {contact.name.split(' ').map(n => n[0]).join('')}
-                  </AvatarFallback>
-                </Avatar>
                 <div>
-                  <p className="font-medium">{contact.name}</p>
-                  <p className="text-sm text-muted-foreground">{contact.role} at {contact.venueName}</p>
+                  <h3 className="font-medium">{contact.name}</h3>
+                  <p className="text-sm text-gray-500">{contact.role} - {contact.venueName}</p>
                 </div>
+                <Button variant="ghost" size="sm">
+                  <Plus className="h-4 w-4" />
+                  <span className="sr-only">Message</span>
+                </Button>
               </div>
             ))}
           </div>
         )}
+        
+        <div className="mt-4 flex justify-end">
+          <Button>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Contact
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );

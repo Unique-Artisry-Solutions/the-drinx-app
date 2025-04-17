@@ -8,7 +8,11 @@ import { Search, MessageSquare } from 'lucide-react';
 import MessageThreadList from './MessageThreadList';
 import { usePromoterMessages } from '@/hooks/promoter/usePromoterMessages';
 
-const PromoterInbox: React.FC = () => {
+interface PromoterInboxProps {
+  onSelectThread?: (threadId: string) => void;
+}
+
+const PromoterInbox: React.FC<PromoterInboxProps> = ({ onSelectThread }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const { 
     conversations,
@@ -22,6 +26,13 @@ const PromoterInbox: React.FC = () => {
     conv => conv.venueName.toLowerCase().includes(searchQuery.toLowerCase()) ||
             conv.lastMessage.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const handleSelectConversation = (threadId: string) => {
+    markAsRead(threadId);
+    if (onSelectThread) {
+      onSelectThread(threadId);
+    }
+  };
 
   return (
     <Card className="w-full">
@@ -58,21 +69,21 @@ const PromoterInbox: React.FC = () => {
           <TabsContent value="all">
             <MessageThreadList 
               conversations={filteredConversations} 
-              onSelectConversation={markAsRead}
+              onSelectConversation={handleSelectConversation}
             />
           </TabsContent>
 
           <TabsContent value="unread">
             <MessageThreadList 
               conversations={filteredConversations.filter(c => !c.isRead)} 
-              onSelectConversation={markAsRead}
+              onSelectConversation={handleSelectConversation}
             />
           </TabsContent>
 
           <TabsContent value="archived">
             <MessageThreadList 
               conversations={filteredConversations.filter(c => c.isArchived)} 
-              onSelectConversation={markAsRead}
+              onSelectConversation={handleSelectConversation}
             />
           </TabsContent>
           

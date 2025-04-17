@@ -6,7 +6,12 @@ import { matchesAnyKeyword } from './coreDetection';
  * Checks if a feature is related to Promoter Communication functionality
  */
 export const isPromoterCommunicationFeature = (feature: FeatureItem): boolean => {
-  // Check using the common helper function
+  // This feature is now implemented with:
+  // - Contact button on establishment pages
+  // - Communication inbox and contacts list 
+  // - Ability to start new conversations with venues
+  // - Navigation link to venues in promoter interface
+  
   return matchesAnyKeyword(feature, [
     'promoter communication', 
     'venue communication', 

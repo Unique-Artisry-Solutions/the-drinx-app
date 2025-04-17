@@ -1,5 +1,5 @@
 
-import { Home, Map, User, Route, Megaphone, BarChart2 } from 'lucide-react';
+import { Home, Map, User, Route, Megaphone, BarChart2, Building } from 'lucide-react';
 import { NavItem } from './types';
 
 export const getUserNavItems = (
@@ -23,6 +23,7 @@ export const getUserNavItems = (
   // Add Create for promoters only (removed for individual users)
   if (userType === 'promoter') {
     navItems.push({ icon: Route, label: 'Create', path: '/create-bar-crawl' });
+    navItems.push({ icon: Building, label: 'Venues', path: '/explore' });
   }
   
   // Add Promotions for promoters only

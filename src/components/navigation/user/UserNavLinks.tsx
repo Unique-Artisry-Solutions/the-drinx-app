@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Map, Route, Megaphone, BarChart2 } from 'lucide-react';
+import { Home, Map, Route, Megaphone, BarChart2, Building } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface UserNavLinksProps {
@@ -36,6 +36,7 @@ const UserNavLinks: React.FC<UserNavLinksProps> = ({ userType }) => {
   // Add different items based on user type - removed Create for individual users
   if (userType === 'promoter') {
     userNavItems.push({ icon: Route, label: 'Create', path: '/create-swig-circuit' });
+    userNavItems.push({ icon: Building, label: 'Venues', path: '/explore' });
     userNavItems.push({ icon: Megaphone, label: 'Promotions', path: '/promoter/dashboard' });
     userNavItems.push({ icon: BarChart2, label: 'Analytics', path: '/promoter/analytics' });
   }

@@ -1,156 +1,249 @@
 
-import { useState, useEffect } from 'react';
-import { useToast } from '@/hooks/use-toast';
-import { MessageThread } from './types';
+import { useState, useEffect, useCallback } from 'react';
+import { MessageThread, Message } from './types';
 
 export const usePromoterMessages = () => {
-  const { toast } = useToast();
   const [conversations, setConversations] = useState<MessageThread[]>([]);
+  const [activeTab, setActiveTab] = useState('all');
   const [unreadCount, setUnreadCount] = useState(0);
-  const [activeTab, setActiveTab] = useState<string>("all");
-  const [isLoading, setIsLoading] = useState(true);
 
+  // Load mock conversation data
   useEffect(() => {
     // In a real implementation, this would fetch from API/database
-    // For now, we're using mock data
     const mockConversations: MessageThread[] = [
       {
-        id: '1',
+        id: 'thread1',
         venueName: 'Downtown Club',
-        eventName: 'Summer Mixer',
-        lastMessage: 'Can we discuss the setup requirements for the event?',
-        timestamp: new Date(Date.now() - 1000 * 60 * 25).toISOString(), // 25 mins ago
+        eventName: 'Summer Launch Party',
+        lastMessage: 'Can we discuss the available dates for July?',
+        timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 minutes ago
         isRead: false,
         isArchived: false,
         messages: [
           {
-            id: '101',
-            text: 'Hello, I wanted to discuss the Summer Mixer event we have scheduled.',
-            timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
-            isFromPromoter: false,
-            senderName: 'Alex (Downtown Club)'
+            id: 'msg1',
+            text: 'Hi there! I\'m interested in hosting an event at your venue.',
+            timestamp: new Date(Date.now() - 1000 * 60 * 120).toISOString(), // 2 hours ago
+            isFromPromoter: true,
+            senderName: 'You'
           },
           {
-            id: '102',
-            text: 'Can we discuss the setup requirements for the event?',
-            timestamp: new Date(Date.now() - 1000 * 60 * 25).toISOString(), // 25 mins ago
+            id: 'msg2',
+            text: 'Hello! We\'d be happy to discuss. What kind of event are you planning?',
+            timestamp: new Date(Date.now() - 1000 * 60 * 60).toISOString(), // 1 hour ago
             isFromPromoter: false,
-            senderName: 'Alex (Downtown Club)'
+            senderName: 'Alex Johnson'
+          },
+          {
+            id: 'msg3',
+            text: 'I\'m planning a summer launch party for a new product. Looking for availability in July.',
+            timestamp: new Date(Date.now() - 1000 * 60 * 45).toISOString(), // 45 minutes ago
+            isFromPromoter: true,
+            senderName: 'You'
+          },
+          {
+            id: 'msg4',
+            text: 'Can we discuss the available dates for July?',
+            timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 minutes ago
+            isFromPromoter: false,
+            senderName: 'Alex Johnson'
           }
         ]
       },
       {
-        id: '2',
+        id: 'thread2',
         venueName: 'Skyline Lounge',
-        lastMessage: 'We\'ve approved your event request for next month.',
-        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(), // 3 hours ago
+        lastMessage: 'The booking has been confirmed for next Friday.',
+        timestamp: new Date(Date.now() - 1000 * 60 * 120).toISOString(), // 2 hours ago
         isRead: true,
         isArchived: false,
         messages: [
           {
-            id: '201',
-            text: 'We\'ve approved your event request for next month.',
-            timestamp: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(), // 3 hours ago
+            id: 'msg1',
+            text: 'I\'d like to book your venue for a corporate event next Friday.',
+            timestamp: new Date(Date.now() - 1000 * 60 * 240).toISOString(), // 4 hours ago
+            isFromPromoter: true,
+            senderName: 'You'
+          },
+          {
+            id: 'msg2',
+            text: 'We have availability that day. What time are you thinking?',
+            timestamp: new Date(Date.now() - 1000 * 60 * 180).toISOString(), // 3 hours ago
             isFromPromoter: false,
-            senderName: 'Jamie (Skyline Lounge)'
+            senderName: 'Jamie Smith'
+          },
+          {
+            id: 'msg3',
+            text: 'Around 7pm until midnight. Will that work?',
+            timestamp: new Date(Date.now() - 1000 * 60 * 150).toISOString(), // 2.5 hours ago
+            isFromPromoter: true,
+            senderName: 'You'
+          },
+          {
+            id: 'msg4',
+            text: 'The booking has been confirmed for next Friday.',
+            timestamp: new Date(Date.now() - 1000 * 60 * 120).toISOString(), // 2 hours ago
+            isFromPromoter: false,
+            senderName: 'Jamie Smith'
           }
         ]
       },
       {
-        id: '3',
+        id: 'thread3',
         venueName: 'Harbor View',
-        eventName: 'Cocktail Fundraiser',
-        lastMessage: 'Thank you for organizing such a successful event!',
-        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(), // 2 days ago
+        lastMessage: 'Thank you for your inquiry. Unfortunately, we are fully booked on that date.',
+        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
+        isRead: false,
+        isArchived: false,
+        messages: [
+          {
+            id: 'msg1',
+            text: 'Do you have availability on June 15th for a private event?',
+            timestamp: new Date(Date.now() - 1000 * 60 * 60 * 25).toISOString(), // 25 hours ago
+            isFromPromoter: true,
+            senderName: 'You'
+          },
+          {
+            id: 'msg2',
+            text: 'Thank you for your inquiry. Unfortunately, we are fully booked on that date.',
+            timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 24 hours ago
+            isFromPromoter: false,
+            senderName: 'Taylor Wilson'
+          }
+        ]
+      },
+      {
+        id: 'thread4',
+        venueName: 'Sunset Terrace',
+        eventName: 'Networking Mixer',
+        lastMessage: 'We look forward to hosting your event!',
+        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(), // 2 days ago
         isRead: true,
         isArchived: true,
         messages: [
           {
-            id: '301',
-            text: 'Thank you for organizing such a successful event!',
-            timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(), // 2 days ago
+            id: 'msg1',
+            text: 'I\'d like to confirm our networking mixer for next month.',
+            timestamp: new Date(Date.now() - 1000 * 60 * 60 * 72).toISOString(), // 3 days ago
+            isFromPromoter: true,
+            senderName: 'You'
+          },
+          {
+            id: 'msg2',
+            text: 'Yes, we have you down for the 20th from 6-9pm.',
+            timestamp: new Date(Date.now() - 1000 * 60 * 60 * 60).toISOString(), // 2.5 days ago
             isFromPromoter: false,
-            senderName: 'Taylor (Harbor View)'
+            senderName: 'Casey Rodriguez'
+          },
+          {
+            id: 'msg3',
+            text: 'Perfect, thank you!',
+            timestamp: new Date(Date.now() - 1000 * 60 * 60 * 50).toISOString(), // ~2 days ago
+            isFromPromoter: true,
+            senderName: 'You'
+          },
+          {
+            id: 'msg4',
+            text: 'We look forward to hosting your event!',
+            timestamp: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(), // 2 days ago
+            isFromPromoter: false,
+            senderName: 'Casey Rodriguez'
           }
         ]
       }
     ];
-
+    
     setConversations(mockConversations);
-    setUnreadCount(mockConversations.filter(c => !c.isRead).length);
-    setIsLoading(false);
   }, []);
 
-  const markAsRead = (conversationId: string) => {
-    setConversations(prevConversations => 
-      prevConversations.map(conversation => {
-        if (conversation.id === conversationId && !conversation.isRead) {
-          return { ...conversation, isRead: true };
-        }
-        return conversation;
-      })
-    );
-    
-    // Update unread count
-    setUnreadCount(prevCount => Math.max(0, prevCount - 1));
-  };
+  // Update unread count whenever conversations change
+  useEffect(() => {
+    const count = conversations.filter(conv => !conv.isRead && !conv.isArchived).length;
+    setUnreadCount(count);
+  }, [conversations]);
 
-  const archiveConversation = (conversationId: string) => {
-    setConversations(prevConversations =>
-      prevConversations.map(conversation => {
-        if (conversation.id === conversationId) {
-          return { ...conversation, isArchived: true };
-        }
-        return conversation;
-      })
+  // Mark a thread as read
+  const markAsRead = useCallback((threadId: string) => {
+    setConversations(prev => 
+      prev.map(conv => 
+        conv.id === threadId ? { ...conv, isRead: true } : conv
+      )
     );
-    
-    toast({
-      title: 'Conversation archived',
-      description: 'You can find it in the archived tab',
-    });
-  };
+  }, []);
 
-  const sendMessage = (conversationId: string, messageText: string) => {
-    // In a real app, this would call an API
-    const newMessage = {
-      id: `msg_${Date.now()}`,
-      text: messageText,
+  // Archive a thread
+  const archiveThread = useCallback((threadId: string) => {
+    setConversations(prev => 
+      prev.map(conv => 
+        conv.id === threadId ? { ...conv, isArchived: true } : conv
+      )
+    );
+  }, []);
+
+  // Get a specific message thread
+  const getMessageThread = useCallback((threadId: string) => {
+    return conversations.find(conv => conv.id === threadId);
+  }, [conversations]);
+
+  // Send a new message in a thread
+  const sendMessage = useCallback((threadId: string, text: string) => {
+    const newMessage: Message = {
+      id: `msg-${Date.now()}`,
+      text,
       timestamp: new Date().toISOString(),
       isFromPromoter: true,
       senderName: 'You'
     };
 
-    setConversations(prevConversations =>
-      prevConversations.map(conversation => {
-        if (conversation.id === conversationId) {
+    setConversations(prev => 
+      prev.map(conv => {
+        if (conv.id === threadId) {
           return {
-            ...conversation,
-            lastMessage: messageText,
-            timestamp: newMessage.timestamp,
-            messages: [...conversation.messages, newMessage]
+            ...conv,
+            messages: [...conv.messages, newMessage],
+            lastMessage: text,
+            timestamp: newMessage.timestamp
           };
         }
-        return conversation;
+        return conv;
       })
     );
+  }, []);
+  
+  // Create a new message thread
+  const createThread = useCallback((venueName: string, eventName: string | undefined, initialMessage: string) => {
+    const newThread: MessageThread = {
+      id: `thread-${Date.now()}`,
+      venueName,
+      eventName,
+      lastMessage: initialMessage,
+      timestamp: new Date().toISOString(),
+      isRead: true,
+      isArchived: false,
+      messages: [
+        {
+          id: `msg-${Date.now()}`,
+          text: initialMessage,
+          timestamp: new Date().toISOString(),
+          isFromPromoter: true,
+          senderName: 'You'
+        }
+      ]
+    };
 
-    toast({
-      title: 'Message sent',
-      description: 'Your message has been delivered',
-    });
-
-    return newMessage;
-  };
+    setConversations(prev => [newThread, ...prev]);
+    return newThread.id;
+  }, []);
 
   return {
     conversations,
     unreadCount,
     activeTab,
-    isLoading,
     setActiveTab,
     markAsRead,
-    archiveConversation,
-    sendMessage
+    archiveThread,
+    getMessageThread,
+    sendMessage,
+    createThread
   };
 };

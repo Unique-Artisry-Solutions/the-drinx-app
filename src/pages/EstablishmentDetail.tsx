@@ -6,6 +6,7 @@ import EstablishmentInterior from '@/components/establishment/EstablishmentInter
 import { useUserLocation } from '@/hooks/useUserLocation';
 import { supabase } from '@/lib/supabase';
 import { Skeleton } from '@/components/ui/skeleton';
+import ContactVenueButton from '@/components/promoter/communication/ContactVenueButton';
 
 const EstablishmentDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -200,6 +201,12 @@ const EstablishmentDetail = () => {
   return (
     <Layout>
       <div className="pb-8">
+        <div className="flex justify-end px-4 pt-4">
+          <ContactVenueButton 
+            establishmentId={id || ''} 
+            establishmentName={establishment.name}
+          />
+        </div>
         <EstablishmentInterior 
           establishment={establishment} 
           cocktails={cocktails}

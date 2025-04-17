@@ -1,77 +1,75 @@
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Layout from '@/components/Layout';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import PromoterInbox from '@/components/promoter/communication/PromoterInbox';
 import ContactsList from '@/components/promoter/communication/ContactsList';
 import MessageThread from '@/components/promoter/communication/MessageThread';
-import { usePromoterMessages } from '@/hooks/promoter/usePromoterMessages';
+import { useLocation } from 'react-router-dom';
+import { VenueContact } from '@/hooks/promoter/types';
 
 const PromoterCommunicationPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>('inbox');
-  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
+  const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
+  const location = useLocation();
+  const [newContact, setNewContact] = useState<VenueContact | null>(null);
   
-  const { 
-    conversations,
-    markAsRead,
-    archiveConversation,
-    sendMessage
-  } = usePromoterMessages();
-  
-  const selectedConversation = conversations.find(c => c.id === selectedConversationId);
-  
-  const handleSelectConversation = (id: string) => {
-    setSelectedConversationId(id);
-    markAsRead(id);
-  };
-  
-  const handleBackFromConversation = () => {
-    setSelectedConversationId(null);
-  };
-
-  const handleSendMessage = (text: string) => {
-    if (selectedConversationId) {
-      sendMessage(selectedConversationId, text);
+  // Check for new contact in URL parameters
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const contactParam = searchParams.get('newContact');
+    
+    if (contactParam) {
+      try {
+        const contactData = JSON.parse(decodeURIComponent(contactParam));
+        setNewContact(contactData);
+        setActiveTab('contacts'); // Switch to contacts tab
+      } catch (e) {
+        console.error('Error parsing contact data:', e);
+      }
     }
-  };
+  }, [location.search]);
   
-  const handleArchive = () => {
-    if (selectedConversationId) {
-      archiveConversation(selectedConversationId);
-      setSelectedConversationId(null);
-    }
+  const handleSelectThread = (threadId: string) => {
+    setSelectedThreadId(threadId);
   };
 
   return (
     <Layout>
-      <div className="container mx-auto py-8">
-        <h1 className="text-3xl font-bold mb-6 text-purple-600">Communication Center</h1>
+      <div className="container mx-auto max-w-6xl px-4 py-8">
+        <h1 className="text-2xl font-bold text-purple-600 mb-4">Communication Hub</h1>
         
-        {selectedConversation ? (
-          <MessageThread 
-            venueName={selectedConversation.venueName}
-            messages={selectedConversation.messages}
-            onBack={handleBackFromConversation}
-            onSendMessage={handleSendMessage}
-            onArchive={handleArchive}
-            eventName={selectedConversation.eventName}
-          />
-        ) : (
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-8">
-              <TabsTrigger value="inbox">Messages</TabsTrigger>
-              <TabsTrigger value="contacts">Contacts</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="inbox" className="mt-0">
-              <PromoterInbox />
-            </TabsContent>
-            
-            <TabsContent value="contacts" className="mt-0">
-              <ContactsList onSelectContact={(id) => console.log('Selected contact:', id)} />
-            </TabsContent>
-          </Tabs>
-        )}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid grid-cols-2 mb-6">
+            <TabsTrigger value="inbox">Inbox</TabsTrigger>
+            <TabsTrigger value="contacts">Contacts</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="inbox" className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              <div className="lg:col-span-1">
+                <PromoterInbox onSelectThread={handleSelectThread} />
+              </div>
+              
+              <div className="lg:col-span-2">
+                {selectedThreadId ? (
+                  <MessageThread threadId={selectedThreadId} />
+                ) : (
+                  <Card>
+                    <CardContent className="p-6 text-center text-gray-500">
+                      <p>Select a conversation to view messages</p>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="contacts">
+            <ContactsList newContact={newContact} />
+          </TabsContent>
+        </Tabs>
       </div>
     </Layout>
   );
