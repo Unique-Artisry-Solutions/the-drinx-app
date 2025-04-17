@@ -835,6 +835,35 @@ export type Database = {
         }
         Relationships: []
       }
+      message_read_status: {
+        Row: {
+          id: string
+          last_read_at: string
+          thread_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          last_read_at?: string
+          thread_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          last_read_at?: string
+          thread_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_read_status_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "promoter_venue_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mocktail_suggestions: {
         Row: {
           created_at: string
@@ -1094,6 +1123,82 @@ export type Database = {
           username?: string | null
         }
         Relationships: []
+      }
+      promoter_venue_messages: {
+        Row: {
+          content: string
+          id: string
+          is_from_promoter: boolean
+          sender_id: string
+          sent_at: string
+          thread_id: string
+        }
+        Insert: {
+          content: string
+          id?: string
+          is_from_promoter: boolean
+          sender_id: string
+          sent_at?: string
+          thread_id: string
+        }
+        Update: {
+          content?: string
+          id?: string
+          is_from_promoter?: boolean
+          sender_id?: string
+          sent_at?: string
+          thread_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promoter_venue_messages_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "promoter_venue_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      promoter_venue_threads: {
+        Row: {
+          created_at: string
+          id: string
+          is_archived: boolean
+          last_message_at: string
+          promoter_id: string
+          subject: string | null
+          updated_at: string
+          venue_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_archived?: boolean
+          last_message_at?: string
+          promoter_id: string
+          subject?: string | null
+          updated_at?: string
+          venue_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_archived?: boolean
+          last_message_at?: string
+          promoter_id?: string
+          subject?: string | null
+          updated_at?: string
+          venue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promoter_venue_threads_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "establishments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       promotion_notifications: {
         Row: {

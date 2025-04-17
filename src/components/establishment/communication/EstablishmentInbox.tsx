@@ -5,9 +5,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import MessageThreadList from '@/components/promoter/communication/MessageThreadList';
 import MessageThread from '@/components/promoter/communication/MessageThread';
 import { useMessageSystem } from '@/hooks/establishment/useMessageSystem';
+import { AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const EstablishmentInbox = () => {
   const [activeTab, setActiveTab] = useState('all');
+  const [error, setError] = useState<string | null>(null);
+  
   const {
     threads,
     loading,
@@ -16,14 +20,32 @@ const EstablishmentInbox = () => {
     markThreadAsRead
   } = useMessageSystem('establishment');
 
+  useEffect(() => {
+    // Clear error when tab changes
+    setError(null);
+  }, [activeTab]);
+
   const handleSelectThread = (threadId: string) => {
-    markThreadAsRead(threadId);
-    setSelectedThreadId(threadId);
+    try {
+      markThreadAsRead(threadId);
+      setSelectedThreadId(threadId);
+    } catch (err) {
+      console.error("Error selecting thread:", err);
+      setError("Failed to mark thread as read. Please try again.");
+    }
   };
 
   return (
     <Card>
       <CardContent className="p-4 md:p-6">
+        {error && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+        
         <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-4">
             <TabsTrigger value="all">All Messages</TabsTrigger>
@@ -36,11 +58,15 @@ const EstablishmentInbox = () => {
               <div className="lg:col-span-1">
                 {loading ? (
                   <div className="text-center py-6">Loading messages...</div>
-                ) : (
+                ) : threads.length > 0 ? (
                   <MessageThreadList 
                     conversations={threads.filter(t => !t.isArchived)} 
                     onSelectConversation={handleSelectThread} 
                   />
+                ) : (
+                  <div className="text-center py-6 text-gray-500">
+                    <p>No messages found</p>
+                  </div>
                 )}
               </div>
               
@@ -64,11 +90,15 @@ const EstablishmentInbox = () => {
               <div className="lg:col-span-1">
                 {loading ? (
                   <div className="text-center py-6">Loading messages...</div>
-                ) : (
+                ) : threads.filter(t => !t.isRead && !t.isArchived).length > 0 ? (
                   <MessageThreadList 
                     conversations={threads.filter(t => !t.isRead && !t.isArchived)} 
                     onSelectConversation={handleSelectThread} 
                   />
+                ) : (
+                  <div className="text-center py-6 text-gray-500">
+                    <p>No unread messages</p>
+                  </div>
                 )}
               </div>
               
@@ -92,11 +122,15 @@ const EstablishmentInbox = () => {
               <div className="lg:col-span-1">
                 {loading ? (
                   <div className="text-center py-6">Loading messages...</div>
-                ) : (
+                ) : threads.filter(t => t.isArchived).length > 0 ? (
                   <MessageThreadList 
                     conversations={threads.filter(t => t.isArchived)} 
                     onSelectConversation={handleSelectThread} 
                   />
+                ) : (
+                  <div className="text-center py-6 text-gray-500">
+                    <p>No archived messages</p>
+                  </div>
                 )}
               </div>
               
