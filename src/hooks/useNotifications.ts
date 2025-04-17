@@ -28,10 +28,18 @@ export const useNotifications = () => {
     if (!user?.id) return;
 
     try {
+      // First get the session
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+
+      if (!accessToken) {
+        throw new Error('No access token available');
+      }
+
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/notifications`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${supabase.auth.session()?.access_token}`,
+          'Authorization': `Bearer ${accessToken}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -59,10 +67,18 @@ export const useNotifications = () => {
 
   const markAsRead = async (notificationId: string) => {
     try {
+      // First get the session
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+
+      if (!accessToken) {
+        throw new Error('No access token available');
+      }
+
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/notifications`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${supabase.auth.session()?.access_token}`,
+          'Authorization': `Bearer ${accessToken}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
