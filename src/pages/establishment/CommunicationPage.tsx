@@ -1,7 +1,7 @@
 
 import React from 'react';
 import ResponsiveLayout from '@/components/layout/ResponsiveLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import EstablishmentInbox from '@/components/establishment/communication/EstablishmentInbox';
 
 const EstablishmentCommunicationPage: React.FC = () => {

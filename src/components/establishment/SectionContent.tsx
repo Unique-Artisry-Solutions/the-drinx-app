@@ -31,7 +31,18 @@ const SectionContent: React.FC<SectionContentProps> = ({
     case 'allActions':
       return <AllActionsSection handleTabChange={handleTabChange} />;
     case 'analytics':
-      return <AnalyticsSection visitorStats={visitorStats} establishmentId={establishmentId} />;
+      return <AnalyticsSection 
+        visitorStats={{
+          // Map totalVisitors to totalVisits for compatibility
+          totalVisits: visitorStats.totalVisitors, 
+          uniqueVisitors: visitorStats.uniqueVisitors,
+          returningVisitors: visitorStats.returningVisitors,
+          hasData: visitorStats.hasData,
+          isLoading: visitorStats.isLoading,
+          error: visitorStats.error || null
+        }} 
+        establishmentId={establishmentId} 
+      />;
     case 'settings':
       return <SettingsSection handleTabChange={handleTabChange} />;
     case 'communication':

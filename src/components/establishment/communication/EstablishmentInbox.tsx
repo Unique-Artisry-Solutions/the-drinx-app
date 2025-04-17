@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/lib/supabase';
+import { supabaseClient } from '@/lib/supabaseClient'; // Using the typed client
 import { useAuth } from '@/contexts/auth';
 import MessageThreadList from '@/components/promoter/communication/MessageThreadList';
 import MessageThread from '@/components/promoter/communication/MessageThread';
@@ -24,7 +24,7 @@ const EstablishmentInbox = () => {
       setLoading(true);
       try {
         // Get the establishment ID for the current user
-        const { data: establishment, error: establishmentError } = await supabase
+        const { data: establishment, error: establishmentError } = await supabaseClient
           .from('establishments')
           .select('id')
           .eq('owner_id', user.id)
@@ -41,8 +41,8 @@ const EstablishmentInbox = () => {
           return;
         }
 
-        // Fetch threads for this establishment
-        const { data: threadData, error: threadError } = await supabase
+        // Fetch threads for this establishment using fromTable helper
+        const { data: threadData, error: threadError } = await supabaseClient
           .from('promoter_venue_threads')
           .select(`
             id,
@@ -79,30 +79,39 @@ const EstablishmentInbox = () => {
         }
 
         // Get unread counts
-        const { data: unreadData, error: unreadError } = await supabase
-          .from('unread_message_counts')
-          .select('thread_id, unread_count')
+        const { data: unreadData, error: unreadError } = await supabaseClient
+          .from('message_read_status')
+          .select('thread_id, last_read_at')
           .eq('user_id', user.id);
 
         if (unreadError) {
-          console.error('Error fetching unread counts:', unreadError);
+          console.error('Error fetching read status:', unreadError);
         }
 
-        const unreadMap = new Map();
+        // Create map of thread_id to last_read_at
+        const readStatusMap = new Map();
         if (unreadData) {
           unreadData.forEach(item => {
-            unreadMap.set(item.thread_id, item.unread_count);
+            readStatusMap.set(item.thread_id, item.last_read_at);
           });
         }
 
         // Format the threads for our component
         const formattedThreads: MessageThreadType[] = threadData.map(thread => {
           const promoterName = thread.profiles?.display_name || thread.profiles?.username || 'Promoter';
-          const lastMessage = thread.promoter_venue_messages.length > 0 
-            ? thread.promoter_venue_messages.sort((a, b) => 
+          
+          // Get the last message
+          const messages = thread.promoter_venue_messages || [];
+          const lastMessage = messages.length > 0 
+            ? messages.sort((a: any, b: any) => 
                 new Date(b.sent_at).getTime() - new Date(a.sent_at).getTime()
               )[0].content
             : 'No messages yet';
+          
+          // Check if thread is read
+          const lastReadAt = readStatusMap.get(thread.id);
+          const lastMessageAt = thread.last_message_at;
+          const isRead = !lastMessageAt || (lastReadAt && new Date(lastReadAt) >= new Date(lastMessageAt));
           
           return {
             id: thread.id,
@@ -110,7 +119,7 @@ const EstablishmentInbox = () => {
             eventName: thread.subject,
             lastMessage,
             timestamp: thread.last_message_at,
-            isRead: unreadMap.get(thread.id) === 0 || !unreadMap.has(thread.id),
+            isRead: isRead,
             isArchived: thread.is_archived,
             messages: [] // We'll load these when a thread is selected
           };
@@ -138,7 +147,7 @@ const EstablishmentInbox = () => {
     // Mark thread as read
     if (user) {
       try {
-        await supabase.rpc('mark_thread_as_read', {
+        await supabaseClient.rpc('mark_thread_as_read', {
           _thread_id: threadId,
           _user_id: user.id
         });
