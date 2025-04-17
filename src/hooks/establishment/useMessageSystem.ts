@@ -33,9 +33,9 @@ export interface ThreadData {
   last_message_at: string;
   is_archived: boolean;
   promoter_id: string;
-  venues?: MessageVenue;
-  promoters?: MessageSender;
-  profiles?: MessageSender;
+  venues?: MessageVenue | MessageVenue[];
+  promoters?: MessageSender | MessageSender[];
+  profiles?: MessageSender | MessageSender[];
   promoter_venue_messages?: MessageData[];
 }
 
@@ -183,9 +183,19 @@ export const useMessageSystem = (userType: 'establishment' | 'promoter'): UseMes
     const formattedThreads: FormattedThread[] = (threadData as ThreadData[]).map(thread => {
       const promoterProfile = thread.profiles || {};
       // Access properties safely
-      const promoterName = (promoterProfile.display_name as string) || 
-                          (promoterProfile.username as string) || 
-                          'Promoter';
+      let promoterName = 'Promoter';
+      
+      // Handle array or single object structure for profiles
+      if (Array.isArray(promoterProfile)) {
+        const profile = promoterProfile[0] || {};
+        promoterName = (profile.display_name as string) || 
+                      (profile.username as string) || 
+                      'Promoter';
+      } else {
+        promoterName = (promoterProfile.display_name as string) || 
+                      (promoterProfile.username as string) || 
+                      'Promoter';
+      }
       
       const messages = thread.promoter_venue_messages || [];
       const lastMessage = messages.length > 0 
@@ -240,14 +250,29 @@ export const useMessageSystem = (userType: 'establishment' | 'promoter'): UseMes
         return [];
       }
 
-      // Cast to our strongly typed interfaces
-      const threadTyped = threadData as ThreadData;
-      const venues = threadTyped.venues || {};
-      const promoters = threadTyped.promoters || {};
+      // Cast to a temporary type that can handle array properties
+      interface ThreadDataResponse {
+        id: string;
+        subject?: string | null;
+        venues?: { id?: string; name?: string; }[];
+        promoters?: { id?: string; display_name?: string; username?: string; }[];
+      }
+
+      // Type safe handling of potentially array-structured responses
+      const threadTyped = threadData as unknown as ThreadDataResponse;
+      
+      // Handle venues and promoters as arrays
+      const venuesArray = threadTyped.venues || [];
+      const promotersArray = threadTyped.promoters || [];
+      
+      const venueName = venuesArray.length > 0 ? (venuesArray[0].name as string) || 'Venue' : 'Venue';
+      const promoterName = promotersArray.length > 0 
+        ? (promotersArray[0].display_name as string) || (promotersArray[0].username as string) || 'Promoter' 
+        : 'Promoter';
 
       setThreadInfo({
-        venueName: (venues.name as string) || 'Venue',
-        promoterName: (promoters.display_name as string) || (promoters.username as string) || 'Promoter',
+        venueName: venueName,
+        promoterName: promoterName,
         subject: threadTyped.subject || undefined
       });
 
@@ -283,8 +308,16 @@ export const useMessageSystem = (userType: 'establishment' | 'promoter'): UseMes
       }
 
       return (messageData as MessageData[]).map(message => {
-        const sender = message.sender || {};
-        const senderName = (sender.display_name as string) || (sender.username as string) || 'Unknown';
+        const senderData = message.sender || {};
+        let senderName = 'Unknown';
+        
+        // Handle sender as potential array
+        if (Array.isArray(senderData)) {
+          const sender = senderData[0] || {};
+          senderName = (sender.display_name as string) || (sender.username as string) || 'Unknown';
+        } else {
+          senderName = (senderData.display_name as string) || (senderData.username as string) || 'Unknown';
+        }
         
         return {
           id: message.id,
@@ -333,8 +366,16 @@ export const useMessageSystem = (userType: 'establishment' | 'promoter'): UseMes
           
           // Cast to our strongly typed interface
           const messageTyped = newMessage as MessageData;
-          const sender = messageTyped.sender || {};
-          const senderName = (sender.display_name as string) || (sender.username as string) || 'Unknown';
+          const senderData = messageTyped.sender || {};
+          let senderName = 'Unknown';
+          
+          // Handle potential array structure
+          if (Array.isArray(senderData)) {
+            const sender = senderData[0] || {};
+            senderName = (sender.display_name as string) || (sender.username as string) || 'Unknown';
+          } else {
+            senderName = (senderData.display_name as string) || (senderData.username as string) || 'Unknown';
+          }
           
           // We'd handle the message here
           // This would update local state with the new message
