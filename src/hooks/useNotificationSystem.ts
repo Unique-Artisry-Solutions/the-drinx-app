@@ -3,11 +3,14 @@ import { useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
 
+// Define the allowed notification channel types
+export type NotificationChannel = 'push' | 'in_app' | 'email';
+
 export interface NotificationPreference {
   id: string;
   user_id: string;
   category_id: string;
-  channels: string[];
+  channels: NotificationChannel[];
   is_enabled: boolean;
 }
 
@@ -49,7 +52,7 @@ export const useNotificationSystem = () => {
 
   const updatePreferences = useCallback(async (
     categoryId: string,
-    channels: string[],
+    channels: NotificationChannel[],
     isEnabled: boolean
   ) => {
     try {

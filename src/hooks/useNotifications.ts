@@ -1,20 +1,9 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/auth';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
-
-export interface Notification {
-  id: string;
-  title: string;
-  content: string;
-  is_read: boolean;
-  created_at: string;
-  priority: 'low' | 'medium' | 'high' | 'urgent';
-  notification_categories?: {
-    name: string;
-    description: string;
-  } | null;
-}
+import { Notification } from '@/hooks/useNotificationSystem';
 
 export const useNotifications = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
