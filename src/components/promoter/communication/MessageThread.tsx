@@ -28,8 +28,16 @@ const MessageThread: React.FC<MessageThreadProps> = ({ threadId, userType = 'pro
     sendMessage
   } = useMessageSystem(userType);
 
+  // Log the thread ID on component mount
   useEffect(() => {
-    if (!threadId) return;
+    console.log(`MessageThread component mounted with threadId: ${threadId}`);
+  }, [threadId]);
+
+  useEffect(() => {
+    if (!threadId) {
+      console.log("No threadId provided, skipping fetch");
+      return;
+    }
     
     const fetchData = async () => {
       setLoading(true);
@@ -50,7 +58,10 @@ const MessageThread: React.FC<MessageThreadProps> = ({ threadId, userType = 'pro
     fetchData();
     
     // Set up a polling mechanism to periodically check for new messages
-    const intervalId = setInterval(fetchData, 10000); // Check every 10 seconds
+    const intervalId = setInterval(() => {
+      console.log("Polling for new messages");
+      fetchData();
+    }, 10000); // Check every 10 seconds
     
     return () => {
       clearInterval(intervalId);
@@ -64,7 +75,10 @@ const MessageThread: React.FC<MessageThreadProps> = ({ threadId, userType = 'pro
   }, [messages]);
 
   const handleSendMessage = async () => {
-    if (!newMessage.trim() || !threadId) return;
+    if (!newMessage.trim() || !threadId) {
+      console.log("Message empty or no threadId, not sending");
+      return;
+    }
     
     setSending(true);
     setError(null);
@@ -91,12 +105,19 @@ const MessageThread: React.FC<MessageThreadProps> = ({ threadId, userType = 'pro
     if (!threadId) return;
     
     try {
+      console.log(`Archiving thread: ${threadId}`);
       await archiveThread(threadId);
     } catch (err) {
       console.error('Error archiving thread:', err);
       setError('Failed to archive conversation. Please try again.');
     }
   };
+
+  // Log the current state for debugging
+  useEffect(() => {
+    console.log("Current thread info:", threadInfo);
+    console.log("Messages state:", messages);
+  }, [threadInfo, messages]);
 
   return (
     <Card className="h-full flex flex-col">

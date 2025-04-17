@@ -27,6 +27,7 @@ const EstablishmentInbox = () => {
 
   const handleSelectThread = (threadId: string) => {
     try {
+      console.log(`Selecting thread: ${threadId}`);
       markThreadAsRead(threadId);
       setSelectedThreadId(threadId);
     } catch (err) {
@@ -34,6 +35,12 @@ const EstablishmentInbox = () => {
       setError("Failed to mark thread as read. Please try again.");
     }
   };
+
+  // Logging for debugging
+  useEffect(() => {
+    console.log("Establishment Inbox rendered with threads:", threads);
+    console.log("Loading state:", loading);
+  }, [threads, loading]);
 
   return (
     <Card>
