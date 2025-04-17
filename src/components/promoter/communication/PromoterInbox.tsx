@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -6,7 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, MessageSquare } from 'lucide-react';
 import MessageThreadList from './MessageThreadList';
-import { usePromoterMessages } from '@/hooks/promoter/usePromoterMessages';
+import { useMessageSystem } from '@/hooks/messages/useMessageSystem';
+import { useAuth } from '@/contexts/auth';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface PromoterInboxProps {
   onSelectThread?: (threadId: string) => void;
@@ -14,25 +15,35 @@ interface PromoterInboxProps {
 
 const PromoterInbox: React.FC<PromoterInboxProps> = ({ onSelectThread }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const { 
-    conversations,
-    unreadCount,
-    activeTab,
-    setActiveTab,
-    markAsRead
-  } = usePromoterMessages();
+  const { user } = useAuth();
+  const {
+    threads,
+    loading,
+    markThreadAsRead,
+  } = useMessageSystem('promoter');
 
-  const filteredConversations = conversations.filter(
-    conv => conv.venueName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            conv.lastMessage.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredThreads = threads.filter(
+    conv => 
+      conv.venueName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      conv.lastMessage.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleSelectConversation = (threadId: string) => {
-    markAsRead(threadId);
+    markThreadAsRead(threadId);
     if (onSelectThread) {
       onSelectThread(threadId);
     }
   };
+
+  if (!user) {
+    return (
+      <Alert>
+        <AlertDescription>
+          Please log in to view your messages.
+        </AlertDescription>
+      </Alert>
+    );
+  }
 
   return (
     <Card className="w-full">
@@ -42,11 +53,6 @@ const PromoterInbox: React.FC<PromoterInboxProps> = ({ onSelectThread }) => {
             <MessageSquare className="h-5 w-5" />
             <span>Venue Communications</span>
           </div>
-          {unreadCount > 0 && (
-            <div className="bg-red-500 text-white px-2 py-1 text-xs rounded-full">
-              {unreadCount} unread
-            </div>
-          )}
         </CardTitle>
         <div className="relative">
           <Search className="absolute left-2 top-3 h-4 w-4 text-muted-foreground" />
@@ -58,8 +64,9 @@ const PromoterInbox: React.FC<PromoterInboxProps> = ({ onSelectThread }) => {
           />
         </div>
       </CardHeader>
+      
       <CardContent>
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs defaultValue="all" className="w-full">
           <TabsList className="grid grid-cols-3 mb-4">
             <TabsTrigger value="all">All</TabsTrigger>
             <TabsTrigger value="unread">Unread</TabsTrigger>
@@ -67,22 +74,26 @@ const PromoterInbox: React.FC<PromoterInboxProps> = ({ onSelectThread }) => {
           </TabsList>
           
           <TabsContent value="all">
-            <MessageThreadList 
-              conversations={filteredConversations} 
-              onSelectConversation={handleSelectConversation}
-            />
+            {loading ? (
+              <div className="text-center py-6">Loading conversations...</div>
+            ) : (
+              <MessageThreadList 
+                conversations={filteredThreads} 
+                onSelectConversation={handleSelectConversation}
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="unread">
             <MessageThreadList 
-              conversations={filteredConversations.filter(c => !c.isRead)} 
+              conversations={filteredThreads.filter(c => !c.isRead)} 
               onSelectConversation={handleSelectConversation}
             />
           </TabsContent>
 
           <TabsContent value="archived">
             <MessageThreadList 
-              conversations={filteredConversations.filter(c => c.isArchived)} 
+              conversations={filteredThreads.filter(c => c.isArchived)} 
               onSelectConversation={handleSelectConversation}
             />
           </TabsContent>
