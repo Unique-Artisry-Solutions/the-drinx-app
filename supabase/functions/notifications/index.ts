@@ -7,12 +7,12 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-interface CreateNotificationParams {
+interface NotificationData {
   recipientId: string;
-  categoryId?: string;
   title: string;
   content: string;
   priority?: 'low' | 'medium' | 'high' | 'urgent';
+  categoryId?: string;
   metadata?: Record<string, any>;
 }
 
@@ -21,26 +21,7 @@ interface UpdateNotificationParams {
   isRead?: boolean;
 }
 
-interface GetNotificationsParams {
-  userId: string;
-  isRead?: boolean;
-  limit?: number;
-  offset?: number;
-}
-
-interface UpdatePreferencesParams {
-  userId: string;
-  categoryId: string;
-  isEnabled: boolean;
-  channels: string[];
-}
-
 serve(async (req) => {
-  const supabaseClient = createClient(
-    "https://dvifibvzwunnpcsihpxq.supabase.co",
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR2aWZpYnZ6d3VubnBjc2locHhxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDMyNzM4MDcsImV4cCI6MjA1ODg0OTgwN30.8nsPh_YwHjoFDJ2_IMQY9tkM9NHVLmu6oFf5Tnwa2FA"
-  )
-
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
@@ -51,13 +32,11 @@ serve(async (req) => {
 
     switch (action) {
       case 'createNotification':
-        return await handleCreateNotification(supabaseClient, params)
+        return await handleCreateNotification(params)
       case 'updateNotification':
-        return await handleUpdateNotification(supabaseClient, params)
+        return await handleUpdateNotification(params)
       case 'getNotifications':
-        return await handleGetNotifications(supabaseClient, params)
-      case 'updatePreferences':
-        return await handleUpdatePreferences(supabaseClient, params)
+        return await handleGetNotifications(params)
       default:
         throw new Error('Invalid action')
     }
@@ -73,21 +52,47 @@ serve(async (req) => {
   }
 })
 
-async function handleCreateNotification(supabaseClient, params: CreateNotificationParams) {
+async function handleCreateNotification(params: NotificationData) {
+  const supabaseClient = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+  )
+
+  // Get user's notification preferences
+  const { data: preferences } = await supabaseClient
+    .from('notification_preferences')
+    .select('*')
+    .eq('user_id', params.recipientId)
+    .eq('category_id', params.categoryId)
+    .single()
+
+  // Create in-app notification
   const { data, error } = await supabaseClient
     .from('notifications')
     .insert({
       recipient_id: params.recipientId,
-      category_id: params.categoryId,
       title: params.title,
       content: params.content,
       priority: params.priority || 'medium',
+      category_id: params.categoryId,
       metadata: params.metadata || {}
     })
     .select()
     .single()
 
   if (error) throw error
+
+  // Handle email notifications if enabled
+  if (preferences?.channels?.includes('email')) {
+    // Here you would integrate with your email service
+    console.log('Email notification should be sent:', params)
+  }
+
+  // Handle push notifications if enabled
+  if (preferences?.channels?.includes('push')) {
+    // Here you would integrate with your push notification service
+    console.log('Push notification should be sent:', params)
+  }
 
   return new Response(
     JSON.stringify({ data }),
@@ -97,7 +102,12 @@ async function handleCreateNotification(supabaseClient, params: CreateNotificati
   )
 }
 
-async function handleUpdateNotification(supabaseClient, params: UpdateNotificationParams) {
+async function handleUpdateNotification(params: UpdateNotificationParams) {
+  const supabaseClient = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+  )
+
   const { data, error } = await supabaseClient
     .from('notifications')
     .update({ is_read: params.isRead })
@@ -115,8 +125,13 @@ async function handleUpdateNotification(supabaseClient, params: UpdateNotificati
   )
 }
 
-async function handleGetNotifications(supabaseClient, params: GetNotificationsParams) {
-  let query = supabaseClient
+async function handleGetNotifications(params: { userId: string }) {
+  const supabaseClient = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+  )
+
+  const { data, error } = await supabaseClient
     .from('notifications')
     .select(`
       *,
@@ -127,42 +142,6 @@ async function handleGetNotifications(supabaseClient, params: GetNotificationsPa
     `)
     .eq('recipient_id', params.userId)
     .order('created_at', { ascending: false })
-
-  if (params.isRead !== undefined) {
-    query = query.eq('is_read', params.isRead)
-  }
-
-  if (params.limit) {
-    query = query.limit(params.limit)
-  }
-
-  if (params.offset) {
-    query = query.range(params.offset, params.offset + (params.limit || 10) - 1)
-  }
-
-  const { data, error } = await query
-
-  if (error) throw error
-
-  return new Response(
-    JSON.stringify({ data }),
-    {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    }
-  )
-}
-
-async function handleUpdatePreferences(supabaseClient, params: UpdatePreferencesParams) {
-  const { data, error } = await supabaseClient
-    .from('notification_preferences')
-    .upsert({
-      user_id: params.userId,
-      category_id: params.categoryId,
-      is_enabled: params.isEnabled,
-      channels: params.channels
-    })
-    .select()
-    .single()
 
   if (error) throw error
 
