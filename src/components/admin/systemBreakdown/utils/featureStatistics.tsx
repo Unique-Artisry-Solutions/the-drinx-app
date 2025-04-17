@@ -1,4 +1,3 @@
-
 import { FeatureItem } from '../types';
 import { getNormalizedDbStatus } from './statusRenderers';
 
@@ -6,17 +5,20 @@ import { getNormalizedDbStatus } from './statusRenderers';
  * Calculates comprehensive statistics about feature implementation status
  */
 export const calculateFeatureStatistics = (
-  adminFeatures: FeatureItem[] = [],
+  adminFeatures: FeatureItem[] | FeatureItem[] = [],
   establishmentFeatures: FeatureItem[] = [],
   individualFeatures: FeatureItem[] = [],
   promoterFeatures: FeatureItem[] = []
 ) => {
-  // Convert arguments to array when multiple arguments provided
+  // Handle different calling patterns - if first argument is array and rest are empty, use just that
   let features: FeatureItem[] = [];
   
-  if (arguments.length === 1 && Array.isArray(arguments[0])) {
-    features = arguments[0];
+  if (Array.isArray(adminFeatures) && establishmentFeatures.length === 0 && 
+      individualFeatures.length === 0 && promoterFeatures.length === 0) {
+    // Single array of features passed
+    features = adminFeatures;
   } else {
+    // Multiple arrays passed
     features = [...adminFeatures, ...establishmentFeatures, ...individualFeatures, ...promoterFeatures];
   }
   

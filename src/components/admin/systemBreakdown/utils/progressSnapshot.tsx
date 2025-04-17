@@ -11,12 +11,15 @@ export function createProgressSnapshot(
   individualFeatures: FeatureItem[],
   promoterFeatures: FeatureItem[] = []
 ): ProgressSnapshot {
-  const stats = calculateFeatureStatistics(
-    adminFeatures,
-    establishmentFeatures,
-    individualFeatures,
-    promoterFeatures
-  );
+  // Pass each feature set separately to calculateFeatureStatistics
+  const adminStats = calculateFeatureStatistics(adminFeatures);
+  const establishmentStats = calculateFeatureStatistics(establishmentFeatures);
+  const individualStats = calculateFeatureStatistics(individualFeatures);
+  const promoterStats = calculateFeatureStatistics(promoterFeatures);
+  
+  // Pass all features together for overall stats
+  const allFeatures = [...adminFeatures, ...establishmentFeatures, ...individualFeatures, ...promoterFeatures];
+  const stats = calculateFeatureStatistics(allFeatures);
   
   const adminProgressObj = calculateCategoryProgress(adminFeatures);
   const establishmentProgressObj = calculateCategoryProgress(establishmentFeatures);

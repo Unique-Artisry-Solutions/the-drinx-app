@@ -1,7 +1,6 @@
 
 import { renderStatusBadge, renderDatabaseStatusBadge, renderAccessIcon } from './statusRenderers';
 import { 
-  calculateFeatureStatistics,
   createProgressSnapshot,
   validateProgressData,
   generateHistoricalProgressData
@@ -56,8 +55,12 @@ import {
   generateFeatureReport 
 } from './featureShowcaseUtils';
 
-// Also import from our featureStatistics module to fix import errors
-import { calculateCategoryProgress, groupFeaturesByCategory } from './featureStatistics';
+// Import directly from featureStatistics.tsx to fix circular dependency issues
+import { 
+  calculateFeatureStatistics,
+  calculateCategoryProgress, 
+  groupFeaturesByCategory
+} from './featureStatistics';
 
 /**
  * Creates a date string that is X months from now (for planned release date)
