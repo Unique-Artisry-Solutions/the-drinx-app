@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -30,16 +31,34 @@ const MessageThread: React.FC<MessageThreadProps> = ({ threadId, userType = 'pro
         .from('promoter_venue_messages')
         .select(`
           *,
-          sender:sender_id (
-            display_name,
-            username
-          )
+          sender:sender_id (id)
         `)
         .eq('thread_id', threadId)
         .order('sent_at', { ascending: true });
 
       if (error) throw error;
-      setMessages(data || []);
+
+      // Get sender details
+      const senderIds = data?.map(msg => msg.sender_id) || [];
+      const { data: senderData, error: senderError } = await supabase
+        .from('profiles')
+        .select('id, display_name, username')
+        .in('id', senderIds);
+      
+      if (senderError) throw senderError;
+
+      // Map sender details to messages
+      const senderMap = senderData?.reduce((acc, sender) => {
+        acc[sender.id] = sender;
+        return acc;
+      }, {} as Record<string, any>);
+
+      const messagesWithSenders = data?.map(msg => ({
+        ...msg,
+        sender: senderMap?.[msg.sender_id] || { display_name: "Unknown", username: "user" }
+      }));
+
+      setMessages(messagesWithSenders || []);
     } catch (err) {
       console.error('Error fetching messages:', err);
       setError('Failed to load messages');
@@ -49,27 +68,37 @@ const MessageThread: React.FC<MessageThreadProps> = ({ threadId, userType = 'pro
   useEffect(() => {
     const fetchThreadInfo = async () => {
       try {
-        const { data, error } = await supabase
+        // Get thread details
+        const { data: threadData, error: threadError } = await supabase
           .from('promoter_venue_threads')
-          .select(`
-            *,
-            venues:venue_id (
-              name
-            ),
-            promoters:promoter_id (
-              display_name,
-              username
-            )
-          `)
+          .select(`*`)
           .eq('id', threadId)
           .single();
   
-        if (error) throw error;
+        if (threadError) throw threadError;
+
+        // Get venue details
+        const { data: venueData, error: venueError } = await supabase
+          .from('establishments')
+          .select('name')
+          .eq('id', threadData.venue_id)
+          .single();
+
+        if (venueError) throw venueError;
+
+        // Get promoter details
+        const { data: promoterData, error: promoterError } = await supabase
+          .from('profiles')
+          .select('display_name, username')
+          .eq('id', threadData.promoter_id)
+          .single();
+
+        if (promoterError) throw promoterError;
   
         setThreadInfo({
-          venueName: data?.venues?.name || '',
-          promoterName: data?.promoters?.display_name || data?.promoters?.username || '',
-          subject: data?.subject || ''
+          venueName: venueData?.name || '',
+          promoterName: promoterData?.display_name || promoterData?.username || '',
+          subject: threadData?.subject || ''
         });
       } catch (err) {
         console.error('Error fetching thread info:', err);
@@ -136,8 +165,14 @@ const MessageThread: React.FC<MessageThreadProps> = ({ threadId, userType = 'pro
     if (!threadId) return;
     
     try {
-      //console.log(`Archiving thread: ${threadId}`);
-      //await archiveThread(threadId);
+      const { error } = await supabase
+        .from('promoter_venue_threads')
+        .update({ is_archived: true })
+        .eq('id', threadId);
+
+      if (error) throw error;
+      
+      // Optionally refresh or redirect after archiving
     } catch (err) {
       console.error('Error archiving thread:', err);
       setError('Failed to archive conversation. Please try again.');

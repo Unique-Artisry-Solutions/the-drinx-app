@@ -25,36 +25,117 @@ export const useMessageSystem = (userType: 'promoter' | 'establishment' = 'promo
     if (!user) return;
 
     try {
+      // Modify the query to use explicit joins instead of relying on relations
       const { data: threadsData, error } = await supabase
         .from('promoter_venue_threads')
         .select(`
-          *,
-          venues:venue_id (
-            name
-          ),
-          promoters:promoter_id (
-            display_name,
-            username
-          ),
-          messages:promoter_venue_messages (
-            content,
-            sent_at,
-            sender_id
-          )
+          id, 
+          subject,
+          is_archived,
+          created_at,
+          updated_at,
+          last_message_at,
+          venue_id, 
+          promoter_id
         `)
         .order('last_message_at', { ascending: false })
         .eq(userType === 'promoter' ? 'promoter_id' : 'venue_id', user.id);
 
       if (error) throw error;
 
-      const formattedThreads: MessageThread[] = threadsData.map(thread => ({
-        id: thread.id,
-        venueName: userType === 'promoter' ? thread.venues?.name : thread.promoters?.display_name || thread.promoters?.username || 'Unknown',
-        lastMessage: thread.messages?.[0]?.content || 'No messages yet',
-        timestamp: thread.last_message_at || thread.created_at,
-        isRead: false, // Will be updated with read status check
-        isArchived: thread.is_archived
-      }));
+      // Fetch establishments separately
+      const venueIds = threadsData.map(thread => thread.venue_id);
+      const { data: venueData, error: venueError } = await supabase
+        .from('establishments')
+        .select('id, name')
+        .in('id', venueIds);
+      
+      if (venueError) throw venueError;
+
+      // Fetch promoters separately
+      const promoterIds = threadsData.map(thread => thread.promoter_id);
+      const { data: promoterData, error: promoterError } = await supabase
+        .from('profiles')
+        .select('id, display_name, username')
+        .in('id', promoterIds);
+      
+      if (promoterError) throw promoterError;
+
+      // Fetch latest messages
+      const threadIds = threadsData.map(thread => thread.id);
+      const { data: messagesData, error: messagesError } = await supabase
+        .from('promoter_venue_messages')
+        .select('thread_id, content, sent_at')
+        .in('thread_id', threadIds)
+        .order('sent_at', { ascending: false });
+
+      if (messagesError) throw messagesError;
+
+      // Get read status for threads
+      const { data: readStatusData, error: readStatusError } = await supabase
+        .from('message_read_status')
+        .select('thread_id, last_read_at')
+        .eq('user_id', user.id)
+        .in('thread_id', threadIds);
+
+      if (readStatusError) throw readStatusError;
+
+      // Create a map for easier lookup
+      const venueMap = venueData?.reduce((acc, venue) => {
+        acc[venue.id] = venue;
+        return acc;
+      }, {} as Record<string, any>);
+
+      const promoterMap = promoterData?.reduce((acc, promoter) => {
+        acc[promoter.id] = promoter;
+        return acc;
+      }, {} as Record<string, any>);
+
+      const messageMap = messagesData?.reduce((acc, msg) => {
+        if (!acc[msg.thread_id]) {
+          acc[msg.thread_id] = msg;
+        }
+        return acc;
+      }, {} as Record<string, any>);
+
+      const readStatusMap = readStatusData?.reduce((acc, status) => {
+        acc[status.thread_id] = status;
+        return acc;
+      }, {} as Record<string, any>);
+
+      const formattedThreads: MessageThread[] = threadsData.map(thread => {
+        let venueName = "Unknown Venue";
+        if (venueMap && thread.venue_id && venueMap[thread.venue_id]) {
+          venueName = venueMap[thread.venue_id].name;
+        }
+        
+        let promoterName = "Unknown Promoter";
+        if (promoterMap && thread.promoter_id && promoterMap[thread.promoter_id]) {
+          const promoter = promoterMap[thread.promoter_id];
+          promoterName = promoter.display_name || promoter.username || "Unknown Promoter";
+        }
+
+        const lastMessage = messageMap?.[thread.id]?.content || "No messages yet";
+        const timestamp = thread.last_message_at || thread.created_at;
+        
+        // Determine if thread is read based on last_read_at timestamp
+        let isRead = false;
+        if (readStatusMap && readStatusMap[thread.id]) {
+          const readStatus = readStatusMap[thread.id];
+          const lastReadAt = new Date(readStatus.last_read_at);
+          const lastMessageAt = new Date(timestamp);
+          isRead = lastReadAt >= lastMessageAt;
+        }
+
+        return {
+          id: thread.id,
+          venueName: userType === 'promoter' ? venueName : promoterName,
+          lastMessage,
+          timestamp,
+          isRead,
+          isArchived: thread.is_archived || false
+        };
+      });
 
       setThreads(formattedThreads);
     } catch (error) {
@@ -125,7 +206,7 @@ export const useMessageSystem = (userType: 'promoter' | 'establishment' = 'promo
           event: 'INSERT',
           schema: 'public',
           table: 'promoter_venue_messages',
-          filter: `thread_id=eq.${selectedThreadId}`
+          filter: selectedThreadId ? `thread_id=eq.${selectedThreadId}` : undefined
         },
         () => {
           fetchThreads();

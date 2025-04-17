@@ -1,8 +1,8 @@
 
 import React from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { MessageThread } from '@/hooks/promoter/types';
 import { cn } from '@/lib/utils';
+import { MessageThread } from '@/hooks/messages/useMessageSystem';
 
 interface MessageThreadListProps {
   conversations: MessageThread[];
