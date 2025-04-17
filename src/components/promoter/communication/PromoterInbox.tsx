@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
@@ -7,7 +8,7 @@ import { Search, MessageSquarePlus, RefreshCw } from 'lucide-react';
 import MessageThreadList from './MessageThreadList';
 import { useMessageSystem } from '@/hooks/messages/useMessageSystem';
 import { useAuth } from '@/contexts/auth';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useNavigate } from 'react-router-dom';
 import ChatWidget from '@/components/chat/ChatWidget';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -29,6 +30,15 @@ const PromoterInbox: React.FC<PromoterInboxProps> = ({ onSelectThread }) => {
     refetchThreads
   } = useMessageSystem('promoter');
 
+  // Check authentication status
+  useEffect(() => {
+    if (!user) {
+      // Optional: Redirect to login page
+      // navigate('/login?redirect=/promoter/communication');
+      console.log('User not authenticated');
+    }
+  }, [user, navigate]);
+
   const filteredThreads = threads.filter(
     conv => 
       conv.venueName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -43,6 +53,11 @@ const PromoterInbox: React.FC<PromoterInboxProps> = ({ onSelectThread }) => {
   };
 
   const handleNewMessage = () => {
+    if (!user) {
+      // Handle unauthenticated user
+      alert("Please log in to start a new conversation");
+      return;
+    }
     setIsNewMessageOpen(true);
   };
 
@@ -52,11 +67,19 @@ const PromoterInbox: React.FC<PromoterInboxProps> = ({ onSelectThread }) => {
 
   if (!user) {
     return (
-      <Alert>
-        <AlertDescription>
-          Please log in to view your messages.
-        </AlertDescription>
-      </Alert>
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">Authentication Required</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Alert>
+            <AlertTitle>You must be logged in</AlertTitle>
+            <AlertDescription>
+              Please log in to view your messages and communicate with venues.
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
     );
   }
 

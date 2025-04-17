@@ -23,11 +23,17 @@ export const useMessageSystem = (userType: 'promoter' | 'establishment' = 'promo
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
 
   const fetchThreads = useCallback(async () => {
-    if (!user) return;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
 
     try {
       setLoading(true);
       setError(null);
+      
+      // Log the user ID for debugging
+      console.log('Fetching threads for user:', user.id, 'as', userType);
       
       const { data: threadsData, error: threadError } = await supabase
         .from('promoter_venue_threads')
@@ -186,9 +192,17 @@ export const useMessageSystem = (userType: 'promoter' | 'establishment' = 'promo
   }, [user]);
 
   const sendMessage = useCallback(async (threadId: string, content: string) => {
-    if (!user) return;
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "You must be logged in to send messages.",
+        variant: "destructive",
+      });
+      throw new Error("Authentication required");
+    }
 
     try {
+      console.log('Sending message with threadId:', threadId, 'content:', content);
       const { error } = await supabase
         .from('promoter_venue_messages')
         .insert({
@@ -198,22 +212,55 @@ export const useMessageSystem = (userType: 'promoter' | 'establishment' = 'promo
           is_from_promoter: userType === 'promoter'
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error in sendMessage:', error);
+        throw error;
+      }
+      
+      // Message sent successfully
+      return threadId;
     } catch (error) {
       console.error('Error sending message:', error);
       throw error;
     }
-  }, [user, userType]);
+  }, [user, userType, toast]);
 
-  const createThread = async (venueId: string) => {
-    if (!user) throw new Error('User not authenticated');
+  const createThread = useCallback(async (venueId: string) => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "You must be logged in to start conversations.",
+        variant: "destructive",
+      });
+      throw new Error("Authentication required");
+    }
 
     try {
+      console.log('Creating thread between promoter:', user.id, 'and venue:', venueId);
+      
+      // First check if a thread already exists
+      const { data: existingThread, error: checkError } = await supabase
+        .from('promoter_venue_threads')
+        .select('id')
+        .eq('promoter_id', user.id)
+        .eq('venue_id', venueId)
+        .maybeSingle();
+      
+      if (checkError) {
+        console.error('Error checking existing thread:', checkError);
+      }
+      
+      if (existingThread?.id) {
+        console.log('Thread already exists, returning existing ID:', existingThread.id);
+        return existingThread.id;
+      }
+      
+      // Create new thread
       const { data: thread, error: threadError } = await supabase
         .from('promoter_venue_threads')
         .insert({
-          promoter_id: userType === 'promoter' ? user.id : venueId,
-          venue_id: userType === 'promoter' ? venueId : user.id,
+          promoter_id: user.id,
+          venue_id: venueId,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
           last_message_at: new Date().toISOString()
@@ -221,20 +268,29 @@ export const useMessageSystem = (userType: 'promoter' | 'establishment' = 'promo
         .select()
         .single();
 
-      if (threadError) throw threadError;
+      if (threadError) {
+        console.error('Error creating thread:', threadError);
+        toast({
+          title: "Error",
+          description: "Failed to create conversation with venue. Please try again.",
+          variant: "destructive",
+        });
+        throw threadError;
+      }
 
+      console.log('Thread created successfully:', thread.id);
       await fetchThreads();
       return thread.id;
-    } catch (error) {
-      console.error('Error creating thread:', error);
+    } catch (error: any) {
+      console.error('Error in createThread:', error);
       toast({
         title: "Error",
-        description: "Failed to create conversation with venue. Please try again.",
+        description: error.message || "Failed to create conversation with venue. Please try again.",
         variant: "destructive",
       });
       throw error;
     }
-  };
+  }, [user, fetchThreads, toast]);
 
   useEffect(() => {
     if (!user) return;
