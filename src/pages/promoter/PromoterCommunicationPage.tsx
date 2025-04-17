@@ -1,38 +1,28 @@
 
 import React, { useEffect, useState } from 'react';
 import Layout from '@/components/Layout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import PromoterInbox from '@/components/promoter/communication/PromoterInbox';
 import ContactsList from '@/components/promoter/communication/ContactsList';
 import MessageThread from '@/components/promoter/communication/MessageThread';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import { VenueContact } from '@/hooks/promoter/types';
 
 const PromoterCommunicationPage: React.FC = () => {
+  const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<string>('inbox');
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
-  const location = useLocation();
-  const [newContact, setNewContact] = useState<VenueContact | null>(null);
   
-  // Check for new contact in URL parameters
   useEffect(() => {
-    const searchParams = new URLSearchParams(location.search);
-    const contactParam = searchParams.get('newContact');
-    
-    if (contactParam) {
-      try {
-        const contactData = JSON.parse(decodeURIComponent(contactParam));
-        setNewContact(contactData);
-        setActiveTab('contacts'); // Switch to contacts tab
-      } catch (e) {
-        console.error('Error parsing contact data:', e);
-      }
+    const tab = searchParams.get('tab');
+    if (tab === 'contacts' || tab === 'inbox') {
+      setActiveTab(tab);
     }
-  }, [location.search]);
-  
+  }, [searchParams]);
+
   const handleSelectThread = (threadId: string) => {
     setSelectedThreadId(threadId);
+    setActiveTab('inbox');
   };
 
   return (
@@ -67,7 +57,10 @@ const PromoterCommunicationPage: React.FC = () => {
           </TabsContent>
           
           <TabsContent value="contacts">
-            <ContactsList newContact={newContact} />
+            <ContactsList onThreadCreated={(threadId) => {
+              setSelectedThreadId(threadId);
+              setActiveTab('inbox');
+            }} />
           </TabsContent>
         </Tabs>
       </div>

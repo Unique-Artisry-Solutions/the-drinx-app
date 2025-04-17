@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -7,16 +6,20 @@ import { Search, Plus, Users } from 'lucide-react';
 import { usePromoterContacts } from '@/hooks/promoter/usePromoterContacts';
 import { VenueContact } from '@/hooks/promoter/types';
 import { useNavigate } from 'react-router-dom';
+import { useMessageSystem } from '@/hooks/messages/useMessageSystem';
+import { useToast } from '@/hooks/use-toast';
 
 interface ContactsListProps {
-  newContact?: VenueContact | null;
+  onThreadCreated?: (threadId: string) => void;
 }
 
-const ContactsList: React.FC<ContactsListProps> = ({ newContact }) => {
+const ContactsList: React.FC<ContactsListProps> = ({ onThreadCreated }) => {
   const { contacts: initialContacts, isLoading } = usePromoterContacts();
   const [contacts, setContacts] = useState<VenueContact[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
+  const { createThread } = useMessageSystem('promoter');
+  const { toast } = useToast();
   
   useEffect(() => {
     if (initialContacts) {
@@ -24,11 +27,9 @@ const ContactsList: React.FC<ContactsListProps> = ({ newContact }) => {
     }
   }, [initialContacts]);
   
-  // Handle new contact if provided
   useEffect(() => {
     if (newContact && !contacts.some(c => c.venueId === newContact.venueId)) {
       setContacts(prev => [...prev, newContact]);
-      // Clear the URL parameter after processing
       navigate('/promoter/communication', { replace: true });
     }
   }, [newContact, contacts, navigate]);
@@ -38,11 +39,20 @@ const ContactsList: React.FC<ContactsListProps> = ({ newContact }) => {
                contact.venueName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleStartConversation = (contact: VenueContact) => {
-    // Here you would typically create a new message thread and redirect to it
-    console.log('Starting conversation with:', contact);
-    // For now, just redirect to the inbox
-    navigate('/promoter/communication');
+  const handleStartConversation = async (contact: VenueContact) => {
+    try {
+      const threadId = await createThread(contact.venueId);
+      if (onThreadCreated) {
+        onThreadCreated(threadId);
+      }
+    } catch (error) {
+      console.error('Error creating thread:', error);
+      toast({
+        title: "Error",
+        description: "Failed to start conversation",
+        variant: "destructive",
+      });
+    }
   };
 
   return (

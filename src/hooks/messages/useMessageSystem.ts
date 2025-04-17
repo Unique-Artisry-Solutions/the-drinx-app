@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/contexts/auth';
 import { supabase } from '@/lib/supabase';
@@ -25,7 +24,6 @@ export const useMessageSystem = (userType: 'promoter' | 'establishment' = 'promo
     if (!user) return;
 
     try {
-      // Modify the query to use explicit joins instead of relying on relations
       const { data: threadsData, error } = await supabase
         .from('promoter_venue_threads')
         .select(`
@@ -43,7 +41,6 @@ export const useMessageSystem = (userType: 'promoter' | 'establishment' = 'promo
 
       if (error) throw error;
 
-      // Fetch establishments separately
       const venueIds = threadsData.map(thread => thread.venue_id);
       const { data: venueData, error: venueError } = await supabase
         .from('establishments')
@@ -52,7 +49,6 @@ export const useMessageSystem = (userType: 'promoter' | 'establishment' = 'promo
       
       if (venueError) throw venueError;
 
-      // Fetch promoters separately
       const promoterIds = threadsData.map(thread => thread.promoter_id);
       const { data: promoterData, error: promoterError } = await supabase
         .from('profiles')
@@ -61,7 +57,6 @@ export const useMessageSystem = (userType: 'promoter' | 'establishment' = 'promo
       
       if (promoterError) throw promoterError;
 
-      // Fetch latest messages
       const threadIds = threadsData.map(thread => thread.id);
       const { data: messagesData, error: messagesError } = await supabase
         .from('promoter_venue_messages')
@@ -71,7 +66,6 @@ export const useMessageSystem = (userType: 'promoter' | 'establishment' = 'promo
 
       if (messagesError) throw messagesError;
 
-      // Get read status for threads
       const { data: readStatusData, error: readStatusError } = await supabase
         .from('message_read_status')
         .select('thread_id, last_read_at')
@@ -80,7 +74,6 @@ export const useMessageSystem = (userType: 'promoter' | 'establishment' = 'promo
 
       if (readStatusError) throw readStatusError;
 
-      // Create a map for easier lookup
       const venueMap = venueData?.reduce((acc, venue) => {
         acc[venue.id] = venue;
         return acc;
@@ -118,7 +111,6 @@ export const useMessageSystem = (userType: 'promoter' | 'establishment' = 'promo
         const lastMessage = messageMap?.[thread.id]?.content || "No messages yet";
         const timestamp = thread.last_message_at || thread.created_at;
         
-        // Determine if thread is read based on last_read_at timestamp
         let isRead = false;
         if (readStatusMap && readStatusMap[thread.id]) {
           const readStatus = readStatusMap[thread.id];
@@ -194,7 +186,32 @@ export const useMessageSystem = (userType: 'promoter' | 'establishment' = 'promo
     }
   }, [user, userType]);
 
-  // Set up real-time subscription for new messages
+  const createThread = async (venueId: string) => {
+    if (!user) throw new Error('User not authenticated');
+
+    try {
+      const { data: thread, error: threadError } = await supabase
+        .from('promoter_venue_threads')
+        .insert({
+          promoter_id: userType === 'promoter' ? user.id : venueId,
+          venue_id: userType === 'promoter' ? venueId : user.id,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          last_message_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      if (threadError) throw threadError;
+
+      await fetchThreads();
+      return thread.id;
+    } catch (error) {
+      console.error('Error creating thread:', error);
+      throw error;
+    }
+  };
+
   useEffect(() => {
     if (!user) return;
 
@@ -219,7 +236,6 @@ export const useMessageSystem = (userType: 'promoter' | 'establishment' = 'promo
     };
   }, [user, selectedThreadId, fetchThreads]);
 
-  // Initial fetch
   useEffect(() => {
     fetchThreads();
   }, [fetchThreads]);
@@ -231,6 +247,7 @@ export const useMessageSystem = (userType: 'promoter' | 'establishment' = 'promo
     sendMessage,
     selectedThreadId,
     setSelectedThreadId,
-    refetchThreads: fetchThreads
+    refetchThreads: fetchThreads,
+    createThread
   };
 };

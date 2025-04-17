@@ -1,14 +1,14 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, MessageSquare } from 'lucide-react';
+import { Search, MessageSquarePlus } from 'lucide-react';
 import MessageThreadList from './MessageThreadList';
 import { useMessageSystem } from '@/hooks/messages/useMessageSystem';
 import { useAuth } from '@/contexts/auth';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useNavigate } from 'react-router-dom';
 
 interface PromoterInboxProps {
   onSelectThread?: (threadId: string) => void;
@@ -17,6 +17,7 @@ interface PromoterInboxProps {
 const PromoterInbox: React.FC<PromoterInboxProps> = ({ onSelectThread }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const { user } = useAuth();
+  const navigate = useNavigate();
   const {
     threads,
     loading,
@@ -36,6 +37,10 @@ const PromoterInbox: React.FC<PromoterInboxProps> = ({ onSelectThread }) => {
     }
   };
 
+  const handleNewMessage = () => {
+    navigate('/promoter/communication?tab=contacts');
+  };
+
   if (!user) {
     return (
       <Alert>
@@ -51,7 +56,7 @@ const PromoterInbox: React.FC<PromoterInboxProps> = ({ onSelectThread }) => {
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <MessageSquare className="h-5 w-5" />
+            <MessageSquarePlus className="h-5 w-5" />
             <span>Venue Communications</span>
           </div>
         </CardTitle>
@@ -100,8 +105,8 @@ const PromoterInbox: React.FC<PromoterInboxProps> = ({ onSelectThread }) => {
           </TabsContent>
           
           <div className="mt-4 flex justify-end">
-            <Button>
-              <MessageSquare className="mr-2 h-4 w-4" />
+            <Button onClick={handleNewMessage}>
+              <MessageSquarePlus className="mr-2 h-4 w-4" />
               New Message
             </Button>
           </div>
