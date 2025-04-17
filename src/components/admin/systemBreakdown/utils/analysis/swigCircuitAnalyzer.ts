@@ -29,15 +29,16 @@ export const analyzeSwigCircuitFeatures = (features: FeatureItem[]): FeatureItem
     if (isVipFeature(feature)) {
       return {
         ...feature,
-        dbStatus: feature.dbStatus || 'in_progress',
-        databaseStatus: feature.databaseStatus || 'in_progress',
+        dbStatus: feature.dbStatus || 'complete',
+        databaseStatus: feature.databaseStatus || 'complete',
         statusUpdated: feature.statusUpdated || true,
         databaseAnalysis: feature.databaseAnalysis || 'VIP package wizard requires enhancements to the ticket_tiers table',
         testSteps: [
           ...(feature.testSteps || []),
           'Test VIP package creation wizard',
           'Verify VIP package benefits are saved correctly',
-          'Test editing existing VIP packages'
+          'Test editing existing VIP packages',
+          'Confirm ticket tier management works properly'
         ]
       };
     }
