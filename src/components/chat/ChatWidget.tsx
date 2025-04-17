@@ -27,11 +27,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({
   const { user } = useAuth();
 
   const handleSendMessage = async () => {
-    if (!message.trim()) return;
-    if (!user) {
-      setError("You must be logged in to send messages");
-      return;
-    }
+    if (!message.trim() || !user) return;
 
     try {
       setSending(true);
@@ -42,9 +38,16 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({
       if (!threadId && contact) {
         try {
           threadId = await createThread(contact.venueId);
-        } catch (err) {
+        } catch (err: any) {
           console.error('Error creating thread:', err);
-          setError('Failed to create conversation. Please try again later.');
+          // Check for specific error types
+          if (err.message?.includes('Invalid promoter_id')) {
+            setError('You must be a promoter to start a conversation.');
+          } else if (err.message?.includes('Invalid venue_id')) {
+            setError('Unable to connect with this venue. Please try again later.');
+          } else {
+            setError('Failed to create conversation. Please try again later.');
+          }
           return;
         }
       }
@@ -55,9 +58,9 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({
       } else {
         setError('Could not determine where to send this message.');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sending message:', error);
-      setError('Failed to send message. Please try again.');
+      setError(error.message || 'Failed to send message. Please try again.');
     } finally {
       setSending(false);
     }

@@ -1237,7 +1237,7 @@ export type Database = {
           phone: string | null
           push_notifications: boolean | null
           updated_at: string | null
-          user_type: string | null
+          user_type: string
           username: string | null
         }
         Insert: {
@@ -1250,7 +1250,7 @@ export type Database = {
           phone?: string | null
           push_notifications?: boolean | null
           updated_at?: string | null
-          user_type?: string | null
+          user_type: string
           username?: string | null
         }
         Update: {
@@ -1263,7 +1263,7 @@ export type Database = {
           phone?: string | null
           push_notifications?: boolean | null
           updated_at?: string | null
-          user_type?: string | null
+          user_type?: string
           username?: string | null
         }
         Relationships: []

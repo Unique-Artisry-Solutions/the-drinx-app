@@ -1,13 +1,13 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { MessageSquare } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import { VenueContact } from '@/hooks/promoter/types';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import ChatWidget from '@/components/chat/ChatWidget';
 import { useAuth } from '@/contexts/auth';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/lib/supabase';
 
 interface ContactVenueButtonProps {
   establishmentId: string;
@@ -18,17 +18,9 @@ const ContactVenueButton: React.FC<ContactVenueButtonProps> = ({
   establishmentId, 
   establishmentName 
 }) => {
-  const navigate = useNavigate();
-  const [isPromoter, setIsPromoter] = useState<boolean>(false);
   const [isOpen, setIsOpen] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
-
-  // Check if user is a promoter
-  useEffect(() => {
-    const userType = localStorage.getItem('user_type');
-    setIsPromoter(userType === 'promoter');
-  }, []);
 
   const venueContact: VenueContact = {
     id: `contact-${establishmentId}`,
@@ -38,7 +30,7 @@ const ContactVenueButton: React.FC<ContactVenueButtonProps> = ({
     venueName: establishmentName
   };
 
-  const handleOpenChat = () => {
+  const handleOpenChat = async () => {
     if (!user) {
       toast({
         title: "Authentication Required",
@@ -47,10 +39,39 @@ const ContactVenueButton: React.FC<ContactVenueButtonProps> = ({
       });
       return;
     }
-    setIsOpen(true);
+
+    try {
+      // Check if user is a promoter
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('user_type')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError) throw profileError;
+
+      if (profile?.user_type !== 'promoter') {
+        toast({
+          title: "Access Denied",
+          description: "Only promoters can contact venues",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setIsOpen(true);
+    } catch (error) {
+      console.error('Error checking user type:', error);
+      toast({
+        title: "Error",
+        description: "Unable to verify permissions. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
-  if (!isPromoter) return null;
+  // Only render if user is authenticated
+  if (!user) return null;
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
