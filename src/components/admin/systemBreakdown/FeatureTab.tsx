@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -6,9 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { ChevronDown } from 'lucide-react';
 import { FeatureItem } from './types';
 import { renderStatusBadge, renderDatabaseStatusBadge } from './utils';
-import FeatureDetailsModal from './components/FeatureDetailsModal';
 
 interface FeatureTabProps {
   features: FeatureItem[];
@@ -19,7 +19,15 @@ interface FeatureTabProps {
 const FeatureTab: React.FC<FeatureTabProps> = ({ features, title, description }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [selectedFeature, setSelectedFeature] = useState<FeatureItem | null>(null);
+  const [openFeatures, setOpenFeatures] = useState<string[]>([]);
+
+  const toggleFeature = (featureId: string) => {
+    setOpenFeatures(current => 
+      current.includes(featureId) 
+        ? current.filter(id => id !== featureId)
+        : [...current, featureId]
+    );
+  };
 
   // Filter features based on search term and status filter
   const filteredFeatures = features.filter(feature => {
@@ -43,6 +51,10 @@ const FeatureTab: React.FC<FeatureTabProps> = ({ features, title, description })
         ))}
       </div>
     );
+  };
+
+  const hasDetails = (feature: FeatureItem) => {
+    return (feature.testSteps && feature.testSteps.length > 0) || feature.dbRequirementsText;
   };
 
   return (
@@ -85,45 +97,70 @@ const FeatureTab: React.FC<FeatureTabProps> = ({ features, title, description })
       <CardContent>
         <div className="space-y-4">
           {filteredFeatures.map((feature) => (
-            <div key={feature.id} className="border rounded-lg p-4">
-              <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex flex-col md:flex-row md:items-center gap-2">
-                    <h3 className="text-lg font-medium">{feature.name}</h3>
-                    <div className="flex items-center gap-2">
-                      {renderStatusBadge(feature.status)}
-                      {renderDatabaseStatusBadge(feature.databaseStatus)}
+            <Collapsible
+              key={feature.id}
+              open={openFeatures.includes(feature.id)}
+              onOpenChange={() => toggleFeature(feature.id)}
+            >
+              <div className="border rounded-lg p-4">
+                <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <div className="flex flex-col md:flex-row md:items-center gap-2">
+                      <h3 className="text-lg font-medium">{feature.name}</h3>
+                      <div className="flex items-center gap-2">
+                        {renderStatusBadge(feature.status)}
+                        {renderDatabaseStatusBadge(feature.databaseStatus)}
+                      </div>
                     </div>
+                    <p className="text-gray-600 mt-1">{feature.description}</p>
+                    {renderTags(feature.tags)}
                   </div>
-                  <p className="text-gray-600 mt-1">{feature.description}</p>
-                  {renderTags(feature.tags)}
-                </div>
-                <div className="flex items-center gap-2">
-                  {feature.testSteps && feature.testSteps.length > 0 && (
-                    <Button 
-                      variant="outline" 
-                      onClick={() => setSelectedFeature(feature)}
-                    >
-                      View Details
-                    </Button>
+                  {hasDetails(feature) && (
+                    <CollapsibleTrigger asChild>
+                      <Button variant="ghost" size="sm" className="gap-2">
+                        Details
+                        <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${
+                          openFeatures.includes(feature.id) ? 'transform rotate-180' : ''
+                        }`} />
+                      </Button>
+                    </CollapsibleTrigger>
                   )}
                 </div>
+
+                {hasDetails(feature) && (
+                  <CollapsibleContent>
+                    <div className="mt-4 pt-4 border-t space-y-4">
+                      {feature.testSteps && feature.testSteps.length > 0 && (
+                        <div>
+                          <h4 className="font-medium mb-2">Test Steps</h4>
+                          <ul className="space-y-2">
+                            {feature.testSteps.map((step, index) => (
+                              <li key={index} className="text-sm">
+                                {step}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      
+                      {feature.dbRequirementsText && (
+                        <div>
+                          <h4 className="font-medium mb-2">Database Requirements</h4>
+                          <pre className="text-sm bg-slate-50 p-3 rounded-md whitespace-pre-wrap">
+                            {feature.dbRequirementsText}
+                          </pre>
+                        </div>
+                      )}
+                    </div>
+                  </CollapsibleContent>
+                )}
               </div>
-            </div>
+            </Collapsible>
           ))}
         </div>
-
-        {selectedFeature && (
-          <FeatureDetailsModal
-            feature={selectedFeature}
-            isOpen={!!selectedFeature}
-            onClose={() => setSelectedFeature(null)}
-          />
-        )}
       </CardContent>
     </Card>
   );
 };
 
 export default FeatureTab;
-
