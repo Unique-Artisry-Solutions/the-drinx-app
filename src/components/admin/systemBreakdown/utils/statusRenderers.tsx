@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { FeatureStatus, DatabaseStatus, AccessLevel } from '../types';
 import { AlertCircle, Clock, CheckCircle, TimerIcon, AlertTriangle } from 'lucide-react';
 
@@ -141,16 +141,18 @@ export function renderAccessIcon(access: AccessLevel | undefined) {
   };
   
   return (
-    <Tooltip>
-      <TooltipTrigger>
-        <div className={`${getColorClass()}`}>
-          {/* Icon here */}
-          <span className="text-xs">{access.charAt(0).toUpperCase()}</span>
-        </div>
-      </TooltipTrigger>
-      <TooltipContent>
-        <p>{access} access</p>
-      </TooltipContent>
-    </Tooltip>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger>
+          <div className={`${getColorClass()}`}>
+            {/* Icon here */}
+            <span className="text-xs">{access.charAt(0).toUpperCase()}</span>
+          </div>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>{access} access</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
