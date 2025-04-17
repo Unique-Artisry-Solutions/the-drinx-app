@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -55,12 +56,13 @@ const MessageThread: React.FC<MessageThreadProps> = ({ threadId, userType = 'pro
           return;
         }
 
+        // Use optional chaining and nullish coalescing for safe property access
         const venues = threadData?.venues || {};
         const promoters = threadData?.promoters || {};
 
         setThreadInfo({
-          venueName: venues?.name,
-          promoterName: promoters?.display_name || promoters?.username,
+          venueName: venues?.name || 'Venue',
+          promoterName: promoters?.display_name || promoters?.username || 'Promoter',
           subject: threadData?.subject
         });
 
@@ -88,6 +90,7 @@ const MessageThread: React.FC<MessageThreadProps> = ({ threadId, userType = 'pro
         }
 
         const formattedMessages: Message[] = messageData.map(message => {
+          // Use optional chaining and nullish coalescing for safe property access
           const sender = message.sender || {};
           const senderName = sender?.display_name || sender?.username || 'Unknown';
           
@@ -131,6 +134,7 @@ const MessageThread: React.FC<MessageThreadProps> = ({ threadId, userType = 'pro
                 return;
               }
               
+              // Use optional chaining and nullish coalescing for safe property access
               const sender = newMessage.sender || {};
               const senderName = sender?.display_name || sender?.username || 'Unknown';
               

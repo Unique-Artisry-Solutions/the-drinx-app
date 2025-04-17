@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -93,7 +94,9 @@ const EstablishmentInbox = () => {
         }
 
         const formattedThreads: MessageThreadType[] = threadData.map(thread => {
+          // Use optional chaining and nullish coalescing for safety
           const promoterProfile = thread.profiles || {};
+          // Safely access properties with optional chaining and provide fallbacks
           const promoterName = promoterProfile?.display_name || promoterProfile?.username || 'Promoter';
           
           const messages = thread.promoter_venue_messages || [];
