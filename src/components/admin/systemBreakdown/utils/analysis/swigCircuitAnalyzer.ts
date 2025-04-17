@@ -45,8 +45,8 @@ export const analyzeSwigCircuitFeatures = (features: FeatureItem[]): FeatureItem
     if (isThemeCustomizationFeature(feature)) {
       return {
         ...feature,
-        dbStatus: feature.dbStatus || 'completed',
-        databaseStatus: feature.databaseStatus || 'completed',
+        dbStatus: feature.dbStatus || 'complete',
+        databaseStatus: feature.databaseStatus || 'complete',
         statusUpdated: feature.statusUpdated || true,
         databaseAnalysis: feature.databaseAnalysis || 'Theme customization uses localStorage for persistence',
         testSteps: [
