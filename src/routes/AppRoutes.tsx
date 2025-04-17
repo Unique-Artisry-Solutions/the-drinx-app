@@ -39,6 +39,7 @@ import MocktailSuggestionsPage from '@/pages/establishment/MocktailSuggestionsPa
 import SettingsPage from '@/pages/SettingsPage';
 import UserRecipesPage from '@/pages/profile/UserRecipesPage';
 import { ProtectedRoute, TypedProtectedRoute } from './protectedRoutes';
+import EstablishmentCommunicationPage from '@/pages/establishment/CommunicationPage';
 
 import EstablishmentProfilePage from '@/pages/establishment/EstablishmentProfilePage';
 import MocktailMenuPage from '@/pages/establishment/MocktailMenuPage';
@@ -172,6 +173,11 @@ const AppRoutes = () => {
         <Route path="/establishment/bar-crawl-requests" element={
           <TypedProtectedRoute userType="establishment">
             <SwigCircuitRequestsPage />
+          </TypedProtectedRoute>
+        } />
+        <Route path="/establishment/communication" element={
+          <TypedProtectedRoute userType="establishment">
+            <EstablishmentCommunicationPage />
           </TypedProtectedRoute>
         } />
         <Route path="/establishment/reviews" element={

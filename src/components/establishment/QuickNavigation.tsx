@@ -1,8 +1,7 @@
-
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { buttonVariants } from '@/components/ui/button';
-import { BarChart4, Store, Route, Utensils, Tag, Settings, MessageSquare } from 'lucide-react';
+import { BarChart4, Store, Route, Utensils, Tag, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
 
@@ -30,7 +29,6 @@ const QuickNavigation: React.FC<QuickNavigationProps> = ({
     { label: 'Mocktail Menu', section: 'menu', icon: Utensils, tab: 'menu' },
     { label: 'Promotions', section: 'promotions', icon: Tag, tab: 'promotions' },
     { label: 'Swig Circuits', section: 'barCrawls', icon: Route, tab: 'barCrawls' },
-    { label: 'Messages', section: 'communication', icon: MessageSquare },
     { label: 'Settings', section: 'settings', icon: Settings }
   ];
 

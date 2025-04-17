@@ -3,7 +3,6 @@ import React from 'react';
 import AllActionsSection from './sections/AllActionsSection';
 import AnalyticsSection from './sections/AnalyticsSection';
 import SettingsSection from './sections/SettingsSection';
-import EstablishmentInbox from './communication/EstablishmentInbox';
 
 interface SectionContentProps {
   activeSection: string | null;
@@ -37,16 +36,6 @@ const SectionContent: React.FC<SectionContentProps> = ({
       />;
     case 'settings':
       return <SettingsSection handleTabChange={handleTabChange} />;
-    case 'communication':
-      return (
-        <div className="space-y-4 px-4">
-          <h2 className="text-xl font-semibold">Promoter Communication</h2>
-          <p className="text-gray-600">
-            Manage messages from promoters interested in organizing events at your venue.
-          </p>
-          <EstablishmentInbox />
-        </div>
-      );
     default:
       return null;
   }
