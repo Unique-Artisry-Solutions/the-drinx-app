@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -10,6 +9,8 @@ import { useMessageSystem } from '@/hooks/messages/useMessageSystem';
 import { useAuth } from '@/contexts/auth';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useNavigate } from 'react-router-dom';
+import ChatWidget from '@/components/chat/ChatWidget';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 interface PromoterInboxProps {
   onSelectThread?: (threadId: string) => void;
@@ -17,6 +18,7 @@ interface PromoterInboxProps {
 
 const PromoterInbox: React.FC<PromoterInboxProps> = ({ onSelectThread }) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [isNewMessageOpen, setIsNewMessageOpen] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
   const {
@@ -41,7 +43,7 @@ const PromoterInbox: React.FC<PromoterInboxProps> = ({ onSelectThread }) => {
   };
 
   const handleNewMessage = () => {
-    navigate('/promoter/communication?tab=contacts');
+    setIsNewMessageOpen(true);
   };
 
   const handleRefresh = () => {
@@ -118,10 +120,19 @@ const PromoterInbox: React.FC<PromoterInboxProps> = ({ onSelectThread }) => {
           </TabsContent>
           
           <div className="mt-4 flex justify-end">
-            <Button onClick={handleNewMessage}>
-              <MessageSquarePlus className="mr-2 h-4 w-4" />
-              New Message
-            </Button>
+            <Popover open={isNewMessageOpen} onOpenChange={setIsNewMessageOpen}>
+              <PopoverTrigger asChild>
+                <Button onClick={handleNewMessage}>
+                  <MessageSquarePlus className="mr-2 h-4 w-4" />
+                  New Message
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="p-0 border-none" align="end">
+                <ChatWidget 
+                  onClose={() => setIsNewMessageOpen(false)}
+                />
+              </PopoverContent>
+            </Popover>
           </div>
         </Tabs>
       </CardContent>

@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { MessageSquare } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { VenueContact } from '@/hooks/promoter/types';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import ChatWidget from '@/components/chat/ChatWidget';
 
 interface ContactVenueButtonProps {
   establishmentId: string;
@@ -16,6 +18,7 @@ const ContactVenueButton: React.FC<ContactVenueButtonProps> = ({
 }) => {
   const navigate = useNavigate();
   const [isPromoter, setIsPromoter] = useState<boolean>(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   // Check if user is a promoter
   React.useEffect(() => {
@@ -23,33 +26,35 @@ const ContactVenueButton: React.FC<ContactVenueButtonProps> = ({
     setIsPromoter(userType === 'promoter');
   }, []);
 
-  const handleContactClick = () => {
-    // Create a contact object to pass to the communication page
-    const venueContact: VenueContact = {
-      id: `contact-${establishmentId}`,
-      name: establishmentName,
-      role: 'Venue',
-      venueId: establishmentId,
-      venueName: establishmentName
-    };
-    
-    // Encode the contact details to pass as URL parameters
-    const contactParams = encodeURIComponent(JSON.stringify(venueContact));
-    navigate(`/promoter/communication?newContact=${contactParams}`);
+  const venueContact: VenueContact = {
+    id: `contact-${establishmentId}`,
+    name: establishmentName,
+    role: 'Venue',
+    venueId: establishmentId,
+    venueName: establishmentName
   };
 
-  // Only show button for promoters
   if (!isPromoter) return null;
 
   return (
-    <Button 
-      onClick={handleContactClick}
-      className="flex items-center gap-2"
-      variant="outline"
-    >
-      <MessageSquare className="h-4 w-4" />
-      Contact Venue
-    </Button>
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
+      <PopoverTrigger asChild>
+        <Button 
+          onClick={() => setIsOpen(true)}
+          className="flex items-center gap-2"
+          variant="outline"
+        >
+          <MessageSquare className="h-4 w-4" />
+          Contact Venue
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="p-0 border-none" align="end">
+        <ChatWidget 
+          contact={venueContact}
+          onClose={() => setIsOpen(false)}
+        />
+      </PopoverContent>
+    </Popover>
   );
 };
 
