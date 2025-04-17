@@ -264,12 +264,13 @@ export const useEstablishmentProfile = (establishmentId?: string) => {
           
           // Try to get organizer names when possible
           for (let i = 0; i < formattedBarCrawls.length; i++) {
-            if (barCrawlsData[i].bar_crawls?.organizer_id) {
+            // Make sure we have the data we need and it's accessible
+            if (barCrawlsData[i] && barCrawlsData[i].bar_crawls && barCrawlsData[i].bar_crawls.organizer_id) {
               try {
                 const { data: userData } = await supabase
                   .from('profiles')
                   .select('display_name')
-                  .eq('id', barCrawlsData[i].bar_crawls?.organizer_id)
+                  .eq('id', barCrawlsData[i].bar_crawls.organizer_id)
                   .single();
                   
                 if (userData && userData.display_name) {
