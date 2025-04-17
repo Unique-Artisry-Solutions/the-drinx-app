@@ -9,7 +9,7 @@ interface SectionContentProps {
   activeSection: string | null;
   handleTabChange: (tab: string) => void;
   visitorStats: {
-    totalVisitors: number; // This matches our hook now
+    totalVisits: number; // Match the property name from useVisitorStats
     uniqueVisitors: number;
     returningVisitors: number;
     hasData: boolean;
@@ -32,14 +32,7 @@ const SectionContent: React.FC<SectionContentProps> = ({
       return <AllActionsSection handleTabChange={handleTabChange} />;
     case 'analytics':
       return <AnalyticsSection 
-        visitorStats={{
-          totalVisits: visitorStats.totalVisitors, // Map totalVisitors to totalVisits for compatibility
-          uniqueVisitors: visitorStats.uniqueVisitors,
-          returningVisitors: visitorStats.returningVisitors,
-          hasData: visitorStats.hasData,
-          isLoading: visitorStats.isLoading,
-          error: visitorStats.error || null
-        }} 
+        visitorStats={visitorStats} // Pass the visitor stats directly as they now match
         establishmentId={establishmentId} 
       />;
     case 'settings':

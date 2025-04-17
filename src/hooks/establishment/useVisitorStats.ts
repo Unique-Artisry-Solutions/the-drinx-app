@@ -1,8 +1,9 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 
 interface VisitorStats {
-  totalVisitors: number;
+  totalVisits: number;
   uniqueVisitors: number;
   returningVisitors: number;
   hasData: boolean;
@@ -12,7 +13,7 @@ interface VisitorStats {
 
 export const useVisitorStats = (establishmentId?: string) => {
   const [visitorStats, setVisitorStats] = useState<VisitorStats>({
-    totalVisitors: 0,
+    totalVisits: 0,
     uniqueVisitors: 0,
     returningVisitors: 0,
     hasData: false,
@@ -58,7 +59,7 @@ export const useVisitorStats = (establishmentId?: string) => {
 
         if (data) {
           setVisitorStats({
-            totalVisitors: data.total_visitors || 0,
+            totalVisits: data.total_visitors || 0,  // Map total_visitors to totalVisits
             uniqueVisitors: data.unique_visitors || 0,
             returningVisitors: data.returning_visitors || 0,
             hasData: true,
@@ -67,7 +68,7 @@ export const useVisitorStats = (establishmentId?: string) => {
           });
         } else {
           setVisitorStats({
-            totalVisitors: 278,
+            totalVisits: 278,  // Sample data uses totalVisits instead of totalVisitors
             uniqueVisitors: 153,
             returningVisitors: 62,
             hasData: true,

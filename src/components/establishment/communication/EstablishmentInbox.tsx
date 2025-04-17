@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -25,7 +24,6 @@ const EstablishmentInbox = () => {
     const fetchThreads = async () => {
       setLoading(true);
       try {
-        // Get the establishment ID for the current user
         const { data: establishment, error: establishmentError } = await supabase
           .from('establishments')
           .select('id')
@@ -43,9 +41,7 @@ const EstablishmentInbox = () => {
           return;
         }
 
-        // Fetch threads for this establishment
-        const { data: threadData, error: threadError } = await supabase
-          .from('promoter_venue_threads')
+        const { data: threadData, error: threadError } = await fromTable('promoter_venue_threads')
           .select(`
             id,
             created_at,
@@ -80,7 +76,6 @@ const EstablishmentInbox = () => {
           return;
         }
 
-        // Get unread counts
         const { data: unreadData, error: unreadError } = await supabase
           .from('message_read_status')
           .select('thread_id, last_read_at')
@@ -90,7 +85,6 @@ const EstablishmentInbox = () => {
           console.error('Error fetching read status:', unreadError);
         }
 
-        // Create map of thread_id to last_read_at
         const readStatusMap = new Map();
         if (unreadData) {
           unreadData.forEach(item => {
@@ -98,13 +92,10 @@ const EstablishmentInbox = () => {
           });
         }
 
-        // Format the threads for our component
         const formattedThreads: MessageThreadType[] = threadData.map(thread => {
-          // Access profile data safely
           const promoterProfile = thread.profiles || {};
-          const promoterName = promoterProfile.display_name || promoterProfile.username || 'Promoter';
+          const promoterName = promoterProfile?.display_name || promoterProfile?.username || 'Promoter';
           
-          // Get the last message
           const messages = thread.promoter_venue_messages || [];
           const lastMessage = messages.length > 0 
             ? messages.sort((a, b) => 
@@ -112,20 +103,19 @@ const EstablishmentInbox = () => {
               )[0].content
             : 'No messages yet';
           
-          // Check if thread is read
           const lastReadAt = readStatusMap.get(thread.id);
           const lastMessageAt = thread.last_message_at;
           const isRead = !lastMessageAt || (lastReadAt && new Date(lastReadAt) >= new Date(lastMessageAt));
           
           return {
             id: thread.id,
-            venueName: promoterName, // For establishment view, we show promoter name
+            venueName: promoterName,
             eventName: thread.subject,
             lastMessage,
             timestamp: thread.last_message_at,
             isRead: isRead,
             isArchived: thread.is_archived,
-            messages: [] // We'll load these when a thread is selected
+            messages: []
           };
         });
 
@@ -148,7 +138,6 @@ const EstablishmentInbox = () => {
   const handleSelectThread = async (threadId: string) => {
     setSelectedThreadId(threadId);
 
-    // Mark thread as read
     if (user) {
       try {
         await supabase.rpc('mark_thread_as_read', {
@@ -156,7 +145,6 @@ const EstablishmentInbox = () => {
           _user_id: user.id
         });
 
-        // Update the local state to mark the thread as read
         setThreads(current => 
           current.map(thread => 
             thread.id === threadId 

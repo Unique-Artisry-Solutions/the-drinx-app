@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabaseClient as supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/contexts/auth';
 import { Message } from '@/hooks/promoter/types';
+import { fromTable } from '@/lib/supabaseClient';
 
 interface MessageThreadProps {
   threadId: string;
@@ -34,9 +35,7 @@ const MessageThread: React.FC<MessageThreadProps> = ({ threadId, userType = 'pro
     const fetchMessages = async () => {
       setLoading(true);
       try {
-        // First fetch thread info
-        const { data: threadData, error: threadError } = await supabase
-          .from('promoter_venue_threads')
+        const { data: threadData, error: threadError } = await fromTable('promoter_venue_threads')
           .select(`
             id, subject,
             venues:establishments(id, name),
@@ -56,19 +55,16 @@ const MessageThread: React.FC<MessageThreadProps> = ({ threadId, userType = 'pro
           return;
         }
 
-        // Access the venue and promoter data safely
         const venues = threadData?.venues || {};
         const promoters = threadData?.promoters || {};
 
         setThreadInfo({
-          venueName: venues.name,
-          promoterName: promoters.display_name || promoters.username,
+          venueName: venues?.name,
+          promoterName: promoters?.display_name || promoters?.username,
           subject: threadData?.subject
         });
 
-        // Then fetch messages
-        const { data: messageData, error: messageError } = await supabase
-          .from('promoter_venue_messages')
+        const { data: messageData, error: messageError } = await fromTable('promoter_venue_messages')
           .select(`
             id,
             content,
@@ -92,9 +88,8 @@ const MessageThread: React.FC<MessageThreadProps> = ({ threadId, userType = 'pro
         }
 
         const formattedMessages: Message[] = messageData.map(message => {
-          // Access sender data safely
           const sender = message.sender || {};
-          const senderName = sender.display_name || sender.username || 'Unknown';
+          const senderName = sender?.display_name || sender?.username || 'Unknown';
           
           return {
             id: message.id,
@@ -108,7 +103,6 @@ const MessageThread: React.FC<MessageThreadProps> = ({ threadId, userType = 'pro
 
         setMessages(formattedMessages);
 
-        // Set up real-time subscription for new messages
         const channel = supabase
           .channel('thread-messages')
           .on(
@@ -120,9 +114,7 @@ const MessageThread: React.FC<MessageThreadProps> = ({ threadId, userType = 'pro
               filter: `thread_id=eq.${threadId}`
             },
             async (payload) => {
-              // When a new message arrives, fetch its details
-              const { data: newMessage, error } = await supabase
-                .from('promoter_venue_messages')
+              const { data: newMessage, error } = await fromTable('promoter_venue_messages')
                 .select(`
                   id,
                   content,
@@ -139,11 +131,9 @@ const MessageThread: React.FC<MessageThreadProps> = ({ threadId, userType = 'pro
                 return;
               }
               
-              // Access sender data safely for the new message
               const sender = newMessage.sender || {};
-              const senderName = sender.display_name || sender.username || 'Unknown';
+              const senderName = sender?.display_name || sender?.username || 'Unknown';
               
-              // Add the new message to state
               const formattedMessage: Message = {
                 id: newMessage.id,
                 text: newMessage.content,
@@ -155,7 +145,6 @@ const MessageThread: React.FC<MessageThreadProps> = ({ threadId, userType = 'pro
               
               setMessages(current => [...current, formattedMessage]);
               
-              // Mark as read if it's from the other party
               if (newMessage.sender_id !== user?.id) {
                 await supabase.rpc('mark_thread_as_read', {
                   _thread_id: threadId,
@@ -166,7 +155,6 @@ const MessageThread: React.FC<MessageThreadProps> = ({ threadId, userType = 'pro
           )
           .subscribe();
 
-        // Mark this thread as read
         if (user) {
           await supabase.rpc('mark_thread_as_read', {
             _thread_id: threadId,
@@ -192,7 +180,6 @@ const MessageThread: React.FC<MessageThreadProps> = ({ threadId, userType = 'pro
     fetchMessages();
   }, [threadId, user, toast]);
 
-  // Scroll to bottom when messages change
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -205,10 +192,8 @@ const MessageThread: React.FC<MessageThreadProps> = ({ threadId, userType = 'pro
     setSending(true);
     
     try {
-      // Determine if the current user is a promoter or establishment
       const isFromPromoter = userType === 'promoter';
       
-      // Send the message
       const { error } = await supabase
         .from('promoter_venue_messages')
         .insert({
@@ -222,7 +207,6 @@ const MessageThread: React.FC<MessageThreadProps> = ({ threadId, userType = 'pro
         throw error;
       }
       
-      // Clear the input
       setNewMessage('');
       
     } catch (error) {
