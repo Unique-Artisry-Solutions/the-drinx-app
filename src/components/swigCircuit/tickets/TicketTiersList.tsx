@@ -92,6 +92,7 @@ const TicketTiersList: React.FC<TicketTiersListProps> = ({
         isOpen={tierToRemove !== null}
         onClose={onCloseRemoveDialog}
         onConfirm={onConfirmRemoveTier}
+        tier={tierToRemove !== null ? ticketTiers[tierToRemove] : undefined}
       />
     </div>
   );
