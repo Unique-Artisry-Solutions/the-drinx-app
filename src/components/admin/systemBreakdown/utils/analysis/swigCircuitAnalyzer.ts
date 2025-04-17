@@ -1,6 +1,6 @@
 
 import { FeatureItem } from '../../types';
-import { isSwigCircuitFeature } from '../detection/venueDetection';
+import { isSwigCircuitFeature, isVipFeature } from '../detection/venueDetection';
 
 /**
  * Analyzes all Swig Circuit related features
@@ -24,6 +24,23 @@ export const analyzeSwigCircuitFeatures = (features: FeatureItem[]): FeatureItem
         ]
       };
     }
+    
+    if (isVipFeature(feature)) {
+      return {
+        ...feature,
+        dbStatus: feature.dbStatus || 'in_progress',
+        databaseStatus: feature.databaseStatus || 'in_progress',
+        statusUpdated: feature.statusUpdated || true,
+        databaseAnalysis: feature.databaseAnalysis || 'VIP package wizard requires enhancements to the ticket_tiers table',
+        testSteps: [
+          ...(feature.testSteps || []),
+          'Test VIP package creation wizard',
+          'Verify VIP package benefits are saved correctly',
+          'Test editing existing VIP packages'
+        ]
+      };
+    }
+    
     return feature;
   });
 };

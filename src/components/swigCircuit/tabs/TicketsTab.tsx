@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -42,6 +43,8 @@ const TicketsTab: React.FC<TicketsTabProps> = ({
   onContinue,
 }) => {
   const [newTier, setNewTier] = useState<TicketTier>(emptyTier);
+  const [editingVipPackage, setEditingVipPackage] = useState<TicketTier | null>(null);
+  const [isWizardOpen, setIsWizardOpen] = useState(false);
 
   const handleAddTier = () => {
     if (!newTier.name || newTier.price <= 0) return;
@@ -58,6 +61,8 @@ const TicketsTab: React.FC<TicketsTabProps> = ({
     } else {
       addTicketTier(vipPackage);
     }
+    
+    setEditingVipPackage(null);
   };
 
   const handleBenefitChange = (value: string, index: number) => {
@@ -110,7 +115,8 @@ const TicketsTab: React.FC<TicketsTabProps> = ({
   };
 
   const editVipPackage = (tier: TicketTier) => {
-    console.log("Edit VIP package", tier);
+    setEditingVipPackage(tier);
+    setIsWizardOpen(true);
   };
   
   return (
@@ -126,7 +132,12 @@ const TicketsTab: React.FC<TicketsTabProps> = ({
         </div>
 
         <div className="flex justify-center my-6">
-          <CreateVipPackageButton onSaveVipPackage={handleSaveVipPackage} />
+          <CreateVipPackageButton 
+            onSaveVipPackage={handleSaveVipPackage} 
+            initialPackage={editingVipPackage}
+            isOpen={isWizardOpen}
+            onOpenChange={setIsWizardOpen}
+          />
         </div>
 
         {ticketTiers.length > 0 && (

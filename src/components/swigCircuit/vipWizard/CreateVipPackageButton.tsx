@@ -8,18 +8,38 @@ import { TicketTier } from '@/hooks/swigCircuit/types';
 interface CreateVipPackageButtonProps {
   onSaveVipPackage: (vipPackage: TicketTier) => void;
   className?: string;
+  initialPackage?: TicketTier | null;
+  isOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 const CreateVipPackageButton: React.FC<CreateVipPackageButtonProps> = ({ 
   onSaveVipPackage,
-  className = ''
+  className = '',
+  initialPackage = null,
+  isOpen = false,
+  onOpenChange
 }) => {
-  const [isWizardOpen, setIsWizardOpen] = useState(false);
+  const [isWizardOpen, setIsWizardOpen] = useState(isOpen);
+
+  // Sync external isOpen prop with internal state
+  React.useEffect(() => {
+    if (isWizardOpen !== isOpen) {
+      setIsWizardOpen(isOpen);
+    }
+  }, [isOpen]);
+
+  const handleOpenChange = (open: boolean) => {
+    setIsWizardOpen(open);
+    if (onOpenChange) {
+      onOpenChange(open);
+    }
+  };
 
   return (
     <>
       <Button 
-        onClick={() => setIsWizardOpen(true)}
+        onClick={() => handleOpenChange(true)}
         className={`bg-gradient-to-r from-purple-600 to-spiritless-pink hover:opacity-90 text-white ${className}`}
       >
         <Crown className="mr-2 h-4 w-4" />
@@ -29,8 +49,9 @@ const CreateVipPackageButton: React.FC<CreateVipPackageButtonProps> = ({
       
       <VipPackageWizard
         open={isWizardOpen}
-        onOpenChange={setIsWizardOpen}
+        onOpenChange={handleOpenChange}
         onSave={onSaveVipPackage}
+        initialPackage={initialPackage}
       />
     </>
   );
