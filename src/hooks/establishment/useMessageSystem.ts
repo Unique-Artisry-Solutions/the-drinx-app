@@ -33,65 +33,95 @@ export const useMessageSystem = (userType: 'establishment') => {
 
       const establishmentIds = userEstablishments.map(est => est.id);
 
-      // Now fetch threads for these establishments
+      // First get all threads
       const { data: threadsData, error: threadsError } = await supabase
         .from('promoter_venue_threads')
         .select(`
-          *,
+          id,
+          promoter_id,
+          venue_id,
+          subject,
+          is_archived,
+          last_message_at,
+          created_at,
+          updated_at,
           venues:establishments(id, name),
-          promoters:profiles!promoter_id(id, display_name, username),
-          promoter_venue_messages!inner(
-            id,
-            content,
-            sent_at,
-            sender_id,
-            is_from_promoter,
-            sender:profiles(display_name, username)
-          )
+          promoters:profiles!promoter_id(id, display_name, username)
         `)
         .in('venue_id', establishmentIds)
         .order('last_message_at', { ascending: false });
 
       if (threadsError) throw threadsError;
       
-      // Get read status information
-      const { data: readStatusData } = await supabase
-        .from('message_read_status')
-        .select('*')
-        .eq('user_id', currentUser.data.user?.id);
+      // Now get the latest message for each thread and the read status
+      const processedThreads: MessageThread[] = [];
       
-      const readStatusMap = (readStatusData || []).reduce((acc, status) => {
-        acc[status.thread_id] = status.last_read_at;
-        return acc;
-      }, {} as Record<string, string>);
-
-      const processedThreads: MessageThread[] = threadsData?.map(thread => {
-        // Check if thread is read based on read status data
-        const isRead = readStatusMap[thread.id] ? true : false;
+      for (const thread of threadsData || []) {
+        // Get messages for this thread
+        const { data: messagesData, error: messagesError } = await supabase
+          .from('promoter_venue_messages')
+          .select(`
+            id,
+            content,
+            sent_at,
+            sender_id,
+            is_from_promoter
+          `)
+          .eq('thread_id', thread.id)
+          .order('sent_at', { ascending: false })
+          .limit(20);
+          
+        if (messagesError) throw messagesError;
         
-        return {
-          id: thread.id,
-          venue_id: thread.venue_id,
-          promoter_id: thread.promoter_id,
-          subject: thread.subject || undefined,
-          lastMessage: thread.promoter_venue_messages[0]?.content,
-          timestamp: thread.last_message_at,
-          isRead,
-          isArchived: thread.is_archived,
-          venueName: thread.venues?.name,
-          messages: thread.promoter_venue_messages?.map(msg => ({
+        // For each message, get the sender info separately
+        const messages: Message[] = [];
+        for (const msg of messagesData || []) {
+          // Get sender profile info
+          const { data: senderData, error: senderError } = await supabase
+            .from('profiles')
+            .select('display_name, username')
+            .eq('id', msg.sender_id)
+            .single();
+            
+          if (senderError && senderError.code !== 'PGRST116') {
+            console.error('Error fetching sender profile:', senderError);
+          }
+          
+          messages.push({
             id: msg.id,
             content: msg.content,
             sent_at: msg.sent_at,
             sender_id: msg.sender_id,
             is_from_promoter: msg.is_from_promoter,
             sender: {
-              display_name: msg.sender?.display_name,
-              username: msg.sender?.username
+              display_name: senderData?.display_name,
+              username: senderData?.username
             }
-          })) || []
-        };
-      }) || [];
+          });
+        }
+        
+        // Get read status
+        const { data: readStatusData } = await supabase
+          .from('message_read_status')
+          .select('*')
+          .eq('thread_id', thread.id)
+          .eq('user_id', currentUser.data.user?.id);
+        
+        const isRead = readStatusData && readStatusData.length > 0;
+        
+        processedThreads.push({
+          id: thread.id,
+          venue_id: thread.venue_id,
+          promoter_id: thread.promoter_id,
+          subject: thread.subject || undefined,
+          lastMessage: messages[0]?.content || 'No messages yet',
+          timestamp: thread.last_message_at,
+          isRead: isRead,
+          isArchived: thread.is_archived,
+          venueName: thread.venues?.name,
+          messages: messages.reverse() // Reverse to get ascending order
+        });
+      }
 
       setThreads(processedThreads);
     } catch (err: any) {
