@@ -24,13 +24,18 @@ const SignupForm: React.FC<SignupFormProps> = ({
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
-  const [selectedUserType, setSelectedUserType] = useState(initialUserType);
+  const [selectedUserType, setSelectedUserType] = useState<'individual' | 'establishment' | 'promoter'>(initialUserType);
   const [formError, setFormError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { signUp, isLoading } = useAuth();
+
+  // Fix: Create a handler function that explicitly handles the type conversion
+  const handleUserTypeChange = (value: string) => {
+    setSelectedUserType(value as 'individual' | 'establishment' | 'promoter');
+  };
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -132,7 +137,7 @@ const SignupForm: React.FC<SignupFormProps> = ({
             <label className="text-sm font-medium" htmlFor="user-type">
               Account Type
             </label>
-            <Select value={selectedUserType} onValueChange={setSelectedUserType}>
+            <Select value={selectedUserType} onValueChange={handleUserTypeChange}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select your account type" />
               </SelectTrigger>
