@@ -1,1 +1,5 @@
+
 project_id = "dvifibvzwunnpcsihpxq"
+
+[functions.create_test_user]
+verify_jwt = true

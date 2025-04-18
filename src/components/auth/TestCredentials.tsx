@@ -58,7 +58,7 @@ const TestCredentials: React.FC = () => {
 
       console.log(`Creating test ${credentials.userType} with email ${credentials.email}`);
       
-      // Create the user in auth
+      // Create the user in auth with detailed error handling
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: credentials.email,
         password: credentials.password,
@@ -73,6 +73,16 @@ const TestCredentials: React.FC = () => {
 
       if (signUpError) {
         console.error('Sign up error:', signUpError);
+        
+        // Check for specific error types
+        if (signUpError.message.includes('Database error saving new user')) {
+          // This could be due to the trigger failing
+          const manualCreationResponse = await createUserManually(credentials);
+          if (manualCreationResponse) {
+            return manualCreationResponse;
+          }
+        }
+        
         throw signUpError;
       }
 
@@ -82,54 +92,16 @@ const TestCredentials: React.FC = () => {
 
       console.log('Auth data after signup:', authData);
 
-      // Create corresponding profile manually since the trigger may fail
-      const { error: profileError } = await supabase
+      // User was successfully created, now check if we need to create corresponding profile manually
+      const { data: existingProfile } = await supabase
         .from('profiles')
-        .insert({
-          id: authData.user.id,
-          username: credentials.username,
-          display_name: credentials.name,
-          user_type: credentials.userType
-        });
-
-      if (profileError) {
-        console.warn('Could not create profile, it may already exist:', profileError);
-        // Continue anyway, as the profile might have been created by a DB trigger
-      }
-
-      // Create role entry
-      const { error: roleError } = await supabase
-        .from('user_roles')
-        .insert({
-          user_id: authData.user.id,
-          role: credentials.userType,
-          is_active: true
-        });
-
-      if (roleError) {
-        console.warn('Could not create user role, it may already exist:', roleError);
-        // Continue anyway as this is not critical
-      }
-
-      // If it's an establishment, create a test establishment
-      if (credentials.userType === 'establishment') {
-        const { error: establishmentError } = await supabase
-          .from('establishments')
-          .insert({
-            name: "Test Bar",
-            owner_id: authData.user.id,
-            address: "123 Test Street",
-            latitude: 40.7128,
-            longitude: -74.0060,
-            cocktail_count: 0,
-            phone: "555-0123",
-            website: "https://testbar.com"
-          });
-
-        if (establishmentError) {
-          console.warn('Could not create establishment:', establishmentError);
-          // Continue anyway as we want to show the user is created
-        }
+        .select('*')
+        .eq('id', authData.user.id)
+        .single();
+        
+      if (!existingProfile) {
+        console.log('Profile not created automatically, creating manually...');
+        await createProfileManually(authData.user);
       }
 
       toast({
@@ -145,6 +117,8 @@ const TestCredentials: React.FC = () => {
       // Provide a more specific message when it's the notification_channel error
       const errorMessage = error.message?.includes('notification_channel') 
         ? 'Database error: notification_channel type is missing. The user may still have been created partially.'
+        : error.message?.includes('Database error saving new user')
+        ? 'Database trigger error when creating user. Try refreshing and logging in with the test credentials.'
         : error.message || 'Something went wrong';
         
       toast({
@@ -154,6 +128,105 @@ const TestCredentials: React.FC = () => {
       });
       
       return null;
+    }
+  };
+
+  // Fallback manual creation process
+  const createUserManually = async (credentials: TestUserCredentials) => {
+    try {
+      // Direct insertion via SQL function/RPC could help bypass the trigger
+      const { data, error } = await supabase.rpc('create_test_user_manually', {
+        p_email: credentials.email,
+        p_password: credentials.password,
+        p_name: credentials.name,
+        p_username: credentials.username,
+        p_user_type: credentials.userType
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: `Test ${credentials.userType} created (manual process)`,
+        description: `Email: ${credentials.email} | Password: ${credentials.password}`,
+        duration: 10000,
+      });
+
+      return data;
+    } catch (fallbackError: any) {
+      console.error('Manual user creation failed:', fallbackError);
+      // If the manual method also fails, we'll show a more helpful message
+      toast({
+        title: 'Manual user creation failed',
+        description: 'Please use the existing test credentials below to log in.',
+        variant: 'destructive',
+      });
+      return null;
+    }
+  };
+
+  // Function to manually create a profile if the trigger didn't work
+  const createProfileManually = async (user: any) => {
+    try {
+      // Insert profile record
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          id: user.id,
+          username: user.user_metadata.username,
+          display_name: user.user_metadata.name,
+          user_type: user.user_metadata.user_type
+        });
+
+      if (profileError) {
+        console.warn('Manual profile creation failed:', profileError);
+      }
+      
+      // Insert role record
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .insert({
+          user_id: user.id,
+          role: user.user_metadata.user_type,
+          is_active: true
+        });
+
+      if (roleError) {
+        console.warn('Manual role creation failed:', roleError);
+      }
+      
+      // If it's an establishment, create a test establishment
+      if (user.user_metadata.user_type === 'establishment') {
+        createTestEstablishment(user.id);
+      }
+      
+      return true;
+    } catch (err) {
+      console.error('Error in manual profile creation:', err);
+      return false;
+    }
+  };
+
+  // Create a test establishment
+  const createTestEstablishment = async (ownerId: string) => {
+    try {
+      const { error: establishmentError } = await supabase
+        .from('establishments')
+        .insert({
+          name: "Test Bar",
+          owner_id: ownerId,
+          address: "123 Test Street",
+          latitude: 40.7128,
+          longitude: -74.0060,
+          cocktail_count: 0,
+          phone: "555-0123",
+          website: "https://testbar.com"
+        });
+
+      if (establishmentError) {
+        console.warn('Could not create establishment:', establishmentError);
+      }
+    } catch (err) {
+      console.error('Error creating test establishment:', err);
     }
   };
 
