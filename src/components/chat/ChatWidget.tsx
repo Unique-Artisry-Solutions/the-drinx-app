@@ -3,11 +3,13 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Send, X, AlertCircle, Loader2 } from 'lucide-react';
+import { Send, X, AlertCircle, Loader2, Search } from 'lucide-react';
 import { useMessageSystem } from '@/hooks/messages/useMessageSystem';
 import { VenueContact } from '@/hooks/promoter/types';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/auth';
+import VenueSelectionCard from '../promoter/communication/VenueSelectionCard';
+import { usePromoterContacts } from '@/hooks/promoter/usePromoterContacts';
 
 interface ChatWidgetProps {
   contact?: VenueContact;
@@ -24,11 +26,18 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isCreatingThread, setIsCreatingThread] = useState(false);
+  const [selectedVenue, setSelectedVenue] = useState<VenueContact | undefined>(contact);
+  const [searchQuery, setSearchQuery] = useState('');
   const { createThread, sendMessage } = useMessageSystem('promoter');
   const { user } = useAuth();
+  const { contacts, isLoading } = usePromoterContacts();
+
+  const filteredContacts = contacts.filter(c => 
+    c.venueName.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const handleSendMessage = async () => {
-    if (!message.trim() || !user) return;
+    if (!message.trim() || !user || !selectedVenue) return;
 
     try {
       setSending(true);
@@ -36,10 +45,10 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({
       
       let threadId = existingThreadId;
       
-      if (!threadId && contact) {
+      if (!threadId) {
         try {
           setIsCreatingThread(true);
-          threadId = await createThread(contact.venueId);
+          threadId = await createThread(selectedVenue.venueId);
           setIsCreatingThread(false);
         } catch (err: any) {
           console.error('Error creating thread:', err);
@@ -52,6 +61,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({
       if (threadId) {
         await sendMessage(threadId, message);
         setMessage('');
+        onClose(); // Close the widget after sending
       } else {
         setError('Could not determine where to send this message.');
       }
@@ -92,10 +102,10 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({
   }
 
   return (
-    <Card className="w-[320px] shadow-lg">
+    <Card className="w-[400px] shadow-lg">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium">
-          {contact ? `Message ${contact.venueName}` : 'New Message'}
+          {selectedVenue ? `Message ${selectedVenue.venueName}` : 'New Message'}
         </CardTitle>
         <Button
           variant="ghost"
@@ -108,49 +118,90 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          <div className="min-h-[100px] max-h-[200px] overflow-y-auto p-2 bg-gray-50 rounded">
-            {error ? (
-              <Alert variant="destructive" className="mb-2 p-2">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription className="text-xs">{error}</AlertDescription>
-              </Alert>
-            ) : isCreatingThread ? (
-              <div className="flex flex-col items-center justify-center h-full">
-                <Loader2 className="h-6 w-6 animate-spin text-purple-500" />
-                <p className="text-sm text-gray-500 mt-2">
-                  Creating conversation...
-                </p>
+          {!selectedVenue && (
+            <div className="space-y-3">
+              <div className="relative">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search venues..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-8"
+                />
               </div>
-            ) : (
-              <p className="text-sm text-gray-500 text-center">
-                Start a new conversation
-              </p>
-            )}
-          </div>
-          <div className="flex gap-2">
-            <Input
-              placeholder="Type your message..."
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  handleSendMessage();
-                }
-              }}
-              disabled={sending || isCreatingThread}
-            />
-            <Button
-              size="icon"
-              onClick={handleSendMessage}
-              disabled={!message.trim() || sending || isCreatingThread}
-            >
-              {sending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Send className="h-4 w-4" />
-              )}
-            </Button>
-          </div>
+              <div className="max-h-[200px] overflow-y-auto space-y-2">
+                {isLoading ? (
+                  <div className="flex justify-center py-4">
+                    <Loader2 className="h-6 w-6 animate-spin text-purple-500" />
+                  </div>
+                ) : filteredContacts.length > 0 ? (
+                  filteredContacts.map((venue) => (
+                    <VenueSelectionCard
+                      key={venue.id}
+                      venueName={venue.venueName}
+                      isSelected={selectedVenue?.id === venue.id}
+                      onClick={() => setSelectedVenue(venue)}
+                    />
+                  ))
+                ) : (
+                  <p className="text-center text-sm text-muted-foreground py-4">
+                    No venues found
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {error && (
+            <Alert variant="destructive" className="mb-2">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
+          {selectedVenue && (
+            <>
+              <div className="min-h-[100px] max-h-[200px] overflow-y-auto p-2 bg-gray-50 rounded">
+                {isCreatingThread ? (
+                  <div className="flex flex-col items-center justify-center h-full">
+                    <Loader2 className="h-6 w-6 animate-spin text-purple-500" />
+                    <p className="text-sm text-gray-500 mt-2">
+                      Creating conversation...
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500 text-center">
+                    Start a new conversation
+                  </p>
+                )}
+              </div>
+
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Type your message..."
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      handleSendMessage();
+                    }
+                  }}
+                  disabled={sending || isCreatingThread}
+                />
+                <Button
+                  size="icon"
+                  onClick={handleSendMessage}
+                  disabled={!message.trim() || sending || isCreatingThread}
+                >
+                  {sending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+            </>
+          )}
         </div>
       </CardContent>
     </Card>
