@@ -8,6 +8,7 @@ import AuthButton from './AuthButton';
 import { useAuth } from '@/contexts/AuthContext';
 import SignupConfirmationModal from './SignupConfirmationModal';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { supabase } from '@/lib/supabase'; // Import supabase client
 
 interface SignupFormProps {
   onSuccess?: () => void;
@@ -51,12 +52,12 @@ const SignupForm: React.FC<SignupFormProps> = ({
       
       const redirectTo = `${window.location.origin}/?email_confirmed=true`;
       
-      const { error } = await signUp(email, password, {
+      const result = await signUp(email, password, {
         data: metadata,
         emailRedirectTo: redirectTo
       });
       
-      if (error) throw error;
+      if (result?.error) throw result.error;
 
       // If this is your email, initialize the roles
       if (email === 'jacksonmcfarland14@gmail.com') {
