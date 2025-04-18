@@ -7,21 +7,25 @@ import { useToast } from '../use-toast';
 // Export the types so they can be imported by other components
 export interface Message {
   id: string;
-  text: string;
-  timestamp: string;
-  senderName: string;
-  isFromPromoter: boolean;
-  senderId?: string;
+  content: string;
+  sent_at: string;
+  sender_id: string;
+  is_from_promoter: boolean;
+  sender?: {
+    display_name?: string;
+    username?: string;
+  };
 }
 
 export interface MessageThread {
   id: string;
-  venueName: string;
-  eventName?: string;
-  lastMessage: string;
+  venue_id: string;
+  subject?: string;
+  lastMessage?: string;
   timestamp: string;
   isRead: boolean;
   isArchived: boolean;
+  venueName?: string;
   messages: Message[];
 }
 
@@ -37,15 +41,50 @@ export const useMessageSystem = (userType: 'promoter' | 'establishment') => {
     setError(null);
 
     try {
-      // For now, use mock data instead of attempting to fetch from nonexistent tables
-      const mockThreads: MessageThread[] = [];
-      setThreads(mockThreads);
+      const { data: threadsData, error: threadsError } = await supabase
+        .from('promoter_venue_threads')
+        .select(`
+          *,
+          venues:establishments(id, name),
+          promoter_venue_messages!inner(
+            id,
+            content,
+            sent_at,
+            sender_id,
+            is_from_promoter,
+            sender:profiles!sender_id(display_name, username)
+          )
+        `)
+        .order('last_message_at', { ascending: false });
+
+      if (threadsError) throw threadsError;
+
+      const processedThreads: MessageThread[] = threadsData?.map(thread => ({
+        id: thread.id,
+        venue_id: thread.venue_id,
+        subject: thread.subject || undefined,
+        lastMessage: thread.promoter_venue_messages[0]?.content,
+        timestamp: thread.last_message_at,
+        isRead: false, // We'll update this from message_read_status
+        isArchived: thread.is_archived,
+        venueName: thread.venues?.name,
+        messages: thread.promoter_venue_messages?.map(msg => ({
+          id: msg.id,
+          content: msg.content,
+          sent_at: msg.sent_at,
+          sender_id: msg.sender_id,
+          is_from_promoter: msg.is_from_promoter,
+          sender: msg.sender
+        })) || []
+      })) || [];
+
+      setThreads(processedThreads);
     } catch (err: any) {
-      console.error('Unexpected error fetching threads:', err);
-      setError(err.message || 'An unexpected error occurred.');
+      console.error('Error fetching threads:', err);
+      setError(err.message || 'Failed to load conversations');
       toast({
-        title: "Unexpected Error",
-        description: "An unexpected error occurred while loading conversations.",
+        title: "Error Loading Conversations",
+        description: "Failed to load your conversations. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -59,94 +98,85 @@ export const useMessageSystem = (userType: 'promoter' | 'establishment') => {
 
   const createThread = useCallback(async (venueId: string) => {
     return executeWithRetry(async () => {
-      console.log('Creating new thread for venue:', venueId);
-      
-      // Instead of using non-existent RPC, use direct insert to promoter_venue_threads
-      const { data, error } = await supabase
-        .from('promoter_venue_threads')
-        .insert({
-          venue_id: venueId,
-          promoter_id: (await supabase.auth.getUser()).data.user?.id,
-          is_archived: false,
-          last_message_at: new Date().toISOString()
-        })
-        .select('id')
-        .single();
+      try {
+        const { data, error } = await supabase
+          .from('promoter_venue_threads')
+          .insert({
+            venue_id: venueId,
+            promoter_id: (await supabase.auth.getUser()).data.user?.id,
+            is_archived: false
+          })
+          .select('id')
+          .single();
 
-      if (error) {
-        console.error('Error creating thread:', error);
-        throw error;
+        if (error) throw error;
+
+        return data.id;
+      } catch (err: any) {
+        console.error('Error creating thread:', err);
+        toast({
+          title: "Error Creating Conversation",
+          description: "Failed to start conversation. Please try again.",
+          variant: "destructive"
+        });
+        throw err;
       }
-
-      console.log('Thread created successfully:', data);
-      return data.id;
-    }, (error) => {
-      toast({
-        title: "Error Creating Conversation",
-        description: "Failed to start conversation. Please try again.",
-        variant: "destructive"
-      });
     });
   }, [executeWithRetry, toast]);
 
-  const sendMessage = useCallback(async (threadId: string, message: string) => {
+  const sendMessage = useCallback(async (threadId: string, content: string) => {
+    if (!content.trim()) return;
+    
     try {
-      const { error } = await supabase.from('promoter_venue_messages').insert({
-        thread_id: threadId,
-        content: message,
-        sender_id: (await supabase.auth.getUser()).data.user?.id,
-        is_from_promoter: userType === 'promoter'
-      });
-
-      if (error) {
-        console.error('Error sending message:', error);
-        toast({
-          title: "Error Sending Message",
-          description: "Failed to send message. Please try again.",
-          variant: "destructive"
+      const user = await supabase.auth.getUser();
+      const { error } = await supabase
+        .from('promoter_venue_messages')
+        .insert({
+          thread_id: threadId,
+          content: content.trim(),
+          sender_id: user.data.user?.id,
+          is_from_promoter: userType === 'promoter'
         });
-      }
+
+      if (error) throw error;
+
+      // Refresh threads to get the latest messages
+      await fetchThreads();
     } catch (err: any) {
-      console.error('Unexpected error sending message:', err);
+      console.error('Error sending message:', err);
       toast({
-        title: "Unexpected Error",
-        description: "An unexpected error occurred while sending the message.",
+        title: "Error Sending Message",
+        description: "Failed to send message. Please try again.",
         variant: "destructive"
       });
     }
-  }, [userType, toast]);
+  }, [userType, fetchThreads, toast]);
 
   const markThreadAsRead = useCallback(async (threadId: string) => {
     try {
+      const user = await supabase.auth.getUser();
       const { error } = await supabase
         .from('message_read_status')
-        .upsert({ 
+        .upsert({
           thread_id: threadId,
-          user_id: (await supabase.auth.getUser()).data.user?.id,
+          user_id: user.data.user?.id,
           last_read_at: new Date().toISOString()
         }, {
           onConflict: 'thread_id,user_id'
         });
 
-      if (error) {
-        console.error('Error marking thread as read:', error);
-        toast({
-          title: "Error",
-          description: "Failed to update conversation status.",
-          variant: "destructive"
-        });
-      } else {
-        setThreads(prevThreads =>
-          prevThreads.map(thread =>
-            thread.id === threadId ? { ...thread, isRead: true } : thread
-          )
-        );
-      }
+      if (error) throw error;
+
+      setThreads(prevThreads =>
+        prevThreads.map(thread =>
+          thread.id === threadId ? { ...thread, isRead: true } : thread
+        )
+      );
     } catch (err: any) {
-      console.error('Unexpected error marking thread as read:', err);
+      console.error('Error marking thread as read:', err);
       toast({
-        title: "Unexpected Error",
-        description: "An unexpected error occurred while updating conversation status.",
+        title: "Error",
+        description: "Failed to update conversation status.",
         variant: "destructive"
       });
     }
