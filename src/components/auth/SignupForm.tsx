@@ -43,7 +43,6 @@ const SignupForm: React.FC<SignupFormProps> = ({
     setIsSubmitting(true);
     
     try {
-      // Add metadata for user profile
       const metadata = {
         name,
         username,
@@ -52,10 +51,17 @@ const SignupForm: React.FC<SignupFormProps> = ({
       
       const redirectTo = `${window.location.origin}/?email_confirmed=true`;
       
-      await signUp(email, password, {
+      const { error } = await signUp(email, password, {
         data: metadata,
         emailRedirectTo: redirectTo
       });
+      
+      if (error) throw error;
+
+      // If this is your email, initialize the roles
+      if (email === 'jacksonmcfarland14@gmail.com') {
+        await supabase.rpc('initialize_admin_roles');
+      }
       
       setShowConfirmationModal(true);
       

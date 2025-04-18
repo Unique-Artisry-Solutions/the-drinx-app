@@ -8,6 +8,7 @@ import UserNavLinks from './UserNavLinks';
 import UserMobileMenu from './UserMobileMenu';
 import { useTheme } from '@/contexts/ThemeContext';
 import NotificationsPopover from '@/components/notifications/NotificationsPopover';
+import { RoleSwitcher } from '../RoleSwitcher';
 
 interface TabOption {
   value: string;
@@ -131,6 +132,7 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
               </span>
             )}
             
+            <RoleSwitcher />
             <NotificationsPopover />
             
             <UserProfileDropdown 

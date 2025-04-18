@@ -1929,6 +1929,33 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       visitor_sessions: {
         Row: {
           created_at: string
@@ -2109,6 +2136,18 @@ export type Database = {
           retained_users_week4: number
         }[]
       }
+      initialize_admin_roles: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      is_allowed_multi_role_user: {
+        Args: { user_email: string }
+        Returns: boolean
+      }
+      switch_active_role: {
+        Args: { role_to_activate: Database["public"]["Enums"]["user_role"] }
+        Returns: undefined
+      }
       track_analytics_event: {
         Args: {
           p_user_id: string
@@ -2124,6 +2163,7 @@ export type Database = {
     Enums: {
       notification_channel: "in_app" | "email" | "push"
       notification_priority: "low" | "medium" | "high" | "urgent"
+      user_role: "individual" | "establishment" | "promoter"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2241,6 +2281,7 @@ export const Constants = {
     Enums: {
       notification_channel: ["in_app", "email", "push"],
       notification_priority: ["low", "medium", "high", "urgent"],
+      user_role: ["individual", "establishment", "promoter"],
     },
   },
 } as const
