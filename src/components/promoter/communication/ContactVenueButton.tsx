@@ -19,6 +19,7 @@ const ContactVenueButton: React.FC<ContactVenueButtonProps> = ({
   establishmentName 
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -41,56 +42,75 @@ const ContactVenueButton: React.FC<ContactVenueButtonProps> = ({
     }
 
     try {
-      // Check if user is a promoter
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('user_type')
-        .eq('id', user.id)
-        .single();
-
-      if (profileError) throw profileError;
-
-      if (profile?.user_type !== 'promoter') {
-        toast({
-          title: "Access Denied",
-          description: "Only promoters can contact venues",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Check if the user has an active promoter role
+      setIsLoading(true);
+      
+      // First, check if user has the promoter role at all
       const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
         .select('is_active')
         .eq('user_id', user.id)
-        .eq('role', 'promoter')
-        .single();
+        .eq('role', 'promoter');
 
       if (roleError) throw roleError;
 
-      if (!roleData?.is_active) {
-        // If they have the role but it's not active, activate it
-        const { error: switchError } = await supabase.rpc('switch_active_role', {
-          role_to_activate: 'promoter'
-        });
+      // If no promoter role exists, create it
+      if (!roleData || roleData.length === 0) {
+        // Add promoter role to the user
+        const { error: insertError } = await supabase
+          .from('user_roles')
+          .insert({
+            user_id: user.id,
+            role: 'promoter',
+            is_active: false
+          });
 
-        if (switchError) throw switchError;
-
+        if (insertError) throw insertError;
+        
         toast({
-          title: "Role Activated",
-          description: "Your promoter role has been activated",
+          title: "Promoter Role Created",
+          description: "Promoter role has been created for your account",
         });
       }
 
+      // Now activate the promoter role
+      const { error: switchError } = await supabase.rpc('switch_active_role', {
+        role_to_activate: 'promoter'
+      });
+
+      if (switchError) throw switchError;
+
+      // Update local storage to maintain state
+      localStorage.setItem('user_type', 'promoter');
+      
+      // Update profile to ensure consistent state
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ user_type: 'promoter' })
+        .eq('id', user.id);
+        
+      if (profileError) {
+        console.warn('Could not update profile user_type:', profileError);
+        // Non-blocking error
+      }
+
+      toast({
+        title: "Role Activated",
+        description: "Your promoter role has been activated",
+      });
+      
+      // Brief delay to ensure database changes propagate
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
       setIsOpen(true);
     } catch (error: any) {
-      console.error('Error checking user type:', error);
+      console.error('Error preparing promoter role:', error);
       toast({
         title: "Error",
-        description: "Unable to verify permissions. Please try again.",
+        description: error.message || "Unable to activate promoter role. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -104,9 +124,10 @@ const ContactVenueButton: React.FC<ContactVenueButtonProps> = ({
           onClick={handleOpenChat}
           className="flex items-center gap-2"
           variant="outline"
+          disabled={isLoading}
         >
           <MessageSquare className="h-4 w-4" />
-          Contact Venue
+          {isLoading ? 'Preparing...' : 'Contact Venue'}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="p-0 border-none" align="end">

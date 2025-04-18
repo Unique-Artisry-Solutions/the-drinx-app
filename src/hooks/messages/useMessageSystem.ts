@@ -238,7 +238,35 @@ export const useMessageSystem = (userType: 'promoter' | 'establishment' = 'promo
     try {
       console.log('Creating thread between promoter:', user.id, 'and venue:', venueId);
       
-      // First check if a thread already exists
+      // First verify that the user has an active promoter role
+      const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select('is_active')
+        .eq('user_id', user.id)
+        .eq('role', 'promoter')
+        .single();
+        
+      if (roleError) {
+        console.error('Error checking promoter role:', roleError);
+        throw new Error("Unable to verify promoter role. Please try refreshing the page.");
+      }
+        
+      if (!roleData?.is_active) {
+        // Try to activate the role if it exists but isn't active
+        const { error: switchError } = await supabase.rpc('switch_active_role', {
+          role_to_activate: 'promoter'
+        });
+        
+        if (switchError) {
+          console.error('Error activating role:', switchError);
+          throw new Error("Could not activate promoter role. Please try again.");
+        }
+        
+        // Update local storage
+        localStorage.setItem('user_type', 'promoter');
+      }
+      
+      // Check if a thread already exists
       const { data: existingThread, error: checkError } = await supabase
         .from('promoter_venue_threads')
         .select('id')
@@ -270,12 +298,17 @@ export const useMessageSystem = (userType: 'promoter' | 'establishment' = 'promo
 
       if (threadError) {
         console.error('Error creating thread:', threadError);
-        toast({
-          title: "Error",
-          description: "Failed to create conversation with venue. Please try again.",
-          variant: "destructive",
-        });
-        throw threadError;
+        
+        // Add more specific error handling
+        if (threadError.message?.includes('check_thread_participants')) {
+          if (threadError.message?.includes('Invalid promoter_id')) {
+            throw new Error("Your account doesn't have an active promoter role. Please refresh and try again.");
+          } else if (threadError.message?.includes('Invalid venue_id')) {
+            throw new Error("The selected venue doesn't exist or has been removed.");
+          }
+        }
+        
+        throw new Error("Could not create conversation. Please ensure you have a promoter role and try again.");
       }
 
       console.log('Thread created successfully:', thread.id);
