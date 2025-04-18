@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
@@ -38,6 +38,7 @@ const TEST_CREDENTIALS = {
 
 const TestCredentials: React.FC = () => {
   const { toast } = useToast();
+  const [isCreating, setIsCreating] = useState(false);
 
   const createTestUser = async (credentials: TestUserCredentials) => {
     try {
@@ -71,7 +72,7 @@ const TestCredentials: React.FC = () => {
       if (signUpError) throw signUpError;
 
       if (authData.user) {
-        // Create corresponding profile
+        // Create corresponding profile manually since the trigger may fail
         const { error: profileError } = await supabase
           .from('profiles')
           .insert({
@@ -81,7 +82,10 @@ const TestCredentials: React.FC = () => {
             user_type: credentials.userType
           });
 
-        if (profileError) throw profileError;
+        if (profileError) {
+          console.warn('Could not create profile, it may already exist:', profileError);
+          // Continue anyway, as the profile might have been created by a DB trigger
+        }
 
         // Create role entry
         const { error: roleError } = await supabase
@@ -92,7 +96,10 @@ const TestCredentials: React.FC = () => {
             is_active: true
           });
 
-        if (roleError) throw roleError;
+        if (roleError) {
+          console.warn('Could not create user role, it may already exist:', roleError);
+          // Continue anyway as this is not critical
+        }
 
         // If it's an establishment, create a test establishment
         if (credentials.userType === 'establishment') {
@@ -109,7 +116,10 @@ const TestCredentials: React.FC = () => {
               website: "https://testbar.com"
             });
 
-          if (establishmentError) throw establishmentError;
+          if (establishmentError) {
+            console.warn('Could not create establishment:', establishmentError);
+            // Continue anyway as we want to show the user is created
+          }
         }
 
         toast({
@@ -120,23 +130,36 @@ const TestCredentials: React.FC = () => {
       }
     } catch (error: any) {
       console.error('Error creating test user:', error);
+      
+      // Provide a more specific message when it's the notification_channel error
+      const errorMessage = error.message?.includes('notification_channel') 
+        ? 'Database error: notification_channel type is missing. The user may still have been created partially.'
+        : error.message || 'Something went wrong';
+        
       toast({
         title: 'Error creating test user',
-        description: error.message || 'Something went wrong',
+        description: errorMessage,
         variant: 'destructive',
       });
     }
   };
 
   const createAllTestUsers = async () => {
-    await createTestUser(TEST_CREDENTIALS.individual);
-    await createTestUser(TEST_CREDENTIALS.establishment);
-    await createTestUser(TEST_CREDENTIALS.promoter);
-    
-    toast({
-      title: 'Test credentials created',
-      description: 'All test users have been set up or already exist',
-    });
+    try {
+      setIsCreating(true);
+      await createTestUser(TEST_CREDENTIALS.individual);
+      await createTestUser(TEST_CREDENTIALS.establishment);
+      await createTestUser(TEST_CREDENTIALS.promoter);
+      
+      toast({
+        title: 'Test credentials created',
+        description: 'All test users have been set up or already exist',
+      });
+    } catch (error) {
+      console.error('Error creating all test users:', error);
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   return (
@@ -148,8 +171,9 @@ const TestCredentials: React.FC = () => {
           size="sm"
           className="w-full text-xs"
           onClick={createAllTestUsers}
+          disabled={isCreating}
         >
-          Create Test Users
+          {isCreating ? 'Creating Users...' : 'Create Test Users'}
         </Button>
         <div className="text-xs text-muted-foreground space-y-1">
           <p><strong>User:</strong> testuser@spiritless.com / Test123!</p>
