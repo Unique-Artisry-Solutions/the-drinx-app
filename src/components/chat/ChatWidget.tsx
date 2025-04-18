@@ -10,6 +10,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/auth';
 import VenueSelectionCard from '../promoter/communication/VenueSelectionCard';
 import { usePromoterContacts } from '@/hooks/promoter/usePromoterContacts';
+import { usePromoterRole } from '@/hooks/promoter/usePromoterRole';
 
 interface ChatWidgetProps {
   contact?: VenueContact;
@@ -31,6 +32,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({
   const { createThread, sendMessage } = useMessageSystem('promoter');
   const { user } = useAuth();
   const { contacts, isLoading } = usePromoterContacts();
+  const { ensurePromoterRole, isActivating } = usePromoterRole();
 
   const filteredContacts = contacts.filter(c => 
     c.venueName.toLowerCase().includes(searchQuery.toLowerCase())
@@ -48,6 +50,10 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({
       if (!threadId) {
         try {
           setIsCreatingThread(true);
+          
+          // Ensure promoter role is active before creating thread
+          await ensurePromoterRole();
+          
           threadId = await createThread(selectedVenue.venueId);
           setIsCreatingThread(false);
         } catch (err: any) {
@@ -162,11 +168,11 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({
           {selectedVenue && (
             <>
               <div className="min-h-[100px] max-h-[200px] overflow-y-auto p-2 bg-gray-50 rounded">
-                {isCreatingThread ? (
+                {isCreatingThread || isActivating ? (
                   <div className="flex flex-col items-center justify-center h-full">
                     <Loader2 className="h-6 w-6 animate-spin text-purple-500" />
                     <p className="text-sm text-gray-500 mt-2">
-                      Creating conversation...
+                      {isActivating ? 'Activating promoter role...' : 'Creating conversation...'}
                     </p>
                   </div>
                 ) : (
@@ -186,12 +192,12 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({
                       handleSendMessage();
                     }
                   }}
-                  disabled={sending || isCreatingThread}
+                  disabled={sending || isCreatingThread || isActivating}
                 />
                 <Button
                   size="icon"
                   onClick={handleSendMessage}
-                  disabled={!message.trim() || sending || isCreatingThread}
+                  disabled={!message.trim() || sending || isCreatingThread || isActivating}
                 >
                   {sending ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
