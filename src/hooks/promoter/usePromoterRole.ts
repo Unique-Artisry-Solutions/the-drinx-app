@@ -16,33 +16,8 @@ export const usePromoterRole = () => {
 
     try {
       setIsActivating(true);
-      
-      // First check if user has the promoter role at all
-      const { data: roleData, error: roleError } = await supabase
-        .from('user_roles')
-        .select('is_active')
-        .eq('user_id', user.id)
-        .eq('role', 'promoter')
-        .single();
 
-      if (roleError) {
-        // If error is not found, create the role
-        if (roleError.code === 'PGRST116') {
-          const { error: insertError } = await supabase
-            .from('user_roles')
-            .insert({
-              user_id: user.id,
-              role: 'promoter',
-              is_active: false
-            });
-
-          if (insertError) throw insertError;
-        } else {
-          throw roleError;
-        }
-      }
-
-      // Now activate the promoter role
+      // Use the new RPC function to switch to promoter role
       const { error: switchError } = await supabase.rpc('switch_active_role', {
         role_to_activate: 'promoter'
       });

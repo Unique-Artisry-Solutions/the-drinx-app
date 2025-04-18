@@ -55,12 +55,12 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({
           await ensurePromoterRole();
           
           threadId = await createThread(selectedVenue.venueId);
-          setIsCreatingThread(false);
         } catch (err: any) {
           console.error('Error creating thread:', err);
           setError(err.message || 'Failed to create conversation. Please try again later.');
-          setIsCreatingThread(false);
           return;
+        } finally {
+          setIsCreatingThread(false);
         }
       }
 
