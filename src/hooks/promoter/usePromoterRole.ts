@@ -17,12 +17,25 @@ export const usePromoterRole = () => {
     try {
       setIsActivating(true);
 
-      // Use the new RPC function to switch to promoter role
-      const { error: switchError } = await supabase.rpc('switch_active_role', {
-        role_to_activate: 'promoter'
-      });
-
-      if (switchError) throw switchError;
+      // Use the RPC function to switch to promoter role with retries
+      let retries = 2;
+      let success = false;
+      
+      while (retries > 0 && !success) {
+        try {
+          const { error: switchError } = await supabase.rpc('switch_active_role', {
+            role_to_activate: 'promoter'
+          });
+          
+          if (switchError) throw switchError;
+          success = true;
+        } catch (error: any) {
+          retries--;
+          if (retries === 0) throw error;
+          // Short delay between retries
+          await new Promise(resolve => setTimeout(resolve, 300));
+        }
+      }
 
       // Update local storage
       localStorage.setItem('user_type', 'promoter');
