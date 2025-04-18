@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import UserAuth from '@/components/UserAuth';
@@ -6,8 +7,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/contexts/ThemeContext';
-import TestCredentials from '@/components/auth/TestCredentials';
 import { clearAllSessions } from '@/utils/sessionCleaner';
+import TestCredentials from '@/components/auth/TestCredentials';
 
 const LoginPage = () => {
   const navigate = useNavigate();
