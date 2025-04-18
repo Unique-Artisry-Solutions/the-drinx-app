@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Bell } from 'lucide-react';
+import { Bell, AlertCircle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
@@ -13,7 +13,7 @@ import { useNotifications } from '@/hooks/useNotifications';
 import NotificationItem from './NotificationItem';
 
 const NotificationsPopover = () => {
-  const { notifications, unreadCount, isLoading, markAsRead } = useNotifications();
+  const { notifications, unreadCount, isLoading, error, markAsRead, refetch } = useNotifications();
 
   return (
     <Popover>
@@ -31,31 +31,56 @@ const NotificationsPopover = () => {
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-80 sm:w-96">
-        <div className="px-4 py-2 border-b">
+        <div className="px-4 py-2 border-b flex justify-between items-center">
           <h3 className="font-medium">Notifications</h3>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="p-1 h-auto"
+            onClick={() => refetch()}
+          >
+            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+            <span className="sr-only">Refresh</span>
+          </Button>
         </div>
-        <ScrollArea className="h-[400px] px-4 py-2">
-          {isLoading ? (
-            <div className="flex justify-center py-8">
-              <div className="animate-pulse space-y-2">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-20 w-full bg-gray-100 rounded-lg" />
-                ))}
+        <ScrollArea className="h-[400px]">
+          <div className="px-4 py-2">
+            {isLoading ? (
+              <div className="flex justify-center py-8">
+                <div className="animate-pulse space-y-2">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="h-20 w-full bg-gray-100 rounded-lg" />
+                  ))}
+                </div>
               </div>
-            </div>
-          ) : notifications.length > 0 ? (
-            notifications.map((notification) => (
-              <NotificationItem
-                key={notification.id}
-                notification={notification}
-                onMarkAsRead={markAsRead}
-              />
-            ))
-          ) : (
-            <div className="text-center py-8 text-gray-500">
-              No notifications
-            </div>
-          )}
+            ) : error ? (
+              <div className="text-center py-8 space-y-2">
+                <AlertCircle className="h-8 w-8 text-red-500 mx-auto" />
+                <p className="text-gray-700 font-medium">Error loading notifications</p>
+                <p className="text-sm text-gray-500">{error}</p>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => refetch()}
+                >
+                  Try Again
+                </Button>
+              </div>
+            ) : notifications.length > 0 ? (
+              notifications.map((notification) => (
+                <NotificationItem
+                  key={notification.id}
+                  notification={notification}
+                  onMarkAsRead={markAsRead}
+                />
+              ))
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <p className="mb-2">No notifications</p>
+                <p className="text-sm text-gray-400">You'll be notified when you have updates</p>
+              </div>
+            )}
+          </div>
         </ScrollArea>
       </PopoverContent>
     </Popover>

@@ -1,59 +1,80 @@
 
 import React from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { Bell, Check } from 'lucide-react';
-import { Notification } from '@/hooks/useNotificationSystem';
+import { Check, AlertCircle, Bell } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { Notification } from '@/types/NotificationTypes';
 
 interface NotificationItemProps {
   notification: Notification;
   onMarkAsRead: (id: string) => void;
 }
 
-const NotificationItem: React.FC<NotificationItemProps> = ({ 
-  notification, 
-  onMarkAsRead 
-}) => {
-  const priorityColors = {
-    low: 'bg-blue-100 text-blue-600',
-    medium: 'bg-green-100 text-green-600',
-    high: 'bg-orange-100 text-orange-600',
-    urgent: 'bg-red-100 text-red-600'
+const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onMarkAsRead }) => {
+  const isUnread = !notification.is_read;
+  const formattedTime = formatDistanceToNow(new Date(notification.created_at), { addSuffix: true });
+
+  const getPriorityStyles = () => {
+    switch (notification.priority) {
+      case 'urgent':
+        return 'border-red-200 bg-red-50';
+      case 'high':
+        return 'border-orange-200 bg-orange-50';
+      case 'medium':
+        return isUnread ? 'border-blue-200 bg-blue-50' : '';
+      default:
+        return isUnread ? 'border-gray-200 bg-gray-50' : '';
+    }
+  };
+
+  const getIcon = () => {
+    switch (notification.priority) {
+      case 'urgent':
+      case 'high':
+        return <AlertCircle className="h-5 w-5 text-red-500" />;
+      default:
+        return <Bell className="h-5 w-5 text-blue-500" />;
+    }
   };
 
   return (
     <div 
-      className={`flex p-4 rounded-lg ${
-        notification.is_read ? 'bg-white' : 'bg-blue-50'
-      } border mb-2`}
-    >
-      <div className="mr-3">
-        <div className={`h-8 w-8 rounded-full flex items-center justify-center ${priorityColors[notification.priority]}`}>
-          <Bell size={18} />
-        </div>
-      </div>
-      <div className="flex-1">
-        <h4 className="font-medium">{notification.title}</h4>
-        <p className="text-sm text-gray-600">{notification.content}</p>
-        <p className="text-xs text-gray-500 mt-1">
-          {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
-          {notification.notification_categories && (
-            <span className="ml-2 px-2 py-0.5 bg-gray-100 rounded-full">
-              {notification.notification_categories.name}
-            </span>
-          )}
-        </p>
-      </div>
-      {!notification.is_read && (
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="ml-2 text-green-600 hover:text-green-700"
-          onClick={() => onMarkAsRead(notification.id)}
-        >
-          <Check size={16} />
-        </Button>
+      className={cn(
+        "p-4 mb-2 border rounded-lg transition-colors",
+        getPriorityStyles(),
+        isUnread ? 'border-l-4' : ''
       )}
+    >
+      <div className="flex justify-between items-start">
+        <div className="flex items-start gap-3">
+          <div className="mt-0.5">
+            {getIcon()}
+          </div>
+          <div>
+            <h4 className={cn("font-medium", isUnread && "font-semibold")}>
+              {notification.title}
+            </h4>
+            <p className="text-sm text-gray-600 mt-1">
+              {notification.content}
+            </p>
+            <div className="text-xs text-gray-400 mt-2">
+              {formattedTime}
+            </div>
+          </div>
+        </div>
+        {isUnread && (
+          <Button 
+            size="sm" 
+            variant="ghost"
+            className="px-2 h-8"
+            onClick={() => onMarkAsRead(notification.id)}
+          >
+            <Check className="h-4 w-4 mr-1" />
+            <span className="text-xs">Mark read</span>
+          </Button>
+        )}
+      </div>
     </div>
   );
 };
