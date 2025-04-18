@@ -109,7 +109,7 @@ const TestCredentials: React.FC = () => {
               name: "Test Bar",
               owner_id: authData.user.id,
               address: "123 Test Street",
-              latitude: 40.7128, // New York coordinates as example
+              latitude: 40.7128,
               longitude: -74.0060,
               cocktail_count: 0,
               phone: "555-0123",
