@@ -3,7 +3,6 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
-import { enableAdminBypass, disableAdminBypass, checkAdminBypassStatus } from '@/utils/adminBypass';
 
 interface TestUserCredentials {
   email: string;
@@ -39,21 +38,16 @@ const TEST_CREDENTIALS = {
 
 const TestCredentials: React.FC = () => {
   const { toast } = useToast();
-  const { isEnabled: isAdminBypassEnabled } = checkAdminBypassStatus();
 
   const createTestUser = async (credentials: TestUserCredentials) => {
     try {
-      // Check if user already exists
-      const { data: existingUsers, error: checkError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('username', credentials.username);
+      // First check if user already exists in auth
+      const { data: existingUser } = await supabase.auth.signInWithPassword({
+        email: credentials.email,
+        password: credentials.password
+      });
 
-      if (checkError) {
-        throw checkError;
-      }
-
-      if (existingUsers && existingUsers.length > 0) {
+      if (existingUser.user) {
         toast({
           title: `${credentials.userType === 'individual' ? 'User' : credentials.userType === 'establishment' ? 'Business' : 'Promoter'} already exists`,
           description: `You can log in with ${credentials.email} / ${credentials.password}`,
@@ -61,8 +55,8 @@ const TestCredentials: React.FC = () => {
         return;
       }
 
-      // Sign up the test user
-      const { data, error } = await supabase.auth.signUp({
+      // Create the user in auth
+      const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: credentials.email,
         password: credentials.password,
         options: {
@@ -70,20 +64,58 @@ const TestCredentials: React.FC = () => {
             name: credentials.name,
             username: credentials.username,
             user_type: credentials.userType
-          },
-          emailRedirectTo: `${window.location.origin}/?email_confirmed=true`
+          }
         }
       });
 
-      if (error) {
-        throw error;
-      }
+      if (signUpError) throw signUpError;
 
-      toast({
-        title: `Test ${credentials.userType === 'individual' ? 'User' : credentials.userType === 'establishment' ? 'Business' : 'Promoter'} created`,
-        description: `Email: ${credentials.email} | Password: ${credentials.password}`,
-        duration: 10000,
-      });
+      if (authData.user) {
+        // Create corresponding profile
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: authData.user.id,
+            username: credentials.username,
+            display_name: credentials.name,
+            user_type: credentials.userType
+          });
+
+        if (profileError) throw profileError;
+
+        // Create role entry
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .insert({
+            user_id: authData.user.id,
+            role: credentials.userType,
+            is_active: true
+          });
+
+        if (roleError) throw roleError;
+
+        // If it's an establishment, create a test establishment
+        if (credentials.userType === 'establishment') {
+          const { error: establishmentError } = await supabase
+            .from('establishments')
+            .insert({
+              name: "Test Bar",
+              owner_id: authData.user.id,
+              address: "123 Test St",
+              city: "Test City",
+              state: "Test State",
+              zip: "12345"
+            });
+
+          if (establishmentError) throw establishmentError;
+        }
+
+        toast({
+          title: `Test ${credentials.userType} created`,
+          description: `Email: ${credentials.email} | Password: ${credentials.password}`,
+          duration: 10000,
+        });
+      }
     } catch (error: any) {
       console.error('Error creating test user:', error);
       toast({
@@ -105,44 +137,6 @@ const TestCredentials: React.FC = () => {
     });
   };
 
-  const toggleAdminBypass = () => {
-    if (isAdminBypassEnabled) {
-      disableAdminBypass();
-      toast({
-        title: 'Admin Bypass Disabled',
-        description: 'Admin bypass mode has been turned off',
-      });
-    } else {
-      const options = ['admin', 'establishment', 'individual', 'promoter'];
-      
-      let userTypeIndex;
-      if (window.confirm('Select user type:\nOK - Admin\nCancel - Choose Other')) {
-        userTypeIndex = 0;
-      } else if (window.confirm('Select user type:\nOK - Establishment\nCancel - Choose Other')) {
-        userTypeIndex = 1;
-      } else if (window.confirm('Select user type:\nOK - Individual\nCancel - Promoter')) {
-        userTypeIndex = 2;
-      } else {
-        userTypeIndex = 3;
-      }
-      
-      const userType = options[userTypeIndex] as 'admin' | 'establishment' | 'individual' | 'promoter';
-      enableAdminBypass(userType);
-      
-      toast({
-        title: 'Admin Bypass Enabled',
-        description: `You're now in admin bypass mode as ${
-          userType === 'admin' ? 'an administrator' : 
-          userType === 'establishment' ? 'a business' : 
-          userType === 'individual' ? 'an individual user' : 'a promoter'
-        }`,
-        duration: 5000,
-      });
-    }
-    // Force reload to apply changes
-    window.location.reload();
-  };
-
   return (
     <div className="mt-6 border-t pt-4">
       <h3 className="text-sm font-medium mb-2">Test Credentials</h3>
@@ -155,14 +149,6 @@ const TestCredentials: React.FC = () => {
         >
           Create Test Users
         </Button>
-        <Button 
-          variant={isAdminBypassEnabled ? "destructive" : "default"}
-          size="sm"
-          className="w-full text-xs"
-          onClick={toggleAdminBypass}
-        >
-          {isAdminBypassEnabled ? "Disable Admin Bypass" : "Enable Admin Bypass"}
-        </Button>
         <div className="text-xs text-muted-foreground space-y-1">
           <p><strong>User:</strong> testuser@spiritless.com / Test123!</p>
           <p><strong>Business:</strong> testbusiness@spiritless.com / Test123!</p>
@@ -174,4 +160,3 @@ const TestCredentials: React.FC = () => {
 };
 
 export default TestCredentials;
-
