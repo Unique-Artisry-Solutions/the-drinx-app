@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { CardContent, CardFooter } from '@/components/ui/card';
@@ -7,7 +8,7 @@ import AuthButton from './AuthButton';
 import { useAuth } from '@/contexts/AuthContext';
 import SignupConfirmationModal from './SignupConfirmationModal';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { supabase } from '@/lib/supabase'; // Import supabase client
+import { supabase } from '@/lib/supabase';
 
 interface SignupFormProps {
   onSuccess?: () => void;
@@ -54,16 +55,31 @@ const SignupForm: React.FC<SignupFormProps> = ({
         data: metadata,
         emailRedirectTo: redirectTo
       });
-
+      
       if (email === 'jacksonmcfarland14@gmail.com') {
         await supabase.rpc('initialize_admin_roles');
       }
       
       setShowConfirmationModal(true);
       
+      // Optional: Show success toast
+      toast({
+        title: 'Signup Successful',
+        description: 'Please check your email to verify your account.',
+      });
+      
     } catch (error: any) {
       console.error('Signup error:', error);
-      setFormError(error.message || 'Failed to sign up');
+      
+      // More specific error handling
+      const errorMessage = error.message || 'Failed to sign up';
+      setFormError(errorMessage);
+      
+      toast({
+        title: 'Signup Failed',
+        description: errorMessage,
+        variant: 'destructive',
+      });
     } finally {
       setIsSubmitting(false);
     }
