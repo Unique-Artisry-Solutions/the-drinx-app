@@ -43,6 +43,12 @@ const SignupForm: React.FC<SignupFormProps> = ({
     setIsSubmitting(true);
     
     try {
+      console.log('Signup attempt:', { 
+        email, 
+        username, 
+        userType: selectedUserType 
+      });
+      
       const metadata = {
         name,
         username,
@@ -58,11 +64,11 @@ const SignupForm: React.FC<SignupFormProps> = ({
       
       if (email === 'jacksonmcfarland14@gmail.com') {
         await supabase.rpc('initialize_admin_roles');
+        console.log('Admin roles initialized');
       }
       
       setShowConfirmationModal(true);
       
-      // Optional: Show success toast
       toast({
         title: 'Signup Successful',
         description: 'Please check your email to verify your account.',
@@ -83,10 +89,6 @@ const SignupForm: React.FC<SignupFormProps> = ({
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const handleConfirmationClose = () => {
-    setShowConfirmationModal(false);
   };
 
   return (
@@ -204,7 +206,7 @@ const SignupForm: React.FC<SignupFormProps> = ({
 
       <SignupConfirmationModal 
         isOpen={showConfirmationModal} 
-        onClose={handleConfirmationClose}
+        onClose={() => setShowConfirmationModal(false)}
         email={email}
       />
     </>
