@@ -1,35 +1,41 @@
 
-// This Edge Function provides an alternative way to create test users when the normal method fails
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
 
 serve(async (req) => {
   // Handle CORS preflight request
-  if (req.method === "OPTIONS") {
+  if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Get the request body
-    const { email, password, name, username, userType } = await req.json();
+    // Get environment variables
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
-    // Create Supabase client with service role (admin) to bypass RLS policies
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-    
-    if (!supabaseServiceKey) {
-      throw new Error("SUPABASE_SERVICE_ROLE_KEY is not configured");
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('Missing environment variables');
+      throw new Error('Server configuration error');
     }
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    // Create Supabase admin client
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    });
 
-    // Create the user in auth.users
-    const { data: authData, error: signUpError } = await supabase.auth.admin.createUser({
+    const { email, password, name, username, userType } = await req.json();
+    console.log('Creating test user with details:', { email, name, username, userType });
+
+    // Create the user with admin privileges
+    const { data: userData, error: userError } = await supabase.auth.admin.createUser({
       email,
       password,
       email_confirm: true,
@@ -40,40 +46,49 @@ serve(async (req) => {
       }
     });
 
-    if (signUpError) throw signUpError;
-    
-    const userId = authData.user.id;
+    if (userError) {
+      console.error('Error creating user:', userError);
+      throw userError;
+    }
 
-    // Insert the profile record
+    console.log('User created successfully:', userData.user.id);
+
+    // Create profile record
     const { error: profileError } = await supabase
       .from('profiles')
       .insert({
-        id: userId,
+        id: userData.user.id,
         username,
         display_name: name,
         user_type: userType
       });
 
-    if (profileError) console.warn("Profile creation error:", profileError);
+    if (profileError) {
+      console.error('Error creating profile:', profileError);
+      throw profileError;
+    }
 
-    // Insert the role record
+    // Create role record
     const { error: roleError } = await supabase
       .from('user_roles')
       .insert({
-        user_id: userId,
+        user_id: userData.user.id,
         role: userType,
         is_active: true
       });
 
-    if (roleError) console.warn("Role creation error:", roleError);
+    if (roleError) {
+      console.error('Error creating role:', roleError);
+      throw roleError;
+    }
 
-    // If establishment, create a test establishment
+    // If it's an establishment, create a test establishment
     if (userType === 'establishment') {
       const { error: establishmentError } = await supabase
         .from('establishments')
         .insert({
           name: "Test Bar",
-          owner_id: userId,
+          owner_id: userData.user.id,
           address: "123 Test Street",
           latitude: 40.7128,
           longitude: -74.0060,
@@ -82,33 +97,27 @@ serve(async (req) => {
           website: "https://testbar.com"
         });
 
-      if (establishmentError) console.warn("Establishment creation error:", establishmentError);
+      if (establishmentError) {
+        console.error('Error creating establishment:', establishmentError);
+        throw establishmentError;
+      }
     }
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: "Test user created successfully",
-        user: authData.user
-      }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      }
-    );
+    return new Response(JSON.stringify({
+      user: userData.user,
+      message: 'Test user created successfully'
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 200,
+    });
+
   } catch (error) {
-    console.error("Test user creation error:", error);
-    
-    return new Response(
-      JSON.stringify({
-        success: false,
-        message: error.message,
-        error
-      }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 500,
-      }
-    );
+    console.error('Error in create_test_user function:', error);
+    return new Response(JSON.stringify({
+      error: error.message
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 500,
+    });
   }
-});
+})
