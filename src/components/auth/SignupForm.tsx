@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { CardContent, CardFooter } from '@/components/ui/card';
@@ -33,7 +32,6 @@ const SignupForm: React.FC<SignupFormProps> = ({
   const { toast } = useToast();
   const { signUp, isLoading } = useAuth();
 
-  // Fix: Create a handler function that explicitly handles the type conversion
   const handleUserTypeChange = (value: string) => {
     setSelectedUserType(value as 'individual' | 'establishment' | 'promoter');
   };
@@ -52,14 +50,11 @@ const SignupForm: React.FC<SignupFormProps> = ({
       
       const redirectTo = `${window.location.origin}/?email_confirmed=true`;
       
-      const result = await signUp(email, password, {
+      await signUp(email, password, {
         data: metadata,
         emailRedirectTo: redirectTo
       });
-      
-      if (result?.error) throw result.error;
 
-      // If this is your email, initialize the roles
       if (email === 'jacksonmcfarland14@gmail.com') {
         await supabase.rpc('initialize_admin_roles');
       }
