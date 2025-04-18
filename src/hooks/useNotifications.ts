@@ -10,28 +10,25 @@ export const useNotifications = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const { toast } = useToast();
 
   const fetchNotifications = async () => {
-    if (!user?.id) return;
-    setIsLoading(true);
-    setError(null);
+    if (!user?.id || !session?.access_token) {
+      setIsLoading(false);
+      setError("Please log in to view notifications");
+      return;
+    }
 
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const accessToken = sessionData.session?.access_token;
+      setIsLoading(true);
+      setError(null);
 
-      if (!accessToken) {
-        throw new Error('No access token available');
-      }
-
-      // Use the full URL including the project ID
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://dvifibvzwunnpcsihpxq.supabase.co';
       const response = await fetch(`${supabaseUrl}/functions/v1/notifications`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${accessToken}`,
+          'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -48,7 +45,6 @@ export const useNotifications = () => {
       const { data, error } = await response.json();
       if (error) throw error;
 
-      // Handle empty notifications gracefully
       const notificationsArray = Array.isArray(data) ? data : [];
       setNotifications(notificationsArray);
       setUnreadCount(notificationsArray.filter((n: Notification) => !n.is_read).length);
@@ -56,7 +52,6 @@ export const useNotifications = () => {
       console.error('Error fetching notifications:', error);
       setError(error.message || 'Failed to load notifications');
       
-      // Don't show toast for no notifications
       if (!error.message?.includes('No notifications')) {
         toast({
           title: "Notification Error",
@@ -70,19 +65,14 @@ export const useNotifications = () => {
   };
 
   const markAsRead = async (notificationId: string) => {
+    if (!user?.id || !session?.access_token) return;
+
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const accessToken = sessionData.session?.access_token;
-
-      if (!accessToken) {
-        throw new Error('No access token available');
-      }
-
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://dvifibvzwunnpcsihpxq.supabase.co';
       const response = await fetch(`${supabaseUrl}/functions/v1/notifications`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${accessToken}`,
+          'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -99,9 +89,6 @@ export const useNotifications = () => {
         throw new Error(errorData.error || `Server responded with ${response.status}`);
       }
 
-      const { error } = await response.json();
-      if (error) throw error;
-
       setNotifications(prev => 
         prev.map(n => n.id === notificationId ? { ...n, is_read: true } : n)
       );
@@ -117,13 +104,14 @@ export const useNotifications = () => {
   };
 
   useEffect(() => {
-    if (user?.id) {
+    if (user && session) {
       fetchNotifications();
     } else {
       setNotifications([]);
       setUnreadCount(0);
+      setIsLoading(false);
     }
-  }, [user?.id]);
+  }, [user, session]);
 
   return {
     notifications,

@@ -11,9 +11,15 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useNotifications } from '@/hooks/useNotifications';
 import NotificationItem from './NotificationItem';
+import { useAuth } from '@/contexts/auth';
 
 const NotificationsPopover = () => {
   const { notifications, unreadCount, isLoading, error, markAsRead, refetch } = useNotifications();
+  const { user } = useAuth();
+
+  if (!user) {
+    return null; // Don't show notifications popover for unauthenticated users
+  }
 
   return (
     <Popover>
