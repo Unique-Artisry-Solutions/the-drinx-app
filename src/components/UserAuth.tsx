@@ -3,7 +3,7 @@ import React from 'react';
 import { Card } from '@/components/ui/card';
 import UserAuthHeader from './auth/UserAuthHeader';
 import UserAuthTabs from './auth/UserAuthTabs';
-import { UserAuthProps } from './types';
+import { UserAuthProps } from './auth/types';
 
 const UserAuth: React.FC<UserAuthProps> = ({ 
   onSuccess,
