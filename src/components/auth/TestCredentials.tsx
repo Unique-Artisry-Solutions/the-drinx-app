@@ -74,12 +74,11 @@ const TestCredentials: React.FC = () => {
       if (signUpError) {
         console.error('Sign up error:', signUpError);
         
-        // Check for specific error types
+        // If there's an error with the auth signup, try the Edge Function approach
         if (signUpError.message.includes('Database error saving new user')) {
-          // This could be due to the trigger failing
-          const manualCreationResponse = await createUserManually(credentials);
-          if (manualCreationResponse) {
-            return manualCreationResponse;
+          const edgeFunctionResponse = await createUserViaEdgeFunction(credentials);
+          if (edgeFunctionResponse) {
+            return edgeFunctionResponse;
           }
         }
         
@@ -131,32 +130,32 @@ const TestCredentials: React.FC = () => {
     }
   };
 
-  // Fallback manual creation process
-  const createUserManually = async (credentials: TestUserCredentials) => {
+  // Use Edge Function to create test users
+  const createUserViaEdgeFunction = async (credentials: TestUserCredentials) => {
     try {
-      // Direct insertion via SQL function/RPC could help bypass the trigger
-      const { data, error } = await supabase.rpc('create_test_user_manually', {
-        p_email: credentials.email,
-        p_password: credentials.password,
-        p_name: credentials.name,
-        p_username: credentials.username,
-        p_user_type: credentials.userType
+      const { data, error } = await supabase.functions.invoke('create_test_user', {
+        body: {
+          email: credentials.email,
+          password: credentials.password,
+          name: credentials.name,
+          username: credentials.username,
+          userType: credentials.userType
+        }
       });
 
       if (error) throw error;
 
       toast({
-        title: `Test ${credentials.userType} created (manual process)`,
+        title: `Test ${credentials.userType} created (via Edge Function)`,
         description: `Email: ${credentials.email} | Password: ${credentials.password}`,
         duration: 10000,
       });
 
-      return data;
+      return data.user;
     } catch (fallbackError: any) {
-      console.error('Manual user creation failed:', fallbackError);
-      // If the manual method also fails, we'll show a more helpful message
+      console.error('Edge function user creation failed:', fallbackError);
       toast({
-        title: 'Manual user creation failed',
+        title: 'Creation via Edge Function failed',
         description: 'Please use the existing test credentials below to log in.',
         variant: 'destructive',
       });
