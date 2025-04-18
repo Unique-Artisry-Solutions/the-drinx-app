@@ -59,8 +59,32 @@ const ContactVenueButton: React.FC<ContactVenueButtonProps> = ({
         return;
       }
 
+      // Check if the user has an active promoter role
+      const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select('is_active')
+        .eq('user_id', user.id)
+        .eq('role', 'promoter')
+        .single();
+
+      if (roleError) throw roleError;
+
+      if (!roleData?.is_active) {
+        // If they have the role but it's not active, activate it
+        const { error: switchError } = await supabase.rpc('switch_active_role', {
+          role_to_activate: 'promoter'
+        });
+
+        if (switchError) throw switchError;
+
+        toast({
+          title: "Role Activated",
+          description: "Your promoter role has been activated",
+        });
+      }
+
       setIsOpen(true);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error checking user type:', error);
       toast({
         title: "Error",
