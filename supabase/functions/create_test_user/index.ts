@@ -14,9 +14,9 @@ serve(async (req) => {
   }
 
   try {
-    // Get environment variables
-    const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    // Get environment variables using the new names
+    const supabaseUrl = Deno.env.get('PROJECT_URL');
+    const supabaseServiceKey = Deno.env.get('SERVICE_ROLE_SECRET');
 
     if (!supabaseUrl || !supabaseServiceKey) {
       console.error('Missing environment variables:', { 
@@ -42,7 +42,7 @@ serve(async (req) => {
     
     if (lookupError) {
       console.log('Error looking up existing user:', lookupError);
-      // Only proceed if it's not a user already exists error
+      // Only proceed if it's a user not found error
       if (lookupError.message?.includes('User not found')) {
         // Continue with creation
         console.log('User does not exist, proceeding with creation');
