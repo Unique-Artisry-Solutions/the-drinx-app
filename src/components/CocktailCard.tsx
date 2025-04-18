@@ -15,7 +15,7 @@ interface CocktailCardProps {
     id: string;
     name: string;
     distance?: string;
-  };
+  } | undefined;
   className?: string;
 }
 
@@ -31,6 +31,10 @@ const CocktailCard: React.FC<CocktailCardProps> = ({
 }) => {
   const { theme } = useTheme();
   const isLightTheme = theme === 'light';
+  
+  // Default establishment data if it's undefined
+  const establishmentName = establishment?.name || 'Unknown Venue';
+  const establishmentDistance = establishment?.distance;
   
   return (
     <Link to={`/cocktail/${id}`}>
@@ -63,7 +67,7 @@ const CocktailCard: React.FC<CocktailCardProps> = ({
             {name}
           </h3>
           <p className="text-sm mb-3 text-muted-foreground">
-            {establishment.name} {establishment.distance && `· ${establishment.distance}`}
+            {establishmentName} {establishmentDistance && `· ${establishmentDistance}`}
           </p>
 
           <p className="text-sm line-clamp-2 mb-2 text-foreground">

@@ -21,7 +21,10 @@ const MenuTabContent: React.FC<MenuTabContentProps> = ({ cocktails }) => {
             description={cocktail.description} 
             ingredients={cocktail.ingredients} 
             image={cocktail.image || cocktail.image_url} 
-            establishment={cocktail.establishment} 
+            establishment={cocktail.establishment || {
+              id: cocktail.establishment_id,
+              name: 'This Establishment'
+            }} 
           />
         ))
       ) : (
