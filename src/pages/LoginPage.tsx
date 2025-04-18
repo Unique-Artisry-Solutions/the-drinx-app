@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import UserAuth from '@/components/UserAuth';
@@ -7,14 +6,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/contexts/ThemeContext';
-import { clearAllSessions } from '@/utils/adminBypass';
+import TestCredentials from '@/components/auth/TestCredentials';
+import { clearAllSessions } from '@/utils/sessionCleaner';
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const [userType, setUserType] = useState<'individual' | 'establishment'>('individual');
   const { theme, setTheme } = useTheme();
   
-  // Always force light theme for login page
   useEffect(() => {
     if (theme !== 'light') {
       setTheme('light');
@@ -22,7 +21,6 @@ const LoginPage = () => {
   }, [theme, setTheme]);
   
   const handleAuthSuccess = () => {
-    // Force page refresh and navigation to index
     console.log("Login successful, forcing navigation to index");
     window.location.href = '/';
   };
@@ -81,6 +79,8 @@ const LoginPage = () => {
                 </TabsContent>
               </Tabs>
             </Card>
+            
+            <TestCredentials />
             
             <div className="text-center mt-6">
               <p className="text-gray-600">

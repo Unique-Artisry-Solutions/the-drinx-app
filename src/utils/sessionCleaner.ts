@@ -26,3 +26,4 @@ export const clearAllSessions = () => {
   
   // Removed: window.location.href = '/landing';
 };
+
