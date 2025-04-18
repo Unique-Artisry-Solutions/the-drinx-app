@@ -43,7 +43,7 @@ const TestCredentials: React.FC = () => {
   const createTestUser = async (credentials: TestUserCredentials) => {
     try {
       // First check if user already exists in auth
-      const { data: existingUser } = await supabase.auth.signInWithPassword({
+      const { data: existingUser, error: signInError } = await supabase.auth.signInWithPassword({
         email: credentials.email,
         password: credentials.password
       });
@@ -56,6 +56,8 @@ const TestCredentials: React.FC = () => {
         return;
       }
 
+      console.log(`Creating test ${credentials.userType} with email ${credentials.email}`);
+      
       // Create the user in auth
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: credentials.email,
@@ -69,65 +71,74 @@ const TestCredentials: React.FC = () => {
         }
       });
 
-      if (signUpError) throw signUpError;
-
-      if (authData.user) {
-        // Create corresponding profile manually since the trigger may fail
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            id: authData.user.id,
-            username: credentials.username,
-            display_name: credentials.name,
-            user_type: credentials.userType
-          });
-
-        if (profileError) {
-          console.warn('Could not create profile, it may already exist:', profileError);
-          // Continue anyway, as the profile might have been created by a DB trigger
-        }
-
-        // Create role entry
-        const { error: roleError } = await supabase
-          .from('user_roles')
-          .insert({
-            user_id: authData.user.id,
-            role: credentials.userType,
-            is_active: true
-          });
-
-        if (roleError) {
-          console.warn('Could not create user role, it may already exist:', roleError);
-          // Continue anyway as this is not critical
-        }
-
-        // If it's an establishment, create a test establishment
-        if (credentials.userType === 'establishment') {
-          const { error: establishmentError } = await supabase
-            .from('establishments')
-            .insert({
-              name: "Test Bar",
-              owner_id: authData.user.id,
-              address: "123 Test Street",
-              latitude: 40.7128,
-              longitude: -74.0060,
-              cocktail_count: 0,
-              phone: "555-0123",
-              website: "https://testbar.com"
-            });
-
-          if (establishmentError) {
-            console.warn('Could not create establishment:', establishmentError);
-            // Continue anyway as we want to show the user is created
-          }
-        }
-
-        toast({
-          title: `Test ${credentials.userType} created`,
-          description: `Email: ${credentials.email} | Password: ${credentials.password}`,
-          duration: 10000,
-        });
+      if (signUpError) {
+        console.error('Sign up error:', signUpError);
+        throw signUpError;
       }
+
+      if (!authData.user) {
+        throw new Error('User creation failed: No user returned from signup');
+      }
+
+      console.log('Auth data after signup:', authData);
+
+      // Create corresponding profile manually since the trigger may fail
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          id: authData.user.id,
+          username: credentials.username,
+          display_name: credentials.name,
+          user_type: credentials.userType
+        });
+
+      if (profileError) {
+        console.warn('Could not create profile, it may already exist:', profileError);
+        // Continue anyway, as the profile might have been created by a DB trigger
+      }
+
+      // Create role entry
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .insert({
+          user_id: authData.user.id,
+          role: credentials.userType,
+          is_active: true
+        });
+
+      if (roleError) {
+        console.warn('Could not create user role, it may already exist:', roleError);
+        // Continue anyway as this is not critical
+      }
+
+      // If it's an establishment, create a test establishment
+      if (credentials.userType === 'establishment') {
+        const { error: establishmentError } = await supabase
+          .from('establishments')
+          .insert({
+            name: "Test Bar",
+            owner_id: authData.user.id,
+            address: "123 Test Street",
+            latitude: 40.7128,
+            longitude: -74.0060,
+            cocktail_count: 0,
+            phone: "555-0123",
+            website: "https://testbar.com"
+          });
+
+        if (establishmentError) {
+          console.warn('Could not create establishment:', establishmentError);
+          // Continue anyway as we want to show the user is created
+        }
+      }
+
+      toast({
+        title: `Test ${credentials.userType} created`,
+        description: `Email: ${credentials.email} | Password: ${credentials.password}`,
+        duration: 10000,
+      });
+      
+      return authData.user;
     } catch (error: any) {
       console.error('Error creating test user:', error);
       
@@ -141,22 +152,37 @@ const TestCredentials: React.FC = () => {
         description: errorMessage,
         variant: 'destructive',
       });
+      
+      return null;
     }
   };
 
   const createAllTestUsers = async () => {
     try {
       setIsCreating(true);
-      await createTestUser(TEST_CREDENTIALS.individual);
-      await createTestUser(TEST_CREDENTIALS.establishment);
-      await createTestUser(TEST_CREDENTIALS.promoter);
+      console.log('Starting test user creation process');
+      
+      const individualUser = await createTestUser(TEST_CREDENTIALS.individual);
+      const establishmentUser = await createTestUser(TEST_CREDENTIALS.establishment);
+      const promoterUser = await createTestUser(TEST_CREDENTIALS.promoter);
+      
+      console.log('Test user creation results:', {
+        individual: individualUser ? 'created' : 'failed',
+        establishment: establishmentUser ? 'created' : 'failed',
+        promoter: promoterUser ? 'created' : 'failed'
+      });
       
       toast({
-        title: 'Test credentials created',
-        description: 'All test users have been set up or already exist',
+        title: 'Test credentials processed',
+        description: 'Test users have been set up or already exist',
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating all test users:', error);
+      toast({
+        title: 'Creation failed',
+        description: error.message || 'Failed to create test users',
+        variant: 'destructive'
+      });
     } finally {
       setIsCreating(false);
     }
