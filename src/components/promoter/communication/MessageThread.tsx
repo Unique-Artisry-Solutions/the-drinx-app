@@ -3,12 +3,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Send, Archive, Clock, AlertCircle, RefreshCw } from 'lucide-react';
+import { Send, Archive, AlertCircle, RefreshCw } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useMessageSystem } from '@/hooks/messages/useMessageSystem';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/auth';
 import { supabase } from '@/lib/supabase';
+import { useToast } from '@/hooks/use-toast';
 
 interface MessageThreadProps {
   threadId: string;
@@ -21,10 +22,13 @@ const MessageThread: React.FC<MessageThreadProps> = ({ threadId, userType = 'pro
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
-  const { sendMessage } = useMessageSystem(userType);
+  const { sendMessage } = useMessageSystem(userType as any);
   const [threadInfo, setThreadInfo] = useState({ venueName: '', promoterName: '', subject: '' });
+  const { toast } = useToast();
+  const channelRef = useRef<any>(null);
 
   const fetchMessages = async () => {
     if (!threadId || !user) return;
@@ -36,42 +40,81 @@ const MessageThread: React.FC<MessageThreadProps> = ({ threadId, userType = 'pro
       const { data, error } = await supabase
         .from('promoter_venue_messages')
         .select(`
-          *,
-          sender:sender_id (id)
+          id,
+          thread_id,
+          content,
+          sent_at,
+          sender_id,
+          is_from_promoter
         `)
         .eq('thread_id', threadId)
         .order('sent_at', { ascending: true });
 
-      if (error) throw error;
-
-      // Get sender details
-      const senderIds = data?.map(msg => msg.sender_id) || [];
-      if (senderIds.length > 0) {
-        const { data: senderData, error: senderError } = await supabase
-          .from('profiles')
-          .select('id, display_name, username')
-          .in('id', senderIds);
-        
-        if (senderError) throw senderError;
-
-        // Map sender details to messages
-        const senderMap = senderData?.reduce((acc, sender) => {
-          acc[sender.id] = sender;
-          return acc;
-        }, {} as Record<string, any>) || {};
-
-        const messagesWithSenders = data?.map(msg => ({
-          ...msg,
-          sender: senderMap?.[msg.sender_id] || { display_name: "Unknown", username: "user" }
-        }));
-
-        setMessages(messagesWithSenders || []);
-      } else {
-        setMessages([]);
+      if (error) {
+        console.error('Error fetching messages:', error);
+        throw error;
       }
-    } catch (err) {
+
+      // Get sender details separately for each message
+      const messagesWithSenders = await Promise.all(data.map(async (msg) => {
+        try {
+          const { data: senderData, error: senderError } = await supabase
+            .from('profiles')
+            .select('id, display_name, username')
+            .eq('id', msg.sender_id)
+            .single();
+          
+          if (senderError) {
+            console.error('Error fetching sender profile:', senderError);
+            return {
+              ...msg,
+              sender: { display_name: "Unknown", username: "user" }
+            };
+          }
+
+          return {
+            ...msg,
+            sender: senderData
+          };
+        } catch (err) {
+          console.error('Error processing sender:', err);
+          return {
+            ...msg,
+            sender: { display_name: "Unknown", username: "user" }
+          };
+        }
+      }));
+
+      setMessages(messagesWithSenders || []);
+      
+      // Mark thread as read when messages are loaded
+      if (messagesWithSenders && messagesWithSenders.length > 0) {
+        try {
+          await supabase
+            .from('message_read_status')
+            .upsert({
+              thread_id: threadId,
+              user_id: user.id,
+              last_read_at: new Date().toISOString()
+            }, {
+              onConflict: 'thread_id,user_id'
+            });
+        } catch (err) {
+          console.error('Error marking thread as read:', err);
+        }
+      }
+    } catch (err: any) {
       console.error('Error fetching messages:', err);
-      setError('Failed to load messages');
+      setError('Failed to load messages. ' + (err.message || ''));
+      
+      // Auto-retry up to 3 times with increasing delays
+      if (retryCount < 3) {
+        const delay = Math.pow(2, retryCount) * 1000; // Exponential backoff
+        setTimeout(() => {
+          setRetryCount(prev => prev + 1);
+          fetchMessages();
+        }, delay);
+      }
     } finally {
       setLoading(false);
     }
@@ -85,11 +128,19 @@ const MessageThread: React.FC<MessageThreadProps> = ({ threadId, userType = 'pro
         // Get thread details
         const { data: threadData, error: threadError } = await supabase
           .from('promoter_venue_threads')
-          .select(`*`)
+          .select(`
+            id,
+            subject,
+            venue_id,
+            promoter_id
+          `)
           .eq('id', threadId)
           .single();
   
-        if (threadError) throw threadError;
+        if (threadError) {
+          console.error('Error fetching thread info:', threadError);
+          throw threadError;
+        }
 
         // Get venue details
         const { data: venueData, error: venueError } = await supabase
@@ -98,7 +149,9 @@ const MessageThread: React.FC<MessageThreadProps> = ({ threadId, userType = 'pro
           .eq('id', threadData.venue_id)
           .single();
 
-        if (venueError && venueError.code !== 'PGRST116') throw venueError;
+        if (venueError && venueError.code !== 'PGRST116') {
+          console.error('Error fetching venue info:', venueError);
+        }
 
         // Get promoter details
         const { data: promoterData, error: promoterError } = await supabase
@@ -107,30 +160,38 @@ const MessageThread: React.FC<MessageThreadProps> = ({ threadId, userType = 'pro
           .eq('id', threadData.promoter_id)
           .single();
 
-        if (promoterError && promoterError.code !== 'PGRST116') throw promoterError;
+        if (promoterError && promoterError.code !== 'PGRST116') {
+          console.error('Error fetching promoter info:', promoterError);
+        }
   
         setThreadInfo({
           venueName: venueData?.name || 'Unknown Venue',
           promoterName: promoterData?.display_name || promoterData?.username || 'Unknown Promoter',
           subject: threadData?.subject || ''
         });
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching thread info:', err);
-        setError('Failed to load thread info');
+        setError('Failed to load conversation details: ' + (err.message || ''));
       }
     };
   
     if (threadId) {
+      setRetryCount(0);
       fetchThreadInfo();
       fetchMessages();
     }
   }, [threadId, user]);
 
   useEffect(() => {
-    if (threadId) {
+    if (threadId && user) {
+      // Clean up any existing subscription
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+      }
+      
       // Set up real-time subscription
       const channel = supabase
-        .channel('messages')
+        .channel(`messages-${threadId}`)
         .on(
           'postgres_changes',
           {
@@ -139,17 +200,29 @@ const MessageThread: React.FC<MessageThreadProps> = ({ threadId, userType = 'pro
             table: 'promoter_venue_messages',
             filter: `thread_id=eq.${threadId}`
           },
-          () => {
+          (payload) => {
+            console.log('Received new message:', payload);
             fetchMessages();
           }
         )
-        .subscribe();
+        .subscribe((status) => {
+          console.log(`Subscription status for thread ${threadId}:`, status);
+          if (status === 'SUBSCRIBED') {
+            console.log(`Successfully subscribed to thread ${threadId}`);
+          } else if (status === 'CHANNEL_ERROR') {
+            console.error(`Error subscribing to thread ${threadId}`);
+            setError('Failed to connect to real-time updates');
+          }
+        });
+
+      channelRef.current = channel;
 
       return () => {
+        console.log(`Cleaning up subscription for thread ${threadId}`);
         supabase.removeChannel(channel);
       };
     }
-  }, [threadId]);
+  }, [threadId, user]);
 
   useEffect(() => {
     if (messagesEndRef.current) {
@@ -166,10 +239,17 @@ const MessageThread: React.FC<MessageThreadProps> = ({ threadId, userType = 'pro
     try {
       await sendMessage(threadId, newMessage.trim());
       setNewMessage('');
-      await fetchMessages();
-    } catch (err) {
+      // The real-time subscription should update the messages
+      // But we'll also manually fetch to ensure it's updated
+      setTimeout(() => fetchMessages(), 500);
+    } catch (err: any) {
       console.error('Error sending message:', err);
-      setError('Failed to send message');
+      setError('Failed to send message: ' + (err.message || ''));
+      toast({
+        title: "Error Sending Message",
+        description: "Failed to send message. Please try again.",
+        variant: "destructive"
+      });
     } finally {
       setSending(false);
     }
@@ -184,17 +264,28 @@ const MessageThread: React.FC<MessageThreadProps> = ({ threadId, userType = 'pro
         .update({ is_archived: true })
         .eq('id', threadId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error archiving thread:', error);
+        throw error;
+      }
       
-      // Refresh the thread list
-      setError('Conversation archived');
-    } catch (err) {
+      toast({
+        title: "Conversation Archived",
+        description: "The conversation has been archived successfully.",
+      });
+    } catch (err: any) {
       console.error('Error archiving thread:', err);
-      setError('Failed to archive conversation. Please try again.');
+      setError('Failed to archive conversation: ' + (err.message || ''));
+      toast({
+        title: "Error",
+        description: "Failed to archive conversation. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 
   const handleRefresh = () => {
+    setRetryCount(0);
     fetchMessages();
   };
 

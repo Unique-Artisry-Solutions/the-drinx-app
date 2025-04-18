@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +11,8 @@ import { useAuth } from '@/contexts/auth';
 import VenueSelectionCard from '../promoter/communication/VenueSelectionCard';
 import { usePromoterContacts } from '@/hooks/promoter/usePromoterContacts';
 import { usePromoterRole } from '@/hooks/promoter/usePromoterRole';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/lib/supabase';
 
 interface ChatWidgetProps {
   contact?: VenueContact;
@@ -31,11 +33,41 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const { createThread, sendMessage } = useMessageSystem('promoter');
   const { user } = useAuth();
-  const { contacts, isLoading } = usePromoterContacts();
+  const { contacts, isLoading, refetch } = usePromoterContacts();
   const { ensurePromoterRole, isActivating } = usePromoterRole();
+  const { toast } = useToast();
+  const [connectionChecked, setConnectionChecked] = useState(false);
+
+  // Check supabase connection on mount
+  useEffect(() => {
+    const checkConnection = async () => {
+      try {
+        const { error } = await supabase.from('profiles').select('id').limit(1);
+        
+        if (error) {
+          console.error('Supabase connection check failed:', error);
+          setError('Failed to connect to the database. Please check your network connection.');
+        } else {
+          setConnectionChecked(true);
+        }
+      } catch (err) {
+        console.error('Unexpected error during connection check:', err);
+        setError('Unable to connect to the server. Please try again later.');
+      }
+    };
+    
+    checkConnection();
+  }, []);
+
+  // Refetch contacts if user changes or connection is established
+  useEffect(() => {
+    if (user && connectionChecked) {
+      refetch();
+    }
+  }, [user, connectionChecked, refetch]);
 
   const filteredContacts = contacts.filter(c => 
-    c.venueName.toLowerCase().includes(searchQuery.toLowerCase())
+    (c.venueName || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleSendMessage = async () => {
@@ -67,6 +99,11 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({
         } catch (err: any) {
           console.error('Error creating thread:', err);
           setError(err.message || 'Failed to create conversation. Please try again later.');
+          toast({
+            title: "Error Creating Conversation",
+            description: "There was a problem starting the conversation. Please try again.",
+            variant: "destructive"
+          });
           return;
         } finally {
           setIsCreatingThread(false);
@@ -77,6 +114,10 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({
         console.log('Sending message to thread:', threadId);
         await sendMessage(threadId, message);
         setMessage('');
+        toast({
+          title: "Message Sent",
+          description: "Your message was sent successfully.",
+        });
         onClose(); // Close the widget after sending
       } else {
         setError('Could not determine where to send this message.');
@@ -84,10 +125,70 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({
     } catch (error: any) {
       console.error('Error sending message:', error);
       setError(error.message || 'Failed to send message. Please try again.');
+      toast({
+        title: "Error Sending Message",
+        description: "There was a problem sending your message. Please try again.",
+        variant: "destructive"
+      });
     } finally {
       setSending(false);
     }
   };
+
+  const handleRetryConnection = () => {
+    setError(null);
+    setConnectionChecked(false);
+    refetch();
+    // Re-run the connection check effect
+    (async () => {
+      try {
+        const { error } = await supabase.from('profiles').select('id').limit(1);
+        
+        if (error) {
+          console.error('Supabase connection check failed:', error);
+          setError('Failed to connect to the database. Please check your network connection.');
+        } else {
+          setConnectionChecked(true);
+        }
+      } catch (err) {
+        console.error('Unexpected error during connection check:', err);
+        setError('Unable to connect to the server. Please try again later.');
+      }
+    })();
+  };
+
+  if (!connectionChecked && error) {
+    return (
+      <Card className="w-[320px] shadow-lg">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">
+            Connection Error
+          </CardTitle>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 rounded-full"
+            onClick={onClose}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </CardHeader>
+        <CardContent>
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+          <Button 
+            variant="outline" 
+            onClick={handleRetryConnection}
+            className="w-full"
+          >
+            Retry Connection
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (!user) {
     return (
@@ -154,14 +255,14 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({
                   filteredContacts.map((venue) => (
                     <VenueSelectionCard
                       key={venue.id}
-                      venueName={venue.venueName}
+                      venueName={venue.venueName || 'Unnamed Venue'}
                       isSelected={selectedVenue?.id === venue.id}
                       onClick={() => setSelectedVenue(venue)}
                     />
                   ))
                 ) : (
                   <p className="text-center text-sm text-muted-foreground py-4">
-                    No venues found
+                    {searchQuery ? 'No matching venues found' : 'No venues found'}
                   </p>
                 )}
               </div>
