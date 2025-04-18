@@ -16,39 +16,28 @@ export const usePromoterRole = () => {
 
     try {
       setIsActivating(true);
+      console.log('Starting promoter role activation process for user:', user.id);
 
-      // First, check if user has the promoter role at all
-      console.log('Checking for promoter role for user:', user.id);
-      const { data: roleData, error: roleError } = await supabase
+      // First, check if promoter role exists and is already active
+      const { data: activeRole, error: activeRoleError } = await supabase
         .from('user_roles')
         .select('is_active')
         .eq('user_id', user.id)
         .eq('role', 'promoter')
+        .eq('is_active', true)
         .single();
-        
-      if (roleError && !roleError.message.includes('No rows found')) {
-        console.error('Error checking promoter role:', roleError);
-        throw new Error("Unable to verify promoter status: " + roleError.message);
+
+      if (activeRole) {
+        console.log('Promoter role is already active');
+        return true;
       }
 
-      // If no promoter role exists, create it first
-      if (!roleData) {
-        console.log('No promoter role found, creating one');
-        const { error: insertError } = await supabase
-          .from('user_roles')
-          .insert({
-            user_id: user.id,
-            role: 'promoter',
-            is_active: false
-          });
-
-        if (insertError) {
-          console.error('Error creating promoter role:', insertError);
-          throw new Error("Unable to create promoter role: " + insertError.message);
-        }
+      if (activeRoleError && !activeRoleError.message.includes('No rows found')) {
+        console.error('Error checking active role:', activeRoleError);
+        throw new Error("Unable to verify promoter status");
       }
 
-      // Now try to activate the promoter role
+      // If no active role exists, try to activate it
       console.log('Activating promoter role');
       const { error: switchError } = await supabase.rpc('switch_active_role', {
         role_to_activate: 'promoter'
@@ -58,6 +47,9 @@ export const usePromoterRole = () => {
         console.error('Error switching to promoter role:', switchError);
         throw switchError;
       }
+
+      // Add a small delay to allow role changes to propagate
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
       // Verify the role was properly activated
       console.log('Verifying role activation');
@@ -75,16 +67,11 @@ export const usePromoterRole = () => {
 
       // Update local storage
       localStorage.setItem('user_type', 'promoter');
-
-      // Show success message
-      toast({
-        title: "Role Activated",
-        description: "Your promoter role has been activated successfully.",
-      });
+      console.log('Promoter role activated successfully');
 
       return true;
     } catch (error: any) {
-      console.error('Error activating promoter role:', error);
+      console.error('Error in promoter role activation:', error);
       toast({
         title: "Role Activation Failed",
         description: error.message || "Unable to activate promoter role. Please try again.",

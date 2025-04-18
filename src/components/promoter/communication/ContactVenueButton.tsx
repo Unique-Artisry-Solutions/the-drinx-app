@@ -44,17 +44,18 @@ const ContactVenueButton: React.FC<ContactVenueButtonProps> = ({
 
     try {
       setIsLoading(true);
+      console.log('Starting chat initialization');
       
-      // Use the unified promoter role activation
+      // Ensure promoter role is active
       await ensurePromoterRole();
+      console.log('Promoter role activated, opening chat');
       
-      // Open chat after role is activated
       setIsOpen(true);
     } catch (error: any) {
-      console.error('Error preparing promoter role:', error);
+      console.error('Error preparing chat:', error);
       toast({
         title: "Error",
-        description: error.message || "Unable to activate promoter role. Please try again.",
+        description: error.message || "Unable to start chat. Please try again.",
         variant: "destructive",
       });
     } finally {
