@@ -65,7 +65,7 @@ const EstablishmentInbox = () => {
               <div className="lg:col-span-1">
                 {loading ? (
                   <div className="text-center py-6">Loading messages...</div>
-                ) : threads.length > 0 ? (
+                ) : threads.filter(t => !t.isArchived).length > 0 ? (
                   <MessageThreadList 
                     conversations={threads.filter(t => !t.isArchived)} 
                     onSelectConversation={handleSelectThread} 

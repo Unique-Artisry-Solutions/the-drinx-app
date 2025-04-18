@@ -20,12 +20,14 @@ export interface Message {
 export interface MessageThread {
   id: string;
   venue_id: string;
+  promoter_id?: string;
   subject?: string;
   lastMessage?: string;
   timestamp: string;
   isRead: boolean;
   isArchived: boolean;
   venueName?: string;
+  eventName?: string; // Added to match usage in MessageThreadList
   messages: Message[];
 }
 
@@ -35,6 +37,7 @@ export const useMessageSystem = (userType: 'promoter' | 'establishment') => {
   const [threads, setThreads] = useState<MessageThread[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
 
   const fetchThreads = useCallback(async () => {
     setLoading(true);
@@ -52,31 +55,51 @@ export const useMessageSystem = (userType: 'promoter' | 'establishment') => {
             sent_at,
             sender_id,
             is_from_promoter,
-            sender:profiles!sender_id(display_name, username)
+            sender:profiles(display_name, username)
           )
         `)
         .order('last_message_at', { ascending: false });
 
       if (threadsError) throw threadsError;
+      
+      // Get read status information
+      const { data: readStatusData } = await supabase
+        .from('message_read_status')
+        .select('*')
+        .eq('user_id', (await supabase.auth.getUser()).data.user?.id);
+      
+      const readStatusMap = (readStatusData || []).reduce((acc, status) => {
+        acc[status.thread_id] = status.last_read_at;
+        return acc;
+      }, {} as Record<string, string>);
 
-      const processedThreads: MessageThread[] = threadsData?.map(thread => ({
-        id: thread.id,
-        venue_id: thread.venue_id,
-        subject: thread.subject || undefined,
-        lastMessage: thread.promoter_venue_messages[0]?.content,
-        timestamp: thread.last_message_at,
-        isRead: false, // We'll update this from message_read_status
-        isArchived: thread.is_archived,
-        venueName: thread.venues?.name,
-        messages: thread.promoter_venue_messages?.map(msg => ({
-          id: msg.id,
-          content: msg.content,
-          sent_at: msg.sent_at,
-          sender_id: msg.sender_id,
-          is_from_promoter: msg.is_from_promoter,
-          sender: msg.sender
-        })) || []
-      })) || [];
+      const processedThreads: MessageThread[] = threadsData?.map(thread => {
+        // Check if thread is read based on read status data
+        const isRead = readStatusMap[thread.id] ? true : false;
+        
+        return {
+          id: thread.id,
+          venue_id: thread.venue_id,
+          promoter_id: thread.promoter_id,
+          subject: thread.subject || undefined,
+          lastMessage: thread.promoter_venue_messages[0]?.content,
+          timestamp: thread.last_message_at,
+          isRead,
+          isArchived: thread.is_archived,
+          venueName: thread.venues?.name,
+          messages: thread.promoter_venue_messages?.map(msg => ({
+            id: msg.id,
+            content: msg.content,
+            sent_at: msg.sent_at,
+            sender_id: msg.sender_id,
+            is_from_promoter: msg.is_from_promoter,
+            sender: {
+              display_name: msg.sender?.display_name,
+              username: msg.sender?.username
+            }
+          })) || []
+        };
+      }) || [];
 
       setThreads(processedThreads);
     } catch (err: any) {
@@ -193,6 +216,8 @@ export const useMessageSystem = (userType: 'promoter' | 'establishment') => {
     createThread,
     sendMessage,
     markThreadAsRead,
-    refetchThreads
+    refetchThreads,
+    selectedThreadId,
+    setSelectedThreadId
   };
 };

@@ -68,7 +68,7 @@ const MessageThreadList: React.FC<MessageThreadListProps> = ({
               !conversation.isRead && "font-semibold text-purple-700"
             )}>
               {conversation.venueName}
-              {conversation.eventName && <span className="text-gray-500 text-sm ml-2">({conversation.eventName})</span>}
+              {conversation.eventName && <span className="text-sm text-gray-500 ml-2">({conversation.eventName})</span>}
             </h3>
             <span className="text-xs text-gray-500">
               {formatDistanceToNow(new Date(conversation.timestamp), { addSuffix: true })}
