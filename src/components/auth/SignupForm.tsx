@@ -7,22 +7,24 @@ import { useToast } from '@/hooks/use-toast';
 import AuthButton from './AuthButton';
 import { useAuth } from '@/contexts/AuthContext';
 import SignupConfirmationModal from './SignupConfirmationModal';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface SignupFormProps {
   onSuccess?: () => void;
   onClose?: () => void;
-  userType?: 'individual' | 'establishment';
+  userType?: 'individual' | 'establishment' | 'promoter';
 }
 
 const SignupForm: React.FC<SignupFormProps> = ({ 
   onSuccess, 
-  onClose, 
-  userType = 'individual' 
+  onClose,
+  userType: initialUserType = 'individual'
 }) => {
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
+  const [selectedUserType, setSelectedUserType] = useState(initialUserType);
   const [formError, setFormError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
@@ -40,23 +42,18 @@ const SignupForm: React.FC<SignupFormProps> = ({
       const metadata = {
         name,
         username,
-        user_type: userType
+        user_type: selectedUserType
       };
       
-      // Make sure redirectTo is correctly set to use the full URL with the origin
       const redirectTo = `${window.location.origin}/?email_confirmed=true`;
       
-      // Update the signUp call to match the expected parameters
-      // The useAuthActions.ts expects email, password, and an options object
       await signUp(email, password, {
         data: metadata,
         emailRedirectTo: redirectTo
       });
       
-      // Show confirmation modal instead of redirecting
       setShowConfirmationModal(true);
       
-      // Do NOT call onSuccess here, which could trigger redirection
     } catch (error: any) {
       console.error('Signup error:', error);
       setFormError(error.message || 'Failed to sign up');
@@ -67,8 +64,6 @@ const SignupForm: React.FC<SignupFormProps> = ({
 
   const handleConfirmationClose = () => {
     setShowConfirmationModal(false);
-    // Don't call onSuccess which would trigger navigation to landing page
-    // Instead, stay on the current page and let the email verification handler redirect later
   };
 
   return (
@@ -87,9 +82,6 @@ const SignupForm: React.FC<SignupFormProps> = ({
               required
               className="border-spiritless-pink/20 focus-visible:ring-spiritless-pink"
             />
-            <p className="text-xs text-muted-foreground">
-              This is how you'll appear to others on the platform
-            </p>
           </div>
           
           <div className="space-y-2">
@@ -104,9 +96,6 @@ const SignupForm: React.FC<SignupFormProps> = ({
               required
               className="border-spiritless-pink/20 focus-visible:ring-spiritless-pink"
             />
-            <p className="text-xs text-muted-foreground">
-              Must be unique, you'll use this to log in
-            </p>
           </div>
           
           <div className="space-y-2">
@@ -138,15 +127,25 @@ const SignupForm: React.FC<SignupFormProps> = ({
               className="border-spiritless-pink/20 focus-visible:ring-spiritless-pink"
             />
           </div>
-          
-          {userType === 'establishment' && (
-            <div className="space-y-2 pt-2 bg-gray-50 p-3 rounded-md border border-gray-100">
-              <h3 className="text-sm font-medium text-spiritless-green">Establishment Details</h3>
-              <p className="text-xs text-muted-foreground mb-2">
-                You'll be able to add more details to your establishment profile after signing up.
-              </p>
-            </div>
-          )}
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium" htmlFor="user-type">
+              Account Type
+            </label>
+            <Select value={selectedUserType} onValueChange={setSelectedUserType}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select your account type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="individual">Personal Account</SelectItem>
+                <SelectItem value="promoter">Promoter Account</SelectItem>
+                <SelectItem value="establishment">Business Account</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Select the type of account you want to create
+            </p>
+          </div>
           
           {formError && (
             <div className="text-red-500 text-sm mt-2">{formError}</div>
@@ -157,9 +156,9 @@ const SignupForm: React.FC<SignupFormProps> = ({
           <AuthButton
             type="submit"
             isLoading={isLoading || isSubmitting}
-            className={`w-full ${userType === 'individual' ? 'bg-spiritless-pink hover:bg-spiritless-pink/90' : 'bg-spiritless-green hover:bg-spiritless-green/90'} text-white`}
+            className={`w-full ${selectedUserType === 'individual' ? 'bg-spiritless-pink hover:bg-spiritless-pink/90' : selectedUserType === 'promoter' ? 'bg-purple-600 hover:bg-purple-700' : 'bg-spiritless-green hover:bg-spiritless-green/90'} text-white`}
           >
-            {isLoading || isSubmitting ? 'Creating account...' : `Create ${userType === 'establishment' ? 'Business' : 'Personal'} Account`}
+            {isLoading || isSubmitting ? 'Creating account...' : `Create ${selectedUserType === 'establishment' ? 'Business' : selectedUserType === 'promoter' ? 'Promoter' : 'Personal'} Account`}
           </AuthButton>
           
           <p className="text-xs text-center text-muted-foreground">
