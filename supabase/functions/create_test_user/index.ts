@@ -36,26 +36,26 @@ serve(async (req) => {
 
     const { email, password, name, username, userType } = await req.json();
     console.log('Creating test user with details:', { email, name, username, userType });
-
-    // First check if the user already exists
-    const { data: existingUser, error: lookupError } = await supabase.auth.admin.getUserByEmail(email);
     
-    if (lookupError) {
-      console.log('Error looking up existing user:', lookupError);
-      // Only proceed if it's a user not found error
-      if (lookupError.message?.includes('User not found')) {
-        // Continue with creation
-        console.log('User does not exist, proceeding with creation');
-      } else {
-        throw lookupError;
+    // Check for existing user using listUsers
+    const { data: existingUsers, error: listError } = await supabase.auth.admin.listUsers({
+      page: 1,
+      perPage: 1,
+      filters: {
+        email: email
       }
+    });
+
+    if (listError) {
+      console.error('Error looking up existing user:', listError);
+      throw listError;
     }
     
     // If user already exists, return early with success
-    if (existingUser) {
-      console.log('User already exists:', existingUser.id);
+    if (existingUsers?.users?.length > 0) {
+      console.log('User already exists:', existingUsers.users[0].id);
       return new Response(JSON.stringify({
-        user: existingUser,
+        user: existingUsers.users[0],
         message: 'User already exists'
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
