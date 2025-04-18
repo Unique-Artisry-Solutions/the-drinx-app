@@ -101,10 +101,12 @@ const TestCredentials: React.FC = () => {
             .insert({
               name: "Test Bar",
               owner_id: authData.user.id,
-              address: "123 Test St",
-              city: "Test City",
-              state: "Test State",
-              zip: "12345"
+              address: "123 Test Street",
+              latitude: 40.7128, // New York coordinates as example
+              longitude: -74.0060,
+              cocktail_count: 0,
+              phone: "555-0123",
+              website: "https://testbar.com"
             });
 
           if (establishmentError) throw establishmentError;
