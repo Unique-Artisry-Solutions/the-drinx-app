@@ -59,10 +59,11 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({
           // Add a delay to ensure role switch is propagated
           await new Promise(resolve => setTimeout(resolve, 1000));
           
-          threadId = await createThread(selectedVenue.venueId);
-          console.log('Thread created:', threadId);
+          const createdThreadId = await createThread(selectedVenue.venueId);
+          console.log('Thread created:', createdThreadId);
           
-          if (!threadId) throw new Error("Failed to create conversation thread");
+          if (!createdThreadId) throw new Error("Failed to create conversation thread");
+          threadId = createdThreadId;
         } catch (err: any) {
           console.error('Error creating thread:', err);
           setError(err.message || 'Failed to create conversation. Please try again later.');

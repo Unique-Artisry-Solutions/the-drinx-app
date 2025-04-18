@@ -36,7 +36,7 @@ const ContactsList: React.FC<ContactsListProps> = ({ onThreadCreated }) => {
     try {
       setProcessingContact(contact.id);
       const threadId = await createThread(contact.venueId);
-      if (onThreadCreated) {
+      if (onThreadCreated && threadId) {
         onThreadCreated(threadId);
       }
       toast({
