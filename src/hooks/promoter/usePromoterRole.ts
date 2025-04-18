@@ -17,24 +17,60 @@ export const usePromoterRole = () => {
     try {
       setIsActivating(true);
 
-      // Use the RPC function to switch to promoter role with retries
-      let retries = 2;
-      let success = false;
-      
-      while (retries > 0 && !success) {
-        try {
-          const { error: switchError } = await supabase.rpc('switch_active_role', {
-            role_to_activate: 'promoter'
+      // First, check if user has the promoter role at all
+      console.log('Checking for promoter role for user:', user.id);
+      const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select('is_active')
+        .eq('user_id', user.id)
+        .eq('role', 'promoter')
+        .single();
+        
+      if (roleError && !roleError.message.includes('No rows found')) {
+        console.error('Error checking promoter role:', roleError);
+        throw new Error("Unable to verify promoter status: " + roleError.message);
+      }
+
+      // If no promoter role exists, create it first
+      if (!roleData) {
+        console.log('No promoter role found, creating one');
+        const { error: insertError } = await supabase
+          .from('user_roles')
+          .insert({
+            user_id: user.id,
+            role: 'promoter',
+            is_active: false
           });
-          
-          if (switchError) throw switchError;
-          success = true;
-        } catch (error: any) {
-          retries--;
-          if (retries === 0) throw error;
-          // Short delay between retries
-          await new Promise(resolve => setTimeout(resolve, 300));
+
+        if (insertError) {
+          console.error('Error creating promoter role:', insertError);
+          throw new Error("Unable to create promoter role: " + insertError.message);
         }
+      }
+
+      // Now try to activate the promoter role
+      console.log('Activating promoter role');
+      const { error: switchError } = await supabase.rpc('switch_active_role', {
+        role_to_activate: 'promoter'
+      });
+      
+      if (switchError) {
+        console.error('Error switching to promoter role:', switchError);
+        throw switchError;
+      }
+
+      // Verify the role was properly activated
+      console.log('Verifying role activation');
+      const { data: verifyData, error: verifyError } = await supabase
+        .from('user_roles')
+        .select('is_active')
+        .eq('user_id', user.id)
+        .eq('role', 'promoter')
+        .single();
+        
+      if (verifyError || !verifyData || !verifyData.is_active) {
+        console.error('Role activation verification failed:', verifyError || 'Role not active');
+        throw new Error("Failed to activate promoter role. Please try again.");
       }
 
       // Update local storage

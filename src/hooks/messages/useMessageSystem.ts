@@ -238,35 +238,72 @@ export const useMessageSystem = (userType: 'promoter' | 'establishment' = 'promo
     try {
       console.log('Creating thread between promoter:', user.id, 'and venue:', venueId);
       
-      // First verify that the user has an active promoter role
+      // First ensure the user has the promoter role record
+      console.log('Checking for promoter role');
       const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
-        .select('is_active')
+        .select('id, is_active')
         .eq('user_id', user.id)
         .eq('role', 'promoter')
         .single();
         
-      if (roleError) {
+      if (roleError && !roleError.message.includes('No rows found')) {
         console.error('Error checking promoter role:', roleError);
-        throw new Error("Unable to verify promoter role. Please try refreshing the page.");
-      }
-        
-      if (!roleData?.is_active) {
-        // Try to activate the role if it exists but isn't active
-        const { error: switchError } = await supabase.rpc('switch_active_role', {
-          role_to_activate: 'promoter'
-        });
-        
-        if (switchError) {
-          console.error('Error activating role:', switchError);
-          throw new Error("Could not activate promoter role. Please try again.");
-        }
-        
-        // Update local storage
-        localStorage.setItem('user_type', 'promoter');
+        throw new Error("Unable to verify promoter status. Please refresh and try again.");
       }
       
-      // Check if a thread already exists
+      // If no promoter role exists, create it first
+      if (!roleData) {
+        console.log('No promoter role found, creating one');
+        const { error: insertError } = await supabase
+          .from('user_roles')
+          .insert({
+            user_id: user.id,
+            role: 'promoter',
+            is_active: false
+          });
+          
+        if (insertError) {
+          console.error('Error creating promoter role:', insertError);
+          throw new Error("Unable to create promoter role. Please contact support.");
+        }
+        
+        console.log('Promoter role created');
+      }
+      
+      // Activate the promoter role
+      console.log('Activating promoter role');
+      const { error: switchError } = await supabase.rpc('switch_active_role', {
+        role_to_activate: 'promoter'
+      });
+      
+      if (switchError) {
+        console.error('Error switching to promoter role:', switchError);
+        throw new Error("Could not activate promoter role: " + switchError.message);
+      }
+      
+      // Update local storage to maintain state
+      localStorage.setItem('user_type', 'promoter');
+      
+      // Short delay to ensure role changes propagate
+      console.log('Waiting for role changes to propagate');
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      // Verify the venue exists
+      console.log('Verifying venue exists:', venueId);
+      const { data: venueData, error: venueError } = await supabase
+        .from('establishments')
+        .select('id')
+        .eq('id', venueId)
+        .single();
+        
+      if (venueError || !venueData) {
+        console.error('Error verifying venue:', venueError || 'Venue not found');
+        throw new Error("The selected venue is invalid or no longer exists.");
+      }
+      
+      // Check for existing thread
+      console.log('Checking for existing thread');
       const { data: existingThread, error: checkError } = await supabase
         .from('promoter_venue_threads')
         .select('id')
@@ -284,6 +321,7 @@ export const useMessageSystem = (userType: 'promoter' | 'establishment' = 'promo
       }
       
       // Create new thread
+      console.log('Creating new thread');
       const { data: thread, error: threadError } = await supabase
         .from('promoter_venue_threads')
         .insert({
@@ -299,16 +337,13 @@ export const useMessageSystem = (userType: 'promoter' | 'establishment' = 'promo
       if (threadError) {
         console.error('Error creating thread:', threadError);
         
-        // Add more specific error handling
-        if (threadError.message?.includes('check_thread_participants')) {
-          if (threadError.message?.includes('Invalid promoter_id')) {
-            throw new Error("Your account doesn't have an active promoter role. Please refresh and try again.");
-          } else if (threadError.message?.includes('Invalid venue_id')) {
-            throw new Error("The selected venue doesn't exist or has been removed.");
-          }
+        if (threadError.message?.includes('violates row level security policy')) {
+          throw new Error("You don't have permission to create this conversation. Please ensure your promoter role is active and try again.");
+        } else if (threadError.message?.includes('check_thread_participants')) {
+          throw new Error("Failed to create conversation. Verify that you have a promoter role and the venue exists.");
         }
         
-        throw new Error("Could not create conversation. Please ensure you have a promoter role and try again.");
+        throw new Error("Could not create conversation: " + threadError.message);
       }
 
       console.log('Thread created successfully:', thread.id);

@@ -51,13 +51,16 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({
         setIsCreatingThread(true);
         
         try {
-          // Ensure promoter role is active before creating thread
+          console.log('Starting conversation creation process');
+          // First activate the promoter role
           await ensurePromoterRole();
           
-          // Add a small delay to ensure role switch is propagated
-          await new Promise(resolve => setTimeout(resolve, 500));
+          console.log('Role activated, creating thread');
+          // Add a delay to ensure role switch is propagated
+          await new Promise(resolve => setTimeout(resolve, 1000));
           
           threadId = await createThread(selectedVenue.venueId);
+          console.log('Thread created:', threadId);
           
           if (!threadId) throw new Error("Failed to create conversation thread");
         } catch (err: any) {
@@ -70,6 +73,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({
       }
 
       if (threadId) {
+        console.log('Sending message to thread:', threadId);
         await sendMessage(threadId, message);
         setMessage('');
         onClose(); // Close the widget after sending
