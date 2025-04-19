@@ -25,7 +25,6 @@ export const useRetry = (config: RetryConfig = {}) => {
         throw error;
       }
 
-      // Calculate delay with exponential backoff
       const delay = Math.min(
         Math.pow(2, attempt) * baseDelay + Math.random() * 1000,
         maxDelay

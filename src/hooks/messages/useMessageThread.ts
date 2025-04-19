@@ -1,29 +1,24 @@
-
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Message } from './types';
+import { Message, ThreadInfo } from './types';
 import { useToast } from '@/hooks/use-toast';
-
-interface ThreadInfo {
-  venueName: string;
-  promoterName: string;
-  subject: string;
-}
+import { useRetry } from '@/hooks/useRetry';
 
 export const useMessageThread = (threadId: string | null) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [retryCount, setRetryCount] = useState(0);
   const [threadInfo, setThreadInfo] = useState<ThreadInfo>({ 
     venueName: '', 
     promoterName: '', 
     subject: '' 
   });
+  
   const { toast } = useToast();
   const channelRef = useRef<any>(null);
+  const { executeWithRetry } = useRetry();
 
-  const fetchMessages = async () => {
+  const fetchMessages = useCallback(async () => {
     if (!threadId) return;
 
     try {
@@ -101,20 +96,12 @@ export const useMessageThread = (threadId: string | null) => {
     } catch (err: any) {
       console.error('Error fetching messages:', err);
       setError('Failed to load messages. ' + (err.message || ''));
-      
-      if (retryCount < 3) {
-        const delay = Math.pow(2, retryCount) * 1000;
-        setTimeout(() => {
-          setRetryCount(prev => prev + 1);
-          fetchMessages();
-        }, delay);
-      }
     } finally {
       setLoading(false);
     }
-  };
+  }, [threadId]);
 
-  const fetchThreadInfo = async () => {
+  const fetchThreadInfo = useCallback(async () => {
     if (!threadId) return;
     
     try {
@@ -163,9 +150,9 @@ export const useMessageThread = (threadId: string | null) => {
       console.error('Error fetching thread info:', err);
       setError('Failed to load conversation details: ' + (err.message || ''));
     }
-  };
+  }, [threadId]);
 
-  const handleArchiveThread = async () => {
+  const handleArchiveThread = useCallback(async () => {
     if (!threadId) return;
     
     try {
@@ -189,9 +176,9 @@ export const useMessageThread = (threadId: string | null) => {
         variant: "destructive"
       });
     }
-  };
+  }, [threadId, toast]);
 
-  const setupRealtimeSubscription = () => {
+  const setupRealtimeSubscription = useCallback(() => {
     if (threadId) {
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
@@ -224,13 +211,30 @@ export const useMessageThread = (threadId: string | null) => {
 
       channelRef.current = channel;
     }
-  };
+  }, [threadId, fetchMessages]);
+
+  const retryFetch = useCallback(async () => {
+    setError(null);
+    try {
+      await executeWithRetry(async () => {
+        await Promise.all([
+          fetchThreadInfo(),
+          fetchMessages()
+        ]);
+      });
+    } catch (err: any) {
+      setError('Failed to reload messages. Please try again.');
+      toast({
+        title: "Error",
+        description: "Failed to reload messages. Please try again.",
+        variant: "destructive"
+      });
+    }
+  }, [fetchMessages, fetchThreadInfo, executeWithRetry, toast]);
 
   useEffect(() => {
     if (threadId) {
-      setRetryCount(0);
-      fetchThreadInfo();
-      fetchMessages();
+      retryFetch();
       setupRealtimeSubscription();
 
       return () => {
@@ -240,7 +244,7 @@ export const useMessageThread = (threadId: string | null) => {
         }
       };
     }
-  }, [threadId]);
+  }, [threadId, retryFetch, setupRealtimeSubscription]);
 
   return {
     messages,
@@ -248,7 +252,7 @@ export const useMessageThread = (threadId: string | null) => {
     error,
     threadInfo,
     handleArchiveThread,
-    fetchMessages
+    fetchMessages,
+    retryFetch
   };
 };
-

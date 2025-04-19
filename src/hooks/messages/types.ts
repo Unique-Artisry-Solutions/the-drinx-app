@@ -11,18 +11,10 @@ export interface Message {
   };
 }
 
-export interface MessageThread {
-  id: string;
-  venue_id: string;
-  promoter_id?: string;
-  subject?: string;
-  lastMessage?: string;
-  timestamp: string;
-  isRead: boolean;
-  isArchived: boolean;
-  venueName?: string;
-  eventName?: string;
-  messages?: Message[];
+export interface ThreadInfo {
+  venueName: string;
+  promoterName: string;
+  subject: string;
 }
 
 export type UserType = 'promoter' | 'establishment';

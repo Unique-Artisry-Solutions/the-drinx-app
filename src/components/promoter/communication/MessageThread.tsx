@@ -8,6 +8,8 @@ import { useMessageThread } from '@/hooks/messages/useMessageThread';
 import MessageList from './messages/MessageList';
 import MessageInput from './messages/MessageInput';
 import ThreadHeader from './messages/ThreadHeader';
+import MessageErrorBoundary from './messages/MessageErrorBoundary';
+import MessageLoadingState from './messages/MessageLoadingState';
 
 interface MessageThreadProps {
   threadId: string;
@@ -19,14 +21,15 @@ const MessageThread: React.FC<MessageThreadProps> = ({
   userType = 'promoter' 
 }) => {
   const { user } = useAuth();
-  const { sendMessage } = useMessageSystem(userType as any);
+  const { sendMessage } = useMessageSystem(userType);
   const { 
     messages, 
     loading, 
     error, 
     threadInfo, 
     handleArchiveThread, 
-    fetchMessages 
+    fetchMessages,
+    retryFetch 
   } = useMessageThread(threadId);
 
   if (!user) {
@@ -52,28 +55,20 @@ const MessageThread: React.FC<MessageThreadProps> = ({
       </CardHeader>
 
       <CardContent className="flex-1 overflow-y-auto p-4 mb-4 max-h-[500px]">
-        {error && (
-          <Alert variant="destructive" className="mb-4">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-        
-        {loading ? (
-          <div className="flex justify-center items-center h-full">
-            <div className="animate-pulse flex flex-col gap-3 w-full">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="h-16 bg-gray-100 rounded-md w-3/4"></div>
-              ))}
+        <MessageErrorBoundary error={error} onRetry={retryFetch}>
+          {loading ? (
+            <div className="flex justify-center items-center h-full">
+              <MessageLoadingState />
             </div>
-          </div>
-        ) : messages.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-gray-500">No messages in this conversation yet</p>
-            <p className="text-sm text-gray-400 mt-1">Type below to send the first message</p>
-          </div>
-        ) : (
-          <MessageList messages={messages} userId={user.id} />
-        )}
+          ) : messages.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-gray-500">No messages in this conversation yet</p>
+              <p className="text-sm text-gray-400 mt-1">Type below to send the first message</p>
+            </div>
+          ) : (
+            <MessageList messages={messages} userId={user.id} />
+          )}
+        </MessageErrorBoundary>
       </CardContent>
 
       <MessageInput
