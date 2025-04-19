@@ -1,52 +1,41 @@
 
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
 
 interface RetryConfig {
   maxAttempts?: number;
-  initialDelay?: number;
+  baseDelay?: number;
   maxDelay?: number;
-  backoffFactor?: number;
 }
 
 export const useRetry = (config: RetryConfig = {}) => {
   const {
     maxAttempts = 3,
-    initialDelay = 1000,
-    maxDelay = 5000,
-    backoffFactor = 2,
+    baseDelay = 1000,
+    maxDelay = 5000
   } = config;
-
-  const [attemptCount, setAttemptCount] = useState(0);
 
   const executeWithRetry = useCallback(async <T>(
     operation: () => Promise<T>,
-    onError?: (error: any) => void
+    attempt = 1
   ): Promise<T> => {
-    let delay = initialDelay;
-
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      try {
-        setAttemptCount(attempt);
-        return await operation();
-      } catch (error) {
-        console.error(`Attempt ${attempt} failed:`, error);
-        
-        if (attempt === maxAttempts) {
-          onError?.(error);
-          throw error;
-        }
-
-        await new Promise(resolve => setTimeout(resolve, delay));
-        delay = Math.min(delay * backoffFactor, maxDelay);
+    try {
+      return await operation();
+    } catch (error) {
+      if (attempt >= maxAttempts) {
+        throw error;
       }
+
+      // Calculate delay with exponential backoff
+      const delay = Math.min(
+        Math.pow(2, attempt) * baseDelay + Math.random() * 1000,
+        maxDelay
+      );
+
+      await new Promise(resolve => setTimeout(resolve, delay));
+      
+      return executeWithRetry(operation, attempt + 1);
     }
+  }, [maxAttempts, baseDelay, maxDelay]);
 
-    throw new Error('Max retry attempts reached');
-  }, [maxAttempts, initialDelay, maxDelay, backoffFactor]);
-
-  return {
-    executeWithRetry,
-    attemptCount,
-    isRetrying: attemptCount > 0,
-  };
+  return { executeWithRetry };
 };

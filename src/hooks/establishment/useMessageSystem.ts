@@ -1,4 +1,3 @@
-
 import { useCallback, useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRetry } from '../useRetry';
@@ -26,10 +25,12 @@ export const useMessageSystem = (userType: 'establishment') => {
       }
       
       // For establishments, we need to query threads where venue_id matches establishments they own
-      const { data: userEstablishments, error: establishmentsError } = await supabase
-        .from('establishments')
-        .select('id')
-        .eq('owner_id', currentUser.data.user.id);
+      const { data: userEstablishments, error: establishmentsError } = await executeWithRetry(async () => 
+        supabase
+          .from('establishments')
+          .select('id')
+          .eq('owner_id', currentUser.data.user.id)
+      );
 
       if (establishmentsError) {
         console.error('Error fetching establishments:', establishmentsError);
@@ -44,22 +45,24 @@ export const useMessageSystem = (userType: 'establishment') => {
       const establishmentIds = userEstablishments.map(est => est.id);
 
       // First get all threads
-      const { data: threadsData, error: threadsError } = await supabase
-        .from('promoter_venue_threads')
-        .select(`
-          id,
-          promoter_id,
-          venue_id,
-          subject,
-          is_archived,
-          last_message_at,
-          created_at,
-          updated_at,
-          venues:establishments(id, name),
-          promoters:profiles!promoter_id(id, display_name, username)
-        `)
-        .in('venue_id', establishmentIds)
-        .order('last_message_at', { ascending: false });
+      const { data: threadsData, error: threadsError } = await executeWithRetry(async () =>
+        supabase
+          .from('promoter_venue_threads')
+          .select(`
+            id,
+            promoter_id,
+            venue_id,
+            subject,
+            is_archived,
+            last_message_at,
+            created_at,
+            updated_at,
+            venues:establishments(id, name),
+            promoters:profiles!promoter_id(id, display_name, username)
+          `)
+          .in('venue_id', establishmentIds)
+          .order('last_message_at', { ascending: false })
+      );
 
       if (threadsError) {
         console.error('Error fetching establishment threads:', threadsError);
@@ -72,18 +75,20 @@ export const useMessageSystem = (userType: 'establishment') => {
       for (const thread of threadsData || []) {
         try {
           // Get messages for this thread separately
-          const { data: messagesData, error: messagesError } = await supabase
-            .from('promoter_venue_messages')
-            .select(`
-              id,
-              content,
-              sent_at,
-              sender_id,
-              is_from_promoter
-            `)
-            .eq('thread_id', thread.id)
-            .order('sent_at', { ascending: false })
-            .limit(20);
+          const { data: messagesData, error: messagesError } = await executeWithRetry(async () =>
+            supabase
+              .from('promoter_venue_messages')
+              .select(`
+                id,
+                content,
+                sent_at,
+                sender_id,
+                is_from_promoter
+              `)
+              .eq('thread_id', thread.id)
+              .order('sent_at', { ascending: false })
+              .limit(20)
+          );
             
           if (messagesError) {
             console.error('Error fetching messages:', messagesError);
@@ -95,11 +100,13 @@ export const useMessageSystem = (userType: 'establishment') => {
           for (const msg of messagesData || []) {
             try {
               // Get sender profile info
-              const { data: senderData, error: senderError } = await supabase
-                .from('profiles')
-                .select('display_name, username')
-                .eq('id', msg.sender_id)
-                .single();
+              const { data: senderData, error: senderError } = await executeWithRetry(async () =>
+                supabase
+                  .from('profiles')
+                  .select('display_name, username')
+                  .eq('id', msg.sender_id)
+                  .maybeSingle()
+              );
                 
               if (senderError && senderError.code !== 'PGRST116') {
                 console.error('Error fetching sender profile:', senderError);
@@ -118,7 +125,7 @@ export const useMessageSystem = (userType: 'establishment') => {
               });
             } catch (err) {
               console.error('Error processing message sender:', err);
-              // Add message with default sender info
+              // Continue with default sender info
               messages.push({
                 id: msg.id,
                 content: msg.content,
@@ -134,11 +141,13 @@ export const useMessageSystem = (userType: 'establishment') => {
           }
           
           // Get read status
-          const { data: readStatusData, error: readStatusError } = await supabase
-            .from('message_read_status')
-            .select('*')
-            .eq('thread_id', thread.id)
-            .eq('user_id', currentUser.data.user.id);
+          const { data: readStatusData, error: readStatusError } = await executeWithRetry(async () =>
+            supabase
+              .from('message_read_status')
+              .select('*')
+              .eq('thread_id', thread.id)
+              .eq('user_id', currentUser.data.user.id)
+          );
           
           if (readStatusError) {
             console.error('Error fetching read status:', readStatusError);
@@ -160,7 +169,11 @@ export const useMessageSystem = (userType: 'establishment') => {
           });
         } catch (err) {
           console.error(`Error processing thread ${thread.id}:`, err);
-          // Continue with other threads even if one fails
+          toast({
+            title: "Error Loading Messages",
+            description: "Some messages couldn't be loaded. Please try again.",
+            variant: "destructive"
+          });
         }
       }
 
@@ -176,7 +189,7 @@ export const useMessageSystem = (userType: 'establishment') => {
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [executeWithRetry, toast]);
 
   useEffect(() => {
     fetchThreads();
@@ -193,14 +206,16 @@ export const useMessageSystem = (userType: 'establishment') => {
       
       console.log(`Sending message to thread ${threadId}: ${content}`);
       
-      const { error } = await supabase
-        .from('promoter_venue_messages')
-        .insert({
-          thread_id: threadId,
-          content: content.trim(),
-          sender_id: user.data.user.id,
-          is_from_promoter: false // Always false for establishment
-        });
+      const { error } = await executeWithRetry(async () =>
+        supabase
+          .from('promoter_venue_messages')
+          .insert({
+            thread_id: threadId,
+            content: content.trim(),
+            sender_id: user.data.user.id,
+            is_from_promoter: false // Always false for establishment
+          })
+      );
 
       if (error) {
         console.error('Error sending message:', error);
@@ -217,7 +232,7 @@ export const useMessageSystem = (userType: 'establishment') => {
         variant: "destructive"
       });
     }
-  }, [fetchThreads, toast]);
+  }, [fetchThreads, executeWithRetry, toast]);
 
   const markThreadAsRead = useCallback(async (threadId: string) => {
     try {
@@ -228,15 +243,17 @@ export const useMessageSystem = (userType: 'establishment') => {
       
       console.log(`Marking thread ${threadId} as read`);
       
-      const { error } = await supabase
-        .from('message_read_status')
-        .upsert({
-          thread_id: threadId,
-          user_id: user.data.user.id,
-          last_read_at: new Date().toISOString()
-        }, {
-          onConflict: 'thread_id,user_id'
-        });
+      const { error } = await executeWithRetry(async () =>
+        supabase
+          .from('message_read_status')
+          .upsert({
+            thread_id: threadId,
+            user_id: user.data.user.id,
+            last_read_at: new Date().toISOString()
+          }, {
+            onConflict: 'thread_id,user_id'
+          })
+      );
 
       if (error) {
         console.error('Error marking thread as read:', error);
@@ -259,7 +276,7 @@ export const useMessageSystem = (userType: 'establishment') => {
         variant: "destructive"
       });
     }
-  }, [toast]);
+  }, [executeWithRetry, toast]);
 
   const refetchThreads = useCallback(() => {
     fetchThreads();
