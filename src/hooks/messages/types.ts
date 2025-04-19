@@ -18,3 +18,17 @@ export interface ThreadInfo {
 }
 
 export type UserType = 'promoter' | 'establishment';
+
+export interface MessageThread {
+  id: string;
+  venue_id: string;
+  promoter_id: string;
+  subject?: string;
+  timestamp: string;
+  isRead: boolean;
+  isArchived: boolean;
+  venueName?: string;
+  messages?: Message[];
+  lastMessage?: string;
+}
+
