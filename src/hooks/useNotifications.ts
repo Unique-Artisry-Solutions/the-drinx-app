@@ -1,9 +1,9 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/auth';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { Notification } from '@/types/NotificationTypes';
+import { debouncedToast } from '@/utils/debouncedToast';
 
 export const useNotifications = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -20,47 +20,59 @@ export const useNotifications = () => {
       return;
     }
 
-    try {
-      setIsLoading(true);
-      setError(null);
+    const maxRetries = 3;
+    let attempt = 0;
+    
+    while (attempt < maxRetries) {
+      try {
+        setIsLoading(true);
+        setError(null);
 
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://dvifibvzwunnpcsihpxq.supabase.co';
-      const response = await fetch(`${supabaseUrl}/functions/v1/notifications`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          action: 'getNotifications',
-          params: { userId: user.id }
-        })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `Server responded with ${response.status}`);
-      }
-
-      const { data, error } = await response.json();
-      if (error) throw error;
-
-      const notificationsArray = Array.isArray(data) ? data : [];
-      setNotifications(notificationsArray);
-      setUnreadCount(notificationsArray.filter((n: Notification) => !n.is_read).length);
-    } catch (error: any) {
-      console.error('Error fetching notifications:', error);
-      setError(error.message || 'Failed to load notifications');
-      
-      if (!error.message?.includes('No notifications')) {
-        toast({
-          title: "Notification Error",
-          description: error.message || "Failed to load notifications",
-          variant: "destructive"
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://dvifibvzwunnpcsihpxq.supabase.co';
+        const response = await fetch(`${supabaseUrl}/functions/v1/notifications`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            action: 'getNotifications',
+            params: { userId: user.id }
+          })
         });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || `Server responded with ${response.status}`);
+        }
+
+        const { data, error } = await response.json();
+        if (error) throw error;
+
+        const notificationsArray = Array.isArray(data) ? data : [];
+        setNotifications(notificationsArray);
+        setUnreadCount(notificationsArray.filter((n: Notification) => !n.is_read).length);
+        return;
+
+      } catch (error: any) {
+        console.error(`Attempt ${attempt + 1} failed:`, error);
+        attempt++;
+        
+        if (attempt === maxRetries) {
+          setError(error.message || 'Failed to load notifications');
+          if (!error.message?.includes('No notifications')) {
+            debouncedToast.error(
+              "Notification Error",
+              "Unable to fetch notifications. Will retry automatically."
+            );
+          }
+        }
+        
+        // Add exponential backoff
+        await new Promise(resolve => setTimeout(resolve, Math.min(1000 * Math.pow(2, attempt), 5000)));
+      } finally {
+        if (attempt === maxRetries) setIsLoading(false);
       }
-    } finally {
-      setIsLoading(false);
     }
   };
 

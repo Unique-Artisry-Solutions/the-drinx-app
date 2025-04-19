@@ -1,8 +1,7 @@
-
 import { useEffect } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/hooks/use-toast';
+import { debouncedToast } from '@/utils/debouncedToast';
 
 interface UseAuthSetupProps {
   setSession: (session: Session | null) => void;
@@ -13,7 +12,6 @@ interface UseAuthSetupProps {
   checkAdminBypass: () => { isAdminBypass: boolean; bypassUser?: any };
   checkAdminSession: () => boolean;
   refreshSession: () => Promise<any>;
-  toast: typeof toast;
 }
 
 export function useAuthSetup({
@@ -25,10 +23,10 @@ export function useAuthSetup({
   checkAdminBypass,
   checkAdminSession,
   refreshSession,
-  toast
-}: UseAuthSetupProps) {
+}) {
   useEffect(() => {
     console.log('AuthProvider useEffect running');
+    let isInitialAuth = true;
     
     // Check for admin bypass first
     const { isAdminBypass, bypassUser } = checkAdminBypass();
@@ -38,14 +36,12 @@ export function useAuthSetup({
       setUser(bypassUser);
       setIsEmailVerified(true);
       setIsLoading(false);
-      // Skip the rest of the auth checks when admin bypass is active
       return;
     }
     
-    // Set up auth listener FIRST, then check current session
+    // Set up auth listener FIRST
     const setupAuthListener = async () => {
       console.log('Setting up auth listener');
-      // Set up authentication state listener
       const { data: { subscription } } = supabase.auth.onAuthStateChange(
         async (event, currentSession) => {
           console.log('Auth state changed:', event, currentSession);
@@ -56,120 +52,53 @@ export function useAuthSetup({
           if (currentSession?.user) {
             setIsEmailVerified(currentSession.user.email_confirmed_at !== null);
             
-            if (event === 'SIGNED_IN') {
-              // If email is verified, store authentication state in localStorage
-              if (currentSession.user.email_confirmed_at) {
-                updateLocalStorage(currentSession.user);
-                
-                toast({
-                  title: "Signed In",
-                  description: `Welcome back, ${currentSession.user.email}!`
-                });
-              }
+            if (event === 'SIGNED_IN' && !isInitialAuth) {
+              updateLocalStorage(currentSession.user);
+              debouncedToast.success(
+                "Signed In",
+                `Welcome back, ${currentSession.user.email}!`
+              );
             } else if (event === 'SIGNED_OUT') {
               updateLocalStorage(null);
-              
-              toast({
-                title: "Signed Out",
-                description: "You have been successfully signed out."
-              });
-            } else if (event === 'PASSWORD_RECOVERY') {
-              toast({
-                title: "Password Recovery",
-                description: "Complete the form to reset your password."
-              });
-            } else if (event === 'USER_UPDATED') {
-              toast({
-                title: "Profile Updated",
-                description: "Your user profile has been updated."
-              });
+              debouncedToast.success(
+                "Signed Out",
+                "You have been successfully signed out."
+              );
             }
           }
           
           setIsLoading(false);
+          isInitialAuth = false;
         }
       );
       
       return subscription;
     };
     
-    // Check active session
-    const checkSession = async () => {
-      try {
-        console.log('Checking for existing session');
-        const { data, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error('Error checking session:', error);
-          setIsLoading(false);
-          return;
-        }
-        
-        console.log('Session check result:', data);
-        setSession(data.session);
-        setUser(data.session?.user || null);
-        
-        // Set email verification status
-        if (data.session?.user) {
-          console.log('User email verified status:', data.session.user.email_confirmed_at !== null);
-          setIsEmailVerified(data.session.user.email_confirmed_at !== null);
-          
-          // Ensure localStorage is consistent with session state
-          updateLocalStorage(data.session.user);
-        } else {
-          updateLocalStorage(null);
-        }
-        
-        checkAdminSession();
-        setIsLoading(false);
-      } catch (error) {
-        console.error('Error in checkSession:', error);
-        setIsLoading(false);
-      }
-    };
-
     // Initialize in the correct order
     let subscription: { unsubscribe: () => void } | null = null;
     
     const initialize = async () => {
-      // 1. Set up listener first
       subscription = await setupAuthListener();
-      // 2. Then check for existing session
-      await checkSession();
+      
+      // Check existing session
+      const { data } = await supabase.auth.getSession();
+      setSession(data.session);
+      setUser(data.session?.user || null);
+      setIsLoading(false);
+      
+      if (data.session?.user) {
+        setIsEmailVerified(data.session.user.email_confirmed_at !== null);
+        updateLocalStorage(data.session.user);
+      }
     };
     
     initialize();
-
-    // Check for email verification in URL
-    const checkEmailVerification = () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get('email_confirmed') === 'true') {
-        console.log('Email verification detected in URL');
-        refreshSession().then(() => {
-          toast({
-            title: "Email Verified",
-            description: "Your email has been successfully verified!"
-          });
-        });
-      }
-    };
     
-    checkEmailVerification();
-    
-    // Set up a periodic session check and refresh
-    const sessionCheckInterval = setInterval(() => {
-      // Skip session refresh for admin bypass users
-      if (!localStorage.getItem('admin_bypass')) {
-        refreshSession();
-        checkAdminSession();
-      }
-    }, 15 * 60 * 1000); // Check every 15 minutes
-
     return () => {
       if (subscription) {
         subscription.unsubscribe();
       }
-      clearInterval(sessionCheckInterval);
     };
   }, []);
 
