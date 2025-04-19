@@ -1,15 +1,45 @@
-
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
-import { useAuth } from '@/contexts/auth'; // Fixed import path
-import { Link } from 'react-router-dom';
 import { MessageSquare, CalendarDays, ChartBar, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuthenticatedUser } from '@/hooks/useAuthenticatedUser';
+import { useToast } from '@/hooks/use-toast';
+import { Link } from 'react-router-dom';
 
 const PromoterDashboardPage = () => {
-  const { user } = useAuth();
-  console.log("Rendered PromoterDashboardPage with user:", user?.id);
+  const { user, isLoading } = useAuthenticatedUser();
+  const navigate = useNavigate();
+  const { toast } = useToast();
   
+  useEffect(() => {
+    if (!isLoading && !user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to access the promoter dashboard",
+        variant: "destructive"
+      });
+      navigate('/auth');
+    }
+  }, [user, isLoading, navigate, toast]);
+
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="container mx-auto max-w-6xl px-4 py-8">
+          <div className="animate-pulse space-y-4">
+            <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="h-40 bg-gray-200 rounded"></div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
       <div className="container mx-auto max-w-6xl px-4 py-8">
