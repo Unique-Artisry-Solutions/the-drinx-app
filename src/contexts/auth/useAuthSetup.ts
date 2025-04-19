@@ -1,3 +1,4 @@
+
 import { useEffect } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,6 +13,7 @@ interface UseAuthSetupProps {
   checkAdminBypass: () => { isAdminBypass: boolean; bypassUser?: any };
   checkAdminSession: () => boolean;
   refreshSession: () => Promise<any>;
+  toast?: any; // Added toast property
 }
 
 export function useAuthSetup({
@@ -23,7 +25,8 @@ export function useAuthSetup({
   checkAdminBypass,
   checkAdminSession,
   refreshSession,
-}) {
+  toast
+}: UseAuthSetupProps) {
   useEffect(() => {
     console.log('AuthProvider useEffect running');
     let isInitialAuth = true;
