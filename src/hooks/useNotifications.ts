@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/auth';
 import { supabase } from '@/lib/supabase';
@@ -47,7 +48,11 @@ export const useNotifications = () => {
         }
 
         const { data, error } = await response.json();
-        if (error) throw error;
+        
+        // Important change: Do not throw an error if no notifications exist
+        if (error && error !== "No notifications found") {
+          throw error;
+        }
 
         const notificationsArray = Array.isArray(data) ? data : [];
         setNotifications(notificationsArray);
@@ -58,14 +63,16 @@ export const useNotifications = () => {
         console.error(`Attempt ${attempt + 1} failed:`, error);
         attempt++;
         
-        if (attempt === maxRetries) {
-          setError(error.message || 'Failed to load notifications');
-          if (!error.message?.includes('No notifications')) {
-            debouncedToast.error(
-              "Notification Error",
-              "Unable to fetch notifications. Will retry automatically."
-            );
-          }
+        // Change: Only show toast for non-"No notifications" errors
+        if (
+          attempt === maxRetries && 
+          !error.message?.includes('No notifications') &&
+          !error.message?.includes('No notifications found')
+        ) {
+          debouncedToast.error(
+            "Notification Error",
+            "Unable to fetch notifications. Will retry automatically."
+          );
         }
         
         // Add exponential backoff
