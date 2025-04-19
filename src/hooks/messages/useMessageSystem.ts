@@ -3,31 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { useRetry } from '../useRetry';
 import { useToast } from '../use-toast';
 import { useAuthenticatedUser } from '@/hooks/useAuthenticatedUser';
-
-export interface Message {
-  id: string;
-  content: string;
-  sent_at: string;
-  sender_id: string;
-  is_from_promoter: boolean;
-  sender?: {
-    display_name?: string;
-    username?: string;
-  };
-}
-
-export interface MessageThread {
-  id: string;
-  venue_id: string;
-  promoter_id?: string;
-  subject?: string;
-  lastMessage?: string;
-  timestamp: string;
-  isRead: boolean;
-  isArchived: boolean;
-  venueName?: string;
-  eventName?: string;
-}
+import { Message, MessageThread } from '../promoter/types';
 
 export const useMessageSystem = (userType: 'promoter' | 'establishment') => {
   const { executeWithRetry } = useRetry();

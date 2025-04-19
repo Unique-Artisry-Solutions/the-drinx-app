@@ -2,7 +2,7 @@ import { useCallback, useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRetry } from '../useRetry';
 import { useToast } from '../use-toast';
-import { MessageThread, Message } from '../messages/useMessageSystem';
+import { Message, MessageThread } from '../promoter/types';
 
 export const useMessageSystem = (userType: 'establishment') => {
   const { executeWithRetry } = useRetry();
@@ -24,7 +24,6 @@ export const useMessageSystem = (userType: 'establishment') => {
         return;
       }
       
-      // For establishments, we need to query threads where venue_id matches establishments they own
       const { data: userEstablishments, error: establishmentsError } = await executeWithRetry(async () => 
         supabase
           .from('establishments')
@@ -44,7 +43,6 @@ export const useMessageSystem = (userType: 'establishment') => {
 
       const establishmentIds = userEstablishments.map(est => est.id);
 
-      // First get all threads
       const { data: threadsData, error: threadsError } = await executeWithRetry(async () =>
         supabase
           .from('promoter_venue_threads')
@@ -69,12 +67,10 @@ export const useMessageSystem = (userType: 'establishment') => {
         throw threadsError;
       }
       
-      // Process threads and fetch related data
       const processedThreads: MessageThread[] = [];
       
       for (const thread of threadsData || []) {
         try {
-          // Get messages for this thread separately
           const { data: messagesData, error: messagesError } = await executeWithRetry(async () =>
             supabase
               .from('promoter_venue_messages')
@@ -95,11 +91,9 @@ export const useMessageSystem = (userType: 'establishment') => {
             throw messagesError;
           }
           
-          // For each message, get the sender info separately
           const messages: Message[] = [];
           for (const msg of messagesData || []) {
             try {
-              // Get sender profile info
               const { data: senderData, error: senderError } = await executeWithRetry(async () =>
                 supabase
                   .from('profiles')
@@ -125,7 +119,6 @@ export const useMessageSystem = (userType: 'establishment') => {
               });
             } catch (err) {
               console.error('Error processing message sender:', err);
-              // Continue with default sender info
               messages.push({
                 id: msg.id,
                 content: msg.content,
@@ -140,7 +133,6 @@ export const useMessageSystem = (userType: 'establishment') => {
             }
           }
           
-          // Get read status
           const { data: readStatusData, error: readStatusError } = await executeWithRetry(async () =>
             supabase
               .from('message_read_status')
@@ -165,7 +157,7 @@ export const useMessageSystem = (userType: 'establishment') => {
             isRead: isRead,
             isArchived: thread.is_archived,
             venueName: thread.venues?.name,
-            messages: messages.reverse() // Reverse to get ascending order
+            messages: messages.reverse()
           });
         } catch (err) {
           console.error(`Error processing thread ${thread.id}:`, err);
@@ -213,7 +205,7 @@ export const useMessageSystem = (userType: 'establishment') => {
             thread_id: threadId,
             content: content.trim(),
             sender_id: user.data.user.id,
-            is_from_promoter: false // Always false for establishment
+            is_from_promoter: false
           })
       );
 
@@ -222,7 +214,6 @@ export const useMessageSystem = (userType: 'establishment') => {
         throw error;
       }
 
-      // Refresh threads to get the latest messages
       await fetchThreads();
     } catch (err: any) {
       console.error('Error sending message:', err);
@@ -266,7 +257,6 @@ export const useMessageSystem = (userType: 'establishment') => {
         )
       );
       
-      // Also select this thread
       setSelectedThreadId(threadId);
     } catch (err: any) {
       console.error('Error marking thread as read:', err);
