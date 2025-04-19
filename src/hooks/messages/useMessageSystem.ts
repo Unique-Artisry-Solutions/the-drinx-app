@@ -1,10 +1,11 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useAuthenticatedUser } from '@/hooks/useAuthenticatedUser';
 import { MessageThread, UserType } from './types';
 import { useThreads } from './useThreads';
 import { useMessages } from './useMessages';
 import { useThreadReadStatus } from './useThreadReadStatus';
+import { useThreadCreation } from './useThreadCreation';
 
 export const useMessageSystem = (userType: UserType) => {
   const { user } = useAuthenticatedUser();
@@ -13,20 +14,7 @@ export const useMessageSystem = (userType: UserType) => {
   const { threads, setThreads, loading, error, fetchThreads } = useThreads(userType, user?.id);
   const { fetchMessages, sendMessage } = useMessages(userType);
   const { updateThreadReadStatus, markThreadAsRead } = useThreadReadStatus(user?.id);
-
-  useEffect(() => {
-    if (user?.id) {
-      fetchThreads();
-    }
-  }, [user?.id, fetchThreads]);
-
-  useEffect(() => {
-    if (threads.length > 0) {
-      updateThreadReadStatus(threads).then(updatedThreads => {
-        setThreads(updatedThreads);
-      });
-    }
-  }, [threads, updateThreadReadStatus]);
+  const { createThread, isCreating } = useThreadCreation();
 
   const handleSelectThread = useCallback(async (threadId: string) => {
     try {
@@ -59,6 +47,8 @@ export const useMessageSystem = (userType: UserType) => {
     setSelectedThreadId: handleSelectThread,
     markThreadAsRead,
     sendMessage: handleSendMessage,
+    createThread,
+    isCreating,
     refetchThreads: fetchThreads
   };
 };

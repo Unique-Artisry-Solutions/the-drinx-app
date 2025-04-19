@@ -1,6 +1,5 @@
-
 import { useState, useEffect, useCallback } from 'react';
-import { MessageThread, Message } from './types';
+import { MessageThread, Message } from '../messages/types';
 
 export const usePromoterMessages = () => {
   const [conversations, setConversations] = useState<MessageThread[]>([]);
@@ -9,145 +8,162 @@ export const usePromoterMessages = () => {
 
   // Load mock conversation data
   useEffect(() => {
-    // In a real implementation, this would fetch from API/database
     const mockConversations: MessageThread[] = [
       {
         id: 'thread1',
+        venue_id: 'venue1',
         venueName: 'Downtown Club',
         eventName: 'Summer Launch Party',
         lastMessage: 'Can we discuss the available dates for July?',
-        timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 minutes ago
+        timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
         isRead: false,
         isArchived: false,
         messages: [
           {
             id: 'msg1',
-            text: 'Hi there! I\'m interested in hosting an event at your venue.',
-            timestamp: new Date(Date.now() - 1000 * 60 * 120).toISOString(), // 2 hours ago
-            isFromPromoter: true,
-            senderName: 'You'
+            content: 'Hi there! I\'m interested in hosting an event at your venue.',
+            sent_at: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
+            sender_id: 'user1',
+            is_from_promoter: true,
+            sender: { display_name: 'You' }
           },
           {
             id: 'msg2',
-            text: 'Hello! We\'d be happy to discuss. What kind of event are you planning?',
-            timestamp: new Date(Date.now() - 1000 * 60 * 60).toISOString(), // 1 hour ago
-            isFromPromoter: false,
-            senderName: 'Alex Johnson'
+            content: 'Hello! We\'d be happy to discuss. What kind of event are you planning?',
+            sent_at: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
+            sender_id: 'user2',
+            is_from_promoter: false,
+            sender: { display_name: 'Alex Johnson' }
           },
           {
             id: 'msg3',
-            text: 'I\'m planning a summer launch party for a new product. Looking for availability in July.',
-            timestamp: new Date(Date.now() - 1000 * 60 * 45).toISOString(), // 45 minutes ago
-            isFromPromoter: true,
-            senderName: 'You'
+            content: 'I\'m planning a summer launch party for a new product. Looking for availability in July.',
+            sent_at: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
+            sender_id: 'user1',
+            is_from_promoter: true,
+            sender: { display_name: 'You' }
           },
           {
             id: 'msg4',
-            text: 'Can we discuss the available dates for July?',
-            timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 minutes ago
-            isFromPromoter: false,
-            senderName: 'Alex Johnson'
+            content: 'Can we discuss the available dates for July?',
+            sent_at: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+            sender_id: 'user2',
+            is_from_promoter: false,
+            sender: { display_name: 'Alex Johnson' }
           }
         ]
       },
       {
         id: 'thread2',
+        venue_id: 'venue2',
         venueName: 'Skyline Lounge',
         lastMessage: 'The booking has been confirmed for next Friday.',
-        timestamp: new Date(Date.now() - 1000 * 60 * 120).toISOString(), // 2 hours ago
+        timestamp: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
         isRead: true,
         isArchived: false,
         messages: [
           {
             id: 'msg1',
-            text: 'I\'d like to book your venue for a corporate event next Friday.',
-            timestamp: new Date(Date.now() - 1000 * 60 * 240).toISOString(), // 4 hours ago
-            isFromPromoter: true,
-            senderName: 'You'
+            content: 'I\'d like to book your venue for a corporate event next Friday.',
+            sent_at: new Date(Date.now() - 1000 * 60 * 240).toISOString(),
+            sender_id: 'user1',
+            is_from_promoter: true,
+            sender: { display_name: 'You' }
           },
           {
             id: 'msg2',
-            text: 'We have availability that day. What time are you thinking?',
-            timestamp: new Date(Date.now() - 1000 * 60 * 180).toISOString(), // 3 hours ago
-            isFromPromoter: false,
-            senderName: 'Jamie Smith'
+            content: 'We have availability that day. What time are you thinking?',
+            sent_at: new Date(Date.now() - 1000 * 60 * 180).toISOString(),
+            sender_id: 'user3',
+            is_from_promoter: false,
+            sender: { display_name: 'Jamie Smith' }
           },
           {
             id: 'msg3',
-            text: 'Around 7pm until midnight. Will that work?',
-            timestamp: new Date(Date.now() - 1000 * 60 * 150).toISOString(), // 2.5 hours ago
-            isFromPromoter: true,
-            senderName: 'You'
+            content: 'Around 7pm until midnight. Will that work?',
+            sent_at: new Date(Date.now() - 1000 * 60 * 150).toISOString(),
+            sender_id: 'user1',
+            is_from_promoter: true,
+            sender: { display_name: 'You' }
           },
           {
             id: 'msg4',
-            text: 'The booking has been confirmed for next Friday.',
-            timestamp: new Date(Date.now() - 1000 * 60 * 120).toISOString(), // 2 hours ago
-            isFromPromoter: false,
-            senderName: 'Jamie Smith'
+            content: 'The booking has been confirmed for next Friday.',
+            sent_at: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
+            sender_id: 'user3',
+            is_from_promoter: false,
+            sender: { display_name: 'Jamie Smith' }
           }
         ]
       },
       {
         id: 'thread3',
+        venue_id: 'venue3',
         venueName: 'Harbor View',
         lastMessage: 'Thank you for your inquiry. Unfortunately, we are fully booked on that date.',
-        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
+        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
         isRead: false,
         isArchived: false,
         messages: [
           {
             id: 'msg1',
-            text: 'Do you have availability on June 15th for a private event?',
-            timestamp: new Date(Date.now() - 1000 * 60 * 60 * 25).toISOString(), // 25 hours ago
-            isFromPromoter: true,
-            senderName: 'You'
+            content: 'Do you have availability on June 15th for a private event?',
+            sent_at: new Date(Date.now() - 1000 * 60 * 60 * 25).toISOString(),
+            sender_id: 'user1',
+            is_from_promoter: true,
+            sender: { display_name: 'You' }
           },
           {
             id: 'msg2',
-            text: 'Thank you for your inquiry. Unfortunately, we are fully booked on that date.',
-            timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 24 hours ago
-            isFromPromoter: false,
-            senderName: 'Taylor Wilson'
+            content: 'Thank you for your inquiry. Unfortunately, we are fully booked on that date.',
+            sent_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
+            sender_id: 'user4',
+            is_from_promoter: false,
+            sender: { display_name: 'Taylor Wilson' }
           }
         ]
       },
       {
         id: 'thread4',
+        venue_id: 'venue4',
         venueName: 'Sunset Terrace',
         eventName: 'Networking Mixer',
         lastMessage: 'We look forward to hosting your event!',
-        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(), // 2 days ago
+        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
         isRead: true,
         isArchived: true,
         messages: [
           {
             id: 'msg1',
-            text: 'I\'d like to confirm our networking mixer for next month.',
-            timestamp: new Date(Date.now() - 1000 * 60 * 60 * 72).toISOString(), // 3 days ago
-            isFromPromoter: true,
-            senderName: 'You'
+            content: 'I\'d like to confirm our networking mixer for next month.',
+            sent_at: new Date(Date.now() - 1000 * 60 * 60 * 72).toISOString(),
+            sender_id: 'user1',
+            is_from_promoter: true,
+            sender: { display_name: 'You' }
           },
           {
             id: 'msg2',
-            text: 'Yes, we have you down for the 20th from 6-9pm.',
-            timestamp: new Date(Date.now() - 1000 * 60 * 60 * 60).toISOString(), // 2.5 days ago
-            isFromPromoter: false,
-            senderName: 'Casey Rodriguez'
+            content: 'Yes, we have you down for the 20th from 6-9pm.',
+            sent_at: new Date(Date.now() - 1000 * 60 * 60 * 60).toISOString(),
+            sender_id: 'user5',
+            is_from_promoter: false,
+            sender: { display_name: 'Casey Rodriguez' }
           },
           {
             id: 'msg3',
-            text: 'Perfect, thank you!',
-            timestamp: new Date(Date.now() - 1000 * 60 * 60 * 50).toISOString(), // ~2 days ago
-            isFromPromoter: true,
-            senderName: 'You'
+            content: 'Perfect, thank you!',
+            sent_at: new Date(Date.now() - 1000 * 60 * 60 * 50).toISOString(),
+            sender_id: 'user1',
+            is_from_promoter: true,
+            sender: { display_name: 'You' }
           },
           {
             id: 'msg4',
-            text: 'We look forward to hosting your event!',
-            timestamp: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(), // 2 days ago
-            isFromPromoter: false,
-            senderName: 'Casey Rodriguez'
+            content: 'We look forward to hosting your event!',
+            sent_at: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
+            sender_id: 'user5',
+            is_from_promoter: false,
+            sender: { display_name: 'Casey Rodriguez' }
           }
         ]
       }
@@ -189,10 +205,11 @@ export const usePromoterMessages = () => {
   const sendMessage = useCallback((threadId: string, text: string) => {
     const newMessage: Message = {
       id: `msg-${Date.now()}`,
-      text,
-      timestamp: new Date().toISOString(),
-      isFromPromoter: true,
-      senderName: 'You'
+      content: text,
+      sent_at: new Date().toISOString(),
+      sender_id: 'user1', // Assuming current user is sender
+      is_from_promoter: true,
+      sender: { display_name: 'You' }
     };
 
     setConversations(prev => 
@@ -202,7 +219,7 @@ export const usePromoterMessages = () => {
             ...conv,
             messages: [...conv.messages, newMessage],
             lastMessage: text,
-            timestamp: newMessage.timestamp
+            timestamp: newMessage.sent_at
           };
         }
         return conv;
@@ -214,6 +231,7 @@ export const usePromoterMessages = () => {
   const createThread = useCallback((venueName: string, eventName: string | undefined, initialMessage: string) => {
     const newThread: MessageThread = {
       id: `thread-${Date.now()}`,
+      venue_id: 'venue5', // Mock venue ID
       venueName,
       eventName,
       lastMessage: initialMessage,
@@ -223,10 +241,11 @@ export const usePromoterMessages = () => {
       messages: [
         {
           id: `msg-${Date.now()}`,
-          text: initialMessage,
-          timestamp: new Date().toISOString(),
-          isFromPromoter: true,
-          senderName: 'You'
+          content: initialMessage,
+          sent_at: new Date().toISOString(),
+          sender_id: 'user1',
+          is_from_promoter: true,
+          sender: { display_name: 'You' }
         }
       ]
     };
