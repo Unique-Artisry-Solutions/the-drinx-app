@@ -14,7 +14,7 @@ export interface Message {
 export interface MessageThread {
   id: string;
   venue_id: string;
-  promoter_id?: string;
+  promoter_id: string; // Making this required to match the shared interface
   subject?: string;
   lastMessage?: string;
   timestamp: string;

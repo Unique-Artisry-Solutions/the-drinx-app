@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import MessageThreadList from '@/components/promoter/communication/MessageThreadList';
 import MessageThread from '@/components/promoter/communication/MessageThread';
-import { useMessageSystem } from '@/hooks/establishment/useMessageSystem';
+import { useMessageSystem } from '@/hooks/messages/useMessageSystem';
 import { AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 

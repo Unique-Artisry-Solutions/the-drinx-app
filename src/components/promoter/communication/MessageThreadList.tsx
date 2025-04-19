@@ -1,7 +1,8 @@
+
 import React from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { MessageThread } from '@/hooks/messages/useMessageSystem';
+import { MessageThread } from '@/hooks/messages/types';
 import { AlertCircle } from 'lucide-react';
 
 interface MessageThreadListProps {
