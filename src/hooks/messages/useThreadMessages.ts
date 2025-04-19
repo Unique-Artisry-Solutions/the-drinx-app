@@ -17,7 +17,7 @@ export const useThreadMessages = (threadId: string | null) => {
       setLoading(true);
       setError(null);
 
-      const { data, error } = await supabase
+      const { data: messagesData, error: messagesError } = await supabase
         .from('promoter_venue_messages')
         .select(`
           id,
@@ -30,9 +30,9 @@ export const useThreadMessages = (threadId: string | null) => {
         .eq('thread_id', threadId)
         .order('sent_at', { ascending: true });
 
-      if (error) throw error;
+      if (messagesError) throw messagesError;
 
-      const messagesWithSenders = await Promise.all(data.map(async (msg) => {
+      const messagesWithSenders = await Promise.all(messagesData.map(async (msg) => {
         try {
           const { data: senderData, error: senderError } = await supabase
             .from('profiles')
@@ -61,26 +61,6 @@ export const useThreadMessages = (threadId: string | null) => {
       }));
 
       setMessages(messagesWithSenders || []);
-
-      // Update read status
-      if (messagesWithSenders && messagesWithSenders.length > 0) {
-        try {
-          const user = await supabase.auth.getUser();
-          if (user.data.user) {
-            await supabase
-              .from('message_read_status')
-              .upsert({
-                thread_id: threadId,
-                user_id: user.data.user.id,
-                last_read_at: new Date().toISOString()
-              }, {
-                onConflict: 'thread_id,user_id'
-              });
-          }
-        } catch (err) {
-          console.error('Error marking thread as read:', err);
-        }
-      }
     } catch (err: any) {
       console.error('Error fetching messages:', err);
       setError('Failed to load messages. ' + (err.message || ''));
@@ -102,4 +82,3 @@ export const useThreadMessages = (threadId: string | null) => {
     setError
   };
 };
-

@@ -1,4 +1,3 @@
-
 export interface Message {
   id: string;
   content: string;
@@ -31,4 +30,3 @@ export interface MessageThread {
   messages?: Message[];
   lastMessage?: string;
 }
-
