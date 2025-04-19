@@ -6,19 +6,37 @@ self.addEventListener('push', function(event) {
     icon: '/favicon.ico',
     badge: '/favicon.ico',
     data: data.metadata || {},
-    tag: data.id // For notification grouping
+    tag: data.id, // For notification grouping
+    vibrate: [200, 100, 200],
+    actions: [
+      {
+        action: 'view',
+        title: 'View'
+      },
+      {
+        action: 'close',
+        title: 'Close'
+      }
+    ],
+    requireInteraction: data.priority === 'high' || data.priority === 'urgent'
   };
 
-  event.waitUntil(
-    self.registration.showNotification(data.title, options)
-  );
+  const notificationPromise = self.registration.showNotification(data.title, options);
+  event.waitUntil(notificationPromise);
 });
 
 self.addEventListener('notificationclick', function(event) {
   event.notification.close();
-  const urlToOpen = event.notification.data.url || '/';
-  
-  event.waitUntil(
-    clients.openWindow(urlToOpen)
-  );
+
+  // Handle notification actions
+  if (event.action === 'view' && event.notification.data.url) {
+    event.waitUntil(
+      clients.openWindow(event.notification.data.url)
+    );
+  }
+});
+
+self.addEventListener('notificationclose', function(event) {
+  // Optional: Track when notifications are dismissed
+  console.log('Notification was closed', event.notification);
 });

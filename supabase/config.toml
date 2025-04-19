@@ -4,3 +4,6 @@ project_id = "dvifibvzwunnpcsihpxq"
 [functions.create_test_user]
 verify_jwt = false
 
+[functions.generate-vapid-keys]
+verify_jwt = false
+
