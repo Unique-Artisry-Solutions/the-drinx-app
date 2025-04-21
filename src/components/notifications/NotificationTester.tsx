@@ -2,7 +2,7 @@ import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { usePushNotifications } from '@/hooks/usePushNotifications';
-import { Bell, BellOff } from 'lucide-react';
+import { Bell, BellOff, Key } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
 
@@ -53,6 +53,29 @@ const NotificationTester = () => {
     }
   };
 
+  const handleGenerateVapidKeys = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-vapid-keys');
+      
+      if (error) throw error;
+
+      toast({
+        title: "VAPID Keys Generated",
+        description: "Please save these keys in your Supabase dashboard:\n" +
+                    `Public Key: ${data.publicKey}\n` +
+                    `Private Key: ${data.privateKey}`,
+      });
+
+    } catch (error) {
+      console.error('Error generating VAPID keys:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate VAPID keys",
+        variant: "destructive"
+      });
+    }
+  };
+
   if (!isSupported) {
     return (
       <Card>
@@ -95,13 +118,23 @@ const NotificationTester = () => {
               </Button>
             </>
           ) : (
-            <Button 
-              onClick={subscribeToPushNotifications}
-              className="flex gap-2"
-            >
-              <Bell className="h-4 w-4" />
-              Enable Notifications
-            </Button>
+            <>
+              <Button 
+                onClick={subscribeToPushNotifications}
+                className="flex gap-2"
+              >
+                <Bell className="h-4 w-4" />
+                Enable Notifications
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleGenerateVapidKeys}
+                className="flex gap-2"
+              >
+                <Key className="h-4 w-4" />
+                Generate VAPID Keys
+              </Button>
+            </>
           )}
         </div>
       </CardContent>
