@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { BrowserRouter as Router } from 'react-router-dom';
 import './App.css';
 import AppRoutes from './routes/AppRoutes';
 import AppProviders from './providers/AppProviders';
@@ -8,9 +7,7 @@ import AppProviders from './providers/AppProviders';
 function App() {
   return (
     <AppProviders>
-      <Router>
-        <AppRoutes />
-      </Router>
+      <AppRoutes />
     </AppProviders>
   );
 }

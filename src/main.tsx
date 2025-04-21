@@ -5,8 +5,21 @@ import AppProviders from './providers/AppProviders';
 import AppRoutes from './routes/AppRoutes';
 import './index.css'
 
+// Get the correct basename for preview URLs
+const getBasename = () => {
+  const { hostname } = window.location;
+  if (hostname.includes('lovable.app')) {
+    // Extract the basename for preview URLs
+    const parts = hostname.split('--');
+    if (parts.length === 2) {
+      return `/${parts[0]}`;
+    }
+  }
+  return '/';
+};
+
 createRoot(document.getElementById("root")!).render(
-  <BrowserRouter>
+  <BrowserRouter basename={getBasename()}>
     <AppProviders>
       <AppRoutes />
     </AppProviders>
