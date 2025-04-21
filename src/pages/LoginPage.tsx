@@ -1,52 +1,67 @@
 
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import UserAuth from '@/components/UserAuth';
-import { ArrowLeft, Building, User, RefreshCw } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { ArrowLeft } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
-import { clearAllSessions } from '@/utils/sessionCleaner';
-import TestCredentials from '@/components/auth/TestCredentials';
+import { useAuth } from '@/contexts/auth';
 
 const LoginPage = () => {
-  const navigate = useNavigate();
-  const [userType, setUserType] = useState<'individual' | 'establishment'>('individual');
+  const [requiredUserType, setRequiredUserType] = useState<'individual' | 'establishment' | 'promoter'>('individual');
   const { theme, setTheme } = useTheme();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { user } = useAuth();
   
+  // Check for userType in the location state
+  useEffect(() => {
+    const state = location.state as { userType?: 'individual' | 'establishment' | 'promoter', message?: string };
+    if (state?.userType) {
+      setRequiredUserType(state.userType);
+    }
+    
+    // If there's a redirect message, we could display it
+  }, [location]);
+  
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      // Check if there's a saved redirect
+      const savedRedirect = localStorage.getItem('auth_redirect');
+      
+      if (savedRedirect) {
+        navigate(savedRedirect);
+        localStorage.removeItem('auth_redirect');
+      } else {
+        // Default redirect based on user type
+        const userType = localStorage.getItem('user_type');
+        
+        if (userType === 'establishment') {
+          navigate('/establishment/dashboard');
+        } else if (userType === 'promoter') {
+          navigate('/promoter/dashboard');
+        } else {
+          navigate('/explore');
+        }
+      }
+    }
+  }, [user, navigate]);
+  
+  // Always force light theme for login page
   useEffect(() => {
     if (theme !== 'light') {
       setTheme('light');
     }
   }, [theme, setTheme]);
   
-  const handleAuthSuccess = () => {
-    console.log("Login successful, forcing navigation to index");
-    window.location.href = '/';
-  };
-
-  const handleClearSessions = () => {
-    clearAllSessions();
-  };
-  
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-white to-purple-50">
       <div className="container max-w-6xl mx-auto px-4 py-8 flex-1 flex flex-col">
-        <div className="mb-8 flex justify-between items-center">
+        <div className="mb-8">
           <Link to="/" className="inline-flex items-center text-material-primary hover:underline">
             <ArrowLeft size={16} className="mr-2" />
             Back to Home
           </Link>
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={handleClearSessions}
-            className="flex items-center gap-1 text-gray-600"
-          >
-            <RefreshCw size={14} className="mr-1" />
-            Clear All Sessions
-          </Button>
         </div>
         
         <div className="flex-1 flex items-center justify-center">
@@ -54,40 +69,20 @@ const LoginPage = () => {
             <div className="text-center mb-8">
               <h1 className="text-3xl font-bold mb-2">Welcome Back</h1>
               <p className="text-gray-600">
-                Login to continue your journey with Spiritless
+                Sign in to your Spiritless account
               </p>
             </div>
             
-            <Card className="mb-6">
-              <Tabs defaultValue="individual" onValueChange={(value) => setUserType(value as 'individual' | 'establishment')}>
-                <TabsList className="w-full grid grid-cols-2">
-                  <TabsTrigger value="individual" className="flex items-center justify-center">
-                    <User size={16} className="mr-2" />
-                    Individual
-                  </TabsTrigger>
-                  <TabsTrigger value="establishment" className="flex items-center justify-center">
-                    <Building size={16} className="mr-2" />
-                    Establishment
-                  </TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="individual">
-                  <UserAuth defaultTab="login" onSuccess={handleAuthSuccess} userType="individual" />
-                </TabsContent>
-                
-                <TabsContent value="establishment">
-                  <UserAuth defaultTab="login" onSuccess={handleAuthSuccess} userType="establishment" />
-                </TabsContent>
-              </Tabs>
-            </Card>
-            
-            <TestCredentials />
+            <UserAuth 
+              defaultTab="login" 
+              userType={requiredUserType}
+            />
             
             <div className="text-center mt-6">
               <p className="text-gray-600">
                 Don't have an account?{' '}
                 <Link to="/signup" className="text-material-primary hover:underline">
-                  Sign up
+                  Sign Up
                 </Link>
               </p>
             </div>

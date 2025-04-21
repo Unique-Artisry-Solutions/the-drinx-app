@@ -5,6 +5,7 @@ import PromoterDashboardPage from '@/pages/promoter/PromoterDashboardPage';
 import PromoterCommunicationPage from '@/pages/promoter/PromoterCommunicationPage';
 import CreateSwigCircuitPage from '@/pages/profile/CreateSwigCircuitPage';
 
+// Helper function to wrap components with promoter protection
 const wrapPromoterRoute = (element: JSX.Element) => (
   <TypedProtectedRoute userType="promoter">{element}</TypedProtectedRoute>
 );

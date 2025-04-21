@@ -1,22 +1,20 @@
 
 import { useEffect } from 'react';
-import { Session } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
-import { debouncedToast } from '@/utils/debouncedToast';
+import { supabase } from '@/lib/supabase';
 
 interface UseAuthSetupProps {
-  setSession: (session: Session | null) => void;
+  setSession: (session: any) => void;
   setUser: (user: any) => void;
   setIsEmailVerified: (isVerified: boolean) => void;
   setIsLoading: (isLoading: boolean) => void;
   updateLocalStorage: (user: any) => void;
   checkAdminBypass: () => { isAdminBypass: boolean; bypassUser?: any };
   checkAdminSession: () => boolean;
-  refreshSession: () => Promise<any>;
-  toast?: any; // Added toast property
+  refreshSession: () => Promise<{ isEmailVerified?: boolean }>;
+  toast: any;
 }
 
-export function useAuthSetup({
+export const useAuthSetup = ({
   setSession,
   setUser,
   setIsEmailVerified,
@@ -26,84 +24,84 @@ export function useAuthSetup({
   checkAdminSession,
   refreshSession,
   toast
-}: UseAuthSetupProps) {
+}: UseAuthSetupProps) => {
   useEffect(() => {
-    console.log('AuthProvider useEffect running');
-    let isInitialAuth = true;
+    console.log('AuthProvider setup running...');
     
-    // Check for admin bypass first
+    // Set loading state initially
+    setIsLoading(true);
+    
+    // First check for admin bypass
     const { isAdminBypass, bypassUser } = checkAdminBypass();
     
     if (isAdminBypass && bypassUser) {
-      console.log('Admin bypass active, using bypass user', bypassUser);
+      console.log('Admin bypass active, using bypass user');
       setUser(bypassUser);
       setIsEmailVerified(true);
+      setIsLoading(false);
+      updateLocalStorage(bypassUser);
+      return;
+    }
+    
+    // Check if admin session has expired
+    if (checkAdminSession()) {
       setIsLoading(false);
       return;
     }
     
-    // Set up auth listener FIRST
-    const setupAuthListener = async () => {
-      console.log('Setting up auth listener');
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(
-        async (event, currentSession) => {
-          console.log('Auth state changed:', event, currentSession);
-          setSession(currentSession);
-          setUser(currentSession?.user || null);
+    // Set up auth state listener FIRST
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('Auth state changed:', event, !!session);
+        
+        // We need some delay to avoid race conditions
+        setTimeout(() => {
+          setSession(session);
+          setUser(session?.user ?? null);
           
-          // Update email verification status
-          if (currentSession?.user) {
-            setIsEmailVerified(currentSession.user.email_confirmed_at !== null);
-            
-            if (event === 'SIGNED_IN' && !isInitialAuth) {
-              updateLocalStorage(currentSession.user);
-              debouncedToast.success(
-                "Signed In",
-                `Welcome back, ${currentSession.user.email}!`
-              );
-            } else if (event === 'SIGNED_OUT') {
-              updateLocalStorage(null);
-              debouncedToast.success(
-                "Signed Out",
-                "You have been successfully signed out."
-              );
-            }
+          if (session?.user) {
+            // We assume email is verified if we get here
+            setIsEmailVerified(true);
+            updateLocalStorage(session.user);
+          } else if (event === 'SIGNED_OUT') {
+            setIsEmailVerified(false);
+            updateLocalStorage(null);
           }
-          
-          setIsLoading(false);
-          isInitialAuth = false;
-        }
-      );
-      
-      return subscription;
-    };
-    
-    // Initialize in the correct order
-    let subscription: { unsubscribe: () => void } | null = null;
-    
-    const initialize = async () => {
-      subscription = await setupAuthListener();
-      
-      // Check existing session
-      const { data } = await supabase.auth.getSession();
-      setSession(data.session);
-      setUser(data.session?.user || null);
-      setIsLoading(false);
-      
-      if (data.session?.user) {
-        setIsEmailVerified(data.session.user.email_confirmed_at !== null);
-        updateLocalStorage(data.session.user);
+        }, 0);
       }
-    };
+    );
     
-    initialize();
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Initial session check:', !!session);
+      
+      if (session) {
+        setSession(session);
+        setUser(session.user);
+        setIsEmailVerified(true);  
+        updateLocalStorage(session.user);
+      }
+      
+      setIsLoading(false);
+    });
+    
+    // Show a notification if the session was recovered from storage
+    const hasStoredSession = localStorage.getItem('spiritless-auth-storage') ? true : false;
+    
+    if (hasStoredSession) {
+      console.log('Restoring session from storage');
+      refreshSession().catch(e => {
+        console.error('Error refreshing session:', e);
+        toast({
+          title: "Session Expired",
+          description: "Please sign in again",
+          variant: "destructive"
+        });
+      });
+    }
     
     return () => {
-      if (subscription) {
-        subscription.unsubscribe();
-      }
+      authListener.subscription.unsubscribe();
     };
   }, []);
-
-  return null;
-}
+};

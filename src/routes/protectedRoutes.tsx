@@ -1,10 +1,11 @@
 
-import React from 'react';
-import { Navigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth';
 
 export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, isLoading, isEmailVerified } = useAuth();
+  const location = useLocation();
   const isAdminBypass = localStorage.getItem('admin_bypass') === 'true';
   
   if (isLoading) {
@@ -17,8 +18,10 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   }
   
   if (!user) {
+    // Store the path the user was trying to access
+    localStorage.setItem('auth_redirect', location.pathname);
     // Non-logged in users should be redirected to the landing page
-    return <Navigate to="/landing" replace />;
+    return <Navigate to="/login" replace />;
   }
   
   if (!isEmailVerified) {
@@ -58,6 +61,7 @@ export const TypedProtectedRoute = ({
   children: React.ReactNode 
 }) => {
   const { user, isLoading, isEmailVerified } = useAuth();
+  const location = useLocation();
   const storedUserType = localStorage.getItem('user_type');
   const isAdminBypass = localStorage.getItem('admin_bypass') === 'true';
   
@@ -68,15 +72,19 @@ export const TypedProtectedRoute = ({
   if (isAdminBypass) {
     // For admin bypass, check if the stored type matches the required type
     if (storedUserType !== userType) {
+      // Store the intended destination
+      localStorage.setItem('auth_redirect', location.pathname);
       // Redirect if user types don't match
-      return <Navigate to="/landing" replace />;
+      return <Navigate to="/landing" state={{ message: `You need a ${userType} account to access this page` }} replace />;
     }
     
     return <>{children}</>;
   }
   
   if (!user) {
-    return <Navigate to="/landing" replace />;
+    // Store the intended destination
+    localStorage.setItem('auth_redirect', location.pathname);
+    return <Navigate to="/login" state={{ userType }} replace />;
   }
   
   if (!isEmailVerified) {
@@ -84,7 +92,9 @@ export const TypedProtectedRoute = ({
   }
   
   if (storedUserType !== userType) {
-    return <Navigate to="/landing" replace />;
+    // Store the intended destination
+    localStorage.setItem('auth_redirect', location.pathname);
+    return <Navigate to="/landing" state={{ message: `You need a ${userType} account to access this page` }} replace />;
   }
   
   return <>{children}</>;

@@ -1,26 +1,43 @@
+
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { MessageSquare, CalendarDays, ChartBar, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useAuthenticatedUser } from '@/hooks/useAuthenticatedUser';
+import { useAuth } from '@/contexts/auth';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';
 import NotificationTester from '@/components/notifications/NotificationTester';
 
 const PromoterDashboardPage = () => {
-  const { user, isLoading } = useAuthenticatedUser();
+  const { user, isLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   
   useEffect(() => {
-    if (!isLoading && !user) {
-      toast({
-        title: "Authentication Required",
-        description: "Please sign in to access the promoter dashboard",
-        variant: "destructive"
-      });
-      navigate('/auth');
+    const userType = localStorage.getItem('user_type');
+    
+    if (!isLoading) {
+      // If not loading and no user, redirect to auth
+      if (!user) {
+        // Store the current page as redirect destination
+        localStorage.setItem('auth_redirect', '/promoter/dashboard');
+        toast({
+          title: "Authentication Required",
+          description: "Please sign in to access the promoter dashboard",
+          variant: "destructive"
+        });
+        navigate('/login');
+      } 
+      // If user but wrong type, show error and redirect
+      else if (userType !== 'promoter') {
+        toast({
+          title: "Access Restricted",
+          description: "This area is for promoters only",
+          variant: "destructive"
+        });
+        navigate('/landing');
+      }
     }
   }, [user, isLoading, navigate, toast]);
 
