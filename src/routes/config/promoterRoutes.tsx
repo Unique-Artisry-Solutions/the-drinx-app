@@ -16,11 +16,11 @@ export const promoterRoutes: RouteObject[] = [
   },
   {
     path: '/promoter/dashboard',
-    element: <PromoterDashboardPage />,
+    element: wrapPromoterRoute(<PromoterDashboardPage />),
   },
   {
     path: '/promoter/communication',
-    element: <PromoterCommunicationPage />,
+    element: wrapPromoterRoute(<PromoterCommunicationPage />),
   },
   {
     path: '/create-swig-circuit',
