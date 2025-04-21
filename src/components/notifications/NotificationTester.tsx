@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { Bell, BellOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/lib/supabase';
 
 const NotificationTester = () => {
   const { isSupported, subscription, subscribeToPushNotifications, unsubscribeFromPushNotifications } = usePushNotifications();
