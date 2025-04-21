@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useAuthenticatedUser } from '@/hooks/useAuthenticatedUser';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';
+import NotificationTester from '@/components/notifications/NotificationTester';
 
 const PromoterDashboardPage = () => {
   const { user, isLoading } = useAuthenticatedUser();
@@ -47,9 +48,10 @@ const PromoterDashboardPage = () => {
           <h1 className="text-2xl font-bold text-purple-600 mb-4">
             Promoter Dashboard
           </h1>
-          <p className="text-gray-600 dark:text-gray-300 mb-6">
-            Welcome to your promoter dashboard. Here you can manage your promotions and view analytics.
-          </p>
+          
+          <div className="mb-6">
+            <NotificationTester />
+          </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-purple-50 dark:bg-gray-700 rounded-lg p-6">
