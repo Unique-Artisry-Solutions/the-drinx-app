@@ -1,14 +1,23 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { usePushNotifications } from '@/hooks/usePushNotifications';
-import { Bell, BellOff, Key } from 'lucide-react';
+import { Bell, BellOff, Key, Copy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const NotificationTester = () => {
   const { isSupported, subscription, subscribeToPushNotifications, unsubscribeFromPushNotifications } = usePushNotifications();
   const { toast } = useToast();
+  const [vapidKeys, setVapidKeys] = useState<{ publicKey: string; privateKey: string } | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const handleTestNotification = async () => {
     try {
@@ -53,18 +62,22 @@ const NotificationTester = () => {
     }
   };
 
+  const handleCopy = async (text: string, label: string) => {
+    await navigator.clipboard.writeText(text);
+    toast({
+      title: "Copied!",
+      description: `${label} has been copied to clipboard`,
+    });
+  };
+
   const handleGenerateVapidKeys = async () => {
     try {
       const { data, error } = await supabase.functions.invoke('generate-vapid-keys');
       
       if (error) throw error;
 
-      toast({
-        title: "VAPID Keys Generated",
-        description: "Please save these keys in your Supabase dashboard:\n" +
-                    `Public Key: ${data.publicKey}\n` +
-                    `Private Key: ${data.privateKey}`,
-      });
+      setVapidKeys(data);
+      setDialogOpen(true);
 
     } catch (error) {
       console.error('Error generating VAPID keys:', error);
@@ -90,55 +103,101 @@ const NotificationTester = () => {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Push Notifications</CardTitle>
-        <CardDescription>
-          Test and manage push notification settings for your browser
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex gap-4">
-          {subscription ? (
-            <>
-              <Button 
-                variant="outline" 
-                onClick={unsubscribeFromPushNotifications}
-                className="flex gap-2"
-              >
-                <BellOff className="h-4 w-4" />
-                Disable Notifications
-              </Button>
-              <Button 
-                onClick={handleTestNotification}
-                className="flex gap-2"
-              >
-                <Bell className="h-4 w-4" />
-                Send Test Notification
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button 
-                onClick={subscribeToPushNotifications}
-                className="flex gap-2"
-              >
-                <Bell className="h-4 w-4" />
-                Enable Notifications
-              </Button>
-              <Button
-                variant="outline"
-                onClick={handleGenerateVapidKeys}
-                className="flex gap-2"
-              >
-                <Key className="h-4 w-4" />
-                Generate VAPID Keys
-              </Button>
-            </>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle>Push Notifications</CardTitle>
+          <CardDescription>
+            Test and manage push notification settings for your browser
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex gap-4">
+            {subscription ? (
+              <>
+                <Button 
+                  variant="outline" 
+                  onClick={unsubscribeFromPushNotifications}
+                  className="flex gap-2"
+                >
+                  <BellOff className="h-4 w-4" />
+                  Disable Notifications
+                </Button>
+                <Button 
+                  onClick={handleTestNotification}
+                  className="flex gap-2"
+                >
+                  <Bell className="h-4 w-4" />
+                  Send Test Notification
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button 
+                  onClick={subscribeToPushNotifications}
+                  className="flex gap-2"
+                >
+                  <Bell className="h-4 w-4" />
+                  Enable Notifications
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleGenerateVapidKeys}
+                  className="flex gap-2"
+                >
+                  <Key className="h-4 w-4" />
+                  Generate VAPID Keys
+                </Button>
+              </>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>VAPID Keys Generated</DialogTitle>
+            <DialogDescription>
+              Please save these keys in your Supabase dashboard. You'll need to set these as secrets:
+              VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, and VAPID_MAILTO (for your contact email).
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <div className="font-semibold">Public Key:</div>
+              <div className="flex items-center gap-2">
+                <code className="bg-muted p-2 rounded flex-1 break-all">
+                  {vapidKeys?.publicKey}
+                </code>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handleCopy(vapidKeys?.publicKey || '', 'Public Key')}
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <div className="font-semibold">Private Key:</div>
+              <div className="flex items-center gap-2">
+                <code className="bg-muted p-2 rounded flex-1 break-all">
+                  {vapidKeys?.privateKey}
+                </code>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handleCopy(vapidKeys?.privateKey || '', 'Private Key')}
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 
