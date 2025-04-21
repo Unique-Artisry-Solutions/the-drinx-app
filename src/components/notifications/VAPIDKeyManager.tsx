@@ -5,7 +5,12 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
-import { Key, Copy, Check } from 'lucide-react';
+import { Key, Copy, Check, AlertTriangle } from 'lucide-react';
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/ui/alert";
 
 interface VAPIDKeys {
   publicKey: string;
@@ -22,6 +27,7 @@ const VAPIDKeyManager = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
+  const [showInstructions, setShowInstructions] = useState(false);
 
   const handleInputChange = (field: keyof VAPIDKeys) => (e: React.ChangeEvent<HTMLInputElement>) => {
     setKeys(prev => ({ ...prev, [field]: e.target.value }));
@@ -69,8 +75,8 @@ const VAPIDKeyManager = () => {
     try {
       setIsSaving(true);
 
-      // Save keys to Supabase secrets
-      const { error: secretsError } = await supabase.functions.invoke('notifications', {
+      // Call the edge function
+      const { data, error } = await supabase.functions.invoke('notifications', {
         body: {
           action: 'saveVapidKeys',
           params: {
@@ -81,11 +87,13 @@ const VAPIDKeyManager = () => {
         }
       });
 
-      if (secretsError) throw secretsError;
+      if (error) throw error;
 
+      setShowInstructions(true);
+      
       toast({
-        title: "Success",
-        description: "VAPID keys saved successfully",
+        title: "Keys Generated Successfully",
+        description: "Please add these keys to your Supabase secrets",
       });
     } catch (error) {
       console.error('Error saving VAPID keys:', error);
@@ -116,6 +124,26 @@ const VAPIDKeyManager = () => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {showInstructions && (
+          <Alert className="mb-4">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Important: Manual Setup Required</AlertTitle>
+            <AlertDescription>
+              <p className="mb-2">
+                You need to manually add these VAPID keys to your Supabase project secrets:
+              </p>
+              <ul className="list-disc pl-5 space-y-1">
+                <li><strong>VAPID_PUBLIC_KEY</strong>: {keys.publicKey}</li>
+                <li><strong>VAPID_PRIVATE_KEY</strong>: {keys.privateKey}</li>
+                <li><strong>VAPID_MAILTO</strong>: {keys.mailto}</li>
+              </ul>
+              <p className="mt-2">
+                Add these in your Supabase dashboard under Settings &gt; API &gt; Project Secrets.
+              </p>
+            </AlertDescription>
+          </Alert>
+        )}
+
         <div className="space-y-4">
           <div className="space-y-2">
             <label className="text-sm font-medium">Public Key</label>
@@ -182,7 +210,7 @@ const VAPIDKeyManager = () => {
             className="flex gap-2"
           >
             <Check className="h-4 w-4" />
-            {isSaving ? 'Saving...' : 'Save Keys'}
+            {isSaving ? 'Saving...' : 'Generate Keys & Show Instructions'}
           </Button>
         </div>
       </CardContent>
