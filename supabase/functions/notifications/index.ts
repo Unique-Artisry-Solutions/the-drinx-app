@@ -38,6 +38,8 @@ serve(async (req) => {
         )
       case 'createNotification':
         return await handleCreateNotification(params)
+      case 'getNotifications':
+        return await handleGetNotifications(params)
       default:
         throw new Error('Invalid action')
     }
@@ -103,6 +105,35 @@ async function handleCreateNotification(params) {
 
   return new Response(
     JSON.stringify({ data: notification }),
+    {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    }
+  )
+}
+
+async function handleGetNotifications(params) {
+  const supabaseClient = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+  )
+
+  const { userId, limit = 10, offset = 0 } = params || {};
+  
+  if (!userId) {
+    throw new Error('User ID is required to fetch notifications');
+  }
+
+  const { data: notifications, error } = await supabaseClient
+    .from('notifications')
+    .select('*')
+    .eq('recipient_id', userId)
+    .order('created_at', { ascending: false })
+    .range(offset, offset + limit - 1);
+
+  if (error) throw error;
+
+  return new Response(
+    JSON.stringify({ data: notifications }),
     {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     }
