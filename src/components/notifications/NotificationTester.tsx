@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { usePushNotifications } from '@/hooks/usePushNotifications';
-import { Bell, BellOff, Key, Copy } from 'lucide-react';
+import { Bell, BellOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
 import {
@@ -12,12 +12,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import VAPIDKeyManager from './VAPIDKeyManager';
+import { Copy } from 'lucide-react';
 
 const NotificationTester = () => {
   const { isSupported, subscription, subscribeToPushNotifications, unsubscribeFromPushNotifications } = usePushNotifications();
   const { toast } = useToast();
-  const [vapidKeys, setVapidKeys] = useState<{ publicKey: string; privateKey: string } | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [vapidKeys, setVapidKeys] = useState<{ publicKey: string; privateKey: string } | null>(null);
 
   const handleTestNotification = async () => {
     try {
@@ -103,7 +105,7 @@ const NotificationTester = () => {
   }
 
   return (
-    <>
+    <div className="space-y-6">
       <Card>
         <CardHeader>
           <CardTitle>Push Notifications</CardTitle>
@@ -132,27 +134,19 @@ const NotificationTester = () => {
                 </Button>
               </>
             ) : (
-              <>
-                <Button 
-                  onClick={subscribeToPushNotifications}
-                  className="flex gap-2"
-                >
-                  <Bell className="h-4 w-4" />
-                  Enable Notifications
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={handleGenerateVapidKeys}
-                  className="flex gap-2"
-                >
-                  <Key className="h-4 w-4" />
-                  Generate VAPID Keys
-                </Button>
-              </>
+              <Button 
+                onClick={subscribeToPushNotifications}
+                className="flex gap-2"
+              >
+                <Bell className="h-4 w-4" />
+                Enable Notifications
+              </Button>
             )}
           </div>
         </CardContent>
       </Card>
+
+      <VAPIDKeyManager />
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
@@ -197,7 +191,7 @@ const NotificationTester = () => {
           </div>
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   );
 };
 

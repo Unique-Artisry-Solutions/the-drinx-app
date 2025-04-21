@@ -1,6 +1,4 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import webpush from 'https://esm.sh/web-push@3.6.6'
 
 const corsHeaders = {
@@ -28,6 +26,23 @@ serve(async (req) => {
           JSON.stringify({ publicKey: Deno.env.get('VAPID_PUBLIC_KEY') }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
+      case 'saveVapidKeys':
+        if (!params.publicKey || !params.privateKey || !params.mailto) {
+          throw new Error('Missing required VAPID parameters')
+        }
+        try {
+          webpush.setVapidDetails(
+            'mailto:' + params.mailto,
+            params.publicKey,
+            params.privateKey
+          )
+          return new Response(
+            JSON.stringify({ success: true }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          )
+        } catch (error) {
+          throw new Error('Invalid VAPID keys')
+        }
       case 'createNotification':
         return await handleCreateNotification(params)
       default:
@@ -51,7 +66,6 @@ async function handleCreateNotification(params: NotificationData) {
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
   )
 
-  // Get user's notification preferences and profile
   const [{ data: preferences }, { data: userProfile }] = await Promise.all([
     supabaseClient
       .from('notification_preferences')
@@ -66,7 +80,6 @@ async function handleCreateNotification(params: NotificationData) {
       .single()
   ]);
 
-  // Create in-app notification
   const { data: notification, error } = await supabaseClient
     .from('notifications')
     .insert({
@@ -86,7 +99,6 @@ async function handleCreateNotification(params: NotificationData) {
 
   let deliveryStatus = {};
 
-  // Handle push notifications if enabled
   if (preferences?.channels?.includes('push')) {
     try {
       const { data: subscriptions } = await supabaseClient
@@ -135,7 +147,6 @@ async function handleCreateNotification(params: NotificationData) {
     }
   }
 
-  // Update notification with delivery status
   await supabaseClient
     .from('notifications')
     .update({
@@ -160,4 +171,3 @@ interface NotificationData {
   categoryId?: string;
   metadata?: Record<string, any>;
 }
-
