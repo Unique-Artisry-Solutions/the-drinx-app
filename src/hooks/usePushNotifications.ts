@@ -7,15 +7,37 @@ import type { PushSubscription } from '@/types/NotificationTypes';
 export function usePushNotifications() {
   const [subscription, setSubscription] = useState<PushSubscription | null>(null);
   const [isSupported, setIsSupported] = useState(false);
+  const [permissionStatus, setPermissionStatus] = useState<NotificationPermission>('default');
   const { toast } = useToast();
 
   useEffect(() => {
     const checkSupport = async () => {
-      setIsSupported(
-        'serviceWorker' in navigator &&
-        'PushManager' in window &&
-        'Notification' in window
-      );
+      const supported = 'serviceWorker' in navigator && 
+                       'PushManager' in window &&
+                       'Notification' in window;
+      setIsSupported(supported);
+      
+      if (supported) {
+        const permission = await Notification.permission;
+        setPermissionStatus(permission);
+        
+        // If user already has an active service worker, check for existing subscription
+        const registration = await navigator.serviceWorker.getRegistration();
+        if (registration) {
+          const existingSubscription = await registration.pushManager.getSubscription();
+          if (existingSubscription) {
+            const subData: PushSubscription = {
+              user_id: (await supabase.auth.getUser()).data.user?.id || '',
+              endpoint: existingSubscription.endpoint,
+              p256dh: btoa(String.fromCharCode.apply(null, 
+                new Uint8Array(existingSubscription.getKey('p256dh') as ArrayBuffer))),
+              auth: btoa(String.fromCharCode.apply(null, 
+                new Uint8Array(existingSubscription.getKey('auth') as ArrayBuffer)))
+            };
+            setSubscription(subData);
+          }
+        }
+      }
     };
     checkSupport();
   }, []);
@@ -26,16 +48,32 @@ export function usePushNotifications() {
       return registration;
     } catch (error) {
       console.error('Service Worker registration failed:', error);
-      throw error;
+      throw new Error('Failed to register service worker');
     }
   };
 
   const subscribeToPushNotifications = async () => {
     try {
+      if (permissionStatus === 'denied') {
+        toast({
+          title: "Notifications Blocked",
+          description: "Please enable notifications in your browser settings to receive updates.",
+          variant: "destructive"
+        });
+        return;
+      }
+
       // Request notification permission
       const permission = await Notification.requestPermission();
+      setPermissionStatus(permission);
+      
       if (permission !== 'granted') {
-        throw new Error('Notification permission denied');
+        toast({
+          title: "Permission Required",
+          description: "Please allow notifications to receive updates.",
+          variant: "destructive"
+        });
+        return;
       }
 
       // Get VAPID public key from Supabase Edge Function
@@ -45,28 +83,16 @@ export function usePushNotifications() {
         });
 
       if (keyError || !publicKey) {
-        throw new Error('Failed to get VAPID public key');
+        console.error('Failed to get VAPID public key:', keyError);
+        throw new Error('Failed to get notification configuration');
       }
 
       // Register service worker
       const registration = await registerServiceWorker();
+      console.log('Service Worker registered successfully');
 
       // Get push subscription
-      const existingSubscription = await registration.pushManager.getSubscription();
-      if (existingSubscription) {
-        const subData: PushSubscription = {
-          user_id: (await supabase.auth.getUser()).data.user?.id || '',
-          endpoint: existingSubscription.endpoint,
-          p256dh: btoa(String.fromCharCode.apply(null, 
-            new Uint8Array(existingSubscription.getKey('p256dh') as ArrayBuffer))),
-          auth: btoa(String.fromCharCode.apply(null, 
-            new Uint8Array(existingSubscription.getKey('auth') as ArrayBuffer)))
-        };
-        setSubscription(subData);
-        return existingSubscription;
-      }
-
-      // Create new subscription
+      console.log('Requesting push subscription with VAPID key:', publicKey);
       const pushSubscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: publicKey
@@ -103,7 +129,7 @@ export function usePushNotifications() {
       console.error('Error subscribing to push notifications:', error);
       toast({
         title: "Error",
-        description: "Failed to enable push notifications",
+        description: error instanceof Error ? error.message : "Failed to enable push notifications",
         variant: "destructive"
       });
       throw error;
@@ -148,6 +174,7 @@ export function usePushNotifications() {
   return {
     isSupported,
     subscription,
+    permissionStatus,
     subscribeToPushNotifications,
     unsubscribeFromPushNotifications
   };
