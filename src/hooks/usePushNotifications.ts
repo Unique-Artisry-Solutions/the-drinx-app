@@ -38,6 +38,16 @@ export function usePushNotifications() {
         throw new Error('Notification permission denied');
       }
 
+      // Get VAPID public key from Supabase Edge Function
+      const { data: { publicKey }, error: keyError } = await supabase
+        .functions.invoke('notifications', {
+          body: { action: 'getVapidKey' }
+        });
+
+      if (keyError || !publicKey) {
+        throw new Error('Failed to get VAPID public key');
+      }
+
       // Register service worker
       const registration = await registerServiceWorker();
 
@@ -59,7 +69,7 @@ export function usePushNotifications() {
       // Create new subscription
       const pushSubscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: import.meta.env.VITE_VAPID_PUBLIC_KEY
+        applicationServerKey: publicKey
       });
 
       // Save subscription to database
