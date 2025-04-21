@@ -1,6 +1,6 @@
 
 import React from "react";
-import { useLocation, Link, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/auth'; // Fixed import path
@@ -31,7 +31,7 @@ const NotFound = () => {
         navigate('/explore');
       }
     } else {
-      navigate('/');
+      navigate('/landing');
     }
   };
 

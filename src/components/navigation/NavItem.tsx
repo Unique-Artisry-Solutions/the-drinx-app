@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -19,10 +19,21 @@ const NavItem: React.FC<NavItemProps> = ({
   active = false,
   onClick
 }) => {
+  const navigate = useNavigate();
+  
+  const handleClick = (e: React.MouseEvent) => {
+    if (onClick) {
+      onClick();
+    } else {
+      e.preventDefault();
+      navigate(href);
+    }
+  };
+
   return (
-    <Link
-      to={href}
-      onClick={onClick}
+    <a
+      href={href}
+      onClick={handleClick}
       className={cn(
         "flex items-center px-3 py-2 rounded-md transition-colors",
         active
@@ -32,7 +43,7 @@ const NavItem: React.FC<NavItemProps> = ({
     >
       <Icon className="mr-2 h-4 w-4" />
       <span className="text-sm font-medium">{label}</span>
-    </Link>
+    </a>
   );
 };
 

@@ -66,6 +66,8 @@ const MobileNavigation: React.FC<ExtendedMobileNavigationProps> = ({
     if (user) {
       if (currentUserType === 'establishment') {
         navigate('/establishment/dashboard');
+      } else if (currentUserType === 'promoter') {
+        navigate('/promoter/dashboard');
       } else {
         navigate('/explore');
       }

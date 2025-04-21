@@ -2,10 +2,11 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { Home } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface HomeButtonProps {
   isActive: boolean;
-  onClick: (e: React.MouseEvent) => void;
+  onClick?: (e: React.MouseEvent) => void;
   isPromoter?: boolean;
 }
 
@@ -14,12 +15,23 @@ const HomeButton: React.FC<HomeButtonProps> = ({
   onClick,
   isPromoter = false
 }) => {
+  const navigate = useNavigate();
   const activeColor = isPromoter ? 'text-purple-600' : 'text-spiritless-pink';
   const inactiveColor = 'text-gray-500 hover:text-gray-700';
 
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (onClick) {
+      onClick(e);
+    } else {
+      // Default navigation to landing when no onClick is provided
+      navigate('/landing');
+    }
+  };
+
   return (
     <button
-      onClick={onClick}
+      onClick={handleClick}
       className={cn(
         "flex flex-col items-center justify-center w-full h-full py-2 transition-all duration-300",
         isActive ? activeColor : inactiveColor

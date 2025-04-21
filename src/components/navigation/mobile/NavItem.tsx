@@ -1,8 +1,8 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import type { NavItemType } from './types';
+import { NavItem as NavItemType } from './types';
 
 interface NavItemProps {
   item: NavItemType;
@@ -15,20 +15,29 @@ const NavItem: React.FC<NavItemProps> = ({
   item, 
   isActive, 
   onClick,
-  isPromoter = false 
+  isPromoter = false
 }) => {
+  const navigate = useNavigate();
   const activeColor = isPromoter ? 'text-purple-600' : 'text-spiritless-pink';
-  
+  const inactiveColor = 'text-gray-500 hover:text-gray-700';
+
+  const handleClick = (e: React.MouseEvent) => {
+    if (onClick) {
+      onClick(e);
+    } else {
+      e.preventDefault();
+      navigate(item.path);
+    }
+  };
+
   return (
-    <Link
-      to={item.path}
-      onClick={onClick}
+    <button
+      onClick={handleClick}
       className={cn(
         "flex flex-col items-center justify-center w-full h-full py-2 transition-all duration-300",
-        isActive 
-          ? activeColor
-          : "text-gray-500 hover:text-gray-700"
+        isActive ? activeColor : inactiveColor
       )}
+      aria-label={item.label}
     >
       <div className={cn(
         "flex items-center justify-center mb-1 relative",
@@ -48,7 +57,7 @@ const NavItem: React.FC<NavItemProps> = ({
       )}>
         {item.label}
       </span>
-    </Link>
+    </button>
   );
 };
 
