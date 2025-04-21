@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,16 +18,35 @@ interface VAPIDKeys {
   mailto: string;
 }
 
+// Store keys in sessionStorage to preserve across tab switches
+const getStoredKeys = (): VAPIDKeys => {
+  try {
+    const storedKeys = sessionStorage.getItem('vapid_keys');
+    return storedKeys ? JSON.parse(storedKeys) : {
+      publicKey: '',
+      privateKey: '',
+      mailto: ''
+    };
+  } catch (e) {
+    return {
+      publicKey: '',
+      privateKey: '',
+      mailto: ''
+    };
+  }
+};
+
 const VAPIDKeyManager = () => {
-  const [keys, setKeys] = useState<VAPIDKeys>({
-    publicKey: '',
-    privateKey: '',
-    mailto: ''
-  });
+  const [keys, setKeys] = useState<VAPIDKeys>(getStoredKeys);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
   const [showInstructions, setShowInstructions] = useState(false);
+
+  // Save keys to sessionStorage when they change
+  useEffect(() => {
+    sessionStorage.setItem('vapid_keys', JSON.stringify(keys));
+  }, [keys]);
 
   const handleInputChange = (field: keyof VAPIDKeys) => (e: React.ChangeEvent<HTMLInputElement>) => {
     setKeys(prev => ({ ...prev, [field]: e.target.value }));

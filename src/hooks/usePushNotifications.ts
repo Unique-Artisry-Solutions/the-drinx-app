@@ -9,37 +9,59 @@ export function usePushNotifications() {
   const [isSupported, setIsSupported] = useState(false);
   const [permissionStatus, setPermissionStatus] = useState<NotificationPermission>('default');
   const { toast } = useToast();
-
+  
+  // This useEffect checks for push notification support and existing subscriptions
+  // We want to make it run only once when the component mounts
   useEffect(() => {
+    let isMounted = true;
+    
     const checkSupport = async () => {
       const supported = 'serviceWorker' in navigator && 
                        'PushManager' in window &&
                        'Notification' in window;
+      
+      if (!isMounted) return;
       setIsSupported(supported);
       
       if (supported) {
         const permission = await Notification.permission;
+        if (!isMounted) return;
         setPermissionStatus(permission);
         
         // If user already has an active service worker, check for existing subscription
-        const registration = await navigator.serviceWorker.getRegistration();
-        if (registration) {
-          const existingSubscription = await registration.pushManager.getSubscription();
-          if (existingSubscription) {
-            const subData: PushSubscription = {
-              user_id: (await supabase.auth.getUser()).data.user?.id || '',
-              endpoint: existingSubscription.endpoint,
-              p256dh: btoa(String.fromCharCode.apply(null, 
-                new Uint8Array(existingSubscription.getKey('p256dh') as ArrayBuffer))),
-              auth: btoa(String.fromCharCode.apply(null, 
-                new Uint8Array(existingSubscription.getKey('auth') as ArrayBuffer)))
-            };
-            setSubscription(subData);
+        try {
+          const registration = await navigator.serviceWorker.getRegistration();
+          if (!isMounted) return;
+          
+          if (registration) {
+            const existingSubscription = await registration.pushManager.getSubscription();
+            if (!isMounted) return;
+            
+            if (existingSubscription) {
+              const subData: PushSubscription = {
+                user_id: (await supabase.auth.getUser()).data.user?.id || '',
+                endpoint: existingSubscription.endpoint,
+                p256dh: btoa(String.fromCharCode.apply(null, 
+                  new Uint8Array(existingSubscription.getKey('p256dh') as ArrayBuffer))),
+                auth: btoa(String.fromCharCode.apply(null, 
+                  new Uint8Array(existingSubscription.getKey('auth') as ArrayBuffer)))
+              };
+              setSubscription(subData);
+            }
           }
+        } catch (error) {
+          console.error('Error checking service worker registration:', error);
         }
       }
     };
+    
+    // Run the check immediately
     checkSupport();
+    
+    // Cleanup function to prevent state updates after unmounting
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const registerServiceWorker = async () => {

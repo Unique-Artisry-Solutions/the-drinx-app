@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/auth';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
@@ -13,14 +13,20 @@ export const useNotifications = () => {
   const [error, setError] = useState<string | null>(null);
   const { user, session } = useAuth();
   const { toast } = useToast();
+  const isInitialFetch = useRef(true);
+  const fetchingRef = useRef(false);
 
   const fetchNotifications = async () => {
-    if (!user?.id || !session?.access_token) {
+    // Don't fetch if we're already fetching or don't have auth
+    if (fetchingRef.current || !user?.id || !session?.access_token) {
       setIsLoading(false);
-      setError("Please log in to view notifications");
+      if (!user?.id || !session?.access_token) {
+        setError("Please log in to view notifications");
+      }
       return;
     }
 
+    fetchingRef.current = true;
     const maxRetries = 3;
     let attempt = 0;
     
@@ -78,7 +84,10 @@ export const useNotifications = () => {
         // Add exponential backoff
         await new Promise(resolve => setTimeout(resolve, Math.min(1000 * Math.pow(2, attempt), 5000)));
       } finally {
-        if (attempt === maxRetries) setIsLoading(false);
+        if (attempt === maxRetries) {
+          setIsLoading(false);
+          fetchingRef.current = false;
+        }
       }
     }
   };
@@ -123,12 +132,14 @@ export const useNotifications = () => {
   };
 
   useEffect(() => {
-    if (user && session) {
+    if (user && session && isInitialFetch.current) {
+      isInitialFetch.current = false;
       fetchNotifications();
-    } else {
+    } else if (!user || !session) {
       setNotifications([]);
       setUnreadCount(0);
       setIsLoading(false);
+      isInitialFetch.current = true;
     }
   }, [user, session]);
 
