@@ -16,7 +16,13 @@ const NotFound = () => {
       "404 Error: User attempted to access non-existent route:",
       location.pathname
     );
-  }, [location.pathname]);
+    
+    // Additional debug information
+    console.log("Current URL:", window.location.href);
+    console.log("Base URL:", window.location.origin);
+    console.log("Current path:", location.pathname);
+    console.log("Authenticated user:", !!user);
+  }, [location.pathname, user]);
 
   const handleGoHome = () => {
     if (user) {
