@@ -1,44 +1,34 @@
-import React, { useState } from 'react';
+
+import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { Bell, BellOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import VAPIDKeyManager from './VAPIDKeyManager';
-import { Copy } from 'lucide-react';
 
 const NotificationTester = () => {
-  const { isSupported, subscription, subscribeToPushNotifications, unsubscribeFromPushNotifications } = usePushNotifications();
+  const { isSupported, subscription } = usePushNotifications();
   const { toast } = useToast();
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [vapidKeys, setVapidKeys] = useState<{ publicKey: string; privateKey: string } | null>(null);
 
   const handleTestNotification = async () => {
-    try {
-      if (!subscription) {
-        toast({
-          title: "Error",
-          description: "Please enable notifications first",
-          variant: "destructive"
-        });
-        return;
-      }
+    if (!subscription) {
+      toast({
+        title: "Error",
+        description: "Please enable notifications first",
+        variant: "destructive"
+      });
+      return;
+    }
 
+    try {
       const { error } = await supabase.functions.invoke('notifications', {
         body: {
           action: 'createNotification',
           params: {
             recipientId: subscription.user_id,
-            title: "Test Notification",
-            content: "This is a test notification from your dashboard!",
+            title: "Test Push Notification",
+            content: "This is a test push notification from your dashboard!",
             priority: "medium",
             categoryId: "test",
             metadata: {
@@ -64,33 +54,6 @@ const NotificationTester = () => {
     }
   };
 
-  const handleCopy = async (text: string, label: string) => {
-    await navigator.clipboard.writeText(text);
-    toast({
-      title: "Copied!",
-      description: `${label} has been copied to clipboard`,
-    });
-  };
-
-  const handleGenerateVapidKeys = async () => {
-    try {
-      const { data, error } = await supabase.functions.invoke('generate-vapid-keys');
-      
-      if (error) throw error;
-
-      setVapidKeys(data);
-      setDialogOpen(true);
-
-    } catch (error) {
-      console.error('Error generating VAPID keys:', error);
-      toast({
-        title: "Error",
-        description: "Failed to generate VAPID keys",
-        variant: "destructive"
-      });
-    }
-  };
-
   if (!isSupported) {
     return (
       <Card>
@@ -105,93 +68,24 @@ const NotificationTester = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Push Notifications</CardTitle>
-          <CardDescription>
-            Test and manage push notification settings for your browser
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex gap-4">
-            {subscription ? (
-              <>
-                <Button 
-                  variant="outline" 
-                  onClick={unsubscribeFromPushNotifications}
-                  className="flex gap-2"
-                >
-                  <BellOff className="h-4 w-4" />
-                  Disable Notifications
-                </Button>
-                <Button 
-                  onClick={handleTestNotification}
-                  className="flex gap-2"
-                >
-                  <Bell className="h-4 w-4" />
-                  Send Test Notification
-                </Button>
-              </>
-            ) : (
-              <Button 
-                onClick={subscribeToPushNotifications}
-                className="flex gap-2"
-              >
-                <Bell className="h-4 w-4" />
-                Enable Notifications
-              </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      <VAPIDKeyManager />
-
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>VAPID Keys Generated</DialogTitle>
-            <DialogDescription>
-              Please save these keys in your Supabase dashboard. You'll need to set these as secrets:
-              VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, and VAPID_MAILTO (for your contact email).
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <div className="font-semibold">Public Key:</div>
-              <div className="flex items-center gap-2">
-                <code className="bg-muted p-2 rounded flex-1 break-all">
-                  {vapidKeys?.publicKey}
-                </code>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => handleCopy(vapidKeys?.publicKey || '', 'Public Key')}
-                >
-                  <Copy className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <div className="font-semibold">Private Key:</div>
-              <div className="flex items-center gap-2">
-                <code className="bg-muted p-2 rounded flex-1 break-all">
-                  {vapidKeys?.privateKey}
-                </code>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => handleCopy(vapidKeys?.privateKey || '', 'Private Key')}
-                >
-                  <Copy className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>Push Notifications</CardTitle>
+        <CardDescription>
+          Test and manage push notification settings
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Button 
+          onClick={handleTestNotification}
+          disabled={!subscription}
+          className="flex gap-2"
+        >
+          <Bell className="h-4 w-4" />
+          Send Test Notification
+        </Button>
+      </CardContent>
+    </Card>
   );
 };
 
