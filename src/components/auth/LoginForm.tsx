@@ -6,12 +6,12 @@ import LoginFormActions from './login/LoginFormActions';
 import { useLoginForm } from './login/useLoginForm';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/auth'; // Fixed import path
+import { useAuth } from '@/contexts/auth'; 
 
 interface LoginFormProps {
   onSuccess?: () => void;
   onClose?: () => void;
-  userType?: 'individual' | 'establishment';
+  userType?: 'individual' | 'establishment' | 'promoter';
 }
 
 const LoginForm: React.FC<LoginFormProps> = ({ 

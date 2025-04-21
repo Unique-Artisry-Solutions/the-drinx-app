@@ -7,7 +7,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useTheme } from '@/contexts/ThemeContext';
 
 const SignupPage = () => {
-  const [selectedUserType, setSelectedUserType] = useState<'individual' | 'establishment'>('individual');
+  const [selectedUserType, setSelectedUserType] = useState<'individual' | 'establishment' | 'promoter'>('individual');
   const { theme, setTheme } = useTheme();
   
   // Always force light theme for signup page
@@ -39,21 +39,27 @@ const SignupPage = () => {
             <div className="bg-white p-4 rounded-t-lg shadow-sm">
               <Tabs 
                 value={selectedUserType} 
-                onValueChange={(value) => setSelectedUserType(value as 'individual' | 'establishment')}
+                onValueChange={(value) => setSelectedUserType(value as 'individual' | 'establishment' | 'promoter')}
                 className="w-full"
               >
-                <TabsList className="grid w-full grid-cols-2 mb-4">
+                <TabsList className="grid w-full grid-cols-3 mb-4">
                   <TabsTrigger 
                     value="individual"
                     className="data-[state=active]:bg-spiritless-pink data-[state=active]:text-white"
                   >
-                    Personal Account
+                    Personal
                   </TabsTrigger>
                   <TabsTrigger 
                     value="establishment"
                     className="data-[state=active]:bg-spiritless-green data-[state=active]:text-white"
                   >
-                    Business Account
+                    Business
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="promoter"
+                    className="data-[state=active]:bg-purple-500 data-[state=active]:text-white"
+                  >
+                    Promoter
                   </TabsTrigger>
                 </TabsList>
               </Tabs>

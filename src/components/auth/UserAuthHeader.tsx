@@ -13,15 +13,18 @@ const UserAuthHeader: React.FC<UserAuthHeaderProps> = ({
     <CardHeader>
       <CardTitle className="text-2xl text-center">
         {defaultTab === 'signup' 
-          ? (userType === 'establishment' ? 'Establishment Registration' : 'Create Your Account')
+          ? (userType === 'establishment' ? 'Establishment Registration' : 
+             userType === 'promoter' ? 'Promoter Registration' : 'Create Your Account')
           : 'Welcome Back'
         }
       </CardTitle>
       <CardDescription className="text-center">
         {defaultTab === 'signup' 
           ? (userType === 'establishment' 
-            ? 'Register your business to showcase your mocktails'
-            : 'Sign up to discover and track your favorite mocktails')
+              ? 'Register your business to showcase your mocktails'
+              : userType === 'promoter'
+                ? 'Register as a promoter to create swig circuits'
+                : 'Sign up to discover and track your favorite mocktails')
           : 'Login to continue your mocktail journey'
         }
       </CardDescription>

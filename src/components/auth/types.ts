@@ -4,5 +4,5 @@ export interface UserAuthProps {
   onSuccess?: () => void;
   onClose?: () => void;
   defaultTab?: 'login' | 'signup';
-  userType?: 'individual' | 'establishment';
+  userType?: 'individual' | 'establishment' | 'promoter';
 }
