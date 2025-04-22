@@ -3,6 +3,7 @@ import { RouteObject } from 'react-router-dom';
 import { TypedProtectedRoute } from '../protectedRoutes';
 import PromoterDashboardPage from '@/pages/promoter/PromoterDashboardPage';
 import PromoterCommunicationPage from '@/pages/promoter/PromoterCommunicationPage';
+import PromoterAnalyticsPage from '@/pages/promoter/PromoterAnalyticsPage';
 import CreateSwigCircuitPage from '@/pages/profile/CreateSwigCircuitPage';
 
 // Helper function to wrap components with promoter protection
@@ -22,6 +23,10 @@ export const promoterRoutes: RouteObject[] = [
   {
     path: '/promoter/communication',
     element: wrapPromoterRoute(<PromoterCommunicationPage />),
+  },
+  {
+    path: '/promoter/analytics',
+    element: wrapPromoterRoute(<PromoterAnalyticsPage />),
   },
   {
     path: '/create-swig-circuit',
