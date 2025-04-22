@@ -1,8 +1,36 @@
+console.log('Service Worker Loaded');
 
+// Debugging helper
+const swLog = (message, data = {}) => {
+  const logMessage = typeof message === 'string' ? message : JSON.stringify(message);
+  console.log(`[ServiceWorker] ${logMessage}`, data);
+};
+
+// Lifecycle events
+self.addEventListener('install', event => {
+  swLog('Installing Service Worker');
+  self.skipWaiting(); // Ensures the service worker activates immediately
+});
+
+self.addEventListener('activate', event => {
+  swLog('Service Worker activated');
+  return self.clients.claim(); // Take control of all clients
+});
+
+// Push event handler
 self.addEventListener('push', function(event) {
   try {
-    console.log('Received push event:', event);
+    swLog('Received push event', event);
+    
+    // Check if there's data in the push message
+    if (!event.data) {
+      swLog('No data received in push event');
+      return;
+    }
+    
     const data = event.data.json();
+    swLog('Push data parsed', data);
+    
     const options = {
       body: data.content,
       icon: '/favicon.ico',
@@ -26,14 +54,14 @@ self.addEventListener('push', function(event) {
     const notificationPromise = self.registration.showNotification(data.title, options);
     event.waitUntil(notificationPromise);
     
-    console.log('Push event processed successfully');
+    swLog('Push event processed successfully');
   } catch (error) {
     console.error('Error processing push notification:', error);
   }
 });
 
 self.addEventListener('notificationclick', function(event) {
-  console.log('Notification clicked:', event);
+  swLog('Notification clicked', event);
   event.notification.close();
 
   // Handle notification actions
@@ -41,20 +69,44 @@ self.addEventListener('notificationclick', function(event) {
     event.waitUntil(
       clients.openWindow(event.notification.data.url)
     );
+  } else {
+    // Default behavior when clicking the notification body
+    event.waitUntil(
+      clients.matchAll({ type: 'window' }).then(clientList => {
+        // If a window is already open, focus it
+        if (clientList.length > 0) {
+          let client = clientList[0];
+          for (let i = 0; i < clientList.length; i++) {
+            if (clientList[i].focused) {
+              client = clientList[i];
+            }
+          }
+          return client.focus();
+        }
+        // Otherwise open a new window
+        return clients.openWindow('/');
+      })
+    );
   }
 });
 
 self.addEventListener('notificationclose', function(event) {
   // Optional: Track when notifications are dismissed
-  console.log('Notification was closed', event.notification);
+  swLog('Notification was closed', event.notification);
 });
 
 // Add a message handler for debugging
 self.addEventListener('message', function(event) {
   if (event.data.action === 'checkServiceWorker') {
+    swLog('Received checkServiceWorker message', event.data);
     event.ports[0].postMessage({
       status: 'active',
       timestamp: new Date().toISOString()
     });
   }
+});
+
+// Report errors to the client
+self.addEventListener('error', function(event) {
+  swLog('Service Worker error:', event.error);
 });

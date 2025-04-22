@@ -1,34 +1,70 @@
 
-import { toast } from "@/hooks/use-toast";
-import debounce from "lodash/debounce";
+import { toast } from '@/hooks/use-toast';
 
-// Map to track when specific types of toasts were last shown
-const toastTimestamps = new Map<string, number>();
-const TOAST_COOLDOWN = 5000; // 5 seconds cooldown between similar toasts
+// Create a map to track recent toasts by their message to prevent duplicates
+const recentToasts = new Map<string, number>();
+const TOAST_DEBOUNCE_TIME = 3000; // 3 seconds
 
-export const showDebouncedToast = (key: string, config: Parameters<typeof toast>[0]) => {
-  const now = Date.now();
-  const lastShown = toastTimestamps.get(key);
+const debouncedToast = {
+  success: (title: string, description: string) => {
+    const key = `success:${title}:${description}`;
+    if (shouldShowToast(key)) {
+      toast({
+        title,
+        description,
+      });
+    }
+  },
   
-  if (!lastShown || (now - lastShown) > TOAST_COOLDOWN) {
-    toastTimestamps.set(key, now);
-    toast(config);
+  error: (title: string, description: string) => {
+    const key = `error:${title}:${description}`;
+    if (shouldShowToast(key)) {
+      toast({
+        title,
+        description,
+        variant: "destructive"
+      });
+    }
+  },
+  
+  info: (title: string, description: string) => {
+    const key = `info:${title}:${description}`;
+    if (shouldShowToast(key)) {
+      toast({
+        title,
+        description,
+      });
+    }
   }
 };
 
-export const debouncedToast = {
-  error: debounce((title: string, description: string) => {
-    showDebouncedToast(`error-${title}`, {
-      title,
-      description,
-      variant: "destructive"
-    });
-  }, 1000, { leading: true, trailing: false }),
+function shouldShowToast(key: string): boolean {
+  const now = Date.now();
   
-  success: debounce((title: string, description: string) => {
-    showDebouncedToast(`success-${title}`, {
-      title,
-      description
-    });
-  }, 1000, { leading: true, trailing: false })
-};
+  // Check if we've shown this toast recently
+  const lastShown = recentToasts.get(key);
+  if (lastShown && (now - lastShown) < TOAST_DEBOUNCE_TIME) {
+    return false;
+  }
+  
+  // Update the last shown time
+  recentToasts.set(key, now);
+  
+  // Clean up old entries
+  cleanupOldToasts(now);
+  
+  return true;
+}
+
+function cleanupOldToasts(now: number) {
+  // Remove entries older than 1 minute to prevent memory leaks
+  const CLEANUP_TIME = 60000; // 1 minute
+  
+  for (const [key, timestamp] of recentToasts.entries()) {
+    if ((now - timestamp) > CLEANUP_TIME) {
+      recentToasts.delete(key);
+    }
+  }
+}
+
+export { debouncedToast };

@@ -35,59 +35,42 @@ export const useNotifications = () => {
         setIsLoading(true);
         setError(null);
 
-        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://dvifibvzwunnpcsihpxq.supabase.co';
-        const response = await fetch(`${supabaseUrl}/functions/v1/notifications`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
+        // Use the supabase function invoke method instead of raw fetch
+        const { data, error } = await supabase.functions.invoke('notifications', {
+          body: {
             action: 'getNotifications',
             params: { userId: user.id }
-          })
+          }
         });
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || `Server responded with ${response.status}`);
+        if (error) {
+          throw new Error(error.message || 'Failed to fetch notifications');
         }
-
-        const { data, error } = await response.json();
         
-        // Important change: Do not throw an error if no notifications exist
-        if (error && error !== "No notifications found") {
-          throw error;
-        }
-
-        const notificationsArray = Array.isArray(data) ? data : [];
+        const notificationsArray = data?.data && Array.isArray(data.data) ? data.data : [];
+        
         setNotifications(notificationsArray);
         setUnreadCount(notificationsArray.filter((n: Notification) => !n.is_read).length);
+        fetchingRef.current = false;
+        setIsLoading(false);
         return;
 
       } catch (error: any) {
         console.error(`Attempt ${attempt + 1} failed:`, error);
         attempt++;
         
-        // Change: Only show toast for non-"No notifications" errors
-        if (
-          attempt === maxRetries && 
-          !error.message?.includes('No notifications') &&
-          !error.message?.includes('No notifications found')
-        ) {
+        if (attempt === maxRetries) {
           debouncedToast.error(
             "Notification Error",
             "Unable to fetch notifications. Will retry automatically."
           );
+          setError(error.message || 'Failed to fetch notifications');
+          setIsLoading(false);
+          fetchingRef.current = false;
         }
         
         // Add exponential backoff
         await new Promise(resolve => setTimeout(resolve, Math.min(1000 * Math.pow(2, attempt), 5000)));
-      } finally {
-        if (attempt === maxRetries) {
-          setIsLoading(false);
-          fetchingRef.current = false;
-        }
       }
     }
   };
@@ -96,25 +79,19 @@ export const useNotifications = () => {
     if (!user?.id || !session?.access_token) return;
 
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://dvifibvzwunnpcsihpxq.supabase.co';
-      const response = await fetch(`${supabaseUrl}/functions/v1/notifications`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
+      // Use the supabase function invoke method instead of raw fetch
+      const { data, error } = await supabase.functions.invoke('notifications', {
+        body: {
           action: 'updateNotification',
           params: {
             notificationId,
             isRead: true
           }
-        })
+        }
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `Server responded with ${response.status}`);
+      if (error) {
+        throw new Error(error.message || 'Failed to update notification');
       }
 
       setNotifications(prev => 
@@ -132,15 +109,39 @@ export const useNotifications = () => {
   };
 
   useEffect(() => {
-    if (user && session && isInitialFetch.current) {
-      isInitialFetch.current = false;
-      fetchNotifications();
-    } else if (!user || !session) {
-      setNotifications([]);
-      setUnreadCount(0);
-      setIsLoading(false);
-      isInitialFetch.current = true;
-    }
+    let isMounted = true;
+    const autoRefreshInterval = 30000; // 30 seconds
+    let refreshTimer: number;
+
+    const setupNotificationFetch = () => {
+      if (user && session) {
+        if (isInitialFetch.current) {
+          isInitialFetch.current = false;
+          fetchNotifications();
+        }
+        
+        // Set up auto-refresh
+        refreshTimer = window.setInterval(() => {
+          if (isMounted && !fetchingRef.current) {
+            fetchNotifications();
+          }
+        }, autoRefreshInterval);
+      } else {
+        setNotifications([]);
+        setUnreadCount(0);
+        setIsLoading(false);
+        isInitialFetch.current = true;
+      }
+    };
+
+    setupNotificationFetch();
+
+    return () => {
+      isMounted = false;
+      if (refreshTimer) {
+        clearInterval(refreshTimer);
+      }
+    };
   }, [user, session]);
 
   return {
