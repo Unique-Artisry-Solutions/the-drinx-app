@@ -13,11 +13,11 @@ export const useRegistrationProcess = () => {
       const registration = await navigator.serviceWorker.register('/service-worker.js');
       console.log('Service worker registered:', registration);
       
-      // Wait for the service worker to be ready
+      // Wait for the service worker to be ready - increase timeout to 10 seconds
       await new Promise((resolve, reject) => {
         const timeout = setTimeout(() => {
-          reject(new Error('Service worker registration timeout'));
-        }, 5000);
+          reject(new Error('Service worker registration timeout after 10s'));
+        }, 10000);
 
         registration.addEventListener('activate', () => {
           clearTimeout(timeout);

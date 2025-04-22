@@ -1,6 +1,7 @@
 
 self.addEventListener('push', function(event) {
   try {
+    console.log('Received push event:', event);
     const data = event.data.json();
     const options = {
       body: data.content,
@@ -32,6 +33,7 @@ self.addEventListener('push', function(event) {
 });
 
 self.addEventListener('notificationclick', function(event) {
+  console.log('Notification clicked:', event);
   event.notification.close();
 
   // Handle notification actions
