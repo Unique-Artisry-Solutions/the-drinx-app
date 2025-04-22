@@ -1,14 +1,9 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth';
 
-// --- Add this explicit local type alias ---
-type NotificationPermissionType = 'default' | 'denied' | 'granted';
-
 export function useDirectNotifications() {
-  // --- Use the explicit type alias everywhere ---
-  const [permissionStatus, setPermissionStatus] = useState<NotificationPermissionType>('default');
+  const [permissionStatus, setPermissionStatus] = useState<NotificationPermission>('default');
   const [isSupported, setIsSupported] = useState(false);
   const [lastCheck, setLastCheck] = useState<Date>(new Date());
   const [isLoading, setIsLoading] = useState(false);
@@ -16,18 +11,15 @@ export function useDirectNotifications() {
   const { toast } = useToast();
   const { user } = useAuth();
 
-  // Check if notifications are supported
   useEffect(() => {
     const hasNotificationSupport = 'Notification' in window;
     setIsSupported(hasNotificationSupport);
 
     if (hasNotificationSupport) {
-      // Explicit type assertion
-      setPermissionStatus(Notification.permission as NotificationPermissionType);
+      setPermissionStatus(Notification.permission);
     }
   }, []);
 
-  // Request permission function
   const requestPermission = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -41,7 +33,7 @@ export function useDirectNotifications() {
       const permission = await Notification.requestPermission();
       console.log('Permission response:', permission);
 
-      setPermissionStatus(permission as NotificationPermissionType);
+      setPermissionStatus(permission);
       setLastCheck(new Date());
 
       if (permission === 'granted') {
@@ -74,10 +66,9 @@ export function useDirectNotifications() {
     }
   }, [toast]);
 
-  // Check current permission
   const checkPermission = useCallback(() => {
     if ('Notification' in window) {
-      const currentPermission = Notification.permission as NotificationPermissionType;
+      const currentPermission = Notification.permission;
       console.log('Current notification permission:', currentPermission);
       setPermissionStatus(currentPermission);
       setLastCheck(new Date());
@@ -86,7 +77,6 @@ export function useDirectNotifications() {
     return null;
   }, []);
 
-  // Send a direct test notification
   const sendTestNotification = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -95,7 +85,6 @@ export function useDirectNotifications() {
         throw new Error('Notifications are not supported in this browser');
       }
 
-      // --- Now the type comparison will work, TS no longer complains ---
       if (permissionStatus !== 'granted') {
         const granted = await requestPermission();
         if (!granted) {
@@ -136,7 +125,6 @@ export function useDirectNotifications() {
     }
   }, [isSupported, permissionStatus, requestPermission, toast]);
 
-  // Reset permissions system
   const resetPermissionState = useCallback(async () => {
     try {
       setIsLoading(true);
