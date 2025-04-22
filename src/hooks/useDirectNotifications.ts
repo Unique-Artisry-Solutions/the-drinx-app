@@ -3,8 +3,12 @@ import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth';
 
+// --- Add this explicit local type alias ---
+type NotificationPermissionType = 'default' | 'denied' | 'granted';
+
 export function useDirectNotifications() {
-  const [permissionStatus, setPermissionStatus] = useState<NotificationPermission>('default');
+  // --- Use the explicit type alias everywhere ---
+  const [permissionStatus, setPermissionStatus] = useState<NotificationPermissionType>('default');
   const [isSupported, setIsSupported] = useState(false);
   const [lastCheck, setLastCheck] = useState<Date>(new Date());
   const [isLoading, setIsLoading] = useState(false);
@@ -16,9 +20,10 @@ export function useDirectNotifications() {
   useEffect(() => {
     const hasNotificationSupport = 'Notification' in window;
     setIsSupported(hasNotificationSupport);
-    
+
     if (hasNotificationSupport) {
-      setPermissionStatus(Notification.permission as NotificationPermission);
+      // Explicit type assertion
+      setPermissionStatus(Notification.permission as NotificationPermissionType);
     }
   }, []);
 
@@ -27,19 +32,18 @@ export function useDirectNotifications() {
     try {
       setIsLoading(true);
       setError(null);
-      
+
       if (!('Notification' in window)) {
         throw new Error('This browser does not support notifications');
       }
-      
+
       console.log('Requesting notification permission...');
       const permission = await Notification.requestPermission();
       console.log('Permission response:', permission);
-      
-      setPermissionStatus(permission as NotificationPermission);
+
+      setPermissionStatus(permission as NotificationPermissionType);
       setLastCheck(new Date());
-      
-      // Using the proper type check to compare string literals
+
       if (permission === 'granted') {
         toast({
           title: "Notification Access Granted",
@@ -54,7 +58,7 @@ export function useDirectNotifications() {
         });
         return false;
       }
-      
+
       return permission === 'granted';
     } catch (err) {
       console.error('Error requesting notification permission:', err);
@@ -73,9 +77,9 @@ export function useDirectNotifications() {
   // Check current permission
   const checkPermission = useCallback(() => {
     if ('Notification' in window) {
-      const currentPermission = Notification.permission;
+      const currentPermission = Notification.permission as NotificationPermissionType;
       console.log('Current notification permission:', currentPermission);
-      setPermissionStatus(currentPermission as NotificationPermission);
+      setPermissionStatus(currentPermission);
       setLastCheck(new Date());
       return currentPermission;
     }
@@ -86,37 +90,37 @@ export function useDirectNotifications() {
   const sendTestNotification = useCallback(async () => {
     try {
       setIsLoading(true);
-      
+
       if (!isSupported) {
         throw new Error('Notifications are not supported in this browser');
       }
-      
-      // Using strict comparison with string literals
+
+      // --- Now the type comparison will work, TS no longer complains ---
       if (permissionStatus !== 'granted') {
         const granted = await requestPermission();
         if (!granted) {
           throw new Error('Notification permission not granted');
         }
       }
-      
+
       const notification = new Notification('Test Notification', {
         body: 'This is a direct browser notification test',
         icon: '/favicon.ico',
         tag: 'test-notification',
         requireInteraction: true
       });
-      
+
       notification.onclick = () => {
         console.log('Notification clicked');
         window.focus();
         notification.close();
       };
-      
+
       toast({
         title: "Test Notification Sent",
         description: "A test notification was displayed directly by the browser."
       });
-      
+
       return { success: true };
     } catch (err) {
       console.error('Error sending test notification:', err);
@@ -137,7 +141,7 @@ export function useDirectNotifications() {
     try {
       setIsLoading(true);
       setError(null);
-      
+
       if ('serviceWorker' in navigator) {
         const registrations = await navigator.serviceWorker.getRegistrations();
         await Promise.all(
@@ -145,14 +149,14 @@ export function useDirectNotifications() {
         );
         console.log('All service worker registrations cleared');
       }
-      
+
       checkPermission();
-      
+
       toast({
         title: "Permission System Reset",
         description: "Notification system has been reset. Please try again."
       });
-      
+
       return true;
     } catch (err) {
       console.error('Error resetting permission state:', err);
