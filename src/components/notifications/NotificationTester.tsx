@@ -10,9 +10,11 @@ import { NotificationError } from './NotificationError';
 import { SubscriptionStatus } from './SubscriptionStatus';
 import { ActiveSubscription } from './ActiveSubscription';
 import { LoginPrompt } from './LoginPrompt';
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 const NotificationTester = () => {
-  const { isSupported, subscription, permissionStatus, isLoading, subscribeToNotifications } = usePushNotifications();
+  const { isSupported, subscription, permissionStatus, isLoading, error: setupError, subscribeToNotifications } = usePushNotifications();
   const { hasServiceWorker, isCheckingServiceWorker, registrationError, isRetrying } = useServiceWorker();
   const { isSending, sendTestNotification } = useTestNotification();
   const { user } = useAuth();
@@ -34,6 +36,8 @@ const NotificationTester = () => {
     return <NotificationLoading />;
   }
 
+  const showError = registrationError || setupError;
+
   return (
     <Card>
       <CardHeader>
@@ -43,7 +47,14 @@ const NotificationTester = () => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {registrationError && <NotificationError error={registrationError} />}
+        {showError && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              {registrationError || setupError}
+            </AlertDescription>
+          </Alert>
+        )}
         
         {!user ? (
           <LoginPrompt />

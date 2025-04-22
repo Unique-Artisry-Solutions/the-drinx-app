@@ -3,18 +3,19 @@ import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/auth';
 import { urlB64ToUint8Array } from '../utils/pushUtils';
+import { useToast } from '@/hooks/use-toast';
 
 export const useNotificationSender = () => {
   const [isSending, setIsSending] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
   const { user } = useAuth();
+  const { toast } = useToast();
 
   const registerServiceWorker = async () => {
     try {
       setIsRegistering(true);
       console.log('Registering service worker...');
       
-      // Check for existing registrations
       const existingRegistrations = await navigator.serviceWorker.getRegistrations();
       const hasExistingWorker = existingRegistrations.some(registration => 
         registration.active && registration.active.scriptURL.includes('service-worker.js')
@@ -31,12 +32,11 @@ export const useNotificationSender = () => {
         console.log('New service worker registered');
       }
 
-      // Wait for the service worker to be ready
       await navigator.serviceWorker.ready;
       return registration;
     } catch (error) {
       console.error('Service worker registration failed:', error);
-      throw error;
+      throw new Error('Failed to register service worker: ' + error.message);
     } finally {
       setIsRegistering(false);
     }
@@ -45,34 +45,34 @@ export const useNotificationSender = () => {
   const subscribeToPushNotifications = async (registration: ServiceWorkerRegistration) => {
     console.log('Subscribing to push notifications...');
     
-    // Get VAPID public key
-    const { data: { publicKey }, error: keyError } = await supabase.functions.invoke('notifications', {
-      body: { action: 'getVapidKey' }
-    });
+    try {
+      const { data, error } = await supabase.functions.invoke('notifications', {
+        body: { action: 'getVapidKey' }
+      });
 
-    if (keyError || !publicKey) {
-      throw new Error('Failed to retrieve VAPID public key');
+      if (error || !data?.publicKey) {
+        throw new Error('Failed to retrieve VAPID key: ' + (error?.message || 'No public key returned'));
+      }
+
+      const convertedVapidKey = urlB64ToUint8Array(data.publicKey);
+      const existingSubscription = await registration.pushManager.getSubscription();
+      
+      if (existingSubscription) {
+        console.log('Using existing push subscription');
+        return existingSubscription;
+      }
+
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: convertedVapidKey
+      });
+
+      console.log('Created new push subscription');
+      return subscription;
+    } catch (error) {
+      console.error('Failed to subscribe to push notifications:', error);
+      throw new Error('Push notification setup failed: ' + error.message);
     }
-
-    // Convert VAPID key
-    const convertedVapidKey = urlB64ToUint8Array(publicKey);
-
-    // Get existing subscription or create new one
-    const existingSubscription = await registration.pushManager.getSubscription();
-    
-    if (existingSubscription) {
-      console.log('Using existing push subscription');
-      return existingSubscription;
-    }
-
-    // Create new subscription
-    const subscription = await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: convertedVapidKey
-    });
-
-    console.log('Created new push subscription');
-    return subscription;
   };
 
   const sendNotification = async () => {
@@ -84,7 +84,6 @@ export const useNotificationSender = () => {
       setIsSending(true);
       console.log('Initiating notification send process...');
       
-      // Register service worker and get subscription
       const registration = await registerServiceWorker();
       const subscription = await subscribeToPushNotifications(registration);
       
@@ -106,15 +105,28 @@ export const useNotificationSender = () => {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
       
-      const pushStatus = data?.push_status;
-      
-      if (!pushStatus?.success) {
-        throw new Error(pushStatus?.error || 'Push notification failed to send');
+      if (!data?.push_status?.success) {
+        throw new Error(data?.push_status?.error || 'Push notification failed to send');
       }
 
-      return pushStatus;
+      toast({
+        title: "Success",
+        description: "Push notification sent successfully",
+      });
+
+      return data.push_status;
+    } catch (error) {
+      console.error('Error sending notification:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to send notification",
+        variant: "destructive"
+      });
+      throw error;
     } finally {
       setIsSending(false);
     }

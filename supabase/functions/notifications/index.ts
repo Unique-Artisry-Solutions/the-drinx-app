@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.0"
 import webPush from "https://esm.sh/web-push@3.6.6"
@@ -9,6 +8,18 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
 }
+
+// Helper function to create consistent error responses
+const createErrorResponse = (message: string, status = 400) => {
+  console.error('Error:', message);
+  return new Response(
+    JSON.stringify({ error: message }),
+    {
+      status,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    }
+  );
+};
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -26,45 +37,45 @@ serve(async (req) => {
       case 'getVapidKey':
         const publicKey = Deno.env.get('VAPID_PUBLIC_KEY');
         if (!publicKey) {
-          console.error('VAPID_PUBLIC_KEY is not configured in secrets');
-          throw new Error('VAPID public key not configured');
+          return createErrorResponse('VAPID public key not configured');
         }
         return new Response(
           JSON.stringify({ publicKey }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        )
+        );
+
+      case 'getNotifications':
+        if (!params?.userId) {
+          return createErrorResponse('User ID is required');
+        }
+        return await handleGetNotifications(params);
 
       case 'createNotification':
         return await handleCreateNotification(params, req.headers.get('Authorization') || '');
 
       case 'saveVapidKeys':
         if (!params.publicKey || !params.privateKey || !params.mailto) {
-          throw new Error('Missing required VAPID parameters')
+          return createErrorResponse('Missing required VAPID parameters');
         }
-        
         return new Response(
           JSON.stringify({ 
             success: true,
             message: 'Please set these keys in your Supabase dashboard secrets'
           }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        )
-      case 'getNotifications':
-        return await handleGetNotifications(params)
+        );
+
       default:
-        throw new Error('Invalid action')
+        return createErrorResponse('Invalid action');
     }
   } catch (error) {
-    console.error('Error:', error.message);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      {
-        status: error.message === 'No authorization header' ? 401 : 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    )
+    console.error('Unexpected error:', error);
+    return createErrorResponse(
+      error.message || 'Internal server error',
+      error.message === 'No authorization header' ? 401 : 500
+    );
   }
-})
+});
 
 async function handleCreateNotification(params: any, authHeader: string) {
   if (!params.recipientId) {
@@ -211,40 +222,32 @@ async function handleCreateNotification(params: any, authHeader: string) {
   )
 }
 
-async function handleGetNotifications(params) {
+async function handleGetNotifications(params: any) {
+  if (!params.userId) {
+    return createErrorResponse('User ID is required to fetch notifications');
+  }
+
   const supabaseClient = createClient(
     Deno.env.get('SUPABASE_URL') ?? '',
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-  )
+  );
 
-  const { userId, limit = 10, offset = 0 } = params || {};
-  
-  if (!userId) {
-    throw new Error('User ID is required to fetch notifications');
+  try {
+    const { data: notifications, error } = await supabaseClient
+      .from('notifications')
+      .select('*')
+      .eq('recipient_id', params.userId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    return new Response(
+      JSON.stringify({ data: notifications }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    );
+  } catch (error) {
+    return createErrorResponse(`Error fetching notifications: ${error.message}`);
   }
-
-  const { data: notifications, error } = await supabaseClient
-    .from('notifications')
-    .select('*')
-    .eq('recipient_id', userId)
-    .order('created_at', { ascending: false })
-    .range(offset, offset + limit - 1);
-
-  if (error) throw error;
-
-  return new Response(
-    JSON.stringify({ data: notifications }),
-    {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    }
-  )
-}
-
-interface NotificationData {
-  recipientId: string;
-  title: string;
-  content: string;
-  priority?: 'low' | 'medium' | 'high' | 'urgent';
-  categoryId?: string;
-  metadata?: Record<string, any>;
 }
