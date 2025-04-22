@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { usePushNotifications } from '@/hooks/usePushNotifications';
@@ -10,10 +11,12 @@ import { SubscriptionStatus } from './SubscriptionStatus';
 import { ActiveSubscription } from './ActiveSubscription';
 import { LoginPrompt } from './LoginPrompt';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, Settings, RefreshCw } from "lucide-react";
+import { AlertCircle, Settings, RefreshCw, Info, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useServiceWorkerStatus } from '@/hooks/service-worker/useServiceWorkerStatus';
 import { debouncedToast } from '@/utils/debouncedToast';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import DirectNotificationTester from './DirectNotificationTester';
 
 const NotificationTester = () => {
   const { 
@@ -24,13 +27,68 @@ const NotificationTester = () => {
     error: setupError,
     subscribeToNotifications,
     showPermissionPrompt,
-    checkPermissions
+    checkPermissions,
+    resetSubscriptionState
   } = usePushNotifications();
   const { hasServiceWorker, isCheckingServiceWorker, registrationError, isRetrying } = useServiceWorker();
   const { isSending, sendTestNotification } = useTestNotification();
   const { user } = useAuth();
   const { refreshPermissionStatus } = useServiceWorkerStatus();
   const [permissionState, setPermissionState] = useState<NotificationPermission>(permissionStatus);
+  const [selectedTab, setSelectedTab] = useState<string>("service-worker");
+  const [diagnosticsData, setDiagnosticsData] = useState<Record<string, any>>({});
+  
+  const runDiagnostics = async () => {
+    const data: Record<string, any> = {
+      browser: navigator.userAgent,
+      timestamp: new Date().toISOString(),
+      notifications: 'Notification' in window,
+      serviceWorker: 'serviceWorker' in navigator,
+      pushManager: 'PushManager' in window,
+      permission: 'Notification' in window ? Notification.permission : 'API not available',
+      controller: !!navigator.serviceWorker?.controller,
+      registrations: []
+    };
+    
+    if ('serviceWorker' in navigator) {
+      try {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        data.registrations = registrations.map(reg => ({
+          scope: reg.scope,
+          active: !!reg.active,
+          installing: !!reg.installing,
+          waiting: !!reg.waiting,
+          scriptURL: reg.active?.scriptURL || 'N/A'
+        }));
+      } catch (e) {
+        data.registrationsError = e instanceof Error ? e.message : 'Unknown error';
+      }
+    }
+    
+    console.log('Diagnostics data:', data);
+    setDiagnosticsData(data);
+    debouncedToast.info(
+      "Diagnostics Complete", 
+      "System diagnostics information has been collected"
+    );
+  };
+  
+  const handleReset = async () => {
+    try {
+      await resetSubscriptionState();
+      debouncedToast.info(
+        "Reset Complete", 
+        "Notification system has been reset"
+      );
+      runDiagnostics();
+    } catch (error) {
+      console.error('Error during reset:', error);
+      debouncedToast.error(
+        "Reset Error", 
+        error instanceof Error ? error.message : "Failed to reset notification system"
+      );
+    }
+  };
   
   const handleRefreshPermissions = () => {
     const currentPermission = refreshPermissionStatus();
@@ -51,40 +109,11 @@ const NotificationTester = () => {
   useEffect(() => {
     setPermissionState(permissionStatus);
   }, [permissionStatus]);
-
-  const renderPermissionGuidance = () => {
-    if (permissionState === 'denied') {
-      return (
-        <Alert variant="destructive" className="mb-4">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Notification Permission Denied</AlertTitle>
-          <AlertDescription>
-            <p className="mb-2">You've denied notification permissions. To enable them:</p>
-            <ol className="list-decimal ml-5 space-y-1 text-sm">
-              <li>Click the lock/info icon in your browser's address bar</li>
-              <li>Find "Notifications" in the site settings</li>
-              <li>Change the setting to "Allow"</li>
-              <li>Use the refresh button to update permission status</li>
-            </ol>
-          </AlertDescription>
-        </Alert>
-      );
-    }
-    return null;
-  };
-
-  if (!isSupported) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Push Notifications</CardTitle>
-          <CardDescription>
-            Push notifications are not supported in your browser.
-          </CardDescription>
-        </CardHeader>
-      </Card>
-    );
-  }
+  
+  useEffect(() => {
+    // Run diagnostics on component mount
+    runDiagnostics();
+  }, []);
 
   if (isCheckingServiceWorker || isRetrying || isLoading) {
     return <NotificationLoading />;
@@ -98,32 +127,33 @@ const NotificationTester = () => {
         <div>
           <CardTitle>Push Notifications</CardTitle>
           <CardDescription>
-            Test and manage push notification settings
+            Test and manage notification settings
           </CardDescription>
         </div>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={handleRefreshPermissions}
-          title="Refresh permission status"
-          className="h-8 px-2"
-        >
-          <RefreshCw className="h-4 w-4 mr-1" />
-          Refresh Status
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={runDiagnostics}
+            title="Run system diagnostics"
+            className="h-8 px-2"
+          >
+            <Zap className="h-4 w-4 mr-1" />
+            Diagnose
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleRefreshPermissions}
+            title="Refresh permission status"
+            className="h-8 px-2"
+          >
+            <RefreshCw className="h-4 w-4 mr-1" />
+            Refresh
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {renderPermissionGuidance()}
-        
-        {showPermissionPrompt && (
-          <Alert className="mb-4 bg-blue-50 border-blue-200">
-            <AlertTitle>Permission Required</AlertTitle>
-            <AlertDescription>
-              Please click "Allow" on the browser notification permission prompt.
-            </AlertDescription>
-          </Alert>
-        )}
-        
         {showError && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
@@ -135,42 +165,77 @@ const NotificationTester = () => {
         
         {!user ? (
           <LoginPrompt />
-        ) : !subscription ? (
-          <SubscriptionStatus
-            isLoading={isLoading}
-            hasServiceWorker={hasServiceWorker}
-            permissionStatus={permissionState}
-            subscribeToNotifications={subscribeToNotifications}
-            refreshPermissions={handleRefreshPermissions}
-          />
         ) : (
-          <ActiveSubscription
-            isSending={isSending}
-            sendTestNotification={sendTestNotification}
-          />
-        )}
-        
-        {process.env.NODE_ENV !== 'production' && (
-          <div className="mt-8 pt-4 border-t border-gray-200">
-            <h4 className="text-sm font-medium mb-2 flex items-center gap-1">
-              <Settings className="h-3 w-3" /> Debug Info
-            </h4>
-            <div className="text-xs space-y-1 text-gray-500">
-              <p>Service Worker: {hasServiceWorker ? 'Active' : 'Inactive'}</p>
-              <p>Permission: {permissionState}</p>
-              <p>Subscription: {subscription ? 'Yes' : 'No'}</p>
-            </div>
-            <div className="mt-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => window.location.reload()}
-                className="text-xs"
-              >
-                Reload Page
-              </Button>
-            </div>
-          </div>
+          <Tabs defaultValue="direct" className="w-full">
+            <TabsList className="w-full grid grid-cols-2">
+              <TabsTrigger value="direct">Direct Browser</TabsTrigger>
+              <TabsTrigger value="service-worker">Service Worker</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="direct" className="py-4">
+              <DirectNotificationTester />
+            </TabsContent>
+            
+            <TabsContent value="service-worker" className="py-4">
+              {!subscription ? (
+                <SubscriptionStatus
+                  isLoading={isLoading}
+                  hasServiceWorker={hasServiceWorker}
+                  permissionStatus={permissionState}
+                  subscribeToNotifications={subscribeToNotifications}
+                  refreshPermissions={handleRefreshPermissions}
+                />
+              ) : (
+                <ActiveSubscription
+                  isSending={isSending}
+                  sendTestNotification={sendTestNotification}
+                />
+              )}
+              
+              <div className="mt-4">
+                <Alert className="bg-blue-50 border-blue-200">
+                  <Info className="h-4 w-4 text-blue-600" />
+                  <AlertTitle>Service Worker Mode</AlertTitle>
+                  <AlertDescription>
+                    This mode uses service workers to handle push notifications. If you're having trouble, try the Direct Browser mode instead.
+                  </AlertDescription>
+                </Alert>
+              </div>
+              
+              {Object.keys(diagnosticsData).length > 0 && (
+                <div className="mt-4 p-4 border rounded-md bg-slate-50">
+                  <h4 className="text-sm font-medium mb-2 flex items-center gap-1">
+                    <Settings className="h-3 w-3" /> System Diagnostics
+                  </h4>
+                  <div className="text-xs space-y-1 text-gray-500">
+                    <p>Service Worker: {hasServiceWorker ? 'Active' : 'Inactive'}</p>
+                    <p>Permission: {permissionState}</p>
+                    <p>Controller: {diagnosticsData.controller ? 'Yes' : 'No'}</p>
+                    <p>Registrations: {diagnosticsData.registrations?.length || 0}</p>
+                    <p>Subscription: {subscription ? 'Yes' : 'No'}</p>
+                  </div>
+                  <div className="mt-2 flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={handleReset}
+                      className="text-xs"
+                    >
+                      Reset System
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => window.location.reload()}
+                      className="text-xs"
+                    >
+                      Reload Page
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         )}
       </CardContent>
     </Card>

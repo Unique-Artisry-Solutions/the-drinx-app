@@ -1,12 +1,27 @@
 
 import React from 'react';
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { User } from "lucide-react";
+import { useAuth } from '@/contexts/auth';
 
 export const LoginPrompt = () => {
+  const { signIn } = useAuth();
+
   return (
-    <div className="border border-amber-200 bg-amber-50 p-4 rounded-md mb-4">
-      <p className="text-sm text-amber-800">
-        Please log in to enable push notifications.
-      </p>
-    </div>
+    <Alert className="bg-blue-50 border-blue-200">
+      <User className="h-4 w-4 text-blue-600" />
+      <AlertTitle>Authentication Required</AlertTitle>
+      <AlertDescription className="space-y-3">
+        <p>Please log in to manage and test notification settings.</p>
+        <Button 
+          variant="outline"
+          onClick={() => signIn?.()}
+          className="mt-2"
+        >
+          Sign In
+        </Button>
+      </AlertDescription>
+    </Alert>
   );
 };
