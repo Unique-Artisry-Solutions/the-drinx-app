@@ -6,12 +6,14 @@ import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { Bell, BellOff, BellRing } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/contexts/auth';
 
 const NotificationTester = () => {
   const { isSupported, subscription, permissionStatus, isLoading, subscribeToNotifications } = usePushNotifications();
   const [isSending, setIsSending] = useState(false);
   const [hasServiceWorker, setHasServiceWorker] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   // Check if service worker is active
   useEffect(() => {
@@ -30,6 +32,15 @@ const NotificationTester = () => {
   }, []);
 
   const handleTestNotification = async () => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to use push notifications",
+        variant: "destructive"
+      });
+      return;
+    }
+
     if (!subscription) {
       toast({
         title: "Error",
@@ -46,7 +57,7 @@ const NotificationTester = () => {
         body: {
           action: 'createNotification',
           params: {
-            recipientId: subscription.user_id,
+            recipientId: user.id,
             title: "Test Push Notification",
             content: "This is a test push notification from your dashboard!",
             priority: "medium",
@@ -75,7 +86,7 @@ const NotificationTester = () => {
       console.error('Error sending test notification:', error);
       toast({
         title: "Notification Error",
-        description: error instanceof Error ? error.message : "Failed to send test notification",
+        description: error instanceof Error ? error.message : "Failed to send test notification. Please ensure you're logged in.",
         variant: "destructive"
       });
     } finally {
@@ -105,7 +116,13 @@ const NotificationTester = () => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {!subscription ? (
+        {!user ? (
+          <div className="border border-amber-200 bg-amber-50 p-4 rounded-md mb-4">
+            <p className="text-sm text-amber-800">
+              Please log in to enable push notifications.
+            </p>
+          </div>
+        ) : !subscription ? (
           <div className="border border-amber-200 bg-amber-50 p-4 rounded-md mb-4">
             <p className="text-sm text-amber-800 mb-3">
               Push notifications are {permissionStatus === 'granted' ? 'enabled in your browser' : 'not enabled yet'}.
