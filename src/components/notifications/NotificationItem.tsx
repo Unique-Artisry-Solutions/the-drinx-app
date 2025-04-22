@@ -1,10 +1,10 @@
 
 import React from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { Check, AlertCircle, Bell } from 'lucide-react';
+import { Check, AlertCircle, Bell, TestTube } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Notification } from '@/types/NotificationTypes';
+import { Notification, NotificationType } from '@/types/NotificationTypes';
 
 interface NotificationItemProps {
   notification: Notification;
@@ -29,6 +29,11 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onMar
   };
 
   const getIcon = () => {
+    // Check if this is a test notification
+    if (notification.category_id === 'test') {
+      return <TestTube className="h-5 w-5 text-purple-500" />;
+    }
+
     switch (notification.priority) {
       case 'urgent':
       case 'high':

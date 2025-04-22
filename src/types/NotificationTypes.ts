@@ -1,4 +1,3 @@
-
 export interface PushSubscription {
   id?: string;
   user_id: string;
@@ -37,4 +36,12 @@ export interface Notification {
   is_read: boolean;
   created_at: string;
   updated_at: string;
+}
+
+export type NotificationType = 'test' | 'system' | 'promotional' | 'alert';
+
+export interface NotificationCategory {
+  id: string;
+  name: string;
+  description?: string;
 }
