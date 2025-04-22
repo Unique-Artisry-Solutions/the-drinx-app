@@ -9,15 +9,27 @@ export const useServiceWorkerRegistration = () => {
   const { registerWorker } = useRegistrationProcess();
   const [isRegistering, setIsRegistering] = useState(false);
 
+  const cleanupExistingRegistrations = async () => {
+    if ('serviceWorker' in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(
+        registrations.map(registration => registration.unregister())
+      );
+      console.log('Cleaned up existing service worker registrations');
+    }
+  };
+
   const registerServiceWorker = async () => {
     try {
       setIsRegistering(true);
       setRegistrationError(null);
       
-      console.log('Starting service worker registration...');
+      // Clean up existing registrations first
+      await cleanupExistingRegistrations();
+      
+      console.log('Starting fresh service worker registration...');
       await registerWorker();
       
-      // Show success toast
       debouncedToast.success(
         "Service Worker Ready", 
         "Notification service worker is now active"
@@ -29,7 +41,6 @@ export const useServiceWorkerRegistration = () => {
       const errorMessage = error instanceof Error ? error.message : 'Failed to register service worker';
       setRegistrationError(errorMessage);
       
-      // Show error toast
       debouncedToast.error(
         "Service Worker Error", 
         errorMessage
@@ -45,6 +56,7 @@ export const useServiceWorkerRegistration = () => {
     registerServiceWorker,
     registrationError,
     setRegistrationError,
-    isRegistering
+    isRegistering,
+    cleanupExistingRegistrations
   };
 };

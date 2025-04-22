@@ -1,30 +1,76 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useServiceWorkerCheck } from './useServiceWorkerCheck';
 import { debouncedToast } from '@/utils/debouncedToast';
 
 export const useServiceWorkerStatus = () => {
   const [hasServiceWorker, setHasServiceWorker] = useState(false);
   const [permissionStatus, setPermissionStatus] = useState<NotificationPermission>('default');
+  const [lastPermissionCheck, setLastPermissionCheck] = useState<Date>(new Date());
   const { isCheckingServiceWorker, setIsCheckingServiceWorker, checkServiceWorkerSupport } = useServiceWorkerCheck();
 
-  // Check permission status
-  useEffect(() => {
+  const refreshPermissionStatus = useCallback(() => {
     if ('Notification' in window) {
-      setPermissionStatus(Notification.permission);
-      
-      // Log current permission state
-      console.log('Current notification permission:', Notification.permission);
+      const currentPermission = Notification.permission;
+      setPermissionStatus(currentPermission);
+      setLastPermissionCheck(new Date());
+      console.log('Permission status refreshed:', currentPermission, new Date().toISOString());
+      return currentPermission;
     }
+    return null;
   }, []);
 
-  // Check service worker status on mount
+  // Watch for permission changes
+  useEffect(() => {
+    const handlePermissionChange = () => {
+      console.log('Permission change detected, refreshing status...');
+      refreshPermissionStatus();
+      
+      // Clear existing service worker registrations on permission change
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(registrations => {
+          registrations.forEach(registration => {
+            registration.unregister().then(success => {
+              console.log('Service worker unregistered:', success);
+              setHasServiceWorker(false);
+            });
+          });
+        });
+      }
+    };
+
+    // Set up permission change monitoring
+    if ('permissions' in navigator) {
+      navigator.permissions.query({ name: 'notifications' as PermissionName })
+        .then(status => {
+          status.onchange = handlePermissionChange;
+        })
+        .catch(error => {
+          console.error('Error setting up permission monitoring:', error);
+        });
+    }
+
+    // Initial permission check
+    refreshPermissionStatus();
+
+    return () => {
+      // Cleanup permission monitoring
+      if ('permissions' in navigator) {
+        navigator.permissions.query({ name: 'notifications' as PermissionName })
+          .then(status => {
+            status.onchange = null;
+          })
+          .catch(() => {});
+      }
+    };
+  }, [refreshPermissionStatus]);
+
+  // Check service worker and permission status on mount
   useEffect(() => {
     const checkWorkerStatus = async () => {
       try {
         await checkServiceWorkerSupport();
         
-        // Check if we have an active service worker
         if ('serviceWorker' in navigator) {
           const registrations = await navigator.serviceWorker.getRegistrations();
           const isActive = registrations.some(registration => 
@@ -34,7 +80,7 @@ export const useServiceWorkerStatus = () => {
           setHasServiceWorker(isActive);
           console.log('Service worker status check:', isActive ? 'Active' : 'Not active');
           
-          // If permission was granted but we have no service worker, show a notification
+          // Show notification if permission granted but no service worker
           if (Notification.permission === 'granted' && !isActive) {
             debouncedToast.info(
               "Service Worker Required", 
@@ -51,18 +97,7 @@ export const useServiceWorkerStatus = () => {
     };
     
     checkWorkerStatus();
-  }, [checkServiceWorkerSupport, setIsCheckingServiceWorker]);
-
-  // Function to manually refresh permission status
-  const refreshPermissionStatus = () => {
-    if ('Notification' in window) {
-      const currentPermission = Notification.permission;
-      setPermissionStatus(currentPermission);
-      console.log('Permission status refreshed:', currentPermission);
-      return currentPermission;
-    }
-    return null;
-  };
+  }, [checkServiceWorkerSupport, setIsCheckingServiceWorker, permissionStatus]);
 
   return {
     hasServiceWorker,
@@ -71,6 +106,7 @@ export const useServiceWorkerStatus = () => {
     setIsCheckingServiceWorker,
     checkServiceWorkerSupport,
     permissionStatus,
-    refreshPermissionStatus
+    refreshPermissionStatus,
+    lastPermissionCheck
   };
 };

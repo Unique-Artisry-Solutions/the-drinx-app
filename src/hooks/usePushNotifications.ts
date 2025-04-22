@@ -17,7 +17,21 @@ export function usePushNotifications() {
   const vapidRetryCount = useRef(0);
   const maxVapidRetries = 3;
   
-  // Check if browser supports push notifications
+  const resetSubscriptionState = useCallback(async () => {
+    setSubscription(null);
+    setIsLoading(false);
+    setError(null);
+    
+    if ('serviceWorker' in navigator) {
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.getSubscription();
+      if (subscription) {
+        await subscription.unsubscribe();
+        console.log('Existing push subscription cleared');
+      }
+    }
+  }, []);
+
   const checkPushSupport = useCallback(async (): Promise<boolean> => {
     try {
       const hasServiceWorkerSupport = 'serviceWorker' in navigator;
@@ -38,8 +52,7 @@ export function usePushNotifications() {
       return false;
     }
   }, []);
-  
-  // Check current permission status and update state
+
   const checkPermissions = useCallback(() => {
     if ('Notification' in window) {
       const currentPermission = Notification.permission;
@@ -49,8 +62,7 @@ export function usePushNotifications() {
     }
     return null;
   }, []);
-  
-  // Get VAPID public key with retry logic
+
   const getVapidPublicKey = async (): Promise<string> => {
     for (let i = 0; i <= maxVapidRetries; i++) {
       try {
@@ -75,21 +87,17 @@ export function usePushNotifications() {
         console.error(`VAPID key retrieval attempt ${i + 1} failed:`, error);
         vapidRetryCount.current = i + 1;
         
-        // If this is the last attempt, throw the error
         if (i === maxVapidRetries) {
           throw error;
         }
         
-        // Otherwise wait with exponential backoff before retrying
         await new Promise(r => setTimeout(r, Math.min(1000 * Math.pow(2, i), 5000)));
       }
     }
     
-    // This should never be reached due to the throw in the loop
     throw new Error('Failed to retrieve VAPID public key after retries');
   };
-  
-  // Check if service worker is registered and active
+
   const checkServiceWorker = async (): Promise<boolean> => {
     try {
       if (!('serviceWorker' in navigator)) return false;
@@ -97,7 +105,6 @@ export function usePushNotifications() {
       const registrations = await navigator.serviceWorker.getRegistrations();
       if (registrations.length === 0) return false;
       
-      // Look for our specific service worker
       for (const registration of registrations) {
         if (registration.active && registration.active.scriptURL.includes('service-worker.js')) {
           return true;
@@ -110,8 +117,7 @@ export function usePushNotifications() {
       return false;
     }
   };
-  
-  // Register service worker
+
   const registerServiceWorker = async (): Promise<ServiceWorkerRegistration | null> => {
     try {
       return await navigator.serviceWorker.register('/service-worker.js');
@@ -120,14 +126,12 @@ export function usePushNotifications() {
       return null;
     }
   };
-  
-  // Save subscription to database
+
   const saveSubscription = async (
     pushSubscription: PushSubscriptionJSON, 
     userId: string
   ): Promise<PushSubscription | null> => {
     try {
-      // Get the keys from the subscription
       const p256dhKey = pushSubscription.keys?.p256dh;
       const authKey = pushSubscription.keys?.auth;
       
@@ -159,14 +163,14 @@ export function usePushNotifications() {
       return null;
     }
   };
-  
-  // Subscribe to push notifications
+
   const subscribeToNotifications = async (): Promise<void> => {
     try {
       setIsLoading(true);
       setError(null);
       
-      // Check if push notifications are supported
+      await resetSubscriptionState();
+      
       const isPushSupported = await checkPushSupport();
       if (!isPushSupported) {
         setIsSupported(false);
@@ -175,52 +179,30 @@ export function usePushNotifications() {
       
       setIsSupported(true);
       
-      // Check current permission status before prompting
       const currentPermission = checkPermissions();
+      console.log('Current permission status:', currentPermission);
       
-      // If permission is already denied, show guidance
       if (currentPermission === 'denied') {
         throw new Error('Notification permission denied: Please enable notifications in your browser settings');
       }
       
-      // Only show permission prompt if permission is default (not yet decided)
-      if (currentPermission === 'default') {
-        setShowPermissionPrompt(true);
-        // Request notification permission
-        const permission = await Notification.requestPermission();
-        setPermissionStatus(permission);
-        setShowPermissionPrompt(false);
-        
-        if (permission !== 'granted') {
-          throw new Error(`Notification permission ${permission}: Please enable notifications in your browser settings`);
-        }
-      }
-      
-      // Check if service worker is registered or register a new one
       const hasRegisteredServiceWorker = await checkServiceWorker();
       setHasServiceWorker(hasRegisteredServiceWorker);
       
-      // Wait for service worker to be ready
       const registration = await navigator.serviceWorker.ready;
       console.log('Service worker ready:', registration);
       
-      // Get user ID
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         throw new Error('User not authenticated');
       }
       
-      // Fetch VAPID public key with retries
       const vapidPublicKey = await getVapidPublicKey();
-      
-      // Convert base64 string to Uint8Array for applicationServerKey
       const applicationServerKey = urlB64ToUint8Array(vapidPublicKey);
       
-      // Check for existing subscription
       const existingSubscription = await registration.pushManager.getSubscription();
       console.log('Existing subscription:', existingSubscription);
       
-      // Use existing subscription or create a new one
       let pushSubscription;
       if (existingSubscription) {
         pushSubscription = existingSubscription;
@@ -242,7 +224,6 @@ export function usePushNotifications() {
         }
       }
       
-      // Save subscription to database
       const savedSubscription = await saveSubscription(
         pushSubscription.toJSON(), 
         user.id
@@ -269,33 +250,28 @@ export function usePushNotifications() {
       setIsLoading(false);
     }
   };
-  
-  // Initialize push notifications
+
   useEffect(() => {
     let isMounted = true;
     
     const init = async () => {
       try {
-        // Check if service worker is supported
         const isSupported = await checkPushSupport();
         
         if (!isMounted) return;
         setIsSupported(isSupported);
         
         if (isSupported) {
-          // Get current permission status
           const permission = checkPermissions();
           if (!permission) return;
           
-          // Check if service worker is active
-          const hasActiveWorker = await checkServiceWorker();
-          setHasServiceWorker(hasActiveWorker);
+          if (permission !== permissionStatus) {
+            await resetSubscriptionState();
+          }
           
-          // Check if user is authenticated
           const { data: { user } } = await supabase.auth.getUser();
           
           if (user && permission === 'granted') {
-            // Check for existing subscription
             const { data: subscriptions } = await supabase
               .from('push_notification_subscriptions')
               .select('*')
@@ -325,7 +301,7 @@ export function usePushNotifications() {
     return () => {
       isMounted = false;
     };
-  }, [checkPushSupport, checkPermissions, setHasServiceWorker]);
+  }, [checkPushSupport, checkPermissions, permissionStatus, resetSubscriptionState]);
   
   return {
     isSupported,
@@ -335,6 +311,7 @@ export function usePushNotifications() {
     error,
     subscribeToNotifications,
     showPermissionPrompt,
-    checkPermissions
+    checkPermissions,
+    resetSubscriptionState
   };
 }
