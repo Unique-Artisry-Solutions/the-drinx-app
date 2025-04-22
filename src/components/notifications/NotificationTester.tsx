@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,10 +16,8 @@ const NotificationTester = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const { executeWithRetry } = useRetry();
-  // New state to track if retrying is in progress
   const [isRetrying, setIsRetrying] = useState(false);
 
-  // Enhanced service worker check with retry capability
   const checkServiceWorker = async () => {
     try {
       if (!('serviceWorker' in navigator)) {
@@ -35,7 +32,6 @@ const NotificationTester = () => {
       
       if (!hasActiveWorker) {
         await navigator.serviceWorker.register('/service-worker.js');
-        // Wait for the service worker to be ready
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
       
@@ -43,27 +39,25 @@ const NotificationTester = () => {
     } catch (error) {
       console.error('Error checking/registering service worker:', error);
       setHasServiceWorker(false);
-      throw error; // Allow retry mechanism to catch this
+      throw error;
     } finally {
       setIsCheckingServiceWorker(false);
     }
   };
 
-  // Set up service worker with retry
   useEffect(() => {
     const setupServiceWorker = async () => {
       setIsRetrying(true);
       try {
-        await executeWithRetry(checkServiceWorker, {
-          retries: 3,
-          onError: (error) => {
-            console.error('Service worker setup failed:', error);
-            toast({
-              title: "Service Worker Error",
-              description: "Failed to set up notifications. Please refresh the page.",
-              variant: "destructive"
-            });
-          },
+        await executeWithRetry(async () => {
+          await checkServiceWorker();
+        });
+      } catch (error) {
+        console.error('Service worker setup failed after multiple attempts:', error);
+        toast({
+          title: "Service Worker Error",
+          description: "Failed to set up notifications. Please refresh the page.",
+          variant: "destructive"
         });
       } finally {
         setIsRetrying(false);
