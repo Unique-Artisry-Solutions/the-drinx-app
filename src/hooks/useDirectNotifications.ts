@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth';
@@ -18,7 +17,7 @@ export function useDirectNotifications() {
     setIsSupported(hasNotificationSupport);
     
     if (hasNotificationSupport) {
-      setPermissionStatus(Notification.permission);
+      setPermissionStatus(Notification.permission as NotificationPermission);
     }
   }, []);
 
@@ -36,7 +35,7 @@ export function useDirectNotifications() {
       const permission = await Notification.requestPermission();
       console.log('Permission response:', permission);
       
-      setPermissionStatus(permission);
+      setPermissionStatus(permission as NotificationPermission);
       setLastCheck(new Date());
       
       if (permission === 'granted') {
@@ -136,7 +135,6 @@ export function useDirectNotifications() {
       setIsLoading(true);
       setError(null);
       
-      // Clear service worker registrations
       if ('serviceWorker' in navigator) {
         const registrations = await navigator.serviceWorker.getRegistrations();
         await Promise.all(
@@ -145,7 +143,6 @@ export function useDirectNotifications() {
         console.log('All service worker registrations cleared');
       }
       
-      // Re-check permissions
       checkPermission();
       
       toast({
