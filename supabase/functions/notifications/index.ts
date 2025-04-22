@@ -1,6 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.0"
+import webPush from "https://esm.sh/web-push@3.6.6"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -92,19 +93,90 @@ async function handleCreateNotification(params) {
 
   if (error) throw error
 
-  // For push notifications, we'd normally use web-push here, but since that's causing issues
-  // We'll update the UI to guide users to manually set their VAPID keys in Supabase
+  // Initialize push notification delivery status
+  let pushDeliveryStatus = { success: false, error: null, timestamp: new Date().toISOString() };
 
+  try {
+    // Get the push subscription for this user
+    const { data: subscriptions, error: subError } = await supabaseClient
+      .from('push_notification_subscriptions')
+      .select('*')
+      .eq('user_id', params.recipientId)
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    if (subError) throw subError;
+    
+    if (subscriptions && subscriptions.length > 0) {
+      const subscription = subscriptions[0];
+      
+      // Configure web-push with VAPID details
+      const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY');
+      const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY');
+      const vapidMailto = Deno.env.get('VAPID_MAILTO') || 'mailto:test@example.com';
+      
+      if (!vapidPublicKey || !vapidPrivateKey) {
+        throw new Error('VAPID keys not configured');
+      }
+
+      webPush.setVapidDetails(vapidMailto, vapidPublicKey, vapidPrivateKey);
+      
+      // Convert our stored base64 keys back to Uint8Arrays
+      const p256dhBuffer = Uint8Array.from(atob(subscription.p256dh), c => c.charCodeAt(0));
+      const authBuffer = Uint8Array.from(atob(subscription.auth), c => c.charCodeAt(0));
+      
+      // Create the proper subscription object format for web-push
+      const pushSubscription = {
+        endpoint: subscription.endpoint,
+        keys: {
+          p256dh: Buffer.from(p256dhBuffer).toString('base64'),
+          auth: Buffer.from(authBuffer).toString('base64')
+        }
+      };
+      
+      // Send the notification
+      const pushPayload = JSON.stringify({
+        id: notification.id,
+        title: notification.title,
+        content: notification.content,
+        priority: notification.priority,
+        metadata: notification.metadata,
+        created_at: notification.created_at
+      });
+      
+      // Send push notification
+      await webPush.sendNotification(pushSubscription, pushPayload);
+      
+      // Update success status
+      pushDeliveryStatus = { 
+        success: true, 
+        timestamp: new Date().toISOString() 
+      };
+      
+      console.log('Push notification sent successfully');
+    } else {
+      pushDeliveryStatus.error = 'No subscription found for user';
+      console.log('No push subscription found for user');
+    }
+  } catch (pushError) {
+    console.error('Error sending push notification:', pushError);
+    pushDeliveryStatus.error = pushError.message || 'Unknown error sending push notification';
+  }
+
+  // Update notification record with delivery status
   await supabaseClient
     .from('notifications')
     .update({
-      delivery_status: { api_response: 'Notification created but push delivery skipped' },
+      delivery_status: { push: pushDeliveryStatus },
       delivery_attempts: notification.delivery_attempts + 1
     })
     .eq('id', notification.id);
 
   return new Response(
-    JSON.stringify({ data: notification }),
+    JSON.stringify({ 
+      data: notification,
+      push_status: pushDeliveryStatus
+    }),
     {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     }
