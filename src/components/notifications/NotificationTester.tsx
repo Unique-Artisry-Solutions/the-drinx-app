@@ -3,32 +3,67 @@ import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { usePushNotifications } from '@/hooks/usePushNotifications';
-import { Bell, BellOff, BellRing } from 'lucide-react';
+import { Bell, BellOff, BellRing, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/auth';
+import { useRetry } from '@/hooks/useRetry';
 
 const NotificationTester = () => {
   const { isSupported, subscription, permissionStatus, isLoading, subscribeToNotifications } = usePushNotifications();
   const [isSending, setIsSending] = useState(false);
   const [hasServiceWorker, setHasServiceWorker] = useState(false);
+  const [isCheckingServiceWorker, setIsCheckingServiceWorker] = useState(true);
   const { toast } = useToast();
   const { user } = useAuth();
+  const { retry, isRetrying } = useRetry();
 
-  // Check if service worker is active
-  useEffect(() => {
-    const checkServiceWorker = async () => {
-      try {
-        if (!('serviceWorker' in navigator)) return;
-        
-        const registrations = await navigator.serviceWorker.getRegistrations();
-        setHasServiceWorker(registrations.length > 0);
-      } catch (error) {
-        console.error('Error checking service worker:', error);
+  // Enhanced service worker check with retry capability
+  const checkServiceWorker = async () => {
+    try {
+      if (!('serviceWorker' in navigator)) {
+        setHasServiceWorker(false);
+        return;
       }
+      
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      const hasActiveWorker = registrations.some(registration => 
+        registration.active && registration.active.scriptURL.includes('service-worker.js')
+      );
+      
+      if (!hasActiveWorker) {
+        await navigator.serviceWorker.register('/service-worker.js');
+        // Wait for the service worker to be ready
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+      
+      setHasServiceWorker(true);
+    } catch (error) {
+      console.error('Error checking/registering service worker:', error);
+      setHasServiceWorker(false);
+      throw error; // Allow retry mechanism to catch this
+    } finally {
+      setIsCheckingServiceWorker(false);
+    }
+  };
+
+  // Set up service worker with retry
+  useEffect(() => {
+    const setupServiceWorker = async () => {
+      await retry(checkServiceWorker, {
+        retries: 3,
+        onError: (error) => {
+          console.error('Service worker setup failed:', error);
+          toast({
+            title: "Service Worker Error",
+            description: "Failed to set up notifications. Please refresh the page.",
+            variant: "destructive"
+          });
+        },
+      });
     };
-    
-    checkServiceWorker();
+
+    setupServiceWorker();
   }, []);
 
   const handleTestNotification = async () => {
@@ -86,7 +121,7 @@ const NotificationTester = () => {
       console.error('Error sending test notification:', error);
       toast({
         title: "Notification Error",
-        description: error instanceof Error ? error.message : "Failed to send test notification. Please ensure you're logged in.",
+        description: error instanceof Error ? error.message : "Failed to send test notification. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -101,6 +136,22 @@ const NotificationTester = () => {
           <CardTitle>Push Notifications</CardTitle>
           <CardDescription>
             Push notifications are not supported in your browser.
+          </CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
+
+  if (isCheckingServiceWorker || isRetrying) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Push Notifications</CardTitle>
+          <CardDescription>
+            <div className="flex items-center gap-2">
+              <RefreshCw className="h-4 w-4 animate-spin" />
+              Setting up notifications...
+            </div>
           </CardDescription>
         </CardHeader>
       </Card>
@@ -126,11 +177,11 @@ const NotificationTester = () => {
           <div className="border border-amber-200 bg-amber-50 p-4 rounded-md mb-4">
             <p className="text-sm text-amber-800 mb-3">
               Push notifications are {permissionStatus === 'granted' ? 'enabled in your browser' : 'not enabled yet'}.
-              {!hasServiceWorker && ' Service worker needs to be registered.'}
+              {!hasServiceWorker && ' Notification service needs to be initialized.'}
             </p>
             <Button 
               onClick={subscribeToNotifications}
-              disabled={isLoading}
+              disabled={isLoading || !hasServiceWorker}
               className="bg-amber-500 hover:bg-amber-600 text-white"
             >
               <BellRing className="h-4 w-4 mr-2" />
