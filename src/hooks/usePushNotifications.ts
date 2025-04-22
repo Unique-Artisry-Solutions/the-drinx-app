@@ -9,6 +9,7 @@ export function usePushNotifications() {
   const [isSupported, setIsSupported] = useState(false);
   const [permissionStatus, setPermissionStatus] = useState<NotificationPermission>('default');
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   
   // Convert ArrayBuffer to Base64 string
@@ -91,11 +92,12 @@ export function usePushNotifications() {
   const subscribeToNotifications = async (): Promise<void> => {
     try {
       setIsLoading(true);
+      setError(null);
       
       // Check if service worker is supported
       if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
         setIsSupported(false);
-        return;
+        throw new Error('Push notifications are not supported in this browser');
       }
       
       setIsSupported(true);
@@ -105,7 +107,7 @@ export function usePushNotifications() {
       setPermissionStatus(permission);
       
       if (permission !== 'granted') {
-        return;
+        throw new Error('Notification permission denied');
       }
       
       // Check if service worker is registered
@@ -127,17 +129,18 @@ export function usePushNotifications() {
       }
       
       // Fetch VAPID public key
-      const { data: { publicKey }, error: keyError } = await supabase
+      const { data, error: keyError } = await supabase
         .functions.invoke('notifications', {
           body: { action: 'getVapidKey' }
         });
       
-      if (keyError || !publicKey) {
+      if (keyError || !data || !data.publicKey) {
+        console.error('VAPID key error:', keyError || 'No public key returned');
         throw new Error('Failed to retrieve VAPID public key');
       }
       
       // Convert base64 string to Uint8Array for applicationServerKey
-      const vapidPublicKey = urlB64ToUint8Array(publicKey);
+      const vapidPublicKey = urlB64ToUint8Array(data.publicKey);
       
       // Subscribe to push notifications
       const existingSubscription = await registration.pushManager.getSubscription();
@@ -166,6 +169,7 @@ export function usePushNotifications() {
       }
     } catch (error) {
       console.error('Push Notification Setup Error:', error);
+      setError(error instanceof Error ? error.message : "Failed to set up push notifications");
       toast({
         title: "Notification Error",
         description: error instanceof Error ? error.message : "Failed to set up push notifications",
@@ -212,6 +216,11 @@ export function usePushNotifications() {
             }
           }
         }
+      } catch (err) {
+        if (isMounted) {
+          setError(err instanceof Error ? err.message : "Failed to initialize push notifications");
+          console.error('Error initializing push notifications:', err);
+        }
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -231,6 +240,7 @@ export function usePushNotifications() {
     subscription,
     permissionStatus,
     isLoading,
+    error,
     subscribeToNotifications
   };
 }
