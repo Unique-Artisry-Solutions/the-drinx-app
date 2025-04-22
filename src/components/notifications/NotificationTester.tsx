@@ -16,7 +16,9 @@ const NotificationTester = () => {
   const [isCheckingServiceWorker, setIsCheckingServiceWorker] = useState(true);
   const { toast } = useToast();
   const { user } = useAuth();
-  const { retry, isRetrying } = useRetry();
+  const { executeWithRetry } = useRetry();
+  // New state to track if retrying is in progress
+  const [isRetrying, setIsRetrying] = useState(false);
 
   // Enhanced service worker check with retry capability
   const checkServiceWorker = async () => {
@@ -50,17 +52,22 @@ const NotificationTester = () => {
   // Set up service worker with retry
   useEffect(() => {
     const setupServiceWorker = async () => {
-      await retry(checkServiceWorker, {
-        retries: 3,
-        onError: (error) => {
-          console.error('Service worker setup failed:', error);
-          toast({
-            title: "Service Worker Error",
-            description: "Failed to set up notifications. Please refresh the page.",
-            variant: "destructive"
-          });
-        },
-      });
+      setIsRetrying(true);
+      try {
+        await executeWithRetry(checkServiceWorker, {
+          retries: 3,
+          onError: (error) => {
+            console.error('Service worker setup failed:', error);
+            toast({
+              title: "Service Worker Error",
+              description: "Failed to set up notifications. Please refresh the page.",
+              variant: "destructive"
+            });
+          },
+        });
+      } finally {
+        setIsRetrying(false);
+      }
     };
 
     setupServiceWorker();
