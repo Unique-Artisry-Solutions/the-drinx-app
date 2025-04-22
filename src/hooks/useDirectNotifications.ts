@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth';
@@ -38,6 +39,7 @@ export function useDirectNotifications() {
       setPermissionStatus(permission as NotificationPermission);
       setLastCheck(new Date());
       
+      // Using the proper type check to compare string literals
       if (permission === 'granted') {
         toast({
           title: "Notification Access Granted",
@@ -73,7 +75,7 @@ export function useDirectNotifications() {
     if ('Notification' in window) {
       const currentPermission = Notification.permission;
       console.log('Current notification permission:', currentPermission);
-      setPermissionStatus(currentPermission);
+      setPermissionStatus(currentPermission as NotificationPermission);
       setLastCheck(new Date());
       return currentPermission;
     }
@@ -89,6 +91,7 @@ export function useDirectNotifications() {
         throw new Error('Notifications are not supported in this browser');
       }
       
+      // Using strict comparison with string literals
       if (permissionStatus !== 'granted') {
         const granted = await requestPermission();
         if (!granted) {
