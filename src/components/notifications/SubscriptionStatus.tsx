@@ -1,8 +1,4 @@
 
-import React from 'react';
-import { BellRing } from 'lucide-react';
-import { Button } from "@/components/ui/button";
-
 interface SubscriptionStatusProps {
   isLoading: boolean;
   hasServiceWorker: boolean;
@@ -24,11 +20,11 @@ export const SubscriptionStatus = ({
       </p>
       <Button 
         onClick={subscribeToNotifications}
-        disabled={isLoading || !hasServiceWorker}
+        disabled={isLoading}
         className="bg-amber-500 hover:bg-amber-600 text-white"
       >
         <BellRing className="h-4 w-4 mr-2" />
-        {isLoading ? 'Enabling...' : 'Enable Notifications'}
+        {isLoading ? 'Setting up...' : 'Enable Notifications'}
       </Button>
     </div>
   );

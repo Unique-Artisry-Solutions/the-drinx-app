@@ -4,7 +4,7 @@ import { useNotificationToasts } from './notifications/useNotificationToasts';
 import { useAuth } from '@/contexts/auth';
 
 export const useTestNotification = () => {
-  const { isSending, sendNotification } = useNotificationSender();
+  const { isSending, isRegistering, sendNotification } = useNotificationSender();
   const { showSuccessToast, showErrorToast, showAuthErrorToast } = useNotificationToasts();
   const { user } = useAuth();
 
@@ -28,7 +28,7 @@ export const useTestNotification = () => {
   };
 
   return {
-    isSending,
+    isSending: isSending || isRegistering,
     sendTestNotification
   };
 };
