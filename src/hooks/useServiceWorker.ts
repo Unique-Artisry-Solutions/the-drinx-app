@@ -1,42 +1,13 @@
 
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useRetry } from '@/hooks/useRetry';
-import { useServiceWorkerRegistration } from './service-worker/useServiceWorkerRegistration';
-import { useServiceWorkerStatus } from './service-worker/useServiceWorkerStatus';
+import { useRetryState } from './service-worker/useRetryState';
+import { useServiceWorkerSetup } from './service-worker/useServiceWorkerSetup';
 
 export const useServiceWorker = () => {
-  const [isRetrying, setIsRetrying] = useState(false);
+  const { isRetrying, setIsRetrying } = useRetryState();
   const { executeWithRetry } = useRetry();
-  
-  const {
-    hasServiceWorker,
-    setHasServiceWorker,
-    isCheckingServiceWorker,
-    setIsCheckingServiceWorker,
-    checkServiceWorkerSupport
-  } = useServiceWorkerStatus();
-
-  const {
-    registerServiceWorker,
-    registrationError,
-    setRegistrationError
-  } = useServiceWorkerRegistration();
-
-  const checkServiceWorker = async () => {
-    try {
-      await checkServiceWorkerSupport();
-      await registerServiceWorker();
-      console.log('Service worker check completed successfully');
-      setHasServiceWorker(true);
-    } catch (error) {
-      console.error('Error checking/registering service worker:', error);
-      setHasServiceWorker(false);
-      setRegistrationError(error instanceof Error ? error.message : 'Failed to setup service worker');
-      throw error;
-    } finally {
-      setIsCheckingServiceWorker(false);
-    }
-  };
+  const { checkServiceWorker, hasServiceWorker, isCheckingServiceWorker, registrationError } = useServiceWorkerSetup();
 
   useEffect(() => {
     const setupServiceWorker = async () => {

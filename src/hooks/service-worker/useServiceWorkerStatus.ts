@@ -1,25 +1,10 @@
 
-import { useState } from 'react';
+import { useServiceWorkerCheck } from './useServiceWorkerCheck';
+import { useServiceWorkerState } from './useServiceWorkerState';
 
 export const useServiceWorkerStatus = () => {
-  const [hasServiceWorker, setHasServiceWorker] = useState(false);
-  const [isCheckingServiceWorker, setIsCheckingServiceWorker] = useState(true);
-
-  const checkServiceWorkerSupport = async () => {
-    try {
-      console.log('Checking service worker support...');
-      
-      if (!('serviceWorker' in navigator)) {
-        throw new Error('Service Worker not supported in this browser');
-      }
-      
-      return true;
-    } catch (error) {
-      console.error('Service worker not supported:', error);
-      setHasServiceWorker(false);
-      throw error;
-    }
-  };
+  const { isCheckingServiceWorker, setIsCheckingServiceWorker, checkServiceWorkerSupport } = useServiceWorkerCheck();
+  const { hasServiceWorker, setHasServiceWorker } = useServiceWorkerState();
 
   return {
     hasServiceWorker,
