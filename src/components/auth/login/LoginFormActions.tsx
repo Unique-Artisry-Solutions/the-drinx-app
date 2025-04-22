@@ -8,7 +8,7 @@ interface LoginFormActionsProps {
   isLoading: boolean;
   isSubmitting: boolean;
   isAdminLogin: boolean;
-  userType: 'individual' | 'establishment';
+  userType: 'individual' | 'establishment' | 'promoter';
   onClose?: () => void;
   onBypassLogin?: (type: 'individual' | 'establishment' | 'admin' | 'promoter') => void;
 }
@@ -26,7 +26,10 @@ const LoginFormActions: React.FC<LoginFormActionsProps> = ({
       <AuthButton
         type="submit"
         isLoading={isLoading || isSubmitting}
-        className={`w-full ${isAdminLogin ? 'bg-purple-600 hover:bg-purple-700' : userType === 'individual' ? 'bg-spiritless-pink hover:bg-spiritless-pink/90' : 'bg-spiritless-green hover:bg-spiritless-green/90'} text-white`}
+        className={`w-full ${isAdminLogin ? 'bg-purple-600 hover:bg-purple-700' : 
+          userType === 'individual' ? 'bg-spiritless-pink hover:bg-spiritless-pink/90' : 
+          userType === 'promoter' ? 'bg-purple-500 hover:bg-purple-600' : 
+          'bg-spiritless-green hover:bg-spiritless-green/90'} text-white`}
       >
         {isLoading || isSubmitting ? 'Signing in...' : isAdminLogin ? 'Admin Login' : 'Login'}
       </AuthButton>
