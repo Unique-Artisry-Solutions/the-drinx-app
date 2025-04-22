@@ -13,7 +13,7 @@ export function usePushNotifications() {
   const [error, setError] = useState<string | null>(null);
   const [showPermissionPrompt, setShowPermissionPrompt] = useState(false);
   const { toast } = useToast();
-  const { hasServiceWorker, setHasServiceWorker } = useServiceWorkerStatus();
+  const { hasServiceWorker, setHasServiceWorker, refreshPermissionStatus } = useServiceWorkerStatus();
   const vapidRetryCount = useRef(0);
   const maxVapidRetries = 3;
   
@@ -37,6 +37,17 @@ export function usePushNotifications() {
       console.error('Error checking push support:', err);
       return false;
     }
+  }, []);
+  
+  // Check current permission status and update state
+  const checkPermissions = useCallback(() => {
+    if ('Notification' in window) {
+      const currentPermission = Notification.permission;
+      console.log('Checking permission status:', currentPermission);
+      setPermissionStatus(currentPermission);
+      return currentPermission;
+    }
+    return null;
   }, []);
   
   // Get VAPID public key with retry logic
@@ -163,15 +174,26 @@ export function usePushNotifications() {
       }
       
       setIsSupported(true);
-      setShowPermissionPrompt(true);
       
-      // Request notification permission
-      const permission = await Notification.requestPermission();
-      setPermissionStatus(permission);
-      setShowPermissionPrompt(false);
+      // Check current permission status before prompting
+      const currentPermission = checkPermissions();
       
-      if (permission !== 'granted') {
-        throw new Error(`Notification permission ${permission}: Please enable notifications in your browser settings`);
+      // If permission is already denied, show guidance
+      if (currentPermission === 'denied') {
+        throw new Error('Notification permission denied: Please enable notifications in your browser settings');
+      }
+      
+      // Only show permission prompt if permission is default (not yet decided)
+      if (currentPermission === 'default') {
+        setShowPermissionPrompt(true);
+        // Request notification permission
+        const permission = await Notification.requestPermission();
+        setPermissionStatus(permission);
+        setShowPermissionPrompt(false);
+        
+        if (permission !== 'granted') {
+          throw new Error(`Notification permission ${permission}: Please enable notifications in your browser settings`);
+        }
       }
       
       // Check if service worker is registered or register a new one
@@ -262,8 +284,8 @@ export function usePushNotifications() {
         
         if (isSupported) {
           // Get current permission status
-          const permission = Notification.permission;
-          setPermissionStatus(permission);
+          const permission = checkPermissions();
+          if (!permission) return;
           
           // Check if service worker is active
           const hasActiveWorker = await checkServiceWorker();
@@ -303,7 +325,7 @@ export function usePushNotifications() {
     return () => {
       isMounted = false;
     };
-  }, [checkPushSupport, setHasServiceWorker]);
+  }, [checkPushSupport, checkPermissions, setHasServiceWorker]);
   
   return {
     isSupported,
@@ -312,6 +334,7 @@ export function usePushNotifications() {
     isLoading,
     error,
     subscribeToNotifications,
-    showPermissionPrompt
+    showPermissionPrompt,
+    checkPermissions
   };
 }

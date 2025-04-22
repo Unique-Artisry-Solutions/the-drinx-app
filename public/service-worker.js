@@ -1,3 +1,4 @@
+
 console.log('Service Worker Loaded');
 
 // Debugging helper
@@ -9,12 +10,32 @@ const swLog = (message, data = {}) => {
 // Lifecycle events
 self.addEventListener('install', event => {
   swLog('Installing Service Worker');
-  self.skipWaiting(); // Ensures the service worker activates immediately
+  // Force activation
+  self.skipWaiting();
+  swLog('Skip waiting called - will activate immediately');
 });
 
 self.addEventListener('activate', event => {
   swLog('Service Worker activated');
-  return self.clients.claim(); // Take control of all clients
+  // Take control of all clients
+  event.waitUntil(
+    self.clients.claim()
+      .then(() => {
+        swLog('Successfully claimed all clients');
+        // Notify all clients that the service worker is ready
+        self.clients.matchAll().then(clients => {
+          clients.forEach(client => {
+            client.postMessage({
+              type: 'SW_ACTIVATED',
+              timestamp: new Date().toISOString()
+            });
+          });
+        });
+      })
+      .catch(err => {
+        swLog('Error claiming clients:', err);
+      })
+  );
 });
 
 // Push event handler
@@ -97,10 +118,19 @@ self.addEventListener('notificationclose', function(event) {
 
 // Add a message handler for debugging
 self.addEventListener('message', function(event) {
+  swLog('Received message in service worker', event.data);
+  
   if (event.data.action === 'checkServiceWorker') {
     swLog('Received checkServiceWorker message', event.data);
     event.ports[0].postMessage({
       status: 'active',
+      timestamp: new Date().toISOString()
+    });
+  } else if (event.data.action === 'ping') {
+    // Simple ping-pong to check if service worker is responsive
+    swLog('Ping received, sending pong');
+    event.ports[0].postMessage({
+      action: 'pong',
       timestamp: new Date().toISOString()
     });
   }

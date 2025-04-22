@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { BellRing, Info } from "lucide-react";
+import { BellRing, Info, RefreshCw } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface SubscriptionStatusProps {
@@ -8,13 +8,15 @@ interface SubscriptionStatusProps {
   hasServiceWorker: boolean;
   permissionStatus: NotificationPermission;
   subscribeToNotifications: () => Promise<void>;
+  refreshPermissions?: () => void;
 }
 
 export const SubscriptionStatus = ({
   isLoading,
   hasServiceWorker,
   permissionStatus,
-  subscribeToNotifications
+  subscribeToNotifications,
+  refreshPermissions
 }: SubscriptionStatusProps) => {
   const getStatusMessage = () => {
     if (permissionStatus === 'denied') {
@@ -48,9 +50,23 @@ export const SubscriptionStatus = ({
   return (
     <>
       <div className={`border ${getStatusColor()} p-4 rounded-md mb-4`}>
-        <p className="text-sm text-amber-800 mb-3">
-          {getStatusMessage()}
-        </p>
+        <div className="flex justify-between items-start mb-3">
+          <p className="text-sm text-amber-800">
+            {getStatusMessage()}
+          </p>
+          {refreshPermissions && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="p-1 h-7 w-7 -mt-1" 
+              onClick={refreshPermissions}
+              title="Refresh permission status"
+            >
+              <RefreshCw className="h-4 w-4" />
+              <span className="sr-only">Refresh</span>
+            </Button>
+          )}
+        </div>
         <Button 
           onClick={subscribeToNotifications}
           disabled={isLoading}
@@ -67,7 +83,7 @@ export const SubscriptionStatus = ({
         <Alert variant="destructive">
           <Info className="h-4 w-4" />
           <AlertDescription>
-            Notifications are currently blocked. To enable them, click the lock icon in your browser's address bar and change notification permission settings.
+            Notifications are currently blocked. To enable them, click the lock icon in your browser's address bar and change notification permission settings. After changing permissions, click the refresh button above.
           </AlertDescription>
         </Alert>
       )}

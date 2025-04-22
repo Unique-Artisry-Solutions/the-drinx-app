@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { useServiceWorker } from '@/hooks/useServiceWorker';
@@ -11,26 +10,50 @@ import { SubscriptionStatus } from './SubscriptionStatus';
 import { ActiveSubscription } from './ActiveSubscription';
 import { LoginPrompt } from './LoginPrompt';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, Settings } from "lucide-react";
+import { AlertCircle, Settings, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useServiceWorkerStatus } from '@/hooks/service-worker/useServiceWorkerStatus';
+import { debouncedToast } from '@/utils/debouncedToast';
 
 const NotificationTester = () => {
   const { 
     isSupported, 
     subscription, 
-    permissionStatus, 
+    permissionStatus,
     isLoading, 
-    error: setupError, 
+    error: setupError,
     subscribeToNotifications,
-    showPermissionPrompt 
+    showPermissionPrompt,
+    checkPermissions
   } = usePushNotifications();
   const { hasServiceWorker, isCheckingServiceWorker, registrationError, isRetrying } = useServiceWorker();
   const { isSending, sendTestNotification } = useTestNotification();
   const { user } = useAuth();
+  const { refreshPermissionStatus } = useServiceWorkerStatus();
+  const [permissionState, setPermissionState] = useState<NotificationPermission>(permissionStatus);
+  
+  const handleRefreshPermissions = () => {
+    const currentPermission = refreshPermissionStatus();
+    if (currentPermission) {
+      setPermissionState(currentPermission);
+      
+      if (checkPermissions) {
+        checkPermissions();
+      }
+      
+      debouncedToast.info(
+        "Permission Status", 
+        `Current notification permission: ${currentPermission}`
+      );
+    }
+  };
 
-  // Helper for permission guidance
+  useEffect(() => {
+    setPermissionState(permissionStatus);
+  }, [permissionStatus]);
+
   const renderPermissionGuidance = () => {
-    if (permissionStatus === 'denied') {
+    if (permissionState === 'denied') {
       return (
         <Alert variant="destructive" className="mb-4">
           <AlertCircle className="h-4 w-4" />
@@ -41,7 +64,7 @@ const NotificationTester = () => {
               <li>Click the lock/info icon in your browser's address bar</li>
               <li>Find "Notifications" in the site settings</li>
               <li>Change the setting to "Allow"</li>
-              <li>Refresh this page</li>
+              <li>Use the refresh button to update permission status</li>
             </ol>
           </AlertDescription>
         </Alert>
@@ -50,7 +73,6 @@ const NotificationTester = () => {
     return null;
   };
 
-  // Early return for unsupported browsers
   if (!isSupported) {
     return (
       <Card>
@@ -64,27 +86,35 @@ const NotificationTester = () => {
     );
   }
 
-  // Loading state
   if (isCheckingServiceWorker || isRetrying || isLoading) {
     return <NotificationLoading />;
   }
 
-  // Determine if there are errors to show
   const showError = registrationError || setupError;
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Push Notifications</CardTitle>
-        <CardDescription>
-          Test and manage push notification settings
-        </CardDescription>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle>Push Notifications</CardTitle>
+          <CardDescription>
+            Test and manage push notification settings
+          </CardDescription>
+        </div>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={handleRefreshPermissions}
+          title="Refresh permission status"
+          className="h-8 px-2"
+        >
+          <RefreshCw className="h-4 w-4 mr-1" />
+          Refresh Status
+        </Button>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Permission guidance */}
         {renderPermissionGuidance()}
         
-        {/* Permission prompt alert */}
         {showPermissionPrompt && (
           <Alert className="mb-4 bg-blue-50 border-blue-200">
             <AlertTitle>Permission Required</AlertTitle>
@@ -94,7 +124,6 @@ const NotificationTester = () => {
           </Alert>
         )}
         
-        {/* Error display */}
         {showError && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
@@ -110,8 +139,9 @@ const NotificationTester = () => {
           <SubscriptionStatus
             isLoading={isLoading}
             hasServiceWorker={hasServiceWorker}
-            permissionStatus={permissionStatus}
+            permissionStatus={permissionState}
             subscribeToNotifications={subscribeToNotifications}
+            refreshPermissions={handleRefreshPermissions}
           />
         ) : (
           <ActiveSubscription
@@ -120,7 +150,6 @@ const NotificationTester = () => {
           />
         )}
         
-        {/* Debugging info for development */}
         {process.env.NODE_ENV !== 'production' && (
           <div className="mt-8 pt-4 border-t border-gray-200">
             <h4 className="text-sm font-medium mb-2 flex items-center gap-1">
@@ -128,7 +157,7 @@ const NotificationTester = () => {
             </h4>
             <div className="text-xs space-y-1 text-gray-500">
               <p>Service Worker: {hasServiceWorker ? 'Active' : 'Inactive'}</p>
-              <p>Permission: {permissionStatus}</p>
+              <p>Permission: {permissionState}</p>
               <p>Subscription: {subscription ? 'Yes' : 'No'}</p>
             </div>
             <div className="mt-2">
