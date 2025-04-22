@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth';
@@ -36,7 +37,9 @@ export function useDirectNotifications() {
       setPermissionStatus(permission);
       setLastCheck(new Date());
 
-      if (permission === 'granted') {
+      // Using strict equality comparison for string literals
+      const isGranted = permission === 'granted';
+      if (isGranted) {
         toast({
           title: "Notification Access Granted",
           description: "You will now receive notifications from this application."
@@ -51,7 +54,7 @@ export function useDirectNotifications() {
         return false;
       }
 
-      return permission === 'granted';
+      return isGranted;
     } catch (err) {
       console.error('Error requesting notification permission:', err);
       setError(err instanceof Error ? err.message : 'Failed to request notification permission');
@@ -85,7 +88,9 @@ export function useDirectNotifications() {
         throw new Error('Notifications are not supported in this browser');
       }
 
-      if (permissionStatus !== 'granted') {
+      // Using strict equality comparison for string literals
+      const isGranted = permissionStatus === 'granted';
+      if (!isGranted) {
         const granted = await requestPermission();
         if (!granted) {
           throw new Error('Notification permission not granted');
