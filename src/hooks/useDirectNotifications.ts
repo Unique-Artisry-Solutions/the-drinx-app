@@ -30,14 +30,13 @@ export function useDirectNotifications() {
         throw new Error('This browser does not support notifications');
       }
 
-      console.log('Requesting notification permission...');
+      console.log('[DirectNotifications] Requesting notification permission...');
       const permission = await Notification.requestPermission();
-      console.log('Permission response:', permission);
+      console.log('[DirectNotifications] Permission response:', permission);
 
       setPermissionStatus(permission);
       setLastCheck(new Date());
 
-      // Using strict equality comparison for string literals
       const isGranted = permission === 'granted';
       if (isGranted) {
         toast({
@@ -56,7 +55,7 @@ export function useDirectNotifications() {
 
       return isGranted;
     } catch (err) {
-      console.error('Error requesting notification permission:', err);
+      console.error('[DirectNotifications] Error requesting notification permission:', err);
       setError(err instanceof Error ? err.message : 'Failed to request notification permission');
       toast({
         variant: "destructive",
@@ -72,7 +71,7 @@ export function useDirectNotifications() {
   const checkPermission = useCallback(() => {
     if ('Notification' in window) {
       const currentPermission = Notification.permission;
-      console.log('Current notification permission:', currentPermission);
+      console.log('[DirectNotifications] Current notification permission:', currentPermission);
       setPermissionStatus(currentPermission);
       setLastCheck(new Date());
       return currentPermission;
@@ -88,7 +87,6 @@ export function useDirectNotifications() {
         throw new Error('Notifications are not supported in this browser');
       }
 
-      // Using strict equality comparison for string literals
       const isGranted = permissionStatus === 'granted';
       if (!isGranted) {
         const granted = await requestPermission();
@@ -97,17 +95,40 @@ export function useDirectNotifications() {
         }
       }
 
-      const notification = new Notification('Test Notification', {
-        body: 'This is a direct browser notification test',
-        icon: '/favicon.ico',
-        tag: 'test-notification',
-        requireInteraction: true
-      });
+      // Additional diagnostic: check Notification API
+      if (!('Notification' in window)) {
+        throw new Error('Notification API missing at send time');
+      }
 
+      console.log('[DirectNotifications] Attempting to construct Notification instance...');
+      let notification;
+      try {
+        notification = new Notification('Test Notification', {
+          body: 'This is a direct browser notification test',
+          icon: '/favicon.ico',
+          tag: 'test-notification',
+          requireInteraction: true
+        });
+        console.log('[DirectNotifications] Notification object constructed:', notification);
+      } catch (notifErr) {
+        console.error('[DirectNotifications] Failed to construct notification:', notifErr);
+        throw notifErr;
+      }
+
+      // Attach event logging for diagnostics:
+      notification.onshow = () => {
+        console.log('[DirectNotifications] Notification "show" event triggered.');
+      };
       notification.onclick = () => {
-        console.log('Notification clicked');
+        console.log('[DirectNotifications] Notification "click" event triggered.');
         window.focus();
         notification.close();
+      };
+      notification.onerror = (event) => {
+        console.error('[DirectNotifications] Notification "error" event:', event);
+      };
+      notification.onclose = (event) => {
+        console.log('[DirectNotifications] Notification "close" event triggered.', event);
       };
 
       toast({
@@ -117,7 +138,7 @@ export function useDirectNotifications() {
 
       return { success: true };
     } catch (err) {
-      console.error('Error sending test notification:', err);
+      console.error('[DirectNotifications] Error sending test notification:', err);
       setError(err instanceof Error ? err.message : 'Failed to send test notification');
       toast({
         variant: "destructive",
@@ -140,7 +161,7 @@ export function useDirectNotifications() {
         await Promise.all(
           registrations.map(registration => registration.unregister())
         );
-        console.log('All service worker registrations cleared');
+        console.log('[DirectNotifications] All service worker registrations cleared');
       }
 
       checkPermission();
@@ -152,7 +173,7 @@ export function useDirectNotifications() {
 
       return true;
     } catch (err) {
-      console.error('Error resetting permission state:', err);
+      console.error('[DirectNotifications] Error resetting permission state:', err);
       setError(err instanceof Error ? err.message : 'Failed to reset permission state');
       return false;
     } finally {
