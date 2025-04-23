@@ -9,7 +9,7 @@ interface NotificationsLayoutProps {
 
 const NotificationsLayout = ({ title, children }: NotificationsLayoutProps) => {
   return (
-    <div className="container mx-auto p-4 max-w-4xl space-y-4">
+    <div className="container mx-auto p-4 max-w-4xl">
       <Card>
         <CardHeader>
           <CardTitle>{title}</CardTitle>
