@@ -16,31 +16,66 @@ const NotificationContent: React.FC<NotificationContentProps> = ({ notification 
     
     switch (type) {
       case 'bar_crawl':
-        return <Glasses className="h-5 w-5 text-purple-500" />;
+        return <Glasses className="h-5 w-5 text-purple-500" aria-hidden="true" />;
       case 'establishment':
       case 'mocktail_suggestion':
-        return <Store className="h-5 w-5 text-blue-500" />;
+        return <Store className="h-5 w-5 text-blue-500" aria-hidden="true" />;
       case 'venue_message':
       case 'promoter':
-        return <MessageCircle className="h-5 w-5 text-green-500" />;
+        return <MessageCircle className="h-5 w-5 text-green-500" aria-hidden="true" />;
       case 'admin':
       case 'moderation':
-        return <UserCheck className="h-5 w-5 text-amber-500" />;
+        return <UserCheck className="h-5 w-5 text-amber-500" aria-hidden="true" />;
       case 'system':
-        return <AlertCircle className="h-5 w-5 text-red-500" />;
+        return <AlertCircle className="h-5 w-5 text-red-500" aria-hidden="true" />;
       default:
-        return <Bell className="h-5 w-5 text-blue-500" />;
+        return <Bell className="h-5 w-5 text-blue-500" aria-hidden="true" />;
+    }
+  };
+
+  const getTypeDescription = () => {
+    const type = notification.metadata?.type;
+    switch (type) {
+      case 'bar_crawl':
+        return 'Bar Crawl notification';
+      case 'establishment':
+        return 'Establishment update';
+      case 'mocktail_suggestion':
+        return 'Mocktail suggestion';
+      case 'venue_message':
+        return 'Message from venue';
+      case 'promoter':
+        return 'Promoter notification';
+      case 'admin':
+        return 'Admin notification';
+      case 'moderation':
+        return 'Moderation alert';
+      case 'system':
+        return 'System notification';
+      default:
+        return 'General notification';
     }
   };
 
   return (
     <div className="flex items-start gap-3">
-      <div className="mt-0.5">
+      <div className="mt-0.5" aria-hidden="true">
         {getNotificationIcon()}
       </div>
       <div>
-        <h4 className="font-medium">{notification.title}</h4>
-        <p className="text-sm text-gray-600 mt-1">{notification.content}</p>
+        <h4 
+          id={`notification-${notification.id}-title`}
+          className="font-medium"
+        >
+          {notification.title}
+        </h4>
+        <p 
+          id={`notification-${notification.id}-content`}
+          className="text-sm text-gray-600 mt-1"
+        >
+          <span className="sr-only">{getTypeDescription()}:</span>
+          {notification.content}
+        </p>
       </div>
     </div>
   );

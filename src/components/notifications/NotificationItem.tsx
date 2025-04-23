@@ -40,6 +40,13 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
     }
   };
 
+  const priorityLabel = {
+    urgent: 'Urgent priority',
+    high: 'High priority',
+    medium: 'Medium priority',
+    low: 'Low priority'
+  }[notification.priority] || 'Normal priority';
+
   return (
     <article 
       className={cn(
@@ -50,7 +57,9 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
       role="article"
       tabIndex={tabIndex}
       onKeyDown={handleKeyPress}
-      aria-label={`${notification.title} - ${isUnread ? 'Unread' : 'Read'} notification`}
+      aria-labelledby={`notification-${notification.id}-title`}
+      aria-describedby={`notification-${notification.id}-content`}
+      aria-label={`${priorityLabel} notification - ${isUnread ? 'Unread' : 'Read'}`}
     >
       <div className="flex justify-between items-start">
         <NotificationContent notification={notification} />
@@ -68,7 +77,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
               variant="ghost"
               className="px-2 h-8"
               onClick={() => onMarkAsRead(notification.id)}
-              aria-label="Mark as read (press M)"
+              aria-label={`Mark as read (press M key)`}
             >
               <Check className="h-4 w-4 mr-1" aria-hidden="true" />
               <span className="text-xs">Mark read</span>

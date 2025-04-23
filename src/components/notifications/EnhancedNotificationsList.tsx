@@ -36,6 +36,7 @@ const EnhancedNotificationsList = ({
       <div 
         className="space-y-4" 
         role="status" 
+        aria-busy="true"
         aria-label="Loading notifications"
       >
         {[1, 2, 3].map((i) => (
@@ -43,7 +44,7 @@ const EnhancedNotificationsList = ({
             <Skeleton className="h-24 w-full rounded-lg" />
           </div>
         ))}
-        <div className="sr-only">Loading notifications</div>
+        <div className="sr-only" aria-live="polite">Loading notifications</div>
       </div>
     );
   }
@@ -67,19 +68,26 @@ const EnhancedNotificationsList = ({
         className="text-center py-8 text-gray-500"
         role="status"
         aria-label="No notifications"
+        aria-live="polite"
       >
         <p>No notifications to display</p>
       </div>
     );
   }
 
+  const unreadCount = notifications.filter(n => !n.is_read).length;
+
   return (
     <div 
       className="space-y-4" 
       role="log" 
-      aria-label="Notifications list"
+      aria-label={`Notifications list with ${notifications.length} notifications, ${unreadCount} unread`}
       aria-live="polite"
     >
+      <div className="sr-only">
+        Use up and down arrow keys to navigate between notifications. 
+        Press M to mark a notification as read.
+      </div>
       <AnimatePresence initial={false}>
         {notifications.map((notification, index) => (
           <motion.div
