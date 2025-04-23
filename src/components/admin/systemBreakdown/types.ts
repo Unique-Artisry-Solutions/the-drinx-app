@@ -1,4 +1,3 @@
-
 export type FeatureStatus = 'implemented' | 'in_progress' | 'planned' | 'blocked' | 'partial';
 export type DatabaseStatus = 'complete' | 'in_progress' | 'not_started' | 'implemented';
 export type AccessLevel = 'full' | 'partial' | 'read' | 'none' | 'write';
@@ -30,18 +29,18 @@ export interface FeatureItem {
   scheduledFor?: string;
 }
 
+export interface Phase {
+  name: string;
+  status: FeatureStatus;
+  tasks: string[];
+}
+
 export interface SubFeature {
   name: string;
-  status: 'implemented' | 'in_progress' | 'planned' | 'blocked' | 'partial';
+  status: FeatureStatus;
   description: string;
   progress: number;
   phases?: Phase[];
-}
-
-export interface Phase {
-  name: string;
-  status: 'implemented' | 'in_progress' | 'planned' | 'blocked';
-  tasks: string[];
 }
 
 export type FeatureShowcaseCategoryType = string;

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Bell } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -7,7 +6,8 @@ import {
   FormField,
   FormItem,
   FormControl,
-  FormLabel
+  FormLabel,
+  FormDescription
 } from '@/components/ui/form';
 import {
   Accordion,
@@ -15,6 +15,8 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import PrioritySelect from './PrioritySelect';
+import TimeWindowSelector from './TimeWindowSelector';
 
 interface NotificationCategoriesListProps {
   isLightTheme: boolean;
@@ -77,13 +79,13 @@ const NotificationCategoriesList: React.FC<NotificationCategoriesListProps> = ({
                 name={`notification_categories.${category.id}.enabled`}
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 mb-4">
-                    <div>
+                    <div className="space-y-1">
                       <FormLabel className={isLightTheme ? "text-gray-700" : ""}>
                         {category.title}
                       </FormLabel>
-                      <p className={cn("text-sm", isLightTheme ? "text-gray-600" : "text-muted-foreground")}>
+                      <FormDescription className={cn(isLightTheme ? "text-gray-600" : "")}>
                         {category.description}
-                      </p>
+                      </FormDescription>
                     </div>
                     <FormControl>
                       <Switch
@@ -94,76 +96,88 @@ const NotificationCategoriesList: React.FC<NotificationCategoriesListProps> = ({
                   </FormItem>
                 )}
               />
-              
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <FormField
-                  name={`notification_categories.${category.id}.channels.email`}
-                  render={({ field }) => (
-                    <FormItem className="flex items-center space-x-2">
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <FormLabel className={cn("text-sm m-0", isLightTheme ? "text-gray-700" : "")}>
-                        Email Notifications
-                      </FormLabel>
-                    </FormItem>
-                  )}
+
+              <div className="space-y-6">
+                <PrioritySelect 
+                  name={`notification_categories.${category.id}.priority`}
+                  isLightTheme={isLightTheme}
                 />
 
-                <FormField
-                  name={`notification_categories.${category.id}.channels.push`}
-                  render={({ field }) => (
-                    <FormItem className="flex items-center space-x-2">
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <FormLabel className={cn("text-sm m-0", isLightTheme ? "text-gray-700" : "")}>
-                        Push Notifications
-                      </FormLabel>
-                    </FormItem>
-                  )}
-                />
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  name={`notification_categories.${category.id}.sound`}
-                  render={({ field }) => (
-                    <FormItem className="flex items-center space-x-2">
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <FormLabel className={cn("text-sm m-0", isLightTheme ? "text-gray-700" : "")}>
-                        Sound
-                      </FormLabel>
-                    </FormItem>
-                  )}
-                />
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    name={`notification_categories.${category.id}.channels.email`}
+                    render={({ field }) => (
+                      <FormItem className="flex items-center space-x-2">
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <FormLabel className={cn("text-sm m-0", isLightTheme ? "text-gray-700" : "")}>
+                          Email Notifications
+                        </FormLabel>
+                      </FormItem>
+                    )}
+                  />
 
-                <FormField
-                  name={`notification_categories.${category.id}.vibration`}
-                  render={({ field }) => (
-                    <FormItem className="flex items-center space-x-2">
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <FormLabel className={cn("text-sm m-0", isLightTheme ? "text-gray-700" : "")}>
-                        Vibration
-                      </FormLabel>
-                    </FormItem>
-                  )}
+                  <FormField
+                    name={`notification_categories.${category.id}.channels.push`}
+                    render={({ field }) => (
+                      <FormItem className="flex items-center space-x-2">
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <FormLabel className={cn("text-sm m-0", isLightTheme ? "text-gray-700" : "")}>
+                          Push Notifications
+                        </FormLabel>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    name={`notification_categories.${category.id}.sound`}
+                    render={({ field }) => (
+                      <FormItem className="flex items-center space-x-2">
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <FormLabel className={cn("text-sm m-0", isLightTheme ? "text-gray-700" : "")}>
+                          Sound
+                        </FormLabel>
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    name={`notification_categories.${category.id}.vibration`}
+                    render={({ field }) => (
+                      <FormItem className="flex items-center space-x-2">
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <FormLabel className={cn("text-sm m-0", isLightTheme ? "text-gray-700" : "")}>
+                          Vibration
+                        </FormLabel>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <TimeWindowSelector 
+                  basePath={`notification_categories.${category.id}`}
+                  isLightTheme={isLightTheme}
                 />
               </div>
             </AccordionContent>
