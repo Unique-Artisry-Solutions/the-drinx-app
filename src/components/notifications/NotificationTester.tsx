@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { usePushNotifications } from '@/hooks/usePushNotifications';
@@ -34,10 +35,12 @@ const NotificationTester = () => {
   const { user } = useAuth();
   const { refreshPermissionStatus } = useServiceWorkerStatus();
   const [permissionState, setPermissionState] = useState<NotificationPermission>(permissionStatus);
-  const [selectedTab, setSelectedTab] = useState<string>("service-worker");
+  const [selectedTab, setSelectedTab] = useState<string>("direct");
   const [diagnosticsData, setDiagnosticsData] = useState<Record<string, any>>({});
+  const [serviceWorkerStatus, setServiceWorkerStatus] = useState<'checking' | 'active' | 'inactive'>('checking');
   
   const runDiagnostics = async () => {
+    setServiceWorkerStatus('checking');
     const data: Record<string, any> = {
       browser: navigator.userAgent,
       timestamp: new Date().toISOString(),
@@ -59,8 +62,39 @@ const NotificationTester = () => {
           waiting: !!reg.waiting,
           scriptURL: reg.active?.scriptURL || 'N/A'
         }));
+        
+        // Check if service worker is responding
+        if (navigator.serviceWorker.controller) {
+          const messageChannel = new MessageChannel();
+          const promise = new Promise<boolean>((resolve) => {
+            messageChannel.port1.onmessage = (event) => {
+              data.serviceWorkerResponse = event.data;
+              resolve(true);
+            };
+            
+            // Set a timeout in case the service worker doesn't respond
+            setTimeout(() => {
+              data.serviceWorkerTimeout = true;
+              resolve(false);
+            }, 1000);
+          });
+          
+          navigator.serviceWorker.controller.postMessage({
+            action: 'ping',
+            timestamp: new Date().toISOString()
+          }, [messageChannel.port2]);
+          
+          await promise;
+        }
+        
+        // Update service worker status
+        const hasActiveServiceWorker = registrations.some(
+          reg => reg.active && reg.active.scriptURL.includes('service-worker.js')
+        );
+        setServiceWorkerStatus(hasActiveServiceWorker ? 'active' : 'inactive');
       } catch (e) {
         data.registrationsError = e instanceof Error ? e.message : 'Unknown error';
+        setServiceWorkerStatus('inactive');
       }
     }
     
@@ -74,12 +108,28 @@ const NotificationTester = () => {
   
   const handleReset = async () => {
     try {
+      setServiceWorkerStatus('checking');
       await resetSubscriptionState();
+      
+      // Force unregister all service workers
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(registrations.map(reg => reg.unregister()));
+        console.log('Unregistered all service workers during reset');
+      }
+      
       debouncedToast.info(
         "Reset Complete", 
         "Notification system has been reset"
       );
-      runDiagnostics();
+      
+      // Run diagnostics after reset
+      await runDiagnostics();
+      
+      // Refresh the page to ensure clean state
+      if (window.confirm('Reset complete. Reload the page to ensure a clean state?')) {
+        window.location.reload();
+      }
     } catch (error) {
       console.error('Error during reset:', error);
       debouncedToast.error(
@@ -104,6 +154,27 @@ const NotificationTester = () => {
       );
     }
   };
+  
+  // Listen for messages from service worker
+  useEffect(() => {
+    const handleServiceWorkerMessage = (event: MessageEvent) => {
+      if (event.data && event.data.type === 'SW_ACTIVATED') {
+        console.log('Service worker activated message received:', event.data);
+        setServiceWorkerStatus('active');
+        runDiagnostics();
+      }
+    };
+    
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('message', handleServiceWorkerMessage);
+    }
+    
+    return () => {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.removeEventListener('message', handleServiceWorkerMessage);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     setPermissionState(permissionStatus);
@@ -206,7 +277,7 @@ const NotificationTester = () => {
                     <Settings className="h-3 w-3" /> System Diagnostics
                   </h4>
                   <div className="text-xs space-y-1 text-gray-500">
-                    <p>Service Worker: {hasServiceWorker ? 'Active' : 'Inactive'}</p>
+                    <p>Service Worker: {serviceWorkerStatus === 'active' ? 'Active' : serviceWorkerStatus === 'checking' ? 'Checking...' : 'Inactive'}</p>
                     <p>Permission: {permissionState}</p>
                     <p>Controller: {diagnosticsData.controller ? 'Yes' : 'No'}</p>
                     <p>Registrations: {diagnosticsData.registrations?.length || 0}</p>

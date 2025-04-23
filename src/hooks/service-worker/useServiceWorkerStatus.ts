@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { useServiceWorkerCheck } from './useServiceWorkerCheck';
 import { debouncedToast } from '@/utils/debouncedToast';
@@ -65,10 +66,51 @@ export const useServiceWorkerStatus = () => {
         await checkServiceWorkerSupport();
 
         if ('serviceWorker' in navigator) {
-          const registrations = await navigator.serviceWorker.getRegistrations();
-          const isActive = registrations.some(registration => 
-            registration.active && registration.active.scriptURL.includes('service-worker.js')
-          );
+          // Add a direct check with the service worker
+          let isActive = false;
+          
+          try {
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            isActive = registrations.some(registration => 
+              registration.active && registration.active.scriptURL.includes('service-worker.js')
+            );
+            
+            // If we have an active service worker, try to communicate with it
+            if (isActive) {
+              // Create a MessageChannel for direct communication
+              const messageChannel = new MessageChannel();
+              const promise = new Promise<boolean>((resolve) => {
+                messageChannel.port1.onmessage = (event) => {
+                  if (event.data && event.data.status === 'active') {
+                    console.log('Service worker confirmed active via messaging', event.data);
+                    resolve(true);
+                  } else {
+                    resolve(false);
+                  }
+                };
+                
+                // Set a timeout in case the service worker doesn't respond
+                setTimeout(() => resolve(false), 1000);
+              });
+              
+              // Send a ping to the service worker
+              if (navigator.serviceWorker.controller) {
+                navigator.serviceWorker.controller.postMessage({
+                  action: 'checkServiceWorker'
+                }, [messageChannel.port2]);
+                
+                // Wait for the response or timeout
+                const isResponsive = await promise;
+                if (isResponsive) {
+                  isActive = true;
+                } else {
+                  console.log('Service worker did not respond to message');
+                }
+              }
+            }
+          } catch (error) {
+            console.error('Error checking service worker registrations:', error);
+          }
 
           setHasServiceWorker(isActive);
           console.log('Service worker status check:', isActive ? 'Active' : 'Not active');

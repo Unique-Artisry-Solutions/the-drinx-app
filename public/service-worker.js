@@ -1,4 +1,3 @@
-
 console.log('Service Worker Loaded');
 
 // Debugging helper with timestamp
@@ -24,14 +23,16 @@ self.addEventListener('activate', event => {
       .then(() => {
         swLog('Successfully claimed all clients');
         // Notify all clients that the service worker is ready
-        self.clients.matchAll().then(clients => {
-          clients.forEach(client => {
-            client.postMessage({
-              type: 'SW_ACTIVATED',
-              timestamp: new Date().toISOString()
-            });
+        return self.clients.matchAll();
+      })
+      .then(clients => {
+        clients.forEach(client => {
+          client.postMessage({
+            type: 'SW_ACTIVATED',
+            timestamp: new Date().toISOString()
           });
         });
+        swLog(`Notified ${clients.length} clients about activation`);
       })
       .catch(err => {
         swLog('Error claiming clients:', err);
@@ -48,6 +49,7 @@ const relayNotificationToClients = (notificationData) => {
         notification: notificationData,
         timestamp: new Date().toISOString()
       });
+      swLog(`Relayed notification to client: ${client.id}`);
     });
   });
 };
@@ -174,23 +176,44 @@ self.addEventListener('notificationclose', function(event) {
   swLog('Notification was closed', event.notification);
 });
 
-// Add a message handler for debugging
+// Add a message handler for improved client communication
 self.addEventListener('message', function(event) {
   swLog('Received message in service worker', event.data);
   
   if (event.data.action === 'checkServiceWorker') {
     swLog('Received checkServiceWorker message', event.data);
-    event.ports[0].postMessage({
-      status: 'active',
-      timestamp: new Date().toISOString()
-    });
+    
+    // Reply using the MessageChannel port if available
+    if (event.ports && event.ports.length > 0) {
+      event.ports[0].postMessage({
+        status: 'active',
+        timestamp: new Date().toISOString()
+      });
+      swLog('Sent active status response through MessageChannel');
+    } else {
+      // Fallback for older implementations
+      event.source?.postMessage({
+        action: 'serviceWorkerStatus',
+        status: 'active',
+        timestamp: new Date().toISOString()
+      });
+      swLog('Sent active status response directly to source');
+    }
   } else if (event.data.action === 'ping') {
     // Simple ping-pong to check if service worker is responsive
     swLog('Ping received, sending pong');
-    event.ports[0].postMessage({
-      action: 'pong',
-      timestamp: new Date().toISOString()
-    });
+    
+    if (event.ports && event.ports.length > 0) {
+      event.ports[0].postMessage({
+        action: 'pong',
+        timestamp: new Date().toISOString()
+      });
+    } else {
+      event.source?.postMessage({
+        action: 'pong',
+        timestamp: new Date().toISOString()
+      });
+    }
   } else if (event.data.action === 'showTestNotification') {
     // Handle direct test notification request from client
     swLog('Showing test notification from client request');
@@ -229,3 +252,19 @@ self.addEventListener('message', function(event) {
 self.addEventListener('error', function(event) {
   swLog('Service Worker error:', event.error);
 });
+
+// Periodic ping to keep service worker alive (every 25 minutes)
+setInterval(() => {
+  swLog('Sending periodic keep-alive ping');
+  self.clients.matchAll().then(clients => {
+    clients.forEach(client => {
+      client.postMessage({
+        type: 'SW_PING',
+        timestamp: new Date().toISOString()
+      });
+    });
+  });
+}, 25 * 60 * 1000);
+
+// Log service worker startup
+swLog('Service Worker initialization complete');

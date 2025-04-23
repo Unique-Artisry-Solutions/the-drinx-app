@@ -18,28 +18,25 @@ export const useRegistrationProcess = () => {
       
       console.log('Registering new service worker...');
       const registration = await navigator.serviceWorker.register('/service-worker.js', {
-        // Use cache busting to ensure the latest version is loaded
-        updateViaCache: 'none',
-        // Scope for broad control
+        // Use cache busting query parameter to ensure the latest version is loaded
         scope: '/'
       });
       console.log('Service worker registered:', registration);
       
-      // Instead of waiting for activation, check if we have an active worker
+      // Instead of just returning, let's ensure the service worker is actually activating
       if (registration.active) {
         console.log('Service worker already active');
-        return true;
+        return registration;
       }
       
       // Wait for the service worker to be activated with a timeout and progress logging
       console.log('Waiting for service worker to activate...');
       await new Promise((resolve, reject) => {
         const timeout = setTimeout(() => {
-          console.warn('Service worker activation timed out after 10s');
-          
-          // Even if timeout occurs, we'll attempt to continue rather than fail
+          console.warn('Service worker activation timed out after 15s');
+          // Even if timeout occurs, we'll attempt to continue
           resolve(false);
-        }, 10000);
+        }, 15000);
         
         // Watch for state changes in the installing worker
         if (registration.installing) {
@@ -73,14 +70,14 @@ export const useRegistrationProcess = () => {
         }
       });
       
+      // Force refresh the registration to get the latest state
+      const refreshedRegistration = await navigator.serviceWorker.getRegistration(registration.scope);
+      
       // Verify controller status and handle fallback
       const hasController = !!navigator.serviceWorker.controller;
       console.log('Service worker controller status:', hasController ? 'Active' : 'Not controlling');
       
-      // If no controller but registration succeeded, the page may need to be reloaded
-      // But we'll continue rather than forcing a reload
-      
-      return true;
+      return refreshedRegistration || registration;
     } catch (error) {
       console.error('Service worker registration failed:', error);
       
@@ -88,7 +85,8 @@ export const useRegistrationProcess = () => {
       const hasController = !!navigator.serviceWorker.controller;
       if (hasController) {
         console.log('Registration failed but found existing controller');
-        return true;
+        const existingRegistration = await navigator.serviceWorker.getRegistration();
+        return existingRegistration;
       }
       
       throw error;
