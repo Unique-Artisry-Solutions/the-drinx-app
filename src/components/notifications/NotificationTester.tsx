@@ -3,175 +3,131 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Info, AlertCircle } from "lucide-react";
-import { usePushNotifications } from '@/hooks/usePushNotifications';
-import { useServiceWorker } from '@/hooks/useServiceWorker';
-import { useTestNotification } from '@/hooks/useTestNotification';
-import { useAuth } from '@/contexts/auth';
-import { NotificationLoading } from './NotificationLoading';
-import { NotificationError } from './NotificationError';
-import { SubscriptionStatus } from './SubscriptionStatus';
-import { ActiveSubscription } from './ActiveSubscription';
-import { LoginPrompt } from './LoginPrompt';
-import { NotificationControls } from './NotificationControls';
-import DirectNotificationTester from './DirectNotificationTester';
-import { useNotificationDiagnostics } from '@/hooks/notifications/useNotificationDiagnostics';
-import NotificationDiagnosticsPanel from './NotificationDiagnosticsPanel';
-import PermissionRequestDialog from './PermissionRequestDialog';
-import { useNotificationActions } from '@/hooks/notifications/useNotificationActions';
+import { useDirectNotifications } from '@/hooks/useDirectNotifications';
+import { NotificationStatusAlert } from './direct/NotificationStatusAlert';
+import { NotificationActionButtons } from './direct/NotificationActionButtons';
+import { SystemStatusPanel } from './direct/SystemStatusPanel';
+import { ResetSystemSection } from './direct/ResetSystemSection';
+import { DiagnosticStatusSection } from './direct/DiagnosticStatusSection';
 
 const NotificationTester = () => {
-  const { 
-    isSupported, 
-    subscription, 
-    permissionStatus,
-    isLoading, 
-    error: setupError,
-    subscribeToNotifications
-  } = usePushNotifications();
-  
-  const { hasServiceWorker, isCheckingServiceWorker, registrationError, isRetrying } = useServiceWorker();
-  const { isSending, sendTestNotification } = useTestNotification();
-  const { user } = useAuth();
-  const { handleRefreshPermissions } = useNotificationActions();
-  const [permissionState, setPermissionState] = useState<NotificationPermission>(permissionStatus);
-  const [showPermissionDialog, setShowPermissionDialog] = useState(false);
-
   const {
-    diagnosticsData,
-    serviceWorkerStatus,
-    runDiagnostics,
-    handleReset,
-    hasJustReset,
-    onHasJustResetUsed
-  } = useNotificationDiagnostics({ resetSubscriptionState: () => {} });
-
-  useEffect(() => {
-    if (hasJustReset) {
-      onHasJustResetUsed();
-      runDiagnostics();
-    }
-  }, [hasJustReset, onHasJustResetUsed, runDiagnostics]);
-
-  const handleRefreshPermissionsAsync = async (): Promise<void> => {
-    if (handleRefreshPermissions) {
-      await handleRefreshPermissions();
-    }
-  };
-
-  const handleSubscribeClick = async (): Promise<void> => {
-    if (permissionStatus === 'default') {
-      setShowPermissionDialog(true);
-    } else {
-      await subscribeToNotifications();
+    isSupported,
+    permissionStatus,
+    lastCheck,
+    isLoading,
+    error,
+    requestPermission,
+    checkPermission,
+    sendTestNotification,
+    resetPermissionState
+  } = useDirectNotifications();
+  
+  const [activeTab, setActiveTab] = useState("test");
+  const [notificationSent, setNotificationSent] = useState(false);
+  
+  const handleSendTestNotification = async () => {
+    try {
+      await sendTestNotification();
+      setNotificationSent(true);
+      setTimeout(() => setNotificationSent(false), 10000);
+    } catch (err) {
+      console.error("Failed to send test notification:", err);
     }
   };
 
-  useEffect(() => {
-    setPermissionState(permissionStatus);
-  }, [permissionStatus]);
-
-  useEffect(() => {
-    runDiagnostics();
-  }, []);
-
-  useEffect(() => {
-    const handleServiceWorkerMessage = (event: MessageEvent) => {
-      if (event.data && event.data.type === 'SW_ACTIVATED') {
-        console.log('Service worker activated message received:', event.data);
-        runDiagnostics();
-      }
-    };
-    
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.addEventListener('message', handleServiceWorkerMessage);
+  const handleRequestPermission = async () => {
+    try {
+      await requestPermission();
+    } catch (err) {
+      console.error("Failed to request permission:", err);
     }
-    return () => {
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.removeEventListener('message', handleServiceWorkerMessage);
-      }
-    };
-  }, [runDiagnostics]);
-
-  if (isCheckingServiceWorker || isRetrying || isLoading) {
-    return <NotificationLoading />;
-  }
-
-  const showError = registrationError || setupError;
-
-  return (
-    <Card className="w-full">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div>
-          <CardTitle>Push Notifications</CardTitle>
-          <CardDescription>
-            Test and manage notification settings
-          </CardDescription>
-        </div>
-        <NotificationControls 
-          onRefresh={handleRefreshPermissionsAsync}
-          onDiagnose={runDiagnostics}
-        />
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {showError && (
+  };
+  
+  if (!isSupported) {
+    return (
+      <Card>
+        <div className="p-6 space-y-4">
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Not Supported</AlertTitle>
             <AlertDescription>
-              {registrationError || setupError}
+              Your browser does not support the Notifications API.
             </AlertDescription>
           </Alert>
-        )}
+        </div>
+      </Card>
+    );
+  }
+  
+  return (
+    <div className="space-y-4">
+      <NotificationStatusAlert permissionStatus={permissionStatus} />
+      
+      <Tabs defaultValue="test" value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="w-full grid grid-cols-3">
+          <TabsTrigger value="test">Test</TabsTrigger>
+          <TabsTrigger value="debug">Debug</TabsTrigger>
+          <TabsTrigger value="reset">Reset</TabsTrigger>
+        </TabsList>
         
-        {!user ? (
-          <LoginPrompt />
-        ) : (
-          <Tabs defaultValue="direct" className="w-full">
-            <TabsList className="w-full grid grid-cols-2">
-              <TabsTrigger value="direct">Direct Browser</TabsTrigger>
-              <TabsTrigger value="service-worker">Service Worker</TabsTrigger>
-            </TabsList>
+        <TabsContent value="test" className="py-4">
+          <div className="space-y-4">
+            <NotificationActionButtons
+              permissionStatus={permissionStatus}
+              isLoading={isLoading}
+              onSendTest={handleSendTestNotification}
+              onRequestPermission={handleRequestPermission}
+              onRefreshPermission={checkPermission}
+            />
+            <DiagnosticStatusSection 
+              notificationSent={notificationSent}
+              permissionStatus={permissionStatus}
+            />
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="debug" className="py-4">
+          <div className="space-y-4">
+            <SystemStatusPanel
+              isSupported={isSupported}
+              permissionStatus={permissionStatus}
+              lastCheck={lastCheck}
+            />
             
-            <TabsContent value="direct" className="py-4">
-              <DirectNotificationTester />
-            </TabsContent>
-            
-            <TabsContent value="service-worker" className="py-4">
-              {!subscription ? (
-                <SubscriptionStatus
-                  isLoading={isLoading}
-                  hasServiceWorker={hasServiceWorker}
-                  permissionStatus={permissionState}
-                  subscribeToNotifications={handleSubscribeClick}
-                  refreshPermissions={handleRefreshPermissions}
-                />
-              ) : (
-                <ActiveSubscription
-                  isSending={isSending}
-                  sendTestNotification={sendTestNotification}
-                />
-              )}
-
-              <NotificationDiagnosticsPanel
-                diagnosticsData={diagnosticsData}
-                serviceWorkerStatus={serviceWorkerStatus}
-                permissionState={permissionState}
-                subscription={subscription}
-                onReset={handleReset}
-              />
-            </TabsContent>
-          </Tabs>
-        )}
-
-        <PermissionRequestDialog
-          open={showPermissionDialog}
-          onOpenChange={setShowPermissionDialog}
-          onRequestPermission={async () => {
-            await subscribeToNotifications();
-          }}
-          permissionStatus={permissionState}
-        />
-      </CardContent>
-    </Card>
+            <Alert className="bg-amber-50 border-amber-200">
+              <Info className="h-4 w-4 text-amber-600" />
+              <AlertTitle>Browser Support</AlertTitle>
+              <AlertDescription className="text-xs">
+                Different browsers handle notifications differently. Chrome, Firefox, and Edge provide the best notification support. Safari requires special permission handling.
+              </AlertDescription>
+            </Alert>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="reset" className="py-4">
+          <ResetSystemSection
+            isLoading={isLoading}
+            onReset={resetPermissionState}
+          />
+        </TabsContent>
+      </Tabs>
+      
+      <div className="flex flex-col text-xs text-muted-foreground space-y-2">
+        <div className="flex justify-between w-full">
+          <span>Last checked: {lastCheck.toLocaleTimeString()}</span>
+          {navigator.userAgent && (
+            <span className="truncate max-w-[200px]" title={navigator.userAgent}>
+              {navigator.userAgent.split(' ').slice(-1)[0]}
+            </span>
+          )}
+        </div>
+        
+        <p className="text-xs text-center text-gray-500 italic w-full">
+          Note: Some browsers and operating systems may block notifications
+        </p>
+      </div>
+    </div>
   );
 };
 
