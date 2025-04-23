@@ -1,9 +1,8 @@
-
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { createProfileManually } from '../utils/testUserCreation';
-import { TestUserCredentials } from '../types/testCredentials';
+import { TestUserCredentials, TestCredentialsData } from '../types/testCredentials';
 
 export const useTestUserCreation = () => {
   const { toast } = useToast();
@@ -128,7 +127,7 @@ export const useTestUserCreation = () => {
     }
   };
 
-  const createAllTestUsers = async (testCredentials: Record<string, TestUserCredentials>) => {
+  const createAllTestUsers = async (testCredentials: TestCredentialsData) => {
     try {
       setIsCreating(true);
       console.log('Starting test user creation process');
