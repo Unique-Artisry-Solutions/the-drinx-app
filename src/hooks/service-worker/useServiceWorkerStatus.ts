@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { useServiceWorkerCheck } from './useServiceWorkerCheck';
 import { debouncedToast } from '@/utils/debouncedToast';
@@ -20,13 +19,11 @@ export const useServiceWorkerStatus = () => {
     return null;
   }, []);
 
-  // Watch for permission changes
   useEffect(() => {
     const handlePermissionChange = () => {
       console.log('Permission change detected, refreshing status...');
       refreshPermissionStatus();
       
-      // Clear existing service worker registrations on permission change
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistrations().then(registrations => {
           registrations.forEach(registration => {
@@ -39,7 +36,6 @@ export const useServiceWorkerStatus = () => {
       }
     };
 
-    // Set up permission change monitoring
     if ('permissions' in navigator) {
       navigator.permissions.query({ name: 'notifications' as PermissionName })
         .then(status => {
@@ -50,11 +46,9 @@ export const useServiceWorkerStatus = () => {
         });
     }
 
-    // Initial permission check
     refreshPermissionStatus();
 
     return () => {
-      // Cleanup permission monitoring
       if ('permissions' in navigator) {
         navigator.permissions.query({ name: 'notifications' as PermissionName })
           .then(status => {
@@ -65,22 +59,20 @@ export const useServiceWorkerStatus = () => {
     };
   }, [refreshPermissionStatus]);
 
-  // Check service worker and permission status on mount
   useEffect(() => {
     const checkWorkerStatus = async () => {
       try {
         await checkServiceWorkerSupport();
-        
+
         if ('serviceWorker' in navigator) {
           const registrations = await navigator.serviceWorker.getRegistrations();
           const isActive = registrations.some(registration => 
             registration.active && registration.active.scriptURL.includes('service-worker.js')
           );
-          
+
           setHasServiceWorker(isActive);
           console.log('Service worker status check:', isActive ? 'Active' : 'Not active');
-          
-          // Show notification if permission granted but no service worker
+
           if (Notification.permission === 'granted' && !isActive) {
             debouncedToast.info(
               "Service Worker Required", 
@@ -95,7 +87,7 @@ export const useServiceWorkerStatus = () => {
         setIsCheckingServiceWorker(false);
       }
     };
-    
+
     checkWorkerStatus();
   }, [checkServiceWorkerSupport, setIsCheckingServiceWorker, permissionStatus]);
 

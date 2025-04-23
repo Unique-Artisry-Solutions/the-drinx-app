@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { usePushNotifications } from '@/hooks/usePushNotifications';
@@ -111,7 +110,6 @@ const NotificationTester = () => {
   }, [permissionStatus]);
   
   useEffect(() => {
-    // Run diagnostics on component mount
     runDiagnostics();
   }, []);
 
