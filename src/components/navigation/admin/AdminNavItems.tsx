@@ -1,5 +1,4 @@
-
-import { Home, Users, Building2, LayoutDashboard, FileBarChart2, Image, Palette, Layers, BookOpen, Settings } from 'lucide-react';
+import { Home, Users, Building2, LayoutDashboard, FileBarChart2, Image, Palette, Layers, BookOpen, Settings, Bell } from 'lucide-react';
 
 type AdminNavItem = {
   label: string;
@@ -13,6 +12,12 @@ export const adminNavItems: AdminNavItem[] = [
     label: 'Dashboard',
     path: '/admin/dashboard',
     icon: LayoutDashboard,
+    showInNav: true,
+  },
+  {
+    label: 'Notifications',
+    path: '/admin/notifications',
+    icon: Bell,
     showInNav: true,
   },
   {

@@ -1,5 +1,4 @@
-
-import { Home, Map, User, Route, Megaphone, BarChart2, Building } from 'lucide-react';
+import { Home, Map, User, Route, Megaphone, BarChart2, Building, Bell } from 'lucide-react';
 import { NavItem } from './types';
 
 export const getUserNavItems = (
@@ -11,10 +10,13 @@ export const getUserNavItems = (
   // Add appropriate home path based on user type
   if (userType === 'establishment') {
     navItems.push({ icon: Home, label: 'Home', path: '/establishment/dashboard' });
+    navItems.push({ icon: Bell, label: 'Notifications', path: '/establishment/notifications' });
   } else if (userType === 'promoter') {
     navItems.push({ icon: Home, label: 'Home', path: '/promoter/dashboard' });
+    navItems.push({ icon: Bell, label: 'Notifications', path: '/promoter/notifications' });
   } else {
     navItems.push({ icon: Home, label: 'Explore', path: '/explore' });
+    navItems.push({ icon: Bell, label: 'Notifications', path: '/notifications' });
   }
   
   // Add Map for all user types
