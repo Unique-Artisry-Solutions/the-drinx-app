@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useDirectNotifications } from '@/hooks/useDirectNotifications';
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { RefreshCw, Bell, Zap, AlertCircle, Lock, CheckCircle } from "lucide-react";
+import { RefreshCw, Bell, Zap, AlertCircle, Lock, CheckCircle, Info } from "lucide-react";
 
 const DirectNotificationTester = () => {
   const {
@@ -21,9 +21,21 @@ const DirectNotificationTester = () => {
   } = useDirectNotifications();
   
   const [activeTab, setActiveTab] = useState("test");
+  const [notificationSent, setNotificationSent] = useState(false);
   
   const handleRefreshPermission = () => {
     checkPermission();
+  };
+
+  const handleSendTestNotification = async () => {
+    try {
+      await sendTestNotification();
+      setNotificationSent(true);
+      // Reset flag after 10 seconds
+      setTimeout(() => setNotificationSent(false), 10000);
+    } catch (err) {
+      console.error("Failed to send test notification:", err);
+    }
   };
   
   const getPermissionBadge = () => {
@@ -36,6 +48,16 @@ const DirectNotificationTester = () => {
         return <span className="px-2 py-1 text-xs bg-amber-100 text-amber-800 rounded">Not Set</span>;
     }
   };
+  
+  // Check document visibility to warn if notification might be missed
+  useEffect(() => {
+    if (notificationSent) {
+      // Only show this alert for granted permissions
+      if (permissionStatus === 'granted' && document.visibilityState !== 'visible') {
+        console.log('[DirectNotificationTester] Document not visible, notification may be missed');
+      }
+    }
+  }, [notificationSent, permissionStatus]);
   
   if (!isSupported) {
     return (
@@ -72,6 +94,23 @@ const DirectNotificationTester = () => {
           <Alert variant="destructive" className="mb-4">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+        
+        {notificationSent && permissionStatus === 'granted' && (
+          <Alert className="mb-4 bg-blue-50 border-blue-200">
+            <Info className="h-4 w-4 text-blue-600" />
+            <AlertTitle>Notification Troubleshooting</AlertTitle>
+            <AlertDescription>
+              <p>A notification was sent but not visible? Check:</p>
+              <ul className="list-disc ml-5 space-y-1 text-sm mt-2">
+                <li>Browser "Focus Assist" or "Do Not Disturb" mode</li>
+                <li>System notification settings (check your OS control panel)</li>
+                <li>Browser-specific notification settings</li>
+                <li>Look at the top-right or bottom-right of your screen</li>
+                <li>Try using a different browser</li>
+              </ul>
+            </AlertDescription>
           </Alert>
         )}
         
@@ -118,7 +157,7 @@ const DirectNotificationTester = () => {
               
               <div className="space-y-2">
                 <Button 
-                  onClick={permissionStatus === 'granted' ? sendTestNotification : requestPermission}
+                  onClick={permissionStatus === 'granted' ? handleSendTestNotification : requestPermission}
                   disabled={isLoading}
                   className="w-full"
                 >
@@ -165,8 +204,20 @@ const DirectNotificationTester = () => {
                   <div>{lastCheck.toLocaleTimeString()}</div>
                   <div className="text-muted-foreground">Service Worker:</div>
                   <div>{'serviceWorker' in navigator ? 'Supported' : 'Not Supported'}</div>
+                  <div className="text-muted-foreground">Browser Focus:</div>
+                  <div>{document.visibilityState}</div>
+                  <div className="text-muted-foreground">Device Type:</div>
+                  <div>{/Mobi|Android/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop'}</div>
                 </div>
               </div>
+              
+              <Alert className="bg-amber-50 border-amber-200">
+                <Info className="h-4 w-4 text-amber-600" />
+                <AlertTitle>Browser Support</AlertTitle>
+                <AlertDescription className="text-xs">
+                  Different browsers handle notifications differently. Chrome, Firefox, and Edge provide the best notification support. Safari requires special permission handling.
+                </AlertDescription>
+              </Alert>
               
               <Button 
                 variant="outline" 
@@ -217,13 +268,19 @@ const DirectNotificationTester = () => {
         </Tabs>
       </CardContent>
       
-      <CardFooter className="flex justify-between text-xs text-muted-foreground">
-        <span>Last checked: {lastCheck.toLocaleTimeString()}</span>
-        {navigator.userAgent && (
-          <span className="truncate max-w-[200px]" title={navigator.userAgent}>
-            {navigator.userAgent.split(' ').slice(-1)[0]}
-          </span>
-        )}
+      <CardFooter className="flex flex-col text-xs text-muted-foreground space-y-2">
+        <div className="flex justify-between w-full">
+          <span>Last checked: {lastCheck.toLocaleTimeString()}</span>
+          {navigator.userAgent && (
+            <span className="truncate max-w-[200px]" title={navigator.userAgent}>
+              {navigator.userAgent.split(' ').slice(-1)[0]}
+            </span>
+          )}
+        </div>
+        
+        <p className="text-xs text-center text-gray-500 italic w-full">
+          Note: Some browsers and operating systems may block notifications
+        </p>
       </CardFooter>
     </Card>
   );

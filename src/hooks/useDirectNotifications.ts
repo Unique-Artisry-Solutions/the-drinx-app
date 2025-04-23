@@ -43,6 +43,18 @@ export function useDirectNotifications() {
           title: "Notification Access Granted",
           description: "You will now receive notifications from this application."
         });
+        
+        // Send a test notification immediately after getting permission to verify
+        try {
+          const testNotif = new Notification('Permission Granted', {
+            body: 'Notifications are now enabled for this application',
+            icon: '/favicon.ico'
+          });
+          console.log('[DirectNotifications] Test notification sent after permission granted');
+        } catch (e) {
+          console.error('[DirectNotifications] Error sending test notification after permission:', e);
+        }
+        
         return true;
       } else if (permission === 'denied') {
         toast({
@@ -103,11 +115,13 @@ export function useDirectNotifications() {
       console.log('[DirectNotifications] Attempting to construct Notification instance...');
       let notification;
       try {
+        // Create a notification with more attention-grabbing properties
         notification = new Notification('Test Notification', {
-          body: 'This is a direct browser notification test',
+          body: 'This is a direct browser notification test (' + new Date().toLocaleTimeString() + ')',
           icon: '/favicon.ico',
-          tag: 'test-notification',
-          requireInteraction: true
+          tag: 'test-notification-' + Date.now(), // Make each notification unique
+          requireInteraction: true, // Keep notification visible until user interacts with it
+          silent: false // Ensure sound plays if browser supports it
         });
         console.log('[DirectNotifications] Notification object constructed:', notification);
       } catch (notifErr) {
@@ -131,10 +145,26 @@ export function useDirectNotifications() {
         console.log('[DirectNotifications] Notification "close" event triggered.', event);
       };
 
+      // Check if the notification is visible through alternative feedback
       toast({
         title: "Test Notification Sent",
-        description: "A test notification was displayed directly by the browser."
+        description: "A notification was sent. If you don't see it, check your browser settings."
       });
+
+      // Try to detect if the notification is actually showing
+      setTimeout(() => {
+        console.log('[DirectNotifications] Notification should be visible now. If not visible, check browser settings.');
+        // Additional diagnostic info about environment
+        console.log('[DirectNotifications] Browser environment:', {
+          userAgent: navigator.userAgent,
+          platform: navigator.platform,
+          vendor: navigator.vendor,
+          language: navigator.language,
+          doNotTrack: navigator.doNotTrack,
+          cookieEnabled: navigator.cookieEnabled,
+          onLine: navigator.onLine
+        });
+      }, 500);
 
       return { success: true };
     } catch (err) {
