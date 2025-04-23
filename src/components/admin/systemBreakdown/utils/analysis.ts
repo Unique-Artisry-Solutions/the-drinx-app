@@ -1,4 +1,5 @@
-import { AnalysisStep, FeatureItem } from '../types';
+
+import { AnalysisStep, FeatureItem, DatabaseStatus } from '../types';
 import { 
   analyzeDatabaseStatus, 
   analyzeSwigCircuitSystem, 
@@ -34,49 +35,31 @@ export function analyzeAllFeatures(
   ];
   
   // Step 2: Update database status based on detected tables
-  const adminDatabaseResult = analyzeDatabaseStatus(adminFeatures).map(feature => ({
-    ...feature,
-    databaseStatus: (feature.databaseStatus || feature.dbStatus || 'not_started') as 'complete' | 'in_progress' | 'not_started'
-  }));
-  let updatedAdminFeatures = adminDatabaseResult;
-  
-  const establishmentDatabaseResult = analyzeDatabaseStatus(establishmentFeatures).map(feature => ({
-    ...feature,
-    databaseStatus: (feature.databaseStatus || feature.dbStatus || 'not_started') as 'complete' | 'in_progress' | 'not_started'
-  }));
-  let updatedEstablishmentFeatures = establishmentDatabaseResult;
-  
-  const individualDatabaseResult = analyzeDatabaseStatus(individualFeatures).map(feature => ({
-    ...feature,
-    databaseStatus: (feature.databaseStatus || feature.dbStatus || 'not_started') as 'complete' | 'in_progress' | 'not_started'
-  }));
-  let updatedIndividualFeatures = individualDatabaseResult;
-  
-  const promoterDatabaseResult = analyzeDatabaseStatus(promoterFeatures).map(feature => ({
-    ...feature,
-    databaseStatus: (feature.databaseStatus || feature.dbStatus || 'not_started') as 'complete' | 'in_progress' | 'not_started'
-  }));
-  let updatedPromoterFeatures = promoterDatabaseResult;
+  // Make sure the returned type is FeatureItem[] for all updateFeatures calls
+  let updatedAdminFeatures = analyzeDatabaseStatus(adminFeatures);
+  let updatedEstablishmentFeatures = analyzeDatabaseStatus(establishmentFeatures);
+  let updatedIndividualFeatures = analyzeDatabaseStatus(individualFeatures);
+  let updatedPromoterFeatures = analyzeDatabaseStatus(promoterFeatures);
   
   // Ensure all features have a valid databaseStatus
   updatedAdminFeatures = updatedAdminFeatures.map(feature => ({
     ...feature,
-    databaseStatus: (feature.databaseStatus || feature.dbStatus || 'not_started') as 'complete' | 'in_progress' | 'not_started'
+    databaseStatus: feature.databaseStatus || feature.dbStatus || 'not_started'
   }));
   
   updatedEstablishmentFeatures = updatedEstablishmentFeatures.map(feature => ({
     ...feature,
-    databaseStatus: (feature.databaseStatus || feature.dbStatus || 'not_started') as 'complete' | 'in_progress' | 'not_started'
+    databaseStatus: feature.databaseStatus || feature.dbStatus || 'not_started'
   }));
   
   updatedIndividualFeatures = updatedIndividualFeatures.map(feature => ({
     ...feature,
-    databaseStatus: (feature.databaseStatus || feature.dbStatus || 'not_started') as 'complete' | 'in_progress' | 'not_started'
+    databaseStatus: feature.databaseStatus || feature.dbStatus || 'not_started'
   }));
   
   updatedPromoterFeatures = updatedPromoterFeatures.map(feature => ({
     ...feature,
-    databaseStatus: (feature.databaseStatus || feature.dbStatus || 'not_started') as 'complete' | 'in_progress' | 'not_started'
+    databaseStatus: feature.databaseStatus || feature.dbStatus || 'not_started'
   }));
   
   // Step 3: Analyze specific systems for more detailed status
