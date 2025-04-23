@@ -1,15 +1,21 @@
+export type FeatureStatus = 'implemented' | 'in_progress' | 'planned' | 'blocked' | 'partial';
+export type DatabaseStatus = 'complete' | 'in_progress' | 'not_started';
+export type AccessLevel = 'full' | 'partial' | 'read' | 'none';
+export type FeatureComplexity = 'high' | 'medium' | 'low';
+export type FeatureCategory = string;
+
 export interface FeatureItem {
   id: string;
   name: string;
   description: string;
-  status: 'implemented' | 'in_progress' | 'planned' | 'blocked' | 'partial';
-  adminAccess: 'full' | 'partial' | 'read' | 'none';
-  establishmentAccess: 'full' | 'partial' | 'read' | 'none';
-  individualAccess: 'full' | 'partial' | 'read' | 'none';
-  databaseStatus: 'complete' | 'in_progress' | 'not_started';
-  dbStatus?: string;
+  status: FeatureStatus;
+  adminAccess: AccessLevel;
+  establishmentAccess: AccessLevel;
+  individualAccess: AccessLevel;
+  databaseStatus: DatabaseStatus;
+  dbStatus?: DatabaseStatus;
   userImpact: 'high' | 'medium' | 'low';
-  complexity: 'high' | 'medium' | 'low';
+  complexity: FeatureComplexity;
   databaseAnalysis?: string;
   statusUpdated?: boolean;
   implementationProgress?: number;
@@ -56,8 +62,8 @@ export interface FeatureShowcaseData {
   name: string;
   description: string;
   businessValue: FeatureBusinessValueType;
-  complexity: 'high' | 'medium' | 'low';
-  implementationStatus: string;
+  complexity: FeatureComplexity;
+  implementationStatus: FeatureStatus;
   showcaseCategory: string;
   isSignature: boolean;
   icon: string;

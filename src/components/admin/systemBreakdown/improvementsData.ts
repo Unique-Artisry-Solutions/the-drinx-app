@@ -7,6 +7,7 @@ export const improvementsData: ImprovementItem[] = [
     description: 'Implement an AI-based recommendation engine for mocktails based on user preferences and past selections.',
     impact: 'high',
     effort: 'high',
+    priority: 1,
     status: 'proposed',
     category: 'AI',
     votes: 42,
@@ -14,7 +15,6 @@ export const improvementsData: ImprovementItem[] = [
     submittedDate: '2023-04-15',
     type: 'new-feature',
     name: 'Advanced AI Recommendations',
-    priority: 'high',
     lovableCompatible: true,
     technicalRequirements: 'ML model training, user preference database schema updates',
     implementationSteps: [
@@ -42,7 +42,7 @@ export const improvementsData: ImprovementItem[] = [
     submittedDate: '2023-04-18',
     type: 'enhancement',
     name: 'Social Sharing Integration',
-    priority: 'medium',
+    priority: 2,
     lovableCompatible: true,
     technicalRequirements: 'Social API integration, image generation services',
     implementationSteps: [
@@ -69,7 +69,7 @@ export const improvementsData: ImprovementItem[] = [
     submittedDate: '2023-04-22',
     type: 'new-feature',
     name: 'Establishment Analytics Dashboard',
-    priority: 'high',
+    priority: 3,
     lovableCompatible: true,
     technicalRequirements: 'Data visualization library, event tracking system',
     implementationSteps: [
@@ -97,7 +97,7 @@ export const improvementsData: ImprovementItem[] = [
     submittedDate: '2023-04-25',
     type: 'new-feature',
     name: 'Ingredient Inventory Management',
-    priority: 'medium',
+    priority: 4,
     lovableCompatible: false,
     technicalRequirements: 'Inventory database schema, alert system',
     implementationSteps: [
@@ -124,7 +124,7 @@ export const improvementsData: ImprovementItem[] = [
     submittedDate: '2023-04-30',
     type: 'enhancement',
     name: 'Personalized Bar Crawl Planner',
-    priority: 'high',
+    priority: 5,
     lovableCompatible: true,
     technicalRequirements: 'Route optimization algorithm, user preference system',
     implementationSteps: [

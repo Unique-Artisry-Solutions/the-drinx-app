@@ -209,7 +209,9 @@ export const prepareFeatureShowcaseData = (
       isSignature: isSignatureFeature(feature),
       implementations: stats.implementations,
       avgRating: stats.avgRating,
-      icon: determineFeatureIcon(feature)
+      icon: determineFeatureIcon(feature),
+      categories: [feature.tags?.[0] || 'default'],
+      businessValues: [feature.userImpact]
     };
   });
 };
@@ -257,3 +259,4 @@ export const generateFeatureReport = (
   
   return report;
 };
+

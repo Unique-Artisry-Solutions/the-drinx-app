@@ -51,46 +51,19 @@ export function createProgressSnapshot(
   const allFeatures = [...adminFeatures, ...establishmentFeatures, ...individualFeatures, ...promoterFeatures];
   
   // Calculate statistics
+  const overallStats = calculateFeatureStatistics(allFeatures);
   const adminStats = calculateFeatureStatistics(adminFeatures);
   const establishmentStats = calculateFeatureStatistics(establishmentFeatures);
   const individualStats = calculateFeatureStatistics(individualFeatures);
   const promoterStats = calculateFeatureStatistics(promoterFeatures);
-  const overallStats = calculateFeatureStatistics(allFeatures);
-  
-  // Calculate database status stats - normalize different field names
-  const dbImplemented = allFeatures.filter(f => 
-    f.dbStatus === 'implemented' || 
-    f.databaseStatus === 'complete' || 
-    f.dbStatus === 'complete' || 
-    f.databaseStatus === 'implemented'
-  ).length;
-  
-  const dbInProgress = allFeatures.filter(f => 
-    f.dbStatus === 'in_progress' || 
-    f.databaseStatus === 'in_progress'
-  ).length;
-  
-  const dbNotStarted = allFeatures.filter(f => 
-    f.dbStatus === 'not_started' || 
-    f.databaseStatus === 'not_started' || 
-    (!f.dbStatus && !f.databaseStatus)
-  ).length;
   
   const frontendProgress = overallStats.averageImplementation;
-  const backendProgress = ((dbImplemented * 100) + (dbInProgress * 50)) / (allFeatures.length || 1);
-  
-  console.log("Creating snapshot with progress:", {
-    frontendProgress,
-    backendProgress,
-    adminAvgImpl: adminStats.averageImplementation,
-    establishmentAvgImpl: establishmentStats.averageImplementation,
-    individualAvgImpl: individualStats.averageImplementation,
-    promoterAvgImpl: promoterStats.averageImplementation,
-    overallAvgImpl: overallStats.averageImplementation
-  });
+  const backendProgress = calculateBackendProgress(allFeatures);
+  const confidenceScore = calculateConfidenceScore(allFeatures);
   
   const snapshot: ProgressSnapshot = {
     timestamp: new Date().toISOString(),
+    date: new Date().toISOString().split('T')[0],
     totalFeatures: allFeatures.length,
     implementedFeatures: overallStats.implementedFeatures,
     inProgressFeatures: overallStats.inProgressFeatures,
@@ -108,10 +81,31 @@ export function createProgressSnapshot(
     individualImplementationRate: individualStats.averageImplementation,
     promoterImplementationRate: promoterStats.averageImplementation,
     overallProgress: Math.round((frontendProgress + backendProgress) / 2),
-    dbComplete: dbImplemented
+    dbComplete: calculateDbCompleteCount(allFeatures),
+    confidenceScore
   };
   
   return snapshot;
+}
+
+function calculateDbCompleteCount(features: FeatureItem[]): number {
+  return features.filter(f => f.databaseStatus === 'complete').length;
+}
+
+function calculateBackendProgress(features: FeatureItem[]): number {
+  const complete = features.filter(f => f.databaseStatus === 'complete').length;
+  const inProgress = features.filter(f => f.databaseStatus === 'in_progress').length;
+  return features.length > 0 ? Math.round(((complete + (inProgress * 0.5)) / features.length) * 100) : 0;
+}
+
+function calculateConfidenceScore(features: FeatureItem[]): number {
+  const implementedCount = features.filter(f => f.status === 'implemented').length;
+  const dbCompleteCount = features.filter(f => f.databaseStatus === 'complete').length;
+  
+  if (implementedCount === 0) return 100;
+  
+  const ratio = dbCompleteCount / implementedCount;
+  return Math.round(Math.min(ratio * 100, 100));
 }
 
 /**
@@ -168,22 +162,11 @@ export async function generateHistoricalProgressData(
   currentSnapshot: ProgressSnapshot,
   history: ProgressSnapshot[] = []
 ): Promise<MonthlyProgressData[]> {
-  // In a production app, this might fetch historical data from an API
-  // For now, we simulate historical data based on the current snapshot
-  
-  if (!currentSnapshot) {
-    console.log('No current snapshot available');
-    return [];
-  }
-  
-  const currentMonth = new Date().getMonth();
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   
   if (history.length > 0) {
-    // If we have actual historical data, use it
-    const monthlyData: Record<string, MonthlyProgressData> = {};
+    const monthlyData: Record<string, { month: string; frontend: number; backend: number; count: number }> = {};
     
-    // Group snapshots by month
     history.forEach(snapshot => {
       const date = new Date(snapshot.timestamp);
       const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
@@ -193,35 +176,71 @@ export async function generateHistoricalProgressData(
           month: monthNames[date.getMonth()],
           frontend: 0,
           backend: 0,
-          snapshots: 0
+          count: 0
         };
       }
       
       monthlyData[monthKey].frontend += snapshot.frontendProgress;
       monthlyData[monthKey].backend += snapshot.backendProgress;
-      monthlyData[monthKey].snapshots += 1;
+      monthlyData[monthKey].count += 1;
     });
     
-    // Calculate averages and sort by month
     return Object.values(monthlyData)
       .map(data => ({
         month: data.month,
-        frontend: Math.round(data.frontend / data.snapshots),
-        backend: Math.round(data.backend / data.snapshots)
+        frontend: Math.round(data.frontend / data.count),
+        backend: Math.round(data.backend / data.count)
       }))
       .sort((a, b) => monthNames.indexOf(a.month) - monthNames.indexOf(b.month));
-  } else {
-    // Synthesize historical data based on current progress
-    // with a realistic progression curve
-    return Array.from({ length: currentMonth + 1 }, (_, i) => {
-      // Use a sigmoid-like curve for more realistic progress
-      const progressRatio = 1 / (1 + Math.exp(-0.5 * (i - currentMonth / 2))) * 0.9;
-      
-      return {
-        month: monthNames[i],
-        frontend: Math.round(currentSnapshot.frontendProgress * progressRatio),
-        backend: Math.round(currentSnapshot.backendProgress * progressRatio * 0.85) // Backend typically lags slightly
-      };
-    });
   }
+  
+  const currentMonth = new Date().getMonth();
+  return Array.from({ length: currentMonth + 1 }, (_, i) => {
+    const progressRatio = 1 / (1 + Math.exp(-0.5 * (i - currentMonth / 2))) * 0.9;
+    return {
+      month: monthNames[i],
+      frontend: Math.round(currentSnapshot.frontendProgress * progressRatio),
+      backend: Math.round(currentSnapshot.backendProgress * progressRatio * 0.85)
+    };
+  });
 }
+
+/**
+ * Group features by category based on their tags
+ */
+export function groupFeaturesByCategory(features: FeatureItem[]): Record<string, FeatureItem[]> {
+  const categories: Record<string, FeatureItem[]> = {};
+  
+  features.forEach(feature => {
+    if (feature.tags && feature.tags.length > 0) {
+      // Find the most specific category tag (excluding 'promoter' which is too general)
+      const categoryTags = feature.tags.filter(tag => tag !== 'promoter');
+      
+      if (categoryTags.length > 0) {
+        // Use the first category tag found
+        const primaryCategory = categoryTags[0];
+        
+        if (!categories[primaryCategory]) {
+          categories[primaryCategory] = [];
+        }
+        
+        categories[primaryCategory].push(feature);
+      } else {
+        // If no specific category found, put in 'other'
+        if (!categories['other']) {
+          categories['other'] = [];
+        }
+        categories['other'].push(feature);
+      }
+    } else {
+      // If no tags, put in 'uncategorized'
+      if (!categories['uncategorized']) {
+        categories['uncategorized'] = [];
+      }
+      categories['uncategorized'].push(feature);
+    }
+  });
+  
+  return categories;
+}
+
