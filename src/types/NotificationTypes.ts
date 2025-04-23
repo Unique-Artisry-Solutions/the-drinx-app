@@ -1,3 +1,24 @@
+
+export interface NotificationMetadata {
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  sound: boolean;
+  vibration: boolean;
+  timeWindowEnabled: boolean;
+  quietHoursStart: string;
+  quietHoursEnd: string;
+}
+
+export interface NotificationDeliveryStatus {
+  push?: {
+    success: boolean;
+    timestamp: string;
+  };
+  email?: {
+    success: boolean;
+    timestamp: string;
+  };
+}
+
 export interface PushSubscription {
   id?: string;
   user_id: string;
@@ -12,37 +33,13 @@ export interface PushSubscription {
   updated_at?: string;
 }
 
-export interface NotificationDeliveryStatus {
-  push?: {
-    success: boolean;
-    timestamp: string;
-  };
-  email?: {
-    success: boolean;
-    timestamp: string;
-  };
-}
-
-export interface NotificationMetadata {
-  priority: 'low' | 'medium' | 'high' | 'urgent';
-  sound: boolean;
-  vibration: boolean;
-  timeWindowEnabled: boolean;
-  quietHoursStart: string;
-  quietHoursEnd: string;
-}
-
-export interface Notification {
+export interface NotificationPreferences {
   id: string;
-  recipient_id: string;
-  title: string;
-  content: string;
-  priority: 'low' | 'medium' | 'high' | 'urgent';
-  category_id?: string;
-  metadata?: Record<string, any>;
-  delivery_status?: NotificationDeliveryStatus;
-  delivery_attempts?: number;
-  is_read: boolean;
+  user_id: string;
+  category_id: string;
+  channels: ('email' | 'push' | 'in_app')[];
+  is_enabled: boolean;
+  metadata: NotificationMetadata;
   created_at: string;
   updated_at: string;
 }
@@ -55,27 +52,17 @@ export interface NotificationCategory {
   description?: string;
 }
 
-export interface NotificationPreferenceSettings {
-  enabled: boolean;
+export interface Notification {
+  id: string;
+  recipient_id: string;  
+  title: string;
+  content: string;
   priority: 'low' | 'medium' | 'high' | 'urgent';
-  channels: {
-    email: boolean;
-    push: boolean;
-  };
-  sound: boolean;
-  vibration: boolean;
-  timeWindowEnabled: boolean;
-  quietHoursStart: string;
-  quietHoursEnd: string;
-}
-
-export interface NotificationPreferences {
-  user_id: string;
-  category_id: string;
-  channels: ('email' | 'push' | 'in_app')[];
-  is_enabled: boolean;
-  metadata: NotificationMetadata;
+  category_id?: string;
+  metadata?: Record<string, any>;
+  delivery_status?: NotificationDeliveryStatus;
+  delivery_attempts?: number;
+  is_read: boolean;
   created_at: string;
   updated_at: string;
-  id: string;
 }

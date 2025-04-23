@@ -21,13 +21,13 @@ export const useNotificationPreferences = (userId?: string) => {
 
       if (error) throw error;
 
-      setPreferences(prefs);
+      setPreferences(prefs as NotificationPreferences[]);
     } catch (error) {
       console.error('Error fetching notification preferences:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to load notification preferences',
-        variant: 'destructive',
+        title: "Error",
+        description: "Failed to load notification preferences",
+        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
@@ -51,26 +51,24 @@ export const useNotificationPreferences = (userId?: string) => {
           category_id: categoryId,
           channels,
           is_enabled: isEnabled,
-          metadata,
+          metadata: metadata as any,
           updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'user_id,category_id'
         });
 
       if (error) throw error;
 
       toast({
-        title: 'Success',
-        description: 'Notification preferences updated',
+        title: "Success",
+        description: "Notification preferences updated",
       });
       
       await fetchPreferences();
     } catch (error) {
       console.error('Error saving notification preferences:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to save notification preferences',
-        variant: 'destructive',
+        title: "Error",
+        description: "Failed to save notification preferences",
+        variant: "destructive",
       });
     } finally {
       setIsLoading(false);

@@ -1,5 +1,4 @@
-
-import React, { useEffect } from 'react';
+import React from 'react';
 import { TabsContent } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -11,6 +10,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import NotificationCategorySection from '@/components/notifications/settings/NotificationCategorySection';
 import TimeWindowSelector from '@/components/notifications/settings/TimeWindowSelector';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { useNotificationPreferences } from '@/hooks/notifications/useNotificationPreferences';
 import { useNotificationActions } from '@/hooks/notifications/useNotificationActions';
 
 interface NotificationsTabProps {
@@ -20,13 +20,14 @@ interface NotificationsTabProps {
 const NotificationsTab: React.FC<NotificationsTabProps> = ({ isLightTheme }) => {
   const form = useProfileFormContext();
   const { user } = useAuth();
+  const { preferences, isLoading } = useNotificationPreferences(user?.id);
   const { permissionStatus, handleRefreshPermissions, handleSubscribe } = useNotificationActions();
   
   const isPushSupported = 'Notification' in window;
   const isBrowserBlocking = isPushSupported && permissionStatus === 'denied';
   const isPermissionPromptNeeded = isPushSupported && permissionStatus === 'default';
   const isPermissionGranted = isPushSupported && permissionStatus === 'granted';
-  
+
   const notificationCategories = [
     {
       id: 'system-updates',
@@ -53,11 +54,6 @@ const NotificationsTab: React.FC<NotificationsTabProps> = ({ isLightTheme }) => 
       type: 'promotional' as const,
     }
   ];
-  
-  useEffect(() => {
-    // Check permissions on component mount
-    handleRefreshPermissions();
-  }, [handleRefreshPermissions]);
 
   return (
     <TabsContent value="notifications">
@@ -170,13 +166,6 @@ const NotificationsTab: React.FC<NotificationsTabProps> = ({ isLightTheme }) => 
             </h3>
             <Card className={cn(isLightTheme ? "bg-gray-50 border-gray-200" : "")}>
               <CardContent className="pt-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <Volume2 className="h-5 w-5 text-muted-foreground" />
-                  <p className={cn("text-sm", isLightTheme ? "text-gray-600" : "text-muted-foreground")}>
-                    Set hours when you don't want to receive notifications
-                  </p>
-                </div>
-                
                 <TimeWindowSelector 
                   isLightTheme={isLightTheme}
                   basePath="global_quiet_hours"
@@ -191,32 +180,36 @@ const NotificationsTab: React.FC<NotificationsTabProps> = ({ isLightTheme }) => 
               Notification Categories
             </h3>
             
-            <Accordion type="multiple" defaultValue={['system-updates']}>
-              {notificationCategories.map((category) => (
-                <AccordionItem 
-                  value={category.id} 
-                  key={category.id}
-                  className={cn("border rounded-md mb-2", isLightTheme ? "border-gray-200" : "border-border")}
-                >
-                  <AccordionTrigger className="px-4">
-                    <div className="flex items-center">
-                      <Bell className="h-4 w-4 mr-2 text-muted-foreground" />
-                      <span>{category.title}</span>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="px-4">
-                    <NotificationCategorySection
-                      title={category.title}
-                      description={category.description}
-                      name={category.id}
-                      categoryId={category.id}
-                      type={category.type}
-                      isLightTheme={isLightTheme}
-                    />
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
+            {isLoading ? (
+              <div>Loading preferences...</div>
+            ) : (
+              <Accordion type="multiple" defaultValue={['system-updates']}>
+                {notificationCategories.map((category) => (
+                  <AccordionItem 
+                    value={category.id} 
+                    key={category.id}
+                    className={cn("border rounded-md mb-2", isLightTheme ? "border-gray-200" : "border-border")}
+                  >
+                    <AccordionTrigger className="px-4">
+                      <div className="flex items-center">
+                        <Bell className="h-4 w-4 mr-2 text-muted-foreground" />
+                        <span>{category.title}</span>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="px-4">
+                      <NotificationCategorySection
+                        title={category.title}
+                        description={category.description}
+                        name={category.id}
+                        categoryId={category.id}
+                        type={category.type}
+                        isLightTheme={isLightTheme}
+                      />
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            )}
           </div>
           
           {/* Reset button */}
@@ -224,10 +217,7 @@ const NotificationsTab: React.FC<NotificationsTabProps> = ({ isLightTheme }) => 
             <Button
               variant="outline"
               type="button"
-              onClick={() => {
-                // Reset to defaults
-                form.reset();
-              }}
+              onClick={() => form.reset()}
             >
               <RotateCcw className="h-4 w-4 mr-2" />
               Reset to Defaults
