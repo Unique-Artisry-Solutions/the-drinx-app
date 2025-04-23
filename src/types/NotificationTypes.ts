@@ -66,3 +66,29 @@ export interface Notification {
   created_at: string;
   updated_at: string;
 }
+
+// Form-related types
+export interface NotificationFormData {
+  email_notifications: boolean;
+  push_notifications: boolean;
+  global_quiet_hours: {
+    enabled: boolean;
+    start: string;
+    end: string;
+  };
+  notification_categories: Record<string, {
+    enabled: boolean;
+    priority: 'low' | 'medium' | 'high' | 'urgent';
+    channels: {
+      email: boolean;
+      push: boolean;
+    };
+    sound: boolean;
+    vibration: boolean;
+    timeWindow: {
+      enabled: boolean;
+      start: string;
+      end: string;
+    };
+  }>;
+}

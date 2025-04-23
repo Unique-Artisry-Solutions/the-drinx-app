@@ -21,7 +21,25 @@ export const useNotificationPreferences = (userId?: string) => {
 
       if (error) throw error;
 
-      setPreferences(prefs as NotificationPreferences[]);
+      // Convert the database results to match our expected type
+      const typedPreferences = prefs.map(pref => {
+        // Ensure metadata is cast to NotificationMetadata with proper defaults
+        const metadata = pref.metadata as unknown as NotificationMetadata || {
+          priority: 'medium',
+          sound: true,
+          vibration: true,
+          timeWindowEnabled: false,
+          quietHoursStart: '22:00',
+          quietHoursEnd: '08:00'
+        };
+        
+        return {
+          ...pref,
+          metadata
+        } as NotificationPreferences;
+      });
+
+      setPreferences(typedPreferences);
     } catch (error) {
       console.error('Error fetching notification preferences:', error);
       toast({

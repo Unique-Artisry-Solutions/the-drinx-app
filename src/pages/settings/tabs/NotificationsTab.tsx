@@ -1,8 +1,8 @@
+
 import React from 'react';
 import { TabsContent } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { useProfileFormContext } from '../hooks/useProfileFormContext';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/auth';
 import { Bell, Info, RotateCcw, Volume2 } from 'lucide-react';
@@ -12,13 +12,20 @@ import TimeWindowSelector from '@/components/notifications/settings/TimeWindowSe
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { useNotificationPreferences } from '@/hooks/notifications/useNotificationPreferences';
 import { useNotificationActions } from '@/hooks/notifications/useNotificationActions';
+import { useNotificationFormContext } from '../hooks/useNotificationFormContext';
+import { 
+  FormField,
+  FormItem,
+  FormControl,
+  FormLabel
+} from '@/components/ui/form';
 
 interface NotificationsTabProps {
   isLightTheme: boolean;
 }
 
 const NotificationsTab: React.FC<NotificationsTabProps> = ({ isLightTheme }) => {
-  const form = useProfileFormContext();
+  const form = useNotificationFormContext();
   const { user } = useAuth();
   const { preferences, isLoading } = useNotificationPreferences(user?.id);
   const { permissionStatus, handleRefreshPermissions, handleSubscribe } = useNotificationActions();
@@ -85,14 +92,24 @@ const NotificationsTab: React.FC<NotificationsTabProps> = ({ isLightTheme }) => 
                   <p className={cn("text-sm mb-4", isLightTheme ? "text-gray-600" : "text-muted-foreground")}>
                     Receive notifications to your registered email address
                   </p>
-                  <Button
-                    variant={form.watch('email_notifications') ? "default" : "outline"}
-                    className="w-full"
-                    type="button"
-                    onClick={() => form.setValue('email_notifications', !form.watch('email_notifications'))}
-                  >
-                    {form.watch('email_notifications') ? 'Enabled' : 'Disabled'}
-                  </Button>
+                  <FormField
+                    control={form.control}
+                    name="email_notifications"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Button
+                            variant={field.value ? "default" : "outline"}
+                            className="w-full"
+                            type="button"
+                            onClick={() => field.onChange(!field.value)}
+                          >
+                            {field.value ? 'Enabled' : 'Disabled'}
+                          </Button>
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
                 </CardContent>
               </Card>
               
@@ -123,15 +140,25 @@ const NotificationsTab: React.FC<NotificationsTabProps> = ({ isLightTheme }) => 
                   ) : null}
                   
                   <div className="flex gap-2">
-                    <Button
-                      variant={form.watch('push_notifications') ? "default" : "outline"}
-                      className="flex-1"
-                      type="button"
-                      onClick={() => form.setValue('push_notifications', !form.watch('push_notifications'))}
-                      disabled={!isPushSupported || isBrowserBlocking}
-                    >
-                      {form.watch('push_notifications') ? 'Enabled' : 'Disabled'}
-                    </Button>
+                    <FormField
+                      control={form.control}
+                      name="push_notifications"
+                      render={({ field }) => (
+                        <FormItem className="flex-1">
+                          <FormControl>
+                            <Button
+                              variant={field.value ? "default" : "outline"}
+                              className="w-full"
+                              type="button"
+                              onClick={() => field.onChange(!field.value)}
+                              disabled={!isPushSupported || isBrowserBlocking}
+                            >
+                              {field.value ? 'Enabled' : 'Disabled'}
+                            </Button>
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
                     
                     {isPermissionPromptNeeded && (
                       <Button 
@@ -166,10 +193,69 @@ const NotificationsTab: React.FC<NotificationsTabProps> = ({ isLightTheme }) => 
             </h3>
             <Card className={cn(isLightTheme ? "bg-gray-50 border-gray-200" : "")}>
               <CardContent className="pt-6">
-                <TimeWindowSelector 
-                  isLightTheme={isLightTheme}
-                  basePath="global_quiet_hours"
+                <FormField
+                  control={form.control}
+                  name="global_quiet_hours.enabled"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center justify-between mb-4">
+                      <FormLabel className={isLightTheme ? "text-gray-700 mb-0" : "mb-0"}>
+                        Enable Quiet Hours
+                      </FormLabel>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
                 />
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="global_quiet_hours.start"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className={isLightTheme ? "text-gray-700" : ""}>
+                          Start Time
+                        </FormLabel>
+                        <FormControl>
+                          <input 
+                            type="time"
+                            className={cn(
+                              "flex h-10 w-full rounded-md border px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+                              isLightTheme ? "bg-white border-gray-200" : ""
+                            )}
+                            {...field}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="global_quiet_hours.end"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className={isLightTheme ? "text-gray-700" : ""}>
+                          End Time
+                        </FormLabel>
+                        <FormControl>
+                          <input 
+                            type="time"
+                            className={cn(
+                              "flex h-10 w-full rounded-md border px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+                              isLightTheme ? "bg-white border-gray-200" : ""
+                            )}
+                            {...field}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -197,14 +283,104 @@ const NotificationsTab: React.FC<NotificationsTabProps> = ({ isLightTheme }) => 
                       </div>
                     </AccordionTrigger>
                     <AccordionContent className="px-4">
-                      <NotificationCategorySection
-                        title={category.title}
-                        description={category.description}
-                        name={category.id}
-                        categoryId={category.id}
-                        type={category.type}
-                        isLightTheme={isLightTheme}
+                      <FormField
+                        control={form.control}
+                        name={`notification_categories.${category.id}.enabled`}
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 mb-4">
+                            <div>
+                              <FormLabel className={isLightTheme ? "text-gray-700" : ""}>
+                                {category.title}
+                              </FormLabel>
+                              <p className={cn("text-sm", isLightTheme ? "text-gray-600" : "text-muted-foreground")}>
+                                {category.description}
+                              </p>
+                            </div>
+                            <FormControl>
+                              <Switch
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
                       />
+                      
+                      <div className="grid grid-cols-2 gap-4 mb-4">
+                        <FormField
+                          control={form.control}
+                          name={`notification_categories.${category.id}.channels.email`}
+                          render={({ field }) => (
+                            <FormItem className="flex items-center space-x-2">
+                              <FormControl>
+                                <Switch
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                              <FormLabel className={cn("text-sm m-0", isLightTheme ? "text-gray-700" : "")}>
+                                Email Notifications
+                              </FormLabel>
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name={`notification_categories.${category.id}.channels.push`}
+                          render={({ field }) => (
+                            <FormItem className="flex items-center space-x-2">
+                              <FormControl>
+                                <Switch
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                              <FormLabel className={cn("text-sm m-0", isLightTheme ? "text-gray-700" : "")}>
+                                Push Notifications
+                              </FormLabel>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name={`notification_categories.${category.id}.sound`}
+                          render={({ field }) => (
+                            <FormItem className="flex items-center space-x-2">
+                              <FormControl>
+                                <Switch
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                              <FormLabel className={cn("text-sm m-0", isLightTheme ? "text-gray-700" : "")}>
+                                Sound
+                              </FormLabel>
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name={`notification_categories.${category.id}.vibration`}
+                          render={({ field }) => (
+                            <FormItem className="flex items-center space-x-2">
+                              <FormControl>
+                                <Switch
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                              <FormLabel className={cn("text-sm m-0", isLightTheme ? "text-gray-700" : "")}>
+                                Vibration
+                              </FormLabel>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
                     </AccordionContent>
                   </AccordionItem>
                 ))}

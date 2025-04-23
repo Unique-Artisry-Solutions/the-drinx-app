@@ -13,6 +13,7 @@ const profileFormSchema = z.object({
   phone: z.string().optional(),
   email: z.string().email({ message: "Invalid email address" }),
   bio: z.string().max(160, { message: "Bio must be less than 160 characters." }).optional(),
+  avatar_url: z.string().optional(),
 });
 
 export type UserProfileFormData = z.infer<typeof profileFormSchema>;
@@ -32,6 +33,7 @@ export const useProfileData = () => {
       phone: '',
       email: '',
       bio: '',
+      avatar_url: ''
     }
   });
 
@@ -55,6 +57,7 @@ export const useProfileData = () => {
           phone: userData.phone || '',
           email: user.email || '',
           bio: userData.bio || '',
+          avatar_url: userData.avatar_url || '',
         };
 
         form.reset(profileData);
@@ -83,9 +86,12 @@ export const useProfileData = () => {
         updated_at: new Date().toISOString(),
       };
 
+      // Remove email from updates as it shouldn't be stored in profiles table
+      const { email, ...profileUpdates } = updates;
+
       const { error } = await supabase
         .from('profiles')
-        .update(updates)
+        .update(profileUpdates)
         .eq('id', user?.id);
 
       if (error) throw error;

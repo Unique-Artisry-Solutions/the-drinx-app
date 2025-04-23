@@ -12,7 +12,9 @@ import NotificationsTab from './tabs/NotificationsTab';
 import AppearanceTab from './tabs/AppearanceTab';
 import PrivacyTab from './tabs/PrivacyTab';
 import { ProfileFormProvider } from './hooks/useProfileFormContext';
+import { NotificationFormProvider } from './hooks/useNotificationFormContext';
 import { useProfileData } from './hooks/useProfileData';
+import { useNotificationFormData } from './hooks/useNotificationFormData';
 import { Form } from '@/components/ui/form';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -23,15 +25,31 @@ const SettingsPage = () => {
   const isMobile = useIsMobile();
   
   const { 
-    form,
+    form: profileForm,
     profile, 
-    loading, 
-    handleSubmit, 
+    loading: profileLoading, 
+    handleSubmit: handleProfileSubmit, 
     avatarFile,
     handlePhotoSelect,
   } = useProfileData();
 
+  const {
+    form: notificationForm,
+    loading: notificationLoading,
+    handleSubmit: handleNotificationSubmit
+  } = useNotificationFormData();
+
   const isLightTheme = theme === 'light';
+  const isLoading = profileLoading || notificationLoading;
+
+  const handleSubmit = async () => {
+    // Submit the appropriate form based on active tab
+    if (activeTab === 'notifications') {
+      await notificationForm.handleSubmit(handleNotificationSubmit)();
+    } else {
+      await profileForm.handleSubmit(handleProfileSubmit)();
+    }
+  };
 
   return (
     <Layout>
@@ -49,8 +67,8 @@ const SettingsPage = () => {
           )}>Manage your account settings and preferences</p>
         </div>
         
-        <ProfileFormProvider value={form}>
-          <Form {...form}>
+        <ProfileFormProvider value={profileForm}>
+          <NotificationFormProvider value={notificationForm}>
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className={cn(
                 "w-full flex justify-start p-1 mb-6",
@@ -74,35 +92,32 @@ const SettingsPage = () => {
                 </TabsTrigger>
               </TabsList>
               
-              {/* Use onSubmit with the form's handleSubmit wrapper around our submit function */}
-              <form onSubmit={form.handleSubmit(handleSubmit)}>
+              <div>
                 {activeTab === 'account' && (
-                  <AccountTab 
-                    profile={profile} 
-                    isLightTheme={isLightTheme} 
-                    avatarFile={avatarFile}
-                    onPhotoSelect={handlePhotoSelect}
-                  />
+                  <Form {...profileForm}>
+                    <AccountTab 
+                      profile={profile} 
+                      isLightTheme={isLightTheme} 
+                      avatarFile={avatarFile}
+                      onPhotoSelect={handlePhotoSelect}
+                    />
+                  </Form>
                 )}
                 
                 {activeTab === 'notifications' && (
-                  <NotificationsTab 
-                    profile={profile} 
-                    isLightTheme={isLightTheme} 
-                  />
+                  <Form {...notificationForm}>
+                    <NotificationsTab isLightTheme={isLightTheme} />
+                  </Form>
                 )}
                 
                 {activeTab === 'appearance' && (
-                  <AppearanceTab 
-                    profile={profile} 
-                    isLightTheme={isLightTheme} 
-                  />
+                  <Form {...profileForm}>
+                    <AppearanceTab isLightTheme={isLightTheme} />
+                  </Form>
                 )}
                 
                 {activeTab === 'privacy' && (
-                  <PrivacyTab 
-                    isLightTheme={isLightTheme} 
-                  />
+                  <PrivacyTab isLightTheme={isLightTheme} />
                 )}
                 
                 <div className="mt-6 flex justify-between w-full">
@@ -115,16 +130,17 @@ const SettingsPage = () => {
                     Cancel
                   </Button>
                   <Button 
-                    type="submit" 
-                    disabled={loading}
+                    type="button" 
+                    disabled={isLoading}
                     className="bg-gradient-to-r from-purple-600 to-pink-600 w-[48%]"
+                    onClick={handleSubmit}
                   >
-                    {loading ? 'Saving...' : 'Save Changes'}
+                    {isLoading ? 'Saving...' : 'Save Changes'}
                   </Button>
                 </div>
-              </form>
+              </div>
             </Tabs>
-          </Form>
+          </NotificationFormProvider>
         </ProfileFormProvider>
       </div>
     </Layout>

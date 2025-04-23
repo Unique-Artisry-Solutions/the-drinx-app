@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/form';
 
 interface AccountTabProps {
-  profile: UserProfileFormData;
+  profile: UserProfileFormData | null;
   isLightTheme: boolean;
   avatarFile: File | null;
   onPhotoSelect: (file: File) => void;
@@ -45,7 +45,7 @@ const AccountTab: React.FC<AccountTabProps> = ({ profile, isLightTheme, avatarFi
               Profile Picture
             </Label>
             <div className="flex items-center gap-4">
-              {profile.avatar_url && (
+              {profile?.avatar_url && (
                 <div className="h-16 w-16 rounded-full overflow-hidden border border-gray-200">
                   <img 
                     src={profile.avatar_url} 

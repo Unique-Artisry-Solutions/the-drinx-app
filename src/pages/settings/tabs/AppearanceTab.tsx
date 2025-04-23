@@ -4,23 +4,22 @@ import { TabsContent } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
-import { UserProfileFormData } from '../hooks/useProfileData';
-import { useProfileFormContext } from '../hooks/useProfileFormContext';
-import {
+import { 
   FormField,
   FormItem,
   FormLabel,
   FormControl,
   FormDescription
 } from '@/components/ui/form';
+import { useNotificationFormContext } from '../hooks/useNotificationFormContext';
 
 interface AppearanceTabProps {
-  profile: UserProfileFormData;
   isLightTheme: boolean;
 }
 
-const AppearanceTab: React.FC<AppearanceTabProps> = ({ profile, isLightTheme }) => {
-  const form = useProfileFormContext();
+const AppearanceTab: React.FC<AppearanceTabProps> = ({ isLightTheme }) => {
+  // Since dark mode isn't part of the profile form, let's use local state for now
+  const [darkMode, setDarkMode] = React.useState(false);
   
   return (
     <TabsContent value="appearance">
@@ -35,31 +34,23 @@ const AppearanceTab: React.FC<AppearanceTabProps> = ({ profile, isLightTheme }) 
         </CardHeader>
         
         <CardContent className="space-y-4">
-          <FormField
-            control={form.control}
-            name="dark_mode"
-            render={({ field }) => (
-              <FormItem className="flex items-center justify-between space-y-0">
-                <div className="space-y-0.5">
-                  <FormLabel className={isLightTheme ? "text-gray-700" : ""}>
-                    Dark Mode
-                  </FormLabel>
-                  <FormDescription className={cn(
-                    "text-sm", 
-                    isLightTheme ? "text-gray-600" : "text-muted-foreground"
-                  )}>
-                    Use dark theme throughout the app
-                  </FormDescription>
-                </div>
-                <FormControl>
-                  <Switch
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
+          <div className="flex items-center justify-between space-y-0">
+            <div className="space-y-0.5">
+              <FormLabel className={isLightTheme ? "text-gray-700" : ""}>
+                Dark Mode
+              </FormLabel>
+              <FormDescription className={cn(
+                "text-sm", 
+                isLightTheme ? "text-gray-600" : "text-muted-foreground"
+              )}>
+                Use dark theme throughout the app
+              </FormDescription>
+            </div>
+            <Switch
+              checked={darkMode}
+              onCheckedChange={setDarkMode}
+            />
+          </div>
         </CardContent>
       </Card>
     </TabsContent>
