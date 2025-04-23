@@ -5,7 +5,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Notification } from '@/types/NotificationTypes';
 
 import { useNotificationFetcher } from './notifications/useNotificationFetcher';
-import { useNotificationActions } from './notifications/useNotificationActions';
+import { useNotificationMarking } from './notifications/useNotificationMarking';
+import { usePermissionActions } from './notifications/usePermissionActions';
 import { usePushNotificationHandler } from './notifications/usePushNotificationHandler';
 
 export const useNotifications = () => {
@@ -26,7 +27,7 @@ export const useNotifications = () => {
     setError
   });
 
-  const { markAsRead, markAllAsRead } = useNotificationActions({
+  const { markAsRead, markAllAsRead } = useNotificationMarking({
     userId: user?.id,
     accessToken: session?.access_token,
     notifications,
@@ -34,6 +35,8 @@ export const useNotifications = () => {
     setUnreadCount,
     toast
   });
+
+  const { handleRefreshPermissions } = usePermissionActions();
 
   const { addPushNotification } = usePushNotificationHandler({
     setNotifications,
