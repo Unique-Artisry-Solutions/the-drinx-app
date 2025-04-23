@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
@@ -10,6 +9,7 @@ interface TestUserCredentials {
   name: string;
   username: string;
   userType: 'individual' | 'establishment' | 'promoter';
+  phone: string;
 }
 
 const TEST_CREDENTIALS = {
@@ -18,21 +18,24 @@ const TEST_CREDENTIALS = {
     password: 'Test123!',
     name: 'Test User',
     username: 'testuser',
-    userType: 'individual' as const
+    userType: 'individual' as const,
+    phone: '555-0101'
   },
   establishment: {
     email: 'testbusiness@spiritless.com',
     password: 'Test123!',
     name: 'Test Bar',
     username: 'testbar',
-    userType: 'establishment' as const
+    userType: 'establishment' as const,
+    phone: '555-0102'
   },
   promoter: {
     email: 'testpromoter@spiritless.com',
     password: 'Test123!',
     name: 'Test Promoter',
     username: 'testpromoter',
-    userType: 'promoter' as const
+    userType: 'promoter' as const,
+    phone: '555-0103'
   }
 };
 
@@ -66,7 +69,8 @@ const TestCredentials: React.FC = () => {
           data: {
             name: credentials.name,
             username: credentials.username,
-            user_type: credentials.userType
+            user_type: credentials.userType,
+            phone: credentials.phone
           }
         }
       });
@@ -139,7 +143,8 @@ const TestCredentials: React.FC = () => {
           password: credentials.password,
           name: credentials.name,
           username: credentials.username,
-          userType: credentials.userType
+          userType: credentials.userType,
+          phone: credentials.phone
         }
       });
 
@@ -166,14 +171,15 @@ const TestCredentials: React.FC = () => {
   // Function to manually create a profile if the trigger didn't work
   const createProfileManually = async (user: any) => {
     try {
-      // Insert profile record
+      // Insert profile record with phone number
       const { error: profileError } = await supabase
         .from('profiles')
         .insert({
           id: user.id,
           username: user.user_metadata.username,
           display_name: user.user_metadata.name,
-          user_type: user.user_metadata.user_type
+          user_type: user.user_metadata.user_type,
+          phone: user.user_metadata.phone
         });
 
       if (profileError) {
@@ -193,9 +199,9 @@ const TestCredentials: React.FC = () => {
         console.warn('Manual role creation failed:', roleError);
       }
       
-      // If it's an establishment, create a test establishment
+      // If it's an establishment, create a test establishment with phone
       if (user.user_metadata.user_type === 'establishment') {
-        createTestEstablishment(user.id);
+        createTestEstablishment(user.id, user.user_metadata.phone);
       }
       
       return true;
@@ -206,7 +212,7 @@ const TestCredentials: React.FC = () => {
   };
 
   // Create a test establishment
-  const createTestEstablishment = async (ownerId: string) => {
+  const createTestEstablishment = async (ownerId: string, phone: string) => {
     try {
       const { error: establishmentError } = await supabase
         .from('establishments')
@@ -217,7 +223,7 @@ const TestCredentials: React.FC = () => {
           latitude: 40.7128,
           longitude: -74.0060,
           cocktail_count: 0,
-          phone: "555-0123",
+          phone: phone,
           website: "https://testbar.com"
         });
 
@@ -274,9 +280,9 @@ const TestCredentials: React.FC = () => {
           {isCreating ? 'Creating Users...' : 'Create Test Users'}
         </Button>
         <div className="text-xs text-muted-foreground space-y-1">
-          <p><strong>User:</strong> testuser@spiritless.com / Test123!</p>
-          <p><strong>Business:</strong> testbusiness@spiritless.com / Test123!</p>
-          <p><strong>Promoter:</strong> testpromoter@spiritless.com / Test123!</p>
+          <p><strong>User:</strong> testuser@spiritless.com / Test123! (Phone: 555-0101)</p>
+          <p><strong>Business:</strong> testbusiness@spiritless.com / Test123! (Phone: 555-0102)</p>
+          <p><strong>Promoter:</strong> testpromoter@spiritless.com / Test123! (Phone: 555-0103)</p>
         </div>
       </div>
     </div>
