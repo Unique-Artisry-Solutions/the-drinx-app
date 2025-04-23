@@ -1,11 +1,10 @@
-
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '@/contexts/auth';
 import { useNotificationPreferences } from '@/hooks/notifications/useNotificationPreferences';
-import { NotificationFormData } from '@/types/NotificationTypes';
+import { NotificationFormData, NotificationMetadata } from '@/types/NotificationTypes';
 import { useToast } from '@/hooks/use-toast';
 
 const notificationFormSchema = z.object({
@@ -108,21 +107,17 @@ export const useNotificationFormData = () => {
     }
   }, [user, fetchPreferences]);
 
-  // When preferences are loaded, update the form
   useEffect(() => {
     if (!preferences) return;
     
-    // Here we would map from database preferences to form model
     const notificationCategories: Record<string, any> = {};
     
-    // Set defaults first
     ['system-updates', 'bar-crawl', 'establishment', 'promotions'].forEach(categoryId => {
       notificationCategories[categoryId] = form.getValues(`notification_categories.${categoryId}`);
     });
     
-    // Override with actual preferences from the database
     preferences.forEach(pref => {
-      const metadata = pref.metadata || {};
+      const metadata = (pref.metadata || {}) as NotificationMetadata;
       
       notificationCategories[pref.category_id] = {
         enabled: pref.is_enabled,
@@ -142,8 +137,8 @@ export const useNotificationFormData = () => {
     });
     
     form.reset({
-      email_notifications: true, // You might get these from user profile
-      push_notifications: false, // You might get these from user profile
+      email_notifications: true,
+      push_notifications: false,
       global_quiet_hours: {
         enabled: false,
         start: '22:00',
@@ -158,14 +153,13 @@ export const useNotificationFormData = () => {
     
     setLoading(true);
     try {
-      // Save each category's preferences
       const savePromises = Object.entries(data.notification_categories).map(([categoryId, prefs]) => {
         const channels: ('email' | 'push' | 'in_app')[] = [];
         if (prefs.channels.email) channels.push('email');
         if (prefs.channels.push) channels.push('push');
-        channels.push('in_app'); // Always enable in-app notifications
+        channels.push('in_app');
         
-        const metadata = {
+        const metadata: NotificationMetadata = {
           priority: prefs.priority,
           sound: prefs.sound,
           vibration: prefs.vibration,
