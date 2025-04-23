@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { usePushNotifications } from '@/hooks/usePushNotifications';
@@ -19,6 +18,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import DirectNotificationTester from './DirectNotificationTester';
 import { useNotificationDiagnostics } from '@/hooks/notifications/useNotificationDiagnostics';
 import NotificationDiagnosticsPanel from './NotificationDiagnosticsPanel';
+import PermissionRequestDialog from './PermissionRequestDialog';
 
 const NotificationTester = () => {
   const { 
@@ -37,6 +37,7 @@ const NotificationTester = () => {
   const { user } = useAuth();
   const { refreshPermissionStatus } = useServiceWorkerStatus();
   const [permissionState, setPermissionState] = useState<NotificationPermission>(permissionStatus);
+  const [showPermissionDialog, setShowPermissionDialog] = useState(false);
 
   // use the new diagnostics logic
   const {
@@ -66,6 +67,14 @@ const NotificationTester = () => {
         "Permission Status", 
         `Current notification permission: ${currentPermission}`
       );
+    }
+  };
+
+  const handleSubscribeClick = () => {
+    if (permissionStatus === 'default') {
+      setShowPermissionDialog(true);
+    } else {
+      subscribeToNotifications();
     }
   };
 
@@ -163,7 +172,7 @@ const NotificationTester = () => {
                   isLoading={isLoading}
                   hasServiceWorker={hasServiceWorker}
                   permissionStatus={permissionState}
-                  subscribeToNotifications={subscribeToNotifications}
+                  subscribeToNotifications={handleSubscribeClick}
                   refreshPermissions={handleRefreshPermissions}
                 />
               ) : (
@@ -183,6 +192,13 @@ const NotificationTester = () => {
             </TabsContent>
           </Tabs>
         )}
+
+        <PermissionRequestDialog
+          open={showPermissionDialog}
+          onOpenChange={setShowPermissionDialog}
+          onRequestPermission={subscribeToNotifications}
+          permissionStatus={permissionState}
+        />
       </CardContent>
     </Card>
   );
