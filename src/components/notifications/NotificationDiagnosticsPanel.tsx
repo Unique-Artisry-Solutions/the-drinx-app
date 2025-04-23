@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Info, Settings } from "lucide-react";
+import { Info, Settings, CheckCircle2, AlertCircle } from "lucide-react";
 
 interface Props {
   diagnosticsData: Record<string, any>;
@@ -11,6 +11,46 @@ interface Props {
   subscription: any;
   onReset: () => Promise<void>;
 }
+
+// Diagnostic line item component
+const DiagnosticItem = ({ label, value, isPositive = true }: { 
+  label: string; 
+  value: React.ReactNode;
+  isPositive?: boolean;
+}) => (
+  <p className="flex justify-between">
+    <span>{label}:</span>
+    <span className={isPositive ? "text-green-600" : "text-amber-600 font-medium"}>
+      {value}
+    </span>
+  </p>
+);
+
+// Status indicator component
+const ServiceWorkerStatusIndicator = ({ status }: { status: 'checking' | 'active' | 'inactive' }) => {
+  if (status === 'checking') {
+    return <span className="text-blue-500 flex items-center gap-1">
+      <Info className="h-3 w-3" /> Checking...
+    </span>;
+  } else if (status === 'active') {
+    return <span className="text-green-500 flex items-center gap-1">
+      <CheckCircle2 className="h-3 w-3" /> Active
+    </span>;
+  } else {
+    return <span className="text-amber-500 flex items-center gap-1">
+      <AlertCircle className="h-3 w-3" /> Inactive
+    </span>;
+  }
+};
+
+// Permission status formatter
+const formatPermission = (permission: NotificationPermission) => {
+  switch (permission) {
+    case 'granted': return <span className="text-green-600">Granted</span>;
+    case 'denied': return <span className="text-red-600">Denied</span>;
+    default: return <span className="text-amber-600">Not set</span>;
+  }
+};
 
 export default function NotificationDiagnosticsPanel({
   diagnosticsData,
@@ -21,18 +61,43 @@ export default function NotificationDiagnosticsPanel({
 }: Props) {
   if (!diagnosticsData || Object.keys(diagnosticsData).length === 0) return null;
 
+  const registrationsCount = Array.isArray(diagnosticsData.registrations) ? 
+    diagnosticsData.registrations.length : 0;
+
   return (
     <div className="mt-4 p-4 border rounded-md bg-slate-50">
       <h4 className="text-sm font-medium mb-2 flex items-center gap-1">
         <Settings className="h-3 w-3" /> System Diagnostics
       </h4>
+      
       <div className="text-xs space-y-1 text-gray-500">
-        <p>Service Worker: {serviceWorkerStatus === 'active' ? 'Active' : serviceWorkerStatus === 'checking' ? 'Checking...' : 'Inactive'}</p>
-        <p>Permission: {permissionState}</p>
-        <p>Controller: {diagnosticsData.controller ? 'Yes' : 'No'}</p>
-        <p>Registrations: {diagnosticsData.registrations?.length || 0}</p>
-        <p>Subscription: {subscription ? 'Yes' : 'No'}</p>
+        <DiagnosticItem 
+          label="Service Worker" 
+          value={<ServiceWorkerStatusIndicator status={serviceWorkerStatus} />} 
+          isPositive={serviceWorkerStatus === 'active'} 
+        />
+        <DiagnosticItem 
+          label="Permission" 
+          value={formatPermission(permissionState)} 
+          isPositive={permissionState === 'granted'} 
+        />
+        <DiagnosticItem 
+          label="Controller" 
+          value={diagnosticsData.controller ? 'Yes' : 'No'} 
+          isPositive={!!diagnosticsData.controller} 
+        />
+        <DiagnosticItem 
+          label="Registrations" 
+          value={registrationsCount} 
+          isPositive={registrationsCount > 0} 
+        />
+        <DiagnosticItem 
+          label="Subscription" 
+          value={subscription ? 'Yes' : 'No'} 
+          isPositive={!!subscription} 
+        />
       </div>
+      
       <div className="mt-2 flex gap-2">
         <Button
           variant="outline"

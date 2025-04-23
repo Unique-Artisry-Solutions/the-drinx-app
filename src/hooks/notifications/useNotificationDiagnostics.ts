@@ -1,17 +1,32 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { debouncedToast } from '@/utils/debouncedToast';
 
 type DiagnosticsData = Record<string, any>;
+
+// Helper functions
+const checkActiveServiceWorker = async (): Promise<boolean> => {
+  if (!('serviceWorker' in navigator)) return false;
+  
+  try {
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    return registrations.some(
+      reg => reg.active && reg.active.scriptURL.includes('service-worker.js')
+    );
+  } catch (e) {
+    console.error('Error checking service worker status:', e);
+    return false;
+  }
+};
 
 export function useNotificationDiagnostics({ resetSubscriptionState }: { resetSubscriptionState: () => Promise<void> }) {
   const [diagnosticsData, setDiagnosticsData] = useState<DiagnosticsData>({});
   const [serviceWorkerStatus, setServiceWorkerStatus] = useState<'checking' | 'active' | 'inactive'>('checking');
   const [hasJustReset, setHasJustReset] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
-  // Diagnostics runner
-  const runDiagnostics = useCallback(async () => {
-    setServiceWorkerStatus('checking');
+  // Diagnostics runner - collect system information
+  const collectDiagnosticsData = useCallback(async (): Promise<DiagnosticsData> => {
     const data: DiagnosticsData = {
       browser: navigator.userAgent,
       timestamp: new Date().toISOString(),
@@ -22,6 +37,8 @@ export function useNotificationDiagnostics({ resetSubscriptionState }: { resetSu
       controller: !!navigator.serviceWorker?.controller,
       registrations: []
     };
+    
+    // Get service worker registrations data
     if ('serviceWorker' in navigator) {
       try {
         const registrations = await navigator.serviceWorker.getRegistrations();
@@ -32,6 +49,8 @@ export function useNotificationDiagnostics({ resetSubscriptionState }: { resetSu
           waiting: !!reg.waiting,
           scriptURL: reg.active?.scriptURL || 'N/A'
         }));
+        
+        // Check controller communication
         if (navigator.serviceWorker.controller) {
           const messageChannel = new MessageChannel();
           const promise = new Promise<boolean>((resolve) => {
@@ -39,48 +58,90 @@ export function useNotificationDiagnostics({ resetSubscriptionState }: { resetSu
               data.serviceWorkerResponse = event.data;
               resolve(true);
             };
+            
             setTimeout(() => {
               data.serviceWorkerTimeout = true;
               resolve(false);
             }, 1000);
           });
+          
           navigator.serviceWorker.controller.postMessage({
             action: 'ping',
             timestamp: new Date().toISOString()
           }, [messageChannel.port2]);
+          
           await promise;
         }
-        const hasActiveServiceWorker = registrations.some(
-          reg => reg.active && reg.active.scriptURL.includes('service-worker.js')
-        );
-        setServiceWorkerStatus(hasActiveServiceWorker ? 'active' : 'inactive');
       } catch (e) {
         data.registrationsError = e instanceof Error ? e.message : 'Unknown error';
-        setServiceWorkerStatus('inactive');
       }
     }
-    setDiagnosticsData(data);
-    debouncedToast.info(
-      "Diagnostics Complete",
-      "System diagnostics information has been collected"
-    );
+    
+    return data;
   }, []);
 
-  // Reset logic
-  const handleReset = useCallback(async () => {
+  // Diagnostics runner
+  const runDiagnostics = useCallback(async () => {
+    // Don't run diagnostics if we're in the middle of a reset
+    if (isResetting) return;
+    
+    setServiceWorkerStatus('checking');
+    
     try {
+      // Collect the diagnostic data
+      const data = await collectDiagnosticsData();
+      
+      // Update service worker status
+      const hasActiveServiceWorker = data.registrations && 
+        Array.isArray(data.registrations) && 
+        data.registrations.some(
+          (reg: any) => reg.active && reg.scriptURL.includes('service-worker.js')
+        );
+      
+      setServiceWorkerStatus(hasActiveServiceWorker ? 'active' : 'inactive');
+      setDiagnosticsData(data);
+      
+      // Don't show toast if this is running right after a reset
+      if (!hasJustReset) {
+        debouncedToast.info(
+          "Diagnostics Complete",
+          "System diagnostics information has been collected"
+        );
+      }
+    } catch (error) {
+      console.error('Error running diagnostics:', error);
+      setServiceWorkerStatus('inactive');
+    }
+  }, [collectDiagnosticsData, hasJustReset, isResetting]);
+
+  // Reset logic with safeguards against infinite loops
+  const handleReset = useCallback(async () => {
+    if (isResetting) return;
+    
+    try {
+      setIsResetting(true);
       setServiceWorkerStatus('checking');
+      
+      // First, reset subscription state
       await resetSubscriptionState();
+      
+      // Then unregister all service workers
       if ('serviceWorker' in navigator) {
         const registrations = await navigator.serviceWorker.getRegistrations();
         await Promise.all(registrations.map(reg => reg.unregister()));
         console.log('Unregistered all service workers during reset');
       }
+      
+      // Notify user
       debouncedToast.info(
         "Reset Complete",
         "Notification system has been reset"
       );
+      
+      // Mark that we've just reset, which will trigger a single diagnostic run
       setHasJustReset(true);
+      
+      // Ask if user wants to reload
       if (window.confirm('Reset complete. Reload the page to ensure a clean state?')) {
         window.location.reload();
       }
@@ -90,11 +151,25 @@ export function useNotificationDiagnostics({ resetSubscriptionState }: { resetSu
         "Reset Error",
         error instanceof Error ? error.message : "Failed to reset notification system"
       );
+    } finally {
+      setIsResetting(false);
     }
-  }, [resetSubscriptionState]);
+  }, [resetSubscriptionState, isResetting]);
 
   // After a reset, run diagnostics once and clear the flag
   const onHasJustResetUsed = useCallback(() => setHasJustReset(false), []);
+  
+  // Clean up effect when hasJustReset changes
+  useEffect(() => {
+    if (hasJustReset && !isResetting) {
+      const timer = setTimeout(() => {
+        runDiagnostics();
+        onHasJustResetUsed();
+      }, 500); // Small delay to ensure things have settled
+      
+      return () => clearTimeout(timer);
+    }
+  }, [hasJustReset, isResetting, onHasJustResetUsed, runDiagnostics]);
 
   return {
     diagnosticsData,
@@ -103,7 +178,8 @@ export function useNotificationDiagnostics({ resetSubscriptionState }: { resetSu
     handleReset,
     hasJustReset,
     onHasJustResetUsed,
-    setDiagnosticsData, // For advanced integration if needed (not required here)
+    isResetting,
+    setDiagnosticsData,
     setServiceWorkerStatus
   };
 }

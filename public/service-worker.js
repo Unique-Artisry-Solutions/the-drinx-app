@@ -1,4 +1,6 @@
-console.log('Service Worker Loaded');
+
+// Service Worker Configuration
+const SW_VERSION = '1.0.0';
 
 // Debugging helper with timestamp
 const swLog = (message, data = {}) => {
@@ -7,7 +9,12 @@ const swLog = (message, data = {}) => {
   console.log(`[ServiceWorker ${timestamp}] ${logMessage}`, data);
 };
 
-// Lifecycle events
+// Log service worker startup
+swLog('Service Worker initialization started', { version: SW_VERSION });
+
+// ====== Lifecycle Events ======
+
+// Install: Set up service worker
 self.addEventListener('install', event => {
   swLog('Installing Service Worker');
   // Force activation
@@ -15,22 +22,20 @@ self.addEventListener('install', event => {
   swLog('Skip waiting called - will activate immediately');
 });
 
+// Activate: Take control of clients
 self.addEventListener('activate', event => {
   swLog('Service Worker activated');
-  // Take control of all clients
+  
   event.waitUntil(
     self.clients.claim()
       .then(() => {
         swLog('Successfully claimed all clients');
-        // Notify all clients that the service worker is ready
         return self.clients.matchAll();
       })
       .then(clients => {
-        clients.forEach(client => {
-          client.postMessage({
-            type: 'SW_ACTIVATED',
-            timestamp: new Date().toISOString()
-          });
+        notifyClients(clients, {
+          type: 'SW_ACTIVATED',
+          timestamp: new Date().toISOString()
         });
         swLog(`Notified ${clients.length} clients about activation`);
       })
@@ -40,85 +45,98 @@ self.addEventListener('activate', event => {
   );
 });
 
+// ====== Client Communication Helpers ======
+
+// Send message to all connected clients
+const notifyClients = (clients, message) => {
+  clients.forEach(client => {
+    client.postMessage(message);
+    swLog(`Sent message to client: ${client.id}`, { messageType: message.type });
+  });
+};
+
 // Function to relay notification data to all clients
 const relayNotificationToClients = (notificationData) => {
   self.clients.matchAll().then(clients => {
-    clients.forEach(client => {
-      client.postMessage({
-        type: 'PUSH_NOTIFICATION_RECEIVED',
-        notification: notificationData,
-        timestamp: new Date().toISOString()
-      });
-      swLog(`Relayed notification to client: ${client.id}`);
+    notifyClients(clients, {
+      type: 'PUSH_NOTIFICATION_RECEIVED',
+      notification: notificationData,
+      timestamp: new Date().toISOString()
     });
   });
 };
 
-// Push event handler
+// ====== Push Notification Handling ======
+
+// Create default notification options
+const createDefaultNotificationOptions = () => ({
+  body: 'You have a new notification',
+  icon: '/favicon.ico',
+  badge: '/favicon.ico',
+  tag: 'default-notification',
+  vibrate: [200, 100, 200],
+  requireInteraction: true
+});
+
+// Parse notification data from push event
+const parseNotificationData = (event) => {
+  if (!event.data) {
+    swLog('No data received in push event, using defaults');
+    return {
+      title: 'New Notification',
+      options: createDefaultNotificationOptions()
+    };
+  }
+  
+  try {
+    const data = event.data.json();
+    swLog('Push data parsed', data);
+    
+    const options = {
+      body: data.content || data.body,
+      icon: '/favicon.ico',
+      badge: '/favicon.ico',
+      tag: data.id || 'notification-' + Date.now(),
+      vibrate: [200, 100, 200],
+      data: data.metadata || data || {},
+      requireInteraction: data.priority === 'high' || data.priority === 'urgent'
+    };
+    
+    // Add actions if we have them
+    options.actions = data.actions && Array.isArray(data.actions) 
+      ? data.actions 
+      : [
+          { action: 'view', title: 'View' },
+          { action: 'close', title: 'Close' }
+        ];
+    
+    return {
+      title: data.title || 'New Notification',
+      options,
+      data
+    };
+  } catch (parseError) {
+    swLog('Error parsing push data', parseError);
+    return {
+      title: 'New Notification',
+      options: createDefaultNotificationOptions()
+    };
+  }
+};
+
+// Handle push events
 self.addEventListener('push', function(event) {
   try {
     swLog('Received push event', event);
     
-    // Default notification if we can't parse data
-    let title = 'New Notification';
-    let options = {
-      body: 'You have a new notification',
-      icon: '/favicon.ico',
-      badge: '/favicon.ico',
-      tag: 'default-notification',
-      vibrate: [200, 100, 200],
-      requireInteraction: true
-    };
-    
-    let notificationData = null;
-    
-    // Try to parse the push data
-    if (event.data) {
-      try {
-        const data = event.data.json();
-        swLog('Push data parsed', data);
-        
-        notificationData = data;
-        title = data.title || title;
-        options = {
-          body: data.content || data.body,
-          icon: '/favicon.ico',
-          badge: '/favicon.ico',
-          tag: data.id || 'notification-' + Date.now(), 
-          vibrate: [200, 100, 200],
-          data: data.metadata || data || {},
-          requireInteraction: data.priority === 'high' || data.priority === 'urgent'
-        };
-        
-        // Add actions if we have them
-        if (data.actions && Array.isArray(data.actions)) {
-          options.actions = data.actions;
-        } else {
-          options.actions = [
-            {
-              action: 'view',
-              title: 'View'
-            },
-            {
-              action: 'close',
-              title: 'Close'
-            }
-          ];
-        }
-      } catch (parseError) {
-        swLog('Error parsing push data', parseError);
-        // Continue with default notification
-      }
-    } else {
-      swLog('No data received in push event, using defaults');
-    }
+    const { title, options, data } = parseNotificationData(event);
     
     // Show the notification
     swLog('Showing notification', { title, options });
     
     // Also pass notification data to any open clients
-    if (notificationData) {
-      relayNotificationToClients(notificationData);
+    if (data) {
+      relayNotificationToClients(data);
     }
     
     const notificationPromise = self.registration.showNotification(title, options);
@@ -130,6 +148,9 @@ self.addEventListener('push', function(event) {
   }
 });
 
+// ====== Notification Event Handling ======
+
+// Handle notification click events
 self.addEventListener('notificationclick', function(event) {
   swLog('Notification clicked', event);
   event.notification.close();
@@ -171,82 +192,105 @@ self.addEventListener('notificationclick', function(event) {
   }
 });
 
+// Track notification close events
 self.addEventListener('notificationclose', function(event) {
-  // Track when notifications are dismissed
   swLog('Notification was closed', event.notification);
 });
 
-// Add a message handler for improved client communication
+// ====== Message Handling ======
+
+// CORS headers for cross-origin requests
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+// Handle messages from clients
 self.addEventListener('message', function(event) {
   swLog('Received message in service worker', event.data);
   
-  if (event.data.action === 'checkServiceWorker') {
-    swLog('Received checkServiceWorker message', event.data);
-    
-    // Reply using the MessageChannel port if available
-    if (event.ports && event.ports.length > 0) {
-      event.ports[0].postMessage({
-        status: 'active',
-        timestamp: new Date().toISOString()
-      });
-      swLog('Sent active status response through MessageChannel');
-    } else {
-      // Fallback for older implementations
-      event.source?.postMessage({
-        action: 'serviceWorkerStatus',
-        status: 'active',
-        timestamp: new Date().toISOString()
-      });
-      swLog('Sent active status response directly to source');
-    }
-  } else if (event.data.action === 'ping') {
-    // Simple ping-pong to check if service worker is responsive
-    swLog('Ping received, sending pong');
-    
-    if (event.ports && event.ports.length > 0) {
-      event.ports[0].postMessage({
-        action: 'pong',
-        timestamp: new Date().toISOString()
-      });
-    } else {
-      event.source?.postMessage({
-        action: 'pong',
-        timestamp: new Date().toISOString()
-      });
-    }
-  } else if (event.data.action === 'showTestNotification') {
-    // Handle direct test notification request from client
-    swLog('Showing test notification from client request');
-    const title = event.data.title || 'Test Notification';
-    const options = event.data.options || {
-      body: 'This is a test notification from the service worker',
-      icon: '/favicon.ico',
-      badge: '/favicon.ico',
-      timestamp: Date.now()
-    };
-    
-    self.registration.showNotification(title, options)
-      .then(() => {
-        if (event.ports && event.ports[0]) {
-          event.ports[0].postMessage({
-            success: true,
-            message: 'Test notification sent successfully',
-            timestamp: new Date().toISOString()
-          });
-        }
-      })
-      .catch(error => {
-        swLog('Error showing notification', error);
-        if (event.ports && event.ports[0]) {
-          event.ports[0].postMessage({
-            success: false,
-            error: error.message || 'Failed to show notification',
-            timestamp: new Date().toISOString()
-          });
-        }
-      });
+  switch (event.data.action) {
+    case 'checkServiceWorker':
+      handleServiceWorkerCheck(event);
+      break;
+    case 'ping':
+      handlePing(event);
+      break;
+    case 'showTestNotification':
+      handleTestNotification(event);
+      break;
+    default:
+      break;
   }
 });
+
+// Handle service worker check message
+function handleServiceWorkerCheck(event) {
+  swLog('Received checkServiceWorker message', event.data);
+  
+  const response = {
+    status: 'active',
+    timestamp: new Date().toISOString()
+  };
+  
+  sendResponse(event, response);
+}
+
+// Handle ping message
+function handlePing(event) {
+  swLog('Ping received, sending pong');
+  
+  const response = {
+    action: 'pong',
+    timestamp: new Date().toISOString()
+  };
+  
+  sendResponse(event, response);
+}
+
+// Handle test notification message
+function handleTestNotification(event) {
+  swLog('Showing test notification from client request');
+  
+  const title = event.data.title || 'Test Notification';
+  const options = event.data.options || {
+    body: 'This is a test notification from the service worker',
+    icon: '/favicon.ico',
+    badge: '/favicon.ico',
+    timestamp: Date.now()
+  };
+  
+  self.registration.showNotification(title, options)
+    .then(() => {
+      const response = {
+        success: true,
+        message: 'Test notification sent successfully',
+        timestamp: new Date().toISOString()
+      };
+      
+      sendResponse(event, response);
+    })
+    .catch(error => {
+      swLog('Error showing notification', error);
+      
+      const response = {
+        success: false,
+        error: error.message || 'Failed to show notification',
+        timestamp: new Date().toISOString()
+      };
+      
+      sendResponse(event, response);
+    });
+}
+
+// Send response back to client
+function sendResponse(event, data) {
+  if (event.ports && event.ports[0]) {
+    event.ports[0].postMessage(data);
+  } else if (event.source) {
+    event.source.postMessage(data);
+  }
+}
 
 // Report errors to the client
 self.addEventListener('error', function(event) {
@@ -257,14 +301,12 @@ self.addEventListener('error', function(event) {
 setInterval(() => {
   swLog('Sending periodic keep-alive ping');
   self.clients.matchAll().then(clients => {
-    clients.forEach(client => {
-      client.postMessage({
-        type: 'SW_PING',
-        timestamp: new Date().toISOString()
-      });
+    notifyClients(clients, {
+      type: 'SW_PING',
+      timestamp: new Date().toISOString()
     });
   });
 }, 25 * 60 * 1000);
 
-// Log service worker startup
+// Log service worker initialization complete
 swLog('Service Worker initialization complete');
