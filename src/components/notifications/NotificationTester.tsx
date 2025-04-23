@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Info, AlertCircle } from "lucide-react";
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { useServiceWorker } from '@/hooks/useServiceWorker';
 import { useTestNotification } from '@/hooks/useTestNotification';
@@ -9,14 +12,11 @@ import { NotificationError } from './NotificationError';
 import { SubscriptionStatus } from './SubscriptionStatus';
 import { ActiveSubscription } from './ActiveSubscription';
 import { LoginPrompt } from './LoginPrompt';
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { NotificationControls } from './NotificationControls';
 import DirectNotificationTester from './DirectNotificationTester';
 import { useNotificationDiagnostics } from '@/hooks/notifications/useNotificationDiagnostics';
 import NotificationDiagnosticsPanel from './NotificationDiagnosticsPanel';
 import PermissionRequestDialog from './PermissionRequestDialog';
-import { NotificationControls } from './NotificationControls';
 import { useNotificationActions } from '@/hooks/notifications/useNotificationActions';
 
 const NotificationTester = () => {
@@ -51,6 +51,12 @@ const NotificationTester = () => {
       runDiagnostics();
     }
   }, [hasJustReset, onHasJustResetUsed, runDiagnostics]);
+
+  const handleRefreshPermissionsAsync = async (): Promise<void> => {
+    if (handleRefreshPermissions) {
+      await handleRefreshPermissions();
+    }
+  };
 
   const handleSubscribeClick = async (): Promise<void> => {
     if (permissionStatus === 'default') {
@@ -93,7 +99,7 @@ const NotificationTester = () => {
   const showError = registrationError || setupError;
 
   return (
-    <Card>
+    <Card className="w-full">
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
           <CardTitle>Push Notifications</CardTitle>
@@ -102,7 +108,7 @@ const NotificationTester = () => {
           </CardDescription>
         </div>
         <NotificationControls 
-          onRefresh={handleRefreshPermissions}
+          onRefresh={handleRefreshPermissionsAsync}
           onDiagnose={runDiagnostics}
         />
       </CardHeader>
