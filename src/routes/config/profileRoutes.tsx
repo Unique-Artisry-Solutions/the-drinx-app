@@ -1,56 +1,35 @@
-
 import { RouteObject } from 'react-router-dom';
-import { ProtectedRoute } from '../protectedRoutes';
-import Profile from '@/pages/ProfilePage';
-import FavoritesPage from '@/pages/profile/FavoritesPage';
-import VisitedPage from '@/pages/profile/VisitedPage';
-import BarCrawlsPage from '@/pages/profile/BarCrawlsPage';
-import MyCreationsPage from '@/pages/profile/MyCreationsPage';
-import UserRecipesPage from '@/pages/profile/UserRecipesPage';
-import RewardsPage from '@/pages/profile/RewardsPage';
-import UserProfilePage from '@/pages/profile/UserProfilePage';
+import { TypedProtectedRoute } from '../protectedRoutes';
+import ProfilePage from '@/pages/profile/ProfilePage';
+import EditProfilePage from '@/pages/profile/EditProfilePage';
+import VisitsPage from '@/pages/profile/VisitsPage';
+import AchievementsPage from '@/pages/profile/AchievementsPage';
 import SettingsPage from '@/pages/SettingsPage';
-import { BarCrawlManagementPage } from '@/imports';
+import NotificationsPage from '@/pages/notifications/NotificationsPage';
 
 export const profileRoutes: RouteObject[] = [
   {
     path: '/profile',
-    element: <ProtectedRoute><Profile /></ProtectedRoute>,
+    element: <TypedProtectedRoute><ProfilePage /></TypedProtectedRoute>,
   },
   {
-    path: '/profile/favorites',
-    element: <ProtectedRoute><FavoritesPage /></ProtectedRoute>,
+    path: '/profile/edit',
+    element: <TypedProtectedRoute><EditProfilePage /></TypedProtectedRoute>,
   },
   {
-    path: '/profile/visited',
-    element: <ProtectedRoute><VisitedPage /></ProtectedRoute>,
+    path: '/visits',
+    element: <TypedProtectedRoute><VisitsPage /></TypedProtectedRoute>,
   },
   {
-    path: '/profile/bar-crawls',
-    element: <ProtectedRoute><BarCrawlsPage /></ProtectedRoute>,
-  },
-  {
-    path: '/profile/my-creations',
-    element: <ProtectedRoute><MyCreationsPage /></ProtectedRoute>,
-  },
-  {
-    path: '/profile/my-creations/:id',
-    element: <ProtectedRoute><BarCrawlManagementPage /></ProtectedRoute>,
-  },
-  {
-    path: '/profile/recipes',
-    element: <ProtectedRoute><UserRecipesPage /></ProtectedRoute>,
-  },
-  {
-    path: '/profile/rewards',
-    element: <ProtectedRoute><RewardsPage /></ProtectedRoute>,
-  },
-  {
-    path: '/profile/settings',
-    element: <ProtectedRoute><UserProfilePage /></ProtectedRoute>,
+    path: '/achievements',
+    element: <TypedProtectedRoute><AchievementsPage /></TypedProtectedRoute>,
   },
   {
     path: '/settings',
-    element: <ProtectedRoute><SettingsPage /></ProtectedRoute>,
+    element: <TypedProtectedRoute><SettingsPage /></TypedProtectedRoute>,
+  },
+  {
+    path: '/notifications',
+    element: <TypedProtectedRoute><NotificationsPage /></TypedProtectedRoute>,
   },
 ];
