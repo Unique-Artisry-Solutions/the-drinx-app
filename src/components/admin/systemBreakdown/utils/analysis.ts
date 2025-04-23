@@ -1,5 +1,5 @@
-
-import { AnalysisStep, FeatureItem, DatabaseStatus } from '../types';
+import { FeatureItem } from '../types/core';
+import { AnalysisStep, AnalysisResult } from '../types/analysis';
 import { 
   analyzeDatabaseStatus, 
   analyzeSwigCircuitSystem, 
@@ -8,15 +8,12 @@ import {
 } from './analysis/index';
 import { groupFeaturesByCategory } from './featureStatistics';
 
-/**
- * Analyzes all features and updates their implementation and database status
- */
 export function analyzeAllFeatures(
   adminFeatures: FeatureItem[],
   establishmentFeatures: FeatureItem[],
   individualFeatures: FeatureItem[],
   promoterFeatures: FeatureItem[] = []
-) {
+): AnalysisResult {
   // Store original features to track changes
   const originalAdminFeatures = [...adminFeatures];
   const originalEstablishmentFeatures = [...establishmentFeatures];
@@ -35,7 +32,6 @@ export function analyzeAllFeatures(
   ];
   
   // Step 2: Update database status based on detected tables
-  // Make sure the returned type is FeatureItem[] for all updateFeatures calls
   let updatedAdminFeatures = analyzeDatabaseStatus(adminFeatures);
   let updatedEstablishmentFeatures = analyzeDatabaseStatus(establishmentFeatures);
   let updatedIndividualFeatures = analyzeDatabaseStatus(individualFeatures);

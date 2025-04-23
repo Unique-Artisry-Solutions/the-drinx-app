@@ -1,5 +1,4 @@
-
-import { FeatureItem, DatabaseStatus } from '../../types';
+import { FeatureItem, DatabaseStatus } from '../../types/core';
 
 /**
  * Updates feature database status based on analysis
@@ -92,21 +91,16 @@ function generateDatabaseAnalysis(feature: FeatureItem, status: DatabaseStatus):
   // Base analysis text on the feature and detected status
   const name = feature.name;
   
-  if (status === 'complete') {
-    return `Database implementation for "${name}" is complete. All necessary tables, relationships, and indices have been created and optimized.`;
+  switch (status) {
+    case 'complete':
+      return `Database implementation for "${name}" is complete. All necessary tables, relationships, and indices have been created and optimized.`;
+    case 'in_progress':
+      return `Database implementation for "${name}" is in progress. Basic tables have been created, but additional work is needed for optimization and full functionality.`;
+    case 'not_started':
+      return `Database implementation for "${name}" has not been started. Based on the feature description, the following database work will be needed: table creation, relationship mapping, and API integration.`;
+    case 'implemented':
+      return `Database implementation for "${name}" has been implemented. All required database components are in place and functioning.`;
+    default:
+      return `Database status for "${name}" requires further analysis.`;
   }
-  
-  if (status === 'in_progress') {
-    return `Database implementation for "${name}" is in progress. Basic tables have been created, but additional work is needed for optimization and full functionality.`;
-  }
-  
-  if (status === 'not_started') {
-    return `Database implementation for "${name}" has not been started. Based on the feature description, the following database work will be needed: table creation, relationship mapping, and API integration.`;
-  }
-  
-  if (status === 'implemented') {
-    return `Database implementation for "${name}" has been implemented. All required database components are in place and functioning.`;
-  }
-  
-  return `Database status for "${name}" requires further analysis.`;
 }
