@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -9,10 +8,9 @@ interface Props {
   serviceWorkerStatus: 'checking' | 'active' | 'inactive';
   permissionState: NotificationPermission;
   subscription: any;
-  onReset: () => Promise<void>;
+  onReset: () => Promise<boolean | void>;
 }
 
-// Diagnostic line item component
 const DiagnosticItem = ({ label, value, isPositive = true }: { 
   label: string; 
   value: React.ReactNode;
@@ -26,7 +24,6 @@ const DiagnosticItem = ({ label, value, isPositive = true }: {
   </p>
 );
 
-// Status indicator component
 const ServiceWorkerStatusIndicator = ({ status }: { status: 'checking' | 'active' | 'inactive' }) => {
   if (status === 'checking') {
     return <span className="text-blue-500 flex items-center gap-1">
@@ -43,7 +40,6 @@ const ServiceWorkerStatusIndicator = ({ status }: { status: 'checking' | 'active
   }
 };
 
-// Permission status formatter
 const formatPermission = (permission: NotificationPermission) => {
   switch (permission) {
     case 'granted': return <span className="text-green-600">Granted</span>;

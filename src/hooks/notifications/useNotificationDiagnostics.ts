@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from 'react';
 import { debouncedToast } from '@/utils/debouncedToast';
 
@@ -115,7 +114,7 @@ export function useNotificationDiagnostics({ resetSubscriptionState }: { resetSu
   }, [collectDiagnosticsData, hasJustReset, isResetting]);
 
   // Reset logic with safeguards against infinite loops
-  const handleReset = useCallback(async () => {
+  const handleReset = useCallback(async (): Promise<void> => {
     if (isResetting) return;
     
     try {
