@@ -1,4 +1,3 @@
-
 export interface PushSubscription {
   id?: string;
   user_id: string;
@@ -22,6 +21,15 @@ export interface NotificationDeliveryStatus {
     success: boolean;
     timestamp: string;
   };
+}
+
+export interface NotificationMetadata {
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  sound: boolean;
+  vibration: boolean;
+  timeWindowEnabled: boolean;
+  quietHoursStart: string;
+  quietHoursEnd: string;
 }
 
 export interface Notification {
@@ -63,9 +71,11 @@ export interface NotificationPreferenceSettings {
 
 export interface NotificationPreferences {
   user_id: string;
-  email_notifications: boolean;
-  push_notifications: boolean;
-  notification_categories: {
-    [key: string]: NotificationPreferenceSettings;
-  };
+  category_id: string;
+  channels: ('email' | 'push' | 'in_app')[];
+  is_enabled: boolean;
+  metadata: NotificationMetadata;
+  created_at: string;
+  updated_at: string;
+  id: string;
 }

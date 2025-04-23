@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { useAuth } from '@/contexts/auth';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
+import { NotificationPreferenceSettings } from '@/types/NotificationTypes';
 
 const profileFormSchema = z.object({
   first_name: z.string().min(2, { message: "First name must be at least 2 characters." }),
