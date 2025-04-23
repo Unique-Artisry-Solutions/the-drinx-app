@@ -166,7 +166,8 @@ export const useNotifications = () => {
   useEffect(() => {
     let isMounted = true;
     const autoRefreshInterval = 30000; // 30 seconds
-    let refreshTimer: number;
+    let refreshTimer: number | undefined;
+    let swMessageHandler: ((event: MessageEvent) => void) | null = null;
 
     const setupNotificationFetch = () => {
       if (user && session) {
@@ -182,20 +183,19 @@ export const useNotifications = () => {
           }
         }, autoRefreshInterval);
 
-        // Set up service worker message listener for push notifications
-        const handleServiceWorkerMessage = (event: MessageEvent) => {
-          // Check if the event is from our service worker and contains notification data
+        // Prepare a handler for service worker push notification
+        swMessageHandler = (event: MessageEvent) => {
           if (
             event.data && 
             event.data.type === 'PUSH_NOTIFICATION_RECEIVED' &&
             event.data.notification
           ) {
             console.log('Received push notification from service worker:', event.data.notification);
+            // Add notification to local state so it shows instantly in the popover
             addPushNotification(event.data.notification);
           }
         };
-
-        navigator.serviceWorker.addEventListener('message', handleServiceWorkerMessage);
+        navigator.serviceWorker.addEventListener('message', swMessageHandler);
       } else {
         setNotifications([]);
         setUnreadCount(0);
@@ -211,10 +211,10 @@ export const useNotifications = () => {
       if (refreshTimer) {
         clearInterval(refreshTimer);
       }
-      // Clean up service worker listener
-      navigator.serviceWorker.removeEventListener('message', (event: any) => {
-        console.log('Removed service worker message listener');
-      });
+      // Properly clean up service worker listener if it was assigned
+      if (swMessageHandler) {
+        navigator.serviceWorker.removeEventListener('message', swMessageHandler);
+      }
     };
   }, [user, session, addPushNotification]);
 
@@ -228,3 +228,4 @@ export const useNotifications = () => {
     refetch: fetchNotifications
   };
 };
+
