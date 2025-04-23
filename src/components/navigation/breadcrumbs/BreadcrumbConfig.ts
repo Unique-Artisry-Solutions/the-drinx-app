@@ -1,4 +1,3 @@
-
 import { Home } from 'lucide-react';
 import React from 'react';
 
@@ -56,6 +55,12 @@ export const routes: Record<string, BreadcrumbConfig> = {
   '/mission': { path: '/mission', label: 'Our Mission' },
   '/resources': { path: '/resources', label: 'Resources' },
   '/pricing': { path: '/pricing', label: 'Pricing' },
+  
+  // Add notification routes
+  '/notifications': { path: '/notifications', label: 'Notifications' },
+  '/admin/notifications': { path: '/admin/notifications', label: 'Notifications' },
+  '/promoter/notifications': { path: '/promoter/notifications', label: 'Notifications' },
+  '/establishment/notifications': { path: '/establishment/notifications', label: 'Notifications' },
 };
 
 // Dynamic path matching patterns

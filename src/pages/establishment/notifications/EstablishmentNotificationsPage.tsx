@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { useRoleNotifications } from '@/hooks/notifications/useRoleNotifications';
 import NotificationsList from '@/pages/notifications/components/NotificationsList';
 import NotificationsHeader from '@/pages/notifications/components/NotificationsHeader';
+import NotificationsLayout from '@/components/notifications/NotificationsLayout';
 
 export default function EstablishmentNotificationsPage() {
   const { notifications, unreadCount, isLoading, error, markAllAsRead, refetch } = useRoleNotifications();
@@ -12,7 +13,7 @@ export default function EstablishmentNotificationsPage() {
   }, [refetch]);
 
   return (
-    <div className="container mx-auto p-4 max-w-4xl">
+    <NotificationsLayout title="Establishment Notifications">
       <NotificationsHeader 
         unreadCount={unreadCount}
         onMarkAllRead={markAllAsRead}
@@ -26,6 +27,6 @@ export default function EstablishmentNotificationsPage() {
           error={error}
         />
       </div>
-    </div>
+    </NotificationsLayout>
   );
 }

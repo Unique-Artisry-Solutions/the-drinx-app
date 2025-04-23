@@ -1,7 +1,6 @@
-
 import React from 'react';
 import { useLocation } from 'react-router-dom';
-import { User, Settings, LogOut, Route, GlassWater, BarChart4, Store, Megaphone } from 'lucide-react';
+import { User, Settings, LogOut, Route, GlassWater, BarChart4, Store, Megaphone, Bell } from 'lucide-react';
 import { 
   DropdownMenuSeparator 
 } from "@/components/ui/dropdown-menu";
@@ -47,6 +46,15 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
     return '/profile';
   };
 
+  const getNotificationsPath = () => {
+    if (userType === 'establishment') {
+      return '/establishment/notifications';
+    } else if (userType === 'promoter') {
+      return '/promoter/notifications';
+    }
+    return '/notifications';
+  };
+
   return (
     <div className="py-2 group space-y-1">
       <ProfileHeader 
@@ -54,6 +62,16 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
         isDarkTheme={isDarkTheme} 
         isPromoter={isPromoter} 
       />
+      
+      <ProfileMenuItem 
+        to={getNotificationsPath()} 
+        icon={Bell} 
+        isDarkTheme={isDarkTheme}
+        isActive={location.pathname === getNotificationsPath()}
+        customColor={userType === 'promoter' ? "text-purple-600" : undefined}
+      >
+        Notifications
+      </ProfileMenuItem>
       
       <ProfileMenuItem 
         to={getProfilePath()} 
