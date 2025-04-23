@@ -1,3 +1,4 @@
+
 import { toast } from '@/hooks/use-toast';
 
 // Create a debounced toast system to prevent duplicate toasts
