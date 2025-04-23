@@ -1,20 +1,33 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useServiceWorkerCheck } from './useServiceWorkerCheck';
 import { debouncedToast } from '@/utils/debouncedToast';
+
+const STATUS_CHECK_INTERVAL = 30000; // 30 seconds
 
 export const useServiceWorkerStatus = () => {
   const [hasServiceWorker, setHasServiceWorker] = useState(false);
   const [permissionStatus, setPermissionStatus] = useState<NotificationPermission>('default');
   const [lastPermissionCheck, setLastPermissionCheck] = useState<Date>(new Date());
   const { isCheckingServiceWorker, setIsCheckingServiceWorker, checkServiceWorkerSupport } = useServiceWorkerCheck();
+  
+  // Use a ref to track the last status check to prevent excessive updates
+  const lastStatusCheck = useRef<Date>(new Date());
+  const statusCheckTimeout = useRef<NodeJS.Timeout>();
 
   const refreshPermissionStatus = useCallback(() => {
+    // Only check if enough time has passed since the last check
+    const now = new Date();
+    if (now.getTime() - lastStatusCheck.current.getTime() < STATUS_CHECK_INTERVAL) {
+      return null;
+    }
+
     if ('Notification' in window) {
       const currentPermission = Notification.permission;
       setPermissionStatus(currentPermission);
-      setLastPermissionCheck(new Date());
-      console.log('Permission status refreshed:', currentPermission, new Date().toISOString());
+      setLastPermissionCheck(now);
+      lastStatusCheck.current = now;
+      console.log('Permission status refreshed:', currentPermission, now.toISOString());
       return currentPermission;
     }
     return null;
@@ -27,16 +40,24 @@ export const useServiceWorkerStatus = () => {
       
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistrations().then(registrations => {
-          registrations.forEach(registration => {
-            registration.unregister().then(success => {
-              console.log('Service worker unregistered:', success);
-              setHasServiceWorker(false);
-            });
-          });
+          const hasActive = registrations.some(registration => 
+            registration.active && registration.active.scriptURL.includes('service-worker.js')
+          );
+          setHasServiceWorker(hasActive);
+          
+          // Only show toast if the service worker is not active
+          if (Notification.permission === 'granted' && !hasActive) {
+            debouncedToast.info(
+              "Service Worker Required", 
+              "Permissions are granted but service worker needs to be initialized",
+              10000 // Increase debounce time to prevent frequent toasts
+            );
+          }
         });
       }
     };
 
+    // Set up permission change listener
     if ('permissions' in navigator) {
       navigator.permissions.query({ name: 'notifications' as PermissionName })
         .then(status => {
@@ -47,9 +68,37 @@ export const useServiceWorkerStatus = () => {
         });
     }
 
+    // Initial permission check
     refreshPermissionStatus();
 
+    // Set up periodic status check
+    const checkStatus = async () => {
+      try {
+        await checkServiceWorkerSupport();
+
+        if ('serviceWorker' in navigator) {
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          const hasActive = registrations.some(registration => 
+            registration.active && registration.active.scriptURL.includes('service-worker.js')
+          );
+          setHasServiceWorker(hasActive);
+        }
+      } catch (error) {
+        console.error('Error checking service worker status:', error);
+        setHasServiceWorker(false);
+      }
+    };
+
+    // Initial check
+    checkStatus();
+
+    // Set up periodic check
+    statusCheckTimeout.current = setInterval(checkStatus, STATUS_CHECK_INTERVAL);
+
     return () => {
+      if (statusCheckTimeout.current) {
+        clearInterval(statusCheckTimeout.current);
+      }
       if ('permissions' in navigator) {
         navigator.permissions.query({ name: 'notifications' as PermissionName })
           .then(status => {
@@ -58,80 +107,7 @@ export const useServiceWorkerStatus = () => {
           .catch(() => {});
       }
     };
-  }, [refreshPermissionStatus]);
-
-  useEffect(() => {
-    const checkWorkerStatus = async () => {
-      try {
-        await checkServiceWorkerSupport();
-
-        if ('serviceWorker' in navigator) {
-          // Add a direct check with the service worker
-          let isActive = false;
-          
-          try {
-            const registrations = await navigator.serviceWorker.getRegistrations();
-            isActive = registrations.some(registration => 
-              registration.active && registration.active.scriptURL.includes('service-worker.js')
-            );
-            
-            // If we have an active service worker, try to communicate with it
-            if (isActive) {
-              // Create a MessageChannel for direct communication
-              const messageChannel = new MessageChannel();
-              const promise = new Promise<boolean>((resolve) => {
-                messageChannel.port1.onmessage = (event) => {
-                  if (event.data && event.data.status === 'active') {
-                    console.log('Service worker confirmed active via messaging', event.data);
-                    resolve(true);
-                  } else {
-                    resolve(false);
-                  }
-                };
-                
-                // Set a timeout in case the service worker doesn't respond
-                setTimeout(() => resolve(false), 1000);
-              });
-              
-              // Send a ping to the service worker
-              if (navigator.serviceWorker.controller) {
-                navigator.serviceWorker.controller.postMessage({
-                  action: 'checkServiceWorker'
-                }, [messageChannel.port2]);
-                
-                // Wait for the response or timeout
-                const isResponsive = await promise;
-                if (isResponsive) {
-                  isActive = true;
-                } else {
-                  console.log('Service worker did not respond to message');
-                }
-              }
-            }
-          } catch (error) {
-            console.error('Error checking service worker registrations:', error);
-          }
-
-          setHasServiceWorker(isActive);
-          console.log('Service worker status check:', isActive ? 'Active' : 'Not active');
-
-          if (Notification.permission === 'granted' && !isActive) {
-            debouncedToast.info(
-              "Service Worker Required", 
-              "Permissions are granted but service worker needs to be initialized"
-            );
-          }
-        }
-      } catch (error) {
-        console.error('Error checking service worker status:', error);
-        setHasServiceWorker(false);
-      } finally {
-        setIsCheckingServiceWorker(false);
-      }
-    };
-
-    checkWorkerStatus();
-  }, [checkServiceWorkerSupport, setIsCheckingServiceWorker, permissionStatus]);
+  }, [checkServiceWorkerSupport, refreshPermissionStatus]);
 
   return {
     hasServiceWorker,

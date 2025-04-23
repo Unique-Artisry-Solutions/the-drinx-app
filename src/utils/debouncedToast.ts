@@ -15,8 +15,9 @@ export const debouncedToast = {
         variant: "destructive"
       });
       delete toastTimeouts[key];
-    }, 100);
+    }, debounceMs);
   },
+
   success: (title: string, description: string, debounceMs = 5000) => {
     const key = `${title}-${description}`;
     if (toastTimeouts[key]) clearTimeout(toastTimeouts[key]);
@@ -26,8 +27,9 @@ export const debouncedToast = {
         description,
       });
       delete toastTimeouts[key];
-    }, 100);
+    }, debounceMs);
   },
+
   info: (title: string, description: string, debounceMs = 5000) => {
     const key = `${title}-${description}`;
     if (toastTimeouts[key]) clearTimeout(toastTimeouts[key]);
@@ -38,8 +40,9 @@ export const debouncedToast = {
         variant: "default"
       });
       delete toastTimeouts[key];
-    }, 100);
+    }, debounceMs);
   },
+
   // Clear all pending toasts
   clear: () => {
     Object.keys(toastTimeouts).forEach(key => {
