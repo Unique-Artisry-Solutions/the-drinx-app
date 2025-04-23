@@ -1,3 +1,4 @@
+
 import { ImprovementItem } from './types';
 
 export const improvementsData: ImprovementItem[] = [
@@ -14,7 +15,6 @@ export const improvementsData: ImprovementItem[] = [
     submittedBy: 'Alex Johnson',
     submittedDate: '2023-04-15',
     type: 'new-feature',
-    name: 'Advanced AI Recommendations',
     lovableCompatible: true,
     technicalRequirements: 'ML model training, user preference database schema updates',
     implementationSteps: [
@@ -41,7 +41,6 @@ export const improvementsData: ImprovementItem[] = [
     submittedBy: 'Morgan Taylor',
     submittedDate: '2023-04-18',
     type: 'enhancement',
-    name: 'Social Sharing Integration',
     priority: 2,
     lovableCompatible: true,
     technicalRequirements: 'Social API integration, image generation services',
@@ -68,7 +67,6 @@ export const improvementsData: ImprovementItem[] = [
     submittedBy: 'Jamie Williams',
     submittedDate: '2023-04-22',
     type: 'new-feature',
-    name: 'Establishment Analytics Dashboard',
     priority: 3,
     lovableCompatible: true,
     technicalRequirements: 'Data visualization library, event tracking system',
@@ -96,7 +94,6 @@ export const improvementsData: ImprovementItem[] = [
     submittedBy: 'Riley Smith',
     submittedDate: '2023-04-25',
     type: 'new-feature',
-    name: 'Ingredient Inventory Management',
     priority: 4,
     lovableCompatible: false,
     technicalRequirements: 'Inventory database schema, alert system',
@@ -123,7 +120,6 @@ export const improvementsData: ImprovementItem[] = [
     submittedBy: 'Jordan Lee',
     submittedDate: '2023-04-30',
     type: 'enhancement',
-    name: 'Personalized Bar Crawl Planner',
     priority: 5,
     lovableCompatible: true,
     technicalRequirements: 'Route optimization algorithm, user preference system',

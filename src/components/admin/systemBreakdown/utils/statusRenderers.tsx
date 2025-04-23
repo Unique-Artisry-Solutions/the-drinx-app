@@ -83,6 +83,7 @@ export function getNormalizedDbStatus(feature: { databaseStatus?: DatabaseStatus
 export function renderDatabaseStatusBadge(status: DatabaseStatus | undefined) {
   switch(status) {
     case 'complete':
+      return <Badge variant="outline" className="border-green-500 text-green-700">Complete</Badge>;
     case 'implemented':
       return <Badge variant="outline" className="border-green-500 text-green-700">Complete</Badge>;
     case 'in_progress':
@@ -134,8 +135,9 @@ export function renderAccessIcon(access: AccessLevel | undefined) {
   const getColorClass = () => {
     switch(access) {
       case 'read': return 'text-blue-500';
-      case 'write': return 'text-purple-500';
+      case 'partial': return 'text-purple-500';
       case 'full': return 'text-green-500';
+      case 'write': return 'text-purple-500';
       default: return 'text-gray-400';
     }
   };

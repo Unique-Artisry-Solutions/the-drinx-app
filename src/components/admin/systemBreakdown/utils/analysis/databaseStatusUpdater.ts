@@ -1,5 +1,5 @@
 
-import { FeatureItem } from '../../types';
+import { FeatureItem, DatabaseStatus } from '../../types';
 
 /**
  * Updates feature database status based on analysis
@@ -32,7 +32,7 @@ export const updateFeaturesDbStatus = (features: FeatureItem[]): FeatureItem[] =
 /**
  * Detects appropriate database status based on feature attributes
  */
-function detectDatabaseStatus(feature: FeatureItem): 'not_started' | 'in_progress' | 'implemented' | 'complete' {
+function detectDatabaseStatus(feature: FeatureItem): DatabaseStatus {
   const name = feature.name.toLowerCase();
   const tags = feature.tags || [];
   const description = feature.description.toLowerCase();
@@ -88,7 +88,7 @@ function detectDatabaseStatus(feature: FeatureItem): 'not_started' | 'in_progres
 /**
  * Generates a detailed analysis text about the database requirements
  */
-function generateDatabaseAnalysis(feature: FeatureItem, status: string): string {
+function generateDatabaseAnalysis(feature: FeatureItem, status: DatabaseStatus): string {
   // Base analysis text on the feature and detected status
   const name = feature.name;
   const description = feature.description;

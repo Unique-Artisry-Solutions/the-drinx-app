@@ -214,7 +214,9 @@ const FeatureShowcaseTab: React.FC<FeatureShowcaseTabProps> = ({
                   icon: 'Star',
                   marketingPoints: [],
                   implementations: 0,
-                  avgRating: 0
+                  avgRating: 0,
+                  categories: [feature.tags?.[0] || 'default'],
+                  businessValues: [feature.userImpact]
                 }))} />
               </div>
             </>
