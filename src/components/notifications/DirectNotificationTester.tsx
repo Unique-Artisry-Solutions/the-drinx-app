@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardContent, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,6 +5,7 @@ import { useDirectNotifications } from '@/hooks/useDirectNotifications';
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { RefreshCw, Bell, Zap, AlertCircle, Lock, CheckCircle, Info } from "lucide-react";
+import { DiagnosticStatusSection } from './DiagnosticStatusSection';
 
 const DirectNotificationTester = () => {
   const {
@@ -31,7 +31,6 @@ const DirectNotificationTester = () => {
     try {
       await sendTestNotification();
       setNotificationSent(true);
-      // Reset flag after 10 seconds
       setTimeout(() => setNotificationSent(false), 10000);
     } catch (err) {
       console.error("Failed to send test notification:", err);
@@ -49,10 +48,8 @@ const DirectNotificationTester = () => {
     }
   };
   
-  // Check document visibility to warn if notification might be missed
   useEffect(() => {
     if (notificationSent) {
-      // Only show this alert for granted permissions
       if (permissionStatus === 'granted' && document.visibilityState !== 'visible') {
         console.log('[DirectNotificationTester] Document not visible, notification may be missed');
       }
@@ -97,22 +94,10 @@ const DirectNotificationTester = () => {
           </Alert>
         )}
         
-        {notificationSent && permissionStatus === 'granted' && (
-          <Alert className="mb-4 bg-blue-50 border-blue-200">
-            <Info className="h-4 w-4 text-blue-600" />
-            <AlertTitle>Notification Troubleshooting</AlertTitle>
-            <AlertDescription>
-              <p>A notification was sent but not visible? Check:</p>
-              <ul className="list-disc ml-5 space-y-1 text-sm mt-2">
-                <li>Browser "Focus Assist" or "Do Not Disturb" mode</li>
-                <li>System notification settings (check your OS control panel)</li>
-                <li>Browser-specific notification settings</li>
-                <li>Look at the top-right or bottom-right of your screen</li>
-                <li>Try using a different browser</li>
-              </ul>
-            </AlertDescription>
-          </Alert>
-        )}
+        <DiagnosticStatusSection 
+          notificationSent={notificationSent}
+          permissionStatus={permissionStatus}
+        />
         
         <Tabs defaultValue="test" value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="w-full grid grid-cols-3">
