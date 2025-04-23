@@ -54,7 +54,7 @@ export function usePushNotifications() {
   }, []);
 
   // Reset subscription state
-  const resetSubscriptionState = useCallback(async () => {
+  const resetSubscriptionState = useCallback(async (): Promise<void> => {
     try {
       setSubscription(null);
       setError(null);
@@ -65,11 +65,11 @@ export function usePushNotifications() {
       // Then unregister all service workers
       await unregisterAllServiceWorkers();
       
-      return true;
+      // No need to return boolean; type should be void, success/failure handled via error state
     } catch (error) {
       console.error('Error during subscription reset:', error);
       setError(error instanceof Error ? error.message : 'Failed to reset subscription state');
-      return false;
+      // No rethrow, no return value
     } finally {
       setIsLoading(false);
     }

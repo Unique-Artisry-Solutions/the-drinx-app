@@ -8,7 +8,7 @@ interface Props {
   serviceWorkerStatus: 'checking' | 'active' | 'inactive';
   permissionState: NotificationPermission;
   subscription: any;
-  onReset: () => Promise<boolean | void>;
+  onReset: () => Promise<void>;
 }
 
 const DiagnosticItem = ({ label, value, isPositive = true }: { 
