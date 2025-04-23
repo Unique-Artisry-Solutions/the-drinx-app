@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, KeyboardEvent } from 'react';
 import { Bell, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,12 @@ const NotificationTestPanel = () => {
   const [priority, setPriority] = useState<'low' | 'medium' | 'high' | 'urgent'>('medium');
   const [type, setType] = useState('default');
 
+  const handleKeyPress = (e: KeyboardEvent) => {
+    if (e.key === 'Enter' && !isLoading) {
+      handleSendTest();
+    }
+  };
+
   const handleSendTest = () => {
     sendTestNotification();
   };
@@ -31,13 +37,16 @@ const NotificationTestPanel = () => {
           <span>Test Notifications</span>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent 
+        className="space-y-4"
+        onKeyDown={handleKeyPress}
+      >
         <div 
           className="space-y-2"
           role="group" 
           aria-labelledby="priority-label"
         >
-          <Label id="priority-label">Priority Level</Label>
+          <Label id="priority-label">Priority Level (use arrow keys to navigate)</Label>
           <RadioGroup
             defaultValue="medium"
             onValueChange={(value: 'low' | 'medium' | 'high' | 'urgent') => setPriority(value)}
@@ -45,19 +54,35 @@ const NotificationTestPanel = () => {
             aria-label="Select notification priority"
           >
             <div className="flex items-center space-x-2">
-              <RadioGroupItem value="low" id="low" aria-describedby="low-label" />
+              <RadioGroupItem 
+                value="low" 
+                id="low"
+                aria-describedby="low-label"
+              />
               <Label id="low-label" htmlFor="low">Low</Label>
             </div>
             <div className="flex items-center space-x-2">
-              <RadioGroupItem value="medium" id="medium" aria-describedby="medium-label" />
+              <RadioGroupItem 
+                value="medium" 
+                id="medium" 
+                aria-describedby="medium-label"
+              />
               <Label id="medium-label" htmlFor="medium">Medium</Label>
             </div>
             <div className="flex items-center space-x-2">
-              <RadioGroupItem value="high" id="high" aria-describedby="high-label" />
+              <RadioGroupItem 
+                value="high" 
+                id="high" 
+                aria-describedby="high-label"
+              />
               <Label id="high-label" htmlFor="high">High</Label>
             </div>
             <div className="flex items-center space-x-2">
-              <RadioGroupItem value="urgent" id="urgent" aria-describedby="urgent-label" />
+              <RadioGroupItem 
+                value="urgent" 
+                id="urgent" 
+                aria-describedby="urgent-label"
+              />
               <Label id="urgent-label" htmlFor="urgent">Urgent</Label>
             </div>
           </RadioGroup>
@@ -68,7 +93,7 @@ const NotificationTestPanel = () => {
           role="group" 
           aria-labelledby="type-label"
         >
-          <Label id="type-label">Notification Type</Label>
+          <Label id="type-label">Notification Type (press Space to open)</Label>
           <Select 
             onValueChange={setType} 
             defaultValue="default"
@@ -101,7 +126,7 @@ const NotificationTestPanel = () => {
           onClick={handleSendTest} 
           disabled={isLoading}
           className="w-full"
-          aria-label={isLoading ? "Sending test notification..." : "Send test notification"}
+          aria-label={isLoading ? "Sending test notification..." : "Send test notification (press Enter)"}
         >
           {isLoading ? (
             <span className="flex items-center gap-2">

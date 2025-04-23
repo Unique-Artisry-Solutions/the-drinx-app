@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { KeyboardEvent } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -10,14 +10,22 @@ import NotificationContent from './NotificationContent';
 interface NotificationItemProps {
   notification: Notification;
   onMarkAsRead: (id: string) => void;
+  tabIndex?: number;
 }
 
 const NotificationItem: React.FC<NotificationItemProps> = ({ 
   notification, 
-  onMarkAsRead 
+  onMarkAsRead,
+  tabIndex = 0
 }) => {
   const isUnread = !notification.is_read;
   const formattedTime = formatDistanceToNow(new Date(notification.created_at), { addSuffix: true });
+
+  const handleKeyPress = (e: KeyboardEvent) => {
+    if (e.key === 'm' || e.key === 'M') {
+      !notification.is_read && onMarkAsRead(notification.id);
+    }
+  };
 
   const getPriorityStyles = () => {
     switch (notification.priority) {
@@ -35,11 +43,13 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
   return (
     <article 
       className={cn(
-        "p-4 mb-2 border rounded-lg transition-colors",
+        "p-4 mb-2 border rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary",
         getPriorityStyles(),
         isUnread ? 'border-l-4' : ''
       )}
       role="article"
+      tabIndex={tabIndex}
+      onKeyDown={handleKeyPress}
       aria-label={`${notification.title} - ${isUnread ? 'Unread' : 'Read'} notification`}
     >
       <div className="flex justify-between items-start">
@@ -58,7 +68,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
               variant="ghost"
               className="px-2 h-8"
               onClick={() => onMarkAsRead(notification.id)}
-              aria-label="Mark as read"
+              aria-label="Mark as read (press M)"
             >
               <Check className="h-4 w-4 mr-1" aria-hidden="true" />
               <span className="text-xs">Mark read</span>

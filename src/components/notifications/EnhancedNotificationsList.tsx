@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useCallback, KeyboardEvent } from 'react';
 import { AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import NotificationItem from './NotificationItem';
@@ -19,6 +19,18 @@ const EnhancedNotificationsList = ({
   error,
   onMarkAsRead
 }: EnhancedNotificationsListProps) => {
+  const handleKeyNavigation = useCallback((e: KeyboardEvent, index: number) => {
+    const focusableElements = document.querySelectorAll('[role="article"]');
+    
+    if (e.key === 'ArrowDown' && index < focusableElements.length - 1) {
+      e.preventDefault();
+      (focusableElements[index + 1] as HTMLElement).focus();
+    } else if (e.key === 'ArrowUp' && index > 0) {
+      e.preventDefault();
+      (focusableElements[index - 1] as HTMLElement).focus();
+    }
+  }, []);
+
   if (isLoading) {
     return (
       <div 
@@ -69,7 +81,7 @@ const EnhancedNotificationsList = ({
       aria-live="polite"
     >
       <AnimatePresence initial={false}>
-        {notifications.map((notification) => (
+        {notifications.map((notification, index) => (
           <motion.div
             key={notification.id}
             initial={{ opacity: 0, y: 20 }}
@@ -77,10 +89,12 @@ const EnhancedNotificationsList = ({
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.2 }}
             layout
+            onKeyDown={(e) => handleKeyNavigation(e as KeyboardEvent, index)}
           >
             <NotificationItem
               notification={notification}
               onMarkAsRead={onMarkAsRead}
+              tabIndex={0}
             />
           </motion.div>
         ))}
