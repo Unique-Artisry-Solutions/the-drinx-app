@@ -11,7 +11,7 @@ export function useTestNotification() {
   const { onShow, onClick, onError, onClose } = useNotificationEvents();
   const { logEnvironmentInfo } = useEnvironmentInfo();
 
-  const createTestNotification = useCallback(async (): Promise<{ success: boolean }> => {
+  const createTestNotification = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);

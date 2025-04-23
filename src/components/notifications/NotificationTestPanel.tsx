@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Bell, AlertTriangle, Info } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,12 +19,8 @@ const NotificationTestPanel = () => {
   const [type, setType] = useState('default');
 
   const handleSendTest = () => {
-    sendTestNotification({
-      priority,
-      type,
-      title: `Test ${priority} priority notification`,
-      content: `This is a test notification with ${priority} priority and type: ${type}`,
-    });
+    // Remove the parameter and call the method directly
+    sendTestNotification();
   };
 
   return (
