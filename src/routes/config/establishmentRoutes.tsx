@@ -1,4 +1,3 @@
-
 import { RouteObject } from 'react-router-dom';
 import { TypedProtectedRoute } from '../protectedRoutes';
 import EstablishmentDashboardPage from '@/pages/establishment/EstablishmentDashboardPage';
@@ -12,6 +11,7 @@ import EstablishmentReviewsPage from '@/pages/establishment/EstablishmentReviews
 import MocktailDetailsPage from '@/pages/establishment/MocktailDetailsPage';
 import MocktailSuggestionsPage from '@/pages/establishment/MocktailSuggestionsPage';
 import AllActionsPage from '@/pages/establishment/AllActionsPage';
+import EstablishmentNotificationsPage from '@/pages/establishment/notifications/EstablishmentNotificationsPage';
 
 const wrapEstablishmentRoute = (element: JSX.Element) => (
   <TypedProtectedRoute userType="establishment">{element}</TypedProtectedRoute>
@@ -69,5 +69,9 @@ export const establishmentRoutes: RouteObject[] = [
   {
     path: '/establishment/mocktail-suggestions',
     element: wrapEstablishmentRoute(<MocktailSuggestionsPage />),
+  },
+  {
+    path: '/establishment/notifications',
+    element: wrapEstablishmentRoute(<EstablishmentNotificationsPage />),
   },
 ];
