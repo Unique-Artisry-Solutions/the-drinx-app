@@ -16,7 +16,7 @@ const TimeWindowSelector: React.FC<TimeWindowSelectorProps> = ({ isLightTheme, b
     const amPm = hour >= 12 ? 'PM' : 'AM';
     const displayHour = hour % 12 || 12;
     return {
-      value: hour.toString(),
+      value: hour.toString().padStart(2, '0') + ':00',
       label: `${displayHour}:00 ${amPm}`
     };
   });
@@ -24,7 +24,7 @@ const TimeWindowSelector: React.FC<TimeWindowSelectorProps> = ({ isLightTheme, b
   return (
     <div className="space-y-4">
       <FormField
-        name={`${basePath}.timeWindowEnabled`}
+        name={`${basePath}.timeWindow.enabled`}
         render={({ field }) => (
           <FormItem className="flex items-center space-x-2">
             <FormControl>
@@ -42,7 +42,7 @@ const TimeWindowSelector: React.FC<TimeWindowSelectorProps> = ({ isLightTheme, b
 
       <div className="grid grid-cols-2 gap-4">
         <FormField
-          name={`${basePath}.quietHoursStart`}
+          name={`${basePath}.timeWindow.start`}
           render={({ field }) => (
             <FormItem>
               <FormLabel className={cn("text-sm", isLightTheme ? "text-gray-700" : "")}>
@@ -50,7 +50,7 @@ const TimeWindowSelector: React.FC<TimeWindowSelectorProps> = ({ isLightTheme, b
               </FormLabel>
               <Select 
                 onValueChange={field.onChange}
-                defaultValue={field.value}
+                value={field.value}
                 disabled={!field.value}
               >
                 <FormControl>
@@ -71,7 +71,7 @@ const TimeWindowSelector: React.FC<TimeWindowSelectorProps> = ({ isLightTheme, b
         />
 
         <FormField
-          name={`${basePath}.quietHoursEnd`}
+          name={`${basePath}.timeWindow.end`}
           render={({ field }) => (
             <FormItem>
               <FormLabel className={cn("text-sm", isLightTheme ? "text-gray-700" : "")}>
@@ -79,7 +79,7 @@ const TimeWindowSelector: React.FC<TimeWindowSelectorProps> = ({ isLightTheme, b
               </FormLabel>
               <Select 
                 onValueChange={field.onChange}
-                defaultValue={field.value}
+                value={field.value}
                 disabled={!field.value}
               >
                 <FormControl>

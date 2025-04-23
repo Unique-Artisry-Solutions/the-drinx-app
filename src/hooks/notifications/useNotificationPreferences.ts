@@ -62,25 +62,62 @@ export const useNotificationPreferences = (userId?: string) => {
     
     setIsLoading(true);
     try {
+      // First check if this preference exists
+      const { data: existingPref, error: checkError } = await supabase
+        .from('notification_preferences')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('category_id', categoryId)
+        .maybeSingle();
+      
+      if (checkError) throw checkError;
+      
       const { error } = await supabase
         .from('notification_preferences')
         .upsert({
+          id: existingPref?.id,
           user_id: userId,
           category_id: categoryId,
           channels,
           is_enabled: isEnabled,
           metadata: metadata as any,
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
+          created_at: existingPref ? undefined : new Date().toISOString()
         });
 
       if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Notification preferences updated",
-      });
       
-      await fetchPreferences();
+      // Update local state without refetching
+      setPreferences(prev => {
+        if (!prev) return prev;
+        
+        const updatedPrefs = [...prev];
+        const index = updatedPrefs.findIndex(p => p.category_id === categoryId);
+        
+        if (index >= 0) {
+          // Update existing preference
+          updatedPrefs[index] = {
+            ...updatedPrefs[index],
+            channels,
+            is_enabled: isEnabled,
+            metadata
+          };
+        } else {
+          // Add new preference
+          updatedPrefs.push({
+            id: existingPref?.id || crypto.randomUUID(),
+            user_id: userId,
+            category_id: categoryId,
+            channels,
+            is_enabled: isEnabled,
+            metadata,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          });
+        }
+        
+        return updatedPrefs;
+      });
     } catch (error) {
       console.error('Error saving notification preferences:', error);
       toast({
@@ -91,7 +128,7 @@ export const useNotificationPreferences = (userId?: string) => {
     } finally {
       setIsLoading(false);
     }
-  }, [userId, toast, fetchPreferences]);
+  }, [userId, toast]);
 
   return {
     isLoading,
