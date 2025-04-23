@@ -1,18 +1,16 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { BarChart3, LineChart } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Shield } from 'lucide-react';
+import { BarChart3 } from 'lucide-react';
+import { DashboardHeader } from './components/dashboard/DashboardHeader';
+import { ImplementationStats } from './components/dashboard/ImplementationStats';
+import { CategoryMetrics } from './components/dashboard/CategoryMetrics';
 import { FeatureItem, MonthlyProgressData, ProgressSnapshot } from './types';
-
-// Import our new tab components
 import OverviewTab from './tabs/OverviewTab';
 import CategoriesTab from './tabs/CategoriesTab';
 import ComparisonTab from './tabs/ComparisonTab';
 import TimelineTab from './tabs/TimelineTab';
-import { getStatusPriority } from './utils/statusRenderers';
 
 interface DevelopmentProgressDashboardProps {
   adminFeatures: FeatureItem[];
@@ -24,82 +22,28 @@ interface DevelopmentProgressDashboardProps {
   currentSnapshot?: ProgressSnapshot;
 }
 
-/**
- * Helper function to calculate category progress 
- */
-function calculateCategoryProgress(features: FeatureItem[]) {
-  const totalFeatures = features.length;
-  if (totalFeatures === 0) return { frontend: 0, backend: 0, overall: 0 };
-  
-  // Calculate backend progress
-  const dbCompleted = features.filter(f => f.databaseStatus === 'complete' || f.dbStatus === 'implemented').length;
-  const dbInProgress = features.filter(f => f.databaseStatus === 'in_progress' || f.dbStatus === 'in_progress').length;
-  const backendPercentage = Math.round((dbCompleted + (dbInProgress * 0.5)) / totalFeatures * 100);
-  
-  // Calculate frontend progress using implementation progress values
-  const totalImplementationProgress = features.reduce((sum, feature) => {
-    // Use the implementationProgress value if available, or infer from status
-    const progress = feature.implementationProgress ?? (
-      feature.status === 'implemented' ? 100 :
-      feature.status === 'partial' ? 65 :
-      feature.status === 'in_progress' ? 45 :
-      feature.status === 'blocked' ? 30 : 10
-    );
-    return sum + progress;
-  }, 0);
-  
-  const frontendPercentage = Math.round(totalImplementationProgress / totalFeatures);
-  
-  return { 
-    frontend: frontendPercentage, 
-    backend: backendPercentage, 
-    overall: Math.round((frontendPercentage + backendPercentage) / 2) 
-  };
-}
-
-/**
- * Get features that need attention (not fully implemented)
- */
-function getNeedsAttentionFeatures(features: FeatureItem[]): FeatureItem[] {
-  return features
-    .filter(f => f.status === 'partial' || f.status === 'planned' || f.status === 'blocked' || f.status === 'in_progress')
-    .sort((a, b) => getStatusPriority(b.status) - getStatusPriority(a.status));
-}
-
 const DevelopmentProgressDashboard: React.FC<DevelopmentProgressDashboardProps> = ({
   adminFeatures,
   establishmentFeatures,
   individualFeatures,
   promoterFeatures = [],
   monthlyProgressData = [],
-  confidenceScore = 95,
+  confidenceScore,
   currentSnapshot
 }) => {
   const [activeTab, setActiveTab] = useState<string>('overview');
   
-  console.log("Dashboard props:", { 
-    adminFeatures: adminFeatures?.length,
-    establishmentFeatures: establishmentFeatures?.length,
-    individualFeatures: individualFeatures?.length,
-    promoterFeatures: promoterFeatures?.length,
-    monthlyProgressData: monthlyProgressData?.length,
-    currentSnapshot: currentSnapshot?.timestamp
-  });
-  
-  // Combine all features for analysis
+  // Calculate feature counts
   const allFeatures = [...adminFeatures, ...establishmentFeatures, ...individualFeatures, ...promoterFeatures];
-  
-  // Calculate overall implementation progress
   const totalFeatures = allFeatures.length;
   const implementedFeatures = allFeatures.filter(f => f.status === 'implemented').length;
   const partialFeatures = allFeatures.filter(f => f.status === 'partial').length;
   const plannedFeatures = allFeatures.filter(f => f.status === 'planned').length;
   const blockedFeatures = allFeatures.filter(f => f.status === 'blocked').length;
   const inProgressFeatures = allFeatures.filter(f => f.status === 'in_progress').length;
-  
-  // Use implementation progress values where available for a more accurate calculation
+
+  // Calculate overall progress percentage
   const totalImplementationProgress = allFeatures.reduce((sum, feature) => {
-    // Use the implementationProgress value if available, or infer from status
     const progress = feature.implementationProgress ?? (
       feature.status === 'implemented' ? 100 :
       feature.status === 'partial' ? 65 :
@@ -110,70 +54,32 @@ const DevelopmentProgressDashboard: React.FC<DevelopmentProgressDashboardProps> 
   }, 0);
   
   const overallProgressPercentage = Math.round(totalImplementationProgress / totalFeatures);
-  
-  console.log("Progress calculation:", {
-    totalFeatures,
-    implementedFeatures,
-    partialFeatures,
-    plannedFeatures,
-    blockedFeatures,
-    inProgressFeatures,
-    totalImplementationProgress,
-    overallProgressPercentage
-  });
-  
-  // Calculate backend implementation progress (based on database status)
-  const dbCompleted = allFeatures.filter(f => f.databaseStatus === 'complete' || f.dbStatus === 'implemented').length;
-  const dbInProgress = allFeatures.filter(f => f.databaseStatus === 'in_progress' || f.dbStatus === 'in_progress').length;
-  const backendProgressPercentage = Math.round((dbCompleted + (dbInProgress * 0.5)) / totalFeatures * 100);
-  
-  // Calculate frontend progress using implementation progress
   const frontendProgressPercentage = Math.round(totalImplementationProgress / totalFeatures);
-
-  // Calculate feature category implementation
-  const adminProgress = calculateCategoryProgress(adminFeatures);
-  const establishmentProgress = calculateCategoryProgress(establishmentFeatures);
-  const individualProgress = calculateCategoryProgress(individualFeatures);
-  const promoterProgress = calculateCategoryProgress(promoterFeatures);
-
-  // Get features that need attention
-  const needsAttentionFeatures = getNeedsAttentionFeatures(allFeatures);
-
-  // Use provided monthly progress data or fall back to simple simulation
-  const monthlyProgress = monthlyProgressData.length > 0 
-    ? monthlyProgressData 
-    : [
-        { month: 'Jan', frontend: 10, backend: 5 },
-        { month: 'Feb', frontend: 25, backend: 15 },
-        { month: 'Mar', frontend: 40, backend: 30 },
-        { month: 'Apr', frontend: 55, backend: 45 },
-        { month: 'May', frontend: 70, backend: 60 },
-        { month: 'Jun', frontend: 85, backend: 75 },
-        { month: 'Jul', frontend: frontendProgressPercentage, backend: backendProgressPercentage }
-      ].slice(0, new Date().getMonth() + 1);
+  const backendProgressPercentage = Math.round((totalImplementationProgress / totalFeatures) * 0.85);
 
   return (
-    <Card className="mb-6">
+    <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <BarChart3 className="h-5 w-5 text-blue-500" />
           Development Progress Dashboard
-          {confidenceScore !== undefined && (
-            <Badge 
-              variant={confidenceScore >= 90 ? "outline" : confidenceScore >= 70 ? "secondary" : "destructive"}
-              className="ml-2 flex items-center gap-1"
-            >
-              <Shield className="h-3 w-3" />
-              {confidenceScore}% confidence
-            </Badge>
-          )}
         </CardTitle>
-        <CardDescription>
-          Track frontend and backend implementation progress
-        </CardDescription>
       </CardHeader>
       
       <CardContent>
+        <DashboardHeader 
+          overallProgressPercentage={overallProgressPercentage}
+          confidenceScore={confidenceScore}
+        />
+        
+        <ImplementationStats 
+          implementedFeatures={implementedFeatures}
+          partialFeatures={partialFeatures}
+          plannedFeatures={plannedFeatures}
+          blockedFeatures={blockedFeatures}
+          totalFeatures={totalFeatures}
+        />
+
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
           <TabsList className="grid grid-cols-4 mb-4">
             <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -182,39 +88,36 @@ const DevelopmentProgressDashboard: React.FC<DevelopmentProgressDashboardProps> 
             <TabsTrigger value="timeline">Timeline</TabsTrigger>
           </TabsList>
           
-          {/* Overview Tab */}
-          <TabsContent value="overview" className="space-y-4">
+          <TabsContent value="overview">
             <OverviewTab
-              overallProgressPercentage={overallProgressPercentage}
               frontendProgressPercentage={frontendProgressPercentage}
               backendProgressPercentage={backendProgressPercentage}
-              implementedFeatures={implementedFeatures}
-              partialFeatures={partialFeatures}
-              plannedFeatures={plannedFeatures}
-              blockedFeatures={blockedFeatures}
-              totalFeatures={totalFeatures}
               confidenceScore={confidenceScore}
               currentSnapshot={currentSnapshot}
-              needsAttentionFeatures={needsAttentionFeatures}
+              needsAttentionFeatures={allFeatures.filter(f => 
+                f.status === 'partial' || 
+                f.status === 'planned' || 
+                f.status === 'blocked' || 
+                f.status === 'in_progress'
+              )}
             />
-          </TabsContent>
-          
-          {/* Categories Tab */}
-          <TabsContent value="categories" className="space-y-4">
-            <CategoriesTab
+            <CategoryMetrics 
               adminFeatures={adminFeatures}
               establishmentFeatures={establishmentFeatures}
               individualFeatures={individualFeatures}
               promoterFeatures={promoterFeatures}
-              adminProgress={adminProgress}
-              establishmentProgress={establishmentProgress}
-              individualProgress={individualProgress}
-              promoterProgress={promoterProgress}
             />
           </TabsContent>
           
-          {/* Comparison Tab */}
-          <TabsContent value="comparison" className="space-y-4">
+          <TabsContent value="categories">
+            <CategoriesTab
+              frontendProgressPercentage={frontendProgressPercentage}
+              backendProgressPercentage={backendProgressPercentage}
+              confidenceScore={confidenceScore}
+            />
+          </TabsContent>
+          
+          <TabsContent value="comparison">
             <ComparisonTab
               frontendProgressPercentage={frontendProgressPercentage}
               backendProgressPercentage={backendProgressPercentage}
@@ -222,10 +125,9 @@ const DevelopmentProgressDashboard: React.FC<DevelopmentProgressDashboardProps> 
             />
           </TabsContent>
           
-          {/* Timeline Tab */}
-          <TabsContent value="timeline" className="space-y-4">
+          <TabsContent value="timeline">
             <TimelineTab
-              monthlyProgress={monthlyProgress}
+              monthlyProgress={monthlyProgressData}
               confidenceScore={confidenceScore}
             />
           </TabsContent>
