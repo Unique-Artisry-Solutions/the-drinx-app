@@ -33,33 +33,40 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
   };
 
   return (
-    <div 
+    <article 
       className={cn(
         "p-4 mb-2 border rounded-lg transition-colors",
         getPriorityStyles(),
         isUnread ? 'border-l-4' : ''
       )}
+      role="article"
+      aria-label={`${notification.title} - ${isUnread ? 'Unread' : 'Read'} notification`}
     >
       <div className="flex justify-between items-start">
         <NotificationContent notification={notification} />
         <div className="flex flex-col items-end gap-2">
-          <div className="text-xs text-gray-400">
+          <time 
+            className="text-xs text-gray-400"
+            dateTime={notification.created_at}
+            aria-label={`Sent ${formattedTime}`}
+          >
             {formattedTime}
-          </div>
+          </time>
           {isUnread && (
             <Button 
               size="sm" 
               variant="ghost"
               className="px-2 h-8"
               onClick={() => onMarkAsRead(notification.id)}
+              aria-label="Mark as read"
             >
-              <Check className="h-4 w-4 mr-1" />
+              <Check className="h-4 w-4 mr-1" aria-hidden="true" />
               <span className="text-xs">Mark read</span>
             </Button>
           )}
         </div>
       </div>
-    </div>
+    </article>
   );
 };
 

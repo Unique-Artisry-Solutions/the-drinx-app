@@ -21,12 +21,17 @@ const EnhancedNotificationsList = ({
 }: EnhancedNotificationsListProps) => {
   if (isLoading) {
     return (
-      <div className="space-y-4" role="status" aria-label="Loading notifications">
+      <div 
+        className="space-y-4" 
+        role="status" 
+        aria-label="Loading notifications"
+      >
         {[1, 2, 3].map((i) => (
           <div key={i} className="animate-pulse">
             <Skeleton className="h-24 w-full rounded-lg" />
           </div>
         ))}
+        <div className="sr-only">Loading notifications</div>
       </div>
     );
   }
@@ -36,8 +41,9 @@ const EnhancedNotificationsList = ({
       <div 
         role="alert" 
         className="flex items-center gap-2 p-4 bg-red-50 text-red-700 rounded-lg"
+        aria-live="assertive"
       >
-        <AlertCircle className="h-5 w-5" />
+        <AlertCircle className="h-5 w-5" aria-hidden="true" />
         <p>{error}</p>
       </div>
     );
