@@ -39,7 +39,6 @@ const NotificationTester = () => {
   const [permissionState, setPermissionState] = useState<NotificationPermission>(permissionStatus);
   const [showPermissionDialog, setShowPermissionDialog] = useState(false);
 
-  // use the new diagnostics logic
   const {
     diagnosticsData,
     serviceWorkerStatus,
@@ -78,7 +77,14 @@ const NotificationTester = () => {
     }
   };
 
-  // Listen for messages from service worker
+  useEffect(() => {
+    setPermissionState(permissionStatus);
+  }, [permissionStatus]);
+
+  useEffect(() => {
+    runDiagnostics();
+  }, []);
+
   useEffect(() => {
     const handleServiceWorkerMessage = (event: MessageEvent) => {
       if (event.data && event.data.type === 'SW_ACTIVATED') {
@@ -95,15 +101,6 @@ const NotificationTester = () => {
       }
     };
   }, [runDiagnostics]);
-
-  useEffect(() => {
-    setPermissionState(permissionStatus);
-  }, [permissionStatus]);
-
-  useEffect(() => {
-    runDiagnostics();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   if (isCheckingServiceWorker || isRetrying || isLoading) {
     return <NotificationLoading />;
@@ -196,7 +193,7 @@ const NotificationTester = () => {
         <PermissionRequestDialog
           open={showPermissionDialog}
           onOpenChange={setShowPermissionDialog}
-          onRequestPermission={subscribeToNotifications}
+          onRequestPermission={() => subscribeToNotifications()}
           permissionStatus={permissionState}
         />
       </CardContent>
