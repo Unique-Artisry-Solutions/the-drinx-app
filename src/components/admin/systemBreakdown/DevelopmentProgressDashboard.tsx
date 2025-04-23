@@ -57,6 +57,31 @@ const DevelopmentProgressDashboard: React.FC<DevelopmentProgressDashboardProps> 
   const frontendProgressPercentage = Math.round(totalImplementationProgress / totalFeatures);
   const backendProgressPercentage = Math.round((totalImplementationProgress / totalFeatures) * 0.85);
 
+  // Calculate progress for each category
+  const adminProgress = {
+    frontend: Math.round(adminFeatures.reduce((sum, f) => sum + (f.implementationProgress || 0), 0) / adminFeatures.length),
+    backend: Math.round(adminFeatures.reduce((sum, f) => sum + (f.implementationProgress || 0), 0) / adminFeatures.length * 0.85),
+    overall: Math.round(adminFeatures.reduce((sum, f) => sum + (f.implementationProgress || 0), 0) / adminFeatures.length)
+  };
+
+  const establishmentProgress = {
+    frontend: Math.round(establishmentFeatures.reduce((sum, f) => sum + (f.implementationProgress || 0), 0) / establishmentFeatures.length),
+    backend: Math.round(establishmentFeatures.reduce((sum, f) => sum + (f.implementationProgress || 0), 0) / establishmentFeatures.length * 0.85),
+    overall: Math.round(establishmentFeatures.reduce((sum, f) => sum + (f.implementationProgress || 0), 0) / establishmentFeatures.length)
+  };
+
+  const individualProgress = {
+    frontend: Math.round(individualFeatures.reduce((sum, f) => sum + (f.implementationProgress || 0), 0) / individualFeatures.length),
+    backend: Math.round(individualFeatures.reduce((sum, f) => sum + (f.implementationProgress || 0), 0) / individualFeatures.length * 0.85),
+    overall: Math.round(individualFeatures.reduce((sum, f) => sum + (f.implementationProgress || 0), 0) / individualFeatures.length)
+  };
+
+  const promoterProgress = {
+    frontend: promoterFeatures.length ? Math.round(promoterFeatures.reduce((sum, f) => sum + (f.implementationProgress || 0), 0) / promoterFeatures.length) : 0,
+    backend: promoterFeatures.length ? Math.round(promoterFeatures.reduce((sum, f) => sum + (f.implementationProgress || 0), 0) / promoterFeatures.length * 0.85) : 0,
+    overall: promoterFeatures.length ? Math.round(promoterFeatures.reduce((sum, f) => sum + (f.implementationProgress || 0), 0) / promoterFeatures.length) : 0
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -90,8 +115,14 @@ const DevelopmentProgressDashboard: React.FC<DevelopmentProgressDashboardProps> 
           
           <TabsContent value="overview">
             <OverviewTab
+              overallProgressPercentage={overallProgressPercentage}
               frontendProgressPercentage={frontendProgressPercentage}
               backendProgressPercentage={backendProgressPercentage}
+              implementedFeatures={implementedFeatures}
+              partialFeatures={partialFeatures}
+              totalFeatures={totalFeatures}
+              plannedFeatures={plannedFeatures}
+              blockedFeatures={blockedFeatures}
               confidenceScore={confidenceScore}
               currentSnapshot={currentSnapshot}
               needsAttentionFeatures={allFeatures.filter(f => 
@@ -111,9 +142,14 @@ const DevelopmentProgressDashboard: React.FC<DevelopmentProgressDashboardProps> 
           
           <TabsContent value="categories">
             <CategoriesTab
-              frontendProgressPercentage={frontendProgressPercentage}
-              backendProgressPercentage={backendProgressPercentage}
-              confidenceScore={confidenceScore}
+              adminFeatures={adminFeatures}
+              establishmentFeatures={establishmentFeatures}
+              individualFeatures={individualFeatures}
+              promoterFeatures={promoterFeatures}
+              adminProgress={adminProgress}
+              establishmentProgress={establishmentProgress}
+              individualProgress={individualProgress}
+              promoterProgress={promoterProgress}
             />
           </TabsContent>
           

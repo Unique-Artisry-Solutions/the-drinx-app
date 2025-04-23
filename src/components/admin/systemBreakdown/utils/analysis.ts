@@ -50,22 +50,22 @@ export function analyzeAllFeatures(
   // Ensure all features have a valid databaseStatus
   updatedAdminFeatures = updatedAdminFeatures.map(feature => ({
     ...feature,
-    databaseStatus: feature.databaseStatus || feature.dbStatus || 'not_started'
+    databaseStatus: (feature.databaseStatus || feature.dbStatus || 'not_started') as 'complete' | 'in_progress' | 'not_started'
   }));
   
   updatedEstablishmentFeatures = updatedEstablishmentFeatures.map(feature => ({
     ...feature,
-    databaseStatus: feature.databaseStatus || feature.dbStatus || 'not_started'
+    databaseStatus: (feature.databaseStatus || feature.dbStatus || 'not_started') as 'complete' | 'in_progress' | 'not_started'
   }));
   
   updatedIndividualFeatures = updatedIndividualFeatures.map(feature => ({
     ...feature,
-    databaseStatus: feature.databaseStatus || feature.dbStatus || 'not_started'
+    databaseStatus: (feature.databaseStatus || feature.dbStatus || 'not_started') as 'complete' | 'in_progress' | 'not_started'
   }));
   
   updatedPromoterFeatures = updatedPromoterFeatures.map(feature => ({
     ...feature,
-    databaseStatus: feature.databaseStatus || feature.dbStatus || 'not_started'
+    databaseStatus: (feature.databaseStatus || feature.dbStatus || 'not_started') as 'complete' | 'in_progress' | 'not_started'
   }));
   
   // Step 3: Analyze specific systems for more detailed status
@@ -149,7 +149,8 @@ function markStatusChanges(features: FeatureItem[], originalFeatures: FeatureIte
     ) {
       return {
         ...feature,
-        statusUpdated: true
+        statusUpdated: true,
+        originalStatus: original.status
       };
     }
     

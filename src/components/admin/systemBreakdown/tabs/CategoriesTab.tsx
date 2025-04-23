@@ -1,7 +1,9 @@
+
 import React from 'react';
 import CategoryCard from '../components/CategoryCard';
 import RecentFeaturesList from '../components/RecentFeaturesList';
 import { FeatureItem } from '../types';
+
 interface CategoriesTabProps {
   adminFeatures: FeatureItem[];
   establishmentFeatures: FeatureItem[];
@@ -28,6 +30,7 @@ interface CategoriesTabProps {
     overall: number;
   };
 }
+
 const CategoriesTab: React.FC<CategoriesTabProps> = ({
   adminFeatures,
   establishmentFeatures,
@@ -87,4 +90,5 @@ const CategoriesTab: React.FC<CategoriesTabProps> = ({
       </div>
     </div>;
 };
+
 export default CategoriesTab;

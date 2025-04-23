@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 import { ProgressSnapshot, FeatureItem } from '../types';
@@ -12,18 +11,17 @@ import StatusProgressBar from '../components/StatusProgressBar';
 import { getStatusPriority, getAttentionLabel } from '../utils/statusRenderers';
 
 interface OverviewTabProps {
-  overallProgressPercentage: number;
   frontendProgressPercentage: number;
   backendProgressPercentage: number;
+  confidenceScore?: number;
+  currentSnapshot?: ProgressSnapshot;
+  needsAttentionFeatures?: FeatureItem[];
+  overallProgressPercentage: number;
   implementedFeatures: number;
   partialFeatures: number;
   totalFeatures: number;
-  confidenceScore?: number;
-  currentSnapshot?: ProgressSnapshot;
-  // New props for needs attention section
   plannedFeatures?: number;
   blockedFeatures?: number;
-  needsAttentionFeatures?: FeatureItem[];
 }
 
 const OverviewTab: React.FC<OverviewTabProps> = ({
@@ -159,7 +157,6 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
         </div>
       </div>
 
-      {/* New Needs Attention Section */}
       {needsAttentionCount > 0 && (
         <div className="mt-6 border border-amber-200 rounded-lg p-4 bg-amber-50">
           <h3 className="text-lg font-medium mb-3 text-amber-800 flex items-center gap-2">
