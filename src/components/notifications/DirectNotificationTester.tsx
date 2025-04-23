@@ -1,11 +1,14 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState } from 'react';
 import { Card, CardHeader, CardContent, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { useDirectNotifications } from '@/hooks/useDirectNotifications';
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { RefreshCw, Bell, Zap, AlertCircle, Lock, CheckCircle, Info } from "lucide-react";
-import { DiagnosticStatusSection } from './DiagnosticStatusSection';
+import { Info, AlertCircle } from "lucide-react";
+import { useDirectNotifications } from '@/hooks/useDirectNotifications';
+import { NotificationStatusAlert } from './direct/NotificationStatusAlert';
+import { NotificationActionButtons } from './direct/NotificationActionButtons';
+import { SystemStatusPanel } from './direct/SystemStatusPanel';
+import { ResetSystemSection } from './direct/ResetSystemSection';
 
 const DirectNotificationTester = () => {
   const {
@@ -23,10 +26,6 @@ const DirectNotificationTester = () => {
   const [activeTab, setActiveTab] = useState("test");
   const [notificationSent, setNotificationSent] = useState(false);
   
-  const handleRefreshPermission = () => {
-    checkPermission();
-  };
-
   const handleSendTestNotification = async () => {
     try {
       await sendTestNotification();
@@ -36,25 +35,6 @@ const DirectNotificationTester = () => {
       console.error("Failed to send test notification:", err);
     }
   };
-  
-  const getPermissionBadge = () => {
-    switch (permissionStatus) {
-      case 'granted':
-        return <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded">Granted</span>;
-      case 'denied':
-        return <span className="px-2 py-1 text-xs bg-red-100 text-red-800 rounded">Denied</span>;
-      default:
-        return <span className="px-2 py-1 text-xs bg-amber-100 text-amber-800 rounded">Not Set</span>;
-    }
-  };
-  
-  useEffect(() => {
-    if (notificationSent) {
-      if (permissionStatus === 'granted' && document.visibilityState !== 'visible') {
-        console.log('[DirectNotificationTester] Document not visible, notification may be missed');
-      }
-    }
-  }, [notificationSent, permissionStatus]);
   
   if (!isSupported) {
     return (
@@ -81,7 +61,14 @@ const DirectNotificationTester = () => {
       <CardHeader className="space-y-1">
         <div className="flex justify-between items-center">
           <CardTitle>Browser Notifications</CardTitle>
-          {getPermissionBadge()}
+          <span className={`px-2 py-1 text-xs rounded ${
+            permissionStatus === 'granted' ? 'bg-green-100 text-green-800' :
+            permissionStatus === 'denied' ? 'bg-red-100 text-red-800' :
+            'bg-amber-100 text-amber-800'
+          }`}>
+            {permissionStatus === 'granted' ? 'Granted' :
+             permissionStatus === 'denied' ? 'Denied' : 'Not Set'}
+          </span>
         </div>
         <CardDescription>Test notifications directly from the browser</CardDescription>
       </CardHeader>
@@ -94,11 +81,6 @@ const DirectNotificationTester = () => {
           </Alert>
         )}
         
-        <DiagnosticStatusSection 
-          notificationSent={notificationSent}
-          permissionStatus={permissionStatus}
-        />
-        
         <Tabs defaultValue="test" value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="w-full grid grid-cols-3">
             <TabsTrigger value="test">Test</TabsTrigger>
@@ -108,93 +90,24 @@ const DirectNotificationTester = () => {
           
           <TabsContent value="test" className="py-4">
             <div className="space-y-4">
-              {permissionStatus === 'granted' ? (
-                <Alert className="bg-green-50 border-green-200">
-                  <CheckCircle className="h-4 w-4 text-green-600" />
-                  <AlertTitle>Notification Access Granted</AlertTitle>
-                  <AlertDescription>
-                    You can now receive browser notifications. Try sending a test notification.
-                  </AlertDescription>
-                </Alert>
-              ) : permissionStatus === 'denied' ? (
-                <Alert variant="destructive">
-                  <Lock className="h-4 w-4" />
-                  <AlertTitle>Notifications Blocked</AlertTitle>
-                  <AlertDescription>
-                    You've denied notification permissions. To enable them:
-                    <ol className="list-decimal ml-5 space-y-1 text-sm mt-2">
-                      <li>Click the lock/info icon in your browser's address bar</li>
-                      <li>Find "Notifications" in the site settings</li>
-                      <li>Change the setting to "Allow"</li>
-                      <li>Use the refresh button to update permission status</li>
-                    </ol>
-                  </AlertDescription>
-                </Alert>
-              ) : (
-                <Alert className="bg-blue-50 border-blue-200">
-                  <AlertCircle className="h-4 w-4 text-blue-600" />
-                  <AlertTitle>Permission Required</AlertTitle>
-                  <AlertDescription>
-                    Please allow notifications when prompted to enable this feature.
-                  </AlertDescription>
-                </Alert>
-              )}
-              
-              <div className="space-y-2">
-                <Button 
-                  onClick={permissionStatus === 'granted' ? handleSendTestNotification : requestPermission}
-                  disabled={isLoading}
-                  className="w-full"
-                >
-                  {isLoading ? (
-                    <>
-                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                      Processing...
-                    </>
-                  ) : permissionStatus === 'granted' ? (
-                    <>
-                      <Bell className="h-4 w-4 mr-2" />
-                      Send Test Notification
-                    </>
-                  ) : (
-                    <>
-                      <Bell className="h-4 w-4 mr-2" />
-                      Request Notification Permission
-                    </>
-                  )}
-                </Button>
-                
-                <Button 
-                  variant="outline" 
-                  onClick={handleRefreshPermission}
-                  className="w-full"
-                >
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Refresh Permission Status
-                </Button>
-              </div>
+              <NotificationStatusAlert permissionStatus={permissionStatus} />
+              <NotificationActionButtons
+                permissionStatus={permissionStatus}
+                isLoading={isLoading}
+                onSendTest={handleSendTestNotification}
+                onRequestPermission={requestPermission}
+                onRefreshPermission={checkPermission}
+              />
             </div>
           </TabsContent>
           
           <TabsContent value="debug" className="py-4">
             <div className="space-y-4">
-              <div className="rounded-md bg-muted p-4">
-                <h3 className="font-medium mb-2 text-sm">Notification System Status</h3>
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className="text-muted-foreground">API Available:</div>
-                  <div>{isSupported ? 'Yes' : 'No'}</div>
-                  <div className="text-muted-foreground">Permission Status:</div>
-                  <div>{permissionStatus}</div>
-                  <div className="text-muted-foreground">Last Checked:</div>
-                  <div>{lastCheck.toLocaleTimeString()}</div>
-                  <div className="text-muted-foreground">Service Worker:</div>
-                  <div>{'serviceWorker' in navigator ? 'Supported' : 'Not Supported'}</div>
-                  <div className="text-muted-foreground">Browser Focus:</div>
-                  <div>{document.visibilityState}</div>
-                  <div className="text-muted-foreground">Device Type:</div>
-                  <div>{/Mobi|Android/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop'}</div>
-                </div>
-              </div>
+              <SystemStatusPanel
+                isSupported={isSupported}
+                permissionStatus={permissionStatus}
+                lastCheck={lastCheck}
+              />
               
               <Alert className="bg-amber-50 border-amber-200">
                 <Info className="h-4 w-4 text-amber-600" />
@@ -203,52 +116,14 @@ const DirectNotificationTester = () => {
                   Different browsers handle notifications differently. Chrome, Firefox, and Edge provide the best notification support. Safari requires special permission handling.
                 </AlertDescription>
               </Alert>
-              
-              <Button 
-                variant="outline" 
-                onClick={checkPermission}
-                className="w-full"
-              >
-                <Zap className="h-4 w-4 mr-2" />
-                Run Diagnostics
-              </Button>
             </div>
           </TabsContent>
           
           <TabsContent value="reset" className="py-4">
-            <div className="space-y-4">
-              <Alert className="bg-amber-50 border-amber-200">
-                <AlertCircle className="h-4 w-4 text-amber-600" />
-                <AlertTitle>System Reset</AlertTitle>
-                <AlertDescription>
-                  If you're experiencing issues with notifications, you can reset the entire notification system. This will:
-                  <ul className="list-disc ml-5 space-y-1 text-sm mt-2">
-                    <li>Unregister all service workers</li>
-                    <li>Refresh permission status</li>
-                    <li>Clear any cached data</li>
-                  </ul>
-                </AlertDescription>
-              </Alert>
-              
-              <Button 
-                variant="destructive" 
-                onClick={resetPermissionState}
-                disabled={isLoading}
-                className="w-full"
-              >
-                {isLoading ? (
-                  <>
-                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                    Resetting...
-                  </>
-                ) : (
-                  <>
-                    <Zap className="h-4 w-4 mr-2" />
-                    Reset Notification System
-                  </>
-                )}
-              </Button>
-            </div>
+            <ResetSystemSection
+              isLoading={isLoading}
+              onReset={resetPermissionState}
+            />
           </TabsContent>
         </Tabs>
       </CardContent>
