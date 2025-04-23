@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@/contexts/auth';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
@@ -15,6 +15,19 @@ export const useNotifications = () => {
   const { toast } = useToast();
   const isInitialFetch = useRef(true);
   const fetchingRef = useRef(false);
+
+  // Add new push notification from service worker
+  const addPushNotification = useCallback((notification: Notification) => {
+    setNotifications(prev => [notification, ...prev]);
+    setUnreadCount(prev => prev + 1);
+    
+    // Show toast notification when receiving a push in the background
+    toast({
+      title: notification.title,
+      description: notification.content,
+      duration: 5000
+    });
+  }, [toast]);
 
   const fetchNotifications = async () => {
     // Don't fetch if we're already fetching or don't have auth
@@ -108,6 +121,48 @@ export const useNotifications = () => {
     }
   };
 
+  const markAllAsRead = async () => {
+    if (!user?.id || !session?.access_token || notifications.length === 0) return;
+    
+    try {
+      // Mark all notifications as read
+      const unreadIds = notifications
+        .filter(n => !n.is_read)
+        .map(n => n.id);
+        
+      if (unreadIds.length === 0) return;
+      
+      const { error } = await supabase.functions.invoke('notifications', {
+        body: {
+          action: 'markAllAsRead',
+          params: { userId: user.id }
+        }
+      });
+
+      if (error) {
+        throw new Error(error.message || 'Failed to mark all notifications as read');
+      }
+
+      // Update the local state
+      setNotifications(prev => 
+        prev.map(n => ({ ...n, is_read: true }))
+      );
+      setUnreadCount(0);
+      
+      toast({
+        title: "Success", 
+        description: `Marked ${unreadIds.length} notifications as read`
+      });
+    } catch (error: any) {
+      console.error('Error marking all notifications as read:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update notifications",
+        variant: "destructive"
+      });
+    }
+  };
+
   useEffect(() => {
     let isMounted = true;
     const autoRefreshInterval = 30000; // 30 seconds
@@ -126,6 +181,21 @@ export const useNotifications = () => {
             fetchNotifications();
           }
         }, autoRefreshInterval);
+
+        // Set up service worker message listener for push notifications
+        const handleServiceWorkerMessage = (event: MessageEvent) => {
+          // Check if the event is from our service worker and contains notification data
+          if (
+            event.data && 
+            event.data.type === 'PUSH_NOTIFICATION_RECEIVED' &&
+            event.data.notification
+          ) {
+            console.log('Received push notification from service worker:', event.data.notification);
+            addPushNotification(event.data.notification);
+          }
+        };
+
+        navigator.serviceWorker.addEventListener('message', handleServiceWorkerMessage);
       } else {
         setNotifications([]);
         setUnreadCount(0);
@@ -141,8 +211,12 @@ export const useNotifications = () => {
       if (refreshTimer) {
         clearInterval(refreshTimer);
       }
+      // Clean up service worker listener
+      navigator.serviceWorker.removeEventListener('message', (event: any) => {
+        console.log('Removed service worker message listener');
+      });
     };
-  }, [user, session]);
+  }, [user, session, addPushNotification]);
 
   return {
     notifications,
@@ -150,6 +224,7 @@ export const useNotifications = () => {
     isLoading,
     error,
     markAsRead,
+    markAllAsRead,
     refetch: fetchNotifications
   };
 };

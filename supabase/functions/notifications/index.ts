@@ -58,6 +58,12 @@ serve(async (req) => {
         }
         return await handleUpdateNotification(params);
 
+      case 'markAllAsRead':
+        if (!params?.userId) {
+          return createErrorResponse('User ID is required');
+        }
+        return await handleMarkAllAsRead(params);
+
       case 'createNotification':
         return await handleCreateNotification(params, req.headers.get('Authorization') || '');
 
@@ -118,6 +124,37 @@ serve(async (req) => {
     );
   }
 });
+
+async function handleMarkAllAsRead(params: any) {
+  try {
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    const { data, error } = await supabaseClient
+      .from('notifications')
+      .update({ is_read: true })
+      .eq('recipient_id', params.userId)
+      .eq('is_read', false)
+      .select();
+
+    if (error) throw error;
+
+    return new Response(
+      JSON.stringify({ 
+        success: true, 
+        count: data ? data.length : 0,
+        message: `Marked ${data ? data.length : 0} notifications as read` 
+      }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    );
+  } catch (error) {
+    return createErrorResponse(`Error marking notifications as read: ${error.message}`);
+  }
+}
 
 async function handleUpdateNotification(params: any) {
   try {

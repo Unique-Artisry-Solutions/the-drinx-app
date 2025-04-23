@@ -39,6 +39,19 @@ self.addEventListener('activate', event => {
   );
 });
 
+// Function to relay notification data to all clients
+const relayNotificationToClients = (notificationData) => {
+  self.clients.matchAll().then(clients => {
+    clients.forEach(client => {
+      client.postMessage({
+        type: 'PUSH_NOTIFICATION_RECEIVED',
+        notification: notificationData,
+        timestamp: new Date().toISOString()
+      });
+    });
+  });
+};
+
 // Push event handler
 self.addEventListener('push', function(event) {
   try {
@@ -55,12 +68,15 @@ self.addEventListener('push', function(event) {
       requireInteraction: true
     };
     
+    let notificationData = null;
+    
     // Try to parse the push data
     if (event.data) {
       try {
         const data = event.data.json();
         swLog('Push data parsed', data);
         
+        notificationData = data;
         title = data.title || title;
         options = {
           body: data.content || data.body,
@@ -97,6 +113,12 @@ self.addEventListener('push', function(event) {
     
     // Show the notification
     swLog('Showing notification', { title, options });
+    
+    // Also pass notification data to any open clients
+    if (notificationData) {
+      relayNotificationToClients(notificationData);
+    }
+    
     const notificationPromise = self.registration.showNotification(title, options);
     event.waitUntil(notificationPromise);
     
@@ -110,10 +132,13 @@ self.addEventListener('notificationclick', function(event) {
   swLog('Notification clicked', event);
   event.notification.close();
 
+  // Extract notification data
+  const notificationData = event.notification.data;
+
   // Handle notification actions
-  if (event.action === 'view' && event.notification.data && event.notification.data.url) {
+  if (event.action === 'view' && notificationData && notificationData.url) {
     event.waitUntil(
-      clients.openWindow(event.notification.data.url)
+      clients.openWindow(notificationData.url)
     );
   } else {
     // Default behavior when clicking the notification body
@@ -127,6 +152,14 @@ self.addEventListener('notificationclick', function(event) {
               client = clientList[i];
             }
           }
+          
+          // Notify the client that this notification was clicked
+          client.postMessage({
+            type: 'PUSH_NOTIFICATION_CLICKED',
+            notificationId: notificationData?.id || event.notification.tag,
+            timestamp: new Date().toISOString()
+          });
+          
           return client.focus();
         }
         // Otherwise open a new window

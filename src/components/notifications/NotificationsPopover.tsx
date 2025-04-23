@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Bell, AlertCircle, RefreshCw } from 'lucide-react';
+import { Bell, AlertCircle, RefreshCw, Check, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
@@ -12,14 +12,59 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useNotifications } from '@/hooks/useNotifications';
 import NotificationItem from './NotificationItem';
 import { useAuth } from '@/contexts/auth';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const NotificationsPopover = () => {
-  const { notifications, unreadCount, isLoading, error, markAsRead, refetch } = useNotifications();
+  const { notifications, unreadCount, isLoading, error, markAsRead, markAllAsRead, refetch } = useNotifications();
   const { user } = useAuth();
+  const { isSupported, permissionStatus, subscribeToNotifications } = usePushNotifications();
 
   if (!user) {
     return null; // Don't show notifications popover for unauthenticated users
   }
+
+  const handleSubscribe = async () => {
+    await subscribeToNotifications();
+  };
+
+  const getPushStatus = () => {
+    if (!isSupported) {
+      return {
+        text: 'Not supported',
+        variant: 'outline',
+        icon: <AlertCircle className="h-3.5 w-3.5 text-muted-foreground" />
+      };
+    }
+    
+    switch (permissionStatus) {
+      case 'granted':
+        return {
+          text: 'Enabled',
+          variant: 'default',
+          icon: <Check className="h-3.5 w-3.5" />
+        };
+      case 'denied':
+        return {
+          text: 'Blocked',
+          variant: 'destructive',
+          icon: <AlertCircle className="h-3.5 w-3.5" />
+        };
+      default:
+        return {
+          text: 'Not enabled',
+          variant: 'outline',
+          icon: <Bell className="h-3.5 w-3.5 text-muted-foreground" />
+        };
+    }
+  };
+
+  const pushStatus = getPushStatus();
 
   return (
     <Popover>
@@ -39,16 +84,66 @@ const NotificationsPopover = () => {
       <PopoverContent className="w-80 sm:w-96">
         <div className="px-4 py-2 border-b flex justify-between items-center">
           <h3 className="font-medium">Notifications</h3>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="p-1 h-auto"
-            onClick={() => refetch()}
-          >
-            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-            <span className="sr-only">Refresh</span>
-          </Button>
+          <div className="flex items-center gap-2">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={markAllAsRead}
+                    disabled={unreadCount === 0}
+                    className="p-1 h-auto text-xs"
+                  >
+                    <Check className="h-3.5 w-3.5 mr-1" />
+                    Read all
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Mark all as read</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="p-1 h-auto"
+              onClick={() => refetch()}
+            >
+              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+              <span className="sr-only">Refresh</span>
+            </Button>
+          </div>
         </div>
+        
+        <div className="p-2 border-b">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center">
+              <span className="text-sm font-medium mr-2">Push notifications</span>
+              <Badge 
+                variant={pushStatus.variant as any} 
+                className="text-xs"
+              >
+                <span className="flex items-center">
+                  {pushStatus.icon}
+                  <span className="ml-1">{pushStatus.text}</span>
+                </span>
+              </Badge>
+            </div>
+            {permissionStatus !== 'granted' && isSupported && (
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handleSubscribe}
+                disabled={permissionStatus === 'denied'}
+              >
+                Enable
+              </Button>
+            )}
+          </div>
+        </div>
+        
         <ScrollArea className="h-[400px]">
           <div className="px-4 py-2">
             {isLoading ? (
