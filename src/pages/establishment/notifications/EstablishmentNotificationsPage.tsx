@@ -1,11 +1,11 @@
 
 import { useEffect } from 'react';
-import { useNotifications } from '@/hooks/useNotifications';
+import { useRoleNotifications } from '@/hooks/notifications/useRoleNotifications';
 import NotificationsList from '@/pages/notifications/components/NotificationsList';
 import NotificationsHeader from '@/pages/notifications/components/NotificationsHeader';
 
 export default function EstablishmentNotificationsPage() {
-  const { notifications, unreadCount, isLoading, error, markAllAsRead, refetch } = useNotifications();
+  const { notifications, unreadCount, isLoading, error, markAllAsRead, refetch } = useRoleNotifications();
 
   useEffect(() => {
     refetch();
