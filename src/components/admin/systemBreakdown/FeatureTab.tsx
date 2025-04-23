@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -92,21 +93,27 @@ const FeatureTab: React.FC<FeatureTabProps> = ({ features, title, description })
         <CardTitle>{title}</CardTitle>
         <CardDescription>{description}</CardDescription>
         
-        <div className="flex flex-col md:flex-row gap-4 mt-4">
+        <div className="flex flex-col md:flex-row gap-4 mt-4" role="search">
           <div className="w-full md:w-2/3">
-            <Label htmlFor="search">Search</Label>
+            <Label htmlFor="feature-search">Search Features</Label>
             <Input
-              id="search"
+              id="feature-search"
               placeholder="Search features..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full"
+              aria-label="Search features"
+              role="searchbox"
             />
           </div>
           
           <div className="w-full md:w-1/3">
-            <Label htmlFor="status-filter">Status</Label>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Label htmlFor="status-filter">Filter by Status</Label>
+            <Select 
+              value={statusFilter} 
+              onValueChange={setStatusFilter}
+              aria-label="Filter features by status"
+            >
               <SelectTrigger id="status-filter">
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
@@ -124,49 +131,113 @@ const FeatureTab: React.FC<FeatureTabProps> = ({ features, title, description })
       </CardHeader>
       
       <CardContent>
-        <div className="space-y-4">
+        <div 
+          className="space-y-4"
+          role="list"
+          aria-label={`Features list containing ${filteredFeatures.length} items`}
+        >
           {filteredFeatures.map((feature) => (
             <Collapsible
               key={feature.id}
               open={openFeatures.includes(feature.id)}
               onOpenChange={() => toggleFeature(feature.id)}
             >
-              <div className="border rounded-lg p-4">
+              <div 
+                className="border rounded-lg p-4"
+                role="listitem"
+              >
                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                   <div className="flex-1">
                     <div className="flex flex-col md:flex-row md:items-center gap-2">
-                      <h3 className="text-lg font-medium">{feature.name}</h3>
-                      <div className="flex items-center gap-2">
+                      <h3 
+                        className="text-lg font-medium"
+                        id={`feature-${feature.id}-title`}
+                      >
+                        {feature.name}
+                      </h3>
+                      <div 
+                        className="flex items-center gap-2"
+                        aria-label={`Status: ${feature.status}, Database: ${feature.databaseStatus}`}
+                      >
                         {renderStatusBadge(feature.status)}
                         {renderDatabaseStatusBadge(feature.databaseStatus)}
                       </div>
                     </div>
-                    <p className="text-gray-600 mt-1">{feature.description}</p>
+                    <p 
+                      className="text-gray-600 mt-1"
+                      id={`feature-${feature.id}-description`}
+                    >
+                      {feature.description}
+                    </p>
                     {renderTags(feature.tags)}
                   </div>
                   {hasDetails(feature) && (
                     <CollapsibleTrigger asChild>
-                      <Button variant="ghost" size="sm" className="gap-2">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="gap-2"
+                        aria-expanded={openFeatures.includes(feature.id)}
+                        aria-controls={`feature-${feature.id}-content`}
+                        aria-label={`${openFeatures.includes(feature.id) ? 'Hide' : 'Show'} details for ${feature.name}`}
+                      >
                         Details
                         <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${
                           openFeatures.includes(feature.id) ? 'transform rotate-180' : ''
-                        }`} />
+                        }`} aria-hidden="true" />
                       </Button>
                     </CollapsibleTrigger>
                   )}
                 </div>
 
                 {hasDetails(feature) && (
-                  <CollapsibleContent>
+                  <CollapsibleContent
+                    id={`feature-${feature.id}-content`}
+                  >
                     <div className="mt-4 pt-4 border-t space-y-4">
-                      {renderTestSteps(feature.testSteps)}
-                      {renderDatabaseDetails(feature)}
+                      {feature.testSteps && feature.testSteps.length > 0 && (
+                        <div>
+                          <h4 className="font-medium mb-2">Test Steps</h4>
+                          <ul className="space-y-2" role="list">
+                            {feature.testSteps.map((step, index) => (
+                              <li 
+                                key={index} 
+                                className="text-sm"
+                                role="listitem"
+                              >
+                                {step}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {feature.dbRequirementsText && (
+                        <div>
+                          <h4 className="font-medium mb-2">Database Requirements</h4>
+                          <pre 
+                            className="text-sm bg-slate-50 p-3 rounded-md whitespace-pre-wrap"
+                            role="text"
+                          >
+                            {feature.dbRequirementsText}
+                          </pre>
+                        </div>
+                      )}
                     </div>
                   </CollapsibleContent>
                 )}
               </div>
             </Collapsible>
           ))}
+          
+          {filteredFeatures.length === 0 && (
+            <div 
+              className="text-center py-8 text-gray-500"
+              role="status"
+              aria-live="polite"
+            >
+              <p>No features match your search criteria</p>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
