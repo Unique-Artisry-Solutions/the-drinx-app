@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 import { RefreshCw, Zap } from "lucide-react";
 
 interface NotificationControlsProps {
-  onRefresh: () => void;
-  onDiagnose: () => void;
+  onRefresh: () => Promise<void>;
+  onDiagnose: () => Promise<void>;
 }
 
 export const NotificationControls: React.FC<NotificationControlsProps> = ({
@@ -17,7 +17,7 @@ export const NotificationControls: React.FC<NotificationControlsProps> = ({
       <Button 
         variant="outline" 
         size="sm" 
-        onClick={onDiagnose}
+        onClick={() => onDiagnose()}
         title="Run system diagnostics"
         className="h-8 px-2"
       >
@@ -27,7 +27,7 @@ export const NotificationControls: React.FC<NotificationControlsProps> = ({
       <Button 
         variant="outline" 
         size="sm" 
-        onClick={onRefresh}
+        onClick={() => onRefresh()}
         title="Refresh permission status"
         className="h-8 px-2"
       >

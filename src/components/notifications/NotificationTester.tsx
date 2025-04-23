@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { useServiceWorker } from '@/hooks/useServiceWorker';
 import { useTestNotification } from '@/hooks/useTestNotification';
@@ -53,11 +52,11 @@ const NotificationTester = () => {
     }
   }, [hasJustReset, onHasJustResetUsed, runDiagnostics]);
 
-  const handleSubscribeClick = () => {
+  const handleSubscribeClick = async (): Promise<void> => {
     if (permissionStatus === 'default') {
       setShowPermissionDialog(true);
     } else {
-      subscribeToNotifications();
+      await subscribeToNotifications();
     }
   };
 

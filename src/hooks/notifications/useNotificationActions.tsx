@@ -11,14 +11,14 @@ export const useNotificationActions = () => {
   } = usePushNotifications();
   const { toast } = useToast();
 
-  const handleRefreshPermissions = useCallback(() => {
+  const handleRefreshPermissions = useCallback(async (): Promise<void> => {
     const currentPermission = checkPermissions?.();
     if (currentPermission) {
       toast({
         title: "Permission Status",
         description: `Current notification permission: ${currentPermission}`
       });
-      return currentPermission;
+      return;
     }
   }, [checkPermissions, toast]);
 
