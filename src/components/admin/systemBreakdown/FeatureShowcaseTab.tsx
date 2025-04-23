@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { 
   Card, 
@@ -31,7 +30,6 @@ const FeatureShowcaseTab: React.FC<FeatureShowcaseTabProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState('categories');
   
-  // Get all signature features across all user types
   const signatureFeatures = useMemo(() => [
     ...adminFeatures,
     ...establishmentFeatures,
@@ -39,9 +37,7 @@ const FeatureShowcaseTab: React.FC<FeatureShowcaseTabProps> = ({
     ...promoterFeatures
   ].filter(isSignatureFeature), [adminFeatures, establishmentFeatures, individualFeatures, promoterFeatures]);
   
-  // Organize features by category and business value
   const showcaseData = useMemo(() => {
-    // Mock implementation to avoid errors until real implementation is fixed
     const allFeatures = [
       ...adminFeatures,
       ...establishmentFeatures, 
@@ -49,23 +45,23 @@ const FeatureShowcaseTab: React.FC<FeatureShowcaseTabProps> = ({
       ...promoterFeatures
     ];
     
-    // Simple mapping for showcase data
     const featureShowcaseData: FeatureShowcaseData[] = allFeatures.map(feature => ({
       id: feature.id,
       name: feature.name,
       description: feature.description,
-      businessValue: (feature.userImpact as any) || 'medium',
-      complexity: feature.complexity || 'medium',
+      businessValue: feature.userImpact,
+      complexity: feature.complexity,
       implementationStatus: feature.status,
-      showcaseCategory: 'Management Tools', // Default
+      showcaseCategory: 'Management Tools',
       isSignature: isSignatureFeature(feature),
       icon: 'Star',
       marketingPoints: [],
       implementations: 0,
       avgRating: 0,
+      categories: [feature.tags?.[0] || 'default'],
+      businessValues: [feature.userImpact]
     }));
     
-    // Create mock category data
     const categoryData = [
       {
         name: 'User Experience',
@@ -93,7 +89,6 @@ const FeatureShowcaseTab: React.FC<FeatureShowcaseTabProps> = ({
       }
     ];
     
-    // Create mock business value data
     const businessValueData = [
       {
         name: 'High Value',
@@ -118,7 +113,6 @@ const FeatureShowcaseTab: React.FC<FeatureShowcaseTabProps> = ({
       }
     ];
     
-    // Attach the categories and business values as properties of the array
     const result = featureShowcaseData as any;
     result.categories = categoryData;
     result.businessValues = businessValueData;
@@ -126,7 +120,6 @@ const FeatureShowcaseTab: React.FC<FeatureShowcaseTabProps> = ({
     return result;
   }, [adminFeatures, establishmentFeatures, individualFeatures, promoterFeatures]);
   
-  // Calculate implementation percentage for signature features
   const signatureImplementationRate = useMemo(() => {
     if (signatureFeatures.length === 0) return 0;
     const sum = signatureFeatures.reduce((acc, feature) => acc + (feature.implementationProgress || 0), 0);
@@ -213,7 +206,7 @@ const FeatureShowcaseTab: React.FC<FeatureShowcaseTabProps> = ({
                   id: feature.id,
                   name: feature.name,
                   description: feature.description,
-                  businessValue: (feature.userImpact as any),
+                  businessValue: feature.userImpact,
                   complexity: feature.complexity,
                   implementationStatus: feature.status,
                   showcaseCategory: 'Management Tools',

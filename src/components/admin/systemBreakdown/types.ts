@@ -1,4 +1,3 @@
-
 export interface FeatureItem {
   id: string;
   name: string;
@@ -17,7 +16,6 @@ export interface FeatureItem {
   dbCompleted?: number;
   testSteps?: string[];
   subFeatures?: SubFeature[];
-  // Additional properties needed by various components
   originalStatus?: string;
   tags?: string[];
   dbRequirementsText?: string;
@@ -38,6 +36,65 @@ export interface Phase {
   status: 'implemented' | 'in_progress' | 'planned' | 'blocked';
   tasks: string[];
 }
+
+export type FeatureShowcaseCategoryType = string;
+export type FeatureBusinessValueType = 'high' | 'medium' | 'low';
+
+export interface FeatureBusinessValueObject {
+  value: FeatureBusinessValueType;
+  label: string;
+  description: string;
+  color: string;
+  name: string;
+  features: FeatureItem[];
+  implementationRate: number;
+  featureCount?: number;
+}
+
+export interface FeatureShowcaseData {
+  id: string;
+  name: string;
+  description: string;
+  businessValue: FeatureBusinessValueType;
+  complexity: 'high' | 'medium' | 'low';
+  implementationStatus: string;
+  showcaseCategory: string;
+  isSignature: boolean;
+  icon: string;
+  implementations?: number;
+  avgRating?: number;
+  marketingPoints?: string[];
+  categories: string[];
+  businessValues: string[];
+}
+
+export interface ImprovementItem {
+  id: string;
+  title: string;
+  description: string;
+  impact: 'high' | 'medium' | 'low';
+  effort: 'high' | 'medium' | 'low';
+  priority: number;
+  category: string;
+  status: 'proposed' | 'approved' | 'in_progress' | 'completed' | 'rejected';
+  targetDate?: string;
+  assignedTo?: string;
+  relatedFeatures?: string[];
+  type: 'enhancement' | 'new-feature';
+  votes: number;
+  submittedDate: string;
+  submittedBy: string;
+  lovableCompatible?: boolean;
+  technicalRequirements?: string;
+  implementationSteps: string[];
+  estimatedEffort: string;
+  businessImpact: string;
+  currentStatus?: string;
+  affectedAreas: ('admin' | 'establishment' | 'individual')[];
+}
+
+export type SortField = 'priority' | 'impact' | 'effort' | 'title' | 'name' | 'status' | 'type' | 'lovableCompatible' | 'submittedDate' | 'votes';
+export type SortOrder = 'asc' | 'desc';
 
 export interface ProgressSnapshot {
   timestamp: string;
@@ -68,51 +125,6 @@ export interface MonthlyProgressData {
   frontend: number;
   backend: number;
 }
-
-// Add missing type interfaces for showcase and improvements data
-export interface FeatureShowcaseData {
-  id: string;
-  name: string;
-  description: string;
-  businessValue: FeatureBusinessValueType;
-  complexity: 'high' | 'medium' | 'low';
-  implementationStatus: string;
-  showcaseCategory: string;
-  isSignature: boolean;
-  icon: string;
-  implementations?: number;
-  avgRating?: number;
-  marketingPoints?: string[];
-  categories: string[];
-  businessValues: string[];
-}
-
-export type FeatureShowcaseCategoryType = string;
-export type FeatureBusinessValueType = 'high' | 'medium' | 'low';
-
-export interface FeatureBusinessValueObject {
-  value: FeatureBusinessValueType;
-  label: string;
-  description: string;
-  color: string;
-}
-
-export interface ImprovementItem {
-  id: string;
-  title: string;
-  description: string;
-  impact: 'high' | 'medium' | 'low';
-  effort: 'high' | 'medium' | 'low';
-  priority: number;
-  category: string;
-  status: 'proposed' | 'approved' | 'in_progress' | 'completed' | 'rejected';
-  targetDate?: string;
-  assignedTo?: string;
-  relatedFeatures?: string[];
-}
-
-export type SortField = 'priority' | 'impact' | 'effort' | 'title';
-export type SortOrder = 'asc' | 'desc';
 
 export interface AnalysisStep {
   name: string;

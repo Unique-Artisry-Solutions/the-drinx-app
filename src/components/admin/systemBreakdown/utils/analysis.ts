@@ -1,4 +1,3 @@
-
 import { AnalysisStep, FeatureItem } from '../types';
 import { 
   analyzeDatabaseStatus, 
@@ -35,16 +34,28 @@ export function analyzeAllFeatures(
   ];
   
   // Step 2: Update database status based on detected tables
-  const adminDatabaseResult = analyzeDatabaseStatus(adminFeatures);
+  const adminDatabaseResult = analyzeDatabaseStatus(adminFeatures).map(feature => ({
+    ...feature,
+    databaseStatus: (feature.databaseStatus || feature.dbStatus || 'not_started') as 'complete' | 'in_progress' | 'not_started'
+  }));
   let updatedAdminFeatures = adminDatabaseResult;
   
-  const establishmentDatabaseResult = analyzeDatabaseStatus(establishmentFeatures);
+  const establishmentDatabaseResult = analyzeDatabaseStatus(establishmentFeatures).map(feature => ({
+    ...feature,
+    databaseStatus: (feature.databaseStatus || feature.dbStatus || 'not_started') as 'complete' | 'in_progress' | 'not_started'
+  }));
   let updatedEstablishmentFeatures = establishmentDatabaseResult;
   
-  const individualDatabaseResult = analyzeDatabaseStatus(individualFeatures);
+  const individualDatabaseResult = analyzeDatabaseStatus(individualFeatures).map(feature => ({
+    ...feature,
+    databaseStatus: (feature.databaseStatus || feature.dbStatus || 'not_started') as 'complete' | 'in_progress' | 'not_started'
+  }));
   let updatedIndividualFeatures = individualDatabaseResult;
   
-  const promoterDatabaseResult = analyzeDatabaseStatus(promoterFeatures);
+  const promoterDatabaseResult = analyzeDatabaseStatus(promoterFeatures).map(feature => ({
+    ...feature,
+    databaseStatus: (feature.databaseStatus || feature.dbStatus || 'not_started') as 'complete' | 'in_progress' | 'not_started'
+  }));
   let updatedPromoterFeatures = promoterDatabaseResult;
   
   // Ensure all features have a valid databaseStatus

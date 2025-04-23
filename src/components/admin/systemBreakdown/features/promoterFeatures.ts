@@ -10,7 +10,10 @@ export const promoterFeatures: FeatureItem[] = [
     userImpact: "high",
     complexity: "medium",
     implementationProgress: 100,
-    tags: ["promoter", "dashboard"]
+    tags: ["promoter", "dashboard"],
+    adminAccess: "none",
+    establishmentAccess: "none",
+    individualAccess: "none"
   },
   {
     id: "venue-communication-system",
@@ -22,7 +25,10 @@ export const promoterFeatures: FeatureItem[] = [
     complexity: "high",
     implementationProgress: 95,
     dbRequirementsText: "Thread and message tables with relationships",
-    tags: ["promoter", "communication", "messaging", "establishment"]
+    tags: ["promoter", "communication", "messaging", "establishment"],
+    adminAccess: "none",
+    establishmentAccess: "none",
+    individualAccess: "none"
   },
   {
     id: "contact-management",
@@ -33,7 +39,10 @@ export const promoterFeatures: FeatureItem[] = [
     userImpact: "medium",
     complexity: "medium",
     implementationProgress: 90,
-    tags: ["promoter", "communication", "contacts"]
+    tags: ["promoter", "communication", "contacts"],
+    adminAccess: "none",
+    establishmentAccess: "none",
+    individualAccess: "none"
   },
   {
     id: "promoter-notification-system",
@@ -44,7 +53,10 @@ export const promoterFeatures: FeatureItem[] = [
     userImpact: "medium",
     complexity: "medium",
     implementationProgress: 50,
-    tags: ["promoter", "notifications", "communication"]
+    tags: ["promoter", "notifications", "communication"],
+    adminAccess: "none",
+    establishmentAccess: "none",
+    individualAccess: "none"
   },
   {
     id: "event-management",
@@ -103,7 +115,10 @@ export const promoterFeatures: FeatureItem[] = [
       "- Create marketing performance reports"
     ],
     dependsOn: ["venue-communication-system", "promoter-notification-system"],
-    scheduledFor: "2025-Q2"
+    scheduledFor: "2025-Q2",
+    adminAccess: "none",
+    establishmentAccess: "none",
+    individualAccess: "none"
   },
   {
     id: "promoter-analytics",
@@ -114,7 +129,10 @@ export const promoterFeatures: FeatureItem[] = [
     userImpact: "medium",
     complexity: "high",
     implementationProgress: 10,
-    tags: ["promoter", "analytics", "reporting"]
+    tags: ["promoter", "analytics", "reporting"],
+    adminAccess: "none",
+    establishmentAccess: "none",
+    individualAccess: "none"
   },
   {
     id: "custom-promotion-creation",
@@ -125,7 +143,10 @@ export const promoterFeatures: FeatureItem[] = [
     userImpact: "high",
     complexity: "medium",
     implementationProgress: 5,
-    tags: ["promoter", "promotions"]
+    tags: ["promoter", "promotions"],
+    adminAccess: "none",
+    establishmentAccess: "none",
+    individualAccess: "none"
   },
   {
     id: "brand-partnerships",
@@ -136,6 +157,9 @@ export const promoterFeatures: FeatureItem[] = [
     userImpact: "medium",
     complexity: "medium",
     implementationProgress: 0,
-    tags: ["promoter", "partnerships"]
+    tags: ["promoter", "partnerships"],
+    adminAccess: "none",
+    establishmentAccess: "none",
+    individualAccess: "none"
   }
 ];
