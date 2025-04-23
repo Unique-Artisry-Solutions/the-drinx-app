@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
@@ -20,7 +19,6 @@ export function usePushNotifications() {
   const { registerServiceWorker, unregisterAllServiceWorkers } = useServiceWorkerRegistration();
   const { createPushSubscription, resetSubscription } = usePushSubscription();
 
-  // Check if push notifications are supported in this browser
   const checkPushSupport = useCallback(async (): Promise<boolean> => {
     try {
       const hasServiceWorkerSupport = 'serviceWorker' in navigator;
@@ -42,7 +40,6 @@ export function usePushNotifications() {
     }
   }, []);
 
-  // Check notification permissions
   const checkPermissions = useCallback(() => {
     if ('Notification' in window) {
       const currentPermission = Notification.permission;
@@ -53,35 +50,28 @@ export function usePushNotifications() {
     return null;
   }, []);
 
-  // Reset subscription state
   const resetSubscriptionState = useCallback(async (): Promise<void> => {
     try {
       setSubscription(null);
       setError(null);
       
-      // Reset push subscription
       await resetSubscription();
       
-      // Then unregister all service workers
       await unregisterAllServiceWorkers();
       
-      // No need to return boolean; type should be void, success/failure handled via error state
+      setIsLoading(false);
     } catch (error) {
       console.error('Error during subscription reset:', error);
       setError(error instanceof Error ? error.message : 'Failed to reset subscription state');
-      // No rethrow, no return value
-    } finally {
       setIsLoading(false);
     }
   }, [resetSubscription, unregisterAllServiceWorkers]);
 
-  // Subscribe to push notifications
-  const subscribeToNotifications = async (): Promise<void> => {
+  const subscribeToNotifications = useCallback(async (): Promise<void> => {
     try {
       setIsLoading(true);
       setError(null);
       
-      // Check push support
       const isPushSupported = await checkPushSupport();
       if (!isPushSupported) {
         setIsSupported(false);
@@ -90,7 +80,6 @@ export function usePushNotifications() {
       
       setIsSupported(true);
       
-      // Check permission
       const currentPermission = checkPermissions();
       console.log('Current permission status:', currentPermission);
       
@@ -98,18 +87,15 @@ export function usePushNotifications() {
         throw new Error('Notification permission denied: Please enable notifications in your browser settings');
       }
       
-      // Get user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         throw new Error('User not authenticated');
       }
       
-      // Register service worker
       const registration = await registerServiceWorker();
       setHasServiceWorker(true);
       console.log('Service worker ready:', registration);
       
-      // Create push subscription
       const savedSubscription = await createPushSubscription(registration, user.id);
       setSubscription(savedSubscription);
       
@@ -119,40 +105,40 @@ export function usePushNotifications() {
       });
     } catch (error: any) {
       console.error('Push Notification Setup Error:', error);
-      setError(error.message || "Failed to set up push notifications");
+      
+      const errorMessage = error.message || "Failed to set up push notifications";
+      setError(errorMessage);
+      
       toast({
         title: "Notification Error",
-        description: error.message || "Failed to set up push notifications",
+        description: errorMessage,
         variant: "destructive"
       });
+      
+      throw error;
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [checkPermissions, checkPushSupport, createPushSubscription, registerServiceWorker, toast]);
 
-  // Initialize
   useEffect(() => {
     let isMounted = true;
     
     const init = async () => {
       try {
-        // Check if push is supported
         const isSupported = await checkPushSupport();
         
         if (!isMounted) return;
         setIsSupported(isSupported);
         
         if (isSupported) {
-          // Check current permission
           const permission = checkPermissions();
           if (!permission) return;
           
-          // Reset if permission has changed
           if (permission !== permissionStatus) {
             await resetSubscriptionState();
           }
           
-          // If we have permission, check for existing subscription
           const { data: { user } } = await supabase.auth.getUser();
           
           if (user && permission === 'granted') {
