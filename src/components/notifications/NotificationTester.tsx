@@ -1,14 +1,16 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Info, AlertCircle, Bell } from "lucide-react";
+import { Info, AlertCircle, Bell, Settings } from "lucide-react";
 import { useEnhancedNotificationTesting } from '@/hooks/notifications/testing/useEnhancedNotificationTesting';
 import { NotificationStatusAlert } from './direct/NotificationStatusAlert';
 import { SystemStatusPanel } from './direct/SystemStatusPanel';
 import { ResetSystemSection } from './direct/ResetSystemSection';
 import { EnhancedTestControls } from './testing/EnhancedTestControls';
+import { NotificationSystemDiagnostics } from './diagnostics/NotificationSystemDiagnostics';
 
 const NotificationTester = () => {
   const {
@@ -48,6 +50,9 @@ const NotificationTester = () => {
   return (
     <div className="space-y-4">
       <NotificationStatusAlert permissionStatus={Notification.permission} />
+      
+      {/* Add diagnostics panel */}
+      <NotificationSystemDiagnostics />
       
       <Tabs defaultValue="test" value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="w-full grid grid-cols-3">
@@ -104,6 +109,46 @@ const NotificationTester = () => {
               {navigator.userAgent}
             </AlertDescription>
           </Alert>
+          
+          <div className="mt-4">
+            <h3 className="text-sm font-medium mb-2">Testing Commands</h3>
+            <div className="grid grid-cols-2 gap-2">
+              <Button 
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  if (navigator.serviceWorker.controller) {
+                    navigator.serviceWorker.controller.postMessage({
+                      action: 'setDebugLevel',
+                      level: 'DEBUG'
+                    });
+                  } else {
+                    console.error('No service worker controller');
+                  }
+                }}
+              >
+                <Settings className="h-3 w-3 mr-1" />
+                Enable Debug Logs
+              </Button>
+              
+              <Button 
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  if (navigator.serviceWorker.controller) {
+                    navigator.serviceWorker.controller.postMessage({
+                      action: 'healthCheck'
+                    });
+                  } else {
+                    console.error('No service worker controller');
+                  }
+                }}
+              >
+                <Settings className="h-3 w-3 mr-1" />
+                Run Health Check
+              </Button>
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
     </div>
