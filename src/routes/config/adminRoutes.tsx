@@ -1,4 +1,3 @@
-
 import { lazy } from 'react';
 import { RouteObject } from 'react-router-dom';
 import AdminLogin from '@/pages/admin/AdminLogin';
@@ -12,7 +11,7 @@ import SystemConfigurationPage from '@/pages/admin/SystemConfigurationPage';
 const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
 const AdminUsersPage = lazy(() => import('@/pages/admin/AdminUsersPage'));
 const AdminUserProfile = lazy(() => import('@/pages/admin/AdminUserProfile'));
-const AdminEstablishmentsPage = lazy(() => import('@/pages/admin/AdminEstablishmentsPage'));
+const AdminEstablishmentsPage = lazy(() => import('@/pages/admin/AdminEstablishmentProfile'));
 const AdminEstablishmentProfile = lazy(() => import('@/pages/admin/AdminEstablishmentProfile'));
 const SystemAnalyticsPage = lazy(() => import('@/pages/admin/SystemAnalyticsPage'));
 const PhotoModerationPage = lazy(() => import('@/pages/admin/PhotoModerationPage'));
