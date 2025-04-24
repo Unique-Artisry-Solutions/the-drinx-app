@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useNotificationEvents } from './useNotificationEvents';
 import { useEnvironmentInfo } from './useEnvironmentInfo';
+import { useAuth } from '@/contexts/auth';
 
 export interface TestNotificationConfig {
   category: string;
@@ -27,6 +28,7 @@ export function useEnhancedNotificationTesting() {
   const { toast } = useToast();
   const { onShow, onClick, onError, onClose } = useNotificationEvents();
   const { logEnvironmentInfo } = useEnvironmentInfo();
+  const { user } = useAuth();
 
   const sendEnhancedTestNotification = async () => {
     try {
@@ -53,7 +55,12 @@ export function useEnhancedNotificationTesting() {
       });
 
       // Set up event handlers
-      notification.onshow = onShow;
+      notification.onshow = () => {
+        onShow();
+        if (user) {
+          setTimeout(logEnvironmentInfo, 500);
+        }
+      };
       notification.onclick = () => onClick(notification);
       notification.onerror = onError;
       notification.onclose = onClose;
@@ -73,7 +80,6 @@ export function useEnhancedNotificationTesting() {
         description: `Category: ${config.category}, Priority: ${config.priority}`
       });
 
-      setTimeout(logEnvironmentInfo, 500);
       return { success: true };
 
     } catch (err) {

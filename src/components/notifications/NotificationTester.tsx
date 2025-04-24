@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -85,11 +84,7 @@ const NotificationTester = () => {
               </Alert>
             )}
 
-            <EnhancedTestControls
-              config={config}
-              onConfigChange={setConfig}
-              disabled={isLoading}
-            />
+            <EnhancedTestControls />
           </div>
         </TabsContent>
         
