@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -15,7 +14,6 @@ const AdminLogin: React.FC = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check if admin is already logged in
     const isAdminAuth = localStorage.getItem('admin_authenticated') === 'true';
     if (isAdminAuth) {
       navigate('/admin/system-breakdown', { replace: true });
@@ -26,19 +24,15 @@ const AdminLogin: React.FC = () => {
     e.preventDefault();
     setIsLoading(true);
     
-    // In a real app, this would call an API endpoint to validate credentials
     setTimeout(() => {
       if (username === 'admin' && password === 'password') {
-        // Set admin session in localStorage (in a real app, use proper JWT tokens or cookies)
         localStorage.setItem('admin_authenticated', 'true');
         localStorage.setItem('admin_username', username);
-        
-        // Set a session timestamp
         localStorage.setItem('admin_session_created', new Date().toISOString());
         
         toast({
           title: 'Login successful',
-          description: 'Welcome to the admin dashboard',
+          description: 'Welcome to the admin dashboard for the Drinx app',
         });
         navigate('/admin/system-breakdown', { replace: true });
       } else {
@@ -60,7 +54,7 @@ const AdminLogin: React.FC = () => {
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl font-bold text-center">Admin Login</CardTitle>
             <CardDescription className="text-center">
-              Enter your credentials to access the admin dashboard
+              Enter your credentials to access the admin dashboard for the Drinx app
             </CardDescription>
           </CardHeader>
           <form onSubmit={handleLogin}>
