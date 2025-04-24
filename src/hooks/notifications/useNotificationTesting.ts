@@ -2,11 +2,11 @@
 import { useTestNotification } from './testing/useTestNotification';
 
 export function useNotificationTesting() {
-  const { isLoading, error, sendTestNotification } = useTestNotification();
+  const { isSending, sendTestNotification } = useTestNotification();
   
   return {
-    isLoading,
-    error,
+    isLoading: isSending, // Map isSending to isLoading for backward compatibility
+    error: null, // Provide a default error value since useTestNotification doesn't return one
     sendTestNotification
   };
 }
