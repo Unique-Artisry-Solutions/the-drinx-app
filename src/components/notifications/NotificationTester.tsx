@@ -1,53 +1,39 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Info, AlertCircle } from "lucide-react";
-import { useDirectNotifications } from '@/hooks/useDirectNotifications';
+import { Button } from "@/components/ui/button";
+import { Info, AlertCircle, Bell } from "lucide-react";
+import { useEnhancedNotificationTesting } from '@/hooks/notifications/testing/useEnhancedNotificationTesting';
 import { NotificationStatusAlert } from './direct/NotificationStatusAlert';
-import { NotificationActionButtons } from './direct/NotificationActionButtons';
 import { SystemStatusPanel } from './direct/SystemStatusPanel';
 import { ResetSystemSection } from './direct/ResetSystemSection';
-import { DiagnosticStatusSection } from './direct/DiagnosticStatusSection';
+import { EnhancedTestControls } from './testing/EnhancedTestControls';
 
 const NotificationTester = () => {
   const {
-    isSupported,
-    permissionStatus,
-    lastCheck,
+    config,
+    setConfig,
     isLoading,
     error,
-    requestPermission,
-    checkPermission,
-    sendTestNotification,
-    resetPermissionState
-  } = useDirectNotifications();
+    sendEnhancedTestNotification
+  } = useEnhancedNotificationTesting();
   
   const [activeTab, setActiveTab] = useState("test");
-  const [notificationSent, setNotificationSent] = useState(false);
-  
-  const handleSendTestNotification = async () => {
+
+  const handleSendTest = async () => {
     try {
-      await sendTestNotification();
-      setNotificationSent(true);
-      setTimeout(() => setNotificationSent(false), 10000);
+      await sendEnhancedTestNotification();
     } catch (err) {
       console.error("Failed to send test notification:", err);
     }
   };
 
-  const handleRequestPermission = async () => {
-    try {
-      await requestPermission();
-    } catch (err) {
-      console.error("Failed to request permission:", err);
-    }
-  };
-  
-  if (!isSupported) {
+  if (!('Notification' in window)) {
     return (
       <Card>
-        <div className="p-6 space-y-4">
+        <div className="p-6">
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Not Supported</AlertTitle>
@@ -62,71 +48,69 @@ const NotificationTester = () => {
   
   return (
     <div className="space-y-4">
-      <NotificationStatusAlert permissionStatus={permissionStatus} />
+      <NotificationStatusAlert permissionStatus={Notification.permission} />
       
       <Tabs defaultValue="test" value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="w-full grid grid-cols-3">
           <TabsTrigger value="test">Test</TabsTrigger>
+          <TabsTrigger value="config">Configure</TabsTrigger>
           <TabsTrigger value="debug">Debug</TabsTrigger>
-          <TabsTrigger value="reset">Reset</TabsTrigger>
         </TabsList>
         
         <TabsContent value="test" className="py-4">
           <div className="space-y-4">
-            <NotificationActionButtons
-              permissionStatus={permissionStatus}
-              isLoading={isLoading}
-              onSendTest={handleSendTestNotification}
-              onRequestPermission={handleRequestPermission}
-              onRefreshPermission={checkPermission}
-            />
-            <DiagnosticStatusSection 
-              notificationSent={notificationSent}
-              permissionStatus={permissionStatus}
+            <Button 
+              onClick={handleSendTest}
+              disabled={isLoading}
+              className="w-full"
+              aria-label={isLoading ? "Sending test notification..." : "Send test notification"}
+            >
+              {isLoading ? (
+                <span className="flex items-center gap-2">
+                  <Bell className="h-4 w-4 animate-pulse" aria-hidden="true" />
+                  <span>Sending...</span>
+                </span>
+              ) : (
+                <span className="flex items-center gap-2">
+                  <Bell className="h-4 w-4" aria-hidden="true" />
+                  <span>Send Test Notification</span>
+                </span>
+              )}
+            </Button>
+
+            {error && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+
+            <EnhancedTestControls
+              config={config}
+              onConfigChange={setConfig}
+              disabled={isLoading}
             />
           </div>
+        </TabsContent>
+        
+        <TabsContent value="config" className="py-4">
+          <SystemStatusPanel
+            isSupported={'Notification' in window}
+            permissionStatus={Notification.permission}
+            lastCheck={new Date()}
+          />
         </TabsContent>
         
         <TabsContent value="debug" className="py-4">
-          <div className="space-y-4">
-            <SystemStatusPanel
-              isSupported={isSupported}
-              permissionStatus={permissionStatus}
-              lastCheck={lastCheck}
-            />
-            
-            <Alert className="bg-amber-50 border-amber-200">
-              <Info className="h-4 w-4 text-amber-600" />
-              <AlertTitle>Browser Support</AlertTitle>
-              <AlertDescription className="text-xs">
-                Different browsers handle notifications differently. Chrome, Firefox, and Edge provide the best notification support. Safari requires special permission handling.
-              </AlertDescription>
-            </Alert>
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="reset" className="py-4">
-          <ResetSystemSection
-            isLoading={isLoading}
-            onReset={resetPermissionState}
-          />
+          <Alert>
+            <Info className="h-4 w-4" />
+            <AlertTitle>Browser Information</AlertTitle>
+            <AlertDescription className="text-xs mt-2">
+              {navigator.userAgent}
+            </AlertDescription>
+          </Alert>
         </TabsContent>
       </Tabs>
-      
-      <div className="flex flex-col text-xs text-muted-foreground space-y-2">
-        <div className="flex justify-between w-full">
-          <span>Last checked: {lastCheck.toLocaleTimeString()}</span>
-          {navigator.userAgent && (
-            <span className="truncate max-w-[200px]" title={navigator.userAgent}>
-              {navigator.userAgent.split(' ').slice(-1)[0]}
-            </span>
-          )}
-        </div>
-        
-        <p className="text-xs text-center text-gray-500 italic w-full">
-          Note: Some browsers and operating systems may block notifications
-        </p>
-      </div>
     </div>
   );
 };
