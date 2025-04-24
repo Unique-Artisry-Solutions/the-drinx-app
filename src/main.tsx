@@ -5,6 +5,36 @@ import AppProviders from './providers/AppProviders';
 import AppRoutes from './routes/AppRoutes';
 import './index.css'
 
+// Register service worker
+const registerServiceWorker = async () => {
+  if ('serviceWorker' in navigator) {
+    try {
+      const registration = await navigator.serviceWorker.register('/service-worker.js');
+      console.log('Service Worker registered successfully:', registration);
+
+      // Wait for the service worker to be active
+      if (registration.installing) {
+        console.log('Service Worker installing');
+        
+        registration.installing.addEventListener('statechange', (event) => {
+          if (event.target?.state === 'activated') {
+            console.log('Service Worker activated');
+          }
+        });
+      }
+
+      // Return registration for potential use
+      return registration;
+    } catch (error) {
+      console.error('Service Worker registration failed:', error);
+      throw error;
+    }
+  } else {
+    console.warn('Service Workers are not supported in this browser');
+    return null;
+  }
+};
+
 // Get the correct basename for preview URLs
 const getBasename = () => {
   // For debugging purposes
@@ -30,10 +60,23 @@ const getBasename = () => {
 const basename = getBasename();
 console.log('Using basename:', basename);
 
-createRoot(document.getElementById("root")!).render(
-  <BrowserRouter basename={basename}>
-    <AppProviders>
-      <AppRoutes />
-    </AppProviders>
-  </BrowserRouter>
-);
+// Register service worker before mounting the app
+registerServiceWorker().then(() => {
+  createRoot(document.getElementById("root")!).render(
+    <BrowserRouter basename={basename}>
+      <AppProviders>
+        <AppRoutes />
+      </AppProviders>
+    </BrowserRouter>
+  );
+}).catch(error => {
+  console.error('Failed to register service worker, continuing without it:', error);
+  // Still render the app even if service worker registration fails
+  createRoot(document.getElementById("root")!).render(
+    <BrowserRouter basename={basename}>
+      <AppProviders>
+        <AppRoutes />
+      </AppProviders>
+    </BrowserRouter>
+  );
+});
