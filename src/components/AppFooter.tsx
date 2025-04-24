@@ -2,15 +2,17 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Sparkles, Heart, Mail, ExternalLink } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
+
 const AppFooter: React.FC = () => {
   const currentYear = new Date().getFullYear();
+  
   return <footer className="border-t mt-auto py-6 bg-slate-900">
       <div className="container mx-auto px-4">
         <div className="flex flex-col md:flex-row justify-between items-center">
           <div className="flex items-center mb-4 md:mb-0">
             <Sparkles className="h-5 w-5 mr-2 text-material-primary" />
             <span className="font-medium">
-              Spirit<span className="font-light italic">less</span>
+              the Drinx <span className="font-light italic">app</span>
             </span>
           </div>
           
@@ -33,7 +35,7 @@ const AppFooter: React.FC = () => {
         <Separator className="my-4" />
         
         <div className="text-xs text-center text-gray-500">
-          <p>© {currentYear} Spiritless. All rights reserved.</p>
+          <p>© {currentYear} the Drinx app. All rights reserved.</p>
           <p className="mt-1">Drink responsibly. Not suitable for individuals under the legal drinking age.</p>
         </div>
       </div>

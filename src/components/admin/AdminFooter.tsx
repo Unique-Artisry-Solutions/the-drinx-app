@@ -14,7 +14,7 @@ const AdminFooter: React.FC = () => {
           <div className="flex items-center mb-4 md:mb-0">
             <Shield className="h-4 w-4 mr-2 text-material-primary" />
             <span className="font-medium text-sm">
-              Spiritless Admin
+              the Drinx app Admin
             </span>
           </div>
           

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
@@ -11,14 +10,13 @@ const Hero = () => {
     backgroundSize: "cover",
     backgroundPosition: "center",
     backgroundBlendMode: "overlay"
-  }} role="banner" aria-label="Welcome to Spiritless - Find non-alcoholic cocktails near you">
-      {/* Overlay to ensure text readability */}
+  }} role="banner" aria-label="Welcome to the Drinx app - Find non-alcoholic cocktails near you">
       <div className="absolute inset-0 bg-black/50" aria-hidden="true"></div>
       
       <div className="container mx-auto px-4 relative z-10">
         <header className="flex justify-between items-center mb-16">
           <h1 className="text-3xl font-medium text-white">
-            Spirit<span className="text-spiritless-pink">less</span>
+            the Drinx <span className="text-spiritless-pink">app</span>
           </h1>
         </header>
 
