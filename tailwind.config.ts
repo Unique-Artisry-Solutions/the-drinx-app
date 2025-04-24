@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -72,6 +71,12 @@ export default {
           950: "#0b101a",
         },
         spiritless: {
+          pink: "var(--theme-primary, #FF719A)",
+          orange: "var(--theme-accent, #FFA99F)",
+          green: "var(--theme-secondary, #8BC34A)",
+          burgundy: "var(--theme-error, #590202)",
+        },
+        drinx: {
           pink: "var(--theme-primary, #FF719A)",
           orange: "var(--theme-accent, #FFA99F)",
           green: "var(--theme-secondary, #8BC34A)",

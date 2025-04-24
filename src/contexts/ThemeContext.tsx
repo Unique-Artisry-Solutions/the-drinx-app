@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
 type ThemeType = 'dark' | 'light';
@@ -121,11 +120,11 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     root.style.setProperty('--theme-warning', palette.warning);
     root.style.setProperty('--theme-error', palette.error);
     
-    // Apply the core spiritless colors as CSS variables too
-    root.style.setProperty('--spiritless-pink', palette.primary);
-    root.style.setProperty('--spiritless-green', palette.secondary);
-    root.style.setProperty('--spiritless-orange', palette.accent);
-    root.style.setProperty('--spiritless-burgundy', palette.error);
+    // Apply the core drinx colors as CSS variables too
+    root.style.setProperty('--drinx-pink', palette.primary);
+    root.style.setProperty('--drinx-green', palette.secondary);
+    root.style.setProperty('--drinx-orange', palette.accent);
+    root.style.setProperty('--drinx-burgundy', palette.error);
     
     // Update core Tailwind CSS variables as well
     root.style.setProperty('--pink', palette.primary);
