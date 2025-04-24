@@ -1,7 +1,9 @@
+
 import { lazy } from 'react';
 import { RouteObject } from 'react-router-dom';
 import AdminLogin from '@/pages/admin/AdminLogin';
 import AdminNotificationsPage from '@/pages/admin/notifications/AdminNotificationsPage';
+import NotificationTestingPage from '@/pages/admin/notifications/NotificationTestingPage';
 import SystemFunctionalityBreakdown from '@/pages/admin/SystemFunctionalityBreakdown';
 import ComponentCatalogPage from '@/pages/admin/ComponentCatalogPage';
 import AdminDocumentationPage from '@/pages/admin/AdminDocumentationPage';
@@ -34,4 +36,5 @@ export const adminRoutes: RouteObject[] = [
   { path: '/admin/documentation', element: <AdminDocumentationPage /> },
   { path: '/admin/system-configuration', element: <SystemConfigurationPage /> },
   { path: '/admin/notifications', element: <AdminNotificationsPage /> },
+  { path: '/admin/notification-testing', element: <NotificationTestingPage /> },
 ];

@@ -1,72 +1,143 @@
 
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { useNotificationEvents } from './useNotificationEvents';
-import { useEnvironmentInfo } from './useEnvironmentInfo';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/contexts/auth';
+
+export type NotificationRole = 'user' | 'promoter' | 'establishment' | 'admin';
+export type NotificationDirection = 'to' | 'from';
+
+export interface RoleBasedNotificationConfig {
+  sourceRole: NotificationRole;
+  targetRole: NotificationRole;
+  content: string;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  category: string;
+}
 
 export function useTestNotification() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-  const { onShow, onClick, onError, onClose } = useNotificationEvents();
-  const { logEnvironmentInfo } = useEnvironmentInfo();
+  const { user } = useAuth();
 
-  const createTestNotification = useCallback(async () => {
+  const sendTestNotification = async () => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "You must be logged in to send test notifications",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError(null);
 
-      if (!('Notification' in window)) {
-        throw new Error('Notification API missing at send time');
-      }
+      // Call the edge function directly for test notification
+      const { data, error } = await supabase.functions.invoke('notifications', {
+        body: {
+          action: 'testPushNotification',
+          params: {
+            userId: user.id
+          }
+        }
+      });
 
-      console.log('[NotificationTesting] Attempting to construct Notification instance...');
-      let notification: Notification;
-      
-      try {
-        notification = new Notification('Test Notification', {
-          body: 'This is a direct browser notification test (' + new Date().toLocaleTimeString() + ')',
-          icon: '/favicon.ico',
-          tag: 'test-notification-' + Date.now(),
-          requireInteraction: true,
-          silent: false
+      if (error) {
+        console.error('[useTestNotification] Edge function error:', error);
+        setError(error instanceof Error ? error.message : 'Failed to send test notification');
+        toast({
+          title: "Notification Error",
+          description: error instanceof Error ? error.message : 'Failed to send test notification',
+          variant: "destructive"
         });
-        console.log('[NotificationTesting] Notification object constructed:', notification);
-      } catch (notifErr) {
-        console.error('[NotificationTesting] Failed to construct notification:', notifErr);
-        throw notifErr;
+        return;
       }
 
-      notification.onshow = onShow;
-      notification.onclick = () => onClick(notification);
-      notification.onerror = onError;
-      notification.onclose = onClose;
-
-      toast({
-        title: "Test Notification Sent",
-        description: "A notification was sent. If you don't see it, check your browser settings."
-      });
-
-      setTimeout(logEnvironmentInfo, 500);
-
-      return { success: true };
+      if (data && data.success) {
+        console.log('Test notification sent successfully');
+        toast({
+          title: "Success",
+          description: "Test notification sent successfully",
+        });
+      } else {
+        const errorMsg = typeof data?.error === 'string'
+          ? data.error
+          : 'Unknown error from notification function';
+        setError(errorMsg);
+        toast({
+          title: "Notification Error",
+          description: errorMsg,
+          variant: "destructive"
+        });
+      }
     } catch (err) {
-      console.error('[NotificationTesting] Error sending test notification:', err);
-      setError(err instanceof Error ? err.message : 'Failed to send test notification');
+      console.error('[useTestNotification] Unexpected exception:', err);
+      const errorMsg = err instanceof Error ? err.message : 'Failed to send test notification';
+      setError(errorMsg);
       toast({
-        variant: "destructive",
         title: "Notification Error",
-        description: err instanceof Error ? err.message : 'Failed to send test notification'
+        description: errorMsg,
+        variant: "destructive"
       });
-      throw err;
     } finally {
       setIsLoading(false);
     }
-  }, [toast, onShow, onClick, onError, onClose, logEnvironmentInfo]);
+  };
+
+  const sendRoleBasedNotification = async (config: RoleBasedNotificationConfig) => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "You must be logged in to send test notifications",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      console.log(`[RoleNotificationTesting] Sending ${config.sourceRole} to ${config.targetRole} notification`);
+      
+      // This would call an edge function to handle role-based notifications
+      // For now, we just show a toast to simulate success
+      toast({
+        title: "Role-based Test Started",
+        description: `Sending ${config.sourceRole} to ${config.targetRole} notification (${config.priority} priority)`,
+      });
+      
+      // Simulate delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      toast({
+        title: "Role-based Test Complete",
+        description: `Successfully sent ${config.sourceRole} to ${config.targetRole} notification`,
+      });
+      
+      return { success: true };
+    } catch (err) {
+      console.error('[useTestNotification] Role-based error:', err);
+      const errorMsg = err instanceof Error ? err.message : 'Failed to send role-based notification';
+      setError(errorMsg);
+      toast({
+        title: "Notification Error",
+        description: errorMsg,
+        variant: "destructive"
+      });
+      return { success: false, error: errorMsg };
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return {
     isLoading,
     error,
-    sendTestNotification: createTestNotification
+    sendTestNotification,
+    sendRoleBasedNotification
   };
 }

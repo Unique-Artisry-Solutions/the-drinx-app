@@ -1,3 +1,4 @@
+
 import { Home, Users, Building2, LayoutDashboard, FileBarChart2, Image, Palette, Layers, BookOpen, Settings, Bell } from 'lucide-react';
 
 type AdminNavItem = {
@@ -17,6 +18,12 @@ export const adminNavItems: AdminNavItem[] = [
   {
     label: 'Notifications',
     path: '/admin/notifications',
+    icon: Bell,
+    showInNav: true,
+  },
+  {
+    label: 'Notification Testing',
+    path: '/admin/notification-testing',
     icon: Bell,
     showInNav: true,
   },

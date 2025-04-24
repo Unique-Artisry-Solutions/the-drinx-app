@@ -2,12 +2,12 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
-import { MessageSquare, CalendarDays, ChartBar, Users } from 'lucide-react';
+import { MessageSquare, CalendarDays, ChartBar, Users, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/auth';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';
-import NotificationTester from '@/components/notifications/NotificationTester';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const PromoterDashboardPage = () => {
   const { user, isLoading } = useAuth();
@@ -67,7 +67,18 @@ const PromoterDashboardPage = () => {
           </h1>
           
           <div className="mb-6">
-            <NotificationTester />
+            <Alert className="bg-blue-50 border-blue-200">
+              <div className="flex items-center gap-2">
+                <Bell className="h-4 w-4 text-blue-500" />
+                <AlertDescription className="text-blue-600">
+                  Notification testing has been moved to the admin panel. Visit the 
+                  <Link to="/admin/notification-testing" className="text-blue-700 font-medium mx-1 underline">
+                    Notification Testing
+                  </Link>
+                  section to test all notification types.
+                </AlertDescription>
+              </div>
+            </Alert>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
