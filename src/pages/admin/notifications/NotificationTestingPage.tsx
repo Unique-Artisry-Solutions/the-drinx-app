@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import Layout from '@/components/Layout';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -7,6 +6,7 @@ import { Bell, Users, Building2, AlertTriangle } from 'lucide-react';
 import NotificationTester from '@/components/notifications/NotificationTester';
 import DirectNotificationTester from '@/components/notifications/DirectNotificationTester';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { RoleBasedNotificationTester } from '@/components/notifications/RoleBasedNotificationTester';
 
 const NotificationTestingPage = () => {
   const [activeTab, setActiveTab] = useState('direct');
@@ -50,36 +50,19 @@ const NotificationTestingPage = () => {
               </TabsContent>
               
               <TabsContent value="user-promoter" className="mt-0">
-                <Alert>
-                  <AlertDescription>
-                    User to Promoter notification testing will be available in the next update.
-                  </AlertDescription>
-                </Alert>
-                <div className="mt-4">
-                  <NotificationTester />
-                </div>
+                <RoleBasedNotificationTester />
               </TabsContent>
               
               <TabsContent value="user-establishment" className="mt-0">
-                <Alert>
-                  <AlertDescription>
-                    User to Establishment notification testing will be available in the next update.
-                  </AlertDescription>
-                </Alert>
-                <div className="mt-4">
-                  <NotificationTester />
-                </div>
+                <RoleBasedNotificationTester />
               </TabsContent>
               
               <TabsContent value="advanced" className="mt-0">
                 <Alert>
                   <AlertDescription>
-                    Advanced notification testing features will be available in the next update.
+                    Advanced notification testing features will be implemented in the next phase.
                   </AlertDescription>
                 </Alert>
-                <div className="mt-4">
-                  <NotificationTester />
-                </div>
               </TabsContent>
             </Tabs>
           </CardContent>
