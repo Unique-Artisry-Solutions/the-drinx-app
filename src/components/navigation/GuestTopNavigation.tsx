@@ -1,21 +1,20 @@
-
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, LogIn, UserPlus, Menu, X, Sparkles, HeartHandshake } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import CartButton from '@/components/cart/CartButton';
 import { useAuth } from '@/contexts/auth';
-
 const GuestTopNavigation: React.FC = () => {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { user } = useAuth();
+  const {
+    user
+  } = useAuth();
 
   // For debugging - log when this component renders
   React.useEffect(() => {
     console.log('GuestTopNavigation rendered, user:', !!user);
   }, [user]);
-
   const guestNavItems = [{
     icon: Home,
     label: 'Home',
@@ -25,16 +24,14 @@ const GuestTopNavigation: React.FC = () => {
     label: 'Our Mission',
     path: '/mission'
   }];
-  
-  return (
-    <nav className="guest-top-nav fixed top-0 left-0 w-full bg-gradient-to-r from-spiritless-pink to-spiritless-pink-dark z-50 shadow-bold-pink backdrop-blur-sm">
+  return <nav className="guest-top-nav fixed top-0 left-0 w-full bg-gradient-to-r from-spiritless-pink to-spiritless-pink-dark z-50 shadow-bold-pink backdrop-blur-sm">
       <div className="guest-nav-container max-w-6xl mx-auto px-4 py-3">
         <div className="guest-nav-inner flex items-center justify-between">
           <div className="guest-nav-left flex items-center">
             <Link to="/" className="guest-nav-logo flex items-center text-xl font-semibold text-white mr-6">
               <Sparkles className="h-6 w-6 mr-2 text-white" />
-              <span className="font-bold tracking-tight">Spirit</span>
-              <span className="font-light italic">less</span>
+              <span className="font-bold tracking-tight">the Drinx</span>
+              <span className="font-light italic">App</span>
             </Link>
             
             <div className="guest-nav-links hidden md:flex space-x-1">
@@ -73,24 +70,16 @@ const GuestTopNavigation: React.FC = () => {
         </div>
         
         {/* Mobile Menu */}
-        {isMobileMenuOpen && (
-          <div className="guest-mobile-menu md:hidden py-3 space-y-2 bg-white/10 rounded-md mt-2 backdrop-blur-sm animate-fade-in">
+        {isMobileMenuOpen && <div className="guest-mobile-menu md:hidden py-3 space-y-2 bg-white/10 rounded-md mt-2 backdrop-blur-sm animate-fade-in">
             {guestNavItems.map(item => {
-              const isActive = location.pathname === item.path;
-              return (
-                <Link 
-                  key={item.path} 
-                  to={item.path} 
-                  className={`guest-mobile-link block px-3 py-2 rounded-md ${isActive ? 'bg-white/20 text-white' : 'text-white/80 hover:bg-white/10 hover:text-white'}`} 
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
+          const isActive = location.pathname === item.path;
+          return <Link key={item.path} to={item.path} className={`guest-mobile-link block px-3 py-2 rounded-md ${isActive ? 'bg-white/20 text-white' : 'text-white/80 hover:bg-white/10 hover:text-white'}`} onClick={() => setIsMobileMenuOpen(false)}>
                   <div className="flex items-center">
                     <item.icon className="mr-2 h-5 w-5" />
                     <span>{item.label}</span>
                   </div>
-                </Link>
-              );
-            })}
+                </Link>;
+        })}
             <div className="guest-mobile-auth flex space-x-2 px-3 py-2">
               <Link to="/login" className="flex-1">
                 <Button variant="outline" className="guest-mobile-login w-full flex items-center justify-center gap-1 border-white/20 hover:bg-white/10 hover:border-white/30 text-white">
@@ -105,11 +94,8 @@ const GuestTopNavigation: React.FC = () => {
                 </Button>
               </Link>
             </div>
-          </div>
-        )}
+          </div>}
       </div>
-    </nav>
-  );
+    </nav>;
 };
-
 export default GuestTopNavigation;
