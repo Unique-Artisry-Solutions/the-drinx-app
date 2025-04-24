@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
@@ -16,7 +17,7 @@ const Hero = () => {
       <div className="container mx-auto px-4 relative z-10">
         <header className="flex justify-between items-center mb-16">
           <h1 className="text-3xl font-medium text-white">
-            the Drinx <span className="text-spiritless-pink">app</span>
+            the Drinx <span className="text-drinx-pink">app</span>
           </h1>
         </header>
 
