@@ -1,68 +1,85 @@
 
-import { useNotificationSender } from '../useNotificationSender';
-import { useNotificationToasts } from '../useNotificationToasts';
+import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth';
-import { supabase } from '@/lib/supabase';
-import { useEnhancedNotificationTesting } from './useEnhancedNotificationTesting';
 
 export const useTestNotification = () => {
-  const { isSending, isRegistering, sendNotification } = useNotificationSender();
-  const { showSuccessToast, showErrorToast, showAuthErrorToast } = useNotificationToasts();
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
   const { user } = useAuth();
-  const { sendEnhancedTestNotification } = useEnhancedNotificationTesting();
 
   const sendTestNotification = async () => {
     if (!user) {
-      showAuthErrorToast();
+      toast({
+        variant: "destructive",
+        title: "Authentication Required",
+        description: "You must be logged in to send test notifications"
+      });
+      return;
+    }
+
+    if (!('serviceWorker' in navigator) || !navigator.serviceWorker.controller) {
+      toast({
+        variant: "destructive",
+        title: "Service Worker Error",
+        description: "Service worker not available. Please refresh the page."
+      });
       return;
     }
 
     try {
-      // Try the enhanced local notification first
-      // This is more reliable for testing and doesn't require server interaction
-      await sendEnhancedTestNotification();
-      return;
-    } catch (localError) {
-      console.warn('Local notification failed, falling back to edge function:', localError);
+      setIsLoading(true);
       
-      // If that fails, fall back to the edge function
-      try {
-        // Call the edge function directly for test notification
-        const { data, error } = await supabase.functions.invoke('notifications', {
-          body: {
-            action: 'testPushNotification',
-            params: {
-              userId: user.id
-            }
+      const messageChannel = new MessageChannel();
+      const responsePromise = new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('Request timed out'));
+        }, 5000);
+
+        messageChannel.port1.onmessage = (event) => {
+          clearTimeout(timeout);
+          if (event.data.success) {
+            resolve(event.data);
+          } else {
+            reject(new Error(event.data.error || 'Failed to send notification'));
           }
-        });
+        };
+      });
 
-        if (error) {
-          console.error('[useTestNotification] Edge function error:', error);
-          showErrorToast(error instanceof Error ? error : new Error('Failed to send test notification'));
-          return;
+      navigator.serviceWorker.controller.postMessage({
+        action: 'showTestNotification',
+        title: 'Test Notification',
+        options: {
+          body: 'This is a test notification',
+          icon: '/favicon.ico',
+          tag: `test-${Date.now()}`,
+          data: {
+            userId: user.id,
+            timestamp: new Date().toISOString()
+          }
         }
+      }, [messageChannel.port2]);
 
-        if (data && data.success) {
-          console.log('Test notification sent successfully');
-          showSuccessToast();
-        } else {
-          console.error('[useTestNotification] Edge function response is not successful:', data);
-          showErrorToast(
-            typeof data?.error === 'string'
-              ? new Error(data.error)
-              : new Error('Unknown error from notification function')
-          );
-        }
-      } catch (err) {
-        console.error('[useTestNotification] Unexpected exception:', err);
-        showErrorToast(err instanceof Error ? err : new Error('Failed to send test notification'));
-      }
+      await responsePromise;
+      
+      toast({
+        title: "Success",
+        description: "Test notification sent successfully"
+      });
+    } catch (error) {
+      console.error('Test notification error:', error);
+      toast({
+        variant: "destructive",
+        title: "Notification Error",
+        description: error instanceof Error ? error.message : 'Failed to send test notification'
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return {
-    isSending: isSending || isRegistering,
+    isLoading,
     sendTestNotification
   };
 };

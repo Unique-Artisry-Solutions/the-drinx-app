@@ -121,6 +121,15 @@ const clientCommunication = {
       swLogger.error('Error sending message to client:', { error: error.toString() });
       return false;
     }
+  },
+
+  // Send response back to client
+  sendResponse: (event, response) => {
+    if (event.ports?.[0]) {
+      event.ports[0].postMessage(response);
+      return true;
+    }
+    return false;
   }
 };
 
@@ -314,6 +323,25 @@ const messageHandlers = {
     });
     
     return true;
+  },
+  
+  // Show test notification
+  showTestNotification: async (event) => {
+    const { title, options } = event.data;
+    
+    try {
+      const result = await notificationHelpers.showNotification(title, options);
+      return clientCommunication.sendResponse(event, {
+        success: true,
+        message: 'Notification shown successfully'
+      });
+    } catch (error) {
+      swLogger.error('Failed to show test notification:', { error: error.toString() });
+      return clientCommunication.sendResponse(event, {
+        success: false,
+        error: error.toString()
+      });
+    }
   }
 };
 
