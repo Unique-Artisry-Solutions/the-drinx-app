@@ -16,8 +16,8 @@ const registerServiceWorker = async () => {
       if (registration.installing) {
         console.log('Service Worker installing');
         
-        registration.installing.addEventListener('statechange', (event) => {
-          if (event.target?.state === 'activated') {
+        registration.installing.addEventListener('statechange', () => {
+          if (registration.active) {
             console.log('Service Worker activated');
           }
         });
@@ -80,3 +80,4 @@ registerServiceWorker().then(() => {
     </BrowserRouter>
   );
 });
+
