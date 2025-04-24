@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Home, Map, Route, Megaphone, BarChart2, Building, MessageSquare } from 'lucide-react';
@@ -33,12 +32,13 @@ const UserNavLinks: React.FC<UserNavLinksProps> = ({ userType }) => {
     { icon: Route, label: 'Circuits', path: '/swig-circuits' },
   ];
   
-  // Add different items based on user type - removed Create for individual users
   if (userType === 'promoter') {
-    userNavItems.push({ icon: Route, label: 'Create', path: '/create-swig-circuit' });
-    userNavItems.push({ icon: Building, label: 'Venues', path: '/explore' });
-    userNavItems.push({ icon: Megaphone, label: 'Promotions', path: '/promoter/dashboard' });
-    userNavItems.push({ icon: BarChart2, label: 'Analytics', path: '/promoter/analytics' });
+    userNavItems.push(
+      { icon: Route, label: 'Create', path: '/create-swig-circuit' },
+      { icon: Building, label: 'Venues', path: '/explore' },
+      { icon: Megaphone, label: 'Dashboard', path: '/promoter/dashboard' },
+      { icon: BarChart2, label: 'Analytics', path: '/promoter/analytics' }
+    );
   } else if (userType === 'establishment') {
     userNavItems.push({ icon: MessageSquare, label: 'Messages', path: '/establishment/communication' });
   }
