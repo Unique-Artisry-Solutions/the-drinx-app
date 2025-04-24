@@ -1,8 +1,8 @@
-
 import React from 'react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import Layout from '@/components/Layout';
 import { useSystemBreakdown } from '@/components/admin/systemBreakdown/hooks/useSystemBreakdown';
+import { useSearchParams } from 'react-router-dom';
 import StatusUpdateNotification from '@/components/admin/systemBreakdown/StatusUpdateNotification';
 import SystemHeader from '@/components/admin/systemBreakdown/SystemHeader';
 import OverviewTab from '@/components/admin/systemBreakdown/OverviewTab';
@@ -21,9 +21,10 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { proposedImprovements as improvementsData } from '@/components/admin/systemBreakdown/improvementsData';
 
 const SystemFunctionalityBreakdown: React.FC = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab = searchParams.get('tab') || 'overview';
+  
   const {
-    activeTab,
-    setActiveTab,
     adminFeatures,
     establishmentFeatures,
     individualFeatures,
@@ -36,13 +37,18 @@ const SystemFunctionalityBreakdown: React.FC = () => {
     handleExportCSV,
     handleAnalyzeFeatures,
     handleCreateReleaseFromFeatures,
-    // Additional data for enhanced dashboard
     monthlyProgressData,
     currentSnapshot,
     dataValidation
   } = useSystemBreakdown();
   
-  // Use mobile hook to determine if we're on mobile
+  const [activeTab, setActiveTab] = React.useState(initialTab);
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    setSearchParams({ tab: value });
+  };
+  
   const isMobile = useIsMobile();
 
   return (
@@ -66,15 +72,13 @@ const SystemFunctionalityBreakdown: React.FC = () => {
           <StatusUpdateNotification updatedFeaturesCount={updatedFeaturesCount} />
         )}
 
-        {/* Use appropriate navigation based on screen size */}
         {isMobile ? (
-          <MobileSystemBreakdownNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
+          <MobileSystemBreakdownNavigation activeTab={activeTab} setActiveTab={handleTabChange} />
         ) : (
-          <SystemBreakdownNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
+          <SystemBreakdownNavigation activeTab={activeTab} setActiveTab={handleTabChange} />
         )}
 
         <Tabs value={activeTab} className="space-y-4">
-          {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2">
@@ -100,7 +104,6 @@ const SystemFunctionalityBreakdown: React.FC = () => {
             />
           </TabsContent>
 
-          {/* Admin Features Tab */}
           <TabsContent value="admin" className="space-y-4">
             <FeatureTab
               features={adminFeatures}
@@ -109,7 +112,6 @@ const SystemFunctionalityBreakdown: React.FC = () => {
             />
           </TabsContent>
 
-          {/* Establishment Features Tab */}
           <TabsContent value="establishment" className="space-y-4">
             <FeatureTab
               features={establishmentFeatures}
@@ -118,7 +120,6 @@ const SystemFunctionalityBreakdown: React.FC = () => {
             />
           </TabsContent>
 
-          {/* Individual Features Tab */}
           <TabsContent value="individual" className="space-y-4">
             <FeatureTab
               features={individualFeatures}
@@ -127,7 +128,6 @@ const SystemFunctionalityBreakdown: React.FC = () => {
             />
           </TabsContent>
 
-          {/* Promoter Features Tab */}
           <TabsContent value="promoter" className="space-y-4">
             <FeatureTab
               features={promoterFeatures}
@@ -136,22 +136,18 @@ const SystemFunctionalityBreakdown: React.FC = () => {
             />
           </TabsContent>
           
-          {/* Promoter Requirements Tab */}
           <TabsContent value="promoter-requirements" className="space-y-4">
             <PromoterRequirementsTab features={promoterFeatures} />
           </TabsContent>
 
-          {/* Proposed Improvements Tab */}
           <TabsContent value="improvements" className="space-y-4">
             <ProposedImprovementsTab improvements={improvementsData} />
           </TabsContent>
           
-          {/* Release Management Tab */}
           <TabsContent value="releases" className="space-y-4">
             <ReleaseManagementTab />
           </TabsContent>
 
-          {/* Feature Showcase Tab */}
           <TabsContent value="showcase" className="space-y-4">
             <FeatureShowcaseTab
               adminFeatures={adminFeatures}

@@ -1,5 +1,5 @@
-
 import React from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -32,6 +32,14 @@ const SystemBreakdownNavigation: React.FC<SystemBreakdownNavigationProps> = ({
   activeTab,
   setActiveTab
 }) => {
+  const navigate = useNavigate();
+  
+  const handleTabClick = (tab: string) => (e: React.MouseEvent) => {
+    e.preventDefault();
+    setActiveTab(tab);
+    navigate(`/admin/system-breakdown?tab=${tab}`);
+  };
+
   return (
     <NavigationMenu className="mb-6">
       <NavigationMenuList className="flex-wrap">
@@ -51,7 +59,7 @@ const SystemBreakdownNavigation: React.FC<SystemBreakdownNavigationProps> = ({
               <li>
                 <NavigationMenuLink asChild>
                   <a
-                    onClick={(e) => { e.preventDefault(); setActiveTab('overview'); }}
+                    onClick={handleTabClick('overview')}
                     className={cn(
                       "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
                       activeTab === 'overview' ? "bg-blue-50" : "bg-white"
@@ -70,7 +78,7 @@ const SystemBreakdownNavigation: React.FC<SystemBreakdownNavigationProps> = ({
               <li>
                 <NavigationMenuLink asChild>
                   <a
-                    onClick={(e) => { e.preventDefault(); setActiveTab('showcase'); }}
+                    onClick={handleTabClick('showcase')}
                     className={cn(
                       "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
                       activeTab === 'showcase' ? "bg-blue-50" : "bg-white"
@@ -254,13 +262,19 @@ const SystemBreakdownNavigation: React.FC<SystemBreakdownNavigationProps> = ({
   );
 };
 
-// For mobile view, we create a simpler tab-based navigation
 export const MobileSystemBreakdownNavigation: React.FC<SystemBreakdownNavigationProps> = ({
   activeTab,
   setActiveTab
 }) => {
+  const navigate = useNavigate();
+  
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    navigate(`/admin/system-breakdown?tab=${value}`);
+  };
+
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-4">
+    <Tabs value={activeTab} onValueChange={handleTabChange} className="mb-4">
       <TabsList className="grid grid-cols-3">
         <TabsTrigger value="overview" className="flex items-center gap-1">
           <BarChart3 className="h-4 w-4" />
