@@ -1,4 +1,3 @@
-
 // Service Worker Configuration
 const SW_VERSION = '1.0.0';
 
@@ -250,36 +249,39 @@ function handlePing(event) {
 
 // Handle test notification message
 function handleTestNotification(event) {
-  swLog('Showing test notification from client request');
+  console.log('[ServiceWorker] Showing test notification from client request:', event.data);
   
-  const title = event.data.title || 'Test Notification';
-  const options = event.data.options || {
-    body: 'This is a test notification from the service worker',
-    icon: '/favicon.ico',
-    badge: '/favicon.ico',
-    timestamp: Date.now()
-  };
+  const { title, options } = event.data;
   
-  self.registration.showNotification(title, options)
+  return self.registration.showNotification(title, options)
     .then(() => {
+      console.log('[ServiceWorker] Test notification shown successfully');
       const response = {
         success: true,
         message: 'Test notification sent successfully',
         timestamp: new Date().toISOString()
       };
       
-      sendResponse(event, response);
+      // Send response back through MessageChannel if available
+      if (event.ports && event.ports[0]) {
+        event.ports[0].postMessage(response);
+      }
+      
+      return response;
     })
     .catch(error => {
-      swLog('Error showing notification', error);
-      
+      console.error('[ServiceWorker] Error showing notification:', error);
       const response = {
         success: false,
         error: error.message || 'Failed to show notification',
         timestamp: new Date().toISOString()
       };
       
-      sendResponse(event, response);
+      if (event.ports && event.ports[0]) {
+        event.ports[0].postMessage(response);
+      }
+      
+      return response;
     });
 }
 

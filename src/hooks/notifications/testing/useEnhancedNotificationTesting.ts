@@ -39,41 +39,49 @@ export function useEnhancedNotificationTesting() {
         throw new Error('Notification API not supported');
       }
 
-      console.log('[NotificationTesting] Creating enhanced test notification...');
-      
+      if (!navigator.serviceWorker?.controller) {
+        throw new Error('Service Worker not ready. Please wait a moment and try again.');
+      }
+
+      console.log('[NotificationTesting] Sending test notification via Service Worker...');
+
+      // Create message channel for two-way communication
+      const messageChannel = new MessageChannel();
+      messageChannel.port1.onmessage = (event) => {
+        const response = event.data;
+        console.log('[NotificationTesting] Received response from Service Worker:', response);
+        
+        if (response.success) {
+          onShow();
+          if (user) {
+            logEnvironmentInfo();
+          }
+        } else {
+          throw new Error(response.error || 'Failed to show notification');
+        }
+      };
+
       // Add delay if specified
       if (config.delay > 0) {
         await new Promise(resolve => setTimeout(resolve, config.delay * 1000));
       }
 
-      const notification = new Notification(config.category, {
-        body: config.content || 'Test notification content',
-        icon: '/favicon.ico',
-        tag: `test-${config.category}-${Date.now()}`,
-        requireInteraction: true,
-        silent: !config.animate
-      });
-
-      // Set up event handlers
-      notification.onshow = () => {
-        onShow();
-        if (user) {
-          setTimeout(logEnvironmentInfo, 500);
+      // Send message to service worker
+      navigator.serviceWorker.controller.postMessage({
+        action: 'showTestNotification',
+        title: config.category,
+        options: {
+          body: config.content || 'Test notification content',
+          icon: '/favicon.ico',
+          tag: `test-${config.category}-${Date.now()}`,
+          requireInteraction: true,
+          silent: !config.animate,
+          data: {
+            priority: config.priority,
+            timestamp: new Date().toISOString()
+          }
         }
-      };
-      notification.onclick = () => onClick(notification);
-      notification.onerror = onError;
-      notification.onclose = onClose;
-
-      // Log for screen readers if enabled
-      if (config.useScreenReader) {
-        const ariaLive = document.createElement('div');
-        ariaLive.setAttribute('role', 'status');
-        ariaLive.setAttribute('aria-live', 'polite');
-        ariaLive.textContent = `Notification sent: ${config.content}`;
-        document.body.appendChild(ariaLive);
-        setTimeout(() => document.body.removeChild(ariaLive), 1000);
-      }
+      }, [messageChannel.port2]);
 
       toast({
         title: "Test Notification Sent",
