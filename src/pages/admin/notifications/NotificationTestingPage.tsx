@@ -8,6 +8,7 @@ import NotificationTester from '@/components/notifications/NotificationTester';
 import DirectNotificationTester from '@/components/notifications/DirectNotificationTester';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { RoleBasedNotificationTester } from '@/components/notifications/RoleBasedNotificationTester';
+import { EnhancedTestControls } from '@/components/notifications/testing/EnhancedTestControls';
 
 const NotificationTestingPage = () => {
   const [activeTab, setActiveTab] = useState('direct');
@@ -59,11 +60,7 @@ const NotificationTestingPage = () => {
               </TabsContent>
               
               <TabsContent value="advanced" className="mt-0">
-                <Alert>
-                  <AlertDescription>
-                    Advanced notification testing features will be implemented in the next phase.
-                  </AlertDescription>
-                </Alert>
+                <EnhancedTestControls />
               </TabsContent>
             </Tabs>
           </CardContent>
@@ -71,6 +68,6 @@ const NotificationTestingPage = () => {
       </div>
     </Layout>
   );
-};
+}
 
 export default NotificationTestingPage;
