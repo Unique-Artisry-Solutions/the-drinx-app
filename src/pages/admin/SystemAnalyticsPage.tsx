@@ -20,7 +20,7 @@ const SystemAnalyticsPage: React.FC = () => {
         <div className="mb-8">
           <h1 className="text-3xl font-bold">System Analytics</h1>
           <p className="text-muted-foreground mt-2">
-            Platform-wide analytics and insights for the Drinx app
+            Platform-wide analytics and insights for the Spiritless application
           </p>
         </div>
 
@@ -35,7 +35,7 @@ const SystemAnalyticsPage: React.FC = () => {
             <p className="mb-4">
               This dashboard presents comprehensive analytics data about user engagement,
               feature usage, and platform growth. Use the filters and tabs below to 
-              explore different aspects of the Drinx app's performance.
+              explore different aspects of the system's performance.
             </p>
           </CardContent>
         </Card>
