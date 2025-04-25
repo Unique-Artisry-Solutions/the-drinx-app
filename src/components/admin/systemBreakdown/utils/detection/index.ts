@@ -69,6 +69,12 @@ export {
   isSignatureFeature as isSignatureDetectionFeature
 } from './signatureFeatureDetection';
 
+// Export directly from establishmentDetection for the missing functions
+export {
+  isEstablishmentManagementFeature,
+  isVisitTrackingFeature
+} from './establishmentDetection';
+
 // Re-export the core detection functions with their original names
 export { isIngredientPairingFeature, isMocktailSuggestionFeature, isMocktailTrendsFeature, isRecipeFeature } from './mocktailDetection';
 export { isPromotionFeature } from './promotionDetection';
@@ -78,3 +84,4 @@ export {
   isNotificationFeature, isRewardProgramFeature, isSocialFeature, isThemeFeature, isMapFeature,
   isSignatureFeature, isBarCrawlFeature
 } from './venueDetection';
+
