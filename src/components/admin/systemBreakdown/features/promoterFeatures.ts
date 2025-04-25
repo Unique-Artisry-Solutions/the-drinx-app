@@ -1,3 +1,4 @@
+
 import { FeatureItem } from '../types';
 
 export const promoterFeatures: FeatureItem[] = [
@@ -48,15 +49,24 @@ export const promoterFeatures: FeatureItem[] = [
     id: "promoter-notification-system",
     name: "Notification System for Promoters",
     description: "Real-time notifications for message threads and venue responses",
-    status: "in_progress",
-    databaseStatus: "in_progress",
+    status: "implemented", // Updated from in_progress
+    databaseStatus: "complete", // Updated from in_progress
     userImpact: "medium",
     complexity: "medium",
-    implementationProgress: 50,
+    implementationProgress: 100, // Updated from 50
     tags: ["promoter", "notifications", "communication"],
     adminAccess: "none",
     establishmentAccess: "none",
-    individualAccess: "none"
+    individualAccess: "none",
+    dbRequirementsText: `
+      - notification_categories: Categories for promoter-related notifications
+      - promoter_notification_types: Specific notification types for promoters
+      - promoter_notification_preferences: User preferences for notification delivery
+      - bar_crawl_marketing_materials: Storage for marketing materials that trigger notifications
+      - notification triggers: Database triggers that generate notifications automatically
+    `,
+    statusUpdated: true, // Mark as updated
+    originalStatus: "in_progress" // Store original status
   },
   {
     id: "event-management",

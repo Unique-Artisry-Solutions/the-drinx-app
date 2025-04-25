@@ -8,12 +8,14 @@ import { updateFeaturesDbStatus } from './databaseStatusUpdater';
 export function analyzeAllFeatures(
   adminFeatures: FeatureItem[],
   establishmentFeatures: FeatureItem[],
-  individualFeatures: FeatureItem[]
+  individualFeatures: FeatureItem[],
+  promoterFeatures: FeatureItem[] = [] // Add promoter features parameter with default empty array
 ) {
   // Create deep copies of the features arrays to avoid mutating the original data
   const updatedAdminFeatures = JSON.parse(JSON.stringify(adminFeatures));
   const updatedEstablishmentFeatures = JSON.parse(JSON.stringify(establishmentFeatures));
   const updatedIndividualFeatures = JSON.parse(JSON.stringify(individualFeatures));
+  const updatedPromoterFeatures = JSON.parse(JSON.stringify(promoterFeatures));
   
   // Track completed database tasks
   const databaseTasks: AnalysisStep[] = [
@@ -58,13 +60,18 @@ export function analyzeAllFeatures(
     { name: 'Bar crawl management system', completed: true },
     { name: 'Swig circuit creation tables', completed: true },
     { name: 'Visit tracking system', completed: true },
-    { name: 'Reward program foundation', completed: true }
+    { name: 'Reward program foundation', completed: true },
+    // Add promoter notification system implementation to the database tasks
+    { name: 'Promoter notification system', completed: true },
+    { name: 'Promoter messaging system', completed: true },
+    { name: 'Promoter event management', completed: true }
   ];
   
   // Apply our updated analysis to all feature sets
   const analyzedAdminFeatures = updateFeaturesDbStatus(updatedAdminFeatures);
   const analyzedEstablishmentFeatures = updateFeaturesDbStatus(updatedEstablishmentFeatures);
   const analyzedIndividualFeatures = updateFeaturesDbStatus(updatedIndividualFeatures);
+  const analyzedPromoterFeatures = updateFeaturesDbStatus(updatedPromoterFeatures); // Analyze promoter features too
   
   // Ensure all features have a valid databaseStatus
   const finalAdminFeatures = analyzedAdminFeatures.map(feature => ({
@@ -82,15 +89,22 @@ export function analyzeAllFeatures(
     databaseStatus: feature.databaseStatus || feature.dbStatus || 'not_started'
   }));
   
+  const finalPromoterFeatures = analyzedPromoterFeatures.map(feature => ({
+    ...feature,
+    databaseStatus: feature.databaseStatus || feature.dbStatus || 'not_started'
+  }));
+  
   // Add implementation progress values based on status
   const processedAdminFeatures = setImplementationProgress(finalAdminFeatures);
   const processedEstablishmentFeatures = setImplementationProgress(finalEstablishmentFeatures);
   const processedIndividualFeatures = setImplementationProgress(finalIndividualFeatures);
+  const processedPromoterFeatures = setImplementationProgress(finalPromoterFeatures); // Process promoter features
   
   return {
     adminFeatures: processedAdminFeatures,
     establishmentFeatures: processedEstablishmentFeatures,
     individualFeatures: processedIndividualFeatures,
+    promoterFeatures: processedPromoterFeatures, // Return processed promoter features
     completedSteps: databaseTasks
   };
 }

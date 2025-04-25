@@ -35,7 +35,8 @@ export const useAnalysisProcess = (
       { name: 'Content moderation implementation', completed: false },
       { name: 'Storage bucket configuration', completed: false },
       { name: 'Database trigger functions verification', completed: false },
-      { name: 'Frontend component implementation check', completed: false }
+      { name: 'Frontend component implementation check', completed: false },
+      { name: 'Promoter notification system', completed: false } // Added promoter notification system check
     ];
     setAnalysisSteps(initialDatabaseTasks);
     
@@ -70,14 +71,14 @@ export const useAnalysisProcess = (
         adminFeatures,
         establishmentFeatures,
         individualFeatures,
-        promoterFeatures
+        promoterFeatures // Pass promoter features to be analyzed
       );
       
       // Important: Update the state with the analyzed features
       setAdminFeatures([...analyzedFeatures.adminFeatures]);
       setEstablishmentFeatures([...analyzedFeatures.establishmentFeatures]);
       setIndividualFeatures([...analyzedFeatures.individualFeatures]);
-      setPromoterFeatures([...analyzedFeatures.promoterFeatures]);
+      setPromoterFeatures([...analyzedFeatures.promoterFeatures]); // Update promoter features
       setAnalysisSteps(analyzedFeatures.completedSteps);
       
       const totalUpdated = [
