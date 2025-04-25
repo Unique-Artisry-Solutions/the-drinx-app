@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -29,6 +30,12 @@ const ImplementationOverview: React.FC<ImplementationOverviewProps> = ({
   // Calculate feature statistics
   const allFeatures = [...adminFeatures, ...establishmentFeatures, ...individualFeatures, ...promoterFeatures];
   const overallStats = calculateFeatureStatistics(allFeatures);
+  
+  // Calculate statistics for each user type separately
+  const adminStats = calculateFeatureStatistics(adminFeatures);
+  const establishmentStats = calculateFeatureStatistics(establishmentFeatures);
+  const individualStats = calculateFeatureStatistics(individualFeatures);
+  const promoterStats = calculateFeatureStatistics(promoterFeatures);
   
   // Prepare data for pie chart
   const pieChartData = useMemo(() => [
