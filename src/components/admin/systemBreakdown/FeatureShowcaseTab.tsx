@@ -2,9 +2,8 @@
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { FeatureItem, FeatureBusinessValueObject } from './types';
-import { prepareFeatureShowcaseData } from './utils/featureShowcaseUtils';
-import { isSignatureFeature } from './utils/featureDetection';
+import { FeatureItem, FeatureBusinessValueObject, FeatureShowcaseData } from './types';
+import { prepareFeatureShowcaseData } from './utils';
 import CategoryCard from './components/CategoryCard';
 import BusinessValueSection from './components/BusinessValueSection';
 import SignatureFeatureSpotlight from './components/SignatureFeatureSpotlight';

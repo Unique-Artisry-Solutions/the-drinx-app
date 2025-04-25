@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Star } from 'lucide-react';
-import { FeatureItem } from '../types';
+import { FeatureItem, FeatureShowcaseData } from '../types';
 
 interface CategoryCardProps {
   category: {
@@ -11,7 +11,7 @@ interface CategoryCardProps {
     description: string;
     featureCount: number;
     implementationRate: number;
-    features: FeatureItem[];
+    features: FeatureItem[] | FeatureShowcaseData[];
     icon?: React.ReactNode;
   }
 }

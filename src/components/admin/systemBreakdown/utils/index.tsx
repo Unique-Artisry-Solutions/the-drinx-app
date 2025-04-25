@@ -43,14 +43,20 @@ import {
   isAIFeature,
   isDashboardFeature,
   isSystemBreakdownFeature,
-  isSignatureFeature
+  isSignatureFeature,
+  isVisitTrackingFeature,
+  isEstablishmentManagementFeature,
+  isBarCrawlFeature
 } from './featureDetection';
 import { isTaskCompleted, parseTasks } from './taskDetection';
 import { 
   mapFeaturesToReleaseFeatures, 
   mapFeatureStatusToReleaseStatus 
 } from './releaseUtils';
-import { prepareFeatureShowcaseData } from './featureShowcaseUtils';
+import { 
+  prepareFeatureShowcaseData,
+  generateFeatureReport
+} from './featureShowcaseUtils';
 
 // Import directly from featureStatistics.tsx to fix circular dependency issues
 import { 
@@ -113,6 +119,9 @@ export {
   isSystemBreakdownFeature,
   isSignatureFeature,
   isSwigCircuitFeature,
+  isVisitTrackingFeature,
+  isEstablishmentManagementFeature,
+  isBarCrawlFeature,
   isTaskCompleted,
   parseTasks,
   mapFeaturesToReleaseFeatures,
@@ -120,7 +129,8 @@ export {
   createProgressSnapshot,
   validateProgressData,
   generateHistoricalProgressData,
-  prepareFeatureShowcaseData
+  prepareFeatureShowcaseData,
+  generateFeatureReport
 };
 
 // Use 'export type' for type exports when isolatedModules is enabled
