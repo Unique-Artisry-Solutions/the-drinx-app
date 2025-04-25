@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { AnalysisStep, FeatureItem } from '../types';
@@ -36,6 +37,7 @@ export const useAnalysisProcess = (
       { name: 'Database trigger functions verification', completed: false },
       { name: 'Frontend component implementation check', completed: false },
       { name: 'Promoter notification triggers verification', completed: false },
+      { name: 'Event management system validation', completed: false },
       { name: 'Notification delivery system check', completed: false }
     ];
     setAnalysisSteps(initialDatabaseTasks);

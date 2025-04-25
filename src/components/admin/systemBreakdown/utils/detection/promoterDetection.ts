@@ -1,3 +1,4 @@
+
 import { FeatureItem } from '../../types';
 import { matchesAnyKeyword } from './coreDetection';
 
@@ -63,15 +64,24 @@ export const isPromoterAnalyticsFeature = (feature: FeatureItem): boolean => {
  * Checks if a feature is related to Event Management functionality
  */
 export const isEventManagementFeature = (feature: FeatureItem): boolean => {
+  // Enhanced detection for Phase 2 of Event Management implementation
   return matchesAnyKeyword(feature, [
     'event management',
     'event creation',
-    'event scheduling'
+    'event scheduling',
+    'event setup',
+    'event details',
+    'event configuration',
+    'event media',
+    'event preview',
+    'custom fields'
   ]) ||
-  (feature.id === 'event-management') ||
+  (feature.id === 'event-management' || feature.id === 'event-details' || 
+   feature.id === 'event-setup' || feature.id === 'event-media-management' ||
+   feature.id === 'event-preview' || feature.id === 'event-custom-fields') ||
   (Array.isArray(feature.tags) && 
    feature.tags.some(tag => 
-     ['events', 'event-management'].includes(tag.toLowerCase())
+     ['events', 'event-management', 'event-creation', 'event-setup'].includes(tag.toLowerCase())
    ));
 };
 

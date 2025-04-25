@@ -1,8 +1,9 @@
 
+
 import { FeatureItem } from '../../types';
 import { isSwigCircuitFeature, isVipFeature } from '../detection/circuitDetection';
 import { isThemeCustomizationFeature } from '../detection/themeDetection';
-import { isPromoterCommunicationFeature } from '../detection/promoterDetection';
+import { isPromoterCommunicationFeature, isEventManagementFeature } from '../detection/promoterDetection';
 
 /**
  * Analyzes all Swig Circuit related features
@@ -82,6 +83,29 @@ export const analyzeSwigCircuitFeatures = (features: FeatureItem[]): FeatureItem
           'Test message archiving functionality',
           'Verify contact list display and filtering',
           'Test responsive design of messaging interface'
+        ]
+      };
+    }
+    
+    // Add event management feature detection
+    if (isEventManagementFeature(feature)) {
+      return {
+        ...feature,
+        status: 'in_progress',
+        dbStatus: feature.dbStatus || 'in_progress',
+        databaseStatus: feature.databaseStatus || 'in_progress',
+        statusUpdated: true,
+        implementationProgress: Math.max(feature.implementationProgress || 0, 60),
+        databaseAnalysis: feature.databaseAnalysis || 'Event management requires comprehensive tables for events, media, and custom fields',
+        testSteps: [
+          ...(feature.testSteps || []),
+          'Test event creation workflow',
+          'Verify event media upload functionality',
+          'Test custom fields configuration',
+          'Verify event preview generation',
+          'Test event templates',
+          'Verify event status updates',
+          'Test venue selection and capacity calculation'
         ]
       };
     }
