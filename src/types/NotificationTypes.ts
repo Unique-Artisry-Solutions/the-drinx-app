@@ -1,4 +1,3 @@
-
 export interface NotificationMetadata {
   priority: 'low' | 'medium' | 'high' | 'urgent';
   sound: boolean;
@@ -44,7 +43,7 @@ export interface NotificationPreferences {
   updated_at: string;
 }
 
-export type NotificationType = 'test' | 'system' | 'promotional' | 'alert' | 'bar-crawl' | 'establishment';
+export type NotificationType = 'test' | 'system' | 'promotional' | 'alert' | 'bar-crawl' | 'establishment' | 'promoter';
 
 export interface NotificationCategory {
   id: string;
@@ -65,9 +64,28 @@ export interface Notification {
   is_read: boolean;
   created_at: string;
   updated_at: string;
+  recipient_type?: 'individual' | 'establishment' | 'promoter';
 }
 
-// Form-related types
+export interface PromoterNotificationType {
+  id: string;
+  name: string;
+  description?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PromoterNotificationPreference {
+  id: string;
+  promoter_id: string;
+  notification_type_id: string;
+  is_enabled: boolean;
+  channels: ('email' | 'push' | 'in_app')[];
+  created_at: string;
+  updated_at: string;
+}
+
 export interface NotificationFormData {
   email_notifications: boolean;
   push_notifications: boolean;

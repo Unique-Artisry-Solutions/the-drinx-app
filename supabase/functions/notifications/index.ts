@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.0"
 
@@ -112,6 +111,18 @@ serve(async (req) => {
           }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
+
+      case 'getPromoterNotifications':
+        if (!params?.promoterId) {
+          return createErrorResponse('Promoter ID is required');
+        }
+        return await handleGetPromoterNotifications(params);
+
+      case 'updatePromoterPreferences':
+        if (!params?.promoterId || !params?.preferences) {
+          return createErrorResponse('Promoter ID and preferences are required');
+        }
+        return await handleUpdatePromoterPreferences(params);
 
       default:
         return createErrorResponse('Invalid action');
@@ -294,4 +305,63 @@ async function handleCreateNotification(params: any, authHeader: string) {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     }
   )
+}
+
+async function handleGetPromoterNotifications(params: any) {
+  try {
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    const { data, error } = await supabaseClient
+      .from('notifications')
+      .select(`
+        *,
+        notification_categories(name, description)
+      `)
+      .eq('recipient_id', params.promoterId)
+      .eq('recipient_type', 'promoter')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    return new Response(
+      JSON.stringify({ data }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    );
+  } catch (error) {
+    return createErrorResponse(`Error fetching promoter notifications: ${error.message}`);
+  }
+}
+
+async function handleUpdatePromoterPreferences(params: any) {
+  try {
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    const { data, error } = await supabaseClient
+      .from('promoter_notification_preferences')
+      .upsert(params.preferences)
+      .select();
+
+    if (error) throw error;
+
+    return new Response(
+      JSON.stringify({ 
+        success: true, 
+        data,
+        message: 'Preferences updated successfully' 
+      }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    );
+  } catch (error) {
+    return createErrorResponse(`Error updating promoter preferences: ${error.message}`);
+  }
 }

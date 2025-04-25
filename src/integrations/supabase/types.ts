@@ -1162,6 +1162,7 @@ export type Database = {
           metadata: Json | null
           priority: Database["public"]["Enums"]["notification_priority"]
           recipient_id: string
+          recipient_type: string | null
           title: string
           updated_at: string
         }
@@ -1174,6 +1175,7 @@ export type Database = {
           metadata?: Json | null
           priority?: Database["public"]["Enums"]["notification_priority"]
           recipient_id: string
+          recipient_type?: string | null
           title: string
           updated_at?: string
         }
@@ -1186,6 +1188,7 @@ export type Database = {
           metadata?: Json | null
           priority?: Database["public"]["Enums"]["notification_priority"]
           recipient_id?: string
+          recipient_type?: string | null
           title?: string
           updated_at?: string
         }
@@ -1268,6 +1271,71 @@ export type Database = {
           updated_at?: string | null
           user_type?: string
           username?: string | null
+        }
+        Relationships: []
+      }
+      promoter_notification_preferences: {
+        Row: {
+          channels: Database["public"]["Enums"]["notification_channel"][]
+          created_at: string
+          id: string
+          is_enabled: boolean
+          notification_type_id: string
+          promoter_id: string
+          updated_at: string
+        }
+        Insert: {
+          channels?: Database["public"]["Enums"]["notification_channel"][]
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          notification_type_id: string
+          promoter_id: string
+          updated_at?: string
+        }
+        Update: {
+          channels?: Database["public"]["Enums"]["notification_channel"][]
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          notification_type_id?: string
+          promoter_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promoter_notification_preferences_notification_type_id_fkey"
+            columns: ["notification_type_id"]
+            isOneToOne: false
+            referencedRelation: "promoter_notification_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      promoter_notification_types: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
         }
         Relationships: []
       }
