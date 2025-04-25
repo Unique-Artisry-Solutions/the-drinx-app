@@ -1,4 +1,5 @@
 import { FeatureItem } from '../types';
+import { rewardProgramFeature } from './rewardSystem/rewardFeature';
 
 export const individualFeatures: FeatureItem[] = [
   {
@@ -142,69 +143,7 @@ export const individualFeatures: FeatureItem[] = [
     ],
     databaseAnalysis: "Visit tracking system database implementation completed:\n\n✓ user_visits table created with metadata fields\n✓ visit_notes table created for personal user notes\n✓ tried_mocktails tracking table implemented\n✓ user_visit_achievements table added\n✓ user_notifications table for system notifications\n✓ SQL triggers and functions for achievement tracking\n✓ Geofencing data integration for location verification"
   },
-  {
-    id: "reward-program",
-    name: "Reward Program",
-    description: "Earn and redeem points for visiting establishments and trying new mocktails",
-    status: "in_progress",
-    adminAccess: "full",
-    establishmentAccess: "none",
-    individualAccess: "full",
-    databaseStatus: "not_started",
-    dbStatus: "not_started",
-    userImpact: "high",
-    complexity: "high",
-    testSteps: [
-      "Visit establishment and earn points",
-      "Try new mocktail for bonus points",
-      "View points balance",
-      "Redeem points for reward",
-      "Track reward history"
-    ],
-    databaseAnalysis: `Enhanced flexible reward system implementation:
-
-1. User Rewards System
-- Create user_rewards table with JSON configuration field for extensibility
-- Add reward_transactions table with version tracking support
-- Implement reward_tiers table with customizable progression criteria
-- Create reward_offerings table with flexible redemption options
-- Add reward_redemptions tracking with complete history
-
-2. Rules Engine Infrastructure
-- Implement reward_rules table with condition/action patterns
-- Support dynamic rule evaluation and execution
-- Enable rule versioning and historical tracking
-
-3. API Layer Design
-- Create abstraction layer between database and UI
-- Support versioned API endpoints
-- Enable feature flag integration
-
-4. Analytics Integration
-- Create analytics views for program performance
-- Track user engagement metrics
-- Monitor reward usage patterns
-
-5. User Preferences
-- Store personalization settings
-- Track reward preferences
-- Enable notification preferences`,
-    dbRequirementsText: `Enhanced flexible reward system implementation:
-
-✓ Design schema with flexible JSON configuration support
-✓ Plan versioning strategy for rewards and redemptions
-✓ Design rule engine with condition/action patterns
-✓ Draft API layer specification for abstraction
-✓ Create entity relationship diagram
-
-Next steps:
-○ Create user_rewards table with JSON configuration field
-○ Implement reward_transactions table with version tracking
-○ Add reward_tiers table with customizable progression criteria
-○ Create reward_offerings table with flexible redemption options
-○ Implement reward_redemptions tracking with complete history
-○ Add reward_rules table with condition/action patterns`
-  },
+  rewardProgramFeature,
   {
     id: "social-sharing",
     name: "Social Sharing",
