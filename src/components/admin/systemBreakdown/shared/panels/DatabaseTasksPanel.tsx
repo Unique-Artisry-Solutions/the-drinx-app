@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { FeatureItem } from '../../types';
 import { Database } from 'lucide-react';
 import { 
   AccordionItem,
@@ -7,88 +8,91 @@ import {
   AccordionContent 
 } from '@/components/ui/accordion';
 import { TaskItem } from './TaskItem';
-import { AlertCircle } from 'lucide-react';
-import { FeatureItem } from '../../types';
+import DatabaseAnalysisPanel from '../../DatabaseAnalysisPanel';
 
 interface DatabaseTasksPanelProps {
   feature: FeatureItem;
 }
 
-const getDatabaseTasks = (feature: FeatureItem) => {
-  const tasks = parseTaskStatuses(feature.databaseAnalysis);
-  if (tasks.length === 0) {
-    const dbStatus = feature.dbStatus || feature.databaseStatus || 'not_started';
-    const isComplete = dbStatus === 'complete' || dbStatus === 'implemented';
-    const isInProgress = dbStatus === 'in_progress';
-    
-    return [
-      { text: 'Create database schema', isCompleted: isComplete || isInProgress },
-      { text: 'Define table relationships', isCompleted: isComplete || isInProgress },
-      { text: 'Implement API endpoints', isCompleted: isComplete },
-      { text: 'Create database triggers', isCompleted: isComplete },
-      { text: 'Optimize query performance', isCompleted: isComplete }
-    ];
-  }
-  return tasks;
-};
-
-const parseTaskStatuses = (analysisText?: string): { text: string; isCompleted: boolean }[] => {
-  if (!analysisText) return [];
-  
-  const tasks: { text: string; isCompleted: boolean }[] = [];
-  const lines = analysisText.split('\n');
-  
-  for (const line of lines) {
-    if (line.includes('- [x]')) {
-      tasks.push({
-        text: line.replace('- [x]', '').trim(),
-        isCompleted: true
-      });
-    } else if (line.includes('- [ ]')) {
-      tasks.push({
-        text: line.replace('- [ ]', '').trim(),
-        isCompleted: false
-      });
-    } else if (line.match(/^\d+\.\s+/)) {
-      tasks.push({
-        text: line.trim(),
-        isCompleted: false
-      });
-    } else if (line.includes('✓')) {
-      tasks.push({
-        text: line.replace('✓', '').trim(),
-        isCompleted: true
-      });
-    }
-  }
-  
-  return tasks;
-};
-
 export const DatabaseTasksPanel: React.FC<DatabaseTasksPanelProps> = ({ feature }) => {
-  const tasks = getDatabaseTasks(feature);
-
+  // Parse the database tasks from the feature's databaseAnalysis
+  const renderDatabaseTasks = () => {
+    if (feature.databaseAnalysis) {
+      return <DatabaseAnalysisPanel analysisText={feature.databaseAnalysis} />;
+    }
+    
+    if (feature.id === "reward-program" && feature.dbRequirementsText) {
+      return <DatabaseAnalysisPanel analysisText={feature.dbRequirementsText} />;
+    }
+    
+    return (
+      <div className="text-sm text-gray-500 italic">
+        No database analysis available yet.
+      </div>
+    );
+  };
+  
+  // If there's no database information, don't show the panel
+  if (!feature.databaseAnalysis && !feature.dbRequirementsText && feature.id !== "reward-program") {
+    return null;
+  }
+  
   return (
-    <AccordionItem value="database">
+    <AccordionItem value="database-tasks">
       <AccordionTrigger className="text-sm py-2">
         <div className="flex items-center gap-2">
-          <Database className="h-4 w-4 text-purple-600" />
-          <span>Database Implementation Details</span>
+          <Database className="h-4 w-4 text-gray-600" />
+          <span>Database Tasks</span>
         </div>
       </AccordionTrigger>
       <AccordionContent className="pt-2">
-        <div className="space-y-2 pl-6">
-          {tasks.map((task, index) => (
-            <TaskItem key={index} task={task} />
-          ))}
-          
-          {tasks.length === 0 && (
-            <div className="flex items-center gap-2 text-gray-500">
-              <AlertCircle className="h-4 w-4" />
-              <span className="text-sm">No database tasks defined</span>
-            </div>
-          )}
-        </div>
+        {feature.id === "reward-program" ? (
+          <div className="space-y-3 pl-6">
+            <h4 className="font-medium text-sm">Enhanced Flexible Schema</h4>
+            <TaskItem task={{ 
+              text: "Create user_rewards table with JSON configuration field for extensibility", 
+              isCompleted: false 
+            }} />
+            <TaskItem task={{ 
+              text: "Implement reward_transactions table with version tracking", 
+              isCompleted: false 
+            }} />
+            <TaskItem task={{ 
+              text: "Add reward_tiers table with customizable progression criteria", 
+              isCompleted: false 
+            }} />
+            <TaskItem task={{ 
+              text: "Create reward_offerings table with flexible redemption options", 
+              isCompleted: false 
+            }} />
+            <TaskItem task={{ 
+              text: "Implement reward_redemptions tracking with complete history", 
+              isCompleted: false 
+            }} />
+            <TaskItem task={{ 
+              text: "Add reward_rules table with condition/action patterns for extensible rule engine", 
+              isCompleted: false 
+            }} />
+            <TaskItem task={{ 
+              text: "Create analytics views for program performance monitoring", 
+              isCompleted: false 
+            }} />
+            <TaskItem task={{ 
+              text: "Implement notification system with customizable templates for point expiration", 
+              isCompleted: false 
+            }} />
+            <TaskItem task={{ 
+              text: "Set up partner_establishments table with participation tiers and custom rules", 
+              isCompleted: false 
+            }} />
+            <TaskItem task={{ 
+              text: "Add user_reward_preferences for personalized experiences", 
+              isCompleted: false 
+            }} />
+          </div>
+        ) : (
+          renderDatabaseTasks()
+        )}
       </AccordionContent>
     </AccordionItem>
   );

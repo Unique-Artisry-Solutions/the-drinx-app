@@ -6,6 +6,7 @@ import { DatabaseTasksPanel } from './panels/DatabaseTasksPanel';
 import { UITasksPanel } from './panels/UITasksPanel';
 import { TestingPanel } from './panels/TestingPanel';
 import { DependenciesPanel } from './panels/DependenciesPanel';
+import { RewardSystemPanel } from './panels/RewardSystemPanel';
 
 interface ImplementationDetailsPanelProps {
   feature: FeatureItem;
@@ -25,6 +26,7 @@ export const ImplementationDetailsPanel: React.FC<ImplementationDetailsPanelProp
       <DatabaseTasksPanel feature={feature} />
       <UITasksPanel feature={feature} />
       <TestingPanel feature={feature} />
+      <RewardSystemPanel feature={feature} />
       <DependenciesPanel feature={feature} />
     </Accordion>
   );

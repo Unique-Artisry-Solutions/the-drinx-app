@@ -1,4 +1,3 @@
-
 import { FeatureItem } from '../types';
 
 export const individualFeatures: FeatureItem[] = [
@@ -162,7 +161,8 @@ export const individualFeatures: FeatureItem[] = [
       "Redeem points for reward",
       "Track reward history"
     ],
-    databaseAnalysis: "Reward program requires comprehensive database implementation:\n\n1. Create user_rewards table to track points balance\n2. Implement reward_transactions table for point history\n3. Add reward_tiers table for different reward levels\n4. Create reward_offerings table for redemption options\n5. Implement reward_redemptions tracking\n6. Add reward_rules table for point calculation\n7. Create analytics views for program performance\n8. Implement notification system for point expiration\n9. Set up partner_establishments table for program participation"
+    databaseAnalysis: "Reward program requires comprehensive database implementation:\n\n1. Create user_rewards table to track points balance\n2. Implement reward_transactions table for point history\n3. Add reward_tiers table for different reward levels\n4. Create reward_offerings table for redemption options\n5. Implement reward_redemptions tracking\n6. Add reward_rules table for point calculation\n7. Create analytics views for program performance\n8. Implement notification system for point expiration\n9. Set up partner_establishments table for program participation",
+    dbRequirementsText: "Enhanced flexible reward system implementation:\n\n✓ Create user_rewards table with JSON configuration field for extensibility\n✓ Implement reward_transactions table with version tracking\n✓ Add reward_tiers table with customizable progression criteria\n✓ Create reward_offerings table with flexible redemption options\n✓ Implement reward_redemptions tracking with complete history\n✓ Add reward_rules table with condition/action patterns for rule engine\n✓ Create analytics views for program performance monitoring\n✓ Implement notification system with customizable templates\n✓ Set up partner_establishments table with participation tiers\n✓ Add user_reward_preferences for personalized experiences"
   },
   {
     id: "social-sharing",
