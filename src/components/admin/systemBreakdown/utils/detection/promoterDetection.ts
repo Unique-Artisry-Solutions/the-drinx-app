@@ -19,7 +19,7 @@ export const isPromoterCommunicationFeature = (feature: FeatureItem): boolean =>
     'messaging system',
     'promoter-venue'
   ]) || 
-  (feature.id === '6008') || 
+  (feature.id === 'venue-communication-system' || feature.id === 'contact-management') || 
   (Array.isArray(feature.tags) && 
    feature.tags.some(tag => 
      ['communication', 'messaging', 'promoter-venue'].includes(tag.toLowerCase())
@@ -36,9 +36,90 @@ export const isBrandConnectionFeature = (feature: FeatureItem): boolean => {
     'brand platform', 
     'brand partnership'
   ]) || 
-  (feature.id === '6004') || 
+  (feature.id === 'brand-partnerships') || 
   (Array.isArray(feature.tags) && 
    feature.tags.some(tag => 
      ['brand', 'connection', 'partnership'].includes(tag.toLowerCase())
+   ));
+};
+
+/**
+ * Checks if a feature is related to Promoter Analytics functionality
+ */
+export const isPromoterAnalyticsFeature = (feature: FeatureItem): boolean => {
+  return matchesAnyKeyword(feature, [
+    'promoter analytics',
+    'event performance',
+    'campaign analytics'
+  ]) ||
+  (feature.id === 'promoter-analytics') ||
+  (Array.isArray(feature.tags) && 
+   feature.tags.some(tag => 
+     ['analytics', 'reporting', 'performance'].includes(tag.toLowerCase()) &&
+     feature.id.includes('promoter')
+   ));
+};
+
+/**
+ * Checks if a feature is related to Event Management functionality
+ */
+export const isEventManagementFeature = (feature: FeatureItem): boolean => {
+  return matchesAnyKeyword(feature, [
+    'event management',
+    'event creation',
+    'event scheduling'
+  ]) ||
+  (feature.id === 'event-management') ||
+  (Array.isArray(feature.tags) && 
+   feature.tags.some(tag => 
+     ['events', 'event-management'].includes(tag.toLowerCase())
+   ));
+};
+
+/**
+ * Checks if a feature is related to Promoter Dashboard functionality
+ */
+export const isPromoterDashboardFeature = (feature: FeatureItem): boolean => {
+  return matchesAnyKeyword(feature, [
+    'promoter dashboard',
+    'promoter overview'
+  ]) ||
+  (feature.id === 'promoter-dashboard') ||
+  (Array.isArray(feature.tags) && 
+   feature.tags.some(tag => 
+     ['dashboard', 'overview'].includes(tag.toLowerCase()) &&
+     feature.id.includes('promoter')
+   ));
+};
+
+/**
+ * Checks if a feature is related to Custom Promotions functionality
+ */
+export const isCustomPromotionFeature = (feature: FeatureItem): boolean => {
+  return matchesAnyKeyword(feature, [
+    'custom promotion',
+    'promotion creation',
+    'promotional tools'
+  ]) ||
+  (feature.id === 'custom-promotion-creation') ||
+  (Array.isArray(feature.tags) && 
+   feature.tags.some(tag => 
+     ['promotions', 'promotion-creation'].includes(tag.toLowerCase())
+   ));
+};
+
+/**
+ * Checks if a feature is related to Promoter Notification functionality
+ */
+export const isPromoterNotificationFeature = (feature: FeatureItem): boolean => {
+  return matchesAnyKeyword(feature, [
+    'promoter notification',
+    'notification system for promoters'
+  ]) ||
+  (feature.id === 'promoter-notification-system') ||
+  (Array.isArray(feature.tags) && 
+   feature.tags.some(tag => 
+     ['notifications'].includes(tag.toLowerCase()) &&
+     feature.id.includes('promoter')
    ));
 };

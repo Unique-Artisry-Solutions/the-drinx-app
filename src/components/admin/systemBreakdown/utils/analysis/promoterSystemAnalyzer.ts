@@ -1,6 +1,14 @@
 
 import { FeatureItem, AnalysisStep } from '../../types';
 import { groupFeaturesByCategory } from '../featureStatistics';
+import {
+  isPromoterCommunicationFeature,
+  isEventManagementFeature,
+  isPromoterAnalyticsFeature,
+  isBrandConnectionFeature,
+  isCustomPromotionFeature,
+  isPromoterNotificationFeature
+} from '../detection';
 
 /**
  * Analyzes all promoter system features and updates their statuses
@@ -41,14 +49,17 @@ export const analyzePromoterSystem = (
 
   // First pass: set basic database requirements for each feature
   updatedFeatures = updatedFeatures.map(feature => {
+    // Categorize feature type
+    const featureType = determineFeatureType(feature);
+    
     // Ensure all features have database requirements text
     if (!feature.dbRequirementsText) {
-      feature.dbRequirementsText = generateDatabaseRequirementsText(feature);
+      feature.dbRequirementsText = generateDatabaseRequirementsText(feature, featureType);
     }
 
     // Set test steps if not present
     if (!feature.testSteps || feature.testSteps.length === 0) {
-      feature.testSteps = generateTestSteps(feature);
+      feature.testSteps = generateTestSteps(feature, featureType);
     }
     
     return feature;
@@ -109,99 +120,135 @@ export const analyzePromoterSystem = (
 };
 
 /**
+ * Determine the feature type for more specific analysis
+ */
+function determineFeatureType(feature: FeatureItem): string {
+  if (isPromoterCommunicationFeature(feature)) return 'communication';
+  if (isEventManagementFeature(feature)) return 'event';
+  if (isPromoterAnalyticsFeature(feature)) return 'analytics';
+  if (isBrandConnectionFeature(feature)) return 'partnership';
+  if (isCustomPromotionFeature(feature)) return 'promotion';
+  if (isPromoterNotificationFeature(feature)) return 'notification';
+  
+  // Extract keywords from feature name and description
+  const name = feature.name.toLowerCase();
+  const description = (feature.description || '').toLowerCase();
+  
+  if (name.includes('ticket') || description.includes('ticket')) return 'ticket';
+  if (name.includes('analytic') || description.includes('analytic')) return 'analytics';
+  if (name.includes('brand') || description.includes('brand')) return 'partnership';
+  if (name.includes('event') || description.includes('event')) return 'event';
+  
+  return 'general';
+}
+
+/**
  * Generate database requirements text based on feature
  */
-function generateDatabaseRequirementsText(feature: FeatureItem): string {
-  // Extract keywords from feature name and description to customize requirements
-  const name = feature.name.toLowerCase();
-  const description = feature.description.toLowerCase();
-  
-  if (name.includes('ticket') || name.includes('sales') || description.includes('ticket')) {
-    return 'Requires ticket_tiers, ticket_sales, ticket_transactions tables with payment integration';
-  } else if (name.includes('analytics') || name.includes('tracking') || description.includes('analytics')) {
-    return 'Requires event_analytics, audience_metrics, campaign_performance tables with time-series data';
-  } else if (name.includes('venue') || name.includes('partnership') || description.includes('venue')) {
-    return 'Requires venue_partnerships, revenue_sharing_agreements, venue_communications tables';
-  } else if (name.includes('sponsor') || name.includes('brand') || description.includes('sponsor')) {
-    return 'Requires sponsor_relationships, brand_assets, campaign_metrics tables with file storage';
-  } else if (name.includes('payment') || name.includes('processing') || description.includes('payment')) {
-    return 'Requires payment_transactions, payment_methods, payment_gateways tables with encryption';
-  } else if (name.includes('merch') || description.includes('merchandise')) {
-    return 'Requires merchandise_products, merchandise_inventory, merchandise_orders tables';
-  } else if (name.includes('vip') || description.includes('vip')) {
-    return 'Requires vip_packages, vip_benefits, vip_redemptions tables with exclusive content';
-  } else if (name.includes('feedback') || name.includes('survey') || description.includes('feedback')) {
-    return 'Requires feedback_responses, survey_templates, rating_metrics tables with analytics';
-  } else if (name.includes('ad') || name.includes('advertis') || description.includes('advertis')) {
-    return 'Requires ad_placements, ad_campaigns, ad_metrics tables with targeting options';
+function generateDatabaseRequirementsText(feature: FeatureItem, featureType: string): string {
+  switch (featureType) {
+    case 'ticket':
+      return 'Requires ticket_tiers, ticket_sales, ticket_transactions tables with payment integration';
+    case 'analytics':
+      return 'Requires event_analytics, audience_metrics, campaign_performance tables with time-series data';
+    case 'communication':
+      return 'Requires promoter_venue_threads, promoter_venue_messages, venue_contacts tables with real-time capabilities';
+    case 'event':
+      return 'Requires events, event_schedules, event_venues, event_attendees tables with geographic data';
+    case 'partnership':
+      return 'Requires brand_partners, partnership_agreements, partnership_assets tables with contract management';
+    case 'promotion':
+      return 'Requires promotions, promotion_codes, promotion_redemptions tables with validation rules';
+    case 'notification':
+      return 'Requires notification_templates, notification_deliveries tables with multi-channel support';
+    default:
+      return 'Standard promoter system database tables required';
   }
-  
-  // Default requirements
-  return 'Standard promoter system database tables required';
 }
 
 /**
  * Generate test steps for a feature
  */
-function generateTestSteps(feature: FeatureItem): string[] {
-  const name = feature.name.toLowerCase();
-  const steps: string[] = [
-    'Verify authentication and authorization for the feature',
-    'Validate input validation and error handling'
+function generateTestSteps(feature: FeatureItem, featureType: string): string[] {
+  const commonSteps = [
+    'Verify authentication and authorization for promoter-specific permissions',
+    'Test responsive design across desktop and mobile interfaces'
   ];
   
-  // Add specific test steps based on feature type
-  if (name.includes('ticket') || name.includes('sales')) {
-    steps.push(
-      'Test ticket creation with various pricing tiers',
-      'Verify sales tracking accuracy across multiple events',
-      'Test payment processing and refund workflows'
-    );
-  } else if (name.includes('analytics') || name.includes('tracking')) {
-    steps.push(
-      'Verify data collection across all tracked metrics',
-      'Test visualization components with various data sets',
-      'Validate export functionality for reports'
-    );
-  } else if (name.includes('venue') || name.includes('partnership')) {
-    steps.push(
-      'Test venue search and filtering functionality',
-      'Verify communication channels between promoters and venues',
-      'Validate revenue sharing calculation accuracy'
-    );
-  } else if (name.includes('sponsor') || name.includes('brand')) {
-    steps.push(
-      'Test sponsor relationship management workflows',
-      'Verify brand asset upload and management',
-      'Validate ROI reporting accuracy'
-    );
-  } else if (name.includes('merch') || name.includes('merchandise')) {
-    steps.push(
-      'Test merchandise creation and customization tools',
-      'Verify inventory tracking and alerts',
-      'Test order processing and fulfillment workflows'
-    );
-  } else if (name.includes('vip')) {
-    steps.push(
-      'Test VIP package creation and pricing',
-      'Verify exclusive content access controls',
-      'Validate VIP check-in and benefit redemption'
-    );
-  } else if (name.includes('feedback') || name.includes('survey')) {
-    steps.push(
-      'Test survey creation and distribution',
-      'Verify response collection and storage',
-      'Test analytics generation from feedback data'
-    );
-  } else {
-    steps.push(
-      'Test basic CRUD operations',
-      'Verify integration with other promoter features',
-      'Validate performance under load'
-    );
+  let specificSteps: string[] = [];
+  
+  switch (featureType) {
+    case 'communication':
+      specificSteps = [
+        'Test message composition and delivery between promoters and venues',
+        'Verify message threading and conversation organization',
+        'Test contact management functionality and search capabilities',
+        'Validate notification delivery for new messages',
+        'Test unread/read status tracking'
+      ];
+      break;
+    case 'event':
+      specificSteps = [
+        'Verify event creation workflow with all required fields',
+        'Test venue selection and multiple venue support',
+        'Validate date/time scheduling functionality',
+        'Test ticket tier creation and management',
+        'Verify attendee registration and check-in processes'
+      ];
+      break;
+    case 'analytics':
+      specificSteps = [
+        'Test data collection from multiple event sources',
+        'Validate metric calculations and aggregations',
+        'Verify visualization components render correctly with various datasets',
+        'Test filtering and date range selection',
+        'Validate export functionality for reports'
+      ];
+      break;
+    case 'partnership':
+      specificSteps = [
+        'Test brand partner search and connection workflows',
+        'Verify brand asset management and usage rights',
+        'Validate partnership proposal and acceptance flows',
+        'Test financial arrangement tracking and reporting',
+        'Verify communication channels between promoters and brands'
+      ];
+      break;
+    case 'ticket':
+      specificSteps = [
+        'Test ticket creation with various pricing models',
+        'Validate ticket inventory management and availability tracking',
+        'Test payment processing for ticket purchases',
+        'Verify ticket delivery methods (email, app, etc.)',
+        'Test ticket validation at event check-in'
+      ];
+      break;
+    case 'promotion':
+      specificSteps = [
+        'Verify promotion creation with validation rules',
+        'Test discount calculations across various scenarios',
+        'Validate promotion code generation and uniqueness',
+        'Test redemption flows and limit enforcement',
+        'Verify promotion analytics and performance tracking'
+      ];
+      break;
+    case 'notification':
+      specificSteps = [
+        'Test notification delivery across multiple channels',
+        'Verify notification grouping and categorization',
+        'Validate read/unread status tracking',
+        'Test notification preferences and opt-out functionality',
+        'Verify real-time delivery and queuing for offline recipients'
+      ];
+      break;
+    default:
+      specificSteps = [
+        'Test core functionality specific to this feature',
+        'Verify integration with other promoter system components',
+        'Validate proper error handling and edge cases',
+        'Test performance under expected load conditions'
+      ];
   }
   
-  steps.push('Perform cross-browser compatibility testing');
-  
-  return steps;
+  return [...commonSteps, ...specificSteps, 'Perform cross-browser compatibility testing'];
 }

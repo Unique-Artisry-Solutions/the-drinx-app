@@ -13,7 +13,13 @@ import {
   isSocialFeature,
   isRecipeFeature,
   isNotificationFeature,
-  isUserManagementFeature
+  isUserManagementFeature,
+  isPromoterCommunicationFeature,
+  isEventManagementFeature,
+  isPromoterDashboardFeature,
+  isPromoterAnalyticsFeature,
+  isCustomPromotionFeature,
+  isBrandConnectionFeature
 } from '../detection';
 
 export const determineFeatureIcon = (feature: FeatureItem): string => {
@@ -31,6 +37,13 @@ export const determineFeatureIcon = (feature: FeatureItem): string => {
   if (isNotificationFeature(feature)) return 'bell';
   if (isUserManagementFeature(feature)) return 'user-cog';
   
+  // Promoter-specific icons
+  if (isPromoterDashboardFeature(feature)) return 'layout-dashboard';
+  if (isPromoterCommunicationFeature(feature)) return 'message-square';
+  if (isEventManagementFeature(feature)) return 'calendar';
+  if (isPromoterAnalyticsFeature(feature)) return 'activity';
+  if (isCustomPromotionFeature(feature)) return 'gift';
+  if (isBrandConnectionFeature(feature)) return 'handshake';
+  
   return 'star';
 };
-

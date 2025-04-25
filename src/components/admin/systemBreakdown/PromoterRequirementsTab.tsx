@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -24,6 +25,7 @@ import {
 } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import PromoterSystemPhases from './PromoterSystemPhases';
 
 const categoryIcons: Record<string, React.ReactNode> = {
   'ticket-management': <Ticket className="h-5 w-5 text-purple-500" />,
@@ -59,7 +61,17 @@ const implementationPhases: Record<string, number> = {
   '6003': 2, '6007': 2, '6009': 2, '6019': 2, '6022': 2, // Phase 2: Core features
   '6004': 3, '6013': 3, '6015': 3, '6016': 3, '6020': 3, // Phase 3: Advanced features
   '6005': 4, '6006': 4, '6014': 4, '6017': 4, '6023': 4, // Phase 4: Enhancement features
-  '6010': 5, '6011': 5, '6012': 5, '6018': 5  // Phase 5: Optional features
+  '6010': 5, '6011': 5, '6012': 5, '6018': 5,  // Phase 5: Optional features
+  
+  // Map promoter features to phases
+  'promoter-dashboard': 1,
+  'venue-communication-system': 1,
+  'contact-management': 1,
+  'promoter-notification-system': 2,
+  'event-management': 3,
+  'promoter-analytics': 4,
+  'custom-promotion-creation': 5,
+  'brand-partnerships': 5
 };
 
 const getImplementationPhase = (featureId: string): number => {
@@ -71,6 +83,7 @@ interface PromoterRequirementsTabProps {
 }
 
 const PromoterRequirementsTab: React.FC<PromoterRequirementsTabProps> = ({ features }) => {
+  const [activeTab, setActiveTab] = useState<string>('development-phases');
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [activeView, setActiveView] = useState<string>('categories');
   
@@ -272,201 +285,214 @@ const PromoterRequirementsTab: React.FC<PromoterRequirementsTabProps> = ({ featu
         </CardContent>
       </Card>
       
-      <Card>
-        <CardHeader>
-          <CardTitle>Promoter System Development Plan</CardTitle>
-          <CardDescription>View implementation details by category or implementation phase</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Tabs value={activeView} onValueChange={setActiveView} className="mb-6">
-            <TabsList className="mb-2">
-              <TabsTrigger value="categories">By Category</TabsTrigger>
-              <TabsTrigger value="phases">By Implementation Phase</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="categories">
-              <div>
-                <div className="relative mb-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-sm font-medium flex items-center gap-1">
-                      <Filter className="h-4 w-4" />
-                      Filter by Category
-                    </h3>
-                  </div>
-                  <div className="overflow-x-auto pb-2 w-full">
-                    <div className="flex space-x-1 pb-1 min-w-max">
-                      <Tabs value={activeCategory} onValueChange={setActiveCategory}>
-                        <TabsList className="flex-wrap h-auto p-1 bg-transparent">
-                          <TabsTrigger 
-                            value="all" 
-                            className="rounded-md px-3 py-1.5 text-xs font-medium"
-                          >
-                            All Features
-                            <Badge variant="outline" className="ml-1.5 text-[10px] px-1">
-                              {features.length}
-                            </Badge>
-                          </TabsTrigger>
-                          
-                          {orderedCategories.map(category => (
-                            <TabsTrigger 
-                              key={category} 
-                              value={category} 
-                              className="flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-medium"
-                            >
-                              <span className="flex items-center gap-1">
-                                {categoryIcons[category]}
-                                {categoryDisplayNames[category] || category}
-                              </span>
-                              <Badge variant="outline" className="ml-1.5 text-[10px] px-1">
-                                {categorizedFeatures[category].length}
-                              </Badge>
-                            </TabsTrigger>
-                          ))}
-                        </TabsList>
-                      </Tabs>
-                    </div>
-                  </div>
-                </div>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="development-phases">Development Phases</TabsTrigger>
+          <TabsTrigger value="feature-details">Feature Details</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="development-phases" className="mt-6">
+          <PromoterSystemPhases />
+        </TabsContent>
+        
+        <TabsContent value="feature-details" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Promoter System Features</CardTitle>
+              <CardDescription>View implementation details by category or implementation phase</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Tabs value={activeView} onValueChange={setActiveView} className="mb-6">
+                <TabsList className="mb-2">
+                  <TabsTrigger value="categories">By Category</TabsTrigger>
+                  <TabsTrigger value="phases">By Implementation Phase</TabsTrigger>
+                </TabsList>
                 
-                <TabsContent value="all" className="space-y-4">
-                  {renderFeatures(features)}
+                <TabsContent value="categories">
+                  <div>
+                    <div className="relative mb-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-sm font-medium flex items-center gap-1">
+                          <Filter className="h-4 w-4" />
+                          Filter by Category
+                        </h3>
+                      </div>
+                      <div className="overflow-x-auto pb-2 w-full">
+                        <div className="flex space-x-1 pb-1 min-w-max">
+                          <Tabs value={activeCategory} onValueChange={setActiveCategory}>
+                            <TabsList className="flex-wrap h-auto p-1 bg-transparent">
+                              <TabsTrigger 
+                                value="all" 
+                                className="rounded-md px-3 py-1.5 text-xs font-medium"
+                              >
+                                All Features
+                                <Badge variant="outline" className="ml-1.5 text-[10px] px-1">
+                                  {features.length}
+                                </Badge>
+                              </TabsTrigger>
+                              
+                              {orderedCategories.map(category => (
+                                <TabsTrigger 
+                                  key={category} 
+                                  value={category} 
+                                  className="flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-medium"
+                                >
+                                  <span className="flex items-center gap-1">
+                                    {categoryIcons[category]}
+                                    {categoryDisplayNames[category] || category}
+                                  </span>
+                                  <Badge variant="outline" className="ml-1.5 text-[10px] px-1">
+                                    {categorizedFeatures[category].length}
+                                  </Badge>
+                                </TabsTrigger>
+                              ))}
+                            </TabsList>
+                          </Tabs>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <TabsContent value="all" className="space-y-4">
+                      {renderFeatures(features)}
+                    </TabsContent>
+                    
+                    {orderedCategories.map(category => (
+                      <TabsContent key={category} value={category} className="space-y-4">
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center gap-2">
+                            {categoryIcons[category] || <div className="w-6 h-6" />}
+                            <h3 className="font-medium">{categoryDisplayNames[category] || category}</h3>
+                          </div>
+                          <Progress value={categoryProgress[category].overall} className="w-32 h-2" />
+                        </div>
+                        {renderFeatures(categorizedFeatures[category])}
+                      </TabsContent>
+                    ))}
+                  </div>
                 </TabsContent>
                 
-                {orderedCategories.map(category => (
-                  <TabsContent key={category} value={category} className="space-y-4">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-2">
-                        {categoryIcons[category] || <div className="w-6 h-6" />}
-                        <h3 className="font-medium">{categoryDisplayNames[category] || category}</h3>
-                      </div>
-                      <Progress value={categoryProgress[category].overall} className="w-32 h-2" />
+                <TabsContent value="phases">
+                  <Accordion type="single" collapsible defaultValue="phase-1">
+                    {[1, 2, 3, 4, 5].map(phase => {
+                      const phaseTitle = [
+                        "Basic Functionality", 
+                        "Core Features", 
+                        "Advanced Features",
+                        "Enhancement Features",
+                        "Optional Features"
+                      ][phase-1];
+                      
+                      return (
+                        <AccordionItem key={`phase-${phase}`} value={`phase-${phase}`}>
+                          <AccordionTrigger className="hover:bg-slate-50 px-4 py-3 rounded-md">
+                            <div className="flex items-center gap-2 w-full">
+                              <Badge variant={phase === 1 ? "default" : "outline"}>Phase {phase}</Badge>
+                              <span>{phaseTitle}</span>
+                              <Badge variant="outline" className="ml-auto">
+                                {(phaseFeatures[phase] || []).length} features
+                              </Badge>
+                            </div>
+                          </AccordionTrigger>
+                          <AccordionContent className="px-4">
+                            {phaseFeatures[phase] && phaseFeatures[phase].length > 0 ? (
+                              renderFeatures(phaseFeatures[phase])
+                            ) : (
+                              <p className="text-sm text-gray-500 py-2">No features in this phase.</p>
+                            )}
+                          </AccordionContent>
+                        </AccordionItem>
+                      );
+                    })}
+                  </Accordion>
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
+          
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle>Database Schema & Integration Plan</CardTitle>
+              <CardDescription>Database development strategy for promoter features</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-medium mb-3">Database Tables</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="border rounded-lg p-4">
+                      <h4 className="font-medium mb-2 flex items-center gap-2">
+                        <Ticket className="h-5 w-5 text-purple-500" />
+                        Ticket Management Tables
+                      </h4>
+                      <ul className="space-y-2 text-sm">
+                        <li><Badge variant="outline" className="mr-2">ticket_tiers</Badge> For various ticket levels and pricing</li>
+                        <li><Badge variant="outline" className="mr-2">ticket_sales</Badge> Track all ticket sales transactions</li>
+                        <li><Badge variant="outline" className="mr-2">ticket_redemptions</Badge> Track ticket usage at events</li>
+                      </ul>
                     </div>
-                    {renderFeatures(categorizedFeatures[category])}
-                  </TabsContent>
-                ))}
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="phases">
-              <Accordion type="single" collapsible defaultValue="phase-1">
-                {[1, 2, 3, 4, 5].map(phase => {
-                  const phaseTitle = [
-                    "Basic Functionality", 
-                    "Core Features", 
-                    "Advanced Features",
-                    "Enhancement Features",
-                    "Optional Features"
-                  ][phase-1];
-                  
-                  return (
-                    <AccordionItem key={`phase-${phase}`} value={`phase-${phase}`}>
-                      <AccordionTrigger className="hover:bg-slate-50 px-4 py-3 rounded-md">
-                        <div className="flex items-center gap-2 w-full">
-                          <Badge variant={phase === 1 ? "default" : "outline"}>Phase {phase}</Badge>
-                          <span>{phaseTitle}</span>
-                          <Badge variant="outline" className="ml-auto">
-                            {(phaseFeatures[phase] || []).length} features
-                          </Badge>
-                        </div>
-                      </AccordionTrigger>
-                      <AccordionContent className="px-4">
-                        {phaseFeatures[phase] && phaseFeatures[phase].length > 0 ? (
-                          renderFeatures(phaseFeatures[phase])
-                        ) : (
-                          <p className="text-sm text-gray-500 py-2">No features in this phase.</p>
-                        )}
-                      </AccordionContent>
-                    </AccordionItem>
-                  );
-                })}
-              </Accordion>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardHeader>
-          <CardTitle>Database Schema & Integration Plan</CardTitle>
-          <CardDescription>Database development strategy for promoter features</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-lg font-medium mb-3">Database Tables</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="border rounded-lg p-4">
-                  <h4 className="font-medium mb-2 flex items-center gap-2">
-                    <Ticket className="h-5 w-5 text-purple-500" />
-                    Ticket Management Tables
-                  </h4>
-                  <ul className="space-y-2 text-sm">
-                    <li><Badge variant="outline" className="mr-2">ticket_tiers</Badge> For various ticket levels and pricing</li>
-                    <li><Badge variant="outline" className="mr-2">ticket_sales</Badge> Track all ticket sales transactions</li>
-                    <li><Badge variant="outline" className="mr-2">ticket_redemptions</Badge> Track ticket usage at events</li>
-                  </ul>
+                    
+                    <div className="border rounded-lg p-4">
+                      <h4 className="font-medium mb-2 flex items-center gap-2">
+                        <BadgeDollarSign className="h-5 w-5 text-emerald-500" />
+                        Sponsorship Tables
+                      </h4>
+                      <ul className="space-y-2 text-sm">
+                        <li><Badge variant="outline" className="mr-2">sponsor_relationships</Badge> Track promoter-sponsor connections</li>
+                        <li><Badge variant="outline" className="mr-2">sponsor_assets</Badge> Brand logos and marketing materials</li>
+                        <li><Badge variant="outline" className="mr-2">sponsor_campaigns</Badge> Track sponsorship campaigns</li>
+                      </ul>
+                    </div>
+                    
+                    <div className="border rounded-lg p-4">
+                      <h4 className="font-medium mb-2 flex items-center gap-2">
+                        <Users className="h-5 w-5 text-blue-500" />
+                        Venue Partnership Tables
+                      </h4>
+                      <ul className="space-y-2 text-sm">
+                        <li><Badge variant="outline" className="mr-2">promoter_venue_agreements</Badge> Revenue sharing agreements</li>
+                        <li><Badge variant="outline" className="mr-2">venue_communications</Badge> Communication history</li>
+                        <li><Badge variant="outline" className="mr-2">venue_bookings</Badge> Event scheduling at venues</li>
+                      </ul>
+                    </div>
+                    
+                    <div className="border rounded-lg p-4">
+                      <h4 className="font-medium mb-2 flex items-center gap-2">
+                        <BarChart3 className="h-5 w-5 text-indigo-500" />
+                        Analytics Tables
+                      </h4>
+                      <ul className="space-y-2 text-sm">
+                        <li><Badge variant="outline" className="mr-2">event_analytics</Badge> Performance metrics for events</li>
+                        <li><Badge variant="outline" className="mr-2">audience_metrics</Badge> Demographic and attendance data</li>
+                        <li><Badge variant="outline" className="mr-2">campaign_performance</Badge> Marketing campaign results</li>
+                      </ul>
+                    </div>
+                  </div>
                 </div>
                 
-                <div className="border rounded-lg p-4">
-                  <h4 className="font-medium mb-2 flex items-center gap-2">
-                    <BadgeDollarSign className="h-5 w-5 text-emerald-500" />
-                    Sponsorship Tables
-                  </h4>
-                  <ul className="space-y-2 text-sm">
-                    <li><Badge variant="outline" className="mr-2">sponsor_relationships</Badge> Track promoter-sponsor connections</li>
-                    <li><Badge variant="outline" className="mr-2">sponsor_assets</Badge> Brand logos and marketing materials</li>
-                    <li><Badge variant="outline" className="mr-2">sponsor_campaigns</Badge> Track sponsorship campaigns</li>
-                  </ul>
-                </div>
-                
-                <div className="border rounded-lg p-4">
-                  <h4 className="font-medium mb-2 flex items-center gap-2">
-                    <Users className="h-5 w-5 text-blue-500" />
-                    Venue Partnership Tables
-                  </h4>
-                  <ul className="space-y-2 text-sm">
-                    <li><Badge variant="outline" className="mr-2">promoter_venue_agreements</Badge> Revenue sharing agreements</li>
-                    <li><Badge variant="outline" className="mr-2">venue_communications</Badge> Communication history</li>
-                    <li><Badge variant="outline" className="mr-2">venue_bookings</Badge> Event scheduling at venues</li>
-                  </ul>
-                </div>
-                
-                <div className="border rounded-lg p-4">
-                  <h4 className="font-medium mb-2 flex items-center gap-2">
-                    <BarChart3 className="h-5 w-5 text-indigo-500" />
-                    Analytics Tables
-                  </h4>
-                  <ul className="space-y-2 text-sm">
-                    <li><Badge variant="outline" className="mr-2">event_analytics</Badge> Performance metrics for events</li>
-                    <li><Badge variant="outline" className="mr-2">audience_metrics</Badge> Demographic and attendance data</li>
-                    <li><Badge variant="outline" className="mr-2">campaign_performance</Badge> Marketing campaign results</li>
-                  </ul>
+                <div>
+                  <h3 className="text-lg font-medium mb-3">Integration Points</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="border rounded-lg p-4">
+                      <h4 className="font-medium mb-2">Payment Systems</h4>
+                      <p className="text-sm text-gray-600">Integrate with payment gateways for ticket sales and sponsor payments.</p>
+                    </div>
+                    
+                    <div className="border rounded-lg p-4">
+                      <h4 className="font-medium mb-2">Notification System</h4>
+                      <p className="text-sm text-gray-600">Connect with the platform's notification service for alerts and updates.</p>
+                    </div>
+                    
+                    <div className="border rounded-lg p-4">
+                      <h4 className="font-medium mb-2">User Authentication</h4>
+                      <p className="text-sm text-gray-600">Extend existing authentication to include promoter-specific permissions.</p>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-            
-            <div>
-              <h3 className="text-lg font-medium mb-3">Integration Points</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="border rounded-lg p-4">
-                  <h4 className="font-medium mb-2">Payment Systems</h4>
-                  <p className="text-sm text-gray-600">Integrate with payment gateways for ticket sales and sponsor payments.</p>
-                </div>
-                
-                <div className="border rounded-lg p-4">
-                  <h4 className="font-medium mb-2">Notification System</h4>
-                  <p className="text-sm text-gray-600">Connect with the platform's notification service for alerts and updates.</p>
-                </div>
-                
-                <div className="border rounded-lg p-4">
-                  <h4 className="font-medium mb-2">User Authentication</h4>
-                  <p className="text-sm text-gray-600">Extend existing authentication to include promoter-specific permissions.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

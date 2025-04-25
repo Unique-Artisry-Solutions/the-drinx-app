@@ -75,6 +75,17 @@ export {
   isVisitTrackingFeature
 } from './establishmentDetection';
 
+// Export promoter detection functions
+export {
+  isPromoterCommunicationFeature,
+  isBrandConnectionFeature,
+  isPromoterAnalyticsFeature,
+  isEventManagementFeature,
+  isPromoterDashboardFeature,
+  isCustomPromotionFeature,
+  isPromoterNotificationFeature
+} from './promoterDetection';
+
 // Re-export the core detection functions with their original names
 export { isIngredientPairingFeature, isMocktailSuggestionFeature, isMocktailTrendsFeature, isRecipeFeature } from './mocktailDetection';
 export { isPromotionFeature } from './promotionDetection';
@@ -84,4 +95,3 @@ export {
   isNotificationFeature, isRewardProgramFeature, isSocialFeature, isThemeFeature, isMapFeature,
   isSignatureFeature, isBarCrawlFeature
 } from './venueDetection';
-
