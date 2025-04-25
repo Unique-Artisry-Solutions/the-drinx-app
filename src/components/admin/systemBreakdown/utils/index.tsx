@@ -1,4 +1,3 @@
-
 import { renderStatusBadge, renderDatabaseStatusBadge, renderAccessIcon } from './statusRenderers';
 import { 
   createProgressSnapshot,
@@ -138,3 +137,9 @@ export type { AnalysisStep } from '../types';
 export type { ReleaseProgress } from '../types/releaseTypes';
 export type { MonthlyProgressData } from '../types';
 export type { FeatureShowcaseData, FeatureShowcaseCategoryType, FeatureBusinessValueType } from '../types';
+
+export { determineBusinessValue, determineComplexity } from './featureShowcase/featureTransformation';
+export { determineShowcaseCategory } from './featureShowcase/categoryDetection';
+export { generateMarketingPoints } from './featureShowcase/marketingUtils';
+export { determineFeatureIcon } from './featureShowcase/iconSelection';
+export { generateMockImplementationStats } from './featureShowcase/mockStats';
