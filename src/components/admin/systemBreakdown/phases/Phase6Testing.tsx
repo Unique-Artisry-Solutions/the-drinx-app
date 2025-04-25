@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -9,7 +8,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { ClipboardCheck, AlertTriangle, Cpu, Shield, Rocket, CircleDashed, Clock } from 'lucide-react';
+import { ClipboardCheck, AlertTriangle, Cpu, Shield, Rocket, CircleDashed, Clock, Check } from 'lucide-react';
 
 interface TestProgress {
   category: string;
