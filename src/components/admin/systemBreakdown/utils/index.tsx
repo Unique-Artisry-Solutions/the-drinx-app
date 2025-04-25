@@ -50,10 +50,7 @@ import {
   mapFeaturesToReleaseFeatures, 
   mapFeatureStatusToReleaseStatus 
 } from './releaseUtils';
-import { 
-  prepareFeatureShowcaseData, 
-  generateFeatureReport 
-} from './featureShowcaseUtils';
+import { prepareFeatureShowcaseData } from './featureShowcaseUtils';
 
 // Import directly from featureStatistics.tsx to fix circular dependency issues
 import { 
@@ -123,8 +120,7 @@ export {
   createProgressSnapshot,
   validateProgressData,
   generateHistoricalProgressData,
-  prepareFeatureShowcaseData,
-  generateFeatureReport
+  prepareFeatureShowcaseData
 };
 
 // Use 'export type' for type exports when isolatedModules is enabled
