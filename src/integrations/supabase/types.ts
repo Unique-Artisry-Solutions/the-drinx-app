@@ -255,6 +255,53 @@ export type Database = {
           },
         ]
       }
+      bar_crawl_marketing_materials: {
+        Row: {
+          bar_crawl_id: string | null
+          created_at: string
+          description: string | null
+          file_url: string | null
+          id: string
+          material_type: string
+          promoter_id: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          bar_crawl_id?: string | null
+          created_at?: string
+          description?: string | null
+          file_url?: string | null
+          id?: string
+          material_type: string
+          promoter_id: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          bar_crawl_id?: string | null
+          created_at?: string
+          description?: string | null
+          file_url?: string | null
+          id?: string
+          material_type?: string
+          promoter_id?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bar_crawl_marketing_materials_bar_crawl_id_fkey"
+            columns: ["bar_crawl_id"]
+            isOneToOne: false
+            referencedRelation: "bar_crawls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bar_crawl_themes: {
         Row: {
           created_at: string
@@ -1104,6 +1151,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "notification_delivery_logs_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "notifications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_delivery_status: {
+        Row: {
+          channel: string
+          created_at: string
+          delivered_at: string | null
+          error_message: string | null
+          id: string
+          notification_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          channel: string
+          created_at?: string
+          delivered_at?: string | null
+          error_message?: string | null
+          id?: string
+          notification_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          delivered_at?: string | null
+          error_message?: string | null
+          id?: string
+          notification_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_delivery_status_notification_id_fkey"
             columns: ["notification_id"]
             isOneToOne: false
             referencedRelation: "notifications"

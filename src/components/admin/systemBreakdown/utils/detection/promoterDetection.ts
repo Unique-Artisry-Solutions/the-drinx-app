@@ -1,4 +1,3 @@
-
 import { FeatureItem } from '../../types';
 import { matchesAnyKeyword } from './coreDetection';
 
@@ -112,14 +111,23 @@ export const isCustomPromotionFeature = (feature: FeatureItem): boolean => {
  * Checks if a feature is related to Promoter Notification functionality
  */
 export const isPromoterNotificationFeature = (feature: FeatureItem): boolean => {
-  return matchesAnyKeyword(feature, [
+  const hasNotificationKeywords = matchesAnyKeyword(feature, [
     'promoter notification',
-    'notification system for promoters'
-  ]) ||
-  (feature.id === 'promoter-notification-system') ||
-  (Array.isArray(feature.tags) && 
-   feature.tags.some(tag => 
-     ['notifications'].includes(tag.toLowerCase()) &&
-     feature.id.includes('promoter')
-   ));
+    'notification system for promoters',
+    'promoter alerts',
+    'promoter messaging notifications'
+  ]);
+
+  // Check for notification-specific database implementations
+  const hasNotificationInfrastructure = feature.dbRequirementsText?.toLowerCase().includes('notification') &&
+    feature.dbRequirementsText?.toLowerCase().includes('trigger');
+
+  return hasNotificationKeywords || 
+    (feature.id === 'promoter-notification-system') ||
+    (Array.isArray(feature.tags) && 
+     feature.tags.some(tag => 
+       ['notifications'].includes(tag.toLowerCase()) &&
+       feature.id.includes('promoter')
+     )) ||
+    hasNotificationInfrastructure;
 };
