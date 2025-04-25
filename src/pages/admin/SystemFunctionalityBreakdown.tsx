@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import Layout from '@/components/Layout';
@@ -6,7 +7,7 @@ import { useSearchParams } from 'react-router-dom';
 import StatusUpdateNotification from '@/components/admin/systemBreakdown/StatusUpdateNotification';
 import SystemHeader from '@/components/admin/systemBreakdown/SystemHeader';
 import OverviewTab from '@/components/admin/systemBreakdown/OverviewTab';
-import FeatureTab from '@/components/admin/systemBreakdown/FeatureTab';
+import { EnhancedFeatureTab } from '@/components/admin/systemBreakdown/EnhancedFeatureTab';
 import ProposedImprovementsTab from '@/components/admin/systemBreakdown/ProposedImprovementsTab';
 import AnalysisProgress from '@/components/admin/systemBreakdown/AnalysisProgress';
 import ReleaseManagementTab from '@/components/admin/systemBreakdown/ReleaseManagementTab';
@@ -105,7 +106,7 @@ const SystemFunctionalityBreakdown: React.FC = () => {
           </TabsContent>
 
           <TabsContent value="admin" className="space-y-4">
-            <FeatureTab
+            <EnhancedFeatureTab
               features={adminFeatures}
               title="Admin Features"
               description="Features accessible to system administrators and content managers"
@@ -113,7 +114,7 @@ const SystemFunctionalityBreakdown: React.FC = () => {
           </TabsContent>
 
           <TabsContent value="establishment" className="space-y-4">
-            <FeatureTab
+            <EnhancedFeatureTab
               features={establishmentFeatures}
               title="Establishment Features"
               description="Features accessible to bar, restaurant, and venue owners"
@@ -121,7 +122,7 @@ const SystemFunctionalityBreakdown: React.FC = () => {
           </TabsContent>
 
           <TabsContent value="individual" className="space-y-4">
-            <FeatureTab
+            <EnhancedFeatureTab
               features={individualFeatures}
               title="Individual User Features"
               description="Features accessible to regular users of the platform"
@@ -129,7 +130,7 @@ const SystemFunctionalityBreakdown: React.FC = () => {
           </TabsContent>
 
           <TabsContent value="promoter" className="space-y-4">
-            <FeatureTab
+            <EnhancedFeatureTab
               features={promoterFeatures}
               title="Promoter Features"
               description="Features accessible to event promoters and organizers"

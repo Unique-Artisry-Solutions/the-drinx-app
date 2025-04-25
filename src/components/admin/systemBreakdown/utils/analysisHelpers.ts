@@ -1,56 +1,81 @@
 
-import { isTaskCompleted } from './taskDetection';
+import { FeatureItem } from '../types';
 
-interface AnalysisResult {
-  completionPercentage: number;
-  hasStarted: boolean;
-  isComplete: boolean;
+/**
+ * Parses database requirements or analysis text to identify tasks and their completion status
+ */
+export function parseTaskStatuses(analysisText?: string): { text: string; isCompleted: boolean }[] {
+  if (!analysisText) return [];
+  
+  const tasks: { text: string; isCompleted: boolean }[] = [];
+  const lines = analysisText.split('\n');
+  
+  for (const line of lines) {
+    // Match markdown-style checkboxes: - [x] task or - [ ] task
+    if (line.includes('- [x]')) {
+      tasks.push({
+        text: line.replace('- [x]', '').trim(),
+        isCompleted: true
+      });
+    } else if (line.includes('- [ ]')) {
+      tasks.push({
+        text: line.replace('- [ ]', '').trim(),
+        isCompleted: false
+      });
+    } else if (line.match(/^\d+\.\s+/)) {
+      // For numbered lists: 1. Create table
+      tasks.push({
+        text: line.trim(),
+        isCompleted: false
+      });
+    } else if (line.includes('✓')) {
+      // Also match checkmarks: ✓ task
+      tasks.push({
+        text: line.replace('✓', '').trim(),
+        isCompleted: true
+      });
+    }
+  }
+  
+  return tasks;
 }
 
 /**
- * Analyzes the database requirements text and determines the completion status
+ * Analyzes database requirements for a feature and returns a structured analysis
  */
-export const analyzeDbRequirements = (analysisText: string): AnalysisResult => {
-  if (!analysisText) return { completionPercentage: 0, hasStarted: false, isComplete: false };
+export function analyzeDbRequirements(feature: FeatureItem): {
+  completedTasks: number;
+  totalTasks: number;
+  tasks: { text: string; isCompleted: boolean }[];
+  completionPercentage: number;
+} {
+  const tasks = parseTaskStatuses(feature.databaseAnalysis);
   
-  // Parse tasks with the [x] or [ ] format
-  const taskLines = analysisText
-    .split('\n')
-    .filter(line => line.trim().match(/^\s*-\s*\[[\sx]\]/i));
+  // If no tasks were found in the analysis, generate default ones based on status
+  if (tasks.length === 0) {
+    const dbStatus = feature.dbStatus || feature.databaseStatus || 'not_started';
+    const isComplete = dbStatus === 'complete' || dbStatus === 'implemented';
+    const isInProgress = dbStatus === 'in_progress';
+    
+    const defaultTasks = [
+      { text: 'Create database schema', isCompleted: isComplete || isInProgress },
+      { text: 'Define table relationships', isCompleted: isComplete || isInProgress },
+      { text: 'Implement API endpoints', isCompleted: isComplete },
+      { text: 'Create database triggers', isCompleted: isComplete },
+      { text: 'Optimize query performance', isCompleted: isComplete }
+    ];
+    
+    tasks.push(...defaultTasks);
+  }
   
-  const taskStatuses = taskLines.map(line => isTaskCompleted(line));
-  
-  const completedCount = taskStatuses.filter(status => status).length;
-  const totalTasks = taskStatuses.length;
-  const completionPercentage = totalTasks > 0 ? (completedCount / totalTasks) * 100 : 0;
+  const completedTasks = tasks.filter(task => task.isCompleted).length;
+  const totalTasks = tasks.length;
+  const completionPercentage = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
   
   return {
-    completionPercentage,
-    // If at least one task is completed, consider it started
-    hasStarted: completedCount > 0,
-    // Only mark as complete if all tasks are completed
-    isComplete: completedCount > 0 && completedCount === totalTasks
+    completedTasks,
+    totalTasks,
+    tasks,
+    completionPercentage
   };
-};
-
-/**
- * Parses the analysis text and returns task status objects
- */
-export const parseTaskStatuses = (analysisText: string) => {
-  if (!analysisText) return [];
-  
-  // Parse tasks with the [x] or [ ] format
-  const taskLines = analysisText
-    .split('\n')
-    .filter(line => line.trim().match(/^\s*-\s*\[[\sx]\]/i));
-  
-  return taskLines.map(line => {
-    // Extract just the task description without the checkbox
-    const taskText = line.replace(/^\s*-\s*\[[\sx]\]\s*/i, '').trim();
-    
-    return { 
-      text: taskText,
-      isCompleted: isTaskCompleted(line)
-    };
-  });
-};
+}
