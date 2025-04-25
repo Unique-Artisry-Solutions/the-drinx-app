@@ -1,5 +1,5 @@
 
-import { FeatureItem } from '../types';
+import { FeatureItem } from '../../types';
 import { rewardSystemDatabaseAnalysis, rewardSystemRequirements } from './databaseAnalysis';
 
 export const rewardProgramFeature: FeatureItem = {
