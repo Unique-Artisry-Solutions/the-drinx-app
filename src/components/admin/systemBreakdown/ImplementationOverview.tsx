@@ -1,51 +1,42 @@
-
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BarChart, PieChart, LineChart } from 'lucide-react';
 import { FeatureItem } from './types';
 import SystemHealthCheck from './components/SystemHealthCheck';
 import { calculateFeatureStatistics } from './utils';
+import StatusPieChart from './components/charts/StatusPieChart';
+import ProgressLineChart from './components/charts/ProgressLineChart';
+import { MonthlyProgressData } from './types';
 
 interface ImplementationOverviewProps {
   adminFeatures: FeatureItem[];
   establishmentFeatures: FeatureItem[];
   individualFeatures: FeatureItem[];
   promoterFeatures: FeatureItem[];
+  monthlyProgressData?: MonthlyProgressData[];
 }
 
 const ImplementationOverview: React.FC<ImplementationOverviewProps> = ({
   adminFeatures,
   establishmentFeatures,
   individualFeatures,
-  promoterFeatures
+  promoterFeatures,
+  monthlyProgressData = []
 }) => {
   const [chartType, setChartType] = useState<'bar' | 'pie' | 'line'>('bar');
   
   // Calculate feature statistics
-  const adminStats = calculateFeatureStatistics(adminFeatures);
-  const establishmentStats = calculateFeatureStatistics(establishmentFeatures);
-  const individualStats = calculateFeatureStatistics(individualFeatures);
-  const promoterStats = calculateFeatureStatistics(promoterFeatures);
-
-  // Combine all features for overall statistics
   const allFeatures = [...adminFeatures, ...establishmentFeatures, ...individualFeatures, ...promoterFeatures];
   const overallStats = calculateFeatureStatistics(allFeatures);
   
-  // Get feature counts by status
-  const totalFeatures = allFeatures.length;
-  const implementedFeatures = allFeatures.filter(f => f.status === 'implemented').length;
-  const partialFeatures = allFeatures.filter(f => f.status === 'partial').length;
-  const inProgressFeatures = allFeatures.filter(f => f.status === 'in_progress').length;
-  const plannedFeatures = allFeatures.filter(f => f.status === 'planned').length;
-  const blockedFeatures = allFeatures.filter(f => f.status === 'blocked').length;
-  
-  // Calculate percentages for the progress bars
-  const implementedPercentage = Math.round((implementedFeatures / totalFeatures) * 100);
-  const partialPercentage = Math.round((partialFeatures / totalFeatures) * 100);
-  const inProgressPercentage = Math.round((inProgressFeatures / totalFeatures) * 100);
-  const plannedPercentage = Math.round((plannedFeatures / totalFeatures) * 100);
-  const blockedPercentage = Math.round((blockedFeatures / totalFeatures) * 100);
+  // Prepare data for pie chart
+  const pieChartData = useMemo(() => [
+    { name: 'Implemented', value: overallStats.implementedFeatures, color: '#22c55e' },
+    { name: 'In Progress', value: overallStats.inProgressFeatures, color: '#eab308' },
+    { name: 'Planned', value: overallStats.plannedFeatures, color: '#94a3b8' },
+    { name: 'Blocked', value: overallStats.blockedFeatures, color: '#ef4444' },
+  ], [overallStats]);
 
   // Render bar chart with basic CSS
   const renderBarChart = () => (
@@ -53,66 +44,53 @@ const ImplementationOverview: React.FC<ImplementationOverviewProps> = ({
       <div className="space-y-3">
         <div>
           <div className="flex justify-between text-sm mb-1">
-            <span>Implemented ({implementedFeatures})</span>
-            <span>{implementedPercentage}%</span>
+            <span>Implemented ({overallStats.implementedFeatures})</span>
+            <span>{Math.round((overallStats.implementedFeatures / allFeatures.length) * 100)}%</span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
             <div
               className="bg-green-500 h-2 rounded-full"
-              style={{ width: `${implementedPercentage}%` }}
+              style={{ width: `${Math.round((overallStats.implementedFeatures / allFeatures.length) * 100)}%` }}
             ></div>
           </div>
         </div>
         
         <div>
           <div className="flex justify-between text-sm mb-1">
-            <span>Partial ({partialFeatures})</span>
-            <span>{partialPercentage}%</span>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div
-              className="bg-blue-500 h-2 rounded-full"
-              style={{ width: `${partialPercentage}%` }}
-            ></div>
-          </div>
-        </div>
-        
-        <div>
-          <div className="flex justify-between text-sm mb-1">
-            <span>In Progress ({inProgressFeatures})</span>
-            <span>{inProgressPercentage}%</span>
+            <span>In Progress ({overallStats.inProgressFeatures})</span>
+            <span>{Math.round((overallStats.inProgressFeatures / allFeatures.length) * 100)}%</span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
             <div
               className="bg-yellow-500 h-2 rounded-full"
-              style={{ width: `${inProgressPercentage}%` }}
+              style={{ width: `${Math.round((overallStats.inProgressFeatures / allFeatures.length) * 100)}%` }}
             ></div>
           </div>
         </div>
         
         <div>
           <div className="flex justify-between text-sm mb-1">
-            <span>Planned ({plannedFeatures})</span>
-            <span>{plannedPercentage}%</span>
+            <span>Planned ({overallStats.plannedFeatures})</span>
+            <span>{Math.round((overallStats.plannedFeatures / allFeatures.length) * 100)}%</span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
             <div
               className="bg-purple-500 h-2 rounded-full"
-              style={{ width: `${plannedPercentage}%` }}
+              style={{ width: `${Math.round((overallStats.plannedFeatures / allFeatures.length) * 100)}%` }}
             ></div>
           </div>
         </div>
         
-        {blockedFeatures > 0 && (
+        {overallStats.blockedFeatures > 0 && (
           <div>
             <div className="flex justify-between text-sm mb-1">
-              <span>Blocked ({blockedFeatures})</span>
-              <span>{blockedPercentage}%</span>
+              <span>Blocked ({overallStats.blockedFeatures})</span>
+              <span>{Math.round((overallStats.blockedFeatures / allFeatures.length) * 100)}%</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
               <div
                 className="bg-red-500 h-2 rounded-full"
-                style={{ width: `${blockedPercentage}%` }}
+                style={{ width: `${Math.round((overallStats.blockedFeatures / allFeatures.length) * 100)}%` }}
               ></div>
             </div>
           </div>
@@ -184,21 +162,18 @@ const ImplementationOverview: React.FC<ImplementationOverviewProps> = ({
           <span className="text-sm ml-2 font-normal text-gray-500">implemented</span>
         </div>
         <div className="text-sm text-gray-500 mb-6">
-          {implementedFeatures} of {totalFeatures} features completed
-          {partialFeatures > 0 && `, ${partialFeatures} partial`}
-          {inProgressFeatures > 0 && `, ${inProgressFeatures} in progress`}
+          {overallStats.implementedFeatures} of {allFeatures.length} features completed
+          {overallStats.partialFeatures > 0 && `, ${overallStats.partialFeatures} partial`}
+          {overallStats.inProgressFeatures > 0 && `, ${overallStats.inProgressFeatures} in progress`}
         </div>
         
         {chartType === 'bar' && renderBarChart()}
-        {chartType === 'pie' && (
-          <div className="flex justify-center items-center h-48 text-gray-400">
-            Pie chart visualization (upgrade to Pro)
-          </div>
-        )}
-        {chartType === 'line' && (
-          <div className="flex justify-center items-center h-48 text-gray-400">
-            Line chart visualization (upgrade to Pro)
-          </div>
+        {chartType === 'pie' && <StatusPieChart data={pieChartData} title="Feature Status Distribution" />}
+        {chartType === 'line' && monthlyProgressData && (
+          <ProgressLineChart 
+            data={monthlyProgressData} 
+            title="Implementation Progress Over Time" 
+          />
         )}
       </CardContent>
     </Card>

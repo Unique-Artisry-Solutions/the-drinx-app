@@ -1,26 +1,22 @@
 
 import { useState, useEffect } from 'react';
 import { ProgressSnapshot, MonthlyProgressData, FeatureItem } from '../types';
-import { createProgressSnapshot, validateProgressData, generateHistoricalProgressData } from '../utils';
+import { createProgressSnapshot, validateProgressData } from '../utils';
+import { generateHistoricalProgressData } from '../utils/historicalData';
 
-/**
- * Hook to track system implementation progress
- */
 export const useProgressTracking = (
   adminFeatures: FeatureItem[],
   establishmentFeatures: FeatureItem[],
   individualFeatures: FeatureItem[],
   promoterFeatures: FeatureItem[]
 ) => {
-  // Track progress history for accurate dashboard data
   const [progressHistory, setProgressHistory] = useState<ProgressSnapshot[]>([]);
   const [monthlyProgressData, setMonthlyProgressData] = useState<MonthlyProgressData[]>([]);
   const [currentSnapshot, setCurrentSnapshot] = useState<ProgressSnapshot | null>(null);
   const [dataValidation, setDataValidation] = useState<{ isValid: boolean, issues: string[] }>({ isValid: true, issues: [] });
   
-  // Initialize project status on first load
+  // Initialize project status on mount and when features change
   useEffect(() => {
-    // Create initial snapshot without saving to history
     const initialSnapshot = createProgressSnapshot(
       adminFeatures,
       establishmentFeatures,
@@ -30,17 +26,13 @@ export const useProgressTracking = (
     
     setCurrentSnapshot(initialSnapshot);
     
-    // Validate the initial snapshot
     const validationResult = validateProgressData(initialSnapshot);
     setDataValidation(validationResult);
     
-    // Generate initial monthly progress data based on current state
     generateHistoricalProgressDataAndUpdate(initialSnapshot);
   }, [adminFeatures, establishmentFeatures, individualFeatures, promoterFeatures]);
   
-  // Update progress tracking when features change
   const updateProgressTracking = () => {
-    // Create a new progress snapshot after analysis
     const newSnapshot = createProgressSnapshot(
       adminFeatures,
       establishmentFeatures,
@@ -48,17 +40,13 @@ export const useProgressTracking = (
       promoterFeatures
     );
     
-    // Validate the progress data
     const validationResult = validateProgressData(newSnapshot);
     setDataValidation(validationResult);
     
-    // Update current snapshot
     setCurrentSnapshot(newSnapshot);
     
-    // Add new snapshot to history
     setProgressHistory(prevHistory => [...prevHistory, newSnapshot]);
     
-    // Generate updated monthly progress data
     generateHistoricalProgressDataAndUpdate(newSnapshot, [...progressHistory, newSnapshot]);
     
     return {
@@ -67,20 +55,17 @@ export const useProgressTracking = (
     };
   };
 
-  // Helper function to generate historical data and update state
   const generateHistoricalProgressDataAndUpdate = (
     snapshot: ProgressSnapshot,
     history: ProgressSnapshot[] = []
   ) => {
-    // Call the function, which returns a Promise
     generateHistoricalProgressData(snapshot, history)
       .then(data => {
-        // Update the state with the resulting data
         setMonthlyProgressData(data);
       })
       .catch(error => {
         console.error("Error generating historical progress data:", error);
-        // Fallback with a simple implementation if there's an error
+        // Use basic fallback data if generation fails
         const currentMonth = new Date().getMonth();
         const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         
