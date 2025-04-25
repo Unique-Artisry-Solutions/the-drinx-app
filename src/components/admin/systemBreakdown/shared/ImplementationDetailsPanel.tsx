@@ -15,55 +15,26 @@ import {
   TestTube,
   FileCheck
 } from 'lucide-react';
-import { FeatureItem } from '../types';
+import { FeatureItem, FeatureStatus } from '../types';
 
 interface ImplementationDetailsPanelProps {
   feature: FeatureItem;
 }
 
+const isFeatureInProgress = (status: FeatureStatus): boolean => {
+  return ['in_progress', 'partial', 'implemented'].includes(status);
+};
+
+const isFeatureComplete = (status: FeatureStatus): boolean => {
+  return status === 'implemented';
+};
+
 export const ImplementationDetailsPanel: React.FC<ImplementationDetailsPanelProps> = ({ feature }) => {
   const [expanded, setExpanded] = useState<string | null>(null);
 
-  const parseDatabaseTasks = (analysisText?: string): { text: string; isCompleted: boolean }[] => {
-    if (!analysisText) return [];
-    
-    const tasks: { text: string; isCompleted: boolean }[] = [];
-    const lines = analysisText.split('\n');
-    
-    for (const line of lines) {
-      // Match markdown checkboxes: - [x] task or - [ ] task
-      if (line.includes('- [x]')) {
-        tasks.push({
-          text: line.replace('- [x]', '').trim(),
-          isCompleted: true
-        });
-      } else if (line.includes('- [ ]')) {
-        tasks.push({
-          text: line.replace('- [ ]', '').trim(),
-          isCompleted: false
-        });
-      } else if (line.match(/^\d+\.\s+/)) {
-        // For numbered lists: 1. Create table
-        tasks.push({
-          text: line.trim(),
-          isCompleted: false
-        });
-      } else if (line.includes('✓')) {
-        // Also match checkmarks: ✓ task
-        tasks.push({
-          text: line.replace('✓', '').trim(),
-          isCompleted: true
-        });
-      }
-    }
-    
-    return tasks;
-  };
-
   const getDatabaseTasks = () => {
-    const tasks = parseDatabaseTasks(feature.databaseAnalysis);
+    const tasks = parseTaskStatuses(feature.databaseAnalysis);
     if (tasks.length === 0) {
-      // Generate default tasks if none were parsed
       const dbStatus = feature.dbStatus || feature.databaseStatus || 'not_started';
       const isComplete = dbStatus === 'complete' || dbStatus === 'implemented';
       const isInProgress = dbStatus === 'in_progress';
@@ -79,6 +50,39 @@ export const ImplementationDetailsPanel: React.FC<ImplementationDetailsPanelProp
     return tasks;
   };
 
+  const parseTaskStatuses = (analysisText?: string): { text: string; isCompleted: boolean }[] => {
+    if (!analysisText) return [];
+    
+    const tasks: { text: string; isCompleted: boolean }[] = [];
+    const lines = analysisText.split('\n');
+    
+    for (const line of lines) {
+      if (line.includes('- [x]')) {
+        tasks.push({
+          text: line.replace('- [x]', '').trim(),
+          isCompleted: true
+        });
+      } else if (line.includes('- [ ]')) {
+        tasks.push({
+          text: line.replace('- [ ]', '').trim(),
+          isCompleted: false
+        });
+      } else if (line.match(/^\d+\.\s+/)) {
+        tasks.push({
+          text: line.trim(),
+          isCompleted: false
+        });
+      } else if (line.includes('✓')) {
+        tasks.push({
+          text: line.replace('✓', '').trim(),
+          isCompleted: true
+        });
+      }
+    }
+    
+    return tasks;
+  };
+
   const getTestSteps = () => {
     if (feature.testSteps && feature.testSteps.length > 0) {
       return feature.testSteps.map(step => ({
@@ -87,12 +91,11 @@ export const ImplementationDetailsPanel: React.FC<ImplementationDetailsPanelProp
       }));
     }
     
-    // Default test steps if none provided
     return [
-      { text: 'Unit testing', isCompleted: feature.status === 'implemented' },
-      { text: 'Integration testing', isCompleted: feature.status === 'implemented' },
-      { text: 'User acceptance testing', isCompleted: feature.status === 'implemented' },
-      { text: 'Performance testing', isCompleted: feature.status === 'implemented' }
+      { text: 'Unit testing', isCompleted: isFeatureComplete(feature.status) },
+      { text: 'Integration testing', isCompleted: isFeatureComplete(feature.status) },
+      { text: 'User acceptance testing', isCompleted: isFeatureComplete(feature.status) },
+      { text: 'Performance testing', isCompleted: isFeatureComplete(feature.status) }
     ];
   };
 
@@ -145,13 +148,12 @@ export const ImplementationDetailsPanel: React.FC<ImplementationDetailsPanelProp
         </AccordionTrigger>
         <AccordionContent className="pt-2">
           <div className="space-y-2 pl-6">
-            {/* UI tasks - typically based on feature's implementation status */}
             {[
-              { text: 'Component design', isCompleted: feature.status !== 'planned' && feature.status !== 'not_started' },
-              { text: 'State management', isCompleted: feature.status !== 'planned' && feature.status !== 'not_started' },
+              { text: 'Component design', isCompleted: isFeatureInProgress(feature.status) },
+              { text: 'State management', isCompleted: isFeatureInProgress(feature.status) },
               { text: 'API integration', isCompleted: feature.status === 'implemented' || feature.status === 'partial' },
-              { text: 'Responsive design', isCompleted: feature.status === 'implemented' },
-              { text: 'Accessibility compliance', isCompleted: feature.status === 'implemented' }
+              { text: 'Responsive design', isCompleted: isFeatureComplete(feature.status) },
+              { text: 'Accessibility compliance', isCompleted: isFeatureComplete(feature.status) }
             ].map((task, index) => (
               <div key={index} className="flex items-start gap-2">
                 {task.isCompleted ? (
@@ -217,3 +219,4 @@ export const ImplementationDetailsPanel: React.FC<ImplementationDetailsPanelProp
     </Accordion>
   );
 };
+
