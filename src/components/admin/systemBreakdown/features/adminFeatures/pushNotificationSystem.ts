@@ -20,12 +20,15 @@ export const pushNotificationSystem: FeatureItem = {
     - [x] Multi-channel delivery support (push, email, in-app)
     - [x] Notification triggers for various events
     - [x] API endpoints for notification management
+    - [x] Cross-role notification support (individual-to-establishment, establishment-to-promoter)
+    - [x] Specialized notification triggers for key user interactions
   `,
   testSteps: [
     "Send test notifications to different user types",
     "Verify notification preferences are respected",
     "Test real-time delivery mechanisms",
     "Validate notification triggers",
-    "Check multi-channel delivery"
+    "Check multi-channel delivery",
+    "Verify cross-role notifications (individual to establishment, establishment to promoter)"
   ]
 };

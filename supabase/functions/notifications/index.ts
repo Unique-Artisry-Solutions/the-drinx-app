@@ -124,6 +124,18 @@ serve(async (req) => {
         }
         return await handleUpdatePromoterPreferences(params);
 
+      case 'getEstablishmentNotifications':
+        if (!params?.establishmentId) {
+          return createErrorResponse('Establishment ID is required');
+        }
+        return await handleGetEstablishmentNotifications(params);
+
+      case 'updateEstablishmentPreferences':
+        if (!params?.establishmentId || !params?.preferences) {
+          return createErrorResponse('Establishment ID and preferences are required');
+        }
+        return await handleUpdateEstablishmentPreferences(params);
+
       default:
         return createErrorResponse('Invalid action');
     }
@@ -307,7 +319,7 @@ async function handleCreateNotification(params: any, authHeader: string) {
   )
 }
 
-async function handleGetPromoterNotifications(params: any) {
+async function handleGetEstablishmentNotifications(params: any) {
   try {
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -320,8 +332,8 @@ async function handleGetPromoterNotifications(params: any) {
         *,
         notification_categories(name, description)
       `)
-      .eq('recipient_id', params.promoterId)
-      .eq('recipient_type', 'promoter')
+      .eq('recipient_id', params.establishmentId)
+      .eq('recipient_type', 'establishment')
       .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -333,11 +345,11 @@ async function handleGetPromoterNotifications(params: any) {
       }
     );
   } catch (error) {
-    return createErrorResponse(`Error fetching promoter notifications: ${error.message}`);
+    return createErrorResponse(`Error fetching establishment notifications: ${error.message}`);
   }
 }
 
-async function handleUpdatePromoterPreferences(params: any) {
+async function handleUpdateEstablishmentPreferences(params: any) {
   try {
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -345,7 +357,7 @@ async function handleUpdatePromoterPreferences(params: any) {
     );
 
     const { data, error } = await supabaseClient
-      .from('promoter_notification_preferences')
+      .from('establishment_notification_preferences')
       .upsert(params.preferences)
       .select();
 
@@ -355,13 +367,13 @@ async function handleUpdatePromoterPreferences(params: any) {
       JSON.stringify({ 
         success: true, 
         data,
-        message: 'Preferences updated successfully' 
+        message: 'Establishment preferences updated successfully' 
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     );
   } catch (error) {
-    return createErrorResponse(`Error updating promoter preferences: ${error.message}`);
+    return createErrorResponse(`Error updating establishment preferences: ${error.message}`);
   }
 }
