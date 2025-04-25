@@ -1,19 +1,14 @@
+
 import React, { useState, useMemo } from 'react';
-import { 
-  Card, 
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle 
-} from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { FeatureItem, FeatureShowcaseData } from './types';
-import { isSignatureFeature } from './utils';
-import SignatureFeatureSpotlight from './components/SignatureFeatureSpotlight';
+import { FeatureItem } from './types';
+import { prepareFeatureShowcaseData } from './utils/featureShowcaseUtils';
+import { isSignatureFeature } from './utils/featureDetection';
 import CategoryCard from './components/CategoryCard';
 import BusinessValueSection from './components/BusinessValueSection';
+import SignatureFeatureSpotlight from './components/SignatureFeatureSpotlight';
+import { AlertTriangle } from 'lucide-react';
 
 interface FeatureShowcaseTabProps {
   adminFeatures: FeatureItem[];
@@ -30,138 +25,61 @@ const FeatureShowcaseTab: React.FC<FeatureShowcaseTabProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState('categories');
   
-  const signatureFeatures = useMemo(() => [
-    ...adminFeatures,
-    ...establishmentFeatures,
-    ...individualFeatures,
-    ...promoterFeatures
-  ].filter(isSignatureFeature), [adminFeatures, establishmentFeatures, individualFeatures, promoterFeatures]);
-  
   const showcaseData = useMemo(() => {
-    const allFeatures = [
-      ...adminFeatures,
-      ...establishmentFeatures, 
-      ...individualFeatures,
-      ...promoterFeatures
-    ];
-    
-    const featureShowcaseData: FeatureShowcaseData[] = allFeatures.map(feature => ({
-      id: feature.id,
-      name: feature.name,
-      description: feature.description,
-      businessValue: feature.userImpact,
-      complexity: feature.complexity,
-      implementationStatus: feature.status,
-      showcaseCategory: 'Management Tools',
-      isSignature: isSignatureFeature(feature),
-      icon: 'Star',
-      marketingPoints: [],
-      implementations: 0,
-      avgRating: 0,
-      categories: [feature.tags?.[0] || 'default'],
-      businessValues: [feature.userImpact]
-    }));
-    
-    const categoryData = [
-      {
-        name: 'User Experience',
-        description: 'Features that enhance the user experience',
-        featureCount: Math.floor(allFeatures.length / 3),
-        implementationRate: 75,
-        icon: { name: 'User' },
-        features: allFeatures.slice(0, Math.floor(allFeatures.length / 3))
-      },
-      {
-        name: 'Management Tools',
-        description: 'Features for administration and management',
-        featureCount: Math.floor(allFeatures.length / 3),
-        implementationRate: 85,
-        icon: { name: 'Settings' },
-        features: allFeatures.slice(Math.floor(allFeatures.length / 3), Math.floor(allFeatures.length * 2/3))
-      },
-      {
-        name: 'Analytics',
-        description: 'Data analysis and reporting features',
-        featureCount: allFeatures.length - Math.floor(allFeatures.length * 2/3),
-        implementationRate: 65,
-        icon: { name: 'BarChart' },
-        features: allFeatures.slice(Math.floor(allFeatures.length * 2/3))
-      }
-    ];
-    
-    const businessValueData = [
-      {
-        name: 'High Value',
-        description: 'Critical business features',
-        featureCount: allFeatures.filter(f => f.userImpact === 'high').length,
-        implementationRate: 80,
-        features: allFeatures.filter(f => f.userImpact === 'high')
-      },
-      {
-        name: 'Medium Value',
-        description: 'Important features',
-        featureCount: allFeatures.filter(f => f.userImpact === 'medium').length,
-        implementationRate: 70,
-        features: allFeatures.filter(f => f.userImpact === 'medium')
-      },
-      {
-        name: 'Low Value',
-        description: 'Nice-to-have features',
-        featureCount: allFeatures.filter(f => f.userImpact === 'low').length,
-        implementationRate: 60,
-        features: allFeatures.filter(f => f.userImpact === 'low')
-      }
-    ];
-    
-    const result = featureShowcaseData as any;
-    result.categories = categoryData;
-    result.businessValues = businessValueData;
-    
-    return result;
+    try {
+      const allFeatures = [
+        ...adminFeatures,
+        ...establishmentFeatures,
+        ...individualFeatures,
+        ...promoterFeatures
+      ];
+      
+      return prepareFeatureShowcaseData(allFeatures);
+    } catch (error) {
+      console.error('Error preparing showcase data:', error);
+      return [];
+    }
   }, [adminFeatures, establishmentFeatures, individualFeatures, promoterFeatures]);
-  
-  const signatureImplementationRate = useMemo(() => {
-    if (signatureFeatures.length === 0) return 0;
-    const sum = signatureFeatures.reduce((acc, feature) => acc + (feature.implementationProgress || 0), 0);
-    return Math.round(sum / signatureFeatures.length);
-  }, [signatureFeatures]);
-  
+
+  const signatureFeatures = useMemo(() => {
+    return showcaseData.filter(feature => feature.isSignature);
+  }, [showcaseData]);
+
+  if (!showcaseData.length) {
+    return (
+      <Card className="p-6">
+        <CardContent className="text-center space-y-4">
+          <AlertTriangle className="mx-auto h-12 w-12 text-yellow-500" />
+          <h3 className="text-lg font-medium">No Feature Data Available</h3>
+          <p className="text-gray-500">There was an error loading the feature showcase data.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const categories = Array.from(new Set(showcaseData.map(f => f.showcaseCategory)));
+  const categoryData = categories.map(cat => ({
+    name: cat,
+    features: showcaseData.filter(f => f.showcaseCategory === cat),
+    description: `${cat} related features and capabilities`,
+    implementationRate: Math.round(
+      (showcaseData.filter(f => f.showcaseCategory === cat && f.implementationStatus === 'implemented').length /
+        showcaseData.filter(f => f.showcaseCategory === cat).length) * 100
+    )
+  }));
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h2 className="text-2xl font-semibold">Feature Showcase</h2>
-          <p className="text-muted-foreground">
-            Highlighting the platform's key capabilities and implementation status
-          </p>
-        </div>
-        
-        <div className="flex items-center gap-3">
-          <Badge variant="outline" className="px-3 py-1">
-            <span className="mr-1">Signature Features:</span>
-            <span className="font-semibold">{signatureFeatures.length}</span>
-          </Badge>
-          
-          <Badge className={`px-3 py-1 ${
-            signatureImplementationRate >= 75 ? 'bg-green-500' : 
-            signatureImplementationRate >= 50 ? 'bg-yellow-500' : 
-            'bg-orange-500'
-          }`}>
-            {signatureImplementationRate}% Implemented
-          </Badge>
-        </div>
-      </div>
-      
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="mb-6">
+        <TabsList>
           <TabsTrigger value="categories">Categories</TabsTrigger>
           <TabsTrigger value="business">Business Value</TabsTrigger>
           <TabsTrigger value="signature">Signature Features</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="categories" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {showcaseData.categories.map((category) => (
+            {categoryData.map((category) => (
               <CategoryCard 
                 key={category.name}
                 category={category}
@@ -169,58 +87,13 @@ const FeatureShowcaseTab: React.FC<FeatureShowcaseTabProps> = ({
             ))}
           </div>
         </TabsContent>
-        
+
         <TabsContent value="business">
-          <BusinessValueSection values={showcaseData.businessValues} />
+          <BusinessValueSection values={showcaseData} />
         </TabsContent>
-        
-        <TabsContent value="signature" className="space-y-6">
-          {signatureFeatures.length === 0 ? (
-            <Card className="text-center p-6">
-              <CardContent>
-                <p className="text-lg text-muted-foreground pt-6">
-                  No signature features have been defined yet.
-                </p>
-                <Button className="mt-4">Define Signature Features</Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <>
-              <Card className="mb-6">
-                <CardHeader>
-                  <CardTitle>Signature Features</CardTitle>
-                  <CardDescription>
-                    These features represent the core value proposition of the platform
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Signature features are the differentiating capabilities that set our platform apart
-                    from competitors and deliver exceptional value to users.
-                  </p>
-                </CardContent>
-              </Card>
-              
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <SignatureFeatureSpotlight features={signatureFeatures.map(feature => ({
-                  id: feature.id,
-                  name: feature.name,
-                  description: feature.description,
-                  businessValue: feature.userImpact,
-                  complexity: feature.complexity,
-                  implementationStatus: feature.status,
-                  showcaseCategory: 'Management Tools',
-                  isSignature: true,
-                  icon: 'Star',
-                  marketingPoints: [],
-                  implementations: 0,
-                  avgRating: 0,
-                  categories: [feature.tags?.[0] || 'default'],
-                  businessValues: [feature.userImpact]
-                }))} />
-              </div>
-            </>
-          )}
+
+        <TabsContent value="signature">
+          <SignatureFeatureSpotlight features={signatureFeatures} />
         </TabsContent>
       </Tabs>
     </div>
