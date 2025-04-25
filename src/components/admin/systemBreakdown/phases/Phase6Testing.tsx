@@ -3,16 +3,9 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ClipboardCheck } from 'lucide-react';
-import { TestProgressSection } from './components/TestProgressSection';
-import { TestingStatusGrid } from './components/TestingStatusGrid';
-import { RolloutTimeline } from './components/RolloutTimeline';
-
-interface TestProgress {
-  category: string;
-  completed: number;
-  total: number;
-  status: 'not_started' | 'in_progress' | 'completed' | 'blocked';
-}
+import { TestProgressSection, TestProgress } from '../shared/TestProgressSection';
+import { TestingStatusGrid } from '../shared/TestingStatusGrid';
+import { RolloutTimeline } from '../shared/RolloutTimeline';
 
 const promoterTestCategories: TestProgress[] = [
   { category: 'Promoter Authentication', completed: 12, total: 12, status: 'completed' },
