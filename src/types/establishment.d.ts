@@ -8,5 +8,6 @@ export interface EstablishmentWithDistance {
   cocktailCount: number;
   image?: string;
   distanceInMiles?: number;
-  distance?: string; // Adding distance property as optional
+  distance?: string;
+  distance_in_miles?: number; // Add this property
 }

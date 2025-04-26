@@ -50,7 +50,7 @@ const MapPage: React.FC = () => {
     cocktailCount: est.cocktail_count || est.cocktailCount || 0,
     image: est.image_url || est.image,
     distanceInMiles: est.distanceInMiles || est.distance_in_miles || est.distanceValue,
-    distance: est.distance
+    distance: est.distance || `${est.distanceInMiles || est.distance_in_miles || 0} mi`
   }));
 
   useEffect(() => {
