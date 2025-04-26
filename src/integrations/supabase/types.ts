@@ -1518,6 +1518,86 @@ export type Database = {
         }
         Relationships: []
       }
+      promoter_subscription_tiers: {
+        Row: {
+          created_at: string
+          features: Json
+          id: string
+          is_active: boolean
+          name: string
+          price: number
+          promoter_id: string
+          tier: Database["public"]["Enums"]["subscription_tier"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          features?: Json
+          id?: string
+          is_active?: boolean
+          name: string
+          price: number
+          promoter_id: string
+          tier?: Database["public"]["Enums"]["subscription_tier"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          features?: Json
+          id?: string
+          is_active?: boolean
+          name?: string
+          price?: number
+          promoter_id?: string
+          tier?: Database["public"]["Enums"]["subscription_tier"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      promoter_subscriptions: {
+        Row: {
+          created_at: string
+          id: string
+          promoter_id: string
+          status: string
+          subscriber_id: string
+          subscription_end: string | null
+          subscription_start: string
+          tier_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          promoter_id: string
+          status?: string
+          subscriber_id: string
+          subscription_end?: string | null
+          subscription_start?: string
+          tier_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          promoter_id?: string
+          status?: string
+          subscriber_id?: string
+          subscription_end?: string | null
+          subscription_start?: string
+          tier_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promoter_subscriptions_tier_id_fkey"
+            columns: ["tier_id"]
+            isOneToOne: false
+            referencedRelation: "promoter_subscription_tiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       promoter_venue_messages: {
         Row: {
           content: string
@@ -2414,6 +2494,7 @@ export type Database = {
       event_status: "draft" | "published" | "cancelled" | "completed"
       notification_channel: "in_app" | "email" | "push"
       notification_priority: "low" | "medium" | "high" | "urgent"
+      subscription_tier: "free" | "basic" | "premium"
       user_role: "individual" | "establishment" | "promoter"
     }
     CompositeTypes: {
@@ -2533,6 +2614,7 @@ export const Constants = {
       event_status: ["draft", "published", "cancelled", "completed"],
       notification_channel: ["in_app", "email", "push"],
       notification_priority: ["low", "medium", "high", "urgent"],
+      subscription_tier: ["free", "basic", "premium"],
       user_role: ["individual", "establishment", "promoter"],
     },
   },

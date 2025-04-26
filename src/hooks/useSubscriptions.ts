@@ -1,0 +1,106 @@
+
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { Subscription, SubscriptionTier } from '@/types/SubscriptionTypes';
+
+export const useSubscriptions = (promoterId?: string) => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const { data: subscriptions = [], isLoading: isLoadingSubscriptions } = useQuery({
+    queryKey: ['subscriptions', promoterId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('promoter_subscriptions')
+        .select('*')
+        .eq('promoter_id', promoterId);
+
+      if (error) throw error;
+      return data as Subscription[];
+    },
+    enabled: !!promoterId,
+  });
+
+  const { data: tiers = [], isLoading: isLoadingTiers } = useQuery({
+    queryKey: ['subscription-tiers', promoterId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('promoter_subscription_tiers')
+        .select('*')
+        .eq('promoter_id', promoterId)
+        .eq('is_active', true);
+
+      if (error) throw error;
+      return data as SubscriptionTier[];
+    },
+    enabled: !!promoterId,
+  });
+
+  const subscribe = useMutation({
+    mutationFn: async ({ promoterId, tierId }: { promoterId: string; tierId?: string }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      const { data, error } = await supabase
+        .from('promoter_subscriptions')
+        .insert({
+          subscriber_id: user.id,
+          promoter_id: promoterId,
+          tier_id: tierId
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['subscriptions'] });
+      toast({
+        title: 'Subscribed successfully',
+        description: 'You are now subscribed to this promoter',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Subscription failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const unsubscribe = useMutation({
+    mutationFn: async (subscriptionId: string) => {
+      const { error } = await supabase
+        .from('promoter_subscriptions')
+        .delete()
+        .eq('id', subscriptionId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['subscriptions'] });
+      toast({
+        title: 'Unsubscribed successfully',
+        description: 'You have unsubscribed from this promoter',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Unsubscribe failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  return {
+    subscriptions,
+    tiers,
+    isLoading: isLoadingSubscriptions || isLoadingTiers,
+    subscribe,
+    unsubscribe,
+  };
+};
