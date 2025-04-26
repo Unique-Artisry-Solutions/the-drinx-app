@@ -1,9 +1,8 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { Database } from '@/integrations/supabase/types';
-import { CustomDatabase } from '@/lib/supabase';
 
-// Export type helpers for common tables
+// Define the types for commonly used tables
 export type EventNotificationSchedule = {
   id?: string;
   event_id: string;
@@ -27,28 +26,25 @@ export type SubscriptionSettings = {
   updated_at?: string;
 };
 
-// Helper function to access tables with proper typing
-export function fromTable<T = any>(tableName: string) {
-  return supabase.from(tableName);
-}
-
-// Helper for getting the current user ID
+// Helper function to get the current user ID
 export async function getCurrentUserId() {
   const { data } = await supabase.auth.getUser();
   return data?.user?.id;
 }
 
-// Helper for accessing the subscription_settings table
-export function subscriptionSettings() {
-  return supabase.from('subscription_settings');
-}
-
-// Helper for accessing the event_notification_schedules table
+// Type-safe database access functions
 export function eventNotificationSchedules() {
-  return supabase.from('event_notification_schedules');
+  return supabase
+    .from('event_notification_schedules')
+    .withConverter<EventNotificationSchedule>();
 }
 
-// Export specific table helpers
+export function subscriptionSettings() {
+  return supabase
+    .from('subscription_settings')
+    .withConverter<SubscriptionSettings>();
+}
+
 export function swigCircuits() {
   return supabase.from('swig_circuits');
 }
@@ -69,6 +65,13 @@ export function swigCircuitTicketTiers() {
   return supabase.from('swig_circuit_ticket_tiers');
 }
 
+// Generic helper for other tables
+export function fromTable<T = any>(tableName: string) {
+  return supabase.from(tableName);
+}
+
 // Export the client for convenience
 export { supabase };
-export type { CustomDatabase };
+
+// Re-export types from SubscriptionTypes.ts for convenience
+export type { Database };

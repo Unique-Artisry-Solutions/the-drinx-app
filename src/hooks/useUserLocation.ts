@@ -20,33 +20,22 @@ export const useUserLocation = () => {
 
   const updateServerLocation = useCallback(async (latitude: number, longitude: number, accuracy?: number) => {
     try {
-      // Store user location directly in the user_locations table
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return false;
+      
+      // Store user location directly in the database
       const { error } = await supabase
-        .from('user_locations')
-        .insert({
-          user_id: (await supabase.auth.getUser()).data.user?.id,
-          latitude,
-          longitude,
-          accuracy: accuracy || null
-        });
-      
-      if (error) {
-        console.error('Error inserting location:', error);
-        return false;
-      }
-      
-      // Also update the profiles table for quick access
-      const { error: profileError } = await supabase
-        .from('profiles')
+        .from('profiles') // Store in profiles instead of user_locations
         .update({
           latitude,
           longitude,
           location_updated_at: new Date().toISOString()
         })
-        .eq('id', (await supabase.auth.getUser()).data.user?.id);
+        .eq('id', user.id);
       
-      if (profileError) {
-        console.error('Error updating profile location:', profileError);
+      if (error) {
+        console.error('Error updating profile location:', error);
+        return false;
       }
       
       return true;
@@ -152,8 +141,8 @@ export const useUserLocation = () => {
 
   return { 
     userLocation, 
-    isLoading, // This will be used as isLocating in MapPage
-    error, // This will be used as locationError in MapPage
+    isLoading, 
+    error, 
     refreshLocation,
     calculateDistance,
     formatDistance

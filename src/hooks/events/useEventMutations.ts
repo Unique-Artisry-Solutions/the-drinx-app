@@ -48,7 +48,7 @@ export const useEventMutations = () => {
         for (const schedule of eventData.notificationSchedules) {
           // For location-based notifications, save to event_notification_schedules
           if (schedule.locationBased && schedule.coordinates) {
-            // Use the helper function for event notification schedules
+            // Use the type-safe helper for event notification schedules
             const { error: scheduleError } = await eventNotificationSchedules()
               .insert({
                 event_id: eventResponse.id,

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,8 +9,8 @@ import { useUserLocation } from '@/hooks/useUserLocation';
 import { useSubscriptions } from '@/hooks/useSubscriptions';
 import { useAuth } from '@/contexts/auth';
 import { useToast } from '@/hooks/use-toast';
-import { subscriptionSettings, getCurrentUserId } from '@/lib/typedSupabase';
-import { SubscriptionSettings } from '@/types/SubscriptionTypes';
+import { subscriptionSettings } from '@/lib/typedSupabase';
+import { SubscriptionSettings } from '@/lib/typedSupabase';
 
 export const SubscriptionManagement = () => {
   const { user } = useAuth();
@@ -29,9 +28,9 @@ export const SubscriptionManagement = () => {
       
       try {
         const { data, error } = await subscriptionSettings()
-          .select('*')
+          .select()
           .eq('user_id', user.id)
-          .single<SubscriptionSettings>();
+          .single();
         
         if (error && error.code !== 'PGRST116') {
           console.error('Error fetching subscription settings:', error);

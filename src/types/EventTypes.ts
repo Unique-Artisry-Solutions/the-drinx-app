@@ -1,52 +1,41 @@
 
-import { NotificationSchedule } from '@/components/promoter/events/wizard/EventWizardContext';
-
-export interface EventType {
-  id: string;
+// This is a new file to properly define event types
+export interface EventTicketType {
+  id?: string;
   name: string;
   description: string;
-  date: string;
-  time: string;
-  venue: {
-    id: string;
-    name: string;
-    address: string;
-  };
-  status: 'draft' | 'published' | 'cancelled' | 'completed';
-  imageUrl?: string;
-  promotionalMaterials?: string[];
-  ticketTypes: TicketType[];
-  attendees: {
-    registered: number;
-    capacity: number;
-    checkedIn: number;
-  };
-  revenue: {
-    total: number;
-    ticketSales: number;
-    additionalSales: number;
-  };
-  createdAt: string;
-  updatedAt: string;
-  createdBy: string;
-  notificationSchedules?: NotificationSchedule[];
-  distance?: number;
-  venue_id?: string;
-  image_url?: string;
-  created_by?: string;
-  created_at?: string;
-  updated_at?: string;
-  event_ticket_types?: any[];
+  price: number;
+  quantity: number;
+  sold?: number;
+  available?: number;
 }
 
-export interface TicketType {
+export interface EventAttendees {
+  registered: number;
+  capacity: number;
+  checkedIn: number;
+}
+
+export interface EventRevenue {
+  total: number;
+  ticketSales: number;
+  additionalSales: number;
+}
+
+export interface EventVenue {
   id: string;
   name: string;
-  price: number;
-  description: string;
-  quantity: number;
-  sold: number;
-  available: number;
+  address: string;
+}
+
+export interface EventNotificationScheduleInput {
+  title: string;
+  content: string;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  scheduledFor: string;
+  locationBased?: boolean;
+  coordinates?: { latitude: number; longitude: number };
+  targetRadius?: number;
 }
 
 export interface EventFormData {
@@ -54,15 +43,29 @@ export interface EventFormData {
   description: string;
   date: string;
   time: string;
-  venue?: string;  
   venueId?: string;
-  ticketTypes: {
-    name: string;
-    price: number;
-    description: string;
-    quantity: number;
-  }[];
-  imageUrl: string;
-  promotionalMaterials: string[];
-  notificationSchedules?: NotificationSchedule[];
+  imageUrl?: string;
+  promotionalMaterials?: string[];
+  ticketTypes: Omit<EventTicketType, 'id' | 'sold' | 'available'>[];
+  notificationSchedules?: EventNotificationScheduleInput[];
+}
+
+export interface EventType {
+  id: string;
+  name: string;
+  description: string;
+  date: string;
+  time: string;
+  venue_id?: string;
+  venue: EventVenue;
+  image_url?: string;
+  promotional_materials?: string[];
+  status: 'draft' | 'published' | 'cancelled' | 'completed';
+  ticketTypes: EventTicketType[];
+  attendees: EventAttendees;
+  revenue: EventRevenue;
+  distance?: number;
+  createdAt: string;
+  updatedAt: string;
+  createdBy: string;
 }
