@@ -1,7 +1,9 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Subscription, SubscriptionTier, SubscriptionSettings } from '@/types/SubscriptionTypes';
+import { Subscription, SubscriptionTier } from '@/types/SubscriptionTypes';
+import { SubscriptionSettings } from '@/lib/typedSupabase';
 
 export const useSubscriptions = (promoterId?: string) => {
   const { toast } = useToast();
@@ -132,14 +134,15 @@ export const useSubscriptions = (promoterId?: string) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
       
+      // Using specific table name without fromTable helper as the type isn't correctly registered
       const { data, error } = await supabase
         .from('subscription_settings')
         .select('*')
         .eq('user_id', user.id)
-        .single<SubscriptionSettings>();
+        .single();
 
       if (error && error.code !== 'PGRST116') throw error;
-      return data;
+      return data as SubscriptionSettings | null;
     },
   });
 

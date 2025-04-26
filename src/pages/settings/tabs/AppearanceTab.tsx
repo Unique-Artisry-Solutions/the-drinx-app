@@ -2,25 +2,16 @@
 import React from 'react';
 import { TabsContent } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Switch } from '@/components/ui/switch';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { 
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormDescription
-} from '@/components/ui/form';
-import { useNotificationFormContext } from '../hooks/useNotificationFormContext';
 
 interface AppearanceTabProps {
   isLightTheme: boolean;
 }
 
 const AppearanceTab: React.FC<AppearanceTabProps> = ({ isLightTheme }) => {
-  // Since dark mode isn't part of the profile form, let's use local state for now
-  const [darkMode, setDarkMode] = React.useState(false);
-  
   return (
     <TabsContent value="appearance">
       <Card className={isLightTheme ? "bg-[#f5f3ed] border-gray-200" : ""}>
@@ -29,27 +20,36 @@ const AppearanceTab: React.FC<AppearanceTabProps> = ({ isLightTheme }) => {
             Appearance Settings
           </CardTitle>
           <CardDescription className={isLightTheme ? "text-gray-600" : ""}>
-            Customize how the app looks
+            Customize how the app looks for you
           </CardDescription>
         </CardHeader>
         
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between space-y-0">
-            <div className="space-y-0.5">
-              <FormLabel className={isLightTheme ? "text-gray-700" : ""}>
-                Dark Mode
-              </FormLabel>
-              <FormDescription className={cn(
-                "text-sm", 
-                isLightTheme ? "text-gray-600" : "text-muted-foreground"
-              )}>
-                Use dark theme throughout the app
-              </FormDescription>
-            </div>
-            <Switch
-              checked={darkMode}
-              onCheckedChange={setDarkMode}
-            />
+        <CardContent className="space-y-6">
+          <div className="space-y-4">
+            <h3 className={cn(
+              "text-lg font-medium", 
+              isLightTheme ? "text-gray-800" : ""
+            )}>
+              Theme
+            </h3>
+            <RadioGroup defaultValue="system" className="gap-4">
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="light" id="light" />
+                <Label htmlFor="light" className={isLightTheme ? "text-gray-700" : ""}>Light</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="dark" id="dark" />
+                <Label htmlFor="dark" className={isLightTheme ? "text-gray-700" : ""}>Dark</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="system" id="system" />
+                <Label htmlFor="system" className={isLightTheme ? "text-gray-700" : ""}>System</Label>
+              </div>
+            </RadioGroup>
+          </div>
+          
+          <div className="pt-4">
+            <Button className="w-full">Apply Changes</Button>
           </div>
         </CardContent>
       </Card>

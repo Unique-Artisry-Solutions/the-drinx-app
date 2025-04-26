@@ -4,7 +4,6 @@ import { useUserLocation } from '@/hooks/useUserLocation';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { EventType } from '@/types/EventTypes';
-import { fromTable } from '@/lib/typedSupabase';
 
 export const useLocationFilteredEvents = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -40,7 +39,8 @@ export const useLocationFilteredEvents = () => {
       if (!events || events.length === 0) return [];
 
       // Add location data from notification schedules
-      const { data: notificationSchedules } = await fromTable('event_notification_schedules')
+      const { data: notificationSchedules } = await supabase
+        .from('event_notification_schedules')
         .select('event_id, coordinates')
         .in('event_id', events.map(event => event.id))
         .eq('location_based', true);
@@ -69,17 +69,47 @@ export const useLocationFilteredEvents = () => {
           );
 
           if (distance !== null && distance <= radiusMiles) {
+            // Transform to match EventType
             return {
               ...event,
               distance,
-            };
+              venue: {
+                id: event.venue_id || '',
+                name: '',  // We'll need to fetch this separately if needed
+                address: ''
+              },
+              ticketTypes: event.event_ticket_types ? event.event_ticket_types.map((ticket: any) => ({
+                id: ticket.id,
+                name: ticket.name,
+                price: ticket.price,
+                description: ticket.description,
+                quantity: ticket.quantity,
+                sold: 0,  // Default values
+                available: ticket.quantity
+              })) : [],
+              attendees: {
+                registered: 0,
+                capacity: 0,
+                checkedIn: 0
+              },
+              revenue: {
+                total: 0,
+                ticketSales: 0,
+                additionalSales: 0
+              },
+              createdAt: event.created_at,
+              updatedAt: event.updated_at,
+              createdBy: event.created_by
+            } as EventType;
           }
           return null;
         })
         .filter(Boolean) as EventType[];
 
       // Sort by distance
-      filteredEvents.sort((a: any, b: any) => a.distance - b.distance);
+      filteredEvents.sort((a: EventType, b: EventType) => 
+        (a.distance || Infinity) - (b.distance || Infinity)
+      );
 
       return filteredEvents;
     } catch (err: any) {

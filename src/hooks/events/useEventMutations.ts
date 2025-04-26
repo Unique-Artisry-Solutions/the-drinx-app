@@ -3,7 +3,6 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { EventFormData } from '@/types/EventTypes';
-import { fromTable } from '@/lib/typedSupabase';
 
 export const useEventMutations = () => {
   const { toast } = useToast();
@@ -48,8 +47,9 @@ export const useEventMutations = () => {
         for (const schedule of eventData.notificationSchedules) {
           // For location-based notifications, save to event_notification_schedules
           if (schedule.locationBased && schedule.coordinates) {
-            // Use fromTable helper which abstracts away the need for specific table definitions
-            const { error: scheduleError } = await fromTable('event_notification_schedules')
+            // Use Supabase directly since we're dealing with a custom table
+            const { error: scheduleError } = await supabase
+              .from('event_notification_schedules')
               .insert({
                 event_id: eventResponse.id,
                 title: schedule.title,

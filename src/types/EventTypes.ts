@@ -31,6 +31,12 @@ export interface EventType {
   createdBy: string;
   notificationSchedules?: NotificationSchedule[];
   distance?: number;
+  venue_id?: string;
+  image_url?: string;
+  created_by?: string;
+  created_at?: string;
+  updated_at?: string;
+  event_ticket_types?: any[];
 }
 
 export interface TicketType {

@@ -2,15 +2,10 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Database } from '@/integrations/supabase/types';
 
-// Helper function to access tables with proper typing
-export function fromTable<T = any>(tableName: string) {
-  return supabase.from(tableName);
-}
+// Re-export types from supabase.ts to avoid duplication
+export type { CustomDatabase } from '@/lib/supabase';
 
-// Export the client for convenience
-export { supabase };
-
-// Type helper for event notification schedules
+// Export type helpers for common tables
 export type EventNotificationSchedule = {
   id?: string;
   event_id: string;
@@ -25,7 +20,6 @@ export type EventNotificationSchedule = {
   updated_at?: string;
 };
 
-// Type helper for subscription settings
 export type SubscriptionSettings = {
   id?: string;
   user_id: string;
@@ -34,3 +28,38 @@ export type SubscriptionSettings = {
   created_at?: string;
   updated_at?: string;
 };
+
+// Helper function to access tables with proper typing
+export function fromTable<T = any>(tableName: string) {
+  return supabase.from(tableName);
+}
+
+// Helper for getting the current user ID
+export async function getCurrentUserId() {
+  const { data } = await supabase.auth.getUser();
+  return data?.user?.id;
+}
+
+// Export specific table helpers
+export function swigCircuits() {
+  return supabase.from('swig_circuits');
+}
+
+export function swigCircuitVenues() {
+  return supabase.from('swig_circuit_venues');
+}
+
+export function swigCircuitDrinkHighlights() {
+  return supabase.from('swig_circuit_drink_highlights');
+}
+
+export function swigCircuitPairings() {
+  return supabase.from('swig_circuit_pairings');
+}
+
+export function swigCircuitTicketTiers() {
+  return supabase.from('swig_circuit_ticket_tiers');
+}
+
+// Export the client for convenience
+export { supabase };

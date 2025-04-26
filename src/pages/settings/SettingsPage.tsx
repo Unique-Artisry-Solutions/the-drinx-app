@@ -14,13 +14,13 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('profile');
   const [isLightTheme, setIsLightTheme] = useState(false);
   const { user, isLoading } = useAuth();
-  
+
   // Check if user prefers light theme
   useEffect(() => {
     const isDark = document.documentElement.classList.contains('dark');
     setIsLightTheme(!isDark);
   }, []);
-  
+
   if (isLoading) {
     return (
       <Layout>
@@ -30,7 +30,7 @@ export default function SettingsPage() {
       </Layout>
     );
   }
-  
+
   if (!user) {
     return (
       <Layout>
@@ -43,17 +43,18 @@ export default function SettingsPage() {
       </Layout>
     );
   }
-
+  
   return (
     <Layout>
       <div className="container mx-auto max-w-4xl px-4 py-8">
-        <h1 className={cn(
-          "text-2xl font-semibold mb-6", 
-          isLightTheme ? "text-gray-800" : ""
-        )}>
+        <h1 
+          className={cn("text-2xl font-semibold mb-6", 
+            isLightTheme ? "text-gray-800" : ""
+          )}
+        >
           Settings
         </h1>
-
+        
         <Tabs defaultValue={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-8">
             <TabsTrigger value="profile">Profile</TabsTrigger>
@@ -61,7 +62,7 @@ export default function SettingsPage() {
             <TabsTrigger value="subscriptions">Subscriptions</TabsTrigger>
             <TabsTrigger value="appearance">Appearance</TabsTrigger>
           </TabsList>
-
+          
           <ProfileTab isLightTheme={isLightTheme} />
           <NotificationsTab isLightTheme={isLightTheme} />
           <SubscriptionTab isLightTheme={isLightTheme} />
