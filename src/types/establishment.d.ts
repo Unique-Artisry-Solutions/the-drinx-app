@@ -9,5 +9,6 @@ export interface EstablishmentWithDistance {
   image?: string;
   distanceInMiles?: number;
   distance?: string;
-  distance_in_miles?: number; // Add this property
+  distance_in_miles?: number;
+  distanceValue?: number;
 }

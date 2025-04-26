@@ -41,17 +41,22 @@ const MapPage: React.FC = () => {
     searchTerm: searchTerm,
   });
 
-  const establishments: EstablishmentWithDistance[] = supabaseEstablishments.map(est => ({
-    id: est.id,
-    name: est.name,
-    address: est.address,
-    latitude: est.latitude,
-    longitude: est.longitude,
-    cocktailCount: est.cocktail_count || est.cocktailCount || 0,
-    image: est.image_url || est.image,
-    distanceInMiles: est.distanceInMiles || est.distance_in_miles || est.distanceValue,
-    distance: est.distance || `${est.distanceInMiles || est.distance_in_miles || 0} mi`
-  }));
+  const establishments: EstablishmentWithDistance[] = supabaseEstablishments.map(est => {
+    const distanceValue = est.distance_in_miles || est.distanceValue || 0;
+    return {
+      id: est.id,
+      name: est.name,
+      address: est.address,
+      latitude: est.latitude,
+      longitude: est.longitude,
+      cocktailCount: est.cocktail_count || est.cocktailCount || 0,
+      image: est.image_url || est.image,
+      distanceValue,
+      distanceInMiles: distanceValue,
+      distance_in_miles: distanceValue,
+      distance: est.distance || `${distanceValue} mi`
+    };
+  });
 
   useEffect(() => {
     if (isMobile) {
