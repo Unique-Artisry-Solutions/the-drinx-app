@@ -1,23 +1,14 @@
 
-import { NavigationType } from '../NavigationTypes';
+import { LucideIcon } from 'lucide-react';
 
-export interface MobileNavigationProps {
-  type: NavigationType;
-  userType: 'individual' | 'establishment' | 'promoter';
-  forceGuestNavigation?: boolean;
-}
-
-export interface NavItemType {
-  icon: React.ElementType;
+export interface NavItem {
+  icon: LucideIcon;
   label: string;
   path: string;
-}
-
-// Add NavItem as an alias to NavItemType for backward compatibility
-export type NavItem = NavItemType;
-
-export interface NavItemProps {
-  item: NavItemType;
-  isActive: boolean;
-  onClick: (e: React.MouseEvent) => void;
+  dropdown?: {
+    items: Array<{
+      label: string;
+      path: string;
+    }>;
+  };
 }
