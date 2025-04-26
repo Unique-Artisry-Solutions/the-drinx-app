@@ -1,8 +1,32 @@
+
 import { useState, useCallback } from 'react';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { EventType } from '@/types/EventTypes';
+
+// Interface for raw event data from database
+interface RawEventData {
+  id: string;
+  name: string;
+  description: string | null;
+  date: string;
+  time: string;
+  venue_id: string | null;
+  image_url: string | null;
+  promotional_materials: string[] | null;
+  status: 'draft' | 'published' | 'cancelled' | 'completed';
+  created_at: string;
+  updated_at: string;
+  created_by: string;
+  event_ticket_types: Array<{
+    id: string;
+    name: string;
+    price: number;
+    description: string;
+    quantity: number;
+  }>;
+}
 
 export const useLocationFilteredEvents = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -24,7 +48,6 @@ export const useLocationFilteredEvents = () => {
     setError(null);
 
     try {
-      // Get all events first (we'll filter by location client-side)
       const { data: events, error } = await supabase
         .from('events')
         .select(`
@@ -34,7 +57,6 @@ export const useLocationFilteredEvents = () => {
         .eq('status', 'published');
 
       if (error) throw error;
-
       if (!events || events.length === 0) return [];
 
       // Add location data from notifications
@@ -56,8 +78,8 @@ export const useLocationFilteredEvents = () => {
 
       // Filter and add distance information
       const filteredEvents = events
-        .map(event => {
-          const coordinates = eventCoordinates.get(event.id);
+        .map((rawEvent: RawEventData) => {
+          const coordinates = eventCoordinates.get(rawEvent.id);
           if (!coordinates) return null;
 
           const distance = calculateDistance(
@@ -67,11 +89,20 @@ export const useLocationFilteredEvents = () => {
           );
 
           if (distance !== null && distance <= radiusMiles) {
-            // Create a properly typed EventType object
-            return {
-              ...event,
+            // Create a properly typed EventType object with all required fields
+            const formattedEvent: EventType = {
+              id: rawEvent.id,
+              name: rawEvent.name,
+              description: rawEvent.description || '',
+              date: rawEvent.date,
+              time: rawEvent.time,
+              venue_id: rawEvent.venue_id,
+              image_url: rawEvent.image_url || '',
+              promotional_materials: rawEvent.promotional_materials || [],
+              status: rawEvent.status,
               distance,
-              ticketTypes: event.event_ticket_types.map((ticket: any) => ({
+              // Map ticket types with proper structure
+              ticketTypes: rawEvent.event_ticket_types.map(ticket => ({
                 id: ticket.id,
                 name: ticket.name,
                 price: ticket.price,
@@ -80,14 +111,34 @@ export const useLocationFilteredEvents = () => {
                 sold: 0,
                 available: ticket.quantity
               })),
-              createdAt: event.created_at,
-              updatedAt: event.updated_at,
-              createdBy: event.created_by
-            } as EventType;
+              // Add required venue information
+              venue: {
+                id: rawEvent.venue_id || '',
+                name: '', // Default empty string for venue name
+                address: '' // Default empty string for venue address
+              },
+              // Add required attendees information
+              attendees: {
+                registered: 0,
+                capacity: rawEvent.event_ticket_types.reduce((sum, ticket) => sum + ticket.quantity, 0),
+                checkedIn: 0
+              },
+              // Add required revenue information
+              revenue: {
+                total: 0,
+                ticketSales: 0,
+                additionalSales: 0
+              },
+              createdAt: rawEvent.created_at,
+              updatedAt: rawEvent.updated_at,
+              createdBy: rawEvent.created_by
+            };
+
+            return formattedEvent;
           }
           return null;
         })
-        .filter(Boolean) as EventType[];
+        .filter((event): event is EventType => event !== null);
 
       return filteredEvents.sort((a, b) => 
         (a.distance || Infinity) - (b.distance || Infinity)
