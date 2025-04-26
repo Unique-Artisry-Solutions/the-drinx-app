@@ -34,13 +34,13 @@ export const usePromoterMessages = (userId: string | undefined) => {
 
       const threads: MessageThread[] = (threadsData || []).map(thread => ({
         id: thread.id,
-        promoter_id: thread.promoter_id, // Ensure this is always provided
+        promoter_id: thread.promoter_id,
         venue_id: thread.venue_id,
         subject: thread.subject,
         timestamp: thread.last_message_at,
         isRead: false,
         isArchived: thread.is_archived,
-        venueName: thread.venues?.name, // Fix: access name property on the object, not the array
+        venueName: thread.venues ? thread.venues.name : undefined,
         lastMessage: ''
       }));
 

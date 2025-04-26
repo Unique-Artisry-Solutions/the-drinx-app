@@ -62,10 +62,7 @@ export const useMessageSystem = (userType: 'establishment') => {
           .order('last_message_at', { ascending: false })
       );
 
-      if (threadsError) {
-        console.error('Error fetching establishment threads:', threadsError);
-        throw threadsError;
-      }
+      if (threadsError) throw threadsError;
       
       const processedThreads: MessageThread[] = [];
       
@@ -156,7 +153,7 @@ export const useMessageSystem = (userType: 'establishment') => {
             timestamp: thread.last_message_at,
             isRead: isRead,
             isArchived: thread.is_archived,
-            venueName: thread.venues?.name,
+            venueName: thread.venues ? thread.venues.name : undefined,
             messages: messages.reverse()
           });
         } catch (err) {

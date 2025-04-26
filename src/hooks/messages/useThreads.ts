@@ -42,12 +42,12 @@ export const useThreads = (userType: UserType, userId: string | undefined) => {
       const processedThreads: MessageThread[] = threadsData?.map(thread => ({
         id: thread.id,
         venue_id: thread.venue_id,
-        promoter_id: thread.promoter_id, // Ensure this is always defined
+        promoter_id: thread.promoter_id,
         subject: thread.subject,
         timestamp: thread.last_message_at,
-        isRead: false, // Will be updated by useThreadReadStatus
+        isRead: false,
         isArchived: thread.is_archived,
-        venueName: thread.venues?.name, // Fix: access name property on the object, not the array
+        venueName: thread.venues ? thread.venues.name : undefined
       })) || [];
 
       setThreads(processedThreads);
