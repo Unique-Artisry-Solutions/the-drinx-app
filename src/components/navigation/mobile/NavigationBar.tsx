@@ -5,10 +5,11 @@ import { useTheme } from '@/contexts/ThemeContext';
 import HomeButton from './HomeButton';
 import NavItem from './NavItem';
 import { NavItem as NavItemType } from './types';
+import { NavigationType } from '../NavigationTypes';
 
 interface NavigationBarProps {
   navItems: NavItemType[];
-  type: string;
+  type: NavigationType;
   handleHomeClick: (e: React.MouseEvent) => void;
   handleProfileClick: (item: NavItemType, e: React.MouseEvent) => void;
   getProfilePath: () => string;

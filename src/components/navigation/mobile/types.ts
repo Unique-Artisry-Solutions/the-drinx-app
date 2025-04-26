@@ -1,5 +1,6 @@
 
 import { LucideIcon } from 'lucide-react';
+import { NavigationType } from '../NavigationTypes';
 
 export interface NavItem {
   icon: LucideIcon;
@@ -11,4 +12,10 @@ export interface NavItem {
       path: string;
     }>;
   };
+}
+
+export interface MobileNavigationProps {
+  type: NavigationType;
+  userType: 'individual' | 'establishment' | 'promoter';
+  forceGuestNavigation?: boolean;
 }
