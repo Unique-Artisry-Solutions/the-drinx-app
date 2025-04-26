@@ -13,8 +13,10 @@ type FetchEstablishmentsOptions = {
 }
 
 // Extend the Establishment type to include the distance value for filtering
-type EstablishmentWithDistance = Establishment & {
+type EstablishmentWithDistanceTemp = Establishment & {
   distanceValue?: number;
+  distance?: string;
+  distance_in_miles?: number;
 };
 
 const fetchEstablishmentsFromSupabase = async ({ 
@@ -22,7 +24,7 @@ const fetchEstablishmentsFromSupabase = async ({
   longitude, 
   searchTerm,
   maxDistance = 20
-}: FetchEstablishmentsOptions): Promise<EstablishmentWithDistance[]> => {
+}: FetchEstablishmentsOptions): Promise<EstablishmentWithDistanceTemp[]> => {
   let query = supabaseClient
     .from('establishments')
     .select('*');
@@ -55,8 +57,9 @@ const fetchEstablishmentsFromSupabase = async ({
         image: establishment.image_url,
         distance: `${distance.toFixed(1)} mi`,
         distanceValue: distance, // Add raw distance for filtering
+        distance_in_miles: distance, // Include for backward compatibility
         created_at: establishment.created_at
-      } as EstablishmentWithDistance;
+      } as EstablishmentWithDistanceTemp;
     }).filter(est => est.distanceValue! <= maxDistance); // Filter by distance
   }
   
@@ -65,12 +68,12 @@ const fetchEstablishmentsFromSupabase = async ({
     ...establishment,
     cocktailCount: establishment.cocktail_count,
     image: establishment.image_url,
-  })) as EstablishmentWithDistance[] || [];
+  })) as EstablishmentWithDistanceTemp[] || [];
 };
 
 export const useEstablishments = (options: FetchEstablishmentsOptions = {}) => {
-  const [establishments, setEstablishments] = useState<EstablishmentWithDistance[]>([]);
-  const [filteredEstablishments, setFilteredEstablishments] = useState<EstablishmentWithDistance[]>([]);
+  const [establishments, setEstablishments] = useState<EstablishmentWithDistanceTemp[]>([]);
+  const [filteredEstablishments, setFilteredEstablishments] = useState<EstablishmentWithDistanceTemp[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>(options.searchTerm || '');
   const [maxDistance, setMaxDistance] = useState<number>(options.maxDistance || 20);
   
