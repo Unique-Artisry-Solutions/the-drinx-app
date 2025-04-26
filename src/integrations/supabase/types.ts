@@ -702,6 +702,97 @@ export type Database = {
         }
         Relationships: []
       }
+      event_ticket_types: {
+        Row: {
+          created_at: string | null
+          description: string
+          event_id: string | null
+          id: string
+          name: string
+          price: number
+          quantity: number
+        }
+        Insert: {
+          created_at?: string | null
+          description: string
+          event_id?: string | null
+          id?: string
+          name: string
+          price: number
+          quantity: number
+        }
+        Update: {
+          created_at?: string | null
+          description?: string
+          event_id?: string | null
+          id?: string
+          name?: string
+          price?: number
+          quantity?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_ticket_types_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      events: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          date: string
+          description: string | null
+          id: string
+          image_url: string | null
+          name: string
+          promotional_materials: string[] | null
+          status: Database["public"]["Enums"]["event_status"] | null
+          time: string
+          updated_at: string | null
+          venue_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          date: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          name: string
+          promotional_materials?: string[] | null
+          status?: Database["public"]["Enums"]["event_status"] | null
+          time: string
+          updated_at?: string | null
+          venue_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          date?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          name?: string
+          promotional_materials?: string[] | null
+          status?: Database["public"]["Enums"]["event_status"] | null
+          time?: string
+          updated_at?: string | null
+          venue_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "events_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "establishments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       favorites: {
         Row: {
           created_at: string | null
@@ -2320,6 +2411,7 @@ export type Database = {
       }
     }
     Enums: {
+      event_status: "draft" | "published" | "cancelled" | "completed"
       notification_channel: "in_app" | "email" | "push"
       notification_priority: "low" | "medium" | "high" | "urgent"
       user_role: "individual" | "establishment" | "promoter"
@@ -2438,6 +2530,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      event_status: ["draft", "published", "cancelled", "completed"],
       notification_channel: ["in_app", "email", "push"],
       notification_priority: ["low", "medium", "high", "urgent"],
       user_role: ["individual", "establishment", "promoter"],
