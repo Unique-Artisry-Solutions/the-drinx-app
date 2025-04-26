@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -22,16 +23,16 @@ export const useUserLocation = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return false;
       
-      // Store location in a separate location_history table instead of profiles
+      // Store location in profiles table instead of location_history
       const { error } = await supabase
-        .from('location_history')
-        .insert({
-          user_id: user.id,
-          latitude,
-          longitude,
-          accuracy,
-          timestamp: new Date().toISOString()
-        });
+        .from('profiles')
+        .update({
+          last_location_latitude: latitude,
+          last_location_longitude: longitude,
+          last_location_accuracy: accuracy,
+          last_location_timestamp: new Date().toISOString()
+        })
+        .eq('id', user.id);
       
       if (error) {
         console.error('Error updating location:', error);

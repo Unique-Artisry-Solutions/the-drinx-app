@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
@@ -97,7 +98,30 @@ export function usePushNotifications() {
       console.log('Service worker ready:', registration);
       
       const savedSubscription = await createPushSubscription(registration, user.id);
-      setSubscription(savedSubscription);
+      
+      // Transform the database subscription record into the PushSubscription type
+      // that our application expects
+      if (savedSubscription) {
+        const transformedSubscription: PushSubscription = {
+          id: savedSubscription.id,
+          endpoint: savedSubscription.endpoint,
+          p256dh: savedSubscription.p256dh,
+          auth: savedSubscription.auth,
+          user_id: savedSubscription.user_id,
+          device_info: savedSubscription.device_info ? {
+            userAgent: typeof savedSubscription.device_info === 'object' 
+              ? savedSubscription.device_info.userAgent 
+              : undefined,
+            language: typeof savedSubscription.device_info === 'object' 
+              ? savedSubscription.device_info.language 
+              : undefined
+          } : { userAgent: undefined, language: undefined },
+          created_at: savedSubscription.created_at,
+          updated_at: savedSubscription.updated_at
+        };
+        
+        setSubscription(transformedSubscription);
+      }
       
       toast({
         title: "Success",
@@ -119,7 +143,7 @@ export function usePushNotifications() {
     } finally {
       setIsLoading(false);
     }
-  }, [checkPermissions, checkPushSupport, createPushSubscription, registerServiceWorker, toast]);
+  }, [checkPermissions, checkPushSupport, createPushSubscription, registerServiceWorker, setHasServiceWorker, toast]);
 
   useEffect(() => {
     let isMounted = true;
@@ -150,7 +174,27 @@ export function usePushNotifications() {
               .limit(1);
             
             if (subscriptions && subscriptions.length > 0) {
-              setSubscription(subscriptions[0]);
+              // Transform the subscription data
+              const dbSubscription = subscriptions[0];
+              const transformedSubscription: PushSubscription = {
+                id: dbSubscription.id,
+                endpoint: dbSubscription.endpoint,
+                p256dh: dbSubscription.p256dh,
+                auth: dbSubscription.auth,
+                user_id: dbSubscription.user_id,
+                device_info: dbSubscription.device_info ? {
+                  userAgent: typeof dbSubscription.device_info === 'object' 
+                    ? dbSubscription.device_info.userAgent 
+                    : undefined,
+                  language: typeof dbSubscription.device_info === 'object' 
+                    ? dbSubscription.device_info.language 
+                    : undefined
+                } : { userAgent: undefined, language: undefined },
+                created_at: dbSubscription.created_at,
+                updated_at: dbSubscription.updated_at
+              };
+              
+              setSubscription(transformedSubscription);
             }
           }
         }

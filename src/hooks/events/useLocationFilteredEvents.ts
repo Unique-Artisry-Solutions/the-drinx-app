@@ -1,9 +1,9 @@
+
 import { useState, useCallback } from 'react';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { EventType } from '@/types/EventTypes';
-import { eventNotificationSchedules } from '@/lib/typedSupabase';
 
 export const useLocationFilteredEvents = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -39,16 +39,18 @@ export const useLocationFilteredEvents = () => {
       if (!events || events.length === 0) return [];
 
       // Add location data from notification schedules
-      const { data: notificationSchedules } = await eventNotificationSchedules()
-        .select('event_id, coordinates')
-        .eq('location_based', true);
+      const { data: notificationSchedules } = await supabase
+        .from('notifications')
+        .select('metadata, event_id')
+        .contains('metadata', { location_based: true });
 
       // Create a map of event_id to coordinates
       const eventCoordinates = new Map();
       if (notificationSchedules) {
         notificationSchedules.forEach((schedule: any) => {
-          if (schedule.coordinates) {
-            eventCoordinates.set(schedule.event_id, schedule.coordinates);
+          const metadata = schedule.metadata || {};
+          if (metadata.coordinates) {
+            eventCoordinates.set(metadata.event_id, metadata.coordinates);
           }
         });
       }
@@ -66,14 +68,22 @@ export const useLocationFilteredEvents = () => {
           );
 
           if (distance !== null && distance <= radiusMiles) {
+            // Create a properly typed EventType object
             return {
-              ...event,
-              distance,
+              id: event.id,
+              name: event.name,
+              description: event.description || '',
+              date: event.date,
+              time: event.time,
+              venue_id: event.venue_id,
               venue: {
                 id: event.venue_id || '',
                 name: '',
                 address: ''
               },
+              image_url: event.image_url,
+              promotional_materials: event.promotional_materials || [],
+              status: event.status,
               ticketTypes: event.event_ticket_types.map((ticket: any) => ({
                 id: ticket.id,
                 name: ticket.name,
@@ -92,29 +102,33 @@ export const useLocationFilteredEvents = () => {
                 total: 0,
                 ticketSales: 0,
                 additionalSales: 0
-              }
+              },
+              distance: distance,
+              createdAt: event.created_at,
+              updatedAt: event.updated_at,
+              createdBy: event.created_by
             } as EventType;
-        }
-        return null;
-      })
-      .filter(Boolean) as EventType[];
+          }
+          return null;
+        })
+        .filter(Boolean) as EventType[];
 
-    return filteredEvents.sort((a, b) => 
-      (a.distance || Infinity) - (b.distance || Infinity)
-    );
+      return filteredEvents.sort((a, b) => 
+        (a.distance || Infinity) - (b.distance || Infinity)
+      );
 
-  } catch (err: any) {
-    setError(err.message);
-    toast({
-      title: "Error retrieving nearby events",
-      description: err.message,
-      variant: "destructive",
-    });
-    return [];
-  } finally {
-    setIsLoading(false);
-  }
-}, [userLocation, calculateDistance, toast]);
+    } catch (err: any) {
+      setError(err.message);
+      toast({
+        title: "Error retrieving nearby events",
+        description: err.message,
+        variant: "destructive",
+      });
+      return [];
+    } finally {
+      setIsLoading(false);
+    }
+  }, [userLocation, calculateDistance, toast]);
 
   return {
     getLocationFilteredEvents,

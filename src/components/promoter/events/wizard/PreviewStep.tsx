@@ -54,7 +54,7 @@ const PreviewStep: React.FC = () => {
             
             <div className="flex items-center text-gray-600">
               <MapPin className="h-4 w-4 mr-2" />
-              <span>{formData.venue || 'No venue selected'}</span>
+              <span>{formData.venueId || 'No venue selected'}</span>
             </div>
             
             {formData.imageUrl && (
@@ -99,7 +99,7 @@ const PreviewStep: React.FC = () => {
               </div>
             </div>
             
-            {formData.promotionalMaterials.length > 0 && (
+            {formData.promotionalMaterials && formData.promotionalMaterials.length > 0 && (
               <div className="pt-2">
                 <h3 className="text-lg font-medium">Promotional Materials</h3>
                 <ul className="list-disc list-inside mt-1 text-blue-600">

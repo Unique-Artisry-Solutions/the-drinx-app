@@ -29,7 +29,7 @@ export interface EventVenue {
 }
 
 export interface EventNotificationScheduleInput {
-  id: string; // Add this field
+  id: string; // Required field now
   title: string;
   content: string;
   priority: 'low' | 'medium' | 'high' | 'urgent';
@@ -44,7 +44,7 @@ export interface EventFormData {
   description: string;
   date: string;
   time: string;
-  venueId?: string;
+  venueId?: string; // Changed from venue to venueId to match usage
   imageUrl?: string;
   promotionalMaterials?: string[];
   ticketTypes: Omit<EventTicketType, 'id' | 'sold' | 'available'>[];

@@ -81,6 +81,6 @@ export interface CustomDatabase extends Database {
 export const supabase = supabaseClient;
 
 // Create a typed helper function for accessing tables
-export function fromTable<T = any>(tableName: string) {
-  return supabase.from(tableName);
+export function fromTable<T = any>(tableName: keyof Database['public']['Tables'] | keyof Database['public']['Views'] | string) {
+  return supabase.from(tableName as string);
 }
