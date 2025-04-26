@@ -20,13 +20,34 @@ export const useUserLocation = () => {
 
   const updateServerLocation = useCallback(async (latitude: number, longitude: number, accuracy?: number) => {
     try {
-      const { error } = await supabase.rpc('update_user_location', {
-        p_latitude: latitude,
-        p_longitude: longitude,
-        p_accuracy: accuracy || null
-      });
+      // Store user location directly in the user_locations table
+      const { error } = await supabase
+        .from('user_locations')
+        .insert({
+          user_id: (await supabase.auth.getUser()).data.user?.id,
+          latitude,
+          longitude,
+          accuracy: accuracy || null
+        });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error inserting location:', error);
+        return false;
+      }
+      
+      // Also update the profiles table for quick access
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          latitude,
+          longitude,
+          location_updated_at: new Date().toISOString()
+        })
+        .eq('id', (await supabase.auth.getUser()).data.user?.id);
+      
+      if (profileError) {
+        console.error('Error updating profile location:', profileError);
+      }
       
       return true;
     } catch (err) {
@@ -102,7 +123,7 @@ export const useUserLocation = () => {
           setIsLoading(false);
           toast({
             title: "Location access denied",
-            description: "Enable location services to find nearby establishments.",
+            description: "Enable location services to find nearby events.",
             variant: "destructive",
           });
         }

@@ -26,20 +26,25 @@ export const SubscriptionManagement = () => {
     const fetchSettings = async () => {
       if (!user?.id) return;
       
-      const { data, error } = await supabase
-        .from('subscription_settings')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-      
-      if (error) {
-        console.error('Error fetching subscription settings:', error);
-        return;
-      }
-      
-      if (data) {
-        setLocationSharing(data.location_sharing);
-        setNotificationRadius(data.notification_radius);
+      try {
+        // Use fromTable from lib/supabase instead
+        const { data, error } = await supabase
+          .from('subscription_settings')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+        
+        if (error && error.code !== 'PGRST116') {
+          console.error('Error fetching subscription settings:', error);
+          return;
+        }
+        
+        if (data) {
+          setLocationSharing(data.location_sharing);
+          setNotificationRadius(data.notification_radius);
+        }
+      } catch (err) {
+        console.error('Error in subscription settings fetch:', err);
       }
     };
     
@@ -59,6 +64,8 @@ export const SubscriptionManagement = () => {
           location_sharing: locationSharing,
           notification_radius: notificationRadius,
           updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'user_id'
         });
       
       if (error) throw error;
