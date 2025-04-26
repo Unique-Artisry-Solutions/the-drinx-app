@@ -1,4 +1,3 @@
-
 export interface NotificationMetadata {
   priority: 'low' | 'medium' | 'high' | 'urgent';
   sound: boolean;
@@ -6,6 +5,12 @@ export interface NotificationMetadata {
   timeWindowEnabled: boolean;
   quietHoursStart: string;
   quietHoursEnd: string;
+  locationBased?: boolean;
+  coordinates?: {
+    latitude: number;
+    longitude: number;
+  };
+  targetRadius?: number;
 }
 
 export interface NotificationDeliveryStatus {
@@ -66,6 +71,13 @@ export interface Notification {
   created_at: string;
   updated_at: string;
   recipient_type?: 'individual' | 'establishment' | 'promoter';
+  location_based?: boolean;
+  coordinates?: {
+    latitude: number;
+    longitude: number;
+  };
+  target_radius?: number;
+  scheduled_for?: string;
 }
 
 export interface PromoterNotificationType {
@@ -129,4 +141,21 @@ export interface NotificationFormData {
       end: string;
     };
   }>;
+}
+
+export interface EventNotificationSchedule {
+  id: string;
+  event_id: string;
+  title: string;
+  content: string;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  scheduled_for: string;
+  location_based: boolean;
+  coordinates?: {
+    latitude: number;
+    longitude: number;
+  };
+  target_radius?: number;
+  created_at: string;
+  updated_at: string;
 }

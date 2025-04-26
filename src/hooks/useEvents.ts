@@ -3,10 +3,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { EventType, EventFormData } from '@/types/EventTypes';
+import { useUserLocation } from '@/hooks/useUserLocation';
 
 export const useEvents = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { userLocation } = useUserLocation();
 
   const { data: events = [], isLoading } = useQuery({
     queryKey: ['events'],
@@ -69,6 +71,27 @@ export const useEvents = () => {
         if (ticketError) throw ticketError;
       }
 
+      // Create notification schedules if provided
+      if (eventData.notificationSchedules && eventData.notificationSchedules.length > 0) {
+        // Schedule event notifications
+        const { error: notificationError } = await supabase
+          .from('event_notification_schedules')
+          .insert(
+            eventData.notificationSchedules.map(schedule => ({
+              event_id: eventResponse.id,
+              title: schedule.title || `Reminder: ${eventData.name}`,
+              content: schedule.content || `Don't forget: ${eventData.name} is happening soon!`,
+              priority: schedule.priority || 'medium',
+              scheduled_for: schedule.scheduledFor,
+              location_based: !!schedule.locationBased,
+              coordinates: schedule.coordinates || null,
+              target_radius: schedule.targetRadius || null
+            }))
+          );
+
+        if (notificationError) throw notificationError;
+      }
+
       return eventResponse;
     },
     onSuccess: () => {
@@ -87,9 +110,95 @@ export const useEvents = () => {
     },
   });
 
+  // New function to schedule notifications for an existing event
+  const scheduleEventNotifications = useMutation({
+    mutationFn: async ({ 
+      eventId, 
+      notifications 
+    }: { 
+      eventId: string, 
+      notifications: Array<{
+        title: string;
+        content: string;
+        priority: 'low' | 'medium' | 'high' | 'urgent';
+        scheduledFor: string;
+        locationBased?: boolean;
+        coordinates?: { latitude: number; longitude: number };
+        targetRadius?: number;
+      }> 
+    }) => {
+      const { error } = await supabase
+        .from('event_notification_schedules')
+        .insert(
+          notifications.map(notification => ({
+            event_id: eventId,
+            title: notification.title,
+            content: notification.content,
+            priority: notification.priority,
+            scheduled_for: notification.scheduledFor,
+            location_based: !!notification.locationBased,
+            coordinates: notification.coordinates || null,
+            target_radius: notification.targetRadius || null
+          }))
+        );
+
+      if (error) throw error;
+      
+      return { success: true };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+      toast({
+        title: 'Notifications scheduled',
+        description: 'Event notifications have been scheduled successfully.',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error scheduling notifications',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // New function to get location-filtered events
+  const getLocationFilteredEvents = async (radius: number = 10) => {
+    if (!userLocation) {
+      toast({
+        title: 'Location required',
+        description: 'Please enable location services to use this feature.',
+        variant: 'destructive',
+      });
+      return [];
+    }
+
+    try {
+      // This is a simple approach - for production, you'd want to use PostGIS or a similar geospatial extension
+      const { data, error } = await supabase
+        .rpc('get_events_by_distance', { 
+          user_lat: userLocation.latitude,
+          user_lng: userLocation.longitude,
+          radius_miles: radius
+        });
+
+      if (error) throw error;
+      return data || [];
+    } catch (error: any) {
+      toast({
+        title: 'Error filtering events',
+        description: error.message,
+        variant: 'destructive',
+      });
+      return [];
+    }
+  };
+
   return {
     events,
     isLoading,
     createEvent,
+    scheduleEventNotifications,
+    getLocationFilteredEvents,
   };
 };

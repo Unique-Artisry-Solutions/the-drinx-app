@@ -22,6 +22,9 @@ export const pushNotificationSystem: FeatureItem = {
     - [x] API endpoints for notification management
     - [x] Cross-role notification support (individual-to-establishment, establishment-to-promoter)
     - [x] Specialized notification triggers for key user interactions
+    - [x] Location-based filtering capabilities
+    - [x] Automated event notification scheduling
+    - [x] Radius-based targeting for proximity alerts
   `,
   testSteps: [
     "Send test notifications to different user types",
@@ -29,6 +32,9 @@ export const pushNotificationSystem: FeatureItem = {
     "Test real-time delivery mechanisms",
     "Validate notification triggers",
     "Check multi-channel delivery",
-    "Verify cross-role notifications (individual to establishment, establishment to promoter)"
+    "Verify cross-role notifications (individual to establishment, establishment to promoter)",
+    "Test location-based filtering with different radius settings",
+    "Verify automated event notification scheduling",
+    "Confirm radius-based targeting accuracy"
   ]
 };
