@@ -1,30 +1,10 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Database } from '@/integrations/supabase/types';
+import { PostgrestFilterBuilder } from '@supabase/postgrest-js';
 
 // Define the types for commonly used tables
-export type EventNotificationSchedule = {
-  id?: string;
-  event_id: string;
-  title: string;
-  content: string;
-  priority: 'low' | 'medium' | 'high' | 'urgent';
-  scheduled_for: string;
-  location_based: boolean;
-  coordinates?: { latitude: number; longitude: number } | null;
-  target_radius?: number | null;
-  created_at?: string;
-  updated_at?: string;
-};
-
-export type SubscriptionSettings = {
-  id?: string;
-  user_id: string;
-  location_sharing: boolean;
-  notification_radius: number;
-  created_at?: string;
-  updated_at?: string;
-};
+export type EventNotificationSchedule = Database['public']['Tables']['event_notification_schedules']['Row'];
+export type SubscriptionSettings = Database['public']['Tables']['subscription_settings']['Row'];
 
 // Helper function to get the current user ID
 export async function getCurrentUserId() {
@@ -34,15 +14,13 @@ export async function getCurrentUserId() {
 
 // Type-safe database access functions
 export function eventNotificationSchedules() {
-  return supabase
-    .from('event_notification_schedules')
-    .withConverter<EventNotificationSchedule>();
+  return supabase.from('event_notification_schedules')
+    .returns<EventNotificationSchedule>();
 }
 
 export function subscriptionSettings() {
-  return supabase
-    .from('subscription_settings')
-    .withConverter<SubscriptionSettings>();
+  return supabase.from('subscription_settings')
+    .returns<SubscriptionSettings>();
 }
 
 export function swigCircuits() {

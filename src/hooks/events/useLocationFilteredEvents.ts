@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import { supabase } from '@/integrations/supabase/client';
@@ -42,7 +41,6 @@ export const useLocationFilteredEvents = () => {
       // Add location data from notification schedules
       const { data: notificationSchedules } = await eventNotificationSchedules()
         .select('event_id, coordinates')
-        .in('event_id', events.map(event => event.id))
         .eq('location_based', true);
 
       // Create a map of event_id to coordinates
@@ -62,31 +60,29 @@ export const useLocationFilteredEvents = () => {
           if (!coordinates) return null;
 
           const distance = calculateDistance(
-            userLocation.latitude,
-            userLocation.longitude,
             coordinates.latitude,
-            coordinates.longitude
+            coordinates.longitude,
+            { units: 'miles' }
           );
 
           if (distance !== null && distance <= radiusMiles) {
-            // Transform to match EventType
             return {
               ...event,
               distance,
               venue: {
                 id: event.venue_id || '',
-                name: '',  // We'll need to fetch this separately if needed
+                name: '',
                 address: ''
               },
-              ticketTypes: event.event_ticket_types ? event.event_ticket_types.map((ticket: any) => ({
+              ticketTypes: event.event_ticket_types.map((ticket: any) => ({
                 id: ticket.id,
                 name: ticket.name,
                 price: ticket.price,
                 description: ticket.description,
                 quantity: ticket.quantity,
-                sold: 0,  // Default values
+                sold: 0,
                 available: ticket.quantity
-              })) : [],
+              })),
               attendees: {
                 registered: 0,
                 capacity: 0,
@@ -96,34 +92,29 @@ export const useLocationFilteredEvents = () => {
                 total: 0,
                 ticketSales: 0,
                 additionalSales: 0
-              },
-              createdAt: event.created_at,
-              updatedAt: event.updated_at,
-              createdBy: event.created_by
+              }
             } as EventType;
-          }
-          return null;
-        })
-        .filter(Boolean) as EventType[];
+        }
+        return null;
+      })
+      .filter(Boolean) as EventType[];
 
-      // Sort by distance
-      filteredEvents.sort((a: EventType, b: EventType) => 
-        (a.distance || Infinity) - (b.distance || Infinity)
-      );
+    return filteredEvents.sort((a, b) => 
+      (a.distance || Infinity) - (b.distance || Infinity)
+    );
 
-      return filteredEvents;
-    } catch (err: any) {
-      setError(err.message);
-      toast({
-        title: "Error retrieving nearby events",
-        description: err.message,
-        variant: "destructive",
-      });
-      return [];
-    } finally {
-      setIsLoading(false);
-    }
-  }, [userLocation, calculateDistance, toast]);
+  } catch (err: any) {
+    setError(err.message);
+    toast({
+      title: "Error retrieving nearby events",
+      description: err.message,
+      variant: "destructive",
+    });
+    return [];
+  } finally {
+    setIsLoading(false);
+  }
+}, [userLocation, calculateDistance, toast]);
 
   return {
     getLocationFilteredEvents,

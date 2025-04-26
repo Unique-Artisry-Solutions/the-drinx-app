@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Search } from 'lucide-react';
+
 type Venue = {
   id: string;
   name: string;
@@ -29,6 +30,7 @@ const mockVenues: Venue[] = [{
   name: 'The Rooftop',
   address: '101 High St, Downtown'
 }];
+
 const VenueSelectionStep: React.FC = () => {
   const {
     formData,
@@ -36,6 +38,7 @@ const VenueSelectionStep: React.FC = () => {
   } = useEventWizard();
   const [searchTerm, setSearchTerm] = useState('');
   const [venues, setVenues] = useState<Venue[]>(mockVenues);
+
   useEffect(() => {
     if (searchTerm) {
       const filtered = mockVenues.filter(venue => venue.name.toLowerCase().includes(searchTerm.toLowerCase()) || venue.address.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -44,12 +47,13 @@ const VenueSelectionStep: React.FC = () => {
       setVenues(mockVenues);
     }
   }, [searchTerm]);
+
   const handleVenueSelect = (venue: Venue) => {
     updateFormData({
-      venue: venue.name,
       venueId: venue.id
     });
   };
+
   return <Card className="shadow-md">
       <CardContent className="pt-6 my-px">
         <div className="space-y-6">
@@ -89,4 +93,5 @@ const VenueSelectionStep: React.FC = () => {
       </CardContent>
     </Card>;
 };
+
 export default VenueSelectionStep;
