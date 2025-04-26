@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Home, Map, Route, Megaphone, BarChart2, Building, MessageSquare, Calendar } from 'lucide-react';
@@ -35,9 +34,8 @@ const UserNavLinks: React.FC<UserNavLinksProps> = ({ userType }) => {
   
   if (userType === 'promoter') {
     userNavItems.push(
-      { icon: Route, label: 'Create', path: '/create-swig-circuit' },
-      { icon: Building, label: 'Venues', path: '/explore' },
       { icon: Calendar, label: 'Events', path: '/promoter/events' },
+      { icon: Building, label: 'Venues', path: '/explore' },
       { icon: Megaphone, label: 'Dashboard', path: '/promoter/dashboard' },
       { icon: BarChart2, label: 'Analytics', path: '/promoter/analytics' }
     );

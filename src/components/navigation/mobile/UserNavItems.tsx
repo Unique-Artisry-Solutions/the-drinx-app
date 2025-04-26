@@ -1,4 +1,4 @@
-import { Home, Map, User, Route, Megaphone, BarChart2, Building, Bell, Calendar, ChevronDown } from 'lucide-react';
+import { Home, Map, User, Route, Megaphone, BarChart2, Building, Bell, Calendar } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
