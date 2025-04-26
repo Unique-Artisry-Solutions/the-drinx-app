@@ -73,58 +73,24 @@ export const useEvents = () => {
 
       // Create notification schedules if provided
       if (eventData.notificationSchedules && eventData.notificationSchedules.length > 0) {
-        // First, create a SQL function if needed to create the notifications table
-        await supabase.rpc('execute_sql', { 
-          sql_query: `
-            DO $$
-            BEGIN
-              IF NOT EXISTS (
-                SELECT FROM pg_catalog.pg_tables 
-                WHERE schemaname = 'public' 
-                AND tablename = 'event_notification_schedules'
-              ) THEN
-                EXECUTE '
-                  CREATE TABLE public.event_notification_schedules (
-                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                    event_id UUID NOT NULL REFERENCES public.events(id) ON DELETE CASCADE,
-                    title TEXT NOT NULL,
-                    content TEXT NOT NULL,
-                    priority TEXT NOT NULL DEFAULT ''medium'',
-                    scheduled_for TIMESTAMPTZ NOT NULL,
-                    location_based BOOLEAN NOT NULL DEFAULT false,
-                    coordinates JSONB,
-                    target_radius INTEGER,
-                    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-                    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-                  );
-                  
-                  ALTER TABLE public.event_notification_schedules ENABLE ROW LEVEL SECURITY;
-                  
-                  CREATE POLICY "Event creators can manage their event notifications"
-                    ON public.event_notification_schedules
-                    USING (auth.uid() IN (
-                      SELECT created_by FROM public.events WHERE id = event_id
-                    ));
-                ';
-              END IF;
-            END
-            $$;
-          `
-        });
-        
-        // Schedule event notifications
+        // Create notifications for each schedule
         for (const schedule of eventData.notificationSchedules) {
           const { error: notificationError } = await supabase
-            .from('event_notification_schedules')
+            .from('notifications')
             .insert({
-              event_id: eventResponse.id,
+              recipient_id: user.id, // Event creator will receive these notifications
+              recipient_type: 'promoter',
               title: schedule.title || `Reminder: ${eventData.name}`,
               content: schedule.content || `Don't forget: ${eventData.name} is happening soon!`,
               priority: schedule.priority || 'medium',
-              scheduled_for: schedule.scheduledFor,
-              location_based: !!schedule.locationBased,
-              coordinates: schedule.coordinates || null,
-              target_radius: schedule.targetRadius || null
+              metadata: {
+                event_id: eventResponse.id,
+                scheduled_for: schedule.scheduledFor,
+                location_based: !!schedule.locationBased,
+                coordinates: schedule.coordinates || null,
+                target_radius: schedule.targetRadius || null,
+                notification_type: 'event_schedule'
+              }
             });
 
           if (notificationError) throw notificationError;
@@ -166,58 +132,38 @@ export const useEvents = () => {
         targetRadius?: number;
       }> 
     }) => {
-      // First check if the table exists, create it if it doesn't
-      await supabase.rpc('execute_sql', { 
-        sql_query: `
-          DO $$
-          BEGIN
-            IF NOT EXISTS (
-              SELECT FROM pg_catalog.pg_tables 
-              WHERE schemaname = 'public' 
-              AND tablename = 'event_notification_schedules'
-            ) THEN
-              EXECUTE '
-                CREATE TABLE public.event_notification_schedules (
-                  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                  event_id UUID NOT NULL REFERENCES public.events(id) ON DELETE CASCADE,
-                  title TEXT NOT NULL,
-                  content TEXT NOT NULL,
-                  priority TEXT NOT NULL DEFAULT ''medium'',
-                  scheduled_for TIMESTAMPTZ NOT NULL,
-                  location_based BOOLEAN NOT NULL DEFAULT false,
-                  coordinates JSONB,
-                  target_radius INTEGER,
-                  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-                  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-                );
-                
-                ALTER TABLE public.event_notification_schedules ENABLE ROW LEVEL SECURITY;
-                
-                CREATE POLICY "Event creators can manage their event notifications"
-                  ON public.event_notification_schedules
-                  USING (auth.uid() IN (
-                    SELECT created_by FROM public.events WHERE id = event_id
-                  ));
-              ';
-            END IF;
-          END
-          $$;
-        `
-      });
+      // Get the current user's ID
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+      
+      // Get the event to verify ownership
+      const { data: event } = await supabase
+        .from('events')
+        .select('created_by')
+        .eq('id', eventId)
+        .single();
+      
+      if (!event) throw new Error('Event not found');
+      if (event.created_by !== user.id) throw new Error('You do not have permission to schedule notifications for this event');
       
       // Insert notifications one by one to avoid potential errors
       for (const notification of notifications) {
         const { error } = await supabase
-          .from('event_notification_schedules')
+          .from('notifications')
           .insert({
-            event_id: eventId,
+            recipient_id: user.id, // Event creator will receive these notifications
+            recipient_type: 'promoter',
             title: notification.title,
             content: notification.content,
             priority: notification.priority,
-            scheduled_for: notification.scheduledFor,
-            location_based: !!notification.locationBased,
-            coordinates: notification.coordinates || null,
-            target_radius: notification.targetRadius || null
+            metadata: {
+              event_id: eventId,
+              scheduled_for: notification.scheduledFor,
+              location_based: !!notification.locationBased,
+              coordinates: notification.coordinates || null,
+              target_radius: notification.targetRadius || null,
+              notification_type: 'event_schedule'
+            }
           });
         
         if (error) throw error;
@@ -253,16 +199,46 @@ export const useEvents = () => {
     }
 
     try {
-      // This is a simple approach - for production, you'd want to use PostGIS or a similar geospatial extension
-      const { data, error } = await supabase
-        .rpc('get_events_by_distance', { 
-          user_lat: userLocation.latitude,
-          user_lng: userLocation.longitude,
-          radius_miles: radius
-        });
-
-      if (error) throw error;
-      return data || [];
+      // Since we can't use RPC directly, we'll use a client-side filter approach
+      const { data: venues, error: venuesError } = await supabase
+        .from('establishments')
+        .select('id, latitude, longitude');
+      
+      if (venuesError) throw venuesError;
+      
+      // Get all events
+      const { data: allEvents, error: eventsError } = await supabase
+        .from('events')
+        .select('*, establishments(id, latitude, longitude)')
+        .eq('status', 'published');
+      
+      if (eventsError) throw eventsError;
+      
+      // Filter events by distance (Haversine formula)
+      const filteredEvents = allEvents.filter(event => {
+        if (!event.establishments) return false;
+        
+        const venue = event.establishments;
+        if (!venue.latitude || !venue.longitude) return false;
+        
+        // Calculate distance in miles
+        const R = 3958.8; // Earth radius in miles
+        const lat1 = userLocation.latitude * Math.PI/180;
+        const lat2 = venue.latitude * Math.PI/180;
+        const deltaLat = (venue.latitude - userLocation.latitude) * Math.PI/180;
+        const deltaLon = (venue.longitude - userLocation.longitude) * Math.PI/180;
+        
+        const a = 
+          Math.sin(deltaLat/2) * Math.sin(deltaLat/2) +
+          Math.cos(lat1) * Math.cos(lat2) * 
+          Math.sin(deltaLon/2) * Math.sin(deltaLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        const distance = R * c;
+        
+        return distance <= radius;
+      });
+      
+      return filteredEvents;
     } catch (error: any) {
       toast({
         title: 'Error filtering events',

@@ -30,7 +30,7 @@ export interface EventFormData {
   description: string;
   date: string;
   time: string;
-  venue?: string;
+  venue?: string;  // Make venue optional to match with EventTypes.ts
   venueId?: string;
   ticketTypes: TicketType[];
   imageUrl?: string;

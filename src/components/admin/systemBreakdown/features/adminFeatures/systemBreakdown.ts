@@ -18,11 +18,13 @@ export const systemBreakdown: FeatureItem = {
     - [x] Database requirements analysis table created
     - [x] API endpoints for system breakdown data retrieval
     - [x] UI components for system breakdown dashboard
+    - [x] Event notification handling using notifications table
   `,
   testSteps: [
     "Log in as admin and navigate to System Breakdown page",
     "View the overall system status",
     "Drill down into specific feature details",
-    "Verify that the database requirements are properly analyzed"
+    "Verify that the database requirements are properly analyzed",
+    "Check event notification system integration"
   ]
 };
