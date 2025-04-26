@@ -33,6 +33,19 @@ interface RawEventResponse {
   error: any;
 }
 
+// Interface for location notification data
+interface LocationNotificationData {
+  metadata?: {
+    location_based?: boolean;
+    coordinates?: {
+      latitude: number;
+      longitude: number;
+    };
+    event_id?: string;
+  };
+  event_id?: string;
+}
+
 export const useLocationFilteredEvents = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -81,16 +94,18 @@ export const useLocationFilteredEvents = () => {
       if (result.error) throw result.error;
       if (!result.data || result.data.length === 0) return [];
 
-      // Add location data from notifications
-      const { data: locationData } = await supabase
+      // Add location data from notifications with explicit typing
+      const locationResponse = await supabase
         .from('notifications')
         .select('metadata, event_id')
         .eq('metadata->location_based', true);
 
+      const locationData = locationResponse.data as LocationNotificationData[] | null;
+
       // Create a map of event_id to coordinates
-      const eventCoordinates = new Map();
+      const eventCoordinates = new Map<string, {latitude: number, longitude: number}>();
       if (locationData) {
-        locationData.forEach((item: any) => {
+        locationData.forEach((item: LocationNotificationData) => {
           const metadata = item.metadata || {};
           if (metadata.coordinates && metadata.event_id) {
             eventCoordinates.set(metadata.event_id, metadata.coordinates);
