@@ -1,48 +1,47 @@
 
 import { useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useRetry } from '../useRetry';
 import { useToast } from '../use-toast';
 import { MessageThread } from './types';
 
-export const useThreadReadStatus = (userId: string | undefined) => {
+export const useThreadReadStatus = (
+  setThreads: React.Dispatch<React.SetStateAction<MessageThread[]>>,
+  setSelectedThreadId: (id: string) => void
+) => {
+  const { executeWithRetry } = useRetry();
   const { toast } = useToast();
 
-  const updateThreadReadStatus = useCallback(async (threads: MessageThread[]) => {
-    if (!userId) return threads;
-
-    try {
-      const { data: readStatusData } = await supabase
-        .from('message_read_status')
-        .select('*')
-        .in('thread_id', threads.map(t => t.id))
-        .eq('user_id', userId);
-
-      return threads.map(thread => ({
-        ...thread,
-        isRead: readStatusData?.some(status => status.thread_id === thread.id) ?? false
-      }));
-    } catch (err) {
-      console.error('Error fetching read status:', err);
-      return threads;
-    }
-  }, [userId]);
-
   const markThreadAsRead = useCallback(async (threadId: string) => {
-    if (!userId) return;
-
     try {
-      const { error } = await supabase
-        .from('message_read_status')
-        .upsert({
-          thread_id: threadId,
-          user_id: userId,
-          last_read_at: new Date().toISOString()
-        }, {
-          onConflict: 'thread_id,user_id'
-        });
+      const user = await supabase.auth.getUser();
+      if (!user.data.user) {
+        throw new Error("User not authenticated");
+      }
+      
+      console.log(`Marking thread ${threadId} as read`);
+      
+      const { error } = await executeWithRetry(async () =>
+        supabase
+          .from('message_read_status')
+          .upsert({
+            thread_id: threadId,
+            user_id: user.data.user.id,
+            last_read_at: new Date().toISOString()
+          }, {
+            onConflict: 'thread_id,user_id'
+          })
+      );
 
       if (error) throw error;
 
+      setThreads(prevThreads =>
+        prevThreads.map(thread =>
+          thread.id === threadId ? { ...thread, isRead: true } : thread
+        )
+      );
+      
+      setSelectedThreadId(threadId);
     } catch (err: any) {
       console.error('Error marking thread as read:', err);
       toast({
@@ -51,10 +50,7 @@ export const useThreadReadStatus = (userId: string | undefined) => {
         variant: "destructive"
       });
     }
-  }, [userId, toast]);
+  }, [executeWithRetry, setThreads, setSelectedThreadId, toast]);
 
-  return {
-    updateThreadReadStatus,
-    markThreadAsRead
-  };
+  return markThreadAsRead;
 };
