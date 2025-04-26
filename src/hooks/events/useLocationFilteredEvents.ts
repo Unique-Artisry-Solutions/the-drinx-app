@@ -28,6 +28,11 @@ interface RawEventData {
   }>;
 }
 
+interface RawEventResponse {
+  data: RawEventData[] | null;
+  error: any;
+}
+
 export const useLocationFilteredEvents = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,16 +53,33 @@ export const useLocationFilteredEvents = () => {
     setError(null);
 
     try {
-      const { data: events, error } = await supabase
+      const result = await supabase
         .from('events')
         .select(`
-          *,
-          event_ticket_types (*)
+          id,
+          name,
+          description,
+          date,
+          time,
+          venue_id,
+          image_url,
+          promotional_materials,
+          status,
+          created_at,
+          updated_at,
+          created_by,
+          event_ticket_types (
+            id,
+            name,
+            price,
+            description,
+            quantity
+          )
         `)
-        .eq('status', 'published');
+        .eq('status', 'published') as RawEventResponse;
 
-      if (error) throw error;
-      if (!events || events.length === 0) return [];
+      if (result.error) throw result.error;
+      if (!result.data || result.data.length === 0) return [];
 
       // Add location data from notifications
       const { data: locationData } = await supabase
@@ -77,7 +99,7 @@ export const useLocationFilteredEvents = () => {
       }
 
       // Filter and add distance information
-      const filteredEvents = events
+      const filteredEvents = result.data
         .map((rawEvent: RawEventData) => {
           const coordinates = eventCoordinates.get(rawEvent.id);
           if (!coordinates) return null;
@@ -89,7 +111,6 @@ export const useLocationFilteredEvents = () => {
           );
 
           if (distance !== null && distance <= radiusMiles) {
-            // Create a properly typed EventType object with all required fields
             const formattedEvent: EventType = {
               id: rawEvent.id,
               name: rawEvent.name,
@@ -101,7 +122,6 @@ export const useLocationFilteredEvents = () => {
               promotional_materials: rawEvent.promotional_materials || [],
               status: rawEvent.status,
               distance,
-              // Map ticket types with proper structure
               ticketTypes: rawEvent.event_ticket_types.map(ticket => ({
                 id: ticket.id,
                 name: ticket.name,
@@ -111,19 +131,16 @@ export const useLocationFilteredEvents = () => {
                 sold: 0,
                 available: ticket.quantity
               })),
-              // Add required venue information
               venue: {
                 id: rawEvent.venue_id || '',
-                name: '', // Default empty string for venue name
-                address: '' // Default empty string for venue address
+                name: '',
+                address: ''
               },
-              // Add required attendees information
               attendees: {
                 registered: 0,
                 capacity: rawEvent.event_ticket_types.reduce((sum, ticket) => sum + ticket.quantity, 0),
                 checkedIn: 0
               },
-              // Add required revenue information
               revenue: {
                 total: 0,
                 ticketSales: 0,
