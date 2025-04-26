@@ -1,5 +1,4 @@
-
-import { Home, Map, User, Route, Megaphone, BarChart2, Building, Bell, ChevronDown } from 'lucide-react';
+import { Home, Map, User, Route, Megaphone, BarChart2, Building, Bell, Calendar, ChevronDown } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,11 +44,8 @@ export const getUserNavItems = (
       }
     });
     navItems.push({ icon: Building, label: 'Venues', path: '/explore' });
-  }
-  
-  // Add Promotions for promoters only
-  if (userType === 'promoter') {
-    navItems.push({ icon: Megaphone, label: 'Events', path: '/promoter/events' });
+    navItems.push({ icon: Calendar, label: 'Events', path: '/promoter/events' });
+    navItems.push({ icon: Megaphone, label: 'Dashboard', path: '/promoter/dashboard' });
     navItems.push({ icon: BarChart2, label: 'Analytics', path: '/promoter/analytics' });
   }
   
