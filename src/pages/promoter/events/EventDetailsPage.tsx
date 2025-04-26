@@ -14,7 +14,7 @@ import {
   Ticket,
   DollarSign,
   Share2,
-  CircleAlertTriangle
+  AlertTriangle
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -218,7 +218,7 @@ const EventDetailsPage = () => {
                 <span>Manage Tickets</span>
               </Button>
               <Button variant="outline" className="h-auto py-6 flex flex-col gap-2 text-yellow-600 border-yellow-200 bg-yellow-50 hover:bg-yellow-100">
-                <CircleAlertTriangle className="h-5 w-5" />
+                <AlertTriangle className="h-5 w-5" />
                 <span>Cancel Event</span>
               </Button>
             </div>

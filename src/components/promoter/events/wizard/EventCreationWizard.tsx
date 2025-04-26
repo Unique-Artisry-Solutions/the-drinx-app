@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { EventWizardProvider } from './EventWizardContext';
+import { EventWizardProvider, useEventWizard } from './EventWizardContext';
 import WizardSteps from './WizardSteps';
 import BasicDetailsStep from './BasicDetailsStep';
 import VenueSelectionStep from './VenueSelectionStep';
