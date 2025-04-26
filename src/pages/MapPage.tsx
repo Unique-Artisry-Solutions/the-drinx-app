@@ -42,7 +42,7 @@ const MapPage: React.FC = () => {
   });
 
   const establishments: EstablishmentWithDistance[] = supabaseEstablishments.map(est => {
-    const distanceValue = est.distance_in_miles || est.distanceValue || 0;
+    const distanceValue = est.distance_in_miles || 0;
     return {
       id: est.id,
       name: est.name,
@@ -52,8 +52,6 @@ const MapPage: React.FC = () => {
       cocktailCount: est.cocktail_count || est.cocktailCount || 0,
       image: est.image_url || est.image,
       distanceValue,
-      distanceInMiles: distanceValue,
-      distance_in_miles: distanceValue,
       distance: est.distance || `${distanceValue} mi`
     };
   });

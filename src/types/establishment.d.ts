@@ -7,8 +7,6 @@ export interface EstablishmentWithDistance {
   longitude: number;
   cocktailCount: number;
   image?: string;
-  distanceInMiles?: number;
-  distance?: string;
-  distance_in_miles?: number;
-  distanceValue?: number;
+  distance: string;
+  distanceValue: number;
 }
