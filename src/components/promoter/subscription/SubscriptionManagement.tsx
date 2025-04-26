@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,6 +10,8 @@ import { useSubscriptions } from '@/hooks/useSubscriptions';
 import { useAuth } from '@/contexts/auth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { SubscriptionSettings } from '@/types/SubscriptionTypes';
+import { fromTable } from '@/lib/typedSupabase';
 
 export const SubscriptionManagement = () => {
   const { user } = useAuth();
@@ -27,12 +28,10 @@ export const SubscriptionManagement = () => {
       if (!user?.id) return;
       
       try {
-        // Use fromTable from lib/supabase instead
-        const { data, error } = await supabase
-          .from('subscription_settings')
+        const { data, error } = await fromTable('subscription_settings')
           .select('*')
           .eq('user_id', user.id)
-          .single();
+          .single<SubscriptionSettings>();
         
         if (error && error.code !== 'PGRST116') {
           console.error('Error fetching subscription settings:', error);
@@ -57,8 +56,7 @@ export const SubscriptionManagement = () => {
     setUpdatingSettings(true);
     
     try {
-      const { error } = await supabase
-        .from('subscription_settings')
+      const { error } = await fromTable('subscription_settings')
         .upsert({
           user_id: user.id,
           location_sharing: locationSharing,

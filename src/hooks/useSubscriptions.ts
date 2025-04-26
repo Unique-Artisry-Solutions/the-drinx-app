@@ -1,8 +1,7 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Subscription, SubscriptionTier } from '@/types/SubscriptionTypes';
+import { Subscription, SubscriptionTier, SubscriptionSettings } from '@/types/SubscriptionTypes';
 
 export const useSubscriptions = (promoterId?: string) => {
   const { toast } = useToast();
@@ -137,7 +136,7 @@ export const useSubscriptions = (promoterId?: string) => {
         .from('subscription_settings')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .single<SubscriptionSettings>();
 
       if (error && error.code !== 'PGRST116') throw error;
       return data;

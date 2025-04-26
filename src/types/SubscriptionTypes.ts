@@ -1,4 +1,3 @@
-
 export interface Subscription {
   id: string;
   subscriber_id: string;
@@ -11,6 +10,7 @@ export interface Subscription {
   updated_at: string;
   promoter_name?: string;
   tier_name?: string;
+  subscription_settings?: SubscriptionSettings;
 }
 
 export interface SubscriptionTier {
@@ -26,11 +26,27 @@ export interface SubscriptionTier {
 }
 
 export interface SubscriptionSettings {
-  id: string;
+  id?: string;
   user_id: string;
   location_sharing: boolean;
   notification_radius: number;
-  notification_preferences: Record<string, any>;
-  created_at: string;
-  updated_at: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface EventNotificationSchedule {
+  id?: string;
+  event_id: string;
+  title: string;
+  content: string;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  scheduled_for: string;
+  location_based: boolean;
+  coordinates?: { 
+    latitude: number; 
+    longitude: number; 
+  } | null;
+  target_radius?: number | null;
+  created_at?: string;
+  updated_at?: string;
 }
