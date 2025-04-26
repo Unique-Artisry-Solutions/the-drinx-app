@@ -47,7 +47,8 @@ export const useThreads = (userType: UserType, userId: string | undefined) => {
         timestamp: thread.last_message_at,
         isRead: false,
         isArchived: thread.is_archived,
-        venueName: thread.venues ? thread.venues.name : undefined
+        // Fix: The venues property is an object with a name field, not an array
+        venueName: thread.venues?.name || undefined
       })) || [];
 
       setThreads(processedThreads);

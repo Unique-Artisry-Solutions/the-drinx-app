@@ -153,7 +153,7 @@ export const useMessageSystem = (userType: 'establishment') => {
             timestamp: thread.last_message_at,
             isRead: isRead,
             isArchived: thread.is_archived,
-            venueName: thread.venues ? thread.venues.name : undefined,
+            venueName: thread.venues?.name || undefined,
             messages: messages.reverse()
           });
         } catch (err) {
