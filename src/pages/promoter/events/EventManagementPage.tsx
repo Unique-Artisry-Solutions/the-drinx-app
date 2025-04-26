@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Layout from '@/components/Layout';
@@ -15,8 +16,11 @@ const EventManagementPage = () => {
   
   // Filter events based on search term and active tab
   const filteredEvents = events.filter(event => {
-    const matchesSearch = event.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        event.venue?.name?.toLowerCase().includes(searchTerm.toLowerCase());
+    // Handle venue display safely since we don't have a direct venue object
+    const eventName = event.name?.toLowerCase() || '';
+    const searchLower = searchTerm.toLowerCase();
+    
+    const matchesSearch = eventName.includes(searchLower);
                         
     if (activeTab === 'all') return matchesSearch;
     return matchesSearch && event.status === activeTab;
@@ -82,7 +86,7 @@ const EventManagementPage = () => {
                       name={event.name}
                       date={event.date}
                       time={event.time}
-                      venue={event.venue?.name || 'Venue not specified'}
+                      venue={event.venue_id ? "View event for venue details" : "Venue not specified"}
                       attendeeCount={0}
                       status={event.status}
                       imageUrl={event.image_url}

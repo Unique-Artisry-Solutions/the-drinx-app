@@ -33,6 +33,10 @@ export const useEvents = () => {
 
   const createEvent = useMutation({
     mutationFn: async (eventData: EventFormData) => {
+      // First get the current user's ID
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
       // First, create the event
       const { data: eventResponse, error: eventError } = await supabase
         .from('events')
@@ -44,6 +48,7 @@ export const useEvents = () => {
           venue_id: eventData.venueId,
           image_url: eventData.imageUrl,
           promotional_materials: eventData.promotionalMaterials,
+          created_by: user.id // Add the created_by field
         })
         .select()
         .single();

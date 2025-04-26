@@ -8,9 +8,10 @@ import { useToast } from '@/hooks/use-toast';
 interface WizardNavigationProps {
   steps: number;
   onSubmit: () => void;
+  isSubmitting?: boolean; // Added isSubmitting prop
 }
 
-const WizardNavigation: React.FC<WizardNavigationProps> = ({ steps, onSubmit }) => {
+const WizardNavigation: React.FC<WizardNavigationProps> = ({ steps, onSubmit, isSubmitting = false }) => {
   const { currentStep, nextStep, prevStep, formData } = useEventWizard();
   const { toast } = useToast();
   
@@ -82,8 +83,8 @@ const WizardNavigation: React.FC<WizardNavigationProps> = ({ steps, onSubmit }) 
           <ArrowRight className="w-4 h-4 ml-2" />
         </Button>
       ) : (
-        <Button onClick={handleSubmit} className="bg-purple-600 hover:bg-purple-700">
-          Create Event
+        <Button onClick={handleSubmit} className="bg-purple-600 hover:bg-purple-700" disabled={isSubmitting}>
+          {isSubmitting ? 'Creating...' : 'Create Event'}
         </Button>
       )}
     </div>
