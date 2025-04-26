@@ -1,7 +1,8 @@
-
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/lib/supabase';
+import { useQueryClient } from '@tanstack/react-query';
 
 export interface EventFormData {
   name: string;
@@ -45,6 +46,7 @@ export const useEventCreation = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const updateForm = (updates: Partial<EventFormData>) => {
     setFormData(prev => ({ ...prev, ...updates }));
@@ -55,7 +57,6 @@ export const useEventCreation = () => {
   };
 
   const validateForm = (): boolean => {
-    // Basic validation
     if (!formData.name.trim()) {
       toast({
         title: "Event name required",
@@ -110,18 +111,33 @@ export const useEventCreation = () => {
     setIsSubmitting(true);
     
     try {
-      // In a real app, this would be an API call to create the event
-      // For now, we'll simulate the API call with a timeout
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const { data, error } = await supabase
+        .from('events')
+        .insert([{
+          name: formData.name,
+          description: formData.description,
+          date: formData.date,
+          time: formData.time,
+          venue: formData.venue?.name || '',
+          venue_id: formData.venue?.id,
+          status: 'draft',
+          image_url: formData.imageUrl,
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      await queryClient.invalidateQueries({ queryKey: ['events'] });
       
       toast({
         title: "Event created successfully!",
         description: "Your event has been created and is now live",
       });
       
-      // Navigate to the events list page
       navigate('/promoter/events');
     } catch (error) {
+      console.error('Error creating event:', error);
       toast({
         title: "Failed to create event",
         description: "There was an error creating your event. Please try again.",
