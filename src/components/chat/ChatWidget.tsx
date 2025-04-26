@@ -41,7 +41,8 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({
         threadId = createdThreadId;
       }
 
-      await sendMessage(threadId, content);
+      // Adding the venue ID as the third argument
+      await sendMessage(threadId, content, venueId);
       
       toast({
         title: "Message Sent",

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Grid } from 'lucide-react';
 import Layout from '@/components/Layout';
@@ -49,7 +50,7 @@ const MapPage: React.FC = () => {
     longitude: est.longitude,
     cocktailCount: est.cocktail_count || est.cocktailCount || 0,
     image: est.image_url || est.image,
-    distanceInMiles: est.distance
+    distanceInMiles: est.distanceInMiles || est.distance
   }));
 
   useEffect(() => {
