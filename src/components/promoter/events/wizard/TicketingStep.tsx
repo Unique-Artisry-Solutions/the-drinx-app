@@ -41,7 +41,7 @@ const TicketingStep: React.FC = () => {
   return <Card className="shadow-md">
       <CardContent className="pt-6 my-px">
         <div className="space-y-6">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between my-[20px]">
             <h3 className="text-lg font-medium">Ticket Types</h3>
             <Button onClick={addTicketType} variant="outline" size="sm" className="text-purple-600 border-purple-600 hover:bg-purple-50">
               <Plus className="h-4 w-4 mr-2" />
