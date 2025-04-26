@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Layout from '@/components/Layout';
@@ -72,12 +71,7 @@ const EventManagementPage = () => {
               {filteredEvents.length > 0 ? (
                 <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                   {filteredEvents.map(event => (
-                    <EventCard 
-                      key={event.id} 
-                      {...event} 
-                      attendeeCount={0} // Adding default attendee count for now
-                      imageUrl={event.image_url}
-                    />
+                    <EventCard key={event.id} {...event} />
                   ))}
                 </div>
               ) : (
