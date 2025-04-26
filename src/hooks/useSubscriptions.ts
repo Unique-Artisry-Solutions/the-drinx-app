@@ -22,6 +22,35 @@ export const useSubscriptions = (promoterId?: string) => {
     enabled: !!promoterId,
   });
 
+  const { data: subscribedPromoters = [], isLoading: isLoadingSubscribed } = useQuery({
+    queryKey: ['subscribed-promoters'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+      
+      const { data, error } = await supabase
+        .from('promoter_subscriptions')
+        .select(`
+          id,
+          promoter_id,
+          subscriber_id,
+          tier_id,
+          subscription_start,
+          subscription_end,
+          status,
+          promoter:promoter_id (
+            id,
+            display_name,
+            username
+          )
+        `)
+        .eq('subscriber_id', user.id);
+
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
   const { data: tiers = [], isLoading: isLoadingTiers } = useQuery({
     queryKey: ['subscription-tiers', promoterId],
     queryFn: async () => {
@@ -57,6 +86,7 @@ export const useSubscriptions = (promoterId?: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['subscriptions'] });
+      queryClient.invalidateQueries({ queryKey: ['subscribed-promoters'] });
       toast({
         title: 'Subscribed successfully',
         description: 'You are now subscribed to this promoter',
@@ -82,6 +112,7 @@ export const useSubscriptions = (promoterId?: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['subscriptions'] });
+      queryClient.invalidateQueries({ queryKey: ['subscribed-promoters'] });
       toast({
         title: 'Unsubscribed successfully',
         description: 'You have unsubscribed from this promoter',
@@ -96,10 +127,29 @@ export const useSubscriptions = (promoterId?: string) => {
     },
   });
 
+  const { data: settings, isLoading: isLoadingSettings } = useQuery({
+    queryKey: ['subscription-settings'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+      
+      const { data, error } = await supabase
+        .from('subscription_settings')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') throw error;
+      return data;
+    },
+  });
+
   return {
     subscriptions,
+    subscribedPromoters,
     tiers,
-    isLoading: isLoadingSubscriptions || isLoadingTiers,
+    settings,
+    isLoading: isLoadingSubscriptions || isLoadingTiers || isLoadingSubscribed || isLoadingSettings,
     subscribe,
     unsubscribe,
   };

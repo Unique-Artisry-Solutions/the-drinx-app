@@ -30,6 +30,7 @@ export interface EventType {
   updatedAt: string;
   createdBy: string;
   notificationSchedules?: NotificationSchedule[];
+  distance?: number;
 }
 
 export interface TicketType {

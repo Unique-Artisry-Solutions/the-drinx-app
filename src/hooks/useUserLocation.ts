@@ -1,6 +1,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface UserLocation {
   latitude: number;
@@ -16,6 +17,23 @@ export const useUserLocation = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+
+  const updateServerLocation = useCallback(async (latitude: number, longitude: number, accuracy?: number) => {
+    try {
+      const { error } = await supabase.rpc('update_user_location', {
+        p_latitude: latitude,
+        p_longitude: longitude,
+        p_accuracy: accuracy || null
+      });
+      
+      if (error) throw error;
+      
+      return true;
+    } catch (err) {
+      console.error('Error updating location on server:', err);
+      return false;
+    }
+  }, []);
 
   const calculateDistance = useCallback((
     destLat: number, 
@@ -56,11 +74,20 @@ export const useUserLocation = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          setUserLocation({
+          const newLocation = {
             latitude: position.coords.latitude,
             longitude: position.coords.longitude,
-          });
+          };
+          
+          setUserLocation(newLocation);
           setIsLoading(false);
+          
+          // Update location on the server
+          updateServerLocation(
+            newLocation.latitude, 
+            newLocation.longitude,
+            position.coords.accuracy
+          );
           
           // Using a subtle toast without a title and shorter duration
           toast({
@@ -89,16 +116,23 @@ export const useUserLocation = () => {
         variant: "destructive",
       });
     }
-  }, [toast]);
+  }, [toast, updateServerLocation]);
 
   useEffect(() => {
     refreshLocation();
+    
+    // Set up a periodic location refresh (every 15 minutes)
+    const intervalId = setInterval(() => {
+      refreshLocation();
+    }, 15 * 60 * 1000);
+    
+    return () => clearInterval(intervalId);
   }, [refreshLocation]);
 
   return { 
     userLocation, 
     isLoading, // This will be used as isLocating in MapPage
-    error: error, // This will be used as locationError in MapPage
+    error, // This will be used as locationError in MapPage
     refreshLocation,
     calculateDistance,
     formatDistance

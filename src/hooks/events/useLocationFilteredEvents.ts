@@ -1,70 +1,101 @@
 
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { useState, useCallback } from 'react';
 import { useUserLocation } from '@/hooks/useUserLocation';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { EventType } from '@/types/EventTypes';
 
 export const useLocationFilteredEvents = () => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { userLocation, calculateDistance } = useUserLocation();
   const { toast } = useToast();
-  const { userLocation } = useUserLocation();
 
-  const getLocationFilteredEvents = async (radius: number = 10) => {
+  const getLocationFilteredEvents = useCallback(async (radiusMiles: number = 10): Promise<EventType[]> => {
     if (!userLocation) {
       toast({
-        title: 'Location required',
-        description: 'Please enable location services to use this feature.',
-        variant: 'destructive',
+        title: "Location unavailable",
+        description: "Please enable location services to find nearby events.",
+        variant: "destructive",
       });
       return [];
     }
+
+    setIsLoading(true);
+    setError(null);
 
     try {
-      const { data: venues, error: venuesError } = await supabase
-        .from('establishments')
-        .select('id, latitude, longitude');
-      
-      if (venuesError) throw venuesError;
-      
-      const { data: allEvents, error: eventsError } = await supabase
+      // Get all events first (we'll filter by location client-side)
+      const { data: events, error } = await supabase
         .from('events')
-        .select('*, establishments(id, latitude, longitude)')
+        .select(`
+          *,
+          event_ticket_types (*)
+        `)
         .eq('status', 'published');
-      
-      if (eventsError) throw eventsError;
-      
-      const filteredEvents = allEvents.filter(event => {
-        if (!event.establishments) return false;
-        
-        const venue = event.establishments;
-        if (!venue.latitude || !venue.longitude) return false;
-        
-        const R = 3958.8;
-        const lat1 = userLocation.latitude * Math.PI/180;
-        const lat2 = venue.latitude * Math.PI/180;
-        const deltaLat = (venue.latitude - userLocation.latitude) * Math.PI/180;
-        const deltaLon = (venue.longitude - userLocation.longitude) * Math.PI/180;
-        
-        const a = 
-          Math.sin(deltaLat/2) * Math.sin(deltaLat/2) +
-          Math.cos(lat1) * Math.cos(lat2) * 
-          Math.sin(deltaLon/2) * Math.sin(deltaLon/2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        const distance = R * c;
-        
-        return distance <= radius;
+
+      if (error) throw error;
+
+      if (!events || events.length === 0) return [];
+
+      // Add location data from notification schedules
+      const { data: notificationSchedules } = await supabase
+        .from('event_notification_schedules')
+        .select('event_id, coordinates')
+        .in('event_id', events.map(event => event.id))
+        .eq('location_based', true);
+
+      // Create a map of event_id to coordinates
+      const eventCoordinates = new Map();
+      notificationSchedules?.forEach(schedule => {
+        if (schedule.coordinates) {
+          eventCoordinates.set(schedule.event_id, schedule.coordinates);
+        }
       });
-      
+
+      // Now filter and add distance information
+      const filteredEvents = events
+        .map(event => {
+          const coordinates = eventCoordinates.get(event.id);
+          if (!coordinates) return null;
+
+          const distance = calculateDistance(
+            userLocation.latitude,
+            userLocation.longitude,
+            coordinates.latitude,
+            coordinates.longitude
+          );
+
+          if (distance !== null && distance <= radiusMiles) {
+            return {
+              ...event,
+              distance,
+            };
+          }
+          return null;
+        })
+        .filter(Boolean) as EventType[];
+
+      // Sort by distance
+      filteredEvents.sort((a: any, b: any) => a.distance - b.distance);
+
       return filteredEvents;
-    } catch (error: any) {
+    } catch (err: any) {
+      setError(err.message);
       toast({
-        title: 'Error filtering events',
-        description: error.message,
-        variant: 'destructive',
+        title: "Error retrieving nearby events",
+        description: err.message,
+        variant: "destructive",
       });
       return [];
+    } finally {
+      setIsLoading(false);
     }
-  };
+  }, [userLocation, calculateDistance, toast]);
 
   return {
-    getLocationFilteredEvents
+    getLocationFilteredEvents,
+    isLoading,
+    error,
   };
 };

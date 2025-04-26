@@ -34,6 +34,27 @@ export const useEventNotifications = () => {
       if (!event) throw new Error('Event not found');
       if (event.created_by !== user.id) throw new Error('You do not have permission to schedule notifications for this event');
       
+      // First save to event_notification_schedules for location-based targeting
+      for (const notification of notifications) {
+        if (notification.locationBased && notification.coordinates) {
+          const { error } = await supabase
+            .from('event_notification_schedules')
+            .insert({
+              event_id: eventId,
+              title: notification.title,
+              content: notification.content,
+              priority: notification.priority,
+              scheduled_for: notification.scheduledFor,
+              location_based: true,
+              coordinates: notification.coordinates,
+              target_radius: notification.targetRadius || 10000 // Default 10km radius
+            });
+          
+          if (error) throw error;
+        }
+      }
+      
+      // Then create immediate notifications without location targeting
       for (const notification of notifications) {
         const { error } = await supabase
           .from('notifications')

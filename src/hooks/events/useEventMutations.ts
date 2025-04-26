@@ -45,6 +45,25 @@ export const useEventMutations = () => {
 
       if (eventData.notificationSchedules && eventData.notificationSchedules.length > 0) {
         for (const schedule of eventData.notificationSchedules) {
+          // For location-based notifications, save to event_notification_schedules
+          if (schedule.locationBased && schedule.coordinates) {
+            const { error: scheduleError } = await supabase
+              .from('event_notification_schedules')
+              .insert({
+                event_id: eventResponse.id,
+                title: schedule.title,
+                content: schedule.content,
+                priority: schedule.priority,
+                scheduled_for: schedule.scheduledFor,
+                location_based: true,
+                coordinates: schedule.coordinates,
+                target_radius: schedule.targetRadius || 10000
+              });
+
+            if (scheduleError) throw scheduleError;
+          }
+          
+          // Always create a notification record
           const { error: notificationError } = await supabase
             .from('notifications')
             .insert({
@@ -56,7 +75,7 @@ export const useEventMutations = () => {
               metadata: {
                 event_id: eventResponse.id,
                 scheduled_for: schedule.scheduledFor,
-                location_based: !!schedule.locationBased,
+                location_based: schedule.locationBased || false,
                 coordinates: schedule.coordinates || null,
                 target_radius: schedule.targetRadius || null,
                 notification_type: 'event_schedule'
