@@ -15,6 +15,7 @@ export interface ThreadInfo {
   venueName: string;
   promoterName: string;
   subject: string;
+  venueId: string; // Adding venueId property
 }
 
 export type UserType = 'promoter' | 'establishment';

@@ -7,7 +7,8 @@ export const useThreadInfo = (threadId: string | null) => {
   const [threadInfo, setThreadInfo] = useState<ThreadInfo>({
     venueName: '',
     promoterName: '',
-    subject: ''
+    subject: '',
+    venueId: '' // Initialize venueId
   });
 
   const fetchThreadInfo = useCallback(async () => {
@@ -50,7 +51,8 @@ export const useThreadInfo = (threadId: string | null) => {
       setThreadInfo({
         venueName: venueData?.name || 'Unknown Venue',
         promoterName: promoterData?.display_name || promoterData?.username || 'Unknown Promoter',
-        subject: threadData?.subject || ''
+        subject: threadData?.subject || '',
+        venueId: threadData?.venue_id || '' // Set venueId from thread data
       });
     } catch (err: any) {
       console.error('Error fetching thread info:', err);
