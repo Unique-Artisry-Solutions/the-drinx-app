@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from 'react';
-import { supabase, isAuthenticated } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 
 export const useFavorites = () => {
@@ -12,22 +11,14 @@ export const useFavorites = () => {
   useEffect(() => {
     const fetchFavorites = async () => {
       try {
-        const isUserAuth = await isAuthenticated();
+        const { data: { user } } = await supabase.auth.getUser();
         
-        if (!isUserAuth) {
+        if (!user) {
           // If not authenticated, get favorites from localStorage
           const storedFavorites = localStorage.getItem('favoriteEstablishments');
           if (storedFavorites) {
             setFavoriteEstablishments(JSON.parse(storedFavorites));
           }
-          setIsLoading(false);
-          return;
-        }
-
-        // Get the current user
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        if (!user) {
           setIsLoading(false);
           return;
         }
@@ -68,7 +59,7 @@ export const useFavorites = () => {
   // Toggle favorite status
   const toggleFavorite = async (establishmentId: string) => {
     try {
-      const isUserAuth = await isAuthenticated();
+      const { data: { user } } = await supabase.auth.getUser();
       const isFavorite = favoriteEstablishments.includes(establishmentId);
       let newFavorites: string[];
       
@@ -87,26 +78,22 @@ export const useFavorites = () => {
       localStorage.setItem('favoriteEstablishments', JSON.stringify(newFavorites));
       
       // If user is authenticated, update Supabase
-      if (isUserAuth) {
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        if (user) {
-          if (isFavorite) {
-            // Remove from Supabase
-            await supabase
-              .from('favorites')
-              .delete()
-              .eq('user_id', user.id)
-              .eq('establishment_id', establishmentId);
-          } else {
-            // Add to Supabase
-            await supabase
-              .from('favorites')
-              .insert({
-                user_id: user.id,
-                establishment_id: establishmentId
-              });
-          }
+      if (user) {
+        if (isFavorite) {
+          // Remove from Supabase
+          await supabase
+            .from('favorites')
+            .delete()
+            .eq('user_id', user.id)
+            .eq('establishment_id', establishmentId);
+        } else {
+          // Add to Supabase
+          await supabase
+            .from('favorites')
+            .insert({
+              user_id: user.id,
+              establishment_id: establishmentId
+            });
         }
       }
       

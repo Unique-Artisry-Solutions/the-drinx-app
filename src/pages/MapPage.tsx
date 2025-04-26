@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Grid } from 'lucide-react';
 import Layout from '@/components/Layout';
@@ -9,43 +8,20 @@ import ViewModeToggle from '@/components/ViewModeToggle';
 import { useEstablishments } from '@/hooks/useEstablishments';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Establishment as SupabaseEstablishment } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
+import { EstablishmentWithDistance } from '@/types/establishment';
 
 enum ViewMode {
-  MAP = 'map',
-  LIST = 'list'
+  Map = 'map',
+  List = 'list'
 }
-
-// Define a component-specific Establishment type that guarantees required properties
-interface Establishment {
-  id: string;
-  name: string;
-  address: string;
-  latitude: number;
-  longitude: number;
-  cocktailCount: number;
-  image?: string;
-  distance?: string;
-}
-
-// Helper function to map from Supabase Establishment to component Establishment
-const mapToComponentEstablishment = (est: SupabaseEstablishment): Establishment => ({
-  id: est.id,
-  name: est.name,
-  address: est.address,
-  latitude: est.latitude,
-  longitude: est.longitude,
-  cocktailCount: est.cocktail_count || est.cocktailCount || 0,
-  image: est.image_url || est.image,
-  distance: est.distance
-});
 
 const MapPage: React.FC = () => {
   const isMobile = useIsMobile();
-  const [viewMode, setViewMode] = useState<ViewMode>(isMobile ? ViewMode.LIST : ViewMode.MAP);
+  const [viewMode, setViewMode] = useState<ViewMode>(isMobile ? ViewMode.List : ViewMode.Map);
   const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
+  
   const { 
     userLocation, 
     isLoading: isLocating, 
@@ -65,13 +41,20 @@ const MapPage: React.FC = () => {
     searchTerm: searchTerm,
   });
 
-  // Map the Supabase establishments to our component's expected format
-  const establishments: Establishment[] = supabaseEstablishments.map(mapToComponentEstablishment);
+  const establishments: EstablishmentWithDistance[] = supabaseEstablishments.map(est => ({
+    id: est.id,
+    name: est.name,
+    address: est.address,
+    latitude: est.latitude,
+    longitude: est.longitude,
+    cocktailCount: est.cocktail_count || est.cocktailCount || 0,
+    image: est.image_url || est.image,
+    distanceInMiles: est.distance
+  }));
 
-  // Update viewMode when mobile status changes
   useEffect(() => {
     if (isMobile) {
-      setViewMode(ViewMode.LIST);
+      setViewMode(ViewMode.List);
     }
   }, [isMobile]);
 
@@ -91,13 +74,10 @@ const MapPage: React.FC = () => {
   };
 
   const handleFilterChange = (filters: any) => {
-    // In a real application, we would apply distance and price filters here
     console.log('Applied filters:', filters);
   };
   
   const applyFilters = () => {
-    // In a real application, this would apply the filters and search
-    // For now, we'll just call performSearch()
     performSearch();
     
     toast({
@@ -107,10 +87,9 @@ const MapPage: React.FC = () => {
   };
 
   const toggleViewMode = () => {
-    setViewMode(prevMode => prevMode === ViewMode.MAP ? ViewMode.LIST : ViewMode.MAP);
+    setViewMode(prevMode => prevMode === ViewMode.Map ? ViewMode.List : ViewMode.Map);
   };
 
-  // Handle errors
   useEffect(() => {
     if (locationError) {
       console.error('Error getting location:', locationError);
@@ -131,7 +110,6 @@ const MapPage: React.FC = () => {
     }
   }, [locationError, establishmentsError, toast]);
 
-  // Render loading state
   if (isLoading) {
     return (
       <Layout>
@@ -156,8 +134,8 @@ const MapPage: React.FC = () => {
             <h1 className="text-xl font-bold">Explore Mocktails</h1>
             {!isMobile && (
               <ViewModeToggle 
-                viewMode={viewMode === ViewMode.MAP ? 'map' : 'list'} 
-                onViewModeChange={toggleViewMode} 
+                viewMode={viewMode.toLowerCase() as 'map' | 'list'} 
+                onViewModeChange={(mode) => setViewMode(mode === 'map' ? ViewMode.Map : ViewMode.List)} 
               />
             )}
           </div>
@@ -170,7 +148,7 @@ const MapPage: React.FC = () => {
         </div>
         
         <div className="flex-1">
-          {viewMode === ViewMode.MAP ? (
+          {viewMode === ViewMode.Map ? (
             <div className="h-full">
               <MapView 
                 establishments={establishments}

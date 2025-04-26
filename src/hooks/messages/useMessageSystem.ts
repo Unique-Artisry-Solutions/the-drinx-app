@@ -12,19 +12,13 @@ export const useMessageSystem = (userType: UserType) => {
   const { user } = useAuthenticatedUser();
   const { threads, setThreads, loading, error, fetchThreads } = useThreads(userType, user?.id);
   const { fetchMessages, sendMessage } = useMessages(userType);
-  const { updateThreadReadStatus, markThreadAsRead } = useThreadReadStatus(user?.id);
+  const threadReadStatus = useThreadReadStatus(user?.id);
   const { createThread, isCreating } = useThreadCreation();
   
   const { selectedThreadId, setSelectedThreadId } = useThreadSelection(
     setThreads,
-    markThreadAsRead,
+    threadReadStatus.markThreadAsRead,
     fetchMessages
-  );
-
-  const handleSendMessage = useMessageSending(
-    sendMessage,
-    user?.id,
-    fetchThreads
   );
 
   return {
@@ -33,8 +27,8 @@ export const useMessageSystem = (userType: UserType) => {
     error,
     selectedThreadId,
     setSelectedThreadId,
-    markThreadAsRead,
-    sendMessage: handleSendMessage,
+    markThreadAsRead: threadReadStatus.markThreadAsRead,
+    sendMessage,
     createThread,
     isCreating,
     refetchThreads: fetchThreads

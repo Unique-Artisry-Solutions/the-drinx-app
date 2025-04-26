@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Calendar, MapPin, Clock, Users } from 'lucide-react';
@@ -12,20 +11,20 @@ export interface EventCardProps {
   date: string;
   time: string;
   venue: string;
-  attendeeCount: number;
-  status: 'draft' | 'published' | 'cancelled' | 'completed';
+  status: 'published' | 'draft' | 'cancelled' | 'completed';
   imageUrl?: string;
+  attendeeCount?: number;
 }
 
-const EventCard: React.FC<EventCardProps> = ({
-  id,
-  name,
-  date,
-  time,
-  venue,
-  attendeeCount,
-  status,
-  imageUrl
+const EventCard: React.FC<EventCardProps> = ({ 
+  id, 
+  name, 
+  date, 
+  time, 
+  venue, 
+  status, 
+  imageUrl,
+  attendeeCount = 0
 }) => {
   // Status colors
   const statusConfig = {
