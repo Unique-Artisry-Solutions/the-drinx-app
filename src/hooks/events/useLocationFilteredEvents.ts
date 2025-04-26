@@ -33,23 +33,21 @@ interface RawEventResponse {
   error: any;
 }
 
-// Define notification metadata structure independently to prevent deep type instantiation
-interface LocationCoordinates {
+// Define location coordinates type
+type LocationCoordinates = {
   latitude: number;
   longitude: number;
-}
+};
 
-interface NotificationMetadata {
-  location_based?: boolean;
-  coordinates?: LocationCoordinates;
+// Define notification structure as a simple type to prevent deep instantiation
+type NotificationRecord = {
+  metadata?: {
+    location_based?: boolean;
+    coordinates?: LocationCoordinates;
+    event_id?: string;
+  };
   event_id?: string;
-}
-
-// Simple interface for notification data to avoid excessive depth
-interface NotificationData {
-  metadata: NotificationMetadata | null;
-  event_id?: string | null;
-}
+};
 
 export const useLocationFilteredEvents = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -99,37 +97,37 @@ export const useLocationFilteredEvents = () => {
       if (result.error) throw result.error;
       if (!result.data || result.data.length === 0) return [];
 
-      // Fix the type issues by using a more generic approach first
+      // Fix the type issues by using a more generic approach
       const locationResponse = await supabase
         .from('notifications')
         .select('metadata, event_id')
         .eq('metadata->location_based', true);
         
-      // Safely type the location data with proper initialization
-      const locationData: NotificationData[] = [];
+      // Create an array to hold properly typed notification data
+      const locationData: NotificationRecord[] = [];
       
       // Only process if we have valid data with array check
       if (locationResponse.data && Array.isArray(locationResponse.data)) {
-        // Map the raw data to our expected structure with proper null checks
+        // Map the raw data to our expected structure with explicit null checks
         locationResponse.data.forEach(item => {
           if (item && typeof item === 'object') {
             locationData.push({
-              metadata: item.metadata || null,
-              event_id: item.event_id || null
+              metadata: item.metadata,
+              event_id: item.event_id
             });
           }
         });
       }
 
-      // Create a map of event_id to coordinates with explicit typing
+      // Create a map of event_id to coordinates
       const eventCoordinates = new Map<string, LocationCoordinates>();
       
+      // Process each item safely
       locationData.forEach(item => {
-        // Add null checks for properties that might be undefined
-        if (item.metadata && item.metadata.coordinates) {
+        if (item && item.metadata && item.metadata.coordinates) {
           const eventId = item.metadata.event_id || item.event_id;
           
-          if (eventId && item.metadata.coordinates) {
+          if (eventId) {
             eventCoordinates.set(eventId, item.metadata.coordinates);
           }
         }
