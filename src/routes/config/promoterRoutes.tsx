@@ -5,6 +5,9 @@ import PromoterCommunicationPage from '@/pages/promoter/PromoterCommunicationPag
 import PromoterAnalyticsPage from '@/pages/promoter/PromoterAnalyticsPage';
 import CreateSwigCircuitPage from '@/pages/profile/CreateSwigCircuitPage';
 import PromoterNotificationsPage from '@/pages/promoter/notifications/PromoterNotificationsPage';
+import EventManagementPage from '@/pages/promoter/events/EventManagementPage';
+import CreateEventPage from '@/pages/promoter/events/CreateEventPage';
+import EventDetailsPage from '@/pages/promoter/events/EventDetailsPage';
 
 const wrapPromoterRoute = (element: JSX.Element) => (
   <TypedProtectedRoute userType="promoter">{element}</TypedProtectedRoute>
@@ -39,4 +42,16 @@ export const promoterRoutes: RouteObject[] = [
     path: '/promoter/notifications',
     element: wrapPromoterRoute(<PromoterNotificationsPage />),
   },
+  {
+    path: '/promoter/events',
+    element: wrapPromoterRoute(<EventManagementPage />),
+  },
+  {
+    path: '/promoter/events/create',
+    element: wrapPromoterRoute(<CreateEventPage />),
+  },
+  {
+    path: '/promoter/events/:eventId',
+    element: wrapPromoterRoute(<EventDetailsPage />),
+  }
 ];
