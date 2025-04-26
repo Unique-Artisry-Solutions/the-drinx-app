@@ -19,6 +19,7 @@ export const systemBreakdown: FeatureItem = {
     - [x] API endpoints for system breakdown data retrieval
     - [x] UI components for system breakdown dashboard
     - [x] Event notification handling using notifications table
+    - [x] Event promotion and marketing material management
   `,
   testSteps: [
     "Log in as admin and navigate to System Breakdown page",

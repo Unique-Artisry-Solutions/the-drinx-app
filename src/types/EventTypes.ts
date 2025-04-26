@@ -47,8 +47,8 @@ export interface EventFormData {
   description: string;
   date: string;
   time: string;
-  venue?: string;  // Make venue optional to match EventWizardContext
-  venueId: string | null;
+  venue?: string;  // Keep venue optional
+  venueId?: string; // Make venueId optional to match the context type
   ticketTypes: {
     name: string;
     price: number;
