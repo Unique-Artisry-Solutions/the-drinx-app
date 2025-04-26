@@ -3,7 +3,6 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { EventFormData } from '@/types/EventTypes';
-import { eventNotificationSchedules } from '@/lib/typedSupabase';
 
 export const useEventMutations = () => {
   const { toast } = useToast();
@@ -46,25 +45,17 @@ export const useEventMutations = () => {
 
       if (eventData.notificationSchedules && eventData.notificationSchedules.length > 0) {
         for (const schedule of eventData.notificationSchedules) {
-          // For location-based notifications, save to event_notification_schedules
-          if (schedule.locationBased && schedule.coordinates) {
-            // Use the type-safe helper for event notification schedules
-            const { error: scheduleError } = await eventNotificationSchedules()
-              .insert({
-                event_id: eventResponse.id,
-                title: schedule.title,
-                content: schedule.content,
-                priority: schedule.priority,
-                scheduled_for: schedule.scheduledFor,
-                location_based: true,
-                coordinates: schedule.coordinates,
-                target_radius: schedule.targetRadius || 10000
-              });
-
-            if (scheduleError) throw scheduleError;
-          }
+          // Store all notification data in the notifications table
+          const metadata: any = {
+            event_id: eventResponse.id,
+            scheduled_for: schedule.scheduledFor,
+            location_based: !!schedule.locationBased,
+            coordinates: schedule.coordinates || null,
+            target_radius: schedule.targetRadius || null,
+            notification_type: 'event_schedule'
+          };
           
-          // Always create a notification record
+          // Create a notification record
           const { error: notificationError } = await supabase
             .from('notifications')
             .insert({
@@ -73,14 +64,7 @@ export const useEventMutations = () => {
               title: schedule.title || `Reminder: ${eventData.name}`,
               content: schedule.content || `Don't forget: ${eventData.name} is happening soon!`,
               priority: schedule.priority || 'medium',
-              metadata: {
-                event_id: eventResponse.id,
-                scheduled_for: schedule.scheduledFor,
-                location_based: schedule.locationBased || false,
-                coordinates: schedule.coordinates || null,
-                target_radius: schedule.targetRadius || null,
-                notification_type: 'event_schedule'
-              }
+              metadata: metadata
             });
 
           if (notificationError) throw notificationError;

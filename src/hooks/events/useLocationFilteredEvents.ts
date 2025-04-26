@@ -42,14 +42,14 @@ export const useLocationFilteredEvents = () => {
       const { data: notificationSchedules } = await supabase
         .from('notifications')
         .select('metadata, event_id')
-        .contains('metadata', { location_based: true });
+        .containsAny('metadata', [{ location_based: true }]);
 
       // Create a map of event_id to coordinates
       const eventCoordinates = new Map();
       if (notificationSchedules) {
         notificationSchedules.forEach((schedule: any) => {
           const metadata = schedule.metadata || {};
-          if (metadata.coordinates) {
+          if (metadata.coordinates && metadata.event_id) {
             eventCoordinates.set(metadata.event_id, metadata.coordinates);
           }
         });
@@ -68,8 +68,8 @@ export const useLocationFilteredEvents = () => {
           );
 
           if (distance !== null && distance <= radiusMiles) {
-            // Create a properly typed EventType object
-            return {
+            // Create a properly typed EventType object with all required fields
+            const eventData: EventType = {
               id: event.id,
               name: event.name,
               description: event.description || '',
@@ -107,7 +107,9 @@ export const useLocationFilteredEvents = () => {
               createdAt: event.created_at,
               updatedAt: event.updated_at,
               createdBy: event.created_by
-            } as EventType;
+            };
+            
+            return eventData;
           }
           return null;
         })

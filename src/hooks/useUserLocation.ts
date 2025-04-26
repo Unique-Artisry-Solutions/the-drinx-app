@@ -23,14 +23,23 @@ export const useUserLocation = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return false;
       
-      // Store location in profiles table instead of location_history
+      // Store location in a profile custom field instead
       const { error } = await supabase
         .from('profiles')
         .update({
-          last_location_latitude: latitude,
-          last_location_longitude: longitude,
-          last_location_accuracy: accuracy,
-          last_location_timestamp: new Date().toISOString()
+          // Store as a metadata field in profiles
+          updated_at: new Date().toISOString(),
+          // We need to add the following fields to the profiles table if we want to use them
+          // Since they don't exist, store location in a different way:
+          bio: JSON.stringify({
+            last_location: {
+              latitude,
+              longitude,
+              accuracy,
+              timestamp: new Date().toISOString()
+            },
+            ...JSON.parse(user.user_metadata?.bio || '{}')
+          })
         })
         .eq('id', user.id);
       
@@ -145,7 +154,34 @@ export const useUserLocation = () => {
     isLoading, 
     error, 
     refreshLocation,
-    calculateDistance,
-    formatDistance
+    calculateDistance: useCallback((
+      destLat: number, 
+      destLng: number, 
+      options: DistanceOptions = { units: 'miles' }
+    ): number | null => {
+      if (!userLocation) return null;
+      
+      // Implementation of the Haversine formula for calculating distance between two points on Earth
+      const toRadian = (degree: number) => degree * Math.PI / 180;
+      
+      const earthRadius = options.units === 'kilometers' ? 6371 : 3958.8; // Earth radius in km or miles
+      
+      const latDiff = toRadian(destLat - userLocation.latitude);
+      const lngDiff = toRadian(destLng - userLocation.longitude);
+      
+      const a = 
+        Math.sin(latDiff / 2) * Math.sin(latDiff / 2) +
+        Math.cos(toRadian(userLocation.latitude)) * Math.cos(toRadian(destLat)) * 
+        Math.sin(lngDiff / 2) * Math.sin(lngDiff / 2);
+      
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      const distance = earthRadius * c;
+      
+      return parseFloat(distance.toFixed(1));
+    }, [userLocation]),
+    formatDistance: useCallback((distance: number | null): string => {
+      if (distance === null) return 'Unknown';
+      return `${distance} miles`;
+    }, [])
   };
 };

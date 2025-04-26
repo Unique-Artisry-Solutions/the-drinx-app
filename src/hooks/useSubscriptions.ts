@@ -3,7 +3,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Subscription, SubscriptionTier } from '@/types/SubscriptionTypes';
-import { SubscriptionSettings, subscriptionSettings } from '@/lib/typedSupabase';
 
 export const useSubscriptions = (promoterId?: string) => {
   const { toast } = useToast();
@@ -134,13 +133,36 @@ export const useSubscriptions = (promoterId?: string) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
       
-      const { data, error } = await subscriptionSettings()
+      // Use profiles table directly instead of helper function
+      const { data, error } = await supabase
+        .from('profiles')
         .select()
-        .eq('user_id', user.id)
+        .eq('id', user.id)
         .single();
 
       if (error && error.code !== 'PGRST116') throw error;
-      return data as SubscriptionSettings | null;
+      
+      // Parse location settings from the bio field
+      let locationSettings = null;
+      if (data && data.bio) {
+        try {
+          const bioData = JSON.parse(data.bio);
+          if (bioData.location_settings) {
+            locationSettings = {
+              id: data.id,
+              user_id: data.id,
+              location_sharing: bioData.location_settings.sharing || false,
+              notification_radius: bioData.location_settings.radius || 10,
+              created_at: data.created_at,
+              updated_at: data.updated_at
+            };
+          }
+        } catch (e) {
+          console.error('Error parsing bio JSON:', e);
+        }
+      }
+      
+      return locationSettings;
     },
   });
 

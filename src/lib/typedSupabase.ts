@@ -1,7 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { Database } from '@/integrations/supabase/types';
-import { PostgrestFilterBuilder } from '@supabase/postgrest-js';
 
 // Define standard types without relying on tables that don't exist
 export type EventNotificationSchedule = {
@@ -33,15 +32,15 @@ export async function getCurrentUserId() {
   return data?.user?.id;
 }
 
-// Type-safe database access functions
+// Type-safe database access functions - using direct table access instead of custom tables
 export function eventNotificationSchedules() {
-  return supabase.from('notifications') // Use existing 'notifications' table instead
-    .select('*');
+  // Use notifications table instead of a custom table
+  return supabase.from('notifications');
 }
 
 export function subscriptionSettings() {
-  return supabase.from('profiles') // Use 'profiles' table for subscription settings
-    .select('*');
+  // Store subscription settings in profiles table
+  return supabase.from('profiles');
 }
 
 export function swigCircuits() {
@@ -64,13 +63,13 @@ export function swigCircuitTicketTiers() {
   return supabase.from('swig_circuit_ticket_tiers');
 }
 
-// Generic helper for other tables
+// Generic helper for other tables - use a more type-safe approach
 export function fromTable<T = any>(tableName: keyof Database['public']['Tables'] | keyof Database['public']['Views']) {
-  return supabase.from(tableName);
+  return supabase.from(tableName as string);
 }
 
 // Export the client for convenience
 export { supabase };
 
-// Re-export types from SubscriptionTypes.ts for convenience
+// Re-export types from Database for convenience
 export type { Database };

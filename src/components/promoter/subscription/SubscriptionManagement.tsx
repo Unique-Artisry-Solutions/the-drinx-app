@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -9,8 +9,7 @@ import { useUserLocation } from '@/hooks/useUserLocation';
 import { useSubscriptions } from '@/hooks/useSubscriptions';
 import { useAuth } from '@/contexts/auth';
 import { useToast } from '@/hooks/use-toast';
-import { subscriptionSettings } from '@/lib/typedSupabase';
-import { SubscriptionSettings } from '@/lib/typedSupabase';
+import { supabase } from '@/lib/supabase';
 
 export const SubscriptionManagement = () => {
   const { user } = useAuth();
@@ -27,9 +26,10 @@ export const SubscriptionManagement = () => {
       if (!user?.id) return;
       
       try {
-        const { data, error } = await subscriptionSettings()
-          .select()
-          .eq('user_id', user.id)
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
           .single();
         
         if (error && error.code !== 'PGRST116') {
@@ -38,8 +38,15 @@ export const SubscriptionManagement = () => {
         }
         
         if (data) {
-          setLocationSharing(data.location_sharing);
-          setNotificationRadius(data.notification_radius);
+          try {
+            const bioData = data.bio ? JSON.parse(data.bio) : {};
+            if (bioData.location_settings) {
+              setLocationSharing(bioData.location_settings.sharing || false);
+              setNotificationRadius(bioData.location_settings.radius || 10);
+            }
+          } catch (parseError) {
+            console.error('Error parsing bio JSON:', parseError);
+          }
         }
       } catch (err) {
         console.error('Error in subscription settings fetch:', err);
@@ -55,15 +62,34 @@ export const SubscriptionManagement = () => {
     setUpdatingSettings(true);
     
     try {
-      const { error } = await subscriptionSettings()
-        .upsert({
-          user_id: user.id,
-          location_sharing: locationSharing,
-          notification_radius: notificationRadius,
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('bio')
+        .eq('id', user.id)
+        .single();
+      
+      let bioData = {};
+      try {
+        bioData = profile?.bio ? JSON.parse(profile.bio) : {};
+      } catch (e) {
+        bioData = {};
+      }
+      
+      bioData = {
+        ...bioData,
+        location_settings: {
+          sharing: locationSharing,
+          radius: notificationRadius
+        }
+      };
+      
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          bio: JSON.stringify(bioData),
           updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'user_id'
-        });
+        })
+        .eq('id', user.id);
       
       if (error) throw error;
       

@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
@@ -99,8 +98,6 @@ export function usePushNotifications() {
       
       const savedSubscription = await createPushSubscription(registration, user.id);
       
-      // Transform the database subscription record into the PushSubscription type
-      // that our application expects
       if (savedSubscription) {
         const transformedSubscription: PushSubscription = {
           id: savedSubscription.id,
@@ -174,22 +171,28 @@ export function usePushNotifications() {
               .limit(1);
             
             if (subscriptions && subscriptions.length > 0) {
-              // Transform the subscription data
               const dbSubscription = subscriptions[0];
+              
+              let userAgent: string | undefined;
+              let language: string | undefined;
+              
+              if (dbSubscription.device_info && typeof dbSubscription.device_info === 'object') {
+                if (!Array.isArray(dbSubscription.device_info)) {
+                  userAgent = dbSubscription.device_info.userAgent as string;
+                  language = dbSubscription.device_info.language as string;
+                }
+              }
+              
               const transformedSubscription: PushSubscription = {
                 id: dbSubscription.id,
                 endpoint: dbSubscription.endpoint,
                 p256dh: dbSubscription.p256dh,
                 auth: dbSubscription.auth,
                 user_id: dbSubscription.user_id,
-                device_info: dbSubscription.device_info ? {
-                  userAgent: typeof dbSubscription.device_info === 'object' 
-                    ? dbSubscription.device_info.userAgent 
-                    : undefined,
-                  language: typeof dbSubscription.device_info === 'object' 
-                    ? dbSubscription.device_info.language 
-                    : undefined
-                } : { userAgent: undefined, language: undefined },
+                device_info: { 
+                  userAgent, 
+                  language 
+                },
                 created_at: dbSubscription.created_at,
                 updated_at: dbSubscription.updated_at
               };
