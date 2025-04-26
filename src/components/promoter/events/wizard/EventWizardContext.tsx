@@ -43,6 +43,7 @@ export const EventWizardProvider: React.FC<EventWizardProviderProps> = ({ childr
     date: '',
     time: '',
     ticketTypes: [],
+    imageUrl: '',
     promotionalMaterials: [],
     notificationSchedules: []
   });
@@ -58,13 +59,10 @@ export const EventWizardProvider: React.FC<EventWizardProviderProps> = ({ childr
       case 'venue':
         return !!formData.venueId;
       case 'tickets':
-        // Ticket types can be empty, but if they exist, they need name and price
         return formData.ticketTypes.every(ticket => !!ticket.name && ticket.price >= 0);
       case 'materials':
-        // Promotional materials are optional
         return true;
       case 'notifications':
-        // Notifications are optional
         return true;
       default:
         return true;

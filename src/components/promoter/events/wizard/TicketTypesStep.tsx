@@ -19,6 +19,11 @@ const TicketTypesStep: React.FC = () => {
     }];
     updateFormData({ ticketTypes: newTicketTypes });
   };
+
+  const removeTicketType = (index: number) => {
+    const newTicketTypes = formData.ticketTypes.filter((_, i) => i !== index);
+    updateFormData({ ticketTypes: newTicketTypes });
+  };
   
   const updateTicketType = (index: number, field: string, value: string | number) => {
     const newTicketTypes = [...formData.ticketTypes];
