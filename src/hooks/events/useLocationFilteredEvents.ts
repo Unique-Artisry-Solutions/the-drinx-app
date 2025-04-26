@@ -33,16 +33,21 @@ interface RawEventResponse {
   error: any;
 }
 
-// Define the notification structure separately to avoid deep instantiation
+// Define notification metadata structure independently to prevent deep type instantiation
+interface LocationCoordinates {
+  latitude: number;
+  longitude: number;
+}
+
+interface NotificationMetadata {
+  location_based?: boolean;
+  coordinates?: LocationCoordinates;
+  event_id?: string;
+}
+
+// Simple interface for notification data to avoid excessive depth
 interface NotificationData {
-  metadata: {
-    location_based?: boolean;
-    coordinates?: {
-      latitude: number;
-      longitude: number;
-    };
-    event_id?: string;
-  } | null;
+  metadata: NotificationMetadata | null;
   event_id?: string | null;
 }
 
@@ -100,12 +105,12 @@ export const useLocationFilteredEvents = () => {
         .select('metadata, event_id')
         .eq('metadata->location_based', true);
         
-      // Safely type the location data
+      // Safely type the location data with proper initialization
       const locationData: NotificationData[] = [];
       
-      // Only process if we have valid data
+      // Only process if we have valid data with array check
       if (locationResponse.data && Array.isArray(locationResponse.data)) {
-        // Map the raw data to our expected structure
+        // Map the raw data to our expected structure with proper null checks
         locationResponse.data.forEach(item => {
           if (item && typeof item === 'object') {
             locationData.push({
@@ -117,14 +122,16 @@ export const useLocationFilteredEvents = () => {
       }
 
       // Create a map of event_id to coordinates with explicit typing
-      const eventCoordinates = new Map<string, {latitude: number, longitude: number}>();
+      const eventCoordinates = new Map<string, LocationCoordinates>();
       
       locationData.forEach(item => {
-        const metadata = item.metadata;
-        const eventId = metadata?.event_id || item.event_id;
-        
-        if (metadata?.coordinates && eventId) {
-          eventCoordinates.set(eventId, metadata.coordinates);
+        // Add null checks for properties that might be undefined
+        if (item.metadata && item.metadata.coordinates) {
+          const eventId = item.metadata.event_id || item.event_id;
+          
+          if (eventId && item.metadata.coordinates) {
+            eventCoordinates.set(eventId, item.metadata.coordinates);
+          }
         }
       });
 
