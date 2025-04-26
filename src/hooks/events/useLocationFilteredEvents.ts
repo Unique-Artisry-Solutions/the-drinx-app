@@ -33,16 +33,19 @@ interface RawEventResponse {
   error: any;
 }
 
+// Define a simplified structure for notification metadata
+interface NotificationMetadata {
+  location_based?: boolean;
+  coordinates?: {
+    latitude: number;
+    longitude: number;
+  };
+  event_id?: string;
+}
+
 // Interface for location notification data
 interface LocationNotificationData {
-  metadata?: {
-    location_based?: boolean;
-    coordinates?: {
-      latitude: number;
-      longitude: number;
-    };
-    event_id?: string;
-  };
+  metadata?: NotificationMetadata;
   event_id?: string;
 }
 
@@ -94,21 +97,27 @@ export const useLocationFilteredEvents = () => {
       if (result.error) throw result.error;
       if (!result.data || result.data.length === 0) return [];
 
-      // Add location data from notifications with explicit typing
-      const locationResponse = await supabase
+      // Get location data from notifications with explicit typing to avoid deep instantiation
+      const { data: locationDataRaw } = await supabase
         .from('notifications')
         .select('metadata, event_id')
         .eq('metadata->location_based', true);
 
-      const locationData = locationResponse.data as LocationNotificationData[] | null;
+      // Type cast with a specific structure to prevent deep type instantiation
+      const locationData = locationDataRaw as Array<{
+        metadata: NotificationMetadata;
+        event_id?: string;
+      }>;
 
-      // Create a map of event_id to coordinates
+      // Create a map of event_id to coordinates with explicit typing
       const eventCoordinates = new Map<string, {latitude: number, longitude: number}>();
+      
       if (locationData) {
-        locationData.forEach((item: LocationNotificationData) => {
+        locationData.forEach(item => {
           const metadata = item.metadata || {};
-          if (metadata.coordinates && metadata.event_id) {
-            eventCoordinates.set(metadata.event_id, metadata.coordinates);
+          const eventId = metadata.event_id || item.event_id;
+          if (metadata.coordinates && eventId) {
+            eventCoordinates.set(eventId, metadata.coordinates);
           }
         });
       }
