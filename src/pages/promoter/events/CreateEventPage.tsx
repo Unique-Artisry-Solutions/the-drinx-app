@@ -4,6 +4,7 @@ import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import EventCreationWizard from '@/components/promoter/events/wizard/EventCreationWizard';
 
 const CreateEventPage = () => {
   const navigate = useNavigate();
@@ -20,13 +21,17 @@ const CreateEventPage = () => {
           Back to Events
         </Button>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-          <h1 className="text-2xl font-bold text-purple-600 mb-6">Create New Event</h1>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
+          <div className="p-6 border-b">
+            <h1 className="text-2xl font-bold text-purple-600">Create New Event</h1>
+            <p className="text-gray-600 dark:text-gray-400">
+              Fill out the form below to create a new event for your audiences.
+            </p>
+          </div>
           
-          {/* Event creation wizard will be implemented in the next step */}
-          <p className="text-center text-gray-500 dark:text-gray-400 py-8">
-            Event creation wizard coming soon.
-          </p>
+          <div className="p-6">
+            <EventCreationWizard />
+          </div>
         </div>
       </div>
     </Layout>
