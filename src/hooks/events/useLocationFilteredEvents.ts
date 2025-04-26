@@ -104,7 +104,7 @@ export const useLocationFilteredEvents = () => {
       const locationData: NotificationData[] = [];
       
       // Only process if we have valid data
-      if (locationResponse.data) {
+      if (locationResponse.data && Array.isArray(locationResponse.data)) {
         // Map the raw data to our expected structure
         locationResponse.data.forEach(item => {
           if (item && typeof item === 'object') {
