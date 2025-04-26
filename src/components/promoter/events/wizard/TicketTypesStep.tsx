@@ -1,12 +1,11 @@
-
-import React, { useState } from 'react';
+import React from 'react';
+import { useEventWizard } from './EventWizardContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Plus, Trash } from 'lucide-react';
-import { useEventWizard } from './EventWizardContext';
 
 const TicketTypesStep: React.FC = () => {
   const { formData, updateFormData } = useEventWizard();
@@ -27,12 +26,6 @@ const TicketTypesStep: React.FC = () => {
       ...newTicketTypes[index],
       [field]: field === 'price' || field === 'quantity' ? Number(value) : value
     };
-    updateFormData({ ticketTypes: newTicketTypes });
-  };
-  
-  const removeTicketType = (index: number) => {
-    const newTicketTypes = [...formData.ticketTypes];
-    newTicketTypes.splice(index, 1);
     updateFormData({ ticketTypes: newTicketTypes });
   };
 

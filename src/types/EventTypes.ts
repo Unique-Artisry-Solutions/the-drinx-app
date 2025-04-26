@@ -47,8 +47,8 @@ export interface EventFormData {
   description: string;
   date: string;
   time: string;
-  venue?: string;  // Keep venue optional
-  venueId?: string; // Make venueId optional to match the context type
+  venue?: string;  
+  venueId?: string;
   ticketTypes: {
     name: string;
     price: number;

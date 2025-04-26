@@ -1,17 +1,11 @@
-
 import React, { createContext, useContext, useState } from 'react';
+import { EventFormData } from '@/types/EventTypes';
 
 interface TicketType {
   name: string;
   price: number;
-  description?: string;
-  quantity?: number;
-}
-
-export interface PromotionalMaterial {
-  title: string;
   description: string;
-  imageUrl?: string;
+  quantity: number;
 }
 
 export interface NotificationSchedule {
@@ -23,19 +17,6 @@ export interface NotificationSchedule {
   locationBased: boolean;
   coordinates?: { latitude: number; longitude: number };
   targetRadius?: number;
-}
-
-export interface EventFormData {
-  name: string;
-  description: string;
-  date: string;
-  time: string;
-  venue?: string;  // Make venue optional to match with EventTypes.ts
-  venueId?: string;
-  ticketTypes: TicketType[];
-  imageUrl?: string;
-  promotionalMaterials: string[];
-  notificationSchedules: NotificationSchedule[];
 }
 
 interface EventWizardContextType {
