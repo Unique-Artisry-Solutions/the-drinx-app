@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState } from 'react';
 import { EventFormData } from '@/types/EventTypes';
 
@@ -43,7 +44,7 @@ export const EventWizardProvider: React.FC<EventWizardProviderProps> = ({ childr
     date: '',
     time: '',
     ticketTypes: [],
-    imageUrl: '',
+    imageUrl: '', // Added the required imageUrl property with default empty string
     promotionalMaterials: [],
     notificationSchedules: []
   });
