@@ -36,8 +36,8 @@ const mapToComponentEstablishment = (est: SupabaseEstablishment): Establishment 
   address: est.address,
   latitude: est.latitude,
   longitude: est.longitude,
-  cocktailCount: est.cocktail_count || est.cocktailCount || 0,
-  image: est.image_url || est.image,
+  cocktailCount: est.cocktail_count || 0, // Fix: Use cocktail_count from the interface
+  image: est.image_url, // Fix: Use image_url as the property name
   distance: est.distance
 });
 

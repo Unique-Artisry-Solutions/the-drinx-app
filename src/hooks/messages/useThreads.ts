@@ -1,3 +1,4 @@
+
 import { useCallback, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRetry } from '../useRetry';
@@ -46,7 +47,7 @@ export const useThreads = (userType: UserType, userId: string | undefined) => {
         timestamp: thread.last_message_at,
         isRead: false, // Will be updated by useThreadReadStatus
         isArchived: thread.is_archived,
-        venueName: thread.venues?.name,
+        venueName: thread.venues?.name, // Fix: access name property on the object, not the array
       })) || [];
 
       setThreads(processedThreads);

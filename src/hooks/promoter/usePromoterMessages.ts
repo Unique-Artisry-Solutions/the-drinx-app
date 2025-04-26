@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { MessageThread } from '../messages/types';
@@ -39,7 +40,7 @@ export const usePromoterMessages = (userId: string | undefined) => {
         timestamp: thread.last_message_at,
         isRead: false,
         isArchived: thread.is_archived,
-        venueName: thread.venues?.name,
+        venueName: thread.venues?.name, // Fix: access name property on the object, not the array
         lastMessage: ''
       }));
 
