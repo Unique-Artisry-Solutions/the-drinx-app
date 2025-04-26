@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Layout from '@/components/Layout';
@@ -7,16 +6,14 @@ import { PlusCircle, Search, SlidersHorizontal } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import EventCard from '@/components/promoter/events/EventCard';
-import { useEvents } from '@/hooks/useEvents';
+import { useEvents } from '@/hooks/events/useEvents';
 
 const EventManagementPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all');
   const { events, isLoading } = useEvents();
   
-  // Filter events based on search term and active tab
   const filteredEvents = events.filter(event => {
-    // Handle venue display safely since we don't have a direct venue object
     const eventName = event.name?.toLowerCase() || '';
     const searchLower = searchTerm.toLowerCase();
     

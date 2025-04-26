@@ -8,7 +8,7 @@ import TicketTypesStep from './TicketTypesStep';
 import PromotionalMaterialsStep from './PromotionalMaterialsStep';
 import NotificationSchedulingStep from './NotificationSchedulingStep';
 import { EventWizardProvider, useEventWizard } from './EventWizardContext';
-import { useEvents } from '@/hooks/useEvents';
+import { useEvents } from '@/hooks/events/useEvents';
 import { useNavigate } from 'react-router-dom';
 
 const steps = [
