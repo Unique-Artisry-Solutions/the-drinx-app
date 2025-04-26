@@ -43,10 +43,10 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
           <span className="text-sm text-gray-500">/month</span>
         </p>
         <ul className="space-y-2 text-left mb-6">
-          {tier.features.map((feature, index) => (
+          {Array.isArray(tier.features) && tier.features.map((feature: any, index: number) => (
             <li key={index} className="flex items-center">
               <span className="mr-2">•</span>
-              {feature}
+              {typeof feature === 'string' ? feature : JSON.stringify(feature)}
             </li>
           ))}
         </ul>

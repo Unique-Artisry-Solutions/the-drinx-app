@@ -2,6 +2,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { fromTable } from '@/lib/typedSupabase';
 
 export const useEventNotifications = () => {
   const { toast } = useToast();
@@ -37,8 +38,7 @@ export const useEventNotifications = () => {
       // First save to event_notification_schedules for location-based targeting
       for (const notification of notifications) {
         if (notification.locationBased && notification.coordinates) {
-          const { error } = await supabase
-            .from('event_notification_schedules')
+          const { error } = await fromTable('event_notification_schedules')
             .insert({
               event_id: eventId,
               title: notification.title,

@@ -1,6 +1,9 @@
 
 // Extend the CustomDatabase interface to include the new tables
-interface CustomDatabase extends Database {
+import { supabase as supabaseClient } from '@/integrations/supabase/client';
+import { Database } from '@/integrations/supabase/types';
+
+export interface CustomDatabase extends Database {
   public: Database['public'] & {
     Tables: Database['public']['Tables'] & {
       subscription_settings: {
@@ -72,4 +75,12 @@ interface CustomDatabase extends Database {
       };
     }
   }
+}
+
+// Re-export the supabase client for backwards compatibility
+export const supabase = supabaseClient;
+
+// Create a typed helper function for accessing tables
+export function fromTable<T = any>(tableName: string) {
+  return supabase.from(tableName);
 }

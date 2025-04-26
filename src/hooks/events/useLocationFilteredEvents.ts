@@ -4,6 +4,7 @@ import { useUserLocation } from '@/hooks/useUserLocation';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { EventType } from '@/types/EventTypes';
+import { fromTable } from '@/lib/typedSupabase';
 
 export const useLocationFilteredEvents = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -39,19 +40,20 @@ export const useLocationFilteredEvents = () => {
       if (!events || events.length === 0) return [];
 
       // Add location data from notification schedules
-      const { data: notificationSchedules } = await supabase
-        .from('event_notification_schedules')
+      const { data: notificationSchedules } = await fromTable('event_notification_schedules')
         .select('event_id, coordinates')
         .in('event_id', events.map(event => event.id))
         .eq('location_based', true);
 
       // Create a map of event_id to coordinates
       const eventCoordinates = new Map();
-      notificationSchedules?.forEach(schedule => {
-        if (schedule.coordinates) {
-          eventCoordinates.set(schedule.event_id, schedule.coordinates);
-        }
-      });
+      if (notificationSchedules) {
+        notificationSchedules.forEach((schedule: any) => {
+          if (schedule.coordinates) {
+            eventCoordinates.set(schedule.event_id, schedule.coordinates);
+          }
+        });
+      }
 
       // Now filter and add distance information
       const filteredEvents = events
