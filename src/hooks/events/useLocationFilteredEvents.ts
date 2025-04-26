@@ -33,20 +33,17 @@ interface RawEventResponse {
   error: any;
 }
 
-// Define a simplified structure for notification metadata
-interface NotificationMetadata {
-  location_based?: boolean;
-  coordinates?: {
-    latitude: number;
-    longitude: number;
-  };
-  event_id?: string;
-}
-
-// Interface for location notification data
-interface LocationNotificationData {
-  metadata?: NotificationMetadata;
-  event_id?: string;
+// Define the notification structure separately to avoid deep instantiation
+interface NotificationData {
+  metadata: {
+    location_based?: boolean;
+    coordinates?: {
+      latitude: number;
+      longitude: number;
+    };
+    event_id?: string;
+  } | null;
+  event_id?: string | null;
 }
 
 export const useLocationFilteredEvents = () => {
@@ -97,30 +94,39 @@ export const useLocationFilteredEvents = () => {
       if (result.error) throw result.error;
       if (!result.data || result.data.length === 0) return [];
 
-      // Get location data from notifications with explicit typing to avoid deep instantiation
-      const { data: locationDataRaw } = await supabase
+      // Fix the type issues by using a more generic approach first
+      const locationResponse = await supabase
         .from('notifications')
         .select('metadata, event_id')
         .eq('metadata->location_based', true);
-
-      // Type cast with a specific structure to prevent deep type instantiation
-      const locationData = locationDataRaw as Array<{
-        metadata: NotificationMetadata;
-        event_id?: string;
-      }>;
+        
+      // Safely type the location data
+      const locationData: NotificationData[] = [];
+      
+      // Only process if we have valid data
+      if (locationResponse.data) {
+        // Map the raw data to our expected structure
+        locationResponse.data.forEach(item => {
+          if (item && typeof item === 'object') {
+            locationData.push({
+              metadata: item.metadata || null,
+              event_id: item.event_id || null
+            });
+          }
+        });
+      }
 
       // Create a map of event_id to coordinates with explicit typing
       const eventCoordinates = new Map<string, {latitude: number, longitude: number}>();
       
-      if (locationData) {
-        locationData.forEach(item => {
-          const metadata = item.metadata || {};
-          const eventId = metadata.event_id || item.event_id;
-          if (metadata.coordinates && eventId) {
-            eventCoordinates.set(eventId, metadata.coordinates);
-          }
-        });
-      }
+      locationData.forEach(item => {
+        const metadata = item.metadata;
+        const eventId = metadata?.event_id || item.event_id;
+        
+        if (metadata?.coordinates && eventId) {
+          eventCoordinates.set(eventId, metadata.coordinates);
+        }
+      });
 
       // Filter and add distance information
       const filteredEvents = result.data
