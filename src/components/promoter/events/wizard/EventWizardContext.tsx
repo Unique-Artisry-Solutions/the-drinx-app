@@ -8,13 +8,13 @@ interface TicketType {
   quantity?: number;
 }
 
-interface PromotionalMaterial {
+export interface PromotionalMaterial {
   title: string;
   description: string;
   imageUrl?: string;
 }
 
-interface NotificationSchedule {
+export interface NotificationSchedule {
   id: string;
   title: string;
   content: string;
@@ -34,14 +34,18 @@ export interface EventFormData {
   venueId?: string;
   ticketTypes: TicketType[];
   imageUrl?: string;
-  promotionalMaterials?: PromotionalMaterial[];
-  notificationSchedules?: NotificationSchedule[];
+  promotionalMaterials: string[];
+  notificationSchedules: NotificationSchedule[];
 }
 
 interface EventWizardContextType {
   formData: EventFormData;
   updateFormData: (data: Partial<EventFormData>) => void;
   validateStep: (stepId: string) => boolean;
+  currentStep: number;
+  nextStep: () => void;
+  prevStep: () => void;
+  goToStep: (step: number) => void;
 }
 
 const EventWizardContext = createContext<EventWizardContextType | undefined>(undefined);
@@ -51,12 +55,14 @@ interface EventWizardProviderProps {
 }
 
 export const EventWizardProvider: React.FC<EventWizardProviderProps> = ({ children }) => {
+  const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<EventFormData>({
     name: '',
     description: '',
     date: '',
     time: '',
     ticketTypes: [],
+    promotionalMaterials: [],
     notificationSchedules: []
   });
 
@@ -84,8 +90,28 @@ export const EventWizardProvider: React.FC<EventWizardProviderProps> = ({ childr
     }
   };
 
+  const nextStep = () => {
+    setCurrentStep(prev => prev + 1);
+  };
+
+  const prevStep = () => {
+    setCurrentStep(prev => Math.max(0, prev - 1));
+  };
+
+  const goToStep = (step: number) => {
+    setCurrentStep(step);
+  };
+
   return (
-    <EventWizardContext.Provider value={{ formData, updateFormData, validateStep }}>
+    <EventWizardContext.Provider value={{ 
+      formData, 
+      updateFormData, 
+      validateStep,
+      currentStep,
+      nextStep,
+      prevStep,
+      goToStep
+    }}>
       {children}
     </EventWizardContext.Provider>
   );

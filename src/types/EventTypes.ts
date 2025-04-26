@@ -1,4 +1,6 @@
 
+import { NotificationSchedule } from '@/components/promoter/events/wizard/EventWizardContext';
+
 export interface EventType {
   id: string;
   name: string;
@@ -27,6 +29,7 @@ export interface EventType {
   createdAt: string;
   updatedAt: string;
   createdBy: string;
+  notificationSchedules?: NotificationSchedule[];
 }
 
 export interface TicketType {
@@ -54,4 +57,5 @@ export interface EventFormData {
   }[];
   imageUrl: string;
   promotionalMaterials: string[];
+  notificationSchedules?: NotificationSchedule[];
 }

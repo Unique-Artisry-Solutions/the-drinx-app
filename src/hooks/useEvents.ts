@@ -73,11 +73,50 @@ export const useEvents = () => {
 
       // Create notification schedules if provided
       if (eventData.notificationSchedules && eventData.notificationSchedules.length > 0) {
+        // First, create a SQL function if needed to create the notifications table
+        await supabase.rpc('execute_sql', { 
+          sql_query: `
+            DO $$
+            BEGIN
+              IF NOT EXISTS (
+                SELECT FROM pg_catalog.pg_tables 
+                WHERE schemaname = 'public' 
+                AND tablename = 'event_notification_schedules'
+              ) THEN
+                EXECUTE '
+                  CREATE TABLE public.event_notification_schedules (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    event_id UUID NOT NULL REFERENCES public.events(id) ON DELETE CASCADE,
+                    title TEXT NOT NULL,
+                    content TEXT NOT NULL,
+                    priority TEXT NOT NULL DEFAULT ''medium'',
+                    scheduled_for TIMESTAMPTZ NOT NULL,
+                    location_based BOOLEAN NOT NULL DEFAULT false,
+                    coordinates JSONB,
+                    target_radius INTEGER,
+                    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+                    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+                  );
+                  
+                  ALTER TABLE public.event_notification_schedules ENABLE ROW LEVEL SECURITY;
+                  
+                  CREATE POLICY "Event creators can manage their event notifications"
+                    ON public.event_notification_schedules
+                    USING (auth.uid() IN (
+                      SELECT created_by FROM public.events WHERE id = event_id
+                    ));
+                ';
+              END IF;
+            END
+            $$;
+          `
+        });
+        
         // Schedule event notifications
-        const { error: notificationError } = await supabase
-          .from('event_notification_schedules')
-          .insert(
-            eventData.notificationSchedules.map(schedule => ({
+        for (const schedule of eventData.notificationSchedules) {
+          const { error: notificationError } = await supabase
+            .from('event_notification_schedules')
+            .insert({
               event_id: eventResponse.id,
               title: schedule.title || `Reminder: ${eventData.name}`,
               content: schedule.content || `Don't forget: ${eventData.name} is happening soon!`,
@@ -86,10 +125,10 @@ export const useEvents = () => {
               location_based: !!schedule.locationBased,
               coordinates: schedule.coordinates || null,
               target_radius: schedule.targetRadius || null
-            }))
-          );
+            });
 
-        if (notificationError) throw notificationError;
+          if (notificationError) throw notificationError;
+        }
       }
 
       return eventResponse;
@@ -127,10 +166,50 @@ export const useEvents = () => {
         targetRadius?: number;
       }> 
     }) => {
-      const { error } = await supabase
-        .from('event_notification_schedules')
-        .insert(
-          notifications.map(notification => ({
+      // First check if the table exists, create it if it doesn't
+      await supabase.rpc('execute_sql', { 
+        sql_query: `
+          DO $$
+          BEGIN
+            IF NOT EXISTS (
+              SELECT FROM pg_catalog.pg_tables 
+              WHERE schemaname = 'public' 
+              AND tablename = 'event_notification_schedules'
+            ) THEN
+              EXECUTE '
+                CREATE TABLE public.event_notification_schedules (
+                  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                  event_id UUID NOT NULL REFERENCES public.events(id) ON DELETE CASCADE,
+                  title TEXT NOT NULL,
+                  content TEXT NOT NULL,
+                  priority TEXT NOT NULL DEFAULT ''medium'',
+                  scheduled_for TIMESTAMPTZ NOT NULL,
+                  location_based BOOLEAN NOT NULL DEFAULT false,
+                  coordinates JSONB,
+                  target_radius INTEGER,
+                  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+                  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+                );
+                
+                ALTER TABLE public.event_notification_schedules ENABLE ROW LEVEL SECURITY;
+                
+                CREATE POLICY "Event creators can manage their event notifications"
+                  ON public.event_notification_schedules
+                  USING (auth.uid() IN (
+                    SELECT created_by FROM public.events WHERE id = event_id
+                  ));
+              ';
+            END IF;
+          END
+          $$;
+        `
+      });
+      
+      // Insert notifications one by one to avoid potential errors
+      for (const notification of notifications) {
+        const { error } = await supabase
+          .from('event_notification_schedules')
+          .insert({
             event_id: eventId,
             title: notification.title,
             content: notification.content,
@@ -139,10 +218,10 @@ export const useEvents = () => {
             location_based: !!notification.locationBased,
             coordinates: notification.coordinates || null,
             target_radius: notification.targetRadius || null
-          }))
-        );
-
-      if (error) throw error;
+          });
+        
+        if (error) throw error;
+      }
       
       return { success: true };
     },
