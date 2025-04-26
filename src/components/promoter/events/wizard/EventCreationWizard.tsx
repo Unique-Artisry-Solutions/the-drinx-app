@@ -35,7 +35,7 @@ const EventCreationWizard: React.FC = () => {
         <WizardSteps steps={STEPS} />
         
         <Card className="mt-6">
-          <CardContent className="p-6 my-0 py-[20px]">
+          <CardContent className="p-6 py-[20px] my-[10px]">
             {/* Content changes based on current step */}
             <EventWizardContent />
             
