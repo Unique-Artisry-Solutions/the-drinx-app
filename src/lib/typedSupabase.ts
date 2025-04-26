@@ -1,9 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { Database } from '@/integrations/supabase/types';
-
-// Re-export types from supabase.ts to avoid duplication
-export type { CustomDatabase } from '@/lib/supabase';
+import { CustomDatabase } from '@/lib/supabase';
 
 // Export type helpers for common tables
 export type EventNotificationSchedule = {
@@ -40,6 +38,16 @@ export async function getCurrentUserId() {
   return data?.user?.id;
 }
 
+// Helper for accessing the subscription_settings table
+export function subscriptionSettings() {
+  return supabase.from('subscription_settings');
+}
+
+// Helper for accessing the event_notification_schedules table
+export function eventNotificationSchedules() {
+  return supabase.from('event_notification_schedules');
+}
+
 // Export specific table helpers
 export function swigCircuits() {
   return supabase.from('swig_circuits');
@@ -63,3 +71,4 @@ export function swigCircuitTicketTiers() {
 
 // Export the client for convenience
 export { supabase };
+export type { CustomDatabase };

@@ -4,6 +4,7 @@ import { useUserLocation } from '@/hooks/useUserLocation';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { EventType } from '@/types/EventTypes';
+import { eventNotificationSchedules } from '@/lib/typedSupabase';
 
 export const useLocationFilteredEvents = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -39,8 +40,7 @@ export const useLocationFilteredEvents = () => {
       if (!events || events.length === 0) return [];
 
       // Add location data from notification schedules
-      const { data: notificationSchedules } = await supabase
-        .from('event_notification_schedules')
+      const { data: notificationSchedules } = await eventNotificationSchedules()
         .select('event_id, coordinates')
         .in('event_id', events.map(event => event.id))
         .eq('location_based', true);

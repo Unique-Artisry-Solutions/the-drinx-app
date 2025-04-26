@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,9 +10,8 @@ import { useUserLocation } from '@/hooks/useUserLocation';
 import { useSubscriptions } from '@/hooks/useSubscriptions';
 import { useAuth } from '@/contexts/auth';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { subscriptionSettings, getCurrentUserId } from '@/lib/typedSupabase';
 import { SubscriptionSettings } from '@/types/SubscriptionTypes';
-import { fromTable } from '@/lib/typedSupabase';
 
 export const SubscriptionManagement = () => {
   const { user } = useAuth();
@@ -28,7 +28,7 @@ export const SubscriptionManagement = () => {
       if (!user?.id) return;
       
       try {
-        const { data, error } = await fromTable('subscription_settings')
+        const { data, error } = await subscriptionSettings()
           .select('*')
           .eq('user_id', user.id)
           .single<SubscriptionSettings>();
@@ -56,7 +56,7 @@ export const SubscriptionManagement = () => {
     setUpdatingSettings(true);
     
     try {
-      const { error } = await fromTable('subscription_settings')
+      const { error } = await subscriptionSettings()
         .upsert({
           user_id: user.id,
           location_sharing: locationSharing,
