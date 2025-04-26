@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import { supabase } from '@/integrations/supabase/client';
@@ -38,24 +37,24 @@ export const useLocationFilteredEvents = () => {
 
       if (!events || events.length === 0) return [];
 
-      // Add location data from notification schedules
-      const { data: notificationSchedules } = await supabase
+      // Add location data from notifications
+      const { data: locationData } = await supabase
         .from('notifications')
         .select('metadata, event_id')
-        .containsAny('metadata', [{ location_based: true }]);
+        .eq('metadata->location_based', true);
 
       // Create a map of event_id to coordinates
       const eventCoordinates = new Map();
-      if (notificationSchedules) {
-        notificationSchedules.forEach((schedule: any) => {
-          const metadata = schedule.metadata || {};
+      if (locationData) {
+        locationData.forEach((item: any) => {
+          const metadata = item.metadata || {};
           if (metadata.coordinates && metadata.event_id) {
             eventCoordinates.set(metadata.event_id, metadata.coordinates);
           }
         });
       }
 
-      // Now filter and add distance information
+      // Filter and add distance information
       const filteredEvents = events
         .map(event => {
           const coordinates = eventCoordinates.get(event.id);
@@ -68,22 +67,10 @@ export const useLocationFilteredEvents = () => {
           );
 
           if (distance !== null && distance <= radiusMiles) {
-            // Create a properly typed EventType object with all required fields
-            const eventData: EventType = {
-              id: event.id,
-              name: event.name,
-              description: event.description || '',
-              date: event.date,
-              time: event.time,
-              venue_id: event.venue_id,
-              venue: {
-                id: event.venue_id || '',
-                name: '',
-                address: ''
-              },
-              image_url: event.image_url,
-              promotional_materials: event.promotional_materials || [],
-              status: event.status,
+            // Create a properly typed EventType object
+            return {
+              ...event,
+              distance,
               ticketTypes: event.event_ticket_types.map((ticket: any) => ({
                 id: ticket.id,
                 name: ticket.name,
@@ -93,23 +80,10 @@ export const useLocationFilteredEvents = () => {
                 sold: 0,
                 available: ticket.quantity
               })),
-              attendees: {
-                registered: 0,
-                capacity: 0,
-                checkedIn: 0
-              },
-              revenue: {
-                total: 0,
-                ticketSales: 0,
-                additionalSales: 0
-              },
-              distance: distance,
               createdAt: event.created_at,
               updatedAt: event.updated_at,
               createdBy: event.created_by
-            };
-            
-            return eventData;
+            } as EventType;
           }
           return null;
         })

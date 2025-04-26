@@ -32,17 +32,7 @@ export async function getCurrentUserId() {
   return data?.user?.id;
 }
 
-// Type-safe database access functions - using direct table access instead of custom tables
-export function eventNotificationSchedules() {
-  // Use notifications table instead of a custom table
-  return supabase.from('notifications');
-}
-
-export function subscriptionSettings() {
-  // Store subscription settings in profiles table
-  return supabase.from('profiles');
-}
-
+// Type-safe database access functions
 export function swigCircuits() {
   return supabase.from('swig_circuits');
 }
@@ -63,9 +53,9 @@ export function swigCircuitTicketTiers() {
   return supabase.from('swig_circuit_ticket_tiers');
 }
 
-// Generic helper for other tables - use a more type-safe approach
-export function fromTable<T = any>(tableName: keyof Database['public']['Tables'] | keyof Database['public']['Views']) {
-  return supabase.from(tableName as string);
+// Generic helper for tables - use a type-safe approach
+export function fromTable<T extends keyof Database['public']['Tables']>(tableName: T) {
+  return supabase.from(tableName);
 }
 
 // Export the client for convenience
