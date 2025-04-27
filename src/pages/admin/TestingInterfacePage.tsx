@@ -9,6 +9,7 @@ import { useQuery } from '@tanstack/react-query';
 import TestResultsVisualization from '@/components/admin/testing/TestResultsVisualization';
 import TestControls from '@/components/admin/testing/TestControls';
 import TestReportSection from '@/components/admin/testing/TestReportSection';
+import DatabaseMonitoringSection from '@/components/admin/testing/DatabaseMonitoringSection';
 
 const TestingInterfacePage = () => {
   const { toast } = useToast();
@@ -108,7 +109,10 @@ const TestingInterfacePage = () => {
               </Card>
             </div>
 
-            <TestControls />
+            <DatabaseMonitoringSection />
+            <div className="mt-6">
+              <TestControls />
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <TestResultsVisualization results={testResults} />
               <TestReportSection results={testResults} />
