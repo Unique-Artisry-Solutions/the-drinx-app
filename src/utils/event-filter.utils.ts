@@ -1,14 +1,11 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { 
-  SimpleNotification,
-  RawEventResponse,
   LocationCoordinates,
+  RawEventResponse,
   RawEventData,
-  RawNotificationResponse,
-  SupabaseNotification,
-  NotificationMetadata,
-  RawNotification
+  NotificationsResponse,
+  EventLocation
 } from '@/types/event-filter.types';
 import { EventType } from '@/types/EventTypes';
 
@@ -36,63 +33,48 @@ export const fetchPublishedEvents = async (): Promise<RawEventResponse> => {
         quantity
       )
     `)
-    .eq('status', 'published') as RawEventResponse;
+    .eq('status', 'published');
 };
 
-export const fetchLocationBasedNotifications = async (): Promise<RawNotificationResponse> => {
-  // Get raw data from Supabase without type transformations
-  const { data, error } = await supabase
+export const fetchLocationBasedNotifications = async (): Promise<NotificationsResponse> => {
+  return await supabase
     .from('notifications')
     .select('id, metadata')
     .eq('metadata->location_based', true);
-
-  // Return the raw response matching our interface
-  return {
-    data: data as SupabaseNotification[] | null,
-    error
-  };
 };
 
-// Helper function to safely parse notification metadata
-export const parseNotificationMetadata = (notification: SupabaseNotification): RawNotification => {
-  let parsedMetadata: NotificationMetadata | null = null;
+export const extractEventLocations = (data: NotificationsResponse['data']): EventLocation[] => {
+  if (!data || data.length === 0) return [];
   
-  if (notification.metadata) {
-    // Cast to any first to handle the Json type safely
-    const meta = notification.metadata as any;
-    parsedMetadata = {
-      location_based: meta.location_based || false,
-      event_id: meta.event_id || '',
-      coordinates: meta.coordinates || null
-    };
-  }
-
-  return {
-    id: notification.id,
-    metadata: parsedMetadata
-  };
+  return data
+    .map(item => {
+      // Skip invalid items
+      if (!item || !item.metadata) return null;
+      
+      // Cast metadata to any to access properties
+      const meta = item.metadata as any;
+      
+      // Check if this notification has the required location data
+      if (!meta.location_based || !meta.event_id || !meta.coordinates) return null;
+      if (!meta.coordinates.latitude || !meta.coordinates.longitude) return null;
+      
+      return {
+        eventId: meta.event_id,
+        coordinates: {
+          latitude: Number(meta.coordinates.latitude),
+          longitude: Number(meta.coordinates.longitude)
+        }
+      };
+    })
+    .filter((item): item is EventLocation => item !== null);
 };
 
-export const processLocationData = (notifications: SupabaseNotification[]): SimpleNotification[] => {
-  return notifications.map(notification => {
-    // Parse the metadata using our helper function
-    const parsedNotification = parseNotificationMetadata(notification);
-    
-    // Create SimpleNotification from parsed data
-    return {
-      locationBased: Boolean(parsedNotification.metadata?.location_based),
-      coordinates: parsedNotification.metadata?.coordinates || null,
-      eventId: parsedNotification.metadata?.event_id || ''
-    };
-  });
-};
-
-export const createEventCoordinatesMap = (notifications: SimpleNotification[]): Map<string, LocationCoordinates> => {
+export const createEventCoordinatesMap = (locations: EventLocation[]): Map<string, LocationCoordinates> => {
   const coordMap = new Map<string, LocationCoordinates>();
   
-  notifications.forEach(notification => {
-    if (notification.coordinates && notification.eventId) {
-      coordMap.set(notification.eventId, notification.coordinates);
+  locations.forEach(location => {
+    if (location.coordinates && location.eventId) {
+      coordMap.set(location.eventId, location.coordinates);
     }
   });
   
@@ -101,11 +83,9 @@ export const createEventCoordinatesMap = (notifications: SimpleNotification[]): 
 
 export const formatEventData = (
   rawEvent: RawEventData,
-  coordinates: LocationCoordinates | undefined,
-  distance: number | null
-): EventType | null => {
-  if (!coordinates) return null;
-  
+  coordinates: LocationCoordinates,
+  distance: number
+): EventType => {
   return {
     id: rawEvent.id,
     name: rawEvent.name,
@@ -116,7 +96,7 @@ export const formatEventData = (
     image_url: rawEvent.image_url || '',
     promotional_materials: rawEvent.promotional_materials || [],
     status: rawEvent.status,
-    distance: distance || 0,
+    distance: distance,
     ticketTypes: rawEvent.event_ticket_types.map(ticket => ({
       id: ticket.id,
       name: ticket.name,

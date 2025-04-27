@@ -6,11 +6,10 @@ import { EventType } from '@/types/EventTypes';
 import { 
   fetchPublishedEvents, 
   fetchLocationBasedNotifications,
-  processLocationData,
+  extractEventLocations,
   createEventCoordinatesMap,
   formatEventData
 } from '@/utils/event-filter.utils';
-import { SupabaseNotification } from '@/types/event-filter.types';
 
 export const useLocationFilteredEvents = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -32,18 +31,20 @@ export const useLocationFilteredEvents = () => {
     setError(null);
 
     try {
+      // Fetch all published events
       const result = await fetchPublishedEvents();
       if (result.error) throw result.error;
       if (!result.data || result.data.length === 0) return [];
 
+      // Fetch notifications containing location data
       const notificationsResponse = await fetchLocationBasedNotifications();
       if (notificationsResponse.error) throw notificationsResponse.error;
       
-      // Process notifications with improved type safety
-      const notificationsData = notificationsResponse.data || [];
-      const locationData = processLocationData(notificationsData as SupabaseNotification[]);
-      const eventCoordinates = createEventCoordinatesMap(locationData);
+      // Extract and process location data from notifications
+      const eventLocations = extractEventLocations(notificationsResponse.data);
+      const eventCoordinates = createEventCoordinatesMap(eventLocations);
 
+      // Filter events by distance from user location
       const filteredEvents = result.data
         .map(rawEvent => {
           const coordinates = eventCoordinates.get(rawEvent.id);
@@ -62,6 +63,7 @@ export const useLocationFilteredEvents = () => {
         })
         .filter((event): event is EventType => event !== null);
 
+      // Sort by distance
       return filteredEvents.sort((a, b) => 
         (a.distance || Infinity) - (b.distance || Infinity)
       );

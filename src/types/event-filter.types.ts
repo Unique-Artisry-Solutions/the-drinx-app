@@ -1,5 +1,4 @@
 
-import { EventType } from './EventTypes';
 import { Json } from '@/integrations/supabase/types';
 
 // Simple location coordinates type
@@ -8,43 +7,19 @@ export type LocationCoordinates = {
   longitude: number;
 };
 
-export type SimpleNotification = {
-  locationBased: boolean;
-  coordinates: LocationCoordinates | null;
+// For storing simple notification data with location info
+export type EventLocation = {
   eventId: string;
+  coordinates: LocationCoordinates;
 };
 
+// Raw event response from Supabase
 export type RawEventResponse = {
   data: RawEventData[] | null;
   error: any;
 };
 
-// Define the structure as it comes directly from Supabase
-export interface SupabaseNotification {
-  id: string;
-  metadata: Json; // Use Json type from Supabase types
-}
-
-// Type for notification metadata after parsing
-export interface NotificationMetadata {
-  location_based?: boolean;
-  coordinates?: LocationCoordinates;
-  event_id?: string;
-}
-
-// For typed response from the fetch function
-export interface RawNotificationResponse {
-  data: SupabaseNotification[] | null;
-  error: any;
-}
-
-// Processed notification type with parsed metadata
-export interface RawNotification {
-  id: string;
-  metadata: NotificationMetadata | null;
-}
-
-// Basic event data type
+// Basic event data type with all fields we need
 export type RawEventData = {
   id: string;
   name: string;
@@ -65,4 +40,13 @@ export type RawEventData = {
     description: string;
     quantity: number;
   }>;
+};
+
+// For notifications table response
+export type NotificationsResponse = {
+  data: {
+    id: string;
+    metadata: Json;
+  }[] | null;
+  error: any;
 };
