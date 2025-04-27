@@ -1,3 +1,4 @@
+
 import { supabase } from '@/lib/supabase';
 import { 
   RewardOperationResponse, 
@@ -15,7 +16,14 @@ export const rewardsApi = {
     
     if (cacheStatus && !cacheStatus.is_invalidated) {
       console.log('Cache hit for reward profile:', userId);
-      return JSON.parse(cacheStatus.metadata?.cached_data || 'null');
+      // Fix the TypeScript error by ensuring the metadata and cached_data are properly accessed
+      const cachedData = cacheStatus.metadata ? 
+        (typeof cacheStatus.metadata === 'object' ? 
+          (cacheStatus.metadata as any).cached_data : null) : null;
+      
+      if (cachedData) {
+        return JSON.parse(cachedData);
+      }
     }
 
     try {

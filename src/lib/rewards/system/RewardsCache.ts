@@ -31,14 +31,17 @@ export class RewardsCache {
     }
   }
 
-  static async updateCache(key: string, ttlSeconds?: number) {
+  static async updateCache(key: string, ttlSeconds?: number, cachedData?: any) {
+    const metadata = cachedData ? { cached_data: JSON.stringify(cachedData) } : undefined;
+    
     const { error } = await supabase
       .from('reward_cache_control')
       .upsert({
         cache_key: key,
         last_updated: new Date().toISOString(),
         is_invalidated: false,
-        ttl_seconds: ttlSeconds || 300
+        ttl_seconds: ttlSeconds || 300,
+        metadata: metadata
       });
 
     if (error) {
