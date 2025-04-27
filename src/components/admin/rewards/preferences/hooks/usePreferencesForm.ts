@@ -26,14 +26,15 @@ export const usePreferencesForm = (userId: string) => {
   const { data: preferences, isLoading, error: fetchError } = useQuery({
     queryKey: ['rewardPreferences', userId],
     queryFn: () => getUserPreferences(userId),
-    onSuccess: (data) => {
-      console.log('Successfully fetched user preferences');
-    },
-    onError: (err) => {
-      console.error('Failed to fetch user preferences:', err);
+    retry: 2
+  });
+
+  React.useEffect(() => {
+    if (fetchError) {
+      console.error('Failed to fetch user preferences:', fetchError);
       toast.error('Unable to load preferences. Please try again later.');
     }
-  });
+  }, [fetchError]);
 
   React.useEffect(() => {
     if (preferences) {
