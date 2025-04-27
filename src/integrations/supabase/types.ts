@@ -2794,6 +2794,10 @@ export type Database = {
         }
         Returns: string
       }
+      update_user_points: {
+        Args: { p_user_id: string; p_points: number }
+        Returns: undefined
+      }
     }
     Enums: {
       event_status: "draft" | "published" | "cancelled" | "completed"

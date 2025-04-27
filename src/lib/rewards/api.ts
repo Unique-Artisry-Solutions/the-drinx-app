@@ -1,9 +1,7 @@
-
 import { supabase } from '@/integrations/supabase/client';
-import { RewardOperationResponse, UserRewardProfile } from './types';
+import { RewardOperationResponse, UserRewardProfile, transformRewardTier, transformTransaction } from './types';
 
 export const rewardsApi = {
-  // Fetch user's reward profile including points, tier, and history
   async getUserRewardProfile(userId: string): Promise<UserRewardProfile | null> {
     const { data: userReward, error: userRewardError } = await supabase
       .from('user_rewards')
@@ -47,44 +45,47 @@ export const rewardsApi = {
     return {
       points: userReward?.points || 0,
       lifetimePoints: userReward?.lifetime_points || 0,
-      currentTier: userReward?.reward_tiers || null,
+      currentTier: userReward?.reward_tiers ? transformRewardTier(userReward.reward_tiers) : null,
       availableRewards: availableRewards || [],
-      transactionHistory: transactions || [],
+      transactionHistory: (transactions || []).map(transformTransaction),
       redemptionHistory: redemptions || [],
     };
   },
 
-  // Add points to user's reward balance
   async addPoints(userId: string, points: number, source: string, metadata = {}): Promise<RewardOperationResponse> {
-    const { error: transactionError } = await supabase
-      .from('reward_transactions')
-      .insert({
-        user_id: userId,
-        points,
-        transaction_type: 'earn',
-        source,
-        metadata
+    try {
+      const { error: transactionError } = await supabase
+        .from('reward_transactions')
+        .insert({
+          user_id: userId,
+          points,
+          transaction_type: 'earn',
+          source,
+          metadata
+        });
+
+      if (transactionError) {
+        console.error('Error adding points:', transactionError);
+        return { success: false, error: 'Failed to add points' };
+      }
+
+      const { error: updateError } = await supabase.rpc('update_user_points', {
+        p_user_id: userId,
+        p_points: points
       });
 
-    if (transactionError) {
-      console.error('Error adding points:', transactionError);
-      return { success: false, error: 'Failed to add points' };
+      if (updateError) {
+        console.error('Error updating points:', updateError);
+        return { success: false, error: 'Failed to update points' };
+      }
+
+      return { success: true, message: 'Points added successfully' };
+    } catch (error) {
+      console.error('Error in addPoints:', error);
+      return { success: false, error: 'An unexpected error occurred' };
     }
-
-    const { error: updateError } = await supabase.rpc('update_user_points', {
-      p_user_id: userId,
-      p_points: points
-    });
-
-    if (updateError) {
-      console.error('Error updating points:', updateError);
-      return { success: false, error: 'Failed to update points' };
-    }
-
-    return { success: true, message: 'Points added successfully' };
   },
 
-  // Redeem points for a reward
   async redeemReward(userId: string, offeringId: string): Promise<RewardOperationResponse> {
     const { data: offering, error: offeringError } = await supabase
       .from('reward_offerings')
@@ -134,7 +135,6 @@ export const rewardsApi = {
     return { success: true, message: 'Reward redeemed successfully' };
   },
 
-  // Check if feature flag is enabled for rewards
   async isRewardsEnabled(): Promise<boolean> {
     const { data, error } = await supabase
       .from('feature_flags')
