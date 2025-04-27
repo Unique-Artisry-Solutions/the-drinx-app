@@ -1,4 +1,4 @@
-import { Home, Users, Building2, LayoutDashboard, FileBarChart2, Image, Palette, Layers, BookOpen, Settings, Bell, Activity } from 'lucide-react';
+import { Home, Users, Building2, LayoutDashboard, FileBarChart2, Image, Palette, Layers, BookOpen, Settings, Bell, Activity, FileText } from 'lucide-react';
 
 type AdminNavItem = {
   label: string;
@@ -78,6 +78,12 @@ export const adminNavItems: AdminNavItem[] = [
     label: 'System Configuration',
     path: '/admin/system-configuration',
     icon: Settings,
+    showInNav: true,
+  },
+  {
+    label: 'Testing Interface',
+    path: '/admin/testing',
+    icon: FileText,
     showInNav: true,
   }
 ];

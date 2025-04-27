@@ -18,6 +18,7 @@ const SystemAnalyticsPage = lazy(() => import('@/pages/admin/SystemAnalyticsPage
 const PhotoModerationPage = lazy(() => import('@/pages/admin/PhotoModerationPage'));
 const ContentModerationPage = lazy(() => import('@/pages/admin/ContentModerationPage'));
 const ThemeCustomizationPage = lazy(() => import('@/pages/admin/ThemeCustomizationPage'));
+const TestingInterfacePage = lazy(() => import('@/pages/admin/TestingInterfacePage'));
 
 export const adminRoutes: RouteObject[] = [
   { path: '/admin', element: <AdminLogin /> },
@@ -38,4 +39,5 @@ export const adminRoutes: RouteObject[] = [
   { path: '/admin/notifications', element: <AdminNotificationsPage /> },
   { path: '/admin/notification-testing', element: <NotificationTestingPage /> },
   { path: '/admin/reward-system-monitor', element: <RewardSystemMonitorPage /> },
+  { path: '/admin/testing', element: <TestingInterfacePage /> },
 ];
