@@ -42,21 +42,37 @@ export function UserPreferencesTab() {
     }
   });
 
+  // Mock user ID for demo purposes - in a real app, you'd get this from auth context
+  const demoUserId = '123e4567-e89b-12d3-a456-426614174000';
+
   const { data: preferences, isLoading } = useQuery({
-    queryKey: ['rewardPreferences'],
-    queryFn: () => getUserPreferences(),
+    queryKey: ['rewardPreferences', demoUserId],
+    queryFn: () => getUserPreferences(demoUserId),
   });
 
   React.useEffect(() => {
     if (preferences) {
-      form.reset(preferences);
+      // Convert the array of preferences to the expected form data structure
+      const formattedPreferences = preferences.reduce((acc, pref) => {
+        if (pref.preference_key === 'notification_settings') {
+          acc.notification_settings = pref.preference_value;
+        } else if (pref.preference_key === 'display_settings') {
+          acc.display_settings = pref.preference_value;
+        }
+        return acc;
+      }, {} as PreferencesFormData);
+
+      // Only reset if we have valid data
+      if (formattedPreferences.notification_settings && formattedPreferences.display_settings) {
+        form.reset(formattedPreferences);
+      }
     }
   }, [preferences, form]);
 
   const onSubmit = async (data: PreferencesFormData) => {
     try {
-      await updateUserPreference('notification_settings', data.notification_settings);
-      await updateUserPreference('display_settings', data.display_settings);
+      await updateUserPreference(demoUserId, 'notification_settings', data.notification_settings);
+      await updateUserPreference(demoUserId, 'display_settings', data.display_settings);
       toast.success('Preferences updated successfully');
     } catch (error) {
       toast.error('Failed to update preferences');
@@ -194,6 +210,12 @@ export function UserPreferencesTab() {
             />
           </CardContent>
         </Card>
+
+        <div className="flex justify-end">
+          <button type="submit" className="bg-primary text-primary-foreground px-4 py-2 rounded hover:bg-primary/90">
+            Save Preferences
+          </button>
+        </div>
       </form>
     </Form>
   );

@@ -1,8 +1,13 @@
 
 import { supabase } from '@/lib/supabase';
-import type { UserRewardPreference } from '../types';
 
-export async function getUserPreferences(userId: string) {
+export interface UserRewardPreference {
+  user_id: string;
+  preference_key: string;
+  preference_value: any;
+}
+
+export async function getUserPreferences(userId: string): Promise<UserRewardPreference[]> {
   const { data, error } = await supabase
     .from('user_reward_preferences')
     .select('*')
@@ -10,7 +15,7 @@ export async function getUserPreferences(userId: string) {
 
   if (error) {
     console.error('Error fetching user preferences:', error);
-    return null;
+    return [];
   }
 
   return data as UserRewardPreference[];
@@ -20,7 +25,7 @@ export async function updateUserPreference(
   userId: string,
   key: string,
   value: any
-) {
+): Promise<boolean> {
   const { error } = await supabase
     .from('user_reward_preferences')
     .upsert({
