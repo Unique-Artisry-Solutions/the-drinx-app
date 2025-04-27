@@ -1,3 +1,4 @@
+
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { rewardsApi } from '@/lib/rewards/api';
 import { supabase } from '@/lib/supabase';

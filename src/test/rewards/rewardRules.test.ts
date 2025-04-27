@@ -1,3 +1,4 @@
+
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { supabase } from '@/lib/supabase';
 import { rewardsApi } from '@/lib/rewards/api';
@@ -35,7 +36,14 @@ describe('Reward Rules', () => {
         insert: vi.fn(),
         update: vi.fn(),
         eq: vi.fn(),
-      }));
+        // Add missing properties to satisfy TypeScript
+        upsert: vi.fn(),
+        delete: vi.fn(),
+        url: '',
+        headers: {},
+        single: vi.fn(),
+        maybeSingle: vi.fn(),
+      } as any));
 
       const event = {
         type: 'purchase',
@@ -71,7 +79,14 @@ describe('Reward Rules', () => {
         insert: vi.fn(),
         update: vi.fn(),
         eq: vi.fn(),
-      }));
+        // Add missing properties to satisfy TypeScript
+        upsert: vi.fn(),
+        delete: vi.fn(),
+        url: '',
+        headers: {},
+        single: vi.fn(),
+        maybeSingle: vi.fn(),
+      } as any));
 
       const event = {
         type: 'visit',

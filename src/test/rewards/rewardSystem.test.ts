@@ -1,3 +1,4 @@
+
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { supabase } from '@/lib/supabase';
 import { rewardsApi } from '@/lib/rewards/api';
@@ -29,7 +30,12 @@ describe('Reward System', () => {
         eq: vi.fn(),
         single: vi.fn(),
         maybeSingle: vi.fn(),
-      }));
+        // Add missing properties to satisfy TypeScript
+        upsert: vi.fn(),
+        delete: vi.fn(),
+        url: '',
+        headers: {},
+      } as any));
 
       const result = await rewardsApi.addPoints(mockUserId, pointsToAdd, 'test');
       expect(result.success).toBe(true);
@@ -50,7 +56,12 @@ describe('Reward System', () => {
         eq: vi.fn(),
         single: vi.fn(),
         maybeSingle: vi.fn(),
-      }));
+        // Add missing properties to satisfy TypeScript
+        upsert: vi.fn(),
+        delete: vi.fn(),
+        url: '',
+        headers: {},
+      } as any));
 
       const result = await rewardsApi.addPoints(mockUserId, -pointsToDeduct, 'test');
       expect(result.success).toBe(false);
@@ -79,7 +90,12 @@ describe('Reward System', () => {
         eq: vi.fn(),
         single: vi.fn(),
         maybeSingle: vi.fn(),
-      }));
+        // Add missing properties to satisfy TypeScript
+        upsert: vi.fn(),
+        delete: vi.fn(),
+        url: '',
+        headers: {},
+      } as any));
 
       const profile = await rewardsApi.getUserRewardProfile('test-user-id');
       expect(profile?.lifetimePoints).toBe(5000);
@@ -108,7 +124,12 @@ describe('Reward System', () => {
           error: null
         }),
         maybeSingle: vi.fn(),
-      }));
+        // Add missing properties to satisfy TypeScript
+        upsert: vi.fn(),
+        delete: vi.fn(),
+        url: '',
+        headers: {},
+      } as any));
 
       const result = await rewardsApi.redeemReward(mockUserId, mockOfferingId);
       expect(result.success).toBe(false);
@@ -134,7 +155,12 @@ describe('Reward System', () => {
         eq: vi.fn(),
         single: vi.fn(),
         maybeSingle: vi.fn(),
-      }));
+        // Add missing properties to satisfy TypeScript
+        upsert: vi.fn(),
+        delete: vi.fn(),
+        url: '',
+        headers: {},
+      } as any));
 
       // Add points
       await rewardsApi.addPoints(mockUserId, pointsToAdd, 'test');
@@ -150,7 +176,12 @@ describe('Reward System', () => {
         eq: vi.fn(),
         single: vi.fn(),
         maybeSingle: vi.fn(),
-      }));
+        // Add missing properties to satisfy TypeScript
+        upsert: vi.fn(),
+        delete: vi.fn(),
+        url: '',
+        headers: {},
+      } as any));
 
       // Verify final balance
       const profile = await rewardsApi.getUserRewardProfile(mockUserId);
