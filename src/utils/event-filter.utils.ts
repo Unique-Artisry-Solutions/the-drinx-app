@@ -37,7 +37,7 @@ export const fetchPublishedEvents = async (): Promise<RawEventResponse> => {
     .eq('status', 'published') as RawEventResponse;
 };
 
-export const fetchLocationBasedNotifications = async (): Promise<RawNotificationResponse> {
+export const fetchLocationBasedNotifications = async (): Promise<RawNotificationResponse> => {
   // Explicitly cast the response to match our expected type
   const response = await supabase
     .from('notifications')
