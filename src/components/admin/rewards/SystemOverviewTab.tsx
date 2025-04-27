@@ -1,9 +1,9 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Activity, AlertTriangle, CheckCircle, TrendingUp, Zap, CircleCheck } from "lucide-react";
-import { RewardsSystemMonitor, PerformanceTestResult } from '@/lib/rewards/system/RewardsSystemMonitor';
+import { RewardsSystemMonitor } from '@/lib/rewards/system/RewardsSystemMonitor';
+import type { PerformanceTestResult } from '@/lib/rewards/types';
 import { useQuery } from '@tanstack/react-query';
 import AnalyticsMetricCard from '@/components/charts/AnalyticsMetricCard';
 import { toast } from 'sonner';
@@ -38,7 +38,7 @@ const SystemOverviewTab = () => {
     refetchTests();
   };
 
-  const getTestStatusIcon = (status: string) => {
+  const getTestStatusIcon = (status: 'fast' | 'average' | 'slow' | 'error') => {
     switch (status) {
       case 'fast':
         return <Zap className="h-4 w-4 text-green-500" />;
@@ -157,17 +157,17 @@ const SystemOverviewTab = () => {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-xl font-mono">
-                      {typeof result.duration_ms === 'number' ? `${result.duration_ms}ms` : 'N/A'}
+                      {`${result.duration_ms}ms`}
                     </span>
-                    {typeof result.duration_ms === 'number' && (
-                      <span className={
-                        result.status === 'fast' ? "text-green-500" : 
-                        result.status === 'average' ? "text-yellow-500" : 
-                        result.status === 'slow' ? "text-red-500" : "text-gray-500"
-                      }>
-                        {result.status === 'fast' ? "Fast" : result.status === 'average' ? "Average" : result.status === 'slow' ? "Slow" : "Error"}
-                      </span>
-                    )}
+                    <span className={
+                      result.status === 'fast' ? "text-green-500" : 
+                      result.status === 'average' ? "text-yellow-500" : 
+                      result.status === 'slow' ? "text-red-500" : "text-gray-500"
+                    }>
+                      {result.status === 'fast' ? "Fast" : 
+                       result.status === 'average' ? "Average" : 
+                       result.status === 'slow' ? "Slow" : "Error"}
+                    </span>
                   </div>
                   {result.rows_processed && (
                     <div className="text-xs text-muted-foreground mt-1">

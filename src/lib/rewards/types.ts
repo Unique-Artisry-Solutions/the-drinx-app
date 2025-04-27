@@ -137,6 +137,14 @@ export interface PerformanceMetric {
   context?: Record<string, any>;
 }
 
+export interface PerformanceTestResult {
+  [testName: string]: {
+    duration_ms: number;
+    status: 'fast' | 'average' | 'slow' | 'error';
+    rows_processed?: number;
+  };
+}
+
 export function transformRewardTier(rawTier: any): RewardTier {
   return {
     id: rawTier.id,
