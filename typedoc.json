@@ -1,0 +1,10 @@
+
+{
+  "entryPoints": ["src/lib/rewards/api.ts"],
+  "out": "docs/rewards-api",
+  "excludePrivate": true,
+  "excludeProtected": true,
+  "excludeExternals": true,
+  "theme": "default",
+  "name": "Rewards System API Documentation"
+}
