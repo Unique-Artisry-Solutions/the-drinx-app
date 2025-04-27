@@ -1,35 +1,23 @@
-
 import { supabase } from '@/lib/supabase';
+import type { SystemHealthMetric, PerformanceMetric, PerformanceTestResult } from '../types';
 
-export interface SystemHealthMetric {
-  status: 'healthy' | 'degraded' | 'error';
-  response_time_ms: number;
-  transaction_count: number;
-  error_count: number;
-  details?: Record<string, any>;
+type HealthStatus = 'healthy' | 'degraded' | 'error';
+
+function isValidHealthStatus(status: string): status is HealthStatus {
+  return ['healthy', 'degraded', 'error'].includes(status);
 }
 
-export interface PerformanceMetric {
-  metric_type: string;
-  metric_name: string;
-  metric_value: number;
-  context?: Record<string, any>;
-}
-
-// Added this interface for better typing of performance test results
-export interface PerformanceTestResult {
-  [testName: string]: {
-    duration_ms: number;
-    status: 'fast' | 'average' | 'slow' | 'error';
-    rows_processed?: number;
-  };
+function sanitizeDetails(details: unknown): Record<string, any> {
+  if (typeof details === 'object' && details !== null) {
+    return details as Record<string, any>;
+  }
+  return {};
 }
 
 export class RewardsSystemMonitor {
   static async recordHealthMetric(metric: SystemHealthMetric): Promise<boolean> {
     try {
-      // Validate that status is one of the allowed values
-      if (!['healthy', 'degraded', 'error'].includes(metric.status)) {
+      if (!isValidHealthStatus(metric.status)) {
         console.error('Invalid status value for health metric:', metric.status);
         return false;
       }
@@ -41,7 +29,7 @@ export class RewardsSystemMonitor {
           response_time_ms: metric.response_time_ms,
           transaction_count: metric.transaction_count,
           error_count: metric.error_count,
-          details: metric.details || {}
+          details: sanitizeDetails(metric.details)
         });
 
       if (error) {
@@ -97,19 +85,17 @@ export class RewardsSystemMonitor {
         return null;
       }
 
-      // Ensure the status is one of the allowed values
-      const status = data.status as 'healthy' | 'degraded' | 'error';
-      if (!['healthy', 'degraded', 'error'].includes(status)) {
-        console.error('Invalid status value from database:', status);
+      if (!isValidHealthStatus(data.status)) {
+        console.error('Invalid status value from database:', data.status);
         return null;
       }
 
       return {
-        status: status,
+        status: data.status,
         response_time_ms: data.response_time_ms,
         transaction_count: data.transaction_count,
         error_count: data.error_count,
-        details: data.details && typeof data.details === 'object' ? data.details : {}
+        details: sanitizeDetails(data.details)
       };
     } catch (error) {
       console.error('Exception fetching system health:', error);

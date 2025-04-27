@@ -1,4 +1,3 @@
-
 export interface RewardMetric {
   id: string;
   metric_date: string;
@@ -42,7 +41,6 @@ export interface RewardSystemAnalyticsRow {
   establishment_id?: string;
 }
 
-// Adding more specific types for each query
 export interface RewardTransactionRow {
   id: string;
   user_id: string;
@@ -63,7 +61,6 @@ export interface DailyRewardMetrics {
   activeUsers: number;
 }
 
-// Add the missing types:
 export interface DailyMetrics {
   date: string;
   metrics: Record<string, number>;
@@ -125,7 +122,21 @@ export interface RewardRedemption {
   expires_at?: string;
 }
 
-// Helper transformation functions
+export interface SystemHealthMetric {
+  status: 'healthy' | 'degraded' | 'error';
+  response_time_ms: number;
+  transaction_count: number;
+  error_count: number;
+  details?: Record<string, any>;
+}
+
+export interface PerformanceMetric {
+  metric_type: string;
+  metric_name: string;
+  metric_value: number;
+  context?: Record<string, any>;
+}
+
 export function transformRewardTier(rawTier: any): RewardTier {
   return {
     id: rawTier.id,
