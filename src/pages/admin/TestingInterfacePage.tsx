@@ -16,7 +16,7 @@ const TestingInterfacePage = () => {
   const { data: testResults, isLoading, refetch } = useQuery({
     queryKey: ['testResults'],
     queryFn: async () => {
-      // Simulated test results - replace with actual API call
+      // Simulated test results with updated materialized view metrics
       return {
         totalTests: 156,
         passed: 142,
