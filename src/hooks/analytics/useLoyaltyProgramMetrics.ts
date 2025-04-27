@@ -14,6 +14,24 @@ interface LoyaltyProgramMetrics {
   error: string | null;
 }
 
+interface UserReward {
+  points: number;
+  establishment_id?: string;
+}
+
+interface RewardTransaction {
+  user_id: string;
+  points: number;
+  transaction_type: string;
+  source: string;
+  created_at: string;
+}
+
+interface RewardRedemption {
+  user_id: string;
+  created_at: string;
+}
+
 export function useLoyaltyProgramMetrics(establishmentId?: string): LoyaltyProgramMetrics {
   const [metrics, setMetrics] = useState<LoyaltyProgramMetrics>({
     memberCount: 0,
@@ -38,9 +56,9 @@ export function useLoyaltyProgramMetrics(establishmentId?: string): LoyaltyProgr
           query = query.eq('establishment_id', establishmentId);
         }
         
-        const { data: userRewards, count, error } = await query;
+        const { data: userRewards, count, error: userRewardsError } = await query;
 
-        if (error) throw error;
+        if (userRewardsError) throw userRewardsError;
 
         // Get redemption data
         const { data: redemptions, error: redemptionError } = await supabase
@@ -64,7 +82,7 @@ export function useLoyaltyProgramMetrics(establishmentId?: string): LoyaltyProgr
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
         
-        const { data: activeCount, error: activeError } = await supabase
+        const { count: activeCount, error: activeError } = await supabase
           .from('reward_transactions')
           .select('user_id', { count: 'exact', head: true })
           .gt('created_at', thirtyDaysAgo.toISOString())
@@ -77,18 +95,18 @@ export function useLoyaltyProgramMetrics(establishmentId?: string): LoyaltyProgr
         
         // Avg points calculation
         const avgPoints = userRewards && userRewards.length > 0
-          ? userRewards.reduce((sum, profile) => sum + (profile.points || 0), 0) / userRewards.length
+          ? Math.round(userRewards.reduce((sum: number, profile: UserReward) => sum + (profile.points || 0), 0) / userRewards.length)
           : 0;
         
         // Redemption rate: percentage of users who have redeemed rewards
-        const uniqueRedeemers = new Set(redemptions?.map(r => r.user_id) || []);
+        const uniqueRedeemers = new Set((redemptions || []).map(r => r.user_id));
         const redemptionRate = totalMembers > 0
-          ? (uniqueRedeemers.size / totalMembers) * 100
+          ? Math.round((uniqueRedeemers.size / totalMembers) * 100)
           : 0;
         
         // Retention calculation (simplified)
         const retentionRate = totalMembers > 0
-          ? (activeMembers / totalMembers) * 100
+          ? Math.round((activeMembers / totalMembers) * 100)
           : 0;
         
         // Prepare time series data for charts
@@ -97,9 +115,9 @@ export function useLoyaltyProgramMetrics(establishmentId?: string): LoyaltyProgr
         setMetrics({
           memberCount: totalMembers,
           activeMembers,
-          redemptionRate: Math.round(redemptionRate),
-          averagePoints: Math.round(avgPoints),
-          memberRetentionRate: Math.round(retentionRate),
+          redemptionRate,
+          averagePoints: avgPoints,
+          memberRetentionRate: retentionRate,
           data: timeSeriesData,
           isLoading: false,
           error: null
@@ -122,7 +140,7 @@ export function useLoyaltyProgramMetrics(establishmentId?: string): LoyaltyProgr
 }
 
 // Helper to process transaction data into time series
-function processTimeSeriesData(transactions: any[]): any[] {
+function processTimeSeriesData(transactions: RewardTransaction[]): any[] {
   // Group by month for the chart
   const monthlyData: Record<string, { signups: number, redemptions: number, activeMembers: number }> = {};
 
