@@ -9,6 +9,7 @@ import AdminDocumentationPage from '@/pages/admin/AdminDocumentationPage';
 import SystemConfigurationPage from '@/pages/admin/SystemConfigurationPage';
 
 const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
+const RewardSystemMonitorPage = lazy(() => import('@/pages/admin/RewardSystemMonitorPage'));
 const AdminUsersPage = lazy(() => import('@/pages/admin/AdminUsersPage'));
 const AdminUserProfile = lazy(() => import('@/pages/admin/AdminUserProfile'));
 const AdminEstablishmentsPage = lazy(() => import('@/pages/admin/AdminEstablishmentProfile'));
@@ -36,4 +37,5 @@ export const adminRoutes: RouteObject[] = [
   { path: '/admin/system-configuration', element: <SystemConfigurationPage /> },
   { path: '/admin/notifications', element: <AdminNotificationsPage /> },
   { path: '/admin/notification-testing', element: <NotificationTestingPage /> },
+  { path: '/admin/reward-system-monitor', element: <RewardSystemMonitorPage /> },
 ];

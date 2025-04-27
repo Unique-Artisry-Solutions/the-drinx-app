@@ -1,5 +1,4 @@
-
-import { Home, Users, Building2, LayoutDashboard, FileBarChart2, Image, Palette, Layers, BookOpen, Settings, Bell } from 'lucide-react';
+import { Home, Users, Building2, LayoutDashboard, FileBarChart2, Image, Palette, Layers, BookOpen, Settings, Bell, Activity } from 'lucide-react';
 
 type AdminNavItem = {
   label: string;
@@ -43,6 +42,12 @@ export const adminNavItems: AdminNavItem[] = [
     label: 'System Breakdown',
     path: '/admin/system-breakdown',
     icon: FileBarChart2,
+    showInNav: true,
+  },
+  {
+    label: 'Reward System Monitor',
+    path: '/admin/reward-system-monitor',
+    icon: Activity,
     showInNav: true,
   },
   {
