@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { 
   SimpleNotification,
@@ -5,6 +6,8 @@ import {
   LocationCoordinates,
   RawEventData,
   RawNotificationResponse,
+  SupabaseNotification,
+  NotificationMetadata,
   RawNotification
 } from '@/types/event-filter.types';
 import { EventType } from '@/types/EventTypes';
@@ -37,23 +40,51 @@ export const fetchPublishedEvents = async (): Promise<RawEventResponse> => {
 };
 
 export const fetchLocationBasedNotifications = async (): Promise<RawNotificationResponse> => {
+  // Get raw data from Supabase without type transformations
   const { data, error } = await supabase
     .from('notifications')
     .select('id, metadata')
     .eq('metadata->location_based', true);
 
+  // Return the raw response matching our interface
   return {
-    data: data as RawNotification[],
+    data: data as SupabaseNotification[] | null,
     error
   };
 };
 
-export const processLocationData = (notifications: RawNotification[]): SimpleNotification[] => {
-  return notifications.map(notification => ({
-    locationBased: Boolean(notification.metadata?.location_based),
-    coordinates: notification.metadata?.coordinates || null,
-    eventId: notification.metadata?.event_id || ''
-  }));
+// Helper function to safely parse notification metadata
+export const parseNotificationMetadata = (notification: SupabaseNotification): RawNotification => {
+  let parsedMetadata: NotificationMetadata | null = null;
+  
+  if (notification.metadata) {
+    // Cast to any first to handle the Json type safely
+    const meta = notification.metadata as any;
+    parsedMetadata = {
+      location_based: meta.location_based || false,
+      event_id: meta.event_id || '',
+      coordinates: meta.coordinates || null
+    };
+  }
+
+  return {
+    id: notification.id,
+    metadata: parsedMetadata
+  };
+};
+
+export const processLocationData = (notifications: SupabaseNotification[]): SimpleNotification[] => {
+  return notifications.map(notification => {
+    // Parse the metadata using our helper function
+    const parsedNotification = parseNotificationMetadata(notification);
+    
+    // Create SimpleNotification from parsed data
+    return {
+      locationBased: Boolean(parsedNotification.metadata?.location_based),
+      coordinates: parsedNotification.metadata?.coordinates || null,
+      eventId: parsedNotification.metadata?.event_id || ''
+    };
+  });
 };
 
 export const createEventCoordinatesMap = (notifications: SimpleNotification[]): Map<string, LocationCoordinates> => {

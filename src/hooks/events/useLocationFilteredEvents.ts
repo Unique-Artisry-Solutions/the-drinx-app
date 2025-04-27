@@ -10,6 +10,7 @@ import {
   createEventCoordinatesMap,
   formatEventData
 } from '@/utils/event-filter.utils';
+import { SupabaseNotification } from '@/types/event-filter.types';
 
 export const useLocationFilteredEvents = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -38,8 +39,9 @@ export const useLocationFilteredEvents = () => {
       const notificationsResponse = await fetchLocationBasedNotifications();
       if (notificationsResponse.error) throw notificationsResponse.error;
       
-      // Safely handle potentially null data
-      const locationData = processLocationData(notificationsResponse.data || []);
+      // Process notifications with improved type safety
+      const notificationsData = notificationsResponse.data || [];
+      const locationData = processLocationData(notificationsData as SupabaseNotification[]);
       const eventCoordinates = createEventCoordinatesMap(locationData);
 
       const filteredEvents = result.data

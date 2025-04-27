@@ -19,22 +19,30 @@ export type RawEventResponse = {
   error: any;
 };
 
-export type NotificationMetadata = {
+// Define the structure as it comes directly from Supabase
+export interface SupabaseNotification {
+  id: string;
+  metadata: Json; // Use Json type from Supabase types
+}
+
+// Type for notification metadata after parsing
+export interface NotificationMetadata {
   location_based?: boolean;
   coordinates?: LocationCoordinates;
   event_id?: string;
-};
+}
 
-// Updated to match Supabase response structure
-export type RawNotification = {
+// For typed response from the fetch function
+export interface RawNotificationResponse {
+  data: SupabaseNotification[] | null;
+  error: any;
+}
+
+// Processed notification type with parsed metadata
+export interface RawNotification {
   id: string;
   metadata: NotificationMetadata | null;
-};
-
-export type RawNotificationResponse = {
-  data: RawNotification[] | null;
-  error: any;
-};
+}
 
 // Basic event data type
 export type RawEventData = {
