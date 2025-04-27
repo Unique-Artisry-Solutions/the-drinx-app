@@ -32,3 +32,89 @@ export interface RewardAnalytics {
   }>;
   sourcesBreakdown: Record<string, number>;
 }
+
+// Add the missing types:
+export interface DailyMetrics {
+  date: string;
+  metrics: Record<string, number>;
+  metadata?: Record<string, any>;
+}
+
+export interface UserRewardProfile {
+  points: number;
+  lifetimePoints: number;
+  currentTier: RewardTier | null;
+  availableRewards: RewardOffering[];
+  transactionHistory: RewardTransaction[];
+  redemptionHistory: RewardRedemption[];
+}
+
+export interface RewardOperationResponse {
+  success: boolean;
+  message?: string;
+  error?: string;
+}
+
+export interface RewardTier {
+  id: string;
+  name: string;
+  description?: string;
+  points_required: number;
+  benefits: any[];
+  icon?: string;
+  color?: string;
+}
+
+export interface RewardOffering {
+  id: string;
+  name: string;
+  description?: string;
+  points_required: number;
+  quantity_available?: number;
+  is_active: boolean;
+  image_url?: string;
+  expiration_days?: number;
+}
+
+export interface RewardTransaction {
+  id: string;
+  date: string;
+  points: number;
+  type: string;
+  source: string;
+  description?: string;
+}
+
+export interface RewardRedemption {
+  id: string;
+  offering_id: string;
+  points_spent: number;
+  created_at: string;
+  status: string;
+  fulfilled_at?: string;
+  expires_at?: string;
+}
+
+// Helper transformation functions
+export function transformRewardTier(rawTier: any): RewardTier {
+  return {
+    id: rawTier.id,
+    name: rawTier.name,
+    description: rawTier.description,
+    points_required: rawTier.points_required,
+    benefits: rawTier.benefits || [],
+    icon: rawTier.icon,
+    color: rawTier.color
+  };
+}
+
+export function transformTransaction(rawTransaction: any): RewardTransaction {
+  return {
+    id: rawTransaction.id,
+    date: rawTransaction.created_at,
+    points: rawTransaction.points,
+    type: rawTransaction.transaction_type,
+    source: rawTransaction.source,
+    description: rawTransaction.description
+  };
+}
