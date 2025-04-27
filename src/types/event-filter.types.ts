@@ -1,35 +1,27 @@
 
 import { EventType } from './EventTypes';
 
+// Simple location coordinates type
 export type LocationCoordinates = {
   latitude: number;
   longitude: number;
 };
 
-// Raw response type from Supabase
-export type SupabaseNotificationResponse = {
-  data: {
-    metadata: {
-      location_based?: boolean;
-      coordinates?: LocationCoordinates;
-      event_id?: string;
-    };
-    event_id: string;
-  }[] | null;
+// Simplified notification type without deep nesting
+export type SimpleNotification = {
+  locationBased: boolean;
+  coordinates: LocationCoordinates | null;
+  eventId: string;
+};
+
+// Basic response types
+export type RawEventResponse = {
+  data: RawEventData[] | null;
   error: any;
 };
 
-// Simplified type for processed notification records
-export type NotificationRecord = {
-  metadata?: {
-    location_based?: boolean;
-    coordinates?: LocationCoordinates;
-    event_id?: string;
-  };
-  event_id?: string;
-};
-
-export interface RawEventData {
+// Basic event data type
+export type RawEventData = {
   id: string;
   name: string;
   description: string | null;
@@ -49,9 +41,4 @@ export interface RawEventData {
     description: string;
     quantity: number;
   }>;
-}
-
-export interface RawEventResponse {
-  data: RawEventData[] | null;
-  error: any;
-}
+};

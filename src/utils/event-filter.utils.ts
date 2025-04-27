@@ -1,11 +1,10 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { 
-  NotificationRecord, 
-  RawEventResponse, 
+  SimpleNotification,
+  RawEventResponse,
   LocationCoordinates,
-  RawEventData,
-  SupabaseNotificationResponse
+  RawEventData
 } from '@/types/event-filter.types';
 import { EventType } from '@/types/EventTypes';
 
@@ -36,52 +35,37 @@ export const fetchPublishedEvents = async (): Promise<RawEventResponse> => {
     .eq('status', 'published') as RawEventResponse;
 };
 
-export const fetchLocationBasedNotifications = async (): Promise<SupabaseNotificationResponse> => {
-  const response = await supabase
+export const fetchLocationBasedNotifications = async () => {
+  const { data, error } = await supabase
     .from('notifications')
     .select('metadata, event_id')
     .eq('metadata->location_based', true);
-    
-  return response as unknown as SupabaseNotificationResponse;
-};
 
-export const processLocationData = (responseData: any): NotificationRecord[] => {
-  const locationData: NotificationRecord[] = [];
-  
-  // Handle null response data
-  if (!responseData || !Array.isArray(responseData)) {
-    return locationData;
+  if (error) {
+    throw error;
   }
-  
-  responseData.forEach(item => {
-    if (item && item.metadata) {
-      locationData.push({
-        metadata: {
-          location_based: item.metadata.location_based,
-          coordinates: item.metadata.coordinates,
-          event_id: item.metadata.event_id
-        },
-        event_id: item.event_id
-      });
-    }
-  });
-  
-  return locationData;
+
+  return data || [];
 };
 
-export const createEventCoordinatesMap = (locationData: NotificationRecord[]): Map<string, LocationCoordinates> => {
-  const eventCoordinates = new Map<string, LocationCoordinates>();
+export const processLocationData = (responseData: any[]): SimpleNotification[] => {
+  return responseData.map(item => ({
+    locationBased: item.metadata?.location_based ?? false,
+    coordinates: item.metadata?.coordinates ?? null,
+    eventId: item.metadata?.event_id || item.event_id || ''
+  }));
+};
+
+export const createEventCoordinatesMap = (notifications: SimpleNotification[]): Map<string, LocationCoordinates> => {
+  const coordMap = new Map<string, LocationCoordinates>();
   
-  locationData.forEach(item => {
-    const coordinates = item?.metadata?.coordinates;
-    const eventId = item?.metadata?.event_id || item?.event_id;
-    
-    if (coordinates && eventId) {
-      eventCoordinates.set(eventId, coordinates);
+  notifications.forEach(notification => {
+    if (notification.coordinates && notification.eventId) {
+      coordMap.set(notification.eventId, notification.coordinates);
     }
   });
   
-  return eventCoordinates;
+  return coordMap;
 };
 
 export const formatEventData = (
@@ -90,7 +74,7 @@ export const formatEventData = (
   distance: number | null
 ): EventType | null => {
   if (!coordinates) return null;
-
+  
   return {
     id: rawEvent.id,
     name: rawEvent.name,
