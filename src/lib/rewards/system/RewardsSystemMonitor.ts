@@ -26,8 +26,14 @@ export interface PerformanceTestResult {
 }
 
 export class RewardsSystemMonitor {
-  static async recordHealthMetric(metric: SystemHealthMetric) {
+  static async recordHealthMetric(metric: SystemHealthMetric): Promise<boolean> {
     try {
+      // Validate that status is one of the allowed values
+      if (!['healthy', 'degraded', 'error'].includes(metric.status)) {
+        console.error('Invalid status value for health metric:', metric.status);
+        return false;
+      }
+
       const { error } = await supabase
         .from('reward_system_health')
         .insert({
@@ -35,7 +41,7 @@ export class RewardsSystemMonitor {
           response_time_ms: metric.response_time_ms,
           transaction_count: metric.transaction_count,
           error_count: metric.error_count,
-          details: metric.details
+          details: metric.details || {}
         });
 
       if (error) {
@@ -50,7 +56,7 @@ export class RewardsSystemMonitor {
     }
   }
 
-  static async recordPerformanceMetric(metric: PerformanceMetric) {
+  static async recordPerformanceMetric(metric: PerformanceMetric): Promise<boolean> {
     try {
       const { error } = await supabase
         .from('reward_performance_metrics')
@@ -58,7 +64,7 @@ export class RewardsSystemMonitor {
           metric_type: metric.metric_type,
           metric_name: metric.metric_name,
           metric_value: metric.metric_value,
-          context: metric.context
+          context: metric.context || {}
         });
 
       if (error) {
@@ -80,19 +86,30 @@ export class RewardsSystemMonitor {
         .select()
         .order('timestamp', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Error fetching system health:', error);
         return null;
       }
 
+      if (!data) {
+        return null;
+      }
+
+      // Ensure the status is one of the allowed values
+      const status = data.status as 'healthy' | 'degraded' | 'error';
+      if (!['healthy', 'degraded', 'error'].includes(status)) {
+        console.error('Invalid status value from database:', status);
+        return null;
+      }
+
       return {
-        status: data.status,
+        status: status,
         response_time_ms: data.response_time_ms,
         transaction_count: data.transaction_count,
         error_count: data.error_count,
-        details: data.details
+        details: data.details && typeof data.details === 'object' ? data.details : {}
       };
     } catch (error) {
       console.error('Exception fetching system health:', error);

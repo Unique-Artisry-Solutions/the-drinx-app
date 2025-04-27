@@ -60,7 +60,7 @@ export async function getRewardAnalytics(establishmentId?: string): Promise<Rewa
     
     // Record error in system health with correct property names
     await RewardsSystemMonitor.recordHealthMetric({
-      status: 'error',
+      status: 'error', // Using the correct string literal type
       transaction_count: 0,
       error_count: 1,
       response_time_ms: 0,
