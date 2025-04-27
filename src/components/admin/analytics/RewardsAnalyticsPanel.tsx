@@ -7,6 +7,7 @@ import AnalyticsMetricCard from '@/components/charts/AnalyticsMetricCard';
 import { useQuery } from '@tanstack/react-query';
 import { rewardsApi } from '@/lib/rewards/api';
 import { Skeleton } from '@/components/ui/skeleton';
+import { RewardAnalytics } from '@/lib/rewards/types';
 
 interface RewardsAnalyticsPanelProps {
   establishmentId?: string;
@@ -50,32 +51,34 @@ const RewardsAnalyticsPanel: React.FC<RewardsAnalyticsPanelProps> = ({ establish
     );
   }
 
+  const analyticsData = data as RewardAnalytics;
+
   // Create metrics for display
   const metrics = [
     {
       title: "Points Earned",
-      value: data.totalPointsEarned.toLocaleString(),
+      value: analyticsData.totalPointsEarned.toLocaleString(),
       icon: Award,
       iconColor: "text-purple-500",
       backgroundColor: "bg-purple-50"
     },
     {
       title: "Points Redeemed",
-      value: data.totalPointsRedeemed.toLocaleString(),
+      value: analyticsData.totalPointsRedeemed.toLocaleString(),
       icon: Zap,
       iconColor: "text-amber-500",
       backgroundColor: "bg-amber-50"
     },
     {
       title: "Points Economy",
-      value: data.pointsEconomyBalance.toLocaleString(),
+      value: analyticsData.pointsEconomyBalance.toLocaleString(),
       icon: TrendingUp,
       iconColor: "text-green-500",
       backgroundColor: "bg-green-50"
     },
     {
       title: "Redemption Rate",
-      value: `${Math.round(data.redemptionRate)}%`,
+      value: `${Math.round(analyticsData.redemptionRate)}%`,
       icon: Users,
       iconColor: "text-blue-500",
       backgroundColor: "bg-blue-50"
@@ -83,7 +86,7 @@ const RewardsAnalyticsPanel: React.FC<RewardsAnalyticsPanelProps> = ({ establish
   ];
 
   // Prepare source breakdown data for pie chart
-  const sourceData = Object.entries(data.sourcesBreakdown || {}).map(([name, value]) => ({
+  const sourceData = Object.entries(analyticsData.sourcesBreakdown || {}).map(([name, value]) => ({
     name,
     value
   }));
@@ -120,7 +123,7 @@ const RewardsAnalyticsPanel: React.FC<RewardsAnalyticsPanelProps> = ({ establish
               <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart
-                    data={data.timeSeriesData}
+                    data={analyticsData.timeSeriesData}
                     margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" />
@@ -189,7 +192,7 @@ const RewardsAnalyticsPanel: React.FC<RewardsAnalyticsPanelProps> = ({ establish
           <CardContent>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={data.timeSeriesData}>
+                <BarChart data={analyticsData.timeSeriesData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="date" />
                   <YAxis yAxisId="left" orientation="left" stroke="#8884d8" />

@@ -48,66 +48,35 @@ export function useLoyaltyProgramMetrics(establishmentId?: string): LoyaltyProgr
     async function fetchLoyaltyMetrics() {
       try {
         // Get user reward profiles for the establishment
-        let query = supabase
-          .from('user_rewards')
-          .select('*', { count: 'exact' });
-        
-        if (establishmentId) {
-          query = query.eq('establishment_id', establishmentId);
-        }
-        
-        const { data: userRewards, count, error: userRewardsError } = await query;
-
+        const { data: userRewards, count, error: userRewardsError } = await getUserRewardsData(establishmentId);
         if (userRewardsError) throw userRewardsError;
 
         // Get redemption data
-        const { data: redemptions, error: redemptionError } = await supabase
-          .from('reward_redemptions')
-          .select('*');
-
+        const { data: redemptions, error: redemptionError } = await getRedemptionsData();
         if (redemptionError) throw redemptionError;
 
         // Get transaction data for time series
-        const { data: transactions, error: txError } = await supabase
-          .from('reward_transactions')
-          .select('*')
-          .order('created_at', { ascending: true });
-
+        const { data: transactions, error: txError } = await getTransactionsData();
         if (txError) throw txError;
 
         // Process the metrics
         const totalMembers = count || 0;
         
         // Consider active members as those with activity in the last 30 days
-        const thirtyDaysAgo = new Date();
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-        
-        const { count: activeCount, error: activeError } = await supabase
-          .from('reward_transactions')
-          .select('user_id', { count: 'exact', head: true })
-          .gt('created_at', thirtyDaysAgo.toISOString())
-          .eq('transaction_type', 'earn');
-
+        const { activeCount, activeError } = await getActiveMembersCount();
         if (activeError) throw activeError;
 
         // Calculate metrics
         const activeMembers = activeCount || 0;
         
         // Avg points calculation
-        const avgPoints = userRewards && userRewards.length > 0
-          ? Math.round(userRewards.reduce((sum: number, profile: UserReward) => sum + (profile.points || 0), 0) / userRewards.length)
-          : 0;
+        const avgPoints = calculateAveragePoints(userRewards);
         
         // Redemption rate: percentage of users who have redeemed rewards
-        const uniqueRedeemers = new Set((redemptions || []).map(r => r.user_id));
-        const redemptionRate = totalMembers > 0
-          ? Math.round((uniqueRedeemers.size / totalMembers) * 100)
-          : 0;
+        const redemptionRate = calculateRedemptionRate(redemptions, totalMembers);
         
         // Retention calculation (simplified)
-        const retentionRate = totalMembers > 0
-          ? Math.round((activeMembers / totalMembers) * 100)
-          : 0;
+        const retentionRate = calculateRetentionRate(activeMembers, totalMembers);
         
         // Prepare time series data for charts
         const timeSeriesData = processTimeSeriesData(transactions || []);
@@ -137,6 +106,56 @@ export function useLoyaltyProgramMetrics(establishmentId?: string): LoyaltyProgr
   }, [establishmentId]);
 
   return metrics;
+}
+
+// Helper functions to break down the complex queries
+async function getUserRewardsData(establishmentId?: string) {
+  let query = supabase.from('user_rewards').select('*', { count: 'exact' });
+  
+  if (establishmentId) {
+    query = query.eq('establishment_id', establishmentId);
+  }
+  
+  return await query;
+}
+
+async function getRedemptionsData() {
+  return await supabase.from('reward_redemptions').select('*');
+}
+
+async function getTransactionsData() {
+  return await supabase
+    .from('reward_transactions')
+    .select('*')
+    .order('created_at', { ascending: true });
+}
+
+async function getActiveMembersCount() {
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  
+  const response = await supabase
+    .from('reward_transactions')
+    .select('user_id', { count: 'exact', head: true })
+    .gt('created_at', thirtyDaysAgo.toISOString())
+    .eq('transaction_type', 'earn');
+  
+  return { activeCount: response.count, activeError: response.error };
+}
+
+function calculateAveragePoints(userRewards: UserReward[] | null) {
+  if (!userRewards || userRewards.length === 0) return 0;
+  return Math.round(userRewards.reduce((sum: number, profile: UserReward) => sum + (profile.points || 0), 0) / userRewards.length);
+}
+
+function calculateRedemptionRate(redemptions: RewardRedemption[] | null, totalMembers: number) {
+  if (!redemptions || totalMembers === 0) return 0;
+  const uniqueRedeemers = new Set(redemptions.map(r => r.user_id));
+  return Math.round((uniqueRedeemers.size / totalMembers) * 100);
+}
+
+function calculateRetentionRate(activeMembers: number, totalMembers: number) {
+  return totalMembers > 0 ? Math.round((activeMembers / totalMembers) * 100) : 0;
 }
 
 // Helper to process transaction data into time series

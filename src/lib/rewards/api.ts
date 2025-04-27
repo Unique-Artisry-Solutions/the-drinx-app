@@ -1,6 +1,13 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { RewardOperationResponse, UserRewardProfile, transformRewardTier, transformTransaction } from './types';
+import { 
+  RewardOperationResponse, 
+  UserRewardProfile, 
+  transformRewardTier, 
+  transformTransaction,
+  RewardTransactionRow
+} from './types';
+import { getRewardAnalytics } from './api/analytics';
 
 export const rewardsApi = {
   async getUserRewardProfile(userId: string): Promise<UserRewardProfile | null> {
@@ -166,7 +173,7 @@ export const rewardsApi = {
   },
 
   // New method to track reward-related analytics events
-  async trackRewardEvent(eventType: string, userId: string, eventData: Record<string, any> = {}): Promise<void> {
+  async trackRewardEvent(eventType: string, userId: string, eventData: Record<string, any> = {}): Promise<boolean> {
     try {
       await supabase.rpc('track_analytics_event', {
         p_user_id: userId,
@@ -176,40 +183,18 @@ export const rewardsApi = {
         p_user_agent: null,
         p_ip_address: null
       });
+      return true;
     } catch (error) {
       console.error('Error tracking reward event:', error);
+      return false;
     }
   },
 
   // New method to get reward analytics
-  async getRewardAnalytics(establishmentId?: string): Promise<any> {
-    try {
-      let query = supabase
-        .from('reward_transactions')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (establishmentId) {
-        query = query.eq('establishment_id', establishmentId);
-      }
-
-      const { data, error } = await query;
-
-      if (error) {
-        console.error('Error fetching reward analytics:', error);
-        return null;
-      }
-
-      // Process analytics data
-      return this.processRewardAnalytics(data);
-    } catch (error) {
-      console.error('Error in getRewardAnalytics:', error);
-      return null;
-    }
-  },
+  getRewardAnalytics,
 
   // Helper method to process raw transaction data into analytics metrics
-  processRewardAnalytics(transactions: any[]): any {
+  processRewardAnalytics(transactions: RewardTransactionRow[]): any {
     if (!transactions || transactions.length === 0) {
       return {
         totalPointsEarned: 0,
@@ -242,17 +227,17 @@ export const rewardsApi = {
   },
 
   // Helper to group transactions by source
-  groupTransactionsBySource(transactions: any[]): Record<string, number> {
+  groupTransactionsBySource(transactions: RewardTransactionRow[]): Record<string, number> {
     return transactions.reduce((acc, tx) => {
       const source = tx.source || 'unknown';
       if (!acc[source]) acc[source] = 0;
       acc[source] += tx.points || 0;
       return acc;
-    }, {});
+    }, {} as Record<string, number>);
   },
 
   // Helper to create time series data for charts
-  createTimeSeriesData(transactions: any[]): any[] {
+  createTimeSeriesData(transactions: RewardTransactionRow[]): any[] {
     // Group by date and transaction type
     const groupedByDate: Record<string, {earned: number, redeemed: number}> = {};
     

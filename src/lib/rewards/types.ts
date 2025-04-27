@@ -1,3 +1,4 @@
+
 export interface RewardMetric {
   id: string;
   metric_date: string;
@@ -38,6 +39,28 @@ export interface RewardSystemAnalyticsRow {
   transaction_count: number;
   points_total: number;
   unique_users: number;
+  establishment_id?: string;
+}
+
+// Adding more specific types for each query
+export interface RewardTransactionRow {
+  id: string;
+  user_id: string;
+  establishment_id?: string;
+  points: number;
+  transaction_type: string;
+  source: string;
+  description?: string;
+  metadata: Record<string, any>;
+  created_at: string;
+  version: number;
+}
+
+export interface DailyRewardMetrics {
+  date: string;
+  earnedPoints: number;
+  redeemedPoints: number;
+  activeUsers: number;
 }
 
 // Add the missing types:
