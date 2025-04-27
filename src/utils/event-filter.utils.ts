@@ -5,7 +5,7 @@ import {
   RawEventResponse,
   RawEventData,
   NotificationsResponse,
-  EventLocation
+  NotificationMetadata
 } from '@/types/event-filter.types';
 import { EventType } from '@/types/EventTypes';
 
@@ -43,39 +43,39 @@ export const fetchLocationBasedNotifications = async (): Promise<NotificationsRe
     .eq('metadata->location_based', true);
 };
 
-export const extractEventLocations = (data: NotificationsResponse['data']): EventLocation[] => {
-  if (!data || data.length === 0) return [];
+// Type guard function to validate notification metadata
+function isValidLocationMetadata(metadata: NotificationMetadata): metadata is Required<NotificationMetadata> {
+  return (
+    metadata.location_based === true &&
+    typeof metadata.event_id === 'string' &&
+    metadata.coordinates !== undefined &&
+    typeof metadata.coordinates.latitude === 'number' &&
+    typeof metadata.coordinates.longitude === 'number'
+  );
+}
+
+// Extract event locations from notifications with type safety
+export const extractEventLocations = (data: NotificationsResponse['data']): { eventId: string; coordinates: LocationCoordinates }[] => {
+  if (!data) return [];
   
   return data
     .map(item => {
-      // Skip invalid items
-      if (!item || !item.metadata) return null;
-      
-      // Cast metadata to any to access properties
-      const meta = item.metadata as any;
-      
-      // Check if this notification has the required location data
-      if (!meta.location_based || !meta.event_id || !meta.coordinates) return null;
-      if (!meta.coordinates.latitude || !meta.coordinates.longitude) return null;
+      if (!isValidLocationMetadata(item.metadata)) return null;
       
       return {
-        eventId: meta.event_id,
-        coordinates: {
-          latitude: Number(meta.coordinates.latitude),
-          longitude: Number(meta.coordinates.longitude)
-        }
+        eventId: item.metadata.event_id,
+        coordinates: item.metadata.coordinates
       };
     })
-    .filter((item): item is EventLocation => item !== null);
+    .filter((item): item is { eventId: string; coordinates: LocationCoordinates } => item !== null);
 };
 
-export const createEventCoordinatesMap = (locations: EventLocation[]): Map<string, LocationCoordinates> => {
+// Create a map of event IDs to their coordinates
+export const createEventCoordinatesMap = (locations: { eventId: string; coordinates: LocationCoordinates }[]): Map<string, LocationCoordinates> => {
   const coordMap = new Map<string, LocationCoordinates>();
   
   locations.forEach(location => {
-    if (location.coordinates && location.eventId) {
-      coordMap.set(location.eventId, location.coordinates);
-    }
+    coordMap.set(location.eventId, location.coordinates);
   });
   
   return coordMap;

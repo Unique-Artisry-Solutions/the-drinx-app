@@ -1,6 +1,4 @@
 
-import { Json } from '@/integrations/supabase/types';
-
 // Simple location coordinates type
 export type LocationCoordinates = {
   latitude: number;
@@ -8,9 +6,10 @@ export type LocationCoordinates = {
 };
 
 // For storing simple notification data with location info
-export type EventLocation = {
-  eventId: string;
-  coordinates: LocationCoordinates;
+export type NotificationMetadata = {
+  location_based?: boolean;
+  event_id?: string;
+  coordinates?: LocationCoordinates;
 };
 
 // Raw event response from Supabase
@@ -46,7 +45,7 @@ export type RawEventData = {
 export type NotificationsResponse = {
   data: {
     id: string;
-    metadata: Json;
+    metadata: NotificationMetadata;
   }[] | null;
   error: any;
 };
