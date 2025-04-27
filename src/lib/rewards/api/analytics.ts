@@ -1,26 +1,30 @@
 
 import { supabase } from '@/lib/supabase';
-import type { RewardAnalytics, RewardMetric, RewardSystemAnalyticsRow } from '../types';
+import type { RewardAnalytics, RewardMetric } from '../types';
+
+// Use simple typings and avoid complex generics
+interface AnalyticsRow {
+  date: string;
+  transaction_type: 'earn' | 'redeem';
+  points_total: number;
+  unique_users: number;
+  establishment_id?: string;
+}
 
 export async function getRewardAnalytics(establishmentId?: string) {
-  // Change the query to avoid deep typing issues
-  let query = supabase
+  // Use a simple approach with basic types
+  const { data, error } = await supabase
     .from('reward_system_analytics')
-    .select('*');
-
-  if (establishmentId) {
-    query = query.eq('establishment_id', establishmentId);
-  }
-  
-  const { data, error } = await query.order('date', { ascending: false });
+    .select()
+    .order('date', { ascending: false })
+    .eq(establishmentId ? 'establishment_id' : 'date', establishmentId || 'date');
 
   if (error) {
     console.error('Error fetching reward analytics:', error);
     return null;
   }
 
-  // Explicitly cast the data to the correct type
-  return processAnalyticsData(data as RewardSystemAnalyticsRow[]);
+  return processAnalyticsData(data as AnalyticsRow[]);
 }
 
 export async function getDailyMetrics(date: Date, establishmentId?: string) {
@@ -38,7 +42,7 @@ export async function getDailyMetrics(date: Date, establishmentId?: string) {
   return data as RewardMetric[];
 }
 
-function processAnalyticsData(metrics: RewardSystemAnalyticsRow[]): RewardAnalytics | null {
+function processAnalyticsData(metrics: AnalyticsRow[]): RewardAnalytics | null {
   if (!metrics || metrics.length === 0) {
     return {
       totalPointsEarned: 0,
