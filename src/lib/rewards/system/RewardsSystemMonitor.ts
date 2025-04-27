@@ -1,3 +1,4 @@
+
 import { supabase } from '@/lib/supabase';
 
 export interface SystemHealthMetric {
@@ -9,9 +10,9 @@ export interface SystemHealthMetric {
 }
 
 export interface PerformanceMetric {
-  metricType: string;
-  metricName: string;
-  metricValue: number;
+  metric_type: string;
+  metric_name: string;
+  metric_value: number;
   context?: Record<string, any>;
 }
 
@@ -26,50 +27,77 @@ export interface PerformanceTestResult {
 
 export class RewardsSystemMonitor {
   static async recordHealthMetric(metric: SystemHealthMetric) {
-    const { error } = await supabase
-      .from('reward_system_health')
-      .insert({
-        status: metric.status,
-        response_time_ms: metric.response_time_ms,
-        transaction_count: metric.transaction_count,
-        error_count: metric.error_count,
-        details: metric.details
-      });
+    try {
+      const { error } = await supabase
+        .from('reward_system_health')
+        .insert({
+          status: metric.status,
+          response_time_ms: metric.response_time_ms,
+          transaction_count: metric.transaction_count,
+          error_count: metric.error_count,
+          details: metric.details
+        });
 
-    if (error) {
-      console.error('Error recording health metric:', error);
+      if (error) {
+        console.error('Error recording health metric:', error);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Exception recording health metric:', error);
+      return false;
     }
   }
 
   static async recordPerformanceMetric(metric: PerformanceMetric) {
-    const { error } = await supabase
-      .from('reward_performance_metrics')
-      .insert({
-        metric_type: metric.metricType,
-        metric_name: metric.metricName,
-        metric_value: metric.metricValue,
-        context: metric.context
-      });
+    try {
+      const { error } = await supabase
+        .from('reward_performance_metrics')
+        .insert({
+          metric_type: metric.metric_type,
+          metric_name: metric.metric_name,
+          metric_value: metric.metric_value,
+          context: metric.context
+        });
 
-    if (error) {
-      console.error('Error recording performance metric:', error);
+      if (error) {
+        console.error('Error recording performance metric:', error);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Exception recording performance metric:', error);
+      return false;
     }
   }
 
-  static async getSystemHealth() {
-    const { data, error } = await supabase
-      .from('reward_system_health')
-      .select()
-      .order('timestamp', { ascending: false })
-      .limit(1)
-      .single();
+  static async getSystemHealth(): Promise<SystemHealthMetric | null> {
+    try {
+      const { data, error } = await supabase
+        .from('reward_system_health')
+        .select()
+        .order('timestamp', { ascending: false })
+        .limit(1)
+        .single();
 
-    if (error) {
-      console.error('Error fetching system health:', error);
+      if (error) {
+        console.error('Error fetching system health:', error);
+        return null;
+      }
+
+      return {
+        status: data.status,
+        response_time_ms: data.response_time_ms,
+        transaction_count: data.transaction_count,
+        error_count: data.error_count,
+        details: data.details
+      };
+    } catch (error) {
+      console.error('Exception fetching system health:', error);
       return null;
     }
-
-    return data;
   }
 
   static async runPerformanceTests(): Promise<PerformanceTestResult | null> {
@@ -113,8 +141,8 @@ export class RewardsSystemMonitor {
       });
 
       return transformedData;
-    } catch (e) {
-      console.error('Exception running performance tests:', e);
+    } catch (error) {
+      console.error('Exception running performance tests:', error);
       return null;
     }
   }

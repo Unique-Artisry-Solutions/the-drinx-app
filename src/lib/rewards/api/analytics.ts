@@ -1,9 +1,10 @@
+
 import { supabase } from '@/lib/supabase';
 import type { RewardAnalytics, RewardMetric } from '../types';
 import { RewardsCache } from '../system/RewardsCache';
 import { RewardsSystemMonitor } from '../system/RewardsSystemMonitor';
 
-export async function getRewardAnalytics(establishmentId?: string) {
+export async function getRewardAnalytics(establishmentId?: string): Promise<RewardAnalytics | null> {
   const startTime = performance.now();
 
   try {
@@ -16,7 +17,6 @@ export async function getRewardAnalytics(establishmentId?: string) {
       const ttl = (cacheStatus.ttl_seconds || 300) * 1000;
       
       if (Date.now() - lastUpdateTime < ttl) {
-        // Cache is still valid, use materialized view
         const { data, error } = await supabase
           .from('reward_analytics_materialized')
           .select()
@@ -49,9 +49,9 @@ export async function getRewardAnalytics(establishmentId?: string) {
     // Record performance metric
     const endTime = performance.now();
     await RewardsSystemMonitor.recordPerformanceMetric({
-      metricType: 'analytics',
-      metricName: 'fetch_duration',
-      metricValue: endTime - startTime
+      metric_type: 'analytics',
+      metric_name: 'fetch_duration',
+      metric_value: endTime - startTime
     });
 
     return processAnalyticsData(data);
