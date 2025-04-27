@@ -7,16 +7,31 @@ export type LocationCoordinates = {
   longitude: number;
 };
 
-// Simplified notification type without deep nesting
 export type SimpleNotification = {
   locationBased: boolean;
   coordinates: LocationCoordinates | null;
   eventId: string;
 };
 
-// Basic response types
 export type RawEventResponse = {
   data: RawEventData[] | null;
+  error: any;
+};
+
+// New simplified type for notification responses
+export type NotificationMetadata = {
+  location_based?: boolean;
+  coordinates?: LocationCoordinates;
+  event_id?: string;
+};
+
+export type RawNotification = {
+  metadata: NotificationMetadata;
+  event_id: string;
+};
+
+export type RawNotificationResponse = {
+  data: RawNotification[] | null;
   error: any;
 };
 

@@ -1,10 +1,11 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { 
   SimpleNotification,
   RawEventResponse,
   LocationCoordinates,
-  RawEventData
+  RawEventData,
+  RawNotificationResponse,
+  RawNotification
 } from '@/types/event-filter.types';
 import { EventType } from '@/types/EventTypes';
 
@@ -35,23 +36,18 @@ export const fetchPublishedEvents = async (): Promise<RawEventResponse> => {
     .eq('status', 'published') as RawEventResponse;
 };
 
-export const fetchLocationBasedNotifications = async () => {
-  const { data, error } = await supabase
+export const fetchLocationBasedNotifications = async (): Promise<RawNotificationResponse> => {
+  return await supabase
     .from('notifications')
     .select('metadata, event_id')
-    .eq('metadata->location_based', true);
-
-  if (error) {
-    throw error;
-  }
-
-  return data || [];
+    .eq('metadata->location_based', true)
+    .throwOnError();
 };
 
-export const processLocationData = (responseData: any[]): SimpleNotification[] => {
+export const processLocationData = (responseData: RawNotification[]): SimpleNotification[] => {
   return responseData.map(item => ({
-    locationBased: item.metadata?.location_based ?? false,
-    coordinates: item.metadata?.coordinates ?? null,
+    locationBased: Boolean(item.metadata?.location_based),
+    coordinates: item.metadata?.coordinates || null,
     eventId: item.metadata?.event_id || item.event_id || ''
   }));
 };
