@@ -26,8 +26,9 @@ export function formatDistance(distance: number): string {
   if (distance < 0.1) {
     return 'Very close';
   } else if (distance < 1) {
-    return `${(distance * 10).toFixed(0) / 10} miles`;
+    // Fix: Ensure we're working with numeric values
+    return `${(Number(distance) * 10).toFixed(0) / 10} miles`;
   } else {
-    return `${distance.toFixed(1)} miles`;
+    return `${Number(distance).toFixed(1)} miles`;
   }
 }
