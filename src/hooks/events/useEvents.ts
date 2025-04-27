@@ -1,13 +1,16 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { EventType } from '@/types/EventTypes';
+import { EventType, EventFormData } from '@/types/EventTypes';
 import { useToast } from '@/hooks/use-toast';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 export const useEvents = () => {
+  const [events, setEvents] = useState<EventType[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const fetchPublishedEvents = useCallback(async (): Promise<EventType[]> => {
     setIsLoading(true);
@@ -42,7 +45,7 @@ export const useEvents = () => {
       if (error) throw error;
       if (!data) return [];
 
-      return data.map(event => ({
+      const formattedEvents = data.map(event => ({
         id: event.id,
         name: event.name,
         description: event.description || '',
@@ -82,6 +85,9 @@ export const useEvents = () => {
         createdBy: event.created_by
       }));
 
+      setEvents(formattedEvents);
+      return formattedEvents;
+
     } catch (err: any) {
       setError(err.message);
       toast({
@@ -95,9 +101,98 @@ export const useEvents = () => {
     }
   }, [toast]);
 
+  // Fetch events on component mount
+  useEffect(() => {
+    fetchPublishedEvents();
+  }, [fetchPublishedEvents]);
+
+  // Create event mutation
+  const createEvent = useMutation({
+    mutationFn: async (eventData: EventFormData) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      const { data: eventResponse, error: eventError } = await supabase
+        .from('events')
+        .insert({
+          name: eventData.name,
+          description: eventData.description,
+          date: eventData.date,
+          time: eventData.time,
+          venue_id: eventData.venueId || null,
+          image_url: eventData.imageUrl,
+          promotional_materials: eventData.promotionalMaterials,
+          created_by: user.id
+        })
+        .select()
+        .single();
+
+      if (eventError) throw eventError;
+
+      if (eventData.ticketTypes.length > 0) {
+        const { error: ticketError } = await supabase
+          .from('event_ticket_types')
+          .insert(
+            eventData.ticketTypes.map(ticket => ({
+              event_id: eventResponse.id,
+              ...ticket
+            }))
+          );
+
+        if (ticketError) throw ticketError;
+      }
+
+      if (eventData.notificationSchedules && eventData.notificationSchedules.length > 0) {
+        for (const schedule of eventData.notificationSchedules) {
+          // Store all notification data in the notifications table
+          const metadata: any = {
+            event_id: eventResponse.id,
+            scheduled_for: schedule.scheduledFor,
+            location_based: !!schedule.locationBased,
+            coordinates: schedule.coordinates || null,
+            target_radius: schedule.targetRadius || null,
+            notification_type: 'event_schedule'
+          };
+          
+          // Create a notification record
+          const { error: notificationError } = await supabase
+            .from('notifications')
+            .insert({
+              recipient_id: user.id,
+              recipient_type: 'promoter',
+              title: schedule.title || `Reminder: ${eventData.name}`,
+              content: schedule.content || `Don't forget: ${eventData.name} is happening soon!`,
+              priority: schedule.priority || 'medium',
+              metadata: metadata
+            });
+
+          if (notificationError) throw notificationError;
+        }
+      }
+
+      return eventResponse;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+      toast({
+        title: 'Event created',
+        description: 'Your event has been created successfully.',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error creating event',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
   return {
+    events,
     fetchPublishedEvents,
     isLoading,
     error,
+    createEvent,
   };
 };
