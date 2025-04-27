@@ -1,3 +1,4 @@
+
 import { EventType } from './EventTypes';
 
 // Simple location coordinates type
@@ -25,7 +26,7 @@ export type NotificationMetadata = {
 
 export type RawNotification = {
   id: string;
-  metadata: NotificationMetadata;
+  metadata: NotificationMetadata | null;
 };
 
 export type RawNotificationResponse = {

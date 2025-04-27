@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { 
   SimpleNotification,
@@ -36,12 +37,19 @@ export const fetchPublishedEvents = async (): Promise<RawEventResponse> => {
     .eq('status', 'published') as RawEventResponse;
 };
 
-export const fetchLocationBasedNotifications = async (): Promise<RawNotificationResponse> => {
-  return await supabase
+export const fetchLocationBasedNotifications = async (): Promise<RawNotificationResponse> {
+  // Explicitly cast the response to match our expected type
+  const response = await supabase
     .from('notifications')
     .select('id, metadata')
     .eq('metadata->location_based', true)
     .throwOnError();
+    
+  // Return a properly typed response
+  return {
+    data: response.data as RawNotification[],
+    error: response.error
+  };
 };
 
 export const processLocationData = (notifications: RawNotification[]): SimpleNotification[] => {
