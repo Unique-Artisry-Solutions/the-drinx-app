@@ -2092,6 +2092,47 @@ export type Database = {
           },
         ]
       }
+      reward_usage_metrics: {
+        Row: {
+          created_at: string
+          establishment_id: string | null
+          id: string
+          metadata: Json | null
+          metric_date: string
+          metric_name: string
+          metric_value: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          establishment_id?: string | null
+          id?: string
+          metadata?: Json | null
+          metric_date?: string
+          metric_name: string
+          metric_value: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          establishment_id?: string | null
+          id?: string
+          metadata?: Json | null
+          metric_date?: string
+          metric_name?: string
+          metric_value?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reward_usage_metrics_establishment_id_fkey"
+            columns: ["establishment_id"]
+            isOneToOne: false
+            referencedRelation: "establishments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suggestion_feedback: {
         Row: {
           comments: string | null
@@ -2513,6 +2554,33 @@ export type Database = {
         }
         Relationships: []
       }
+      user_reward_preferences: {
+        Row: {
+          created_at: string
+          id: string
+          preference_key: string
+          preference_value: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          preference_key: string
+          preference_value?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          preference_key?: string
+          preference_value?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_rewards: {
         Row: {
           config: Json
@@ -2731,6 +2799,16 @@ export type Database = {
           },
         ]
       }
+      reward_system_analytics: {
+        Row: {
+          date: string | null
+          points_total: number | null
+          transaction_count: number | null
+          transaction_type: string | null
+          unique_users: number | null
+        }
+        Relationships: []
+      }
       seasonal_trend_analysis: {
         Row: {
           avg_quality_score: number | null
@@ -2745,6 +2823,10 @@ export type Database = {
     }
     Functions: {
       aggregate_daily_analytics: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      aggregate_daily_reward_metrics: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }

@@ -1,35 +1,34 @@
 
-import { RewardTransaction, RewardTier, RewardOffering, RewardRedemption } from '@/types/SupabaseTables';
-
-export interface RewardOperationResponse {
-  success: boolean;
-  message?: string;
-  error?: string;
+export interface RewardMetric {
+  id: string;
+  metric_date: string;
+  establishment_id?: string;
+  metric_name: string;
+  metric_value: number;
+  metadata: Record<string, any>;
+  created_at: string;
+  updated_at: string;
 }
 
-export interface UserRewardProfile {
-  points: number;
-  lifetimePoints: number;
-  currentTier?: RewardTier;
-  availableRewards: RewardOffering[];
-  transactionHistory: RewardTransaction[];
-  redemptionHistory: RewardRedemption[];
+export interface UserRewardPreference {
+  id: string;
+  user_id: string;
+  preference_key: string;
+  preference_value: Record<string, any>;
+  created_at: string;
+  updated_at: string;
 }
 
-// Transform functions to ensure type safety
-export function transformRewardTier(dbTier: any): RewardTier {
-  return {
-    ...dbTier,
-    benefits: Array.isArray(dbTier.benefits) ? dbTier.benefits : []
-  };
+export interface RewardAnalytics {
+  totalPointsEarned: number;
+  totalPointsRedeemed: number;
+  pointsEconomyBalance: number;
+  redemptionRate: number;
+  timeSeriesData: Array<{
+    date: string;
+    pointsEarned: number;
+    pointsRedeemed: number;
+    netPoints: number;
+  }>;
+  sourcesBreakdown: Record<string, number>;
 }
-
-export function transformTransaction(dbTransaction: any): RewardTransaction {
-  return {
-    ...dbTransaction,
-    metadata: typeof dbTransaction.metadata === 'string' 
-      ? JSON.parse(dbTransaction.metadata) 
-      : dbTransaction.metadata || {}
-  };
-}
-
