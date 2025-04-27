@@ -1,4 +1,5 @@
 
+import React from 'react';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from '@tanstack/react-query';
@@ -32,9 +33,9 @@ export const usePreferencesForm = (userId: string) => {
     if (preferences) {
       const formattedPreferences = preferences.reduce((acc, pref) => {
         if (pref.preference_key === 'notification_settings') {
-          acc.notification_settings = pref.preference_value;
+          acc.notification_settings = JSON.parse(pref.preference_value);
         } else if (pref.preference_key === 'display_settings') {
-          acc.display_settings = pref.preference_value;
+          acc.display_settings = JSON.parse(pref.preference_value);
         }
         return acc;
       }, {} as PreferencesFormData);
@@ -47,8 +48,8 @@ export const usePreferencesForm = (userId: string) => {
 
   const onSubmit = async (data: PreferencesFormData) => {
     try {
-      await updateUserPreference(userId, 'notification_settings', data.notification_settings);
-      await updateUserPreference(userId, 'display_settings', data.display_settings);
+      await updateUserPreference(userId, 'notification_settings', JSON.stringify(data.notification_settings));
+      await updateUserPreference(userId, 'display_settings', JSON.stringify(data.display_settings));
       toast.success('Preferences updated successfully');
     } catch (error) {
       toast.error('Failed to update preferences');
