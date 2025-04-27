@@ -1,6 +1,10 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Download } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import RewardMetrics from '@/components/analytics/rewards/RewardMetrics';
+import RewardTrends from '@/components/analytics/rewards/RewardTrends';
 import AnalyticsBarChart from '@/components/charts/AnalyticsBarChart';
 import AnalyticsLineChart from '@/components/charts/AnalyticsLineChart';
 import { Activity, BarChart, LineChart, Database, Server, Clock, Gauge } from 'lucide-react';
@@ -74,9 +78,31 @@ const throughputData = [
 ];
 
 const PerformanceMetricsTab = () => {
+  const { toast } = useToast();
+
+  const handleExport = () => {
+    toast({
+      title: "Export Started",
+      description: "Your analytics data is being prepared for download.",
+    });
+    // Export functionality to be implemented
+  };
+
   return (
-    <div className="grid gap-6">
-      <div className="grid gap-6 md:grid-cols-2">
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">Performance Dashboard</h2>
+        <Button onClick={handleExport} variant="outline">
+          <Download className="mr-2 h-4 w-4" />
+          Export Data
+        </Button>
+      </div>
+
+      <RewardMetrics />
+      
+      <div className="grid gap-6 grid-cols-1">
+        <RewardTrends />
+        
         <AnalyticsLineChart
           title="Response Time (ms)"
           description="System response time over the past 24 hours"
