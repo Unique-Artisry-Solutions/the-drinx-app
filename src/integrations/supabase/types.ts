@@ -1838,6 +1838,260 @@ export type Database = {
           },
         ]
       }
+      reward_offerings: {
+        Row: {
+          created_at: string
+          description: string | null
+          establishment_id: string
+          expiration_days: number | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          name: string
+          points_required: number
+          quantity_available: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          establishment_id: string
+          expiration_days?: number | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name: string
+          points_required: number
+          quantity_available?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          establishment_id?: string
+          expiration_days?: number | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name?: string
+          points_required?: number
+          quantity_available?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reward_offerings_establishment_id_fkey"
+            columns: ["establishment_id"]
+            isOneToOne: false
+            referencedRelation: "establishments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reward_redemptions: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          fulfilled_at: string | null
+          id: string
+          offering_id: string
+          points_spent: number
+          status: string
+          transaction_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          fulfilled_at?: string | null
+          id?: string
+          offering_id: string
+          points_spent: number
+          status?: string
+          transaction_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          fulfilled_at?: string | null
+          id?: string
+          offering_id?: string
+          points_spent?: number
+          status?: string
+          transaction_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reward_redemptions_offering_id_fkey"
+            columns: ["offering_id"]
+            isOneToOne: false
+            referencedRelation: "reward_offerings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reward_redemptions_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "reward_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reward_rules: {
+        Row: {
+          actions: Json
+          conditions: Json
+          created_at: string
+          description: string | null
+          establishment_id: string
+          event_type: string
+          id: string
+          is_active: boolean
+          name: string
+          points: number
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          actions?: Json
+          conditions?: Json
+          created_at?: string
+          description?: string | null
+          establishment_id: string
+          event_type: string
+          id?: string
+          is_active?: boolean
+          name: string
+          points?: number
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          actions?: Json
+          conditions?: Json
+          created_at?: string
+          description?: string | null
+          establishment_id?: string
+          event_type?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          points?: number
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reward_rules_establishment_id_fkey"
+            columns: ["establishment_id"]
+            isOneToOne: false
+            referencedRelation: "establishments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reward_tiers: {
+        Row: {
+          benefits: Json
+          color: string | null
+          created_at: string
+          description: string | null
+          establishment_id: string
+          icon: string | null
+          id: string
+          is_active: boolean
+          name: string
+          points_required: number
+          updated_at: string
+        }
+        Insert: {
+          benefits?: Json
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          establishment_id: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          points_required: number
+          updated_at?: string
+        }
+        Update: {
+          benefits?: Json
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          establishment_id?: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          points_required?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reward_tiers_establishment_id_fkey"
+            columns: ["establishment_id"]
+            isOneToOne: false
+            referencedRelation: "establishments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reward_transactions: {
+        Row: {
+          created_at: string
+          description: string | null
+          establishment_id: string | null
+          id: string
+          metadata: Json
+          points: number
+          source: string
+          transaction_type: string
+          user_id: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          establishment_id?: string | null
+          id?: string
+          metadata?: Json
+          points: number
+          source: string
+          transaction_type: string
+          user_id: string
+          version?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          establishment_id?: string | null
+          id?: string
+          metadata?: Json
+          points?: number
+          source?: string
+          transaction_type?: string
+          user_id?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reward_transactions_establishment_id_fkey"
+            columns: ["establishment_id"]
+            isOneToOne: false
+            referencedRelation: "establishments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suggestion_feedback: {
         Row: {
           comments: string | null
@@ -2258,6 +2512,57 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_rewards: {
+        Row: {
+          config: Json
+          created_at: string
+          current_tier_id: string | null
+          establishment_id: string | null
+          id: string
+          lifetime_points: number
+          points: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          config?: Json
+          created_at?: string
+          current_tier_id?: string | null
+          establishment_id?: string | null
+          id?: string
+          lifetime_points?: number
+          points?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          config?: Json
+          created_at?: string
+          current_tier_id?: string | null
+          establishment_id?: string | null
+          id?: string
+          lifetime_points?: number
+          points?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_user_rewards_current_tier"
+            columns: ["current_tier_id"]
+            isOneToOne: false
+            referencedRelation: "reward_tiers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_rewards_establishment_id_fkey"
+            columns: ["establishment_id"]
+            isOneToOne: false
+            referencedRelation: "establishments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {

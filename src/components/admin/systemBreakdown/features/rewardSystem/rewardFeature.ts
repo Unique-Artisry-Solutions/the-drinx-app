@@ -10,8 +10,8 @@ export const rewardProgramFeature: FeatureItem = {
   adminAccess: "full",
   establishmentAccess: "none",
   individualAccess: "full",
-  databaseStatus: "not_started",
-  dbStatus: "not_started",
+  databaseStatus: "in_progress",
+  dbStatus: "in_progress",
   userImpact: "high",
   complexity: "high",
   testSteps: [
@@ -22,5 +22,7 @@ export const rewardProgramFeature: FeatureItem = {
     "Track reward history"
   ],
   databaseAnalysis: rewardSystemDatabaseAnalysis,
-  dbRequirementsText: rewardSystemRequirements
+  dbRequirementsText: rewardSystemRequirements,
+  implementationProgress: 60, // Updated progress
+  dbCompleted: 85 // Updated database progress
 };

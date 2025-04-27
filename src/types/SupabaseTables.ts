@@ -1,3 +1,4 @@
+
 // Custom type definitions for database tables that aren't in the auto-generated Supabase types
 
 export interface UserVisitTable {
@@ -176,6 +177,88 @@ export interface PromotionAnalytics {
   total_order_value: number;
   total_discount_amount: number;
   days_remaining: number;
+}
+
+// Reward System Tables
+export interface UserReward {
+  id: string;
+  user_id: string;
+  establishment_id: string;
+  points: number;
+  lifetime_points: number;
+  current_tier_id?: string;
+  config: Record<string, any>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RewardTier {
+  id: string;
+  establishment_id: string;
+  name: string;
+  description?: string;
+  points_required: number;
+  benefits: any[];
+  icon?: string;
+  color?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RewardOffering {
+  id: string;
+  establishment_id: string;
+  name: string;
+  description?: string;
+  image_url?: string;
+  points_required: number;
+  quantity_available?: number;
+  expiration_days?: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RewardTransaction {
+  id: string;
+  user_id: string;
+  establishment_id?: string;
+  points: number;
+  transaction_type: string;
+  source: string;
+  description?: string;
+  metadata: Record<string, any>;
+  version: number;
+  created_at: string;
+}
+
+export interface RewardRedemption {
+  id: string;
+  user_id: string;
+  offering_id: string;
+  points_spent: number;
+  transaction_id?: string;
+  status: string;
+  fulfilled_at?: string;
+  expires_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RewardRule {
+  id: string;
+  establishment_id: string;
+  name: string;
+  description?: string;
+  event_type: string;
+  conditions: Record<string, any>;
+  actions: Record<string, any>;
+  points: number;
+  is_active: boolean;
+  version: number;
+  created_at: string;
+  updated_at: string;
 }
 
 // Communication system types
