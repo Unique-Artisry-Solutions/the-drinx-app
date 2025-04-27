@@ -1,20 +1,12 @@
-
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { supabase } from '@/lib/supabase';
 import { rewardsApi } from '@/lib/rewards/api';
 import { UserRewardProfile } from '@/lib/rewards/types';
+import { createMockQueryBuilder } from '../utils/supabaseTestUtils';
 
-// Mock Supabase client
 vi.mock('@/lib/supabase', () => ({
   supabase: {
-    from: vi.fn(() => ({
-      select: vi.fn(),
-      insert: vi.fn(),
-      update: vi.fn(),
-      eq: vi.fn(),
-      single: vi.fn(),
-      maybeSingle: vi.fn(),
-    })),
+    from: vi.fn(() => createMockQueryBuilder()),
     rpc: vi.fn(),
   },
 }));
