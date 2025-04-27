@@ -2799,6 +2799,24 @@ export type Database = {
           },
         ]
       }
+      reward_analytics_materialized: {
+        Row: {
+          date: string | null
+          establishment_id: string | null
+          points_total: number | null
+          transaction_type: string | null
+          unique_users: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reward_transactions_establishment_id_fkey"
+            columns: ["establishment_id"]
+            isOneToOne: false
+            referencedRelation: "establishments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reward_system_analytics: {
         Row: {
           date: string | null
@@ -2860,6 +2878,10 @@ export type Database = {
       is_allowed_multi_role_user: {
         Args: { user_email: string }
         Returns: boolean
+      }
+      refresh_reward_analytics_materialized: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       switch_active_role: {
         Args: { role_to_activate: Database["public"]["Enums"]["user_role"] }
