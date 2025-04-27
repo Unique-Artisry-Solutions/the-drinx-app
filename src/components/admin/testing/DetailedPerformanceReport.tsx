@@ -10,7 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useQuery } from '@tanstack/react-query';
-import { Activity, AlertTriangle, CheckCircle, Database, Zap } from 'lucide-react';
+import { Activity, AlertTriangle, CheckCircle, Database, Loader, Zap } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
@@ -382,7 +382,7 @@ const DetailedPerformanceReport = () => {
               >
                 {testLoading ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader className="mr-2 h-4 w-4 animate-spin" />
                     Running...
                   </>
                 ) : (
@@ -446,7 +446,7 @@ const DetailedPerformanceReport = () => {
               ) : testLoading ? (
                 <div className="flex justify-center items-center h-64">
                   <div className="flex flex-col items-center">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+                    <Loader className="h-8 w-8 animate-spin text-primary mb-4" />
                     <p className="text-gray-500">Running performance tests...</p>
                   </div>
                 </div>
