@@ -2,7 +2,7 @@
 import React from 'react';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { getUserPreferences, updateUserPreference } from '@/lib/rewards/api/preferences';
 import { preferencesSchema, type PreferencesFormData } from '../types';
@@ -27,6 +27,23 @@ export const usePreferencesForm = (userId: string) => {
     queryKey: ['rewardPreferences', userId],
     queryFn: () => getUserPreferences(userId),
     retry: 2
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async (data: PreferencesFormData) => {
+      const updatePromises = [
+        updateUserPreference(userId, 'notification_settings', JSON.stringify(data.notification_settings)),
+        updateUserPreference(userId, 'display_settings', JSON.stringify(data.display_settings))
+      ];
+      await Promise.all(updatePromises);
+    },
+    onSuccess: () => {
+      toast.success('Preferences updated successfully');
+    },
+    onError: (error) => {
+      console.error('Error updating preferences:', error);
+      toast.error('Failed to update preferences. Please try again.');
+    }
   });
 
   React.useEffect(() => {
@@ -67,35 +84,14 @@ export const usePreferencesForm = (userId: string) => {
   }, [preferences, form]);
 
   const onSubmit = async (data: PreferencesFormData) => {
-    console.log('Updating preferences:', data);
-    
-    try {
-      const updatePromises = [
-        updateUserPreference(userId, 'notification_settings', JSON.stringify(data.notification_settings))
-          .catch(error => {
-            console.error('Failed to update notification settings:', error);
-            throw new Error('Failed to update notification settings');
-          }),
-        updateUserPreference(userId, 'display_settings', JSON.stringify(data.display_settings))
-          .catch(error => {
-            console.error('Failed to update display settings:', error);
-            throw new Error('Failed to update display settings');
-          })
-      ];
-
-      await Promise.all(updatePromises);
-      console.log('Successfully updated all preferences');
-      toast.success('Preferences updated successfully');
-    } catch (error) {
-      console.error('Error updating preferences:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to update preferences');
-    }
+    updateMutation.mutate(data);
   };
 
   return {
     form,
     isLoading,
     onSubmit,
+    isSubmitting: updateMutation.isPending,
     hasError: !!fetchError
   };
 };
