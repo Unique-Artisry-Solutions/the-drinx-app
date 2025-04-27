@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -23,42 +22,75 @@ export const usePreferencesForm = (userId: string) => {
     }
   });
 
-  const { data: preferences, isLoading } = useQuery({
+  const { data: preferences, isLoading, error: fetchError } = useQuery({
     queryKey: ['rewardPreferences', userId],
     queryFn: () => getUserPreferences(userId),
+    onError: (error) => {
+      console.error('Failed to fetch user preferences:', error);
+      toast.error('Unable to load preferences. Please try again later.');
+    }
   });
 
-  // Format the preferences data when it's loaded
   React.useEffect(() => {
     if (preferences) {
-      const formattedPreferences = preferences.reduce((acc, pref) => {
-        if (pref.preference_key === 'notification_settings') {
-          acc.notification_settings = JSON.parse(pref.preference_value);
-        } else if (pref.preference_key === 'display_settings') {
-          acc.display_settings = JSON.parse(pref.preference_value);
-        }
-        return acc;
-      }, {} as PreferencesFormData);
+      try {
+        const formattedPreferences = preferences.reduce((acc, pref) => {
+          try {
+            if (pref.preference_key === 'notification_settings') {
+              acc.notification_settings = JSON.parse(pref.preference_value);
+            } else if (pref.preference_key === 'display_settings') {
+              acc.display_settings = JSON.parse(pref.preference_value);
+            }
+          } catch (parseError) {
+            console.error(`Error parsing ${pref.preference_key}:`, parseError);
+            toast.error(`Invalid preference format for ${pref.preference_key}`);
+          }
+          return acc;
+        }, {} as PreferencesFormData);
 
-      if (formattedPreferences.notification_settings && formattedPreferences.display_settings) {
-        form.reset(formattedPreferences);
+        if (formattedPreferences.notification_settings && formattedPreferences.display_settings) {
+          form.reset(formattedPreferences);
+        } else {
+          console.warn('Incomplete preference data:', formattedPreferences);
+          toast.error('Some preferences could not be loaded');
+        }
+      } catch (error) {
+        console.error('Error formatting preferences:', error);
+        toast.error('Failed to process preferences data');
       }
     }
   }, [preferences, form]);
 
   const onSubmit = async (data: PreferencesFormData) => {
+    console.log('Updating preferences:', data);
+    
     try {
-      await updateUserPreference(userId, 'notification_settings', JSON.stringify(data.notification_settings));
-      await updateUserPreference(userId, 'display_settings', JSON.stringify(data.display_settings));
+      const updatePromises = [
+        updateUserPreference(userId, 'notification_settings', JSON.stringify(data.notification_settings))
+          .catch(error => {
+            console.error('Failed to update notification settings:', error);
+            throw new Error('Failed to update notification settings');
+          }),
+        updateUserPreference(userId, 'display_settings', JSON.stringify(data.display_settings))
+          .catch(error => {
+            console.error('Failed to update display settings:', error);
+            throw new Error('Failed to update display settings');
+          })
+      ];
+
+      await Promise.all(updatePromises);
+      console.log('Successfully updated all preferences');
       toast.success('Preferences updated successfully');
     } catch (error) {
-      toast.error('Failed to update preferences');
+      console.error('Error updating preferences:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to update preferences');
     }
   };
 
   return {
     form,
     isLoading,
-    onSubmit
+    onSubmit,
+    hasError: !!fetchError
   };
 };
