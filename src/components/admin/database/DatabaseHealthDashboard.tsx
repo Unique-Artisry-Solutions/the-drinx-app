@@ -6,6 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import AnalyticsLineChart from '@/components/charts/AnalyticsLineChart';
 import AnalyticsBarChart from '@/components/charts/AnalyticsBarChart';
 import { Activity, Database, Search, GitMerge } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
 const DatabaseHealthDashboard = () => {
   const { data, isLoading } = useQuery({
@@ -103,12 +104,12 @@ const DatabaseHealthDashboard = () => {
           <AnalyticsLineChart
             title=""
             data={[
-              { time: '00:00', response: 42 },
-              { time: '04:00', response: 38 },
-              { time: '08:00', response: 45 },
-              { time: '12:00', response: 52 },
-              { time: '16:00', response: 48 },
-              { time: '20:00', response: 44 }
+              { name: '00:00', time: '00:00', response: 42 },
+              { name: '04:00', time: '04:00', response: 38 },
+              { name: '08:00', time: '08:00', response: 45 },
+              { name: '12:00', time: '12:00', response: 52 },
+              { name: '16:00', time: '16:00', response: 48 },
+              { name: '20:00', time: '20:00', response: 44 }
             ]}
             series={[
               { key: 'response', name: 'Response Time (ms)', color: '#8884d8' }
