@@ -1,140 +1,67 @@
 
 import { supabase } from '@/lib/supabase';
-import type { RewardAnalytics, RewardMetric } from '../types';
-import { RewardsCache } from '../system/RewardsCache';
-import { RewardsSystemMonitor } from '../system/RewardsSystemMonitor';
+import { RewardTransactionRow } from '../types';
 
-export async function getRewardAnalytics(establishmentId?: string): Promise<RewardAnalytics | null> {
-  const startTime = performance.now();
-
-  try {
-    // Check cache first
-    const cacheKey = `reward_analytics_${establishmentId || 'all'}`;
-    const cacheStatus = await RewardsCache.getCacheStatus(cacheKey);
-
-    if (cacheStatus && !cacheStatus.is_invalidated && cacheStatus.last_updated) {
-      const lastUpdateTime = new Date(cacheStatus.last_updated).getTime();
-      const ttl = (cacheStatus.ttl_seconds || 300) * 1000;
-      
-      if (Date.now() - lastUpdateTime < ttl) {
-        const { data, error } = await supabase
-          .from('reward_analytics_materialized')
-          .select()
-          .order('date', { ascending: false });
-
-        if (error) {
-          throw error;
-        }
-
-        return processAnalyticsData(data);
-      }
-    }
-
-    // Cache invalid or expired, refresh materialized view
-    await supabase.rpc('refresh_reward_analytics_materialized');
-    
-    // Update cache status
-    await RewardsCache.updateCache(cacheKey);
-
-    // Fetch fresh data
-    const { data, error } = await supabase
-      .from('reward_analytics_materialized')
-      .select()
-      .order('date', { ascending: false });
-
-    if (error) {
-      throw error;
-    }
-
-    // Record performance metric
-    const endTime = performance.now();
-    await RewardsSystemMonitor.recordPerformanceMetric({
-      metric_type: 'analytics',
-      metric_name: 'fetch_duration',
-      metric_value: endTime - startTime
-    });
-
-    return processAnalyticsData(data);
-  } catch (error) {
-    console.error('Error fetching reward analytics:', error);
-    
-    // Record error in system health with correct property names
-    await RewardsSystemMonitor.recordHealthMetric({
-      status: 'error', // Using the correct string literal type
-      transaction_count: 0,
-      error_count: 1,
-      response_time_ms: 0,
-      details: { error: error instanceof Error ? error.message : 'Unknown error' }
-    });
-    
-    return null;
-  }
-}
-
-export async function getDailyMetrics(date: Date, establishmentId?: string) {
-  const { data, error } = await supabase
-    .from('reward_usage_metrics')
-    .select('*')
-    .eq('metric_date', date.toISOString().split('T')[0])
-    .eq('establishment_id', establishmentId);
-
-  if (error) {
-    console.error('Error fetching daily metrics:', error);
-    return null;
-  }
-
-  return data as RewardMetric[];
-}
-
-function processAnalyticsData(metrics: any[]): RewardAnalytics | null {
-  if (!metrics || metrics.length === 0) {
+export function processRewardAnalytics(transactions: RewardTransactionRow[]): any {
+  if (!transactions || transactions.length === 0) {
     return {
       totalPointsEarned: 0,
       totalPointsRedeemed: 0,
       pointsEconomyBalance: 0,
-      redemptionRate: 0,
-      timeSeriesData: [],
-      sourcesBreakdown: {}
+      transactionCount: 0,
+      redemptionRate: 0
     };
   }
+
+  const earningTransactions = transactions.filter(tx => tx.transaction_type === 'earn');
+  const redemptionTransactions = transactions.filter(tx => tx.transaction_type === 'redeem');
   
-  const timeSeriesMap = new Map<string, { earned: number, redeemed: number }>();
-  let totalEarned = 0;
-  let totalRedeemed = 0;
+  const totalPointsEarned = earningTransactions.reduce((sum, tx) => sum + (tx.points || 0), 0);
+  const totalPointsRedeemed = redemptionTransactions.reduce((sum, tx) => sum + (tx.points || 0), 0);
   
-  metrics.forEach(metric => {
-    const points = Number(metric.points_total) || 0;
-    
-    if (!timeSeriesMap.has(metric.date)) {
-      timeSeriesMap.set(metric.date, { earned: 0, redeemed: 0 });
+  return {
+    totalPointsEarned,
+    totalPointsRedeemed,
+    pointsEconomyBalance: totalPointsEarned - totalPointsRedeemed,
+    transactionCount: transactions.length,
+    redemptionRate: earningTransactions.length ? (redemptionTransactions.length / earningTransactions.length) * 100 : 0,
+    sourcesBreakdown: groupTransactionsBySource(earningTransactions),
+    timeSeriesData: createTimeSeriesData(transactions)
+  };
+}
+
+function groupTransactionsBySource(transactions: RewardTransactionRow[]): Record<string, number> {
+  return transactions.reduce((acc, tx) => {
+    const source = tx.source || 'unknown';
+    if (!acc[source]) acc[source] = 0;
+    acc[source] += tx.points || 0;
+    return acc;
+  }, {} as Record<string, number>);
+}
+
+function createTimeSeriesData(transactions: RewardTransactionRow[]): any[] {
+  const groupedByDate: Record<string, {earned: number, redeemed: number}> = {};
+  
+  transactions.forEach(tx => {
+    const date = new Date(tx.created_at).toISOString().split('T')[0];
+    if (!groupedByDate[date]) {
+      groupedByDate[date] = {earned: 0, redeemed: 0};
     }
     
-    const entry = timeSeriesMap.get(metric.date)!;
-    
-    if (metric.transaction_type === 'earn') {
-      entry.earned += points;
-      totalEarned += points;
-    } else if (metric.transaction_type === 'redeem') {
-      entry.redeemed += points;
-      totalRedeemed += points;
+    if (tx.transaction_type === 'earn') {
+      groupedByDate[date].earned += tx.points || 0;
+    } else if (tx.transaction_type === 'redeem') {
+      groupedByDate[date].redeemed += tx.points || 0;
     }
   });
   
-  const timeSeriesData = Array.from(timeSeriesMap.entries()).map(([date, values]) => ({
-    date,
-    pointsEarned: values.earned,
-    pointsRedeemed: values.redeemed,
-    netPoints: values.earned - values.redeemed
-  })).sort((a, b) => a.date.localeCompare(b.date));
-  
-  const redemptionRate = totalEarned > 0 ? (totalRedeemed / totalEarned) * 100 : 0;
-  
-  return {
-    totalPointsEarned: totalEarned,
-    totalPointsRedeemed: totalRedeemed,
-    pointsEconomyBalance: totalEarned - totalRedeemed,
-    redemptionRate,
-    timeSeriesData,
-    sourcesBreakdown: {}
-  };
+  return Object.entries(groupedByDate)
+    .map(([date, values]) => ({
+      date,
+      pointsEarned: values.earned,
+      pointsRedeemed: values.redeemed,
+      netPoints: values.earned - values.redeemed
+    }))
+    .sort((a, b) => a.date.localeCompare(b.date));
 }
+
