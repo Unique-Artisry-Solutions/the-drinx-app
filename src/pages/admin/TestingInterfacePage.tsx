@@ -26,6 +26,16 @@ const TestingInterfacePage = () => {
           avgResponseTime: 245,
           p95ResponseTime: 450,
           maxResponseTime: 850
+        },
+        relationships: {
+          validConstraints: 24,
+          totalConstraints: 26,
+          invalidConstraints: 2,
+          cacheHitRate: 92,
+          validationDetails: [
+            "Foreign key constraint violation: user_rewards.tier_id references non-existent reward_tiers.id",
+            "Uniqueness constraint violation: duplicate entries in user_loyalty_points"
+          ]
         }
       };
     }
@@ -98,9 +108,11 @@ const TestingInterfacePage = () => {
               </Card>
             </div>
 
-            <TestResultsVisualization results={testResults} />
             <TestControls />
-            <TestReportSection results={testResults} />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <TestResultsVisualization results={testResults} />
+              <TestReportSection results={testResults} />
+            </div>
           </>
         ) : (
           <div className="flex items-center justify-center h-64">
