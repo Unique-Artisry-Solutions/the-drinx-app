@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -25,8 +26,11 @@ export const usePreferencesForm = (userId: string) => {
   const { data: preferences, isLoading, error: fetchError } = useQuery({
     queryKey: ['rewardPreferences', userId],
     queryFn: () => getUserPreferences(userId),
-    onError: (error) => {
-      console.error('Failed to fetch user preferences:', error);
+    onSuccess: (data) => {
+      console.log('Successfully fetched user preferences');
+    },
+    onError: (err) => {
+      console.error('Failed to fetch user preferences:', err);
       toast.error('Unable to load preferences. Please try again later.');
     }
   });
