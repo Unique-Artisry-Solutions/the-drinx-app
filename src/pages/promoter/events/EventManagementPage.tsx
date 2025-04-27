@@ -3,16 +3,23 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Search, SlidersHorizontal } from 'lucide-react';
+import { PlusCircle, Search, SlidersHorizontal, MapPin } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import EventCard from '@/components/promoter/events/EventCard';
-import { useEvents } from '@/hooks/events/useEvents';
+import { useEvents, LocationFilter } from '@/hooks/events/useEvents';
+import { Slider } from '@/components/ui/slider';
+import { useToast } from '@/hooks/use-toast';
 
 const EventManagementPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all');
-  const { events, isLoading } = useEvents();
+  const { events, isLoading, fetchPublishedEvents } = useEvents();
+  const [showLocationFilter, setShowLocationFilter] = useState(false);
+  const [userLocation, setUserLocation] = useState<{latitude: number, longitude: number} | null>(null);
+  const [radiusMiles, setRadiusMiles] = useState<number>(10);
+  const [isLocating, setIsLocating] = useState(false);
+  const { toast } = useToast();
   
   const filteredEvents = events.filter(event => {
     const eventName = event.name?.toLowerCase() || '';
@@ -23,6 +30,59 @@ const EventManagementPage = () => {
     if (activeTab === 'all') return matchesSearch;
     return matchesSearch && event.status === activeTab;
   });
+
+  // Get user location and filter events
+  const handleLocationFilter = () => {
+    setIsLocating(true);
+    
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
+          });
+          
+          // Apply location filter
+          const locationFilter: LocationFilter = {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            radiusMiles: radiusMiles
+          };
+          
+          fetchPublishedEvents(locationFilter);
+          setIsLocating(false);
+        },
+        (error) => {
+          console.error("Error getting location:", error);
+          toast({
+            title: "Location Error",
+            description: "Could not get your location. Please check permissions.",
+            variant: "destructive",
+          });
+          setIsLocating(false);
+        }
+      );
+    } else {
+      toast({
+        title: "Location Not Supported",
+        description: "Geolocation is not supported by this browser.",
+        variant: "destructive",
+      });
+      setIsLocating(false);
+    }
+  };
+
+  // Apply radius filter when radius changes and we have user location
+  useEffect(() => {
+    if (userLocation) {
+      const locationFilter: LocationFilter = {
+        ...userLocation,
+        radiusMiles: radiusMiles
+      };
+      fetchPublishedEvents(locationFilter);
+    }
+  }, [radiusMiles, userLocation, fetchPublishedEvents]);
 
   return (
     <Layout>
@@ -53,11 +113,52 @@ const EventManagementPage = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <Button variant="outline" className="gap-2">
+            <Button 
+              variant="outline" 
+              className="gap-2"
+              onClick={() => setShowLocationFilter(!showLocationFilter)}
+            >
               <SlidersHorizontal className="h-4 w-4" />
               <span className="hidden sm:inline">Filter</span>
             </Button>
           </div>
+          
+          {showLocationFilter && (
+            <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+                <div>
+                  <h3 className="text-sm font-medium flex items-center gap-1">
+                    <MapPin className="h-4 w-4" /> Location Filter
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Find events near you</p>
+                </div>
+                <Button 
+                  size="sm" 
+                  onClick={handleLocationFilter}
+                  disabled={isLocating}
+                >
+                  {isLocating ? "Locating..." : userLocation ? "Update Location" : "Use My Location"}
+                </Button>
+              </div>
+              
+              {userLocation && (
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex justify-between mb-2">
+                      <span className="text-sm">Radius: {radiusMiles} miles</span>
+                    </div>
+                    <Slider
+                      value={[radiusMiles]}
+                      min={1}
+                      max={50}
+                      step={1}
+                      onValueChange={(value) => setRadiusMiles(value[0])}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
           
           <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="mb-6">
@@ -88,6 +189,7 @@ const EventManagementPage = () => {
                       attendeeCount={0}
                       status={event.status}
                       imageUrl={event.image_url}
+                      distance={event.distance}
                     />
                   ))}
                 </div>

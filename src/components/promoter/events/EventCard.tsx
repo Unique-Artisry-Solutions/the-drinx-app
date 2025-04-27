@@ -1,9 +1,11 @@
+
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Calendar, MapPin, Clock, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { formatDistance } from '@/utils/locationUtils';
 
 export interface EventCardProps {
   id: string;
@@ -14,6 +16,7 @@ export interface EventCardProps {
   status: 'published' | 'draft' | 'cancelled' | 'completed';
   imageUrl?: string;
   attendeeCount?: number;
+  distance?: number;
 }
 
 const EventCard: React.FC<EventCardProps> = ({ 
@@ -24,7 +27,8 @@ const EventCard: React.FC<EventCardProps> = ({
   venue, 
   status, 
   imageUrl,
-  attendeeCount = 0
+  attendeeCount = 0,
+  distance
 }) => {
   // Status colors
   const statusConfig = {
@@ -48,6 +52,13 @@ const EventCard: React.FC<EventCardProps> = ({
               {statusConfig[status].text}
             </Badge>
           </div>
+          {distance !== undefined && distance > 0 && (
+            <div className="absolute bottom-2 left-2">
+              <Badge className="bg-purple-600 text-white">
+                {formatDistance(distance)}
+              </Badge>
+            </div>
+          )}
         </div>
         <CardContent className="p-4">
           <h3 className="font-semibold text-lg mb-2 line-clamp-1">{name}</h3>
