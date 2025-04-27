@@ -1,5 +1,6 @@
 
 import { EventType } from './EventTypes';
+import { Json } from '@/integrations/supabase/types';
 
 // Simple location coordinates type
 export type LocationCoordinates = {
@@ -24,6 +25,7 @@ export type NotificationMetadata = {
   event_id?: string;
 };
 
+// Updated to match Supabase response structure
 export type RawNotification = {
   id: string;
   metadata: NotificationMetadata | null;
