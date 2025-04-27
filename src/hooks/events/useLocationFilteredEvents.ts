@@ -36,7 +36,9 @@ export const useLocationFilteredEvents = () => {
       if (!result.data || result.data.length === 0) return [];
 
       const notificationsData = await fetchLocationBasedNotifications();
-      const locationData = processLocationData(notificationsData);
+      if (notificationsData.error) throw notificationsData.error;
+      
+      const locationData = processLocationData(notificationsData.data || []);
       const eventCoordinates = createEventCoordinatesMap(locationData);
 
       const filteredEvents = result.data
