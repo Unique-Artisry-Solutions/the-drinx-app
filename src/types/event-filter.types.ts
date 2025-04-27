@@ -6,12 +6,15 @@ export type LocationCoordinates = {
   longitude: number;
 };
 
+// Flattened metadata structure to avoid recursive types
+export type NotificationMetadata = {
+  location_based?: boolean;
+  coordinates?: LocationCoordinates;
+  event_id?: string;
+};
+
 export type NotificationRecord = {
-  metadata?: {
-    location_based?: boolean;
-    coordinates?: LocationCoordinates;
-    event_id?: string;
-  };
+  metadata?: NotificationMetadata;
   event_id?: string;
 };
 

@@ -1,6 +1,12 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { NotificationRecord, RawEventResponse, LocationCoordinates } from '@/types/event-filter.types';
+import { 
+  NotificationRecord, 
+  RawEventResponse, 
+  LocationCoordinates,
+  RawEventData,
+  NotificationMetadata 
+} from '@/types/event-filter.types';
 import { EventType } from '@/types/EventTypes';
 
 export const fetchPublishedEvents = async (): Promise<RawEventResponse> => {
@@ -43,8 +49,9 @@ export const processLocationData = (responseData: any[]): NotificationRecord[] =
   if (Array.isArray(responseData)) {
     responseData.forEach(item => {
       if (item && typeof item === 'object') {
+        const metadata = item.metadata as NotificationMetadata;
         locationData.push({
-          metadata: item.metadata,
+          metadata,
           event_id: item.event_id
         });
       }
@@ -60,7 +67,7 @@ export const createEventCoordinatesMap = (locationData: NotificationRecord[]): M
   locationData.forEach(item => {
     if (item?.metadata?.coordinates) {
       const eventId = item.metadata.event_id || item.event_id;
-      if (eventId) {
+      if (eventId && item.metadata.coordinates) {
         eventCoordinates.set(eventId, item.metadata.coordinates);
       }
     }
@@ -70,7 +77,7 @@ export const createEventCoordinatesMap = (locationData: NotificationRecord[]): M
 };
 
 export const formatEventData = (
-  rawEvent: RawEventData, 
+  rawEvent: RawEventData,
   coordinates: LocationCoordinates | undefined,
   distance: number | null
 ): EventType | null => {
