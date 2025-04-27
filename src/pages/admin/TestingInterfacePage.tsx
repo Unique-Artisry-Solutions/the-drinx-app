@@ -38,10 +38,32 @@ const TestingInterfacePage = () => {
             "Foreign key constraint violation: user_rewards.tier_id references non-existent reward_tiers.id",
             "Uniqueness constraint violation: duplicate entries in user_loyalty_points"
           ]
+        },
+        rewardSystem: {
+          pointsTransactions: 850,
+          redemptionRate: 18.5,
+          tierProgressions: 45,
+          activeUsers: 320
         }
       };
     }
   });
+
+  const handleRunTests = () => {
+    toast({
+      title: "Starting test run",
+      description: "Test execution has been initiated"
+    });
+    refetch();
+  };
+
+  const handleExportReport = () => {
+    toast({
+      title: "Exporting report",
+      description: "Report generation has started"
+    });
+    // In a real implementation, this would generate and download a report
+  };
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -59,13 +81,16 @@ const TestingInterfacePage = () => {
               Refresh
             </Button>
             <Button 
+              variant="outline"
               className="flex items-center gap-2"
-              onClick={() => {
-                toast({
-                  title: "Starting test run",
-                  description: "Test execution has been initiated"
-                });
-              }}
+              onClick={handleExportReport}
+            >
+              <Download className="h-4 w-4" />
+              Export Report
+            </Button>
+            <Button 
+              className="flex items-center gap-2"
+              onClick={handleRunTests}
             >
               <PlayCircle className="h-4 w-4" />
               Run Tests
@@ -110,7 +135,35 @@ const TestingInterfacePage = () => {
               </Card>
             </div>
 
-            <DatabaseMonitoringSection />
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-6">
+              <Card className="xl:col-span-2">
+                <CardHeader>
+                  <CardTitle>Reward System Health</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="p-4 bg-blue-50 rounded-lg">
+                      <p className="text-xs font-medium text-blue-700">Transactions</p>
+                      <p className="text-xl font-bold">{testResults.rewardSystem.pointsTransactions}</p>
+                    </div>
+                    <div className="p-4 bg-green-50 rounded-lg">
+                      <p className="text-xs font-medium text-green-700">Redemption Rate</p>
+                      <p className="text-xl font-bold">{testResults.rewardSystem.redemptionRate}%</p>
+                    </div>
+                    <div className="p-4 bg-purple-50 rounded-lg">
+                      <p className="text-xs font-medium text-purple-700">Tier Progressions</p>
+                      <p className="text-xl font-bold">{testResults.rewardSystem.tierProgressions}</p>
+                    </div>
+                    <div className="p-4 bg-amber-50 rounded-lg">
+                      <p className="text-xs font-medium text-amber-700">Active Users</p>
+                      <p className="text-xl font-bold">{testResults.rewardSystem.activeUsers}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <DatabaseMonitoringSection />
+            </div>
             
             <div className="mt-6">
               <TestControls />
