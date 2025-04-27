@@ -36,6 +36,7 @@ export const useLocationFilteredEvents = () => {
       if (!result.data || result.data.length === 0) return [];
 
       const locationResponse = await fetchLocationBasedNotifications();
+      // Use type assertion for the responseData to avoid the error
       const locationData = processLocationData(locationResponse.data || []);
       const eventCoordinates = createEventCoordinatesMap(locationData);
 

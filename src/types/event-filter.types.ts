@@ -6,17 +6,20 @@ export type LocationCoordinates = {
   longitude: number;
 };
 
-// Raw response type to handle Supabase data
-export type RawNotificationData = {
-  metadata: {
-    location_based?: boolean;
-    coordinates?: LocationCoordinates;
-    event_id?: string;
-  };
-  event_id: string;
+// Raw response type from Supabase
+export type SupabaseNotificationResponse = {
+  data: {
+    metadata: {
+      location_based?: boolean;
+      coordinates?: LocationCoordinates;
+      event_id?: string;
+    };
+    event_id: string;
+  }[] | null;
+  error: any;
 };
 
-// Simplified notification record to avoid deep type instantiation
+// Simplified type for processed notification records
 export type NotificationRecord = {
   metadata?: {
     location_based?: boolean;
