@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Activity, AlertTriangle, CheckCircle } from "lucide-react";
+import { Activity, AlertTriangle, CheckCircle, HelpCircle } from "lucide-react";
 import { RewardsSystemMonitor } from '@/lib/rewards/system/RewardsSystemMonitor';
 import { useQuery } from '@tanstack/react-query';
 import AnalyticsMetricCard from '@/components/charts/AnalyticsMetricCard';
@@ -16,7 +16,7 @@ const SystemOverviewTab = () => {
 
   const { data: performanceTest, isLoading: testLoading } = useQuery({
     queryKey: ['performanceTest'],
-    queryFn: RewardsSystemMonitor.runPerformanceTests
+    queryFn: RewardsSystemMonitor.runPerformanceTests,
   });
 
   const getStatusColor = (status: string) => {
@@ -34,7 +34,7 @@ const SystemOverviewTab = () => {
 
   return (
     <div className="grid gap-6">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-lg">
@@ -97,7 +97,7 @@ const SystemOverviewTab = () => {
           {testLoading ? (
             <p>Running tests...</p>
           ) : performanceTest ? (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-3">
               {Object.entries(performanceTest).map(([test, result]) => (
                 <div key={test} className="bg-muted/50 p-4 rounded-lg">
                   <h3 className="font-medium text-sm mb-2">{test.replace(/_/g, ' ')}</h3>

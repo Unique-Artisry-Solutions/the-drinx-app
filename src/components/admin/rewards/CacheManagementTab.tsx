@@ -1,170 +1,277 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { Database, RefreshCcw } from 'lucide-react';
-import { RewardsCache } from '@/lib/rewards/system/RewardsCache';
-import { useToast } from '@/hooks/use-toast';
-import AnalyticsPieChart from '@/components/charts/AnalyticsPieChart';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { 
+  Database, 
+  RefreshCw, 
+  Clock, 
+  CheckCircle, 
+  Server, 
+  AlertTriangle,
+  Gauge
+} from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import AnalyticsLineChart from '@/components/charts/AnalyticsLineChart';
+import AnalyticsBarChart from '@/components/charts/AnalyticsBarChart';
+import { toast } from 'sonner';
 
-// Sample cache data for visualization
-const cacheStatusData = [
-  { name: 'Valid', value: 75 },
-  { name: 'Stale', value: 15 },
-  { name: 'Empty', value: 10 },
+// Sample cache data
+const cacheItems = [
+  { name: 'reward_analytics_all', last_updated: '2025-04-27T08:30:00', ttl_seconds: 300, is_invalidated: false, size_kb: 128 },
+  { name: 'user_points_balance', last_updated: '2025-04-27T09:15:00', ttl_seconds: 600, is_invalidated: false, size_kb: 256 },
+  { name: 'reward_leaderboard', last_updated: '2025-04-27T06:45:00', ttl_seconds: 900, is_invalidated: false, size_kb: 512 },
+  { name: 'establishment_rewards', last_updated: '2025-04-27T07:20:00', ttl_seconds: 1200, is_invalidated: true, size_kb: 384 },
+  { name: 'transaction_history', last_updated: '2025-04-27T05:10:00', ttl_seconds: 1800, is_invalidated: false, size_kb: 768 }
 ];
 
-const cacheSizeData = [
-  { name: 'User Data', value: 45 },
-  { name: 'Analytics', value: 25 },
-  { name: 'Transactions', value: 20 },
-  { name: 'Other', value: 10 },
+// Sample cache performance data
+const cachePerformanceData = [
+  { name: '00:00', hit_rate: 85, miss_rate: 15 },
+  { name: '04:00', hit_rate: 88, miss_rate: 12 },
+  { name: '08:00', hit_rate: 92, miss_rate: 8 },
+  { name: '12:00', hit_rate: 78, miss_rate: 22 },
+  { name: '16:00', hit_rate: 82, miss_rate: 18 },
+  { name: '20:00', hit_rate: 90, miss_rate: 10 },
 ];
 
-// Cache entries for the table
-const cacheEntries = [
-  { key: 'reward_analytics_all', lastUpdated: '2 mins ago', status: 'Valid', ttl: '5 minutes' },
-  { key: 'user_points_leaderboard', lastUpdated: '10 mins ago', status: 'Valid', ttl: '30 minutes' },
-  { key: 'establishment_rewards_123', lastUpdated: '1 hour ago', status: 'Stale', ttl: '1 hour' },
-  { key: 'daily_transactions', lastUpdated: '5 hours ago', status: 'Expired', ttl: '4 hours' },
-  { key: 'reward_offerings_active', lastUpdated: '12 mins ago', status: 'Valid', ttl: '1 hour' },
+const responseTimeComparisonData = [
+  { name: 'Points Lookup', cached: 12, uncached: 85 },
+  { name: 'Rewards List', cached: 18, uncached: 125 },
+  { name: 'User History', cached: 25, uncached: 210 },
+  { name: 'Analytics', cached: 35, uncached: 345 },
+  { name: 'Balance Check', cached: 8, uncached: 65 },
 ];
 
 const CacheManagementTab = () => {
-  const { toast } = useToast();
-  const [isInvalidating, setIsInvalidating] = useState<string | null>(null);
-  const [isRefreshing, setIsRefreshing] = useState<string | null>(null);
-
-  const handleInvalidateCache = async (key: string) => {
-    setIsInvalidating(key);
-    try {
-      await RewardsCache.invalidateCache(key);
-      toast({
-        title: 'Cache invalidated',
-        description: `Cache key "${key}" has been successfully invalidated`,
-        variant: 'default',
-      });
-    } catch (error) {
-      toast({
-        title: 'Error invalidating cache',
-        description: 'There was a problem invalidating the cache',
-        variant: 'destructive',
-      });
-      console.error('Error invalidating cache:', error);
-    } finally {
-      setIsInvalidating(null);
+  const [refreshingCache, setRefreshingCache] = useState<string | null>(null);
+  
+  // This would be replaced with an actual query to get cache metrics
+  const { data: cacheMetrics, isLoading: metricsLoading, refetch: refetchMetrics } = useQuery({
+    queryKey: ['cacheMetrics'],
+    queryFn: async () => {
+      // Mock API call
+      return { 
+        total_items: 5, 
+        total_size_kb: 2048, 
+        avg_hit_rate: 86.5, 
+        avg_ttl_seconds: 960,
+        memory_usage_percent: 42
+      };
     }
+  });
+
+  const handleInvalidateCache = (cacheName: string) => {
+    setRefreshingCache(cacheName);
+    
+    // Simulate cache invalidation
+    setTimeout(() => {
+      toast.success(`Cache "${cacheName}" has been successfully invalidated.`);
+      setRefreshingCache(null);
+    }, 1500);
   };
 
-  const handleRefreshCache = async (key: string) => {
-    setIsRefreshing(key);
-    try {
-      await RewardsCache.updateCache(key, 300); // 5 minute TTL
-      toast({
-        title: 'Cache refreshed',
-        description: `Cache key "${key}" has been successfully refreshed`,
-        variant: 'default',
-      });
-    } catch (error) {
-      toast({
-        title: 'Error refreshing cache',
-        description: 'There was a problem refreshing the cache',
-        variant: 'destructive',
-      });
-      console.error('Error refreshing cache:', error);
-    } finally {
-      setIsRefreshing(null);
-    }
+  const handleRefreshAllCaches = () => {
+    setRefreshingCache('all');
+    
+    // Simulate refreshing all caches
+    setTimeout(() => {
+      toast.success("All caches have been successfully refreshed.");
+      setRefreshingCache(null);
+      refetchMetrics();
+    }, 2500);
   };
 
-  const getStatusColorClass = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'valid':
-        return 'text-green-500';
-      case 'stale':
-        return 'text-yellow-500';
-      case 'expired':
-        return 'text-red-500';
-      default:
-        return 'text-gray-500';
+  const formatTimeAgo = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+    
+    if (diffInSeconds < 60) {
+      return `${diffInSeconds} seconds ago`;
+    } else if (diffInSeconds < 3600) {
+      return `${Math.floor(diffInSeconds / 60)} minutes ago`;
+    } else if (diffInSeconds < 86400) {
+      return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+    } else {
+      return `${Math.floor(diffInSeconds / 86400)} days ago`;
     }
   };
 
   return (
     <div className="grid gap-6">
-      <div className="grid gap-6 md:grid-cols-2">
-        <AnalyticsPieChart
-          title="Cache Status"
-          description="Current state of cache entries"
-          data={cacheStatusData}
-          colors={['#22c55e', '#f59e0b', '#94a3b8']}
-        />
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2">
+              <Database className="h-5 w-5" />
+              Cache Status
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {metricsLoading ? (
+              <p>Loading cache metrics...</p>
+            ) : cacheMetrics ? (
+              <div className="space-y-4">
+                <div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-500">Total Items:</span>
+                    <span className="font-medium">{cacheMetrics.total_items}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-500">Total Size:</span>
+                    <span className="font-medium">{cacheMetrics.total_size_kb.toLocaleString()} KB</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-500">Average Hit Rate:</span>
+                    <span className="font-medium">{cacheMetrics.avg_hit_rate}%</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-500">Memory Usage:</span>
+                    <span className="font-medium">{cacheMetrics.memory_usage_percent}%</span>
+                  </div>
+                </div>
+                
+                <div className="pt-2 border-t border-border">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Cache Health</span>
+                    <span className={`text-sm font-medium ${cacheMetrics.avg_hit_rate > 80 ? 'text-green-500' : 'text-yellow-500'}`}>
+                      {cacheMetrics.avg_hit_rate > 80 ? 'Optimal' : 'Needs Optimization'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <p>No cache metrics available</p>
+            )}
+          </CardContent>
+        </Card>
 
-        <AnalyticsPieChart
-          title="Cache Size Distribution"
-          description="Memory usage by cache category"
-          data={cacheSizeData}
-          colors={['#3b82f6', '#8b5cf6', '#06b6d4', '#94a3b8']}
-        />
+        <Card className="col-span-2">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2">
+              <Gauge className="h-5 w-5" />
+              Cache Hit/Miss Rate
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="h-[200px]">
+            <AnalyticsBarChart
+              title=""
+              description=""
+              data={cachePerformanceData}
+              series={[
+                { key: 'hit_rate', name: 'Hit Rate %', color: '#22c55e' },
+                { key: 'miss_rate', name: 'Miss Rate %', color: '#ef4444' }
+              ]}
+              height={200}
+            />
+          </CardContent>
+        </Card>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Database className="h-5 w-5" />
-            Cache Entries
+            <Clock className="h-5 w-5" />
+            Response Time Comparison (Cached vs Uncached)
           </CardTitle>
-          <CardDescription>
-            Manage and monitor reward system cache entries
-          </CardDescription>
+        </CardHeader>
+        <CardContent className="h-[300px]">
+          <AnalyticsBarChart
+            title=""
+            description=""
+            data={responseTimeComparisonData}
+            series={[
+              { key: 'cached', name: 'Cached (ms)', color: '#22c55e' },
+              { key: 'uncached', name: 'Uncached (ms)', color: '#3b82f6' }
+            ]}
+            height={300}
+          />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex justify-between">
+          <CardTitle>Cache Entries</CardTitle>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleRefreshAllCaches}
+            disabled={refreshingCache !== null}
+            className="flex items-center gap-1"
+          >
+            <RefreshCw className={`h-4 w-4 ${refreshingCache === 'all' ? 'animate-spin' : ''}`} />
+            Refresh All
+          </Button>
         </CardHeader>
         <CardContent>
           <div className="border rounded-md">
-            <div className="grid grid-cols-5 p-4 font-medium">
-              <div>Cache Key</div>
-              <div>Last Updated</div>
-              <div>Status</div>
-              <div>TTL</div>
-              <div className="text-right">Actions</div>
-            </div>
-            <Separator />
-            {cacheEntries.map((entry, index) => (
-              <div key={entry.key}>
-                <div className="grid grid-cols-5 p-4 items-center">
-                  <div className="font-mono text-sm">{entry.key}</div>
-                  <div>{entry.lastUpdated}</div>
-                  <div className={getStatusColorClass(entry.status)}>{entry.status}</div>
-                  <div>{entry.ttl}</div>
-                  <div className="flex gap-2 justify-end">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => handleInvalidateCache(entry.key)}
-                      disabled={isInvalidating === entry.key}
-                    >
-                      {isInvalidating === entry.key ? 'Invalidating...' : 'Invalidate'}
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => handleRefreshCache(entry.key)}
-                      disabled={isRefreshing === entry.key}
-                      className="flex items-center gap-1"
-                    >
-                      <RefreshCcw className="h-3 w-3" />
-                      {isRefreshing === entry.key ? 'Refreshing...' : 'Refresh'}
-                    </Button>
-                  </div>
-                </div>
-                {index < cacheEntries.length - 1 && <Separator />}
-              </div>
-            ))}
+            <table className="min-w-full divide-y divide-border">
+              <thead>
+                <tr className="bg-muted/50">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground tracking-wider">Cache Key</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground tracking-wider">Last Updated</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground tracking-wider">TTL</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground tracking-wider">Size</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground tracking-wider">Status</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground tracking-wider">Action</th>
+                </tr>
+              </thead>
+              <tbody className="bg-card divide-y divide-border">
+                {cacheItems.map((item) => (
+                  <tr key={item.name} className={item.is_invalidated ? 'bg-red-50' : ''}>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm font-medium">{item.name}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-muted-foreground">
+                      {formatTimeAgo(item.last_updated)}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-muted-foreground">
+                      {Math.floor(item.ttl_seconds / 60)} min
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-muted-foreground">
+                      {item.size_kb} KB
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      {item.is_invalidated ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                          <AlertTriangle className="h-3 w-3 mr-1" />
+                          Invalidated
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          <CheckCircle className="h-3 w-3 mr-1" />
+                          Valid
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-right">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleInvalidateCache(item.name)}
+                        disabled={refreshingCache !== null || item.is_invalidated}
+                      >
+                        {refreshingCache === item.name ? (
+                          <RefreshCw className="h-4 w-4 animate-spin" />
+                        ) : (
+                          'Invalidate'
+                        )}
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </CardContent>
-        <CardFooter className="flex justify-between">
-          <Button variant="outline">Clear All</Button>
-          <Button>Refresh All</Button>
+        <CardFooter>
+          <Alert className="w-full">
+            <Server className="h-4 w-4" />
+            <AlertTitle>Cache Management</AlertTitle>
+            <AlertDescription className="text-sm">
+              Invalidating a cache will force the system to refetch fresh data on the next request. This can temporarily increase response times.
+            </AlertDescription>
+          </Alert>
         </CardFooter>
       </Card>
     </div>

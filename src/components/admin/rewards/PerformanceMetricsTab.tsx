@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import AnalyticsBarChart from '@/components/charts/AnalyticsBarChart';
 import AnalyticsLineChart from '@/components/charts/AnalyticsLineChart';
-import { Activity, BarChart, LineChart } from 'lucide-react';
+import { Activity, BarChart, LineChart, Database, Server, Clock, Gauge } from 'lucide-react';
 import {
   ChartContainer, 
   ChartTooltip, 
@@ -49,6 +49,28 @@ const resourceUsageData = [
   { name: '18:00', cpu: 52, memory: 58, db: 32 },
   { name: '20:00', cpu: 38, memory: 52, db: 24 },
   { name: '22:00', cpu: 30, memory: 48, db: 18 },
+];
+
+// Added data for the new visualizations
+const requestLatencyData = [
+  { name: 'Points Calculation', min: 15, avg: 42, max: 86 },
+  { name: 'Rule Processing', min: 18, avg: 35, max: 62 },
+  { name: 'Reward Lookup', min: 8, avg: 22, max: 45 },
+  { name: 'Redemption', min: 25, avg: 60, max: 120 },
+  { name: 'Balance Check', min: 5, avg: 15, max: 35 },
+];
+
+const throughputData = [
+  { name: '8:00', transactions: 145 },
+  { name: '9:00', transactions: 256 },
+  { name: '10:00', transactions: 378 },
+  { name: '11:00', transactions: 421 },
+  { name: '12:00', transactions: 463 },
+  { name: '13:00', transactions: 502 },
+  { name: '14:00', transactions: 546 },
+  { name: '15:00', transactions: 475 },
+  { name: '16:00', transactions: 380 },
+  { name: '17:00', transactions: 340 },
 ];
 
 const PerformanceMetricsTab = () => {
@@ -101,14 +123,22 @@ const PerformanceMetricsTab = () => {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <LineChart className="h-5 w-5" />
+              <Gauge className="h-5 w-5" />
               Latency Distribution
             </CardTitle>
           </CardHeader>
           <CardContent className="h-[300px]">
-            <div className="h-full w-full flex items-center justify-center">
-              <p className="text-muted-foreground">Advanced latency metrics coming soon</p>
-            </div>
+            <AnalyticsBarChart
+              title=""
+              description=""
+              data={requestLatencyData}
+              series={[
+                { key: 'min', name: 'Min (ms)', color: '#22c55e' },
+                { key: 'avg', name: 'Avg (ms)', color: '#f59e0b' },
+                { key: 'max', name: 'Max (ms)', color: '#ef4444' }
+              ]}
+              height={250}
+            />
           </CardContent>
         </Card>
         
@@ -120,12 +150,46 @@ const PerformanceMetricsTab = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="h-[300px]">
-            <div className="h-full w-full flex items-center justify-center">
-              <p className="text-muted-foreground">Throughput analysis coming soon</p>
-            </div>
+            <AnalyticsBarChart
+              title=""
+              description=""
+              data={throughputData}
+              series={[
+                { key: 'transactions', name: 'Transactions/hour', color: '#3b82f6' }
+              ]}
+              height={250}
+            />
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="h-5 w-5" />
+            Performance Trends (Last 30 Days)
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="h-[350px]">
+          <AnalyticsLineChart
+            title=""
+            data={[
+              { name: '1', avg_response: 45, peak_response: 120, transactions: 2500 },
+              { name: '5', avg_response: 50, peak_response: 135, transactions: 2700 },
+              { name: '10', avg_response: 42, peak_response: 110, transactions: 3100 },
+              { name: '15', avg_response: 38, peak_response: 95, transactions: 3300 },
+              { name: '20', avg_response: 55, peak_response: 145, transactions: 3200 },
+              { name: '25', avg_response: 48, peak_response: 125, transactions: 3400 },
+              { name: '30', avg_response: 43, peak_response: 115, transactions: 3500 },
+            ]}
+            series={[
+              { key: 'avg_response', name: 'Avg Response (ms)', color: '#3b82f6' },
+              { key: 'peak_response', name: 'Peak Response (ms)', color: '#ef4444' }
+            ]}
+            height={300}
+          />
+        </CardContent>
+      </Card>
     </div>
   );
 };
