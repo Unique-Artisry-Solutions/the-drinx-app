@@ -23,6 +23,14 @@ export const rewardProgramFeature: FeatureItem = {
   ],
   databaseAnalysis: rewardSystemDatabaseAnalysis,
   dbRequirementsText: rewardSystemRequirements,
-  implementationProgress: 70, // Updated progress
-  dbCompleted: 85 // Updated database progress
+  implementationProgress: 80, // Updated progress with analytics
+  dbCompleted: 90, // Updated database progress with analytics
+  analyticsImplemented: true, // New flag for analytics implementation
+  analyticsMetrics: [
+    "Member count and retention",
+    "Points economy balance",
+    "Redemption rates",
+    "Program engagement",
+    "Time-series analysis"
+  ]
 };

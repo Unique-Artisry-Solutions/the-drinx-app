@@ -1,23 +1,20 @@
 
 import { useState, useEffect } from 'react';
+import { rewardsApi } from '@/lib/rewards/api';
+import { supabase } from '@/integrations/supabase/client';
 
-export interface LoyaltyProgramMetrics {
+interface LoyaltyProgramMetrics {
   memberCount: number;
   activeMembers: number;
   redemptionRate: number;
   averagePoints: number;
   memberRetentionRate: number;
-  data: Array<{
-    name: string;
-    signups: number;
-    redemptions: number;
-    activeMembers: number;
-  }>;
+  data: any[];
   isLoading: boolean;
   error: string | null;
 }
 
-export function useLoyaltyProgramMetrics(establishmentId: string): LoyaltyProgramMetrics {
+export function useLoyaltyProgramMetrics(establishmentId?: string): LoyaltyProgramMetrics {
   const [metrics, setMetrics] = useState<LoyaltyProgramMetrics>({
     memberCount: 0,
     activeMembers: 0,
@@ -30,54 +27,129 @@ export function useLoyaltyProgramMetrics(establishmentId: string): LoyaltyProgra
   });
 
   useEffect(() => {
-    // In a real implementation, this would fetch data from the API
-    // Mock data for now
-    const mockFetch = async () => {
+    async function fetchLoyaltyMetrics() {
       try {
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Get user reward profiles for the establishment
+        let query = supabase
+          .from('user_rewards')
+          .select('*', { count: 'exact' });
         
-        // Mock data with consistent pattern based on establishmentId
-        const seed = establishmentId.charCodeAt(0) + establishmentId.charCodeAt(establishmentId.length - 1);
-        const memberCount = 100 + (seed % 900);
-        const activeMembers = Math.floor(memberCount * (0.6 + (seed % 30) / 100));
-        const redemptionRate = 10 + (seed % 40);
-        const averagePoints = 250 + (seed % 750);
-        const memberRetentionRate = 60 + (seed % 30);
+        if (establishmentId) {
+          query = query.eq('establishment_id', establishmentId);
+        }
         
-        // Generate consistent time-series data
-        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-        const data = months.map((month, i) => {
-          const baseFactor = ((seed + i) % 10) / 10;
-          return {
-            name: month,
-            signups: Math.floor(20 + (baseFactor * 50)),
-            redemptions: Math.floor(10 + (baseFactor * 30)),
-            activeMembers: Math.floor(activeMembers * (0.8 + (baseFactor * 0.4)))
-          };
-        });
+        const { data: userRewards, count, error } = await query;
+
+        if (error) throw error;
+
+        // Get redemption data
+        const { data: redemptions, error: redemptionError } = await supabase
+          .from('reward_redemptions')
+          .select('*');
+
+        if (redemptionError) throw redemptionError;
+
+        // Get transaction data for time series
+        const { data: transactions, error: txError } = await supabase
+          .from('reward_transactions')
+          .select('*')
+          .order('created_at', { ascending: true });
+
+        if (txError) throw txError;
+
+        // Process the metrics
+        const totalMembers = count || 0;
         
+        // Consider active members as those with activity in the last 30 days
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        
+        const { data: activeCount, error: activeError } = await supabase
+          .from('reward_transactions')
+          .select('user_id', { count: 'exact', head: true })
+          .gt('created_at', thirtyDaysAgo.toISOString())
+          .eq('transaction_type', 'earn');
+
+        if (activeError) throw activeError;
+
+        // Calculate metrics
+        const activeMembers = activeCount || 0;
+        
+        // Avg points calculation
+        const avgPoints = userRewards && userRewards.length > 0
+          ? userRewards.reduce((sum, profile) => sum + (profile.points || 0), 0) / userRewards.length
+          : 0;
+        
+        // Redemption rate: percentage of users who have redeemed rewards
+        const uniqueRedeemers = new Set(redemptions?.map(r => r.user_id) || []);
+        const redemptionRate = totalMembers > 0
+          ? (uniqueRedeemers.size / totalMembers) * 100
+          : 0;
+        
+        // Retention calculation (simplified)
+        const retentionRate = totalMembers > 0
+          ? (activeMembers / totalMembers) * 100
+          : 0;
+        
+        // Prepare time series data for charts
+        const timeSeriesData = processTimeSeriesData(transactions || []);
+
         setMetrics({
-          memberCount,
+          memberCount: totalMembers,
           activeMembers,
-          redemptionRate,
-          averagePoints,
-          memberRetentionRate,
-          data,
+          redemptionRate: Math.round(redemptionRate),
+          averagePoints: Math.round(avgPoints),
+          memberRetentionRate: Math.round(retentionRate),
+          data: timeSeriesData,
           isLoading: false,
           error: null
         });
+        
       } catch (error) {
+        console.error('Error fetching loyalty program metrics:', error);
         setMetrics(prev => ({
           ...prev,
           isLoading: false,
           error: 'Failed to load loyalty program metrics'
         }));
       }
-    };
-    
-    mockFetch();
+    }
+
+    fetchLoyaltyMetrics();
   }, [establishmentId]);
-  
+
   return metrics;
+}
+
+// Helper to process transaction data into time series
+function processTimeSeriesData(transactions: any[]): any[] {
+  // Group by month for the chart
+  const monthlyData: Record<string, { signups: number, redemptions: number, activeMembers: number }> = {};
+
+  transactions.forEach(tx => {
+    const date = new Date(tx.created_at);
+    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    
+    if (!monthlyData[monthKey]) {
+      monthlyData[monthKey] = { signups: 0, redemptions: 0, activeMembers: 0 };
+    }
+
+    // Track different metrics based on transaction type
+    if (tx.transaction_type === 'earn' && tx.source === 'signup') {
+      monthlyData[monthKey].signups += 1;
+    }
+    if (tx.transaction_type === 'redeem') {
+      monthlyData[monthKey].redemptions += 1;
+    }
+    // Count unique users as active members (simplified)
+    monthlyData[monthKey].activeMembers += 1;
+  });
+
+  // Convert to array and sort by date
+  return Object.entries(monthlyData)
+    .map(([name, data]) => ({
+      name,
+      ...data
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
 }

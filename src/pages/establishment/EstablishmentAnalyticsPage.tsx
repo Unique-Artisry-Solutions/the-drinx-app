@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import Layout from '@/components/Layout';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -16,15 +15,17 @@ import { useDashboardData } from '@/hooks/useDashboardData';
 import { useEstablishmentAnalytics } from '@/hooks/useEstablishmentAnalytics';
 import QuickNavigation from '@/components/establishment/QuickNavigation';
 import { useUserEstablishment } from '@/hooks/establishment';
+import LoyaltyProgramPanel from '@/components/analytics/engagement/LoyaltyProgramPanel';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
 const EstablishmentAnalyticsPage = () => {
   const { user } = useAuth();
   const { id: urlEstablishmentId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   
-  // For navigation between tabs
   const [activeTab, setActiveTab] = useState('analytics');
   const [activeSection, setActiveSection] = useState<string | null>('analytics');
+  const [analyticsView, setAnalyticsView] = useState('overview');
   
   const [date, setDate] = useState<DateRange | undefined>({
     from: addDays(new Date(), -30),
@@ -38,10 +39,8 @@ const EstablishmentAnalyticsPage = () => {
     error: establishmentError
   } = useEstablishmentDetails(urlEstablishmentId);
 
-  // Get user's establishment for QuickNavigation if no establishmentId is provided
   const { establishmentId: userEstablishmentId } = useUserEstablishment();
 
-  // Use the appropriate establishment ID
   const effectiveEstablishmentId = useMemo(() => 
     establishmentId || userEstablishmentId || '', 
     [establishmentId, userEstablishmentId]
@@ -72,10 +71,8 @@ const EstablishmentAnalyticsPage = () => {
     }
   });
   
-  // Handle tab change - stay on the same page and just change the tab/content
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
-    // Special case for tabs that need to navigate to a different page
     if (tab === 'menu') {
       navigate('/establishment/mocktail-menu', { replace: true });
     } else if (tab === 'promotions') {
@@ -85,12 +82,9 @@ const EstablishmentAnalyticsPage = () => {
     }
   };
 
-  // Handle quick link click - stay on the same page and just change the section
   const handleQuickLinkClick = (section: string) => {
-    if (section === activeSection) return; // Don't do anything if clicking the already active section
-    
+    if (section === activeSection) return;
     setActiveSection(section);
-    // Special case for sections that need to navigate to a different page
     if (section === 'settings') {
       navigate('/settings', { replace: true });
     } else if (section === 'allActions') {
@@ -140,14 +134,27 @@ const EstablishmentAnalyticsPage = () => {
             popularDrinks={popularDrinks}
           />
           
-          <AnalyticsTabContent 
-            visitorAnalytics={visitorAnalytics}
-            visitorTrends={visitorTrends}
-            retentionTrends={retentionTrends}
-            revenueReports={revenueReports}
-            popularDrinks={popularDrinks}
-            ratingData={ratingData}
-          />
+          <Tabs value={analyticsView} onValueChange={setAnalyticsView} className="mb-6">
+            <TabsList>
+              <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="loyalty">Loyalty Program</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="overview">
+              <AnalyticsTabContent 
+                visitorAnalytics={visitorAnalytics}
+                visitorTrends={visitorTrends}
+                retentionTrends={retentionTrends}
+                revenueReports={revenueReports}
+                popularDrinks={popularDrinks}
+                ratingData={ratingData}
+              />
+            </TabsContent>
+            
+            <TabsContent value="loyalty">
+              <LoyaltyProgramPanel establishmentId={effectiveEstablishmentId} />
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </Layout>

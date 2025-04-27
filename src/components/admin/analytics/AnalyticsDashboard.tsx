@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -9,7 +8,7 @@ import {
 } from 'recharts';
 import { 
   Activity, Users, BarChart as BarChartIcon, 
-  Clock, TrendingUp, Calendar 
+  Clock, TrendingUp, Calendar, Award 
 } from 'lucide-react';
 import { format, subDays, subMonths, startOfMonth, endOfMonth } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
@@ -22,6 +21,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { getAnalyticsData, getUserRetention } from '@/utils/analytics';
+import RewardsAnalyticsPanel from './RewardsAnalyticsPanel';
 
 interface StatsCard {
   title: string;
@@ -31,7 +31,6 @@ interface StatsCard {
   change?: number;
 }
 
-// Define types for our data
 interface AnalyticsDataItem {
   date?: string;
   year?: number;
@@ -59,7 +58,6 @@ interface EventDistributionItem {
   value: number;
 }
 
-// Type for chart tooltip props
 type ChartTooltipType = TooltipProps<number, string>;
 
 const AnalyticsDashboard: React.FC = () => {
@@ -73,7 +71,6 @@ const AnalyticsDashboard: React.FC = () => {
   const [monthlyData, setMonthlyData] = useState<AnalyticsDataItem[]>([]);
   const [retentionData, setRetentionData] = useState<RetentionDataItem[]>([]);
   
-  // Prepare date ranges based on selected timeframe
   const getDateRange = () => {
     const end = new Date();
     let start;
@@ -104,27 +101,23 @@ const AnalyticsDashboard: React.FC = () => {
       try {
         const { start, end } = getDateRange();
         
-        // Fetch daily data
         const daily = await getAnalyticsData('daily', start, end);
         if (daily) {
           setDailyData(daily);
         }
         
-        // Fetch weekly data
         const weeklyStart = subMonths(end, 3);
         const weekly = await getAnalyticsData('weekly', weeklyStart, end);
         if (weekly) {
           setWeeklyData(weekly);
         }
         
-        // Fetch monthly data
         const monthlyStart = subMonths(end, 12);
         const monthly = await getAnalyticsData('monthly', monthlyStart, end);
         if (monthly) {
           setMonthlyData(monthly);
         }
         
-        // Fetch retention data
         const retention = await getUserRetention(subMonths(end, 3), end);
         if (retention) {
           setRetentionData(retention);
@@ -157,14 +150,12 @@ const AnalyticsDashboard: React.FC = () => {
   const handleExportData = () => {
     track('analytics_export', { tab: activeTab });
     
-    // In a real-world implementation, this would generate and download a CSV
     toast({
       title: "Export Started",
       description: `Exporting ${activeTab} data as CSV...`,
     });
   };
   
-  // Format data for charts
   const formatEventData = (data: AnalyticsDataItem[]): AnalyticsDataItem[] => {
     const eventsByDate: Record<string, AnalyticsDataItem> = {};
     
@@ -189,7 +180,6 @@ const AnalyticsDashboard: React.FC = () => {
     });
   };
   
-  // Key metrics to display on overview
   const calculateStats = (): StatsCard[] => {
     if (!dailyData.length) return [];
     
@@ -245,7 +235,6 @@ const AnalyticsDashboard: React.FC = () => {
   const formattedWeeklyData = formatEventData(weeklyData);
   const formattedMonthlyData = formatEventData(monthlyData);
   
-  // Event distribution for pie chart
   const eventDistribution = dailyData.reduce<Record<string, number>>((acc, item) => {
     const eventType = item.event_type;
     if (eventType) {
@@ -257,10 +246,8 @@ const AnalyticsDashboard: React.FC = () => {
   
   const pieChartData: EventDistributionItem[] = Object.entries(eventDistribution).map(([name, value]) => ({ name, value }));
   
-  // Colors for pie chart
   const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff8042', '#0088FE', '#00C49F', '#FFBB28'];
 
-  // Custom tooltip component for charts
   const CustomTooltip: React.FC<ChartTooltipType> = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (
@@ -310,7 +297,6 @@ const AnalyticsDashboard: React.FC = () => {
         </div>
       </div>
       
-      {/* Key metrics cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat, index) => (
           <Card key={index}>
@@ -341,9 +327,10 @@ const AnalyticsDashboard: React.FC = () => {
           <TabsTrigger value="events">Events Breakdown</TabsTrigger>
           <TabsTrigger value="retention">Retention</TabsTrigger>
           <TabsTrigger value="trends">Trends</TabsTrigger>
+          <TabsTrigger value="rewards">Rewards</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="space-y-6">
+        <TabsContent value="overview">
           <Card>
             <CardHeader>
               <CardTitle>Activity Overview</CardTitle>
@@ -571,6 +558,10 @@ const AnalyticsDashboard: React.FC = () => {
               </ChartContainer>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="rewards">
+          <RewardsAnalyticsPanel />
         </TabsContent>
       </Tabs>
     </div>

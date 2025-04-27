@@ -4,10 +4,12 @@ import { useAuth } from '@/contexts/auth';
 import { rewardsApi } from '@/lib/rewards/api';
 import { UserRewardProfile } from '@/lib/rewards/types';
 import { useToast } from '@/hooks/use-toast';
+import { useAnalytics } from '@/hooks/useAnalytics';
 
 export function useRewards() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { track } = useAnalytics();
   const [isEnabled, setIsEnabled] = useState(false);
   const [rewardProfile, setRewardProfile] = useState<UserRewardProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -37,6 +39,9 @@ export function useRewards() {
   const addPoints = async (points: number, source: string, metadata = {}) => {
     if (!user?.id) return;
 
+    // Track analytics event
+    track('reward_points_add_attempt', { points, source });
+
     const result = await rewardsApi.addPoints(user.id, points, source, metadata);
     
     if (result.success) {
@@ -44,6 +49,9 @@ export function useRewards() {
         title: "Points Added",
         description: `${points} points have been added to your account`,
       });
+      
+      // Track successful points addition
+      track('reward_points_added', { points, source, success: true });
       
       // Refresh profile
       const profile = await rewardsApi.getUserRewardProfile(user.id);
@@ -54,11 +62,24 @@ export function useRewards() {
         description: result.error || "Failed to add points",
         variant: "destructive",
       });
+      
+      // Track failed points addition
+      track('reward_points_added', { points, source, success: false, error: result.error });
     }
   };
 
   const redeemReward = async (offeringId: string) => {
     if (!user?.id) return;
+
+    // Get reward details for analytics
+    const reward = rewardProfile?.availableRewards.find(r => r.id === offeringId);
+    
+    // Track analytics event
+    track('reward_redemption_attempt', { 
+      offering_id: offeringId,
+      points_required: reward?.points_required || 0,
+      reward_name: reward?.name || 'Unknown'
+    });
 
     const result = await rewardsApi.redeemReward(user.id, offeringId);
     
@@ -66,6 +87,14 @@ export function useRewards() {
       toast({
         title: "Reward Redeemed",
         description: "Your reward has been redeemed successfully",
+      });
+      
+      // Track successful redemption
+      track('reward_redemption_complete', { 
+        offering_id: offeringId,
+        points_required: reward?.points_required || 0,
+        reward_name: reward?.name || 'Unknown',
+        success: true
       });
       
       // Refresh profile
@@ -76,6 +105,15 @@ export function useRewards() {
         title: "Error",
         description: result.error || "Failed to redeem reward",
         variant: "destructive",
+      });
+      
+      // Track failed redemption
+      track('reward_redemption_complete', { 
+        offering_id: offeringId,
+        points_required: reward?.points_required || 0,
+        reward_name: reward?.name || 'Unknown',
+        success: false,
+        error: result.error
       });
     }
   };
