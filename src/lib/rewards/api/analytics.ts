@@ -3,22 +3,24 @@ import { supabase } from '@/lib/supabase';
 import type { RewardAnalytics, RewardMetric, RewardSystemAnalyticsRow } from '../types';
 
 export async function getRewardAnalytics(establishmentId?: string) {
+  // Change the query to avoid deep typing issues
   let query = supabase
     .from('reward_system_analytics')
-    .select<string, RewardSystemAnalyticsRow>('*');
+    .select('*');
 
   if (establishmentId) {
     query = query.eq('establishment_id', establishmentId);
   }
   
-  const { data: metrics, error } = await query.order('date', { ascending: false });
+  const { data, error } = await query.order('date', { ascending: false });
 
   if (error) {
     console.error('Error fetching reward analytics:', error);
     return null;
   }
 
-  return processAnalyticsData(metrics);
+  // Explicitly cast the data to the correct type
+  return processAnalyticsData(data as RewardSystemAnalyticsRow[]);
 }
 
 export async function getDailyMetrics(date: Date, establishmentId?: string) {

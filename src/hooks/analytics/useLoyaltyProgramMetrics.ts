@@ -14,6 +14,7 @@ interface LoyaltyProgramMetrics {
   error: string | null;
 }
 
+// Define more specific interfaces for each query
 interface UserReward {
   points: number;
   establishment_id?: string;

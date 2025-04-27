@@ -3,6 +3,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { rewardsApi } from '@/lib/rewards/api';
 import { supabase } from '@/lib/supabase';
 import { createMockQueryBuilder } from '../utils/supabaseTestUtils';
+import { RewardTransactionRow } from '@/lib/rewards/types';
 
 vi.mock('@/lib/supabase', () => ({
   supabase: {
@@ -17,10 +18,41 @@ describe('Reward Analytics', () => {
 
   describe('Data Processing', () => {
     it('should calculate metrics correctly', () => {
-      const mockTransactions = [
-        { transaction_type: 'earn', points: 100 },
-        { transaction_type: 'earn', points: 50 },
-        { transaction_type: 'redeem', points: 75 }
+      // Create properly typed mock transactions
+      const mockTransactions: RewardTransactionRow[] = [
+        { 
+          id: '1', 
+          user_id: 'user1', 
+          transaction_type: 'earn', 
+          points: 100,
+          source: 'purchase',
+          metadata: {},
+          version: 1,
+          created_at: '2025-01-01T12:00:00Z',
+          description: 'Test transaction'
+        },
+        { 
+          id: '2', 
+          user_id: 'user1', 
+          transaction_type: 'earn', 
+          points: 50,
+          source: 'referral',
+          metadata: {},
+          version: 1,
+          created_at: '2025-01-01T13:00:00Z',
+          description: 'Test transaction'
+        },
+        { 
+          id: '3', 
+          user_id: 'user1', 
+          transaction_type: 'redeem', 
+          points: 75,
+          source: 'reward',
+          metadata: {},
+          version: 1,
+          created_at: '2025-01-01T14:00:00Z',
+          description: 'Test transaction'
+        }
       ];
 
       const analytics = rewardsApi.processRewardAnalytics(mockTransactions);
@@ -42,21 +74,40 @@ describe('Reward Analytics', () => {
 
   describe('Time Series Data', () => {
     it('should group transactions by date correctly', () => {
-      const mockTransactions = [
+      // Create properly typed mock transactions
+      const mockTransactions: RewardTransactionRow[] = [
         { 
+          id: '1', 
+          user_id: 'user1', 
           transaction_type: 'earn', 
           points: 100,
-          created_at: '2025-01-01T12:00:00Z'
+          source: 'purchase',
+          metadata: {},
+          version: 1,
+          created_at: '2025-01-01T12:00:00Z',
+          description: 'Purchase points'
         },
         {
+          id: '2',
+          user_id: 'user1',
           transaction_type: 'earn',
           points: 50,
-          created_at: '2025-01-01T14:00:00Z'
+          source: 'referral',
+          metadata: {},
+          version: 1,
+          created_at: '2025-01-01T14:00:00Z',
+          description: 'Referral bonus'
         },
         {
+          id: '3',
+          user_id: 'user1',
           transaction_type: 'redeem',
           points: 75,
-          created_at: '2025-01-02T12:00:00Z'
+          source: 'reward',
+          metadata: {},
+          version: 1,
+          created_at: '2025-01-02T12:00:00Z',
+          description: 'Redemption'
         }
       ];
 
