@@ -45,7 +45,7 @@ export type RawEventData = {
 export type NotificationsResponse = {
   data: {
     id: string;
-    metadata: NotificationMetadata;
+    metadata: any; // Use 'any' here to avoid type incompatibility with Supabase's Json type
   }[] | null;
   error: any;
 };

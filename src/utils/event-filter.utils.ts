@@ -37,15 +37,17 @@ export const fetchPublishedEvents = async (): Promise<RawEventResponse> => {
 };
 
 export const fetchLocationBasedNotifications = async (): Promise<NotificationsResponse> => {
+  // Cast the response to NotificationsResponse to match our expected types
   return await supabase
     .from('notifications')
     .select('id, metadata')
-    .eq('metadata->location_based', true);
+    .eq('metadata->location_based', true) as NotificationsResponse;
 };
 
 // Type guard function to validate notification metadata
-function isValidLocationMetadata(metadata: NotificationMetadata): metadata is Required<NotificationMetadata> {
+function isValidLocationMetadata(metadata: any): metadata is NotificationMetadata & { location_based: true; event_id: string; coordinates: LocationCoordinates } {
   return (
+    metadata &&
     metadata.location_based === true &&
     typeof metadata.event_id === 'string' &&
     metadata.coordinates !== undefined &&
