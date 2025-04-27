@@ -1,5 +1,4 @@
-
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 import { 
   RewardOperationResponse, 
   UserRewardProfile, 
@@ -8,56 +7,73 @@ import {
   RewardTransactionRow
 } from './types';
 import { getRewardAnalytics } from './api/analytics';
+import { RewardsCache } from './system/RewardsCache';
 
 export const rewardsApi = {
   async getUserRewardProfile(userId: string): Promise<UserRewardProfile | null> {
-    const { data: userReward, error: userRewardError } = await supabase
-      .from('user_rewards')
-      .select(`
-        points,
-        lifetime_points,
-        current_tier_id,
-        reward_tiers (*)
-      `)
-      .eq('user_id', userId)
-      .maybeSingle();
+    const cacheStatus = await RewardsCache.getCacheStatus(`reward_profile_${userId}`);
+    
+    if (cacheStatus && !cacheStatus.is_invalidated) {
+      console.log('Cache hit for reward profile:', userId);
+      return JSON.parse(cacheStatus.metadata?.cached_data || 'null');
+    }
 
-    if (userRewardError) {
-      console.error('Error fetching user reward profile:', userRewardError);
+    try {
+      const { data: userReward, error: userRewardError } = await supabase
+        .from('user_rewards')
+        .select(`
+          points,
+          lifetime_points,
+          current_tier_id,
+          reward_tiers (*)
+        `)
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (userRewardError) {
+        console.error('Error fetching user reward profile:', userRewardError);
+        return null;
+      }
+
+      const { data: availableRewards, error: rewardsError } = await supabase
+        .from('reward_offerings')
+        .select('*')
+        .eq('is_active', true);
+
+      const { data: transactions, error: transactionsError } = await supabase
+        .from('reward_transactions')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      const { data: redemptions, error: redemptionsError } = await supabase
+        .from('reward_redemptions')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (rewardsError || transactionsError || redemptionsError) {
+        console.error('Error fetching reward data:', { rewardsError, transactionsError, redemptionsError });
+      }
+
+      const profile = {
+        points: userReward?.points || 0,
+        lifetimePoints: userReward?.lifetime_points || 0,
+        currentTier: userReward?.reward_tiers ? transformRewardTier(userReward.reward_tiers) : null,
+        availableRewards: availableRewards || [],
+        transactionHistory: (transactions || []).map(transformTransaction),
+        redemptionHistory: redemptions || [],
+      };
+
+      await RewardsCache.updateCache(`reward_profile_${userId}`, 300);
+
+      return profile;
+    } catch (error) {
+      console.error('Unexpected error in getUserRewardProfile:', error);
       return null;
     }
-
-    const { data: availableRewards, error: rewardsError } = await supabase
-      .from('reward_offerings')
-      .select('*')
-      .eq('is_active', true);
-
-    const { data: transactions, error: transactionsError } = await supabase
-      .from('reward_transactions')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-      .limit(10);
-
-    const { data: redemptions, error: redemptionsError } = await supabase
-      .from('reward_redemptions')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-      .limit(10);
-
-    if (rewardsError || transactionsError || redemptionsError) {
-      console.error('Error fetching reward data:', { rewardsError, transactionsError, redemptionsError });
-    }
-
-    return {
-      points: userReward?.points || 0,
-      lifetimePoints: userReward?.lifetime_points || 0,
-      currentTier: userReward?.reward_tiers ? transformRewardTier(userReward.reward_tiers) : null,
-      availableRewards: availableRewards || [],
-      transactionHistory: (transactions || []).map(transformTransaction),
-      redemptionHistory: redemptions || [],
-    };
   },
 
   async addPoints(userId: string, points: number, source: string, metadata = {}): Promise<RewardOperationResponse> {
@@ -98,6 +114,43 @@ export const rewardsApi = {
     } catch (error) {
       console.error('Error in addPoints:', error);
       return { success: false, error: 'An unexpected error occurred' };
+    }
+  },
+
+  async batchUpdatePoints(operations: Array<{ userId: string; points: number; source: string; metadata?: any }>): Promise<Array<RewardOperationResponse>> {
+    try {
+      const { data, error } = await supabase.rpc('batch_update_user_points', {
+        p_operations: JSON.stringify(operations)
+      });
+
+      if (error) {
+        console.error('Error in batch points update:', error);
+        return operations.map(() => ({
+          success: false,
+          error: 'Batch operation failed'
+        }));
+      }
+
+      // Log batch operation results
+      console.log('Batch points update completed:', {
+        totalOperations: operations.length,
+        successfulOperations: data.filter((r: any) => r.success).length,
+        failedOperations: data.filter((r: any) => !r.success).length
+      });
+
+      return data.map((result: any) => ({
+        success: result.success,
+        error: result.error,
+        userId: result.user_id,
+        pointsChanged: result.points_change,
+        newBalance: result.new_balance
+      }));
+    } catch (error) {
+      console.error('Unexpected error in batchUpdatePoints:', error);
+      return operations.map(() => ({
+        success: false,
+        error: 'System error occurred'
+      }));
     }
   },
 
@@ -172,7 +225,6 @@ export const rewardsApi = {
     return data.status;
   },
 
-  // New method to track reward-related analytics events
   async trackRewardEvent(eventType: string, userId: string, eventData: Record<string, any> = {}): Promise<boolean> {
     try {
       await supabase.rpc('track_analytics_event', {
@@ -190,10 +242,8 @@ export const rewardsApi = {
     }
   },
 
-  // New method to get reward analytics
   getRewardAnalytics,
 
-  // Helper method to process raw transaction data into analytics metrics
   processRewardAnalytics(transactions: RewardTransactionRow[]): any {
     if (!transactions || transactions.length === 0) {
       return {
@@ -205,28 +255,23 @@ export const rewardsApi = {
       };
     }
 
-    // Process transactions to extract metrics
     const earningTransactions = transactions.filter(tx => tx.transaction_type === 'earn');
     const redemptionTransactions = transactions.filter(tx => tx.transaction_type === 'redeem');
     
     const totalPointsEarned = earningTransactions.reduce((sum, tx) => sum + (tx.points || 0), 0);
     const totalPointsRedeemed = redemptionTransactions.reduce((sum, tx) => sum + (tx.points || 0), 0);
     
-    // Additional metrics
     return {
       totalPointsEarned,
       totalPointsRedeemed,
       pointsEconomyBalance: totalPointsEarned - totalPointsRedeemed,
       transactionCount: transactions.length,
       redemptionRate: earningTransactions.length ? (redemptionTransactions.length / earningTransactions.length) * 100 : 0,
-      // Group by source to identify popular earning methods
       sourcesBreakdown: this.groupTransactionsBySource(earningTransactions),
-      // Time series data for charts
       timeSeriesData: this.createTimeSeriesData(transactions)
     };
   },
 
-  // Helper to group transactions by source
   groupTransactionsBySource(transactions: RewardTransactionRow[]): Record<string, number> {
     return transactions.reduce((acc, tx) => {
       const source = tx.source || 'unknown';
@@ -236,9 +281,7 @@ export const rewardsApi = {
     }, {} as Record<string, number>);
   },
 
-  // Helper to create time series data for charts
   createTimeSeriesData(transactions: RewardTransactionRow[]): any[] {
-    // Group by date and transaction type
     const groupedByDate: Record<string, {earned: number, redeemed: number}> = {};
     
     transactions.forEach(tx => {
@@ -254,7 +297,6 @@ export const rewardsApi = {
       }
     });
     
-    // Convert to array format for charts
     return Object.entries(groupedByDate)
       .map(([date, values]) => ({
         date,
@@ -263,5 +305,32 @@ export const rewardsApi = {
         netPoints: values.earned - values.redeemed
       }))
       .sort((a, b) => a.date.localeCompare(b.date));
+  },
+
+  async retryFailedOperation(operationId: string): Promise<boolean> {
+    try {
+      const { data: operation } = await supabase
+        .from('reward_transactions')
+        .select('*')
+        .eq('id', operationId)
+        .single();
+
+      if (!operation) {
+        console.error('Operation not found:', operationId);
+        return false;
+      }
+
+      const result = await this.addPoints(
+        operation.user_id,
+        operation.points,
+        operation.source,
+        operation.metadata
+      );
+
+      return result.success;
+    } catch (error) {
+      console.error('Error retrying operation:', error);
+      return false;
+    }
   }
 };

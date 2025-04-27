@@ -3004,6 +3004,16 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      batch_update_user_points: {
+        Args: { p_operations: Json }
+        Returns: {
+          user_id: string
+          success: boolean
+          points_change: number
+          new_balance: number
+          error: string
+        }[]
+      }
       can_join_bar_crawl: {
         Args: { user_id: string }
         Returns: boolean
@@ -3033,6 +3043,10 @@ export type Database = {
       }
       refresh_reward_analytics_materialized: {
         Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      refresh_reward_profile_cache: {
+        Args: { p_user_id: string; p_establishment_id?: string }
         Returns: undefined
       }
       switch_active_role: {
