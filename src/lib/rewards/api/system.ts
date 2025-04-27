@@ -1,6 +1,7 @@
 
 import { supabase } from '@/lib/supabase';
 import { RewardOperationResponse } from '../types';
+import { addPoints } from './operations';
 
 export async function isRewardsEnabled(): Promise<boolean> {
   const { data, error } = await supabase
@@ -43,4 +44,3 @@ export async function retryFailedOperation(operationId: string): Promise<boolean
     return false;
   }
 }
-

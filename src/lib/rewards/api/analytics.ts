@@ -2,6 +2,33 @@
 import { supabase } from '@/lib/supabase';
 import { RewardTransactionRow } from '../types';
 
+export async function getRewardAnalytics(establishmentId?: string) {
+  try {
+    // Fetch transaction data from the database
+    const query = supabase
+      .from('reward_transactions')
+      .select('*');
+      
+    // Filter by establishment if provided
+    if (establishmentId) {
+      query.eq('establishment_id', establishmentId);
+    }
+    
+    const { data, error } = await query;
+    
+    if (error) {
+      console.error('Error fetching reward analytics data:', error);
+      return null;
+    }
+    
+    // Process the analytics data
+    return processRewardAnalytics(data as RewardTransactionRow[]);
+  } catch (error) {
+    console.error('Unexpected error in getRewardAnalytics:', error);
+    return null;
+  }
+}
+
 export function processRewardAnalytics(transactions: RewardTransactionRow[]): any {
   if (!transactions || transactions.length === 0) {
     return {
@@ -39,7 +66,7 @@ function groupTransactionsBySource(transactions: RewardTransactionRow[]): Record
   }, {} as Record<string, number>);
 }
 
-function createTimeSeriesData(transactions: RewardTransactionRow[]): any[] {
+export function createTimeSeriesData(transactions: RewardTransactionRow[]): any[] {
   const groupedByDate: Record<string, {earned: number, redeemed: number}> = {};
   
   transactions.forEach(tx => {
@@ -64,4 +91,3 @@ function createTimeSeriesData(transactions: RewardTransactionRow[]): any[] {
     }))
     .sort((a, b) => a.date.localeCompare(b.date));
 }
-

@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { RewardOperationResponse, transformTransaction } from '../types';
 import { RewardsCache } from '../system/RewardsCache';
 import { useAnalytics } from '@/hooks/useAnalytics';
+import { trackRewardEvent } from './tracking';
 
 export async function addPoints(
   userId: string, 
