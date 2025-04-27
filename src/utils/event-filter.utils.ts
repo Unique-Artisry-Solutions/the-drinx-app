@@ -1,11 +1,10 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { 
   NotificationRecord, 
   RawEventResponse, 
   LocationCoordinates,
   RawEventData,
-  NotificationMetadata 
+  RawNotificationData 
 } from '@/types/event-filter.types';
 import { EventType } from '@/types/EventTypes';
 
@@ -43,20 +42,21 @@ export const fetchLocationBasedNotifications = async () => {
     .eq('metadata->location_based', true);
 };
 
-export const processLocationData = (responseData: any[]): NotificationRecord[] => {
+export const processLocationData = (responseData: RawNotificationData[]): NotificationRecord[] => {
   const locationData: NotificationRecord[] = [];
   
-  if (Array.isArray(responseData)) {
-    responseData.forEach(item => {
-      if (item && typeof item === 'object') {
-        const metadata = item.metadata as NotificationMetadata;
-        locationData.push({
-          metadata,
-          event_id: item.event_id
-        });
-      }
-    });
-  }
+  responseData.forEach(item => {
+    if (item && 'metadata' in item) {
+      locationData.push({
+        metadata: {
+          location_based: item.metadata.location_based,
+          coordinates: item.metadata.coordinates,
+          event_id: item.metadata.event_id
+        },
+        event_id: item.event_id
+      });
+    }
+  });
   
   return locationData;
 };
@@ -65,11 +65,11 @@ export const createEventCoordinatesMap = (locationData: NotificationRecord[]): M
   const eventCoordinates = new Map<string, LocationCoordinates>();
   
   locationData.forEach(item => {
-    if (item?.metadata?.coordinates) {
-      const eventId = item.metadata.event_id || item.event_id;
-      if (eventId && item.metadata.coordinates) {
-        eventCoordinates.set(eventId, item.metadata.coordinates);
-      }
+    const coordinates = item?.metadata?.coordinates;
+    const eventId = item?.metadata?.event_id || item?.event_id;
+    
+    if (coordinates && eventId) {
+      eventCoordinates.set(eventId, coordinates);
     }
   });
   
