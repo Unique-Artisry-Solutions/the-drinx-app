@@ -25,13 +25,14 @@ export function AchievementNotification({ title, description, type }: Achievemen
 
   React.useEffect(() => {
     toast({
-      title: (
+      // Fix: Instead of passing a JSX element directly to title, we'll use the description field
+      title,
+      description: (
         <div className="flex items-center gap-2">
           {getIcon()}
-          <span>{title}</span>
+          <span>{description}</span>
         </div>
       ),
-      description: description,
       duration: 5000,
     });
   }, []);

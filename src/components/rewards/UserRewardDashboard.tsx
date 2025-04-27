@@ -10,7 +10,10 @@ import { RewardHistory } from './RewardHistory';
 import { useRewards } from '@/hooks/rewards/useRewards';
 
 export function UserRewardDashboard() {
-  const { rewardProfile, isLoading, currentTier } = useRewards();
+  const { rewardProfile, isLoading } = useRewards();
+  // Extract the current tier from rewardProfile instead of directly from useRewards
+  const currentTier = rewardProfile?.currentTier?.id ? 
+    parseInt(rewardProfile.currentTier.name.split(' ')[1]) || 1 : 1;
 
   if (isLoading) {
     return (
