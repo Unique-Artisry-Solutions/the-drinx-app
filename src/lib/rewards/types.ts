@@ -1,4 +1,3 @@
-
 export interface RewardMetric {
   id: string;
   metric_date: string;
@@ -31,6 +30,14 @@ export interface RewardAnalytics {
     netPoints: number;
   }>;
   sourcesBreakdown: Record<string, number>;
+}
+
+export interface RewardSystemAnalyticsRow {
+  date: string;
+  transaction_type: 'earn' | 'redeem';
+  transaction_count: number;
+  points_total: number;
+  unique_users: number;
 }
 
 // Add the missing types:
