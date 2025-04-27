@@ -1,4 +1,3 @@
-
 import { EventType } from './EventTypes';
 
 // Simple location coordinates type
@@ -18,7 +17,6 @@ export type RawEventResponse = {
   error: any;
 };
 
-// New simplified type for notification responses
 export type NotificationMetadata = {
   location_based?: boolean;
   coordinates?: LocationCoordinates;
@@ -26,8 +24,8 @@ export type NotificationMetadata = {
 };
 
 export type RawNotification = {
+  id: string;
   metadata: NotificationMetadata;
-  event_id: string;
 };
 
 export type RawNotificationResponse = {

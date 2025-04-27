@@ -39,16 +39,16 @@ export const fetchPublishedEvents = async (): Promise<RawEventResponse> => {
 export const fetchLocationBasedNotifications = async (): Promise<RawNotificationResponse> => {
   return await supabase
     .from('notifications')
-    .select('metadata, event_id')
+    .select('id, metadata')
     .eq('metadata->location_based', true)
     .throwOnError();
 };
 
-export const processLocationData = (responseData: RawNotification[]): SimpleNotification[] => {
-  return responseData.map(item => ({
-    locationBased: Boolean(item.metadata?.location_based),
-    coordinates: item.metadata?.coordinates || null,
-    eventId: item.metadata?.event_id || item.event_id || ''
+export const processLocationData = (notifications: RawNotification[]): SimpleNotification[] => {
+  return notifications.map(notification => ({
+    locationBased: Boolean(notification.metadata?.location_based),
+    coordinates: notification.metadata?.coordinates || null,
+    eventId: notification.metadata?.event_id || ''
   }));
 };
 
