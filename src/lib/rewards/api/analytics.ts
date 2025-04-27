@@ -1,18 +1,73 @@
 import { supabase } from '@/lib/supabase';
 import type { RewardAnalytics, RewardMetric } from '../types';
+import { RewardsCache } from '../system/RewardsCache';
+import { RewardsSystemMonitor } from '../system/RewardsSystemMonitor';
 
 export async function getRewardAnalytics(establishmentId?: string) {
-  const { data, error } = await supabase
-    .from('reward_analytics_materialized')
-    .select()
-    .order('date', { ascending: false });
+  const startTime = performance.now();
 
-  if (error) {
+  try {
+    // Check cache first
+    const cacheKey = `reward_analytics_${establishmentId || 'all'}`;
+    const cacheStatus = await RewardsCache.getCacheStatus(cacheKey);
+
+    if (cacheStatus && !cacheStatus.is_invalidated && cacheStatus.last_updated) {
+      const lastUpdateTime = new Date(cacheStatus.last_updated).getTime();
+      const ttl = (cacheStatus.ttl_seconds || 300) * 1000;
+      
+      if (Date.now() - lastUpdateTime < ttl) {
+        // Cache is still valid, use materialized view
+        const { data, error } = await supabase
+          .from('reward_analytics_materialized')
+          .select()
+          .order('date', { ascending: false });
+
+        if (error) {
+          throw error;
+        }
+
+        return processAnalyticsData(data);
+      }
+    }
+
+    // Cache invalid or expired, refresh materialized view
+    await supabase.rpc('refresh_reward_analytics_materialized');
+    
+    // Update cache status
+    await RewardsCache.updateCache(cacheKey);
+
+    // Fetch fresh data
+    const { data, error } = await supabase
+      .from('reward_analytics_materialized')
+      .select()
+      .order('date', { ascending: false });
+
+    if (error) {
+      throw error;
+    }
+
+    // Record performance metric
+    const endTime = performance.now();
+    await RewardsSystemMonitor.recordPerformanceMetric({
+      metricType: 'analytics',
+      metricName: 'fetch_duration',
+      metricValue: endTime - startTime
+    });
+
+    return processAnalyticsData(data);
+  } catch (error) {
     console.error('Error fetching reward analytics:', error);
+    
+    // Record error in system health
+    await RewardsSystemMonitor.recordHealthMetric({
+      status: 'error',
+      transactionCount: 0,
+      errorCount: 1,
+      details: { error: error instanceof Error ? error.message : 'Unknown error' }
+    });
+    
     return null;
   }
-
-  return processAnalyticsData(data);
 }
 
 export async function getDailyMetrics(date: Date, establishmentId?: string) {

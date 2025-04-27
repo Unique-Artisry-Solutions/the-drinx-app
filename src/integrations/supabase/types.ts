@@ -1838,6 +1838,36 @@ export type Database = {
           },
         ]
       }
+      reward_cache_control: {
+        Row: {
+          cache_key: string
+          expires_at: string | null
+          id: string
+          is_invalidated: boolean
+          last_updated: string
+          metadata: Json | null
+          ttl_seconds: number
+        }
+        Insert: {
+          cache_key: string
+          expires_at?: string | null
+          id?: string
+          is_invalidated?: boolean
+          last_updated?: string
+          metadata?: Json | null
+          ttl_seconds?: number
+        }
+        Update: {
+          cache_key?: string
+          expires_at?: string | null
+          id?: string
+          is_invalidated?: boolean
+          last_updated?: string
+          metadata?: Json | null
+          ttl_seconds?: number
+        }
+        Relationships: []
+      }
       reward_offerings: {
         Row: {
           created_at: string
@@ -1887,6 +1917,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      reward_performance_metrics: {
+        Row: {
+          context: Json | null
+          id: string
+          metric_name: string
+          metric_type: string
+          metric_value: number
+          timestamp: string
+        }
+        Insert: {
+          context?: Json | null
+          id?: string
+          metric_name: string
+          metric_type: string
+          metric_value: number
+          timestamp?: string
+        }
+        Update: {
+          context?: Json | null
+          id?: string
+          metric_name?: string
+          metric_type?: string
+          metric_value?: number
+          timestamp?: string
+        }
+        Relationships: []
       }
       reward_redemptions: {
         Row: {
@@ -1994,6 +2051,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      reward_system_health: {
+        Row: {
+          details: Json | null
+          error_count: number
+          id: string
+          response_time_ms: number | null
+          status: string
+          timestamp: string
+          transaction_count: number
+        }
+        Insert: {
+          details?: Json | null
+          error_count?: number
+          id?: string
+          response_time_ms?: number | null
+          status: string
+          timestamp?: string
+          transaction_count?: number
+        }
+        Update: {
+          details?: Json | null
+          error_count?: number
+          id?: string
+          response_time_ms?: number | null
+          status?: string
+          timestamp?: string
+          transaction_count?: number
+        }
+        Relationships: []
       }
       reward_tiers: {
         Row: {
@@ -2132,6 +2219,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      reward_user_activity_patterns: {
+        Row: {
+          activity_type: string
+          first_occurred: string
+          frequency: number | null
+          id: string
+          last_occurred: string
+          metadata: Json | null
+          user_id: string
+        }
+        Insert: {
+          activity_type: string
+          first_occurred?: string
+          frequency?: number | null
+          id?: string
+          last_occurred?: string
+          metadata?: Json | null
+          user_id: string
+        }
+        Update: {
+          activity_type?: string
+          first_occurred?: string
+          frequency?: number | null
+          id?: string
+          last_occurred?: string
+          metadata?: Json | null
+          user_id?: string
+        }
+        Relationships: []
       }
       suggestion_feedback: {
         Row: {
@@ -2886,6 +3003,15 @@ export type Database = {
       switch_active_role: {
         Args: { role_to_activate: Database["public"]["Enums"]["user_role"] }
         Returns: undefined
+      }
+      test_reward_system_performance: {
+        Args: { test_size?: number }
+        Returns: {
+          test_name: string
+          duration_ms: number
+          rows_processed: number
+          status: string
+        }[]
       }
       track_analytics_event: {
         Args: {
