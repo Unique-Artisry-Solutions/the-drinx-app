@@ -16,6 +16,12 @@ interface TestReportSectionProps {
       p95ResponseTime: number;
       maxResponseTime: number;
     };
+    relationships: {
+      validConstraints: number;
+      invalidConstraints: number;
+      cacheHitRate: number;
+      validationDetails: string[];
+    };
   };
 }
 
@@ -28,7 +34,6 @@ const TestReportSection: React.FC<TestReportSectionProps> = ({ results }) => {
       description: "Your test report is being generated and will download shortly"
     });
     
-    // Simulated report generation - replace with actual implementation
     const report = JSON.stringify(results, null, 2);
     const blob = new Blob([report], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -66,6 +71,24 @@ const TestReportSection: React.FC<TestReportSectionProps> = ({ results }) => {
             <li>95th Percentile: {results.performance.p95ResponseTime}ms</li>
             <li>Maximum Response Time: {results.performance.maxResponseTime}ms</li>
           </ul>
+
+          <h3 className="text-lg font-semibold mt-4 mb-2">Relationship Validation</h3>
+          <ul className="list-disc pl-5 space-y-1">
+            <li>Valid Constraints: {results.relationships.validConstraints}</li>
+            <li>Invalid Constraints: {results.relationships.invalidConstraints}</li>
+            <li>Cache Hit Rate: {results.relationships.cacheHitRate}%</li>
+          </ul>
+
+          {results.relationships.validationDetails.length > 0 && (
+            <div className="mt-4">
+              <h4 className="text-md font-semibold mb-2">Validation Details:</h4>
+              <ul className="list-disc pl-5 space-y-1">
+                {results.relationships.validationDetails.map((detail, index) => (
+                  <li key={index} className="text-sm">{detail}</li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

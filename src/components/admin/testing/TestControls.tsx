@@ -14,6 +14,7 @@ const TestControls = () => {
     { id: 'ui', label: 'UI Tests' },
     { id: 'integration', label: 'Integration Tests' },
     { id: 'performance', label: 'Performance Tests' },
+    { id: 'relationships', label: 'Database Relationships' }
   ];
 
   const handleRunTests = () => {

@@ -1910,6 +1910,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_reward_offerings_establishment"
+            columns: ["establishment_id"]
+            isOneToOne: false
+            referencedRelation: "establishments"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "reward_offerings_establishment_id_fkey"
             columns: ["establishment_id"]
             isOneToOne: false
@@ -1983,6 +1990,20 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_redemptions_offering"
+            columns: ["offering_id"]
+            isOneToOne: false
+            referencedRelation: "reward_offerings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_redemptions_transaction"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "reward_transactions"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "reward_redemptions_offering_id_fkey"
             columns: ["offering_id"]
@@ -2123,6 +2144,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_reward_tiers_establishment"
+            columns: ["establishment_id"]
+            isOneToOne: false
+            referencedRelation: "establishments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "reward_tiers_establishment_id_fkey"
             columns: ["establishment_id"]
@@ -2735,6 +2763,13 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "fk_user_rewards_current_tier"
+            columns: ["current_tier_id"]
+            isOneToOne: false
+            referencedRelation: "reward_tiers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_user_rewards_tier"
             columns: ["current_tier_id"]
             isOneToOne: false
             referencedRelation: "reward_tiers"
