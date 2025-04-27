@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/supabase';
 import type { RewardAnalytics, RewardMetric } from '../types';
 import { RewardsCache } from '../system/RewardsCache';
@@ -59,10 +58,10 @@ export async function getRewardAnalytics(establishmentId?: string) {
   } catch (error) {
     console.error('Error fetching reward analytics:', error);
     
-    // Record error in system health
+    // Record error in system health with correct property names
     await RewardsSystemMonitor.recordHealthMetric({
       status: 'error',
-      transaction_count: 0,  // Changed from transactionCount
+      transaction_count: 0,
       error_count: 1,
       response_time_ms: 0,
       details: { error: error instanceof Error ? error.message : 'Unknown error' }

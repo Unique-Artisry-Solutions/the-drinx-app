@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/supabase';
 
 export interface SystemHealthMetric {
@@ -73,7 +72,6 @@ export class RewardsSystemMonitor {
     return data;
   }
 
-  // Improved runPerformanceTests method with better error handling and data transformation
   static async runPerformanceTests(): Promise<PerformanceTestResult | null> {
     try {
       const { data, error } = await supabase
@@ -84,13 +82,11 @@ export class RewardsSystemMonitor {
         return null;
       }
 
-      // Transform from array format to object format
       if (!data || !Array.isArray(data)) {
         console.error('Invalid performance test data format:', data);
         return null;
       }
 
-      // Transform the data into a more usable format
       const transformedData: PerformanceTestResult = {};
       
       data.forEach(test => {
@@ -99,10 +95,8 @@ export class RewardsSystemMonitor {
           return;
         }
 
-        // Create a human-readable test name by replacing underscores with spaces
         const displayName = test.test_name.replace(/_/g, ' ');
         
-        // Determine status based on duration
         let status: 'fast' | 'average' | 'slow' | 'error' = 'average';
         if (test.status === 'error') {
           status = 'error';
