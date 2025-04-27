@@ -10,6 +10,7 @@ import TestResultsVisualization from '@/components/admin/testing/TestResultsVisu
 import TestControls from '@/components/admin/testing/TestControls';
 import TestReportSection from '@/components/admin/testing/TestReportSection';
 import DatabaseMonitoringSection from '@/components/admin/testing/DatabaseMonitoringSection';
+import DetailedPerformanceReport from '@/components/admin/testing/DetailedPerformanceReport';
 
 const TestingInterfacePage = () => {
   const { toast } = useToast();
@@ -110,12 +111,18 @@ const TestingInterfacePage = () => {
             </div>
 
             <DatabaseMonitoringSection />
+            
             <div className="mt-6">
               <TestControls />
             </div>
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <TestResultsVisualization results={testResults} />
               <TestReportSection results={testResults} />
+            </div>
+
+            <div className="mt-6">
+              <DetailedPerformanceReport />
             </div>
           </>
         ) : (
