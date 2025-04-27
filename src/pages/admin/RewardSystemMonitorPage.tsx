@@ -1,10 +1,10 @@
-
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AdminHeader from '@/components/admin/AdminHeader';
 import SystemOverviewTab from '@/components/admin/rewards/SystemOverviewTab';
 import PerformanceMetricsTab from '@/components/admin/rewards/PerformanceMetricsTab';
 import CacheManagementTab from '@/components/admin/rewards/CacheManagementTab';
+import DatabasePerformanceTab from '@/components/admin/rewards/DatabasePerformanceTab';
 import { Info, HelpCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -67,6 +67,7 @@ const RewardSystemMonitorPage = () => {
             <TabsTrigger value="overview">System Overview</TabsTrigger>
             <TabsTrigger value="performance">Performance Metrics</TabsTrigger>
             <TabsTrigger value="cache">Cache Management</TabsTrigger>
+            <TabsTrigger value="database">Database Performance</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview">
@@ -79,6 +80,10 @@ const RewardSystemMonitorPage = () => {
 
           <TabsContent value="cache">
             <CacheManagementTab />
+          </TabsContent>
+
+          <TabsContent value="database">
+            <DatabasePerformanceTab />
           </TabsContent>
         </Tabs>
       </div>
