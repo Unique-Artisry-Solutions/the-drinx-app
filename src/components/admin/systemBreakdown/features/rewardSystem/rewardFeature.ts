@@ -23,6 +23,6 @@ export const rewardProgramFeature: FeatureItem = {
   ],
   databaseAnalysis: rewardSystemDatabaseAnalysis,
   dbRequirementsText: rewardSystemRequirements,
-  implementationProgress: 60, // Updated progress
+  implementationProgress: 70, // Updated progress
   dbCompleted: 85 // Updated database progress
 };

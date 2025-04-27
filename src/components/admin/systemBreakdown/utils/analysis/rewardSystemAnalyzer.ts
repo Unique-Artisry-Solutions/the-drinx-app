@@ -11,7 +11,7 @@ export function analyzeRewardSystem(features: FeatureItem[]): FeatureItem[] {
     if (feature.id === "reward-program") {
       return {
         ...feature,
-        implementationProgress: 60, // Updated progress
+        implementationProgress: 70, // Updated progress
         dbCompleted: 85, // Updated database progress
         dbRequirementsText: `Enhanced flexible reward system implementation:
 
