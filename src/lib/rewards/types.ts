@@ -109,13 +109,15 @@ export interface RewardOffering {
   is_active: boolean;
   image_url?: string;
   expiration_days?: number;
+  category?: string;
+  expires_in?: number;
 }
 
 export interface RewardTransaction {
   id: string;
   date: string;
   points: number;
-  type: string;
+  type: 'earn' | 'redeem';
   source: string;
   description?: string;
 }
@@ -197,7 +199,7 @@ export function transformTransaction(rawTransaction: any): RewardTransaction {
     id: rawTransaction.id,
     date: rawTransaction.created_at,
     points: rawTransaction.points,
-    type: rawTransaction.transaction_type,
+    type: rawTransaction.transaction_type === 'earn' ? 'earn' : 'redeem',
     source: rawTransaction.source,
     description: rawTransaction.description
   };

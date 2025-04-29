@@ -148,7 +148,7 @@ export function RewardRedemptionFlow() {
                           <CardFooter className="flex justify-between items-center pt-0">
                             <div className="flex items-center text-xs text-muted-foreground">
                               <Clock className="h-3 w-3 mr-1" />
-                              {reward.expires_in ? `Expires in ${reward.expires_in} days` : 'Never expires'}
+                              {reward.expiration_days ? `Expires in ${reward.expiration_days} days` : 'Never expires'}
                             </div>
                             
                             <Button 
