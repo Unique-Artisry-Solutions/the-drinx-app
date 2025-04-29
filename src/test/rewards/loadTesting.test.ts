@@ -103,7 +103,7 @@ describe.skip('Reward System Load Testing', () => {
     // Setup redemption mocks with quantity tracking
     let remainingQuantity = mockOffering.quantity_available;
     
-    vi.mocked(supabase.from).mockImplementation((table) => {
+    vi.mocked(supabase.from).mockImplementation((table: string) => {
       if (table === 'reward_offerings') {
         return {
           select: vi.fn().mockImplementation(() => ({

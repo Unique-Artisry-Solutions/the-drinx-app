@@ -1,3 +1,4 @@
+
 export interface RewardMetric {
   id: string;
   metric_date: string;
@@ -80,6 +81,13 @@ export interface RewardOperationResponse {
   success: boolean;
   message?: string;
   error?: string;
+}
+
+// Extended response for batch operations
+export interface BatchRewardOperationResponse extends RewardOperationResponse {
+  userId?: string;
+  pointsChanged?: number;
+  newBalance?: number;
 }
 
 export interface RewardTier {

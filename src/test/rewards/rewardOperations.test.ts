@@ -132,12 +132,15 @@ describe('Reward Operations', () => {
       
       expect(results.length).toBe(2);
       expect(results[0].success).toBe(true);
-      expect(results[0].userId).toBe('user-1');
       expect(results[1].success).toBe(true);
-      expect(results[1].userId).toBe('user-2');
       expect(vi.mocked(supabase.rpc)).toHaveBeenCalledWith('batch_update_user_points', {
         p_operations: JSON.stringify(operations)
       });
+      
+      // Use type assertion here since we're returning extended information
+      // from our API that isn't in the base RewardOperationResponse
+      expect((results[0] as any).userId).toBe('user-1');
+      expect((results[1] as any).userId).toBe('user-2');
     });
 
     it('should handle RPC failure in batch operations', async () => {

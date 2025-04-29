@@ -1,6 +1,6 @@
 
 import { supabase } from '@/lib/supabase';
-import { RewardOperationResponse, transformTransaction } from '../types';
+import { RewardOperationResponse, BatchRewardOperationResponse, transformTransaction } from '../types';
 import { RewardsCache } from '../system/RewardsCache';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { trackRewardEvent } from './tracking';
@@ -53,7 +53,7 @@ export async function addPoints(
 
 export async function batchUpdatePoints(
   operations: Array<{ userId: string; points: number; source: string; metadata?: any }>
-): Promise<Array<RewardOperationResponse>> {
+): Promise<BatchRewardOperationResponse[]> {
   try {
     const { data, error } = await supabase.rpc('batch_update_user_points', {
       p_operations: JSON.stringify(operations)
@@ -88,4 +88,3 @@ export async function batchUpdatePoints(
     }));
   }
 }
-
