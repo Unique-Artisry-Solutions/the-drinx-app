@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -190,17 +191,19 @@ export function ReportExportUtility() {
             <div>
               <label className="block text-sm font-medium mb-2">Date Range</label>
               <div className="flex gap-2 items-center">
-                <DatePicker
-                  date={dateRange.from}
-                  setDate={(date) => setDateRange(prev => ({ ...prev, from: date }))}
-                  disabled={isLoading}
-                />
+                <div className={isLoading ? "pointer-events-none opacity-50" : ""}>
+                  <DatePicker
+                    date={dateRange.from}
+                    setDate={(date) => setDateRange(prev => ({ ...prev, from: date }))}
+                  />
+                </div>
                 <span className="text-sm font-medium">to</span>
-                <DatePicker
-                  date={dateRange.to}
-                  setDate={(date) => setDateRange(prev => ({ ...prev, to: date }))}
-                  disabled={isLoading}
-                />
+                <div className={isLoading ? "pointer-events-none opacity-50" : ""}>
+                  <DatePicker
+                    date={dateRange.to}
+                    setDate={(date) => setDateRange(prev => ({ ...prev, to: date }))}
+                  />
+                </div>
               </div>
             </div>
           </div>
