@@ -6,6 +6,7 @@ import { BulkOperationsInterface } from './bulk/BulkOperationsInterface';
 import { RewardRulesManagement } from './rules/RewardRulesManagement';
 import { ProgramStatisticsDashboard } from './analytics/ProgramStatisticsDashboard';
 import { ReportExportUtility } from './export/ReportExportUtility';
+import { RewardsAdminGuide } from './help/RewardsAdminGuide';
 
 export function RewardsAdminPage() {
   const [activeTab, setActiveTab] = useState('config');
@@ -18,6 +19,8 @@ export function RewardsAdminPage() {
           Manage your rewards program configuration, rules, statistics, and reports.
         </p>
       </div>
+      
+      <RewardsAdminGuide />
       
       <Tabs defaultValue={activeTab} onValueChange={setActiveTab}>
         <TabsList className="mb-4">
