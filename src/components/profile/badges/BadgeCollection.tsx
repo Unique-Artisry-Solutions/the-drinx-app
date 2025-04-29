@@ -1,9 +1,10 @@
 
 import React from 'react';
 import { CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge as BadgeIcon, Route, MapPin, GlassWater, Star, Sparkles, Trophy, Wine, ThumbsUp } from 'lucide-react';
-import BadgeItem from './BadgeItem';
-import { useTheme } from '@/contexts/ThemeContext';
+import { Trophy, Award, MapPin, GlassWater, Star, PenTool } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { motion } from 'framer-motion';
+import { useAchievements } from '@/hooks/rewards/useAchievements';
 
 interface BadgeCollectionProps {
   userStats: {
@@ -12,87 +13,169 @@ interface BadgeCollectionProps {
     mocktailsTried: number;
     reviewsWritten: number;
     mocktailsCreated: number;
-    mocktailsTryCount: number;
   };
 }
 
 const BadgeCollection: React.FC<BadgeCollectionProps> = ({ userStats }) => {
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
+  const { achievements } = useAchievements();
+
+  // Define badge categories
+  const categories = [
+    { id: 'all', name: 'All', icon: <Award className="h-4 w-4" /> },
+    { id: 'visits', name: 'Visits', icon: <MapPin className="h-4 w-4" /> },
+    { id: 'mocktails', name: 'Mocktails', icon: <GlassWater className="h-4 w-4" /> },
+    { id: 'reviews', name: 'Reviews', icon: <Star className="h-4 w-4" /> },
+    { id: 'creator', name: 'Creator', icon: <PenTool className="h-4 w-4" /> },
+  ];
+
+  // Filter achievements by category
+  const getAchievementsByCategory = (categoryId: string) => {
+    if (!achievements || achievements.length === 0) return [];
+    if (categoryId === 'all') return achievements;
+    return achievements.filter(achievement => achievement.category === categoryId);
+  };
+  
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      }
+    }
+  };
+  
+  const item = {
+    hidden: { opacity: 0, scale: 0.8 },
+    show: { opacity: 1, scale: 1 }
+  };
+
+  // If no achievements data is present, show placeholder badges based on user stats
+  const getBadgesPlaceholder = () => {
+    const badges = [];
+
+    // Visit badges
+    if (userStats.establishmentsVisited >= 1) {
+      badges.push({ id: 'first-visit', name: 'First Visit', icon: <MapPin />, category: 'visits', earned: true });
+    }
+    if (userStats.establishmentsVisited >= 5) {
+      badges.push({ id: 'regular', name: 'Regular Visitor', icon: <MapPin />, category: 'visits', earned: true });
+    }
+    if (userStats.establishmentsVisited >= 10) {
+      badges.push({ id: 'explorer', name: 'Explorer', icon: <MapPin />, category: 'visits', earned: true });
+    }
+    
+    // Mocktail badges
+    if (userStats.mocktailsTried >= 1) {
+      badges.push({ id: 'first-mocktail', name: 'First Sip', icon: <GlassWater />, category: 'mocktails', earned: true });
+    }
+    if (userStats.mocktailsTried >= 5) {
+      badges.push({ id: 'taster', name: 'Taster', icon: <GlassWater />, category: 'mocktails', earned: true });
+    }
+    if (userStats.mocktailsTried >= 10) {
+      badges.push({ id: 'connoisseur', name: 'Connoisseur', icon: <GlassWater />, category: 'mocktails', earned: true });
+    }
+    
+    // Add placeholder locked badges
+    badges.push(
+      { id: 'master-explorer', name: 'Master Explorer', icon: <MapPin />, category: 'visits', earned: false },
+      { id: 'mixologist', name: 'Mixologist', icon: <GlassWater />, category: 'mocktails', earned: false },
+      { id: 'critic', name: 'Top Critic', icon: <Star />, category: 'reviews', earned: false },
+      { id: 'recipe-creator', name: 'Recipe Creator', icon: <PenTool />, category: 'creator', earned: false }
+    );
+    
+    return badges;
+  };
+
+  const placeholderBadges = getBadgesPlaceholder();
 
   return (
     <>
-      <CardHeader>
+      <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2">
-          <BadgeIcon className="h-5 w-5 text-spiritless-pink" />
-          Your Badges
+          <Trophy className="h-5 w-5 text-amber-500" />
+          Collection
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <BadgeItem
-            icon={<Route className={`h-5 w-5 ${isDark ? 'text-purple-400' : 'text-purple-600'}`} />}
-            name="First Crawl"
-            description="Complete your first swig circuit"
-            unlocked={userStats.barCrawlsCompleted >= 1}
-          />
-          <BadgeItem
-            icon={<MapPin className={`h-5 w-5 ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`} />}
-            name="Explorer"
-            description="Visit 5 different establishments"
-            unlocked={userStats.establishmentsVisited >= 5}
-            progress={Math.min(userStats.establishmentsVisited, 5)}
-            maxProgress={5}
-          />
-          <BadgeItem
-            icon={<GlassWater className={`h-5 w-5 ${isDark ? 'text-amber-400' : 'text-amber-600'}`} />}
-            name="Mocktail Maven"
-            description="Try 10 different mocktails"
-            unlocked={userStats.mocktailsTried >= 10}
-            progress={Math.min(userStats.mocktailsTried, 10)}
-            maxProgress={10}
-          />
-          <BadgeItem
-            icon={<Star className={`h-5 w-5 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />}
-            name="Review Star"
-            description="Write 3 establishment reviews"
-            unlocked={userStats.reviewsWritten >= 3}
-            progress={userStats.reviewsWritten}
-            maxProgress={3}
-          />
-          <BadgeItem
-            icon={<Sparkles className={`h-5 w-5 ${isDark ? 'text-indigo-400' : 'text-indigo-600'}`} />}
-            name="Crawl Enthusiast"
-            description="Complete 5 swig circuits"
-            unlocked={userStats.barCrawlsCompleted >= 5}
-            progress={Math.min(userStats.barCrawlsCompleted, 5)}
-            maxProgress={5}
-          />
-          <BadgeItem
-            icon={<Trophy className={`h-5 w-5 ${isDark ? 'text-amber-400' : 'text-amber-600'}`} />}
-            name="VIP Crawler"
-            description="Complete 15 swig circuits"
-            unlocked={userStats.barCrawlsCompleted >= 15}
-            progress={Math.min(userStats.barCrawlsCompleted, 15)}
-            maxProgress={15}
-          />
-          <BadgeItem
-            icon={<Wine className={`h-5 w-5 ${isDark ? 'text-rose-400' : 'text-rose-600'}`} />}
-            name="Mocktail Creator"
-            description="Create your first mocktail recipe"
-            unlocked={userStats.mocktailsCreated >= 1}
-            progress={Math.min(userStats.mocktailsCreated, 1)}
-            maxProgress={1}
-          />
-          <BadgeItem
-            icon={<ThumbsUp className={`h-5 w-5 ${isDark ? 'text-teal-400' : 'text-teal-600'}`} />}
-            name="Social Butterfly"
-            description="Have 5 users try your mocktails"
-            unlocked={userStats.mocktailsTryCount >= 5}
-            progress={Math.min(userStats.mocktailsTryCount, 5)}
-            maxProgress={5}
-          />
-        </div>
+      <CardContent className="p-0">
+        <Tabs defaultValue="all" className="px-4 pb-4">
+          <TabsList className="grid grid-cols-5 mb-6">
+            {categories.map(category => (
+              <TabsTrigger key={category.id} value={category.id} className="flex items-center gap-1 text-xs">
+                {category.icon}
+                {category.name}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          
+          {categories.map(category => (
+            <TabsContent key={category.id} value={category.id}>
+              <motion.div 
+                className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
+                variants={container}
+                initial="hidden"
+                animate="show"
+              >
+                {achievements && achievements.length > 0 ? (
+                  getAchievementsByCategory(category.id).map(achievement => (
+                    <motion.div key={achievement.id} variants={item}>
+                      <div 
+                        className={`flex flex-col items-center justify-center p-4 rounded-lg border ${
+                          achievement.isCompleted 
+                            ? 'bg-amber-50 border-amber-200 shadow-sm' 
+                            : 'bg-gray-50 border-gray-200 opacity-60'
+                        } aspect-square hover:scale-105 transition-transform`}
+                      >
+                        <div className={`p-3 rounded-full mb-3 ${
+                          achievement.isCompleted ? 'bg-amber-100' : 'bg-gray-100'
+                        }`}>
+                          <Trophy className={`h-6 w-6 ${
+                            achievement.isCompleted ? 'text-amber-500' : 'text-gray-400'
+                          }`} />
+                        </div>
+                        <div className="text-center">
+                          <div className="font-medium text-sm">{achievement.name}</div>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            {achievement.isCompleted ? 'Earned' : 'Locked'}
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))
+                ) : (
+                  // Use placeholder badges if no achievement data is available
+                  placeholderBadges
+                    .filter(badge => category.id === 'all' || badge.category === category.id)
+                    .map(badge => (
+                      <motion.div key={badge.id} variants={item}>
+                        <div 
+                          className={`flex flex-col items-center justify-center p-4 rounded-lg border ${
+                            badge.earned 
+                              ? 'bg-amber-50 border-amber-200 shadow-sm' 
+                              : 'bg-gray-50 border-gray-200 opacity-60'
+                          } aspect-square hover:scale-105 transition-transform`}
+                        >
+                          <div className={`p-3 rounded-full mb-3 ${
+                            badge.earned ? 'bg-amber-100' : 'bg-gray-100'
+                          }`}>
+                            {React.cloneElement(badge.icon, { 
+                              className: `h-6 w-6 ${badge.earned ? 'text-amber-500' : 'text-gray-400'}`
+                            })}
+                          </div>
+                          <div className="text-center">
+                            <div className="font-medium text-sm">{badge.name}</div>
+                            <div className="text-xs text-muted-foreground mt-1">
+                              {badge.earned ? 'Earned' : 'Locked'}
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))
+                )}
+              </motion.div>
+            </TabsContent>
+          ))}
+        </Tabs>
       </CardContent>
     </>
   );
