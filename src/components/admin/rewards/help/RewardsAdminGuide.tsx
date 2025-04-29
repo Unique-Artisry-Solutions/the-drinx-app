@@ -19,9 +19,9 @@ export function RewardsAdminGuide() {
 
   return (
     <Card>
-      <GuideHeader isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-      
       <Collapsible open={!isCollapsed}>
+        <GuideHeader isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
+        
         <CollapsibleContent>
           <CardContent className="pt-4">
             <Tabs value={openTab} onValueChange={setOpenTab}>

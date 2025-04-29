@@ -4,7 +4,6 @@ import { CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Book, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface GuideHeaderProps {
   isCollapsed: boolean;
@@ -20,11 +19,13 @@ export function GuideHeader({ isCollapsed, setIsCollapsed }: GuideHeaderProps) {
       </CardTitle>
       <div className="flex items-center gap-2">
         <Badge variant="outline" className="bg-primary/10">Documentation</Badge>
-        <CollapsibleTrigger asChild onClick={() => setIsCollapsed(!isCollapsed)}>
-          <Button variant="ghost" size="sm">
-            <ChevronDown className={`h-4 w-4 transition-transform ${isCollapsed ? 'rotate-180' : ''}`} />
-          </Button>
-        </CollapsibleTrigger>
+        <Button 
+          variant="ghost" 
+          size="sm"
+          onClick={() => setIsCollapsed(!isCollapsed)}
+        >
+          <ChevronDown className={`h-4 w-4 transition-transform ${isCollapsed ? 'rotate-180' : ''}`} />
+        </Button>
       </div>
     </CardHeader>
   );
