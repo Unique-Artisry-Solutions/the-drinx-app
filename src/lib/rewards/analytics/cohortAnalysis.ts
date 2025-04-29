@@ -61,20 +61,40 @@ export async function getCohortRetention(
     const actualStartDate = startDate || new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
     const actualEndDate = endDate || new Date();
     
-    // Call the database function to get retention data
-    const { data, error } = await supabase.rpc('get_reward_cohort_retention', {
-      p_start_date: actualStartDate.toISOString(),
-      p_end_date: actualEndDate.toISOString(),
-      p_period_type: periodType,
-      p_period_count: periodCount
-    });
+    // Call database via direct query since RPC may not be available
+    const { data, error } = await supabase
+      .from('reward_cohort_retention')
+      .select('*')
+      .gte('cohort_date', actualStartDate.toISOString())
+      .lte('cohort_date', actualEndDate.toISOString())
+      .eq('period_type', periodType)
+      .limit(periodCount * 12); // Ensure we get enough data
     
     if (error) {
       console.error('Error fetching cohort retention data:', error);
       return [];
     }
     
-    return data || [];
+    // Transform the data to match our interface
+    const transformedData: CohortRetentionData[] = (data || []).reduce((acc: Record<string, any>, row: any) => {
+      if (!acc[row.cohort_date]) {
+        acc[row.cohort_date] = {
+          cohortDate: row.cohort_date,
+          cohortSize: row.cohort_size,
+          retentionByPeriod: []
+        };
+      }
+      
+      acc[row.cohort_date].retentionByPeriod.push({
+        period: row.period_number,
+        activeUsers: row.active_users,
+        retentionRate: row.retention_rate
+      });
+      
+      return acc;
+    }, {});
+    
+    return Object.values(transformedData);
   } catch (error) {
     console.error('Failed to get cohort retention:', error);
     return [];
@@ -97,19 +117,31 @@ export async function getCohortActivity(
     const actualStartDate = startDate || new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
     const actualEndDate = endDate || new Date();
     
-    // Call the database function to get activity data
-    const { data, error } = await supabase.rpc('get_reward_cohort_activity', {
-      p_start_date: actualStartDate.toISOString(),
-      p_end_date: actualEndDate.toISOString(),
-      p_period_type: periodType
-    });
+    // Since RPC might not be available, use direct query
+    const { data, error } = await supabase
+      .from('reward_cohort_activity')
+      .select('*')
+      .gte('cohort_date', actualStartDate.toISOString())
+      .lte('cohort_date', actualEndDate.toISOString())
+      .eq('period_type', periodType);
     
     if (error) {
       console.error('Error fetching cohort activity data:', error);
       return [];
     }
     
-    return data || [];
+    // Transform to match our interface
+    const result: CohortActivityData[] = (data || []).map((row: any) => ({
+      cohortDate: row.cohort_date,
+      totalUsers: row.total_users,
+      activeUsers: row.active_users,
+      activityRate: row.activity_rate,
+      averagePointsEarned: row.average_points_earned,
+      averagePointsRedeemed: row.average_points_redeemed,
+      redemptionRate: row.redemption_rate
+    }));
+    
+    return result;
   } catch (error) {
     console.error('Failed to get cohort activity:', error);
     return [];
@@ -164,14 +196,12 @@ export async function getSegmentMembers(
   offset: number = 0
 ): Promise<{id: string, user_id: string}[]> {
   try {
-    // In a real implementation, this would execute a query that evaluates
-    // users against the segment criteria. For now, we'll just return a mock response.
+    // Use direct table query instead of RPC
     const { data, error } = await supabase
-      .rpc('get_segment_members', {
-        p_segment_id: segmentId,
-        p_limit: limit,
-        p_offset: offset
-      });
+      .from('segment_members')
+      .select('id, user_id')
+      .eq('segment_id', segmentId)
+      .range(offset, offset + limit - 1);
     
     if (error) {
       console.error('Error fetching segment members:', error);

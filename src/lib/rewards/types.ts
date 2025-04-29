@@ -111,6 +111,7 @@ export interface RewardOffering {
   expiration_days?: number;
   category?: string; // Added category property
   expires_in?: number; // Added expires_in property
+  establishment_id?: string; // Added establishment_id property
 }
 
 export interface RewardTransaction {

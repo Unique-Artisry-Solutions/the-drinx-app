@@ -40,6 +40,7 @@ export interface BaseEventMetadata {
   sessionId?: string;
   source?: string; // Source of the event (web, mobile, etc.)
   establishmentId?: string;
+  section?: string; // Added section property for UI component tracking
 }
 
 /**
@@ -67,9 +68,9 @@ export interface TierEventMetadata extends BaseEventMetadata {
  * Reward-related event metadata
  */
 export interface RewardEventMetadata extends BaseEventMetadata {
-  rewardId: string;
-  rewardName: string;
-  pointsRequired: number;
+  rewardId?: string;
+  rewardName?: string;
+  pointsRequired?: number;
   category?: string;
 }
 
@@ -77,8 +78,8 @@ export interface RewardEventMetadata extends BaseEventMetadata {
  * Achievement-related event metadata
  */
 export interface AchievementEventMetadata extends BaseEventMetadata {
-  achievementId: string;
-  achievementName: string;
+  achievementId?: string;
+  achievementName?: string;
   progress?: number;
   threshold?: number;
   category?: string;
@@ -105,12 +106,17 @@ export interface FunnelEventMetadata extends BaseEventMetadata {
   totalStages: number;
   conversionTime?: number; // time in milliseconds since previous stage
   dropoff?: boolean; // whether the user dropped off at this stage
+  reason?: string; // reason for dropoff
+  achievementCount?: number; // count of achievements for certain views
+  achievementId?: string; // ID of achievement being viewed/tracked
+  rewardId?: string; // ID of reward being viewed/tracked
+  rewardName?: string; // Name of reward being viewed/tracked
 }
 
 /**
  * Union type of all possible metadata types
  */
-export type RewardEventMetadata = 
+export type EventMetadata = 
   | BaseEventMetadata
   | PointsEventMetadata
   | TierEventMetadata

@@ -10,6 +10,7 @@ import { getUserAchievements, updateAchievementProgress } from '../achievements'
 import { getUserPreference, saveUserPreference } from './preferences';
 import * as eventTracking from '../tracking/eventTracking';
 import { getCohortRetention, getCohortActivity } from '../analytics/cohortAnalysis';
+import { EventMetadata } from '../tracking/eventTypes';
 
 // Export all event tracking related functionality
 export * from '../tracking/eventTypes';
@@ -81,8 +82,8 @@ export const rewardsApi = {
       {
         userId,
         activityType,
-        ...metadata
-      }
+        ...(metadata || {})
+      } as EventMetadata
     );
     
     for (const achievementId of relevantAchievements) {

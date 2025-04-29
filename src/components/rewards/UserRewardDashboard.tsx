@@ -10,7 +10,7 @@ import { AchievementsList } from './AchievementsList';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useRewards } from '@/hooks/rewards/useRewards';
 import { useAchievements } from '@/hooks/rewards/useAchievements';
-import { RewardEventType } from '@/lib/rewards/tracking/eventTypes';
+import { RewardEventType, EngagementEventMetadata } from '@/lib/rewards/tracking/eventTypes';
 import { trackRewardEvent } from '@/lib/rewards/tracking/eventTracking';
 
 export function UserRewardDashboard() {
@@ -33,7 +33,7 @@ export function UserRewardDashboard() {
             section: 'dashboard',
             points: rewardProfile.points,
             tier: currentTier
-          }
+          } as EngagementEventMetadata
         );
       }
     };
@@ -55,7 +55,7 @@ export function UserRewardDashboard() {
           section: value,
           points: rewardProfile.points,
           tier: currentTier
-        }
+        } as EngagementEventMetadata
       );
     }
   };

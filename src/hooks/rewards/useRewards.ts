@@ -11,6 +11,7 @@ import {
   trackFunnelStage 
 } from '@/lib/rewards/tracking/eventTracking';
 import { REWARD_REDEMPTION_FUNNEL } from '@/lib/rewards/tracking/funnelDefinitions';
+import { FunnelEventMetadata } from '@/lib/rewards/tracking/eventTypes';
 
 export function useRewards() {
   const { user } = useAuth();
@@ -42,7 +43,7 @@ export function useRewards() {
     loadRewardProfile();
   }, [user?.id, isEnabled]);
 
-  const addPoints = async (points: number, source: string, metadata = {}) => {
+  const addPoints = async (points: number, source: string, metadata: Record<string, any> = {}) => {
     if (!user?.id) return;
 
     // Track analytics event
@@ -62,8 +63,8 @@ export function useRewards() {
         points,
         source,
         (rewardProfile?.points || 0) + points,
-        metadata.category as string | undefined,
-        metadata.establishmentId as string | undefined
+        metadata?.category as string | undefined,
+        metadata?.establishmentId as string | undefined
       );
       
       // Also track with legacy system for now
@@ -109,7 +110,7 @@ export function useRewards() {
           rewardId: offeringId,
           rewardName: reward.name,
           pointsRequired: reward.points_required
-        }
+        } as Partial<FunnelEventMetadata>
       );
     }
 
@@ -144,7 +145,7 @@ export function useRewards() {
             rewardId: offeringId,
             rewardName: reward.name,
             pointsRequired: reward.points_required
-          }
+          } as Partial<FunnelEventMetadata>
         );
       }
       
@@ -200,7 +201,11 @@ export function useRewards() {
       1, // Stage index (0-based)
       REWARD_REDEMPTION_FUNNEL.stages.length,
       user.id,
-      { rewardId, rewardName, pointsRequired }
+      { 
+        rewardId, 
+        rewardName, 
+        pointsRequired 
+      } as Partial<FunnelEventMetadata>
     );
   };
   
@@ -214,7 +219,11 @@ export function useRewards() {
       3, // Stage index (0-based)
       REWARD_REDEMPTION_FUNNEL.stages.length,
       user.id,
-      { rewardId, rewardName, pointsRequired }
+      { 
+        rewardId, 
+        rewardName, 
+        pointsRequired 
+      } as Partial<FunnelEventMetadata>
     );
   };
 

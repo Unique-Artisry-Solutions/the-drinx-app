@@ -1,6 +1,16 @@
 
 import { supabase } from '@/lib/supabase';
-import { RewardEventType, RewardEventMetadata, BaseEventMetadata } from './eventTypes';
+import { 
+  RewardEventType, 
+  BaseEventMetadata,
+  PointsEventMetadata,
+  TierEventMetadata,
+  RewardEventMetadata,
+  AchievementEventMetadata,
+  FunnelEventMetadata,
+  EngagementEventMetadata,
+  EventMetadata
+} from './eventTypes';
 
 /**
  * Records a reward-related event to the analytics system
@@ -10,7 +20,7 @@ import { RewardEventType, RewardEventMetadata, BaseEventMetadata } from './event
  */
 export async function trackRewardEvent(
   eventType: RewardEventType,
-  metadata: RewardEventMetadata
+  metadata: EventMetadata
 ): Promise<string | null> {
   try {
     // Ensure we have a timestamp
@@ -24,7 +34,7 @@ export async function trackRewardEvent(
       p_user_id: metadata.userId,
       p_event_type: eventType,
       p_event_data: eventMetadata,
-      p_page_url: eventMetadata.pageUrl || null,
+      p_page_url: (metadata as any).pageUrl || null,
       p_user_agent: navigator?.userAgent || null,
       p_ip_address: null // IP address is collected server-side
     });
@@ -79,7 +89,7 @@ export async function trackFunnelStage(
       totalStages,
       conversionTime,
       ...additionalMetadata
-    } as RewardEventMetadata
+    } as FunnelEventMetadata
   );
 }
 
@@ -110,7 +120,7 @@ export async function trackFunnelDropoff(
       totalStages,
       dropoff: true,
       reason,
-    } as RewardEventMetadata
+    } as FunnelEventMetadata
   );
 }
 
@@ -160,7 +170,7 @@ export async function trackPointsRedeemed(
       rewardId,
       rewardName,
       establishmentId
-    } as RewardEventMetadata & PointsEventMetadata
+    } as PointsEventMetadata & RewardEventMetadata
   );
 }
 

@@ -11,6 +11,7 @@ import {
   trackFunnelDropoff
 } from '@/lib/rewards/tracking/eventTracking';
 import { ACHIEVEMENT_FUNNEL } from '@/lib/rewards/tracking/funnelDefinitions';
+import { FunnelEventMetadata } from '@/lib/rewards/tracking/eventTypes';
 
 export function useAchievements() {
   const { user } = useAuth();
@@ -49,7 +50,9 @@ export function useAchievements() {
             0, // Stage index
             ACHIEVEMENT_FUNNEL.stages.length,
             user.id,
-            { achievementCount: data.length }
+            { 
+              achievementCount: data.length 
+            } as Partial<FunnelEventMetadata>
           );
         }
       } catch (err) {
@@ -82,7 +85,7 @@ export function useAchievements() {
         progress: achievement.progress,
         threshold: achievement.threshold,
         category: achievement.category
-      }
+      } as Partial<FunnelEventMetadata>
     );
   };
 
@@ -123,7 +126,7 @@ export function useAchievements() {
             progress: achievement.progress + increment,
             threshold: achievement.threshold,
             increment
-          }
+          } as Partial<FunnelEventMetadata>
         );
         
         // Update local state
@@ -166,7 +169,7 @@ export function useAchievements() {
               achievementId,
               achievementName: achievement.name,
               pointsAwarded: achievement.pointsReward
-            }
+            } as Partial<FunnelEventMetadata>
           );
         }
       }
@@ -211,7 +214,7 @@ export function useAchievements() {
           achievementId,
           achievementName: achievement.name,
           pointsAwarded: achievement.pointsReward
-        }
+        } as Partial<FunnelEventMetadata>
       );
       
       return true;
