@@ -1,10 +1,11 @@
 
 import { useEffect } from 'react';
 import { useNotifications } from '@/hooks/useNotifications';
-import { Button } from '@/components/ui/button';
-import { Check } from 'lucide-react';
-import NotificationsList from './components/NotificationsList';
+import Layout from '@/components/Layout';
+import NotificationsLayout from '@/components/notifications/NotificationsLayout';
 import NotificationsHeader from './components/NotificationsHeader';
+import NotificationsList from './components/NotificationsList';
+import { NotificationError } from '@/components/notifications/NotificationError';
 
 export default function NotificationsPage() {
   const { notifications, unreadCount, isLoading, error, markAllAsRead, refetch } = useNotifications();
@@ -14,20 +15,24 @@ export default function NotificationsPage() {
   }, [refetch]);
 
   return (
-    <div className="container mx-auto p-4 max-w-4xl">
-      <NotificationsHeader 
-        unreadCount={unreadCount}
-        onMarkAllRead={markAllAsRead}
-        onRefresh={refetch}
-      />
-      
-      <div className="mt-6">
-        <NotificationsList 
-          notifications={notifications}
-          isLoading={isLoading}
-          error={error}
+    <Layout>
+      <NotificationsLayout title="Your Notifications">
+        <NotificationsHeader 
+          unreadCount={unreadCount}
+          onMarkAllRead={markAllAsRead}
+          onRefresh={refetch}
         />
-      </div>
-    </div>
+        
+        {error && <NotificationError error={error} />}
+        
+        <div className="mt-6">
+          <NotificationsList 
+            notifications={notifications}
+            isLoading={isLoading}
+            error={error}
+          />
+        </div>
+      </NotificationsLayout>
+    </Layout>
   );
 }

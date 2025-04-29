@@ -24,26 +24,35 @@ export function useNotificationFetcher({
   const fetchingRef = useRef(false);
 
   const fetchNotifications = useCallback(async () => {
-    if (fetchingRef.current || !userId || !accessToken) {
+    if (fetchingRef.current) {
+      return; // Already fetching
+    }
+
+    if (!userId || !accessToken) {
       setIsLoading(false);
-      if (!userId || !accessToken) setError("Please log in to view notifications");
+      setNotifications([]);
+      setError(userId ? null : "Please log in to view notifications");
       return;
     }
+
     fetchingRef.current = true;
+    setIsLoading(true);
+    setError(null);
+    
     const maxRetries = 3;
     let attempt = 0;
 
     while (attempt < maxRetries) {
       try {
-        setIsLoading(true);
-        setError(null);
         const { data, error } = await supabase.functions.invoke('notifications', {
           body: {
             action: 'getNotifications',
             params: { userId }
           }
         });
+        
         if (error) throw new Error(error.message || 'Failed to fetch notifications');
+        
         const notificationsArray = Array.isArray(data?.data) ? data.data : [];
         setNotifications(notificationsArray);
         setUnreadCount(notificationsArray.filter((n: Notification) => !n.is_read).length);
@@ -68,4 +77,3 @@ export function useNotificationFetcher({
 
   return { fetchNotifications };
 }
-
