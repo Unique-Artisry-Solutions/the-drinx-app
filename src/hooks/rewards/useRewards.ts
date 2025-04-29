@@ -5,6 +5,12 @@ import { rewardsApi } from '@/lib/rewards/api';
 import { UserRewardProfile } from '@/lib/rewards/types';
 import { useToast } from '@/hooks/use-toast';
 import { useAnalytics } from '@/hooks/useAnalytics';
+import { 
+  trackPointsEarned, 
+  trackPointsRedeemed, 
+  trackFunnelStage 
+} from '@/lib/rewards/tracking/eventTracking';
+import { REWARD_REDEMPTION_FUNNEL } from '@/lib/rewards/tracking/funnelDefinitions';
 
 export function useRewards() {
   const { user } = useAuth();
@@ -50,7 +56,17 @@ export function useRewards() {
         description: `${points} points have been added to your account`,
       });
       
-      // Track successful points addition
+      // Track successful points addition with our enhanced tracking system
+      await trackPointsEarned(
+        user.id,
+        points,
+        source,
+        (rewardProfile?.points || 0) + points,
+        metadata.category as string | undefined,
+        metadata.establishmentId as string | undefined
+      );
+      
+      // Also track with legacy system for now
       track('reward_points_added', { points, source, success: true });
       
       // Refresh profile
@@ -74,12 +90,28 @@ export function useRewards() {
     // Get reward details for analytics
     const reward = rewardProfile?.availableRewards.find(r => r.id === offeringId);
     
-    // Track analytics event
+    // Track analytics event - legacy
     track('reward_redemption_attempt', { 
       offering_id: offeringId,
       points_required: reward?.points_required || 0,
       reward_name: reward?.name || 'Unknown'
     });
+    
+    // Track initiate_redemption funnel stage with enhanced tracking
+    if (user?.id && reward) {
+      await trackFunnelStage(
+        REWARD_REDEMPTION_FUNNEL.id,
+        'initiate_redemption',
+        2, // Stage index (0-based)
+        REWARD_REDEMPTION_FUNNEL.stages.length,
+        user.id,
+        { 
+          rewardId: offeringId,
+          rewardName: reward.name,
+          pointsRequired: reward.points_required
+        }
+      );
+    }
 
     const result = await rewardsApi.redeemReward(user.id, offeringId);
     
@@ -89,7 +121,34 @@ export function useRewards() {
         description: "Your reward has been redeemed successfully",
       });
       
-      // Track successful redemption
+      // Track successful redemption with enhanced tracking
+      if (user?.id && reward) {
+        await trackPointsRedeemed(
+          user.id,
+          reward.points_required,
+          'reward_redemption',
+          offeringId,
+          reward.name,
+          (rewardProfile?.points || 0) - reward.points_required,
+          reward.establishment_id
+        );
+        
+        // Track redemption_complete funnel stage
+        await trackFunnelStage(
+          REWARD_REDEMPTION_FUNNEL.id,
+          'redemption_complete',
+          4, // Stage index (0-based)
+          REWARD_REDEMPTION_FUNNEL.stages.length,
+          user.id,
+          { 
+            rewardId: offeringId,
+            rewardName: reward.name,
+            pointsRequired: reward.points_required
+          }
+        );
+      }
+      
+      // Track with legacy system for now
       track('reward_redemption_complete', { 
         offering_id: offeringId,
         points_required: reward?.points_required || 0,
@@ -118,11 +177,56 @@ export function useRewards() {
     }
   };
 
+  const viewRewardsCatalog = async () => {
+    if (!user?.id) return;
+    
+    // Track the first stage of the redemption funnel
+    await trackFunnelStage(
+      REWARD_REDEMPTION_FUNNEL.id,
+      'view_rewards_catalog',
+      0, // Stage index (0-based)
+      REWARD_REDEMPTION_FUNNEL.stages.length,
+      user.id
+    );
+  };
+  
+  const viewRewardDetail = async (rewardId: string, rewardName: string, pointsRequired: number) => {
+    if (!user?.id) return;
+    
+    // Track the second stage of the redemption funnel
+    await trackFunnelStage(
+      REWARD_REDEMPTION_FUNNEL.id,
+      'view_reward_detail',
+      1, // Stage index (0-based)
+      REWARD_REDEMPTION_FUNNEL.stages.length,
+      user.id,
+      { rewardId, rewardName, pointsRequired }
+    );
+  };
+  
+  const confirmRedemption = async (rewardId: string, rewardName: string, pointsRequired: number) => {
+    if (!user?.id) return;
+    
+    // Track the fourth stage of the redemption funnel
+    await trackFunnelStage(
+      REWARD_REDEMPTION_FUNNEL.id,
+      'confirm_redemption',
+      3, // Stage index (0-based)
+      REWARD_REDEMPTION_FUNNEL.stages.length,
+      user.id,
+      { rewardId, rewardName, pointsRequired }
+    );
+  };
+
   return {
     isEnabled,
     isLoading,
     rewardProfile,
     addPoints,
-    redeemReward
+    redeemReward,
+    // New tracking methods
+    viewRewardsCatalog,
+    viewRewardDetail,
+    confirmRedemption
   };
 }
