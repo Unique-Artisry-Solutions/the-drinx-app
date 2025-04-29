@@ -1,4 +1,5 @@
-import { Home, Users, Building2, LayoutDashboard, FileBarChart2, Image, Palette, Layers, BookOpen, Settings, Bell, Activity, FileText } from 'lucide-react';
+
+import { Home, Users, Building2, LayoutDashboard, FileBarChart2, Image, Palette, Layers, BookOpen, Settings, Bell, Activity, FileText, Award } from 'lucide-react';
 
 type AdminNavItem = {
   label: string;
@@ -48,6 +49,12 @@ export const adminNavItems: AdminNavItem[] = [
     label: 'Reward System Monitor',
     path: '/admin/reward-system-monitor',
     icon: Activity,
+    showInNav: true,
+  },
+  {
+    label: 'Rewards Administration',
+    path: '/admin/rewards',
+    icon: Award,
     showInNav: true,
   },
   {
