@@ -1,41 +1,51 @@
 
 import React from 'react';
-import { Trophy, Award, Star } from 'lucide-react';
+import { Trophy, Award, Star, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Badge } from '@/components/ui/badge';
+import { Achievement } from '@/lib/rewards/types';
 
 interface AchievementNotificationProps {
-  title: string;
-  description: string;
-  type: 'tier' | 'badge' | 'reward';
+  achievement: Achievement;
+  showToast?: boolean;
 }
 
-export function AchievementNotification({ title, description, type }: AchievementNotificationProps) {
+export function AchievementNotification({ achievement, showToast = true }: AchievementNotificationProps) {
   const { toast } = useToast();
 
   const getIcon = () => {
-    switch (type) {
-      case 'tier':
-        return <Trophy className="h-5 w-5 text-amber-500" />;
-      case 'badge':
-        return <Award className="h-5 w-5 text-blue-500" />;
-      case 'reward':
+    switch (achievement.category) {
+      case 'visits':
+        return <Trophy className="h-5 w-5 text-blue-500" />;
+      case 'mocktails':
         return <Star className="h-5 w-5 text-purple-500" />;
+      case 'special':
+        return <Award className="h-5 w-5 text-amber-500" />;
+      default:
+        return <Check className="h-5 w-5 text-green-500" />;
     }
   };
 
   React.useEffect(() => {
-    toast({
-      // Fix: Instead of passing a JSX element directly to title, we'll use the description field
-      title,
-      description: (
-        <div className="flex items-center gap-2">
-          {getIcon()}
-          <span>{description}</span>
-        </div>
-      ),
-      duration: 5000,
-    });
-  }, []);
+    if (showToast) {
+      toast({
+        title: "Achievement Unlocked!",
+        description: (
+          <div className="flex items-start gap-2">
+            <div className="mt-0.5">
+              {getIcon()}
+            </div>
+            <div className="flex-1">
+              <p className="font-medium">{achievement.name}</p>
+              <p className="text-sm text-muted-foreground">{achievement.description}</p>
+              <Badge className="mt-1.5" variant="secondary">+{achievement.pointsReward} points</Badge>
+            </div>
+          </div>
+        ),
+        duration: 5000,
+      });
+    }
+  }, [achievement, showToast, toast]);
 
   return null;
 }

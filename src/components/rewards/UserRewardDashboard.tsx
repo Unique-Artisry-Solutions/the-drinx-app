@@ -1,16 +1,21 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Award, Gift, Star, Trophy } from 'lucide-react';
-import { RewardTier, UserRewardProfile } from '@/lib/rewards/types';
 import { TierStatusIndicator } from './TierStatusIndicator';
 import { RewardHistory } from './RewardHistory';
+import { AchievementsList } from './AchievementsList';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useRewards } from '@/hooks/rewards/useRewards';
+import { useAchievements } from '@/hooks/rewards/useAchievements';
 
 export function UserRewardDashboard() {
   const { rewardProfile, isLoading } = useRewards();
+  const { achievements, achievementsByCategory, isLoading: achievementsLoading } = useAchievements();
+  const [activeTab, setActiveTab] = useState('overview');
+  
   // Extract the current tier from rewardProfile instead of directly from useRewards
   const currentTier = rewardProfile?.currentTier?.id ? 
     parseInt(rewardProfile.currentTier.name.split(' ')[1]) || 1 : 1;
@@ -54,11 +59,55 @@ export function UserRewardDashboard() {
         </CardContent>
       </Card>
 
-      {/* Tier Status */}
-      <TierStatusIndicator currentTier={currentTier} points={rewardProfile?.points || 0} />
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="achievements">Achievements</TabsTrigger>
+          <TabsTrigger value="history">History</TabsTrigger>
+        </TabsList>
 
-      {/* Reward History */}
-      <RewardHistory transactions={rewardProfile?.transactionHistory || []} />
+        <TabsContent value="overview" className="space-y-4 mt-4">
+          {/* Tier Status */}
+          <TierStatusIndicator currentTier={currentTier} points={rewardProfile?.points || 0} />
+          
+          {/* Achievement Summary */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">Recent Achievements</CardTitle>
+            </CardHeader>
+            <CardContent className="p-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {achievements.filter(a => a.isCompleted).slice(0, 4).map((achievement) => (
+                  <div key={achievement.id} className="flex items-center gap-2 p-2 border rounded-md bg-muted/30">
+                    <div className="p-1 bg-amber-100 rounded-full">
+                      <Trophy className="h-4 w-4 text-amber-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-xs truncate">{achievement.name}</div>
+                      <div className="text-xs text-muted-foreground truncate">{achievement.description}</div>
+                    </div>
+                    <Badge variant="outline" className="shrink-0">+{achievement.pointsReward}</Badge>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="achievements" className="mt-4">
+          {/* Full Achievements List */}
+          <AchievementsList 
+            achievements={achievements} 
+            achievementsByCategory={achievementsByCategory}
+            isLoading={achievementsLoading}
+          />
+        </TabsContent>
+
+        <TabsContent value="history" className="mt-4">
+          {/* Reward History */}
+          <RewardHistory transactions={rewardProfile?.transactionHistory || []} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

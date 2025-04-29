@@ -1,4 +1,3 @@
-
 export interface RewardMetric {
   id: string;
   metric_date: string;
@@ -75,6 +74,7 @@ export interface UserRewardProfile {
   availableRewards: RewardOffering[];
   transactionHistory: RewardTransaction[];
   redemptionHistory: RewardRedemption[];
+  achievements?: Achievement[];
 }
 
 export interface RewardOperationResponse {
@@ -151,6 +151,33 @@ export interface PerformanceTestResult {
     status: 'fast' | 'average' | 'slow' | 'error';
     rows_processed?: number;
   };
+}
+
+export interface Achievement {
+  id: string;
+  name: string;
+  description: string;
+  category: 'visits' | 'mocktails' | 'social' | 'creation' | 'special';
+  icon: string;
+  pointsReward: number;
+  progress: number;
+  threshold: number;
+  isCompleted: boolean;
+  completedAt?: string;
+}
+
+export interface AchievementCategory {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+}
+
+export interface AchievementProgressEvent {
+  achievementId: string;
+  increment: number;
+  userId: string;
+  metadata?: Record<string, any>;
 }
 
 export function transformRewardTier(rawTier: any): RewardTier {
