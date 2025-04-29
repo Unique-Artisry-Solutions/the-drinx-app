@@ -1,11 +1,13 @@
+
 import { addPoints, batchUpdatePoints } from './operations';
 import { redeemReward } from './redemption';
 import { trackRewardEvent } from './tracking';
 import { getUserRewardProfile } from './profile';
 import { isRewardsEnabled, retryFailedOperation } from './system';
 import { getRewardAnalytics, processRewardAnalytics, createTimeSeriesData } from './analytics';
-import { Achievement, AchievementProgressEvent } from '../types';
+import { Achievement, AchievementProgressEvent, UserRewardPreference } from '../types';
 import { getUserAchievements, updateAchievementProgress } from '../achievements';
+import { getUserPreference, saveUserPreference } from './preferences';
 
 export const rewardsApi = {
   addPoints,
@@ -18,6 +20,10 @@ export const rewardsApi = {
   processRewardAnalytics,
   getRewardAnalytics,
   createTimeSeriesData,
+  
+  // Expose preference methods
+  getUserPreference,
+  saveUserPreference,
 
   getUserAchievements: async (userId: string): Promise<Achievement[]> => {
     return await getUserAchievements(userId);
@@ -42,6 +48,8 @@ export const rewardsApi = {
     metadata?: Record<string, any>
   ): Promise<{
     completedAchievements: Achievement[];
+    pointsAwarded?: number;
+    progress?: Record<string, number>;
   }> => {
     const activityAchievementMap: Record<string, string[]> = {
       'visit': ['first-visit', 'five-visits', 'ten-visits'],

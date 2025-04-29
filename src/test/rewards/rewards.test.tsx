@@ -123,8 +123,11 @@ describe('Rewards Components Tests', () => {
     mocktails: [mockAchievements[1]]
   };
   
+  // Create a properly structured mock toast object
   const mockToast = {
-    toast: vi.fn()
+    toast: vi.fn(),
+    dismiss: vi.fn(),
+    toasts: []
   };
   
   beforeEach(() => {

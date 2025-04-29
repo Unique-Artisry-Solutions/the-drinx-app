@@ -1,41 +1,55 @@
 
 import { supabase } from '@/lib/supabase';
+import { UserRewardPreference } from '../types';
 
-export interface UserRewardPreference {
-  user_id: string;
-  preference_key: string;
-  preference_value: any;
-}
-
-export async function getUserPreferences(userId: string): Promise<UserRewardPreference[]> {
+/**
+ * Get a user's reward preference by key
+ * @param userId User ID
+ * @param preferenceKey The preference key to look up
+ * @returns The preference or null if not found
+ */
+export async function getUserPreference(
+  userId: string,
+  preferenceKey: string
+): Promise<UserRewardPreference | null> {
   const { data, error } = await supabase
     .from('user_reward_preferences')
     .select('*')
-    .eq('user_id', userId);
+    .eq('user_id', userId)
+    .eq('preference_key', preferenceKey)
+    .single();
 
   if (error) {
-    console.error('Error fetching user preferences:', error);
-    return [];
+    console.error('Error fetching user preference:', error);
+    return null;
   }
 
-  return data as UserRewardPreference[];
+  return data as UserRewardPreference;
 }
 
-export async function updateUserPreference(
+/**
+ * Save a user preference
+ * @param userId User ID
+ * @param preferenceKey The preference key
+ * @param preferenceValue The preference value
+ * @returns Success status
+ */
+export async function saveUserPreference(
   userId: string,
-  key: string,
-  value: any
+  preferenceKey: string,
+  preferenceValue: any
 ): Promise<boolean> {
   const { error } = await supabase
     .from('user_reward_preferences')
     .upsert({
       user_id: userId,
-      preference_key: key,
-      preference_value: value
+      preference_key: preferenceKey,
+      preference_value: preferenceValue,
+      updated_at: new Date().toISOString()
     });
 
   if (error) {
-    console.error('Error updating user preference:', error);
+    console.error('Error saving user preference:', error);
     return false;
   }
 
