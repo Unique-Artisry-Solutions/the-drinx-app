@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ChevronDown, Info, HelpCircle, Book, Settings, ListCheck, Database, ChartBar, FileExport } from "lucide-react";
+import { ChevronDown, Info, HelpCircle, Book, Settings, ListCheck, Database, ChartBar, FileText } from "lucide-react";
 
 export function RewardsAdminGuide() {
   const [openTab, setOpenTab] = useState('overview');
@@ -56,7 +56,7 @@ export function RewardsAdminGuide() {
                   Statistics
                 </TabsTrigger>
                 <TabsTrigger value="export" className="flex items-center gap-1">
-                  <FileExport className="h-4 w-4" />
+                  <FileText className="h-4 w-4" />
                   Export
                 </TabsTrigger>
               </TabsList>
