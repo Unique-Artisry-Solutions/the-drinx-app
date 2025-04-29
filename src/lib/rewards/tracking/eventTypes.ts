@@ -42,19 +42,6 @@ export interface BaseEventMetadata {
   establishmentId?: string;
   section?: string; // Added section property for UI component tracking
   category?: string; // Added category for classification
-  // Fields for achievement tracking
-  achievementId?: string;
-  achievementName?: string;
-  achievementCount?: number;
-  progress?: number;
-  threshold?: number;
-  // Fields for reward tracking
-  rewardId?: string;
-  rewardName?: string;
-  pointsRequired?: number;
-  // General fields
-  tier?: number; // User tier
-  points?: number; // Points balance
 }
 
 /**
@@ -63,7 +50,6 @@ export interface BaseEventMetadata {
 export interface PointsEventMetadata extends BaseEventMetadata {
   points: number;
   reason?: string;
-  category?: string;
   balance?: number;
 }
 
@@ -85,7 +71,6 @@ export interface RewardEventMetadata extends BaseEventMetadata {
   rewardId?: string;
   rewardName?: string;
   pointsRequired?: number;
-  category?: string;
 }
 
 /**
@@ -96,7 +81,7 @@ export interface AchievementEventMetadata extends BaseEventMetadata {
   achievementName?: string;
   progress?: number;
   threshold?: number;
-  category?: string;
+  achievementCount?: number;
   pointsAwarded?: number;
 }
 
@@ -107,7 +92,6 @@ export interface EngagementEventMetadata extends BaseEventMetadata {
   pageUrl?: string;
   viewDuration?: number; // in seconds
   interactionCount?: number;
-  section?: string;
 }
 
 /**

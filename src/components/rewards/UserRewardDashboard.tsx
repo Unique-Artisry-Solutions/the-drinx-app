@@ -62,7 +62,7 @@ export function UserRewardDashboard() {
 
   if (isLoading) {
     return (
-      <div className="animate-pulse space-y-4">
+      <div data-testid="loading-state" className="animate-pulse space-y-4">
         <div className="h-32 bg-muted rounded-lg"></div>
         <div className="h-48 bg-muted rounded-lg"></div>
       </div>

@@ -1,5 +1,5 @@
 
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   RewardEventType, 
   BaseEventMetadata,
@@ -35,7 +35,7 @@ export async function trackRewardEvent(
       p_event_type: eventType,
       p_event_data: eventMetadata,
       p_page_url: (metadata as any).pageUrl || null,
-      p_user_agent: navigator?.userAgent || null,
+      p_user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
       p_ip_address: null // IP address is collected server-side
     });
 
@@ -69,27 +69,34 @@ export async function trackFunnelStage(
   additionalMetadata: Partial<BaseEventMetadata> = {}
 ): Promise<string | null> {
   // Get the previous stage tracking time from sessionStorage to calculate conversion time
-  const prevStageKey = `${funnelName}_stage_${stageIndex - 1}_time`;
-  const prevStageTime = sessionStorage.getItem(prevStageKey);
+  let prevStageTime: string | null = null;
+  let currentTime = Date.now();
+  let conversionTime: number | undefined;
   
-  // Store current stage timing
-  const currentTime = Date.now();
-  sessionStorage.setItem(`${funnelName}_stage_${stageIndex}_time`, currentTime.toString());
-  
-  // Calculate conversion time if previous stage exists
-  const conversionTime = prevStageTime ? currentTime - parseInt(prevStageTime, 10) : undefined;
+  if (typeof window !== 'undefined') {
+    const prevStageKey = `${funnelName}_stage_${stageIndex - 1}_time`;
+    prevStageTime = sessionStorage.getItem(prevStageKey);
+    
+    // Store current stage timing
+    sessionStorage.setItem(`${funnelName}_stage_${stageIndex}_time`, currentTime.toString());
+    
+    // Calculate conversion time if previous stage exists
+    conversionTime = prevStageTime ? currentTime - parseInt(prevStageTime, 10) : undefined;
+  }
+
+  const metadata: FunnelEventMetadata = {
+    userId,
+    funnelName,
+    stageName,
+    stageIndex,
+    totalStages,
+    conversionTime,
+    ...additionalMetadata
+  };
 
   return trackRewardEvent(
     RewardEventType.REWARDS_PAGE_VIEW, // We use page view as a generic event type for funnel tracking
-    {
-      userId,
-      funnelName,
-      stageName,
-      stageIndex,
-      totalStages,
-      conversionTime,
-      ...additionalMetadata
-    } as FunnelEventMetadata
+    metadata
   );
 }
 
@@ -110,17 +117,19 @@ export async function trackFunnelDropoff(
   userId: string,
   reason?: string
 ): Promise<string | null> {
+  const metadata: FunnelEventMetadata = {
+    userId,
+    funnelName,
+    stageName,
+    stageIndex,
+    totalStages,
+    dropoff: true,
+    reason
+  };
+  
   return trackRewardEvent(
     RewardEventType.REWARDS_PAGE_VIEW, // We use page view as a generic event type for funnel tracking
-    {
-      userId,
-      funnelName,
-      stageName,
-      stageIndex,
-      totalStages,
-      dropoff: true,
-      reason,
-    } as FunnelEventMetadata
+    metadata
   );
 }
 
@@ -135,16 +144,18 @@ export async function trackPointsEarned(
   category?: string,
   establishmentId?: string
 ): Promise<string | null> {
+  const metadata: PointsEventMetadata = {
+    userId,
+    points,
+    reason,
+    balance,
+    category,
+    establishmentId
+  };
+  
   return trackRewardEvent(
     RewardEventType.POINTS_EARNED,
-    {
-      userId,
-      points,
-      reason,
-      balance,
-      category,
-      establishmentId
-    } as PointsEventMetadata
+    metadata
   );
 }
 
@@ -160,17 +171,19 @@ export async function trackPointsRedeemed(
   balance: number,
   establishmentId?: string
 ): Promise<string | null> {
+  const metadata: PointsEventMetadata & RewardEventMetadata = {
+    userId,
+    points,
+    reason,
+    balance,
+    rewardId,
+    rewardName,
+    establishmentId
+  };
+  
   return trackRewardEvent(
     RewardEventType.POINTS_REDEEMED,
-    {
-      userId,
-      points,
-      reason,
-      balance,
-      rewardId,
-      rewardName,
-      establishmentId
-    } as PointsEventMetadata & RewardEventMetadata
+    metadata
   );
 }
 
@@ -186,17 +199,19 @@ export async function trackTierChanged(
   pointsToNextTier?: number,
   establishmentId?: string
 ): Promise<string | null> {
+  const metadata: TierEventMetadata = {
+    userId,
+    fromTierId,
+    fromTierName,
+    toTierId,
+    toTierName,
+    pointsToNextTier,
+    establishmentId
+  };
+  
   return trackRewardEvent(
     RewardEventType.TIER_CHANGED,
-    {
-      userId,
-      fromTierId,
-      fromTierName,
-      toTierId,
-      toTierName,
-      pointsToNextTier,
-      establishmentId
-    } as TierEventMetadata
+    metadata
   );
 }
 
@@ -210,15 +225,17 @@ export async function trackAchievementCompleted(
   category?: string,
   pointsAwarded?: number
 ): Promise<string | null> {
+  const metadata: AchievementEventMetadata = {
+    userId,
+    achievementId,
+    achievementName,
+    category,
+    pointsAwarded
+  };
+  
   return trackRewardEvent(
     RewardEventType.ACHIEVEMENT_COMPLETED,
-    {
-      userId,
-      achievementId,
-      achievementName,
-      category,
-      pointsAwarded
-    } as AchievementEventMetadata
+    metadata
   );
 }
 
@@ -233,15 +250,17 @@ export async function trackAchievementProgress(
   threshold: number,
   category?: string
 ): Promise<string | null> {
+  const metadata: AchievementEventMetadata = {
+    userId,
+    achievementId,
+    achievementName,
+    progress,
+    threshold,
+    category
+  };
+  
   return trackRewardEvent(
     RewardEventType.ACHIEVEMENT_PROGRESS,
-    {
-      userId,
-      achievementId,
-      achievementName,
-      progress,
-      threshold,
-      category
-    } as AchievementEventMetadata
+    metadata
   );
 }

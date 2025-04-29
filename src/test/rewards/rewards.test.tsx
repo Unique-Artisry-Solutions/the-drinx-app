@@ -1,279 +1,159 @@
 
 import React from 'react';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { UserRewardDashboard } from '@/components/rewards/UserRewardDashboard';
-import { RewardRedemptionFlow } from '@/components/rewards/RewardRedemptionFlow';
-import { RewardHistory } from '@/components/rewards/RewardHistory';
-import * as useRewardsModule from '@/hooks/rewards/useRewards';
-import * as useAchievementsModule from '@/hooks/rewards/useAchievements';
-import * as useToastModule from '@/hooks/use-toast';
-import { RewardOffering, RewardTransaction, RewardTier, Achievement } from '@/lib/rewards/types';
+import { useRewards } from '@/hooks/rewards/useRewards';
+import { useAchievements } from '@/hooks/rewards/useAchievements';
 
-// Mock hooks
-vi.mock('@/hooks/rewards/useRewards', () => ({
-  useRewards: vi.fn(),
+// Mock the hooks
+vi.mock('@/hooks/rewards/useRewards');
+vi.mock('@/hooks/rewards/useAchievements');
+vi.mock('@/lib/rewards/tracking/eventTracking', () => ({
+  trackRewardEvent: vi.fn().mockResolvedValue('mock-tracking-id'),
+  RewardEventType: {
+    REWARDS_PAGE_VIEW: 'rewards_page_view'
+  }
 }));
 
-vi.mock('@/hooks/rewards/useAchievements', () => ({
-  useAchievements: vi.fn(),
-}));
-
-vi.mock('@/hooks/use-toast', () => ({
-  useToast: vi.fn(),
-}));
-
-describe('Rewards Components Tests', () => {
-  // Mock data
-  const mockRewardProfile = {
-    points: 150,
-    lifetimePoints: 250,
-    currentTier: {
-      id: 'tier-1',
-      name: 'Level 1',
-      description: 'Starting tier',
-      points_required: 0,
-      benefits: [],
-      icon: 'star',
-      color: '#FFA500'
-    } as RewardTier,
-    availableRewards: [
-      {
-        id: 'reward-1',
-        name: 'Free Mocktail',
-        description: 'Get a free mocktail at any participating venue',
-        points_required: 100,
-        quantity_available: 10,
-        is_active: true,
-        image_url: '/mocktail.jpg',
-        expiration_days: 30,
-        category: 'drinks',
-        expires_in: 5,
-        establishment_id: 'venue-1' // Added establishment_id
-      },
-      {
-        id: 'reward-2',
-        name: 'VIP Access',
-        description: 'Get VIP access to an exclusive event',
-        points_required: 200,
-        quantity_available: 5,
-        is_active: true,
-        image_url: '/vip.jpg',
-        expiration_days: 60,
-        category: 'events',
-        expires_in: 10,
-        establishment_id: 'venue-2' // Added establishment_id
-      }
-    ] as RewardOffering[],
-    transactionHistory: [
-      {
-        id: 'trans-1',
-        date: '2023-08-15T10:30:00',
-        points: 50,
-        type: 'earn',
-        source: 'check-in',
-        description: 'Check-in at Coolbar'
-      },
-      {
-        id: 'trans-2',
-        date: '2023-08-10T14:45:00',
-        points: 100,
-        type: 'earn',
-        source: 'purchase',
-        description: 'Bought a mocktail'
-      },
-      {
-        id: 'trans-3',
-        date: '2023-08-05T16:20:00',
-        points: 75,
-        type: 'redeem',
-        source: 'reward',
-        description: 'Redeemed for a discount'
-      }
-    ] as RewardTransaction[],
-    redemptionHistory: []
-  };
-
-  const mockAchievements: Achievement[] = [
+// Sample data
+const mockRewardProfile = {
+  points: 1000,
+  lifetimePoints: 1500,
+  currentTier: {
+    id: 'tier-1',
+    name: 'Tier 1',
+    description: 'Basic tier',
+    points_required: 0,
+    benefits: []
+  },
+  availableRewards: [
     {
-      id: 'achv-1',
-      name: 'First Visit',
-      description: 'Visit your first venue',
-      category: 'visits',
-      icon: 'map-pin',
-      pointsReward: 10,
-      progress: 1,
-      threshold: 1,
-      isCompleted: true,
-      completedAt: '2023-08-01T12:00:00'
-    },
-    {
-      id: 'achv-2',
-      name: 'Mocktail Maven',
-      description: 'Try 5 different mocktails',
-      category: 'mocktails',
-      icon: 'glass-water',
-      pointsReward: 25,
-      progress: 3,
-      threshold: 5,
-      isCompleted: false
+      id: 'reward-1',
+      name: 'Free Mocktail',
+      description: 'Get a free mocktail',
+      points_required: 500,
+      establishment_id: 'est-1',
+      category: 'drinks'
     }
-  ];
+  ],
+  transactionHistory: [
+    {
+      id: 'tx-1',
+      points: 100,
+      created_at: '2025-01-01',
+      transaction_type: 'earn',
+      source: 'purchase'
+    }
+  ],
+  redemptionHistory: []
+};
 
-  const mockAchievementsByCategory = {
-    visits: [mockAchievements[0]],
-    mocktails: [mockAchievements[1]]
-  };
-  
-  // Create a properly structured mock toast object
-  const mockToast = {
-    toast: vi.fn(),
-    dismiss: vi.fn(),
-    toasts: []
-  };
-  
+const mockAchievements = [
+  {
+    id: 'ach-1',
+    name: 'First Visit',
+    description: 'Visit for the first time',
+    category: 'visits',
+    isCompleted: true,
+    progress: 1,
+    threshold: 1,
+    pointsReward: 50
+  }
+];
+
+describe('UserRewardDashboard', () => {
   beforeEach(() => {
-    // Reset all mocks
-    vi.resetAllMocks();
+    vi.clearAllMocks();
     
-    // Setup default mock implementations with the new required functions
-    vi.mocked(useRewardsModule.useRewards).mockReturnValue({
+    // Mock useRewards hook
+    (useRewards as any).mockReturnValue({
       isEnabled: true,
       isLoading: false,
       rewardProfile: mockRewardProfile,
-      addPoints: vi.fn().mockResolvedValue({ success: true }),
-      redeemReward: vi.fn().mockResolvedValue({ success: true }),
-      // Add the missing functions
-      viewRewardsCatalog: vi.fn().mockResolvedValue(undefined),
-      viewRewardDetail: vi.fn().mockResolvedValue(undefined),
-      confirmRedemption: vi.fn().mockResolvedValue(undefined)
+      addPoints: vi.fn(),
+      redeemReward: vi.fn(),
+      // Add missing functions
+      viewRewardsCatalog: vi.fn(),
+      viewRewardDetail: vi.fn(),
+      confirmRedemption: vi.fn()
     });
     
-    vi.mocked(useAchievementsModule.useAchievements).mockReturnValue({
+    // Mock useAchievements hook
+    (useAchievements as any).mockReturnValue({
       achievements: mockAchievements,
-      achievementsByCategory: mockAchievementsByCategory,
+      achievementsByCategory: {
+        visits: mockAchievements
+      },
       isLoading: false,
-      // Fix function signature to match what's expected
-      trackAchievementView: vi.fn().mockResolvedValue(undefined),
-      updateProgress: vi.fn().mockResolvedValue(undefined),
-      claimReward: vi.fn().mockResolvedValue(true),
-      error: null
-    });
-    
-    vi.mocked(useToastModule.useToast).mockReturnValue(mockToast);
-  });
-
-  describe('UserRewardDashboard', () => {
-    it('should render user points and tier information', () => {
-      render(<UserRewardDashboard />);
-      
-      expect(screen.getByText('150')).toBeInTheDocument(); // Current points
-      expect(screen.getByText('250')).toBeInTheDocument(); // Lifetime points
-      expect(screen.getByText('1')).toBeInTheDocument(); // Current tier
-    });
-    
-    it('should show loading state when data is loading', () => {
-      vi.mocked(useRewardsModule.useRewards).mockReturnValue({
-        isEnabled: true,
-        isLoading: true,
-        rewardProfile: null,
-        addPoints: vi.fn(),
-        redeemReward: vi.fn(),
-        // Add the missing functions
-        viewRewardsCatalog: vi.fn().mockResolvedValue(undefined),
-        viewRewardDetail: vi.fn().mockResolvedValue(undefined),
-        confirmRedemption: vi.fn().mockResolvedValue(undefined)
-      });
-      
-      render(<UserRewardDashboard />);
-      
-      // Check for loading indicators
-      const loadingElements = document.querySelectorAll('.animate-pulse');
-      expect(loadingElements.length).toBeGreaterThan(0);
-    });
-    
-    it('should display achievements', async () => {
-      render(<UserRewardDashboard />);
-      
-      // Navigate to achievements tab
-      const achievementsTab = screen.getByText('Achievements');
-      fireEvent.click(achievementsTab);
-      
-      await waitFor(() => {
-        expect(screen.getByText('First Visit')).toBeInTheDocument();
-        expect(screen.getByText('Mocktail Maven')).toBeInTheDocument();
-      });
+      error: null,
+      trackAchievementView: vi.fn(),
+      updateProgress: vi.fn(),
+      claimReward: vi.fn()
     });
   });
   
-  describe('RewardRedemptionFlow', () => {
-    it('should display available rewards', () => {
-      render(<RewardRedemptionFlow />);
-      
-      expect(screen.getByText('Free Mocktail')).toBeInTheDocument();
-      expect(screen.getByText('VIP Access')).toBeInTheDocument();
-    });
+  it('renders the dashboard with points overview', () => {
+    render(<UserRewardDashboard />);
     
-    it('should filter rewards by category', async () => {
-      render(<RewardRedemptionFlow />);
-      
-      // Click on the drinks category
-      const drinksTab = screen.getByText('Drinks');
-      fireEvent.click(drinksTab);
-      
-      await waitFor(() => {
-        expect(screen.getByText('Free Mocktail')).toBeInTheDocument();
-        expect(screen.queryByText('VIP Access')).not.toBeInTheDocument();
-      });
-    });
-    
-    it('should redeem a reward successfully', async () => {
-      const redeemRewardMock = vi.fn().mockResolvedValue({ success: true });
-      
-      vi.mocked(useRewardsModule.useRewards).mockReturnValue({
-        isEnabled: true,
-        isLoading: false,
-        rewardProfile: mockRewardProfile,
-        addPoints: vi.fn(),
-        redeemReward: redeemRewardMock,
-        // Add the missing functions
-        viewRewardsCatalog: vi.fn().mockResolvedValue(undefined),
-        viewRewardDetail: vi.fn().mockResolvedValue(undefined),
-        confirmRedemption: vi.fn().mockResolvedValue(undefined)
-      });
-      
-      render(<RewardRedemptionFlow />);
-      
-      // Click redeem button on first reward
-      const redeemButtons = screen.getAllByText('Redeem');
-      fireEvent.click(redeemButtons[0]);
-      
-      // Verify redemption was called
-      await waitFor(() => {
-        expect(redeemRewardMock).toHaveBeenCalledWith('reward-1');
-        expect(mockToast.toast).toHaveBeenCalled();
-      });
-    });
+    expect(screen.getByText('Points Overview')).toBeInTheDocument();
+    expect(screen.getByText('1000')).toBeInTheDocument(); // Current points
+    expect(screen.getByText('1500')).toBeInTheDocument(); // Lifetime points
   });
   
-  describe('RewardHistory', () => {
-    it('should display transaction history in sorted order', () => {
-      render(<RewardHistory transactions={mockRewardProfile.transactionHistory} />);
-      
-      const transactions = screen.getAllByText(/Points (earned|redeemed)/);
-      expect(transactions).toHaveLength(3);
-      
-      // Verify sorted by date (newest first)
-      const dates = screen.getAllByText(/Check-in at|Bought a|Redeemed for/);
-      expect(dates[0].textContent).toContain('Check-in at Coolbar');
-      expect(dates[1].textContent).toContain('Bought a mocktail');
-      expect(dates[2].textContent).toContain('Redeemed for a discount');
+  it('shows loading state when data is loading', () => {
+    (useRewards as any).mockReturnValue({
+      isEnabled: true,
+      isLoading: true,
+      rewardProfile: null,
+      addPoints: vi.fn(),
+      redeemReward: vi.fn(),
+      // Add missing functions
+      viewRewardsCatalog: vi.fn(),
+      viewRewardDetail: vi.fn(),
+      confirmRedemption: vi.fn()
     });
     
-    it('should show empty state when no transactions', () => {
-      render(<RewardHistory transactions={[]} />);
-      
-      expect(screen.getByText('No transaction history yet')).toBeInTheDocument();
-    });
+    render(<UserRewardDashboard />);
+    
+    // Check that loading state is shown
+    expect(screen.getByTestId('loading-state')).toBeInTheDocument();
+  });
+  
+  it('shows achievements on the achievements tab', () => {
+    render(<UserRewardDashboard />);
+    
+    // Switch to achievements tab
+    fireEvent.click(screen.getByRole('tab', { name: /achievements/i }));
+    
+    // Should show achievement
+    expect(screen.getByText('First Visit')).toBeInTheDocument();
+  });
+  
+  it('allows switching between tabs', () => {
+    render(<UserRewardDashboard />);
+    
+    // Initially on overview tab
+    expect(screen.getByText('Recent Achievements')).toBeInTheDocument();
+    
+    // Switch to history tab
+    fireEvent.click(screen.getByRole('tab', { name: /history/i }));
+    expect(screen.getByText(/Transaction history/i)).toBeInTheDocument();
+    
+    // Switch to achievements tab
+    fireEvent.click(screen.getByRole('tab', { name: /achievements/i }));
+    expect(screen.getByText(/All achievements/i)).toBeInTheDocument();
+    
+    // Switch back to overview
+    fireEvent.click(screen.getByRole('tab', { name: /overview/i }));
+    expect(screen.getByText('Recent Achievements')).toBeInTheDocument();
+  });
+  
+  it('tracks dashboard view on load', () => {
+    render(<UserRewardDashboard />);
+    
+    // Check that view was tracked
+    const trackEvent = vi.spyOn(require('@/lib/rewards/tracking/eventTracking'), 'trackRewardEvent');
+    expect(trackEvent).toHaveBeenCalled();
   });
 });

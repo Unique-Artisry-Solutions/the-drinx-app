@@ -1,5 +1,5 @@
 
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Interface for cohort definition
@@ -61,9 +61,7 @@ export async function getCohortRetention(
     const actualStartDate = startDate || new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
     const actualEndDate = endDate || new Date();
     
-    // Since the specific tables don't exist yet, we'll generate mock data for now
-    // In a real implementation, this would query actual cohort data from the database
-    
+    // Generate mock data for now instead of trying to query non-existent tables
     const mockCohorts: CohortRetentionData[] = [];
     
     // Generate cohort data for each week in the date range
@@ -117,16 +115,14 @@ export async function getCohortActivity(
     const actualStartDate = startDate || new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
     const actualEndDate = endDate || new Date();
     
-    // Since the specific tables don't exist yet, we'll generate mock data for now
-    // In a real implementation, this would query actual cohort data from the database
-    
     // Get actual transaction data that we can use for some metrics
-    const { data: transactionData } = await supabase
+    const { data: transactionData, error } = await supabase
       .from('reward_transactions')
       .select('created_at, points, transaction_type')
       .gte('created_at', actualStartDate.toISOString())
       .lte('created_at', actualEndDate.toISOString());
     
+    // Generate mock cohort activity data
     const mockCohorts: CohortActivityData[] = [];
     
     // Generate cohort data for each week in the date range
