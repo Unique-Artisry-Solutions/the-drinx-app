@@ -18,6 +18,16 @@ interface BulkOperation {
   metadata?: Record<string, any>;
 }
 
+// Extended response type to match what the API actually returns
+interface ExtendedRewardOperationResponse {
+  success: boolean;
+  message?: string;
+  error?: string;
+  userId?: string;
+  pointsChanged?: number;
+  newBalance?: number;
+}
+
 export function BulkOperationsInterface() {
   const { toast } = useToast();
   const [operationType, setOperationType] = useState('add');
@@ -87,14 +97,14 @@ export function BulkOperationsInterface() {
           points: operationType === 'subtract' ? -Math.abs(op.points) : Math.abs(op.points)
         }));
         
-        const apiResults = await rewardsApi.batchUpdatePoints(modifiedOperations);
+        const apiResults = await rewardsApi.batchUpdatePoints(modifiedOperations) as ExtendedRewardOperationResponse[];
         
         setResults(apiResults.map(result => ({
-          userId: result.userId.toString(),
+          userId: result.userId?.toString() || 'unknown',
           success: result.success,
           message: result.success 
-            ? `Points ${operationType === 'add' ? 'added' : 'subtracted'}: ${Math.abs(result.points_change)}. New balance: ${result.new_balance}` 
-            : `Error: ${result.error}`
+            ? `Points ${operationType === 'add' ? 'added' : 'subtracted'}: ${Math.abs(result.pointsChanged || 0)}. New balance: ${result.newBalance || 0}` 
+            : `Error: ${result.error || 'Unknown error'}`
         })));
         
         toast({
@@ -151,7 +161,7 @@ export function BulkOperationsInterface() {
             </div>
           </div>
 
-          <Alert variant="outline" className="bg-muted/50">
+          <Alert variant="default" className="bg-muted/50">
             <Info className="h-4 w-4" />
             <AlertDescription>
               CSV format: <code>userId,points,source,metadata</code><br/>

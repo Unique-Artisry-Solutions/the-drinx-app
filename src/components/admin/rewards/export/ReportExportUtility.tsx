@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DatePicker } from "@/components/ui/date-picker";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, FileExport, FileDown, Calendar, Info } from "lucide-react";
+import { Loader2, FileText, FileDown, Calendar, Info } from "lucide-react";
 import { format } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
@@ -174,7 +174,7 @@ export function ReportExportUtility() {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2">
-          <FileExport className="h-5 w-5 text-primary" />
+          <FileText className="h-5 w-5 text-primary" />
           Report Export Utility
         </CardTitle>
       </CardHeader>
@@ -223,7 +223,7 @@ export function ReportExportUtility() {
               Generate Preview
             </Button>
             <Button 
-              variant="outline" 
+              variant="default" 
               onClick={handleExport} 
               disabled={isLoading || preview.length === 0}
             >
@@ -262,7 +262,7 @@ export function ReportExportUtility() {
                 </div>
               </div>
 
-              <Alert variant="outline" className="bg-muted/50">
+              <Alert variant="default" className="bg-muted/50">
                 <Info className="h-4 w-4" />
                 <AlertDescription>
                   This is a preview showing up to 5 records. Export the full report to get all data.

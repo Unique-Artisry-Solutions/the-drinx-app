@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Plus, MoreHorizontal, Trash, Edit, Save, Settings } from "lucide-react";
+import { Loader2, Plus, MoreHorizontal, Trash, Edit, Save, Settings, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 
@@ -21,6 +21,7 @@ interface RewardRule {
   conditions: any;
   actions: any;
   is_active: boolean;
+  establishment_id: string; // Added this required field
 }
 
 export function RewardRulesManagement() {
@@ -35,7 +36,8 @@ export function RewardRulesManagement() {
     points: 0,
     conditions: {},
     actions: {},
-    is_active: true
+    is_active: true,
+    establishment_id: '00000000-0000-0000-0000-000000000000' // Default establishment ID
   });
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -90,7 +92,8 @@ export function RewardRulesManagement() {
             points: currentRule.points,
             conditions: currentRule.conditions,
             actions: currentRule.actions,
-            is_active: currentRule.is_active
+            is_active: currentRule.is_active,
+            establishment_id: currentRule.establishment_id
           })
           .eq('id', currentRule.id)
           .select();
@@ -107,7 +110,8 @@ export function RewardRulesManagement() {
             points: currentRule.points,
             conditions: currentRule.conditions,
             actions: currentRule.actions,
-            is_active: currentRule.is_active
+            is_active: currentRule.is_active,
+            establishment_id: currentRule.establishment_id
           })
           .select();
           
@@ -192,7 +196,8 @@ export function RewardRulesManagement() {
       points: 0,
       conditions: {},
       actions: {},
-      is_active: true
+      is_active: true,
+      establishment_id: '00000000-0000-0000-0000-000000000000'
     });
     setIsEditing(false);
     setIsDialogOpen(true);
