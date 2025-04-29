@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { getUserPreferences, updateUserPreference } from '@/lib/rewards/api/preferences';
+import { rewardsApi } from '@/lib/rewards/api';
 import { preferencesSchema, type PreferencesFormData } from '../types';
 
 export const usePreferencesForm = (userId: string) => {
@@ -25,15 +25,22 @@ export const usePreferencesForm = (userId: string) => {
 
   const { data: preferences, isLoading, error: fetchError } = useQuery({
     queryKey: ['rewardPreferences', userId],
-    queryFn: () => getUserPreferences(userId),
+    queryFn: async () => {
+      // Get all preference keys we need
+      const notificationSettings = await rewardsApi.getUserPreference(userId, 'notification_settings');
+      const displaySettings = await rewardsApi.getUserPreference(userId, 'display_settings');
+      
+      // Return as an array of preferences
+      return [notificationSettings, displaySettings].filter(Boolean);
+    },
     retry: 2
   });
 
   const updateMutation = useMutation({
     mutationFn: async (data: PreferencesFormData) => {
       const updatePromises = [
-        updateUserPreference(userId, 'notification_settings', JSON.stringify(data.notification_settings)),
-        updateUserPreference(userId, 'display_settings', JSON.stringify(data.display_settings))
+        rewardsApi.saveUserPreference(userId, 'notification_settings', JSON.stringify(data.notification_settings)),
+        rewardsApi.saveUserPreference(userId, 'display_settings', JSON.stringify(data.display_settings))
       ];
       await Promise.all(updatePromises);
     },
@@ -58,14 +65,14 @@ export const usePreferencesForm = (userId: string) => {
       try {
         const formattedPreferences = preferences.reduce((acc, pref) => {
           try {
-            if (pref.preference_key === 'notification_settings') {
+            if (pref && pref.preference_key === 'notification_settings') {
               acc.notification_settings = JSON.parse(pref.preference_value);
-            } else if (pref.preference_key === 'display_settings') {
+            } else if (pref && pref.preference_key === 'display_settings') {
               acc.display_settings = JSON.parse(pref.preference_value);
             }
           } catch (parseError) {
-            console.error(`Error parsing ${pref.preference_key}:`, parseError);
-            toast.error(`Invalid preference format for ${pref.preference_key}`);
+            console.error(`Error parsing ${pref?.preference_key}:`, parseError);
+            toast.error(`Invalid preference format for ${pref?.preference_key}`);
           }
           return acc;
         }, {} as PreferencesFormData);
