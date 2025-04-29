@@ -9,6 +9,12 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./src/test/setup.ts'],
+    coverage: {
+      reporter: ['text', 'json', 'html'],
+      exclude: ['node_modules/', 'src/test/setup.ts']
+    },
+    include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
+    testTimeout: 10000, // Increase timeout for performance tests
   },
   resolve: {
     alias: {
