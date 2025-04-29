@@ -1,116 +1,89 @@
 
+import { PostgrestFilterBuilder } from '@supabase/postgrest-js';
 import { vi } from 'vitest';
 
-/**
- * Creates a mock query builder for Supabase tests
- */
-export function createMockQueryBuilder() {
+// Mock query builder for Supabase testing
+export function createMockQueryBuilder<T>(mockData: T[]): PostgrestFilterBuilder<any, any, T[]> {
   return {
-    select: vi.fn().mockReturnThis(),
-    insert: vi.fn().mockReturnThis(),
-    update: vi.fn().mockReturnThis(),
-    upsert: vi.fn().mockReturnThis(),
-    delete: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
-    neq: vi.fn().mockReturnThis(),
-    gt: vi.fn().mockReturnThis(),
-    gte: vi.fn().mockReturnThis(),
-    lt: vi.fn().mockReturnThis(),
-    lte: vi.fn().mockReturnThis(),
-    like: vi.fn().mockReturnThis(),
-    ilike: vi.fn().mockReturnThis(),
-    is: vi.fn().mockReturnThis(),
-    in: vi.fn().mockReturnThis(),
-    contains: vi.fn().mockReturnThis(),
-    containedBy: vi.fn().mockReturnThis(),
-    range: vi.fn().mockReturnThis(),
-    overlaps: vi.fn().mockReturnThis(),
-    textSearch: vi.fn().mockReturnThis(),
-    filter: vi.fn().mockReturnThis(),
-    order: vi.fn().mockReturnThis(),
-    limit: vi.fn().mockReturnThis(),
-    offset: vi.fn().mockReturnThis(),
-    single: vi.fn().mockReturnThis(),
-    maybeSingle: vi.fn().mockReturnThis(),
-    csv: vi.fn().mockReturnThis(),
-    then: vi.fn().mockImplementation(callback => Promise.resolve().then(() => callback({ data: [], error: null }))),
-    catch: vi.fn(),
-    finally: vi.fn(),
-  };
+    eq: () => createMockQueryBuilder(mockData),
+    neq: () => createMockQueryBuilder(mockData),
+    gt: () => createMockQueryBuilder(mockData),
+    lt: () => createMockQueryBuilder(mockData),
+    gte: () => createMockQueryBuilder(mockData),
+    lte: () => createMockQueryBuilder(mockData),
+    like: () => createMockQueryBuilder(mockData),
+    ilike: () => createMockQueryBuilder(mockData),
+    is: () => createMockQueryBuilder(mockData),
+    in: () => createMockQueryBuilder(mockData),
+    contains: () => createMockQueryBuilder(mockData),
+    containedBy: () => createMockQueryBuilder(mockData),
+    rangeGt: () => createMockQueryBuilder(mockData),
+    rangeGte: () => createMockQueryBuilder(mockData),
+    rangeLt: () => createMockQueryBuilder(mockData),
+    rangeLte: () => createMockQueryBuilder(mockData),
+    rangeAdjacent: () => createMockQueryBuilder(mockData),
+    overlaps: () => createMockQueryBuilder(mockData),
+    textSearch: () => createMockQueryBuilder(mockData),
+    match: () => createMockQueryBuilder(mockData),
+    not: () => createMockQueryBuilder(mockData),
+    or: () => createMockQueryBuilder(mockData),
+    filter: () => createMockQueryBuilder(mockData),
+    order: () => createMockQueryBuilder(mockData),
+    limit: () => createMockQueryBuilder(mockData),
+    range: () => createMockQueryBuilder(mockData),
+    single: () => Promise.resolve({ data: mockData[0], error: null }),
+    maybeSingle: () => Promise.resolve({ data: mockData[0], error: null }),
+    then: (callback) => Promise.resolve(mockData).then(callback),
+    select: () => createMockQueryBuilder(mockData),
+    returns: () => createMockQueryBuilder(mockData),
+    csv: () => Promise.resolve({ data: null, error: null }),
+    abortSignal: () => createMockQueryBuilder(mockData),
+  } as unknown as PostgrestFilterBuilder<any, any, T[]>;
 }
 
-/**
- * Creates a mock for Supabase authentication
- */
-export function createMockAuth() {
+// Creates a mock Supabase client for testing
+export function createMockSupabaseClient(mockData = {}) {
   return {
-    signUp: vi.fn(),
-    signIn: vi.fn(),
-    signOut: vi.fn(),
-    session: null,
-    user: null,
-    onAuthStateChange: vi.fn(),
+    from: (table: string) => {
+      const tableData = mockData[table] || [];
+      return {
+        select: () => createMockQueryBuilder(tableData),
+        insert: (data: any) => Promise.resolve({ data, error: null }),
+        update: (data: any) => Promise.resolve({ data, error: null }),
+        delete: () => Promise.resolve({ data: null, error: null }),
+      };
+    },
+    rpc: (fn: string, params: any) => {
+      return Promise.resolve({ data: [], error: null });
+    },
+    auth: {
+      getUser: () => Promise.resolve({ data: { user: { id: 'test-user-id' } }, error: null }),
+      signOut: () => Promise.resolve({ error: null }),
+    },
+    storage: {
+      from: () => ({
+        upload: () => Promise.resolve({ data: { path: 'test-path' }, error: null }),
+        getPublicUrl: () => ({ data: { publicUrl: 'https://test-url.com' } }),
+      }),
+    },
   };
 }
 
-/**
- * Creates a mock for Supabase storage
- */
-export function createMockStorage() {
-  return {
-    from: vi.fn().mockReturnValue({
-      upload: vi.fn(),
-      download: vi.fn(),
-      getPublicUrl: vi.fn(),
-      list: vi.fn(),
-      remove: vi.fn(),
-    }),
+// Spy creation helper for Supabase methods
+export function createSupabaseSpy(mockData = {}) {
+  const mockClient = createMockSupabaseClient(mockData);
+  const spy = {
+    from: vi.fn().mockImplementation(mockClient.from),
+    rpc: vi.fn().mockImplementation(mockClient.rpc),
+    auth: {
+      ...mockClient.auth,
+      getUser: vi.fn().mockImplementation(mockClient.auth.getUser),
+      signOut: vi.fn().mockImplementation(mockClient.auth.signOut),
+    },
+    storage: {
+      from: vi.fn().mockImplementation(() => mockClient.storage.from()),
+    },
   };
-}
-
-/**
- * Helper to mock a successful database response
- * @param data The data to return
- */
-export function mockSuccessResponse(data: any) {
-  return { data, error: null };
-}
-
-/**
- * Helper to mock a failed database response
- * @param message Error message
- * @param code Optional error code
- */
-export function mockErrorResponse(message: string, code = 'unknown_error') {
-  return { 
-    data: null, 
-    error: { 
-      message, 
-      code,
-      details: '',
-      hint: ''
-    } 
-  };
-}
-
-/**
- * Creates a complete mock Supabase client for testing
- */
-export function createMockSupabase() {
-  return {
-    from: vi.fn(() => createMockQueryBuilder()),
-    rpc: vi.fn(),
-    auth: createMockAuth(),
-    storage: createMockStorage(),
-  };
-}
-
-/**
- * Helper to mock RLS policies for testing
- */
-export function mockRlsPolicies() {
-  return {
-    enableRls: vi.fn(),
-    disableRls: vi.fn(),
-  };
+  
+  return spy;
 }

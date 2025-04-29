@@ -1,3 +1,4 @@
+
 export interface RewardMetric {
   id: string;
   metric_date: string;
@@ -109,15 +110,15 @@ export interface RewardOffering {
   is_active: boolean;
   image_url?: string;
   expiration_days?: number;
-  category?: string;
-  expires_in?: number;
+  category?: string; // Added category property
+  expires_in?: number; // Added expires_in property
 }
 
 export interface RewardTransaction {
   id: string;
   date: string;
   points: number;
-  type: 'earn' | 'redeem';
+  type: 'earn' | 'redeem'; // Explicitly defined as union type
   source: string;
   description?: string;
 }
@@ -180,6 +181,12 @@ export interface AchievementProgressEvent {
   increment: number;
   userId: string;
   metadata?: Record<string, any>;
+}
+
+export interface ActivityResult {
+  completedAchievements: Achievement[];
+  pointsAwarded: number;
+  progress: Record<string, number>;
 }
 
 export function transformRewardTier(rawTier: any): RewardTier {
