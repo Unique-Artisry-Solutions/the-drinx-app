@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -46,7 +45,6 @@ export function ReportExportUtility() {
     try {
       let data = [];
       
-      // Fetch preview data based on report type
       switch (reportType) {
         case 'user_points':
           const { data: userPoints, error: userError } = await supabase
@@ -80,7 +78,6 @@ export function ReportExportUtility() {
           break;
           
         case 'tier_distribution':
-          // Simulate tier distribution data
           data = [
             { tier: 'Tier 1', user_count: 156, percentage: '62.4%' },
             { tier: 'Tier 2', user_count: 67, percentage: '26.8%' },
@@ -110,7 +107,6 @@ export function ReportExportUtility() {
   const handleExport = async () => {
     setIsLoading(true);
     try {
-      // Get full dataset based on report type and date range
       let data;
       let fileName;
       
@@ -125,18 +121,15 @@ export function ReportExportUtility() {
           fileName = `user_points_export_${format(new Date(), 'yyyyMMdd')}.csv`;
           break;
           
-        // Handle other report types similarly
         default:
-          data = preview; // Use preview data as a fallback
+          data = preview;
           fileName = `${reportType}_export_${format(new Date(), 'yyyyMMdd')}.csv`;
       }
       
-      // Convert data to CSV
       const headers = Object.keys(data[0]).join(',');
       const rows = data.map(row => Object.values(row).join(','));
       const csvContent = [headers, ...rows].join('\n');
       
-      // Create and trigger download
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -146,7 +139,6 @@ export function ReportExportUtility() {
       link.click();
       document.body.removeChild(link);
       
-      // Add to recent exports
       setRecentExports(prev => [{
         id: `export-${Date.now()}`,
         type: reportTypes.find(t => t.value === reportType)?.label || reportType,
@@ -199,14 +191,14 @@ export function ReportExportUtility() {
               <label className="block text-sm font-medium mb-2">Date Range</label>
               <div className="flex gap-2 items-center">
                 <DatePicker
-                  selected={dateRange.from}
-                  onSelect={(date) => setDateRange(prev => ({ ...prev, from: date }))}
+                  date={dateRange.from}
+                  setDate={(date) => setDateRange(prev => ({ ...prev, from: date }))}
                   disabled={isLoading}
                 />
                 <span className="text-sm font-medium">to</span>
                 <DatePicker
-                  selected={dateRange.to}
-                  onSelect={(date) => setDateRange(prev => ({ ...prev, to: date }))}
+                  date={dateRange.to}
+                  setDate={(date) => setDateRange(prev => ({ ...prev, to: date }))}
                   disabled={isLoading}
                 />
               </div>
