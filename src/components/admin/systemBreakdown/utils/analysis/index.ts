@@ -11,3 +11,5 @@ export { updateFeaturesDbStatus as analyzeDatabaseStatus } from './databaseStatu
 export { analyzeSwigCircuitFeatures as analyzeSwigCircuitSystem } from './swigCircuitAnalyzer';
 // Re-export the analyzePromoterSystem function
 export { analyzePromoterSystem } from './promoterSystemAnalyzer';
+// Re-export the analyzeRewardSystem function
+export { analyzeRewardSystem } from './rewardSystemAnalyzer';

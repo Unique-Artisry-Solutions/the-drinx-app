@@ -4,6 +4,7 @@ import {
   analyzeDatabaseStatus, 
   analyzeSwigCircuitSystem, 
   analyzePromoterSystem,
+  analyzeRewardSystem,
   updateFeaturesDbStatus as analyzeDbRequirements
 } from './analysis/index';
 import { groupFeaturesByCategory } from './featureStatistics';
@@ -66,7 +67,16 @@ export function analyzeAllFeatures(
   const swigCircuitResult = analyzeSwigCircuitSystem(updatedIndividualFeatures);
   updatedIndividualFeatures = swigCircuitResult;
   
-  // Step 4: Analyze promoter system
+  // Step 4: Analyze reward system
+  const rewardSystemResult = analyzeRewardSystem(updatedIndividualFeatures);
+  updatedIndividualFeatures = rewardSystemResult;
+  completedSteps.push({
+    name: 'Analyzed reward system implementation',
+    completed: true,
+    details: 'Updated reward program implementation status and database requirements'
+  });
+  
+  // Step 5: Analyze promoter system
   const promoterSystemResult = analyzePromoterSystem(updatedPromoterFeatures, completedSteps);
   updatedPromoterFeatures = promoterSystemResult.updatedFeatures;
   completedSteps.push(...promoterSystemResult.updatedSteps);

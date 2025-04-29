@@ -1,6 +1,7 @@
 
 import { FeatureItem, AnalysisStep } from '../../types';
 import { updateFeaturesDbStatus } from './databaseStatusUpdater';
+import { analyzeRewardSystem } from './rewardSystemAnalyzer';
 
 /**
  * Analyzes all features in the system to update their status based on database implementation
@@ -61,6 +62,9 @@ export function analyzeAllFeatures(
     { name: 'Swig circuit creation tables', completed: true },
     { name: 'Visit tracking system', completed: true },
     { name: 'Reward program foundation', completed: true },
+    { name: 'Reward points transaction system', completed: true },
+    { name: 'Reward redemption tracking', completed: true },
+    { name: 'Reward tier management system', completed: true },
     // Add promoter notification system implementation to the database tasks
     { name: 'Promoter notification system', completed: true },
     { name: 'Promoter messaging system', completed: true },
@@ -70,8 +74,11 @@ export function analyzeAllFeatures(
   // Apply our updated analysis to all feature sets
   const analyzedAdminFeatures = updateFeaturesDbStatus(updatedAdminFeatures);
   const analyzedEstablishmentFeatures = updateFeaturesDbStatus(updatedEstablishmentFeatures);
-  const analyzedIndividualFeatures = updateFeaturesDbStatus(updatedIndividualFeatures);
+  let analyzedIndividualFeatures = updateFeaturesDbStatus(updatedIndividualFeatures);
   const analyzedPromoterFeatures = updateFeaturesDbStatus(updatedPromoterFeatures); // Analyze promoter features too
+  
+  // Apply reward system analysis to individual features
+  analyzedIndividualFeatures = analyzeRewardSystem(analyzedIndividualFeatures);
   
   // Ensure all features have a valid databaseStatus
   const finalAdminFeatures = analyzedAdminFeatures.map(feature => ({

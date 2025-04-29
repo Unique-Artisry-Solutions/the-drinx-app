@@ -26,7 +26,7 @@ export const useAnalysisProcess = (
     setAnalyzing(true);
     setAnalysisProgress(0);
     
-    // Create initial database tasks array with updated promoter tasks
+    // Create initial database tasks array with reward system and promoter tasks
     const initialDatabaseTasks: AnalysisStep[] = [
       { name: 'Database schema verification', completed: false },
       { name: 'API endpoints validation', completed: false },
@@ -36,6 +36,8 @@ export const useAnalysisProcess = (
       { name: 'Storage bucket configuration', completed: false },
       { name: 'Database trigger functions verification', completed: false },
       { name: 'Frontend component implementation check', completed: false },
+      { name: 'Reward system implementation analysis', completed: false },
+      { name: 'Reward program data validation', completed: false },
       { name: 'Promoter notification triggers verification', completed: false },
       { name: 'Event management system validation', completed: false },
       { name: 'Notification delivery system check', completed: false }
