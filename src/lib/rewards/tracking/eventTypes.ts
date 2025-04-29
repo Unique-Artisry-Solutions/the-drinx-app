@@ -41,6 +41,20 @@ export interface BaseEventMetadata {
   source?: string; // Source of the event (web, mobile, etc.)
   establishmentId?: string;
   section?: string; // Added section property for UI component tracking
+  category?: string; // Added category for classification
+  // Fields for achievement tracking
+  achievementId?: string;
+  achievementName?: string;
+  achievementCount?: number;
+  progress?: number;
+  threshold?: number;
+  // Fields for reward tracking
+  rewardId?: string;
+  rewardName?: string;
+  pointsRequired?: number;
+  // General fields
+  tier?: number; // User tier
+  points?: number; // Points balance
 }
 
 /**

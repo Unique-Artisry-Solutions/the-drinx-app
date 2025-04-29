@@ -48,7 +48,8 @@ describe('Rewards Components Tests', () => {
         image_url: '/mocktail.jpg',
         expiration_days: 30,
         category: 'drinks',
-        expires_in: 5
+        expires_in: 5,
+        establishment_id: 'venue-1' // Added establishment_id
       },
       {
         id: 'reward-2',
@@ -60,7 +61,8 @@ describe('Rewards Components Tests', () => {
         image_url: '/vip.jpg',
         expiration_days: 60,
         category: 'events',
-        expires_in: 10
+        expires_in: 10,
+        establishment_id: 'venue-2' // Added establishment_id
       }
     ] as RewardOffering[],
     transactionHistory: [
@@ -134,20 +136,28 @@ describe('Rewards Components Tests', () => {
     // Reset all mocks
     vi.resetAllMocks();
     
-    // Setup default mock implementations
+    // Setup default mock implementations with the new required functions
     vi.mocked(useRewardsModule.useRewards).mockReturnValue({
       isEnabled: true,
       isLoading: false,
       rewardProfile: mockRewardProfile,
       addPoints: vi.fn().mockResolvedValue({ success: true }),
-      redeemReward: vi.fn().mockResolvedValue({ success: true })
+      redeemReward: vi.fn().mockResolvedValue({ success: true }),
+      // Add the missing functions
+      viewRewardsCatalog: vi.fn().mockResolvedValue(undefined),
+      viewRewardDetail: vi.fn().mockResolvedValue(undefined),
+      confirmRedemption: vi.fn().mockResolvedValue(undefined)
     });
     
     vi.mocked(useAchievementsModule.useAchievements).mockReturnValue({
       achievements: mockAchievements,
       achievementsByCategory: mockAchievementsByCategory,
       isLoading: false,
-      recordActivity: vi.fn().mockResolvedValue([])
+      // Fix function signature to match what's expected
+      trackAchievementView: vi.fn().mockResolvedValue(undefined),
+      updateProgress: vi.fn().mockResolvedValue(undefined),
+      claimReward: vi.fn().mockResolvedValue(true),
+      error: null
     });
     
     vi.mocked(useToastModule.useToast).mockReturnValue(mockToast);
@@ -168,7 +178,11 @@ describe('Rewards Components Tests', () => {
         isLoading: true,
         rewardProfile: null,
         addPoints: vi.fn(),
-        redeemReward: vi.fn()
+        redeemReward: vi.fn(),
+        // Add the missing functions
+        viewRewardsCatalog: vi.fn().mockResolvedValue(undefined),
+        viewRewardDetail: vi.fn().mockResolvedValue(undefined),
+        confirmRedemption: vi.fn().mockResolvedValue(undefined)
       });
       
       render(<UserRewardDashboard />);
@@ -221,7 +235,11 @@ describe('Rewards Components Tests', () => {
         isLoading: false,
         rewardProfile: mockRewardProfile,
         addPoints: vi.fn(),
-        redeemReward: redeemRewardMock
+        redeemReward: redeemRewardMock,
+        // Add the missing functions
+        viewRewardsCatalog: vi.fn().mockResolvedValue(undefined),
+        viewRewardDetail: vi.fn().mockResolvedValue(undefined),
+        confirmRedemption: vi.fn().mockResolvedValue(undefined)
       });
       
       render(<RewardRedemptionFlow />);
