@@ -1,4 +1,3 @@
-
 export interface RewardMetric {
   id: string;
   metric_date: string;
@@ -14,7 +13,7 @@ export interface UserRewardPreference {
   id: string;
   user_id: string;
   preference_key: string;
-  preference_value: Record<string, any>;
+  preference_value: string;
   created_at: string;
   updated_at: string;
 }

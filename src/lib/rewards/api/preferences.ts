@@ -31,20 +31,25 @@ export async function getUserPreference(
  * Save a user preference
  * @param userId User ID
  * @param preferenceKey The preference key
- * @param preferenceValue The preference value
+ * @param preferenceValue The preference value - can be object or string (will be stringified if object)
  * @returns Success status
  */
 export async function saveUserPreference(
   userId: string,
   preferenceKey: string,
-  preferenceValue: any
+  preferenceValue: object | string
 ): Promise<boolean> {
+  // Ensure preferenceValue is stringified if it's an object
+  const valueToSave = typeof preferenceValue === 'string' 
+    ? preferenceValue 
+    : JSON.stringify(preferenceValue);
+
   const { error } = await supabase
     .from('user_reward_preferences')
     .upsert({
       user_id: userId,
       preference_key: preferenceKey,
-      preference_value: preferenceValue,
+      preference_value: valueToSave,
       updated_at: new Date().toISOString()
     });
 

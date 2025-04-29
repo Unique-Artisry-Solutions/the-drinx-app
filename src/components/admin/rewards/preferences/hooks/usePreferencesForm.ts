@@ -39,8 +39,8 @@ export const usePreferencesForm = (userId: string) => {
   const updateMutation = useMutation({
     mutationFn: async (data: PreferencesFormData) => {
       const updatePromises = [
-        rewardsApi.saveUserPreference(userId, 'notification_settings', JSON.stringify(data.notification_settings)),
-        rewardsApi.saveUserPreference(userId, 'display_settings', JSON.stringify(data.display_settings))
+        rewardsApi.saveUserPreference(userId, 'notification_settings', data.notification_settings),
+        rewardsApi.saveUserPreference(userId, 'display_settings', data.display_settings)
       ];
       await Promise.all(updatePromises);
     },
@@ -66,9 +66,13 @@ export const usePreferencesForm = (userId: string) => {
         const formattedPreferences = preferences.reduce((acc, pref) => {
           try {
             if (pref && pref.preference_key === 'notification_settings') {
-              acc.notification_settings = JSON.parse(pref.preference_value);
+              acc.notification_settings = typeof pref.preference_value === 'string' 
+                ? JSON.parse(pref.preference_value)
+                : pref.preference_value;
             } else if (pref && pref.preference_key === 'display_settings') {
-              acc.display_settings = JSON.parse(pref.preference_value);
+              acc.display_settings = typeof pref.preference_value === 'string' 
+                ? JSON.parse(pref.preference_value)
+                : pref.preference_value;
             }
           } catch (parseError) {
             console.error(`Error parsing ${pref?.preference_key}:`, parseError);
