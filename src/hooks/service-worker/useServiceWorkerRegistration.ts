@@ -4,6 +4,27 @@ import { useRegistrationError } from './useRegistrationError';
 import { useRegistrationProcess } from './useRegistrationProcess';
 import { debouncedToast } from '@/utils/debouncedToast';
 
+// Detect if we're running in the Lovable preview environment
+const isLovablePreview = () => {
+  try {
+    // Check if we're in an iframe (Lovable preview uses iframe)
+    const isInIframe = window !== window.parent;
+    
+    // Check for specific URL patterns or parameters of Lovable
+    const isLovableDomain = window.location.hostname.includes('lovable');
+    
+    // Check if window has specific Lovable properties
+    const hasLovableProps = 'LovablePreview' in window || 
+                           document.querySelector('meta[name="lovable-preview"]') !== null;
+    
+    return isInIframe || isLovableDomain || hasLovableProps;
+  } catch (e) {
+    // If accessing window.parent throws a security error, we're likely in a cross-origin iframe
+    console.log('Error detecting environment, assuming Lovable preview:', e);
+    return true;
+  }
+};
+
 export const useServiceWorkerRegistration = () => {
   const { registrationError, setRegistrationError } = useRegistrationError();
   const { registerWorker } = useRegistrationProcess();
@@ -23,6 +44,17 @@ export const useServiceWorkerRegistration = () => {
     try {
       setIsRegistering(true);
       setRegistrationError(null);
+      
+      // Check if we're in the Lovable preview
+      if (isLovablePreview()) {
+        console.log('Running in Lovable preview environment - bypassing service worker registration');
+        debouncedToast.info(
+          "Service Worker Bypassed", 
+          "Service worker registration skipped in Lovable preview environment",
+          5000
+        );
+        return null;
+      }
       
       // Clean up existing registrations first
       await cleanupExistingRegistrations();
@@ -96,6 +128,7 @@ export const useServiceWorkerRegistration = () => {
     registrationError,
     setRegistrationError,
     isRegistering,
-    cleanupExistingRegistrations
+    cleanupExistingRegistrations,
+    isLovablePreview: isLovablePreview()
   };
 };

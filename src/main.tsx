@@ -5,8 +5,35 @@ import AppProviders from './providers/AppProviders';
 import AppRoutes from './routes/AppRoutes';
 import './index.css'
 
+// Helper to detect Lovable preview environment
+const isLovablePreview = () => {
+  try {
+    // Check if we're in an iframe (Lovable preview uses iframe)
+    const isInIframe = window !== window.parent;
+    
+    // Check for specific URL patterns or parameters of Lovable
+    const isLovableDomain = window.location.hostname.includes('lovable');
+    
+    // Check if window has specific Lovable properties
+    const hasLovableProps = 'LovablePreview' in window || 
+                           document.querySelector('meta[name="lovable-preview"]') !== null;
+    
+    return isInIframe || isLovableDomain || hasLovableProps;
+  } catch (e) {
+    // If accessing window.parent throws a security error, we're likely in a cross-origin iframe
+    console.log('Error detecting environment, assuming Lovable preview:', e);
+    return true;
+  }
+};
+
 // Register service worker
 const registerServiceWorker = async () => {
+  // Skip service worker in Lovable preview
+  if (isLovablePreview()) {
+    console.log('Running in Lovable preview - skipping service worker registration');
+    return null;
+  }
+  
   if ('serviceWorker' in navigator) {
     try {
       const registration = await navigator.serviceWorker.register('/service-worker.js');
@@ -60,8 +87,8 @@ const getBasename = () => {
 const basename = getBasename();
 console.log('Using basename:', basename);
 
-// Register service worker before mounting the app
-registerServiceWorker().then(() => {
+// Render the app first, then register service worker
+const renderApp = () => {
   createRoot(document.getElementById("root")!).render(
     <BrowserRouter basename={basename}>
       <AppProviders>
@@ -69,15 +96,17 @@ registerServiceWorker().then(() => {
       </AppProviders>
     </BrowserRouter>
   );
-}).catch(error => {
-  console.error('Failed to register service worker, continuing without it:', error);
-  // Still render the app even if service worker registration fails
-  createRoot(document.getElementById("root")!).render(
-    <BrowserRouter basename={basename}>
-      <AppProviders>
-        <AppRoutes />
-      </AppProviders>
-    </BrowserRouter>
-  );
-});
+};
 
+// Render immediately for better performance in Lovable
+renderApp();
+
+// Register service worker in background after app is loaded
+if (!isLovablePreview()) {
+  // Delay service worker registration to prioritize app rendering
+  setTimeout(() => {
+    registerServiceWorker().catch(error => {
+      console.error('Failed to register service worker, continuing without it:', error);
+    });
+  }, 2000); // 2 second delay
+}
