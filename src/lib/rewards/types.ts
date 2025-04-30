@@ -22,14 +22,15 @@ export interface RewardAnalytics {
   totalPointsEarned: number;
   totalPointsRedeemed: number;
   pointsEconomyBalance: number;
+  transactionCount: number;
   redemptionRate: number;
+  sourcesBreakdown: Record<string, number>;
   timeSeriesData: Array<{
     date: string;
     pointsEarned: number;
     pointsRedeemed: number;
     netPoints: number;
   }>;
-  sourcesBreakdown: Record<string, number>;
 }
 
 export interface RewardSystemAnalyticsRow {
@@ -210,4 +211,59 @@ export function transformTransaction(rawTransaction: any): RewardTransaction {
     source: rawTransaction.source,
     description: rawTransaction.description
   };
+}
+
+export interface ProgramHealthMetrics {
+  activeMembers: number;
+  activeMembersChange: number;
+  pointsBalance: number;
+  pointsBalanceChange: number;
+  growthRate: number;
+  growthRateChange: number;
+  engagementRate: number;
+  engagementRateChange: number;
+}
+
+export interface GrowthTrendsData {
+  enrollment: Array<{
+    name: string;
+    newMembers: number;
+    returningMembers: number;
+    total: number;
+  }>;
+  activeRate: Array<{
+    name: string;
+    activeRate: number;
+    targetRate: number;
+  }>;
+}
+
+export interface MemberValueComparisonItem {
+  name: string;
+  memberValue: number;
+  nonMemberValue: number;
+}
+
+export interface RedemptionDistributionItem {
+  name: string;
+  value: number;
+}
+
+export interface BusinessImpactData {
+  revenueInfluenced: number;
+  revenueInfluencedChange: number;
+  memberValueDiff: number;
+  memberValueChange: number;
+  retentionImpact: number;
+  retentionImpactChange: number;
+  redemptionEfficiency: number;
+  redemptionEfficiencyChange: number;
+  memberValueComparison: MemberValueComparisonItem[];
+  redemptionDistribution: RedemptionDistributionItem[];
+}
+
+export interface ExecutiveSummaryData {
+  programHealth: ProgramHealthMetrics;
+  growthTrends: GrowthTrendsData;
+  businessImpact: BusinessImpactData;
 }

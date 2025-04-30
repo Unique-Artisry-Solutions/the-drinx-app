@@ -5,6 +5,7 @@ import { trackRewardEvent } from './tracking';
 import { getUserRewardProfile } from './profile';
 import { isRewardsEnabled, retryFailedOperation } from './system';
 import { getRewardAnalytics, processRewardAnalytics, createTimeSeriesData } from './analytics';
+import { getExecutiveSummary } from './executiveSummary';
 import { Achievement, AchievementProgressEvent, UserRewardPreference } from '../types';
 import { getUserAchievements, updateAchievementProgress } from '../achievements';
 import { getUserPreference, saveUserPreference } from './preferences';
@@ -26,6 +27,9 @@ export const rewardsApi = {
   processRewardAnalytics,
   getRewardAnalytics,
   createTimeSeriesData,
+  
+  // Executive Summary API
+  getExecutiveSummary,
   
   // Enhanced tracking methods
   eventTracking,

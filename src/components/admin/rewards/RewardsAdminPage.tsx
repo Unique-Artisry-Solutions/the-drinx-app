@@ -7,9 +7,10 @@ import { RewardRulesManagement } from './rules/RewardRulesManagement';
 import { ProgramStatisticsDashboard } from './analytics/ProgramStatisticsDashboard';
 import { ReportExportUtility } from './export/ReportExportUtility';
 import { RewardsAdminGuide } from './help/RewardsAdminGuide';
+import { ExecutiveSummaryTab } from './analytics/ExecutiveSummaryTab';
 
 export function RewardsAdminPage() {
-  const [activeTab, setActiveTab] = useState('config');
+  const [activeTab, setActiveTab] = useState('executive');
   
   return (
     <div className="space-y-6">
@@ -24,12 +25,17 @@ export function RewardsAdminPage() {
       
       <Tabs defaultValue={activeTab} onValueChange={setActiveTab}>
         <TabsList className="mb-4">
+          <TabsTrigger value="executive">Executive Summary</TabsTrigger>
           <TabsTrigger value="config">Configuration</TabsTrigger>
           <TabsTrigger value="rules">Rules Management</TabsTrigger>
           <TabsTrigger value="bulk">Bulk Operations</TabsTrigger>
-          <TabsTrigger value="statistics">Statistics</TabsTrigger>
+          <TabsTrigger value="statistics">Detailed Analytics</TabsTrigger>
           <TabsTrigger value="reports">Export Reports</TabsTrigger>
         </TabsList>
+        
+        <TabsContent value="executive">
+          <ExecutiveSummaryTab />
+        </TabsContent>
         
         <TabsContent value="config">
           <RewardProgramConfig />
