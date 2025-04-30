@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -8,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Plus, Edit, Trash2, RefreshCw } from 'lucide-react';
 import { TierForm } from './TierForm';
 import { TierCard } from './TierCard';
-import { RewardTier } from '@/lib/rewards/types';
+import { RewardTier, transformRewardTier } from '@/lib/rewards/types';
 
 export const TierManagementTab = () => {
   const [tiers, setTiers] = useState<RewardTier[]>([]);
@@ -32,7 +31,9 @@ export const TierManagementTab = () => {
         
       if (error) throw error;
       
-      setTiers(data || []);
+      // Transform the data using the helper function
+      const transformedTiers = data?.map(tier => transformRewardTier(tier)) || [];
+      setTiers(transformedTiers);
     } catch (error) {
       console.error('Error fetching tiers:', error);
       toast({
@@ -61,7 +62,8 @@ export const TierManagementTab = () => {
         description: 'The reward tier has been created successfully.',
       });
       
-      setTiers([...tiers, data]);
+      const newTier = transformRewardTier(data);
+      setTiers([...tiers, newTier]);
       setIsCreating(false);
     } catch (error) {
       console.error('Error creating tier:', error);
@@ -94,7 +96,8 @@ export const TierManagementTab = () => {
         description: 'The reward tier has been updated successfully.',
       });
       
-      setTiers(tiers.map(t => t.id === selectedTier.id ? data : t));
+      const updatedTier = transformRewardTier(data);
+      setTiers(tiers.map(t => t.id === selectedTier.id ? updatedTier : t));
       setSelectedTier(null);
     } catch (error) {
       console.error('Error updating tier:', error);

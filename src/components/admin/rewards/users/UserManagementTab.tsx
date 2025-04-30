@@ -50,13 +50,13 @@ export const UserManagementTab = () => {
           updated_at,
           establishment_id,
           profiles:user_id(username),
-          reward_tiers:current_tier_id(name)
+          reward_tiers!current_tier_id(name)
         `);
 
       // Apply filters
       if (filter.searchTerm) {
         // This would be more efficient with a proper full-text search
-        query = query.textSearch('profiles.username', filter.searchTerm);
+        query = query.ilike('profiles.username', `%${filter.searchTerm}%`);
       }
 
       if (filter.tierFilter) {
@@ -76,7 +76,7 @@ export const UserManagementTab = () => {
       const formattedUsers = data.map(item => ({
         id: item.id,
         user_id: item.user_id,
-        username: item.profiles?.username,
+        username: item.profiles?.username || `User ${item.user_id.substring(0, 6)}`,
         points: item.points,
         lifetime_points: item.lifetime_points,
         tier_name: item.reward_tiers?.name,

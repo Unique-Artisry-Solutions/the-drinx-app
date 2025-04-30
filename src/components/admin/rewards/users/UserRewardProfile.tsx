@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,7 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { Pencil, Save, UserIcon, History, Award, RefreshCw } from 'lucide-react';
-import { RewardTransaction } from '@/lib/rewards/types';
+import { RewardTransaction, transformTransaction } from '@/lib/rewards/types';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface UserRewardProfileProps {
   userId: string;
@@ -84,7 +84,9 @@ export const UserRewardProfile = ({ userId, onUpdate }: UserRewardProfileProps) 
         
       if (error) throw error;
       
-      setTransactions(data || []);
+      // Transform raw transaction data to match RewardTransaction type
+      const transformedTransactions = data?.map(tx => transformTransaction(tx)) || [];
+      setTransactions(transformedTransactions);
     } catch (error) {
       console.error('Error fetching transactions:', error);
       toast({
@@ -261,15 +263,15 @@ export const UserRewardProfile = ({ userId, onUpdate }: UserRewardProfileProps) 
                       transactions.map(tx => (
                         <TableRow key={tx.id}>
                           <TableCell>
-                            {new Date(tx.created_at).toLocaleDateString()}
+                            {new Date(tx.date).toLocaleDateString()}
                           </TableCell>
                           <TableCell>
-                            <Badge variant={tx.transaction_type === 'earn' ? 'default' : 'destructive'}>
-                              {tx.transaction_type === 'earn' ? 'EARNED' : 'SPENT'}
+                            <Badge variant={tx.type === 'earn' ? 'default' : 'destructive'}>
+                              {tx.type === 'earn' ? 'EARNED' : 'SPENT'}
                             </Badge>
                           </TableCell>
-                          <TableCell className={tx.transaction_type === 'earn' ? 'text-green-600' : 'text-red-600'}>
-                            {tx.transaction_type === 'earn' ? '+' : '-'}{tx.points}
+                          <TableCell className={tx.type === 'earn' ? 'text-green-600' : 'text-red-600'}>
+                            {tx.type === 'earn' ? '+' : '-'}{tx.points}
                           </TableCell>
                           <TableCell>{tx.source}</TableCell>
                           <TableCell>{tx.description || '-'}</TableCell>

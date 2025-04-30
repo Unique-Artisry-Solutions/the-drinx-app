@@ -98,6 +98,10 @@ export interface RewardTier {
   benefits: any[];
   icon?: string;
   color?: string;
+  is_active?: boolean;
+  establishment_id?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface RewardOffering {
@@ -117,9 +121,15 @@ export interface RewardTransaction {
   id: string;
   date: string;
   points: number;
-  type: 'earn' | 'redeem'; // Explicitly defined as union type
+  type: 'earn' | 'redeem'; 
   source: string;
   description?: string;
+  created_at?: string;
+  user_id?: string;
+  establishment_id?: string;
+  metadata?: Record<string, any>;
+  transaction_type?: string;
+  version?: number;
 }
 
 export interface RewardRedemption {
@@ -194,9 +204,11 @@ export function transformRewardTier(rawTier: any): RewardTier {
     name: rawTier.name,
     description: rawTier.description,
     points_required: rawTier.points_required,
-    benefits: rawTier.benefits || [],
+    benefits: Array.isArray(rawTier.benefits) ? rawTier.benefits : (typeof rawTier.benefits === 'string' ? JSON.parse(rawTier.benefits) : []),
     icon: rawTier.icon,
-    color: rawTier.color
+    color: rawTier.color,
+    is_active: rawTier.is_active,
+    establishment_id: rawTier.establishment_id,
   };
 }
 
@@ -207,6 +219,13 @@ export function transformTransaction(rawTransaction: any): RewardTransaction {
     points: rawTransaction.points,
     type: rawTransaction.transaction_type === 'earn' ? 'earn' : 'redeem',
     source: rawTransaction.source,
-    description: rawTransaction.description
+    description: rawTransaction.description,
+    // Add other properties
+    created_at: rawTransaction.created_at,
+    user_id: rawTransaction.user_id,
+    establishment_id: rawTransaction.establishment_id,
+    metadata: rawTransaction.metadata,
+    transaction_type: rawTransaction.transaction_type,
+    version: rawTransaction.version
   };
 }

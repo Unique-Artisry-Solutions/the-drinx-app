@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,7 +21,6 @@ export const TierForm = ({ tier, onSubmit, isSubmitting }: TierFormProps) => {
     benefits: [],
     color: '#4f46e5',
     icon: 'crown',
-    is_active: true,
   });
   const [benefitInputs, setBenefitInputs] = useState<{ description: string }[]>([{ description: '' }]);
 
@@ -36,7 +34,6 @@ export const TierForm = ({ tier, onSubmit, isSubmitting }: TierFormProps) => {
         benefits: tier.benefits,
         color: tier.color || '#4f46e5',
         icon: tier.icon || 'crown',
-        is_active: tier.is_active !== false,
       });
       
       // Set benefit inputs for editing
