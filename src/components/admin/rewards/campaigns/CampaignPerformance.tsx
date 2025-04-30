@@ -3,10 +3,23 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ChartBar, Download, Users } from 'lucide-react';
+import { BarChart, Download, LineChart, Users } from 'lucide-react';
 import { RewardCampaign } from '@/lib/rewards/types';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ChartContainer } from '@/components/ui/chart';
+import { 
+  ResponsiveContainer, 
+  BarChart as RechartsBarChart, 
+  Bar,
+  LineChart as RechartsLineChart, 
+  Line,
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  Legend,
+  Area,
+  AreaChart
+} from 'recharts';
 
 interface CampaignPerformanceProps {
   campaign?: RewardCampaign;
@@ -44,6 +57,41 @@ export const CampaignPerformance = ({ campaign, isLoading = false }: CampaignPer
     name: day.date.split('T')[0].split('-')[2], // Just show day number for x-axis
     "Points Awarded": day.points_awarded
   }));
+
+  // Format date for display
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+
+  // Enhanced data with formatted dates
+  const enhancedEngagementData = metrics.daily_metrics.map(day => ({
+    name: formatDate(day.date),
+    "Users Reached": day.users_reached,
+    "Rewards Claimed": day.rewards_claimed
+  }));
+  
+  const enhancedPointsData = metrics.daily_metrics.map(day => ({
+    name: formatDate(day.date),
+    "Points Awarded": day.points_awarded
+  }));
+  
+  // Export data as CSV
+  const exportData = () => {
+    const header = 'Date,Users Reached,Rewards Claimed,Points Awarded\n';
+    const csvData = metrics.daily_metrics.map(day => 
+      `${day.date},${day.users_reached},${day.rewards_claimed},${day.points_awarded}`
+    ).join('\n');
+    
+    const blob = new Blob([header + csvData], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'campaign_performance.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
   
   if (isLoading) {
     return (
@@ -60,14 +108,14 @@ export const CampaignPerformance = ({ campaign, isLoading = false }: CampaignPer
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h3 className="text-xl font-medium">Campaign Performance</h3>
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" onClick={exportData}>
           <Download className="h-4 w-4 mr-1" />
           Export Data
         </Button>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="transition-all hover:shadow-md">
           <CardHeader className="py-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">Users Reached</CardTitle>
           </CardHeader>
@@ -76,7 +124,7 @@ export const CampaignPerformance = ({ campaign, isLoading = false }: CampaignPer
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="transition-all hover:shadow-md">
           <CardHeader className="py-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">Rewards Claimed</CardTitle>
           </CardHeader>
@@ -85,7 +133,7 @@ export const CampaignPerformance = ({ campaign, isLoading = false }: CampaignPer
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="transition-all hover:shadow-md">
           <CardHeader className="py-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">Engagement Rate</CardTitle>
           </CardHeader>
@@ -94,7 +142,7 @@ export const CampaignPerformance = ({ campaign, isLoading = false }: CampaignPer
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="transition-all hover:shadow-md">
           <CardHeader className="py-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">Total Points</CardTitle>
           </CardHeader>
@@ -104,15 +152,17 @@ export const CampaignPerformance = ({ campaign, isLoading = false }: CampaignPer
         </Card>
       </div>
       
-      <Tabs defaultValue="engagement">
-        <TabsList className="mb-4">
-          <TabsTrigger value="engagement">
+      <Tabs defaultValue="engagement" className="w-full">
+        <TabsList className="mb-4 w-full sm:w-auto">
+          <TabsTrigger value="engagement" className="flex items-center">
             <Users className="h-4 w-4 mr-1" />
-            Engagement
+            <span className="hidden sm:inline">Engagement</span>
+            <span className="sm:hidden">Engage</span>
           </TabsTrigger>
-          <TabsTrigger value="points">
-            <ChartBar className="h-4 w-4 mr-1" />
-            Points Awarded
+          <TabsTrigger value="points" className="flex items-center">
+            <BarChart className="h-4 w-4 mr-1" />
+            <span className="hidden sm:inline">Points Awarded</span>
+            <span className="sm:hidden">Points</span>
           </TabsTrigger>
         </TabsList>
         
@@ -126,18 +176,59 @@ export const CampaignPerformance = ({ campaign, isLoading = false }: CampaignPer
             </CardHeader>
             <CardContent>
               <div className="h-80">
-                <ChartContainer
-                  config={{
-                    "Users Reached": { color: "blue" },
-                    "Rewards Claimed": { color: "green" }
-                  }}
-                >
-                  <div className="flex items-center justify-center h-full">
-                    <div className="text-muted-foreground">
-                      User engagement visualization
-                    </div>
-                  </div>
-                </ChartContainer>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={enhancedEngagementData}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 30 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="Users Reached" fill="#4f46e5" />
+                    <Bar dataKey="Rewards Claimed" fill="#10b981" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Engagement Trend</CardTitle>
+              <CardDescription>
+                User engagement over time
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart
+                    data={enhancedEngagementData}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 30 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Area 
+                      type="monotone" 
+                      dataKey="Users Reached" 
+                      stroke="#4f46e5" 
+                      fill="#4f46e580"
+                      activeDot={{ r: 8 }}
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="Rewards Claimed" 
+                      stroke="#10b981" 
+                      fill="#10b98180" 
+                      activeDot={{ r: 6 }}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
               </div>
             </CardContent>
           </Card>
@@ -153,17 +244,51 @@ export const CampaignPerformance = ({ campaign, isLoading = false }: CampaignPer
             </CardHeader>
             <CardContent>
               <div className="h-80">
-                <ChartContainer
-                  config={{
-                    "Points Awarded": { color: "purple" }
-                  }}
-                >
-                  <div className="flex items-center justify-center h-full">
-                    <div className="text-muted-foreground">
-                      Points awarded visualization
-                    </div>
-                  </div>
-                </ChartContainer>
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart
+                    data={enhancedPointsData}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 30 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Line 
+                      type="monotone" 
+                      dataKey="Points Awarded" 
+                      stroke="#9333ea" 
+                      strokeWidth={2}
+                      activeDot={{ r: 8 }} 
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Points Distribution</CardTitle>
+              <CardDescription>
+                Daily breakdown of points awarded
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={enhancedPointsData}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 30 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="Points Awarded" fill="#9333ea" />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             </CardContent>
           </Card>
