@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Download, Activity, FileBarChart2, TrendingUp, FileText } from 'lucide-react';
+import { Download, Activity, FileBarChart2, TrendingUp, FileText, LineChart, PieChart } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAnalyticsExport } from '@/hooks/useAnalyticsExport';
 
@@ -13,6 +13,7 @@ import RealTimeMonitoringComponent from './RealTimeMonitoringComponent';
 import TrendAnalysisComponent from './TrendAnalysisComponent';
 import ReportBuilderComponent from './ReportBuilderComponent';
 import { ProgramStatisticsDashboard } from '../rewards/analytics/ProgramStatisticsDashboard';
+import { EnhancedRewardAnalytics } from '../rewards/analytics/EnhancedRewardAnalytics';
 
 const AnalyticsDashboard = () => {
   const { toast } = useToast();
@@ -56,7 +57,7 @@ const AnalyticsDashboard = () => {
       <RewardMetrics />
       
       <Tabs defaultValue={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-5 mb-6">
+        <TabsList className="grid grid-cols-6 mb-6">
           <TabsTrigger value="overview" className="flex items-center gap-1">
             <Activity className="h-4 w-4" />
             Overview
@@ -75,7 +76,11 @@ const AnalyticsDashboard = () => {
           </TabsTrigger>
           <TabsTrigger value="rewards" className="flex items-center gap-1">
             <FileBarChart2 className="h-4 w-4" />
-            Rewards Program
+            Rewards Basic
+          </TabsTrigger>
+          <TabsTrigger value="enhanced" className="flex items-center gap-1">
+            <PieChart className="h-4 w-4" />
+            Enhanced Analytics
           </TabsTrigger>
         </TabsList>
         
@@ -114,6 +119,11 @@ const AnalyticsDashboard = () => {
         {/* Rewards program tab content */}
         <TabsContent value="rewards">
           <ProgramStatisticsDashboard />
+        </TabsContent>
+        
+        {/* Enhanced Analytics tab content */}
+        <TabsContent value="enhanced">
+          <EnhancedRewardAnalytics />
         </TabsContent>
       </Tabs>
     </div>

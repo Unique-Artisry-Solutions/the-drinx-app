@@ -75,5 +75,5 @@ export const rewardAdministrationTool = {
     'Maintaining accurate analytics across distributed transactions',
     'Proper user reward tier progression'
   ],
-  notes: 'The administration tool includes a system overview dashboard, user management interface for viewing and modifying user rewards, and a tier management system for creating and configuring reward tiers with customizable benefits and appearance. All type issues have been fixed to ensure stable operation.'
+  notes: 'The administration tool includes a system overview dashboard, user management interface for viewing and modifying user rewards, and a tier management system for creating and configuring reward tiers with customizable benefits and appearance. Enhanced analytics now provide funnel visualization, cohort analysis, behavior-based segmentation, conversion tracking between reward stages, and drop-off analysis to identify friction points.'
 };
