@@ -3,14 +3,14 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart, Download, LineChart, Users } from 'lucide-react';
+import { BarChartIcon, Download, LineChartIcon, Users } from 'lucide-react';
 import { RewardCampaign } from '@/lib/rewards/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
   ResponsiveContainer, 
-  BarChart as RechartsBarChart, 
+  BarChart, 
   Bar,
-  LineChart as RechartsLineChart, 
+  LineChart, 
   Line,
   XAxis, 
   YAxis, 
@@ -160,7 +160,7 @@ export const CampaignPerformance = ({ campaign, isLoading = false }: CampaignPer
             <span className="sm:hidden">Engage</span>
           </TabsTrigger>
           <TabsTrigger value="points" className="flex items-center">
-            <BarChart className="h-4 w-4 mr-1" />
+            <BarChartIcon className="h-4 w-4 mr-1" />
             <span className="hidden sm:inline">Points Awarded</span>
             <span className="sm:hidden">Points</span>
           </TabsTrigger>
