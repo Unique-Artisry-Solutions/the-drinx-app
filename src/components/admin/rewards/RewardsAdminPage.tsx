@@ -11,6 +11,7 @@ import SystemOverviewTab from './SystemOverviewTab';
 import { UserManagementTab } from './users/UserManagementTab';
 import { TierManagementTab } from './tiers/TierManagementTab';
 import { RewardOfferingsTab } from './offerings/RewardOfferingsTab';
+import { CampaignManagementTab } from './campaigns/CampaignManagementTab';
 
 export function RewardsAdminPage() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -32,6 +33,7 @@ export function RewardsAdminPage() {
           <TabsTrigger value="users">User Management</TabsTrigger>
           <TabsTrigger value="tiers">Tier Management</TabsTrigger>
           <TabsTrigger value="offerings">Reward Offerings</TabsTrigger>
+          <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
           <TabsTrigger value="config">Configuration</TabsTrigger>
           <TabsTrigger value="rules">Rules Management</TabsTrigger>
           <TabsTrigger value="bulk">Bulk Operations</TabsTrigger>
@@ -53,6 +55,10 @@ export function RewardsAdminPage() {
         
         <TabsContent value="offerings">
           <RewardOfferingsTab />
+        </TabsContent>
+        
+        <TabsContent value="campaigns">
+          <CampaignManagementTab />
         </TabsContent>
         
         <TabsContent value="config">

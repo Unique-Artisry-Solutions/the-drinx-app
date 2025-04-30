@@ -75,7 +75,7 @@ export interface RewardOffering {
   expiration_days?: number | null;
   category?: string;
   expires_in?: number;
-  establishment_id: string; // Added this missing property
+  establishment_id: string;
 }
 
 export interface RewardRedemption {
@@ -144,6 +144,63 @@ export interface TimeSeriesDataPoint {
   netPoints: number;
 }
 
+// Campaign management types
+export interface RewardCampaign {
+  id: string;
+  name: string;
+  description?: string;
+  start_date: string;
+  end_date: string;
+  is_active: boolean;
+  audience_filters: AudienceFilter[];
+  rewards: CampaignReward[];
+  trigger_conditions: TriggerCondition[];
+  establishment_id: string;
+  created_at: string;
+  updated_at: string;
+  status: CampaignStatus;
+  performance_metrics?: CampaignMetrics;
+}
+
+export type CampaignStatus = 'draft' | 'scheduled' | 'active' | 'paused' | 'completed' | 'cancelled';
+
+export interface AudienceFilter {
+  id: string;
+  type: 'tier' | 'pointsRange' | 'activity' | 'joinDate' | 'demographics' | 'all';
+  value: any;
+  description: string;
+}
+
+export interface CampaignReward {
+  id: string;
+  type: 'points' | 'offering' | 'tier';
+  value: any;
+  description: string;
+}
+
+export interface TriggerCondition {
+  id: string;
+  type: 'schedule' | 'event' | 'manual';
+  value: any;
+  description: string;
+}
+
+export interface CampaignMetrics {
+  total_users_reached: number;
+  total_rewards_claimed: number;
+  engagement_rate: number;
+  total_points_awarded: number;
+  roi_estimate?: number;
+  daily_metrics: CampaignDailyMetric[];
+}
+
+export interface CampaignDailyMetric {
+  date: string;
+  users_reached: number;
+  rewards_claimed: number;
+  points_awarded: number;
+}
+
 // System monitoring types
 export interface SystemHealthMetric {
   status: 'healthy' | 'degraded' | 'error';
@@ -199,5 +256,31 @@ export function transformTransaction(rawData: any): RewardTransaction {
     source: rawData.source,
     description: rawData.description,
     date: rawData.created_at
+  };
+}
+
+// Helper function to transform raw campaign data
+export function transformCampaign(rawData: any): RewardCampaign {
+  return {
+    id: rawData.id,
+    name: rawData.name,
+    description: rawData.description,
+    start_date: rawData.start_date,
+    end_date: rawData.end_date,
+    is_active: rawData.is_active,
+    audience_filters: Array.isArray(rawData.audience_filters) 
+      ? rawData.audience_filters 
+      : [],
+    rewards: Array.isArray(rawData.rewards) 
+      ? rawData.rewards 
+      : [],
+    trigger_conditions: Array.isArray(rawData.trigger_conditions) 
+      ? rawData.trigger_conditions 
+      : [],
+    establishment_id: rawData.establishment_id || 'default',
+    created_at: rawData.created_at,
+    updated_at: rawData.updated_at,
+    status: rawData.status || 'draft',
+    performance_metrics: rawData.performance_metrics
   };
 }
