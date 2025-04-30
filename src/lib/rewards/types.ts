@@ -69,12 +69,13 @@ export interface RewardOffering {
   name: string;
   description?: string;
   points_required: number;
-  quantity_available?: number;
+  quantity_available?: number | null;
   is_active: boolean;
   image_url?: string;
-  expiration_days?: number;
+  expiration_days?: number | null;
   category?: string;
   expires_in?: number;
+  establishment_id: string; // Added this missing property
 }
 
 export interface RewardRedemption {

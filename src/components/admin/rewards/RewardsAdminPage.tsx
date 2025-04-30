@@ -10,6 +10,7 @@ import { RewardsAdminGuide } from './help/RewardsAdminGuide';
 import SystemOverviewTab from './SystemOverviewTab';
 import { UserManagementTab } from './users/UserManagementTab';
 import { TierManagementTab } from './tiers/TierManagementTab';
+import { RewardOfferingsTab } from './offerings/RewardOfferingsTab';
 
 export function RewardsAdminPage() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -30,6 +31,7 @@ export function RewardsAdminPage() {
           <TabsTrigger value="overview">System Overview</TabsTrigger>
           <TabsTrigger value="users">User Management</TabsTrigger>
           <TabsTrigger value="tiers">Tier Management</TabsTrigger>
+          <TabsTrigger value="offerings">Reward Offerings</TabsTrigger>
           <TabsTrigger value="config">Configuration</TabsTrigger>
           <TabsTrigger value="rules">Rules Management</TabsTrigger>
           <TabsTrigger value="bulk">Bulk Operations</TabsTrigger>
@@ -47,6 +49,10 @@ export function RewardsAdminPage() {
 
         <TabsContent value="tiers">
           <TierManagementTab />
+        </TabsContent>
+        
+        <TabsContent value="offerings">
+          <RewardOfferingsTab />
         </TabsContent>
         
         <TabsContent value="config">
