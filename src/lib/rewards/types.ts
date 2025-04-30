@@ -1,231 +1,60 @@
-export interface RewardMetric {
-  id: string;
-  metric_date: string;
-  establishment_id?: string;
-  metric_name: string;
-  metric_value: number;
-  metadata: Record<string, any>;
-  created_at: string;
-  updated_at: string;
-}
 
-export interface UserRewardPreference {
-  id: string;
-  user_id: string;
-  preference_key: string;
-  preference_value: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface RewardAnalytics {
-  totalPointsEarned: number;
-  totalPointsRedeemed: number;
-  pointsEconomyBalance: number;
-  redemptionRate: number;
-  timeSeriesData: Array<{
-    date: string;
-    pointsEarned: number;
-    pointsRedeemed: number;
-    netPoints: number;
-  }>;
-  sourcesBreakdown: Record<string, number>;
-}
-
-export interface RewardSystemAnalyticsRow {
-  date: string;
-  transaction_type: 'earn' | 'redeem';
-  transaction_count: number;
-  points_total: number;
-  unique_users: number;
-  establishment_id?: string;
-}
-
-export interface RewardTransactionRow {
-  id: string;
-  user_id: string;
-  establishment_id?: string;
-  points: number;
-  transaction_type: string;
-  source: string;
-  description?: string;
-  metadata: Record<string, any>;
-  created_at: string;
-  version: number;
-}
-
-export interface DailyRewardMetrics {
-  date: string;
-  earnedPoints: number;
-  redeemedPoints: number;
-  activeUsers: number;
-}
-
-export interface DailyMetrics {
-  date: string;
-  metrics: Record<string, number>;
-  metadata?: Record<string, any>;
-}
-
-export interface UserRewardProfile {
-  points: number;
-  lifetimePoints: number;
-  currentTier: RewardTier | null;
-  availableRewards: RewardOffering[];
-  transactionHistory: RewardTransaction[];
-  redemptionHistory: RewardRedemption[];
-  achievements?: Achievement[];
-}
-
-export interface RewardOperationResponse {
-  success: boolean;
-  message?: string;
-  error?: string;
-}
-
-// Extended response for batch operations
-export interface BatchRewardOperationResponse extends RewardOperationResponse {
-  userId?: string;
-  pointsChanged?: number;
-  newBalance?: number;
-}
+import { Json } from '@/integrations/supabase/types';
 
 export interface RewardTier {
   id: string;
+  establishment_id: string;
   name: string;
   description?: string;
   points_required: number;
   benefits: any[];
   icon?: string;
   color?: string;
-  is_active?: boolean;
-  establishment_id?: string;
-  created_at?: string;
-  updated_at?: string;
-}
-
-export interface RewardOffering {
-  id: string;
-  name: string;
-  description?: string;
-  points_required: number;
-  quantity_available?: number;
   is_active: boolean;
-  image_url?: string;
-  expiration_days?: number;
-  category?: string; // Added category property
-  expires_in?: number; // Added expires_in property
+  created_at: string;
+  updated_at: string;
 }
 
 export interface RewardTransaction {
   id: string;
-  date: string;
+  user_id: string;
   points: number;
-  type: 'earn' | 'redeem'; 
+  type: 'earn' | 'spend';
   source: string;
   description?: string;
-  created_at?: string;
-  user_id?: string;
-  establishment_id?: string;
-  metadata?: Record<string, any>;
-  transaction_type?: string;
-  version?: number;
+  date: string;
 }
 
-export interface RewardRedemption {
-  id: string;
-  offering_id: string;
-  points_spent: number;
-  created_at: string;
-  status: string;
-  fulfilled_at?: string;
-  expires_at?: string;
-}
-
-export interface SystemHealthMetric {
-  status: 'healthy' | 'degraded' | 'error';
-  response_time_ms: number;
-  transaction_count: number;
-  error_count: number;
-  details?: Record<string, any>;
-}
-
-export interface PerformanceMetric {
-  metric_type: string;
-  metric_name: string;
-  metric_value: number;
-  context?: Record<string, any>;
-}
-
-export interface PerformanceTestResult {
-  [testName: string]: {
-    duration_ms: number;
-    status: 'fast' | 'average' | 'slow' | 'error';
-    rows_processed?: number;
+// Helper function to transform raw database data to RewardTier type
+export function transformRewardTier(rawData: any): RewardTier {
+  return {
+    id: rawData.id,
+    establishment_id: rawData.establishment_id || 'default',
+    name: rawData.name,
+    description: rawData.description,
+    points_required: rawData.points_required,
+    benefits: Array.isArray(rawData.benefits) 
+      ? rawData.benefits 
+      : (typeof rawData.benefits === 'string' 
+        ? JSON.parse(rawData.benefits) 
+        : []),
+    icon: rawData.icon,
+    color: rawData.color,
+    is_active: rawData.is_active === undefined ? true : rawData.is_active,
+    created_at: rawData.created_at,
+    updated_at: rawData.updated_at
   };
 }
 
-export interface Achievement {
-  id: string;
-  name: string;
-  description: string;
-  category: 'visits' | 'mocktails' | 'social' | 'creation' | 'special';
-  icon: string;
-  pointsReward: number;
-  progress: number;
-  threshold: number;
-  isCompleted: boolean;
-  completedAt?: string;
-}
-
-export interface AchievementCategory {
-  id: string;
-  name: string;
-  description: string;
-  icon: string;
-}
-
-export interface AchievementProgressEvent {
-  achievementId: string;
-  increment: number;
-  userId: string;
-  metadata?: Record<string, any>;
-}
-
-export interface ActivityResult {
-  completedAchievements: Achievement[];
-  pointsAwarded: number;
-  progress: Record<string, number>;
-}
-
-export function transformRewardTier(rawTier: any): RewardTier {
+// Helper function to transform raw transaction data
+export function transformTransaction(rawData: any): RewardTransaction {
   return {
-    id: rawTier.id,
-    name: rawTier.name,
-    description: rawTier.description,
-    points_required: rawTier.points_required,
-    benefits: Array.isArray(rawTier.benefits) ? rawTier.benefits : (typeof rawTier.benefits === 'string' ? JSON.parse(rawTier.benefits) : []),
-    icon: rawTier.icon,
-    color: rawTier.color,
-    is_active: rawTier.is_active,
-    establishment_id: rawTier.establishment_id,
-  };
-}
-
-export function transformTransaction(rawTransaction: any): RewardTransaction {
-  return {
-    id: rawTransaction.id,
-    date: rawTransaction.created_at,
-    points: rawTransaction.points,
-    type: rawTransaction.transaction_type === 'earn' ? 'earn' : 'redeem',
-    source: rawTransaction.source,
-    description: rawTransaction.description,
-    // Add other properties
-    created_at: rawTransaction.created_at,
-    user_id: rawTransaction.user_id,
-    establishment_id: rawTransaction.establishment_id,
-    metadata: rawTransaction.metadata,
-    transaction_type: rawTransaction.transaction_type,
-    version: rawTransaction.version
+    id: rawData.id,
+    user_id: rawData.user_id,
+    points: rawData.points,
+    type: rawData.transaction_type === 'earn' ? 'earn' : 'spend',
+    source: rawData.source,
+    description: rawData.description,
+    date: rawData.created_at
   };
 }
