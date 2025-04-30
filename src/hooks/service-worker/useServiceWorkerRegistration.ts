@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useRegistrationError } from './useRegistrationError';
 import { useRegistrationProcess } from './useRegistrationProcess';
 import { debouncedToast } from '@/utils/debouncedToast';
-import { isLovablePreview } from '@/utils/environment';
+import { isLovablePreview, previewLog } from '@/utils/environment';
 
 export const useServiceWorkerRegistration = () => {
   const { registrationError, setRegistrationError } = useRegistrationError();
@@ -12,29 +12,28 @@ export const useServiceWorkerRegistration = () => {
 
   const cleanupExistingRegistrations = async () => {
     if ('serviceWorker' in navigator) {
-      const registrations = await navigator.serviceWorker.getRegistrations();
-      await Promise.all(
-        registrations.map(registration => registration.unregister())
-      );
-      console.log('Cleaned up existing service worker registrations');
+      try {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(
+          registrations.map(registration => registration.unregister())
+        );
+        console.log('Cleaned up existing service worker registrations');
+      } catch (error) {
+        console.error('Error cleaning up service workers:', error);
+      }
     }
   };
 
   const registerServiceWorker = async () => {
+    // In preview mode, immediately return a mock result
+    if (isLovablePreview()) {
+      previewLog('Bypassing service worker registration in preview');
+      return null;
+    }
+    
     try {
       setIsRegistering(true);
       setRegistrationError(null);
-      
-      // Check if we're in the Lovable preview
-      if (isLovablePreview()) {
-        console.log('Running in Lovable preview environment - bypassing service worker registration');
-        debouncedToast.info(
-          "Service Worker Bypassed", 
-          "Service worker registration skipped in Lovable preview environment",
-          5000
-        );
-        return null;
-      }
       
       // Clean up existing registrations first
       await cleanupExistingRegistrations();

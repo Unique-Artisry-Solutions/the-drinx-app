@@ -13,7 +13,14 @@ const LoadingFallback = () => (
     <div className="text-center">
       <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
       <p className="mt-4 text-gray-600">Loading application...</p>
-      {isLovablePreview() && <p className="mt-2 text-blue-500 text-sm">Running in Lovable Preview Mode</p>}
+      {isLovablePreview() && (
+        <div className="mt-2 text-blue-500 font-bold">
+          Running in Lovable Preview Mode
+          <div className="text-xs text-gray-500 mt-1">
+            Some features disabled for compatibility
+          </div>
+        </div>
+      )}
     </div>
   </div>
 );

@@ -5,7 +5,7 @@ import { useRetryState } from './service-worker/useRetryState';
 import { useServiceWorkerSetup } from './service-worker/useServiceWorkerSetup';
 import { useServiceWorkerCheck } from './service-worker/useServiceWorkerCheck';
 import { useServiceWorkerState } from './service-worker/useServiceWorkerState';
-import { isLovablePreview } from '@/utils/environment';
+import { isLovablePreview, previewLog } from '@/utils/environment';
 
 export const useServiceWorker = () => {
   const { isRetrying, setIsRetrying } = useRetryState();
@@ -15,14 +15,16 @@ export const useServiceWorker = () => {
   const { registrationError } = useServiceWorkerSetup();
 
   useEffect(() => {
-    // Skip service worker setup in Lovable preview environment
+    // Create a mock implementation for preview environment
     if (isLovablePreview()) {
-      console.log('Skipping service worker setup in Lovable preview');
+      previewLog('Using mock service worker implementation for preview');
       setIsCheckingServiceWorker(false);
       setHasServiceWorker(false);
+      setIsRetrying(false);
       return;
     }
     
+    // Normal implementation for production/development
     const setupServiceWorker = async () => {
       setIsRetrying(true);
       try {
@@ -39,10 +41,11 @@ export const useServiceWorker = () => {
     setupServiceWorker();
   }, []);
 
+  // Return mock values for preview, real values for production
   return {
-    hasServiceWorker: isLovablePreview() ? false : hasServiceWorker,
-    isCheckingServiceWorker: isLovablePreview() ? false : isCheckingServiceWorker,
-    registrationError,
-    isRetrying: isLovablePreview() ? false : isRetrying
+    hasServiceWorker: false,
+    isCheckingServiceWorker: false,
+    registrationError: null,
+    isRetrying: false
   };
 };
