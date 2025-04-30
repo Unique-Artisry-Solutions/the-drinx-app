@@ -10,6 +10,7 @@ export const useServiceWorker = () => {
   useEffect(() => {
     // Immediately return if in preview environment
     if (isPreviewEnvironment()) {
+      console.log('Preview environment detected: skipping service worker setup');
       setIsCheckingServiceWorker(false);
       return;
     }

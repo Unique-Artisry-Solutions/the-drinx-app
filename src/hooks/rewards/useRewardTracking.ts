@@ -10,6 +10,35 @@ import {
 } from '@/lib/rewards/api/tracking';
 import { isPreviewEnvironment } from '@/utils/environment';
 
+// In-memory storage for preview environment
+const previewStorage = new Map<string, string>();
+
+// Safe localStorage wrapper that uses in-memory storage in preview environment
+const safeStorage = {
+  getItem: (key: string): string | null => {
+    if (isPreviewEnvironment()) {
+      return previewStorage.get(key) || null;
+    }
+    try {
+      return localStorage.getItem(key);
+    } catch (e) {
+      console.error('localStorage.getItem error:', e);
+      return null;
+    }
+  },
+  setItem: (key: string, value: string): void => {
+    if (isPreviewEnvironment()) {
+      previewStorage.set(key, value);
+      return;
+    }
+    try {
+      localStorage.setItem(key, value);
+    } catch (e) {
+      console.error('localStorage.setItem error:', e);
+    }
+  }
+};
+
 export interface RewardTrackingEvents {
   trackPointsEarned: (points: number, source: string, metadata?: Record<string, any>) => Promise<boolean>;
   trackRewardViewed: (rewardId: string, rewardName: string, metadata?: Record<string, any>) => Promise<boolean>;
@@ -37,9 +66,9 @@ export function useRewardTracking(): RewardTrackingEvents {
     if (isPreviewEnvironment()) return true;
     
     // Determine if this is the user's first time earning points
-    const isFirstTime = !localStorage.getItem(`user_${user.id}_has_earned_points`);
+    const isFirstTime = !safeStorage.getItem(`user_${user.id}_has_earned_points`);
     if (isFirstTime) {
-      localStorage.setItem(`user_${user.id}_has_earned_points`, 'true');
+      safeStorage.setItem(`user_${user.id}_has_earned_points`, 'true');
     }
     
     const result = await trackRewardEvent(REWARD_EVENT_TYPES.POINTS_EARNED, user.id, {
@@ -91,7 +120,7 @@ export function useRewardTracking(): RewardTrackingEvents {
     
     // Check if this is a repeat redemption
     const redemptionCountKey = `user_${user.id}_redemption_count`;
-    const previousRedemptions = parseInt(localStorage.getItem(redemptionCountKey) || '0', 10);
+    const previousRedemptions = parseInt(safeStorage.getItem(redemptionCountKey) || '0', 10);
     
     // Track the event
     const result = await trackRewardEvent(REWARD_EVENT_TYPES.REWARD_REDEEMED, user.id, {
@@ -101,9 +130,9 @@ export function useRewardTracking(): RewardTrackingEvents {
       ...metadata
     });
     
-    // Update redemption count in localStorage
+    // Update redemption count in storage
     if (result) {
-      localStorage.setItem(redemptionCountKey, (previousRedemptions + 1).toString());
+      safeStorage.setItem(redemptionCountKey, (previousRedemptions + 1).toString());
       
       // Update funnel progression
       const funnelStage = previousRedemptions > 0 ? 
@@ -158,7 +187,7 @@ export function useRewardTracking(): RewardTrackingEvents {
     if (isPreviewEnvironment()) return true;
     
     const previousStageKey = `user_${user.id}_funnel_stage`;
-    const previousStage = localStorage.getItem(previousStageKey);
+    const previousStage = safeStorage.getItem(previousStageKey);
     
     const result = await trackFunnelProgression(user.id, currentStage, {
       previousStage,
@@ -167,7 +196,7 @@ export function useRewardTracking(): RewardTrackingEvents {
     
     // Update stored funnel stage
     if (result) {
-      localStorage.setItem(previousStageKey, currentStage);
+      safeStorage.setItem(previousStageKey, currentStage);
     }
     
     return result;

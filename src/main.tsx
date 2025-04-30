@@ -4,9 +4,16 @@ import { BrowserRouter } from 'react-router-dom';
 import AppProviders from './providers/AppProviders';
 import AppRoutes from './routes/AppRoutes';
 import './index.css'
+import { isPreviewEnvironment } from './utils/environment';
 
-// Register service worker
+// Register service worker only if not in preview environment
 const registerServiceWorker = async () => {
+  // Skip service worker registration in preview environment
+  if (isPreviewEnvironment()) {
+    console.log('Preview environment detected: skipping service worker registration');
+    return null;
+  }
+  
   if ('serviceWorker' in navigator) {
     try {
       const registration = await navigator.serviceWorker.register('/service-worker.js');
@@ -60,8 +67,20 @@ const getBasename = () => {
 const basename = getBasename();
 console.log('Using basename:', basename);
 
-// Register service worker before mounting the app
-registerServiceWorker().then(() => {
+// Conditional service worker registration
+const initializeApp = async () => {
+  try {
+    // Only register service worker if not in preview
+    if (!isPreviewEnvironment()) {
+      await registerServiceWorker();
+    } else {
+      console.log('Preview environment detected: skipping service worker registration');
+    }
+  } catch (error) {
+    console.error('Failed to register service worker, continuing without it:', error);
+  }
+  
+  // Always render the app regardless of service worker status
   createRoot(document.getElementById("root")!).render(
     <BrowserRouter basename={basename}>
       <AppProviders>
@@ -69,15 +88,7 @@ registerServiceWorker().then(() => {
       </AppProviders>
     </BrowserRouter>
   );
-}).catch(error => {
-  console.error('Failed to register service worker, continuing without it:', error);
-  // Still render the app even if service worker registration fails
-  createRoot(document.getElementById("root")!).render(
-    <BrowserRouter basename={basename}>
-      <AppProviders>
-        <AppRoutes />
-      </AppProviders>
-    </BrowserRouter>
-  );
-});
+};
 
+// Start the application
+initializeApp();

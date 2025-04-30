@@ -26,3 +26,22 @@ export const isProduction = (): boolean => {
 export const isDevelopment = (): boolean => {
   return process.env.NODE_ENV === 'development';
 };
+
+/**
+ * Safe check for browser APIs that might not exist in some environments
+ * @param callback Function to execute if browser APIs are available
+ * @returns The result of the callback or undefined
+ */
+export const safeBrowserApi = <T>(callback: () => T): T | undefined => {
+  // Skip in preview environment
+  if (isPreviewEnvironment()) {
+    return undefined;
+  }
+  
+  try {
+    return callback();
+  } catch (error) {
+    console.error('Browser API error:', error);
+    return undefined;
+  }
+};

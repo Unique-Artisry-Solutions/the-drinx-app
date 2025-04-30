@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useRegistrationError } from './useRegistrationError';
 import { useRegistrationProcess } from './useRegistrationProcess';
 import { debouncedToast } from '@/utils/debouncedToast';
+import { isPreviewEnvironment } from '@/utils/environment';
 
 export const useServiceWorkerRegistration = () => {
   const { registrationError, setRegistrationError } = useRegistrationError();
@@ -10,6 +11,12 @@ export const useServiceWorkerRegistration = () => {
   const [isRegistering, setIsRegistering] = useState(false);
 
   const cleanupExistingRegistrations = async () => {
+    // Skip in preview environment
+    if (isPreviewEnvironment()) {
+      console.log('Preview environment: skipping service worker cleanup');
+      return;
+    }
+    
     if ('serviceWorker' in navigator) {
       const registrations = await navigator.serviceWorker.getRegistrations();
       await Promise.all(
@@ -20,6 +27,12 @@ export const useServiceWorkerRegistration = () => {
   };
 
   const registerServiceWorker = async () => {
+    // Skip in preview environment
+    if (isPreviewEnvironment()) {
+      console.log('Preview environment: skipping service worker registration');
+      return Promise.resolve(true);
+    }
+    
     try {
       setIsRegistering(true);
       setRegistrationError(null);

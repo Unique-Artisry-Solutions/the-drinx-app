@@ -31,6 +31,85 @@ export const FUNNEL_STAGES = {
   ADVOCACY: 'advocacy'
 };
 
+// In-memory storage for preview environment
+const previewStorage = {
+  sessionId: `preview_session_${Date.now()}`,
+  cohorts: new Map<string, string>(),
+  funnel: new Map<string, string>()
+};
+
+// Safe session storage wrapper that uses in-memory storage in preview environment
+const safeSessionStorage = {
+  getItem: (key: string): string | null => {
+    if (isPreviewEnvironment()) {
+      if (key === 'reward_session_id') {
+        return previewStorage.sessionId;
+      }
+      return null;
+    }
+    try {
+      return sessionStorage.getItem(key);
+    } catch (e) {
+      console.error('sessionStorage.getItem error:', e);
+      return null;
+    }
+  },
+  setItem: (key: string, value: string): void => {
+    if (isPreviewEnvironment()) {
+      if (key === 'reward_session_id') {
+        previewStorage.sessionId = value;
+      }
+      return;
+    }
+    try {
+      sessionStorage.setItem(key, value);
+    } catch (e) {
+      console.error('sessionStorage.setItem error:', e);
+    }
+  }
+};
+
+// Safe localStorage wrapper that uses in-memory storage in preview environment
+const safeLocalStorage = {
+  getItem: (key: string): string | null => {
+    if (isPreviewEnvironment()) {
+      if (key.includes('_enrollment_cohort')) {
+        const userId = key.split('_')[1];
+        return previewStorage.cohorts.get(userId) || null;
+      }
+      if (key.includes('_funnel_stage')) {
+        const userId = key.split('_')[1];
+        return previewStorage.funnel.get(userId) || null;
+      }
+      return null;
+    }
+    try {
+      return localStorage.getItem(key);
+    } catch (e) {
+      console.error('localStorage.getItem error:', e);
+      return null;
+    }
+  },
+  setItem: (key: string, value: string): void => {
+    if (isPreviewEnvironment()) {
+      if (key.includes('_enrollment_cohort')) {
+        const userId = key.split('_')[1];
+        previewStorage.cohorts.set(userId, value);
+      }
+      if (key.includes('_funnel_stage')) {
+        const userId = key.split('_')[1];
+        previewStorage.funnel.set(userId, value);
+      }
+      return;
+    }
+    try {
+      localStorage.setItem(key, value);
+    } catch (e) {
+      console.error('localStorage.setItem error:', e);
+    }
+  }
+};
+
 /**
  * Track a reward program event with standardized metadata structure
  * @param eventType The type of event to track
@@ -131,10 +210,10 @@ export async function trackCohortMetric(
  * Generate or retrieve a consistent session ID
  */
 function getSessionId(): string {
-  let sessionId = sessionStorage.getItem('reward_session_id');
+  let sessionId = safeSessionStorage.getItem('reward_session_id');
   if (!sessionId) {
     sessionId = `session_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-    sessionStorage.setItem('reward_session_id', sessionId);
+    safeSessionStorage.setItem('reward_session_id', sessionId);
   }
   return sessionId;
 }
@@ -145,14 +224,14 @@ function getSessionId(): string {
 function getUserEnrollmentCohort(userId: string): string | null {
   // In a real implementation, this would fetch from a cache or localStorage
   // For now, we'll return a placeholder
-  return localStorage.getItem(`user_${userId}_enrollment_cohort`) || null;
+  return safeLocalStorage.getItem(`user_${userId}_enrollment_cohort`) || null;
 }
 
 /**
  * Get number of days since user enrolled in rewards program
  */
 function getDaysSinceEnrollment(userId: string): number | null {
-  const enrollmentDateStr = localStorage.getItem(`user_${userId}_enrollment_date`);
+  const enrollmentDateStr = safeLocalStorage.getItem(`user_${userId}_enrollment_date`);
   if (!enrollmentDateStr) return null;
   
   const enrollmentDate = new Date(enrollmentDateStr);

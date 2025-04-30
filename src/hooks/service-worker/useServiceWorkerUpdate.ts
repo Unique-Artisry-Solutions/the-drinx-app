@@ -1,12 +1,23 @@
 
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { isPreviewEnvironment } from '@/utils/environment';
 
 export function useServiceWorkerUpdate() {
   const [isUpdating, setIsUpdating] = useState(false);
   const { toast } = useToast();
 
   const updateServiceWorker = async () => {
+    // Skip in preview environment
+    if (isPreviewEnvironment()) {
+      console.log('Preview environment: skipping service worker update');
+      toast({
+        title: "Preview Mode",
+        description: "Service worker updates are disabled in preview mode.",
+      });
+      return true;
+    }
+    
     try {
       setIsUpdating(true);
       

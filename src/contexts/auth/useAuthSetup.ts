@@ -1,6 +1,7 @@
 
 import { useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { isPreviewEnvironment } from '@/utils/environment';
 
 interface UseAuthSetupProps {
   setSession: (session: any) => void;
@@ -30,6 +31,30 @@ export const useAuthSetup = ({
     
     // Set loading state initially
     setIsLoading(true);
+    
+    // Skip full auth setup in preview environment
+    if (isPreviewEnvironment()) {
+      console.log('Preview environment detected: using simplified auth setup');
+      
+      // In preview, we can either:
+      // 1. Use a mock user (uncomment below)
+      // const mockUser = {
+      //   id: 'preview-user-id',
+      //   email: 'preview@example.com',
+      //   user_metadata: { full_name: 'Preview User' }
+      // };
+      // setUser(mockUser);
+      // setIsEmailVerified(true);
+      // setSession({ user: mockUser });
+      
+      // 2. Or just set null user (logged out state)
+      setUser(null);
+      setSession(null);
+      setIsEmailVerified(false);
+      
+      setIsLoading(false);
+      return;
+    }
     
     // First check for admin bypass
     const { isAdminBypass, bypassUser } = checkAdminBypass();
