@@ -31,14 +31,14 @@ export default function DateRangeSelector({ dateRange, onDateRangeChange }: Date
             )}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
-            {dateRange?.start ? (
-              dateRange.end ? (
+            {dateRange?.from ? (
+              dateRange.to ? (
                 <>
-                  {format(dateRange.start, "LLL dd, yyyy")} -{" "}
-                  {format(dateRange.end, "LLL dd, yyyy")}
+                  {format(dateRange.from, "LLL dd, yyyy")} -{" "}
+                  {format(dateRange.to, "LLL dd, yyyy")}
                 </>
               ) : (
-                format(dateRange.start, "LLL dd, yyyy")
+                format(dateRange.from, "LLL dd, yyyy")
               )
             ) : (
               <span>Pick a date</span>
@@ -49,7 +49,7 @@ export default function DateRangeSelector({ dateRange, onDateRangeChange }: Date
           <Calendar
             initialFocus
             mode="range"
-            defaultMonth={dateRange?.start}
+            defaultMonth={dateRange?.from}
             selected={dateRange}
             onSelect={onDateRangeChange}
             numberOfMonths={2}

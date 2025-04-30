@@ -11,21 +11,24 @@ import AnalyticsBarChart from '@/components/charts/AnalyticsBarChart';
 import DateRangeSelector from './components/DateRangeSelector';
 import BusinessImpactSection from './components/BusinessImpactSection';
 import { Skeleton } from '@/components/ui/skeleton';
+import { DateRange } from 'react-day-picker';
 
 export function ExecutiveSummaryTab() {
-  const [dateRange, setDateRange] = useState<{
-    start: Date;
-    end: Date;
-  }>({
-    start: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000), // 90 days ago
-    end: new Date()
+  // Updated to use from/to instead of start/end to match DateRange type
+  const [dateRange, setDateRange] = useState<DateRange>({
+    from: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000), // 90 days ago
+    to: new Date()
   });
   
   const [comparisonPeriod, setComparisonPeriod] = useState<'30d' | '90d' | '1yr'>('90d');
   
   const { data, isLoading, error } = useQuery({
     queryKey: ['rewardExecutiveSummary', dateRange, comparisonPeriod],
-    queryFn: () => rewardsApi.getExecutiveSummary(dateRange.start, dateRange.end, comparisonPeriod),
+    queryFn: () => rewardsApi.getExecutiveSummary(
+      dateRange.from as Date, 
+      dateRange.to as Date, 
+      comparisonPeriod
+    ),
   });
 
   if (isLoading) {
