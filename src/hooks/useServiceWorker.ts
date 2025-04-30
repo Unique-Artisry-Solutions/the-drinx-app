@@ -3,6 +3,8 @@ import { useEffect } from 'react';
 import { useRetry } from '@/hooks/useRetry';
 import { useRetryState } from './service-worker/useRetryState';
 import { useServiceWorkerSetup } from './service-worker/useServiceWorkerSetup';
+import { useServiceWorkerCheck } from './service-worker/useServiceWorkerCheck';
+import { useServiceWorkerState } from './service-worker/useServiceWorkerState';
 
 // Helper to detect Lovable preview environment
 const isLovablePreview = () => {
@@ -28,7 +30,9 @@ const isLovablePreview = () => {
 export const useServiceWorker = () => {
   const { isRetrying, setIsRetrying } = useRetryState();
   const { executeWithRetry } = useRetry();
-  const { checkServiceWorker, hasServiceWorker, isCheckingServiceWorker, registrationError } = useServiceWorkerSetup();
+  const { hasServiceWorker, setHasServiceWorker } = useServiceWorkerState();
+  const { isCheckingServiceWorker, setIsCheckingServiceWorker, checkServiceWorkerSupport } = useServiceWorkerCheck();
+  const { registrationError } = useServiceWorkerSetup();
 
   useEffect(() => {
     // Skip service worker setup in Lovable preview environment
@@ -40,9 +44,11 @@ export const useServiceWorker = () => {
     const setupServiceWorker = async () => {
       setIsRetrying(true);
       try {
-        await executeWithRetry(checkServiceWorker, 3);
+        await executeWithRetry(checkServiceWorkerSupport, 3);
+        setHasServiceWorker(true);
       } catch (error) {
         console.error('Service worker setup failed after multiple attempts:', error);
+        setHasServiceWorker(false);
       } finally {
         setIsRetrying(false);
       }
