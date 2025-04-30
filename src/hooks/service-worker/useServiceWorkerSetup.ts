@@ -1,31 +1,11 @@
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useRetry } from '@/hooks/useRetry';
 import { useRetryState } from './useRetryState';
 import { useServiceWorkerRegistration } from './useServiceWorkerRegistration';
 import { useServiceWorkerState } from './useServiceWorkerState';
 import { useServiceWorkerCheck } from './useServiceWorkerCheck';
-
-// Helper to detect Lovable preview environment
-const isLovablePreview = () => {
-  try {
-    // Check if we're in an iframe (Lovable preview uses iframe)
-    const isInIframe = window !== window.parent;
-    
-    // Check for specific URL patterns or parameters of Lovable
-    const isLovableDomain = window.location.hostname.includes('lovable');
-    
-    // Check if window has specific Lovable properties
-    const hasLovableProps = 'LovablePreview' in window || 
-                           document.querySelector('meta[name="lovable-preview"]') !== null;
-    
-    return isInIframe || isLovableDomain || hasLovableProps;
-  } catch (e) {
-    // If accessing window.parent throws a security error, we're likely in a cross-origin iframe
-    console.log('Error detecting environment, assuming Lovable preview:', e);
-    return true;
-  }
-};
+import { isLovablePreview } from '@/utils/environment';
 
 export const useServiceWorkerSetup = () => {
   const { isRetrying, setIsRetrying } = useRetryState();
@@ -37,8 +17,9 @@ export const useServiceWorkerSetup = () => {
   useEffect(() => {
     // Skip service worker setup in Lovable preview
     if (isLovablePreview()) {
-      console.log('Skipping service worker setup in Lovable preview');
+      console.log('Skipping service worker setup in Lovable preview environment');
       setIsCheckingServiceWorker(false);
+      setHasServiceWorker(false);
       return;
     }
     

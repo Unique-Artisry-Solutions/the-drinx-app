@@ -4,63 +4,10 @@ import { BrowserRouter } from 'react-router-dom';
 import AppProviders from './providers/AppProviders';
 import AppRoutes from './routes/AppRoutes';
 import './index.css'
+import { isLovablePreview } from './utils/environment';
 
-// Helper to detect Lovable preview environment
-const isLovablePreview = () => {
-  try {
-    // Check if we're in an iframe (Lovable preview uses iframe)
-    const isInIframe = window !== window.parent;
-    
-    // Check for specific URL patterns or parameters of Lovable
-    const isLovableDomain = window.location.hostname.includes('lovable');
-    
-    // Check if window has specific Lovable properties
-    const hasLovableProps = 'LovablePreview' in window || 
-                           document.querySelector('meta[name="lovable-preview"]') !== null;
-    
-    return isInIframe || isLovableDomain || hasLovableProps;
-  } catch (e) {
-    // If accessing window.parent throws a security error, we're likely in a cross-origin iframe
-    console.log('Error detecting environment, assuming Lovable preview:', e);
-    return true;
-  }
-};
-
-// Register service worker
-const registerServiceWorker = async () => {
-  // Skip service worker in Lovable preview
-  if (isLovablePreview()) {
-    console.log('Running in Lovable preview - skipping service worker registration');
-    return null;
-  }
-  
-  if ('serviceWorker' in navigator) {
-    try {
-      const registration = await navigator.serviceWorker.register('/service-worker.js');
-      console.log('Service Worker registered successfully:', registration);
-
-      // Wait for the service worker to be active
-      if (registration.installing) {
-        console.log('Service Worker installing');
-        
-        registration.installing.addEventListener('statechange', () => {
-          if (registration.active) {
-            console.log('Service Worker activated');
-          }
-        });
-      }
-
-      // Return registration for potential use
-      return registration;
-    } catch (error) {
-      console.error('Service Worker registration failed:', error);
-      throw error;
-    }
-  } else {
-    console.warn('Service Workers are not supported in this browser');
-    return null;
-  }
-};
+// Log the environment for debugging purposes
+console.log('Application environment:', isLovablePreview() ? 'Lovable Preview' : 'Production/Development');
 
 // Get the correct basename for preview URLs
 const getBasename = () => {
@@ -98,15 +45,24 @@ const renderApp = () => {
   );
 };
 
-// Render immediately for better performance in Lovable
+// Always render immediately for better performance, especially in preview
+console.log('Rendering application immediately');
 renderApp();
 
-// Register service worker in background after app is loaded
+// Only attempt to register service worker in non-preview environments
 if (!isLovablePreview()) {
+  console.log('Will register service worker in background for non-preview environment');
   // Delay service worker registration to prioritize app rendering
   setTimeout(() => {
-    registerServiceWorker().catch(error => {
-      console.error('Failed to register service worker, continuing without it:', error);
-    });
+    if ('serviceWorker' in navigator) {
+      console.log('Starting service worker registration (delayed)');
+      navigator.serviceWorker.register('/service-worker.js').catch(error => {
+        console.error('Failed to register service worker, continuing without it:', error);
+      });
+    } else {
+      console.log('Service workers not supported in this browser');
+    }
   }, 2000); // 2 second delay
+} else {
+  console.log('Service worker registration skipped for Lovable preview');
 }

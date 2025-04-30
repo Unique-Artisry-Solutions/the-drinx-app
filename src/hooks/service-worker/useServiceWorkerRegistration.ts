@@ -3,27 +3,7 @@ import { useState } from 'react';
 import { useRegistrationError } from './useRegistrationError';
 import { useRegistrationProcess } from './useRegistrationProcess';
 import { debouncedToast } from '@/utils/debouncedToast';
-
-// Detect if we're running in the Lovable preview environment
-const isLovablePreview = () => {
-  try {
-    // Check if we're in an iframe (Lovable preview uses iframe)
-    const isInIframe = window !== window.parent;
-    
-    // Check for specific URL patterns or parameters of Lovable
-    const isLovableDomain = window.location.hostname.includes('lovable');
-    
-    // Check if window has specific Lovable properties
-    const hasLovableProps = 'LovablePreview' in window || 
-                           document.querySelector('meta[name="lovable-preview"]') !== null;
-    
-    return isInIframe || isLovableDomain || hasLovableProps;
-  } catch (e) {
-    // If accessing window.parent throws a security error, we're likely in a cross-origin iframe
-    console.log('Error detecting environment, assuming Lovable preview:', e);
-    return true;
-  }
-};
+import { isLovablePreview } from '@/utils/environment';
 
 export const useServiceWorkerRegistration = () => {
   const { registrationError, setRegistrationError } = useRegistrationError();
@@ -109,6 +89,7 @@ export const useServiceWorkerRegistration = () => {
       }
     } catch (error) {
       console.error('Error registering service worker:', error);
+      
       const errorMessage = error instanceof Error ? error.message : 'Failed to register service worker';
       setRegistrationError(errorMessage);
       

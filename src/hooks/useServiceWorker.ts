@@ -5,27 +5,7 @@ import { useRetryState } from './service-worker/useRetryState';
 import { useServiceWorkerSetup } from './service-worker/useServiceWorkerSetup';
 import { useServiceWorkerCheck } from './service-worker/useServiceWorkerCheck';
 import { useServiceWorkerState } from './service-worker/useServiceWorkerState';
-
-// Helper to detect Lovable preview environment
-const isLovablePreview = () => {
-  try {
-    // Check if we're in an iframe (Lovable preview uses iframe)
-    const isInIframe = window !== window.parent;
-    
-    // Check for specific URL patterns or parameters of Lovable
-    const isLovableDomain = window.location.hostname.includes('lovable');
-    
-    // Check if window has specific Lovable properties
-    const hasLovableProps = 'LovablePreview' in window || 
-                           document.querySelector('meta[name="lovable-preview"]') !== null;
-    
-    return isInIframe || isLovableDomain || hasLovableProps;
-  } catch (e) {
-    // If accessing window.parent throws a security error, we're likely in a cross-origin iframe
-    console.log('Error detecting environment, assuming Lovable preview:', e);
-    return true;
-  }
-};
+import { isLovablePreview } from '@/utils/environment';
 
 export const useServiceWorker = () => {
   const { isRetrying, setIsRetrying } = useRetryState();
@@ -38,6 +18,8 @@ export const useServiceWorker = () => {
     // Skip service worker setup in Lovable preview environment
     if (isLovablePreview()) {
       console.log('Skipping service worker setup in Lovable preview');
+      setIsCheckingServiceWorker(false);
+      setHasServiceWorker(false);
       return;
     }
     
