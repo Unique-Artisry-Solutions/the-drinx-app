@@ -12,41 +12,9 @@ import { UserManagementTab } from './users/UserManagementTab';
 import { TierManagementTab } from './tiers/TierManagementTab';
 import { RewardOfferingsTab } from './offerings/RewardOfferingsTab';
 import { CampaignManagementTab } from './campaigns/CampaignManagementTab';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
-} from "@/components/ui/dropdown-menu";
-import { ChevronDown } from 'lucide-react';
 
 export function RewardsAdminPage() {
   const [activeTab, setActiveTab] = useState('overview');
-  
-  // Navigation items for consistent reference
-  const navigationItems = [
-    { value: 'overview', label: 'Overview' },
-    { value: 'users', label: 'Users' },
-    { value: 'tiers', label: 'Tiers' },
-    { value: 'offerings', label: 'Offerings' },
-    { value: 'campaigns', label: 'Campaigns' },
-    { value: 'config', label: 'Config' },
-    { value: 'rules', label: 'Rules' },
-    { value: 'bulk', label: 'Bulk Ops' },
-    { value: 'statistics', label: 'Stats' },
-    { value: 'reports', label: 'Reports' }
-  ];
-  
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
-  };
   
   return (
     <div className="space-y-6">
@@ -60,55 +28,18 @@ export function RewardsAdminPage() {
       <RewardsAdminGuide />
       
       <Tabs defaultValue={activeTab} onValueChange={setActiveTab}>
-        {/* Mobile dropdown navigation */}
-        <div className="md:hidden mb-4">
-          <Select value={activeTab} onValueChange={handleTabChange}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select section" />
-            </SelectTrigger>
-            <SelectContent>
-              {navigationItems.map(item => (
-                <SelectItem key={item.value} value={item.value}>
-                  {item.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        
-        {/* Tablet/Desktop navigation */}
-        <div className="hidden md:flex md:flex-row md:justify-between border-b mb-4">
-          <TabsList className="hidden md:flex">
-            <TabsTrigger value="overview" className="text-sm">Overview</TabsTrigger>
-            <TabsTrigger value="users" className="text-sm">Users</TabsTrigger>
-            <TabsTrigger value="tiers" className="text-sm">Tiers</TabsTrigger>
-            <TabsTrigger value="offerings" className="text-sm">Offerings</TabsTrigger>
-            <TabsTrigger value="campaigns" className="text-sm">Campaigns</TabsTrigger>
-          </TabsList>
-          
-          <DropdownMenu>
-            <DropdownMenuTrigger className="flex items-center px-4 py-2 text-sm border rounded-md md:ml-2">
-              More <ChevronDown className="h-4 w-4 ml-1" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onSelect={() => setActiveTab('config')}>
-                Config
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => setActiveTab('rules')}>
-                Rules
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => setActiveTab('bulk')}>
-                Bulk Ops
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => setActiveTab('statistics')}>
-                Stats
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => setActiveTab('reports')}>
-                Reports
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+        <TabsList className="mb-4">
+          <TabsTrigger value="overview">System Overview</TabsTrigger>
+          <TabsTrigger value="users">User Management</TabsTrigger>
+          <TabsTrigger value="tiers">Tier Management</TabsTrigger>
+          <TabsTrigger value="offerings">Reward Offerings</TabsTrigger>
+          <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
+          <TabsTrigger value="config">Configuration</TabsTrigger>
+          <TabsTrigger value="rules">Rules Management</TabsTrigger>
+          <TabsTrigger value="bulk">Bulk Operations</TabsTrigger>
+          <TabsTrigger value="statistics">Statistics</TabsTrigger>
+          <TabsTrigger value="reports">Export Reports</TabsTrigger>
+        </TabsList>
         
         <TabsContent value="overview">
           <SystemOverviewTab />
