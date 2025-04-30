@@ -8,6 +8,8 @@ import { ProgramStatisticsDashboard } from './analytics/ProgramStatisticsDashboa
 import { ReportExportUtility } from './export/ReportExportUtility';
 import { RewardsAdminGuide } from './help/RewardsAdminGuide';
 import SystemOverviewTab from './SystemOverviewTab';
+import { UserManagementTab } from './users/UserManagementTab';
+import { TierManagementTab } from './tiers/TierManagementTab';
 
 export function RewardsAdminPage() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -26,6 +28,8 @@ export function RewardsAdminPage() {
       <Tabs defaultValue={activeTab} onValueChange={setActiveTab}>
         <TabsList className="mb-4">
           <TabsTrigger value="overview">System Overview</TabsTrigger>
+          <TabsTrigger value="users">User Management</TabsTrigger>
+          <TabsTrigger value="tiers">Tier Management</TabsTrigger>
           <TabsTrigger value="config">Configuration</TabsTrigger>
           <TabsTrigger value="rules">Rules Management</TabsTrigger>
           <TabsTrigger value="bulk">Bulk Operations</TabsTrigger>
@@ -35,6 +39,14 @@ export function RewardsAdminPage() {
         
         <TabsContent value="overview">
           <SystemOverviewTab />
+        </TabsContent>
+
+        <TabsContent value="users">
+          <UserManagementTab />
+        </TabsContent>
+
+        <TabsContent value="tiers">
+          <TierManagementTab />
         </TabsContent>
         
         <TabsContent value="config">
