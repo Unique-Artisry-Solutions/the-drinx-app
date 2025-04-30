@@ -1,23 +1,36 @@
 
-import { useEffect } from 'react';
-import { useRetry } from '@/hooks/useRetry';
-import { useRetryState } from './service-worker/useRetryState';
-import { useServiceWorkerSetup } from './service-worker/useServiceWorkerSetup';
+import { useEffect, useState } from 'react';
+import { isPreviewEnvironment } from '@/utils/environment';
 
 export const useServiceWorker = () => {
-  const { isRetrying, setIsRetrying } = useRetryState();
-  const { executeWithRetry } = useRetry();
-  const { checkServiceWorker, hasServiceWorker, isCheckingServiceWorker, registrationError } = useServiceWorkerSetup();
-
+  const [hasServiceWorker, setHasServiceWorker] = useState(false);
+  const [isCheckingServiceWorker, setIsCheckingServiceWorker] = useState(true);
+  const [registrationError, setRegistrationError] = useState<string | null>(null);
+  
   useEffect(() => {
+    // Immediately return if in preview environment
+    if (isPreviewEnvironment()) {
+      setIsCheckingServiceWorker(false);
+      return;
+    }
+
     const setupServiceWorker = async () => {
-      setIsRetrying(true);
       try {
-        await executeWithRetry(checkServiceWorker, 3);
+        // Check if service workers are supported
+        if ('serviceWorker' in navigator) {
+          const registration = await navigator.serviceWorker.register('/service-worker.js');
+          console.log('Service worker registered:', registration);
+          setHasServiceWorker(true);
+        } else {
+          console.log('Service workers not supported');
+          setHasServiceWorker(false);
+        }
       } catch (error) {
-        console.error('Service worker setup failed after multiple attempts:', error);
+        console.error('Error registering service worker:', error);
+        setRegistrationError(error instanceof Error ? error.message : 'Failed to setup service worker');
+        setHasServiceWorker(false);
       } finally {
-        setIsRetrying(false);
+        setIsCheckingServiceWorker(false);
       }
     };
 
@@ -27,7 +40,6 @@ export const useServiceWorker = () => {
   return {
     hasServiceWorker,
     isCheckingServiceWorker,
-    registrationError,
-    isRetrying
+    registrationError
   };
 };

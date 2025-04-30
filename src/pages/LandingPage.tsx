@@ -11,6 +11,7 @@ import Footer from '@/components/landing/Footer';
 import { useAuth } from '@/contexts/auth';
 import { useTheme } from '@/contexts/ThemeContext';
 import { clearAllSessions } from '@/utils/sessionCleaner';
+import { isPreviewEnvironment } from '@/utils/environment';
 
 const LandingPage = () => {
   const { user, isLoading } = useAuth();
@@ -44,8 +45,14 @@ const LandingPage = () => {
     }
   }, [user, isLoading, navigate]);
 
-  // Clear sessions when landing page loads
+  // Clear sessions when landing page loads, but not in preview environment
   useEffect(() => {
+    // Skip in preview environment
+    if (isPreviewEnvironment()) {
+      console.log('Preview environment detected: skipping session cleanup');
+      return;
+    }
+    
     // Run once on initial load
     console.log('Landing page loaded, clearing sessions...');
     clearAllSessions();
