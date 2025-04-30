@@ -9,6 +9,7 @@ import * as useRewardsModule from '@/hooks/rewards/useRewards';
 import * as useAchievementsModule from '@/hooks/rewards/useAchievements';
 import * as useToastModule from '@/hooks/use-toast';
 import { RewardOffering, RewardTransaction, RewardTier, Achievement } from '@/lib/rewards/types';
+import { RewardTrackingEvents } from '@/hooks/rewards/useRewardTracking';
 
 // Mock hooks
 vi.mock('@/hooks/rewards/useRewards', () => ({
@@ -130,6 +131,21 @@ describe('Rewards Components Tests', () => {
     toasts: []
   };
   
+  // Create a mock for the trackRewardActivity property
+  const mockTrackRewardActivity: RewardTrackingEvents = {
+    trackPointsEarned: vi.fn().mockResolvedValue(true),
+    trackRewardViewed: vi.fn().mockResolvedValue(true),
+    trackRewardRedeemed: vi.fn().mockResolvedValue(true),
+    trackAchievementUnlocked: vi.fn().mockResolvedValue(true),
+    trackTierChange: vi.fn().mockResolvedValue(true),
+    trackFunnelStep: vi.fn().mockResolvedValue(true),
+    trackCohortActivity: vi.fn().mockResolvedValue(true),
+    trackProfileView: vi.fn().mockResolvedValue(true),
+    trackRedemptionHistoryView: vi.fn().mockResolvedValue(true),
+    trackRewardShare: vi.fn().mockResolvedValue(true),
+    trackAbandonedRedemption: vi.fn().mockResolvedValue(true)
+  };
+  
   beforeEach(() => {
     // Reset all mocks
     vi.resetAllMocks();
@@ -140,7 +156,8 @@ describe('Rewards Components Tests', () => {
       isLoading: false,
       rewardProfile: mockRewardProfile,
       addPoints: vi.fn().mockResolvedValue({ success: true }),
-      redeemReward: vi.fn().mockResolvedValue({ success: true })
+      redeemReward: vi.fn().mockResolvedValue({ success: true }),
+      trackRewardActivity: mockTrackRewardActivity
     });
     
     vi.mocked(useAchievementsModule.useAchievements).mockReturnValue({
@@ -168,7 +185,8 @@ describe('Rewards Components Tests', () => {
         isLoading: true,
         rewardProfile: null,
         addPoints: vi.fn(),
-        redeemReward: vi.fn()
+        redeemReward: vi.fn(),
+        trackRewardActivity: mockTrackRewardActivity
       });
       
       render(<UserRewardDashboard />);
@@ -221,7 +239,8 @@ describe('Rewards Components Tests', () => {
         isLoading: false,
         rewardProfile: mockRewardProfile,
         addPoints: vi.fn(),
-        redeemReward: redeemRewardMock
+        redeemReward: redeemRewardMock,
+        trackRewardActivity: mockTrackRewardActivity
       });
       
       render(<RewardRedemptionFlow />);
