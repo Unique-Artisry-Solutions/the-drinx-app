@@ -92,6 +92,7 @@ export default function BusinessImpactSection({ data, dateRange }: BusinessImpac
             </CardHeader>
             <CardContent>
               <AnalyticsPieChart
+                title="Redemption Distribution" 
                 data={data.redemptionDistribution}
                 height={250}
                 formatter={(value) => `${value}%`}
