@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -10,8 +10,6 @@ import { AchievementsList } from './AchievementsList';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useRewards } from '@/hooks/rewards/useRewards';
 import { useAchievements } from '@/hooks/rewards/useAchievements';
-import { RewardEventType, EngagementEventMetadata } from '@/lib/rewards/tracking/eventTypes';
-import { trackRewardEvent } from '@/lib/rewards/tracking/eventTracking';
 
 export function UserRewardDashboard() {
   const { rewardProfile, isLoading } = useRewards();
@@ -21,48 +19,10 @@ export function UserRewardDashboard() {
   // Extract the current tier from rewardProfile instead of directly from useRewards
   const currentTier = rewardProfile?.currentTier?.id ? 
     parseInt(rewardProfile.currentTier.name.split(' ')[1]) || 1 : 1;
-    
-  // Track dashboard view
-  useEffect(() => {
-    const trackPageView = async () => {
-      if (rewardProfile?.points !== undefined) {
-        await trackRewardEvent(
-          RewardEventType.REWARDS_PAGE_VIEW,
-          {
-            userId: rewardProfile?.transactionHistory?.[0]?.id || 'unknown',
-            section: 'dashboard',
-            points: rewardProfile.points,
-            tier: currentTier
-          } as EngagementEventMetadata
-        );
-      }
-    };
-    
-    if (!isLoading) {
-      trackPageView();
-    }
-  }, [isLoading, rewardProfile?.points, currentTier]);
-
-  // Track tab changes
-  const handleTabChange = async (value: string) => {
-    setActiveTab(value);
-    
-    if (rewardProfile?.points !== undefined) {
-      await trackRewardEvent(
-        RewardEventType.REWARDS_PAGE_VIEW,
-        {
-          userId: rewardProfile?.transactionHistory?.[0]?.id || 'unknown',
-          section: value,
-          points: rewardProfile.points,
-          tier: currentTier
-        } as EngagementEventMetadata
-      );
-    }
-  };
 
   if (isLoading) {
     return (
-      <div data-testid="loading-state" className="animate-pulse space-y-4">
+      <div className="animate-pulse space-y-4">
         <div className="h-32 bg-muted rounded-lg"></div>
         <div className="h-48 bg-muted rounded-lg"></div>
       </div>
@@ -101,7 +61,7 @@ export function UserRewardDashboard() {
         </CardContent>
       </Card>
 
-      <Tabs value={activeTab} onValueChange={handleTabChange} className="bg-background rounded-lg shadow-sm">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="bg-background rounded-lg shadow-sm">
         <TabsList className="grid w-full grid-cols-3 bg-muted/50 rounded-t-lg p-1">
           <TabsTrigger 
             value="overview" 
@@ -141,12 +101,6 @@ export function UserRewardDashboard() {
                   <div 
                     key={achievement.id} 
                     className="flex items-center gap-2 p-3 border rounded-md bg-muted/30 hover:bg-muted/50 transition-colors"
-                    onClick={() => {
-                      // Track achievement view when clicked
-                      if (achievement && achievement.id) {
-                        useAchievements().trackAchievementView(achievement.id);
-                      }
-                    }}
                   >
                     <div className="p-1.5 bg-amber-100 dark:bg-amber-900/30 rounded-full">
                       <Trophy className="h-4 w-4 text-amber-600" />

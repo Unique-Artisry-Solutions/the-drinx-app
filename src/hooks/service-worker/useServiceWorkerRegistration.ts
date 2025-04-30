@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { useRegistrationError } from './useRegistrationError';
 import { useRegistrationProcess } from './useRegistrationProcess';
 import { debouncedToast } from '@/utils/debouncedToast';
-import { isLovablePreview, previewLog } from '@/utils/environment';
 
 export const useServiceWorkerRegistration = () => {
   const { registrationError, setRegistrationError } = useRegistrationError();
@@ -12,25 +11,15 @@ export const useServiceWorkerRegistration = () => {
 
   const cleanupExistingRegistrations = async () => {
     if ('serviceWorker' in navigator) {
-      try {
-        const registrations = await navigator.serviceWorker.getRegistrations();
-        await Promise.all(
-          registrations.map(registration => registration.unregister())
-        );
-        console.log('Cleaned up existing service worker registrations');
-      } catch (error) {
-        console.error('Error cleaning up service workers:', error);
-      }
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(
+        registrations.map(registration => registration.unregister())
+      );
+      console.log('Cleaned up existing service worker registrations');
     }
   };
 
   const registerServiceWorker = async () => {
-    // In preview mode, immediately return a mock result
-    if (isLovablePreview()) {
-      previewLog('Bypassing service worker registration in preview');
-      return null;
-    }
-    
     try {
       setIsRegistering(true);
       setRegistrationError(null);
@@ -88,7 +77,6 @@ export const useServiceWorkerRegistration = () => {
       }
     } catch (error) {
       console.error('Error registering service worker:', error);
-      
       const errorMessage = error instanceof Error ? error.message : 'Failed to register service worker';
       setRegistrationError(errorMessage);
       
@@ -108,7 +96,6 @@ export const useServiceWorkerRegistration = () => {
     registrationError,
     setRegistrationError,
     isRegistering,
-    cleanupExistingRegistrations,
-    isLovablePreview: isLovablePreview()
+    cleanupExistingRegistrations
   };
 };

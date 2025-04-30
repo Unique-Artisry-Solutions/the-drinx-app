@@ -6,32 +6,10 @@ import { establishmentRoutes } from './config/establishmentRoutes';
 import { promoterRoutes } from './config/promoterRoutes';
 import { profileRoutes } from './config/profileRoutes';
 import { publicRoutes } from './config/publicRoutes';
-import { isLovablePreview } from '@/utils/environment';
-
-const LoadingFallback = () => (
-  <div className="flex items-center justify-center min-h-screen">
-    <div className="text-center">
-      <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
-      <p className="mt-4 text-gray-600">Loading application...</p>
-      {isLovablePreview() && (
-        <div className="mt-2 text-blue-500 font-bold">
-          Running in Lovable Preview Mode
-          <div className="text-xs text-gray-500 mt-1">
-            Some features disabled for compatibility
-          </div>
-        </div>
-      )}
-    </div>
-  </div>
-);
 
 const AppRoutes = () => {
-  if (isLovablePreview()) {
-    console.log('Rendering optimized routes for Lovable preview');
-  }
-  
   return (
-    <Suspense fallback={<LoadingFallback />}>
+    <Suspense fallback={<div>Loading...</div>}>
       <Routes>
         {/* Public Routes */}
         {publicRoutes.map((route) => (

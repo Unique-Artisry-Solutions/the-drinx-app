@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -10,25 +10,11 @@ import { useRewards } from '@/hooks/rewards/useRewards';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export function RewardRedemptionFlow() {
-  const { 
-    rewardProfile, 
-    redeemReward, 
-    isLoading,
-    // New tracking methods
-    viewRewardsCatalog,
-    viewRewardDetail,
-    confirmRedemption
-  } = useRewards();
-  
+  const { rewardProfile, redeemReward, isLoading } = useRewards();
   const { toast } = useToast();
   const [selectedReward, setSelectedReward] = useState<string | null>(null);
   const [isRedeeming, setIsRedeeming] = useState(false);
   const [activeCategory, setActiveCategory] = useState('all');
-  
-  // Track that user viewed the rewards catalog
-  useEffect(() => {
-    viewRewardsCatalog();
-  }, []);
 
   if (isLoading) {
     return (
@@ -56,22 +42,7 @@ export function RewardRedemptionFlow() {
     ? availableRewards 
     : availableRewards.filter(reward => reward.category === activeCategory);
 
-  const handleRewardClick = (rewardId: string) => {
-    const reward = availableRewards.find(r => r.id === rewardId);
-    if (reward) {
-      // Track reward detail view
-      viewRewardDetail(reward.id, reward.name, reward.points_required);
-      setSelectedReward(rewardId);
-    }
-  };
-
   const handleRedeemClick = async (rewardId: string) => {
-    const reward = availableRewards.find(r => r.id === rewardId);
-    if (!reward) return;
-    
-    // Track user confirming redemption 
-    await confirmRedemption(reward.id, reward.name, reward.points_required);
-    
     setSelectedReward(rewardId);
     setIsRedeeming(true);
     
@@ -148,7 +119,6 @@ export function RewardRedemptionFlow() {
                         <Card 
                           key={reward.id} 
                           className={`overflow-hidden hover:shadow-md transition-shadow ${!canRedeem ? 'opacity-70' : ''} ${selectedReward === reward.id ? 'ring-2 ring-primary' : ''}`}
-                          onClick={() => handleRewardClick(reward.id)}
                         >
                           {reward.image_url && (
                             <div className="w-full h-32 bg-muted overflow-hidden">
@@ -184,10 +154,7 @@ export function RewardRedemptionFlow() {
                             <Button 
                               size="sm"
                               disabled={!canRedeem || isRedeeming}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleRedeemClick(reward.id);
-                              }}
+                              onClick={() => handleRedeemClick(reward.id)}
                               className="transition-all"
                             >
                               {isRedeeming && selectedReward === reward.id ? (

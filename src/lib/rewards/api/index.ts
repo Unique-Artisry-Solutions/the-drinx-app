@@ -5,16 +5,9 @@ import { trackRewardEvent } from './tracking';
 import { getUserRewardProfile } from './profile';
 import { isRewardsEnabled, retryFailedOperation } from './system';
 import { getRewardAnalytics, processRewardAnalytics, createTimeSeriesData } from './analytics';
-import { getExecutiveSummary } from './executiveSummary';
 import { Achievement, AchievementProgressEvent, UserRewardPreference } from '../types';
 import { getUserAchievements, updateAchievementProgress } from '../achievements';
 import { getUserPreference, saveUserPreference } from './preferences';
-import * as eventTracking from '../tracking/eventTracking';
-import { getCohortRetention, getCohortActivity } from '../analytics/cohortAnalysis';
-import { EventMetadata } from '../tracking/eventTypes';
-
-// Export all event tracking related functionality
-export * from '../tracking/eventTypes';
 
 export const rewardsApi = {
   addPoints,
@@ -27,16 +20,6 @@ export const rewardsApi = {
   processRewardAnalytics,
   getRewardAnalytics,
   createTimeSeriesData,
-  
-  // Executive Summary API
-  getExecutiveSummary,
-  
-  // Enhanced tracking methods
-  eventTracking,
-  
-  // Cohort analysis methods
-  getCohortRetention,
-  getCohortActivity,
   
   // Expose preference methods
   getUserPreference,
@@ -80,31 +63,10 @@ export const rewardsApi = {
     const relevantAchievements = activityAchievementMap[activityType] || [];
     const completedAchievements: Achievement[] = [];
     
-    // Track the activity with our enhanced tracking system
-    await eventTracking.trackRewardEvent(
-      `reward_activity_${activityType}` as any,
-      {
-        userId,
-        activityType,
-        ...(metadata || {})
-      } as EventMetadata
-    );
-    
     for (const achievementId of relevantAchievements) {
       const result = await updateAchievementProgress(userId, achievementId, 1, metadata);
       if (result.completed && result.achievement) {
         completedAchievements.push(result.achievement);
-        
-        // Track the achievement completion with our enhanced tracking system
-        if (result.achievement) {
-          await eventTracking.trackAchievementCompleted(
-            userId,
-            achievementId,
-            result.achievement.name,
-            result.achievement.category,
-            result.achievement.pointsReward
-          );
-        }
       }
     }
     

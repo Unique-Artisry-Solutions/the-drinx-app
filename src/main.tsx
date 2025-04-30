@@ -4,67 +4,80 @@ import { BrowserRouter } from 'react-router-dom';
 import AppProviders from './providers/AppProviders';
 import AppRoutes from './routes/AppRoutes';
 import './index.css'
-import { isLovablePreview, getEnvironmentName, previewLog } from './utils/environment';
 
-// Log the environment for debugging purposes
-console.log('Application environment:', getEnvironmentName());
+// Register service worker
+const registerServiceWorker = async () => {
+  if ('serviceWorker' in navigator) {
+    try {
+      const registration = await navigator.serviceWorker.register('/service-worker.js');
+      console.log('Service Worker registered successfully:', registration);
 
-// Get the correct basename for routing
+      // Wait for the service worker to be active
+      if (registration.installing) {
+        console.log('Service Worker installing');
+        
+        registration.installing.addEventListener('statechange', () => {
+          if (registration.active) {
+            console.log('Service Worker activated');
+          }
+        });
+      }
+
+      // Return registration for potential use
+      return registration;
+    } catch (error) {
+      console.error('Service Worker registration failed:', error);
+      throw error;
+    }
+  } else {
+    console.warn('Service Workers are not supported in this browser');
+    return null;
+  }
+};
+
+// Get the correct basename for preview URLs
 const getBasename = () => {
   // For debugging purposes
-  previewLog('Current URL: ' + window.location.href);
-  previewLog('Hostname: ' + window.location.hostname);
+  console.log('Current URL:', window.location.href);
+  console.log('Hostname:', window.location.hostname);
   
-  // Simple implementation - use root path
+  const { hostname, pathname } = window.location;
+  
+  // Check if we're on a Lovable preview URL
+  if (hostname.includes('lovable.app')) {
+    console.log('Detected Lovable preview URL');
+    
+    // For preview URLs, no basename is needed as the server handles it
+    return '/';
+  }
+  
+  // Default case - use root path
+  console.log('Using default basename: /');
   return '/';
 };
 
 // Initialize the app with the correct routing configuration
 const basename = getBasename();
-previewLog('Using basename: ' + basename);
+console.log('Using basename:', basename);
 
-// Specialized initialization for different environments
-const initializeApp = () => {
-  previewLog('Starting application initialization');
-  
-  // Always render the app first for better performance
-  const rootElement = document.getElementById("root");
-  if (!rootElement) {
-    console.error('Root element not found');
-    return;
-  }
-  
-  createRoot(rootElement).render(
+// Register service worker before mounting the app
+registerServiceWorker().then(() => {
+  createRoot(document.getElementById("root")!).render(
     <BrowserRouter basename={basename}>
       <AppProviders>
         <AppRoutes />
       </AppProviders>
     </BrowserRouter>
   );
-  
-  // If we're in Lovable preview, skip service worker completely
-  if (isLovablePreview()) {
-    previewLog('Preview mode - service worker registration skipped');
-    return;
-  }
+}).catch(error => {
+  console.error('Failed to register service worker, continuing without it:', error);
+  // Still render the app even if service worker registration fails
+  createRoot(document.getElementById("root")!).render(
+    <BrowserRouter basename={basename}>
+      <AppProviders>
+        <AppRoutes />
+      </AppProviders>
+    </BrowserRouter>
+  );
+});
 
-  // Only register service worker in production mode after app has rendered
-  previewLog('Registering service worker in background');
-  setTimeout(() => {
-    if ('serviceWorker' in navigator) {
-      console.log('Starting service worker registration (delayed)');
-      navigator.serviceWorker.register('/service-worker.js')
-        .then(registration => {
-          console.log('Service worker registered successfully:', registration);
-        })
-        .catch(error => {
-          console.error('Failed to register service worker:', error);
-        });
-    } else {
-      console.log('Service workers not supported in this browser');
-    }
-  }, 2000); // 2 second delay
-};
-
-// Start the application
-initializeApp();
