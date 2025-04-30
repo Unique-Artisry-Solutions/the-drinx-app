@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Beaker, FileChart } from 'lucide-react';
+import { Beaker, FileChartPie } from 'lucide-react';
 
 export interface AdvancedConfigOptionsProps {
   onSave?: () => void;
