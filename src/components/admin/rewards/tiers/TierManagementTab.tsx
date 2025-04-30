@@ -49,9 +49,17 @@ export const TierManagementTab = () => {
   const handleCreateTier = async (tierData: Partial<RewardTier>) => {
     setIsSubmitting(true);
     try {
+      // We need to ensure establishment_id is not undefined for the Supabase insert
+      const dataToInsert = {
+        ...tierData,
+        establishment_id: tierData.establishment_id || 'default', // Provide a default or appropriate value
+        name: tierData.name || '', // Ensure required fields are not undefined
+        points_required: tierData.points_required || 0
+      };
+      
       const { data, error } = await supabase
         .from('reward_tiers')
-        .insert([tierData])
+        .insert([dataToInsert])
         .select()
         .single();
         

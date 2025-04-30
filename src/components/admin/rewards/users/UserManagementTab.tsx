@@ -38,8 +38,8 @@ export const UserManagementTab = () => {
   const fetchRewardUsers = async () => {
     setIsLoading(true);
     try {
-      // Query user rewards joined with profiles to get usernames
-      let query = supabase
+      // Modified query to fix the relationship issue by using explicit joins
+      const { data: userRewardsData, error: userRewardsError } = await supabase
         .from('user_rewards')
         .select(`
           id,
@@ -48,40 +48,43 @@ export const UserManagementTab = () => {
           lifetime_points,
           current_tier_id,
           updated_at,
-          establishment_id,
-          profiles:user_id(username),
-          reward_tiers!current_tier_id(name)
-        `);
-
-      // Apply filters
-      if (filter.searchTerm) {
-        // This would be more efficient with a proper full-text search
-        query = query.ilike('profiles.username', `%${filter.searchTerm}%`);
-      }
-
-      if (filter.tierFilter) {
-        query = query.eq('current_tier_id', filter.tierFilter);
-      }
-
-      // Apply sorting
-      if (filter.sortBy && filter.sortOrder) {
-        query = query.order(filter.sortBy, { ascending: filter.sortOrder === 'asc' });
-      }
-
-      const { data, error } = await query;
+          establishment_id
+        `)
+        .order(filter.sortBy, { ascending: filter.sortOrder === 'asc' });
       
-      if (error) throw error;
+      if (userRewardsError) throw userRewardsError;
       
-      // Transform data to match RewardUser type
-      const formattedUsers = data.map(item => ({
-        id: item.id,
-        user_id: item.user_id,
-        username: item.profiles?.username || `User ${item.user_id.substring(0, 6)}`,
-        points: item.points,
-        lifetime_points: item.lifetime_points,
-        tier_name: item.reward_tiers?.name,
-        last_activity: item.updated_at,
-        establishment_id: item.establishment_id,
+      // Get additional data with separate queries if needed
+      const formattedUsers = await Promise.all(userRewardsData.map(async (item) => {
+        // Fetch username from profiles
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('username')
+          .eq('id', item.user_id)
+          .single();
+        
+        // Fetch tier name if available
+        let tierName = null;
+        if (item.current_tier_id) {
+          const { data: tierData } = await supabase
+            .from('reward_tiers')
+            .select('name')
+            .eq('id', item.current_tier_id)
+            .single();
+          
+          tierName = tierData?.name;
+        }
+        
+        return {
+          id: item.id,
+          user_id: item.user_id,
+          username: profileData?.username || `User ${item.user_id.substring(0, 6)}`,
+          points: item.points,
+          lifetime_points: item.lifetime_points,
+          tier_name: tierName,
+          last_activity: item.updated_at,
+          establishment_id: item.establishment_id,
+        };
       }));
       
       setUsers(formattedUsers);

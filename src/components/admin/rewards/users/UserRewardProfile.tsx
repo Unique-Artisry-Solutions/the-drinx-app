@@ -329,6 +329,3 @@ export const UserRewardProfile = ({ userId, onUpdate }: UserRewardProfileProps) 
     </Card>
   );
 };
-
-// Import the Table components needed in this file
-const { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } = require("@/components/ui/table");

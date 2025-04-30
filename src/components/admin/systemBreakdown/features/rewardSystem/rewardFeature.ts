@@ -1,4 +1,3 @@
-
 import { FeatureItem } from '../../types';
 import { rewardSystemDatabaseAnalysis, rewardSystemRequirements } from './databaseAnalysis';
 
@@ -23,8 +22,8 @@ export const rewardProgramFeature: FeatureItem = {
   ],
   databaseAnalysis: rewardSystemDatabaseAnalysis,
   dbRequirementsText: rewardSystemRequirements,
-  implementationProgress: 85,
-  dbCompleted: 90
+  implementationProgress: 90,
+  dbCompleted: 95
 };
 
 export const rewardAdministrationTool = {
