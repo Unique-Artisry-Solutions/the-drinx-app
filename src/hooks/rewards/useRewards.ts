@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/auth';
 import { rewardsApi } from '@/lib/rewards/api';
-import { UserRewardProfile } from '@/lib/rewards/types';
+import { UserRewardProfile, RewardTier, RewardTransaction } from '@/lib/rewards/types';
 import { useToast } from '@/hooks/use-toast';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { useRewardTracking } from '@/hooks/rewards/useRewardTracking';
@@ -81,7 +81,7 @@ export function useRewards() {
     const loadRewardProfile = async () => {
       // In preview mode, use mock data
       if (isPreviewEnvironment()) {
-        // Set mock reward profile for preview
+        // Set mock reward profile for preview with proper types
         setRewardProfile({
           points: 150,
           lifetimePoints: 250,
@@ -92,7 +92,11 @@ export function useRewards() {
             points_required: 0,
             benefits: [],
             icon: 'star',
-            color: '#FFA500'
+            color: '#FFA500',
+            establishment_id: 'default',
+            is_active: true,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
           },
           availableRewards: [
             {
@@ -111,6 +115,7 @@ export function useRewards() {
           transactionHistory: [
             {
               id: 'trans-1',
+              user_id: 'user-1', // Added required user_id
               date: new Date().toISOString(),
               points: 50,
               type: 'earn',
@@ -165,7 +170,11 @@ export function useRewards() {
             points_required: 0,
             benefits: [],
             icon: 'star',
-            color: '#FFA500'
+            color: '#FFA500',
+            establishment_id: 'default',
+            is_active: true,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
           },
           availableRewards: [],
           transactionHistory: [],

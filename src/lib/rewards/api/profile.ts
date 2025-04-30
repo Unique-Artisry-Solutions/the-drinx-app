@@ -1,6 +1,6 @@
 
 import { supabase } from '@/lib/supabase';
-import { UserRewardProfile, transformRewardTier, transformTransaction } from '../types';
+import { UserRewardProfile, RewardTransaction, transformRewardTier, transformTransaction } from '../types';
 import { RewardsCache } from '../system/RewardsCache';
 
 export async function getUserRewardProfile(userId: string): Promise<UserRewardProfile | null> {
@@ -57,13 +57,25 @@ export async function getUserRewardProfile(userId: string): Promise<UserRewardPr
       console.error('Error fetching reward data:', { rewardsError, transactionsError, redemptionsError });
     }
 
-    const profile = {
+    // Transform redemptions to match the required type
+    const transformedRedemptions = (redemptions || []).map(redemption => ({
+      id: redemption.id,
+      user_id: redemption.user_id,
+      offering_id: redemption.offering_id,
+      points_spent: redemption.points_spent,
+      created_at: redemption.created_at,
+      status: (redemption.status as 'pending' | 'fulfilled' | 'expired' | 'cancelled'),
+      fulfilled_at: redemption.fulfilled_at,
+      expires_at: redemption.expires_at
+    }));
+
+    const profile: UserRewardProfile = {
       points: userReward?.points || 0,
       lifetimePoints: userReward?.lifetime_points || 0,
       currentTier: userReward?.reward_tiers ? transformRewardTier(userReward.reward_tiers) : null,
       availableRewards: availableRewards || [],
       transactionHistory: (transactions || []).map(transformTransaction),
-      redemptionHistory: redemptions || [],
+      redemptionHistory: transformedRedemptions,
     };
 
     await RewardsCache.updateCache(`reward_profile_${userId}`, 300, profile);
@@ -74,4 +86,3 @@ export async function getUserRewardProfile(userId: string): Promise<UserRewardPr
     return null;
   }
 }
-
