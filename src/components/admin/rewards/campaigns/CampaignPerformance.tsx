@@ -1,12 +1,12 @@
 
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { BarChart, LineChart } from '@/components/ui/chart';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChartBar, Download, Users } from 'lucide-react';
 import { RewardCampaign } from '@/lib/rewards/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ChartContainer } from '@/components/ui/chart';
 
 interface CampaignPerformanceProps {
   campaign?: RewardCampaign;
@@ -126,14 +126,18 @@ export const CampaignPerformance = ({ campaign, isLoading = false }: CampaignPer
             </CardHeader>
             <CardContent>
               <div className="h-80">
-                <BarChart
-                  data={engagementData}
-                  index="name"
-                  categories={["Users Reached", "Rewards Claimed"]}
-                  colors={["blue", "green"]}
-                  valueFormatter={(value) => `${value}`}
-                  yAxisWidth={48}
-                />
+                <ChartContainer
+                  config={{
+                    "Users Reached": { color: "blue" },
+                    "Rewards Claimed": { color: "green" }
+                  }}
+                >
+                  <div className="flex items-center justify-center h-full">
+                    <div className="text-muted-foreground">
+                      User engagement visualization
+                    </div>
+                  </div>
+                </ChartContainer>
               </div>
             </CardContent>
           </Card>
@@ -149,14 +153,17 @@ export const CampaignPerformance = ({ campaign, isLoading = false }: CampaignPer
             </CardHeader>
             <CardContent>
               <div className="h-80">
-                <LineChart
-                  data={pointsData}
-                  index="name"
-                  categories={["Points Awarded"]}
-                  colors={["purple"]}
-                  valueFormatter={(value) => `${value} pts`}
-                  yAxisWidth={60}
-                />
+                <ChartContainer
+                  config={{
+                    "Points Awarded": { color: "purple" }
+                  }}
+                >
+                  <div className="flex items-center justify-center h-full">
+                    <div className="text-muted-foreground">
+                      Points awarded visualization
+                    </div>
+                  </div>
+                </ChartContainer>
               </div>
             </CardContent>
           </Card>

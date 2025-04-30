@@ -1,4 +1,3 @@
-
 import { Json } from '@/integrations/supabase/types';
 
 export interface RewardTier {
@@ -144,7 +143,45 @@ export interface TimeSeriesDataPoint {
   netPoints: number;
 }
 
-// Campaign management types
+// Audience Filter Type
+export interface AudienceFilter {
+  id: string;
+  type: 'tier' | 'pointsRange' | 'activity' | 'joinDate' | 'demographics' | 'all';
+  value: string;
+  description: string;
+}
+
+// Campaign Reward Type
+export interface CampaignReward {
+  id: string;
+  type: 'points' | 'offering' | 'tier';
+  value: string;
+  description: string;
+}
+
+// Trigger Condition Type
+export interface TriggerCondition {
+  id: string;
+  type: string;
+  value: string;
+  description: string;
+}
+
+// Performance Metrics
+export interface PerformanceMetrics {
+  total_users_reached: number;
+  total_rewards_claimed: number;
+  engagement_rate: number;
+  total_points_awarded: number;
+  daily_metrics: {
+    date: string;
+    users_reached: number;
+    rewards_claimed: number;
+    points_awarded: number;
+  }[];
+}
+
+// Reward Campaign Type
 export interface RewardCampaign {
   id: string;
   name: string;
@@ -158,47 +195,8 @@ export interface RewardCampaign {
   establishment_id: string;
   created_at: string;
   updated_at: string;
-  status: CampaignStatus;
-  performance_metrics?: CampaignMetrics;
-}
-
-export type CampaignStatus = 'draft' | 'scheduled' | 'active' | 'paused' | 'completed' | 'cancelled';
-
-export interface AudienceFilter {
-  id: string;
-  type: 'tier' | 'pointsRange' | 'activity' | 'joinDate' | 'demographics' | 'all';
-  value: any;
-  description: string;
-}
-
-export interface CampaignReward {
-  id: string;
-  type: 'points' | 'offering' | 'tier';
-  value: any;
-  description: string;
-}
-
-export interface TriggerCondition {
-  id: string;
-  type: 'schedule' | 'event' | 'manual';
-  value: any;
-  description: string;
-}
-
-export interface CampaignMetrics {
-  total_users_reached: number;
-  total_rewards_claimed: number;
-  engagement_rate: number;
-  total_points_awarded: number;
-  roi_estimate?: number;
-  daily_metrics: CampaignDailyMetric[];
-}
-
-export interface CampaignDailyMetric {
-  date: string;
-  users_reached: number;
-  rewards_claimed: number;
-  points_awarded: number;
+  status: 'draft' | 'scheduled' | 'active' | 'paused' | 'completed' | 'cancelled';
+  performance_metrics: PerformanceMetrics;
 }
 
 // System monitoring types

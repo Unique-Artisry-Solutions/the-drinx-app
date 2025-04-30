@@ -1,7 +1,6 @@
 
 import { useState, useEffect } from 'react';
 import { RewardCampaign } from '@/lib/rewards/types';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { isPreviewEnvironment } from '@/utils/environment';
 
@@ -112,43 +111,8 @@ export function useCampaigns() {
     setIsLoading(true);
     
     try {
-      // In preview mode, use sample data
-      if (isPreviewEnvironment()) {
-        setCampaigns(sampleCampaigns);
-        setIsLoading(false);
-        return;
-      }
-
-      // In real environment, fetch from Supabase
-      const { data, error } = await supabase
-        .from('reward_campaigns')
-        .select('*');
-      
-      if (error) {
-        throw error;
-      }
-      
-      // Transform data using the helper function
-      const transformedCampaigns = data.map(campaign => {
-        return {
-          id: campaign.id,
-          name: campaign.name,
-          description: campaign.description,
-          start_date: campaign.start_date,
-          end_date: campaign.end_date,
-          is_active: campaign.is_active,
-          audience_filters: campaign.audience_filters || [],
-          rewards: campaign.rewards || [],
-          trigger_conditions: campaign.trigger_conditions || [],
-          establishment_id: campaign.establishment_id,
-          created_at: campaign.created_at,
-          updated_at: campaign.updated_at,
-          status: campaign.status || 'draft',
-          performance_metrics: campaign.performance_metrics
-        };
-      });
-      
-      setCampaigns(transformedCampaigns);
+      // Always use sample data for now since we don't have the database table set up
+      setCampaigns(sampleCampaigns);
     } catch (error) {
       console.error('Error fetching campaigns:', error);
       toast({
@@ -156,11 +120,6 @@ export function useCampaigns() {
         description: "Failed to load campaigns. Please try again.",
         variant: "destructive",
       });
-      
-      // Fallback to sample data in case of error
-      if (isPreviewEnvironment()) {
-        setCampaigns(sampleCampaigns);
-      }
     } finally {
       setIsLoading(false);
     }
@@ -168,48 +127,32 @@ export function useCampaigns() {
   
   const createCampaign = async (campaignData: Partial<RewardCampaign>) => {
     try {
-      if (isPreviewEnvironment()) {
-        // In preview mode, simulate creation
-        const newCampaign: RewardCampaign = {
-          id: `campaign-${Date.now()}`,
-          name: campaignData.name || 'New Campaign',
-          description: campaignData.description,
-          start_date: campaignData.start_date || new Date().toISOString(),
-          end_date: campaignData.end_date || new Date().toISOString(),
-          is_active: campaignData.is_active || false,
-          audience_filters: campaignData.audience_filters || [],
-          rewards: campaignData.rewards || [],
-          trigger_conditions: campaignData.trigger_conditions || [],
-          establishment_id: campaignData.establishment_id || 'default',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          status: campaignData.status as any || 'draft',
-          performance_metrics: {
-            total_users_reached: 0,
-            total_rewards_claimed: 0,
-            engagement_rate: 0,
-            total_points_awarded: 0,
-            daily_metrics: []
-          }
-        };
-        
-        setCampaigns(prev => [...prev, newCampaign]);
-        return newCampaign;
-      }
-
-      // In real environment, insert into Supabase
-      const { data, error } = await supabase
-        .from('reward_campaigns')
-        .insert(campaignData)
-        .select()
-        .single();
+      // Simulate creation with local data
+      const newCampaign: RewardCampaign = {
+        id: `campaign-${Date.now()}`,
+        name: campaignData.name || 'New Campaign',
+        description: campaignData.description,
+        start_date: campaignData.start_date || new Date().toISOString(),
+        end_date: campaignData.end_date || new Date().toISOString(),
+        is_active: campaignData.is_active || false,
+        audience_filters: campaignData.audience_filters || [],
+        rewards: campaignData.rewards || [],
+        trigger_conditions: campaignData.trigger_conditions || [],
+        establishment_id: campaignData.establishment_id || 'default',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        status: campaignData.status as any || 'draft',
+        performance_metrics: {
+          total_users_reached: 0,
+          total_rewards_claimed: 0,
+          engagement_rate: 0,
+          total_points_awarded: 0,
+          daily_metrics: []
+        }
+      };
       
-      if (error) {
-        throw error;
-      }
-      
-      await fetchCampaigns();
-      return data;
+      setCampaigns(prev => [...prev, newCampaign]);
+      return newCampaign;
     } catch (error) {
       console.error('Error creating campaign:', error);
       toast({
@@ -223,32 +166,14 @@ export function useCampaigns() {
   
   const updateCampaign = async (campaignId: string, campaignData: Partial<RewardCampaign>) => {
     try {
-      if (isPreviewEnvironment()) {
-        // In preview mode, simulate update
-        setCampaigns(prev => 
-          prev.map(camp => 
-            camp.id === campaignId 
-              ? { ...camp, ...campaignData, updated_at: new Date().toISOString() } 
-              : camp
-          )
-        );
-        return;
-      }
-
-      // In real environment, update in Supabase
-      const { error } = await supabase
-        .from('reward_campaigns')
-        .update({
-          ...campaignData,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', campaignId);
-      
-      if (error) {
-        throw error;
-      }
-      
-      await fetchCampaigns();
+      // Simulate update with local data
+      setCampaigns(prev => 
+        prev.map(camp => 
+          camp.id === campaignId 
+            ? { ...camp, ...campaignData, updated_at: new Date().toISOString() } 
+            : camp
+        )
+      );
     } catch (error) {
       console.error('Error updating campaign:', error);
       toast({
@@ -262,23 +187,8 @@ export function useCampaigns() {
   
   const deleteCampaign = async (campaignId: string) => {
     try {
-      if (isPreviewEnvironment()) {
-        // In preview mode, simulate deletion
-        setCampaigns(prev => prev.filter(camp => camp.id !== campaignId));
-        return;
-      }
-
-      // In real environment, delete from Supabase
-      const { error } = await supabase
-        .from('reward_campaigns')
-        .delete()
-        .eq('id', campaignId);
-      
-      if (error) {
-        throw error;
-      }
-      
-      await fetchCampaigns();
+      // Simulate deletion with local data
+      setCampaigns(prev => prev.filter(camp => camp.id !== campaignId));
     } catch (error) {
       console.error('Error deleting campaign:', error);
       toast({
