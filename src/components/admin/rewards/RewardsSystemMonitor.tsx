@@ -5,8 +5,24 @@ import SystemOverviewTab from './SystemOverviewTab';
 import PerformanceMetricsTab from './PerformanceMetricsTab';
 import CacheManagementTab from './CacheManagementTab';
 import { UserPreferencesTab } from './preferences/UserPreferencesTab';
+import { useRealtimeUpdates } from '@/hooks/admin/systemConfig/useRealtimeUpdates';
+import { toast } from 'sonner';
 
 const RewardsSystemMonitor = () => {
+  const handleSettingsChange = () => {
+    toast.info("Rewards system settings have been updated");
+  };
+
+  const handleAuditLogChange = () => {
+    toast.info("New audit log entry detected");
+  };
+
+  // Setup real-time updates
+  useRealtimeUpdates({
+    onSettingsChange: handleSettingsChange,
+    onAuditLogChange: handleAuditLogChange,
+  });
+
   return (
     <Tabs defaultValue="overview">
       <TabsList className="mb-6">

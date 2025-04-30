@@ -93,6 +93,11 @@ export function useAnalyticsExport() {
       link.click();
       document.body.removeChild(link);
       
+      toast({
+        title: "Export Complete",
+        description: `Analytics data has been exported as ${fileName}_${timestamp}.csv`,
+      });
+      
       return true;
     } catch (error) {
       console.error('Error exporting analytics data:', error);

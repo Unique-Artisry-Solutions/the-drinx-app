@@ -7,8 +7,11 @@ import AnalyticsMetricCard from '@/components/charts/AnalyticsMetricCard';
 import { toast } from 'sonner';
 import { SystemHealthCard } from './system-overview/SystemHealthCard';
 import { PerformanceTestCard } from './system-overview/PerformanceTestCard';
+import { useAnalyticsExport } from '@/hooks/useAnalyticsExport';
 
 const SystemOverviewTab = () => {
+  const { exportAnalytics } = useAnalyticsExport();
+  
   const { data: healthMetrics, isLoading: healthLoading } = useQuery({
     queryKey: ['systemHealth'],
     queryFn: RewardsSystemMonitor.getSystemHealth,
@@ -28,6 +31,18 @@ const SystemOverviewTab = () => {
   const handleRefreshTests = () => {
     toast.info("Refreshing performance tests...");
     refetchTests();
+  };
+  
+  const handleExportMetrics = () => {
+    if (healthMetrics) {
+      exportAnalytics({
+        healthMetrics,
+        performanceTests: performanceTest,
+        timestamp: new Date().toISOString(),
+      }, 'system_health_metrics');
+    } else {
+      toast.error("No health metrics available to export");
+    }
   };
 
   return (
@@ -60,6 +75,7 @@ const SystemOverviewTab = () => {
         isLoading={testLoading}
         error={testError}
         onRefresh={handleRefreshTests}
+        onExport={handleExportMetrics}
       />
     </div>
   );

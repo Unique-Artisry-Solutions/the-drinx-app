@@ -42,6 +42,13 @@ export function FunnelVisualization({ data }: FunnelVisualizationProps) {
                   stroke="none"
                   dataKey="name"
                 />
+                <LabelList
+                  position="inside"
+                  fill="#fff"
+                  stroke="none"
+                  dataKey="value"
+                  formatter={(value: number) => `${value} users`}
+                />
               </Funnel>
             </FunnelChart>
           </ResponsiveContainer>
