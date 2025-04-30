@@ -109,13 +109,14 @@ export function useRewards() {
               image_url: '/mocktail.jpg',
               expiration_days: 30,
               category: 'drinks',
-              expires_in: 5
+              expires_in: 5,
+              establishment_id: 'default'  // Added the required establishment_id property
             }
           ],
           transactionHistory: [
             {
               id: 'trans-1',
-              user_id: 'user-1', // Added required user_id
+              user_id: 'user-1',
               date: new Date().toISOString(),
               points: 50,
               type: 'earn',
