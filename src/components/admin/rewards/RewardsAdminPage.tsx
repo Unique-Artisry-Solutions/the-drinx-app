@@ -12,6 +12,7 @@ import { UserManagementTab } from './users/UserManagementTab';
 import { TierManagementTab } from './tiers/TierManagementTab';
 import { RewardOfferingsTab } from './offerings/RewardOfferingsTab';
 import { CampaignManagementTab } from './campaigns/CampaignManagementTab';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export function RewardsAdminPage() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -28,18 +29,22 @@ export function RewardsAdminPage() {
       <RewardsAdminGuide />
       
       <Tabs defaultValue={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="mb-4">
-          <TabsTrigger value="overview">System Overview</TabsTrigger>
-          <TabsTrigger value="users">User Management</TabsTrigger>
-          <TabsTrigger value="tiers">Tier Management</TabsTrigger>
-          <TabsTrigger value="offerings">Reward Offerings</TabsTrigger>
-          <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
-          <TabsTrigger value="config">Configuration</TabsTrigger>
-          <TabsTrigger value="rules">Rules Management</TabsTrigger>
-          <TabsTrigger value="bulk">Bulk Operations</TabsTrigger>
-          <TabsTrigger value="statistics">Statistics</TabsTrigger>
-          <TabsTrigger value="reports">Export Reports</TabsTrigger>
-        </TabsList>
+        <div className="border-b">
+          <ScrollArea className="whitespace-nowrap">
+            <TabsList className="w-max px-1 py-1">
+              <TabsTrigger value="overview" className="text-sm">Overview</TabsTrigger>
+              <TabsTrigger value="users" className="text-sm">Users</TabsTrigger>
+              <TabsTrigger value="tiers" className="text-sm">Tiers</TabsTrigger>
+              <TabsTrigger value="offerings" className="text-sm">Offerings</TabsTrigger>
+              <TabsTrigger value="campaigns" className="text-sm">Campaigns</TabsTrigger>
+              <TabsTrigger value="config" className="text-sm">Config</TabsTrigger>
+              <TabsTrigger value="rules" className="text-sm">Rules</TabsTrigger>
+              <TabsTrigger value="bulk" className="text-sm">Bulk Ops</TabsTrigger>
+              <TabsTrigger value="statistics" className="text-sm">Stats</TabsTrigger>
+              <TabsTrigger value="reports" className="text-sm">Reports</TabsTrigger>
+            </TabsList>
+          </ScrollArea>
+        </div>
         
         <TabsContent value="overview">
           <SystemOverviewTab />
