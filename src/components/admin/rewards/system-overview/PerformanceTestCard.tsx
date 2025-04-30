@@ -1,108 +1,112 @@
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowDownUp, RefreshCcw } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { PerformanceTestResult } from '@/lib/rewards/types';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Activity, AlertTriangle, Zap } from "lucide-react";
-import type { PerformanceTestResult } from '@/lib/rewards/types';
+import { TriangleAlert } from 'lucide-react';
 
 interface PerformanceTestCardProps {
   performanceTest: PerformanceTestResult | null;
   isLoading: boolean;
-  error: unknown;
+  error: Error | null;
   onRefresh: () => void;
+  onExport?: () => void;  // Added this prop to fix the TS2322 error
 }
 
-const getTestStatusIcon = (status: 'fast' | 'average' | 'slow' | 'error') => {
-  switch (status) {
-    case 'fast':
-      return <Zap className="h-4 w-4 text-green-500" />;
-    case 'average':
-      return <Activity className="h-4 w-4 text-yellow-500" />;
-    case 'slow':
-      return <AlertTriangle className="h-4 w-4 text-orange-500" />;
-    case 'error':
-      return <AlertTriangle className="h-4 w-4 text-red-500" />;
-    default:
-      return <Activity className="h-4 w-4 text-gray-500" />;
-  }
-};
-
-export const PerformanceTestCard: React.FC<PerformanceTestCardProps> = ({
-  performanceTest,
-  isLoading,
+export function PerformanceTestCard({ 
+  performanceTest, 
+  isLoading, 
   error,
-  onRefresh
-}) => {
+  onRefresh,
+  onExport
+}: PerformanceTestCardProps) {
+  if (error) {
+    return (
+      <Card className="col-span-2">
+        <CardHeader>
+          <CardTitle className="text-lg">Performance Tests</CardTitle>
+          <CardDescription>System performance metrics</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Alert variant="destructive">
+            <TriangleAlert className="h-4 w-4" />
+            <AlertTitle>Error Loading Performance Tests</AlertTitle>
+            <AlertDescription>{error.message}</AlertDescription>
+          </Alert>
+          <div className="text-right mt-4">
+            <Button onClick={onRefresh}>Try Again</Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Performance Tests</CardTitle>
-        <button 
-          className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
-          onClick={onRefresh}
-        >
-          <Activity className="h-4 w-4" />
-          Run Tests
-        </button>
+      <CardHeader>
+        <CardTitle className="text-lg flex items-center justify-between">
+          <div className="flex items-center">
+            <ArrowDownUp className="h-4 w-4 mr-2" />
+            Performance Tests
+          </div>
+          {!isLoading && (
+            <Button size="sm" variant="outline" onClick={onRefresh}>
+              <RefreshCcw className="h-3 w-3 mr-1" />
+              Refresh
+            </Button>
+          )}
+        </CardTitle>
+        <CardDescription>Current system response times (in ms)</CardDescription>
       </CardHeader>
       <CardContent>
-        {isLoading ? (
-          <div className="flex items-center justify-center py-6">
-            <div className="flex flex-col items-center gap-2">
-              <Activity className="h-6 w-6 animate-pulse text-blue-500" />
-              <p className="text-sm text-muted-foreground">Running performance tests...</p>
-            </div>
-          </div>
-        ) : error ? (
-          <Alert variant="destructive">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>Test Failed</AlertTitle>
-            <AlertDescription>
-              Unable to run performance tests. Please try again later.
-            </AlertDescription>
-          </Alert>
-        ) : !performanceTest ? (
-          <Alert>
-            <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>No Results</AlertTitle>
-            <AlertDescription>
-              No test results available. Click "Run Tests" to get the latest performance metrics.
-            </AlertDescription>
-          </Alert>
-        ) : Object.keys(performanceTest).length === 0 ? (
-          <p className="text-center py-4 text-muted-foreground">No tests to display</p>
-        ) : (
-          <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-3">
-            {Object.entries(performanceTest).map(([testName, result]) => (
-              <div key={testName} className="bg-muted/50 p-4 rounded-lg">
-                <div className="flex items-center gap-2 mb-2">
-                  {getTestStatusIcon(result.status)}
-                  <h3 className="font-medium text-sm">{testName}</h3>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xl font-mono">
-                    {`${result.duration_ms}ms`}
-                  </span>
-                  <span className={
-                    result.status === 'fast' ? "text-green-500" : 
-                    result.status === 'average' ? "text-yellow-500" : 
-                    result.status === 'slow' ? "text-red-500" : "text-gray-500"
-                  }>
-                    {result.status === 'fast' ? "Fast" : 
-                     result.status === 'average' ? "Average" : 
-                     result.status === 'slow' ? "Slow" : "Error"}
-                  </span>
-                </div>
-                {result.rows_processed && (
-                  <div className="text-xs text-muted-foreground mt-1">
-                    Rows processed: {result.rows_processed}
-                  </div>
-                )}
+        <div className="space-y-4">
+          {isLoading ? (
+            [...Array(5)].map((_, i) => (
+              <div key={i} className="grid grid-cols-3 gap-4 items-center">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-full" />
               </div>
-            ))}
-          </div>
-        )}
+            ))
+          ) : performanceTest ? (
+            Object.entries(performanceTest).map(([testName, result]) => (
+              <div key={testName} className="grid grid-cols-3 gap-4 items-center">
+                <div className="font-medium">{testName}</div>
+                <div 
+                  className={
+                    result.status === 'error' ? 'text-red-500' :
+                    result.status === 'slow' ? 'text-yellow-500' :
+                    result.status === 'fast' ? 'text-green-500' : 'text-blue-500'
+                  }
+                >
+                  {result.status === 'error' ? 'Error' : `${result.duration_ms}ms`}
+                </div>
+                <div className="text-muted-foreground text-sm">
+                  {result.rows_processed} rows
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="text-center py-4 text-muted-foreground">
+              No performance data available
+            </div>
+          )}
+        </div>
       </CardContent>
+      {onExport && performanceTest && (
+        <CardFooter className="justify-end">
+          <Button 
+            size="sm"
+            variant="outline"
+            onClick={onExport}
+          >
+            Export Metrics
+          </Button>
+        </CardFooter>
+      )}
     </Card>
   );
-};
+}

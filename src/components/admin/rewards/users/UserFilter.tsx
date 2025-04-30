@@ -77,7 +77,7 @@ export const UserFilter = ({ filter, onFilterChange, onRefresh }: UserFilterProp
               <SelectValue placeholder="All tiers" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All tiers</SelectItem>
+              <SelectItem value="all">All tiers</SelectItem>
               {tiers.map(tier => (
                 <SelectItem key={tier.id} value={tier.id}>
                   {tier.name}
@@ -90,14 +90,14 @@ export const UserFilter = ({ filter, onFilterChange, onRefresh }: UserFilterProp
         <div className="space-y-2">
           <Label>User Segment</Label>
           <Select 
-            value={filter.segment || ''}
+            value={filter.segment || 'all'}
             onValueChange={(value) => handleChange('segment', value)}
           >
             <SelectTrigger>
               <SelectValue placeholder="All users" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All users</SelectItem>
+              <SelectItem value="all">All users</SelectItem>
               {segments.map(segment => (
                 <SelectItem key={segment.id} value={segment.id}>
                   {segment.name}
@@ -149,8 +149,8 @@ export const UserFilter = ({ filter, onFilterChange, onRefresh }: UserFilterProp
           size="sm"
           onClick={() => onFilterChange({
             searchTerm: '',
-            tierFilter: '',
-            segment: '',
+            tierFilter: 'all',
+            segment: 'all',
             sortBy: 'points',
             sortOrder: 'desc'
           })}

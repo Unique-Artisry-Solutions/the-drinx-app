@@ -50,7 +50,7 @@ const TimeWindowSelector: React.FC<TimeWindowSelectorProps> = ({ isLightTheme, b
               </FormLabel>
               <Select 
                 onValueChange={field.onChange}
-                value={field.value}
+                value={field.value || "00:00"}
                 disabled={!field.value}
               >
                 <FormControl>
@@ -79,7 +79,7 @@ const TimeWindowSelector: React.FC<TimeWindowSelectorProps> = ({ isLightTheme, b
               </FormLabel>
               <Select 
                 onValueChange={field.onChange}
-                value={field.value}
+                value={field.value || "08:00"}
                 disabled={!field.value}
               >
                 <FormControl>
