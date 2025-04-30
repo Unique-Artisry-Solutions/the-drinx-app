@@ -2278,6 +2278,59 @@ export type Database = {
         }
         Relationships: []
       }
+      streak_settings: {
+        Row: {
+          created_at: string
+          description: string | null
+          establishment_id: string | null
+          grace_period_hours: number
+          id: string
+          is_active: boolean
+          milestones: number[]
+          multipliers: number[]
+          name: string
+          point_values: number[]
+          streak_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          establishment_id?: string | null
+          grace_period_hours?: number
+          id?: string
+          is_active?: boolean
+          milestones?: number[]
+          multipliers?: number[]
+          name: string
+          point_values?: number[]
+          streak_type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          establishment_id?: string | null
+          grace_period_hours?: number
+          id?: string
+          is_active?: boolean
+          milestones?: number[]
+          multipliers?: number[]
+          name?: string
+          point_values?: number[]
+          streak_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "streak_settings_establishment_id_fkey"
+            columns: ["establishment_id"]
+            isOneToOne: false
+            referencedRelation: "establishments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suggestion_feedback: {
         Row: {
           comments: string | null
@@ -2624,6 +2677,56 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "trend_data_points_establishment_id_fkey"
+            columns: ["establishment_id"]
+            isOneToOne: false
+            referencedRelation: "establishments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_activity_streaks: {
+        Row: {
+          created_at: string
+          current_count: number
+          establishment_id: string | null
+          id: string
+          last_activity_date: string
+          longest_count: number
+          metadata: Json
+          streak_start_date: string
+          streak_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_count?: number
+          establishment_id?: string | null
+          id?: string
+          last_activity_date?: string
+          longest_count?: number
+          metadata?: Json
+          streak_start_date?: string
+          streak_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_count?: number
+          establishment_id?: string | null
+          id?: string
+          last_activity_date?: string
+          longest_count?: number
+          metadata?: Json
+          streak_start_date?: string
+          streak_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_activity_streaks_establishment_id_fkey"
             columns: ["establishment_id"]
             isOneToOne: false
             referencedRelation: "establishments"
@@ -2990,6 +3093,18 @@ export type Database = {
         }
         Relationships: []
       }
+      streak_performance: {
+        Row: {
+          avg_current_streak_length: number | null
+          max_streak_length: number | null
+          streak_type: string | null
+          streaks_3_plus: number | null
+          streaks_30_plus: number | null
+          streaks_7_plus: number | null
+          total_streaks: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       aggregate_daily_analytics: {
@@ -3031,6 +3146,23 @@ export type Database = {
           retained_users_week2: number
           retained_users_week3: number
           retained_users_week4: number
+        }[]
+      }
+      get_user_streaks: {
+        Args: { p_user_id: string }
+        Returns: {
+          streak_type: string
+          streak_name: string
+          current_count: number
+          longest_count: number
+          last_activity_date: string
+          streak_start_date: string
+          is_active: boolean
+          days_to_milestone: number
+          next_milestone: number
+          next_milestone_reward: number
+          streak_metadata: Json
+          establishment_id: string
         }[]
       }
       initialize_admin_roles: {

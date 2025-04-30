@@ -5,6 +5,7 @@ import SystemOverviewTab from './SystemOverviewTab';
 import PerformanceMetricsTab from './PerformanceMetricsTab';
 import CacheManagementTab from './CacheManagementTab';
 import { UserPreferencesTab } from './preferences/UserPreferencesTab';
+import StreaksTab from './StreaksTab';
 import { useRealtimeUpdates } from '@/hooks/admin/systemConfig/useRealtimeUpdates';
 import { toast } from 'sonner';
 
@@ -28,6 +29,7 @@ const RewardsSystemMonitor = () => {
       <TabsList className="mb-6">
         <TabsTrigger value="overview">System Overview</TabsTrigger>
         <TabsTrigger value="performance">Performance Metrics</TabsTrigger>
+        <TabsTrigger value="streaks">Streaks</TabsTrigger>
         <TabsTrigger value="cache">Cache Management</TabsTrigger>
         <TabsTrigger value="preferences">Preferences</TabsTrigger>
       </TabsList>
@@ -38,6 +40,10 @@ const RewardsSystemMonitor = () => {
 
       <TabsContent value="performance">
         <PerformanceMetricsTab />
+      </TabsContent>
+      
+      <TabsContent value="streaks">
+        <StreaksTab />
       </TabsContent>
 
       <TabsContent value="cache">
