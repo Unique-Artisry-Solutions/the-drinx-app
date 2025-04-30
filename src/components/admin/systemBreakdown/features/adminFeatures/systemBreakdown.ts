@@ -20,12 +20,14 @@ export const systemBreakdown: FeatureItem = {
     - [x] UI components for system breakdown dashboard
     - [x] Event notification handling using notifications table
     - [x] Event promotion and marketing material management
+    - [x] Rewards system monitoring and overview dashboard
   `,
   testSteps: [
     "Log in as admin and navigate to System Breakdown page",
     "View the overall system status",
     "Drill down into specific feature details",
     "Verify that the database requirements are properly analyzed",
-    "Check event notification system integration"
+    "Check event notification system integration",
+    "Verify rewards system monitoring dashboard is functioning"
   ]
 };
