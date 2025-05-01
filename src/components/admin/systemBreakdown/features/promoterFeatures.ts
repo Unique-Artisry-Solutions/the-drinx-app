@@ -141,15 +141,49 @@ export const promoterFeatures: FeatureItem[] = [
     id: "promoter-analytics",
     name: "Promoter Analytics Dashboard",
     description: "Analytics on event performance, audience demographics, and engagement metrics",
-    status: "planned",
-    databaseStatus: "not_started",
+    status: "in_progress",
+    databaseStatus: "in_progress",
     userImpact: "medium",
     complexity: "high",
-    implementationProgress: 10,
+    implementationProgress: 40,
     tags: ["promoter", "analytics", "reporting"],
     adminAccess: "none",
     establishmentAccess: "none",
-    individualAccess: "none"
+    individualAccess: "none",
+    statusUpdated: true,
+    originalStatus: "planned",
+    dbRequirementsText: `
+      - promoter_analytics: Core analytics table for promoter activities [in_progress]
+      - event_performance: Event attendance and revenue metrics [in_progress]
+      - campaign_performance: Marketing campaign effectiveness metrics [in_progress]
+      - audience_metrics: Demographic and engagement data for audience analysis [pending]
+      - promoter_goal_tracking: Tracking of KPIs and promoter goals [pending]
+    `,
+    testSteps: [
+      "Phase 1 - Core Data Layer (Current Phase):",
+      "- Implement analytics data hook and service [✓]",
+      "- Create basic metrics collection and processing [✓]",
+      "- Implement data visualization components [in_progress]",
+      "- Add date range filtering [✓]",
+      
+      "Phase 2 - Dashboard Components:",
+      "- Create overview dashboard with key metrics [in_progress]",
+      "- Implement event performance reports [in_progress]",
+      "- Add campaign analytics views [started]",
+      "- Implement audience insights section [pending]",
+      
+      "Phase 3 - Advanced Features (Pending):",
+      "- Add goal setting and tracking",
+      "- Implement comparative analysis",
+      "- Create export functionality",
+      "- Add custom report builder",
+      
+      "Phase 4 - Integration (Pending):",
+      "- Connect with notification system",
+      "- Integrate with event management",
+      "- Add real-time data updates",
+      "- Implement predictive analytics"
+    ]
   },
   {
     id: "custom-promotion-creation",
