@@ -1,664 +1,314 @@
 
-import { supabase } from '@/lib/supabase';
-import { AnalyticsDateRange } from '@/services/establishmentAnalyticsService';
+import { 
+  PromoterAnalytics, 
+  EventPerformance, 
+  CampaignPerformance,
+  AudienceMetric,
+  TrendDataPoint,
+  AnalyticsDateRange,
+  EventDetailedAnalytics
+} from '@/hooks/promoter/types';
 import { isPreviewEnvironment } from '@/utils/environment';
 
-export interface PromoterAnalytics {
-  id: string;
-  date: string;
-  total_events: number;
-  active_campaigns: number;
-  subscriber_count: number;
-  engagement_rate: number;
-  revenue: number;
-}
-
-export interface EventPerformance {
-  id: string;
-  name: string;
-  date: string;
-  attendees: number;
-  ticket_sales: number;
-  revenue: number;
-  venue_name: string;
-}
-
-export interface EventDetailedAnalytics {
-  id: string;
-  event_id: string;
-  date: string;
-  tickets_sold: number;
-  revenue: number;
-  attendees: number;
-  ticket_types: {
-    name: string;
-    quantity: number;
-    revenue: number;
-  }[];
-}
-
-export interface CampaignPerformance {
-  id: string;
-  name: string;
-  start_date: string;
-  end_date: string;
-  reach: number;
-  engagement: number;
-  conversion_rate: number;
-  status: string;
-}
-
-export interface AudienceMetric {
-  metric_name: string;
-  metric_value: number;
-  timestamp: string;
-  segment: string;
-}
-
-export interface TrendDataPoint {
-  date: string;
-  metric_value: number;
-  metric_name: string;
-}
-
-// Stable and consistent mock data cache
-const mockDataCache: Record<string, {
-  promoterAnalytics: PromoterAnalytics[];
-  eventPerformance: EventPerformance[];
-  campaignPerformance: CampaignPerformance[];
-  audienceMetrics: AudienceMetric[];
-  trends: TrendDataPoint[];
-}> = {};
+const MOCK_DELAY = 500;
 
 /**
- * Generate a deterministic random number based on a seed string and index
- * This ensures consistent mock data between renders
- */
-function seededRandom(seed: string, index: number): number {
-  // Convert seed string to a numeric value
-  const seedValue = seed.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  // Combine with index for different values within the same seed
-  const combinedSeed = seedValue + index * 137;
-  // Use sine function to generate a pseudo-random value between 0-1
-  const x = Math.sin(combinedSeed) * 10000;
-  return x - Math.floor(x);
-}
-
-/**
- * Format a date as ISO string (YYYY-MM-DD)
- */
-const formatDateString = (date: Date): string => {
-  try {
-    return date.toISOString().split('T')[0];
-  } catch (error) {
-    console.error("Error formatting date:", error);
-    return new Date().toISOString().split('T')[0]; // Fallback to today
-  }
-};
-
-/**
- * Generate consistent mock data for testing and preview environments
- */
-const createMockData = (promoterId: string) => {
-  // Return cached data if available to ensure consistency
-  if (mockDataCache[promoterId]) {
-    return mockDataCache[promoterId];
-  }
-
-  try {
-    // Generate a consistent set of mock data based on the promoterId
-    const currentDate = new Date();
-    const today = formatDateString(currentDate);
-
-    // Event names for consistency
-    const eventNames = [
-      'Mocktail Masterclass',
-      'Sober Social Mixer',
-      'Zero-Proof Tasting',
-      'Craft Mocktail Party',
-      'Alcohol-Free Brunch'
-    ];
-
-    // Venue names for consistency
-    const venueNames = [
-      'The Sober Spot',
-      'Abstinence Lounge',
-      'Clear Mind Bar',
-      'Zero Proof Club',
-      'Mindful Mixers'
-    ];
-
-    // Campaign names for consistency
-    const campaignNames = [
-      'Summer Sobriety',
-      'Weekend Wellness',
-      'Mindful Monday',
-      'Thirsty Thursday Alternative',
-      'Friday Night Clarity'
-    ];
-
-    // 1. Generate promoter analytics (daily data for 30 days)
-    const promoterAnalytics: PromoterAnalytics[] = Array.from({ length: 30 }, (_, i) => {
-      const date = new Date(currentDate);
-      date.setDate(date.getDate() - 30 + i);
-      const dateString = formatDateString(date);
-      
-      const rand = seededRandom(promoterId, i);
-      const prevRand = seededRandom(promoterId, i - 1);
-      
-      // Use previous day's data with small variations for realistic trends
-      const baseSubs = i > 0 ? 50 + i : 50;
-      const subGrowth = i > 0 ? Math.floor(rand * 5) : 0;
-      
-      return {
-        id: `pa-${promoterId}-${i}`,
-        date: dateString,
-        total_events: Math.floor(rand * 3) + 1,
-        active_campaigns: Math.floor(rand * 2) + 1,
-        subscriber_count: baseSubs + subGrowth,
-        engagement_rate: Math.round((rand * 30 + 10) * 100) / 100, // 10-40%
-        revenue: Math.round(rand * 500) + 200
-      };
-    });
-
-    // 2. Generate event performance data
-    const eventPerformance: EventPerformance[] = Array.from({ length: 5 }, (_, i) => {
-      const date = new Date(currentDate);
-      // Spread events over past/future 30 days
-      const daysOffset = Math.floor(seededRandom(promoterId, i + 100) * 30) - 15;
-      date.setDate(date.getDate() + daysOffset);
-      const dateString = formatDateString(date);
-      
-      const rand = seededRandom(promoterId, i + 200);
-      const attendees = Math.floor(rand * 50) + 20;
-      const ticketPrice = Math.floor(rand * 15) + 10;
-      
-      return {
-        id: `ep-${promoterId}-${i}`,
-        name: eventNames[i % eventNames.length],
-        date: dateString,
-        attendees,
-        ticket_sales: Math.floor(attendees * (0.8 + rand * 0.2)),
-        revenue: Math.floor(attendees * ticketPrice * (0.8 + rand * 0.2)),
-        venue_name: venueNames[i % venueNames.length]
-      };
-    });
-
-    // 3. Generate campaign performance data
-    const campaignPerformance: CampaignPerformance[] = Array.from({ length: 3 }, (_, i) => {
-      // Create realistic campaign date ranges
-      const startDate = new Date(currentDate);
-      startDate.setDate(startDate.getDate() - Math.floor(seededRandom(promoterId, i + 300) * 30) - 10);
-      const startDateString = formatDateString(startDate);
-      
-      const endDate = new Date(startDate);
-      endDate.setDate(endDate.getDate() + Math.floor(seededRandom(promoterId, i + 400) * 14) + 7);
-      const endDateString = formatDateString(endDate);
-      
-      const rand = seededRandom(promoterId, i + 500);
-      const reach = Math.floor(rand * 500) + 100;
-      const engagement = Math.floor(reach * (0.1 + rand * 0.3));
-      
-      // Determine status based on dates
-      const status = 
-        endDate > currentDate ? 'active' : 
-        seededRandom(promoterId, i + 600) > 0.7 ? 'completed' : 'scheduled';
-      
-      return {
-        id: `cp-${promoterId}-${i}`,
-        name: campaignNames[i % campaignNames.length],
-        start_date: startDateString,
-        end_date: endDateString,
-        reach,
-        engagement,
-        conversion_rate: Math.round((engagement / reach) * 1000) / 10,
-        status
-      };
-    });
-
-    // 4. Generate audience metrics for different demographics
-    const segments = {
-      'gender': ['Male', 'Female', 'Non-binary', 'Prefer not to say'],
-      'age': ['18-24', '25-34', '35-44', '45+'],
-      'location': ['Urban', 'Suburban', 'Rural', 'College Campus'],
-      'interests': ['Health', 'Social', 'Culinary', 'Wellness', 'Nightlife']
-    };
-    
-    const audienceMetrics: AudienceMetric[] = [];
-    
-    // Generate metrics for each segment type
-    Object.entries(segments).forEach(([metricName, segmentValues], metricIndex) => {
-      // Create a total value to distribute
-      const totalValue = 100;
-      let remainingValue = totalValue;
-      
-      // Distribute values across segments
-      segmentValues.forEach((segment, i) => {
-        const isLast = i === segmentValues.length - 1;
-        const rand = seededRandom(`${promoterId}-${metricName}`, i);
-        
-        // Last segment gets remaining value, others get random portion
-        const value = isLast 
-          ? remainingValue 
-          : Math.round(remainingValue * (0.1 + rand * 0.5));
-        
-        remainingValue -= value;
-        
-        audienceMetrics.push({
-          metric_name: metricName,
-          metric_value: value,
-          timestamp: today,
-          segment
-        });
-      });
-    });
-
-    // 5. Generate trend data (subscriber and engagement)
-    const trends: TrendDataPoint[] = [];
-
-    // Subscriber growth trend (30 days)
-    for (let i = 0; i < 30; i++) {
-      const date = new Date(currentDate);
-      date.setDate(date.getDate() - 30 + i);
-      const dateString = formatDateString(date);
-      
-      const rand = seededRandom(promoterId, i + 700);
-      const prevValue = i > 0 ? trends.find(t => 
-        t.date === formatDateString(new Date(date.getTime() - 86400000)) && 
-        t.metric_name === 'subscriber_growth'
-      )?.metric_value : 50;
-      
-      // Create a growth trend that builds on previous days
-      const growth = Math.floor(rand * 5); // 0-5 new subscribers per day
-      const newValue = (prevValue || 50) + growth;
-      
-      trends.push({
-        date: dateString,
-        metric_value: newValue,
-        metric_name: 'subscriber_growth'
-      });
-    }
-
-    // Engagement rate trend (30 days)
-    for (let i = 0; i < 30; i++) {
-      const date = new Date(currentDate);
-      date.setDate(date.getDate() - 30 + i);
-      const dateString = formatDateString(date);
-      
-      const rand = seededRandom(promoterId, i + 800);
-      const prevValue = i > 0 ? trends.find(t => 
-        t.date === formatDateString(new Date(date.getTime() - 86400000)) && 
-        t.metric_name === 'engagement_rate'
-      )?.metric_value : 15;
-      
-      // Create fluctuating engagement with slight trend
-      const change = (rand - 0.5) * 5; // -2.5 to +2.5 % change
-      const newValue = Math.min(Math.max((prevValue || 15) + change, 5), 40); // Keep between 5-40%
-      
-      trends.push({
-        date: dateString,
-        metric_value: Math.round(newValue * 10) / 10,
-        metric_name: 'engagement_rate'
-      });
-    }
-
-    // Cache the generated data
-    const mockData = {
-      promoterAnalytics,
-      eventPerformance,
-      campaignPerformance,
-      audienceMetrics,
-      trends
-    };
-    
-    mockDataCache[promoterId] = mockData;
-    return mockData;
-  } catch (error) {
-    console.error("Error generating mock data:", error);
-    
-    // Return empty data on error
-    return {
-      promoterAnalytics: [],
-      eventPerformance: [],
-      campaignPerformance: [],
-      audienceMetrics: [],
-      trends: []
-    };
-  }
-};
-
-/**
- * Fetches general promoter analytics
+ * Fetch basic analytics data for a promoter
  */
 export async function fetchPromoterAnalytics(
   promoterId: string, 
-  range: AnalyticsDateRange
+  dateRange: AnalyticsDateRange
 ): Promise<PromoterAnalytics[]> {
+  if (isPreviewEnvironment()) {
+    // Return mock data for preview
+    await delay(MOCK_DELAY);
+    return generateMockAnalytics(dateRange);
+  }
+  
   try {
-    // Always use mock data in preview environment
-    if (isPreviewEnvironment()) {
-      console.log("Using mock promoter analytics data in preview environment");
-      const { promoterAnalytics } = createMockData(promoterId);
-      
-      // Filter by date range with safety checks
-      return promoterAnalytics.filter(data => {
-        try {
-          if (!data.date) return false;
-          const dataDate = new Date(data.date);
-          return !isNaN(dataDate.getTime()) && 
-                 dataDate >= range.startDate && 
-                 dataDate <= range.endDate;
-        } catch (e) {
-          console.error("Date filtering error:", e);
-          return false;
-        }
-      });
-    }
-
-    // In production/development environment, query the database
-    const { data, error } = await supabase
-      .from('promoter_event_analytics')
-      .select('*')
-      .eq('promoter_id', promoterId)
-      .gte('date', range.startDate.toISOString().split('T')[0])
-      .lte('date', range.endDate.toISOString().split('T')[0]);
-
-    if (error) {
-      console.error('Error fetching promoter analytics:', error);
-      // Fall back to mock data if there's an error
-      return createMockData(promoterId).promoterAnalytics;
-    }
-
-    // Process the real data or return mock data if none found
-    if (data && data.length > 0) {
-      // Transform database data to match the expected format
-      return data.map(item => ({
-        id: item.id,
-        date: item.date,
-        total_events: 1, // Count each record as an event
-        active_campaigns: 0, // This would come from a different query
-        subscriber_count: 0, // This would come from a different query
-        engagement_rate: item.engagement_score,
-        revenue: item.revenue
-      }));
-    } else {
-      // Fall back to mock data if no records found
-      return createMockData(promoterId).promoterAnalytics;
-    }
+    // Here would be the real API call
+    // Example: const { data } = await supabaseClient.from('promoter_analytics')...
+    
+    // For now returning mock data
+    return generateMockAnalytics(dateRange);
   } catch (error) {
-    console.error('Error in fetchPromoterAnalytics:', error);
-    // Fall back to mock data on any error
-    return createMockData(promoterId).promoterAnalytics;
+    console.error('Error fetching promoter analytics:', error);
+    throw error;
   }
 }
 
 /**
- * Fetches event performance metrics
+ * Fetch event performance data
  */
-export async function fetchEventPerformance(
-  promoterId: string
-): Promise<EventPerformance[]> {
+export async function fetchEventPerformance(promoterId: string): Promise<EventPerformance[]> {
+  if (isPreviewEnvironment()) {
+    await delay(MOCK_DELAY);
+    return generateMockEvents();
+  }
+  
   try {
-    // Use mock data in preview environment
-    if (isPreviewEnvironment()) {
-      console.log("Using mock event performance data in preview environment");
-      return createMockData(promoterId).eventPerformance;
-    }
-
-    // In production environment, query the database
-    const { data, error } = await supabase
-      .from('promoter_event_performance_view')
-      .select('*')
-      .eq('promoter_id', promoterId);
-
-    if (error) {
-      console.error('Error fetching event performance:', error);
-      return createMockData(promoterId).eventPerformance;
-    }
-
-    if (data && data.length > 0) {
-      // Transform database data to match the expected format
-      return data.map(item => ({
-        id: item.event_id || `gen-${Math.random().toString(36).substr(2, 9)}`,
-        name: item.event_name || 'Unnamed Event',
-        date: item.date || formatDateString(new Date()),
-        attendees: item.total_attendees || 0,
-        ticket_sales: item.total_ticket_sales || 0,
-        revenue: item.total_revenue || 0,
-        venue_name: 'Venue' // This would come from a join with venues table
-      }));
-    } else {
-      return createMockData(promoterId).eventPerformance;
-    }
+    // Real API call would go here
+    return generateMockEvents();
   } catch (error) {
     console.error('Error fetching event performance:', error);
-    return createMockData(promoterId).eventPerformance;
+    throw error;
   }
 }
 
 /**
- * Fetches campaign performance metrics
- */
-export async function fetchCampaignPerformance(
-  promoterId: string
-): Promise<CampaignPerformance[]> {
-  try {
-    // Use mock data in preview environment
-    if (isPreviewEnvironment()) {
-      console.log("Using mock campaign performance data in preview environment");
-      return createMockData(promoterId).campaignPerformance;
-    }
-
-    // In production environment, query the database
-    const { data, error } = await supabase
-      .from('promoter_campaign_performance_view')
-      .select('*')
-      .eq('promoter_id', promoterId);
-
-    if (error) {
-      console.error('Error fetching campaign performance:', error);
-      return createMockData(promoterId).campaignPerformance;
-    }
-
-    if (data && data.length > 0) {
-      // Transform database data to match the expected format with safety checks
-      return data.map(item => ({
-        id: item.campaign_id || `gen-${Math.random().toString(36).substr(2, 9)}`,
-        name: item.campaign_name || 'Unnamed Campaign',
-        start_date: item.start_date || formatDateString(new Date()),
-        end_date: item.end_date || formatDateString(new Date(Date.now() + 7 * 86400000)),
-        reach: item.total_impressions || 0,
-        engagement: item.total_clicks || 0,
-        conversion_rate: item.conversion_rate || 0,
-        status: new Date(item.end_date || Date.now()) < new Date() ? 'completed' : 'active'
-      }));
-    } else {
-      return createMockData(promoterId).campaignPerformance;
-    }
-  } catch (error) {
-    console.error('Error fetching campaign performance:', error);
-    return createMockData(promoterId).campaignPerformance;
-  }
-}
-
-/**
- * Fetches audience metrics
- */
-export async function fetchAudienceMetrics(
-  promoterId: string
-): Promise<AudienceMetric[]> {
-  try {
-    // Use mock data in preview environment
-    if (isPreviewEnvironment()) {
-      console.log("Using mock audience metrics data in preview environment");
-      return createMockData(promoterId).audienceMetrics;
-    }
-
-    // In production environment, query the database
-    const { data, error } = await supabase
-      .from('promoter_audience_metrics')
-      .select('*')
-      .eq('promoter_id', promoterId);
-
-    if (error) {
-      console.error('Error fetching audience metrics:', error);
-      return createMockData(promoterId).audienceMetrics;
-    }
-
-    if (data && data.length > 0) {
-      // Transform database data to match the expected format
-      return data.map(item => ({
-        metric_name: item.metric_name || 'unknown',
-        metric_value: item.metric_value || 0,
-        timestamp: item.created_at || formatDateString(new Date()),
-        segment: item.segment || 'Unknown'
-      }));
-    } else {
-      return createMockData(promoterId).audienceMetrics;
-    }
-  } catch (error) {
-    console.error('Error fetching audience metrics:', error);
-    return createMockData(promoterId).audienceMetrics;
-  }
-}
-
-/**
- * Fetches trend data for specific metrics
- */
-export async function fetchTrendData(
-  promoterId: string,
-  metricName: string,
-  range: AnalyticsDateRange
-): Promise<TrendDataPoint[]> {
-  try {
-    // Use mock data in preview environment
-    if (isPreviewEnvironment()) {
-      console.log(`Using mock trend data for ${metricName} in preview environment`);
-      const { trends } = createMockData(promoterId);
-      
-      // Filter by metric name and date range
-      return trends
-        .filter(t => t.metric_name === metricName)
-        .filter(data => {
-          try {
-            if (!data.date) return false;
-            const dataDate = new Date(data.date);
-            return !isNaN(dataDate.getTime()) &&
-                   dataDate >= range.startDate && 
-                   dataDate <= range.endDate;
-          } catch (e) {
-            console.error("Date filtering error:", e);
-            return false;
-          }
-        });
-    }
-
-    // In production environment, query the database
-    const { data, error } = await supabase
-      .from('promoter_audience_trends')
-      .select('*')
-      .eq('promoter_id', promoterId)
-      .eq('metric_name', metricName)
-      .gte('date', range.startDate.toISOString().split('T')[0])
-      .lte('date', range.endDate.toISOString().split('T')[0]);
-
-    if (error) {
-      console.error('Error fetching trend data:', error);
-      return createMockData(promoterId).trends.filter(t => t.metric_name === metricName);
-    }
-
-    if (data && data.length > 0) {
-      // Transform database data to match the expected format
-      return data.map(item => ({
-        date: item.date,
-        metric_value: item.metric_value,
-        metric_name: item.metric_name
-      }));
-    } else {
-      return createMockData(promoterId).trends.filter(t => t.metric_name === metricName);
-    }
-  } catch (error) {
-    console.error('Error fetching trend data:', error);
-    return createMockData(promoterId).trends.filter(t => t.metric_name === metricName);
-  }
-}
-
-/**
- * Fetches detailed analytics for a specific event
+ * Fetch detailed analytics for a specific event
  */
 export async function fetchEventDetailedAnalytics(
-  promoterId: string,
+  promoterId: string, 
   eventId: string
 ): Promise<EventDetailedAnalytics[]> {
+  if (isPreviewEnvironment()) {
+    await delay(MOCK_DELAY);
+    return generateMockEventDetails(eventId);
+  }
+  
   try {
-    // For now, always use mock data for this specific endpoint until we have real data available
-    console.log("Using mock event detailed analytics data");
-    
-    // Find the specific event from mock data
-    const { eventPerformance } = createMockData(promoterId);
-    const event = eventPerformance.find(e => e.id === eventId);
-    
-    if (!event) return [];
-    
-    // Generate daily metrics for the past 14 days
-    const result: EventDetailedAnalytics[] = Array.from({ length: 14 }, (_, i) => {
-      const date = new Date();
-      date.setDate(date.getDate() - (14 - i));
-      const dateString = formatDateString(date);
-      
-      // More tickets sold as we get closer to event date
-      const progress = Math.min(1, (i + 1) / 14);
-      const dailyTickets = Math.floor((event.ticket_sales || 0) * progress * 0.15);
-      
-      const ticketTypes = [
-        {
-          name: "Standard",
-          quantity: Math.floor(dailyTickets * 0.7),
-          revenue: Math.floor(dailyTickets * 0.7 * 10)
-        },
-        {
-          name: "VIP",
-          quantity: Math.floor(dailyTickets * 0.2),
-          revenue: Math.floor(dailyTickets * 0.2 * 25)
-        },
-        {
-          name: "Early Bird",
-          quantity: Math.floor(dailyTickets * 0.1),
-          revenue: Math.floor(dailyTickets * 0.1 * 8)
-        }
-      ];
-      
-      const totalRevenue = ticketTypes.reduce((sum, type) => sum + type.revenue, 0);
-      
-      return {
-        id: `ed-${eventId}-${i}`,
-        event_id: eventId,
-        date: dateString,
-        tickets_sold: ticketTypes.reduce((sum, type) => sum + type.quantity, 0),
-        revenue: totalRevenue,
-        attendees: 0, // Will be filled on event day
-        ticket_types: ticketTypes
-      };
-    });
-    
-    // Simulate attendance on the event day
-    try {
-      const eventDate = event.date ? new Date(event.date) : new Date();
-      const today = new Date();
-      
-      if (!isNaN(eventDate.getTime()) && eventDate <= today) {
-        const eventDayData = result.find(data => data.date === event.date);
-        if (eventDayData) {
-          eventDayData.attendees = event.attendees || 0;
-        }
-      }
-    } catch (error) {
-      console.error("Error setting event day attendance:", error);
-    }
-    
-    return result;
+    // Real API call would go here
+    return generateMockEventDetails(eventId);
   } catch (error) {
-    console.error('Error creating event detailed analytics:', error);
-    return [];
+    console.error('Error fetching event detailed analytics:', error);
+    throw error;
   }
 }
+
+/**
+ * Fetch campaign performance data
+ */
+export async function fetchCampaignPerformance(promoterId: string): Promise<CampaignPerformance[]> {
+  if (isPreviewEnvironment()) {
+    await delay(MOCK_DELAY);
+    return generateMockCampaigns();
+  }
+  
+  try {
+    // Real API call would go here
+    return generateMockCampaigns();
+  } catch (error) {
+    console.error('Error fetching campaign performance:', error);
+    throw error;
+  }
+}
+
+/**
+ * Fetch audience metrics data
+ */
+export async function fetchAudienceMetrics(promoterId: string): Promise<AudienceMetric[]> {
+  if (isPreviewEnvironment()) {
+    await delay(MOCK_DELAY);
+    return generateMockAudienceMetrics();
+  }
+  
+  try {
+    // Real API call would go here
+    return generateMockAudienceMetrics();
+  } catch (error) {
+    console.error('Error fetching audience metrics:', error);
+    throw error;
+  }
+}
+
+/**
+ * Fetch trend data for a specific metric
+ */
+export async function fetchTrendData(
+  promoterId: string, 
+  trendType: string, 
+  dateRange: AnalyticsDateRange
+): Promise<TrendDataPoint[]> {
+  if (isPreviewEnvironment()) {
+    await delay(MOCK_DELAY);
+    return generateMockTrendData(trendType, dateRange);
+  }
+  
+  try {
+    // Real API call would go here
+    return generateMockTrendData(trendType, dateRange);
+  } catch (error) {
+    console.error(`Error fetching ${trendType} trend:`, error);
+    throw error;
+  }
+}
+
+// Helper to create a delay
+function delay(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// Mock data generators
+function generateMockAnalytics(dateRange: AnalyticsDateRange): PromoterAnalytics[] {
+  const { startDate, endDate } = dateRange;
+  const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+  const result: PromoterAnalytics[] = [];
+  
+  for (let i = 0; i < days; i++) {
+    const date = new Date(startDate);
+    date.setDate(startDate.getDate() + i);
+    
+    result.push({
+      date: date.toISOString().split('T')[0],
+      total_views: Math.floor(Math.random() * 500) + 100,
+      unique_visitors: Math.floor(Math.random() * 200) + 50,
+      engagement_rate: parseFloat((Math.random() * 10 + 5).toFixed(1)),
+      conversion_rate: parseFloat((Math.random() * 5 + 1).toFixed(1))
+    });
+  }
+  
+  return result;
+}
+
+function generateMockEvents(): EventPerformance[] {
+  return [
+    {
+      id: '1',
+      name: 'Summer Music Festival',
+      date: '2025-06-15',
+      venue_name: 'Central Park',
+      attendees: 1200,
+      revenue: 24000
+    },
+    {
+      id: '2',
+      name: 'Jazz Night',
+      date: '2025-05-10',
+      venue_name: 'Blue Note Club',
+      attendees: 150,
+      revenue: 3000
+    },
+    {
+      id: '3',
+      name: 'Electronic Dance Party',
+      date: '2025-04-30',
+      venue_name: 'Warehouse 21',
+      attendees: 450,
+      revenue: 9000
+    }
+  ];
+}
+
+function generateMockEventDetails(eventId: string): EventDetailedAnalytics[] {
+  return [
+    {
+      id: `${eventId}-1`,
+      event_id: eventId,
+      metric_name: 'ticket_sales',
+      metric_value: 450,
+      date: '2025-04-30'
+    },
+    {
+      id: `${eventId}-2`,
+      event_id: eventId,
+      metric_name: 'engagement',
+      metric_value: 78,
+      date: '2025-04-30'
+    },
+    {
+      id: `${eventId}-3`,
+      event_id: eventId,
+      metric_name: 'satisfaction',
+      metric_value: 92,
+      date: '2025-04-30'
+    }
+  ];
+}
+
+function generateMockCampaigns(): CampaignPerformance[] {
+  return [
+    {
+      id: '1',
+      name: 'Summer Festival Promo',
+      status: 'active',
+      reach: 15000,
+      engagement: 3200,
+      conversion_rate: 8.5,
+      start_date: '2025-04-01',
+      end_date: '2025-05-15'
+    },
+    {
+      id: '2',
+      name: 'Early Bird Tickets',
+      status: 'completed',
+      reach: 8000,
+      engagement: 1800,
+      conversion_rate: 12.3,
+      start_date: '2025-03-10',
+      end_date: '2025-03-31'
+    },
+    {
+      id: '3',
+      name: 'VIP Experience',
+      status: 'planned',
+      reach: 5000,
+      engagement: 0,
+      conversion_rate: 0,
+      start_date: '2025-05-20',
+      end_date: '2025-06-10'
+    }
+  ];
+}
+
+function generateMockAudienceMetrics(): AudienceMetric[] {
+  return [
+    { id: '1', metric_name: 'age_group', metric_value: 35, segment: '18-24' },
+    { id: '2', metric_name: 'age_group', metric_value: 25, segment: '25-34' },
+    { id: '3', metric_name: 'age_group', metric_value: 20, segment: '35-44' },
+    { id: '4', metric_name: 'age_group', metric_value: 20, segment: '45+' },
+    { id: '5', metric_name: 'location', metric_value: 45, segment: 'urban' },
+    { id: '6', metric_name: 'location', metric_value: 30, segment: 'suburban' },
+    { id: '7', metric_name: 'location', metric_value: 25, segment: 'rural' },
+    { id: '8', metric_name: 'interests', metric_value: 65, segment: 'music' },
+    { id: '9', metric_name: 'interests', metric_value: 45, segment: 'arts' },
+    { id: '10', metric_name: 'interests', metric_value: 40, segment: 'nightlife' }
+  ];
+}
+
+function generateMockTrendData(trendType: string, dateRange: AnalyticsDateRange): TrendDataPoint[] {
+  const { startDate, endDate } = dateRange;
+  const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+  const result: TrendDataPoint[] = [];
+  
+  // Generate data points for every third day to make the chart less crowded
+  for (let i = 0; i < days; i += 3) {
+    const date = new Date(startDate);
+    date.setDate(startDate.getDate() + i);
+    
+    let baseValue;
+    let volatility;
+    
+    if (trendType === 'subscriber_growth') {
+      baseValue = 100;
+      volatility = 25;
+    } else if (trendType === 'engagement_rate') {
+      baseValue = 7;
+      volatility = 3;
+    } else {
+      baseValue = 50;
+      volatility = 10;
+    }
+    
+    // Create some randomness but with an overall upward trend
+    const trendBoost = i / days * 10; // Gradual upward trend factor
+    const value = baseValue + trendBoost + (Math.random() * volatility - volatility / 2);
+    
+    result.push({
+      id: `${trendType}-${i}`,
+      date: date.toISOString().split('T')[0],
+      metric_value: parseFloat(value.toFixed(1))
+    });
+  }
+  
+  return result;
+}
+
+export {
+  type PromoterAnalytics,
+  type EventPerformance,
+  type CampaignPerformance,
+  type AudienceMetric,
+  type TrendDataPoint,
+  type EventDetailedAnalytics
+};

@@ -1,56 +1,31 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/contexts/auth';
-import { DateRange } from 'react-day-picker';
 import { addDays } from 'date-fns';
+import { isPreviewEnvironment } from '@/utils/environment';
+import { PromoterAnalyticsCache } from './promoter/analyticsCache';
 import { 
   fetchPromoterAnalytics, 
   fetchEventPerformance,
   fetchCampaignPerformance,
   fetchAudienceMetrics,
   fetchTrendData,
-  fetchEventDetailedAnalytics,
+  fetchEventDetailedAnalytics
+} from '@/services/promoterAnalyticsService';
+import { 
+  UsePromoterAnalyticsProps,
+  PromoterAnalyticsData,
   PromoterAnalytics,
   EventPerformance,
   CampaignPerformance,
   AudienceMetric,
   TrendDataPoint,
   EventDetailedAnalytics
-} from '@/services/promoterAnalyticsService';
-import { isPreviewEnvironment } from '@/utils/environment';
+} from './promoter/types';
 
-interface UsePromoterAnalyticsProps {
-  promoterId?: string;
-  range: DateRange | undefined;
-}
-
-interface PromoterAnalyticsData {
-  analytics: PromoterAnalytics[];
-  eventPerformance: EventPerformance[];
-  campaignPerformance: CampaignPerformance[];
-  audienceMetrics: AudienceMetric[];
-  subscriberTrend: TrendDataPoint[];
-  engagementTrend: TrendDataPoint[];
-  isLoading: boolean;
-  error: string | null;
-  refresh: () => void;
-  fetchEventDetails: (eventId: string) => Promise<EventDetailedAnalytics[]>;
-}
-
-// In-memory cache for analytics data with expiry
-interface AnalyticsCache {
-  analytics: PromoterAnalytics[];
-  eventPerformance: EventPerformance[];
-  campaignPerformance: CampaignPerformance[];
-  audienceMetrics: AudienceMetric[];
-  subscriberTrend: TrendDataPoint[];
-  engagementTrend: TrendDataPoint[];
-  timestamp: number;
-}
-
-const analyticsCache: Record<string, AnalyticsCache> = {};
-const CACHE_EXPIRY_MS = 5 * 60 * 1000; // 5 minutes
-
+/**
+ * Hook to fetch and manage promoter analytics data
+ */
 export function usePromoterAnalytics({
   promoterId: providedPromoterId,
   range
@@ -91,20 +66,17 @@ export function usePromoterAnalytics({
 
   // Cache key based on promoterId and date range - with safety checks
   const cacheKey = useMemo(() => {
-    if (!effectivePromoterId) return '';
-    
-    const startDate = effectiveRange.from ? 
-      effectiveRange.from.toISOString().split('T')[0] : '';
-    const endDate = effectiveRange.to ? 
-      effectiveRange.to.toISOString().split('T')[0] : '';
-    
-    return `${effectivePromoterId}-${startDate}-${endDate}`;
+    return PromoterAnalyticsCache.createKey(
+      effectivePromoterId,
+      effectiveRange.from,
+      effectiveRange.to
+    );
   }, [effectivePromoterId, effectiveRange.from, effectiveRange.to]);
 
   // Refresh function that safely handles the cache
   const refresh = () => {
     if (cacheKey) {
-      delete analyticsCache[cacheKey];
+      PromoterAnalyticsCache.invalidate(cacheKey);
     }
     setRefreshToken(prev => prev + 1);
   };
@@ -121,7 +93,7 @@ export function usePromoterAnalytics({
     }
   };
 
-  // Main data fetching effect with improved error handling and preview safety
+  // Main data fetching effect
   useEffect(() => {
     // Safety check for required data
     if (!effectivePromoterId) {
@@ -136,13 +108,8 @@ export function usePromoterAnalytics({
 
       try {
         // Check for valid cached data
-        if (
-          cacheKey && 
-          analyticsCache[cacheKey] && 
-          (Date.now() - analyticsCache[cacheKey].timestamp < CACHE_EXPIRY_MS)
-        ) {
-          console.log("Using cached promoter analytics data");
-          const cachedData = analyticsCache[cacheKey];
+        const cachedData = PromoterAnalyticsCache.get(cacheKey);
+        if (cachedData) {
           setAnalytics(cachedData.analytics);
           setEventPerformance(cachedData.eventPerformance);
           setCampaignPerformance(cachedData.campaignPerformance);
@@ -197,15 +164,14 @@ export function usePromoterAnalytics({
 
         // Cache the results
         if (cacheKey) {
-          analyticsCache[cacheKey] = {
+          PromoterAnalyticsCache.set(cacheKey, {
             analytics: analyticsData,
             eventPerformance: events,
             campaignPerformance: campaigns,
             audienceMetrics: audience,
             subscriberTrend: subscriberTrendData,
-            engagementTrend: engagementTrendData,
-            timestamp: Date.now()
-          };
+            engagementTrend: engagementTrendData
+          });
         }
       } catch (err) {
         console.error('Error loading promoter analytics data:', err);
@@ -231,3 +197,12 @@ export function usePromoterAnalytics({
     fetchEventDetails
   };
 }
+
+export type {
+  PromoterAnalytics,
+  EventPerformance,
+  CampaignPerformance,
+  AudienceMetric,
+  TrendDataPoint,
+  EventDetailedAnalytics
+};
