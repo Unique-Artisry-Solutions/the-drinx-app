@@ -1,3 +1,4 @@
+
 import { FeatureItem } from '../types';
 
 export const promoterFeatures: FeatureItem[] = [
@@ -152,12 +153,14 @@ export const promoterFeatures: FeatureItem[] = [
     statusUpdated: true,
     originalStatus: "planned",
     dbRequirementsText: `
-      - promoter_analytics: Core analytics table for promoter activities [complete]
-      - event_performance: Event attendance and revenue metrics [complete]
-      - campaign_performance: Marketing campaign effectiveness metrics [complete]
-      - audience_metrics: Demographic and engagement data for audience analysis [complete]
-      - promoter_goal_tracking: Tracking of KPIs and promoter goals [complete]
-      - analytics_events: Integration with the core analytics tracking system [complete]
+      - promoter_event_analytics: Detailed analytics for event performance [complete]
+      - promoter_audience_metrics: Demographic data for audience analysis [complete]
+      - promoter_campaign_analytics: Marketing campaign performance metrics [complete]
+      - promoter_audience_trends: Engagement and growth trends over time [complete]
+      - promoter_event_performance_view: View for aggregated event statistics [complete]
+      - promoter_audience_segments_view: View for audience demographics analysis [complete]
+      - promoter_campaign_performance_view: View for campaign KPIs and metrics [complete]
+      - promoter_audience_trends_view: View for trend analysis and visualization [complete]
     `,
     testSteps: [
       "Phase 1 - Core Data Layer (Completed):",

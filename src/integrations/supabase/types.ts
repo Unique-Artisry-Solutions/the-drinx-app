@@ -738,6 +738,13 @@ export type Database = {
             referencedRelation: "events"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "event_ticket_types_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "promoter_event_performance_view"
+            referencedColumns: ["event_id"]
+          },
         ]
       }
       events: {
@@ -1452,6 +1459,168 @@ export type Database = {
           username?: string | null
         }
         Relationships: []
+      }
+      promoter_audience_metrics: {
+        Row: {
+          created_at: string
+          id: string
+          metric_name: string
+          metric_value: number
+          period_end: string | null
+          period_start: string | null
+          promoter_id: string
+          segment: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          metric_name: string
+          metric_value: number
+          period_end?: string | null
+          period_start?: string | null
+          promoter_id: string
+          segment: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          metric_name?: string
+          metric_value?: number
+          period_end?: string | null
+          period_start?: string | null
+          promoter_id?: string
+          segment?: string
+        }
+        Relationships: []
+      }
+      promoter_audience_trends: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          metric_name: string
+          metric_value: number
+          promoter_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          id?: string
+          metric_name: string
+          metric_value: number
+          promoter_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          metric_name?: string
+          metric_value?: number
+          promoter_id?: string
+        }
+        Relationships: []
+      }
+      promoter_campaign_analytics: {
+        Row: {
+          campaign_id: string | null
+          campaign_name: string
+          clicks: number
+          conversions: number
+          cost: number
+          created_at: string
+          date: string
+          id: string
+          impressions: number
+          promoter_id: string
+          revenue: number
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          campaign_id?: string | null
+          campaign_name: string
+          clicks?: number
+          conversions?: number
+          cost?: number
+          created_at?: string
+          date: string
+          id?: string
+          impressions?: number
+          promoter_id: string
+          revenue?: number
+          source: string
+          updated_at?: string
+        }
+        Update: {
+          campaign_id?: string | null
+          campaign_name?: string
+          clicks?: number
+          conversions?: number
+          cost?: number
+          created_at?: string
+          date?: string
+          id?: string
+          impressions?: number
+          promoter_id?: string
+          revenue?: number
+          source?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      promoter_event_analytics: {
+        Row: {
+          attendee_count: number
+          created_at: string
+          date: string
+          engagement_score: number
+          event_id: string | null
+          id: string
+          promoter_id: string
+          revenue: number
+          ticket_sales: number
+          updated_at: string
+        }
+        Insert: {
+          attendee_count?: number
+          created_at?: string
+          date: string
+          engagement_score?: number
+          event_id?: string | null
+          id?: string
+          promoter_id: string
+          revenue?: number
+          ticket_sales?: number
+          updated_at?: string
+        }
+        Update: {
+          attendee_count?: number
+          created_at?: string
+          date?: string
+          engagement_score?: number
+          event_id?: string | null
+          id?: string
+          promoter_id?: string
+          revenue?: number
+          ticket_sales?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promoter_event_analytics_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promoter_event_analytics_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "promoter_event_performance_view"
+            referencedColumns: ["event_id"]
+          },
+        ]
       }
       promoter_notification_preferences: {
         Row: {
@@ -3004,6 +3173,71 @@ export type Database = {
           reporter_name: string | null
         }
         Relationships: []
+      }
+      promoter_audience_segments_view: {
+        Row: {
+          data_points: number | null
+          latest_update: string | null
+          metric_name: string | null
+          promoter_id: string | null
+          segment: string | null
+          total_value: number | null
+        }
+        Relationships: []
+      }
+      promoter_audience_trends_view: {
+        Row: {
+          average_value: number | null
+          data_points: number | null
+          max_value: number | null
+          metric_name: string | null
+          min_value: number | null
+          month: string | null
+          promoter_id: string | null
+        }
+        Relationships: []
+      }
+      promoter_campaign_performance_view: {
+        Row: {
+          campaign_id: string | null
+          campaign_name: string | null
+          click_through_rate: number | null
+          conversion_rate: number | null
+          end_date: string | null
+          profit: number | null
+          promoter_id: string | null
+          roi_percentage: number | null
+          source: string | null
+          start_date: string | null
+          total_clicks: number | null
+          total_conversions: number | null
+          total_cost: number | null
+          total_impressions: number | null
+          total_revenue: number | null
+        }
+        Relationships: []
+      }
+      promoter_event_performance_view: {
+        Row: {
+          avg_engagement_score: number | null
+          date: string | null
+          event_id: string | null
+          event_name: string | null
+          promoter_id: string | null
+          total_attendees: number | null
+          total_revenue: number | null
+          total_ticket_sales: number | null
+          venue_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "events_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "establishments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       promotion_analytics: {
         Row: {

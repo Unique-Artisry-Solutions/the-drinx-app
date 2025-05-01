@@ -23,6 +23,8 @@ export const systemBreakdown: FeatureItem = {
     - [x] Rewards system monitoring and overview dashboard
     - [x] Real-time performance monitoring and alerts
     - [x] Cohort analysis and funnel visualization
+    - [x] Analytics tables for promoter data (event, audience, campaign)
+    - [x] Optimized database views for efficient analytics queries
   `,
   testSteps: [
     "Log in as admin and navigate to System Breakdown page",
@@ -32,6 +34,7 @@ export const systemBreakdown: FeatureItem = {
     "Check event notification system integration",
     "Verify rewards system monitoring dashboard is functioning",
     "Test real-time alerts and monitoring capabilities",
-    "View cohort and funnel analytics"
+    "View cohort and funnel analytics",
+    "Check promoter analytics database schema integration"
   ]
 };
