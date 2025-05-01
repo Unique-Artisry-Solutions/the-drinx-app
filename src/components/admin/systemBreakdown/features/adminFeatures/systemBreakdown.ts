@@ -35,6 +35,7 @@ export const systemBreakdown: FeatureItem = {
     - [x] Fixed missing type definitions for communication components
     - [x] Added ticket_sales property to EventPerformance interface
     - [x] Added metric_name property to TrendDataPoint interface
+    - [x] Updated mock data generators to include all required properties
   `,
   testSteps: [
     "Log in as admin and navigate to System Breakdown page",

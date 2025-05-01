@@ -169,7 +169,8 @@ function generateMockEvents(): EventPerformance[] {
       date: '2025-06-15',
       venue_name: 'Central Park',
       attendees: 1200,
-      revenue: 24000
+      revenue: 24000,
+      ticket_sales: 1200 // Added required ticket_sales property
     },
     {
       id: '2',
@@ -177,7 +178,8 @@ function generateMockEvents(): EventPerformance[] {
       date: '2025-05-10',
       venue_name: 'Blue Note Club',
       attendees: 150,
-      revenue: 3000
+      revenue: 3000,
+      ticket_sales: 150 // Added required ticket_sales property
     },
     {
       id: '3',
@@ -185,7 +187,8 @@ function generateMockEvents(): EventPerformance[] {
       date: '2025-04-30',
       venue_name: 'Warehouse 21',
       attendees: 450,
-      revenue: 9000
+      revenue: 9000,
+      ticket_sales: 500 // Added required ticket_sales property
     }
   ];
 }
@@ -297,7 +300,8 @@ function generateMockTrendData(trendType: string, dateRange: AnalyticsDateRange)
     result.push({
       id: `${trendType}-${i}`,
       date: date.toISOString().split('T')[0],
-      metric_value: parseFloat(value.toFixed(1))
+      metric_value: parseFloat(value.toFixed(1)),
+      metric_name: trendType // Added required metric_name property
     });
   }
   
