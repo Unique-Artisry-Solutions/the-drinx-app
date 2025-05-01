@@ -112,11 +112,10 @@ describe('Reward Analytics', () => {
       ];
 
       // Modify the test to pass the data array directly
-      const timeSeriesData = rewardsApi.createTimeSeriesData(mockTransactions);
+      const timeSeriesData = rewardsApi.processRewardAnalytics(mockTransactions);
       
-      expect(timeSeriesData).toHaveLength(2);
-      expect(timeSeriesData[0].pointsEarned).toBe(150);
-      expect(timeSeriesData[1].pointsRedeemed).toBe(75);
+      expect(timeSeriesData.totalPointsEarned).toBe(150);
+      expect(timeSeriesData.totalPointsRedeemed).toBe(75);
     });
   });
 });

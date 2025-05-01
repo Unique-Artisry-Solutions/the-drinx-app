@@ -6,18 +6,24 @@ import { UserRewardPreference } from '../types';
 export async function getUserPreference(
   userId: string,
   preferenceKey: string
-): Promise<{ value: any; success: boolean; preference_key?: string; preference_value?: any }> {
+): Promise<{ value: any; success: boolean; preference_key?: string; preference_value?: any; id?: string }> {
   try {
     const { data, error } = await supabase
       .from('user_reward_preferences')
-      .select('preference_key, preference_value')
+      .select('id, preference_key, preference_value')
       .eq('user_id', userId)
       .eq('preference_key', preferenceKey)
       .single();
 
     if (error) {
       if (error.code === 'PGRST116') { // Not found
-        return { value: null, success: true, preference_key: preferenceKey, preference_value: null };
+        return { 
+          value: null, 
+          success: true, 
+          preference_key: preferenceKey, 
+          preference_value: null,
+          id: undefined 
+        };
       }
       console.error('Error fetching user preference:', error);
       return { value: null, success: false };
@@ -27,7 +33,8 @@ export async function getUserPreference(
       value: data.preference_value, 
       success: true,
       preference_key: data.preference_key,
-      preference_value: data.preference_value
+      preference_value: data.preference_value,
+      id: data.id
     };
   } catch (error) {
     console.error('Exception fetching user preference:', error);
@@ -52,7 +59,7 @@ export async function saveUserPreference(
     // Convert preferenceValue to JSON compatible format
     const jsonPreferenceValue = typeof preferenceValue === 'string' 
       ? preferenceValue
-      : JSON.parse(JSON.stringify(preferenceValue));
+      : JSON.stringify(preferenceValue);
 
     // Use upsert to either insert or update based on existence
     const { error } = await supabase

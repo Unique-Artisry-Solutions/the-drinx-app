@@ -1,6 +1,6 @@
 
 import { supabase } from '@/lib/supabase';
-import { RewardAnalytics, TimeSeriesDataPoint } from '../types';
+import { RewardAnalytics, TimeSeriesDataPoint, RewardTransactionRow } from '../types';
 
 export async function getRewardAnalytics(establishmentId?: string): Promise<RewardAnalytics> {
   try {
@@ -213,17 +213,38 @@ export async function createTimeSeriesData(establishmentId?: string): Promise<Ti
 }
 
 export function processRewardAnalytics(data: RewardTransactionRow[]): any {
-  // Process raw analytics data into useful metrics
-  // This would be expanded based on specific needs
+  // Calculate total points earned and redeemed
+  const totalTransactions = data.length;
+  const totalPoints = data.reduce((sum, item) => sum + item.points, 0);
+  const averagePointsPerTransaction = totalTransactions > 0 ? totalPoints / totalTransactions : 0;
+  
+  // Get points by transaction type
+  const earnTransactions = data.filter(t => t.transaction_type === 'earn');
+  const redeemTransactions = data.filter(t => t.transaction_type === 'redeem' || t.transaction_type === 'spend');
+  
+  const totalPointsEarned = earnTransactions.reduce((sum, t) => sum + t.points, 0);
+  const totalPointsRedeemed = redeemTransactions.reduce((sum, t) => sum + t.points, 0);
+  
+  // Calculate sources breakdown
+  const sourcesBreakdown: Record<string, number> = {};
+  data.forEach(transaction => {
+    const source = transaction.source;
+    if (!sourcesBreakdown[source]) {
+      sourcesBreakdown[source] = 0;
+    }
+    sourcesBreakdown[source] += transaction.points;
+  });
+
   return {
+    totalPointsEarned,
+    totalPointsRedeemed,
+    pointsEconomyBalance: totalPointsEarned - totalPointsRedeemed,
+    transactionCount: totalTransactions,
+    redemptionRate: totalPointsEarned > 0 ? (totalPointsRedeemed / totalPointsEarned) * 100 : 0,
+    sourcesBreakdown,
     summary: {
-      totalTransactions: data.length,
-      averagePointsPerTransaction: data.reduce((sum, item) => sum + item.points, 0) / data.length
-    },
-    trends: {
-      daily: [], // Daily grouping
-      weekly: [], // Weekly grouping
-      monthly: [] // Monthly grouping  
+      totalTransactions,
+      averagePointsPerTransaction
     }
   };
 }

@@ -1,4 +1,3 @@
-
 import { describe, it, expect, beforeEach, vi, afterAll } from 'vitest';
 import { supabase } from '@/lib/supabase';
 import { rewardsApi } from '@/lib/rewards/api';
@@ -280,10 +279,12 @@ describe.skip('Reward System End-to-End Tests', () => {
     
     expect(updatedPreference?.preference_value).toEqual(updatedValue);
     
-    // Add test preference to cleanup list
-    createdResources.push({
-      type: 'user_preference',
-      id: updatedPreference?.id || ''
-    });
+    // Add test preference to cleanup list (if ID exists)
+    if (updatedPreference?.id) {
+      createdResources.push({
+        type: 'user_preference',
+        id: updatedPreference.id
+      });
+    }
   });
 });

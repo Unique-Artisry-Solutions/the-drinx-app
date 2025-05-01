@@ -281,7 +281,7 @@ export async function updateAchievementProgress(
       
       // Create a new user achievement record (simplified example)
       if (achievementId.includes('visit')) {
-        await supabase.from('user_visit_achievements').insert({
+        await supabase.from('user_visit_achievement').insert({
           user_id: userId,
           achievement_type: achievementId,
           earned_at: new Date().toISOString(),
