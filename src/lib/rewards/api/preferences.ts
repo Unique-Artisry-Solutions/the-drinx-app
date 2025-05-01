@@ -2,61 +2,69 @@
 import { supabase } from '@/lib/supabase';
 import { UserRewardPreference } from '../types';
 
-/**
- * Get a user's reward preference by key
- * @param userId User ID
- * @param preferenceKey The preference key to look up
- * @returns The preference or null if not found
- */
 export async function getUserPreference(
   userId: string,
   preferenceKey: string
-): Promise<UserRewardPreference | null> {
-  const { data, error } = await supabase
-    .from('user_reward_preferences')
-    .select('*')
-    .eq('user_id', userId)
-    .eq('preference_key', preferenceKey)
-    .single();
+): Promise<{ value: any; success: boolean }> {
+  try {
+    const { data, error } = await supabase
+      .from('user_reward_preferences')
+      .select('preference_value')
+      .eq('user_id', userId)
+      .eq('preference_key', preferenceKey)
+      .single();
 
-  if (error) {
-    console.error('Error fetching user preference:', error);
-    return null;
+    if (error) {
+      if (error.code === 'PGRST116') { // Not found
+        return { value: null, success: true };
+      }
+      console.error('Error fetching user preference:', error);
+      return { value: null, success: false };
+    }
+
+    return { 
+      value: data.preference_value, 
+      success: true 
+    };
+  } catch (error) {
+    console.error('Exception fetching user preference:', error);
+    return { value: null, success: false };
   }
-
-  return data as UserRewardPreference;
 }
 
-/**
- * Save a user preference
- * @param userId User ID
- * @param preferenceKey The preference key
- * @param preferenceValue The preference value - can be object or string (will be stringified if object)
- * @returns Success status
- */
 export async function saveUserPreference(
   userId: string,
   preferenceKey: string,
-  preferenceValue: object | string
-): Promise<boolean> {
-  // Ensure preferenceValue is stringified if it's an object
-  const valueToSave = typeof preferenceValue === 'string' 
-    ? preferenceValue 
-    : JSON.stringify(preferenceValue);
+  preferenceValue: string | object
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    // Check if the preference already exists
+    const { data } = await supabase
+      .from('user_reward_preferences')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('preference_key', preferenceKey)
+      .maybeSingle();
 
-  const { error } = await supabase
-    .from('user_reward_preferences')
-    .upsert({
-      user_id: userId,
-      preference_key: preferenceKey,
-      preference_value: valueToSave,
-      updated_at: new Date().toISOString()
-    });
+    // Use upsert to either insert or update based on existence
+    const { error } = await supabase
+      .from('user_reward_preferences')
+      .upsert({
+        id: data?.id, // Will be null for new records
+        user_id: userId,
+        preference_key: preferenceKey,
+        preference_value: preferenceValue,
+        updated_at: new Date().toISOString()
+      });
 
-  if (error) {
-    console.error('Error saving user preference:', error);
-    return false;
+    if (error) {
+      console.error('Error saving user preference:', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Exception saving user preference:', error);
+    return { success: false, error: error.message };
   }
-
-  return true;
 }

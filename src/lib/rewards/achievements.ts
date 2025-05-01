@@ -1,300 +1,260 @@
 
-import { Achievement, AchievementCategory } from './types';
+import { supabase } from '@/lib/supabase';
+import { Achievement, AchievementProgressEvent } from './types';
+import { rewardsApi } from './api';
 
-// Define achievement categories
-export const achievementCategories: AchievementCategory[] = [
-  {
-    id: 'visits',
-    name: 'Explorer',
-    description: 'Achievements for discovering new places',
-    icon: 'MapPin'
-  },
-  {
-    id: 'mocktails',
-    name: 'Connoisseur',
-    description: 'Achievements for trying different mocktails',
-    icon: 'GlassWater'
-  },
-  {
-    id: 'social',
-    name: 'Social Butterfly',
-    description: 'Achievements for social interactions',
-    icon: 'Users'
-  },
-  {
-    id: 'creation',
-    name: 'Creator',
-    description: 'Achievements for creating content',
-    icon: 'PenTool'
-  },
-  {
-    id: 'special',
-    name: 'Milestone',
-    description: 'Special achievements and milestones',
-    icon: 'Award'
-  }
-];
+// This file would contain the actual achievement tracking logic
+// This is a simplified version for demonstration
 
-// Define all available achievements
-export const availableAchievements: Achievement[] = [
-  // Explorer category
-  {
+// Mock achievement data - in production this would come from a database
+const achievementDefinitions: Record<string, Omit<Achievement, 'progress' | 'isCompleted' | 'completedAt'>> = {
+  'first-visit': {
     id: 'first-visit',
-    name: 'First Steps',
+    name: 'First Visit',
     description: 'Visit your first establishment',
     category: 'visits',
-    icon: 'MapPin',
+    icon: 'map-pin',
     pointsReward: 50,
-    progress: 0,
-    threshold: 1,
-    isCompleted: false
+    threshold: 1
   },
-  {
+  'five-visits': {
     id: 'five-visits',
-    name: 'Regular Explorer',
+    name: 'Regular Visitor',
     description: 'Visit 5 different establishments',
     category: 'visits',
-    icon: 'MapPin',
+    icon: 'map',
     pointsReward: 100,
-    progress: 0,
-    threshold: 5,
-    isCompleted: false
+    threshold: 5
   },
-  {
+  'ten-visits': {
     id: 'ten-visits',
-    name: 'Urban Adventurer',
+    name: 'Explorer',
     description: 'Visit 10 different establishments',
     category: 'visits',
-    icon: 'MapPin',
+    icon: 'compass',
     pointsReward: 200,
-    progress: 0,
-    threshold: 10,
-    isCompleted: false
+    threshold: 10
   },
-  
-  // Connoisseur category
-  {
+  'first-mocktail': {
     id: 'first-mocktail',
-    name: 'First Sip',
+    name: 'First Taste',
     description: 'Try your first mocktail',
     category: 'mocktails',
-    icon: 'GlassWater',
+    icon: 'glass-water',
     pointsReward: 50,
-    progress: 0,
-    threshold: 1,
-    isCompleted: false
+    threshold: 1
   },
-  {
+  'mocktail-variety': {
     id: 'mocktail-variety',
     name: 'Variety Seeker',
     description: 'Try 5 different mocktails',
     category: 'mocktails',
-    icon: 'GlassWater',
-    pointsReward: 100,
-    progress: 0,
-    threshold: 5,
-    isCompleted: false
+    icon: 'wine-glass',
+    pointsReward: 150,
+    threshold: 5
   },
-  {
+  'mocktail-enthusiast': {
     id: 'mocktail-enthusiast',
     name: 'Mocktail Enthusiast',
-    description: 'Try 15 different mocktails',
+    description: 'Try 20 different mocktails',
     category: 'mocktails',
-    icon: 'GlassWater',
-    pointsReward: 250,
-    progress: 0,
-    threshold: 15,
-    isCompleted: false
+    icon: 'cocktail-glass',
+    pointsReward: 300,
+    threshold: 20
   },
-  
-  // Social category
-  {
+  'first-review': {
     id: 'first-review',
-    name: 'First Impressions',
-    description: 'Write your first review',
-    category: 'social',
-    icon: 'MessageSquare',
-    pointsReward: 50,
-    progress: 0,
-    threshold: 1,
-    isCompleted: false
+    name: 'First Review',
+    description: 'Leave your first review',
+    category: 'engagement',
+    icon: 'edit-3',
+    pointsReward: 30,
+    threshold: 1
   },
-  {
+  'helpful-reviewer': {
     id: 'helpful-reviewer',
     name: 'Helpful Reviewer',
-    description: 'Get 5 likes on your reviews',
-    category: 'social',
-    icon: 'ThumbsUp',
-    pointsReward: 100,
-    progress: 0,
-    threshold: 5,
-    isCompleted: false
+    description: 'Leave 10 reviews',
+    category: 'engagement',
+    icon: 'thumbs-up',
+    pointsReward: 200,
+    threshold: 10
   },
-  {
+  'social-sharer': {
     id: 'social-sharer',
-    name: 'Social Sharer',
-    description: 'Share 3 mocktails or establishments on social media',
-    category: 'social',
-    icon: 'Share2',
-    pointsReward: 75,
-    progress: 0,
-    threshold: 3,
-    isCompleted: false
+    name: 'Social Butterfly',
+    description: 'Share 5 times on social media',
+    category: 'engagement',
+    icon: 'share-2',
+    pointsReward: 100,
+    threshold: 5
   },
-  
-  // Creator category
-  {
+  'first-recipe': {
     id: 'first-recipe',
     name: 'Recipe Creator',
     description: 'Create your first mocktail recipe',
     category: 'creation',
-    icon: 'PenTool',
-    pointsReward: 100,
-    progress: 0,
-    threshold: 1,
-    isCompleted: false
+    icon: 'file-text',
+    pointsReward: 75,
+    threshold: 1
   },
-  {
+  'recipe-liked': {
     id: 'recipe-liked',
-    name: 'Crowd Pleaser',
-    description: 'Have 5 people try your mocktail recipes',
+    name: 'Popular Creator',
+    description: 'Have 5 users like your recipes',
     category: 'creation',
-    icon: 'Heart',
-    pointsReward: 200,
-    progress: 0,
-    threshold: 5,
-    isCompleted: false
+    icon: 'thumbs-up',
+    pointsReward: 150,
+    threshold: 5
   },
-  
-  // Special category
-  {
+  'first-circuit': {
     id: 'first-circuit',
     name: 'Circuit Rider',
-    description: 'Complete your first Swig Circuit',
-    category: 'special',
-    icon: 'Route',
-    pointsReward: 150,
-    progress: 0,
-    threshold: 1,
-    isCompleted: false
-  },
-  {
-    id: 'seasonal-explorer',
-    name: 'Seasonal Explorer',
-    description: 'Visit establishments in all four seasons',
-    category: 'special',
-    icon: 'CalendarDays',
-    pointsReward: 300,
-    progress: 0,
-    threshold: 4,
-    isCompleted: false
-  },
-  {
-    id: 'tier2-unlocked',
-    name: 'Silver Status',
-    description: 'Reach Tier 2 in the rewards program',
-    category: 'special',
-    icon: 'Award',
+    description: 'Complete your first mocktail circuit',
+    category: 'circuits',
+    icon: 'map',
     pointsReward: 200,
-    progress: 0,
-    threshold: 1,
-    isCompleted: false
-  },
-  {
-    id: 'tier3-unlocked',
-    name: 'Gold Status',
-    description: 'Reach Tier 3 in the rewards program',
-    category: 'special',
-    icon: 'Award',
-    pointsReward: 500,
-    progress: 0,
-    threshold: 1,
-    isCompleted: false
+    threshold: 1
   }
-];
+};
 
-// Function to check and update achievements based on user activity
+export async function getUserAchievements(userId: string): Promise<Achievement[]> {
+  // In a real implementation, this would query a database for user achievement progress
+
+  try {
+    // Get progress from user_visit_achievement table as a sample
+    const { data: achievementData, error } = await supabase
+      .from('user_visit_achievement')
+      .select('*')
+      .eq('user_id', userId);
+
+    if (error) {
+      console.error('Error fetching user achievements:', error);
+      // Return a default set for demo purposes
+      return Object.values(achievementDefinitions).map(def => ({
+        ...def,
+        progress: 0,
+        isCompleted: false
+      }));
+    }
+
+    // Convert database achievements to our format
+    // In a real implementation, we'd match achievement_type to our definitions
+    const userAchievementMap = new Map<string, number>();
+    const completedAchievements = new Set<string>();
+    
+    achievementData?.forEach(achievement => {
+      const type = achievement.achievement_type;
+      userAchievementMap.set(type, (userAchievementMap.get(type) || 0) + 1);
+      completedAchievements.add(type);
+    });
+
+    // Return achievements with progress
+    return Object.values(achievementDefinitions).map(def => {
+      const progress = userAchievementMap.get(def.id) || 0;
+      const isCompleted = completedAchievements.has(def.id);
+      
+      return {
+        ...def,
+        progress,
+        isCompleted,
+        completedAt: isCompleted ? new Date().toISOString() : undefined
+      };
+    });
+  } catch (error) {
+    console.error('Exception in getUserAchievements:', error);
+    // Return a default set for demo purposes
+    return Object.values(achievementDefinitions).map(def => ({
+      ...def,
+      progress: 0,
+      isCompleted: false
+    }));
+  }
+}
+
 export async function updateAchievementProgress(
-  userId: string, 
-  achievementId: string, 
+  userId: string,
+  achievementId: string,
   incrementValue: number = 1,
   metadata?: Record<string, any>
-): Promise<{ 
-  updated: boolean; 
+): Promise<{
+  updated: boolean;
   completed: boolean;
   achievement?: Achievement;
 }> {
+  // Get the achievement definition
+  const achievementDef = achievementDefinitions[achievementId];
+  if (!achievementDef) {
+    console.error(`Achievement with ID ${achievementId} not found`);
+    return { updated: false, completed: false };
+  }
+
   try {
-    // This would call the Supabase function to update achievement progress
-    // For now, we'll simulate the update
+    // This is a simplified example - in a real app, you'd:
+    // 1. Check the current progress from the database
+    // 2. Update the progress in the database
+    // 3. Check if the achievement is newly completed
+    // 4. If newly completed, award points and create a notification
     
-    // In a real implementation, this would update the database
-    // and return the updated achievement
-    const achievement = availableAchievements.find(a => a.id === achievementId);
+    // For demo purposes, we'll simulate this process
     
-    if (!achievement) {
+    // Start by getting all the user's achievements
+    const userAchievements = await getUserAchievements(userId);
+    const existingAchievement = userAchievements.find(a => a.id === achievementId);
+    
+    if (!existingAchievement) {
       return { updated: false, completed: false };
     }
     
-    // Simulate an achievement being completed
-    const wasCompleted = achievement.isCompleted;
-    achievement.progress += incrementValue;
+    // Calculate new progress
+    const newProgress = existingAchievement.progress + incrementValue;
+    const wasCompleted = existingAchievement.isCompleted;
+    const isCompleted = newProgress >= achievementDef.threshold;
     
-    if (achievement.progress >= achievement.threshold && !wasCompleted) {
-      achievement.isCompleted = true;
-      achievement.completedAt = new Date().toISOString();
+    // If newly completed, award points
+    if (isCompleted && !wasCompleted) {
+      // In a real implementation, we'd update the database to mark as completed
       
-      return { 
-        updated: true, 
-        completed: true,
-        achievement
-      };
-    }
-    
-    return { 
-      updated: true, 
-      completed: false,
-      achievement
-    };
-  } catch (error) {
-    console.error("Error updating achievement progress:", error);
-    return { updated: false, completed: false };
-  }
-}
-
-// Helper function to get achievements for a user
-export async function getUserAchievements(userId: string): Promise<Achievement[]> {
-  try {
-    // In a real implementation, this would fetch from the database
-    // For now, return the sample achievements with random progress
-    return availableAchievements.map(achievement => {
-      // Create a copy so we don't modify the original
-      const userAchievement = { ...achievement };
-      
-      // Simulate some random progress for demo purposes
-      const randomProgress = Math.floor(Math.random() * (achievement.threshold + 1));
-      userAchievement.progress = randomProgress;
-      
-      if (randomProgress >= achievement.threshold) {
-        userAchievement.isCompleted = true;
-        userAchievement.completedAt = new Date().toISOString();
+      // Award points
+      if (achievementDef.pointsReward > 0) {
+        await rewardsApi.addPoints(
+          userId, 
+          achievementDef.pointsReward, 
+          'achievement', 
+          {
+            achievement_id: achievementId,
+            achievement_name: achievementDef.name
+          }
+        );
       }
       
-      return userAchievement;
-    });
-  } catch (error) {
-    console.error("Error fetching user achievements:", error);
-    return [];
-  }
-}
-
-// Get achievements by category
-export function getAchievementsByCategory(achievements: Achievement[]): Record<string, Achievement[]> {
-  return achievements.reduce((acc, achievement) => {
-    if (!acc[achievement.category]) {
-      acc[achievement.category] = [];
+      // Create a new user achievement record (simplified example)
+      if (achievementId.includes('visit')) {
+        await supabase.from('user_visit_achievement').insert({
+          user_id: userId,
+          achievement_type: achievementId,
+          earned_at: new Date().toISOString(),
+          is_displayed: true,
+          achievement_data: metadata || {}
+        });
+      }
     }
-    acc[achievement.category].push(achievement);
-    return acc;
-  }, {} as Record<string, Achievement[]>);
+    
+    // Return the updated achievement
+    const updatedAchievement: Achievement = {
+      ...achievementDef,
+      progress: newProgress,
+      isCompleted: isCompleted,
+      completedAt: isCompleted ? new Date().toISOString() : undefined
+    };
+    
+    return {
+      updated: true,
+      completed: isCompleted && !wasCompleted,
+      achievement: updatedAchievement
+    };
+  } catch (error) {
+    console.error('Exception in updateAchievementProgress:', error);
+    return { updated: false, completed: false };
+  }
 }

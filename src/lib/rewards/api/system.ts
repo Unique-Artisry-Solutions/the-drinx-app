@@ -1,46 +1,57 @@
 
 import { supabase } from '@/lib/supabase';
-import { RewardOperationResponse } from '../types';
-import { addPoints } from './operations';
 
 export async function isRewardsEnabled(): Promise<boolean> {
-  const { data, error } = await supabase
-    .from('feature_flags')
-    .select('status')
-    .eq('name', 'rewards_system')
-    .single();
-
-  if (error || !data) {
-    console.error('Error checking rewards feature flag:', error);
-    return false;
-  }
-
-  return data.status;
-}
-
-export async function retryFailedOperation(operationId: string): Promise<boolean> {
   try {
-    const { data: operation } = await supabase
-      .from('reward_transactions')
-      .select('*')
-      .eq('id', operationId)
+    const { data, error } = await supabase
+      .from('system_settings')
+      .select('value')
+      .eq('key', 'feature_flags.rewards_enabled')
       .single();
 
-    if (!operation) {
-      console.error('Operation not found:', operationId);
+    if (error) {
+      console.error('Error checking if rewards are enabled:', error);
+      return true; // Default to enabled on error
+    }
+
+    if (!data) {
+      return true; // Default to enabled if setting not found
+    }
+
+    return data.value === true || data.value === 'true';
+  } catch (error) {
+    console.error('Exception checking if rewards are enabled:', error);
+    return true; // Default to enabled on error
+  }
+}
+
+export async function retryFailedOperation(transactionId: string): Promise<boolean> {
+  try {
+    const { data, error } = await supabase
+      .from('reward_transactions')
+      .select('*')
+      .eq('id', transactionId)
+      .single();
+
+    if (error || !data) {
+      console.error('Error fetching transaction for retry:', error);
       return false;
     }
 
-    const result = await addPoints(
-      operation.user_id,
-      operation.points,
-      operation.source,
-      operation.metadata
-    );
+    // Call the update_user_points function
+    const { error: updateError } = await supabase.rpc('update_user_points', {
+      p_user_id: data.user_id,
+      p_points: data.points
+    });
 
-    return result.success;
+    if (updateError) {
+      console.error('Error retrying transaction:', updateError);
+      return false;
+    }
+
+    return true;
   } catch (error) {
-    console.error('Error retrying operation:', error);
+    console.error('Exception in retryFailedOperation:', error);
     return false;
   }
 }
