@@ -49,6 +49,11 @@ export async function saveUserPreference(
       .eq('preference_key', preferenceKey)
       .maybeSingle();
 
+    // Convert preferenceValue to JSON compatible format
+    const jsonPreferenceValue = typeof preferenceValue === 'string' 
+      ? preferenceValue
+      : JSON.parse(JSON.stringify(preferenceValue));
+
     // Use upsert to either insert or update based on existence
     const { error } = await supabase
       .from('user_reward_preferences')
@@ -56,7 +61,7 @@ export async function saveUserPreference(
         id: data?.id, // Will be null for new records
         user_id: userId,
         preference_key: preferenceKey,
-        preference_value: preferenceValue,
+        preference_value: jsonPreferenceValue,
         updated_at: new Date().toISOString()
       });
 

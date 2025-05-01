@@ -111,6 +111,7 @@ describe('Reward Analytics', () => {
         }
       ];
 
+      // Modify the test to pass the data array directly
       const timeSeriesData = rewardsApi.createTimeSeriesData(mockTransactions);
       
       expect(timeSeriesData).toHaveLength(2);

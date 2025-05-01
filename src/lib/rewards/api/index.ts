@@ -1,11 +1,11 @@
 
 import { addPoints, batchUpdatePoints } from './operations';
 import { redeemReward } from './redemption';
-import { trackRewardEvent } from './tracking';
+import { trackRewardEvent, REWARD_EVENT_TYPES, FUNNEL_STAGES } from './tracking';
 import { getUserRewardProfile } from './profile';
 import { isRewardsEnabled, retryFailedOperation } from './system';
 import { getRewardAnalytics, processRewardAnalytics, createTimeSeriesData } from './analytics';
-import { Achievement, AchievementProgressEvent, UserRewardPreference } from '../types';
+import { Achievement, AchievementProgressEvent, UserRewardPreference, RewardTransactionRow } from '../types';
 import { getUserAchievements, updateAchievementProgress } from '../achievements';
 import { getUserPreference, saveUserPreference } from './preferences';
 
@@ -20,6 +20,8 @@ export const rewardsApi = {
   processRewardAnalytics,
   getRewardAnalytics,
   createTimeSeriesData,
+  REWARD_EVENT_TYPES,
+  FUNNEL_STAGES,
   
   // Expose preference methods
   getUserPreference,

@@ -1,3 +1,4 @@
+
 import { supabase } from '@/lib/supabase';
 import { Achievement, AchievementProgressEvent, AchievementCategory } from './types';
 import { rewardsApi } from './api';
@@ -178,7 +179,11 @@ export async function getUserAchievements(userId: string): Promise<Achievement[]
     achievementData?.forEach(achievement => {
       const type = achievement.streak_type;
       userAchievementMap.set(type, (userAchievementMap.get(type) || 0) + 1);
-      if (achievement.current_count >= achievement.threshold) {
+      
+      // Fix: Compare achievement's current_count with achievement definition's threshold
+      // instead of trying to access threshold on the database record
+      const achievementDef = achievementDefinitions[type];
+      if (achievementDef && achievement.current_count >= achievementDef.threshold) {
         completedAchievements.add(type);
       }
     });
@@ -276,7 +281,7 @@ export async function updateAchievementProgress(
       
       // Create a new user achievement record (simplified example)
       if (achievementId.includes('visit')) {
-        await supabase.from('user_visit_achievement').insert({
+        await supabase.from('user_visit_achievements').insert({
           user_id: userId,
           achievement_type: achievementId,
           earned_at: new Date().toISOString(),

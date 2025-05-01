@@ -1,18 +1,19 @@
+
 import { supabase } from '@/lib/supabase';
 import { RewardAnalytics, TimeSeriesDataPoint } from '../types';
 
 export async function getRewardAnalytics(establishmentId?: string): Promise<RewardAnalytics> {
   try {
     // Get total points earned
-    const { data: earnedData, error: earnedError } = await supabase
+    const earnedQuery = supabase
       .from('reward_transactions')
       .select('points')
-      .eq('transaction_type', 'earn')
-      .when(
-        establishmentId !== undefined,
-        query => query.eq('establishment_id', establishmentId),
-        query => query
-      );
+      .eq('transaction_type', 'earn');
+      
+    // Add establishment filter if provided
+    const { data: earnedData, error: earnedError } = establishmentId 
+      ? await earnedQuery.eq('establishment_id', establishmentId)
+      : await earnedQuery;
 
     if (earnedError) {
       console.error('Error fetching earned points:', earnedError);
@@ -20,15 +21,15 @@ export async function getRewardAnalytics(establishmentId?: string): Promise<Rewa
     }
 
     // Get total points redeemed
-    const { data: redeemedData, error: redeemedError } = await supabase
+    const redeemedQuery = supabase
       .from('reward_transactions')
       .select('points')
-      .eq('transaction_type', 'spend')
-      .when(
-        establishmentId !== undefined,
-        query => query.eq('establishment_id', establishmentId),
-        query => query
-      );
+      .eq('transaction_type', 'spend');
+    
+    // Add establishment filter if provided
+    const { data: redeemedData, error: redeemedError } = establishmentId
+      ? await redeemedQuery.eq('establishment_id', establishmentId)
+      : await redeemedQuery;
 
     if (redeemedError) {
       console.error('Error fetching redeemed points:', redeemedError);
@@ -36,14 +37,14 @@ export async function getRewardAnalytics(establishmentId?: string): Promise<Rewa
     }
 
     // Get user counts
-    const { data: userData, error: userError } = await supabase
+    const userQuery = supabase
       .from('user_rewards')
-      .select('user_id, points')
-      .when(
-        establishmentId !== undefined,
-        query => query.eq('establishment_id', establishmentId),
-        query => query
-      );
+      .select('user_id, points');
+    
+    // Add establishment filter if provided
+    const { data: userData, error: userError } = establishmentId
+      ? await userQuery.eq('establishment_id', establishmentId)
+      : await userQuery;
 
     if (userError) {
       console.error('Error fetching user data:', userError);
@@ -51,14 +52,14 @@ export async function getRewardAnalytics(establishmentId?: string): Promise<Rewa
     }
 
     // Get transaction count and sources
-    const { data: transactions, error: transactionsError } = await supabase
+    const transactionsQuery = supabase
       .from('reward_transactions')
-      .select('source, points')
-      .when(
-        establishmentId !== undefined,
-        query => query.eq('establishment_id', establishmentId),
-        query => query
-      );
+      .select('source, points');
+    
+    // Add establishment filter if provided
+    const { data: transactions, error: transactionsError } = establishmentId
+      ? await transactionsQuery.eq('establishment_id', establishmentId)
+      : await transactionsQuery;
 
     if (transactionsError) {
       console.error('Error fetching transactions:', transactionsError);
@@ -155,15 +156,16 @@ export async function createTimeSeriesData(establishmentId?: string): Promise<Ti
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     
-    const { data, error } = await supabase
+    // Build the query
+    const query = supabase
       .from('reward_transactions')
       .select('created_at, points, transaction_type')
-      .gte('created_at', thirtyDaysAgo.toISOString())
-      .when(
-        establishmentId !== undefined,
-        query => query.eq('establishment_id', establishmentId),
-        query => query
-      );
+      .gte('created_at', thirtyDaysAgo.toISOString());
+    
+    // Add establishment filter if provided
+    const { data, error } = establishmentId
+      ? await query.eq('establishment_id', establishmentId)
+      : await query;
 
     if (error) {
       console.error('Error fetching time series data:', error);
@@ -210,7 +212,7 @@ export async function createTimeSeriesData(establishmentId?: string): Promise<Ti
   }
 }
 
-export function processRewardAnalytics(data: any[]): any {
+export function processRewardAnalytics(data: RewardTransactionRow[]): any {
   // Process raw analytics data into useful metrics
   // This would be expanded based on specific needs
   return {
