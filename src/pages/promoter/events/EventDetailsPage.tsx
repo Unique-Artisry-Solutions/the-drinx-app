@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
@@ -25,7 +24,7 @@ import AttendeeDetailModal from '@/components/events/AttendeeDetailModal';
 import CheckInScannerModal from '@/components/events/CheckInScannerModal';
 import { createTicketType, updateTicketType, deleteTicketType } from '@/services/eventTicketService';
 import { checkInAttendee } from '@/services/eventAttendeesService';
-import { toAttendeeStatus } from '@/utils/typeGuards';
+import { toAttendeeStatus, safeJsonToRecord } from '@/utils/typeGuards';
 
 const EventDetailsPage: React.FC = () => {
   const { eventId } = useParams<{ eventId: string }>();
@@ -156,7 +155,7 @@ const EventDetailsPage: React.FC = () => {
         ticket_code: attendee.ticket_code || '',
         checked_in_at: attendee.checked_in_at,
         notes: attendee.notes || '',
-        custom_fields: attendee.custom_fields || {}
+        custom_fields: safeJsonToRecord(attendee.custom_fields)
       }));
 
       setAttendees(typedAttendees);
