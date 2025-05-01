@@ -1,4 +1,3 @@
-
 import { FeatureItem } from '../types';
 
 export const promoterFeatures: FeatureItem[] = [

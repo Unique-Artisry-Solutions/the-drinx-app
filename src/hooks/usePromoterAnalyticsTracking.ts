@@ -15,7 +15,15 @@ export type PromoterEventType =
   | 'message_sent'
   | 'promotion_created'
   | 'promotion_redeemed'
-  | 'marketing_material_uploaded';
+  | 'marketing_material_uploaded'
+  | 'dashboard_accessed'
+  | 'dashboard_tab_changed'
+  | 'dashboard_refreshed'
+  | 'audience_metrics_viewed'
+  | 'date_range_changed'
+  | 'event_details_viewed'
+  | 'demographic_segment_viewed'
+  | 'audience_metric_viewed';
 
 export type CampaignSource =
   | 'email'
