@@ -5,6 +5,8 @@
  * and provide safe methods for environment-specific operations
  */
 
+import { format as formatDate } from 'date-fns';
+
 /**
  * Checks if the app is running in the Lovable preview environment
  * Uses multiple fallback strategies that don't depend on browser APIs
@@ -109,10 +111,8 @@ export const safeFormatDate = (
     // Check if date is valid before formatting
     if (isNaN(dateObj.getTime())) return fallback;
     
-    // Import format dynamically to prevent SSR issues
-    // Using this pattern to avoid direct imports that might cause SSR issues
-    const { format } = require('date-fns');
-    return format(dateObj, formatStr);
+    // Use imported format function directly
+    return formatDate(dateObj, formatStr);
   } catch (error) {
     console.error('Date formatting error:', error);
     return fallback;

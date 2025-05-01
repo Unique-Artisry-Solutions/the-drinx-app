@@ -34,7 +34,7 @@ const registerServiceWorker = async () => {
       return registration;
     } catch (error) {
       console.error('Service Worker registration failed:', error);
-      throw error;
+      return null; // Changed from throwing to returning null for safer error handling
     }
   } else {
     console.warn('Service Workers are not supported in this browser');
@@ -51,8 +51,10 @@ const getBasename = () => {
   const { hostname, pathname } = window.location;
   
   // Check if we're on a Lovable preview URL
-  if (hostname.includes('lovable.app')) {
-    console.log('Detected Lovable preview URL');
+  if (hostname.includes('lovable.app') || 
+      hostname.includes('lovable.dev') || 
+      hostname.includes('gptengineer.app')) {
+    console.log('Detected preview URL');
     
     // For preview URLs, no basename is needed as the server handles it
     return '/';

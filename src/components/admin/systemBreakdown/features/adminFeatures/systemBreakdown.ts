@@ -30,6 +30,7 @@ export const systemBreakdown: FeatureItem = {
     - [x] Safe date formatting across all components
     - [x] Robust mock data generation for analytics preview
     - [x] Complete null safety in analytics components
+    - [x] Fixed dynamic imports for preview environment compatibility
   `,
   testSteps: [
     "Log in as admin and navigate to System Breakdown page",
@@ -44,6 +45,7 @@ export const systemBreakdown: FeatureItem = {
     "Verify preview environment compatibility",
     "Test analytics components with incomplete data",
     "Verify date formatting is consistent and error-free",
-    "Check environment detection in different contexts"
+    "Check environment detection in different contexts",
+    "Verify preview environment works correctly"
   ]
 };
