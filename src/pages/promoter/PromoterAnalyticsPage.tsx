@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/auth';
@@ -23,6 +22,7 @@ import { usePromoterAnalytics } from '@/hooks/usePromoterAnalytics';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useAnalytics } from '@/hooks/useAnalytics';
+import { usePromoterAnalyticsTracking } from '@/hooks/usePromoterAnalyticsTracking'; 
 import { 
   Table, 
   TableBody, 
@@ -39,6 +39,7 @@ import AnalyticsPieChart from '@/components/charts/AnalyticsPieChart';
 const PromoterAnalyticsPage = () => {
   const { user } = useAuth();
   const { trackPage } = useAnalytics();
+  const { trackPromoterEvent, trackCampaignAction } = usePromoterAnalyticsTracking();
   
   const [date, setDate] = useState<DateRange>({
     from: subDays(new Date(), 30),
@@ -47,10 +48,25 @@ const PromoterAnalyticsPage = () => {
   
   const [activeTab, setActiveTab] = useState('overview');
   
-  // Track page view
+  // Track page view and promoter dashboard access
   useEffect(() => {
     trackPage('promoter_analytics_page');
-  }, [trackPage]);
+    trackPromoterEvent('dashboard_accessed', {
+      view_type: 'analytics',
+      date_range: {
+        start: date.from?.toISOString(),
+        end: date.to?.toISOString()
+      }
+    });
+  }, [trackPage, trackPromoterEvent, date]);
+  
+  // Track tab changes
+  useEffect(() => {
+    trackPromoterEvent('dashboard_tab_changed', { 
+      tab: activeTab,
+      timestamp: new Date().toISOString()
+    });
+  }, [activeTab, trackPromoterEvent]);
   
   const {
     analytics,
@@ -66,6 +82,49 @@ const PromoterAnalyticsPage = () => {
     range: date
   });
   
+  // Handle refresh with analytics tracking
+  const handleRefresh = () => {
+    trackPromoterEvent('dashboard_refreshed', {
+      tab: activeTab
+    });
+    refresh();
+  };
+  
+  // Track campaign performance view
+  const handleCampaignTabView = () => {
+    if (activeTab === 'campaigns' && campaignPerformance.length > 0) {
+      trackCampaignAction('performance_viewed', 'all', {
+        campaigns_count: campaignPerformance.length,
+        date_range: {
+          start: date.from?.toISOString(),
+          end: date.to?.toISOString()
+        }
+      });
+    }
+  };
+  
+  // Track audience metrics view
+  const handleAudienceTabView = () => {
+    if (activeTab === 'audience' && audienceMetrics.length > 0) {
+      trackPromoterEvent('audience_metrics_viewed', {
+        metrics_count: audienceMetrics.length,
+        date_range: {
+          start: date.from?.toISOString(),
+          end: date.to?.toISOString()
+        }
+      });
+    }
+  };
+  
+  // Effect to track tabs that need special tracking
+  useEffect(() => {
+    if (activeTab === 'campaigns') {
+      handleCampaignTabView();
+    } else if (activeTab === 'audience') {
+      handleAudienceTabView();
+    }
+  }, [activeTab, campaignPerformance, audienceMetrics]);
+
   // Calculate summary metrics
   const totalEvents = eventPerformance.length;
   const totalAttendees = eventPerformance.reduce((sum, event) => sum + event.attendees, 0);
@@ -117,7 +176,7 @@ const PromoterAnalyticsPage = () => {
             <AlertTitle>Error Loading Analytics</AlertTitle>
             <AlertDescription>{error}</AlertDescription>
           </Alert>
-          <Button onClick={refresh}>
+          <Button onClick={handleRefresh}>
             <RefreshCcw className="mr-2 h-4 w-4" />
             Retry
           </Button>
@@ -162,13 +221,28 @@ const PromoterAnalyticsPage = () => {
                   mode="range"
                   defaultMonth={date?.from}
                   selected={date}
-                  onSelect={(newDate) => newDate && setDate(newDate)}
+                  onSelect={(newDate) => {
+                    if (newDate) {
+                      setDate(newDate);
+                      // Track date range selection
+                      trackPromoterEvent('date_range_changed', {
+                        new_start_date: newDate.from?.toISOString(),
+                        new_end_date: newDate.to?.toISOString(),
+                        tab: activeTab
+                      });
+                    }
+                  }}
                   numberOfMonths={2}
                 />
               </PopoverContent>
             </Popover>
             
-            <Button variant="outline" size="icon" onClick={refresh} title="Refresh data">
+            <Button 
+              variant="outline" 
+              size="icon" 
+              onClick={handleRefresh} 
+              title="Refresh data"
+            >
               <RefreshCcw className="h-4 w-4" />
             </Button>
           </div>
@@ -210,7 +284,13 @@ const PromoterAnalyticsPage = () => {
         </div>
 
         {/* Analytics tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <Tabs 
+          value={activeTab} 
+          onValueChange={(value) => {
+            setActiveTab(value);
+          }} 
+          className="space-y-4"
+        >
           <TabsList>
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="events">Events</TabsTrigger>
@@ -310,7 +390,13 @@ const PromoterAnalyticsPage = () => {
                     </TableHeader>
                     <TableBody>
                       {eventPerformance.map((event) => (
-                        <TableRow key={event.id}>
+                        <TableRow key={event.id} onClick={() => {
+                          // Track event row click
+                          trackPromoterEvent('event_details_viewed', {
+                            eventId: event.id,
+                            eventName: event.name
+                          });
+                        }}>
                           <TableCell className="font-medium">{event.name}</TableCell>
                           <TableCell>{format(new Date(event.date), "MMM d, yyyy")}</TableCell>
                           <TableCell>{event.attendees}</TableCell>
@@ -376,7 +462,13 @@ const PromoterAnalyticsPage = () => {
                     </TableHeader>
                     <TableBody>
                       {campaignPerformance.map((campaign) => (
-                        <TableRow key={campaign.id}>
+                        <TableRow key={campaign.id} onClick={() => {
+                          // Track campaign row click
+                          trackCampaignAction('performance_viewed', campaign.id, {
+                            campaignName: campaign.name,
+                            campaignStatus: campaign.status
+                          });
+                        }}>
                           <TableCell className="font-medium">{campaign.name}</TableCell>
                           <TableCell>
                             <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
@@ -443,6 +535,14 @@ const PromoterAnalyticsPage = () => {
                   description="Age distribution of your audience"
                   data={audienceDemographicData}
                   colors={['#8B5CF6', '#06B6D4', '#10B981', '#F59E0B']}
+                  onSliceClick={(entry) => {
+                    // Track pie chart slice click
+                    trackPromoterEvent('demographic_segment_viewed', {
+                      segment: entry.name,
+                      value: entry.value,
+                      segmentType: 'age'
+                    });
+                  }}
                 />
               )}
 
@@ -460,6 +560,14 @@ const PromoterAnalyticsPage = () => {
                     { name: 'East Region', value: 10 }
                   ]}
                   colors={['#F97316', '#8B5CF6', '#06B6D4', '#10B981']}
+                  onSliceClick={(entry) => {
+                    // Track pie chart slice click
+                    trackPromoterEvent('demographic_segment_viewed', {
+                      segment: entry.name,
+                      value: entry.value,
+                      segmentType: 'location'
+                    });
+                  }}
                 />
               )}
             </div>
@@ -490,7 +598,17 @@ const PromoterAnalyticsPage = () => {
                     </TableHeader>
                     <TableBody>
                       {audienceMetrics.map((metric, index) => (
-                        <TableRow key={`${metric.metric_name}-${index}`}>
+                        <TableRow 
+                          key={`${metric.metric_name}-${index}`}
+                          onClick={() => {
+                            // Track audience metric row click
+                            trackPromoterEvent('audience_metric_viewed', {
+                              metricName: metric.metric_name,
+                              segment: metric.segment,
+                              value: metric.metric_value
+                            });
+                          }}
+                        >
                           <TableCell className="font-medium">{metric.metric_name}</TableCell>
                           <TableCell>{metric.segment}</TableCell>
                           <TableCell>{metric.metric_value}</TableCell>
