@@ -14,6 +14,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { EventType } from '@/types/EventTypes';
 import { useEventAttendees } from '@/hooks/events/useEventAttendees';
 import { useEventMarketing } from '@/hooks/events/useEventMarketing';
+import { safeJsonToRecord } from '@/utils/typeGuards';
 
 const EventDetailsPage = () => {
   const { eventId } = useParams<{ eventId: string }>();
@@ -85,9 +86,9 @@ const EventDetailsPage = () => {
           },
           capacity: data.capacity,
           eventType: data.event_type,
-          locationDetails: data.location_details || {},
-          contactInfo: data.contact_info || {},
-          customSettings: data.custom_settings || {},
+          locationDetails: safeJsonToRecord(data.location_details),
+          contactInfo: safeJsonToRecord(data.contact_info),
+          customSettings: safeJsonToRecord(data.custom_settings),
           isPublic: data.is_public,
           eventUrl: data.event_url,
           createdAt: data.created_at,

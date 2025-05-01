@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { EventMarketingCampaign } from '@/types/EventTypes';
+import { safeJsonToRecord, toCampaignStatus } from '@/utils/typeGuards';
 
 /**
  * Fetch marketing campaigns for an event
@@ -13,7 +14,22 @@ export async function fetchEventCampaigns(eventId: string): Promise<EventMarketi
       .eq('event_id', eventId);
 
     if (error) throw error;
-    return data || [];
+    
+    // Transform data to ensure type safety
+    return (data || []).map(item => ({
+      ...item,
+      id: item.id,
+      event_id: item.event_id,
+      name: item.name,
+      description: item.description || '',
+      campaign_type: item.campaign_type,
+      status: toCampaignStatus(item.status),
+      start_date: item.start_date,
+      end_date: item.end_date,
+      budget: item.budget,
+      metrics: safeJsonToRecord(item.metrics),
+      target_audience: safeJsonToRecord(item.target_audience)
+    }));
   } catch (error) {
     console.error('Error fetching event campaigns:', error);
     throw error;
@@ -32,7 +48,13 @@ export async function createMarketingCampaign(campaign: EventMarketingCampaign):
       .single();
 
     if (error) throw error;
-    return data;
+    
+    return {
+      ...data,
+      status: toCampaignStatus(data.status),
+      metrics: safeJsonToRecord(data.metrics),
+      target_audience: safeJsonToRecord(data.target_audience)
+    };
   } catch (error) {
     console.error('Error creating marketing campaign:', error);
     throw error;
@@ -52,7 +74,13 @@ export async function updateMarketingCampaign(id: string, updates: Partial<Event
       .single();
 
     if (error) throw error;
-    return data;
+    
+    return {
+      ...data,
+      status: toCampaignStatus(data.status),
+      metrics: safeJsonToRecord(data.metrics),
+      target_audience: safeJsonToRecord(data.target_audience)
+    };
   } catch (error) {
     console.error('Error updating marketing campaign:', error);
     throw error;
@@ -93,7 +121,7 @@ export async function trackCampaignMetric(
     
     if (fetchError) throw fetchError;
     
-    const metrics = campaign?.metrics || {};
+    const metrics = safeJsonToRecord(campaign?.metrics);
     metrics[metricName] = (metrics[metricName] || 0) + value;
     
     const { error: updateError } = await supabase

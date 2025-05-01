@@ -5,7 +5,7 @@ import {
   EventCheckIn,
   EventStatistics
 } from '@/types/EventTypes';
-import { useToast } from '@/hooks/use-toast';
+import { safeJsonToRecord, toAttendeeStatus } from '@/utils/typeGuards';
 
 /**
  * Fetch attendees for a specific event
@@ -25,7 +25,23 @@ export async function fetchEventAttendees(eventId: string): Promise<EventAttende
       .eq('event_id', eventId);
 
     if (error) throw error;
-    return data || [];
+    
+    // Transform data to ensure type safety
+    return (data || []).map(item => ({
+      ...item,
+      id: item.id,
+      event_id: item.event_id,
+      user_id: item.user_id,
+      ticket_type_id: item.ticket_type_id,
+      status: toAttendeeStatus(item.status),
+      email: item.email || '',
+      name: item.name || '',
+      purchase_date: item.purchase_date,
+      ticket_code: item.ticket_code || '',
+      checked_in_at: item.checked_in_at,
+      notes: item.notes || '',
+      custom_fields: safeJsonToRecord(item.custom_fields)
+    }));
   } catch (error) {
     console.error('Error fetching event attendees:', error);
     throw error;
@@ -44,7 +60,16 @@ export async function addEventAttendee(attendee: EventAttendee): Promise<EventAt
       .single();
 
     if (error) throw error;
-    return data;
+    
+    return {
+      ...data,
+      status: toAttendeeStatus(data.status),
+      email: data.email || '',
+      name: data.name || '',
+      ticket_code: data.ticket_code || '',
+      notes: data.notes || '',
+      custom_fields: safeJsonToRecord(data.custom_fields)
+    };
   } catch (error) {
     console.error('Error adding event attendee:', error);
     throw error;
@@ -64,7 +89,16 @@ export async function updateEventAttendee(id: string, updates: Partial<EventAtte
       .single();
 
     if (error) throw error;
-    return data;
+    
+    return {
+      ...data,
+      status: toAttendeeStatus(data.status),
+      email: data.email || '',
+      name: data.name || '',
+      ticket_code: data.ticket_code || '',
+      notes: data.notes || '',
+      custom_fields: safeJsonToRecord(data.custom_fields)
+    };
   } catch (error) {
     console.error('Error updating event attendee:', error);
     throw error;
