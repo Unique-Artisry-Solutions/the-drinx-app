@@ -83,10 +83,11 @@ export const trackCampaignMetric = async (
       throw fetchError;
     }
 
-    // Update metrics
+    // Update metrics - Fixed spread operator issue by ensuring metrics is an object
+    const currentMetrics = campaign?.metrics || {};
     const updatedMetrics = {
-      ...(campaign?.metrics || {}),
-      [metricName]: ((campaign?.metrics?.[metricName] || 0) + value)
+      ...currentMetrics,
+      [metricName]: ((currentMetrics[metricName] || 0) + value)
     };
 
     // Save updated metrics
