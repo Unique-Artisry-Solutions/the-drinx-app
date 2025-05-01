@@ -6,15 +6,25 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Calendar, Clock, MapPin, UsersRound, Clipboard, BarChart3, Share2, Edit, Trash } from 'lucide-react';
+import { 
+  ArrowLeft, Calendar, Clock, MapPin, UsersRound, Clipboard, 
+  BarChart3, Share2, Edit, Trash, QrCode, Upload, Download 
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { EventType } from '@/types/EventTypes';
+import { EventType, EventAttendee, EventTicketType } from '@/types/EventTypes';
 import { useEventAttendees } from '@/hooks/events/useEventAttendees';
 import { useEventMarketing } from '@/hooks/events/useEventMarketing';
 import { safeJsonToRecord } from '@/utils/typeGuards';
+import { getEventAnalytics } from '@/services/eventAnalyticsService';
+import { fetchEventTicketTypes, createTicketType, updateTicketType, processTicketScan } from '@/services/eventTicketService';
+import AnalyticsDashboard from '@/components/events/AnalyticsDashboard';
+import AttendeeDetailModal from '@/components/events/AttendeeDetailModal';
+import CheckInScannerModal from '@/components/events/CheckInScannerModal';
+import TicketTypeModal from '@/components/events/TicketTypeModal';
+import MarketingCampaignModal from '@/components/events/MarketingCampaignModal';
 
 const EventDetailsPage = () => {
   const { eventId } = useParams<{ eventId: string }>();
@@ -24,8 +34,33 @@ const EventDetailsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('details');
   
-  const { attendees, isLoading: attendeesLoading } = useEventAttendees(eventId || '');
-  const { campaigns, isLoading: campaignsLoading } = useEventMarketing(eventId || '');
+  // Attendee state
+  const { attendees, isLoading: attendeesLoading, checkIn, refresh: refreshAttendees } = 
+    useEventAttendees(eventId || '');
+  const [selectedAttendee, setSelectedAttendee] = useState<EventAttendee | null>(null);
+  const [isAttendeeModalOpen, setIsAttendeeModalOpen] = useState(false);
+  const [isScannerModalOpen, setIsScannerModalOpen] = useState(false);
+  
+  // Ticket state
+  const [ticketTypes, setTicketTypes] = useState<EventTicketType[]>([]);
+  const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
+  const [selectedTicketType, setSelectedTicketType] = useState<EventTicketType | undefined>(undefined);
+  
+  // Marketing state
+  const { campaigns, isLoading: campaignsLoading, createCampaign, updateCampaign, refresh: refreshCampaigns } = 
+    useEventMarketing(eventId || '');
+  const [isMarketingModalOpen, setIsMarketingModalOpen] = useState(false);
+  const [selectedCampaign, setSelectedCampaign] = useState<any | undefined>(undefined);
+  
+  // Analytics state
+  const [eventAnalytics, setEventAnalytics] = useState({
+    views: 0,
+    uniqueVisitors: 0,
+    ticketSales: 0,
+    revenue: 0,
+    conversionRate: 0,
+  });
+  const [isAnalyticsLoading, setIsAnalyticsLoading] = useState(true);
 
   useEffect(() => {
     const fetchEventDetails = async () => {
@@ -96,6 +131,12 @@ const EventDetailsPage = () => {
           createdBy: data.created_by,
         });
         
+        // Load ticket types with availability counts
+        loadTicketTypes();
+        
+        // Load analytics data
+        loadAnalyticsData();
+        
       } catch (error: any) {
         toast({
           title: 'Error loading event',
@@ -111,6 +152,122 @@ const EventDetailsPage = () => {
 
     fetchEventDetails();
   }, [eventId, navigate, toast]);
+
+  // Load ticket types with availability
+  const loadTicketTypes = async () => {
+    if (!eventId) return;
+    
+    try {
+      const ticketData = await fetchEventTicketTypes(eventId);
+      setTicketTypes(ticketData);
+    } catch (error) {
+      console.error('Error loading ticket types:', error);
+    }
+  };
+  
+  // Load analytics data
+  const loadAnalyticsData = async () => {
+    if (!eventId) return;
+    
+    setIsAnalyticsLoading(true);
+    try {
+      const analytics = await getEventAnalytics(eventId);
+      setEventAnalytics(analytics);
+    } catch (error) {
+      console.error('Error loading analytics:', error);
+    } finally {
+      setIsAnalyticsLoading(false);
+    }
+  };
+  
+  // Handle ticket type save
+  const handleSaveTicketType = async (ticketType: Omit<EventTicketType, 'id' | 'sold' | 'available'>) => {
+    if (!eventId) return;
+    
+    try {
+      if (selectedTicketType?.id) {
+        await updateTicketType(selectedTicketType.id, ticketType);
+      } else {
+        await createTicketType({
+          ...ticketType,
+          event_id: eventId
+        });
+      }
+      
+      // Refresh ticket types
+      loadTicketTypes();
+      
+      toast({
+        title: 'Success',
+        description: selectedTicketType?.id ? 'Ticket type updated' : 'Ticket type created'
+      });
+      
+      setSelectedTicketType(undefined);
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to save ticket type',
+        variant: 'destructive'
+      });
+    }
+  };
+  
+  // Handle marketing campaign save
+  const handleSaveCampaign = async (campaign: any) => {
+    if (!eventId) return;
+    
+    try {
+      if (selectedCampaign?.id) {
+        await updateCampaign(selectedCampaign.id, campaign);
+      } else {
+        await createCampaign(campaign);
+      }
+      
+      // Refresh campaigns
+      refreshCampaigns();
+      
+      toast({
+        title: 'Success',
+        description: selectedCampaign?.id ? 'Campaign updated' : 'Campaign created'
+      });
+      
+      setSelectedCampaign(undefined);
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to save campaign',
+        variant: 'destructive'
+      });
+    }
+  };
+  
+  // Handle attendee selection
+  const handleSelectAttendee = (attendee: EventAttendee) => {
+    setSelectedAttendee(attendee);
+    setIsAttendeeModalOpen(true);
+  };
+  
+  // Handle attendee check-in
+  const handleCheckIn = async (attendeeId: string) => {
+    try {
+      await checkIn(attendeeId);
+      setIsAttendeeModalOpen(false);
+      refreshAttendees();
+    } catch (error) {
+      console.error('Check-in error:', error);
+      throw error;
+    }
+  };
+  
+  // Handle QR code scan result
+  const handleScanComplete = (attendee: EventAttendee) => {
+    setIsScannerModalOpen(false);
+    refreshAttendees();
+    toast({
+      title: 'Check-in Complete',
+      description: `${attendee.name || 'Attendee'} has been checked in successfully.`
+    });
+  };
 
   const getStatusColor = (status: string) => {
     switch(status) {
@@ -314,7 +471,7 @@ const EventDetailsPage = () => {
                       
                       <div className="flex justify-between items-center">
                         <span className="text-gray-600 dark:text-gray-300">Ticket Types</span>
-                        <span className="font-medium">{event.ticketTypes.length}</span>
+                        <span className="font-medium">{ticketTypes.length}</span>
                       </div>
                       
                       <div className="flex justify-between items-center">
@@ -369,11 +526,19 @@ const EventDetailsPage = () => {
             
             <TabsContent value="attendees">
               <Card>
-                <CardHeader>
-                  <CardTitle>Attendee Management</CardTitle>
-                  <CardDescription>
-                    Manage attendees for {event.name}. Current count: {attendees.length}
-                  </CardDescription>
+                <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <div>
+                    <CardTitle>Attendee Management</CardTitle>
+                    <CardDescription>
+                      Manage attendees for {event.name}. Current count: {attendees.length}
+                    </CardDescription>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button onClick={() => setIsScannerModalOpen(true)}>
+                      <QrCode className="mr-2 h-4 w-4" />
+                      Scan Tickets
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   {attendeesLoading ? (
@@ -383,48 +548,62 @@ const EventDetailsPage = () => {
                     </div>
                   ) : attendees.length > 0 ? (
                     <div className="border rounded-md overflow-hidden">
-                      <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50 dark:bg-gray-700">
-                          <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Name</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Email</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                          {attendees.map((attendee) => (
-                            <tr key={attendee.id}>
-                              <td className="px-6 py-4 whitespace-nowrap">{attendee.name || 'N/A'}</td>
-                              <td className="px-6 py-4 whitespace-nowrap">{attendee.email || 'N/A'}</td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <Badge className={
-                                  attendee.status === 'checked_in' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' :
-                                  attendee.status === 'cancelled' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' :
-                                  'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
-                                }>
-                                  {attendee.status}
-                                </Badge>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="flex space-x-2">
-                                  <Button variant="outline" size="sm">View</Button>
-                                  {attendee.status !== 'checked_in' && (
-                                    <Button variant="outline" size="sm">Check In</Button>
-                                  )}
-                                </div>
-                              </td>
+                      <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-200">
+                          <thead className="bg-gray-50 dark:bg-gray-700">
+                            <tr>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Name</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Email</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                          </thead>
+                          <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                            {attendees.map((attendee) => (
+                              <tr key={attendee.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                                <td className="px-6 py-4 whitespace-nowrap">{attendee.name || 'N/A'}</td>
+                                <td className="px-6 py-4 whitespace-nowrap">{attendee.email || 'N/A'}</td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <Badge className={
+                                    attendee.status === 'checked_in' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' :
+                                    attendee.status === 'cancelled' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' :
+                                    'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
+                                  }>
+                                    {attendee.status}
+                                  </Badge>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <div className="flex space-x-2">
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm"
+                                      onClick={() => handleSelectAttendee(attendee)}
+                                    >
+                                      View
+                                    </Button>
+                                    {attendee.status !== 'checked_in' && attendee.status !== 'cancelled' && (
+                                      <Button 
+                                        variant="outline" 
+                                        size="sm"
+                                        onClick={() => handleCheckIn(attendee.id!)}
+                                      >
+                                        Check In
+                                      </Button>
+                                    )}
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
                   ) : (
                     <div className="text-center py-10">
                       <UsersRound className="h-12 w-12 mx-auto text-gray-400" />
                       <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">No attendees</h3>
                       <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                        Get started by adding your first attendee.
+                        Get started by adding your first attendee or importing a list.
                       </p>
                       <div className="mt-6">
                         <Button>Add Attendee</Button>
@@ -432,51 +611,80 @@ const EventDetailsPage = () => {
                     </div>
                   )}
                 </CardContent>
-                <CardFooter>
-                  <div className="flex gap-2">
-                    <Button>Add Attendee</Button>
-                    <Button variant="outline">Import CSV</Button>
-                    <Button variant="outline">Export List</Button>
-                  </div>
+                <CardFooter className="flex flex-wrap gap-2">
+                  <Button>
+                    Add Attendee
+                  </Button>
+                  <Button variant="outline">
+                    <Upload className="mr-2 h-4 w-4" />
+                    Import CSV
+                  </Button>
+                  <Button variant="outline">
+                    <Download className="mr-2 h-4 w-4" />
+                    Export List
+                  </Button>
                 </CardFooter>
               </Card>
             </TabsContent>
             
             <TabsContent value="tickets">
               <Card>
-                <CardHeader>
-                  <CardTitle>Ticket Management</CardTitle>
-                  <CardDescription>
-                    Manage ticket types and pricing for {event.name}
-                  </CardDescription>
+                <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <div>
+                    <CardTitle>Ticket Management</CardTitle>
+                    <CardDescription>
+                      Manage ticket types and pricing for {event.name}
+                    </CardDescription>
+                  </div>
+                  <Button onClick={() => {
+                    setSelectedTicketType(undefined);
+                    setIsTicketModalOpen(true);
+                  }}>
+                    Add Ticket Type
+                  </Button>
                 </CardHeader>
                 <CardContent>
-                  {event.ticketTypes.length > 0 ? (
+                  {ticketTypes.length > 0 ? (
                     <div className="border rounded-md overflow-hidden">
-                      <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50 dark:bg-gray-700">
-                          <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Name</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Price</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Quantity</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Sold</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                          {event.ticketTypes.map((ticket) => (
-                            <tr key={ticket.id}>
-                              <td className="px-6 py-4 whitespace-nowrap">{ticket.name}</td>
-                              <td className="px-6 py-4 whitespace-nowrap">${ticket.price.toFixed(2)}</td>
-                              <td className="px-6 py-4 whitespace-nowrap">{ticket.quantity}</td>
-                              <td className="px-6 py-4 whitespace-nowrap">{ticket.sold || 0}</td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <Button variant="outline" size="sm">Edit</Button>
-                              </td>
+                      <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-200">
+                          <thead className="bg-gray-50 dark:bg-gray-700">
+                            <tr>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Name</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Description</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Price</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Available</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Sold</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                          </thead>
+                          <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                            {ticketTypes.map((ticket) => (
+                              <tr key={ticket.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                                <td className="px-6 py-4 whitespace-nowrap font-medium">{ticket.name}</td>
+                                <td className="px-6 py-4">
+                                  <div className="max-w-xs truncate">{ticket.description || 'No description'}</div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">${ticket.price.toFixed(2)}</td>
+                                <td className="px-6 py-4 whitespace-nowrap">{ticket.available} of {ticket.quantity}</td>
+                                <td className="px-6 py-4 whitespace-nowrap">{ticket.sold || 0}</td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    onClick={() => {
+                                      setSelectedTicketType(ticket);
+                                      setIsTicketModalOpen(true);
+                                    }}
+                                  >
+                                    Edit
+                                  </Button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
                   ) : (
                     <div className="text-center py-10">
@@ -486,24 +694,85 @@ const EventDetailsPage = () => {
                         Get started by creating your first ticket type.
                       </p>
                       <div className="mt-6">
-                        <Button>Add Ticket Type</Button>
+                        <Button onClick={() => {
+                          setSelectedTicketType(undefined);
+                          setIsTicketModalOpen(true);
+                        }}>
+                          Add Ticket Type
+                        </Button>
                       </div>
                     </div>
                   )}
                 </CardContent>
-                <CardFooter>
-                  <Button>Add Ticket Type</Button>
-                </CardFooter>
               </Card>
+              
+              {ticketTypes.length > 0 && (
+                <Card className="mt-6">
+                  <CardHeader>
+                    <CardTitle>Ticket Sales Summary</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                        <div className="text-sm text-gray-500 dark:text-gray-400">Total Tickets</div>
+                        <div className="text-2xl font-bold mt-1">
+                          {ticketTypes.reduce((sum, ticket) => sum + ticket.quantity, 0)}
+                        </div>
+                      </div>
+                      
+                      <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                        <div className="text-sm text-gray-500 dark:text-gray-400">Tickets Sold</div>
+                        <div className="text-2xl font-bold mt-1">
+                          {ticketTypes.reduce((sum, ticket) => sum + (ticket.sold || 0), 0)}
+                        </div>
+                      </div>
+                      
+                      <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                        <div className="text-sm text-gray-500 dark:text-gray-400">Revenue</div>
+                        <div className="text-2xl font-bold mt-1">
+                          ${ticketTypes.reduce((sum, ticket) => sum + ((ticket.sold || 0) * ticket.price), 0).toFixed(2)}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-6">
+                      <div className="mb-2 flex justify-between">
+                        <div className="text-sm font-medium">Sales Progress</div>
+                        <div className="text-sm text-gray-500">
+                          {Math.round((ticketTypes.reduce((sum, ticket) => sum + (ticket.sold || 0), 0) / 
+                            ticketTypes.reduce((sum, ticket) => sum + ticket.quantity, 0)) * 100)}%
+                        </div>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+                        <div 
+                          className="bg-blue-600 h-2.5 rounded-full" 
+                          style={{ 
+                            width: `${Math.round((ticketTypes.reduce((sum, ticket) => sum + (ticket.sold || 0), 0) / 
+                              ticketTypes.reduce((sum, ticket) => sum + ticket.quantity, 0)) * 100)}%` 
+                          }}
+                        ></div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </TabsContent>
             
             <TabsContent value="marketing">
               <Card>
-                <CardHeader>
-                  <CardTitle>Marketing Campaigns</CardTitle>
-                  <CardDescription>
-                    Manage marketing campaigns for {event.name}
-                  </CardDescription>
+                <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <div>
+                    <CardTitle>Marketing Campaigns</CardTitle>
+                    <CardDescription>
+                      Manage marketing campaigns for {event.name}
+                    </CardDescription>
+                  </div>
+                  <Button onClick={() => {
+                    setSelectedCampaign(undefined);
+                    setIsMarketingModalOpen(true);
+                  }}>
+                    Create Campaign
+                  </Button>
                 </CardHeader>
                 <CardContent>
                   {campaignsLoading ? (
@@ -513,40 +782,64 @@ const EventDetailsPage = () => {
                     </div>
                   ) : campaigns.length > 0 ? (
                     <div className="border rounded-md overflow-hidden">
-                      <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50 dark:bg-gray-700">
-                          <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Name</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Type</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                          {campaigns.map((campaign) => (
-                            <tr key={campaign.id}>
-                              <td className="px-6 py-4 whitespace-nowrap">{campaign.name}</td>
-                              <td className="px-6 py-4 whitespace-nowrap">{campaign.campaign_type}</td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <Badge className={
-                                  campaign.status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' :
-                                  campaign.status === 'completed' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' :
-                                  campaign.status === 'cancelled' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' :
-                                  'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'
-                                }>
-                                  {campaign.status}
-                                </Badge>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="flex space-x-2">
-                                  <Button variant="outline" size="sm">View</Button>
-                                  <Button variant="outline" size="sm">Edit</Button>
-                                </div>
-                              </td>
+                      <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-200">
+                          <thead className="bg-gray-50 dark:bg-gray-700">
+                            <tr>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Name</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Type</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Start Date</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Performance</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                          </thead>
+                          <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                            {campaigns.map((campaign) => (
+                              <tr key={campaign.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                                <td className="px-6 py-4 whitespace-nowrap font-medium">{campaign.name}</td>
+                                <td className="px-6 py-4 whitespace-nowrap">{campaign.campaign_type}</td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  {campaign.start_date ? new Date(campaign.start_date).toLocaleDateString() : 'Not set'}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <Badge className={
+                                    campaign.status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' :
+                                    campaign.status === 'completed' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' :
+                                    campaign.status === 'cancelled' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' :
+                                    'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'
+                                  }>
+                                    {campaign.status}
+                                  </Badge>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  {campaign.metrics ? 
+                                    `${Object.values(campaign.metrics).reduce((a: any, b: any) => a + b, 0)} clicks` :
+                                    'No data'
+                                  }
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <div className="flex space-x-2">
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm"
+                                      onClick={() => {
+                                        setSelectedCampaign(campaign);
+                                        setIsMarketingModalOpen(true);
+                                      }}
+                                    >
+                                      Edit
+                                    </Button>
+                                    <Button variant="outline" size="sm">
+                                      View Analytics
+                                    </Button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
                   ) : (
                     <div className="text-center py-10">
@@ -556,101 +849,116 @@ const EventDetailsPage = () => {
                         Get started by creating your first marketing campaign.
                       </p>
                       <div className="mt-6">
-                        <Button>Create Campaign</Button>
+                        <Button onClick={() => {
+                          setSelectedCampaign(undefined);
+                          setIsMarketingModalOpen(true);
+                        }}>
+                          Create Campaign
+                        </Button>
                       </div>
                     </div>
                   )}
                 </CardContent>
-                <CardFooter>
-                  <Button>Create Campaign</Button>
-                </CardFooter>
               </Card>
+              
+              {campaigns.length > 0 && (
+                <Card className="mt-6">
+                  <CardHeader>
+                    <CardTitle>Marketing Insights</CardTitle>
+                    <CardDescription>
+                      Performance metrics for your marketing campaigns
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                        <div className="text-sm text-gray-500 dark:text-gray-400">Total Campaigns</div>
+                        <div className="text-2xl font-bold mt-1">{campaigns.length}</div>
+                      </div>
+                      
+                      <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                        <div className="text-sm text-gray-500 dark:text-gray-400">Active Campaigns</div>
+                        <div className="text-2xl font-bold mt-1">
+                          {campaigns.filter(c => c.status === 'active').length}
+                        </div>
+                      </div>
+                      
+                      <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                        <div className="text-sm text-gray-500 dark:text-gray-400">Total Budget</div>
+                        <div className="text-2xl font-bold mt-1">
+                          ${campaigns.reduce((sum, c) => sum + (c.budget || 0), 0).toFixed(2)}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Simple campaign type distribution chart */}
+                    <div className="mt-6">
+                      <h3 className="text-sm font-medium mb-2">Campaign Types</h3>
+                      <div className="grid grid-cols-5 gap-2">
+                        {['email', 'social', 'sms', 'push', 'partner'].map(type => {
+                          const count = campaigns.filter(c => c.campaign_type === type).length;
+                          const percentage = campaigns.length > 0 ? Math.round((count / campaigns.length) * 100) : 0;
+                          
+                          return (
+                            <div key={type} className="bg-gray-50 dark:bg-gray-700 rounded p-2">
+                              <div className="text-xs text-gray-500 capitalize">{type}</div>
+                              <div className="font-medium mt-1">{count}</div>
+                              <div className="w-full bg-gray-200 h-1 mt-1 rounded">
+                                <div 
+                                  className="bg-blue-500 h-1 rounded" 
+                                  style={{ width: `${percentage}%` }}
+                                ></div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </TabsContent>
             
             <TabsContent value="analytics">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Analytics</CardTitle>
-                  <CardDescription>
-                    Performance metrics for {event.name}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <Card>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-gray-500">Registrations</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-2xl font-bold">{attendees.length}</div>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {event.capacity ? `${Math.round((attendees.length / event.capacity) * 100)}% of capacity` : 'No capacity set'}
-                        </p>
-                      </CardContent>
-                    </Card>
-                    
-                    <Card>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-gray-500">Check-ins</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-2xl font-bold">
-                          {attendees.filter(a => a.status === 'checked_in').length}
-                        </div>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {attendees.length > 0 ? 
-                            `${Math.round((attendees.filter(a => a.status === 'checked_in').length / attendees.length) * 100)}% check-in rate` : 
-                            'No attendees'
-                          }
-                        </p>
-                      </CardContent>
-                    </Card>
-                    
-                    <Card>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-gray-500">Revenue</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-2xl font-bold">
-                          ${event.revenue.total.toFixed(2)}
-                        </div>
-                        <p className="text-xs text-gray-500 mt-1">
-                          From ticket sales and other sources
-                        </p>
-                      </CardContent>
-                    </Card>
-                    
-                    <Card>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-gray-500">Marketing Campaigns</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-2xl font-bold">
-                          {campaigns.length}
-                        </div>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {campaigns.filter(c => c.status === 'active').length} active
-                        </p>
-                      </CardContent>
-                    </Card>
-                  </div>
-                  
-                  <div className="mt-8">
-                    <h3 className="text-lg font-medium mb-4">Analytics Dashboard</h3>
-                    <div className="text-center py-10 border rounded-md">
-                      <BarChart3 className="h-12 w-12 mx-auto text-gray-400" />
-                      <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">Detailed analytics coming soon</h3>
-                      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                        Advanced analytics for your event are in development.
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <AnalyticsDashboard 
+                eventId={eventId || ''}
+                eventAnalytics={eventAnalytics}
+                isLoading={isAnalyticsLoading}
+              />
             </TabsContent>
           </Tabs>
         </div>
       </div>
+      
+      {/* Modals */}
+      <AttendeeDetailModal
+        attendee={selectedAttendee}
+        isOpen={isAttendeeModalOpen}
+        onClose={() => setIsAttendeeModalOpen(false)}
+        onCheckIn={handleCheckIn}
+      />
+      
+      <CheckInScannerModal
+        isOpen={isScannerModalOpen}
+        onClose={() => setIsScannerModalOpen(false)}
+        onCheckIn={handleScanComplete}
+      />
+      
+      <TicketTypeModal
+        isOpen={isTicketModalOpen}
+        onClose={() => setIsTicketModalOpen(false)}
+        onSave={handleSaveTicketType}
+        ticketType={selectedTicketType}
+        isEditing={!!selectedTicketType?.id}
+      />
+      
+      <MarketingCampaignModal
+        isOpen={isMarketingModalOpen}
+        onClose={() => setIsMarketingModalOpen(false)}
+        onSave={handleSaveCampaign}
+        campaign={selectedCampaign}
+        isEditing={!!selectedCampaign?.id}
+      />
     </Layout>
   );
 };

@@ -50,6 +50,10 @@ export const systemBreakdown: FeatureItem = {
     - [x] Refactored database queries for compatibility with Supabase client
     - [x] Fixed group by queries for aggregating ticket sales data
     - [x] Implemented client-side data aggregation for analytics
+    - [x] Enhanced attendee management UI with detailed views
+    - [x] Integrated QR code scanning for ticket validation
+    - [x] Developed comprehensive marketing campaign management interface
+    - [x] Built interactive analytics dashboards with visual reports
   `,
   testSteps: [
     "Log in as admin and navigate to System Breakdown page",
@@ -79,6 +83,10 @@ export const systemBreakdown: FeatureItem = {
     "Test event analytics reporting endpoints",
     "Check marketing campaign performance metrics",
     "Verify ticket sales count functionality works correctly",
-    "Test event comparison analytics with multiple events"
+    "Test event comparison analytics with multiple events",
+    "Verify attendee management interface functionality",
+    "Test QR code scanning integration for tickets",
+    "Verify marketing campaign creation and analytics",
+    "Test reporting dashboards and chart visualizations"
   ]
 };
