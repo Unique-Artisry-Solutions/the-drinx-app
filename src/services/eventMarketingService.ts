@@ -146,3 +146,112 @@ export function generateCampaignLink(eventId: string, campaignId: string, medium
   const baseUrl = window.location.origin;
   return `${baseUrl}/event/${eventId}?utm_source=promoter&utm_medium=${medium}&utm_campaign=${campaignId}`;
 }
+
+/**
+ * Get marketing campaign analytics
+ */
+export async function getCampaignAnalytics(eventId: string): Promise<{
+  campaigns: {
+    id: string;
+    name: string;
+    type: string;
+    clicks: number;
+    impressions: number;
+    conversions: number;
+    conversionRate: number;
+  }[];
+  totalImpressions: number;
+  totalClicks: number;
+  totalConversions: number;
+  avgConversionRate: number;
+}> {
+  try {
+    const { data, error } = await supabase
+      .from('event_marketing_campaigns')
+      .select('id, name, campaign_type, metrics')
+      .eq('event_id', eventId);
+
+    if (error) throw error;
+
+    const campaignAnalytics = data.map(campaign => {
+      const metrics = safeJsonToRecord(campaign.metrics);
+      const clicks = metrics.clicks || 0;
+      const impressions = metrics.impressions || 0;
+      const conversions = metrics.conversions || 0;
+      const conversionRate = impressions > 0 ? (conversions / impressions) * 100 : 0;
+      
+      return {
+        id: campaign.id,
+        name: campaign.name,
+        type: campaign.campaign_type,
+        clicks,
+        impressions,
+        conversions,
+        conversionRate
+      };
+    });
+    
+    // Calculate totals
+    const totalImpressions = campaignAnalytics.reduce((sum, c) => sum + c.impressions, 0);
+    const totalClicks = campaignAnalytics.reduce((sum, c) => sum + c.clicks, 0);
+    const totalConversions = campaignAnalytics.reduce((sum, c) => sum + c.conversions, 0);
+    const avgConversionRate = totalImpressions > 0 ? 
+      (totalConversions / totalImpressions) * 100 : 0;
+    
+    return {
+      campaigns: campaignAnalytics,
+      totalImpressions,
+      totalClicks,
+      totalConversions,
+      avgConversionRate
+    };
+  } catch (error) {
+    console.error('Error getting campaign analytics:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get campaign performance over time
+ */
+export async function getCampaignPerformanceOverTime(campaignId: string): Promise<{
+  dates: string[];
+  impressions: number[];
+  clicks: number[];
+  conversions: number[];
+}> {
+  try {
+    // This would typically be a time-series database query
+    // For now, we'll generate some mock data based on timestamps in the metrics
+    const { data, error } = await supabase
+      .from('event_marketing_campaigns')
+      .select('metrics')
+      .eq('id', campaignId)
+      .single();
+
+    if (error) throw error;
+    
+    const metrics = safeJsonToRecord(data?.metrics);
+    const timeData = metrics.timeData || [];
+    
+    // Sort by date
+    const sortedData = [...timeData].sort((a, b) => 
+      new Date(a.date).getTime() - new Date(b.date).getTime());
+    
+    return {
+      dates: sortedData.map(d => d.date),
+      impressions: sortedData.map(d => d.impressions || 0),
+      clicks: sortedData.map(d => d.clicks || 0),
+      conversions: sortedData.map(d => d.conversions || 0)
+    };
+  } catch (error) {
+    console.error('Error getting campaign performance over time:', error);
+    // Return empty data on error
+    return {
+      dates: [],
+      impressions: [],
+      clicks: [],
+      conversions: []
+    };
+  }
+}

@@ -42,6 +42,11 @@ export const systemBreakdown: FeatureItem = {
     - [x] Event statistics view for performance tracking
     - [x] Type safety improvements for JSON data handling
     - [x] Robust type conversion utilities for database interactions
+    - [x] API endpoints for event attendee management
+    - [x] Ticket validation and scanning services
+    - [x] Analytics and reporting endpoints for events
+    - [x] Event check-in rate analysis and reporting
+    - [x] Marketing campaign performance analytics
   `,
   testSteps: [
     "Log in as admin and navigate to System Breakdown page",
@@ -65,6 +70,10 @@ export const systemBreakdown: FeatureItem = {
     "Verify marketing campaign tracking system",
     "Check custom fields implementation for events",
     "Test type safety with various JSON data structures",
-    "Verify proper handling of enum string conversions"
+    "Verify proper handling of enum string conversions",
+    "Test ticket scanning and validation APIs",
+    "Verify attendee check-in functionality",
+    "Test event analytics reporting endpoints",
+    "Check marketing campaign performance metrics"
   ]
 };

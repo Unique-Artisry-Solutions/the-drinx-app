@@ -224,3 +224,152 @@ export async function importAttendeesFromCSV(eventId: string, csv: string): Prom
     };
   }
 }
+
+/**
+ * Validate a ticket code
+ */
+export async function validateTicketCode(ticketCode: string): Promise<{
+  valid: boolean;
+  attendee?: EventAttendee;
+  message: string;
+}> {
+  try {
+    const { data, error } = await supabase
+      .from('event_attendees')
+      .select(`
+        *,
+        event_ticket_types (
+          id,
+          name,
+          price
+        )
+      `)
+      .eq('ticket_code', ticketCode)
+      .single();
+
+    if (error) {
+      return { 
+        valid: false, 
+        message: 'Invalid ticket code' 
+      };
+    }
+
+    // Check if the ticket was already used
+    if (data.status === 'checked_in') {
+      return {
+        valid: false,
+        attendee: {
+          ...data,
+          status: toAttendeeStatus(data.status),
+          email: data.email || '',
+          name: data.name || '',
+          ticket_code: data.ticket_code || '',
+          notes: data.notes || '',
+          custom_fields: safeJsonToRecord(data.custom_fields)
+        },
+        message: 'Ticket already used'
+      };
+    }
+
+    // Check if ticket was cancelled
+    if (data.status === 'cancelled') {
+      return {
+        valid: false,
+        attendee: {
+          ...data,
+          status: toAttendeeStatus(data.status),
+          email: data.email || '',
+          name: data.name || '',
+          ticket_code: data.ticket_code || '',
+          notes: data.notes || '',
+          custom_fields: safeJsonToRecord(data.custom_fields)
+        },
+        message: 'Ticket has been cancelled'
+      };
+    }
+
+    return {
+      valid: true,
+      attendee: {
+        ...data,
+        status: toAttendeeStatus(data.status),
+        email: data.email || '',
+        name: data.name || '',
+        ticket_code: data.ticket_code || '',
+        notes: data.notes || '',
+        custom_fields: safeJsonToRecord(data.custom_fields)
+      },
+      message: 'Ticket is valid'
+    };
+  } catch (error) {
+    console.error('Error validating ticket:', error);
+    return {
+      valid: false,
+      message: 'Error validating ticket'
+    };
+  }
+}
+
+/**
+ * Get event check-in analytics
+ */
+export async function getEventCheckInAnalytics(eventId: string): Promise<{
+  totalAttendees: number;
+  checkedIn: number;
+  percentCheckedIn: number;
+  checkInRate: { time: string; count: number }[];
+}> {
+  try {
+    // Get total attendees
+    const { count: totalAttendees, error: countError } = await supabase
+      .from('event_attendees')
+      .select('id', { count: 'exact', head: true })
+      .eq('event_id', eventId)
+      .not('status', 'eq', 'cancelled');
+      
+    if (countError) throw countError;
+
+    // Get checked-in count
+    const { count: checkedIn, error: checkedInError } = await supabase
+      .from('event_attendees')
+      .select('id', { count: 'exact', head: true })
+      .eq('event_id', eventId)
+      .eq('status', 'checked_in');
+      
+    if (checkedInError) throw checkedInError;
+
+    // Get check-in rate over time
+    const { data: checkInData, error: rateError } = await supabase
+      .from('event_check_ins')
+      .select('checked_in_at')
+      .eq('event_id', eventId)
+      .order('checked_in_at');
+
+    if (rateError) throw rateError;
+
+    // Group check-ins by hour
+    const checkInsByHour = checkInData.reduce((acc, { checked_in_at }) => {
+      const hour = new Date(checked_in_at).toISOString().slice(0, 13) + ':00:00Z';
+      if (!acc[hour]) {
+        acc[hour] = 0;
+      }
+      acc[hour]++;
+      return acc;
+    }, {});
+
+    const checkInRate = Object.entries(checkInsByHour).map(([time, count]) => ({
+      time,
+      count: count as number
+    }));
+
+    return {
+      totalAttendees: totalAttendees || 0,
+      checkedIn: checkedIn || 0,
+      percentCheckedIn: totalAttendees ? Math.round((checkedIn / totalAttendees) * 100) : 0,
+      checkInRate
+    };
+  } catch (error) {
+    console.error('Error getting event check-in analytics:', error);
+    throw error;
+  }
+}
