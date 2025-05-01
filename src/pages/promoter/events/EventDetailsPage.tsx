@@ -25,6 +25,7 @@ import AttendeeDetailModal from '@/components/events/AttendeeDetailModal';
 import CheckInScannerModal from '@/components/events/CheckInScannerModal';
 import { createTicketType, updateTicketType, deleteTicketType } from '@/services/eventTicketService';
 import { checkInAttendee } from '@/services/eventAttendeesService';
+import { toAttendeeStatus } from '@/utils/typeGuards';
 
 const EventDetailsPage: React.FC = () => {
   const { eventId } = useParams<{ eventId: string }>();
@@ -141,7 +142,24 @@ const EventDetailsPage: React.FC = () => {
         .order('purchase_date', { ascending: false });
 
       if (error) throw error;
-      setAttendees(data);
+      
+      // Convert the data to match our EventAttendee type
+      const typedAttendees: EventAttendee[] = (data || []).map(attendee => ({
+        id: attendee.id,
+        event_id: attendee.event_id,
+        user_id: attendee.user_id,
+        ticket_type_id: attendee.ticket_type_id,
+        status: toAttendeeStatus(attendee.status),
+        email: attendee.email || '',
+        name: attendee.name || '',
+        purchase_date: attendee.purchase_date,
+        ticket_code: attendee.ticket_code || '',
+        checked_in_at: attendee.checked_in_at,
+        notes: attendee.notes || '',
+        custom_fields: attendee.custom_fields || {}
+      }));
+
+      setAttendees(typedAttendees);
     } catch (err) {
       console.error('Error fetching attendees:', err);
     }
@@ -221,8 +239,8 @@ const EventDetailsPage: React.FC = () => {
     }
   };
 
-  const handleCheckIn = async (attendeeId: string) => {
-    if (!eventId) return;
+  const handleCheckIn = async (attendeeId: string): Promise<void> => {
+    if (!eventId) return Promise.resolve();
     
     try {
       await checkInAttendee(eventId, attendeeId);
@@ -248,12 +266,15 @@ const EventDetailsPage: React.FC = () => {
       if (isAttendeeModalOpen) {
         setIsAttendeeModalOpen(false);
       }
+      
+      return Promise.resolve();
     } catch (err: any) {
       toast({
         title: "Check-In Failed",
         description: err.message,
         variant: "destructive",
       });
+      return Promise.reject(err);
     }
   };
 
@@ -567,8 +588,8 @@ const EventDetailsPage: React.FC = () => {
           setSelectedAttendee(null);
         }}
         attendee={selectedAttendee}
-        onCheckIn={attendee => {
-          if (attendee) handleCheckIn(attendee);
+        onCheckIn={async (attendeeId) => {
+          if (attendeeId) await handleCheckIn(attendeeId);
         }}
       />
       
