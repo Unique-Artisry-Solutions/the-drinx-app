@@ -2,18 +2,12 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from '@/components/ui/select';
 import { CampaignPerformance } from '@/services/promoterAnalyticsService';
-import AnalyticsBarChart from '@/components/charts/AnalyticsBarChart';
-import AnalyticsPieChart from '@/components/charts/AnalyticsPieChart';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Progress } from '@/components/ui/progress';
+import AnalyticsBarChart from '@/components/charts/AnalyticsBarChart';
 
 interface CampaignAnalyticsTabProps {
   campaignPerformance: CampaignPerformance[];
@@ -26,62 +20,31 @@ const CampaignAnalyticsTab: React.FC<CampaignAnalyticsTabProps> = ({
   isLoading,
   onCampaignSelect
 }) => {
-  const [selectedCampaign, setSelectedCampaign] = useState<string>(
-    campaignPerformance.length > 0 ? campaignPerformance[0].id : ''
+  const [selectedCampaign, setSelectedCampaign] = useState<string | null>(
+    campaignPerformance.length > 0 ? campaignPerformance[0].id : null
   );
   
-  // Get the selected campaign details
-  const selectedCampaignData = campaignPerformance.find(
-    campaign => campaign.id === selectedCampaign
-  );
+  // Selected campaign details
+  const campaignDetails = React.useMemo(() => {
+    return campaignPerformance.find(c => c.id === selectedCampaign);
+  }, [campaignPerformance, selectedCampaign]);
   
-  // Format data for ROI calculation
-  const roiData = React.useMemo(() => {
-    if (!selectedCampaignData) return [];
-    
-    // Mocking the cost and revenue data as these would typically come from actual campaign data
-    const campaignCost = selectedCampaignData.reach * 0.2; // Assuming $0.2 per reach
-    const conversionValue = selectedCampaignData.reach * (selectedCampaignData.conversion_rate/100) * 15; // $15 per conversion
-    const roi = ((conversionValue - campaignCost) / campaignCost) * 100;
-    
-    return [
-      { name: 'Campaign Cost', value: campaignCost },
-      { name: 'Revenue', value: conversionValue },
-      { name: 'ROI', value: roi }
-    ];
-  }, [selectedCampaignData]);
-  
-  // Source distribution data (mock data based on selected campaign)
-  const sourceDistribution = React.useMemo(() => {
-    if (!selectedCampaignData) return [];
-    
-    // Mock distribution based on campaign reach
-    const reachBase = selectedCampaignData.reach;
-    
-    return [
-      { name: 'Social Media', value: Math.round(reachBase * 0.4) },
-      { name: 'Email', value: Math.round(reachBase * 0.3) },
-      { name: 'Direct', value: Math.round(reachBase * 0.15) },
-      { name: 'Referral', value: Math.round(reachBase * 0.15) }
-    ];
-  }, [selectedCampaignData]);
+  // Format data for campaign comparison chart
+  const campaignComparisonData = React.useMemo(() => {
+    return campaignPerformance.map(campaign => ({
+      name: campaign.name || 'Unnamed Campaign',
+      reach: campaign.reach || 0,
+      engagement: campaign.engagement || 0,
+      conversion: Math.round((campaign.reach || 0) * ((campaign.conversion_rate || 0) / 100))
+    }));
+  }, [campaignPerformance]);
 
-  // Campaign conversion funnel data
-  const conversionFunnelData = React.useMemo(() => {
-    if (!selectedCampaignData) return [];
-    
-    const reach = selectedCampaignData.reach;
-    const engagement = selectedCampaignData.engagement;
-    const clicks = Math.round(engagement * 0.6); // Assuming 60% of engagements lead to clicks
-    const conversions = Math.round(reach * (selectedCampaignData.conversion_rate/100));
-    
-    return [
-      { name: 'Reach', value: reach },
-      { name: 'Engagement', value: engagement },
-      { name: 'Clicks', value: clicks },
-      { name: 'Conversions', value: conversions }
-    ];
-  }, [selectedCampaignData]);
+  const handleCampaignClick = (campaign: CampaignPerformance) => {
+    setSelectedCampaign(campaign.id);
+    if (onCampaignSelect) {
+      onCampaignSelect(campaign.id);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -102,218 +65,157 @@ const CampaignAnalyticsTab: React.FC<CampaignAnalyticsTabProps> = ({
       </Card>
     );
   }
-  
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Campaign Performance Analytics</h3>
-        <Select 
-          value={selectedCampaign} 
-          onValueChange={(value) => {
-            setSelectedCampaign(value);
-            if (onCampaignSelect) {
-              onCampaignSelect(value);
-            }
-          }}
-        >
-          <SelectTrigger className="w-[240px]">
-            <SelectValue placeholder="Select a campaign" />
-          </SelectTrigger>
-          <SelectContent>
-            {campaignPerformance.map(campaign => (
-              <SelectItem key={campaign.id} value={campaign.id}>{campaign.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      {/* Campaign Comparison Chart */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Campaign Performance Comparison</CardTitle>
+          <CardDescription>Compare reach, engagement, and conversions across campaigns</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <AnalyticsBarChart
+            title=""
+            description=""
+            data={campaignComparisonData}
+            series={[
+              {
+                key: "reach",
+                name: "Reach",
+                color: "#8B5CF6"
+              },
+              {
+                key: "engagement",
+                name: "Engagement",
+                color: "#06B6D4"
+              },
+              {
+                key: "conversion",
+                name: "Conversions",
+                color: "#10B981"
+              }
+            ]}
+            formatter={(value) => [`${value}`, 'people']}
+            height={300}
+          />
+        </CardContent>
+      </Card>
       
-      {selectedCampaignData && (
-        <>
-          {/* Campaign Overview */}
-          <Card>
-            <CardHeader>
-              <CardTitle>{selectedCampaignData.name}</CardTitle>
-              <CardDescription className="flex items-center">
-                <Badge className={`mr-2 ${
-                  selectedCampaignData.status === 'active' ? 'bg-green-500' : 
-                  selectedCampaignData.status === 'scheduled' ? 'bg-blue-500' : 'bg-gray-500'
-                }`}>
-                  {selectedCampaignData.status}
-                </Badge>
-                {new Date(selectedCampaignData.start_date).toLocaleDateString()} - 
-                {selectedCampaignData.end_date ? 
-                  ` ${new Date(selectedCampaignData.end_date).toLocaleDateString()}` : 
-                  ' Ongoing'
-                }
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <div className="bg-muted rounded-lg p-4">
-                  <div className="text-muted-foreground text-xs">Total Reach</div>
-                  <div className="text-2xl font-bold">{selectedCampaignData.reach}</div>
-                </div>
-                <div className="bg-muted rounded-lg p-4">
-                  <div className="text-muted-foreground text-xs">Total Engagement</div>
-                  <div className="text-2xl font-bold">{selectedCampaignData.engagement}</div>
-                </div>
-                <div className="bg-muted rounded-lg p-4">
-                  <div className="text-muted-foreground text-xs">Conversion Rate</div>
-                  <div className="text-2xl font-bold">{selectedCampaignData.conversion_rate}%</div>
-                </div>
+      {/* Campaigns Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Campaigns</CardTitle>
+          <CardDescription>Performance metrics for all your marketing campaigns</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Campaign</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Reach</TableHead>
+                <TableHead>Engagement</TableHead>
+                <TableHead>Conversion Rate</TableHead>
+                <TableHead>Dates</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {campaignPerformance.map((campaign) => (
+                <TableRow 
+                  key={campaign.id}
+                  onClick={() => handleCampaignClick(campaign)}
+                  className={`cursor-pointer hover:bg-muted/50 ${selectedCampaign === campaign.id ? 'bg-muted/30' : ''}`}
+                >
+                  <TableCell className="font-medium">{campaign.name || 'Unnamed Campaign'}</TableCell>
+                  <TableCell>
+                    <Badge variant={
+                      campaign.status === 'active' ? 'default' :
+                      campaign.status === 'completed' ? 'secondary' : 'outline'
+                    }>
+                      {campaign.status || 'unknown'}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{campaign.reach || 0}</TableCell>
+                  <TableCell>{campaign.engagement || 0}</TableCell>
+                  <TableCell>
+                    {campaign.conversion_rate?.toFixed(1) || '0.0'}%
+                  </TableCell>
+                  <TableCell>
+                    {campaign.start_date && format(new Date(campaign.start_date), 'MMM d')} - 
+                    {campaign.end_date && format(new Date(campaign.end_date), 'MMM d, yyyy')}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+      
+      {/* Selected Campaign Details */}
+      {campaignDetails && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Campaign Details: {campaignDetails.name || 'Unnamed Campaign'}</CardTitle>
+            <CardDescription>
+              Detailed performance metrics for the selected campaign
+            </CardDescription>
+            <Badge variant={
+              campaignDetails.status === 'active' ? 'default' :
+              campaignDetails.status === 'completed' ? 'secondary' : 'outline'
+            } className="mt-1">
+              {campaignDetails.status || 'unknown'}
+            </Badge>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div>
+                <div className="text-sm font-medium text-muted-foreground mb-1">Reach</div>
+                <div className="text-2xl font-bold">{campaignDetails.reach || 0}</div>
+                <div className="text-xs text-muted-foreground">people</div>
               </div>
-            </CardContent>
-          </Card>
-          
-          {/* Conversion Funnel */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Conversion Funnel</CardTitle>
-              <CardDescription>
-                From audience reach to final conversions
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <AnalyticsBarChart
-                title=""
-                description=""
-                data={conversionFunnelData}
-                series={[
-                  {
-                    key: "value",
-                    name: "Count",
-                    color: "#8B5CF6"
-                  }
-                ]}
-                formatter={(value) => [`${value}`, '']}
-                height={300}
-              />
-            </CardContent>
-          </Card>
-          
-          {/* ROI Calculations */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Campaign ROI</CardTitle>
-                <CardDescription>
-                  Return on investment calculation
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <Table>
-                    <TableBody>
-                      {roiData.map((item, index) => (
-                        <TableRow key={index}>
-                          <TableCell className="font-medium">{item.name}</TableCell>
-                          <TableCell className="text-right">
-                            {item.name === 'ROI' ? 
-                              `${item.value.toFixed(2)}%` : 
-                              `$${item.value.toFixed(2)}`
-                            }
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                  
-                  <div className="mt-4 p-4 bg-muted rounded-lg">
-                    <div className="text-sm text-muted-foreground mb-1">ROI Status</div>
-                    <div className={`text-lg font-semibold ${roiData[2]?.value >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                      {roiData[2]?.value >= 100 ? 'Excellent' : 
-                       roiData[2]?.value >= 50 ? 'Good' : 
-                       roiData[2]?.value >= 0 ? 'Positive' : 'Negative'}
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+              <div>
+                <div className="text-sm font-medium text-muted-foreground mb-1">Engagement</div>
+                <div className="text-2xl font-bold">{campaignDetails.engagement || 0}</div>
+                <div className="text-xs text-muted-foreground">people</div>
+              </div>
+              <div>
+                <div className="text-sm font-medium text-muted-foreground mb-1">Conversions</div>
+                <div className="text-2xl font-bold">{Math.round((campaignDetails.reach || 0) * ((campaignDetails.conversion_rate || 0) / 100))}</div>
+                <div className="text-xs text-muted-foreground">people</div>
+              </div>
+            </div>
             
-            {/* Traffic Source Distribution */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Traffic Sources</CardTitle>
-                <CardDescription>
-                  Breakdown of campaign reach by source
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <AnalyticsPieChart
-                  title=""
-                  description=""
-                  data={sourceDistribution}
-                  colors={['#10B981', '#8B5CF6', '#F59E0B', '#06B6D4']}
-                />
-              </CardContent>
-            </Card>
-          </div>
-          
-          {/* Campaign Metrics Table */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Detailed Metrics</CardTitle>
-              <CardDescription>
-                Complete performance breakdown
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableBody>
-                  <TableRow>
-                    <TableCell className="font-medium">Campaign Name</TableCell>
-                    <TableCell>{selectedCampaignData.name}</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell className="font-medium">Status</TableCell>
-                    <TableCell>{selectedCampaignData.status}</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell className="font-medium">Start Date</TableCell>
-                    <TableCell>{new Date(selectedCampaignData.start_date).toLocaleDateString()}</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell className="font-medium">End Date</TableCell>
-                    <TableCell>
-                      {selectedCampaignData.end_date ? 
-                        new Date(selectedCampaignData.end_date).toLocaleDateString() : 
-                        'Ongoing'
-                      }
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell className="font-medium">Total Reach</TableCell>
-                    <TableCell>{selectedCampaignData.reach}</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell className="font-medium">Total Engagement</TableCell>
-                    <TableCell>{selectedCampaignData.engagement}</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell className="font-medium">Engagement Rate</TableCell>
-                    <TableCell>{((selectedCampaignData.engagement / selectedCampaignData.reach) * 100).toFixed(2)}%</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell className="font-medium">Conversion Rate</TableCell>
-                    <TableCell>{selectedCampaignData.conversion_rate}%</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell className="font-medium">Click-Through Rate</TableCell>
-                    <TableCell>
-                      {((selectedCampaignData.engagement * 0.6 / selectedCampaignData.reach) * 100).toFixed(2)}%
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell className="font-medium">Cost per Acquisition</TableCell>
-                    <TableCell>
-                      ${(selectedCampaignData.reach * 0.2 / (selectedCampaignData.reach * (selectedCampaignData.conversion_rate/100))).toFixed(2)}
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </>
+            <div>
+              <div className="flex justify-between mb-1">
+                <div className="text-sm font-medium">Engagement Rate</div>
+                <div className="text-sm">{campaignDetails.reach && campaignDetails.engagement ? 
+                  ((campaignDetails.engagement / campaignDetails.reach) * 100).toFixed(1) : '0.0'}%</div>
+              </div>
+              <Progress value={campaignDetails.reach && campaignDetails.engagement ? 
+                (campaignDetails.engagement / campaignDetails.reach) * 100 : 0} className="h-2" />
+            </div>
+            
+            <div>
+              <div className="flex justify-between mb-1">
+                <div className="text-sm font-medium">Conversion Rate</div>
+                <div className="text-sm">{campaignDetails.conversion_rate?.toFixed(1) || '0.0'}%</div>
+              </div>
+              <Progress value={campaignDetails.conversion_rate || 0} className="h-2" />
+            </div>
+            
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <div className="text-sm font-medium text-muted-foreground mb-1">Start Date</div>
+                <div>{campaignDetails.start_date ? format(new Date(campaignDetails.start_date), 'MMMM d, yyyy') : 'No start date'}</div>
+              </div>
+              <div>
+                <div className="text-sm font-medium text-muted-foreground mb-1">End Date</div>
+                <div>{campaignDetails.end_date ? format(new Date(campaignDetails.end_date), 'MMMM d, yyyy') : 'No end date'}</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   );

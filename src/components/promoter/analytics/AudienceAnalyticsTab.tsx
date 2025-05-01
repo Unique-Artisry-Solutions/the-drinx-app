@@ -36,36 +36,40 @@ const AudienceAnalyticsTab: React.FC<AudienceAnalyticsTabProps> = ({
   const audienceDemographicData = React.useMemo(() => {
     const filteredMetrics = audienceMetrics.filter(metric => metric.metric_name === selectedMetric);
     return filteredMetrics.map(metric => ({
-      name: metric.segment,
-      value: metric.metric_value
+      name: metric.segment || 'Unknown',
+      value: metric.metric_value || 0
     }));
   }, [audienceMetrics, selectedMetric]);
   
-  // Format trend data for charts
-  const subscriberTrendData = subscriberTrend.map(item => ({
-    name: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-    subscribers: item.metric_value
-  }));
+  // Format trend data for charts - with safety checks
+  const subscriberTrendData = React.useMemo(() => {
+    return subscriberTrend.map(item => ({
+      name: item.date ? new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Unknown',
+      subscribers: item.metric_value || 0
+    }));
+  }, [subscriberTrend]);
   
-  const engagementTrendData = engagementTrend.map(item => ({
-    name: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-    engagement: item.metric_value
-  }));
+  const engagementTrendData = React.useMemo(() => {
+    return engagementTrend.map(item => ({
+      name: item.date ? new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Unknown',
+      engagement: item.metric_value || 0
+    }));
+  }, [engagementTrend]);
   
   // Calculate retention metrics (using subscriber and engagement data)
   const retentionData = React.useMemo(() => {
     // This would typically come from actual retention analysis
     // For now, creating mock data based on subscriber trends
     const trend = [...subscriberTrend].sort((a, b) => 
-      new Date(a.date).getTime() - new Date(b.date).getTime()
+      new Date(a.date || '').getTime() - new Date(b.date || '').getTime()
     );
     
     if (trend.length < 7) return [];
     
     const weeklyRetention = [];
     for (let i = 7; i < trend.length; i += 7) {
-      const currentValue = trend[i].metric_value;
-      const previousValue = trend[i-7].metric_value;
+      const currentValue = trend[i].metric_value || 0;
+      const previousValue = trend[i-7].metric_value || 1; // Prevent division by zero
       const retention = previousValue > 0 ? (currentValue / previousValue) * 100 : 100;
       
       weeklyRetention.push({
@@ -249,14 +253,14 @@ const AudienceAnalyticsTab: React.FC<AudienceAnalyticsTabProps> = ({
                   key={`${metric.metric_name}-${index}`}
                   onClick={() => {
                     if (onMetricClick) {
-                      onMetricClick(metric.metric_name, metric.segment);
+                      onMetricClick(metric.metric_name, metric.segment || 'Unknown');
                     }
                   }}
                   className="cursor-pointer hover:bg-muted/50"
                 >
-                  <TableCell className="font-medium">{metric.metric_name}</TableCell>
-                  <TableCell>{metric.segment}</TableCell>
-                  <TableCell>{metric.metric_value}</TableCell>
+                  <TableCell className="font-medium">{metric.metric_name || 'Unknown'}</TableCell>
+                  <TableCell>{metric.segment || 'Unknown'}</TableCell>
+                  <TableCell>{metric.metric_value || 0}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

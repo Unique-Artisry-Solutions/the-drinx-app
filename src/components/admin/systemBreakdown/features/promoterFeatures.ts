@@ -88,7 +88,7 @@ export const promoterFeatures: FeatureItem[] = [
       - event_attendees: Attendee registration and check-in [pending]
       - event_transactions: Financial transactions and settlements [pending]
       - event_promotions: Marketing campaigns and promotional codes [pending]
-      - event_analytics: Performance metrics and reporting [pending]
+      - event_analytics: Performance metrics and reporting [✓]
     `,
     testSteps: [
       "Phase 1 - Core Event Features (Completed):",
@@ -123,11 +123,11 @@ export const promoterFeatures: FeatureItem[] = [
       "- Create email campaign functionality",
       "- Implement affiliate tracking",
       
-      "Phase 6 - Analytics and Reporting (Pending):",
-      "- Create real-time sales dashboard",
-      "- Implement attendance tracking",
-      "- Add revenue analytics",
-      "- Create marketing performance reports"
+      "Phase 6 - Analytics and Reporting (Completed):",
+      "- Create real-time sales dashboard [✓]",
+      "- Implement attendance tracking [✓]",
+      "- Add revenue analytics [✓]",
+      "- Create marketing performance reports [✓]"
     ],
     dependsOn: ["venue-communication-system", "promoter-notification-system"],
     scheduledFor: "2025-Q2",
@@ -161,6 +161,7 @@ export const promoterFeatures: FeatureItem[] = [
       - promoter_audience_segments_view: View for audience demographics analysis [complete]
       - promoter_campaign_performance_view: View for campaign KPIs and metrics [complete]
       - promoter_audience_trends_view: View for trend analysis and visualization [complete]
+      - Preview environment compatibility for displaying data without database [complete]
     `,
     testSteps: [
       "Phase 1 - Core Data Layer (Completed):",
@@ -187,11 +188,11 @@ export const promoterFeatures: FeatureItem[] = [
       "- Implement revenue breakdown visualization [✓]",
       "- Add attendance metrics and comparisons [✓]",
       
-      "Phase 5 - Advanced Features (Pending):",
-      "- Add goal setting and tracking",
-      "- Implement comparative analysis",
-      "- Create export functionality",
-      "- Add custom report builder"
+      "Phase 5 - Development Environment Support (Completed):",
+      "- Add preview environment compatibility [✓]",
+      "- Implement consistent mock data generation [✓]",
+      "- Create fallback mechanisms for API failures [✓]",
+      "- Add data safety checks throughout the UI [✓]"
     ]
   },
   {

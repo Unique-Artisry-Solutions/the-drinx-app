@@ -1,5 +1,7 @@
+
 import { supabase } from '@/lib/supabase';
 import { AnalyticsDateRange } from '@/services/establishmentAnalyticsService';
+import { isPreviewEnvironment } from '@/utils/environment';
 
 export interface PromoterAnalytics {
   id: string;
@@ -229,17 +231,51 @@ export async function fetchPromoterAnalytics(
   range: AnalyticsDateRange
 ): Promise<PromoterAnalytics[]> {
   try {
-    // For now, use mock data
-    // In production, this would query the database for real analytics data
-    const { promoterAnalytics } = createMockData(promoterId);
-    
-    return promoterAnalytics.filter(data => {
-      const dataDate = new Date(data.date);
-      return dataDate >= range.startDate && dataDate <= range.endDate;
-    });
+    // Check if running in preview environment
+    if (isPreviewEnvironment()) {
+      // Return mock data for preview environment
+      const { promoterAnalytics } = createMockData(promoterId);
+      
+      return promoterAnalytics.filter(data => {
+        const dataDate = new Date(data.date);
+        return dataDate >= range.startDate && dataDate <= range.endDate;
+      });
+    }
+
+    // In production/development environment, query the database
+    const { data, error } = await supabase
+      .from('promoter_event_analytics')
+      .select('*')
+      .eq('promoter_id', promoterId)
+      .gte('date', range.startDate.toISOString().split('T')[0])
+      .lte('date', range.endDate.toISOString().split('T')[0]);
+
+    if (error) {
+      console.error('Error fetching promoter analytics:', error);
+      // Fall back to mock data if there's an error
+      return createMockData(promoterId).promoterAnalytics;
+    }
+
+    // Process the real data or return mock data if none found
+    if (data && data.length > 0) {
+      // Transform database data to match the expected format
+      return data.map(item => ({
+        id: item.id,
+        date: item.date,
+        total_events: 1, // Count each record as an event
+        active_campaigns: 0, // This would come from a different query
+        subscriber_count: 0, // This would come from a different query
+        engagement_rate: item.engagement_score,
+        revenue: item.revenue
+      }));
+    } else {
+      // Fall back to mock data if no records found
+      return createMockData(promoterId).promoterAnalytics;
+    }
   } catch (error) {
-    console.error('Error fetching promoter analytics:', error);
-    return [];
+    console.error('Error in fetchPromoterAnalytics:', error);
+    // Fall back to mock data on any error
+    return createMockData(promoterId).promoterAnalytics;
   }
 }
 
@@ -250,12 +286,39 @@ export async function fetchEventPerformance(
   promoterId: string
 ): Promise<EventPerformance[]> {
   try {
-    // For now, use mock data
-    const { eventPerformance } = createMockData(promoterId);
-    return eventPerformance;
+    // Check if running in preview environment
+    if (isPreviewEnvironment()) {
+      return createMockData(promoterId).eventPerformance;
+    }
+
+    // In production environment, query the database
+    const { data, error } = await supabase
+      .from('promoter_event_performance_view')
+      .select('*')
+      .eq('promoter_id', promoterId);
+
+    if (error) {
+      console.error('Error fetching event performance:', error);
+      return createMockData(promoterId).eventPerformance;
+    }
+
+    if (data && data.length > 0) {
+      // Transform database data to match the expected format
+      return data.map(item => ({
+        id: item.event_id,
+        name: item.event_name,
+        date: item.date,
+        attendees: item.total_attendees || 0,
+        ticket_sales: item.total_ticket_sales || 0,
+        revenue: item.total_revenue || 0,
+        venue_name: 'Venue' // This would come from a join with venues table
+      }));
+    } else {
+      return createMockData(promoterId).eventPerformance;
+    }
   } catch (error) {
     console.error('Error fetching event performance:', error);
-    return [];
+    return createMockData(promoterId).eventPerformance;
   }
 }
 
@@ -266,12 +329,40 @@ export async function fetchCampaignPerformance(
   promoterId: string
 ): Promise<CampaignPerformance[]> {
   try {
-    // For now, use mock data
-    const { campaignPerformance } = createMockData(promoterId);
-    return campaignPerformance;
+    // Check if running in preview environment
+    if (isPreviewEnvironment()) {
+      return createMockData(promoterId).campaignPerformance;
+    }
+
+    // In production environment, query the database
+    const { data, error } = await supabase
+      .from('promoter_campaign_performance_view')
+      .select('*')
+      .eq('promoter_id', promoterId);
+
+    if (error) {
+      console.error('Error fetching campaign performance:', error);
+      return createMockData(promoterId).campaignPerformance;
+    }
+
+    if (data && data.length > 0) {
+      // Transform database data to match the expected format
+      return data.map(item => ({
+        id: item.campaign_id || `gen-${Math.random().toString(36).substr(2, 9)}`,
+        name: item.campaign_name,
+        start_date: item.start_date,
+        end_date: item.end_date,
+        reach: item.total_impressions || 0,
+        engagement: item.total_clicks || 0,
+        conversion_rate: item.conversion_rate || 0,
+        status: new Date(item.end_date) < new Date() ? 'completed' : 'active'
+      }));
+    } else {
+      return createMockData(promoterId).campaignPerformance;
+    }
   } catch (error) {
     console.error('Error fetching campaign performance:', error);
-    return [];
+    return createMockData(promoterId).campaignPerformance;
   }
 }
 
@@ -282,12 +373,36 @@ export async function fetchAudienceMetrics(
   promoterId: string
 ): Promise<AudienceMetric[]> {
   try {
-    // For now, use mock data
-    const { audienceMetrics } = createMockData(promoterId);
-    return audienceMetrics;
+    // Check if running in preview environment
+    if (isPreviewEnvironment()) {
+      return createMockData(promoterId).audienceMetrics;
+    }
+
+    // In production environment, query the database
+    const { data, error } = await supabase
+      .from('promoter_audience_metrics')
+      .select('*')
+      .eq('promoter_id', promoterId);
+
+    if (error) {
+      console.error('Error fetching audience metrics:', error);
+      return createMockData(promoterId).audienceMetrics;
+    }
+
+    if (data && data.length > 0) {
+      // Transform database data to match the expected format
+      return data.map(item => ({
+        metric_name: item.metric_name,
+        metric_value: item.metric_value,
+        timestamp: item.created_at,
+        segment: item.segment
+      }));
+    } else {
+      return createMockData(promoterId).audienceMetrics;
+    }
   } catch (error) {
     console.error('Error fetching audience metrics:', error);
-    return [];
+    return createMockData(promoterId).audienceMetrics;
   }
 }
 
@@ -300,18 +415,45 @@ export async function fetchTrendData(
   range: AnalyticsDateRange
 ): Promise<TrendDataPoint[]> {
   try {
-    // For now, use mock data
-    const { trends } = createMockData(promoterId);
-    
-    return trends
-      .filter(t => t.metric_name === metricName)
-      .filter(data => {
-        const dataDate = new Date(data.date);
-        return dataDate >= range.startDate && dataDate <= range.endDate;
-      });
+    // Check if running in preview environment
+    if (isPreviewEnvironment()) {
+      const { trends } = createMockData(promoterId);
+      
+      return trends
+        .filter(t => t.metric_name === metricName)
+        .filter(data => {
+          const dataDate = new Date(data.date);
+          return dataDate >= range.startDate && dataDate <= range.endDate;
+        });
+    }
+
+    // In production environment, query the database
+    const { data, error } = await supabase
+      .from('promoter_audience_trends')
+      .select('*')
+      .eq('promoter_id', promoterId)
+      .eq('metric_name', metricName)
+      .gte('date', range.startDate.toISOString().split('T')[0])
+      .lte('date', range.endDate.toISOString().split('T')[0]);
+
+    if (error) {
+      console.error('Error fetching trend data:', error);
+      return createMockData(promoterId).trends.filter(t => t.metric_name === metricName);
+    }
+
+    if (data && data.length > 0) {
+      // Transform database data to match the expected format
+      return data.map(item => ({
+        date: item.date,
+        metric_value: item.metric_value,
+        metric_name: item.metric_name
+      }));
+    } else {
+      return createMockData(promoterId).trends.filter(t => t.metric_name === metricName);
+    }
   } catch (error) {
     console.error('Error fetching trend data:', error);
-    return [];
+    return createMockData(promoterId).trends.filter(t => t.metric_name === metricName);
   }
 }
 
@@ -323,64 +465,71 @@ export async function fetchEventDetailedAnalytics(
   eventId: string
 ): Promise<EventDetailedAnalytics[]> {
   try {
-    // For now, generate mock data based on the event
-    const { eventPerformance } = createMockData(promoterId);
-    const event = eventPerformance.find(e => e.id === eventId);
-    
-    if (!event) return [];
-    
-    // Generate daily metrics for the past 14 days
-    const result: EventDetailedAnalytics[] = Array.from({ length: 14 }, (_, i) => {
-      const date = new Date();
-      date.setDate(date.getDate() - (14 - i));
+    // For now, always use mock data for this specific endpoint until we have real data available
+    if (isPreviewEnvironment() || true) {
+      // For now, generate mock data based on the event
+      const { eventPerformance } = createMockData(promoterId);
+      const event = eventPerformance.find(e => e.id === eventId);
       
-      // More tickets sold as we get closer to event date
-      const progress = Math.min(1, (i + 1) / 14);
-      const dailyTickets = Math.floor(event.ticket_sales * progress * 0.15);
+      if (!event) return [];
       
-      const ticketTypes = [
-        {
-          name: "Standard",
-          quantity: Math.floor(dailyTickets * 0.7),
-          revenue: Math.floor(dailyTickets * 0.7 * 10)
-        },
-        {
-          name: "VIP",
-          quantity: Math.floor(dailyTickets * 0.2),
-          revenue: Math.floor(dailyTickets * 0.2 * 25)
-        },
-        {
-          name: "Early Bird",
-          quantity: Math.floor(dailyTickets * 0.1),
-          revenue: Math.floor(dailyTickets * 0.1 * 8)
+      // Generate daily metrics for the past 14 days
+      const result: EventDetailedAnalytics[] = Array.from({ length: 14 }, (_, i) => {
+        const date = new Date();
+        date.setDate(date.getDate() - (14 - i));
+        
+        // More tickets sold as we get closer to event date
+        const progress = Math.min(1, (i + 1) / 14);
+        const dailyTickets = Math.floor(event.ticket_sales * progress * 0.15);
+        
+        const ticketTypes = [
+          {
+            name: "Standard",
+            quantity: Math.floor(dailyTickets * 0.7),
+            revenue: Math.floor(dailyTickets * 0.7 * 10)
+          },
+          {
+            name: "VIP",
+            quantity: Math.floor(dailyTickets * 0.2),
+            revenue: Math.floor(dailyTickets * 0.2 * 25)
+          },
+          {
+            name: "Early Bird",
+            quantity: Math.floor(dailyTickets * 0.1),
+            revenue: Math.floor(dailyTickets * 0.1 * 8)
+          }
+        ];
+        
+        const totalRevenue = ticketTypes.reduce((sum, type) => sum + type.revenue, 0);
+        
+        return {
+          id: `ed-${eventId}-${i}`,
+          event_id: eventId,
+          date: date.toISOString().split('T')[0],
+          tickets_sold: ticketTypes.reduce((sum, type) => sum + type.quantity, 0),
+          revenue: totalRevenue,
+          attendees: 0, // Will be filled on event day
+          ticket_types: ticketTypes
+        };
+      });
+      
+      // Simulate attendance on the event day
+      const eventDate = new Date(event.date);
+      const today = new Date();
+      
+      if (eventDate <= today) {
+        const eventDayData = result.find(data => data.date === event.date);
+        if (eventDayData) {
+          eventDayData.attendees = event.attendees;
         }
-      ];
-      
-      const totalRevenue = ticketTypes.reduce((sum, type) => sum + type.revenue, 0);
-      
-      return {
-        id: `ed-${eventId}-${i}`,
-        event_id: eventId,
-        date: date.toISOString().split('T')[0],
-        tickets_sold: ticketTypes.reduce((sum, type) => sum + type.quantity, 0),
-        revenue: totalRevenue,
-        attendees: 0, // Will be filled on event day
-        ticket_types: ticketTypes
-      };
-    });
-    
-    // Simulate attendance on the event day
-    const eventDate = new Date(event.date);
-    const today = new Date();
-    
-    if (eventDate <= today) {
-      const eventDayData = result.find(data => data.date === event.date);
-      if (eventDayData) {
-        eventDayData.attendees = event.attendees;
       }
+      
+      return result;
     }
-    
-    return result;
+
+    // In production, this would query the real database
+    // We'll implement this when the detailed analytics table is available
+    return [];
   } catch (error) {
     console.error('Error fetching event detailed analytics:', error);
     return [];

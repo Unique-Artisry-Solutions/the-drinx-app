@@ -17,6 +17,7 @@ import {
   TrendDataPoint,
   EventDetailedAnalytics
 } from '@/services/promoterAnalyticsService';
+import { isPreviewEnvironment } from '@/utils/environment';
 
 interface UsePromoterAnalyticsProps {
   promoterId?: string;
@@ -66,10 +67,13 @@ export function usePromoterAnalytics({
   const [refreshToken, setRefreshToken] = useState<number>(0);
 
   // Use provided promoterId or fall back to the current authenticated user
-  const promoterId = useMemo(() => 
-    providedPromoterId || user?.id || '', 
-    [providedPromoterId, user?.id]
-  );
+  const promoterId = useMemo(() => {
+    if (isPreviewEnvironment()) {
+      // In preview environment, always use a mock ID
+      return providedPromoterId || 'preview-promoter-id';
+    }
+    return providedPromoterId || user?.id || '';
+  }, [providedPromoterId, user?.id]);
 
   // Create a cache key based on promoterId and date range
   const cacheKey = useMemo(() => {
@@ -97,6 +101,7 @@ export function usePromoterAnalytics({
 
   // Fetch all analytics data
   useEffect(() => {
+    // Make sure we have required data before proceeding
     if (!promoterId) {
       setIsLoading(false);
       setError("No promoter ID provided");
