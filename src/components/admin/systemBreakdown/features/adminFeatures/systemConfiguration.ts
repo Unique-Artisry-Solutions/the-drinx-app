@@ -27,5 +27,13 @@ export const systemConfiguration: FeatureItem = {
     "Configure payment gateways",
     "Configure API keys",
     "Verify that system settings are properly applied"
+  ],
+  integrations: [
+    "Email service providers",
+    "Payment gateways",
+    "Third-party APIs",
+    "Social media platforms",
+    "Venue management systems",
+    "Financial tracking systems"
   ]
 };

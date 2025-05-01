@@ -1,260 +1,269 @@
 
 import { FeatureItem } from '../types';
 
+// Event Management Feature
+const eventManagement: FeatureItem = {
+  id: "promoter-1",
+  name: "Event Management",
+  description: "A comprehensive tool for promoters to create, manage and monitor events including ticket sales, check-ins, and event analytics.",
+  status: "implemented",
+  adminAccess: "full",
+  establishmentAccess: "none",
+  individualAccess: "none",
+  promoterAccess: "full",
+  databaseStatus: "complete",
+  userImpact: "high",
+  complexity: "high",
+  databaseAnalysis: `
+    Database Implementation:
+    - [x] Events table with necessary fields
+    - [x] Event ticket types table
+    - [x] Event attendees table with check-in status
+    - [x] Event check-in records
+    - [x] UI components for event creation and management
+  `,
+  testSteps: [
+    "Log in as promoter and navigate to Events page",
+    "Create a new event with ticket types",
+    "View events list and event details",
+    "Manage attendees and check-ins",
+    "View event analytics"
+  ],
+  integrations: [
+    "Email marketing systems",
+    "Social media platforms",
+    "Venue management systems",
+    "Finance tracking systems"
+  ]
+};
+
+// Promoter Dashboard Feature
+const promoterDashboard: FeatureItem = {
+  id: "promoter-2",
+  name: "Promoter Dashboard",
+  description: "Centralized dashboard showing event stats, upcoming events, and financial performance for promoters.",
+  status: "implemented",
+  adminAccess: "read",
+  establishmentAccess: "none",
+  individualAccess: "none",
+  promoterAccess: "full",
+  databaseStatus: "complete",
+  userImpact: "high",
+  complexity: "medium",
+  databaseAnalysis: `
+    Database Implementation:
+    - [x] Promoter accounts table
+    - [x] Promoter settings table
+    - [x] Event analytics aggregation tables
+    - [x] UI components for dashboard views
+  `,
+  testSteps: [
+    "Log in as promoter and view dashboard",
+    "Check event performance metrics",
+    "Review upcoming events section",
+    "Test dashboard filters"
+  ]
+};
+
+// Communication Feature
+const promoterCommunication: FeatureItem = {
+  id: "promoter-3",
+  name: "Promoter Communication",
+  description: "Communication tools for promoters to message venues, notify attendees, and coordinate with staff.",
+  status: "implemented",
+  adminAccess: "moderate",
+  establishmentAccess: "none",
+  individualAccess: "none",
+  promoterAccess: "full",
+  databaseStatus: "complete",
+  userImpact: "medium",
+  complexity: "medium",
+  databaseAnalysis: `
+    Database Implementation:
+    - [x] Communication threads table
+    - [x] Messages table
+    - [x] Notification templates
+    - [x] Staff access controls
+  `,
+  testSteps: [
+    "Log in as promoter and access communications tab",
+    "Send test message to venue",
+    "Create event notification for attendees",
+    "Test staff message broadcasts"
+  ]
+};
+
+// Brand Connection Feature
+const brandConnection: FeatureItem = {
+  id: "promoter-4",
+  name: "Brand Connections",
+  description: "Tools for promoters to connect with brands for sponsorships and partnerships.",
+  status: "in_progress",
+  adminAccess: "moderate",
+  establishmentAccess: "none",
+  individualAccess: "none",
+  promoterAccess: "full",
+  databaseStatus: "partial",
+  userImpact: "medium",
+  complexity: "high",
+  databaseAnalysis: `
+    Database Implementation:
+    - [x] Brands table
+    - [x] Brand connection requests table
+    - [x] Sponsorship opportunities table
+    - [ ] Partnership agreements table
+    - [x] UI components for brand connections
+  `,
+  testSteps: [
+    "Log in as promoter and navigate to Brands section",
+    "Browse available brand partnership opportunities",
+    "Send a connection request to a brand",
+    "View existing brand connections"
+  ]
+};
+
+// Analytics Feature
+const promoterAnalytics: FeatureItem = {
+  id: "promoter-5",
+  name: "Promoter Analytics",
+  description: "Advanced analytics tools for promoters to track event performance, audience demographics, and revenue.",
+  status: "in_progress",
+  adminAccess: "read",
+  establishmentAccess: "none",
+  individualAccess: "none",
+  promoterAccess: "full",
+  databaseStatus: "partial",
+  userImpact: "high",
+  complexity: "high",
+  databaseAnalysis: `
+    Database Implementation:
+    - [x] Event analytics table
+    - [x] Audience demographics table
+    - [x] Revenue tracking table
+    - [ ] Advanced analytics views and functions
+    - [x] UI components for analytics dashboards
+  `,
+  testSteps: [
+    "Log in as promoter and access Analytics dashboard",
+    "View event performance metrics",
+    "Generate audience demographic report",
+    "Export revenue analysis"
+  ]
+};
+
+// Custom Promotion Feature
+const customPromotionFeature: FeatureItem = {
+  id: "promoter-6",
+  name: "Custom Promotions",
+  description: "Tools for creating custom promotional campaigns, discount codes, and special offers for events.",
+  status: "implemented",
+  adminAccess: "moderate",
+  establishmentAccess: "none",
+  individualAccess: "none",
+  promoterAccess: "full",
+  databaseStatus: "complete",
+  userImpact: "high",
+  complexity: "medium",
+  databaseAnalysis: `
+    Database Implementation:
+    - [x] Promotions table
+    - [x] Discount codes table
+    - [x] Promotion redemption tracking
+    - [x] UI components for promotion creation
+  `,
+  testSteps: [
+    "Log in as promoter and navigate to Promotions section",
+    "Create a new discount code promotion",
+    "Test the promotion on ticket purchase",
+    "View promotion analytics"
+  ]
+};
+
+// Notification Feature
+const promoterNotificationFeature: FeatureItem = {
+  id: "promoter-7",
+  name: "Notification System",
+  description: "System for sending targeted notifications to attendees before, during, and after events.",
+  status: "implemented",
+  adminAccess: "moderate",
+  establishmentAccess: "none",
+  individualAccess: "none",
+  promoterAccess: "full",
+  databaseStatus: "complete",
+  userImpact: "high",
+  complexity: "medium",
+  databaseAnalysis: `
+    Database Implementation:
+    - [x] Notification templates table
+    - [x] Notification schedules table
+    - [x] Notification delivery tracking
+    - [x] UI components for notification management
+  `,
+  testSteps: [
+    "Log in as promoter and access Notifications section",
+    "Create a scheduled pre-event notification",
+    "Test immediate notification delivery",
+    "View notification analytics"
+  ]
+};
+
+// Marketing Integration Feature
+const marketingIntegrationFeature: FeatureItem = {
+  id: "promoter-8",
+  name: "Marketing Integration",
+  description: "Integration with email marketing platforms, social media, and digital marketing tools.",
+  status: "implemented",
+  adminAccess: "moderate",
+  establishmentAccess: "none",
+  individualAccess: "none",
+  promoterAccess: "full",
+  databaseStatus: "complete",
+  userImpact: "high",
+  complexity: "high",
+  databaseAnalysis: `
+    Database Implementation:
+    - [x] Marketing campaigns table
+    - [x] Integration settings table
+    - [x] Marketing performance tracking
+    - [x] UI components for marketing management
+    - [x] Email marketing integration
+    - [x] Social media sharing functions
+    - [x] External marketing platform webhooks
+  `,
+  testSteps: [
+    "Log in as promoter and access Marketing tab",
+    "Create email marketing campaign for an event",
+    "Test social media sharing functionality",
+    "Configure external marketing platform integration",
+    "Track campaign performance metrics"
+  ],
+  integrations: [
+    "Email marketing providers",
+    "Social media platforms",
+    "Venue management systems",
+    "Financial tracking systems",
+    "Third-party marketing tools"
+  ]
+};
+
+// Export all features
 export const promoterFeatures: FeatureItem[] = [
-  {
-    id: "promoter-dashboard",
-    name: "Promoter Dashboard Overview",
-    description: "Dashboard showing promoter's active promotions, analytics, and access to venue communications",
-    status: "implemented",
-    databaseStatus: "complete",
-    userImpact: "high",
-    complexity: "medium",
-    implementationProgress: 100,
-    tags: ["promoter", "dashboard"],
-    adminAccess: "none",
-    establishmentAccess: "none",
-    individualAccess: "none"
-  },
-  {
-    id: "venue-communication-system",
-    name: "Venue Communication System",
-    description: "Messaging system between promoters and establishments",
-    status: "implemented",
-    databaseStatus: "complete",
-    userImpact: "high",
-    complexity: "high",
-    implementationProgress: 95,
-    dbRequirementsText: "Thread and message tables with relationships",
-    tags: ["promoter", "communication", "messaging", "establishment"],
-    adminAccess: "none",
-    establishmentAccess: "none",
-    individualAccess: "none"
-  },
-  {
-    id: "contact-management",
-    name: "Contact Management",
-    description: "System for promoters to manage venue contacts",
-    status: "implemented",
-    databaseStatus: "complete",
-    userImpact: "medium",
-    complexity: "medium",
-    implementationProgress: 90,
-    tags: ["promoter", "communication", "contacts"],
-    adminAccess: "none",
-    establishmentAccess: "none",
-    individualAccess: "none"
-  },
-  {
-    id: "promoter-notification-system",
-    name: "Notification System for Promoters",
-    description: "Real-time notifications for message threads and venue responses",
-    status: "implemented",
-    databaseStatus: "complete",
-    userImpact: "medium",
-    complexity: "medium",
-    implementationProgress: 100,
-    tags: ["promoter", "notifications", "communication"],
-    adminAccess: "none",
-    establishmentAccess: "none",
-    individualAccess: "none",
-    dbRequirementsText: `
-      - notification_categories: Categories for promoter-related notifications [✓]
-      - promoter_notification_types: Specific notification types for promoters [✓]
-      - promoter_notification_preferences: User preferences for notification delivery [✓]
-      - bar_crawl_marketing_materials: Storage for marketing materials that trigger notifications [✓]
-      - notification triggers: Database triggers that generate notifications automatically [✓]
-      - notification delivery tracking: System to track notification delivery status [✓]
-    `,
-    statusUpdated: true,
-    originalStatus: "in_progress"
-  },
-  {
-    id: "event-management",
-    name: "Event Management",
-    description: "Comprehensive system for creating and managing promoter events with venues, including setup, ticketing, attendee management, and analytics",
-    status: "in_progress",
-    databaseStatus: "in_progress",
-    userImpact: "high",
-    complexity: "high",
-    implementationProgress: 60,
-    tags: ["promoter", "events"],
-    dbRequirementsText: `
-      - events: Core event details and configuration [✓]
-      - event_media: Media storage for event banners and galleries [✓] 
-      - event_custom_fields: Flexible custom fields for different event types [✓]
-      - event_templates: Reusable event configurations [✓]
-      - event_tickets: Ticket types, pricing, and inventory [pending]
-      - event_attendees: Attendee registration and check-in [pending]
-      - event_transactions: Financial transactions and settlements [pending]
-      - event_promotions: Marketing campaigns and promotional codes [pending]
-      - event_analytics: Performance metrics and reporting [✓]
-    `,
-    testSteps: [
-      "Phase 1 - Core Event Features (Completed):",
-      "- Event creation with basic details (name, date, venue, description) [✓]",
-      "- Event status management (draft, published, cancelled) [✓]",
-      "- Venue selection and capacity management [✓]",
-      "- Event scheduling and duration settings [✓]",
-      
-      "Phase 2 - Event Details and Setup (Current Phase):",
-      "- Add detailed event configuration options [✓]",
-      "- Implement media upload for event banners and galleries [✓]",
-      "- Create event preview functionality [✓]",
-      "- Add custom fields for additional event information [✓]",
-      "- Add event templates for quick creation [✓]",
-      
-      "Phase 3 - Ticketing and Financial (Pending):",
-      "- Implement ticket type creation and management",
-      "- Add pricing tiers and early bird settings",
-      "- Create inventory management system",
-      "- Implement payment processing integration",
-      "- Add revenue sharing calculations",
-      
-      "Phase 4 - Attendee Management (Pending):",
-      "- Create attendee registration system",
-      "- Implement check-in functionality",
-      "- Add attendee communications",
-      "- Create guest list management",
-      
-      "Phase 5 - Promotional Tools (Pending):",
-      "- Implement promotional code generation",
-      "- Add social media integration",
-      "- Create email campaign functionality",
-      "- Implement affiliate tracking",
-      
-      "Phase 6 - Analytics and Reporting (Completed):",
-      "- Create real-time sales dashboard [✓]",
-      "- Implement attendance tracking [✓]",
-      "- Add revenue analytics [✓]",
-      "- Create marketing performance reports [✓]"
-    ],
-    dependsOn: ["venue-communication-system", "promoter-notification-system"],
-    scheduledFor: "2025-Q2",
-    adminAccess: "none",
-    establishmentAccess: "none",
-    individualAccess: "none",
-    statusUpdated: true,
-    originalStatus: "partial"
-  },
-  {
-    id: "promoter-analytics",
-    name: "Promoter Analytics Dashboard",
-    description: "Analytics on event performance, audience demographics, and engagement metrics",
-    status: "implemented",
-    databaseStatus: "complete",
-    userImpact: "medium",
-    complexity: "high",
-    implementationProgress: 100,
-    tags: ["promoter", "analytics", "reporting"],
-    adminAccess: "none",
-    establishmentAccess: "none",
-    individualAccess: "none",
-    statusUpdated: true,
-    originalStatus: "planned",
-    dbRequirementsText: `
-      - promoter_event_analytics: Detailed analytics for event performance [complete]
-      - promoter_audience_metrics: Demographic data for audience analysis [complete]
-      - promoter_campaign_analytics: Marketing campaign performance metrics [complete]
-      - promoter_audience_trends: Engagement and growth trends over time [complete]
-      - promoter_event_performance_view: View for aggregated event statistics [complete]
-      - promoter_audience_segments_view: View for audience demographics analysis [complete]
-      - promoter_campaign_performance_view: View for campaign KPIs and metrics [complete]
-      - promoter_audience_trends_view: View for trend analysis and visualization [complete]
-      - Preview environment compatibility for displaying data without database [complete]
-    `,
-    testSteps: [
-      "Phase 1 - Core Data Layer (Completed):",
-      "- Implement analytics data hook and service [✓]",
-      "- Create basic metrics collection and processing [✓]",
-      "- Implement data visualization components [✓]",
-      "- Add date range filtering [✓]",
-      
-      "Phase 2 - Dashboard Components (Completed):",
-      "- Create overview dashboard with key metrics [✓]",
-      "- Implement event performance reports [✓]",
-      "- Add campaign analytics views [✓]",
-      "- Implement audience insights section [✓]",
-      
-      "Phase 3 - Analytics Tracking (Completed):",
-      "- Implement event tracking system [✓]",
-      "- Add campaign performance tracking [✓]",
-      "- Create audience interaction tracking [✓]",
-      "- Implement dashboard usage analytics [✓]",
-      
-      "Phase 4 - Event-Specific Analytics (Completed):",
-      "- Create detailed event analytics tab [✓]",
-      "- Add ticket sales metrics and trends [✓]",
-      "- Implement revenue breakdown visualization [✓]",
-      "- Add attendance metrics and comparisons [✓]",
-      
-      "Phase 5 - Development Environment Support (Completed):",
-      "- Add preview environment compatibility [✓]",
-      "- Implement consistent mock data generation [✓]",
-      "- Create fallback mechanisms for API failures [✓]",
-      "- Add data safety checks throughout the UI [✓]"
-    ]
-  },
-  {
-    id: "custom-promotion-creation",
-    name: "Custom Promotions Creation",
-    description: "Tools to create custom promotions for events",
-    status: "planned",
-    databaseStatus: "not_started",
-    userImpact: "high",
-    complexity: "medium",
-    implementationProgress: 5,
-    tags: ["promoter", "promotions"],
-    adminAccess: "none",
-    establishmentAccess: "none",
-    individualAccess: "none"
-  },
-  {
-    id: "brand-partnerships",
-    name: "Brand Partnership Management",
-    description: "Tools to connect with brands for event sponsorships",
-    status: "planned",
-    databaseStatus: "not_started",
-    userImpact: "medium",
-    complexity: "medium",
-    implementationProgress: 0,
-    tags: ["promoter", "partnerships"],
-    adminAccess: "none",
-    establishmentAccess: "none",
-    individualAccess: "none"
-  },
-  {
-    id: "promoter-analytics-tracking",
-    name: "Analytics Tracking Integration",
-    description: "Comprehensive system for tracking promoter-specific actions and campaign performance metrics",
-    status: "implemented",
-    databaseStatus: "complete",
-    userImpact: "medium",
-    complexity: "medium",
-    implementationProgress: 100,
-    tags: ["promoter", "analytics", "tracking"],
-    adminAccess: "none",
-    establishmentAccess: "none",
-    individualAccess: "none",
-    dbRequirementsText: `
-      - analytics_events: Core events table that stores all tracked actions [✓]
-      - event_performance_tracking: Specialized tracking for event metrics [✓]
-      - campaign_performance_tracking: Tracking for campaign effectiveness [✓]
-      - user_interaction_tracking: System for tracking user engagement with analytics [✓]
-    `,
-    testSteps: [
-      "Phase 1 - Core Tracking System (Completed):",
-      "- Create promoter analytics tracking hook [✓]",
-      "- Implement event action tracking [✓]",
-      "- Add campaign metrics tracking [✓]",
-      "- Implement dashboard usage analytics [✓]",
-      
-      "Phase 2 - Advanced Analytics (Completed):",
-      "- Event performance tracking [✓]",
-      "- Campaign channel attribution [✓]",
-      "- Marketing material performance tracking [✓]",
-      "- Audience interaction tracking [✓]"
-    ],
-    dependsOn: ["promoter-analytics"]
-  }
+  eventManagement,
+  promoterDashboard,
+  promoterCommunication,
+  brandConnection,
+  promoterAnalytics,
+  customPromotionFeature,
+  promoterNotificationFeature,
+  marketingIntegrationFeature
 ];
+
+// Export individual features
+export const isPromoterCommunicationFeature = (id: string) => id === promoterCommunication.id;
+export const isBrandConnectionFeature = (id: string) => id === brandConnection.id;
+export const isPromoterAnalyticsFeature = (id: string) => id === promoterAnalytics.id;
+export const isEventManagementFeature = (id: string) => id === eventManagement.id;
+export const isPromoterDashboardFeature = (id: string) => id === promoterDashboard.id;
+export const isCustomPromotionFeature = (id: string) => id === customPromotionFeature.id;
+export const isPromoterNotificationFeature = (id: string) => id === promoterNotificationFeature.id;
+export const isMarketingIntegrationFeature = (id: string) => id === marketingIntegrationFeature.id;

@@ -1,231 +1,254 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   Dialog, 
   DialogContent, 
   DialogHeader, 
   DialogTitle,
+  DialogDescription,
   DialogFooter
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from '@/components/ui/select';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
 import { EventMarketingCampaign } from '@/types/EventTypes';
-import { useToast } from '@/hooks/use-toast';
-import { DatePicker } from '@/components/ui/date-picker';
 
 interface MarketingCampaignModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (campaign: Partial<EventMarketingCampaign>) => Promise<void>;
+  onSave: (campaign: Omit<EventMarketingCampaign, 'id'>) => void;
   campaign?: EventMarketingCampaign;
-  isEditing?: boolean;
+  isEditing: boolean;
 }
 
 const campaignTypes = [
   { value: 'email', label: 'Email Campaign' },
-  { value: 'social', label: 'Social Media' },
-  { value: 'sms', label: 'SMS Messages' },
-  { value: 'push', label: 'Push Notifications' },
-  { value: 'partner', label: 'Partner Promotions' },
+  { value: 'social_media', label: 'Social Media' },
+  { value: 'referral', label: 'Referral Program' },
+  { value: 'influencer', label: 'Influencer Marketing' },
+  { value: 'partner', label: 'Partner Promotion' }
 ];
-
-const initialState: Partial<EventMarketingCampaign> = {
-  name: '',
-  description: '',
-  campaign_type: 'email',
-  status: 'draft',
-  start_date: new Date().toISOString(),
-  end_date: undefined,
-  budget: 0,
-  metrics: {},
-  target_audience: {},
-};
 
 const MarketingCampaignModal: React.FC<MarketingCampaignModalProps> = ({
   isOpen,
   onClose,
   onSave,
   campaign,
-  isEditing = false
+  isEditing
 }) => {
-  const { toast } = useToast();
-  const [formData, setFormData] = React.useState<Partial<EventMarketingCampaign>>(
-    campaign || initialState
-  );
-  const [startDate, setStartDate] = React.useState<Date | undefined>(
-    formData.start_date ? new Date(formData.start_date) : new Date()
-  );
-  const [endDate, setEndDate] = React.useState<Date | undefined>(
-    formData.end_date ? new Date(formData.end_date) : undefined
-  );
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
-
-  // Reset form when the modal opens/closes or campaign changes
-  React.useEffect(() => {
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [campaignType, setCampaignType] = useState('');
+  const [status, setStatus] = useState<'draft' | 'active' | 'completed' | 'cancelled'>('draft');
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  const [budget, setBudget] = useState<number | undefined>(undefined);
+  
+  useEffect(() => {
     if (campaign) {
-      setFormData(campaign);
-      setStartDate(campaign.start_date ? new Date(campaign.start_date) : new Date());
+      setName(campaign.name || '');
+      setDescription(campaign.description || '');
+      setCampaignType(campaign.campaign_type || '');
+      setStatus(campaign.status || 'draft');
+      setStartDate(campaign.start_date ? new Date(campaign.start_date) : undefined);
       setEndDate(campaign.end_date ? new Date(campaign.end_date) : undefined);
+      setBudget(campaign.budget);
     } else {
-      setFormData(initialState);
-      setStartDate(new Date());
+      // Reset form for new campaign
+      setName('');
+      setDescription('');
+      setCampaignType('');
+      setStatus('draft');
+      setStartDate(undefined);
       setEndDate(undefined);
+      setBudget(undefined);
     }
   }, [campaign, isOpen]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: parseFloat(value) }));
-  };
-
-  const handleSelectChange = (name: string, value: string) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    
-    try {
-      const dataToSave = {
-        ...formData,
-        start_date: startDate?.toISOString(),
-        end_date: endDate?.toISOString(),
-      };
-      
-      await onSave(dataToSave);
-      toast({
-        title: isEditing ? 'Campaign Updated' : 'Campaign Created',
-        description: `Campaign has been ${isEditing ? 'updated' : 'created'} successfully.`,
-      });
-      onClose();
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: `Failed to ${isEditing ? 'update' : 'create'} campaign.`,
-        variant: 'destructive',
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+  const handleSubmit = () => {
+    onSave({
+      name,
+      description,
+      campaign_type: campaignType,
+      status,
+      start_date: startDate?.toISOString(),
+      end_date: endDate?.toISOString(),
+      budget
+    });
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-[550px]">
         <DialogHeader>
-          <DialogTitle>{isEditing ? 'Edit Campaign' : 'New Marketing Campaign'}</DialogTitle>
+          <DialogTitle>{isEditing ? 'Edit Marketing Campaign' : 'Create Marketing Campaign'}</DialogTitle>
+          <DialogDescription>
+            {isEditing 
+              ? 'Make changes to your marketing campaign here.'
+              : 'Create a new marketing campaign to promote your event.'
+            }
+          </DialogDescription>
         </DialogHeader>
-
-        <form onSubmit={handleSubmit} className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Campaign Name</Label>
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="name" className="text-right">
+              Name
+            </Label>
             <Input
               id="name"
-              name="name"
-              value={formData.name || ''}
-              onChange={handleChange}
-              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="col-span-3"
+              placeholder="Campaign name"
             />
           </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
+          
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="description" className="text-right">
+              Description
+            </Label>
             <Textarea
               id="description"
-              name="description"
-              value={formData.description || ''}
-              onChange={handleChange}
-              rows={3}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="col-span-3"
+              placeholder="Campaign description"
             />
           </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="campaign_type">Campaign Type</Label>
-              <Select
-                value={formData.campaign_type || 'email'}
-                onValueChange={(value) => handleSelectChange('campaign_type', value)}
-              >
-                <SelectTrigger id="campaign_type">
-                  <SelectValue placeholder="Select type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {campaignTypes.map((type) => (
-                    <SelectItem key={type.value} value={type.value}>
-                      {type.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="status">Status</Label>
-              <Select
-                value={formData.status || 'draft'}
-                onValueChange={(value) => handleSelectChange('status', value)}
-              >
-                <SelectTrigger id="status">
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="cancelled">Cancelled</SelectItem>
-                </SelectContent>
-              </Select>
+          
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="type" className="text-right">
+              Type
+            </Label>
+            <Select
+              value={campaignType}
+              onValueChange={setCampaignType}
+            >
+              <SelectTrigger className="col-span-3">
+                <SelectValue placeholder="Select campaign type" />
+              </SelectTrigger>
+              <SelectContent>
+                {campaignTypes.map(type => (
+                  <SelectItem key={type.value} value={type.value}>
+                    {type.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="status" className="text-right">
+              Status
+            </Label>
+            <Select
+              value={status}
+              onValueChange={(val: 'draft' | 'active' | 'completed' | 'cancelled') => setStatus(val)}
+            >
+              <SelectTrigger className="col-span-3">
+                <SelectValue placeholder="Select status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="draft">Draft</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="cancelled">Cancelled</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="startDate" className="text-right">
+              Start Date
+            </Label>
+            <div className="col-span-3">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    className="w-full justify-start text-left font-normal"
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {startDate ? format(startDate, "PPP") : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={startDate}
+                    onSelect={setStartDate}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Start Date</Label>
-              <DatePicker date={startDate} setDate={setStartDate} />
-            </div>
-            <div className="space-y-2">
-              <Label>End Date</Label>
-              <DatePicker date={endDate} setDate={setEndDate} />
+          
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="endDate" className="text-right">
+              End Date
+            </Label>
+            <div className="col-span-3">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    className="w-full justify-start text-left font-normal"
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {endDate ? format(endDate, "PPP") : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={endDate}
+                    onSelect={setEndDate}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="budget">Budget</Label>
+          
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="budget" className="text-right">
+              Budget
+            </Label>
             <Input
               id="budget"
-              name="budget"
               type="number"
-              min="0"
-              step="0.01"
-              value={formData.budget || ''}
-              onChange={handleNumberChange}
+              value={budget !== undefined ? budget : ''}
+              onChange={(e) => setBudget(e.target.value !== '' ? parseFloat(e.target.value) : undefined)}
+              className="col-span-3"
+              placeholder="Campaign budget"
             />
           </div>
-
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Saving...' : isEditing ? 'Update' : 'Create'}
-            </Button>
-          </DialogFooter>
-        </form>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button onClick={handleSubmit}>
+            {isEditing ? 'Update' : 'Create'}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

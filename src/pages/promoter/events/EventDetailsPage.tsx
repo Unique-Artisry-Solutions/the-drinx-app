@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
@@ -25,6 +26,7 @@ import CheckInScannerModal from '@/components/events/CheckInScannerModal';
 import { createTicketType, updateTicketType, deleteTicketType } from '@/services/eventTicketService';
 import { checkInAttendee } from '@/services/eventAttendeesService';
 import { toAttendeeStatus, safeJsonToRecord } from '@/utils/typeGuards';
+import MarketingTabContent from '@/components/events/MarketingTabContent';
 
 const EventDetailsPage: React.FC = () => {
   const { eventId } = useParams<{ eventId: string }>();
@@ -537,19 +539,9 @@ const EventDetailsPage: React.FC = () => {
           </Card>
         </TabsContent>
         
-        {/* Marketing Tab - Placeholder */}
+        {/* Marketing Tab - Now using the MarketingTabContent component */}
         <TabsContent value="marketing">
-          <Card>
-            <CardHeader>
-              <CardTitle>Marketing</CardTitle>
-              <CardDescription>
-                Promote your event through various channels.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">Marketing tools will be available soon.</p>
-            </CardContent>
-          </Card>
+          <MarketingTabContent eventId={eventId || ''} eventName={event.name} />
         </TabsContent>
         
         {/* Analytics Tab - Placeholder */}
