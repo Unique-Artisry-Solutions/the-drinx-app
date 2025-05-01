@@ -47,6 +47,9 @@ export const systemBreakdown: FeatureItem = {
     - [x] Analytics and reporting endpoints for events
     - [x] Event check-in rate analysis and reporting
     - [x] Marketing campaign performance analytics
+    - [x] Refactored database queries for compatibility with Supabase client
+    - [x] Fixed group by queries for aggregating ticket sales data
+    - [x] Implemented client-side data aggregation for analytics
   `,
   testSteps: [
     "Log in as admin and navigate to System Breakdown page",
@@ -74,6 +77,8 @@ export const systemBreakdown: FeatureItem = {
     "Test ticket scanning and validation APIs",
     "Verify attendee check-in functionality",
     "Test event analytics reporting endpoints",
-    "Check marketing campaign performance metrics"
+    "Check marketing campaign performance metrics",
+    "Verify ticket sales count functionality works correctly",
+    "Test event comparison analytics with multiple events"
   ]
 };

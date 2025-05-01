@@ -16,19 +16,26 @@ export async function fetchEventTicketTypes(eventId: string): Promise<EventTicke
     if (error) throw error;
 
     // Get ticket sales data for available counts
-    const { data: salesData, error: salesError } = await supabase
+    const { data: attendeeData, error: attendeeError } = await supabase
       .from('event_attendees')
-      .select('ticket_type_id, count')
-      .eq('event_id', eventId)
-      .not('status', 'eq', 'cancelled')
-      .group('ticket_type_id');
+      .select('ticket_type_id, status')
+      .eq('event_id', eventId);
 
-    if (salesError) throw salesError;
+    if (attendeeError) throw attendeeError;
+
+    // Calculate sales counts manually since we can't use .group()
+    const salesByTicketType: Record<string, number> = {};
+    
+    // Count tickets that haven't been cancelled
+    attendeeData.forEach(attendee => {
+      if (attendee.status !== 'cancelled' && attendee.ticket_type_id) {
+        salesByTicketType[attendee.ticket_type_id] = (salesByTicketType[attendee.ticket_type_id] || 0) + 1;
+      }
+    });
 
     // Calculate available tickets and add to response
     return data.map(ticket => {
-      const sales = salesData.find(s => s.ticket_type_id === ticket.id);
-      const sold = sales ? parseInt(sales.count) : 0;
+      const sold = salesByTicketType[ticket.id] || 0;
       const available = ticket.quantity - sold;
       
       return {
@@ -85,19 +92,21 @@ export async function updateTicketType(id: string, updates: Partial<EventTicketT
 
     if (error) throw error;
 
-    // Get sales count
-    const { count: sold, error: countError } = await supabase
+    // Get sales count manually since we can't use .count() with filters directly
+    const { data: attendeeData, error: attendeeError } = await supabase
       .from('event_attendees')
-      .select('id', { count: 'exact', head: true })
+      .select('id')
       .eq('ticket_type_id', id)
-      .not('status', 'eq', 'cancelled');
+      .neq('status', 'cancelled');
       
-    if (countError) throw countError;
+    if (attendeeError) throw attendeeError;
+    
+    const sold = attendeeData.length;
     
     return {
       ...data,
-      sold: sold || 0,
-      available: data.quantity - (sold || 0)
+      sold,
+      available: data.quantity - sold
     };
   } catch (error) {
     console.error('Error updating ticket type:', error);
@@ -111,15 +120,15 @@ export async function updateTicketType(id: string, updates: Partial<EventTicketT
 export async function deleteTicketType(id: string): Promise<void> {
   try {
     // Check if tickets have been sold
-    const { count, error: countError } = await supabase
+    const { data: attendeeData, error: attendeeError } = await supabase
       .from('event_attendees')
-      .select('id', { count: 'exact', head: true })
+      .select('id')
       .eq('ticket_type_id', id);
       
-    if (countError) throw countError;
+    if (attendeeError) throw attendeeError;
     
-    if (count && count > 0) {
-      throw new Error(`Cannot delete ticket type with ${count} tickets sold`);
+    if (attendeeData.length > 0) {
+      throw new Error(`Cannot delete ticket type with ${attendeeData.length} tickets sold`);
     }
     
     const { error } = await supabase

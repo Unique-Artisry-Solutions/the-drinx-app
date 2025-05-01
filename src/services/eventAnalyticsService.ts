@@ -110,7 +110,7 @@ export async function getReferralSourcesAnalytics(eventId: string): Promise<{
     if (error) throw error;
 
     // Combine all referral data
-    const combinedReferrals = {};
+    const combinedReferrals: Record<string, number> = {};
     let totalVisits = 0;
 
     data.forEach(day => {
@@ -161,14 +161,23 @@ export async function compareEvents(eventIds: string[]): Promise<{
 
     if (analyticsError) throw analyticsError;
 
-    // Get analytics views/sales data
-    const { data: viewsData, error: viewsError } = await supabase
+    // Get analytics views/sales data - Refactored to not use .group()
+    const { data: analyticsData, error: analyticsDataError } = await supabase
       .from('event_analytics')
-      .select('event_id, sum(page_views) as total_views, sum(ticket_sales) as total_ticket_sales')
-      .in('event_id', eventIds)
-      .group('event_id');
+      .select('event_id, page_views, ticket_sales')
+      .in('event_id', eventIds);
 
-    if (viewsError) throw viewsError;
+    if (analyticsDataError) throw analyticsDataError;
+
+    // Manually group and sum the analytics data
+    const viewsAndSales: Record<string, { views: number, ticketSales: number }> = {};
+    analyticsData.forEach(item => {
+      if (!viewsAndSales[item.event_id]) {
+        viewsAndSales[item.event_id] = { views: 0, ticketSales: 0 };
+      }
+      viewsAndSales[item.event_id].views += item.page_views || 0;
+      viewsAndSales[item.event_id].ticketSales += item.ticket_sales || 0;
+    });
 
     // Merge data
     return eventIds.map(eventId => {
@@ -177,16 +186,13 @@ export async function compareEvents(eventIds: string[]): Promise<{
         total_revenue: 0, 
         total_attendees: 0 
       };
-      const views = viewsData.find(v => v.event_id === eventId) || { 
-        total_views: 0, 
-        total_ticket_sales: 0 
-      };
+      const views = viewsAndSales[eventId] || { views: 0, ticketSales: 0 };
 
       return {
         eventId,
         eventName: event.name,
-        views: views.total_views || 0,
-        ticketSales: views.total_ticket_sales || 0,
+        views: views.views || 0,
+        ticketSales: views.ticketSales || 0,
         revenue: stats.total_revenue || 0,
         attendees: stats.total_attendees || 0
       };
