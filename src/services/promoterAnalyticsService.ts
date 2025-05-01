@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/supabase';
 import { AnalyticsDateRange } from '@/services/establishmentAnalyticsService';
 
@@ -20,6 +19,20 @@ export interface EventPerformance {
   ticket_sales: number;
   revenue: number;
   venue_name: string;
+}
+
+export interface EventDetailedAnalytics {
+  id: string;
+  event_id: string;
+  date: string;
+  tickets_sold: number;
+  revenue: number;
+  attendees: number;
+  ticket_types: {
+    name: string;
+    quantity: number;
+    revenue: number;
+  }[];
 }
 
 export interface CampaignPerformance {
@@ -298,6 +311,78 @@ export async function fetchTrendData(
       });
   } catch (error) {
     console.error('Error fetching trend data:', error);
+    return [];
+  }
+}
+
+/**
+ * Fetches detailed analytics for a specific event
+ */
+export async function fetchEventDetailedAnalytics(
+  promoterId: string,
+  eventId: string
+): Promise<EventDetailedAnalytics[]> {
+  try {
+    // For now, generate mock data based on the event
+    const { eventPerformance } = createMockData(promoterId);
+    const event = eventPerformance.find(e => e.id === eventId);
+    
+    if (!event) return [];
+    
+    // Generate daily metrics for the past 14 days
+    const result: EventDetailedAnalytics[] = Array.from({ length: 14 }, (_, i) => {
+      const date = new Date();
+      date.setDate(date.getDate() - (14 - i));
+      
+      // More tickets sold as we get closer to event date
+      const progress = Math.min(1, (i + 1) / 14);
+      const dailyTickets = Math.floor(event.ticket_sales * progress * 0.15);
+      
+      const ticketTypes = [
+        {
+          name: "Standard",
+          quantity: Math.floor(dailyTickets * 0.7),
+          revenue: Math.floor(dailyTickets * 0.7 * 10)
+        },
+        {
+          name: "VIP",
+          quantity: Math.floor(dailyTickets * 0.2),
+          revenue: Math.floor(dailyTickets * 0.2 * 25)
+        },
+        {
+          name: "Early Bird",
+          quantity: Math.floor(dailyTickets * 0.1),
+          revenue: Math.floor(dailyTickets * 0.1 * 8)
+        }
+      ];
+      
+      const totalRevenue = ticketTypes.reduce((sum, type) => sum + type.revenue, 0);
+      
+      return {
+        id: `ed-${eventId}-${i}`,
+        event_id: eventId,
+        date: date.toISOString().split('T')[0],
+        tickets_sold: ticketTypes.reduce((sum, type) => sum + type.quantity, 0),
+        revenue: totalRevenue,
+        attendees: 0, // Will be filled on event day
+        ticket_types: ticketTypes
+      };
+    });
+    
+    // Simulate attendance on the event day
+    const eventDate = new Date(event.date);
+    const today = new Date();
+    
+    if (eventDate <= today) {
+      const eventDayData = result.find(data => data.date === event.date);
+      if (eventDayData) {
+        eventDayData.attendees = event.attendees;
+      }
+    }
+    
+    return result;
+  } catch (error) {
+    console.error('Error fetching event detailed analytics:', error);
     return [];
   }
 }

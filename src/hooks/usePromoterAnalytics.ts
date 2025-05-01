@@ -9,11 +9,13 @@ import {
   fetchCampaignPerformance,
   fetchAudienceMetrics,
   fetchTrendData,
+  fetchEventDetailedAnalytics,
   PromoterAnalytics,
   EventPerformance,
   CampaignPerformance,
   AudienceMetric,
-  TrendDataPoint
+  TrendDataPoint,
+  EventDetailedAnalytics
 } from '@/services/promoterAnalyticsService';
 
 interface UsePromoterAnalyticsProps {
@@ -31,6 +33,7 @@ interface PromoterAnalyticsData {
   isLoading: boolean;
   error: string | null;
   refresh: () => void;
+  fetchEventDetails: (eventId: string) => Promise<EventDetailedAnalytics[]>;
 }
 
 // Cache for analytics data to prevent flickering with stable mock data
@@ -84,6 +87,12 @@ export function usePromoterAnalytics({
       delete analyticsCache[cacheKey];
     }
     setRefreshToken(prev => prev + 1);
+  };
+
+  // Function to fetch detailed analytics for a specific event
+  const fetchEventDetails = async (eventId: string): Promise<EventDetailedAnalytics[]> => {
+    if (!promoterId) return [];
+    return await fetchEventDetailedAnalytics(promoterId, eventId);
   };
 
   // Fetch all analytics data
@@ -186,6 +195,7 @@ export function usePromoterAnalytics({
     engagementTrend,
     isLoading,
     error,
-    refresh
+    refresh,
+    fetchEventDetails
   };
 }

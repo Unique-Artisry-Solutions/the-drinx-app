@@ -14,7 +14,8 @@ import {
   Calendar as CalendarIcon2, 
   Ticket, 
   DollarSign, 
-  TrendingUp 
+  TrendingUp,
+  LineChart
 } from 'lucide-react';
 import { DateRange } from 'react-day-picker';
 import { format, addDays, subDays } from 'date-fns';
@@ -35,6 +36,7 @@ import AnalyticsMetricCard from '@/components/charts/AnalyticsMetricCard';
 import AnalyticsLineChart from '@/components/charts/AnalyticsLineChart';
 import AnalyticsBarChart from '@/components/charts/AnalyticsBarChart';
 import AnalyticsPieChart from '@/components/charts/AnalyticsPieChart';
+import EventAnalyticsTab from '@/components/promoter/analytics/EventAnalyticsTab';
 
 const PromoterAnalyticsPage = () => {
   const { user } = useAuth();
@@ -293,11 +295,16 @@ const PromoterAnalyticsPage = () => {
         >
           <TabsList>
             <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="events">Events</TabsTrigger>
+            <TabsTrigger value="events">Events List</TabsTrigger>
+            <TabsTrigger value="event-analytics">
+              <LineChart className="h-4 w-4 mr-1" />
+              Event Analytics
+            </TabsTrigger>
             <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
             <TabsTrigger value="audience">Audience</TabsTrigger>
           </TabsList>
           
+          {/* Overview Tab Content */}
           <TabsContent value="overview" className="space-y-4">
             {/* Subscriber Growth Trend Chart */}
             {isLoading ? (
@@ -362,6 +369,7 @@ const PromoterAnalyticsPage = () => {
             )}
           </TabsContent>
           
+          {/* Events List Tab Content */}
           <TabsContent value="events" className="space-y-4">
             {/* Event Performance Table */}
             <Card>
@@ -434,6 +442,15 @@ const PromoterAnalyticsPage = () => {
             )}
           </TabsContent>
           
+          {/* Event Analytics Tab Content */}
+          <TabsContent value="event-analytics" className="space-y-4">
+            <EventAnalyticsTab 
+              eventPerformance={eventPerformance} 
+              isLoading={isLoading}
+            />
+          </TabsContent>
+          
+          {/* Campaigns Tab Content */}
           <TabsContent value="campaigns" className="space-y-4">
             {/* Campaign Performance Table */}
             <Card>
@@ -524,6 +541,7 @@ const PromoterAnalyticsPage = () => {
             )}
           </TabsContent>
           
+          {/* Audience Tab Content */}
           <TabsContent value="audience" className="space-y-4">
             {/* Audience Demographics Chart */}
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
