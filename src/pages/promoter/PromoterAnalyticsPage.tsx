@@ -37,6 +37,8 @@ import AnalyticsLineChart from '@/components/charts/AnalyticsLineChart';
 import AnalyticsBarChart from '@/components/charts/AnalyticsBarChart';
 import AnalyticsPieChart from '@/components/charts/AnalyticsPieChart';
 import EventAnalyticsTab from '@/components/promoter/analytics/EventAnalyticsTab';
+import AudienceAnalyticsTab from '@/components/promoter/analytics/AudienceAnalyticsTab';
+import CampaignAnalyticsTab from '@/components/promoter/analytics/CampaignAnalyticsTab';
 
 const PromoterAnalyticsPage = () => {
   const { user } = useAuth();
@@ -170,6 +172,27 @@ const PromoterAnalyticsPage = () => {
     revenue: event.revenue / 100 // Scale down for better visualization
   }));
 
+  // Track audience metric view
+  const handleAudienceMetricClick = (metricName: string, segment: string) => {
+    trackPromoterEvent('audience_metric_viewed', {
+      metricName,
+      segment,
+      value: audienceMetrics.find(m => m.metric_name === metricName && m.segment === segment)?.metric_value
+    });
+  };
+
+  // Track campaign selection
+  const handleCampaignSelect = (campaignId: string) => {
+    const campaign = campaignPerformance.find(c => c.id === campaignId);
+    if (campaign) {
+      trackPromoterEvent('campaign_performance_viewed', {
+        campaignId,
+        campaignName: campaign.name,
+        campaignStatus: campaign.status
+      });
+    }
+  };
+
   if (error) {
     return (
       <Layout>
@@ -285,7 +308,7 @@ const PromoterAnalyticsPage = () => {
           />
         </div>
 
-        {/* Analytics tabs */}
+        {/* Analytics tabs - Updated with new tabs */}
         <Tabs 
           value={activeTab} 
           onValueChange={(value) => {
@@ -450,195 +473,24 @@ const PromoterAnalyticsPage = () => {
             />
           </TabsContent>
           
-          {/* Campaigns Tab Content */}
+          {/* Campaign Analytics Tab Content */}
           <TabsContent value="campaigns" className="space-y-4">
-            {/* Campaign Performance Table */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Marketing Campaigns</CardTitle>
-                <CardDescription>
-                  Performance metrics for your marketing campaigns
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {isLoading ? (
-                  <div className="space-y-3">
-                    <Skeleton className="h-12 w-full" />
-                    <Skeleton className="h-12 w-full" />
-                  </div>
-                ) : campaignPerformance.length > 0 ? (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Campaign</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Reach</TableHead>
-                        <TableHead>Engagement</TableHead>
-                        <TableHead>Conversion</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {campaignPerformance.map((campaign) => (
-                        <TableRow key={campaign.id} onClick={() => {
-                          // Track campaign row click
-                          trackCampaignAction('performance_viewed', campaign.id, {
-                            campaignName: campaign.name,
-                            campaignStatus: campaign.status
-                          });
-                        }}>
-                          <TableCell className="font-medium">{campaign.name}</TableCell>
-                          <TableCell>
-                            <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                              campaign.status === 'active' 
-                                ? 'bg-green-100 text-green-800'
-                                : campaign.status === 'scheduled'
-                                ? 'bg-blue-100 text-blue-800'
-                                : 'bg-gray-100 text-gray-800'
-                            }`}>
-                              {campaign.status}
-                            </span>
-                          </TableCell>
-                          <TableCell>{campaign.reach}</TableCell>
-                          <TableCell>{campaign.engagement}</TableCell>
-                          <TableCell>{campaign.conversion_rate}%</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                ) : (
-                  <p className="text-muted-foreground text-center py-6">No campaign data available</p>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Campaign Performance Chart */}
-            {isLoading ? (
-              <Skeleton className="h-[300px] w-full" />
-            ) : (
-              <AnalyticsBarChart
-                title="Campaign Metrics"
-                description="Compare reach, engagement, and conversions across campaigns"
-                data={campaignPerformanceData}
-                series={[
-                  {
-                    key: "reach",
-                    name: "Reach",
-                    color: "#06B6D4"
-                  },
-                  {
-                    key: "engagement",
-                    name: "Engagement",
-                    color: "#8B5CF6"
-                  },
-                  {
-                    key: "conversion",
-                    name: "Conversions",
-                    color: "#F59E0B"
-                  }
-                ]}
-                formatter={(value) => [`${value}`, '']}
-              />
-            )}
+            <CampaignAnalyticsTab 
+              campaignPerformance={campaignPerformance} 
+              isLoading={isLoading}
+              onCampaignSelect={handleCampaignSelect}
+            />
           </TabsContent>
           
-          {/* Audience Tab Content */}
+          {/* Audience Analytics Tab Content */}
           <TabsContent value="audience" className="space-y-4">
-            {/* Audience Demographics Chart */}
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {isLoading ? (
-                <Skeleton className="h-[300px] w-full" />
-              ) : (
-                <AnalyticsPieChart
-                  title="Age Demographics"
-                  description="Age distribution of your audience"
-                  data={audienceDemographicData}
-                  colors={['#8B5CF6', '#06B6D4', '#10B981', '#F59E0B']}
-                  onSliceClick={(entry) => {
-                    // Track pie chart slice click
-                    trackPromoterEvent('demographic_segment_viewed', {
-                      segment: entry.name,
-                      value: entry.value,
-                      segmentType: 'age'
-                    });
-                  }}
-                />
-              )}
-
-              {/* Location Distribution Chart */}
-              {isLoading ? (
-                <Skeleton className="h-[300px] w-full" />
-              ) : (
-                <AnalyticsPieChart
-                  title="Location Distribution"
-                  description="Geographic distribution of your audience"
-                  data={[
-                    { name: 'City Center', value: 40 },
-                    { name: 'North District', value: 30 },
-                    { name: 'South Area', value: 20 },
-                    { name: 'East Region', value: 10 }
-                  ]}
-                  colors={['#F97316', '#8B5CF6', '#06B6D4', '#10B981']}
-                  onSliceClick={(entry) => {
-                    // Track pie chart slice click
-                    trackPromoterEvent('demographic_segment_viewed', {
-                      segment: entry.name,
-                      value: entry.value,
-                      segmentType: 'location'
-                    });
-                  }}
-                />
-              )}
-            </div>
-
-            {/* Audience Interests Table */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Audience Interests</CardTitle>
-                <CardDescription>
-                  Top interests and preferences of your audience
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {isLoading ? (
-                  <div className="space-y-3">
-                    <Skeleton className="h-12 w-full" />
-                    <Skeleton className="h-12 w-full" />
-                    <Skeleton className="h-12 w-full" />
-                  </div>
-                ) : audienceMetrics.length > 0 ? (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Category</TableHead>
-                        <TableHead>Segment</TableHead>
-                        <TableHead>Value</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {audienceMetrics.map((metric, index) => (
-                        <TableRow 
-                          key={`${metric.metric_name}-${index}`}
-                          onClick={() => {
-                            // Track audience metric row click
-                            trackPromoterEvent('audience_metric_viewed', {
-                              metricName: metric.metric_name,
-                              segment: metric.segment,
-                              value: metric.metric_value
-                            });
-                          }}
-                        >
-                          <TableCell className="font-medium">{metric.metric_name}</TableCell>
-                          <TableCell>{metric.segment}</TableCell>
-                          <TableCell>{metric.metric_value}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                ) : (
-                  <p className="text-muted-foreground text-center py-6">No audience data available</p>
-                )}
-              </CardContent>
-            </Card>
+            <AudienceAnalyticsTab 
+              audienceMetrics={audienceMetrics} 
+              subscriberTrend={subscriberTrend}
+              engagementTrend={engagementTrend}
+              isLoading={isLoading}
+              onMetricClick={handleAudienceMetricClick}
+            />
           </TabsContent>
         </Tabs>
       </div>
