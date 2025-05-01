@@ -9,26 +9,16 @@ import {
   fetchCampaignPerformance,
   fetchAudienceMetrics,
   fetchTrendData,
-  fetchEventDetails,
-  fetchAudienceDemographics,
-  fetchAudienceRetention,
-  fetchCampaignROI,
   PromoterAnalytics,
   EventPerformance,
   CampaignPerformance,
   AudienceMetric,
-  TrendDataPoint,
-  EventDetails,
-  AudienceDemographicData,
-  AudienceRetentionData,
-  CampaignROIData
+  TrendDataPoint
 } from '@/services/promoterAnalyticsService';
 
 interface UsePromoterAnalyticsProps {
   promoterId?: string;
   range: DateRange | undefined;
-  selectedEventId?: string | null;
-  selectedCampaignId?: string | null;
 }
 
 interface PromoterAnalyticsData {
@@ -38,10 +28,6 @@ interface PromoterAnalyticsData {
   audienceMetrics: AudienceMetric[];
   subscriberTrend: TrendDataPoint[];
   engagementTrend: TrendDataPoint[];
-  eventDetails: EventDetails | null;
-  audienceDemographics: AudienceDemographicData[] | null;
-  audienceRetention: AudienceRetentionData[] | null;
-  campaignROI: CampaignROIData | null;
   isLoading: boolean;
   error: string | null;
   refresh: () => void;
@@ -55,10 +41,6 @@ const analyticsCache: Record<string, {
   audienceMetrics: AudienceMetric[];
   subscriberTrend: TrendDataPoint[];
   engagementTrend: TrendDataPoint[];
-  eventDetails: EventDetails | null;
-  audienceDemographics: AudienceDemographicData[] | null;
-  audienceRetention: AudienceRetentionData[] | null;
-  campaignROI: CampaignROIData | null;
   timestamp: number;
 }> = {};
 
@@ -67,9 +49,7 @@ const CACHE_EXPIRY_MS = 5 * 60 * 1000;
 
 export function usePromoterAnalytics({
   promoterId: providedPromoterId,
-  range,
-  selectedEventId = null,
-  selectedCampaignId = null
+  range
 }: UsePromoterAnalyticsProps): PromoterAnalyticsData {
   const { user } = useAuth();
   const [analytics, setAnalytics] = useState<PromoterAnalytics[]>([]);
@@ -78,10 +58,6 @@ export function usePromoterAnalytics({
   const [audienceMetrics, setAudienceMetrics] = useState<AudienceMetric[]>([]);
   const [subscriberTrend, setSubscriberTrend] = useState<TrendDataPoint[]>([]);
   const [engagementTrend, setEngagementTrend] = useState<TrendDataPoint[]>([]);
-  const [eventDetails, setEventDetails] = useState<EventDetails | null>(null);
-  const [audienceDemographics, setAudienceDemographics] = useState<AudienceDemographicData[] | null>(null);
-  const [audienceRetention, setAudienceRetention] = useState<AudienceRetentionData[] | null>(null);
-  const [campaignROI, setCampaignROI] = useState<CampaignROIData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshToken, setRefreshToken] = useState<number>(0);
@@ -98,8 +74,8 @@ export function usePromoterAnalytics({
     
     const startDate = range.from?.toISOString().split('T')[0] || '';
     const endDate = range.to?.toISOString().split('T')[0] || '';
-    return `${promoterId}-${startDate}-${endDate}-${selectedEventId || ''}-${selectedCampaignId || ''}`;
-  }, [promoterId, range, selectedEventId, selectedCampaignId]);
+    return `${promoterId}-${startDate}-${endDate}`;
+  }, [promoterId, range]);
 
   // Function to refresh all data
   const refresh = () => {
@@ -109,46 +85,6 @@ export function usePromoterAnalytics({
     }
     setRefreshToken(prev => prev + 1);
   };
-
-  // Effect to fetch event details when selectedEventId changes
-  useEffect(() => {
-    if (selectedEventId) {
-      setIsLoading(true);
-      fetchEventDetails(selectedEventId)
-        .then(data => {
-          setEventDetails(data);
-        })
-        .catch(err => {
-          console.error('Error fetching event details:', err);
-          setError('Failed to load event details');
-        })
-        .finally(() => {
-          setIsLoading(false);
-        });
-    } else {
-      setEventDetails(null);
-    }
-  }, [selectedEventId]);
-
-  // Effect to fetch campaign ROI data when selectedCampaignId changes
-  useEffect(() => {
-    if (selectedCampaignId) {
-      setIsLoading(true);
-      fetchCampaignROI(selectedCampaignId)
-        .then(data => {
-          setCampaignROI(data);
-        })
-        .catch(err => {
-          console.error('Error fetching campaign ROI data:', err);
-          setError('Failed to load campaign ROI data');
-        })
-        .finally(() => {
-          setIsLoading(false);
-        });
-    } else {
-      setCampaignROI(null);
-    }
-  }, [selectedCampaignId]);
 
   // Fetch all analytics data
   useEffect(() => {
@@ -183,17 +119,6 @@ export function usePromoterAnalytics({
           setAudienceMetrics(cachedData.audienceMetrics);
           setSubscriberTrend(cachedData.subscriberTrend);
           setEngagementTrend(cachedData.engagementTrend);
-          setAudienceDemographics(cachedData.audienceDemographics);
-          setAudienceRetention(cachedData.audienceRetention);
-          
-          if (selectedEventId && cachedData.eventDetails) {
-            setEventDetails(cachedData.eventDetails);
-          }
-          
-          if (selectedCampaignId && cachedData.campaignROI) {
-            setCampaignROI(cachedData.campaignROI);
-          }
-          
           setIsLoading(false);
           return;
         }
@@ -211,18 +136,14 @@ export function usePromoterAnalytics({
           campaigns, 
           audience, 
           subscriberTrendData,
-          engagementTrendData,
-          demographics,
-          retention
+          engagementTrendData
         ] = await Promise.all([
           fetchPromoterAnalytics(promoterId, dateRange),
           fetchEventPerformance(promoterId),
           fetchCampaignPerformance(promoterId),
           fetchAudienceMetrics(promoterId),
           fetchTrendData(promoterId, 'subscriber_growth', dateRange),
-          fetchTrendData(promoterId, 'engagement_rate', dateRange),
-          fetchAudienceDemographics(promoterId),
-          fetchAudienceRetention(promoterId)
+          fetchTrendData(promoterId, 'engagement_rate', dateRange)
         ]);
 
         // Update state with fetched data
@@ -232,8 +153,6 @@ export function usePromoterAnalytics({
         setAudienceMetrics(audience);
         setSubscriberTrend(subscriberTrendData);
         setEngagementTrend(engagementTrendData);
-        setAudienceDemographics(demographics);
-        setAudienceRetention(retention);
 
         // Cache the results
         if (cacheKey) {
@@ -244,10 +163,6 @@ export function usePromoterAnalytics({
             audienceMetrics: audience,
             subscriberTrend: subscriberTrendData,
             engagementTrend: engagementTrendData,
-            eventDetails: null,
-            audienceDemographics: demographics,
-            audienceRetention: retention,
-            campaignROI: null,
             timestamp: Date.now()
           };
         }
@@ -269,10 +184,6 @@ export function usePromoterAnalytics({
     audienceMetrics,
     subscriberTrend,
     engagementTrend,
-    eventDetails,
-    audienceDemographics,
-    audienceRetention,
-    campaignROI,
     isLoading,
     error,
     refresh

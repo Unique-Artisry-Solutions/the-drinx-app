@@ -1,4 +1,3 @@
-
 import { FeatureItem } from '../types';
 
 export const promoterFeatures: FeatureItem[] = [
@@ -179,11 +178,11 @@ export const promoterFeatures: FeatureItem[] = [
       "- Create audience interaction tracking [✓]",
       "- Implement dashboard usage analytics [✓]",
       
-      "Phase 4 - Feature-Specific Views (Completed):",
-      "- Implement detailed event analytics with ticket sales and revenue breakdown [✓]",
-      "- Add audience demographics and retention metrics visualization [✓]",
-      "- Create campaign ROI calculator and performance analysis [✓]",
-      "- Add historical comparison for events and campaigns [✓]"
+      "Phase 4 - Advanced Features (Pending):",
+      "- Add goal setting and tracking",
+      "- Implement comparative analysis",
+      "- Create export functionality",
+      "- Add custom report builder"
     ]
   },
   {
@@ -247,50 +246,5 @@ export const promoterFeatures: FeatureItem[] = [
       "- Audience interaction tracking [✓]"
     ],
     dependsOn: ["promoter-analytics"]
-  },
-  {
-    id: "feature-specific-views",
-    name: "Feature-Specific Analytics Views",
-    description: "Detailed views for event performance, audience demographics, and campaign ROI analysis",
-    status: "implemented",
-    databaseStatus: "complete",
-    userImpact: "medium",
-    complexity: "medium",
-    implementationProgress: 100,
-    tags: ["promoter", "analytics", "reporting", "visualization"],
-    adminAccess: "none",
-    establishmentAccess: "none",
-    individualAccess: "none",
-    dbRequirementsText: `
-      - event_ticket_types: Ticket types and pricing information for events [✓]
-      - event_performance: Attendance and revenue metrics [✓]
-      - audience_demographics: Age and location distribution of audience [✓]
-      - campaign_roi: Return on investment metrics for marketing campaigns [✓]
-    `,
-    testSteps: [
-      "Phase 1 - Data Model (Completed):",
-      "- Design data structures for detailed analytics views [✓]",
-      "- Create service functions for analytics data retrieval [✓]",
-      "- Implement mock data generation [✓]",
-      
-      "Phase 2 - Event Analytics (Completed):",
-      "- Implement ticket sales breakdown [✓]",
-      "- Add revenue distribution visualization [✓]",
-      "- Create attendance metrics display [✓]",
-      "- Add historical comparison with past events [✓]",
-      
-      "Phase 3 - Audience Analytics (Completed):",
-      "- Implement demographics visualization [✓]",
-      "- Add engagement patterns charts [✓]",
-      "- Create cohort retention analysis [✓]",
-      "- Implement audience interests display [✓]",
-      
-      "Phase 4 - Campaign Analytics (Completed):",
-      "- Create campaign ROI calculator [✓]",
-      "- Add channel performance comparison [✓]",
-      "- Implement conversion funnel visualization [✓]",
-      "- Create cost-effectiveness analysis [✓]"
-    ],
-    dependsOn: ["promoter-analytics", "promoter-analytics-tracking"]
   }
 ];
