@@ -36,6 +36,10 @@ export const systemBreakdown: FeatureItem = {
     - [x] Added ticket_sales property to EventPerformance interface
     - [x] Added metric_name property to TrendDataPoint interface
     - [x] Updated mock data generators to include all required properties
+    - [x] Event attendee and check-in system database tables
+    - [x] Marketing campaigns integration with events
+    - [x] Custom fields support for event-specific data
+    - [x] Event statistics view for performance tracking
   `,
   testSteps: [
     "Log in as admin and navigate to System Breakdown page",
@@ -54,6 +58,9 @@ export const systemBreakdown: FeatureItem = {
     "Verify preview environment works correctly",
     "Confirm refactored analytics modules maintain functionality",
     "Test communication components with venue contacts",
-    "Verify event analytics with ticket sales data"
+    "Verify event analytics with ticket sales data",
+    "Test event attendee management functionality",
+    "Verify marketing campaign tracking system",
+    "Check custom fields implementation for events"
   ]
 };

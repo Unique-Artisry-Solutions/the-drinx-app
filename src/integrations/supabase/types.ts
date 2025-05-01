@@ -702,6 +702,340 @@ export type Database = {
         }
         Relationships: []
       }
+      event_analytics: {
+        Row: {
+          created_at: string
+          date: string
+          event_id: string
+          id: string
+          page_views: number | null
+          referral_sources: Json | null
+          revenue: number | null
+          social_shares: number | null
+          ticket_sales: number | null
+          ticket_views: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          event_id: string
+          id?: string
+          page_views?: number | null
+          referral_sources?: Json | null
+          revenue?: number | null
+          social_shares?: number | null
+          ticket_sales?: number | null
+          ticket_views?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          event_id?: string
+          id?: string
+          page_views?: number | null
+          referral_sources?: Json | null
+          revenue?: number | null
+          social_shares?: number | null
+          ticket_sales?: number | null
+          ticket_views?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_analytics_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_statistics"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "event_analytics_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_analytics_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "promoter_event_performance_view"
+            referencedColumns: ["event_id"]
+          },
+        ]
+      }
+      event_attendees: {
+        Row: {
+          checked_in_at: string | null
+          created_at: string
+          custom_fields: Json | null
+          email: string | null
+          event_id: string
+          id: string
+          name: string | null
+          notes: string | null
+          purchase_date: string
+          status: string
+          ticket_code: string | null
+          ticket_type_id: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          checked_in_at?: string | null
+          created_at?: string
+          custom_fields?: Json | null
+          email?: string | null
+          event_id: string
+          id?: string
+          name?: string | null
+          notes?: string | null
+          purchase_date?: string
+          status?: string
+          ticket_code?: string | null
+          ticket_type_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          checked_in_at?: string | null
+          created_at?: string
+          custom_fields?: Json | null
+          email?: string | null
+          event_id?: string
+          id?: string
+          name?: string | null
+          notes?: string | null
+          purchase_date?: string
+          status?: string
+          ticket_code?: string | null
+          ticket_type_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_attendees_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_statistics"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "event_attendees_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_attendees_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "promoter_event_performance_view"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "event_attendees_ticket_type_id_fkey"
+            columns: ["ticket_type_id"]
+            isOneToOne: false
+            referencedRelation: "event_ticket_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_check_ins: {
+        Row: {
+          attendee_id: string
+          checked_in_at: string
+          checked_in_by: string | null
+          created_at: string
+          event_id: string
+          id: string
+          location: string | null
+          notes: string | null
+        }
+        Insert: {
+          attendee_id: string
+          checked_in_at?: string
+          checked_in_by?: string | null
+          created_at?: string
+          event_id: string
+          id?: string
+          location?: string | null
+          notes?: string | null
+        }
+        Update: {
+          attendee_id?: string
+          checked_in_at?: string
+          checked_in_by?: string | null
+          created_at?: string
+          event_id?: string
+          id?: string
+          location?: string | null
+          notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_check_ins_attendee_id_fkey"
+            columns: ["attendee_id"]
+            isOneToOne: false
+            referencedRelation: "event_attendees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_check_ins_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_statistics"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "event_check_ins_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_check_ins_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "promoter_event_performance_view"
+            referencedColumns: ["event_id"]
+          },
+        ]
+      }
+      event_custom_fields: {
+        Row: {
+          created_at: string
+          display_order: number | null
+          event_id: string
+          field_name: string
+          field_type: string
+          field_value: Json | null
+          id: string
+          is_required: boolean | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number | null
+          event_id: string
+          field_name: string
+          field_type: string
+          field_value?: Json | null
+          id?: string
+          is_required?: boolean | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number | null
+          event_id?: string
+          field_name?: string
+          field_type?: string
+          field_value?: Json | null
+          id?: string
+          is_required?: boolean | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_custom_fields_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_statistics"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "event_custom_fields_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_custom_fields_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "promoter_event_performance_view"
+            referencedColumns: ["event_id"]
+          },
+        ]
+      }
+      event_marketing_campaigns: {
+        Row: {
+          budget: number | null
+          campaign_type: string
+          created_at: string
+          description: string | null
+          end_date: string | null
+          event_id: string
+          id: string
+          metrics: Json | null
+          name: string
+          start_date: string | null
+          status: string
+          target_audience: Json | null
+          updated_at: string
+        }
+        Insert: {
+          budget?: number | null
+          campaign_type: string
+          created_at?: string
+          description?: string | null
+          end_date?: string | null
+          event_id: string
+          id?: string
+          metrics?: Json | null
+          name: string
+          start_date?: string | null
+          status?: string
+          target_audience?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          budget?: number | null
+          campaign_type?: string
+          created_at?: string
+          description?: string | null
+          end_date?: string | null
+          event_id?: string
+          id?: string
+          metrics?: Json | null
+          name?: string
+          start_date?: string | null
+          status?: string
+          target_audience?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_marketing_campaigns_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_statistics"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "event_marketing_campaigns_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_marketing_campaigns_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "promoter_event_performance_view"
+            referencedColumns: ["event_id"]
+          },
+        ]
+      }
       event_ticket_types: {
         Row: {
           created_at: string | null
@@ -735,6 +1069,13 @@ export type Database = {
             foreignKeyName: "event_ticket_types_event_id_fkey"
             columns: ["event_id"]
             isOneToOne: false
+            referencedRelation: "event_statistics"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "event_ticket_types_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
             referencedRelation: "events"
             referencedColumns: ["id"]
           },
@@ -749,12 +1090,19 @@ export type Database = {
       }
       events: {
         Row: {
+          capacity: number | null
+          contact_info: Json | null
           created_at: string | null
           created_by: string
+          custom_settings: Json | null
           date: string
           description: string | null
+          event_type: string | null
+          event_url: string | null
           id: string
           image_url: string | null
+          is_public: boolean | null
+          location_details: Json | null
           name: string
           promotional_materials: string[] | null
           status: Database["public"]["Enums"]["event_status"] | null
@@ -763,12 +1111,19 @@ export type Database = {
           venue_id: string | null
         }
         Insert: {
+          capacity?: number | null
+          contact_info?: Json | null
           created_at?: string | null
           created_by: string
+          custom_settings?: Json | null
           date: string
           description?: string | null
+          event_type?: string | null
+          event_url?: string | null
           id?: string
           image_url?: string | null
+          is_public?: boolean | null
+          location_details?: Json | null
           name: string
           promotional_materials?: string[] | null
           status?: Database["public"]["Enums"]["event_status"] | null
@@ -777,12 +1132,19 @@ export type Database = {
           venue_id?: string | null
         }
         Update: {
+          capacity?: number | null
+          contact_info?: Json | null
           created_at?: string | null
           created_by?: string
+          custom_settings?: Json | null
           date?: string
           description?: string | null
+          event_type?: string | null
+          event_url?: string | null
           id?: string
           image_url?: string | null
+          is_public?: boolean | null
+          location_details?: Json | null
           name?: string
           promotional_materials?: string[] | null
           status?: Database["public"]["Enums"]["event_status"] | null
@@ -1606,6 +1968,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "promoter_event_analytics_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_statistics"
+            referencedColumns: ["event_id"]
+          },
           {
             foreignKeyName: "promoter_event_analytics_event_id_fkey"
             columns: ["event_id"]
@@ -3159,6 +3528,21 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      event_statistics: {
+        Row: {
+          cancelled_attendees: number | null
+          checked_in_attendees: number | null
+          date: string | null
+          event_id: string | null
+          event_name: string | null
+          marketing_campaign_count: number | null
+          promoter_id: string | null
+          status: Database["public"]["Enums"]["event_status"] | null
+          total_attendees: number | null
+          total_revenue: number | null
+        }
+        Relationships: []
       }
       flagged_content_queue: {
         Row: {
