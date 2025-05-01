@@ -18,7 +18,7 @@ export const fetchEventCampaigns = async (eventId: string): Promise<EventMarketi
 };
 
 export const createMarketingCampaign = async (
-  campaignData: { event_id: string } & Omit<EventMarketingCampaign, 'id'>
+  campaignData: Omit<EventMarketingCampaign, 'id'>
 ): Promise<EventMarketingCampaign> => {
   const { data, error } = await supabase
     .from('event_marketing_campaigns')
@@ -70,33 +70,37 @@ export const trackCampaignMetric = async (
   metricName: string, 
   value: number = 1
 ): Promise<void> => {
-  // Get current metrics
-  const { data: campaign, error: fetchError } = await supabase
-    .from('event_marketing_campaigns')
-    .select('metrics')
-    .eq('id', campaignId)
-    .single();
+  try {
+    // Get current metrics
+    const { data: campaign, error: fetchError } = await supabase
+      .from('event_marketing_campaigns')
+      .select('metrics')
+      .eq('id', campaignId)
+      .single();
 
-  if (fetchError) {
-    console.error('Error fetching campaign metrics:', fetchError);
-    throw fetchError;
-  }
+    if (fetchError) {
+      console.error('Error fetching campaign metrics:', fetchError);
+      throw fetchError;
+    }
 
-  // Update metrics
-  const updatedMetrics = {
-    ...(campaign?.metrics || {}),
-    [metricName]: ((campaign?.metrics?.[metricName] || 0) + value)
-  };
+    // Update metrics
+    const updatedMetrics = {
+      ...(campaign?.metrics || {}),
+      [metricName]: ((campaign?.metrics?.[metricName] || 0) + value)
+    };
 
-  // Save updated metrics
-  const { error: updateError } = await supabase
-    .from('event_marketing_campaigns')
-    .update({ metrics: updatedMetrics })
-    .eq('id', campaignId);
+    // Save updated metrics
+    const { error: updateError } = await supabase
+      .from('event_marketing_campaigns')
+      .update({ metrics: updatedMetrics })
+      .eq('id', campaignId);
 
-  if (updateError) {
-    console.error('Error updating campaign metrics:', updateError);
-    throw updateError;
+    if (updateError) {
+      console.error('Error updating campaign metrics:', updateError);
+      throw updateError;
+    }
+  } catch (err: any) {
+    console.error('Failed to track metric:', err);
   }
 };
 

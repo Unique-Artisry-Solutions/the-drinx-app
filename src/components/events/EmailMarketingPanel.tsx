@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { EventMarketingCampaign } from '@/types/EventTypes';
 import { Mail, SendHorizontal, List, Users, FileText } from 'lucide-react';
+import { PlusCircle } from '@/components/icons/PlusCircle';
 
 interface EmailMarketingPanelProps {
   eventId: string;

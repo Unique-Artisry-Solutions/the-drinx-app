@@ -1,6 +1,6 @@
 export type FeatureStatus = 'implemented' | 'in_progress' | 'planned' | 'blocked' | 'partial';
-export type DatabaseStatus = 'complete' | 'in_progress' | 'not_started' | 'implemented';
-export type AccessLevel = 'full' | 'partial' | 'read' | 'none' | 'write';
+export type DatabaseStatus = 'complete' | 'in_progress' | 'not_started' | 'implemented' | 'partial';
+export type AccessLevel = 'full' | 'partial' | 'read' | 'none' | 'write' | 'moderate';
 export type FeatureComplexity = 'high' | 'medium' | 'low';
 export type FeatureCategory = string;
 
@@ -12,6 +12,7 @@ export interface FeatureItem {
   adminAccess: AccessLevel;
   establishmentAccess: AccessLevel;
   individualAccess: AccessLevel;
+  promoterAccess?: AccessLevel; // Added promoterAccess property
   databaseStatus: DatabaseStatus;
   dbStatus?: DatabaseStatus;
   userImpact: 'high' | 'medium' | 'low';
@@ -27,6 +28,7 @@ export interface FeatureItem {
   dbRequirementsText?: string;
   dependsOn?: string[];
   scheduledFor?: string;
+  integrations?: string[]; // Added integrations property
 }
 
 export interface Phase {

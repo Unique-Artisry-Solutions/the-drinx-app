@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   Card, 
@@ -221,6 +220,7 @@ const MarketingTabContent: React.FC<MarketingTabContentProps> = ({ eventId, even
         onSave={editingCampaign ? handleUpdateCampaign : handleCreateCampaign}
         campaign={editingCampaign}
         isEditing={!!editingCampaign}
+        eventId={eventId}
       />
     </>
   );

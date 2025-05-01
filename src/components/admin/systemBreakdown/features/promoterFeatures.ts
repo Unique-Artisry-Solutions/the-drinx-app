@@ -71,7 +71,7 @@ const promoterCommunication: FeatureItem = {
   name: "Promoter Communication",
   description: "Communication tools for promoters to message venues, notify attendees, and coordinate with staff.",
   status: "implemented",
-  adminAccess: "moderate",
+  adminAccess: "partial", // Changed from "moderate" to "partial"
   establishmentAccess: "none",
   individualAccess: "none",
   promoterAccess: "full",
@@ -99,11 +99,11 @@ const brandConnection: FeatureItem = {
   name: "Brand Connections",
   description: "Tools for promoters to connect with brands for sponsorships and partnerships.",
   status: "in_progress",
-  adminAccess: "moderate",
+  adminAccess: "partial", // Changed from "moderate" to "partial"
   establishmentAccess: "none",
   individualAccess: "none",
   promoterAccess: "full",
-  databaseStatus: "partial",
+  databaseStatus: "in_progress", // Changed from "partial" to "in_progress"
   userImpact: "medium",
   complexity: "high",
   databaseAnalysis: `
@@ -132,7 +132,7 @@ const promoterAnalytics: FeatureItem = {
   establishmentAccess: "none",
   individualAccess: "none",
   promoterAccess: "full",
-  databaseStatus: "partial",
+  databaseStatus: "in_progress", // Changed from "partial" to "in_progress"
   userImpact: "high",
   complexity: "high",
   databaseAnalysis: `
@@ -157,7 +157,7 @@ const customPromotionFeature: FeatureItem = {
   name: "Custom Promotions",
   description: "Tools for creating custom promotional campaigns, discount codes, and special offers for events.",
   status: "implemented",
-  adminAccess: "moderate",
+  adminAccess: "partial", // Changed from "moderate" to "partial"
   establishmentAccess: "none",
   individualAccess: "none",
   promoterAccess: "full",
@@ -185,7 +185,7 @@ const promoterNotificationFeature: FeatureItem = {
   name: "Notification System",
   description: "System for sending targeted notifications to attendees before, during, and after events.",
   status: "implemented",
-  adminAccess: "moderate",
+  adminAccess: "partial", // Changed from "moderate" to "partial"
   establishmentAccess: "none",
   individualAccess: "none",
   promoterAccess: "full",
@@ -213,7 +213,7 @@ const marketingIntegrationFeature: FeatureItem = {
   name: "Marketing Integration",
   description: "Integration with email marketing platforms, social media, and digital marketing tools.",
   status: "implemented",
-  adminAccess: "moderate",
+  adminAccess: "partial", // Changed from "moderate" to "partial"
   establishmentAccess: "none",
   individualAccess: "none",
   promoterAccess: "full",

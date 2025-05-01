@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { 
   Dialog, 
@@ -35,6 +34,7 @@ interface MarketingCampaignModalProps {
   onSave: (campaign: Omit<EventMarketingCampaign, 'id'>) => void;
   campaign?: EventMarketingCampaign;
   isEditing: boolean;
+  eventId: string; // Add eventId prop
 }
 
 const campaignTypes = [
@@ -50,7 +50,8 @@ const MarketingCampaignModal: React.FC<MarketingCampaignModalProps> = ({
   onClose,
   onSave,
   campaign,
-  isEditing
+  isEditing,
+  eventId
 }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -83,6 +84,7 @@ const MarketingCampaignModal: React.FC<MarketingCampaignModalProps> = ({
 
   const handleSubmit = () => {
     onSave({
+      event_id: eventId, // Add the missing event_id property
       name,
       description,
       campaign_type: campaignType,
