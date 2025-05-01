@@ -16,6 +16,7 @@ export interface EventPerformance {
   venue_name: string;
   attendees: number;
   revenue: number;
+  ticket_sales: number; // Added this property
 }
 
 export interface EventDetailedAnalytics {
@@ -49,6 +50,7 @@ export interface TrendDataPoint {
   id: string;
   date: string;
   metric_value: number;
+  metric_name: string; // Added this property
 }
 
 export interface AnalyticsDateRange {
@@ -83,4 +85,48 @@ export interface AnalyticsCache {
   subscriberTrend: TrendDataPoint[];
   engagementTrend: TrendDataPoint[];
   timestamp: number;
+}
+
+// Message types
+export interface Message {
+  id: string;
+  content: string;
+  sent_at: string;
+  sender_id: string;
+  is_from_promoter: boolean;
+  sender?: {
+    display_name?: string;
+    username?: string;
+  };
+}
+
+export interface ThreadInfo {
+  venueName: string;
+  promoterName: string;
+  subject: string;
+  venueId: string;
+}
+
+export type UserType = 'promoter' | 'establishment';
+
+export interface MessageThread {
+  id: string;
+  venue_id: string;
+  promoter_id: string;
+  subject?: string;
+  timestamp: string;
+  isRead: boolean;
+  isArchived: boolean;
+  venueName?: string;
+  messages?: Message[];
+  lastMessage?: string;
+}
+
+// Venue contact types
+export interface VenueContact {
+  id: string;
+  name: string;
+  role: string;
+  venueId: string;
+  venueName: string;
 }

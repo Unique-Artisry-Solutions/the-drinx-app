@@ -32,6 +32,9 @@ export const systemBreakdown: FeatureItem = {
     - [x] Complete null safety in analytics components
     - [x] Fixed dynamic imports for preview environment compatibility
     - [x] Refactored analytics modules for better maintainability
+    - [x] Fixed missing type definitions for communication components
+    - [x] Added ticket_sales property to EventPerformance interface
+    - [x] Added metric_name property to TrendDataPoint interface
   `,
   testSteps: [
     "Log in as admin and navigate to System Breakdown page",
@@ -48,6 +51,8 @@ export const systemBreakdown: FeatureItem = {
     "Verify date formatting is consistent and error-free",
     "Check environment detection in different contexts",
     "Verify preview environment works correctly",
-    "Confirm refactored analytics modules maintain functionality"
+    "Confirm refactored analytics modules maintain functionality",
+    "Test communication components with venue contacts",
+    "Verify event analytics with ticket sales data"
   ]
 };
