@@ -55,7 +55,7 @@ const AudienceRetentionChart: React.FC<AudienceRetentionChartProps> = ({
             </div>
           </div>
 
-          {retentionData.map((cohort, idx) => (
+          {retentionData && retentionData.map((cohort, idx) => (
             <div key={idx} className="space-y-2">
               <div className="flex items-center justify-between">
                 <div className="w-24 text-sm">{cohort.cohort}</div>
