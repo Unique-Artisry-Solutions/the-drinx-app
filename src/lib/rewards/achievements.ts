@@ -1,7 +1,7 @@
-
 import { supabase } from '@/lib/supabase';
 import { Achievement, AchievementProgressEvent, AchievementCategory } from './types';
 import { rewardsApi } from './api';
+import { fromTable } from '@/lib/supabaseClient';
 
 // Define achievement categories
 export const achievementCategories: AchievementCategory[] = [
@@ -279,9 +279,9 @@ export async function updateAchievementProgress(
         );
       }
       
-      // Create a new user achievement record (simplified example)
+      // Create a new user achievement record
       if (achievementId.includes('visit')) {
-        await supabase.from('user_visit_achievements').insert({
+        await fromTable('user_visit_achievements').insert({
           user_id: userId,
           achievement_type: achievementId,
           earned_at: new Date().toISOString(),
