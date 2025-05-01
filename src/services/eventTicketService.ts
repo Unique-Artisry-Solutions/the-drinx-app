@@ -57,7 +57,7 @@ export async function fetchEventTicketTypes(eventId: string): Promise<EventTicke
 /**
  * Create a new ticket type
  */
-export async function createTicketType(ticketType: Omit<EventTicketType, 'id'>): Promise<EventTicketType> {
+export async function createTicketType(ticketType: Omit<EventTicketType, 'id'> & { event_id: string }): Promise<EventTicketType> {
   try {
     const { data, error } = await supabase
       .from('event_ticket_types')
