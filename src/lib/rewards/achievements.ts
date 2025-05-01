@@ -1,3 +1,4 @@
+
 import { supabase } from '@/lib/supabase';
 import { Achievement, AchievementProgressEvent, AchievementCategory } from './types';
 import { rewardsApi } from './api';
@@ -281,12 +282,14 @@ export async function updateAchievementProgress(
       
       // Create a new user achievement record
       if (achievementId.includes('visit')) {
-        await fromTable('user_visit_achievements').insert({
+        await supabase.from('user_activity_streaks').insert({
           user_id: userId,
-          achievement_type: achievementId,
-          earned_at: new Date().toISOString(),
-          is_displayed: true,
-          achievement_data: metadata || {}
+          streak_type: achievementId,
+          current_count: achievementDef.threshold,
+          longest_count: achievementDef.threshold,
+          last_activity_date: new Date().toISOString(),
+          streak_start_date: new Date().toISOString(),
+          metadata: metadata || {}
         });
       }
     }

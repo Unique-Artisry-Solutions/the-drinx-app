@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/supabase';
 import { RewardAnalytics, TimeSeriesDataPoint, RewardTransactionRow } from '../types';
 
@@ -212,7 +211,7 @@ export async function createTimeSeriesData(establishmentId?: string): Promise<Ti
   }
 }
 
-export function processRewardAnalytics(data: RewardTransactionRow[]): any {
+export function processRewardAnalytics(data: any[]): any {
   // Calculate total points earned and redeemed
   const totalTransactions = data.length;
   const totalPoints = data.reduce((sum, item) => sum + item.points, 0);
