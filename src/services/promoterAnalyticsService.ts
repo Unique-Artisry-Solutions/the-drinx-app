@@ -31,6 +31,8 @@ export interface CampaignPerformance {
   engagement: number;
   conversion_rate: number;
   status: string;
+  clicks?: number;
+  ctr?: string;
 }
 
 export interface AudienceMetric {
@@ -46,6 +48,84 @@ export interface TrendDataPoint {
   metric_name: string;
 }
 
+// New interfaces for enhanced analytics
+export interface EventDetails {
+  id: string;
+  name: string;
+  date: string;
+  venue_name: string;
+  total_attendees: number;
+  total_revenue: number;
+  ticket_breakdown: TicketBreakdown[];
+  historical_comparison: HistoricalComparison;
+  attendance_demographics: AttendanceDemographic[];
+}
+
+export interface TicketBreakdown {
+  ticket_type: string;
+  quantity_sold: number;
+  price: number;
+  revenue: number;
+  percentage: number;
+}
+
+export interface HistoricalComparison {
+  event_name: string;
+  previous_date: string;
+  previous_attendees: number;
+  previous_revenue: number;
+  attendee_growth: number;
+  revenue_growth: number;
+}
+
+export interface AttendanceDemographic {
+  category: string;
+  value: number;
+  percentage: number;
+}
+
+export interface AudienceDemographicData {
+  name: string;
+  value: number;
+}
+
+export interface AudienceRetentionData {
+  cohort: string;
+  month0: number;
+  month1: number;
+  month2: number;
+  month3: number;
+}
+
+export interface CampaignROIData {
+  id: string;
+  name: string;
+  total_cost: number;
+  total_revenue: number;
+  roi_percentage: number;
+  breakdown: CampaignROIBreakdown[];
+  channel_performance: ChannelPerformance[];
+}
+
+export interface CampaignROIBreakdown {
+  category: string;
+  cost: number;
+  revenue: number;
+  roi: number;
+}
+
+export interface ChannelPerformance {
+  channel: string;
+  impressions: number;
+  clicks: number;
+  conversions: number;
+  ctr: number;
+  cvr: number;
+  cost: number;
+  cpc: number;
+  revenue: number;
+}
+
 // Cache for mock data to ensure consistency between renders
 const mockDataCache: Record<string, {
   promoterAnalytics: PromoterAnalytics[];
@@ -53,6 +133,10 @@ const mockDataCache: Record<string, {
   campaignPerformance: CampaignPerformance[];
   audienceMetrics: AudienceMetric[];
   trends: TrendDataPoint[];
+  eventDetails: Record<string, EventDetails>;
+  audienceDemographics: AudienceDemographicData[];
+  audienceRetention: AudienceRetentionData[];
+  campaignROI: Record<string, CampaignROIData>;
 }> = {};
 
 // Stable random function using seed to generate consistent mock data
@@ -147,6 +231,8 @@ const createMockData = (promoterId: string) => {
     const rand = seededRandom(promoterId, i + 500);
     const reach = Math.floor(rand * 500) + 100;
     const engagement = Math.floor(reach * (0.1 + rand * 0.3));
+    const clicks = Math.floor(reach * (0.1 + rand * 0.2));
+    const ctr = ((clicks / reach) * 100).toFixed(1);
     
     const statuses = ['active', 'completed', 'scheduled'];
     
@@ -157,6 +243,8 @@ const createMockData = (promoterId: string) => {
       end_date: endDate.toISOString().split('T')[0],
       reach,
       engagement,
+      clicks,
+      ctr,
       conversion_rate: Math.round((engagement / reach) * 1000) / 10,
       status: statuses[i % statuses.length]
     };
@@ -195,13 +283,150 @@ const createMockData = (promoterId: string) => {
     };
   });
 
+  // Generate event details for each event
+  const eventDetails: Record<string, EventDetails> = {};
+
+  eventPerformance.forEach((event, idx) => {
+    const rand = seededRandom(event.id, idx);
+    
+    // Generate ticket breakdown
+    const ticketTypes = ['General Admission', 'VIP', 'Early Bird', 'Group'];
+    const ticketBreakdown = ticketTypes.map((type, i) => {
+      const typeSeed = seededRandom(event.id, i * 10);
+      const price = Math.floor(typeSeed * 20) + 10;
+      const quantity = Math.floor(typeSeed * 30) + 5;
+      const revenue = price * quantity;
+      const percentage = Math.floor(typeSeed * 30) + 10;
+      
+      return {
+        ticket_type: type,
+        quantity_sold: quantity,
+        price: price,
+        revenue: revenue,
+        percentage: percentage
+      };
+    });
+    
+    // Historical comparison
+    const historicalComparison = {
+      event_name: event.name,
+      previous_date: new Date(new Date(event.date).getTime() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      previous_attendees: Math.floor(event.attendees * 0.8),
+      previous_revenue: Math.floor(event.revenue * 0.75),
+      attendee_growth: 25,
+      revenue_growth: 33
+    };
+    
+    // Demographics
+    const demographics = [
+      { category: '18-24', value: Math.floor(rand * 25) + 10, percentage: Math.floor(rand * 30) + 15 },
+      { category: '25-34', value: Math.floor(rand * 35) + 15, percentage: Math.floor(rand * 30) + 25 },
+      { category: '35-44', value: Math.floor(rand * 20) + 5, percentage: Math.floor(rand * 20) + 15 },
+      { category: '45+', value: Math.floor(rand * 15) + 5, percentage: Math.floor(rand * 15) + 10 }
+    ];
+    
+    eventDetails[event.id] = {
+      id: event.id,
+      name: event.name,
+      date: event.date,
+      venue_name: event.venue_name,
+      total_attendees: event.attendees,
+      total_revenue: event.revenue,
+      ticket_breakdown: ticketBreakdown,
+      historical_comparison: historicalComparison,
+      attendance_demographics: demographics
+    };
+  });
+  
+  // Generate campaign ROI data
+  const campaignROI: Record<string, CampaignROIData> = {};
+  
+  campaignPerformance.forEach((campaign, idx) => {
+    const rand = seededRandom(campaign.id, idx);
+    
+    // Cost components
+    const adSpend = Math.floor(rand * 300) + 200;
+    const creativeDesign = Math.floor(rand * 200) + 100;
+    const eventStaffing = Math.floor(rand * 250) + 150;
+    const totalCost = adSpend + creativeDesign + eventStaffing;
+    
+    // Revenue components based on campaign reach and conversion
+    const ticketRevenue = Math.floor(campaign.reach * campaign.conversion_rate * 0.01 * 25);
+    const merchandiseRevenue = Math.floor(campaign.reach * campaign.conversion_rate * 0.01 * 10);
+    const totalRevenue = ticketRevenue + merchandiseRevenue;
+    
+    // ROI breakdown
+    const breakdown = [
+      { category: 'Ad Spend', cost: adSpend, revenue: ticketRevenue * 0.7, roi: ((ticketRevenue * 0.7 / adSpend) - 1) * 100 },
+      { category: 'Creative Design', cost: creativeDesign, revenue: ticketRevenue * 0.2, roi: ((ticketRevenue * 0.2 / creativeDesign) - 1) * 100 },
+      { category: 'Event Staffing', cost: eventStaffing, revenue: ticketRevenue * 0.1 + merchandiseRevenue, roi: ((ticketRevenue * 0.1 + merchandiseRevenue) / eventStaffing - 1) * 100 }
+    ];
+    
+    // Channel performance
+    const channels = ['Social Media', 'Email', 'Paid Search', 'Direct'];
+    const channelPerformance = channels.map((channel, i) => {
+      const channelSeed = seededRandom(campaign.id, i * 11);
+      
+      const impressions = Math.floor(channelSeed * campaign.reach * 0.5) + Math.floor(campaign.reach * 0.1);
+      const clicks = Math.floor(impressions * (0.02 + channelSeed * 0.04));
+      const conversions = Math.floor(clicks * (0.05 + channelSeed * 0.15));
+      const ctr = (clicks / impressions) * 100;
+      const cvr = (conversions / clicks) * 100;
+      const cost = Math.floor(channelSeed * totalCost * 0.4) + Math.floor(totalCost * 0.1);
+      const cpc = cost / clicks;
+      const revenue = conversions * (20 + Math.floor(channelSeed * 15));
+      
+      return {
+        channel,
+        impressions,
+        clicks,
+        conversions,
+        ctr,
+        cvr,
+        cost,
+        cpc,
+        revenue
+      };
+    });
+    
+    campaignROI[campaign.id] = {
+      id: campaign.id,
+      name: campaign.name,
+      total_cost: totalCost,
+      total_revenue: totalRevenue,
+      roi_percentage: ((totalRevenue / totalCost) - 1) * 100,
+      breakdown,
+      channel_performance: channelPerformance
+    };
+  });
+
+  // Audience demographics
+  const audienceDemographics: AudienceDemographicData[] = [
+    { name: '18-24', value: 25 },
+    { name: '25-34', value: 35 },
+    { name: '35-44', value: 20 },
+    { name: '45+', value: 20 }
+  ];
+  
+  // Audience retention cohort analysis
+  const audienceRetention: AudienceRetentionData[] = [
+    { cohort: 'Jan 2025', month0: 100, month1: 75, month2: 60, month3: 45 },
+    { cohort: 'Feb 2025', month0: 100, month1: 70, month2: 55, month3: 0 },
+    { cohort: 'Mar 2025', month0: 100, month1: 80, month2: 0, month3: 0 },
+    { cohort: 'Apr 2025', month0: 100, month1: 0, month2: 0, month3: 0 }
+  ];
+
   // Cache the generated data
   const mockData = {
     promoterAnalytics,
     eventPerformance,
     campaignPerformance,
     audienceMetrics,
-    trends
+    trends,
+    eventDetails,
+    audienceDemographics,
+    audienceRetention,
+    campaignROI
   };
   
   mockDataCache[promoterId] = mockData;
@@ -299,5 +524,69 @@ export async function fetchTrendData(
   } catch (error) {
     console.error('Error fetching trend data:', error);
     return [];
+  }
+}
+
+/**
+ * Fetches detailed event information
+ */
+export async function fetchEventDetails(eventId: string): Promise<EventDetails | null> {
+  try {
+    // Find the cached data across all promoters
+    for (const promoterId in mockDataCache) {
+      const cache = mockDataCache[promoterId];
+      if (cache.eventDetails && cache.eventDetails[eventId]) {
+        return cache.eventDetails[eventId];
+      }
+    }
+    return null;
+  } catch (error) {
+    console.error('Error fetching event details:', error);
+    return null;
+  }
+}
+
+/**
+ * Fetches audience demographics data
+ */
+export async function fetchAudienceDemographics(promoterId: string): Promise<AudienceDemographicData[]> {
+  try {
+    const { audienceDemographics } = createMockData(promoterId);
+    return audienceDemographics;
+  } catch (error) {
+    console.error('Error fetching audience demographics:', error);
+    return [];
+  }
+}
+
+/**
+ * Fetches audience retention data
+ */
+export async function fetchAudienceRetention(promoterId: string): Promise<AudienceRetentionData[]> {
+  try {
+    const { audienceRetention } = createMockData(promoterId);
+    return audienceRetention;
+  } catch (error) {
+    console.error('Error fetching audience retention data:', error);
+    return [];
+  }
+}
+
+/**
+ * Fetches campaign ROI data
+ */
+export async function fetchCampaignROI(campaignId: string): Promise<CampaignROIData | null> {
+  try {
+    // Find the cached data across all promoters
+    for (const promoterId in mockDataCache) {
+      const cache = mockDataCache[promoterId];
+      if (cache.campaignROI && cache.campaignROI[campaignId]) {
+        return cache.campaignROI[campaignId];
+      }
+    }
+    return null;
+  } catch (error) {
+    console.error('Error fetching campaign ROI data:', error);
+    return null;
   }
 }
