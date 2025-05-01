@@ -78,24 +78,33 @@ function seededRandom(seed: string, index: number): number {
   return x - Math.floor(x);
 }
 
-// Create mock data for development
+// Helper function to format a date as ISO string without time part
+const formatDateString = (date: Date): string => {
+  return date.toISOString().split('T')[0];
+};
+
+// Create mock data for development and preview
 const createMockData = (promoterId: string) => {
   // Check if we already have cached mock data for this promoter
   if (mockDataCache[promoterId]) {
     return mockDataCache[promoterId];
   }
 
+  const currentDate = new Date();
+  const today = formatDateString(currentDate);
+
   // Mock promoter analytics data
   const promoterAnalytics: PromoterAnalytics[] = Array.from({ length: 30 }, (_, i) => {
     const date = new Date();
     date.setDate(date.getDate() - 30 + i);
+    const dateString = formatDateString(date);
     
     // Use seeded random to create stable but random-looking data
     const rand = seededRandom(promoterId, i);
     
     return {
       id: `pa-${promoterId}-${i}`,
-      date: date.toISOString().split('T')[0],
+      date: dateString,
       total_events: Math.floor(rand * 3) + 1,
       active_campaigns: Math.floor(rand * 2) + 1,
       subscriber_count: Math.floor(rand * 25) + 50 + i,
@@ -125,7 +134,10 @@ const createMockData = (promoterId: string) => {
   // Mock event performance
   const eventPerformance: EventPerformance[] = Array.from({ length: 5 }, (_, i) => {
     const date = new Date();
-    date.setDate(date.getDate() - Math.floor(seededRandom(promoterId, i + 100) * 14) - 1);
+    // Ensure some past events and some future events
+    const daysOffset = Math.floor(seededRandom(promoterId, i + 100) * 30) - 15;
+    date.setDate(date.getDate() + daysOffset);
+    const dateString = formatDateString(date);
     
     const rand = seededRandom(promoterId, i + 200);
     const attendees = Math.floor(rand * 50) + 20;
@@ -134,7 +146,7 @@ const createMockData = (promoterId: string) => {
     return {
       id: `ep-${promoterId}-${i}`,
       name: eventNames[i % eventNames.length],
-      date: date.toISOString().split('T')[0],
+      date: dateString,
       attendees,
       ticket_sales: Math.floor(attendees * (0.8 + rand * 0.2)),
       revenue: Math.floor(attendees * ticketPrice * (0.8 + rand * 0.2)),
@@ -151,13 +163,15 @@ const createMockData = (promoterId: string) => {
     'Friday Night Clarity'
   ];
 
-  // Mock campaign performance
+  // Mock campaign performance with safer date handling
   const campaignPerformance: CampaignPerformance[] = Array.from({ length: 3 }, (_, i) => {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - Math.floor(seededRandom(promoterId, i + 300) * 30) - 10);
+    const startDateString = formatDateString(startDate);
     
     const endDate = new Date(startDate);
     endDate.setDate(endDate.getDate() + Math.floor(seededRandom(promoterId, i + 400) * 14) + 7);
+    const endDateString = formatDateString(endDate);
     
     const rand = seededRandom(promoterId, i + 500);
     const reach = Math.floor(rand * 500) + 100;
@@ -168,8 +182,8 @@ const createMockData = (promoterId: string) => {
     return {
       id: `cp-${promoterId}-${i}`,
       name: campaignNames[i % campaignNames.length],
-      start_date: startDate.toISOString().split('T')[0],
-      end_date: endDate.toISOString().split('T')[0],
+      start_date: startDateString,
+      end_date: endDateString,
       reach,
       engagement,
       conversion_rate: Math.round((engagement / reach) * 1000) / 10,
@@ -179,7 +193,7 @@ const createMockData = (promoterId: string) => {
 
   // Mock audience metrics
   const segments = ['age_18_24', 'age_25_34', 'age_35_44', 'age_45_plus'];
-  const metricTypes = ['gender', 'location', 'interests'];
+  const metricTypes = ['gender', 'location', 'interests', 'age'];
   
   const audienceMetrics: AudienceMetric[] = [];
   
@@ -190,7 +204,7 @@ const createMockData = (promoterId: string) => {
       audienceMetrics.push({
         metric_name: metricName,
         metric_value: Math.round(rand * 100),
-        timestamp: new Date().toISOString(),
+        timestamp: today,
         segment
       });
     });
@@ -200,15 +214,37 @@ const createMockData = (promoterId: string) => {
   const trends: TrendDataPoint[] = Array.from({ length: 30 }, (_, i) => {
     const date = new Date();
     date.setDate(date.getDate() - 30 + i);
+    const dateString = formatDateString(date);
     
     const rand = seededRandom(promoterId, i + 700);
     
-    return {
-      date: date.toISOString().split('T')[0],
+    // Create subscriber growth trend
+    const subscriberTrend = {
+      date: dateString,
       metric_value: Math.floor(rand * 50) + i/2,
       metric_name: 'subscriber_growth'
     };
+
+    return subscriberTrend;
   });
+
+  // Add engagement trend data
+  const engagementTrends = Array.from({ length: 30 }, (_, i) => {
+    const date = new Date();
+    date.setDate(date.getDate() - 30 + i);
+    const dateString = formatDateString(date);
+    
+    const rand = seededRandom(promoterId, i + 800);
+    
+    return {
+      date: dateString,
+      metric_value: 10 + Math.round(rand * 30),  // 10-40%
+      metric_name: 'engagement_rate'
+    };
+  });
+
+  // Combine all trends
+  const allTrends = [...trends, ...engagementTrends];
 
   // Cache the generated data
   const mockData = {
@@ -216,7 +252,7 @@ const createMockData = (promoterId: string) => {
     eventPerformance,
     campaignPerformance,
     audienceMetrics,
-    trends
+    trends: allTrends
   };
   
   mockDataCache[promoterId] = mockData;
@@ -233,12 +269,17 @@ export async function fetchPromoterAnalytics(
   try {
     // Check if running in preview environment
     if (isPreviewEnvironment()) {
-      // Return mock data for preview environment
+      console.log("Using mock promoter analytics data in preview environment");
       const { promoterAnalytics } = createMockData(promoterId);
       
       return promoterAnalytics.filter(data => {
-        const dataDate = new Date(data.date);
-        return dataDate >= range.startDate && dataDate <= range.endDate;
+        try {
+          const dataDate = new Date(data.date);
+          return dataDate >= range.startDate && dataDate <= range.endDate;
+        } catch (e) {
+          console.error("Date filtering error:", e);
+          return false;
+        }
       });
     }
 
@@ -288,6 +329,7 @@ export async function fetchEventPerformance(
   try {
     // Check if running in preview environment
     if (isPreviewEnvironment()) {
+      console.log("Using mock event performance data in preview environment");
       return createMockData(promoterId).eventPerformance;
     }
 
@@ -331,6 +373,7 @@ export async function fetchCampaignPerformance(
   try {
     // Check if running in preview environment
     if (isPreviewEnvironment()) {
+      console.log("Using mock campaign performance data in preview environment");
       return createMockData(promoterId).campaignPerformance;
     }
 
@@ -375,6 +418,7 @@ export async function fetchAudienceMetrics(
   try {
     // Check if running in preview environment
     if (isPreviewEnvironment()) {
+      console.log("Using mock audience metrics data in preview environment");
       return createMockData(promoterId).audienceMetrics;
     }
 
@@ -417,13 +461,19 @@ export async function fetchTrendData(
   try {
     // Check if running in preview environment
     if (isPreviewEnvironment()) {
+      console.log(`Using mock trend data for ${metricName} in preview environment`);
       const { trends } = createMockData(promoterId);
       
       return trends
         .filter(t => t.metric_name === metricName)
         .filter(data => {
-          const dataDate = new Date(data.date);
-          return dataDate >= range.startDate && dataDate <= range.endDate;
+          try {
+            const dataDate = new Date(data.date);
+            return dataDate >= range.startDate && dataDate <= range.endDate;
+          } catch (e) {
+            console.error("Date filtering error:", e);
+            return false;
+          }
         });
     }
 
@@ -467,6 +517,7 @@ export async function fetchEventDetailedAnalytics(
   try {
     // For now, always use mock data for this specific endpoint until we have real data available
     if (isPreviewEnvironment() || true) {
+      console.log("Using mock event detailed analytics data");
       // For now, generate mock data based on the event
       const { eventPerformance } = createMockData(promoterId);
       const event = eventPerformance.find(e => e.id === eventId);
@@ -477,10 +528,11 @@ export async function fetchEventDetailedAnalytics(
       const result: EventDetailedAnalytics[] = Array.from({ length: 14 }, (_, i) => {
         const date = new Date();
         date.setDate(date.getDate() - (14 - i));
+        const dateString = formatDateString(date);
         
         // More tickets sold as we get closer to event date
         const progress = Math.min(1, (i + 1) / 14);
-        const dailyTickets = Math.floor(event.ticket_sales * progress * 0.15);
+        const dailyTickets = Math.floor((event.ticket_sales || 0) * progress * 0.15);
         
         const ticketTypes = [
           {
@@ -505,7 +557,7 @@ export async function fetchEventDetailedAnalytics(
         return {
           id: `ed-${eventId}-${i}`,
           event_id: eventId,
-          date: date.toISOString().split('T')[0],
+          date: dateString,
           tickets_sold: ticketTypes.reduce((sum, type) => sum + type.quantity, 0),
           revenue: totalRevenue,
           attendees: 0, // Will be filled on event day
@@ -514,13 +566,13 @@ export async function fetchEventDetailedAnalytics(
       });
       
       // Simulate attendance on the event day
-      const eventDate = new Date(event.date);
+      const eventDate = event.date ? new Date(event.date) : new Date();
       const today = new Date();
       
       if (eventDate <= today) {
         const eventDayData = result.find(data => data.date === event.date);
         if (eventDayData) {
-          eventDayData.attendees = event.attendees;
+          eventDayData.attendees = event.attendees || 0;
         }
       }
       

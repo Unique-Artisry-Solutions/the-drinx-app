@@ -14,6 +14,7 @@ import AnalyticsPieChart from '@/components/charts/AnalyticsPieChart';
 import AnalyticsBarChart from '@/components/charts/AnalyticsBarChart';
 import AnalyticsLineChart from '@/components/charts/AnalyticsLineChart';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { safeFormatDate } from '@/utils/environment';
 
 interface AudienceAnalyticsTabProps {
   audienceMetrics: AudienceMetric[];
@@ -44,14 +45,14 @@ const AudienceAnalyticsTab: React.FC<AudienceAnalyticsTabProps> = ({
   // Format trend data for charts - with safety checks
   const subscriberTrendData = React.useMemo(() => {
     return subscriberTrend.map(item => ({
-      name: item.date ? new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Unknown',
+      name: item.date ? safeFormatDate(item.date, 'MMM d', 'Unknown') : 'Unknown',
       subscribers: item.metric_value || 0
     }));
   }, [subscriberTrend]);
   
   const engagementTrendData = React.useMemo(() => {
     return engagementTrend.map(item => ({
-      name: item.date ? new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Unknown',
+      name: item.date ? safeFormatDate(item.date, 'MMM d', 'Unknown') : 'Unknown',
       engagement: item.metric_value || 0
     }));
   }, [engagementTrend]);
@@ -60,9 +61,11 @@ const AudienceAnalyticsTab: React.FC<AudienceAnalyticsTabProps> = ({
   const retentionData = React.useMemo(() => {
     // This would typically come from actual retention analysis
     // For now, creating mock data based on subscriber trends
-    const trend = [...subscriberTrend].sort((a, b) => 
-      new Date(a.date || '').getTime() - new Date(b.date || '').getTime()
-    );
+    const trend = [...subscriberTrend]
+      .sort((a, b) => {
+        if (!a.date || !b.date) return 0;
+        return new Date(a.date).getTime() - new Date(b.date).getTime();
+      });
     
     if (trend.length < 7) return [];
     

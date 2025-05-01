@@ -3,11 +3,11 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CampaignPerformance } from '@/services/promoterAnalyticsService';
-import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Progress } from '@/components/ui/progress';
 import AnalyticsBarChart from '@/components/charts/AnalyticsBarChart';
+import { safeFormatDate } from '@/utils/environment';
 
 interface CampaignAnalyticsTabProps {
   campaignPerformance: CampaignPerformance[];
@@ -142,8 +142,8 @@ const CampaignAnalyticsTab: React.FC<CampaignAnalyticsTabProps> = ({
                     {campaign.conversion_rate?.toFixed(1) || '0.0'}%
                   </TableCell>
                   <TableCell>
-                    {campaign.start_date && format(new Date(campaign.start_date), 'MMM d')} - 
-                    {campaign.end_date && format(new Date(campaign.end_date), 'MMM d, yyyy')}
+                    {safeFormatDate(campaign.start_date, 'MMM d')} - 
+                    {safeFormatDate(campaign.end_date, 'MMM d, yyyy')}
                   </TableCell>
                 </TableRow>
               ))}
@@ -207,11 +207,11 @@ const CampaignAnalyticsTab: React.FC<CampaignAnalyticsTabProps> = ({
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <div className="text-sm font-medium text-muted-foreground mb-1">Start Date</div>
-                <div>{campaignDetails.start_date ? format(new Date(campaignDetails.start_date), 'MMMM d, yyyy') : 'No start date'}</div>
+                <div>{safeFormatDate(campaignDetails.start_date, 'MMMM d, yyyy', 'No start date')}</div>
               </div>
               <div>
                 <div className="text-sm font-medium text-muted-foreground mb-1">End Date</div>
-                <div>{campaignDetails.end_date ? format(new Date(campaignDetails.end_date), 'MMMM d, yyyy') : 'No end date'}</div>
+                <div>{safeFormatDate(campaignDetails.end_date, 'MMMM d, yyyy', 'No end date')}</div>
               </div>
             </div>
           </CardContent>

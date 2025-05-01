@@ -68,7 +68,9 @@ export function usePromoterAnalytics({
 
   // Use provided promoterId or fall back to the current authenticated user
   const promoterId = useMemo(() => {
-    if (isPreviewEnvironment()) {
+    const preview = isPreviewEnvironment();
+    if (preview) {
+      console.log("Using preview promoter ID");
       // In preview environment, always use a mock ID
       return providedPromoterId || 'preview-promoter-id';
     }
@@ -77,10 +79,10 @@ export function usePromoterAnalytics({
 
   // Create a cache key based on promoterId and date range
   const cacheKey = useMemo(() => {
-    if (!range || !promoterId) return '';
+    if (!promoterId) return '';
     
-    const startDate = range.from?.toISOString().split('T')[0] || '';
-    const endDate = range.to?.toISOString().split('T')[0] || '';
+    const startDate = range?.from ? range.from.toISOString().split('T')[0] : '';
+    const endDate = range?.to ? range.to.toISOString().split('T')[0] : '';
     return `${promoterId}-${startDate}-${endDate}`;
   }, [promoterId, range]);
 
@@ -96,7 +98,12 @@ export function usePromoterAnalytics({
   // Function to fetch detailed analytics for a specific event
   const fetchEventDetails = async (eventId: string): Promise<EventDetailedAnalytics[]> => {
     if (!promoterId) return [];
-    return await fetchEventDetailedAnalytics(promoterId, eventId);
+    try {
+      return await fetchEventDetailedAnalytics(promoterId, eventId);
+    } catch (error) {
+      console.error("Error fetching event details:", error);
+      return [];
+    }
   };
 
   // Fetch all analytics data
@@ -108,11 +115,12 @@ export function usePromoterAnalytics({
       return;
     }
 
-    if (!range || !range.from || !range.to) {
-      setIsLoading(false);
-      setError("Date range is required");
-      return;
-    }
+    const effectiveRange = {
+      from: range?.from || addDays(new Date(), -30),
+      to: range?.to || new Date()
+    };
+
+    console.log("Fetching promoter analytics with range:", effectiveRange);
 
     async function loadAnalyticsData() {
       setIsLoading(true);
@@ -139,8 +147,8 @@ export function usePromoterAnalytics({
 
         // Define date range for analytics
         const dateRange = {
-          startDate: range.from || addDays(new Date(), -30),
-          endDate: range.to || new Date()
+          startDate: effectiveRange.from,
+          endDate: effectiveRange.to
         };
 
         // Fetch all data in parallel for better performance

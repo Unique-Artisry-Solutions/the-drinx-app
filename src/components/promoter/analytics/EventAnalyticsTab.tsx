@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { format } from 'date-fns';
 import { 
   EventPerformance, 
   EventDetailedAnalytics 
@@ -11,6 +10,7 @@ import {
 import AnalyticsBarChart from '@/components/charts/AnalyticsBarChart';
 import AnalyticsLineChart from '@/components/charts/AnalyticsLineChart';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { safeFormatDate } from '@/utils/environment';
 
 interface EventAnalyticsTabProps {
   eventPerformance: EventPerformance[];
@@ -58,7 +58,7 @@ const EventAnalyticsTab: React.FC<EventAnalyticsTabProps> = ({ eventPerformance,
         (i + 1) * (0.7 + Math.random() * 0.6));
       
       return {
-        name: format(date, 'MMM dd'),
+        name: safeFormatDate(date, 'MMM dd'),
         sales: Math.min(salesValue, selectedEventData.attendees || 0)
       };
     });
@@ -228,7 +228,7 @@ const EventAnalyticsTab: React.FC<EventAnalyticsTabProps> = ({ eventPerformance,
                   </TableRow>
                   <TableRow>
                     <TableCell className="font-medium">Date</TableCell>
-                    <TableCell>{selectedEventData.date ? format(new Date(selectedEventData.date), 'MMMM d, yyyy') : 'No date'}</TableCell>
+                    <TableCell>{safeFormatDate(selectedEventData.date, 'MMMM d, yyyy', 'No date')}</TableCell>
                   </TableRow>
                   <TableRow>
                     <TableCell className="font-medium">Venue</TableCell>
