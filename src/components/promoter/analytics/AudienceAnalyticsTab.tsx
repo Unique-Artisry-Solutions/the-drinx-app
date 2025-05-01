@@ -33,55 +33,74 @@ const AudienceAnalyticsTab: React.FC<AudienceAnalyticsTabProps> = ({
 }) => {
   const [selectedMetric, setSelectedMetric] = useState<string>('gender');
   
-  // Prepare audience demographic data for the selected metric
+  // Prepare audience demographic data for the selected metric with safety checks
   const audienceDemographicData = React.useMemo(() => {
-    const filteredMetrics = audienceMetrics.filter(metric => metric.metric_name === selectedMetric);
+    if (!audienceMetrics?.length) return [];
+    
+    const filteredMetrics = audienceMetrics.filter(metric => 
+      metric.metric_name === selectedMetric
+    );
+    
     return filteredMetrics.map(metric => ({
       name: metric.segment || 'Unknown',
       value: metric.metric_value || 0
     }));
   }, [audienceMetrics, selectedMetric]);
   
-  // Format trend data for charts - with safety checks
+  // Format trend data for charts - with enhanced safety checks
   const subscriberTrendData = React.useMemo(() => {
+    if (!subscriberTrend?.length) return [];
+    
     return subscriberTrend.map(item => ({
-      name: item.date ? safeFormatDate(item.date, 'MMM d', 'Unknown') : 'Unknown',
+      name: safeFormatDate(item.date || '', 'MMM d', 'Unknown'),
       subscribers: item.metric_value || 0
     }));
   }, [subscriberTrend]);
   
   const engagementTrendData = React.useMemo(() => {
+    if (!engagementTrend?.length) return [];
+    
     return engagementTrend.map(item => ({
-      name: item.date ? safeFormatDate(item.date, 'MMM d', 'Unknown') : 'Unknown',
+      name: safeFormatDate(item.date || '', 'MMM d', 'Unknown'),
       engagement: item.metric_value || 0
     }));
   }, [engagementTrend]);
   
-  // Calculate retention metrics (using subscriber and engagement data)
+  // Calculate retention metrics with safety checks
   const retentionData = React.useMemo(() => {
-    // This would typically come from actual retention analysis
-    // For now, creating mock data based on subscriber trends
-    const trend = [...subscriberTrend]
-      .sort((a, b) => {
-        if (!a.date || !b.date) return 0;
-        return new Date(a.date).getTime() - new Date(b.date).getTime();
-      });
-    
-    if (trend.length < 7) return [];
-    
-    const weeklyRetention = [];
-    for (let i = 7; i < trend.length; i += 7) {
-      const currentValue = trend[i].metric_value || 0;
-      const previousValue = trend[i-7].metric_value || 1; // Prevent division by zero
-      const retention = previousValue > 0 ? (currentValue / previousValue) * 100 : 100;
-      
-      weeklyRetention.push({
-        name: `Week ${Math.floor(i/7)}`,
-        retention: Math.min(Math.round(retention), 100)
-      });
+    // Verify we have enough data to calculate retention
+    if (!subscriberTrend || subscriberTrend.length < 7) {
+      return [];
     }
     
-    return weeklyRetention;
+    try {
+      // Sort dates for accurate calculations
+      const trend = [...subscriberTrend]
+        .sort((a, b) => {
+          if (!a.date || !b.date) return 0;
+          return new Date(a.date).getTime() - new Date(b.date).getTime();
+        })
+        .filter(item => item.date && !isNaN(new Date(item.date).getTime()));
+      
+      if (trend.length < 7) return []; // Still need at least 7 days of valid data
+      
+      const weeklyRetention = [];
+      for (let i = 7; i < trend.length; i += 7) {
+        const currentValue = trend[i].metric_value || 0;
+        const previousValue = trend[i-7].metric_value || 1; // Prevent division by zero
+        const retention = previousValue > 0 ? (currentValue / previousValue) * 100 : 100;
+        
+        weeklyRetention.push({
+          name: `Week ${Math.floor(i/7)}`,
+          retention: Math.min(Math.round(retention), 100)
+        });
+      }
+      
+      return weeklyRetention;
+    } catch (error) {
+      console.error("Error calculating retention data:", error);
+      return [];
+    }
   }, [subscriberTrend]);
 
   if (isLoading) {
@@ -94,7 +113,7 @@ const AudienceAnalyticsTab: React.FC<AudienceAnalyticsTabProps> = ({
     );
   }
   
-  if (audienceMetrics.length === 0) {
+  if (!audienceMetrics || audienceMetrics.length === 0) {
     return (
       <Card>
         <CardContent className="pt-6">
@@ -134,17 +153,21 @@ const AudienceAnalyticsTab: React.FC<AudienceAnalyticsTabProps> = ({
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <AnalyticsPieChart
-              title=""
-              description=""
-              data={audienceDemographicData}
-              colors={['#8B5CF6', '#06B6D4', '#10B981', '#F59E0B', '#EF4444']}
-              onSliceClick={(entry) => {
-                if (onMetricClick) {
-                  onMetricClick(selectedMetric, entry.name);
-                }
-              }}
-            />
+            {audienceDemographicData.length > 0 ? (
+              <AnalyticsPieChart
+                title=""
+                description=""
+                data={audienceDemographicData}
+                colors={['#8B5CF6', '#06B6D4', '#10B981', '#F59E0B', '#EF4444']}
+                onSliceClick={(entry) => {
+                  if (onMetricClick && entry.name) {
+                    onMetricClick(selectedMetric, entry.name);
+                  }
+                }}
+              />
+            ) : (
+              <p className="text-center text-muted-foreground py-8">No demographic data available</p>
+            )}
           </CardContent>
         </Card>
       
@@ -157,20 +180,24 @@ const AudienceAnalyticsTab: React.FC<AudienceAnalyticsTabProps> = ({
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <AnalyticsLineChart
-              title=""
-              description=""
-              data={subscriberTrendData}
-              series={[
-                {
-                  key: "subscribers",
-                  name: "Subscribers",
-                  color: "#8B5CF6"
-                }
-              ]}
-              formatter={(value) => [`${value}`, 'subscribers']}
-              height={260}
-            />
+            {subscriberTrendData.length > 0 ? (
+              <AnalyticsLineChart
+                title=""
+                description=""
+                data={subscriberTrendData}
+                series={[
+                  {
+                    key: "subscribers",
+                    name: "Subscribers",
+                    color: "#8B5CF6"
+                  }
+                ]}
+                formatter={(value) => [`${value}`, 'subscribers']}
+                height={260}
+              />
+            ) : (
+              <p className="text-center text-muted-foreground py-8">No subscriber trend data available</p>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -184,20 +211,24 @@ const AudienceAnalyticsTab: React.FC<AudienceAnalyticsTabProps> = ({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <AnalyticsLineChart
-            title=""
-            description=""
-            data={engagementTrendData}
-            series={[
-              {
-                key: "engagement",
-                name: "Engagement Rate %",
-                color: "#06B6D4"
-              }
-            ]}
-            formatter={(value) => [`${value}%`, 'engagement']}
-            height={300}
-          />
+          {engagementTrendData.length > 0 ? (
+            <AnalyticsLineChart
+              title=""
+              description=""
+              data={engagementTrendData}
+              series={[
+                {
+                  key: "engagement",
+                  name: "Engagement Rate %",
+                  color: "#06B6D4"
+                }
+              ]}
+              formatter={(value) => [`${value}%`, 'engagement']}
+              height={300}
+            />
+          ) : (
+            <p className="text-center text-muted-foreground py-8">No engagement data available</p>
+          )}
         </CardContent>
       </Card>
       
@@ -253,9 +284,9 @@ const AudienceAnalyticsTab: React.FC<AudienceAnalyticsTabProps> = ({
             <TableBody>
               {audienceMetrics.map((metric, index) => (
                 <TableRow 
-                  key={`${metric.metric_name}-${index}`}
+                  key={`${metric.metric_name || 'unknown'}-${index}`}
                   onClick={() => {
-                    if (onMetricClick) {
+                    if (onMetricClick && metric.metric_name) {
                       onMetricClick(metric.metric_name, metric.segment || 'Unknown');
                     }
                   }}

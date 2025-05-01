@@ -1,28 +1,53 @@
 
 /**
+ * Environment detection utilities
+ * These utilities help determine which environment the app is running in
+ * and provide safe methods for environment-specific operations
+ */
+
+/**
  * Checks if the app is running in the Lovable preview environment
+ * Uses multiple fallback strategies that don't depend on browser APIs
  */
 export const isPreviewEnvironment = (): boolean => {
+  // In server-side rendering or testing environments
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
+    return true; // Safer to assume preview in non-browser contexts
+  }
+  
   try {
-    // Check for Lovable preview environment using safer detection methods
-    const isInFrame = window !== window.parent;
-    const isLovableDomain = 
-      typeof window !== 'undefined' &&
+    // Primary method: Check for preview hostname patterns
+    // This doesn't require DOM manipulation or complex window interactions
+    if (
       window.location &&
       (window.location.hostname.includes('lovable.dev') || 
        window.location.hostname.includes('lovable.app') ||
-       window.location.hostname.includes('gptengineer.app'));
+       window.location.hostname.includes('gptengineer.app'))
+    ) {
+      return true;
+    }
     
-    // Some environments might have the Lovable script added
-    const hasLovableScript = 
-      typeof document !== 'undefined' && 
-      document.querySelector && 
-      document.querySelector('script[src*="gptengineer.js"]') !== null;
+    // Secondary method: Check for iframe embedding
+    // Most preview environments are in iframes, but avoid DOM calls
+    if (window !== window.parent) {
+      return true;
+    }
     
-    return isInFrame || isLovableDomain || hasLovableScript;
+    // Tertiary method: Check for staging or development environment patterns
+    // This is lightweight and doesn't depend on DOM
+    if (
+      process.env.NODE_ENV !== 'production' ||
+      window.location.hostname === 'localhost' ||
+      window.location.hostname.includes('staging') ||
+      window.location.protocol === 'file:'
+    ) {
+      return true;
+    }
+    
+    return false;
   } catch (error) {
-    // If we can't access window or document, assume we're in a preview environment
-    console.log("Error checking environment, assuming preview:", error);
+    // If we can't determine environment due to errors, assume preview for safety
+    console.debug("Error checking environment, assuming preview:", error);
     return true;
   }
 };
@@ -42,12 +67,16 @@ export const isDevelopment = (): boolean => {
 };
 
 /**
- * Safe check for browser APIs that might not exist in some environments
+ * Safe wrapper for browser APIs that might not be available in some environments
  * @param callback Function to execute if browser APIs are available
  * @returns The result of the callback or undefined
  */
 export const safeBrowserApi = <T>(callback: () => T): T | undefined => {
-  // Skip in preview environment
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
+    return undefined;
+  }
+  
+  // Skip execution in preview environment
   if (isPreviewEnvironment()) {
     return undefined;
   }
@@ -74,10 +103,14 @@ export const safeFormatDate = (
   if (!date) return fallback;
   
   try {
+    // Convert string to Date if needed
     const dateObj = typeof date === 'string' ? new Date(date) : date;
+    
+    // Check if date is valid before formatting
     if (isNaN(dateObj.getTime())) return fallback;
     
     // Import format dynamically to prevent SSR issues
+    // Using this pattern to avoid direct imports that might cause SSR issues
     const { format } = require('date-fns');
     return format(dateObj, formatStr);
   } catch (error) {

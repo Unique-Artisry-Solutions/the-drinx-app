@@ -26,7 +26,10 @@ export const systemBreakdown: FeatureItem = {
     - [x] Analytics tables for promoter data (event, audience, campaign)
     - [x] Optimized database views for efficient analytics queries
     - [x] Preview environment compatibility for analytics data
-    - [x] Safely handled date formatting in analytics components
+    - [x] Enhanced environment detection for reliable operation
+    - [x] Safe date formatting across all components
+    - [x] Robust mock data generation for analytics preview
+    - [x] Complete null safety in analytics components
   `,
   testSteps: [
     "Log in as admin and navigate to System Breakdown page",
@@ -35,9 +38,12 @@ export const systemBreakdown: FeatureItem = {
     "Verify that the database requirements are properly analyzed",
     "Check event notification system integration",
     "Verify rewards system monitoring dashboard is functioning",
-    "Test real-time alerts and monitoring capabilities",
+    "Test real-time alerts and monitoring capabilities", 
     "View cohort and funnel analytics",
     "Check promoter analytics database schema integration",
-    "Verify preview environment compatibility"
+    "Verify preview environment compatibility",
+    "Test analytics components with incomplete data",
+    "Verify date formatting is consistent and error-free",
+    "Check environment detection in different contexts"
   ]
 };

@@ -37,8 +37,8 @@ interface PromoterAnalyticsData {
   fetchEventDetails: (eventId: string) => Promise<EventDetailedAnalytics[]>;
 }
 
-// Cache for analytics data to prevent flickering with stable mock data
-const analyticsCache: Record<string, {
+// In-memory cache for analytics data with expiry
+interface AnalyticsCache {
   analytics: PromoterAnalytics[];
   eventPerformance: EventPerformance[];
   campaignPerformance: CampaignPerformance[];
@@ -46,10 +46,10 @@ const analyticsCache: Record<string, {
   subscriberTrend: TrendDataPoint[];
   engagementTrend: TrendDataPoint[];
   timestamp: number;
-}> = {};
+}
 
-// Cache expiry time (5 minutes)
-const CACHE_EXPIRY_MS = 5 * 60 * 1000;
+const analyticsCache: Record<string, AnalyticsCache> = {};
+const CACHE_EXPIRY_MS = 5 * 60 * 1000; // 5 minutes
 
 export function usePromoterAnalytics({
   promoterId: providedPromoterId,
@@ -66,68 +66,76 @@ export function usePromoterAnalytics({
   const [error, setError] = useState<string | null>(null);
   const [refreshToken, setRefreshToken] = useState<number>(0);
 
-  // Use provided promoterId or fall back to the current authenticated user
-  const promoterId = useMemo(() => {
-    const preview = isPreviewEnvironment();
-    if (preview) {
-      console.log("Using preview promoter ID");
-      // In preview environment, always use a mock ID
+  // Safe fallback for promoter ID
+  const effectivePromoterId = useMemo(() => {
+    if (isPreviewEnvironment()) {
       return providedPromoterId || 'preview-promoter-id';
     }
     return providedPromoterId || user?.id || '';
   }, [providedPromoterId, user?.id]);
 
-  // Create a cache key based on promoterId and date range
-  const cacheKey = useMemo(() => {
-    if (!promoterId) return '';
+  // Safe fallback for date range
+  const effectiveRange = useMemo(() => {
+    const defaultFrom = addDays(new Date(), -30);
+    const defaultTo = new Date();
     
-    const startDate = range?.from ? range.from.toISOString().split('T')[0] : '';
-    const endDate = range?.to ? range.to.toISOString().split('T')[0] : '';
-    return `${promoterId}-${startDate}-${endDate}`;
-  }, [promoterId, range]);
+    if (!range) {
+      return { from: defaultFrom, to: defaultTo };
+    }
+    
+    return {
+      from: range.from || defaultFrom,
+      to: range.to || defaultTo
+    };
+  }, [range]);
 
-  // Function to refresh all data
+  // Cache key based on promoterId and date range - with safety checks
+  const cacheKey = useMemo(() => {
+    if (!effectivePromoterId) return '';
+    
+    const startDate = effectiveRange.from ? 
+      effectiveRange.from.toISOString().split('T')[0] : '';
+    const endDate = effectiveRange.to ? 
+      effectiveRange.to.toISOString().split('T')[0] : '';
+    
+    return `${effectivePromoterId}-${startDate}-${endDate}`;
+  }, [effectivePromoterId, effectiveRange.from, effectiveRange.to]);
+
+  // Refresh function that safely handles the cache
   const refresh = () => {
-    // Invalidate cache for this key
-    if (cacheKey && analyticsCache[cacheKey]) {
+    if (cacheKey) {
       delete analyticsCache[cacheKey];
     }
     setRefreshToken(prev => prev + 1);
   };
 
-  // Function to fetch detailed analytics for a specific event
+  // Function to fetch detailed analytics with error handling
   const fetchEventDetails = async (eventId: string): Promise<EventDetailedAnalytics[]> => {
-    if (!promoterId) return [];
+    if (!effectivePromoterId) return [];
+    
     try {
-      return await fetchEventDetailedAnalytics(promoterId, eventId);
+      return await fetchEventDetailedAnalytics(effectivePromoterId, eventId);
     } catch (error) {
       console.error("Error fetching event details:", error);
       return [];
     }
   };
 
-  // Fetch all analytics data
+  // Main data fetching effect with improved error handling and preview safety
   useEffect(() => {
-    // Make sure we have required data before proceeding
-    if (!promoterId) {
+    // Safety check for required data
+    if (!effectivePromoterId) {
       setIsLoading(false);
-      setError("No promoter ID provided");
+      setError("No promoter ID available");
       return;
     }
-
-    const effectiveRange = {
-      from: range?.from || addDays(new Date(), -30),
-      to: range?.to || new Date()
-    };
-
-    console.log("Fetching promoter analytics with range:", effectiveRange);
 
     async function loadAnalyticsData() {
       setIsLoading(true);
       setError(null);
 
       try {
-        // Check if we have valid cached data
+        // Check for valid cached data
         if (
           cacheKey && 
           analyticsCache[cacheKey] && 
@@ -145,28 +153,39 @@ export function usePromoterAnalytics({
           return;
         }
 
-        // Define date range for analytics
+        // Define safe date range for analytics
         const dateRange = {
           startDate: effectiveRange.from,
           endDate: effectiveRange.to
         };
 
-        // Fetch all data in parallel for better performance
-        const [
-          analyticsData, 
-          events, 
-          campaigns, 
-          audience, 
-          subscriberTrendData,
-          engagementTrendData
-        ] = await Promise.all([
-          fetchPromoterAnalytics(promoterId, dateRange),
-          fetchEventPerformance(promoterId),
-          fetchCampaignPerformance(promoterId),
-          fetchAudienceMetrics(promoterId),
-          fetchTrendData(promoterId, 'subscriber_growth', dateRange),
-          fetchTrendData(promoterId, 'engagement_rate', dateRange)
+        // Fetch all data in parallel with proper error handling for each request
+        const results = await Promise.allSettled([
+          fetchPromoterAnalytics(effectivePromoterId, dateRange),
+          fetchEventPerformance(effectivePromoterId),
+          fetchCampaignPerformance(effectivePromoterId),
+          fetchAudienceMetrics(effectivePromoterId),
+          fetchTrendData(effectivePromoterId, 'subscriber_growth', dateRange),
+          fetchTrendData(effectivePromoterId, 'engagement_rate', dateRange)
         ]);
+        
+        // Process results with safety checks for each promise
+        const [
+          analyticsResult,
+          eventsResult,
+          campaignsResult,
+          audienceResult,
+          subscriberTrendResult,
+          engagementTrendResult
+        ] = results;
+
+        // Set values with safety checks for each result
+        const analyticsData = analyticsResult.status === 'fulfilled' ? analyticsResult.value : [];
+        const events = eventsResult.status === 'fulfilled' ? eventsResult.value : [];
+        const campaigns = campaignsResult.status === 'fulfilled' ? campaignsResult.value : [];
+        const audience = audienceResult.status === 'fulfilled' ? audienceResult.value : [];
+        const subscriberTrendData = subscriberTrendResult.status === 'fulfilled' ? subscriberTrendResult.value : [];
+        const engagementTrendData = engagementTrendResult.status === 'fulfilled' ? engagementTrendResult.value : [];
 
         // Update state with fetched data
         setAnalytics(analyticsData);
@@ -197,7 +216,7 @@ export function usePromoterAnalytics({
     }
 
     loadAnalyticsData();
-  }, [promoterId, cacheKey, refreshToken, range]);
+  }, [effectivePromoterId, cacheKey, refreshToken, effectiveRange.from, effectiveRange.to]);
 
   return {
     analytics,

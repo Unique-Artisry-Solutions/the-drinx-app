@@ -17,16 +17,23 @@ interface EventAnalyticsTabProps {
   isLoading: boolean;
 }
 
-const EventAnalyticsTab: React.FC<EventAnalyticsTabProps> = ({ eventPerformance, isLoading }) => {
+const EventAnalyticsTab: React.FC<EventAnalyticsTabProps> = ({ 
+  eventPerformance, 
+  isLoading 
+}) => {
   const [selectedEvent, setSelectedEvent] = useState<string>(
-    eventPerformance.length > 0 ? eventPerformance[0].id : ''
+    eventPerformance?.length > 0 ? eventPerformance[0].id : ''
   );
 
-  // Get the selected event details
-  const selectedEventData = eventPerformance.find(event => event.id === selectedEvent);
+  // Get the selected event details with safety checks
+  const selectedEventData = React.useMemo(() => {
+    return eventPerformance?.find(event => event.id === selectedEvent) || null;
+  }, [eventPerformance, selectedEvent]);
   
-  // Format data for attendance comparison chart - with safety checks
+  // Format data for attendance comparison chart with enhanced safety checks
   const attendanceComparisonData = React.useMemo(() => {
+    if (!eventPerformance?.length) return [];
+    
     return eventPerformance.map(event => ({
       name: event.name || 'Unnamed Event',
       attendees: event.attendees || 0,
@@ -34,9 +41,11 @@ const EventAnalyticsTab: React.FC<EventAnalyticsTabProps> = ({ eventPerformance,
     }));
   }, [eventPerformance]);
   
-  // Format data for revenue breakdown with safety checks
+  // Format data for revenue breakdown with enhanced safety checks
   const revenueBreakdownData = React.useMemo(() => {
-    const revenue = selectedEventData?.revenue || 0;
+    if (!selectedEventData) return [];
+    
+    const revenue = selectedEventData.revenue || 0;
     return [
       { name: 'Standard Tickets', value: Math.round(revenue * 0.7) },
       { name: 'VIP Tickets', value: Math.round(revenue * 0.2) },
@@ -45,23 +54,28 @@ const EventAnalyticsTab: React.FC<EventAnalyticsTabProps> = ({ eventPerformance,
     ];
   }, [selectedEventData]);
   
-  // Format ticket sales trend data (mock data) with safety checks
+  // Format ticket sales trend data with enhanced safety checks
   const ticketSalesTrendData = React.useMemo(() => {
     if (!selectedEventData) return [];
     
-    return Array.from({ length: 14 }, (_, i) => {
-      const date = new Date();
-      date.setDate(date.getDate() - (14 - i));
-      
-      // Generate increasing sales trend with some randomness
-      const salesValue = Math.round(((selectedEventData.attendees || 0) / 14) * 
-        (i + 1) * (0.7 + Math.random() * 0.6));
-      
-      return {
-        name: safeFormatDate(date, 'MMM dd'),
-        sales: Math.min(salesValue, selectedEventData.attendees || 0)
-      };
-    });
+    try {
+      return Array.from({ length: 14 }, (_, i) => {
+        const date = new Date();
+        date.setDate(date.getDate() - (14 - i));
+        
+        // Generate increasing sales trend with some randomness
+        const salesValue = Math.round(((selectedEventData.attendees || 0) / 14) * 
+          (i + 1) * (0.7 + Math.random() * 0.6));
+        
+        return {
+          name: safeFormatDate(date, 'MMM dd'),
+          sales: Math.min(salesValue, selectedEventData.attendees || 0)
+        };
+      });
+    } catch (error) {
+      console.error("Error generating ticket sales trend data:", error);
+      return [];
+    }
   }, [selectedEventData]);
   
   if (isLoading) {
@@ -74,7 +88,7 @@ const EventAnalyticsTab: React.FC<EventAnalyticsTabProps> = ({ eventPerformance,
     );
   }
   
-  if (eventPerformance.length === 0) {
+  if (!eventPerformance || eventPerformance.length === 0) {
     return (
       <Card>
         <CardContent className="pt-6">
@@ -143,20 +157,24 @@ const EventAnalyticsTab: React.FC<EventAnalyticsTabProps> = ({ eventPerformance,
               <CardDescription>Track ticket sales over time for {selectedEventData.name || 'this event'}</CardDescription>
             </CardHeader>
             <CardContent>
-              <AnalyticsLineChart
-                title=""
-                description=""
-                data={ticketSalesTrendData}
-                series={[
-                  {
-                    key: "sales",
-                    name: "Tickets Sold",
-                    color: "#10B981"
-                  }
-                ]}
-                formatter={(value) => [`${value}`, 'tickets']}
-                height={300}
-              />
+              {ticketSalesTrendData.length > 0 ? (
+                <AnalyticsLineChart
+                  title=""
+                  description=""
+                  data={ticketSalesTrendData}
+                  series={[
+                    {
+                      key: "sales",
+                      name: "Tickets Sold",
+                      color: "#10B981"
+                    }
+                  ]}
+                  formatter={(value) => [`${value}`, 'tickets']}
+                  height={300}
+                />
+              ) : (
+                <p className="text-center text-muted-foreground py-8">No ticket sales trend data available</p>
+              )}
             </CardContent>
           </Card>
           
@@ -167,20 +185,24 @@ const EventAnalyticsTab: React.FC<EventAnalyticsTabProps> = ({ eventPerformance,
               <CardDescription>Breakdown of revenue sources for {selectedEventData.name || 'this event'}</CardDescription>
             </CardHeader>
             <CardContent>
-              <AnalyticsBarChart
-                title=""
-                description=""
-                data={revenueBreakdownData}
-                series={[
-                  {
-                    key: "value",
-                    name: "Revenue ($)",
-                    color: "#F59E0B"
-                  }
-                ]}
-                formatter={(value) => [`$${value}`, '']}
-                height={300}
-              />
+              {revenueBreakdownData.length > 0 ? (
+                <AnalyticsBarChart
+                  title=""
+                  description=""
+                  data={revenueBreakdownData}
+                  series={[
+                    {
+                      key: "value",
+                      name: "Revenue ($)",
+                      color: "#F59E0B"
+                    }
+                  ]}
+                  formatter={(value) => [`$${value}`, '']}
+                  height={300}
+                />
+              ) : (
+                <p className="text-center text-muted-foreground py-8">No revenue breakdown data available</p>
+              )}
             </CardContent>
           </Card>
           
@@ -191,25 +213,29 @@ const EventAnalyticsTab: React.FC<EventAnalyticsTabProps> = ({ eventPerformance,
               <CardDescription>Compare attendance across events</CardDescription>
             </CardHeader>
             <CardContent>
-              <AnalyticsBarChart
-                title=""
-                description=""
-                data={attendanceComparisonData}
-                series={[
-                  {
-                    key: "attendees",
-                    name: "Actual Attendees",
-                    color: "#8B5CF6"
-                  },
-                  {
-                    key: "expected",
-                    name: "Expected Attendees",
-                    color: "#D1D5DB"
-                  }
-                ]}
-                formatter={(value) => [`${value}`, 'people']}
-                height={300}
-              />
+              {attendanceComparisonData.length > 0 ? (
+                <AnalyticsBarChart
+                  title=""
+                  description=""
+                  data={attendanceComparisonData}
+                  series={[
+                    {
+                      key: "attendees",
+                      name: "Actual Attendees",
+                      color: "#8B5CF6"
+                    },
+                    {
+                      key: "expected",
+                      name: "Expected Attendees",
+                      color: "#D1D5DB"
+                    }
+                  ]}
+                  formatter={(value) => [`${value}`, 'people']}
+                  height={300}
+                />
+              ) : (
+                <p className="text-center text-muted-foreground py-8">No attendance comparison data available</p>
+              )}
             </CardContent>
           </Card>
           

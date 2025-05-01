@@ -24,13 +24,15 @@ const CampaignAnalyticsTab: React.FC<CampaignAnalyticsTabProps> = ({
     campaignPerformance.length > 0 ? campaignPerformance[0].id : null
   );
   
-  // Selected campaign details
+  // Selected campaign details with null safety
   const campaignDetails = React.useMemo(() => {
-    return campaignPerformance.find(c => c.id === selectedCampaign);
+    return campaignPerformance.find(c => c.id === selectedCampaign) || null;
   }, [campaignPerformance, selectedCampaign]);
   
-  // Format data for campaign comparison chart
+  // Format data for campaign comparison chart with safety checks
   const campaignComparisonData = React.useMemo(() => {
+    if (!campaignPerformance?.length) return [];
+    
     return campaignPerformance.map(campaign => ({
       name: campaign.name || 'Unnamed Campaign',
       reach: campaign.reach || 0,
@@ -56,7 +58,7 @@ const CampaignAnalyticsTab: React.FC<CampaignAnalyticsTabProps> = ({
     );
   }
   
-  if (campaignPerformance.length === 0) {
+  if (!campaignPerformance || campaignPerformance.length === 0) {
     return (
       <Card>
         <CardContent className="pt-6">
@@ -139,7 +141,8 @@ const CampaignAnalyticsTab: React.FC<CampaignAnalyticsTabProps> = ({
                   <TableCell>{campaign.reach || 0}</TableCell>
                   <TableCell>{campaign.engagement || 0}</TableCell>
                   <TableCell>
-                    {campaign.conversion_rate?.toFixed(1) || '0.0'}%
+                    {campaign.conversion_rate !== undefined ? 
+                      `${campaign.conversion_rate.toFixed(1)}%` : '0.0%'}
                   </TableCell>
                   <TableCell>
                     {safeFormatDate(campaign.start_date, 'MMM d')} - 
@@ -181,7 +184,9 @@ const CampaignAnalyticsTab: React.FC<CampaignAnalyticsTabProps> = ({
               </div>
               <div>
                 <div className="text-sm font-medium text-muted-foreground mb-1">Conversions</div>
-                <div className="text-2xl font-bold">{Math.round((campaignDetails.reach || 0) * ((campaignDetails.conversion_rate || 0) / 100))}</div>
+                <div className="text-2xl font-bold">
+                  {Math.round((campaignDetails.reach || 0) * ((campaignDetails.conversion_rate || 0) / 100))}
+                </div>
                 <div className="text-xs text-muted-foreground">people</div>
               </div>
             </div>
@@ -189,8 +194,10 @@ const CampaignAnalyticsTab: React.FC<CampaignAnalyticsTabProps> = ({
             <div>
               <div className="flex justify-between mb-1">
                 <div className="text-sm font-medium">Engagement Rate</div>
-                <div className="text-sm">{campaignDetails.reach && campaignDetails.engagement ? 
-                  ((campaignDetails.engagement / campaignDetails.reach) * 100).toFixed(1) : '0.0'}%</div>
+                <div className="text-sm">
+                  {campaignDetails.reach && campaignDetails.engagement ? 
+                    ((campaignDetails.engagement / campaignDetails.reach) * 100).toFixed(1) : '0.0'}%
+                </div>
               </div>
               <Progress value={campaignDetails.reach && campaignDetails.engagement ? 
                 (campaignDetails.engagement / campaignDetails.reach) * 100 : 0} className="h-2" />
@@ -199,7 +206,10 @@ const CampaignAnalyticsTab: React.FC<CampaignAnalyticsTabProps> = ({
             <div>
               <div className="flex justify-between mb-1">
                 <div className="text-sm font-medium">Conversion Rate</div>
-                <div className="text-sm">{campaignDetails.conversion_rate?.toFixed(1) || '0.0'}%</div>
+                <div className="text-sm">
+                  {campaignDetails.conversion_rate !== undefined ? 
+                    `${campaignDetails.conversion_rate.toFixed(1)}%` : '0.0%'}
+                </div>
               </div>
               <Progress value={campaignDetails.conversion_rate || 0} className="h-2" />
             </div>
