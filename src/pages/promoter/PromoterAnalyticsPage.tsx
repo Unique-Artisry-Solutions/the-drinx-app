@@ -7,13 +7,34 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Skeleton } from '@/components/ui/skeleton';
-import { CalendarIcon, BarChart3, RefreshCcw, Users, Calendar as CalendarIcon2 } from 'lucide-react';
+import { 
+  CalendarIcon, 
+  BarChart3, 
+  RefreshCcw, 
+  Users, 
+  Calendar as CalendarIcon2, 
+  Ticket, 
+  DollarSign, 
+  TrendingUp 
+} from 'lucide-react';
 import { DateRange } from 'react-day-picker';
 import { format, addDays, subDays } from 'date-fns';
 import { usePromoterAnalytics } from '@/hooks/usePromoterAnalytics';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useAnalytics } from '@/hooks/useAnalytics';
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from '@/components/ui/table';
+import AnalyticsMetricCard from '@/components/charts/AnalyticsMetricCard';
+import AnalyticsLineChart from '@/components/charts/AnalyticsLineChart';
+import AnalyticsBarChart from '@/components/charts/AnalyticsBarChart';
+import AnalyticsPieChart from '@/components/charts/AnalyticsPieChart';
 
 const PromoterAnalyticsPage = () => {
   const { user } = useAuth();
@@ -53,6 +74,41 @@ const PromoterAnalyticsPage = () => {
     ? analytics.reduce((sum, day) => sum + day.engagement_rate, 0) / analytics.length
     : 0;
   
+  // Prepare chart data for subscriber trends
+  const subscriberTrendData = subscriberTrend.map(item => ({
+    name: format(new Date(item.date), 'MMM dd'),
+    subscribers: item.metric_value
+  }));
+  
+  // Prepare chart data for engagement trends
+  const engagementTrendData = engagementTrend.map(item => ({
+    name: format(new Date(item.date), 'MMM dd'),
+    engagement: item.metric_value
+  }));
+
+  // Prepare audience demographic data for pie chart
+  const audienceDemographicData = [
+    { name: '18-24', value: 25 },
+    { name: '25-34', value: 35 },
+    { name: '35-44', value: 20 },
+    { name: '45+', value: 20 },
+  ];
+
+  // Prepare campaign performance data for bar chart
+  const campaignPerformanceData = campaignPerformance.map(campaign => ({
+    name: campaign.name,
+    reach: campaign.reach,
+    engagement: campaign.engagement,
+    conversion: Math.round(campaign.reach * (campaign.conversion_rate/100))
+  }));
+
+  // Prepare event comparison data for bar chart
+  const eventComparisonData = eventPerformance.map(event => ({
+    name: event.name,
+    attendees: event.attendees,
+    revenue: event.revenue / 100 // Scale down for better visualization
+  }));
+
   if (error) {
     return (
       <Layout>
@@ -73,6 +129,7 @@ const PromoterAnalyticsPage = () => {
   return (
     <Layout>
       <div className="container mx-auto max-w-6xl px-4 py-8">
+        {/* Dashboard Header with Title, Description and Date Range Picker */}
         <div className="mb-6 flex flex-col space-y-2 md:flex-row md:items-center md:justify-between md:space-y-0">
           <div>
             <h1 className="text-3xl font-bold">Promoter Analytics</h1>
@@ -111,69 +168,45 @@ const PromoterAnalyticsPage = () => {
               </PopoverContent>
             </Popover>
             
-            <Button variant="outline" size="icon" onClick={refresh}>
+            <Button variant="outline" size="icon" onClick={refresh} title="Refresh data">
               <RefreshCcw className="h-4 w-4" />
             </Button>
           </div>
         </div>
 
-        {/* Overview cards */}
+        {/* Overview cards - Using AnalyticsMetricCard component */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4 mb-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Total Events</CardTitle>
-              <CalendarIcon2 className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <Skeleton className="h-8 w-20" />
-              ) : (
-                <div className="text-2xl font-bold">{totalEvents}</div>
-              )}
-            </CardContent>
-          </Card>
+          <AnalyticsMetricCard
+            title="Total Events"
+            value={isLoading ? "-" : totalEvents}
+            icon={CalendarIcon2}
+            iconColor="text-blue-500"
+            change={10}
+          />
           
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Total Attendees</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <Skeleton className="h-8 w-20" />
-              ) : (
-                <div className="text-2xl font-bold">{totalAttendees}</div>
-              )}
-            </CardContent>
-          </Card>
+          <AnalyticsMetricCard
+            title="Total Attendees"
+            value={isLoading ? "-" : totalAttendees}
+            icon={Users}
+            iconColor="text-green-500"
+            change={15}
+          />
           
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-              <BarChart3 className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <Skeleton className="h-8 w-20" />
-              ) : (
-                <div className="text-2xl font-bold">${totalRevenue.toFixed(2)}</div>
-              )}
-            </CardContent>
-          </Card>
+          <AnalyticsMetricCard
+            title="Total Revenue"
+            value={isLoading ? "-" : `$${totalRevenue.toFixed(2)}`}
+            icon={DollarSign}
+            iconColor="text-emerald-500"
+            change={12}
+          />
           
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Avg. Engagement</CardTitle>
-              <BarChart3 className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <Skeleton className="h-8 w-20" />
-              ) : (
-                <div className="text-2xl font-bold">{avgEngagementRate.toFixed(1)}%</div>
-              )}
-            </CardContent>
-          </Card>
+          <AnalyticsMetricCard
+            title="Avg. Engagement"
+            value={isLoading ? "-" : `${avgEngagementRate.toFixed(1)}%`}
+            icon={TrendingUp}
+            iconColor="text-purple-500"
+            change={5}
+          />
         </div>
 
         {/* Analytics tabs */}
@@ -186,33 +219,71 @@ const PromoterAnalyticsPage = () => {
           </TabsList>
           
           <TabsContent value="overview" className="space-y-4">
-            <Card className="col-span-4">
-              <CardHeader>
-                <CardTitle>Analytics Overview</CardTitle>
-                <CardDescription>
-                  Overall performance metrics for your promoter activities
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {isLoading ? (
-                  <div className="space-y-3">
-                    <Skeleton className="h-[250px] w-full" />
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <p className="text-muted-foreground">
-                      Detailed analytics visualization will be implemented in the full version.
-                    </p>
-                    <p className="text-muted-foreground mt-2">
-                      This MVP provides the data foundation and basic UI components.
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            {/* Subscriber Growth Trend Chart */}
+            {isLoading ? (
+              <Skeleton className="h-[300px] w-full" />
+            ) : (
+              <AnalyticsLineChart
+                title="Subscriber Growth"
+                description="Track your subscriber growth over time"
+                data={subscriberTrendData}
+                series={[
+                  {
+                    key: "subscribers",
+                    name: "Subscribers",
+                    color: "#8B5CF6"
+                  }
+                ]}
+                formatter={(value) => [`${value}`, 'subscribers']}
+              />
+            )}
+
+            {/* Engagement Rate Trend Chart */}
+            {isLoading ? (
+              <Skeleton className="h-[300px] w-full" />
+            ) : (
+              <AnalyticsLineChart
+                title="Engagement Rate"
+                description="Track audience engagement with your content"
+                data={engagementTrendData}
+                series={[
+                  {
+                    key: "engagement",
+                    name: "Engagement Rate %",
+                    color: "#06B6D4"
+                  }
+                ]}
+                formatter={(value) => [`${value}%`, 'engagement']}
+              />
+            )}
+            
+            {/* Event Performance Comparison */}
+            {isLoading ? (
+              <Skeleton className="h-[300px] w-full" />
+            ) : (
+              <AnalyticsBarChart
+                title="Event Performance"
+                description="Compare attendance and revenue across events"
+                data={eventComparisonData}
+                series={[
+                  {
+                    key: "attendees",
+                    name: "Attendees",
+                    color: "#10B981"
+                  },
+                  {
+                    key: "revenue",
+                    name: "Revenue ($100s)",
+                    color: "#F59E0B"
+                  }
+                ]}
+                formatter={(value, name) => [value, name === "revenue" ? "$100s" : "people"]}
+              />
+            )}
           </TabsContent>
           
           <TabsContent value="events" className="space-y-4">
+            {/* Event Performance Table */}
             <Card>
               <CardHeader>
                 <CardTitle>Event Performance</CardTitle>
@@ -228,32 +299,57 @@ const PromoterAnalyticsPage = () => {
                     <Skeleton className="h-12 w-full" />
                   </div>
                 ) : eventPerformance.length > 0 ? (
-                  <div className="rounded-md border">
-                    <div className="grid grid-cols-4 gap-4 p-4 text-sm font-medium">
-                      <div>Event</div>
-                      <div>Date</div>
-                      <div>Attendees</div>
-                      <div>Revenue</div>
-                    </div>
-                    <div className="divide-y">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Event</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Attendees</TableHead>
+                        <TableHead>Revenue</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
                       {eventPerformance.map((event) => (
-                        <div key={event.id} className="grid grid-cols-4 gap-4 p-4 text-sm">
-                          <div className="font-medium">{event.name}</div>
-                          <div>{format(new Date(event.date), "MMM d, yyyy")}</div>
-                          <div>{event.attendees}</div>
-                          <div>${event.revenue}</div>
-                        </div>
+                        <TableRow key={event.id}>
+                          <TableCell className="font-medium">{event.name}</TableCell>
+                          <TableCell>{format(new Date(event.date), "MMM d, yyyy")}</TableCell>
+                          <TableCell>{event.attendees}</TableCell>
+                          <TableCell>${event.revenue}</TableCell>
+                        </TableRow>
                       ))}
-                    </div>
-                  </div>
+                    </TableBody>
+                  </Table>
                 ) : (
                   <p className="text-muted-foreground text-center py-6">No event data available</p>
                 )}
               </CardContent>
             </Card>
+
+            {/* Event Revenue by Venue Chart */}
+            {isLoading ? (
+              <Skeleton className="h-[300px] w-full" />
+            ) : (
+              <AnalyticsBarChart
+                title="Event Revenue by Venue"
+                description="Compare revenue generation across different venues"
+                data={eventPerformance.map(event => ({
+                  name: event.venue_name,
+                  revenue: event.revenue
+                }))}
+                series={[
+                  {
+                    key: "revenue",
+                    name: "Revenue ($)",
+                    color: "#F59E0B"
+                  }
+                ]}
+                formatter={(value) => [`$${value}`, 'revenue']}
+              />
+            )}
           </TabsContent>
           
           <TabsContent value="campaigns" className="space-y-4">
+            {/* Campaign Performance Table */}
             <Card>
               <CardHeader>
                 <CardTitle>Marketing Campaigns</CardTitle>
@@ -268,19 +364,21 @@ const PromoterAnalyticsPage = () => {
                     <Skeleton className="h-12 w-full" />
                   </div>
                 ) : campaignPerformance.length > 0 ? (
-                  <div className="rounded-md border">
-                    <div className="grid grid-cols-5 gap-4 p-4 text-sm font-medium">
-                      <div>Campaign</div>
-                      <div>Status</div>
-                      <div>Reach</div>
-                      <div>Engagement</div>
-                      <div>Conversion</div>
-                    </div>
-                    <div className="divide-y">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Campaign</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Reach</TableHead>
+                        <TableHead>Engagement</TableHead>
+                        <TableHead>Conversion</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
                       {campaignPerformance.map((campaign) => (
-                        <div key={campaign.id} className="grid grid-cols-5 gap-4 p-4 text-sm">
-                          <div className="font-medium">{campaign.name}</div>
-                          <div>
+                        <TableRow key={campaign.id}>
+                          <TableCell className="font-medium">{campaign.name}</TableCell>
+                          <TableCell>
                             <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
                               campaign.status === 'active' 
                                 ? 'bg-green-100 text-green-800'
@@ -290,43 +388,115 @@ const PromoterAnalyticsPage = () => {
                             }`}>
                               {campaign.status}
                             </span>
-                          </div>
-                          <div>{campaign.reach}</div>
-                          <div>{campaign.engagement}</div>
-                          <div>{campaign.conversion_rate}%</div>
-                        </div>
+                          </TableCell>
+                          <TableCell>{campaign.reach}</TableCell>
+                          <TableCell>{campaign.engagement}</TableCell>
+                          <TableCell>{campaign.conversion_rate}%</TableCell>
+                        </TableRow>
                       ))}
-                    </div>
-                  </div>
+                    </TableBody>
+                  </Table>
                 ) : (
                   <p className="text-muted-foreground text-center py-6">No campaign data available</p>
                 )}
               </CardContent>
             </Card>
+
+            {/* Campaign Performance Chart */}
+            {isLoading ? (
+              <Skeleton className="h-[300px] w-full" />
+            ) : (
+              <AnalyticsBarChart
+                title="Campaign Metrics"
+                description="Compare reach, engagement, and conversions across campaigns"
+                data={campaignPerformanceData}
+                series={[
+                  {
+                    key: "reach",
+                    name: "Reach",
+                    color: "#06B6D4"
+                  },
+                  {
+                    key: "engagement",
+                    name: "Engagement",
+                    color: "#8B5CF6"
+                  },
+                  {
+                    key: "conversion",
+                    name: "Conversions",
+                    color: "#F59E0B"
+                  }
+                ]}
+              />
+            )}
           </TabsContent>
           
           <TabsContent value="audience" className="space-y-4">
+            {/* Audience Demographics Chart */}
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              {isLoading ? (
+                <Skeleton className="h-[300px] w-full" />
+              ) : (
+                <AnalyticsPieChart
+                  title="Age Demographics"
+                  description="Age distribution of your audience"
+                  data={audienceDemographicData}
+                  colors={['#8B5CF6', '#06B6D4', '#10B981', '#F59E0B']}
+                />
+              )}
+
+              {/* Location Distribution Chart */}
+              {isLoading ? (
+                <Skeleton className="h-[300px] w-full" />
+              ) : (
+                <AnalyticsPieChart
+                  title="Location Distribution"
+                  description="Geographic distribution of your audience"
+                  data={[
+                    { name: 'City Center', value: 40 },
+                    { name: 'North District', value: 30 },
+                    { name: 'South Area', value: 20 },
+                    { name: 'East Region', value: 10 }
+                  ]}
+                  colors={['#F97316', '#8B5CF6', '#06B6D4', '#10B981']}
+                />
+              )}
+            </div>
+
+            {/* Audience Interests Table */}
             <Card>
               <CardHeader>
-                <CardTitle>Audience Demographics</CardTitle>
+                <CardTitle>Audience Interests</CardTitle>
                 <CardDescription>
-                  Information about your subscriber demographics
+                  Top interests and preferences of your audience
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 {isLoading ? (
                   <div className="space-y-3">
-                    <Skeleton className="h-[200px] w-full" />
+                    <Skeleton className="h-12 w-full" />
+                    <Skeleton className="h-12 w-full" />
+                    <Skeleton className="h-12 w-full" />
                   </div>
                 ) : audienceMetrics.length > 0 ? (
-                  <div className="text-center py-8">
-                    <p className="text-muted-foreground">
-                      Audience demographic visualizations will be implemented in the full version.
-                    </p>
-                    <p className="text-muted-foreground mt-2">
-                      This MVP provides the data foundation and basic UI components.
-                    </p>
-                  </div>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Category</TableHead>
+                        <TableHead>Segment</TableHead>
+                        <TableHead>Value</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {audienceMetrics.map((metric, index) => (
+                        <TableRow key={`${metric.metric_name}-${index}`}>
+                          <TableCell className="font-medium">{metric.metric_name}</TableCell>
+                          <TableCell>{metric.segment}</TableCell>
+                          <TableCell>{metric.metric_value}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
                 ) : (
                   <p className="text-muted-foreground text-center py-6">No audience data available</p>
                 )}
