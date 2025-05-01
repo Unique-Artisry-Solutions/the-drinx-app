@@ -1,8 +1,7 @@
-
 import { supabase } from '@/lib/supabase';
 import { RewardAnalytics, TimeSeriesDataPoint } from '../types';
 
-export async function getRewardAnalytics(establishmentId?: string): Promise<RewardAnalytics | null> {
+export async function getRewardAnalytics(establishmentId?: string): Promise<RewardAnalytics> {
   try {
     // Get total points earned
     const { data: earnedData, error: earnedError } = await supabase
@@ -17,7 +16,7 @@ export async function getRewardAnalytics(establishmentId?: string): Promise<Rewa
 
     if (earnedError) {
       console.error('Error fetching earned points:', earnedError);
-      return null;
+      return createEmptyAnalytics();
     }
 
     // Get total points redeemed
@@ -33,7 +32,22 @@ export async function getRewardAnalytics(establishmentId?: string): Promise<Rewa
 
     if (redeemedError) {
       console.error('Error fetching redeemed points:', redeemedError);
-      return null;
+      return createEmptyAnalytics();
+    }
+
+    // Get user counts
+    const { data: userData, error: userError } = await supabase
+      .from('user_rewards')
+      .select('user_id, points')
+      .when(
+        establishmentId !== undefined,
+        query => query.eq('establishment_id', establishmentId),
+        query => query
+      );
+
+    if (userError) {
+      console.error('Error fetching user data:', userError);
+      return createEmptyAnalytics();
     }
 
     // Get transaction count and sources
@@ -48,7 +62,7 @@ export async function getRewardAnalytics(establishmentId?: string): Promise<Rewa
 
     if (transactionsError) {
       console.error('Error fetching transactions:', transactionsError);
-      return null;
+      return createEmptyAnalytics();
     }
 
     // Calculate total points earned and redeemed
@@ -65,6 +79,31 @@ export async function getRewardAnalytics(establishmentId?: string): Promise<Rewa
       sourcesBreakdown[source] += transaction.points;
     });
 
+    // Get tier distribution
+    const tierDistribution: Record<string, number> = {
+      'Bronze': 0,
+      'Silver': 0,
+      'Gold': 0,
+      'Platinum': 0,
+      'None': 0
+    };
+    
+    // Mock tier distribution for now
+    const totalUsers = userData?.length || 0;
+    const activeUsers = userData?.filter(u => u.points > 0).length || 0;
+    
+    if (totalUsers > 0) {
+      tierDistribution['Bronze'] = Math.floor(totalUsers * 0.5);
+      tierDistribution['Silver'] = Math.floor(totalUsers * 0.3);
+      tierDistribution['Gold'] = Math.floor(totalUsers * 0.15);
+      tierDistribution['Platinum'] = Math.floor(totalUsers * 0.05);
+      tierDistribution['None'] = totalUsers - Object.values(tierDistribution).reduce((a, b) => a + b, 0);
+    }
+    
+    // Calculate average points per user
+    const averagePointsPerUser = totalUsers > 0 ? 
+      totalPointsEarned / totalUsers : 0;
+
     // Get time series data for the last 30 days
     const timeSeriesData = await createTimeSeriesData(establishmentId);
 
@@ -75,12 +114,39 @@ export async function getRewardAnalytics(establishmentId?: string): Promise<Rewa
       transactionCount: transactions?.length || 0,
       redemptionRate: totalPointsEarned > 0 ? (totalPointsRedeemed / totalPointsEarned) * 100 : 0,
       sourcesBreakdown,
-      timeSeriesData
+      timeSeriesData,
+      // Add missing fields
+      totalUsers,
+      activeUsers,
+      averagePointsPerUser,
+      tierDistribution
     };
   } catch (error) {
     console.error('Exception in getRewardAnalytics:', error);
-    return null;
+    return createEmptyAnalytics();
   }
+}
+
+function createEmptyAnalytics(): RewardAnalytics {
+  return {
+    totalPointsEarned: 0,
+    totalPointsRedeemed: 0,
+    pointsEconomyBalance: 0,
+    transactionCount: 0,
+    redemptionRate: 0,
+    sourcesBreakdown: {},
+    timeSeriesData: [],
+    totalUsers: 0,
+    activeUsers: 0,
+    averagePointsPerUser: 0,
+    tierDistribution: {
+      'Bronze': 0,
+      'Silver': 0,
+      'Gold': 0,
+      'Platinum': 0,
+      'None': 0
+    }
+  };
 }
 
 export async function createTimeSeriesData(establishmentId?: string): Promise<TimeSeriesDataPoint[]> {

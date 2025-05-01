@@ -109,12 +109,19 @@ const StreakSettingsManager = () => {
   const onSubmit = async (values: z.infer<typeof settingsSchema>) => {
     setIsSaving(true);
     try {
+      // Make sure name and streak_type are always provided
+      const dataToSubmit = {
+        ...values,
+        name: values.name || 'Unnamed Setting', // Ensure name is never empty
+        streak_type: values.streak_type || 'daily_check_in' // Ensure streak_type is never empty
+      };
+      
       // Check if we're updating or creating
       if (selectedSetting) {
         // Update existing setting
         const { error } = await supabase
           .from('streak_settings')
-          .update(values)
+          .update(dataToSubmit)
           .eq('id', selectedSetting);
 
         if (error) throw error;
@@ -127,7 +134,7 @@ const StreakSettingsManager = () => {
         // Create new setting
         const { data, error } = await supabase
           .from('streak_settings')
-          .insert(values)
+          .insert(dataToSubmit)
           .select();
 
         if (error) throw error;

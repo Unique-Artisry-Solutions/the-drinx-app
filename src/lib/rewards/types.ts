@@ -134,6 +134,10 @@ export interface RewardAnalytics {
   redemptionRate: number;
   sourcesBreakdown: Record<string, number>;
   timeSeriesData: TimeSeriesDataPoint[];
+  totalUsers: number;
+  activeUsers: number;
+  averagePointsPerUser: number;
+  tierDistribution: Record<string, number>;
 }
 
 export interface TimeSeriesDataPoint {

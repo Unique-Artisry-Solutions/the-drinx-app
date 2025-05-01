@@ -1,7 +1,40 @@
-
 import { supabase } from '@/lib/supabase';
-import { Achievement, AchievementProgressEvent } from './types';
+import { Achievement, AchievementProgressEvent, AchievementCategory } from './types';
 import { rewardsApi } from './api';
+
+// Define achievement categories
+export const achievementCategories: AchievementCategory[] = [
+  {
+    id: 'visits',
+    name: 'Visits',
+    description: 'Achievements for visiting establishments',
+    icon: 'map-pin'
+  },
+  {
+    id: 'mocktails',
+    name: 'Mocktails',
+    description: 'Achievements for trying mocktails',
+    icon: 'glass-water'
+  },
+  {
+    id: 'engagement',
+    name: 'Engagement',
+    description: 'Achievements for engaging with the community',
+    icon: 'users'
+  },
+  {
+    id: 'creation',
+    name: 'Creation',
+    description: 'Achievements for creating content',
+    icon: 'pen-tool'
+  },
+  {
+    id: 'circuits',
+    name: 'Circuits',
+    description: 'Achievements for exploring mocktail circuits',
+    icon: 'route'
+  }
+];
 
 // This file would contain the actual achievement tracking logic
 // This is a simplified version for demonstration
@@ -13,7 +46,7 @@ const achievementDefinitions: Record<string, Omit<Achievement, 'progress' | 'isC
     name: 'First Visit',
     description: 'Visit your first establishment',
     category: 'visits',
-    icon: 'map-pin',
+    icon: 'MapPin',
     pointsReward: 50,
     threshold: 1
   },
@@ -119,14 +152,13 @@ const achievementDefinitions: Record<string, Omit<Achievement, 'progress' | 'isC
 };
 
 export async function getUserAchievements(userId: string): Promise<Achievement[]> {
-  // In a real implementation, this would query a database for user achievement progress
-
   try {
-    // Get progress from user_visit_achievement table as a sample
+    // Get progress from database
     const { data: achievementData, error } = await supabase
-      .from('user_visit_achievement')
+      .from('user_activity_streaks') // Use existing table instead of non-existent one
       .select('*')
-      .eq('user_id', userId);
+      .eq('user_id', userId)
+      .eq('streak_type', 'visit');
 
     if (error) {
       console.error('Error fetching user achievements:', error);
@@ -144,9 +176,11 @@ export async function getUserAchievements(userId: string): Promise<Achievement[]
     const completedAchievements = new Set<string>();
     
     achievementData?.forEach(achievement => {
-      const type = achievement.achievement_type;
+      const type = achievement.streak_type;
       userAchievementMap.set(type, (userAchievementMap.get(type) || 0) + 1);
-      completedAchievements.add(type);
+      if (achievement.current_count >= achievement.threshold) {
+        completedAchievements.add(type);
+      }
     });
 
     // Return achievements with progress
@@ -170,6 +204,18 @@ export async function getUserAchievements(userId: string): Promise<Achievement[]
       isCompleted: false
     }));
   }
+}
+
+// Helper function to group achievements by category
+export function getAchievementsByCategory(achievements: Achievement[]): Record<string, Achievement[]> {
+  return achievements.reduce<Record<string, Achievement[]>>((acc, achievement) => {
+    const category = achievement.category;
+    if (!acc[category]) {
+      acc[category] = [];
+    }
+    acc[category].push(achievement);
+    return acc;
+  }, {});
 }
 
 export async function updateAchievementProgress(

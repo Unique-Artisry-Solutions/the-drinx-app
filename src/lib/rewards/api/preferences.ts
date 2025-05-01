@@ -2,21 +2,22 @@
 import { supabase } from '@/lib/supabase';
 import { UserRewardPreference } from '../types';
 
+// Update the return type to include the structure expected by consumers
 export async function getUserPreference(
   userId: string,
   preferenceKey: string
-): Promise<{ value: any; success: boolean }> {
+): Promise<{ value: any; success: boolean; preference_key?: string; preference_value?: any }> {
   try {
     const { data, error } = await supabase
       .from('user_reward_preferences')
-      .select('preference_value')
+      .select('preference_key, preference_value')
       .eq('user_id', userId)
       .eq('preference_key', preferenceKey)
       .single();
 
     if (error) {
       if (error.code === 'PGRST116') { // Not found
-        return { value: null, success: true };
+        return { value: null, success: true, preference_key: preferenceKey, preference_value: null };
       }
       console.error('Error fetching user preference:', error);
       return { value: null, success: false };
@@ -24,7 +25,9 @@ export async function getUserPreference(
 
     return { 
       value: data.preference_value, 
-      success: true 
+      success: true,
+      preference_key: data.preference_key,
+      preference_value: data.preference_value
     };
   } catch (error) {
     console.error('Exception fetching user preference:', error);
