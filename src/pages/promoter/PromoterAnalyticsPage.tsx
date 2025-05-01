@@ -277,7 +277,7 @@ const PromoterAnalyticsPage = () => {
                     color: "#F59E0B"
                   }
                 ]}
-                formatter={(value, name) => [value, name === "revenue" ? "$100s" : "people"]}
+                formatter={(value) => [`${value}`, value === "revenue" ? "$100s" : "people"]}
               />
             )}
           </TabsContent>
@@ -427,6 +427,7 @@ const PromoterAnalyticsPage = () => {
                     color: "#F59E0B"
                   }
                 ]}
+                formatter={(value) => [`${value}`, '']}
               />
             )}
           </TabsContent>
