@@ -145,7 +145,7 @@ export const promoterFeatures: FeatureItem[] = [
     databaseStatus: "in_progress",
     userImpact: "medium",
     complexity: "high",
-    implementationProgress: 40,
+    implementationProgress: 60,
     tags: ["promoter", "analytics", "reporting"],
     adminAccess: "none",
     establishmentAccess: "none",
