@@ -10,8 +10,22 @@ export const useEventMutations = () => {
 
   const createEvent = useMutation({
     mutationFn: async (eventData: EventFormData) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
+      // Check for admin bypass first
+      const isAdminBypass = localStorage.getItem('admin_bypass') === 'true';
+      let userId = null;
+      
+      if (isAdminBypass) {
+        userId = localStorage.getItem('bypass_user_id');
+        if (!userId) {
+          throw new Error('Bypass user ID not found');
+        }
+        console.log('Using bypass user ID for event creation:', userId);
+      } else {
+        // Regular Supabase auth flow
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('User not authenticated');
+        userId = user.id;
+      }
 
       const { data: eventResponse, error: eventError } = await supabase
         .from('events')
@@ -23,7 +37,7 @@ export const useEventMutations = () => {
           venue_id: eventData.venueId || null,
           image_url: eventData.imageUrl,
           promotional_materials: eventData.promotionalMaterials,
-          created_by: user.id
+          created_by: userId
         })
         .select()
         .single();
@@ -59,7 +73,7 @@ export const useEventMutations = () => {
           const { error: notificationError } = await supabase
             .from('notifications')
             .insert({
-              recipient_id: user.id,
+              recipient_id: userId,
               recipient_type: 'promoter',
               title: schedule.title || `Reminder: ${eventData.name}`,
               content: schedule.content || `Don't forget: ${eventData.name} is happening soon!`,
