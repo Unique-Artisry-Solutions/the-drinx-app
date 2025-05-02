@@ -28,15 +28,17 @@ interface EventWizardContextType {
   nextStep: () => void;
   prevStep: () => void;
   goToStep: (step: number) => void;
+  onSubmit?: (formData: EventFormData) => Promise<void> | void;
 }
 
 const EventWizardContext = createContext<EventWizardContextType | undefined>(undefined);
 
 interface EventWizardProviderProps {
   children: React.ReactNode;
+  onSubmit?: (formData: EventFormData) => Promise<void> | void;
 }
 
-export const EventWizardProvider: React.FC<EventWizardProviderProps> = ({ children }) => {
+export const EventWizardProvider: React.FC<EventWizardProviderProps> = ({ children, onSubmit }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<EventFormData>({
     name: '',
@@ -44,7 +46,7 @@ export const EventWizardProvider: React.FC<EventWizardProviderProps> = ({ childr
     date: '',
     time: '',
     ticketTypes: [],
-    imageUrl: '', // Added the required imageUrl property with default empty string
+    imageUrl: '', 
     promotionalMaterials: [],
     notificationSchedules: []
   });
@@ -90,7 +92,8 @@ export const EventWizardProvider: React.FC<EventWizardProviderProps> = ({ childr
       currentStep,
       nextStep,
       prevStep,
-      goToStep
+      goToStep,
+      onSubmit
     }}>
       {children}
     </EventWizardContext.Provider>
