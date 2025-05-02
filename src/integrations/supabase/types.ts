@@ -1036,6 +1036,70 @@ export type Database = {
           },
         ]
       }
+      event_notification_schedules: {
+        Row: {
+          content: string
+          coordinates: Json | null
+          created_at: string
+          event_id: string
+          id: string
+          location_based: boolean
+          priority: Database["public"]["Enums"]["notification_priority"]
+          scheduled_for: string
+          target_radius: number | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          coordinates?: Json | null
+          created_at?: string
+          event_id: string
+          id?: string
+          location_based?: boolean
+          priority?: Database["public"]["Enums"]["notification_priority"]
+          scheduled_for: string
+          target_radius?: number | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          coordinates?: Json | null
+          created_at?: string
+          event_id?: string
+          id?: string
+          location_based?: boolean
+          priority?: Database["public"]["Enums"]["notification_priority"]
+          scheduled_for?: string
+          target_radius?: number | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_notification_schedules_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_statistics"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "event_notification_schedules_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_notification_schedules_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "promoter_event_performance_view"
+            referencedColumns: ["event_id"]
+          },
+        ]
+      }
       event_ticket_types: {
         Row: {
           created_at: string | null

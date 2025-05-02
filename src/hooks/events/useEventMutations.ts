@@ -58,31 +58,23 @@ export const useEventMutations = () => {
       }
 
       if (eventData.notificationSchedules && eventData.notificationSchedules.length > 0) {
-        for (const schedule of eventData.notificationSchedules) {
-          // Store all notification data in the notifications table
-          const metadata: any = {
-            event_id: eventResponse.id,
-            scheduled_for: schedule.scheduledFor,
-            location_based: !!schedule.locationBased,
-            coordinates: schedule.coordinates || null,
-            target_radius: schedule.targetRadius || null,
-            notification_type: 'event_schedule'
-          };
-          
-          // Create a notification record
-          const { error: notificationError } = await supabase
-            .from('notifications')
-            .insert({
-              recipient_id: userId,
-              recipient_type: 'promoter',
-              title: schedule.title || `Reminder: ${eventData.name}`,
-              content: schedule.content || `Don't forget: ${eventData.name} is happening soon!`,
-              priority: schedule.priority || 'medium',
-              metadata: metadata
-            });
+        // Use the new event_notification_schedules table instead of notifications table
+        const notificationInserts = eventData.notificationSchedules.map(schedule => ({
+          event_id: eventResponse.id,
+          title: schedule.title || `Reminder: ${eventData.name}`,
+          content: schedule.content || `Don't forget: ${eventData.name} is happening soon!`,
+          priority: schedule.priority || 'medium',
+          scheduled_for: schedule.scheduledFor,
+          location_based: !!schedule.locationBased,
+          coordinates: schedule.coordinates || null,
+          target_radius: schedule.targetRadius || null
+        }));
+        
+        const { error: notificationError } = await supabase
+          .from('event_notification_schedules')
+          .insert(notificationInserts);
 
-          if (notificationError) throw notificationError;
-        }
+        if (notificationError) throw notificationError;
       }
 
       return eventResponse;
