@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -14,7 +13,7 @@ import AnalyticsPieChart from '@/components/charts/AnalyticsPieChart';
 import AnalyticsBarChart from '@/components/charts/AnalyticsBarChart';
 import AnalyticsLineChart from '@/components/charts/AnalyticsLineChart';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { safeFormatDate } from '@/utils/environment';
+import { safeFormatDate } from '@/utils/dateUtils';
 
 interface AudienceAnalyticsTabProps {
   audienceMetrics: AudienceMetric[];

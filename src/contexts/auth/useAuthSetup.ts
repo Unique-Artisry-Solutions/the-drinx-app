@@ -39,7 +39,7 @@ export const useAuthSetup = ({
       console.log(`[AUTH SETUP ${setupId}] Preview environment detected: using enhanced setup`);
       
       // In preview, we force persistence settings for auth
-      const { data: { session } } = supabase.auth.getSession().then(({ data }) => {
+      supabase.auth.getSession().then(({ data }) => {
         if (data.session) {
           console.log(`[AUTH SETUP ${setupId}] Found existing session in preview`);
           return { data };
@@ -165,3 +165,4 @@ export const useAuthSetup = ({
     };
   }, []);
 };
+
