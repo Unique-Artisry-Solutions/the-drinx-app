@@ -34,7 +34,7 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     console.log("ProtectedRoute - No authenticated user, redirecting to login");
     // Store the path the user was trying to access
     localStorage.setItem('auth_redirect', location.pathname);
-    // Non-logged in users should be redirected to the landing page
+    // Non-logged in users should be redirected to the login page
     return <Navigate to="/login" replace />;
   }
   
@@ -124,7 +124,7 @@ export const TypedProtectedRoute = ({
       // Store the intended destination
       localStorage.setItem('auth_redirect', location.pathname);
       // Redirect if user types don't match
-      return <Navigate to="/landing" state={{ message: `You need a ${userType} account to access this page` }} replace />;
+      return <Navigate to="/login" state={{ userType, message: `You need a ${userType} account to access this page` }} replace />;
     }
     
     console.log("TypedProtectedRoute - Admin bypass type matches, allowing access");
@@ -147,7 +147,7 @@ export const TypedProtectedRoute = ({
     console.log("TypedProtectedRoute - User type mismatch, redirecting");
     // Store the intended destination
     localStorage.setItem('auth_redirect', location.pathname);
-    return <Navigate to="/landing" state={{ message: `You need a ${userType} account to access this page` }} replace />;
+    return <Navigate to="/login" state={{ userType, message: `You need a ${userType} account to access this page` }} replace />;
   }
   
   console.log("TypedProtectedRoute - Access granted");

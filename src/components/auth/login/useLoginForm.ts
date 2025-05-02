@@ -139,7 +139,10 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
         if (userType && loggedInType !== userType && userType !== 'individual') {
           console.log(`User type mismatch, attempting to switch to ${userType} role`);
           try {
-            await supabase.rpc('switch_active_role', { role_to_activate: userType });
+            const { error } = await supabase.rpc('switch_active_role', { role_to_activate: userType });
+            if (error) throw error;
+            
+            // Update localStorage after successful role switch
             localStorage.setItem('user_type', userType);
             console.log(`Successfully switched to ${userType} role`);
           } catch (roleError) {
@@ -166,10 +169,12 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
           const storedUserType = localStorage.getItem('user_type');
           console.log("Login redirect - user type:", storedUserType);
           
-          if (storedUserType === 'establishment') {
-            navigate('/establishment/dashboard', { replace: true });
-          } else if (storedUserType === 'promoter') {
+          // Explicitly handle promoter redirect
+          if (storedUserType === 'promoter') {
+            console.log("Redirecting to promoter dashboard");
             navigate('/promoter/dashboard', { replace: true });
+          } else if (storedUserType === 'establishment') {
+            navigate('/establishment/dashboard', { replace: true });
           } else {
             navigate('/explore', { replace: true });
           }
@@ -179,7 +184,7 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
       console.error('Login error:', error);
       setFormError(error.message || 'Failed to login');
       
-      if (error.message.includes('Email not verified')) {
+      if (error.message && error.message.includes('Email not verified')) {
         setShowResendVerification(true);
       }
     } finally {
@@ -248,18 +253,21 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
       if (savedRedirect) {
         console.log(`Redirecting to saved path: ${savedRedirect}`);
         navigate(savedRedirect);
-      } else if (type === 'admin') {
-        console.log("Redirecting to admin dashboard");
-        navigate('/admin/system-breakdown');
-      } else if (type === 'establishment') {
-        console.log("Redirecting to establishment dashboard");
-        navigate('/establishment/dashboard');
-      } else if (type === 'promoter') {
-        console.log("Redirecting to promoter dashboard");
-        navigate('/promoter/dashboard');
       } else {
-        console.log("Redirecting to explore page");
-        navigate('/explore');
+        // Ensure proper routing based on user type
+        if (type === 'admin') {
+          console.log("Redirecting to admin dashboard");
+          navigate('/admin/system-breakdown');
+        } else if (type === 'establishment') {
+          console.log("Redirecting to establishment dashboard");
+          navigate('/establishment/dashboard'); 
+        } else if (type === 'promoter') {
+          console.log("Redirecting to promoter dashboard");
+          navigate('/promoter/dashboard');
+        } else {
+          console.log("Redirecting to explore page");
+          navigate('/explore');
+        }
       }
     } catch (error) {
       console.error("Error during bypass login:", error);

@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
@@ -60,7 +61,13 @@ export function useAuthActions() {
         
         localStorage.setItem('user_authenticated', 'true');
         localStorage.setItem('user_email', data.user?.email || '');
-        localStorage.setItem('user_type', data.user?.user_metadata.user_type || 'individual');
+        
+        // Make sure we're explicitly setting the user type
+        let userType = data.user?.user_metadata.user_type || 'individual';
+        console.log('User metadata from sign in:', data.user?.user_metadata);
+        console.log('Setting user type to:', userType);
+        localStorage.setItem('user_type', userType);
+        
         if (data.user?.user_metadata.username) {
           localStorage.setItem('user_username', data.user.user_metadata.username);
         }
