@@ -7,8 +7,9 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { EventMarketingCampaign } from '@/types/EventTypes';
-import { Facebook, Twitter, Instagram, Link2, Copy, Linkedin, Globe, MessageCircle, Heart, Share } from 'lucide-react';
+import { Facebook, Twitter, Instagram, Link2, Copy, Linkedin, Globe, MessageCircle, Heart, Share, Loader2 } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
+import { useEventMarketing } from '@/hooks/events/useEventMarketing';
 
 interface SocialSharingPanelProps {
   eventId: string;
@@ -20,6 +21,8 @@ const SocialSharingPanel: React.FC<SocialSharingPanelProps> = ({ eventId, eventN
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('facebook');
   const [shareUrl, setShareUrl] = useState(`https://youreventapp.com/events/${eventId}`);
+  const { trackMetric, createCampaign } = useEventMarketing(eventId);
+  const [isSharing, setIsSharing] = useState(false);
   
   // Social copy texts with placeholders
   const [socialCopy, setSocialCopy] = useState({
@@ -29,26 +32,118 @@ const SocialSharingPanel: React.FC<SocialSharingPanelProps> = ({ eventId, eventN
     linkedin: `I'm pleased to share that tickets for ${eventName} are now available. This is a fantastic opportunity to network and learn. #ProfessionalEvents #${eventName.replace(/\s+/g, '')}`
   });
 
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(shareUrl);
-    toast({
-      title: "Link Copied",
-      description: "Event link has been copied to clipboard!",
-    });
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      toast({
+        title: "Link Copied",
+        description: "Event link has been copied to clipboard!",
+      });
+      
+      // Track the copy action
+      const campaign = await findOrCreateCampaign('link_sharing');
+      if (campaign) {
+        trackMetric(campaign.id, 'link_copies', 1);
+      }
+    } catch (err) {
+      toast({
+        title: "Copy Failed",
+        description: "Could not copy to clipboard. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
-  const handleSocialShare = (platform: string) => {
+  // Find existing campaign or create a new one
+  const findOrCreateCampaign = async (type: string) => {
+    const existingCampaign = campaigns?.find(c => c.campaign_type === type);
+    if (existingCampaign) {
+      return existingCampaign;
+    }
+    
+    try {
+      // Create a new campaign
+      return await createCampaign({
+        name: `${type.charAt(0).toUpperCase() + type.slice(1)} Campaign`,
+        description: `Campaign for tracking ${type} engagement`,
+        campaign_type: type,
+        status: 'active'
+      });
+    } catch (err) {
+      console.error(`Failed to create ${type} campaign:`, err);
+      return null;
+    }
+  };
+
+  const handleSocialShare = async (platform: string) => {
+    setIsSharing(true);
+    
+    try {
+      // Find or create a campaign for tracking
+      const campaign = await findOrCreateCampaign('social_sharing');
+      if (!campaign) throw new Error('Could not create campaign');
+      
+      const content = socialCopy[platform as keyof typeof socialCopy];
+      const trackingUrl = `${window.location.origin}/api/track-social-click?cid=${campaign.id}&eid=${eventId}&platform=${platform}`;
+      
+      if (platform === 'facebook' || platform === 'twitter' || platform === 'linkedin') {
+        // For platforms with direct sharing APIs, use our backend function
+        const response = await fetch(`${window.location.origin}/api/share-to-social`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            platform,
+            content,
+            url: shareUrl,
+            campaignId: campaign.id,
+            eventId
+          })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          // Track the successful share
+          trackMetric(campaign.id, `${platform}_shares`, 1);
+          toast({
+            title: "Share Complete",
+            description: `Successfully shared to ${platform.charAt(0).toUpperCase() + platform.slice(1)}!`,
+          });
+        } else {
+          // If API integration is not complete, fall back to sharing dialog
+          openShareDialog(platform, content, shareUrl);
+        }
+      } else {
+        // For platforms without direct API integration
+        openShareDialog(platform, content, shareUrl);
+      }
+      
+      // Track attempted shares regardless
+      trackMetric(campaign.id, 'share_attempts', 1);
+    } catch (err) {
+      console.error("Error sharing to social media:", err);
+      // Fall back to sharing dialog on error
+      const content = socialCopy[platform as keyof typeof socialCopy];
+      openShareDialog(platform, content, shareUrl);
+    } finally {
+      setIsSharing(false);
+    }
+  };
+  
+  const openShareDialog = (platform: string, text: string, url: string) => {
     let shareUrlWithParams = '';
     
     switch (platform) {
       case 'facebook':
-        shareUrlWithParams = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(socialCopy.facebook)}`;
+        shareUrlWithParams = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}&quote=${encodeURIComponent(text)}`;
         break;
       case 'twitter':
-        shareUrlWithParams = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(socialCopy.twitter)}`;
+        shareUrlWithParams = `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
         break;
       case 'linkedin':
-        shareUrlWithParams = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}&summary=${encodeURIComponent(socialCopy.linkedin)}`;
+        shareUrlWithParams = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}&summary=${encodeURIComponent(text)}`;
         break;
       default:
         toast({
@@ -102,8 +197,12 @@ const SocialSharingPanel: React.FC<SocialSharingPanelProps> = ({ eventId, eventN
               size="lg" 
               className="flex-col gap-2 h-20 w-24"
               onClick={() => handleSocialShare('facebook')}
+              disabled={isSharing}
             >
-              <Facebook size={24} className="text-blue-600" />
+              {isSharing && activeTab === 'facebook' ? 
+                <Loader2 size={24} className="text-blue-600 animate-spin" /> :
+                <Facebook size={24} className="text-blue-600" />
+              }
               <span>Facebook</span>
             </Button>
             
@@ -112,8 +211,12 @@ const SocialSharingPanel: React.FC<SocialSharingPanelProps> = ({ eventId, eventN
               size="lg" 
               className="flex-col gap-2 h-20 w-24"
               onClick={() => handleSocialShare('twitter')}
+              disabled={isSharing}
             >
-              <Twitter size={24} className="text-blue-400" />
+              {isSharing && activeTab === 'twitter' ? 
+                <Loader2 size={24} className="text-blue-400 animate-spin" /> :
+                <Twitter size={24} className="text-blue-400" />
+              }
               <span>Twitter</span>
             </Button>
             
@@ -122,8 +225,12 @@ const SocialSharingPanel: React.FC<SocialSharingPanelProps> = ({ eventId, eventN
               size="lg" 
               className="flex-col gap-2 h-20 w-24"
               onClick={() => handleSocialShare('instagram')}
+              disabled={isSharing}
             >
-              <Instagram size={24} className="text-pink-500" />
+              {isSharing && activeTab === 'instagram' ? 
+                <Loader2 size={24} className="text-pink-500 animate-spin" /> :
+                <Instagram size={24} className="text-pink-500" />
+              }
               <span>Instagram</span>
             </Button>
             
@@ -132,8 +239,12 @@ const SocialSharingPanel: React.FC<SocialSharingPanelProps> = ({ eventId, eventN
               size="lg" 
               className="flex-col gap-2 h-20 w-24"
               onClick={() => handleSocialShare('linkedin')}
+              disabled={isSharing}
             >
-              <Linkedin size={24} className="text-blue-700" />
+              {isSharing && activeTab === 'linkedin' ? 
+                <Loader2 size={24} className="text-blue-700 animate-spin" /> :
+                <Linkedin size={24} className="text-blue-700" />
+              }
               <span>LinkedIn</span>
             </Button>
           </div>
@@ -304,7 +415,12 @@ const SocialSharingPanel: React.FC<SocialSharingPanelProps> = ({ eventId, eventN
         <Button 
           onClick={() => handleSocialShare(activeTab)}
           className="ml-auto"
+          disabled={isSharing}
         >
+          {isSharing ? 
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 
+            <Share className="mr-2 h-4 w-4" />
+          }
           Share to {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
         </Button>
       </CardFooter>

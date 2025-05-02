@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,8 +9,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { EventMarketingCampaign } from '@/types/EventTypes';
-import { Mail, SendHorizontal, List, Users, FileText } from 'lucide-react';
+import { Mail, SendHorizontal, List, Users, FileText, Loader2 } from 'lucide-react';
 import { PlusCircle } from '@/components/icons/PlusCircle';
+import { supabase } from '@/integrations/supabase/client';
+import { useEventMarketing } from '@/hooks/events/useEventMarketing';
 
 interface EmailMarketingPanelProps {
   eventId: string;
@@ -45,27 +48,74 @@ const sampleTemplates: EmailTemplate[] = [
   }
 ];
 
+interface AttendeeList {
+  id: string;
+  name: string;
+  emails: string[];
+}
+
 const EmailMarketingPanel: React.FC<EmailMarketingPanelProps> = ({ eventId, eventName, campaigns }) => {
   const { toast } = useToast();
+  const { createCampaign, trackMetric } = useEventMarketing(eventId);
   const [currentTab, setCurrentTab] = useState('compose');
   const [emailSubject, setEmailSubject] = useState('');
   const [emailContent, setEmailContent] = useState('');
   const [selectedTemplate, setSelectedTemplate] = useState<string>('');
   const [selectedList, setSelectedList] = useState<string>('all');
+  const [isSending, setIsSending] = useState(false);
+  const [testEmail, setTestEmail] = useState('');
+  const [attendeeLists, setAttendeeLists] = useState<AttendeeList[]>([
+    { id: 'all', name: 'All Attendees', emails: [] },
+    { id: 'registered', name: 'Registered Only', emails: [] },
+    { id: 'checked-in', name: 'Checked-in Attendees', emails: [] },
+    { id: 'vip', name: 'VIP Ticket Holders', emails: [] },
+  ]);
+  const [sentCampaigns, setSentCampaigns] = useState<any[]>([
+    { id: 'sample-1', name: 'Event Announcement', recipients: 256, openRate: '68%', clickRate: '42%', sentDate: 'Jul 15, 2023' },
+    { id: 'sample-2', name: 'Early Bird Reminder', recipients: 128, openRate: '72%', clickRate: '58%', sentDate: 'Jul 10, 2023' },
+  ]);
 
-  const handleSendTestEmail = () => {
-    toast({
-      title: "Test Email Sent",
-      description: "A test email has been sent to your address.",
-    });
-  };
-
-  const handleSendCampaign = () => {
-    toast({
-      title: "Campaign Scheduled",
-      description: "Your email campaign has been scheduled to send.",
-    });
-  };
+  // Fetch attendee lists when component mounts
+  React.useEffect(() => {
+    const fetchAttendees = async () => {
+      try {
+        const { data: attendees, error } = await supabase
+          .from('event_attendees')
+          .select('email, status, custom_fields, ticket_type_id')
+          .eq('event_id', eventId);
+          
+        if (error) throw error;
+        
+        // Get all valid emails
+        const allEmails = attendees?.filter(a => a.email)
+          .map(a => a.email as string) || [];
+          
+        // Get registered emails
+        const registeredEmails = attendees?.filter(a => a.email && a.status === 'registered')
+          .map(a => a.email as string) || [];
+          
+        // Get checked-in emails
+        const checkedInEmails = attendees?.filter(a => a.email && a.status === 'checked_in')
+          .map(a => a.email as string) || [];
+          
+        // Get VIP emails - assuming you have a field or ticket type that identifies VIPs
+        const vipEmails = attendees?.filter(a => a.email && 
+          (a.custom_fields?.isVip || a.ticket_type_id === 'vip-ticket-id'))
+          .map(a => a.email as string) || [];
+          
+        setAttendeeLists([
+          { id: 'all', name: 'All Attendees', emails: allEmails },
+          { id: 'registered', name: 'Registered Only', emails: registeredEmails },
+          { id: 'checked-in', name: 'Checked-in Attendees', emails: checkedInEmails },
+          { id: 'vip', name: 'VIP Ticket Holders', emails: vipEmails },
+        ]);
+      } catch (err) {
+        console.error("Error fetching attendees:", err);
+      }
+    };
+    
+    fetchAttendees();
+  }, [eventId]);
 
   const handleTemplateSelect = (templateId: string) => {
     const template = sampleTemplates.find(t => t.id === templateId);
@@ -81,6 +131,177 @@ const EmailMarketingPanel: React.FC<EmailMarketingPanelProps> = ({ eventId, even
       setEmailContent(content);
     }
     setSelectedTemplate(templateId);
+  };
+
+  const convertContentToHtml = (content: string) => {
+    // Simple conversion of newlines to <br> tags
+    return content.replace(/\n/g, '<br>');
+  };
+
+  const handleSendTestEmail = async () => {
+    if (!testEmail) {
+      toast({
+        title: "Email Required",
+        description: "Please enter a test email address",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setIsSending(true);
+    
+    try {
+      // Create a campaign for tracking purposes if none exists
+      let campaignId: string;
+      const existingCampaign = campaigns?.find(c => c.name === 'Test Email Campaign');
+      
+      if (existingCampaign) {
+        campaignId = existingCampaign.id;
+      } else {
+        const newCampaign = await createCampaign({
+          name: 'Test Email Campaign',
+          description: 'Campaign for test emails',
+          campaign_type: 'email',
+          status: 'draft'
+        });
+        campaignId = newCampaign.id;
+      }
+      
+      // Prepare HTML content with tracking pixel
+      const htmlContent = convertContentToHtml(emailContent);
+      
+      // Send email using the edge function
+      const response = await fetch(`${window.location.origin}/api/send-marketing-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          subject: emailSubject,
+          htmlContent,
+          recipients: [testEmail],
+          campaignId,
+          eventId,
+          trackingPixel: true
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to send test email');
+      }
+      
+      // Track metrics
+      await trackMetric(campaignId, 'test_emails_sent', 1);
+      
+      toast({
+        title: "Test Email Sent",
+        description: `A test email has been sent to ${testEmail}`,
+      });
+    } catch (error) {
+      console.error("Error sending test email:", error);
+      toast({
+        title: "Error",
+        description: "Failed to send test email. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const handleSendCampaign = async () => {
+    if (!emailSubject || !emailContent) {
+      toast({
+        title: "Missing Information",
+        description: "Please provide both subject and content for your email",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    const selectedListObj = attendeeLists.find(list => list.id === selectedList);
+    if (!selectedListObj || selectedListObj.emails.length === 0) {
+      toast({
+        title: "No Recipients",
+        description: "The selected list has no recipients",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setIsSending(true);
+    
+    try {
+      // Create a campaign for this email
+      const campaignName = `Email: ${emailSubject.substring(0, 30)}${emailSubject.length > 30 ? '...' : ''}`;
+      const newCampaign = await createCampaign({
+        name: campaignName,
+        description: `Email campaign: ${emailSubject}`,
+        campaign_type: 'email',
+        status: 'active',
+        target_audience: { recipient_list: selectedList, recipient_count: selectedListObj.emails.length }
+      });
+      
+      // Prepare HTML content
+      const htmlContent = convertContentToHtml(emailContent);
+      
+      // Send email using the edge function
+      const response = await fetch(`${window.location.origin}/api/send-marketing-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          subject: emailSubject,
+          htmlContent,
+          recipients: selectedListObj.emails,
+          campaignId: newCampaign.id,
+          eventId,
+          trackingPixel: true
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to send campaign emails');
+      }
+      
+      // Update campaign metrics
+      await trackMetric(newCampaign.id, 'emails_sent', selectedListObj.emails.length);
+      
+      // Add to sent campaigns list
+      const newSentCampaign = {
+        id: newCampaign.id,
+        name: campaignName,
+        recipients: selectedListObj.emails.length,
+        openRate: '0%',
+        clickRate: '0%',
+        sentDate: new Date().toLocaleDateString()
+      };
+      
+      setSentCampaigns([newSentCampaign, ...sentCampaigns]);
+      
+      toast({
+        title: "Campaign Sent",
+        description: `Email campaign has been sent to ${selectedListObj.emails.length} recipients`,
+      });
+      
+      // Reset the form
+      setEmailSubject('');
+      setEmailContent('');
+      setSelectedTemplate('');
+      
+      // Switch to sent tab
+      setCurrentTab('sent');
+    } catch (error) {
+      console.error("Error sending campaign:", error);
+      toast({
+        title: "Error",
+        description: "Failed to send campaign. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSending(false);
+    }
   };
 
   return (
@@ -121,10 +342,11 @@ const EmailMarketingPanel: React.FC<EmailMarketingPanelProps> = ({ eventId, even
                     <SelectValue placeholder="Select a recipient list" />
                   </SelectTrigger>
                   <SelectContent position="popper">
-                    <SelectItem value="all">All Attendees</SelectItem>
-                    <SelectItem value="registered">Registered Only</SelectItem>
-                    <SelectItem value="checked-in">Checked-in Attendees</SelectItem>
-                    <SelectItem value="vip">VIP Ticket Holders</SelectItem>
+                    {attendeeLists.map(list => (
+                      <SelectItem key={list.id} value={list.id}>
+                        {list.name} ({list.emails.length})
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -167,11 +389,33 @@ const EmailMarketingPanel: React.FC<EmailMarketingPanelProps> = ({ eventId, even
                 />
               </div>
               
-              <div className="flex justify-between pt-4">
-                <Button variant="outline" onClick={handleSendTestEmail}>
-                  Send Test Email
-                </Button>
-                <Button onClick={handleSendCampaign}>
+              <div className="border p-4 rounded-md bg-slate-50">
+                <Label htmlFor="testEmail" className="block mb-2">Send a test email</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="testEmail"
+                    placeholder="Enter your email"
+                    value={testEmail}
+                    onChange={(e) => setTestEmail(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Button 
+                    variant="outline" 
+                    onClick={handleSendTestEmail}
+                    disabled={isSending || !testEmail}
+                  >
+                    {isSending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    Send Test
+                  </Button>
+                </div>
+              </div>
+              
+              <div className="flex justify-end pt-4">
+                <Button 
+                  onClick={handleSendCampaign}
+                  disabled={isSending || !emailSubject || !emailContent}
+                >
+                  {isSending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                   Send Campaign
                 </Button>
               </div>
@@ -228,44 +472,28 @@ const EmailMarketingPanel: React.FC<EmailMarketingPanelProps> = ({ eventId, even
                     <tr>
                       <th className="px-4 py-3">List Name</th>
                       <th className="px-4 py-3">Contacts</th>
-                      <th className="px-4 py-3">Last Updated</th>
+                      <th className="px-4 py-3">Status</th>
                       <th className="px-4 py-3">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr className="border-b hover:bg-muted/50">
-                      <td className="px-4 py-3 font-medium">All Attendees</td>
-                      <td className="px-4 py-3">128</td>
-                      <td className="px-4 py-3">Today</td>
-                      <td className="px-4 py-3">
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="ghost">Edit</Button>
-                          <Button size="sm" variant="ghost">Export</Button>
-                        </div>
-                      </td>
-                    </tr>
-                    <tr className="border-b hover:bg-muted/50">
-                      <td className="px-4 py-3 font-medium">VIP Ticket Holders</td>
-                      <td className="px-4 py-3">24</td>
-                      <td className="px-4 py-3">Yesterday</td>
-                      <td className="px-4 py-3">
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="ghost">Edit</Button>
-                          <Button size="sm" variant="ghost">Export</Button>
-                        </div>
-                      </td>
-                    </tr>
-                    <tr className="border-b hover:bg-muted/50">
-                      <td className="px-4 py-3 font-medium">Early Bird Registrants</td>
-                      <td className="px-4 py-3">56</td>
-                      <td className="px-4 py-3">Jul 12, 2023</td>
-                      <td className="px-4 py-3">
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="ghost">Edit</Button>
-                          <Button size="sm" variant="ghost">Export</Button>
-                        </div>
-                      </td>
-                    </tr>
+                    {attendeeLists.map(list => (
+                      <tr key={list.id} className="border-b hover:bg-muted/50">
+                        <td className="px-4 py-3 font-medium">{list.name}</td>
+                        <td className="px-4 py-3">{list.emails.length}</td>
+                        <td className="px-4 py-3">
+                          <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                            Active
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex gap-2">
+                            <Button size="sm" variant="ghost">View</Button>
+                            <Button size="sm" variant="ghost">Export</Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
@@ -289,26 +517,18 @@ const EmailMarketingPanel: React.FC<EmailMarketingPanelProps> = ({ eventId, even
                     </tr>
                   </thead>
                   <tbody>
-                    <tr className="border-b hover:bg-muted/50">
-                      <td className="px-4 py-3 font-medium">Event Announcement</td>
-                      <td className="px-4 py-3">256</td>
-                      <td className="px-4 py-3">68%</td>
-                      <td className="px-4 py-3">42%</td>
-                      <td className="px-4 py-3">Jul 15, 2023</td>
-                      <td className="px-4 py-3">
-                        <Button size="sm" variant="ghost">View Report</Button>
-                      </td>
-                    </tr>
-                    <tr className="border-b hover:bg-muted/50">
-                      <td className="px-4 py-3 font-medium">Early Bird Reminder</td>
-                      <td className="px-4 py-3">128</td>
-                      <td className="px-4 py-3">72%</td>
-                      <td className="px-4 py-3">58%</td>
-                      <td className="px-4 py-3">Jul 10, 2023</td>
-                      <td className="px-4 py-3">
-                        <Button size="sm" variant="ghost">View Report</Button>
-                      </td>
-                    </tr>
+                    {sentCampaigns.map((campaign) => (
+                      <tr key={campaign.id} className="border-b hover:bg-muted/50">
+                        <td className="px-4 py-3 font-medium">{campaign.name}</td>
+                        <td className="px-4 py-3">{campaign.recipients}</td>
+                        <td className="px-4 py-3">{campaign.openRate}</td>
+                        <td className="px-4 py-3">{campaign.clickRate}</td>
+                        <td className="px-4 py-3">{campaign.sentDate}</td>
+                        <td className="px-4 py-3">
+                          <Button size="sm" variant="ghost">View Report</Button>
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
