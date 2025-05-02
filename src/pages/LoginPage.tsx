@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import UserAuth from '@/components/UserAuth';
@@ -174,7 +173,7 @@ const LoginPage = () => {
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-white to-purple-50">
       <div className="container max-w-6xl mx-auto px-4 py-8 flex-1 flex flex-col">
         <div className="mb-8">
-          <Link to="/" className="inline-flex items-center text-material-primary hover:underline">
+          <Link to="/landing" className="inline-flex items-center text-material-primary hover:underline">
             <ArrowLeft size={16} className="mr-2" />
             Back to Home
           </Link>
