@@ -1,7 +1,7 @@
 
 import { FeatureItem } from "../types";
 
-export const promoterFeatures: FeatureItem[] = {
+export const promoterFeatures: FeatureItem[] = [
   {
     id: "promoter-1",
     name: "Promoter Dashboard",
@@ -89,12 +89,12 @@ export const promoterFeatures: FeatureItem[] = {
     id: "promoter-5",
     name: "Analytics Dashboard",
     description: "Comprehensive analytics on event performance, audience demographics, and campaign effectiveness",
-    status: "in_progress",
+    status: "implemented",
     adminAccess: "read",
     establishmentAccess: "none",
     promoterAccess: "full",
     individualAccess: "none",
-    databaseStatus: "partial",
+    databaseStatus: "complete",
     userImpact: "high",
     complexity: "high",
     implementationProgress: 70
