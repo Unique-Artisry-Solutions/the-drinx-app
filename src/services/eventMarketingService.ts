@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { EventMarketingCampaign } from '@/types/EventTypes';
+import { safeJsonToRecord } from '@/utils/typeGuards';
 
 export const fetchEventCampaigns = async (eventId: string): Promise<EventMarketingCampaign[]> => {
   const { data, error } = await supabase
@@ -83,12 +84,16 @@ export const trackCampaignMetric = async (
       throw fetchError;
     }
 
-    // Update metrics - Fixed spread operator issue by ensuring metrics is an object
-    const currentMetrics = campaign?.metrics || {};
-    const updatedMetrics = {
-      ...currentMetrics,
-      [metricName]: ((currentMetrics[metricName] || 0) + value)
-    };
+    // Convert metrics to a safe object using the utility function
+    const currentMetrics = safeJsonToRecord(campaign?.metrics);
+    
+    // Update the specific metric
+    const updatedMetricValue = ((currentMetrics[metricName] || 0) + value);
+    
+    // Create a new metrics object with the updated value
+    const updatedMetrics = Object.assign({}, currentMetrics, {
+      [metricName]: updatedMetricValue
+    });
 
     // Save updated metrics
     const { error: updateError } = await supabase
