@@ -67,6 +67,7 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
         description: 'Please check your email for the verification link',
       });
     } catch (error: any) {
+      console.error("Email verification error:", error);
       setFormError(error.message || 'Failed to resend verification email');
     } finally {
       setIsResendingEmail(false);
@@ -81,7 +82,9 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
     
     try {
       if (isAdminLogin) {
+        console.log("Attempting admin login");
         if (identifier === 'admin@spiritless.com' && password === 'admin123') {
+          console.log("Admin credentials verified, setting admin session");
           localStorage.setItem('admin_authenticated', 'true');
           localStorage.setItem('admin_username', 'Admin');
           localStorage.setItem('admin_session_created', new Date().toISOString());
@@ -96,11 +99,15 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
           throw new Error('Invalid admin credentials');
         }
       } else {
+        console.log(`Attempting regular login with identifier: ${identifier}`);
         const isEmail = identifier.includes('@');
         
         if (isEmail) {
+          console.log("Logging in with email");
           await signIn(identifier, password);
+          console.log("Email login successful");
         } else {
+          console.log("Logging in with username");
           const { data, error } = await supabase
             .from('profiles')
             .select('id')
@@ -108,16 +115,37 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
             .single();
             
           if (error || !data) {
+            console.error("Username lookup error:", error);
             throw new Error('Username not found');
           }
             
           const { data: userData, error: userError } = await supabase.auth.admin.getUserById(data.id);
           
           if (userError || !userData.user) {
+            console.error("User lookup error:", userError);
             throw new Error('User not found');
           }
             
+          console.log("Username found, attempting login with email");
           await signIn(userData.user.email || '', password);
+          console.log("Username login successful");
+        }
+        
+        // Login was successful, check if the user_type matches the expected type
+        const loggedInType = localStorage.getItem('user_type');
+        console.log(`Login successful, user type is: ${loggedInType}, expected: ${userType}`);
+        
+        // If userType is specified and doesn't match, attempt to switch roles
+        if (userType && loggedInType !== userType && userType !== 'individual') {
+          console.log(`User type mismatch, attempting to switch to ${userType} role`);
+          try {
+            await supabase.rpc('switch_active_role', { role_to_activate: userType });
+            localStorage.setItem('user_type', userType);
+            console.log(`Successfully switched to ${userType} role`);
+          } catch (roleError) {
+            console.warn(`Could not switch to ${userType} role:`, roleError);
+            // Continue with login even if role switch fails
+          }
         }
         
         toast({
@@ -159,60 +187,88 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
     }
   };
 
-  const handleBypassLogin = (type: 'individual' | 'establishment' | 'promoter' | 'admin') => {
-    // Set admin bypass in localStorage
-    localStorage.setItem('admin_bypass', 'true');
-    localStorage.setItem('user_authenticated', 'true');
-    localStorage.setItem('user_type', type);
+  const handleBypassLogin = async (type: 'individual' | 'establishment' | 'promoter' | 'admin') => {
+    console.log(`Initiating bypass login for ${type} user type from useLoginForm`);
     
-    if (type === 'admin') {
-      localStorage.setItem('user_email', 'admin@spiritless.com');
-      localStorage.setItem('user_username', 'admin');
-      localStorage.setItem('admin_authenticated', 'true');
-      localStorage.setItem('admin_username', 'Admin');
-      localStorage.setItem('admin_session_created', new Date().toISOString());
-    } else if (type === 'promoter') {
-      localStorage.setItem('user_email', 'bypass-promoter@spiritless.com');
-      localStorage.setItem('user_username', 'bypass-promoter');
-      localStorage.setItem('promoter_name', 'Bypass Promoter');
-    } else if (type === 'establishment') {
-      localStorage.setItem('user_email', 'bypass-business@example.com');
-      localStorage.setItem('user_username', 'bypass-business');
-      localStorage.setItem('establishment_name', 'Bypass Establishment');
-    } else {
-      localStorage.setItem('user_email', 'bypass-user@example.com');
-      localStorage.setItem('user_username', 'bypass-user');
-    }
-    
-    // Force a refresh of the session to apply bypass
-    refreshSession().then(() => {
+    try {
+      // Generate a proper UUID for the bypass user
+      const bypassUserId = crypto.randomUUID ? crypto.randomUUID() : 'bypass-' + Math.random().toString(36).substring(2, 15);
+      
+      // Set admin bypass in localStorage with consistent data
+      localStorage.setItem('admin_bypass', 'true');
+      localStorage.setItem('bypass_user_id', bypassUserId);
+      localStorage.setItem('user_authenticated', 'true');
+      localStorage.setItem('user_type', type);
+      
+      // Consistent email formats
+      const email = type === 'admin' ? 'admin@spiritless.com' : 
+        type === 'individual' ? 'bypass-user@spiritless.com' : 
+        type === 'promoter' ? 'bypass-promoter@spiritless.com' :
+        'bypass-establishment@spiritless.com';
+        
+      localStorage.setItem('user_email', email);
+      
+      // Consistent username formats
+      const username = type === 'admin' ? 'admin' : 
+        type === 'individual' ? 'bypass-user' : 
+        type === 'promoter' ? 'bypass-promoter' :
+        'bypass-establishment';
+        
+      localStorage.setItem('user_username', username);
+      
+      // Set appropriate role-specific information
+      if (type === 'establishment') {
+        localStorage.setItem('establishment_name', 'Bypass Establishment');
+      } else if (type === 'promoter') {
+        localStorage.setItem('promoter_name', 'Bypass Promoter');
+      } else if (type === 'admin') {
+        localStorage.setItem('admin_authenticated', 'true');
+        localStorage.setItem('admin_username', 'Admin');
+        localStorage.setItem('admin_session_created', new Date().toISOString());
+      }
+      
+      // Force a refresh of the session to apply bypass
+      console.log("Refreshing session to apply bypass login");
+      await refreshSession();
+      
       toast({
-        title: 'Admin Bypass Enabled',
+        title: 'Bypass Login Activated',
         description: `You are now logged in as ${type === 'admin' ? 'an administrator' : 
           type === 'individual' ? 'a user' : 
           type === 'promoter' ? 'a promoter' :
           'a business'} for testing purposes.`,
       });
       
-      console.log("Bypass login activated for type:", type);
-      
       // Check for saved redirect
       const savedRedirect = localStorage.getItem('auth_redirect');
+      console.log("Saved redirect path:", savedRedirect);
       localStorage.removeItem('auth_redirect');
       
       // Redirect based on user type or saved path
       if (savedRedirect) {
+        console.log(`Redirecting to saved path: ${savedRedirect}`);
         navigate(savedRedirect);
       } else if (type === 'admin') {
+        console.log("Redirecting to admin dashboard");
         navigate('/admin/system-breakdown');
       } else if (type === 'establishment') {
+        console.log("Redirecting to establishment dashboard");
         navigate('/establishment/dashboard');
       } else if (type === 'promoter') {
+        console.log("Redirecting to promoter dashboard");
         navigate('/promoter/dashboard');
       } else {
+        console.log("Redirecting to explore page");
         navigate('/explore');
       }
-    });
+    } catch (error) {
+      console.error("Error during bypass login:", error);
+      toast({
+        title: 'Login Error',
+        description: 'An error occurred during bypass login. Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
 
   return {

@@ -15,11 +15,13 @@ export function useAuthState() {
   // Check for admin bypass
   const checkAdminBypass = () => {
     const isAdminBypass = localStorage.getItem('admin_bypass') === 'true';
+    console.log("Checking admin bypass:", isAdminBypass);
     
     if (isAdminBypass) {
       // Create a pseudo user based on localStorage
       const bypassEmail = localStorage.getItem('user_email') || 'bypass@example.com';
       const userType = localStorage.getItem('user_type') || 'individual';
+      const username = localStorage.getItem('user_username') || 'bypass-user';
       
       // Generate a valid UUID for the bypass user instead of using a string
       const bypassUserId = localStorage.getItem('bypass_user_id') || uuidv4();
@@ -27,12 +29,14 @@ export function useAuthState() {
       // Store the bypass user ID for consistency
       localStorage.setItem('bypass_user_id', bypassUserId);
       
+      console.log("Creating bypass user with ID:", bypassUserId, "type:", userType, "email:", bypassEmail);
+      
       const bypassUser = {
         id: bypassUserId,
         email: bypassEmail,
         user_metadata: {
           user_type: userType,
-          username: localStorage.getItem('user_username') || 'bypass-user'
+          username: username
         },
         app_metadata: {},
         aud: 'authenticated',
@@ -54,6 +58,7 @@ export function useAuthState() {
 
   // Update localStorage based on session data
   const updateLocalStorage = (sessionUser: User | null) => {
+    console.log("Updating localStorage from session user:", sessionUser);
     if (sessionUser) {
       localStorage.setItem('user_authenticated', 'true');
       if (sessionUser.email) {
@@ -61,13 +66,29 @@ export function useAuthState() {
       }
       if (sessionUser.user_metadata?.user_type) {
         localStorage.setItem('user_type', sessionUser.user_metadata.user_type);
+        console.log("Setting user_type in localStorage:", sessionUser.user_metadata.user_type);
       }
       if (sessionUser.user_metadata?.username) {
         localStorage.setItem('user_username', sessionUser.user_metadata.username);
       }
+      
+      // See if we need to set any additional role-specific data
+      const userType = sessionUser.user_metadata?.user_type;
+      if (userType === 'promoter') {
+        // Set promoter name if we don't already have it
+        if (!localStorage.getItem('promoter_name') && sessionUser.user_metadata?.name) {
+          localStorage.setItem('promoter_name', sessionUser.user_metadata.name);
+        }
+      } else if (userType === 'establishment') {
+        // Set establishment name if we don't already have it
+        if (!localStorage.getItem('establishment_name') && sessionUser.user_metadata?.name) {
+          localStorage.setItem('establishment_name', sessionUser.user_metadata.name);
+        }
+      }
     } else {
       // No active session, clear localStorage auth items (except admin)
       if (localStorage.getItem('user_authenticated')) {
+        console.log("Clearing user authentication data from localStorage");
         localStorage.removeItem('user_authenticated');
         localStorage.removeItem('user_email');
         localStorage.removeItem('user_type');
@@ -87,10 +108,10 @@ export function useAuthState() {
       
       if (currentTime - sessionTime > SESSION_EXPIRY_TIME) {
         // Admin session expired, log out
+        console.log("Admin session expired, logging out");
         localStorage.removeItem('admin_authenticated');
         localStorage.removeItem('admin_username');
         localStorage.removeItem('admin_session_created');
-        console.log('Admin session expired due to inactivity');
         
         toast({
           title: "Session Expired",

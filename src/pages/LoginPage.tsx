@@ -5,36 +5,52 @@ import UserAuth from '@/components/UserAuth';
 import { ArrowLeft } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/auth';
+import { Button } from '@/components/ui/button';
 
 const LoginPage = () => {
   const [requiredUserType, setRequiredUserType] = useState<'individual' | 'establishment' | 'promoter'>('individual');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { theme, setTheme } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
   
   // Check for userType in the location state
   useEffect(() => {
-    const state = location.state as { userType?: 'individual' | 'establishment' | 'promoter', message?: string };
+    const state = location.state as { 
+      userType?: 'individual' | 'establishment' | 'promoter', 
+      message?: string 
+    };
+
+    console.log("LoginPage - Location state:", state);
+    
     if (state?.userType) {
+      console.log("LoginPage - Setting required user type from state:", state.userType);
       setRequiredUserType(state.userType);
     }
     
-    // If there's a redirect message, we could display it
+    // If there's a redirect message, display it
+    if (state?.message) {
+      setErrorMessage(state.message);
+    }
   }, [location]);
   
   // Redirect if already logged in
   useEffect(() => {
-    if (user) {
+    if (!isLoading && user) {
+      console.log("LoginPage - User already authenticated, redirecting");
+      
       // Check if there's a saved redirect
       const savedRedirect = localStorage.getItem('auth_redirect');
       
       if (savedRedirect) {
+        console.log("LoginPage - Found saved redirect path:", savedRedirect);
         navigate(savedRedirect);
         localStorage.removeItem('auth_redirect');
       } else {
         // Default redirect based on user type
         const userType = localStorage.getItem('user_type');
+        console.log("LoginPage - No saved redirect, using user type for redirect:", userType);
         
         if (userType === 'establishment') {
           navigate('/establishment/dashboard');
@@ -45,7 +61,7 @@ const LoginPage = () => {
         }
       }
     }
-  }, [user, navigate]);
+  }, [user, isLoading, navigate]);
   
   // Always force light theme for login page
   useEffect(() => {
@@ -53,6 +69,14 @@ const LoginPage = () => {
       setTheme('light');
     }
   }, [theme, setTheme]);
+  
+  // Clear error message after 5 seconds
+  useEffect(() => {
+    if (errorMessage) {
+      const timer = setTimeout(() => setErrorMessage(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [errorMessage]);
   
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-white to-purple-50">
@@ -69,8 +93,23 @@ const LoginPage = () => {
             <div className="text-center mb-8">
               <h1 className="text-3xl font-bold mb-2">Welcome Back</h1>
               <p className="text-gray-600">
-                Sign in to your Spiritless account
+                Sign in to your Spiritless account 
+                {requiredUserType !== 'individual' ? ` as ${requiredUserType}` : ''}
               </p>
+              
+              {errorMessage && (
+                <div className="mt-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md">
+                  {errorMessage}
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="ml-2 text-red-500" 
+                    onClick={() => setErrorMessage(null)}
+                  >
+                    Dismiss
+                  </Button>
+                </div>
+              )}
             </div>
             
             <UserAuth 

@@ -13,6 +13,18 @@ const Index = () => {
     console.log("Index page loaded");
     console.log("Current URL:", window.location.href);
     console.log("Auth state:", { user: !!user, isLoading });
+    
+    // Log all localStorage keys and values for debugging
+    const localStorageKeys = Object.keys(localStorage);
+    const localStorageData = {};
+    
+    localStorageKeys.forEach(key => {
+      if (!key.includes('supabase.auth.token')) { // Skip sensitive auth tokens
+        localStorageData[key] = localStorage.getItem(key);
+      }
+    });
+    
+    console.log("LocalStorage data:", localStorageData);
   }, [user, isLoading]);
   
   // Use useEffect to handle navigation properly
@@ -28,6 +40,7 @@ const Index = () => {
     const isEstablishment = userType === 'establishment';
     const isPromoter = userType === 'promoter';
     const isAdmin = localStorage.getItem('admin_authenticated') === 'true';
+    const isAdminBypass = localStorage.getItem('admin_bypass') === 'true';
     
     // For debugging
     console.log("Index page navigation check:", { 
@@ -37,6 +50,7 @@ const Index = () => {
       isEstablishment, 
       isPromoter, 
       isAdmin,
+      isAdminBypass,
       userId: user?.id,
       redirectPath: isPromoter ? '/promoter/dashboard' : (isEstablishment ? '/establishment/dashboard' : '/explore')
     });
@@ -69,6 +83,22 @@ const Index = () => {
       return;
     }
     
+    // For admin bypass (but not regular user)
+    if (!user && isAdminBypass) {
+      console.log("Admin bypass active but no user object, checking user type for redirect");
+      
+      if (isPromoter) {
+        navigate('/promoter/dashboard', { replace: true });
+      } else if (isEstablishment) {
+        navigate('/establishment/dashboard', { replace: true });
+      } else if (isAdmin) {
+        navigate('/admin/system-breakdown', { replace: true });
+      } else {
+        navigate('/explore', { replace: true });
+      }
+      return;
+    }
+    
     // If user is not authenticated, redirect to landing
     if (!user) {
       console.log("Redirecting unauthenticated user to landing");
@@ -84,6 +114,7 @@ const Index = () => {
         <div className="text-center">
           <p className="text-lg mb-2">Loading application...</p>
           <div className="w-12 h-12 border-4 border-spiritless-pink border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="text-sm text-gray-500 mt-2">Please wait while we prepare your experience</p>
         </div>
       </div>
     </Layout>

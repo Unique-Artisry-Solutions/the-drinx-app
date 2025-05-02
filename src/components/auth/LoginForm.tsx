@@ -39,61 +39,90 @@ const LoginForm: React.FC<LoginFormProps> = ({
     handleLogin
   } = useLoginForm(onSuccess, onClose, userType);
 
-  const handleBypassLogin = (type: 'individual' | 'establishment' | 'admin' | 'promoter') => {
-    // Set admin bypass in localStorage
-    localStorage.setItem('admin_bypass', 'true');
-    localStorage.setItem('user_authenticated', 'true');
-    localStorage.setItem('user_type', type);
-    localStorage.setItem('user_email', type === 'admin' ? 'admin@spiritless.com' : 
-      type === 'individual' ? 'bypass-user@example.com' : 
-      type === 'promoter' ? 'bypass-promoter@spiritless.com' :
-      'bypass-business@example.com');
-    localStorage.setItem('user_username', type === 'admin' ? 'admin' : 
-      type === 'individual' ? 'bypass-user' : 
-      type === 'promoter' ? 'bypass-promoter' :
-      'bypass-business');
+  const handleBypassLogin = async (type: 'individual' | 'establishment' | 'admin' | 'promoter') => {
+    console.log(`Initiating bypass login for ${type} user type`);
     
-    // Set establishment name for establishment users
-    if (type === 'establishment') {
-      localStorage.setItem('establishment_name', 'Bypass Establishment');
-    }
-    
-    // Set promoter name for promoter users
-    if (type === 'promoter') {
-      localStorage.setItem('promoter_name', 'Bypass Promoter');
-    }
-    
-    // Set admin authentication flag if it's an admin bypass
-    if (type === 'admin') {
-      localStorage.setItem('admin_authenticated', 'true');
-      localStorage.setItem('admin_username', 'Admin');
-      localStorage.setItem('admin_session_created', new Date().toISOString());
-    }
-    
-    // Force a refresh of the session to apply bypass
-    refreshSession().then(() => {
+    try {
+      // Generate a proper UUID for the bypass user
+      const bypassUserId = crypto.randomUUID ? crypto.randomUUID() : 'bypass-' + Math.random().toString(36).substring(2, 15);
+      
+      // Set admin bypass in localStorage with consistent data
+      localStorage.setItem('admin_bypass', 'true');
+      localStorage.setItem('bypass_user_id', bypassUserId);
+      localStorage.setItem('user_authenticated', 'true');
+      localStorage.setItem('user_type', type);
+      
+      // Consistent email formats
+      const email = type === 'admin' ? 'admin@spiritless.com' : 
+        type === 'individual' ? 'bypass-user@spiritless.com' : 
+        type === 'promoter' ? 'bypass-promoter@spiritless.com' :
+        'bypass-establishment@spiritless.com';
+        
+      localStorage.setItem('user_email', email);
+      
+      // Consistent username formats
+      const username = type === 'admin' ? 'admin' : 
+        type === 'individual' ? 'bypass-user' : 
+        type === 'promoter' ? 'bypass-promoter' :
+        'bypass-establishment';
+        
+      localStorage.setItem('user_username', username);
+      
+      // Set appropriate role-specific information
+      if (type === 'establishment') {
+        localStorage.setItem('establishment_name', 'Bypass Establishment');
+      } else if (type === 'promoter') {
+        localStorage.setItem('promoter_name', 'Bypass Promoter');
+      } else if (type === 'admin') {
+        localStorage.setItem('admin_authenticated', 'true');
+        localStorage.setItem('admin_username', 'Admin');
+        localStorage.setItem('admin_session_created', new Date().toISOString());
+      }
+      
+      // Force a refresh of the session to apply bypass
+      console.log("Refreshing session to apply bypass login");
+      await refreshSession();
+      
       toast({
-        title: 'Admin Bypass Enabled',
+        title: 'Bypass Login Activated',
         description: `You are now logged in as ${type === 'admin' ? 'an administrator' : 
           type === 'individual' ? 'a user' : 
           type === 'promoter' ? 'a promoter' :
           'a business'} for testing purposes.`,
       });
       
-      console.log("Bypass login activated for type:", type);
+      // Check for saved redirect path
+      const savedRedirect = localStorage.getItem('auth_redirect');
+      console.log("Saved redirect path:", savedRedirect);
+      
+      // Clear the saved redirect as we're handling it now
+      localStorage.removeItem('auth_redirect');
       
       // Redirect based on user type
-      if (type === 'admin') {
+      if (savedRedirect) {
+        console.log(`Redirecting to saved path: ${savedRedirect}`);
+        navigate(savedRedirect);
+      } else if (type === 'admin') {
+        console.log("Redirecting to admin dashboard");
         navigate('/admin/system-breakdown');
       } else if (type === 'establishment') {
+        console.log("Redirecting to establishment dashboard");
         navigate('/establishment/dashboard');
       } else if (type === 'promoter') {
-        // Redirect directly to promoter dashboard 
+        console.log("Redirecting to promoter dashboard");
         navigate('/promoter/dashboard');
       } else {
+        console.log("Redirecting to explore page");
         navigate('/explore');
       }
-    });
+    } catch (error) {
+      console.error("Error during bypass login:", error);
+      toast({
+        title: 'Login Error',
+        description: 'An error occurred during bypass login. Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
 
   return (

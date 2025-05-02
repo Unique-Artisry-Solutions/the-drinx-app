@@ -60,6 +60,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   });
 
   const handleSignOut = async () => {
+    console.log("Starting sign out process...");
     // Clear local user state first
     setUser(null);
     setSession(null);

@@ -27,7 +27,7 @@ export const useAuthSetup = ({
   toast
 }: UseAuthSetupProps) => {
   useEffect(() => {
-    console.log('AuthProvider setup running...');
+    console.log('Starting AuthProvider setup...');
     
     // Set loading state initially
     setIsLoading(true);
@@ -60,7 +60,7 @@ export const useAuthSetup = ({
     const { isAdminBypass, bypassUser } = checkAdminBypass();
     
     if (isAdminBypass && bypassUser) {
-      console.log('Admin bypass active, using bypass user');
+      console.log('Admin bypass active, using bypass user:', bypassUser.id);
       setUser(bypassUser);
       setIsEmailVerified(true);
       setIsLoading(false);
@@ -70,14 +70,46 @@ export const useAuthSetup = ({
     
     // Check if admin session has expired
     if (checkAdminSession()) {
+      console.log('Admin session expired');
       setIsLoading(false);
       return;
     }
     
+    console.log('Setting up auth state listener...');
     // Set up auth state listener FIRST
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('Auth state changed:', event, !!session);
+        
+        // Log detailed info for debugging
+        if (session?.user) {
+          console.log('User ID:', session.user.id);
+          console.log('User email:', session.user.email);
+          console.log('User metadata:', session.user.user_metadata);
+          
+          // Check for user_type in metadata
+          const userType = session.user.user_metadata?.user_type;
+          console.log('User type from metadata:', userType);
+          
+          // Check if we have an active role that might override metadata
+          try {
+            const { data: roles } = await supabase
+              .from('user_roles')
+              .select('role, is_active')
+              .eq('user_id', session.user.id);
+              
+            console.log('User roles from database:', roles);
+            
+            if (roles && roles.length > 0) {
+              const activeRole = roles.find(r => r.is_active);
+              if (activeRole) {
+                console.log('Active role from database:', activeRole.role);
+              }
+            }
+          } catch (error) {
+            console.warn('Error fetching user roles:', error);
+          }
+        }
         
         // We need some delay to avoid race conditions
         setTimeout(() => {
@@ -96,11 +128,15 @@ export const useAuthSetup = ({
       }
     );
     
+    console.log('Checking for existing session...');
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('Initial session check:', !!session);
+      console.log('Initial session check result:', !!session);
       
       if (session) {
+        console.log('User ID from session:', session.user.id);
+        console.log('User email from session:', session.user.email);
+        
         setSession(session);
         setUser(session.user);
         setIsEmailVerified(true);  
@@ -114,7 +150,7 @@ export const useAuthSetup = ({
     const hasStoredSession = localStorage.getItem('spiritless-auth-storage') ? true : false;
     
     if (hasStoredSession) {
-      console.log('Restoring session from storage');
+      console.log('Restoring session from storage, refreshing...');
       refreshSession().catch(e => {
         console.error('Error refreshing session:', e);
         toast({
