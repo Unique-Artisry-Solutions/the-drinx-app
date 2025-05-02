@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import UserAuth from '@/components/UserAuth';
@@ -33,6 +32,23 @@ const LoginPage = () => {
     if (state?.message) {
       setErrorMessage(state.message);
     }
+    
+    // DEBUG: Log the auth redirect value
+    const redirectPath = localStorage.getItem('auth_redirect');
+    console.log("LoginPage - Auth redirect path:", redirectPath);
+    
+    // Check if we have a pending redirect that needs to be preserved
+    const pendingLoginRedirect = sessionStorage.getItem('login_redirect_pending');
+    if (pendingLoginRedirect === 'true') {
+      console.log("LoginPage - Detected a pending login redirect, preserving it");
+      // Keep the pending redirect information for now
+    } else {
+      // Clean up any previous redirect flags to prevent issues
+      sessionStorage.removeItem('login_redirect_pending');
+      sessionStorage.removeItem('user_type_at_login');
+      sessionStorage.removeItem('bypass_login_redirect_pending');
+      sessionStorage.removeItem('bypass_user_type');
+    }
   }, [location]);
   
   // Redirect if already logged in
@@ -40,22 +56,32 @@ const LoginPage = () => {
     if (!isLoading && user) {
       console.log("LoginPage - User already authenticated, redirecting");
       
+      // Get user type for routing decision
+      const userType = localStorage.getItem('user_type');
+      console.log("LoginPage - Authenticated user type:", userType);
+      
       // Check if there's a saved redirect
       const savedRedirect = localStorage.getItem('auth_redirect');
       
       if (savedRedirect) {
         console.log("LoginPage - Found saved redirect path:", savedRedirect);
-        navigate(savedRedirect);
+        // Important: Use window.location.href for promoters to ensure proper page reload
+        if (userType === 'promoter') {
+          console.log("LoginPage - Redirecting promoter to saved path with direct navigation");
+          window.location.href = savedRedirect;
+        } else {
+          navigate(savedRedirect);
+        }
         localStorage.removeItem('auth_redirect');
       } else {
         // Default redirect based on user type
-        const userType = localStorage.getItem('user_type');
         console.log("LoginPage - No saved redirect, using user type for redirect:", userType);
         
-        if (userType === 'establishment') {
+        if (userType === 'promoter') {
+          console.log("LoginPage - Redirecting promoter to dashboard with direct navigation");
+          window.location.href = '/promoter/dashboard';
+        } else if (userType === 'establishment') {
           navigate('/establishment/dashboard');
-        } else if (userType === 'promoter') {
-          navigate('/promoter/dashboard');
         } else {
           navigate('/explore');
         }

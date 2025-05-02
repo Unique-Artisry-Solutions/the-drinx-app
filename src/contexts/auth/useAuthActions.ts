@@ -62,15 +62,46 @@ export function useAuthActions() {
         localStorage.setItem('user_authenticated', 'true');
         localStorage.setItem('user_email', data.user?.email || '');
         
-        // Make sure we're explicitly setting the user type
-        let userType = data.user?.user_metadata.user_type || 'individual';
+        // Enhanced user type detection
+        let userType = data.user?.user_metadata.user_type;
         console.log('User metadata from sign in:', data.user?.user_metadata);
+        
+        // If no user_type in metadata, try to determine from database roles
+        if (!userType) {
+          console.log('No user_type in metadata, checking roles from database');
+          
+          try {
+            // Query the user_roles table to see if this user has any roles
+            const { data: userRoles, error: rolesError } = await supabase
+              .from('user_roles')
+              .select('role, is_active')
+              .eq('user_id', data.user.id)
+              .eq('is_active', true)
+              .single();
+              
+            if (!rolesError && userRoles) {
+              userType = userRoles.role;
+              console.log('Found active role in database:', userType);
+            }
+          } catch (roleCheckError) {
+            console.warn('Error checking user roles:', roleCheckError);
+            // Default to individual if we can't determine the role
+            userType = 'individual';
+          }
+        }
+        
+        // Final fallback to 'individual' if still no type
+        userType = userType || 'individual';
         console.log('Setting user type to:', userType);
         localStorage.setItem('user_type', userType);
         
         if (data.user?.user_metadata.username) {
           localStorage.setItem('user_username', data.user.user_metadata.username);
         }
+        
+        // Store the user type at login time in session storage
+        // This will be used to verify the correct redirect happens
+        sessionStorage.setItem('login_user_type', userType);
       }
     } catch (error: any) {
       toast({

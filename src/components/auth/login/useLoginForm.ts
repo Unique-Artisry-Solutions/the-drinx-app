@@ -160,23 +160,40 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
         const savedRedirect = localStorage.getItem('auth_redirect');
         localStorage.removeItem('auth_redirect');
         
+        // Flag to track promoter redirection
+        sessionStorage.setItem('login_redirect_pending', 'true');
+        sessionStorage.setItem('user_type_at_login', localStorage.getItem('user_type') || '');
+        
         if (onSuccess) {
           onSuccess();
-        } else if (savedRedirect) {
-          console.log("Redirecting to saved path:", savedRedirect);
-          navigate(savedRedirect);
         } else {
           const storedUserType = localStorage.getItem('user_type');
           console.log("Login redirect - user type:", storedUserType);
           
-          // Explicitly handle promoter redirect
+          // Handle promoter redirect - use direct window.location.href instead of navigate
           if (storedUserType === 'promoter') {
-            console.log("Redirecting to promoter dashboard");
-            navigate('/promoter/dashboard', { replace: true });
+            console.log("Redirecting to promoter dashboard using direct navigation");
+            
+            if (savedRedirect) {
+              console.log(`Redirecting to saved path: ${savedRedirect} using direct navigation`);
+              window.location.href = savedRedirect;
+            } else {
+              console.log("Redirecting to promoter dashboard using direct navigation");
+              window.location.href = '/promoter/dashboard';
+            }
+            return; // Stop execution after redirect
           } else if (storedUserType === 'establishment') {
-            navigate('/establishment/dashboard', { replace: true });
+            if (savedRedirect) {
+              navigate(savedRedirect);
+            } else {
+              navigate('/establishment/dashboard');
+            }
           } else {
-            navigate('/explore', { replace: true });
+            if (savedRedirect) {
+              navigate(savedRedirect);
+            } else {
+              navigate('/explore');
+            }
           }
         }
       }
@@ -244,10 +261,26 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
           'a business'} for testing purposes.`,
       });
       
+      // Flag to track bypass redirection
+      sessionStorage.setItem('bypass_login_redirect_pending', 'true');
+      sessionStorage.setItem('bypass_user_type', type);
+      
       // Check for saved redirect
       const savedRedirect = localStorage.getItem('auth_redirect');
       console.log("Saved redirect path:", savedRedirect);
       localStorage.removeItem('auth_redirect');
+      
+      // Use direct window location for promoter to ensure full page reload
+      if (type === 'promoter') {
+        if (savedRedirect) {
+          console.log(`Redirecting to saved path: ${savedRedirect} using direct navigation`);
+          window.location.href = savedRedirect;
+        } else {
+          console.log("Redirecting to promoter dashboard using direct navigation");
+          window.location.href = '/promoter/dashboard';
+        }
+        return; // Stop execution after direct navigation
+      }
       
       // Redirect based on user type or saved path
       if (savedRedirect) {
@@ -261,9 +294,6 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
         } else if (type === 'establishment') {
           console.log("Redirecting to establishment dashboard");
           navigate('/establishment/dashboard'); 
-        } else if (type === 'promoter') {
-          console.log("Redirecting to promoter dashboard");
-          navigate('/promoter/dashboard');
         } else {
           console.log("Redirecting to explore page");
           navigate('/explore');
