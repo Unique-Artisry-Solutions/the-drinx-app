@@ -2,7 +2,6 @@
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
-import { Session, User } from '@supabase/supabase-js';
 
 export function useAuthActions() {
   const [isLoading, setIsLoading] = useState(false);
@@ -10,15 +9,15 @@ export function useAuthActions() {
 
   const refreshSession = async () => {
     try {
-      console.log('Refreshing session in useAuthActions...');
+      console.log('[AUTH] Refreshing session...');
       const { data, error } = await supabase.auth.refreshSession();
       if (error) {
-        console.error('Error refreshing session:', error);
+        console.error('[AUTH] Error refreshing session:', error);
         return { session: null, user: null, isEmailVerified: false };
       }
       
       const isVerified = data.session?.user ? (data.session.user.email_confirmed_at !== null) : false;
-      console.log('Session refreshed, email verified:', isVerified);
+      console.log('[AUTH] Session refreshed, email verified:', isVerified);
       
       return { 
         session: data.session, 
@@ -26,7 +25,7 @@ export function useAuthActions() {
         isEmailVerified: isVerified
       };
     } catch (error) {
-      console.error('Error in refreshSession:', error);
+      console.error('[AUTH] Error in refreshSession:', error);
       return { session: null, user: null, isEmailVerified: false };
     }
   };
@@ -34,15 +33,15 @@ export function useAuthActions() {
   const signIn = async (email: string, password: string) => {
     try {
       setIsLoading(true);
-      console.log('Signing in user:', email);
+      console.log('[AUTH] Signing in user:', email);
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       
       if (error) {
-        console.error('Sign in error:', error);
+        console.error('[AUTH] Sign in error:', error);
         throw error;
       }
       
-      console.log('Sign in successful:', data);
+      console.log('[AUTH] Sign in successful:', data);
       
       if (data.user && !data.user.email_confirmed_at) {
         toast({
@@ -64,11 +63,11 @@ export function useAuthActions() {
         
         // Enhanced user type detection
         let userType = data.user?.user_metadata.user_type;
-        console.log('User metadata from sign in:', data.user?.user_metadata);
+        console.log('[AUTH] User metadata from sign in:', data.user?.user_metadata);
         
         // If no user_type in metadata, try to determine from database roles
         if (!userType) {
-          console.log('No user_type in metadata, checking roles from database');
+          console.log('[AUTH] No user_type in metadata, checking roles from database');
           
           try {
             // Query the user_roles table to see if this user has any roles
@@ -81,10 +80,10 @@ export function useAuthActions() {
               
             if (!rolesError && userRoles) {
               userType = userRoles.role;
-              console.log('Found active role in database:', userType);
+              console.log('[AUTH] Found active role in database:', userType);
             }
           } catch (roleCheckError) {
-            console.warn('Error checking user roles:', roleCheckError);
+            console.warn('[AUTH] Error checking user roles:', roleCheckError);
             // Default to individual if we can't determine the role
             userType = 'individual';
           }
@@ -92,16 +91,18 @@ export function useAuthActions() {
         
         // Final fallback to 'individual' if still no type
         userType = userType || 'individual';
-        console.log('Setting user type to:', userType);
+        console.log('[AUTH] Setting user type to:', userType);
         localStorage.setItem('user_type', userType);
+        
+        // Explicitly log if this is a promoter account for debugging
+        if (userType === 'promoter') {
+          console.log('[AUTH] PROMOTER ACCOUNT DETECTED - Setting localStorage user_type=promoter');
+          localStorage.setItem('user_type_timestamp', Date.now().toString());
+        }
         
         if (data.user?.user_metadata.username) {
           localStorage.setItem('user_username', data.user.user_metadata.username);
         }
-        
-        // Store the user type at login time in session storage
-        // This will be used to verify the correct redirect happens
-        sessionStorage.setItem('login_user_type', userType);
       }
     } catch (error: any) {
       toast({

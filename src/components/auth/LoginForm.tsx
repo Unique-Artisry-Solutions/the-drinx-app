@@ -33,8 +33,6 @@ const LoginForm: React.FC<LoginFormProps> = ({
     handleBypassLogin
   } = useLoginForm(onSuccess, onClose, userType);
 
-  // We'll use the handleBypassLogin from the hook instead of duplicating it here
-
   return (
     <form onSubmit={handleLogin}>
       <CardContent>

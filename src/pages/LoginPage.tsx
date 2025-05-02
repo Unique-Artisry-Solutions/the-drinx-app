@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import UserAuth from '@/components/UserAuth';
@@ -14,6 +15,48 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const { user, isLoading } = useAuth();
   
+  // For debugging
+  useEffect(() => {
+    console.log("[LOGIN PAGE] Page loaded", {
+      path: location.pathname,
+      search: location.search,
+      timestamp: Date.now(),
+      authState: { user: !!user, isLoading }
+    });
+    
+    // Log session storage flags
+    console.log("[LOGIN PAGE] Session storage state:", {
+      loginSuccess: sessionStorage.getItem('login_success'),
+      loginTimestamp: sessionStorage.getItem('login_timestamp'),
+      bypassTimestamp: sessionStorage.getItem('bypass_login_timestamp'),
+      promoterRedirect: sessionStorage.getItem('promoter_login_redirect'),
+      loginUserType: sessionStorage.getItem('login_user_type'),
+      bypassUserType: sessionStorage.getItem('bypass_user_type')
+    });
+    
+    // Check if we just came from a successful login
+    const loginSuccess = sessionStorage.getItem('login_success') === 'true';
+    const userType = localStorage.getItem('user_type');
+    const isPromoter = userType === 'promoter';
+    
+    // If we have a successful login flag and the user is a promoter, redirect immediately
+    if (loginSuccess && isPromoter && !isLoading) {
+      console.log("[LOGIN PAGE] Detected successful promoter login, redirecting immediately");
+      sessionStorage.removeItem('login_success');
+      
+      // Get redirect path or use default
+      const savedRedirect = localStorage.getItem('auth_redirect');
+      const redirectPath = savedRedirect || '/promoter/dashboard';
+      localStorage.removeItem('auth_redirect');
+      
+      // Force navigation with timestamp
+      const redirectUrl = new URL(redirectPath, window.location.origin);
+      redirectUrl.searchParams.set('redirect_ts', Date.now().toString());
+      
+      window.location.href = redirectUrl.toString();
+    }
+  }, [location, user, isLoading]);
+  
   // Check for userType in the location state
   useEffect(() => {
     const state = location.state as { 
@@ -21,10 +64,10 @@ const LoginPage = () => {
       message?: string 
     };
 
-    console.log("LoginPage - Location state:", state);
+    console.log("[LOGIN PAGE] Location state:", state);
     
     if (state?.userType) {
-      console.log("LoginPage - Setting required user type from state:", state.userType);
+      console.log("[LOGIN PAGE] Setting required user type from state:", state.userType);
       setRequiredUserType(state.userType);
     }
     
@@ -32,54 +75,43 @@ const LoginPage = () => {
     if (state?.message) {
       setErrorMessage(state.message);
     }
-    
-    // DEBUG: Log the auth redirect value
-    const redirectPath = localStorage.getItem('auth_redirect');
-    console.log("LoginPage - Auth redirect path:", redirectPath);
-    
-    // Check if we have a pending redirect that needs to be preserved
-    const pendingLoginRedirect = sessionStorage.getItem('login_redirect_pending');
-    if (pendingLoginRedirect === 'true') {
-      console.log("LoginPage - Detected a pending login redirect, preserving it");
-      // Keep the pending redirect information for now
-    } else {
-      // Clean up any previous redirect flags to prevent issues
-      sessionStorage.removeItem('login_redirect_pending');
-      sessionStorage.removeItem('user_type_at_login');
-      sessionStorage.removeItem('bypass_login_redirect_pending');
-      sessionStorage.removeItem('bypass_user_type');
-    }
   }, [location]);
   
   // Redirect if already logged in
   useEffect(() => {
     if (!isLoading && user) {
-      console.log("LoginPage - User already authenticated, redirecting");
+      console.log("[LOGIN PAGE] User already authenticated, preparing redirect");
       
       // Get user type for routing decision
       const userType = localStorage.getItem('user_type');
-      console.log("LoginPage - Authenticated user type:", userType);
+      console.log("[LOGIN PAGE] Authenticated user type:", userType);
       
       // Check if there's a saved redirect
       const savedRedirect = localStorage.getItem('auth_redirect');
       
       if (savedRedirect) {
-        console.log("LoginPage - Found saved redirect path:", savedRedirect);
-        // Important: Use window.location.href for promoters to ensure proper page reload
+        console.log("[LOGIN PAGE] Found saved redirect path:", savedRedirect);
+        
+        // For promoters, use window.location.href for consistent full page reload
         if (userType === 'promoter') {
-          console.log("LoginPage - Redirecting promoter to saved path with direct navigation");
-          window.location.href = savedRedirect;
+          console.log("[LOGIN PAGE] Redirecting authenticated promoter to saved path");
+          // Add timestamp to force fresh load
+          const redirectUrl = new URL(savedRedirect, window.location.origin);
+          redirectUrl.searchParams.set('auth_ts', Date.now().toString());
+          window.location.href = redirectUrl.toString();
         } else {
           navigate(savedRedirect);
         }
         localStorage.removeItem('auth_redirect');
       } else {
         // Default redirect based on user type
-        console.log("LoginPage - No saved redirect, using user type for redirect:", userType);
+        console.log("[LOGIN PAGE] No saved redirect, using user type for redirect:", userType);
         
         if (userType === 'promoter') {
-          console.log("LoginPage - Redirecting promoter to dashboard with direct navigation");
-          window.location.href = '/promoter/dashboard';
+          console.log("[LOGIN PAGE] Redirecting authenticated promoter to dashboard");
+          const redirectUrl = new URL('/promoter/dashboard', window.location.origin);
+          redirectUrl.searchParams.set('auth_ts', Date.now().toString());
+          window.location.href = redirectUrl.toString();
         } else if (userType === 'establishment') {
           navigate('/establishment/dashboard');
         } else {
