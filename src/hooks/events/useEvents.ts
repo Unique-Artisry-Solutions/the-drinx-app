@@ -5,7 +5,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useState, useCallback, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { calculateDistance } from '@/utils/locationUtils';
-import { useEventMutations } from './useEventMutations';
 
 export interface LocationFilter {
   latitude: number;
@@ -19,7 +18,6 @@ export const useEvents = () => {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { createEvent: createEventMutation } = useEventMutations();
 
   const fetchPublishedEvents = useCallback(async (locationFilter?: LocationFilter): Promise<EventType[]> => {
     setIsLoading(true);
@@ -146,8 +144,87 @@ export const useEvents = () => {
     fetchPublishedEvents();
   }, [fetchPublishedEvents]);
 
-  // Use the imported createEvent mutation from useEventMutations
-  const createEvent = createEventMutation;
+  // Create event mutation
+  const createEvent = useMutation({
+    mutationFn: async (eventData: EventFormData) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      const { data: eventResponse, error: eventError } = await supabase
+        .from('events')
+        .insert({
+          name: eventData.name,
+          description: eventData.description,
+          date: eventData.date,
+          time: eventData.time,
+          venue_id: eventData.venueId || null,
+          image_url: eventData.imageUrl,
+          promotional_materials: eventData.promotionalMaterials,
+          created_by: user.id
+        })
+        .select()
+        .single();
+
+      if (eventError) throw eventError;
+
+      if (eventData.ticketTypes.length > 0) {
+        const { error: ticketError } = await supabase
+          .from('event_ticket_types')
+          .insert(
+            eventData.ticketTypes.map(ticket => ({
+              event_id: eventResponse.id,
+              ...ticket
+            }))
+          );
+
+        if (ticketError) throw ticketError;
+      }
+
+      if (eventData.notificationSchedules && eventData.notificationSchedules.length > 0) {
+        for (const schedule of eventData.notificationSchedules) {
+          // Store all notification data in the notifications table
+          const metadata: any = {
+            event_id: eventResponse.id,
+            scheduled_for: schedule.scheduledFor,
+            location_based: !!schedule.locationBased,
+            coordinates: schedule.coordinates || null,
+            target_radius: schedule.targetRadius || null,
+            notification_type: 'event_schedule'
+          };
+          
+          // Create a notification record
+          const { error: notificationError } = await supabase
+            .from('notifications')
+            .insert({
+              recipient_id: user.id,
+              recipient_type: 'promoter',
+              title: schedule.title || `Reminder: ${eventData.name}`,
+              content: schedule.content || `Don't forget: ${eventData.name} is happening soon!`,
+              priority: schedule.priority || 'medium',
+              metadata: metadata
+            });
+
+          if (notificationError) throw notificationError;
+        }
+      }
+
+      return eventResponse;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+      toast({
+        title: 'Event created',
+        description: 'Your event has been created successfully.',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error creating event',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
 
   return {
     events,
