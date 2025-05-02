@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useEventMutations } from '@/hooks/events/useEventMutations';
@@ -9,6 +10,7 @@ import { useEventMutations } from '@/hooks/events/useEventMutations';
 import BasicInfoStep from './BasicInfoStep';
 import VenueSelectionStep from './VenueSelectionStep';
 import TicketingStep from './TicketingStep';
+import MediaStep from './MediaStep';
 import MarketingStep from './MarketingStep';
 import PreviewStep from './PreviewStep';
 import { EventWizardProvider, useEventWizard } from './EventWizardContext';
@@ -18,6 +20,7 @@ const steps = [
   { id: 'basic-info', title: 'Event Info' },
   { id: 'venue', title: 'Venue' },
   { id: 'ticketing', title: 'Ticketing' },
+  { id: 'media', title: 'Media' },
   { id: 'marketing', title: 'Marketing' },
   { id: 'preview', title: 'Preview' }
 ];
@@ -92,8 +95,9 @@ const EventWizardContent = () => {
         {currentStep === 0 && <BasicInfoStep />}
         {currentStep === 1 && <VenueSelectionStep />}
         {currentStep === 2 && <TicketingStep />}
-        {currentStep === 3 && <MarketingStep />}
-        {currentStep === 4 && <PreviewStep />}
+        {currentStep === 3 && <MediaStep />}
+        {currentStep === 4 && <MarketingStep />}
+        {currentStep === 5 && <PreviewStep />}
       </div>
 
       {/* Navigation buttons */}

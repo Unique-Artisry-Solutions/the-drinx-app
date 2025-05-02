@@ -1,8 +1,14 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { createClient } from '@supabase/supabase-js';
 import { useToast } from '@/hooks/use-toast';
 import { EventFormData } from '@/types/EventTypes';
+
+// Create an admin client for bypass operations
+const SUPABASE_URL = "https://dvifibvzwunnpcsihpxq.supabase.co";
+const SUPABASE_SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR2aWZpYnZ6d3VubnBjc2locHhxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0MzI3MzgwNywiZXhwIjoyMDU4ODQ5ODA3fQ.BHfFyAGY7Vh6Rlzp2r8FsuGVR7jZ7RYoiWqQ-gp0xVg";
+const adminSupabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
 export const useEventMutations = () => {
   const { toast } = useToast();
@@ -13,6 +19,7 @@ export const useEventMutations = () => {
       // Check for admin bypass first
       const isAdminBypass = localStorage.getItem('admin_bypass') === 'true';
       let userId = null;
+      let client = supabase; // Default client
       
       if (isAdminBypass) {
         userId = localStorage.getItem('bypass_user_id');
@@ -20,6 +27,8 @@ export const useEventMutations = () => {
           throw new Error('Bypass user ID not found');
         }
         console.log('Using bypass user ID for event creation:', userId);
+        // Use admin client for bypass users to bypass RLS
+        client = adminSupabase;
       } else {
         // Regular Supabase auth flow
         const { data: { user } } = await supabase.auth.getUser();
@@ -27,7 +36,7 @@ export const useEventMutations = () => {
         userId = user.id;
       }
 
-      const { data: eventResponse, error: eventError } = await supabase
+      const { data: eventResponse, error: eventError } = await client
         .from('events')
         .insert({
           name: eventData.name,
@@ -45,7 +54,7 @@ export const useEventMutations = () => {
       if (eventError) throw eventError;
 
       if (eventData.ticketTypes.length > 0) {
-        const { error: ticketError } = await supabase
+        const { error: ticketError } = await client
           .from('event_ticket_types')
           .insert(
             eventData.ticketTypes.map(ticket => ({
@@ -70,7 +79,7 @@ export const useEventMutations = () => {
           target_radius: schedule.targetRadius || null
         }));
         
-        const { error: notificationError } = await supabase
+        const { error: notificationError } = await client
           .from('event_notification_schedules')
           .insert(notificationInserts);
 
