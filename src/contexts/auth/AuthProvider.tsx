@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useEffect } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { AuthContextType } from './types';
 import { useAuthActions } from './useAuthActions';
@@ -59,12 +59,72 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     toast
   });
 
+  // Add a special listener for promoter logins
+  useEffect(() => {
+    // Check if there are URL parameters indicating a recent login
+    const urlParams = new URLSearchParams(window.location.search);
+    const loginTs = urlParams.get('login_ts');
+    const loginId = urlParams.get('login_id');
+    const bypassTs = urlParams.get('bypass_ts');
+    const bypassId = urlParams.get('bypass_id');
+    
+    if (loginTs && loginId) {
+      console.log(`[AUTH PROVIDER] Detected login redirect with ID: ${loginId}, timestamp: ${loginTs}`);
+      
+      // Verify the user type is set correctly
+      const storedUserType = localStorage.getItem('user_type');
+      if (storedUserType === 'promoter') {
+        console.log(`[AUTH PROVIDER] Promoter login confirmed. Path: ${window.location.pathname}`);
+        
+        // Ensure we're on a promoter page
+        if (!window.location.pathname.startsWith('/promoter')) {
+          console.log(`[AUTH PROVIDER] Not on a promoter page, redirecting`);
+          window.location.href = '/promoter/dashboard';
+        }
+      }
+    }
+    
+    if (bypassTs && bypassId) {
+      console.log(`[AUTH PROVIDER] Detected bypass login redirect with ID: ${bypassId}, timestamp: ${bypassTs}`);
+      
+      // Ensure admin bypass is active
+      const isAdminBypass = localStorage.getItem('admin_bypass') === 'true';
+      if (!isAdminBypass) {
+        console.warn(`[AUTH PROVIDER] Admin bypass not active but bypass parameters detected`);
+      }
+    }
+    
+    // Debug logging for auth state
+    if (urlParams.get('debug_auth') === 'true') {
+      console.log('[AUTH PROVIDER] Auth debugging enabled. Current state:', { 
+        user: !!user,
+        session: !!session,
+        isLoading,
+        userType: localStorage.getItem('user_type'),
+        isAdminBypass: localStorage.getItem('admin_bypass'),
+      });
+    }
+  }, [user, window.location.search]);
+
   const handleSignOut = async () => {
-    console.log("Starting sign out process...");
+    console.log("[AUTH PROVIDER] Starting sign out process...");
     // Clear local user state first
     setUser(null);
     setSession(null);
     setIsEmailVerified(false);
+    
+    // Clear all login/bypass tracking from sessionStorage
+    sessionStorage.removeItem('login_success');
+    sessionStorage.removeItem('login_success_timestamp');
+    sessionStorage.removeItem('login_user_type');
+    sessionStorage.removeItem('login_attempt_id');
+    sessionStorage.removeItem('login_attempt_timestamp');
+    sessionStorage.removeItem('login_requested_usertype');
+    sessionStorage.removeItem('login_redirect');
+    
+    sessionStorage.removeItem('bypass_attempt_id');
+    sessionStorage.removeItem('bypass_timestamp');
+    sessionStorage.removeItem('bypass_user_type');
     
     // Then call the signOut action which handles backend and localStorage cleanup
     await signOutAction();

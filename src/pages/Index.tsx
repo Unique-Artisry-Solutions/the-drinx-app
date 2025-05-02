@@ -3,35 +3,62 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/auth';
+import { clearAllSessions } from '@/utils/sessionCleaner';
+import { isPreviewEnvironment } from '@/utils/environment';
 
 const Index = () => {
   const { user, isLoading } = useAuth();
   const navigate = useNavigate();
   
+  // Generate a unique ID for this page instance
+  const pageId = React.useId();
+  
   // Log information for debugging
   useEffect(() => {
-    console.log("Index page loaded");
-    console.log("Current URL:", window.location.href);
-    console.log("Auth state:", { user: !!user, isLoading });
+    console.log(`[INDEX ${pageId}] Index page loaded at ${new Date().toISOString()}`);
+    console.log(`[INDEX ${pageId}] Current URL:`, window.location.href);
+    console.log(`[INDEX ${pageId}] Auth state:`, { user: !!user, isLoading });
     
-    // Log all localStorage keys and values for debugging
-    const localStorageKeys = Object.keys(localStorage);
-    const localStorageData = {};
+    // Check for auth debugging flags
+    const urlParams = new URLSearchParams(window.location.search);
+    const debugAuth = urlParams.get('debug_auth') === 'true';
     
-    localStorageKeys.forEach(key => {
-      if (!key.includes('supabase.auth.token')) { // Skip sensitive auth tokens
-        localStorageData[key] = localStorage.getItem(key);
-      }
-    });
+    if (debugAuth) {
+      // Log all localStorage keys and values for debugging
+      const localStorageKeys = Object.keys(localStorage);
+      const localStorageData = {};
+      
+      localStorageKeys.forEach(key => {
+        if (!key.includes('supabase.auth.token')) { // Skip sensitive auth tokens
+          localStorageData[key] = localStorage.getItem(key);
+        }
+      });
+      
+      console.log(`[INDEX ${pageId}] LocalStorage data:`, localStorageData);
+      
+      // Log all sessionStorage keys
+      const sessionStorageKeys = Object.keys(sessionStorage);
+      const sessionStorageData = {};
+      
+      sessionStorageKeys.forEach(key => {
+        sessionStorageData[key] = sessionStorage.getItem(key);
+      });
+      
+      console.log(`[INDEX ${pageId}] SessionStorage data:`, sessionStorageData);
+    }
     
-    console.log("LocalStorage data:", localStorageData);
-  }, [user, isLoading]);
+    // Clear sessions in preview environment to prevent stale data
+    if (isPreviewEnvironment()) {
+      console.log(`[INDEX ${pageId}] Preview environment detected, clearing sessions`);
+      clearAllSessions();
+    }
+  }, [user, isLoading, pageId]);
   
   // Use useEffect to handle navigation properly
   useEffect(() => {
     // Make sure we're not in a loading state
     if (isLoading) {
-      console.log("Auth is still loading, waiting...");
+      console.log(`[INDEX ${pageId}] Auth is still loading, waiting...`);
       return;
     }
     
@@ -42,9 +69,24 @@ const Index = () => {
     const isAdmin = localStorage.getItem('admin_authenticated') === 'true';
     const isAdminBypass = localStorage.getItem('admin_bypass') === 'true';
     
+    // Redirect path determination
+    let redirectPath = '/landing';
+    
+    if (user || isAdminBypass) {
+      if (isAdmin) {
+        redirectPath = '/admin/system-breakdown';
+      } else if (isPromoter) {
+        redirectPath = '/promoter/dashboard';
+      } else if (isEstablishment) {
+        redirectPath = '/establishment/dashboard';
+      } else {
+        redirectPath = '/explore';
+      }
+    }
+    
     // For debugging
-    console.log("Index page navigation check:", { 
-      user, 
+    console.log(`[INDEX ${pageId}] Navigation check:`, { 
+      user: !!user, 
       isLoading, 
       userType, 
       isEstablishment, 
@@ -52,60 +94,23 @@ const Index = () => {
       isAdmin,
       isAdminBypass,
       userId: user?.id,
-      redirectPath: isPromoter ? '/promoter/dashboard' : (isEstablishment ? '/establishment/dashboard' : '/explore')
+      redirectPath
     });
     
-    // If admin is authenticated, redirect to system breakdown page
-    if (isAdmin) {
-      console.log("Redirecting admin to system breakdown");
-      navigate('/admin/system-breakdown', { replace: true });
+    // For promoters, use window.location for a complete reload
+    if (isPromoter) {
+      console.log(`[INDEX ${pageId}] Redirecting promoter using direct navigation`);
+      const redirectUrl = new URL(redirectPath, window.location.origin);
+      redirectUrl.searchParams.set('index_ts', Date.now().toString());
+      redirectUrl.searchParams.set('index_id', pageId);
+      window.location.href = redirectUrl.toString();
       return;
     }
     
-    // If user is authenticated and is an establishment, redirect to establishment dashboard
-    if (user && isEstablishment) {
-      console.log("Redirecting establishment to dashboard");
-      navigate('/establishment/dashboard', { replace: true });
-      return;
-    }
-    
-    // If user is authenticated and is a promoter, redirect to promoter dashboard
-    if (user && isPromoter) {
-      console.log("Redirecting promoter to dashboard");
-      navigate('/promoter/dashboard', { replace: true });
-      return;
-    }
-    
-    // If user is authenticated and is an individual, redirect to explore
-    if (user && !isEstablishment && !isPromoter) {
-      console.log("Redirecting individual user to explore");
-      navigate('/explore', { replace: true });
-      return;
-    }
-    
-    // For admin bypass (but not regular user)
-    if (!user && isAdminBypass) {
-      console.log("Admin bypass active but no user object, checking user type for redirect");
-      
-      if (isPromoter) {
-        navigate('/promoter/dashboard', { replace: true });
-      } else if (isEstablishment) {
-        navigate('/establishment/dashboard', { replace: true });
-      } else if (isAdmin) {
-        navigate('/admin/system-breakdown', { replace: true });
-      } else {
-        navigate('/explore', { replace: true });
-      }
-      return;
-    }
-    
-    // If user is not authenticated, redirect to landing
-    if (!user) {
-      console.log("Redirecting unauthenticated user to landing");
-      navigate('/landing', { replace: true });
-      return;
-    }
-  }, [user, isLoading, navigate]);
+    // For everyone else, use React Router
+    console.log(`[INDEX ${pageId}] Redirecting to: ${redirectPath}`);
+    navigate(redirectPath, { replace: true });
+  }, [user, isLoading, navigate, pageId]);
 
   // If we're still loading, show a loading state
   return (

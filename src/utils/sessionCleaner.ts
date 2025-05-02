@@ -1,29 +1,51 @@
 
-// Utility to clear all session data
-export const clearAllSessions = () => {
-  // Clear user authentication related items
-  localStorage.removeItem('user_authenticated');
-  localStorage.removeItem('user_email');
-  localStorage.removeItem('user_type');
-  localStorage.removeItem('user_username');
-  localStorage.removeItem('user_name');
-  localStorage.removeItem('establishment_name');
-  localStorage.removeItem('promoter_name');
+/**
+ * Utility to clear login-related session storage items
+ */
+export const clearLoginSessions = () => {
+  // Clear login tracking flags
+  sessionStorage.removeItem('login_success');
+  sessionStorage.removeItem('login_success_timestamp');
+  sessionStorage.removeItem('login_user_type');
+  sessionStorage.removeItem('login_attempt_id');
+  sessionStorage.removeItem('login_attempt_timestamp');
+  sessionStorage.removeItem('login_requested_usertype');
+  sessionStorage.removeItem('login_redirect');
+  sessionStorage.removeItem('promoter_login_redirect');
   
-  // Clear admin related items
-  localStorage.removeItem('admin_authenticated');
-  localStorage.removeItem('admin_username');
-  localStorage.removeItem('admin_session_created');
-  
-  // Clear admin bypass
-  localStorage.removeItem('admin_bypass');
-  localStorage.removeItem('bypass_user_id');
-  
-  // Clear Supabase session
-  localStorage.removeItem('spiritless-auth-storage');
-  
-  console.log('All session information has been cleared');
-  
-  // Removed: window.location.href = '/landing';
+  console.log('[SESSION CLEANER] Cleared login session data');
 };
 
+/**
+ * Utility to clear bypass-related session storage items
+ */
+export const clearBypassSessions = () => {
+  // Clear bypass tracking flags
+  sessionStorage.removeItem('bypass_login_timestamp');
+  sessionStorage.removeItem('bypass_user_type');
+  sessionStorage.removeItem('bypass_attempt_id');
+  sessionStorage.removeItem('bypass_timestamp');
+  
+  console.log('[SESSION CLEANER] Cleared bypass session data');
+};
+
+/**
+ * Utility to clear all session storage items
+ */
+export const clearAllSessions = () => {
+  clearLoginSessions();
+  clearBypassSessions();
+  
+  // Clear any other session-specific items
+  const keysToPreserve: string[] = [];
+  
+  // Loop through all sessionStorage items
+  for (let i = 0; i < sessionStorage.length; i++) {
+    const key = sessionStorage.key(i);
+    if (key && !keysToPreserve.includes(key)) {
+      sessionStorage.removeItem(key);
+    }
+  }
+  
+  console.log('[SESSION CLEANER] Cleared all session data');
+};

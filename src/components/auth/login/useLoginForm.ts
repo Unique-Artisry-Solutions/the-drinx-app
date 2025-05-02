@@ -27,13 +27,13 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
     const savedRedirect = localStorage.getItem('auth_redirect');
     if (savedRedirect) {
       setRedirectTo(savedRedirect);
-      console.log("Found saved redirect:", savedRedirect);
+      console.log("[LOGIN HOOK] Found saved redirect:", savedRedirect);
     }
     
     // Get any userType from location state
     const locationState = location.state as { userType?: 'individual' | 'establishment' | 'promoter' };
     if (locationState?.userType) {
-      console.log("Setting user type from location state:", locationState.userType);
+      console.log("[LOGIN HOOK] Setting user type from location state:", locationState.userType);
     }
   }, [location]);
 
@@ -67,7 +67,7 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
         description: 'Please check your email for the verification link',
       });
     } catch (error: any) {
-      console.error("Email verification error:", error);
+      console.error("[LOGIN HOOK] Email verification error:", error);
       setFormError(error.message || 'Failed to resend verification email');
     } finally {
       setIsResendingEmail(false);
@@ -80,11 +80,16 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
     setIsSubmitting(true);
     setShowResendVerification(false);
     
+    // Generate a unique login attempt ID for tracking this login process
+    const loginAttemptId = `login_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    console.log(`[LOGIN ${loginAttemptId}] Starting login process at ${new Date().toISOString()}`);
+    console.log(`[LOGIN ${loginAttemptId}] User type requested: ${userType}`);
+    
     try {
       if (isAdminLogin) {
-        console.log("[LOGIN] Attempting admin login");
+        console.log(`[LOGIN ${loginAttemptId}] Attempting admin login`);
         if (identifier === 'admin@spiritless.com' && password === 'admin123') {
-          console.log("[LOGIN] Admin credentials verified, setting admin session");
+          console.log(`[LOGIN ${loginAttemptId}] Admin credentials verified, setting admin session`);
           localStorage.setItem('admin_authenticated', 'true');
           localStorage.setItem('admin_username', 'Admin');
           localStorage.setItem('admin_session_created', new Date().toISOString());
@@ -99,15 +104,26 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
           throw new Error('Invalid admin credentials');
         }
       } else {
-        console.log(`[LOGIN] Attempting regular login with identifier: ${identifier}`);
+        console.log(`[LOGIN ${loginAttemptId}] Attempting regular login with identifier: ${identifier}`);
         const isEmail = identifier.includes('@');
         
+        // Set login tracking flags before authentication
+        sessionStorage.setItem('login_attempt_id', loginAttemptId);
+        sessionStorage.setItem('login_attempt_timestamp', Date.now().toString());
+        sessionStorage.setItem('login_requested_usertype', userType);
+        
+        // Store the auth redirect for later use (after login success)
+        const savedRedirect = localStorage.getItem('auth_redirect');
+        if (savedRedirect) {
+          sessionStorage.setItem('login_redirect', savedRedirect);
+        }
+        
         if (isEmail) {
-          console.log("[LOGIN] Logging in with email");
+          console.log(`[LOGIN ${loginAttemptId}] Logging in with email`);
           await signIn(identifier, password);
-          console.log("[LOGIN] Email login successful");
+          console.log(`[LOGIN ${loginAttemptId}] Email login successful`);
         } else {
-          console.log("[LOGIN] Logging in with username");
+          console.log(`[LOGIN ${loginAttemptId}] Logging in with username`);
           const { data, error } = await supabase
             .from('profiles')
             .select('id')
@@ -115,103 +131,99 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
             .single();
             
           if (error || !data) {
-            console.error("[LOGIN] Username lookup error:", error);
+            console.error(`[LOGIN ${loginAttemptId}] Username lookup error:`, error);
             throw new Error('Username not found');
           }
             
           const { data: userData, error: userError } = await supabase.auth.admin.getUserById(data.id);
           
           if (userError || !userData.user) {
-            console.error("[LOGIN] User lookup error:", userError);
+            console.error(`[LOGIN ${loginAttemptId}] User lookup error:`, userError);
             throw new Error('User not found');
           }
             
-          console.log("[LOGIN] Username found, attempting login with email");
+          console.log(`[LOGIN ${loginAttemptId}] Username found, attempting login with email`);
           await signIn(userData.user.email || '', password);
-          console.log("[LOGIN] Username login successful");
+          console.log(`[LOGIN ${loginAttemptId}] Username login successful`);
         }
         
         // Login was successful, check if the user_type matches the expected type
         const loggedInType = localStorage.getItem('user_type');
-        console.log(`[LOGIN] Login successful, user type is: ${loggedInType}, expected: ${userType}`);
+        console.log(`[LOGIN ${loginAttemptId}] Login successful, user type is: ${loggedInType}, expected: ${userType}`);
         
         // If userType is specified and doesn't match, attempt to switch roles
         if (userType && loggedInType !== userType && userType !== 'individual') {
-          console.log(`[LOGIN] User type mismatch, attempting to switch to ${userType} role`);
+          console.log(`[LOGIN ${loginAttemptId}] User type mismatch, attempting to switch to ${userType} role`);
           try {
             const { error } = await supabase.rpc('switch_active_role', { role_to_activate: userType });
             if (error) throw error;
             
             // Update localStorage after successful role switch
             localStorage.setItem('user_type', userType);
-            console.log(`[LOGIN] Successfully switched to ${userType} role`);
+            console.log(`[LOGIN ${loginAttemptId}] Successfully switched to ${userType} role`);
           } catch (roleError) {
-            console.warn(`[LOGIN] Could not switch to ${userType} role:`, roleError);
+            console.warn(`[LOGIN ${loginAttemptId}] Could not switch to ${userType} role:`, roleError);
             // Continue with login even if role switch fails
           }
         }
+        
+        // Set login success flags in sessionStorage
+        sessionStorage.setItem('login_success', 'true');
+        sessionStorage.setItem('login_success_timestamp', Date.now().toString());
+        
+        // Store userType at login time
+        const storedUserType = localStorage.getItem('user_type');
+        sessionStorage.setItem('login_user_type', storedUserType || '');
+        console.log(`[LOGIN ${loginAttemptId}] Stored login user type in session: ${storedUserType}`);
         
         toast({
           title: 'Login successful',
           description: 'Welcome back!',
         });
         
-        // Important: Clear the saved redirect before performing navigation
-        const savedRedirect = localStorage.getItem('auth_redirect');
+        // Get and clear redirect path
+        const redirectPath = sessionStorage.getItem('login_redirect') || 
+                             savedRedirect || 
+                             (storedUserType === 'promoter' ? '/promoter/dashboard' : 
+                              storedUserType === 'establishment' ? '/establishment/dashboard' : '/explore');
+                              
+        // Clear the saved redirect before performing navigation
         localStorage.removeItem('auth_redirect');
+        sessionStorage.removeItem('login_redirect');
         
-        // Critical: Store the timestamp to track login progress
-        sessionStorage.setItem('login_timestamp', Date.now().toString());
-        
-        // Critical: Store user type at login to track proper redirection
-        const storedUserType = localStorage.getItem('user_type');
-        sessionStorage.setItem('login_user_type', storedUserType || '');
-        console.log(`[LOGIN] Stored login user type in session: ${storedUserType}`);
-        
-        // For promoters specifically, use direct window.location navigation to force a full page refresh
+        // Specifically for promoters, handle direct navigation
         if (storedUserType === 'promoter') {
-          console.log("[LOGIN] Promoter detected, using direct navigation with timestamp", Date.now());
+          console.log(`[LOGIN ${loginAttemptId}] Promoter login detected. Redirecting to ${redirectPath}`);
           
-          // Set a flag to indicate we're in the process of redirecting
-          sessionStorage.setItem('promoter_login_redirect', 'true');
-          
-          // Set a successful login flag that will be checked in LoginPage
-          sessionStorage.setItem('login_success', 'true');
-          
-          // Use the saved redirect path or default to promoter dashboard
-          const redirectPath = savedRedirect || '/promoter/dashboard';
-          console.log(`[LOGIN] Redirecting promoter to: ${redirectPath} using direct navigation`);
-          
-          // Add a forced refresh parameter to ensure a complete page reload
+          // Force a direct URL navigation to ensure complete page refresh
           const redirectUrl = new URL(redirectPath, window.location.origin);
           redirectUrl.searchParams.set('login_ts', Date.now().toString());
+          redirectUrl.searchParams.set('login_id', loginAttemptId);
           
-          // Use window.location for a full page refresh
+          // Log the full URL for debugging
+          console.log(`[LOGIN ${loginAttemptId}] Redirecting to full URL: ${redirectUrl.toString()}`);
+          
+          // For promoters, use window location to force a full page refresh
           window.location.href = redirectUrl.toString();
           return;
         }
         
+        // For non-promoters, use React Router navigation
         if (onSuccess) {
           onSuccess();
         } else {
-          if (storedUserType === 'establishment') {
-            if (savedRedirect) {
-              navigate(savedRedirect);
-            } else {
-              navigate('/establishment/dashboard');
-            }
-          } else {
-            if (savedRedirect) {
-              navigate(savedRedirect);
-            } else {
-              navigate('/explore');
-            }
-          }
+          console.log(`[LOGIN ${loginAttemptId}] Navigating to: ${redirectPath}`);
+          navigate(redirectPath);
         }
       }
     } catch (error: any) {
-      console.error('[LOGIN] Login error:', error);
+      console.error(`[LOGIN ${loginAttemptId}] Login error:`, error);
       setFormError(error.message || 'Failed to login');
+      
+      // Clear login tracking flags on error
+      sessionStorage.removeItem('login_attempt_id');
+      sessionStorage.removeItem('login_attempt_timestamp');
+      sessionStorage.removeItem('login_requested_usertype');
       
       if (error.message && error.message.includes('Email not verified')) {
         setShowResendVerification(true);
@@ -222,7 +234,8 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
   };
 
   const handleBypassLogin = async (type: 'individual' | 'establishment' | 'promoter' | 'admin') => {
-    console.log(`[BYPASS] Initiating bypass login for ${type} user type`);
+    const bypassAttemptId = `bypass_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    console.log(`[BYPASS ${bypassAttemptId}] Initiating bypass login for ${type} user type`);
     
     try {
       // Generate a proper UUID for the bypass user
@@ -261,8 +274,13 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
         localStorage.setItem('admin_session_created', new Date().toISOString());
       }
       
+      // Set bypass tracking flags
+      sessionStorage.setItem('bypass_attempt_id', bypassAttemptId);
+      sessionStorage.setItem('bypass_timestamp', Date.now().toString());
+      sessionStorage.setItem('bypass_user_type', type);
+      
       // Force a refresh of the session to apply bypass
-      console.log("[BYPASS] Refreshing session to apply bypass login");
+      console.log(`[BYPASS ${bypassAttemptId}] Refreshing session to apply bypass login`);
       await refreshSession();
       
       toast({
@@ -273,46 +291,43 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
           'a business'} for testing purposes.`,
       });
       
-      // Set a flag for bypass login
-      sessionStorage.setItem('bypass_login_timestamp', Date.now().toString());
-      sessionStorage.setItem('bypass_user_type', type);
-      
       // Check for saved redirect
       const savedRedirect = localStorage.getItem('auth_redirect');
-      console.log("[BYPASS] Saved redirect path:", savedRedirect);
+      console.log(`[BYPASS ${bypassAttemptId}] Saved redirect path:`, savedRedirect);
       localStorage.removeItem('auth_redirect');
       
-      // For promoter bypass, use window.location.href for consistency with regular login
+      // For promoter bypass, use direct navigation
       if (type === 'promoter') {
         const redirectPath = savedRedirect || '/promoter/dashboard';
-        console.log(`[BYPASS] Redirecting bypass promoter to: ${redirectPath} using direct navigation`);
+        console.log(`[BYPASS ${bypassAttemptId}] Redirecting bypass promoter to: ${redirectPath}`);
         
-        // Add a parameter to force refresh
         const redirectUrl = new URL(redirectPath, window.location.origin);
         redirectUrl.searchParams.set('bypass_ts', Date.now().toString());
+        redirectUrl.searchParams.set('bypass_id', bypassAttemptId);
         
+        console.log(`[BYPASS ${bypassAttemptId}] Full redirect URL: ${redirectUrl.toString()}`);
         window.location.href = redirectUrl.toString();
         return;
       }
       
       // For other user types, use React Router
       if (savedRedirect) {
-        console.log(`[BYPASS] Redirecting to saved path: ${savedRedirect}`);
+        console.log(`[BYPASS ${bypassAttemptId}] Redirecting to saved path: ${savedRedirect}`);
         navigate(savedRedirect);
       } else {
         if (type === 'admin') {
-          console.log("[BYPASS] Redirecting to admin dashboard");
+          console.log(`[BYPASS ${bypassAttemptId}] Redirecting to admin dashboard`);
           navigate('/admin/system-breakdown');
         } else if (type === 'establishment') {
-          console.log("[BYPASS] Redirecting to establishment dashboard");
+          console.log(`[BYPASS ${bypassAttemptId}] Redirecting to establishment dashboard`);
           navigate('/establishment/dashboard'); 
         } else {
-          console.log("[BYPASS] Redirecting to explore page");
+          console.log(`[BYPASS ${bypassAttemptId}] Redirecting to explore page`);
           navigate('/explore');
         }
       }
     } catch (error) {
-      console.error("[BYPASS] Error during bypass login:", error);
+      console.error(`[BYPASS ${bypassAttemptId}] Error during bypass login:`, error);
       toast({
         title: 'Login Error',
         description: 'An error occurred during bypass login. Please try again.',

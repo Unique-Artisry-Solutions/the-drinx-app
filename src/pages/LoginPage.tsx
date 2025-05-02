@@ -15,47 +15,79 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const { user, isLoading } = useAuth();
   
+  // Generate a unique ID for this page instance for tracking
+  const pageId = React.useId();
+  
   // For debugging
   useEffect(() => {
-    console.log("[LOGIN PAGE] Page loaded", {
+    // Log page load with timestamp
+    const timestamp = new Date().toISOString();
+    console.log(`[LOGIN PAGE ${pageId}] Page loaded at ${timestamp}`, {
       path: location.pathname,
       search: location.search,
-      timestamp: Date.now(),
       authState: { user: !!user, isLoading }
     });
-    
-    // Log session storage flags
-    console.log("[LOGIN PAGE] Session storage state:", {
+
+    // Log auth related storage flags
+    console.log(`[LOGIN PAGE ${pageId}] Storage state:`, {
+      // Session storage flags
       loginSuccess: sessionStorage.getItem('login_success'),
-      loginTimestamp: sessionStorage.getItem('login_timestamp'),
-      bypassTimestamp: sessionStorage.getItem('bypass_login_timestamp'),
-      promoterRedirect: sessionStorage.getItem('promoter_login_redirect'),
+      loginTimestamp: sessionStorage.getItem('login_success_timestamp'),
       loginUserType: sessionStorage.getItem('login_user_type'),
-      bypassUserType: sessionStorage.getItem('bypass_user_type')
+      loginAttemptId: sessionStorage.getItem('login_attempt_id'),
+      bypassAttemptId: sessionStorage.getItem('bypass_attempt_id'),
+      
+      // Local storage flags
+      authenticated: localStorage.getItem('user_authenticated'),
+      userType: localStorage.getItem('user_type'),
+      adminBypass: localStorage.getItem('admin_bypass'),
+      redirectPath: localStorage.getItem('auth_redirect')
     });
     
-    // Check if we just came from a successful login
-    const loginSuccess = sessionStorage.getItem('login_success') === 'true';
-    const userType = localStorage.getItem('user_type');
-    const isPromoter = userType === 'promoter';
-    
-    // If we have a successful login flag and the user is a promoter, redirect immediately
-    if (loginSuccess && isPromoter && !isLoading) {
-      console.log("[LOGIN PAGE] Detected successful promoter login, redirecting immediately");
-      sessionStorage.removeItem('login_success');
-      
-      // Get redirect path or use default
-      const savedRedirect = localStorage.getItem('auth_redirect');
-      const redirectPath = savedRedirect || '/promoter/dashboard';
-      localStorage.removeItem('auth_redirect');
-      
-      // Force navigation with timestamp
-      const redirectUrl = new URL(redirectPath, window.location.origin);
-      redirectUrl.searchParams.set('redirect_ts', Date.now().toString());
-      
-      window.location.href = redirectUrl.toString();
+    // Check URL params for debugging
+    const urlParams = new URLSearchParams(location.search);
+    if (urlParams.get('debug_auth') === 'true') {
+      console.log(`[LOGIN PAGE ${pageId}] Auth debugging enabled`);
     }
-  }, [location, user, isLoading]);
+    
+    // Check if we need an immediate redirect
+    const checkForImmediateRedirect = () => {
+      // If just logged in as promoter (checked via sessionStorage)
+      if (sessionStorage.getItem('login_success') === 'true' && 
+          sessionStorage.getItem('login_user_type') === 'promoter' && 
+          !isLoading) {
+        console.log(`[LOGIN PAGE ${pageId}] Detected successful promoter login, redirecting immediately`);
+        
+        // Clear tracking flags 
+        sessionStorage.removeItem('login_success');
+        
+        // Get redirect path or use default
+        const savedRedirect = localStorage.getItem('auth_redirect') || '/promoter/dashboard';
+        localStorage.removeItem('auth_redirect');
+        
+        // Create URL with timestamp
+        const redirectUrl = new URL(savedRedirect, window.location.origin);
+        redirectUrl.searchParams.set('redirect_ts', Date.now().toString());
+        redirectUrl.searchParams.set('login_page_id', pageId);
+        
+        console.log(`[LOGIN PAGE ${pageId}] Redirecting to: ${redirectUrl.toString()}`);
+        window.location.href = redirectUrl.toString();
+        return;
+      }
+    };
+    
+    // Run initial check
+    checkForImmediateRedirect();
+    
+    // Also set up an interval to check for changes in session storage
+    // This helps catch async login completions
+    const intervalId = setInterval(checkForImmediateRedirect, 500);
+    
+    return () => {
+      clearInterval(intervalId);
+      console.log(`[LOGIN PAGE ${pageId}] Page unloaded at ${new Date().toISOString()}`);
+    };
+  }, [location, user, isLoading, pageId]);
   
   // Check for userType in the location state
   useEffect(() => {
@@ -64,10 +96,10 @@ const LoginPage = () => {
       message?: string 
     };
 
-    console.log("[LOGIN PAGE] Location state:", state);
+    console.log(`[LOGIN PAGE ${pageId}] Location state:`, state);
     
     if (state?.userType) {
-      console.log("[LOGIN PAGE] Setting required user type from state:", state.userType);
+      console.log(`[LOGIN PAGE ${pageId}] Setting required user type from state:`, state.userType);
       setRequiredUserType(state.userType);
     }
     
@@ -75,29 +107,30 @@ const LoginPage = () => {
     if (state?.message) {
       setErrorMessage(state.message);
     }
-  }, [location]);
+  }, [location, pageId]);
   
   // Redirect if already logged in
   useEffect(() => {
     if (!isLoading && user) {
-      console.log("[LOGIN PAGE] User already authenticated, preparing redirect");
+      console.log(`[LOGIN PAGE ${pageId}] User already authenticated, preparing redirect`);
       
       // Get user type for routing decision
       const userType = localStorage.getItem('user_type');
-      console.log("[LOGIN PAGE] Authenticated user type:", userType);
+      console.log(`[LOGIN PAGE ${pageId}] Authenticated user type:`, userType);
       
       // Check if there's a saved redirect
       const savedRedirect = localStorage.getItem('auth_redirect');
       
       if (savedRedirect) {
-        console.log("[LOGIN PAGE] Found saved redirect path:", savedRedirect);
+        console.log(`[LOGIN PAGE ${pageId}] Found saved redirect path:`, savedRedirect);
         
         // For promoters, use window.location.href for consistent full page reload
         if (userType === 'promoter') {
-          console.log("[LOGIN PAGE] Redirecting authenticated promoter to saved path");
+          console.log(`[LOGIN PAGE ${pageId}] Redirecting authenticated promoter to saved path`);
           // Add timestamp to force fresh load
           const redirectUrl = new URL(savedRedirect, window.location.origin);
           redirectUrl.searchParams.set('auth_ts', Date.now().toString());
+          redirectUrl.searchParams.set('login_page_id', pageId);
           window.location.href = redirectUrl.toString();
         } else {
           navigate(savedRedirect);
@@ -105,12 +138,13 @@ const LoginPage = () => {
         localStorage.removeItem('auth_redirect');
       } else {
         // Default redirect based on user type
-        console.log("[LOGIN PAGE] No saved redirect, using user type for redirect:", userType);
+        console.log(`[LOGIN PAGE ${pageId}] No saved redirect, using user type for redirect:`, userType);
         
         if (userType === 'promoter') {
-          console.log("[LOGIN PAGE] Redirecting authenticated promoter to dashboard");
+          console.log(`[LOGIN PAGE ${pageId}] Redirecting authenticated promoter to dashboard`);
           const redirectUrl = new URL('/promoter/dashboard', window.location.origin);
           redirectUrl.searchParams.set('auth_ts', Date.now().toString());
+          redirectUrl.searchParams.set('login_page_id', pageId);
           window.location.href = redirectUrl.toString();
         } else if (userType === 'establishment') {
           navigate('/establishment/dashboard');
@@ -119,7 +153,7 @@ const LoginPage = () => {
         }
       }
     }
-  }, [user, isLoading, navigate]);
+  }, [user, isLoading, navigate, pageId]);
   
   // Always force light theme for login page
   useEffect(() => {
