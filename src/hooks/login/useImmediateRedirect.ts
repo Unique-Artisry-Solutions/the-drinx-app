@@ -1,6 +1,13 @@
 
 import { useEffect } from 'react';
 
+// Add this to extend the Window interface with our custom property
+declare global {
+  interface Window {
+    isLoading?: boolean;
+  }
+}
+
 export const useImmediateRedirect = (pageId: string) => {
   useEffect(() => {
     // Log page load with timestamp
