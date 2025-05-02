@@ -98,9 +98,22 @@ const EmailMarketingPanel: React.FC<EmailMarketingPanelProps> = ({ eventId, even
         const checkedInEmails = attendees?.filter(a => a.email && a.status === 'checked_in')
           .map(a => a.email as string) || [];
           
-        // Get VIP emails - assuming you have a field or ticket type that identifies VIPs
-        const vipEmails = attendees?.filter(a => a.email && 
-          (a.custom_fields?.isVip || a.ticket_type_id === 'vip-ticket-id'))
+        // Get VIP emails - Fix for TypeScript error using proper type checking
+        const vipEmails = attendees?.filter(a => {
+            // Safely check if custom_fields exists and is an object
+            const customFields = a.custom_fields;
+            
+            // Check if isVip property exists in custom_fields
+            const isVip = typeof customFields === 'object' && 
+                           customFields !== null && 
+                           'isVip' in customFields && 
+                           Boolean(customFields.isVip);
+                           
+            // Or check if ticket_type_id is the VIP ticket type
+            const hasVipTicket = a.ticket_type_id === 'vip-ticket-id';
+            
+            return a.email && (isVip || hasVipTicket);
+          })
           .map(a => a.email as string) || [];
           
         setAttendeeLists([
