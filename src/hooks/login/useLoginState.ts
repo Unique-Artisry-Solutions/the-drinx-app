@@ -125,11 +125,12 @@ export const useLoginState = (pageId: string) => {
       const timeoutId = setTimeout(() => controller.abort(), 8000);
       
       // Use a basic health check to verify connectivity
-      const healthPromise = fetch(`${supabase.functions.url}/ping_connection`, {
+      const pingUrl = `${import.meta.env.VITE_SUPABASE_URL || "https://dvifibvzwunnpcsihpxq.supabase.co"}/functions/v1/ping_connection`;
+      const healthPromise = fetch(pingUrl, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabase.auth.session()?.access_token || ''}`
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token || ''}`
         },
         signal: controller.signal
       });

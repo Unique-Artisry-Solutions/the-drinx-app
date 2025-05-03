@@ -1,4 +1,3 @@
-
 /**
  * Centralized redirect utilities for consistent navigation throughout the app
  */
@@ -81,7 +80,12 @@ export function performRedirect(
   
   // Add any additional parameters
   Object.entries(params).forEach(([key, value]) => {
-    redirectUrl.searchParams.set(key, value);
+    if (typeof value === 'string') {
+      redirectUrl.searchParams.set(key, value);
+    } else {
+      // Handle non-string values by converting them to string
+      redirectUrl.searchParams.set(key, String(value));
+    }
   });
   
   console.log(`[REDIRECT UTIL] Redirecting to: ${path} (Full refresh: ${isFullPageRefresh || isPromoter}, Source: ${source}, Count: ${redirectCount})`);
@@ -125,7 +129,12 @@ function performDelayedRedirect(path: string, navigate: NavigateFunction, option
   
   // Add any additional parameters
   Object.entries(params).forEach(([key, value]) => {
-    redirectUrl.searchParams.set(key, value);
+    if (typeof value === 'string') {
+      redirectUrl.searchParams.set(key, value);
+    } else {
+      // Handle non-string values by converting them to string
+      redirectUrl.searchParams.set(key, String(value));
+    }
   });
   
   console.log(`[REDIRECT UTIL] Delayed redirect executing to: ${path}`);
