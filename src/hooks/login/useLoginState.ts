@@ -56,20 +56,38 @@ export const useLoginState = (pageId: string) => {
     try {
       console.log(`[LOGIN PAGE ${pageId}] Testing connection to Supabase...`);
       
-      // Try calling the ping edge function with timeout
+      // Create an AbortController for timeout handling
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 8000);
       
-      // Use invoke instead of directly accessing the URL
-      const { data, error } = await supabase.functions.invoke('ping_connection', {
+      // Use invoke method without passing the signal directly
+      // The Supabase Functions API doesn't support AbortController signals directly
+      const fetchPromise = supabase.functions.invoke('ping_connection', {
         method: 'GET',
-        signal: controller.signal,
         headers: {
           'Content-Type': 'application/json',
         },
       });
       
+      // Race the fetch promise against a timeout promise
+      const result = await Promise.race([
+        fetchPromise,
+        new Promise((_, reject) => {
+          // If the timeout triggers before the fetch completes, this will reject
+          const abortListener = () => reject(new Error('Connection test timed out'));
+          controller.signal.addEventListener('abort', abortListener);
+          
+          // Clean up the abort listener if fetch completes first
+          setTimeout(() => {
+            controller.signal.removeEventListener('abort', abortListener);
+          }, 0);
+        })
+      ]);
+      
       clearTimeout(timeoutId);
+      
+      // Now handle the result from the fetch
+      const { data, error } = result as { data: any, error: any };
       
       if (error) {
         throw new Error(`Connection test failed: ${error.message}`);
