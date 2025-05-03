@@ -51,6 +51,7 @@ export function setupMocks(authUser = mockUser) {
     } : null,
     isLoading: false,
     isEmailVerified: true,
+    authStable: true, // Add the missing property
     signIn: vi.fn().mockResolvedValue({}),
     signUp: vi.fn().mockResolvedValue({}),
     signOut: vi.fn().mockResolvedValue({}),
