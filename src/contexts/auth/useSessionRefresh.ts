@@ -1,3 +1,4 @@
+
 import { useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -134,17 +135,24 @@ export function useSessionRefresh({
         setUser(user);
         setIsEmailVerified(isEmailVerified);
         updateLocalStorage(user);
+        return { isEmailVerified };
       } else {
-        console.log('[SESSION REFRESH] No session after refresh');
+        console.log('[SESSION REFRESH] No session after refresh, clearing state');
+        // Clean state to prevent UI from being stuck - this is critical
         setSession(null);
         setUser(null);
         setIsEmailVerified(false);
         updateLocalStorage(null);
+        
+        // Mark the loading as complete even if we couldn't get a session
+        window.isLoading = false;
+        return { isEmailVerified: false };
       }
-      
-      return { isEmailVerified };
     } catch (error) {
       console.error('[SESSION REFRESH] Error refreshing session:', error);
+      
+      // Always reset the loading state to prevent UI from being stuck
+      window.isLoading = false;
       
       // Check if we still have a valid session stored in localStorage
       try {
@@ -157,12 +165,22 @@ export function useSessionRefresh({
             refreshSessionAction().catch(e => 
               console.warn('[SESSION REFRESH] Retry also failed:', e));
           }, 2000);
+        } else {
+          // If no session in storage, clear the user state to avoid stuck UI
+          setSession(null);
+          setUser(null);
+          setIsEmailVerified(false);
+          updateLocalStorage(null);
         }
       } catch (storageError) {
         console.warn('[SESSION REFRESH] Storage check failed:', storageError);
+        // Clear state in case of any storage errors
+        setSession(null);
+        setUser(null);
+        setIsEmailVerified(false);
+        updateLocalStorage(null);
       }
       
-      // Keep current state, don't clear on error
       return { isEmailVerified: false };
     }
   }, [refreshSessionAction, setSession, setUser, setIsEmailVerified, updateLocalStorage]);

@@ -15,9 +15,23 @@ const Index = () => {
   const [resetSuccess, setResetSuccess] = useState<boolean | null>(null);
   const [resetMessage, setResetMessage] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
+  const [loadingTimeout, setLoadingTimeout] = useState(false);
   
   // Generate a unique ID for this page instance
   const pageId = React.useId();
+  
+  // Add maximum wait time for loading
+  useEffect(() => {
+    // If we're still loading after 15 seconds, show timeout message
+    const timeoutId = setTimeout(() => {
+      if (isLoading) {
+        console.log(`[INDEX ${pageId}] Loading timeout reached after 15 seconds`);
+        setLoadingTimeout(true);
+      }
+    }, 15000);
+    
+    return () => clearTimeout(timeoutId);
+  }, [isLoading, pageId]);
   
   // Log information for debugging
   useEffect(() => {
@@ -87,6 +101,25 @@ const Index = () => {
     setShowConfirm(false);
   };
   
+  // Force navigation to login if loading times out
+  const handleForceLoginNavigation = () => {
+    console.log(`[INDEX ${pageId}] User manually navigating to login page`);
+    breakRedirectLoop();
+    window.location.href = '/login';
+  };
+  
+  // Function to break redirect loops and clear any problematic state
+  const breakRedirectLoop = () => {
+    console.log(`[INDEX ${pageId}] Breaking potential redirect loop`);
+    localStorage.removeItem('redirect_count');
+    localStorage.removeItem('last_redirect_time');
+    localStorage.removeItem('login_success');
+    localStorage.removeItem('login_success_timestamp');
+    localStorage.removeItem('login_user_type');
+    localStorage.removeItem('auth_redirect');
+    localStorage.removeItem('login_redirect');
+  };
+  
   // Use useEffect to handle navigation properly
   useEffect(() => {
     // Check for redirect loop prevention
@@ -152,6 +185,18 @@ const Index = () => {
           <p className="text-lg mb-2 font-medium">Loading application...</p>
           <div className="w-12 h-12 border-4 border-spiritless-pink border-t-transparent rounded-full animate-spin mx-auto"></div>
           <p className="text-sm text-gray-500 mt-2 mb-6">Please wait while we prepare your experience</p>
+          
+          {loadingTimeout && (
+            <div className="mb-6 p-3 bg-amber-50 border border-amber-200 rounded-md text-amber-800">
+              <p className="font-medium">Taking longer than expected</p>
+              <p className="text-sm my-1">The application seems to be having trouble loading.</p>
+              <Button variant="outline" 
+                className="mt-2 text-sm border-amber-300 hover:bg-amber-100"
+                onClick={handleForceLoginNavigation}>
+                Go to Login Page
+              </Button>
+            </div>
+          )}
           
           {/* Emergency Reset Section */}
           <div className="mt-8 border-t pt-4">
@@ -220,4 +265,3 @@ const Index = () => {
 };
 
 export default Index;
-
