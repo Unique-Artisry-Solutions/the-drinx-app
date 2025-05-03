@@ -12,13 +12,13 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 
 /**
  * Supabase client configured for authentication
- * Consistently uses localStorage for session persistence
+ * Always uses localStorage for session persistence with consistent storage key
  */
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
-    persistSession: true,
+    persistSession: true, // Always persist sessions
     autoRefreshToken: true,
     storageKey: 'spiritless-auth-storage',
-    storage: localStorage
+    storage: localStorage // Always use localStorage for consistency
   }
 });

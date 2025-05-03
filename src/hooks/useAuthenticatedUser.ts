@@ -10,10 +10,15 @@ export function useAuthenticatedUser() {
   const { toast } = useToast();
 
   useEffect(() => {
+    const setupId = Date.now().toString();
+    console.log(`[AUTH USER HOOK ${setupId}] Initializing authenticated user hook`);
+    
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log(`[AUTH USER HOOK ${setupId}] Auth state changed: ${event}`);
         setUser(session?.user ?? null);
+        
         if (event === 'SIGNED_OUT') {
           toast({
             title: "Session ended",
@@ -26,10 +31,11 @@ export function useAuthenticatedUser() {
 
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log(`[AUTH USER HOOK ${setupId}] Initial session check: ${!!session}`);
       setUser(session?.user ?? null);
       setIsLoading(false);
     }).catch(error => {
-      console.error('Error checking auth session:', error);
+      console.error(`[AUTH USER HOOK ${setupId}] Error checking auth session:`, error);
       setIsLoading(false);
       toast({
         title: "Authentication Error",
@@ -40,6 +46,7 @@ export function useAuthenticatedUser() {
 
     return () => {
       subscription.unsubscribe();
+      console.log(`[AUTH USER HOOK ${setupId}] Cleanup`);
     };
   }, [toast]);
 

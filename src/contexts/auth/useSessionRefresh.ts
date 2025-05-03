@@ -1,7 +1,6 @@
-
 import { useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 
 interface UseSessionRefreshProps {
   refreshSessionAction: () => Promise<{
@@ -22,14 +21,14 @@ export function useSessionRefresh({
   setIsEmailVerified,
   updateLocalStorage
 }: UseSessionRefreshProps) {
-  // Refresh user session and profile data
+  // Refresh user session and profile data with improved error handling
   const refreshSession = useCallback(async () => {
-    console.log('Refreshing session in useSessionRefresh...');
+    console.log('[SESSION REFRESH] Starting session refresh...');
     
     // Check for admin bypass first
     const isAdminBypass = localStorage.getItem('admin_bypass') === 'true';
     if (isAdminBypass) {
-      console.log('Admin bypass active, skipping normal session refresh');
+      console.log('[SESSION REFRESH] Admin bypass active, using bypass user');
       
       // Create a pseudo user object for bypass
       const bypassUserId = localStorage.getItem('bypass_user_id');
@@ -39,7 +38,7 @@ export function useSessionRefresh({
       
       // Only create bypass user if we have all the required data
       if (bypassUserId && userType) {
-        console.log('Creating bypass user for:', userType);
+        console.log('[SESSION REFRESH] Creating bypass user for:', userType);
         
         const bypassUser = {
           id: bypassUserId,
@@ -62,17 +61,30 @@ export function useSessionRefresh({
     
     // Regular session refresh
     try {
-      // First check for session manually
-      console.log('Checking for existing session');
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      // First check for session manually with timeout protection
+      console.log('[SESSION REFRESH] Checking for existing session');
       
-      if (sessionError) {
-        console.error('Error getting session:', sessionError);
-        throw sessionError;
-      }
+      // Set up a promise with timeout to prevent hanging
+      const sessionPromise = new Promise(async (resolve, reject) => {
+        try {
+          const { data, error } = await supabase.auth.getSession();
+          if (error) throw error;
+          resolve(data);
+        } catch (err) {
+          reject(err);
+        }
+      });
+      
+      // Set a timeout of 5 seconds to prevent hanging
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Session check timed out')), 5000);
+      });
+      
+      // Race the promises
+      const sessionData = await Promise.race([sessionPromise, timeoutPromise]) as { session: Session | null };
       
       if (sessionData.session) {
-        console.log('Session found, updating user state');
+        console.log('[SESSION REFRESH] Session found, updating user state');
         setSession(sessionData.session);
         setUser(sessionData.session.user);
         setIsEmailVerified(true);
@@ -88,32 +100,42 @@ export function useSessionRefresh({
             .single();
             
           if (!rolesError && roles) {
-            console.log('Found active role in database:', roles.role);
+            console.log('[SESSION REFRESH] Found active role in database:', roles.role);
             localStorage.setItem('user_type', roles.role);
-            
-            // Store login information in localStorage instead of sessionStorage
             localStorage.setItem('login_user_type', roles.role);
           }
         } catch (roleError) {
-          console.warn('Error fetching active role:', roleError);
+          console.warn('[SESSION REFRESH] Error fetching active role:', roleError);
         }
         
         return { isEmailVerified: true };
       } else {
-        console.log('No session found, attempting refresh');
+        console.log('[SESSION REFRESH] No session found, attempting refresh');
       }
       
-      // If no session or needs refresh, use the action
-      const { session, user, isEmailVerified } = await refreshSessionAction();
+      // If no session or needs refresh, use the action with timeout protection
+      const refreshPromise = refreshSessionAction();
+      const refreshTimeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Session refresh timed out')), 8000);
+      });
+      
+      const { session, user, isEmailVerified } = await Promise.race([
+        refreshPromise, 
+        refreshTimeoutPromise
+      ]) as { 
+        session: Session | null; 
+        user: User | null; 
+        isEmailVerified: boolean 
+      };
       
       if (session && user) {
-        console.log('Session refreshed successfully');
+        console.log('[SESSION REFRESH] Session refreshed successfully');
         setSession(session);
         setUser(user);
         setIsEmailVerified(isEmailVerified);
         updateLocalStorage(user);
       } else {
-        console.log('No session after refresh');
+        console.log('[SESSION REFRESH] No session after refresh');
         setSession(null);
         setUser(null);
         setIsEmailVerified(false);
@@ -122,7 +144,24 @@ export function useSessionRefresh({
       
       return { isEmailVerified };
     } catch (error) {
-      console.error('Error refreshing session:', error);
+      console.error('[SESSION REFRESH] Error refreshing session:', error);
+      
+      // Check if we still have a valid session stored in localStorage
+      try {
+        const storedSession = localStorage.getItem('spiritless-auth-storage');
+        if (storedSession) {
+          console.log('[SESSION REFRESH] Found stored session, using as fallback');
+          
+          // Attempt retry after small delay
+          setTimeout(() => {
+            refreshSessionAction().catch(e => 
+              console.warn('[SESSION REFRESH] Retry also failed:', e));
+          }, 2000);
+        }
+      } catch (storageError) {
+        console.warn('[SESSION REFRESH] Storage check failed:', storageError);
+      }
+      
       // Keep current state, don't clear on error
       return { isEmailVerified: false };
     }

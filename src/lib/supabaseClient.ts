@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 import { Database } from '@/integrations/supabase/types';
 
@@ -277,6 +276,7 @@ export const supabaseClient = createClient<CustomDatabase>(supabaseUrl, supabase
     persistSession: true,
     autoRefreshToken: true,
     storageKey: 'spiritless-auth-storage',
+    storage: localStorage // Always use localStorage for consistency
   }
 });
 

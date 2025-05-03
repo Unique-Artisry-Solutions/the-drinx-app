@@ -1,6 +1,6 @@
 
 import { useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { isPreviewEnvironment } from '@/utils/environment';
 
 interface UseAuthSetupProps {
@@ -33,23 +33,6 @@ export const useAuthSetup = ({
     // Set loading state initially
     setIsLoading(true);
     
-    // Special handling for preview environment
-    const inPreviewEnv = isPreviewEnvironment();
-    if (inPreviewEnv) {
-      console.log(`[AUTH SETUP ${setupId}] Preview environment detected: using enhanced setup`);
-      
-      // In preview, we force persistence settings for auth
-      supabase.auth.getSession().then(({ data }) => {
-        if (data.session) {
-          console.log(`[AUTH SETUP ${setupId}] Found existing session in preview`);
-          return { data };
-        } else {
-          console.log(`[AUTH SETUP ${setupId}] No session found in preview environment`);
-          return { data: { session: null } };
-        }
-      });
-    }
-    
     // First check for admin bypass
     const { isAdminBypass, bypassUser } = checkAdminBypass();
     
@@ -70,7 +53,8 @@ export const useAuthSetup = ({
     }
     
     console.log(`[AUTH SETUP ${setupId}] Setting up auth state listener...`);
-    // Set up auth state listener FIRST
+    
+    // Set up auth state listener FIRST - this order is important
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log(`[AUTH SETUP ${setupId}] Auth state changed:`, event, !!session);
@@ -80,6 +64,12 @@ export const useAuthSetup = ({
           console.log(`[AUTH SETUP ${setupId}] User ID:`, session.user.id);
           console.log(`[AUTH SETUP ${setupId}] User email:`, session.user.email);
           console.log(`[AUTH SETUP ${setupId}] User metadata:`, session.user.user_metadata);
+          
+          // Update our application state with the session information
+          setSession(session);
+          setUser(session.user);
+          setIsEmailVerified(true);
+          updateLocalStorage(session.user);
           
           // Check for user_type in metadata
           const userType = session.user.user_metadata?.user_type;
@@ -98,32 +88,25 @@ export const useAuthSetup = ({
               const activeRole = roles.find(r => r.is_active);
               if (activeRole) {
                 console.log(`[AUTH SETUP ${setupId}] Active role from database:`, activeRole.role);
+                localStorage.setItem('user_type', activeRole.role);
               }
             }
           } catch (error) {
             console.warn(`[AUTH SETUP ${setupId}] Error fetching user roles:`, error);
           }
+        } else if (event === 'SIGNED_OUT') {
+          console.log(`[AUTH SETUP ${setupId}] Sign out event received`);
+          setSession(null);
+          setUser(null);
+          setIsEmailVerified(false);
+          updateLocalStorage(null);
         }
-        
-        // We need some delay to avoid race conditions
-        setTimeout(() => {
-          setSession(session);
-          setUser(session?.user ?? null);
-          
-          if (session?.user) {
-            // We assume email is verified if we get here
-            setIsEmailVerified(true);
-            updateLocalStorage(session.user);
-          } else if (event === 'SIGNED_OUT') {
-            setIsEmailVerified(false);
-            updateLocalStorage(null);
-          }
-        }, 0);
       }
     );
     
     console.log(`[AUTH SETUP ${setupId}] Checking for existing session...`);
-    // THEN check for existing session
+    
+    // THEN check for existing session - this order is important
     supabase.auth.getSession().then(({ data: { session } }) => {
       console.log(`[AUTH SETUP ${setupId}] Initial session check result:`, !!session);
       
@@ -138,26 +121,15 @@ export const useAuthSetup = ({
       }
       
       setIsLoading(false);
+    }).catch(err => {
+      console.error(`[AUTH SETUP ${setupId}] Error during session check:`, err);
+      setIsLoading(false);
     });
     
-    // Check if we need to refresh the session
-    // In preview environment, we always refresh to ensure a consistent state
-    const shouldRefreshSession = inPreviewEnv || localStorage.getItem('spiritless-auth-storage');
-    
-    if (shouldRefreshSession) {
-      console.log(`[AUTH SETUP ${setupId}] ${inPreviewEnv ? 'Preview environment' : 'Stored session'} detected, refreshing session...`);
-      refreshSession().catch(e => {
-        console.error(`[AUTH SETUP ${setupId}] Error refreshing session:`, e);
-        // Only show toast in non-preview env
-        if (!inPreviewEnv) {
-          toast({
-            title: "Session Expired",
-            description: "Please sign in again",
-            variant: "destructive"
-          });
-        }
-      });
-    }
+    // Force a session refresh to ensure we have the latest data
+    refreshSession().catch(e => {
+      console.error(`[AUTH SETUP ${setupId}] Error refreshing session:`, e);
+    });
     
     return () => {
       authListener.subscription.unsubscribe();
@@ -165,4 +137,3 @@ export const useAuthSetup = ({
     };
   }, []);
 };
-
