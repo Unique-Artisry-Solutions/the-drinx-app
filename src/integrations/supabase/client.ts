@@ -54,7 +54,7 @@ export const trackAuthStateChange = () => {
   return { 
     data: { 
       subscription: {
-        unsubscribe: () => subscription.subscription.unsubscribe()
+        unsubscribe: () => subscription.unsubscribe()
       }
     } 
   };
