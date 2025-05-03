@@ -65,7 +65,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     console.log('AuthProvider initialized');
     let isMounted = true;
-    let authSubscription: { subscription: { unsubscribe: () => void } } | null = null;
+    let authSubscription: { unsubscribe: () => void } | null = null;
     
     const isAuthIntent = checkAuthIntent();
     console.log("Auth intent active:", isAuthIntent);
@@ -90,7 +90,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // Set up auth state listener FIRST before any async calls
       console.log('Setting up auth state listener');
-      authSubscription = trackAuthStateChange();
+      const { data } = trackAuthStateChange();
+      authSubscription = data.subscription;
       
       // Set up detailed auth state listener
       const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -227,7 +228,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => {
       isMounted = false;
       if (authSubscription) {
-        authSubscription.subscription.unsubscribe();
+        authSubscription.unsubscribe();
       }
       window.removeEventListener('adminBypassChanged', handleBypassChange);
       window.removeEventListener('authReset', handleAuthReset);

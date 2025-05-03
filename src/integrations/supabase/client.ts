@@ -41,13 +41,21 @@ export const getSessionDebug = async () => {
   return { session, error };
 };
 
-// Add debugging helper to track auth state changes
+// Update the trackAuthStateChange function to return a compatible object structure
 export const trackAuthStateChange = () => {
-  return supabase.auth.onAuthStateChange((event, session) => {
+  const subscription = supabase.auth.onAuthStateChange((event, session) => {
     console.log(`Auth state changed: ${event}`, { 
       hasSession: !!session, 
       userId: session?.user?.id,
       userEmail: session?.user?.email
     });
   });
+  
+  return { 
+    data: { 
+      subscription: {
+        unsubscribe: () => subscription.subscription.unsubscribe()
+      }
+    } 
+  };
 };
