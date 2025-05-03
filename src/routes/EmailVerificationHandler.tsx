@@ -7,7 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 const EmailVerificationHandler = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { refreshSession, isEmailVerified } = useAuth();
+  const { refreshSession } = useAuth();
   const { toast } = useToast();
   const [isChecking, setIsChecking] = useState(true);
   
@@ -30,11 +30,11 @@ const EmailVerificationHandler = () => {
         
         try {
           // Refresh the session to get the updated verification status
-          const sessionResult = await refreshSession();
-          console.log('Session refresh result:', sessionResult);
+          const result = await refreshSession();
+          console.log('Session refresh result:', result);
           
           // Check if the user is now verified
-          if (sessionResult.isEmailVerified) {
+          if (result.isEmailVerified) {
             console.log('Email is verified, proceeding to explore page');
             
             toast({

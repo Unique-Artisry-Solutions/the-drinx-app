@@ -4,16 +4,7 @@ import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { checkAdminBypassStatus, createBypassUser } from '@/utils/adminBypass';
-
-interface AuthContextType {
-  user: User | null;
-  session: Session | null;
-  isLoading: boolean;
-  isEmailVerified: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
-  signOut: () => Promise<void>;
-  refreshSession: () => Promise<void>;
-}
+import { AuthContextType } from './types';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -110,7 +101,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsEmailVerified(false);
       });
     };
-  }, []);
+  }, [toast]);
 
   const signIn = async (email: string, password: string) => {
     try {
@@ -132,6 +123,82 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       toast({
         title: 'Login failed',
         description: error.message || 'An error occurred during login',
+        variant: 'destructive',
+      });
+      throw error;
+    }
+  };
+
+  const signUp = async (email: string, password: string, options?: {
+    data?: { [key: string]: any },
+    emailRedirectTo?: string
+  }) => {
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: options?.data || {},
+          emailRedirectTo: options?.emailRedirectTo
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: 'Signup successful',
+        description: 'Please check your email to verify your account.',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Signup failed',
+        description: error.message || 'An error occurred during signup',
+        variant: 'destructive',
+      });
+      throw error;
+    }
+  };
+
+  const updateProfile = async (data: { [key: string]: any }) => {
+    try {
+      const { error } = await supabase.auth.updateUser({ data });
+      
+      if (error) {
+        throw error;
+      }
+      
+      toast({
+        title: 'Profile updated',
+        description: 'Your profile has been updated successfully',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Update failed',
+        description: error.message || 'An error occurred while updating your profile',
+        variant: 'destructive',
+      });
+      throw error;
+    }
+  };
+
+  const resetPassword = async (email: string) => {
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email);
+      
+      if (error) {
+        throw error;
+      }
+      
+      toast({
+        title: 'Password reset email sent',
+        description: 'Check your inbox for password reset instructions',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Reset failed',
+        description: error.message || 'An error occurred during password reset',
         variant: 'destructive',
       });
       throw error;
@@ -177,11 +244,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const refreshSession = async () => {
+  const refreshSession = async (): Promise<{ isEmailVerified: boolean }> => {
     try {
       // Skip refresh for admin bypass
       if (checkAdminBypassStatus().isEnabled) {
-        return;
+        return { isEmailVerified: true };
       }
       
       const { data, error } = await supabase.auth.refreshSession();
@@ -193,23 +260,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setSession(data.session);
       setUser(data.session?.user || null);
       
+      const newEmailVerifiedStatus = !!data.session?.user?.email_confirmed_at;
+      
       if (data.session?.user) {
-        setIsEmailVerified(!!data.session.user.email_confirmed_at);
+        setIsEmailVerified(newEmailVerifiedStatus);
       }
+      
+      return { isEmailVerified: newEmailVerifiedStatus };
     } catch (error) {
       console.error('Error refreshing session:', error);
-      // Don't throw, just log the error
+      return { isEmailVerified: false };
     }
   };
 
-  const value = {
+  const value: AuthContextType = {
     user,
     session,
     isLoading,
     isEmailVerified,
     signIn,
+    signUp,
     signOut,
+    updateProfile,
     refreshSession,
+    resetPassword,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
