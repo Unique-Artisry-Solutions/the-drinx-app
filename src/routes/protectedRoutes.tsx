@@ -1,23 +1,23 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth';
+import { checkAdminBypassStatus } from '@/utils/adminBypass';
 
 export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, isLoading, isEmailVerified } = useAuth();
+  const { user, isLoading } = useAuth();
   const location = useLocation();
-  const isAdminBypass = localStorage.getItem('admin_bypass') === 'true';
+  const { isEnabled: isAdminBypass } = checkAdminBypassStatus();
   
   // Add explicit debug logging
   useEffect(() => {
     console.log("ProtectedRoute - Auth state:", { 
       isLoading, 
       hasUser: !!user, 
-      isEmailVerified,
       isAdminBypass,
       path: location.pathname
     });
-  }, [isLoading, user, isEmailVerified, isAdminBypass, location.pathname]);
+  }, [isLoading, user, isAdminBypass, location.pathname]);
   
   if (isLoading) {
     console.log("ProtectedRoute - Still loading auth state");
@@ -38,14 +38,9 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/login" replace />;
   }
   
-  if (!isEmailVerified) {
-    console.log("ProtectedRoute - Email not verified, redirecting to verification page");
-    return <Navigate to="/verify-email" replace />;
-  }
-  
   // Check if user is trying to access Create Swig Circuit page but is not a promoter
-  const isCreatingSwigCircuit = window.location.pathname === '/create-bar-crawl' || 
-                               window.location.pathname === '/create-swig-circuit';
+  const isCreatingSwigCircuit = location.pathname === '/create-bar-crawl' || 
+                               location.pathname === '/create-swig-circuit';
   
   if (isCreatingSwigCircuit) {
     const userType = localStorage.getItem('user_type');
@@ -63,17 +58,25 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 export const AdminRoute = ({ children }: { children: React.ReactNode }) => {
+  const location = useLocation();
+  const { user, isLoading } = useAuth();
+  const { isEnabled: isAdminBypass, userType } = checkAdminBypassStatus();
   const isAdminAuthenticated = localStorage.getItem('admin_authenticated') === 'true';
-  const isAdminBypass = localStorage.getItem('admin_bypass') === 'true';
-  const userType = localStorage.getItem('user_type');
   
   useEffect(() => {
     console.log("AdminRoute - Auth state:", { 
       isAdminAuthenticated, 
       isAdminBypass,
-      userType 
+      userType,
+      path: location.pathname,
+      isLoading,
+      hasUser: !!user
     });
-  }, [isAdminAuthenticated, isAdminBypass, userType]);
+  }, [isAdminAuthenticated, isAdminBypass, userType, location.pathname, isLoading, user]);
+  
+  if (isLoading) {
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  }
   
   // Allow access if admin authenticated or admin bypass with userType=admin
   if (isAdminAuthenticated || (isAdminBypass && userType === 'admin')) {
@@ -82,6 +85,8 @@ export const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   }
   
   console.log("AdminRoute - Not authenticated as admin, redirecting");
+  // Store the intended destination for after login
+  localStorage.setItem('auth_redirect', location.pathname);
   return <Navigate to="/admin" replace />;
 };
 
@@ -92,24 +97,23 @@ export const TypedProtectedRoute = ({
   userType: 'individual' | 'establishment' | 'promoter', 
   children: React.ReactNode 
 }) => {
-  const { user, isLoading, isEmailVerified } = useAuth();
+  const { user, isLoading } = useAuth();
   const location = useLocation();
+  const { isEnabled: isAdminBypass } = checkAdminBypassStatus();
   const storedUserType = localStorage.getItem('user_type');
-  const isAdminBypass = localStorage.getItem('admin_bypass') === 'true';
   
   // Add explicit debug logging
   useEffect(() => {
     console.log("TypedProtectedRoute - Auth state:", { 
       isLoading, 
       hasUser: !!user, 
-      isEmailVerified,
       isAdminBypass,
       storedUserType,
       requiredType: userType,
       path: location.pathname,
       typesMatch: storedUserType === userType
     });
-  }, [isLoading, user, isEmailVerified, isAdminBypass, storedUserType, userType, location.pathname]);
+  }, [isLoading, user, isAdminBypass, storedUserType, userType, location.pathname]);
   
   if (isLoading) {
     console.log("TypedProtectedRoute - Still loading auth state");
@@ -136,11 +140,6 @@ export const TypedProtectedRoute = ({
     // Store the intended destination
     localStorage.setItem('auth_redirect', location.pathname);
     return <Navigate to="/login" state={{ userType }} replace />;
-  }
-  
-  if (!isEmailVerified) {
-    console.log("TypedProtectedRoute - Email not verified, redirecting to verification page");
-    return <Navigate to="/verify-email" replace />;
   }
   
   if (storedUserType !== userType) {

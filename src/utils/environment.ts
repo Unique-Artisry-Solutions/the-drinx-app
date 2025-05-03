@@ -111,7 +111,6 @@ export const safeFormatDate = (
     // Check if date is valid before formatting
     if (isNaN(dateObj.getTime())) return fallback;
     
-    // Use imported format function directly
     return formatDate(dateObj, formatStr);
   } catch (error) {
     console.error('Date formatting error:', error);

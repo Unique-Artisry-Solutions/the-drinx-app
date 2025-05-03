@@ -6,6 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import GuestTopNavigation from '@/components/navigation/GuestTopNavigation';
+import { enableAdminBypass, checkAdminBypassStatus } from '@/utils/adminBypass';
+import { isPreviewEnvironment } from '@/utils/environment';
 
 const AdminLogin: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -13,11 +15,15 @@ const AdminLogin: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const showBypassButtons = isPreviewEnvironment() || process.env.NODE_ENV === 'development';
 
   useEffect(() => {
     // Check if admin is already logged in
     const isAdminAuth = localStorage.getItem('admin_authenticated') === 'true';
-    if (isAdminAuth) {
+    const { isEnabled, userType } = checkAdminBypassStatus();
+    const isAdminBypass = isEnabled && userType === 'admin';
+    
+    if (isAdminAuth || isAdminBypass) {
       navigate('/admin/system-breakdown', { replace: true });
     }
   }, [navigate]);
@@ -50,6 +56,26 @@ const AdminLogin: React.FC = () => {
       }
       setIsLoading(false);
     }, 1000);
+  };
+  
+  const handleBypassLogin = () => {
+    try {
+      enableAdminBypass('admin');
+      
+      toast({
+        title: 'Admin Bypass Activated',
+        description: 'You now have access to the admin dashboard in testing mode',
+      });
+      
+      navigate('/admin/system-breakdown', { replace: true });
+    } catch (error) {
+      console.error('Error during admin bypass login:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to enable admin bypass mode',
+        variant: 'destructive',
+      });
+    }
   };
 
   return (
@@ -98,7 +124,7 @@ const AdminLogin: React.FC = () => {
                 <p>Password: password</p>
               </div>
             </CardContent>
-            <CardFooter>
+            <CardFooter className="flex flex-col gap-3">
               <Button
                 type="submit"
                 className="w-full bg-material-primary hover:bg-material-primary/90 text-white"
@@ -106,6 +132,17 @@ const AdminLogin: React.FC = () => {
               >
                 {isLoading ? 'Logging in...' : 'Login'}
               </Button>
+              
+              {showBypassButtons && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full text-sm"
+                  onClick={handleBypassLogin}
+                >
+                  Use Admin Bypass (Development Only)
+                </Button>
+              )}
             </CardFooter>
           </form>
         </Card>

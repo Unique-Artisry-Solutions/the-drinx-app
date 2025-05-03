@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/auth';
+import { checkAdminBypassStatus } from '@/utils/adminBypass';
 
 const Index = () => {
   const { user, isLoading } = useAuth();
@@ -13,6 +14,10 @@ const Index = () => {
     console.log("Index page loaded");
     console.log("Current URL:", window.location.href);
     console.log("Auth state:", { user: !!user, isLoading });
+    
+    // Check for admin bypass
+    const { isEnabled: isAdminBypass, userType } = checkAdminBypassStatus();
+    console.log("Admin bypass status:", { isAdminBypass, userType });
     
     // Log all localStorage keys and values for debugging
     const localStorageKeys = Object.keys(localStorage);
@@ -31,68 +36,51 @@ const Index = () => {
   useEffect(() => {
     // Make sure we're not in a loading state
     if (isLoading) {
-      console.log("Auth is still loading, waiting...");
+      console.log("Index page - Auth is still loading, waiting...");
       return;
     }
     
-    // Read authentication info
-    const userType = localStorage.getItem('user_type');
-    const isEstablishment = userType === 'establishment';
-    const isPromoter = userType === 'promoter';
+    // Check for admin bypass first since it overrides normal auth
+    const { isEnabled: isAdminBypass, userType: bypassType } = checkAdminBypassStatus();
     const isAdmin = localStorage.getItem('admin_authenticated') === 'true';
-    const isAdminBypass = localStorage.getItem('admin_bypass') === 'true';
     
-    // For debugging
-    console.log("Index page navigation check:", { 
-      user, 
-      isLoading, 
-      userType, 
-      isEstablishment, 
-      isPromoter, 
-      isAdmin,
-      isAdminBypass,
-      userId: user?.id,
-      redirectPath: isPromoter ? '/promoter/dashboard' : (isEstablishment ? '/establishment/dashboard' : '/explore')
-    });
-    
-    // If admin is authenticated, redirect to system breakdown page
-    if (isAdmin) {
-      console.log("Redirecting admin to system breakdown");
-      navigate('/admin/system-breakdown', { replace: true });
-      return;
-    }
-    
-    // If user is authenticated and is an establishment, redirect to establishment dashboard
-    if (user && isEstablishment) {
-      console.log("Redirecting establishment to dashboard");
-      navigate('/establishment/dashboard', { replace: true });
-      return;
-    }
-    
-    // If user is authenticated and is a promoter, redirect to promoter dashboard
-    if (user && isPromoter) {
-      console.log("Redirecting promoter to dashboard");
-      navigate('/promoter/dashboard', { replace: true });
-      return;
-    }
-    
-    // If user is authenticated and is an individual, redirect to explore
-    if (user && !isEstablishment && !isPromoter) {
-      console.log("Redirecting individual user to explore");
-      navigate('/explore', { replace: true });
-      return;
-    }
-    
-    // For admin bypass (but not regular user)
-    if (!user && isAdminBypass) {
-      console.log("Admin bypass active but no user object, checking user type for redirect");
+    if (isAdminBypass || isAdmin) {
+      console.log("Index page - Admin bypass or auth active, redirecting");
       
-      if (isPromoter) {
-        navigate('/promoter/dashboard', { replace: true });
-      } else if (isEstablishment) {
-        navigate('/establishment/dashboard', { replace: true });
-      } else if (isAdmin) {
+      if (isAdmin) {
         navigate('/admin/system-breakdown', { replace: true });
+      } else if (bypassType === 'establishment') {
+        navigate('/establishment/dashboard', { replace: true });
+      } else if (bypassType === 'promoter') {
+        navigate('/promoter/dashboard', { replace: true });
+      } else {
+        navigate('/explore', { replace: true });
+      }
+      return;
+    }
+    
+    // For normal authenticated users
+    if (user) {
+      console.log("Index page - User authenticated, redirecting");
+      
+      // Check if there's a saved redirect
+      const savedRedirect = localStorage.getItem('auth_redirect');
+      
+      if (savedRedirect) {
+        console.log("Index page - Using saved redirect path:", savedRedirect);
+        navigate(savedRedirect, { replace: true });
+        localStorage.removeItem('auth_redirect');
+        return;
+      }
+      
+      // Default redirect based on user type
+      const userType = localStorage.getItem('user_type');
+      console.log("Index page - Using user type for redirect:", userType);
+      
+      if (userType === 'establishment') {
+        navigate('/establishment/dashboard', { replace: true });
+      } else if (userType === 'promoter') {
+        navigate('/promoter/dashboard', { replace: true });
       } else {
         navigate('/explore', { replace: true });
       }
@@ -100,8 +88,8 @@ const Index = () => {
     }
     
     // If user is not authenticated, redirect to landing
-    if (!user) {
-      console.log("Redirecting unauthenticated user to landing");
+    if (!user && !isLoading) {
+      console.log("Index page - No authenticated user, redirecting to landing");
       navigate('/landing', { replace: true });
       return;
     }

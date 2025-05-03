@@ -1,5 +1,8 @@
 
-// Utility to clear all session data
+/**
+ * Utility to clear all session data
+ * Used for sign out and auth reset operations
+ */
 export const clearAllSessions = () => {
   // Clear user authentication related items
   localStorage.removeItem('user_authenticated');
@@ -23,7 +26,4 @@ export const clearAllSessions = () => {
   localStorage.removeItem('spiritless-auth-storage');
   
   console.log('All session information has been cleared');
-  
-  // Removed: window.location.href = '/landing';
 };
-

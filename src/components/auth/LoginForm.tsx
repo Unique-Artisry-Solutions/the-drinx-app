@@ -1,12 +1,12 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { CardContent, CardFooter } from '@/components/ui/card';
-import LoginFormFields from './login/LoginFormFields';
-import LoginFormActions from './login/LoginFormActions';
-import { useLoginForm } from './login/useLoginForm';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/auth'; 
+import LoginFormFields from './login/LoginFormFields';
+import LoginFormActions from './login/LoginFormActions';
+import { supabase } from '@/lib/supabase';
+import { enableAdminBypass, redirectAfterLogin } from '@/utils/adminBypass';
 
 interface LoginFormProps {
   onSuccess?: () => void;
@@ -19,69 +19,157 @@ const LoginForm: React.FC<LoginFormProps> = ({
   onClose, 
   userType = 'individual' 
 }) => {
+  const [identifier, setIdentifier] = useState('');
+  const [password, setPassword] = useState('');
+  const [formError, setFormError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isResendingEmail, setIsResendingEmail] = useState(false);
+  const [showResendVerification, setShowResendVerification] = useState(false);
+  const [isAdminLogin, setIsAdminLogin] = useState(false);
+  
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { refreshSession } = useAuth();
+
+  const toggleAdminLogin = () => {
+    setIsAdminLogin(!isAdminLogin);
+    setFormError('');
+  };
+
+  const handleResendVerification = async () => {
+    if (!identifier) {
+      setFormError('Please enter your email address');
+      return;
+    }
+    
+    setIsResendingEmail(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: identifier,
+        options: {
+          emailRedirectTo: `${window.location.origin}/?email_confirmed=true`,
+        }
+      });
+      
+      if (error) {
+        throw error;
+      }
+      
+      toast({
+        title: 'Verification email sent',
+        description: 'Please check your email for the verification link',
+      });
+    } catch (error: any) {
+      console.error("Email verification error:", error);
+      setFormError(error.message || 'Failed to resend verification email');
+    } finally {
+      setIsResendingEmail(false);
+    }
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormError('');
+    setIsSubmitting(true);
+    setShowResendVerification(false);
+    
+    try {
+      if (isAdminLogin) {
+        console.log("Attempting admin login");
+        if (identifier === 'admin@spiritless.com' && password === 'admin123') {
+          console.log("Admin credentials verified, setting admin session");
+          localStorage.setItem('admin_authenticated', 'true');
+          localStorage.setItem('admin_username', 'Admin');
+          localStorage.setItem('admin_session_created', new Date().toISOString());
+          
+          toast({
+            title: 'Admin login successful',
+            description: 'Welcome to the admin dashboard',
+          });
+          
+          if (onSuccess) {
+            onSuccess();
+          } else {
+            navigate('/admin/system-breakdown', { replace: true });
+          }
+          return;
+        } else {
+          throw new Error('Invalid admin credentials');
+        }
+      } else {
+        console.log(`Attempting regular login with identifier: ${identifier}`);
+        const isEmail = identifier.includes('@');
+        
+        if (isEmail) {
+          console.log("Logging in with email");
+          const { data, error } = await supabase.auth.signInWithPassword({
+            email: identifier,
+            password
+          });
+          
+          if (error) {
+            throw error;
+          }
+          
+          if (!data.user.email_confirmed_at) {
+            console.log("Email not verified");
+            setShowResendVerification(true);
+            throw new Error('Email not verified. Please check your inbox for the verification link.');
+          }
+          
+          handleLoginSuccess(data.user);
+        } else {
+          // This is a simplified mock version for demo purposes
+          // In production, you'd need a proper username lookup 
+          console.log("Username login not supported in this version");
+          throw new Error('Username login is not supported. Please use your email address.');
+        }
+      }
+    } catch (error: any) {
+      console.error('Login error:', error);
+      setFormError(error.message || 'Failed to login');
+      
+      if (error.message.includes('Email not verified')) {
+        setShowResendVerification(true);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
   
-  const {
-    identifier,
-    setIdentifier,
-    password,
-    setPassword,
-    formError,
-    isSubmitting,
-    isResendingEmail,
-    showResendVerification,
-    isAdminLogin,
-    isLoading,
-    toggleAdminLogin,
-    handleResendVerification,
-    handleLogin
-  } = useLoginForm(onSuccess, onClose, userType);
+  const handleLoginSuccess = (user: any) => {
+    console.log("Login successful:", user);
+    
+    localStorage.setItem('user_authenticated', 'true');
+    localStorage.setItem('user_email', user.email || '');
+    
+    // Extract user_type from metadata if available
+    const userType = user.user_metadata?.user_type || 'individual';
+    localStorage.setItem('user_type', userType);
+    
+    // Extract username from metadata if available
+    if (user.user_metadata?.username) {
+      localStorage.setItem('user_username', user.user_metadata.username);
+    }
+    
+    toast({
+      title: 'Login successful',
+      description: 'Welcome back!',
+    });
+    
+    if (onSuccess) {
+      onSuccess();
+    } else {
+      redirectAfterLogin();
+    }
+  };
 
   const handleBypassLogin = async (type: 'individual' | 'establishment' | 'admin' | 'promoter') => {
     console.log(`Initiating bypass login for ${type} user type`);
     
     try {
-      // Generate a proper UUID for the bypass user
-      const bypassUserId = crypto.randomUUID ? crypto.randomUUID() : 'bypass-' + Math.random().toString(36).substring(2, 15);
-      
-      // Set admin bypass in localStorage with consistent data
-      localStorage.setItem('admin_bypass', 'true');
-      localStorage.setItem('bypass_user_id', bypassUserId);
-      localStorage.setItem('user_authenticated', 'true');
-      localStorage.setItem('user_type', type);
-      
-      // Consistent email formats
-      const email = type === 'admin' ? 'admin@spiritless.com' : 
-        type === 'individual' ? 'bypass-user@spiritless.com' : 
-        type === 'promoter' ? 'bypass-promoter@spiritless.com' :
-        'bypass-establishment@spiritless.com';
-        
-      localStorage.setItem('user_email', email);
-      
-      // Consistent username formats
-      const username = type === 'admin' ? 'admin' : 
-        type === 'individual' ? 'bypass-user' : 
-        type === 'promoter' ? 'bypass-promoter' :
-        'bypass-establishment';
-        
-      localStorage.setItem('user_username', username);
-      
-      // Set appropriate role-specific information
-      if (type === 'establishment') {
-        localStorage.setItem('establishment_name', 'Bypass Establishment');
-      } else if (type === 'promoter') {
-        localStorage.setItem('promoter_name', 'Bypass Promoter');
-      } else if (type === 'admin') {
-        localStorage.setItem('admin_authenticated', 'true');
-        localStorage.setItem('admin_username', 'Admin');
-        localStorage.setItem('admin_session_created', new Date().toISOString());
-      }
-      
-      // Force a refresh of the session to apply bypass
-      console.log("Refreshing session to apply bypass login");
-      await refreshSession();
+      // Enable the bypass with the specified user type
+      enableAdminBypass(type);
       
       toast({
         title: 'Bypass Login Activated',
@@ -91,29 +179,11 @@ const LoginForm: React.FC<LoginFormProps> = ({
           'a business'} for testing purposes.`,
       });
       
-      // Check for saved redirect path
-      const savedRedirect = localStorage.getItem('auth_redirect');
-      console.log("Saved redirect path:", savedRedirect);
-      
-      // Clear the saved redirect as we're handling it now
-      localStorage.removeItem('auth_redirect');
-      
-      // Redirect based on user type
-      if (savedRedirect) {
-        console.log(`Redirecting to saved path: ${savedRedirect}`);
-        navigate(savedRedirect);
-      } else if (type === 'admin') {
-        console.log("Redirecting to admin dashboard");
-        navigate('/admin/system-breakdown');
-      } else if (type === 'establishment') {
-        console.log("Redirecting to establishment dashboard");
-        navigate('/establishment/dashboard');
-      } else if (type === 'promoter') {
-        console.log("Redirecting to promoter dashboard");
-        navigate('/promoter/dashboard');
+      if (onSuccess) {
+        onSuccess();
       } else {
-        console.log("Redirecting to explore page");
-        navigate('/explore');
+        // Use the unified redirect function
+        redirectAfterLogin();
       }
     } catch (error) {
       console.error("Error during bypass login:", error);
@@ -144,7 +214,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
       
       <CardFooter>
         <LoginFormActions 
-          isLoading={isLoading}
+          isLoading={false}
           isSubmitting={isSubmitting}
           isAdminLogin={isAdminLogin}
           userType={userType}

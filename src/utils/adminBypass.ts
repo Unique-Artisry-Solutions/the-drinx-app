@@ -1,6 +1,15 @@
 
 import { v4 as uuidv4 } from 'uuid';
+import { supabase } from '@/lib/supabase';
+import { User } from '@supabase/supabase-js';
+import { clearAllSessions } from './sessionCleaner';
 
+/**
+ * Creates and enables an admin bypass session
+ * 
+ * @param userType The type of user to bypass as
+ * @returns The ID of the bypass user
+ */
 export function enableAdminBypass(userType: 'individual' | 'establishment' | 'admin' | 'promoter' = 'individual') {
   // Generate a proper UUID for the bypass user ID
   const bypassUserId = uuidv4();
@@ -30,27 +39,42 @@ export function enableAdminBypass(userType: 'individual' | 'establishment' | 'ad
   }
   
   console.log(`Admin bypass enabled for ${userType} with ID: ${bypassUserId}`);
+  
+  // Create a custom event to notify the app that the bypass is enabled
+  window.dispatchEvent(new CustomEvent('adminBypassChanged', { 
+    detail: { enabled: true, userType, userId: bypassUserId } 
+  }));
+  
   return bypassUserId;
 }
 
+/**
+ * Disables the admin bypass mode and removes associated session data
+ */
 export function disableAdminBypass() {
+  const wasEnabled = localStorage.getItem('admin_bypass') === 'true';
+  
   localStorage.removeItem('admin_bypass');
   localStorage.removeItem('bypass_user_id');
   
-  // Don't remove user_type, user_email, and user_username as they might be used elsewhere
+  if (wasEnabled) {
+    window.dispatchEvent(new CustomEvent('adminBypassChanged', { 
+      detail: { enabled: false } 
+    }));
+  }
+  
   console.log('Admin bypass disabled');
 }
 
+/**
+ * Checks if admin bypass is currently enabled
+ * 
+ * @returns Status information about admin bypass
+ */
 export function checkAdminBypassStatus() {
   const isEnabled = localStorage.getItem('admin_bypass') === 'true';
   const bypassUserId = localStorage.getItem('bypass_user_id');
   const userType = localStorage.getItem('user_type');
-  
-  if (isEnabled) {
-    console.log(`Admin bypass is active with user ID: ${bypassUserId} and type: ${userType}`);
-  } else {
-    console.log('Admin bypass is not active');
-  }
   
   return {
     isEnabled,
@@ -60,35 +84,110 @@ export function checkAdminBypassStatus() {
 }
 
 /**
- * Completely clears all session information from localStorage
- * Use this function to reset all authentication state for testing
+ * Creates a mock user object from bypass information
+ * Can be used to simulate a user session
+ * 
+ * @returns A mock user object for the current bypass
  */
-export function clearAllSessions() {
-  // Clear all auth-related localStorage items
-  localStorage.removeItem('user_authenticated');
-  localStorage.removeItem('user_email');
-  localStorage.removeItem('user_type');
-  localStorage.removeItem('user_username');
-  localStorage.removeItem('user_name');
-  localStorage.removeItem('user_join_date');
-  localStorage.removeItem('establishment_name');
-  localStorage.removeItem('promoter_name');
+export function createBypassUser(): User | null {
+  const { isEnabled, bypassUserId, userType } = checkAdminBypassStatus();
   
-  // Clear admin authentication
-  localStorage.removeItem('admin_authenticated');
-  localStorage.removeItem('admin_username');
-  localStorage.removeItem('admin_session_created');
+  if (!isEnabled || !bypassUserId) {
+    return null;
+  }
   
-  // Clear admin bypass
-  localStorage.removeItem('admin_bypass');
-  localStorage.removeItem('bypass_user_id');
+  const email = localStorage.getItem('user_email') || `admin-${userType}@spiritless.com`;
+  const username = localStorage.getItem('user_username') || `admin-${userType}`;
   
-  // Clear Supabase session
-  localStorage.removeItem('spiritless-auth-storage');
-  
-  console.log('All session information has been cleared');
-  
-  // Force a page reload to ensure clean state
-  window.location.href = '/login';
+  return {
+    id: bypassUserId,
+    email: email,
+    user_metadata: {
+      user_type: userType,
+      username: username,
+    },
+    app_metadata: {},
+    aud: 'authenticated',
+    created_at: new Date().toISOString(),
+  } as unknown as User;
 }
 
+/**
+ * Reset all authentication state and clear all sessions
+ */
+export function resetAuth() {
+  // Force sign out from Supabase
+  supabase.auth.signOut({ scope: 'global' }).catch(error => {
+    console.error("Error signing out:", error);
+  });
+  
+  // Clear all session information (including bypass)
+  clearAllSessions();
+  
+  // Dispatch an event to notify of auth reset
+  window.dispatchEvent(new CustomEvent('authReset'));
+  
+  console.log('Authentication fully reset');
+}
+
+/**
+ * Performs a login redirection based on the user type
+ * Works for both regular and bypass users
+ */
+export function redirectAfterLogin() {
+  const userType = localStorage.getItem('user_type');
+  const isAdminAuthenticated = localStorage.getItem('admin_authenticated') === 'true';
+  const savedRedirect = localStorage.getItem('auth_redirect');
+  
+  // Clear the saved redirect as we're handling it now
+  localStorage.removeItem('auth_redirect');
+  
+  if (savedRedirect) {
+    console.log(`Redirecting to saved path: ${savedRedirect}`);
+    window.location.href = savedRedirect;
+    return;
+  }
+  
+  if (isAdminAuthenticated) {
+    console.log("Redirecting to admin dashboard");
+    window.location.href = '/admin/system-breakdown';
+    return;
+  }
+  
+  if (userType === 'establishment') {
+    console.log("Redirecting to establishment dashboard");
+    window.location.href = '/establishment/dashboard';
+    return;
+  } 
+  
+  if (userType === 'promoter') {
+    console.log("Redirecting to promoter dashboard");
+    window.location.href = '/promoter/dashboard';
+    return;
+  }
+  
+  // Default for individual or unspecified user type
+  console.log("Redirecting to explore page");
+  window.location.href = '/explore';
+}
+
+/**
+ * Add event listener for auth state changes
+ * Useful for components that need to react to auth changes
+ * 
+ * @param callback Function to call when auth state changes
+ * @returns Cleanup function to remove the listener
+ */
+export function onAuthStateChange(callback: (event: CustomEvent) => void) {
+  const handler = (event: Event) => {
+    callback(event as CustomEvent);
+  };
+  
+  window.addEventListener('adminBypassChanged', handler);
+  window.addEventListener('authReset', handler);
+  
+  return () => {
+    window.removeEventListener('adminBypassChanged', handler);
+    window.addEventListener('authReset', handler);
+  };
+}
