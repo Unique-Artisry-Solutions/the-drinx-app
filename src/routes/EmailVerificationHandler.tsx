@@ -3,15 +3,21 @@ import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth';
 import { useToast } from '@/hooks/use-toast';
+import { getSessionDebug } from '@/lib/supabase';
 
 const EmailVerificationHandler = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { refreshSession } = useAuth();
+  const { refreshSession, authStable } = useAuth();
   const { toast } = useToast();
   const [isChecking, setIsChecking] = useState(true);
   
   useEffect(() => {
+    // Wait until auth is stable before handling verification
+    if (!authStable) {
+      return;
+    }
+    
     const handleEmailConfirmation = async () => {
       // Log the entire URL and search parameters for debugging
       console.log('Email verification handler triggered with URL:', window.location.href);
@@ -31,6 +37,9 @@ const EmailVerificationHandler = () => {
         try {
           // Wait a moment to ensure Supabase has processed the verification
           await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          // Debug current session state
+          await getSessionDebug();
           
           // Refresh the session to get the updated verification status
           const result = await refreshSession();
@@ -73,7 +82,7 @@ const EmailVerificationHandler = () => {
     };
     
     handleEmailConfirmation();
-  }, [location, refreshSession, navigate, toast]);
+  }, [location, refreshSession, navigate, toast, authStable]);
   
   // Return null as this is a utility component
   return null;

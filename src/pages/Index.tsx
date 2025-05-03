@@ -4,16 +4,22 @@ import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/auth';
 import { checkAdminBypassStatus } from '@/utils/adminBypass';
+import { getSessionDebug } from '@/lib/supabase';
 
 const Index = () => {
-  const { user, isLoading, session } = useAuth();
+  const { user, isLoading, session, authStable } = useAuth();
   const navigate = useNavigate();
   
   // Log information for debugging
   useEffect(() => {
     console.log("Index page loaded");
     console.log("Current URL:", window.location.href);
-    console.log("Auth state:", { user: !!user, session: !!session, isLoading });
+    console.log("Auth state:", { 
+      user: !!user, 
+      session: !!session, 
+      isLoading,
+      authStable
+    });
     
     // Check for admin bypass
     const { isEnabled: isAdminBypass, userType } = checkAdminBypassStatus();
@@ -30,13 +36,16 @@ const Index = () => {
     });
     
     console.log("LocalStorage data:", localStorageData);
-  }, [user, session, isLoading]);
+    
+    // Always log the current session state
+    getSessionDebug();
+  }, [user, session, isLoading, authStable]);
   
   // Use useEffect to handle navigation properly
   useEffect(() => {
-    // Make sure we're not in a loading state
-    if (isLoading) {
-      console.log("Index page - Auth is still loading, waiting...");
+    // Wait until auth is stable before making navigation decisions
+    if (isLoading || !authStable) {
+      console.log("Index page - Auth is still loading or not stable, waiting...");
       return;
     }
     
@@ -59,7 +68,7 @@ const Index = () => {
       return;
     }
     
-    // For normal authenticated users
+    // For normal authenticated users - explicitly check both user and session
     if (user && session) {
       console.log("Index page - User authenticated with valid session, redirecting");
       
@@ -87,15 +96,24 @@ const Index = () => {
       return;
     }
     
+    // Check localStorage as a fallback
+    const isAuthenticated = localStorage.getItem('user_authenticated') === 'true';
+    if (isAuthenticated && !user) {
+      console.log("Index page - User marked as authenticated in localStorage but session missing. Refreshing...");
+      // This is an edge case - don't redirect yet, but refresh the session first
+      getSessionDebug();
+      return;
+    }
+    
     // If user is not authenticated, redirect to landing
-    if ((!user || !session) && !isLoading) {
+    if ((!user || !session) && !isLoading && authStable) {
       console.log("Index page - No authenticated user/session, redirecting to landing");
       navigate('/landing', { replace: true });
       return;
     }
-  }, [user, session, isLoading, navigate]);
+  }, [user, session, isLoading, navigate, authStable]);
 
-  // If we're still loading, show a loading state
+  // Show improved loading state
   return (
     <Layout>
       <div className="flex items-center justify-center min-h-screen">
@@ -103,6 +121,9 @@ const Index = () => {
           <p className="text-lg mb-2">Loading application...</p>
           <div className="w-12 h-12 border-4 border-spiritless-pink border-t-transparent rounded-full animate-spin mx-auto"></div>
           <p className="text-sm text-gray-500 mt-2">Please wait while we prepare your experience</p>
+          {!authStable && (
+            <p className="text-sm text-amber-500 mt-2">Verifying your authentication...</p>
+          )}
         </div>
       </div>
     </Layout>

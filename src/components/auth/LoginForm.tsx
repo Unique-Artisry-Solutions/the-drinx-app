@@ -1,11 +1,11 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { CardContent, CardFooter } from '@/components/ui/card';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import LoginFormFields from './login/LoginFormFields';
 import LoginFormActions from './login/LoginFormActions';
-import { supabase } from '@/lib/supabase';
+import { supabase, getSessionDebug } from '@/lib/supabase';
 import { enableAdminBypass, redirectAfterLogin } from '@/utils/adminBypass';
 import { useAuth } from '@/contexts/auth';
 
@@ -27,11 +27,12 @@ const LoginForm: React.FC<LoginFormProps> = ({
   const [isResendingEmail, setIsResendingEmail] = useState(false);
   const [showResendVerification, setShowResendVerification] = useState(false);
   const [isAdminLogin, setIsAdminLogin] = useState(false);
+  const [loginSuccess, setLoginSuccess] = useState(false);
   
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const { signIn } = useAuth();
+  const { signIn, authStable } = useAuth();
 
   // Check for redirects in location state
   useEffect(() => {
@@ -41,6 +42,49 @@ const LoginForm: React.FC<LoginFormProps> = ({
       localStorage.setItem('auth_redirect', state.from);
     }
   }, [location]);
+
+  // Prepare redirect after successful login
+  const performRedirect = useCallback(() => {
+    if (!loginSuccess) return;
+    
+    console.log("Preparing to redirect after login success");
+    
+    // Check for saved redirect path
+    const savedRedirect = localStorage.getItem('auth_redirect');
+    console.log("Saved redirect path:", savedRedirect);
+    
+    if (onSuccess) {
+      console.log("Using onSuccess callback");
+      onSuccess();
+    } else if (savedRedirect) {
+      console.log("Redirecting to saved path:", savedRedirect);
+      navigate(savedRedirect, { replace: true });
+      localStorage.removeItem('auth_redirect');
+    } else {
+      console.log("Using default redirect based on user type");
+      // Default redirect based on user type
+      const storedUserType = localStorage.getItem('user_type');
+      
+      if (storedUserType === 'establishment') {
+        navigate('/establishment/dashboard', { replace: true });
+      } else if (storedUserType === 'promoter') {
+        navigate('/promoter/dashboard', { replace: true });
+      } else {
+        navigate('/explore', { replace: true });
+      }
+    }
+  }, [loginSuccess, navigate, onSuccess]);
+
+  // Handle redirect after login and when auth is stable
+  useEffect(() => {
+    if (loginSuccess && authStable) {
+      const timer = setTimeout(() => {
+        performRedirect();
+      }, 300); // Small delay to ensure auth state is fully processed
+      
+      return () => clearTimeout(timer);
+    }
+  }, [loginSuccess, authStable, performRedirect]);
 
   const toggleAdminLogin = () => {
     setIsAdminLogin(!isAdminLogin);
@@ -101,11 +145,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
           
           // Ensure we finish setting local storage before navigation
           setTimeout(() => {
-            if (onSuccess) {
-              onSuccess();
-            } else {
-              navigate('/admin/system-breakdown', { replace: true });
-            }
+            navigate('/admin/system-breakdown', { replace: true });
           }, 100);
           return;
         } else {
@@ -115,19 +155,15 @@ const LoginForm: React.FC<LoginFormProps> = ({
         console.log(`Attempting regular login with identifier: ${identifier}`);
         
         // Use the signIn method from useAuth
-        await signIn(identifier, password);
-        console.log("Login successful, preparing to redirect");
+        const result = await signIn(identifier, password);
+        console.log("Login successful, result:", result);
         
-        // Give the system time to properly set authentication state
-        setTimeout(() => {
-          if (onSuccess) {
-            onSuccess();
-          } else {
-            // Use the unified redirect function with a small delay
-            // This ensures that the session is fully established before redirecting
-            redirectAfterLogin();
-          }
-        }, 300);
+        // Verify session immediately
+        const sessionCheck = await getSessionDebug();
+        console.log("Session check after login:", sessionCheck);
+        
+        // Mark login as successful to trigger redirect
+        setLoginSuccess(true);
       }
     } catch (error: any) {
       console.error('Login error:', error);
@@ -156,15 +192,16 @@ const LoginForm: React.FC<LoginFormProps> = ({
           'a business'} for testing purposes.`,
       });
       
-      // Ensure bypass settings are applied before navigation
-      setTimeout(() => {
-        if (onSuccess) {
-          onSuccess();
-        } else {
-          // Use the unified redirect function
-          redirectAfterLogin();
-        }
-      }, 100);
+      // Add artificial delay to reduce flickering
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Explicitly trigger redirect
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        // Use the unified redirect function
+        redirectAfterLogin();
+      }
     } catch (error) {
       console.error("Error during bypass login:", error);
       toast({
@@ -194,7 +231,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
       
       <CardFooter>
         <LoginFormActions 
-          isLoading={false}
+          isLoading={isSubmitting}
           isSubmitting={isSubmitting}
           isAdminLogin={isAdminLogin}
           userType={userType}

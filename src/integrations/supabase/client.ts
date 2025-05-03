@@ -12,8 +12,42 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
-    persistSession: !isPreviewEnvironment(), // Don't persist sessions in preview environment
+    persistSession: true, // Always persist sessions, regardless of environment
     autoRefreshToken: true,
-    storageKey: 'spiritless-auth-storage'
+    storageKey: 'spiritless-auth-storage',
+    detectSessionInUrl: true, // Detect session in URL for redirects
+    flowType: 'pkce' // Use PKCE flow for more reliable auth
   }
 });
+
+// Add a wrapper function to help with debugging session issues
+export const getSessionDebug = async () => {
+  const { data: { session }, error } = await supabase.auth.getSession();
+  console.log("Session debug:", { 
+    hasSession: !!session, 
+    error: error?.message,
+    user: session?.user ? { 
+      id: session.user.id, 
+      email: session.user.email,
+      emailConfirmed: !!session.user.email_confirmed_at
+    } : null,
+    expiresAt: session?.expires_at ? new Date(session.expires_at * 1000).toISOString() : null,
+    localStorage: {
+      auth: !!localStorage.getItem('spiritless-auth-storage'),
+      userAuthenticated: localStorage.getItem('user_authenticated'),
+      userType: localStorage.getItem('user_type')
+    }
+  });
+  return { session, error };
+};
+
+// Add debugging helper to track auth state changes
+export const trackAuthStateChange = () => {
+  return supabase.auth.onAuthStateChange((event, session) => {
+    console.log(`Auth state changed: ${event}`, { 
+      hasSession: !!session, 
+      userId: session?.user?.id,
+      userEmail: session?.user?.email
+    });
+  });
+};

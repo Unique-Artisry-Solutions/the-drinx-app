@@ -1,11 +1,40 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Session, User } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase';
+import { supabase, getSessionDebug, trackAuthStateChange } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { checkAdminBypassStatus, createBypassUser } from '@/utils/adminBypass';
 import { AuthContextType } from './types';
 import { clearAllSessions } from '@/utils/sessionCleaner';
+
+// Create a new utility function for stable session handling
+const AUTH_INTENT_KEY = 'auth_intent';
+const AUTH_INTENT_TIMEOUT_MS = 10000; // 10 seconds
+
+const setAuthIntent = () => {
+  localStorage.setItem(AUTH_INTENT_KEY, Date.now().toString());
+  console.log("Auth intent set");
+};
+
+const clearAuthIntent = () => {
+  localStorage.removeItem(AUTH_INTENT_KEY);
+  console.log("Auth intent cleared");
+};
+
+const checkAuthIntent = (): boolean => {
+  const intentTimestamp = localStorage.getItem(AUTH_INTENT_KEY);
+  if (!intentTimestamp) return false;
+  
+  // Check if intent is still valid (not expired)
+  const timestamp = parseInt(intentTimestamp, 10);
+  const isValid = Date.now() - timestamp < AUTH_INTENT_TIMEOUT_MS;
+  
+  if (!isValid) {
+    clearAuthIntent();
+  }
+  
+  return isValid;
+};
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -14,82 +43,146 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [authStable, setAuthStable] = useState(false);
   const { toast } = useToast();
 
+  // Explicitly handle localStorage session restoration
+  const restoreSession = () => {
+    const storedSession = localStorage.getItem('spiritless-auth-storage');
+    if (storedSession) {
+      try {
+        const parsedSession = JSON.parse(storedSession);
+        console.log("Found stored session data:", !!parsedSession);
+        return true;
+      } catch (e) {
+        console.error("Error parsing stored session", e);
+      }
+    }
+    return false;
+  };
+
+  // Setup stable authentication state
   useEffect(() => {
     console.log('AuthProvider initialized');
     let isMounted = true;
+    let authSubscription: { subscription: { unsubscribe: () => void } } | null = null;
     
-    // First check for admin bypass
-    const { isEnabled } = checkAdminBypassStatus();
-    if (isEnabled) {
-      console.log('Admin bypass active in AuthProvider, creating bypass user');
-      const bypassUser = createBypassUser();
-      setUser(bypassUser);
-      setIsEmailVerified(true);
-      setIsLoading(false);
-      return;
-    }
+    const isAuthIntent = checkAuthIntent();
+    console.log("Auth intent active:", isAuthIntent);
     
-    // Set up auth state listener FIRST before any async calls
-    console.log('Setting up auth state listener');
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, newSession) => {
-        console.log('Auth state changed:', event, !!newSession);
-        
-        if (!isMounted) return;
-        
-        // Use direct state updates, not async calls
-        setSession(newSession);
-        setUser(newSession?.user ?? null);
-        
-        if (newSession?.user) {
-          setIsEmailVerified(!!newSession.user.email_confirmed_at);
-          // Store user type in localStorage
-          if (newSession.user.user_metadata?.user_type) {
-            localStorage.setItem('user_type', newSession.user.user_metadata.user_type);
-          }
-          localStorage.setItem('user_authenticated', 'true');
-          localStorage.setItem('user_email', newSession.user.email || '');
-        } else if (event === 'SIGNED_OUT') {
-          setIsEmailVerified(false);
-          // Clear user data from localStorage on sign out
-          clearAllSessions();
-        }
+    // Initialize authentication state
+    const initializeAuth = async () => {
+      // Check for admin bypass first as it overrides everything else
+      const { isEnabled } = checkAdminBypassStatus();
+      if (isEnabled) {
+        console.log('Admin bypass active in AuthProvider, creating bypass user');
+        const bypassUser = createBypassUser();
+        setUser(bypassUser);
+        setIsEmailVerified(true);
+        setIsLoading(false);
+        setAuthStable(true);
+        return;
       }
-    );
-
-    // THEN check for existing session
-    console.log('Checking for existing session');
-    supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
-      console.log('Initial session check result:', !!existingSession);
       
-      if (!isMounted) return;
+      // Debug existing session in local storage
+      const hasStoredSession = restoreSession();
+      console.log("Has stored session data:", hasStoredSession);
+      
+      // Set up auth state listener FIRST before any async calls
+      console.log('Setting up auth state listener');
+      authSubscription = trackAuthStateChange();
+      
+      // Set up detailed auth state listener
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        async (event, newSession) => {
+          console.log('Auth state changed:', event, !!newSession);
+          
+          if (!isMounted) return;
+          
+          // Use direct state updates for sync operations
+          if (newSession) {
+            setSession(newSession);
+            setUser(newSession.user);
+            setIsEmailVerified(!!newSession.user?.email_confirmed_at);
+            
+            // Store essential user info in localStorage
+            if (newSession.user) {
+              localStorage.setItem('user_authenticated', 'true');
+              localStorage.setItem('user_email', newSession.user.email || '');
+              
+              // Store user type in localStorage
+              if (newSession.user.user_metadata?.user_type) {
+                localStorage.setItem('user_type', newSession.user.user_metadata.user_type);
+              }
+            }
+            
+            // Clear auth intent as we now have a session
+            if (event === 'SIGNED_IN') {
+              clearAuthIntent();
+              
+              // Small delay to ensure UI updates properly
+              setTimeout(() => {
+                setAuthStable(true);
+              }, 300);
+            }
+          } else if (event === 'SIGNED_OUT') {
+            setIsEmailVerified(false);
+            setSession(null);
+            setUser(null);
+            
+            // Clear user data from localStorage on sign out
+            clearAllSessions();
+            setAuthStable(true);
+          }
+        }
+      );
+      
+      // THEN check for existing session - this is crucial for initial load
+      console.log('Checking for existing session');
+      const { session: existingSession, error } = await getSessionDebug();
+      
+      if (error) {
+        console.error('Error checking session:', error);
+        if (isMounted) {
+          setIsLoading(false);
+          setAuthStable(true);
+        }
+        return;
+      }
       
       if (existingSession) {
-        setSession(existingSession);
-        setUser(existingSession.user);
-        setIsEmailVerified(!!existingSession.user.email_confirmed_at);
-        
-        // Store user info in localStorage
-        if (existingSession.user.user_metadata?.user_type) {
-          localStorage.setItem('user_type', existingSession.user.user_metadata.user_type);
+        console.log('Session found, updating user state');
+        if (isMounted) {
+          setSession(existingSession);
+          setUser(existingSession.user);
+          setIsEmailVerified(!!existingSession.user.email_confirmed_at);
+          
+          // Store user info in localStorage
+          if (existingSession.user.user_metadata?.user_type) {
+            localStorage.setItem('user_type', existingSession.user.user_metadata.user_type);
+          }
+          localStorage.setItem('user_authenticated', 'true');
+          localStorage.setItem('user_email', existingSession.user.email || '');
+          
+          // Intent is complete as we have a session
+          clearAuthIntent();
         }
-        localStorage.setItem('user_authenticated', 'true');
-        localStorage.setItem('user_email', existingSession.user.email || '');
       }
       
-      setIsLoading(false);
-    }).catch(error => {
-      console.error('Error checking session:', error);
+      // We've completed initial auth check, so exit loading state
       if (isMounted) {
         setIsLoading(false);
-        setSession(null);
-        setUser(null);
+        
+        // Mark auth as stable in a small delay to handle any pending state updates
+        setTimeout(() => {
+          if (isMounted) {
+            setAuthStable(true);
+          }
+        }, 100);
       }
-    });
+    };
     
-    // Listen for admin bypass changes
+    // Handle admin bypass changes
     const handleBypassChange = (event: Event) => {
       const customEvent = event as CustomEvent;
       const detail = customEvent.detail;
@@ -102,6 +195,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const bypassUser = createBypassUser();
         setUser(bypassUser);
         setIsEmailVerified(true);
+        setAuthStable(true);
       } else {
         // Only clear user if we were in bypass mode
         if (checkAdminBypassStatus().isEnabled) {
@@ -109,6 +203,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setSession(null);
           setIsEmailVerified(false);
           clearAllSessions();
+          setAuthStable(true);
         }
       }
     };
@@ -119,14 +214,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setSession(null);
       setIsEmailVerified(false);
       clearAllSessions();
+      setAuthStable(true);
     };
     
+    // Listen for relevant events
     window.addEventListener('adminBypassChanged', handleBypassChange);
     window.addEventListener('authReset', handleAuthReset);
+    
+    // Start initialization
+    initializeAuth();
 
     return () => {
       isMounted = false;
-      subscription.unsubscribe();
+      if (authSubscription) {
+        authSubscription.subscription.unsubscribe();
+      }
       window.removeEventListener('adminBypassChanged', handleBypassChange);
       window.removeEventListener('authReset', handleAuthReset);
     };
@@ -134,20 +236,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async (email: string, password: string) => {
     try {
+      console.log('Setting auth intent before login');
+      setAuthIntent(); // Set auth intent before login attempt
+      
       console.log('Attempting to sign in:', email);
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       
       if (error) {
+        clearAuthIntent();
         throw error;
       }
       
+      // This check is important but must be handled carefully to not interrupt the flow
       if (data.user && !data.user.email_confirmed_at) {
+        clearAuthIntent();
+        console.log('Email not verified:', email);
         throw new Error('Email not verified. Please check your inbox.');
       }
       
       console.log('Login successful:', data);
       
-      // Store user info in localStorage
+      // Store user info in localStorage - doing this explicitly helps with race conditions
       localStorage.setItem('user_authenticated', 'true');
       localStorage.setItem('user_email', data.user.email || '');
       
@@ -155,14 +264,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.setItem('user_type', data.user.user_metadata.user_type);
       }
       
-      // Wait for session storage to be updated
-      // This ensures our session data is fully persisted before any redirects
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Manually update the state
+      setUser(data.user);
+      setSession(data.session);
+      setIsEmailVerified(!!data.user.email_confirmed_at);
+      
+      // Add a small delay to ensure the session is properly stored
+      await new Promise(resolve => setTimeout(resolve, 200));
       
       toast({
         title: 'Login successful',
         description: 'Welcome back!',
       });
+      
+      return data;
     } catch (error: any) {
       toast({
         title: 'Login failed',
@@ -337,6 +452,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     session,
     isLoading,
     isEmailVerified,
+    authStable,
     signIn,
     signUp,
     signOut,
