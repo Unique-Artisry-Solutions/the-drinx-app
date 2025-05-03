@@ -35,8 +35,9 @@ export const useLoginState = (pageId: string) => {
     console.log(`[LOGIN PAGE ${pageId}] Attempting to recover connection...`);
     
     try {
-      // Try to ping Supabase to check connection
-      const { error } = await supabase.from('_poke').select('*').limit(1);
+      // Try a simple get request to check connection
+      // Instead of using _poke table which doesn't exist, we'll use a simple healthcheck
+      const { data, error } = await supabase.auth.getSession();
       
       if (error) {
         console.error(`[LOGIN PAGE ${pageId}] Recovery connection test failed:`, error);

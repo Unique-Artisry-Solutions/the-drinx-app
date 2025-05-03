@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
@@ -30,7 +31,7 @@ export function useAuthActions() {
       logAuthError('refreshSession', error, { 
         source: 'useAuthActions',
         caught: true,
-        sessionData: !!data?.session 
+        sessionData: false // Fixed the undefined data reference
       });
       return { session: null, user: null, isEmailVerified: false };
     }
