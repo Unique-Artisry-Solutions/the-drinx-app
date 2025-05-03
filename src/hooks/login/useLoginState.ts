@@ -60,7 +60,9 @@ export const useLoginState = (pageId: string) => {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 8000);
       
-      const response = await fetch(`${supabase.functions.url}/ping_connection`, {
+      // Use invoke instead of directly accessing the URL
+      const { data, error } = await supabase.functions.invoke('ping_connection', {
+        method: 'GET',
         signal: controller.signal,
         headers: {
           'Content-Type': 'application/json',
@@ -69,14 +71,13 @@ export const useLoginState = (pageId: string) => {
       
       clearTimeout(timeoutId);
       
-      if (!response.ok) {
-        throw new Error(`Connection test failed with status: ${response.status}`);
+      if (error) {
+        throw new Error(`Connection test failed: ${error.message}`);
       }
       
-      const data = await response.json();
       console.log(`[LOGIN PAGE ${pageId}] Connection test successful:`, data);
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error(`[LOGIN PAGE ${pageId}] Connection test error:`, error);
       if (error.name === 'AbortError') {
         throw new Error('Connection test timed out');
