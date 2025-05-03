@@ -26,6 +26,22 @@ export function useSessionRefresh({
   const refreshSession = useCallback(async () => {
     console.log('[SESSION REFRESH] Starting session refresh...');
     
+    // Clear any potential stuck states
+    clearTimeout(window.sessionRefreshTimeout);
+    window.sessionRefreshAttempts = (window.sessionRefreshAttempts || 0) + 1;
+    
+    // Prevent excessive refresh attempts
+    if (window.sessionRefreshAttempts > 3) {
+      console.warn('[SESSION REFRESH] Too many refresh attempts, forced reset of state');
+      setSession(null);
+      setUser(null);
+      setIsEmailVerified(false);
+      updateLocalStorage(null);
+      window.isLoading = false;
+      window.sessionRefreshAttempts = 0;
+      return { isEmailVerified: false, forceReset: true };
+    }
+    
     // Check for admin bypass first
     const isAdminBypass = localStorage.getItem('admin_bypass') === 'true';
     if (isAdminBypass) {
@@ -55,7 +71,8 @@ export function useSessionRefresh({
         
         setUser(bypassUser);
         setIsEmailVerified(true);
-        
+        window.isLoading = false;
+        window.sessionRefreshAttempts = 0;
         return { isEmailVerified: true };
       }
     }
@@ -98,7 +115,7 @@ export function useSessionRefresh({
             .select('role, is_active')
             .eq('user_id', sessionData.session.user.id)
             .eq('is_active', true)
-            .single();
+            .maybeSingle();
             
           if (!rolesError && roles) {
             console.log('[SESSION REFRESH] Found active role in database:', roles.role);
@@ -108,6 +125,10 @@ export function useSessionRefresh({
         } catch (roleError) {
           console.warn('[SESSION REFRESH] Error fetching active role:', roleError);
         }
+        
+        // Reset counter on success
+        window.sessionRefreshAttempts = 0;
+        window.isLoading = false;
         
         return { isEmailVerified: true };
       } else {
@@ -135,6 +156,11 @@ export function useSessionRefresh({
         setUser(user);
         setIsEmailVerified(isEmailVerified);
         updateLocalStorage(user);
+        
+        // Reset attempt counter on success
+        window.sessionRefreshAttempts = 0;
+        window.isLoading = false;
+        
         return { isEmailVerified };
       } else {
         console.log('[SESSION REFRESH] No session after refresh, clearing state');
@@ -160,11 +186,20 @@ export function useSessionRefresh({
         if (storedSession) {
           console.log('[SESSION REFRESH] Found stored session, using as fallback');
           
-          // Attempt retry after small delay
-          setTimeout(() => {
-            refreshSessionAction().catch(e => 
-              console.warn('[SESSION REFRESH] Retry also failed:', e));
-          }, 2000);
+          // Attempt retry after small delay but only once
+          if (window.sessionRefreshAttempts <= 2) {
+            window.sessionRefreshTimeout = window.setTimeout(() => {
+              refreshSessionAction().catch(e => 
+                console.warn('[SESSION REFRESH] Retry also failed:', e));
+            }, 2000);
+          } else {
+            // After multiple attempts, clear auth state to prevent being stuck
+            console.warn('[SESSION REFRESH] Multiple refresh attempts failed, clearing auth state');
+            setSession(null);
+            setUser(null);
+            setIsEmailVerified(false);
+            updateLocalStorage(null);
+          }
         } else {
           // If no session in storage, clear the user state to avoid stuck UI
           setSession(null);

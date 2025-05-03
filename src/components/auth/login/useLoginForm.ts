@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth';
@@ -20,6 +20,9 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
   const [errorCategory, setErrorCategory] = useState<AuthErrorCategory>('unknown');
   const [loginAttempts, setLoginAttempts] = useState(0);
   
+  // New: Add timeout to automatically reset submission state
+  const loginTimeoutRef = useRef<number | null>(null);
+  
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
@@ -27,6 +30,41 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
   
   // Check if there's a saved redirect destination
   const [redirectTo, setRedirectTo] = useState<string | null>(null);
+  
+  // Clear timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (loginTimeoutRef.current) {
+        clearTimeout(loginTimeoutRef.current);
+      }
+    };
+  }, []);
+  
+  // Auto-reset isSubmitting after maximum allowed time
+  useEffect(() => {
+    if (isSubmitting) {
+      // Set a maximum submission time of 15 seconds
+      loginTimeoutRef.current = window.setTimeout(() => {
+        console.warn('[LOGIN FORM] Login submission timed out, resetting state');
+        setIsSubmitting(false);
+        setFormError('Login request timed out. Please try again.');
+        
+        // Clear login tracking flags if they exist
+        localStorage.removeItem('login_attempt_id');
+        localStorage.removeItem('login_attempt_timestamp');
+        localStorage.removeItem('login_stuck_timestamp');
+        
+        // If we've been stuck in a submitting state, force the loading state to reset
+        window.isLoading = false;
+      }, 15000);
+    } else {
+      // Clear the timeout when not submitting
+      if (loginTimeoutRef.current) {
+        clearTimeout(loginTimeoutRef.current);
+        loginTimeoutRef.current = null;
+      }
+    }
+  }, [isSubmitting]);
   
   useEffect(() => {
     // Get any redirect path stored in localStorage
@@ -146,12 +184,22 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // If already submitting, prevent multiple submissions
+    if (isSubmitting) {
+      console.log('[LOGIN HOOK] Login already in progress, ignoring click');
+      return;
+    }
+    
     resetError();
     setIsSubmitting(true);
     setShowResendVerification(false);
     
     // Increment login attempt counter
     setLoginAttempts(prev => prev + 1);
+    
+    // Store the timestamp of when login began to help detect stuck states
+    localStorage.setItem('login_stuck_timestamp', Date.now().toString());
     
     // Generate a unique login attempt ID for tracking this login process
     const loginAttemptId = `login_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
@@ -172,6 +220,10 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
             title: 'Admin login successful',
             description: 'Welcome to the admin dashboard',
           });
+          
+          // Clear the stuck login timestamp since we're successful
+          localStorage.removeItem('login_stuck_timestamp');
+          
           navigate('/admin/dashboard');
           return;
         } else {
@@ -189,64 +241,19 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
         // Store the auth redirect for later use (after login success)
         const savedRedirect = localStorage.getItem('auth_redirect');
         
-        try {
-          if (isEmail) {
-            console.log(`[LOGIN ${loginAttemptId}] Logging in with email`);
-            await signIn(identifier, password);
-            console.log(`[LOGIN ${loginAttemptId}] Email login successful`);
-          } else {
-            console.log(`[LOGIN ${loginAttemptId}] Logging in with username`);
-            const { data, error } = await supabase
-              .from('profiles')
-              .select('id')
-              .eq('username', identifier)
-              .maybeSingle();
-              
-            if (error) {
-              console.error(`[LOGIN ${loginAttemptId}] Username lookup error:`, error);
-              throw new Error('Error looking up username');
-            }
-            
-            if (!data) {
-              console.error(`[LOGIN ${loginAttemptId}] Username not found:`, identifier);
-              throw new Error('Username not found');
-            }
-              
-            const { data: userData, error: userError } = await supabase.auth.admin.getUserById(data.id);
-            
-            if (userError || !userData.user) {
-              console.error(`[LOGIN ${loginAttemptId}] User lookup error:`, userError);
-              throw new Error('User not found');
-            }
-              
-            console.log(`[LOGIN ${loginAttemptId}] Username found, attempting login with email`);
-            await signIn(userData.user.email || '', password);
-            console.log(`[LOGIN ${loginAttemptId}] Username login successful`);
-          }
-        } catch (err) {
-          // Use the error categorization function
-          const authError = err as Error;
-          const category = categorizeError(authError);
+        // Set up a timeout for the login request
+        const loginPromise = isEmail 
+          ? signIn(identifier, password)
+          : tryUsernameLogin(identifier, password, loginAttemptId);
           
-          console.error(`[LOGIN ${loginAttemptId}] Login error (${category}):`, authError);
-          setErrorCategory(category);
-          
-          // Special handling for verification errors
-          if (category === 'verification') {
-            setShowResendVerification(true);
-          }
-          
-          // For network errors, set a retry attempt
-          if (category === 'network' || category === 'timeout') {
-            toast({
-              title: 'Connection issue',
-              description: 'There was a problem connecting to the authentication service',
-              variant: 'destructive',
-            });
-          }
-          
-          throw authError;
-        }
+        const loginTimeout = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Login request timed out')), 10000);
+        });
+        
+        // Race the login against a timeout
+        await Promise.race([loginPromise, loginTimeout]);
+        
+        console.log(`[LOGIN ${loginAttemptId}] Login successful`);
         
         // Login was successful, check if the user_type matches the expected type
         const loggedInType = localStorage.getItem('user_type');
@@ -267,6 +274,9 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
             // Continue with login even if role switch fails
           }
         }
+        
+        // Clear the stuck login timestamp since we're successful
+        localStorage.removeItem('login_stuck_timestamp');
         
         // Set login success flags in localStorage for persistence
         localStorage.setItem('login_success', 'true');
@@ -305,16 +315,82 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
       console.error(`[LOGIN ${loginAttemptId}] Login error:`, error);
       setFormError(error.message || 'Failed to login');
       
+      // Categorize the error for better handling
+      const category = categorizeError(error);
+      setErrorCategory(category);
+      
       // Clear login tracking flags on error
       localStorage.removeItem('login_attempt_id');
       localStorage.removeItem('login_attempt_timestamp');
-      localStorage.removeItem('login_requested_usertype');
+      localStorage.removeItem('login_stuck_timestamp');
       
       if (error.message && error.message.includes('Email not verified')) {
         setShowResendVerification(true);
       }
+      
+      // Add specific toast message based on error type
+      let toastMessage = 'An error occurred during login';
+      if (category === 'credentials') {
+        toastMessage = 'Invalid email or password';
+      } else if (category === 'verification') {
+        toastMessage = 'Please verify your email before logging in';
+      } else if (category === 'network') {
+        toastMessage = 'Connection error - please check your internet';
+      } else if (category === 'timeout') {
+        toastMessage = 'Login request timed out - please try again';
+      }
+      
+      toast({
+        title: 'Login failed',
+        description: toastMessage,
+        variant: 'destructive',
+      });
     } finally {
       setIsSubmitting(false);
+      
+      // Clear the stuck login timestamp
+      localStorage.removeItem('login_stuck_timestamp');
+    }
+  };
+  
+  // Helper function to try username-based login
+  const tryUsernameLogin = async (username: string, password: string, loginId: string) => {
+    console.log(`[LOGIN ${loginId}] Logging in with username`);
+    
+    try {
+      // First try to find the user by username
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('username', username)
+        .maybeSingle();
+          
+      if (error) {
+        console.error(`[LOGIN ${loginId}] Username lookup error:`, error);
+        throw new Error('Error looking up username');
+      }
+      
+      if (!data) {
+        console.error(`[LOGIN ${loginId}] Username not found:`, username);
+        throw new Error('Username not found');
+      }
+          
+      // Then get the user's email from the auth system
+      const { data: userData, error: userError } = await supabase.auth.admin.getUserById(data.id);
+      
+      if (userError || !userData.user) {
+        console.error(`[LOGIN ${loginId}] User lookup error:`, userError);
+        throw new Error('User not found');
+      }
+          
+      console.log(`[LOGIN ${loginId}] Username found, attempting login with email`);
+      
+      // Finally login with the email
+      await signIn(userData.user.email || '', password);
+      console.log(`[LOGIN ${loginId}] Username login successful`);
+    } catch (error) {
+      console.error(`[LOGIN ${loginId}] Username login error:`, error);
+      throw error;
     }
   };
 

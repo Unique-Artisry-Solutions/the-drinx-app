@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/auth';
 import { emergencyResetAllStorage } from '@/utils/sessionCleaner';
-import { performRedirect, isRedirectLoop } from '@/utils/redirectUtils';
+import { performRedirect, isRedirectLoop, breakRedirectLoop, forceLoginNavigation } from '@/utils/redirectUtils';
 import { Button } from '@/components/ui/button';
 import { debouncedToast } from '@/utils/debouncedToast';
 
@@ -16,21 +16,37 @@ const Index = () => {
   const [resetMessage, setResetMessage] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
   const [loadingTimeout, setLoadingTimeout] = useState(false);
+  const [criticalTimeout, setCriticalTimeout] = useState(false);
   
   // Generate a unique ID for this page instance
   const pageId = React.useId();
   
   // Add maximum wait time for loading
   useEffect(() => {
-    // If we're still loading after 15 seconds, show timeout message
+    // If we're still loading after 10 seconds, show timeout message
     const timeoutId = setTimeout(() => {
       if (isLoading) {
-        console.log(`[INDEX ${pageId}] Loading timeout reached after 15 seconds`);
+        console.log(`[INDEX ${pageId}] Loading timeout reached after 10 seconds`);
         setLoadingTimeout(true);
       }
-    }, 15000);
+    }, 10000);
     
-    return () => clearTimeout(timeoutId);
+    // If we're STILL loading after 20 seconds, show critical timeout message
+    const criticalTimeoutId = setTimeout(() => {
+      if (isLoading) {
+        console.log(`[INDEX ${pageId}] Critical loading timeout reached after 20 seconds`);
+        setCriticalTimeout(true);
+        // Automatically break any redirect loops that might be occurring
+        breakRedirectLoop();
+        // Reset the loading state flag to unblock the UI
+        window.isLoading = false;
+      }
+    }, 20000);
+    
+    return () => {
+      clearTimeout(timeoutId);
+      clearTimeout(criticalTimeoutId);
+    };
   }, [isLoading, pageId]);
   
   // Log information for debugging
@@ -38,6 +54,7 @@ const Index = () => {
     console.log(`[INDEX ${pageId}] Index page loaded at ${new Date().toISOString()}`);
     console.log(`[INDEX ${pageId}] Current URL:`, window.location.href);
     console.log(`[INDEX ${pageId}] Auth state:`, { user: !!user, isLoading });
+    console.log(`[INDEX ${pageId}] isLoading window property:`, window.isLoading);
     
     // Check for auth debugging flags
     const urlParams = new URLSearchParams(window.location.search);
@@ -56,6 +73,21 @@ const Index = () => {
       
       console.log(`[INDEX ${pageId}] LocalStorage data:`, localStorageData);
     }
+    
+    // If the page has been loading for too long, check if we're in a stuck state
+    if (window.initialLoadTime) {
+      const loadTime = Date.now() - window.initialLoadTime;
+      if (loadTime > 15000) {
+        console.warn(`[INDEX ${pageId}] Page has been loading for ${loadTime}ms, possibly stuck`);
+        // Force window.isLoading to false to prevent UI from being permanently stuck
+        if (window.isLoading) {
+          console.warn(`[INDEX ${pageId}] Forcing window.isLoading to false`);
+          window.isLoading = false;
+        }
+      }
+    } else {
+      window.initialLoadTime = Date.now();
+    }
   }, [user, isLoading, pageId]);
   
   // Handle showing the confirmation dialog
@@ -72,6 +104,12 @@ const Index = () => {
     // Small delay to allow UI to update
     setTimeout(() => {
       try {
+        // Reset the loading state flag to ensure we're not stuck
+        window.isLoading = false;
+        
+        // Break any redirect loops
+        breakRedirectLoop();
+        
         // Perform the reset
         const result = emergencyResetAllStorage();
         setResetSuccess(result.success);
@@ -82,7 +120,7 @@ const Index = () => {
         // Reload the page after reset to ensure clean state
         if (result.success) {
           setTimeout(() => {
-            window.location.reload();
+            window.location.href = '/login?reset=true'; // Direct to login with reset flag
           }, 2000);
         }
       } catch (err) {
@@ -104,24 +142,17 @@ const Index = () => {
   // Force navigation to login if loading times out
   const handleForceLoginNavigation = () => {
     console.log(`[INDEX ${pageId}] User manually navigating to login page`);
-    breakRedirectLoop();
-    window.location.href = '/login';
-  };
-  
-  // Function to break redirect loops and clear any problematic state
-  const breakRedirectLoop = () => {
-    console.log(`[INDEX ${pageId}] Breaking potential redirect loop`);
-    localStorage.removeItem('redirect_count');
-    localStorage.removeItem('last_redirect_time');
-    localStorage.removeItem('login_success');
-    localStorage.removeItem('login_success_timestamp');
-    localStorage.removeItem('login_user_type');
-    localStorage.removeItem('auth_redirect');
-    localStorage.removeItem('login_redirect');
+    forceLoginNavigation();
   };
   
   // Use useEffect to handle navigation properly
   useEffect(() => {
+    // If we're in a critical timeout, don't attempt redirect
+    if (criticalTimeout) {
+      console.log(`[INDEX ${pageId}] Critical timeout reached, skipping redirect logic`);
+      return;
+    }
+    
     // Check for redirect loop prevention
     if (isRedirectLoop()) {
       console.log(`[INDEX ${pageId}] Detected redirect loop, staying on index page`);
@@ -175,7 +206,7 @@ const Index = () => {
       isFullPageRefresh: isPromoter,
       source: `index_${pageId}`
     });
-  }, [user, isLoading, navigate, pageId]);
+  }, [user, isLoading, navigate, pageId, criticalTimeout]);
 
   // If we're still loading, show a loading state
   return (
@@ -198,6 +229,27 @@ const Index = () => {
             </div>
           )}
           
+          {criticalTimeout && (
+            <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-md text-red-800">
+              <p className="font-medium">Loading issue detected</p>
+              <p className="text-sm my-1">We've detected a problem with the authentication process. Please try going to the login page or reset your authentication state.</p>
+              <div className="flex space-x-2 mt-2">
+                <Button 
+                  variant="destructive"
+                  className="text-sm flex-1"
+                  onClick={handleEmergencyReset}>
+                  Reset Authentication
+                </Button>
+                <Button 
+                  variant="outline"
+                  className="text-sm flex-1 border-red-300 hover:bg-red-100"
+                  onClick={handleForceLoginNavigation}>
+                  Go to Login
+                </Button>
+              </div>
+            </div>
+          )}
+          
           {/* Emergency Reset Section */}
           <div className="mt-8 border-t pt-4">
             <p className="text-sm font-medium text-gray-700 mb-2">Authentication Troubleshooting</p>
@@ -206,7 +258,7 @@ const Index = () => {
               <div className="mb-4 p-3 bg-green-100 text-green-800 rounded-md">
                 <p className="font-medium">Reset Successful</p>
                 <p className="text-sm">{resetMessage}</p>
-                <p className="text-xs mt-2">The page will refresh automatically in 2 seconds</p>
+                <p className="text-xs mt-2">Redirecting to login page...</p>
               </div>
             )}
             
@@ -263,5 +315,15 @@ const Index = () => {
     </Layout>
   );
 };
+
+// Add global types for window properties
+declare global {
+  interface Window {
+    isLoading?: boolean;
+    initialLoadTime?: number;
+    sessionRefreshAttempts?: number;
+    sessionRefreshTimeout?: number;
+  }
+}
 
 export default Index;

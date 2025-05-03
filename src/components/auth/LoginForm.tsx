@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { CardContent, CardFooter } from '@/components/ui/card';
 import LoginFormFields from './login/LoginFormFields';
 import LoginFormActions from './login/LoginFormActions';
@@ -37,8 +37,25 @@ const LoginForm: React.FC<LoginFormProps> = ({
 
   // Log form render for debugging
   const formId = React.useId();
-  React.useEffect(() => {
+  
+  useEffect(() => {
     console.log(`[LOGIN FORM ${formId}] Rendering login form for userType: ${userType}`);
+    
+    // Clear any stuck login attempts on component mount
+    const stuckLogin = localStorage.getItem('login_stuck_timestamp');
+    if (stuckLogin) {
+      const stuckTime = parseInt(stuckLogin);
+      const now = Date.now();
+      // If login has been stuck for more than 1 minute, clear it
+      if (now - stuckTime > 60000) {
+        console.log(`[LOGIN FORM ${formId}] Clearing stuck login state`);
+        localStorage.removeItem('login_stuck_timestamp');
+        localStorage.removeItem('login_attempt_id');
+        localStorage.removeItem('login_attempt_timestamp');
+        // Also make sure the global loading state is cleared
+        window.isLoading = false;
+      }
+    }
     
     // Check URL parameters for debug mode
     const urlParams = new URLSearchParams(window.location.search);
@@ -57,6 +74,11 @@ const LoginForm: React.FC<LoginFormProps> = ({
         loginAttemptId: sessionStorage.getItem('login_attempt_id')
       });
     }
+    
+    return () => {
+      // Clear any potential stuck states when form unmounts
+      localStorage.removeItem('login_stuck_timestamp');
+    };
   }, [userType, formId]);
 
   return (

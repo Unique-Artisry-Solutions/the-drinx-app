@@ -10,7 +10,32 @@ export const useLoginState = (pageId: string) => {
   const [isRecovering, setIsRecovering] = useState(false);
   const [connectionTimeoutId, setConnectionTimeoutId] = useState<number | null>(null);
   const [connectionCheckCount, setConnectionCheckCount] = useState(0);
+  const [networkStatus, setNetworkStatus] = useState<'online' | 'offline' | 'checking'>('checking');
   const location = useLocation();
+  
+  // Clear any stuck login states when loading the login page
+  useEffect(() => {
+    // Reset login-stuck indicators
+    if (localStorage.getItem('login_stuck_timestamp')) {
+      const stuckTime = parseInt(localStorage.getItem('login_stuck_timestamp') || '0');
+      const now = Date.now();
+      
+      // If the login has been stuck for more than 2 minutes, reset it
+      if (now - stuckTime > 120000) {
+        console.log(`[LOGIN PAGE ${pageId}] Detected stuck login state, resetting...`);
+        localStorage.removeItem('login_stuck_timestamp');
+        localStorage.removeItem('login_attempt_id');
+        localStorage.removeItem('login_attempt_timestamp');
+        localStorage.removeItem('login_requested_usertype');
+      }
+    }
+    
+    // Clear isLoading window property if set
+    if (window.isLoading) {
+      console.log(`[LOGIN PAGE ${pageId}] Clearing stuck isLoading state`);
+      window.isLoading = false;
+    }
+  }, [pageId]);
   
   // Check for userType in the location state
   useEffect(() => {
@@ -31,6 +56,9 @@ export const useLoginState = (pageId: string) => {
       setErrorMessage(state.message);
     }
     
+    // Check for network connectivity
+    checkNetworkStatus();
+    
     // Set a connection health check timeout - progressive intervals
     const timeoutId = window.setTimeout(() => {
       // Check if we're still on the page and seemingly stuck
@@ -48,34 +76,67 @@ export const useLoginState = (pageId: string) => {
     
     setConnectionTimeoutId(timeoutId);
     
+    // Add listeners for online/offline events
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
     return () => {
       if (connectionTimeoutId) {
         clearTimeout(connectionTimeoutId);
       }
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
     };
   }, [location, pageId, connectionCheckCount, connectionTimeoutId]);
+  
+  // Network status handlers
+  const handleOnline = () => {
+    setNetworkStatus('online');
+    console.log(`[LOGIN PAGE ${pageId}] Browser reports online status`);
+    testConnection();
+  };
+  
+  const handleOffline = () => {
+    setNetworkStatus('offline');
+    console.log(`[LOGIN PAGE ${pageId}] Browser reports offline status`);
+    setErrorMessage("You appear to be offline. Please check your internet connection.");
+  };
+  
+  // Check network connectivity status
+  const checkNetworkStatus = useCallback(() => {
+    const isOnline = navigator.onLine;
+    setNetworkStatus(isOnline ? 'online' : 'offline');
+    
+    if (!isOnline) {
+      setErrorMessage("You appear to be offline. Please check your internet connection.");
+    }
+    
+    return isOnline;
+  }, []);
   
   // Test connection to Supabase with enhanced error handling
   const testConnection = useCallback(async () => {
     try {
+      setNetworkStatus('checking');
       console.log(`[LOGIN PAGE ${pageId}] Testing connection to Supabase... (Attempt #${connectionCheckCount + 1})`);
       
       // Create an AbortController for timeout handling
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 8000);
       
-      // Use invoke method without passing the signal directly
-      // The Supabase Functions API doesn't support AbortController signals directly
-      const fetchPromise = supabase.functions.invoke('ping_connection', {
+      // Use a basic health check to verify connectivity
+      const healthPromise = fetch(`${supabase.functions.url}/ping_connection`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabase.auth.session()?.access_token || ''}`
         },
+        signal: controller.signal
       });
       
       // Race the fetch promise against a timeout promise
-      const result = await Promise.race([
-        fetchPromise,
+      const response = await Promise.race([
+        healthPromise,
         new Promise((_, reject) => {
           // If the timeout triggers before the fetch completes, this will reject
           const abortListener = () => reject(new Error('Connection test timed out'));
@@ -90,23 +151,42 @@ export const useLoginState = (pageId: string) => {
       
       clearTimeout(timeoutId);
       
-      // Now handle the result from the fetch
-      const { data, error } = result as { data: any, error: any };
-      
-      if (error) {
-        throw new Error(`Connection test failed: ${error.message}`);
+      // Now handle the response
+      if (response instanceof Response) {
+        if (!response.ok) {
+          throw new Error(`Server responded with status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log(`[LOGIN PAGE ${pageId}] Connection test successful:`, data);
+        
+        // If we had an error message before but now connection works, clear it
+        if (errorMessage && (
+          errorMessage.includes("Unable to connect") || 
+          errorMessage.includes("offline")
+        )) {
+          setErrorMessage(null);
+        }
+        
+        setNetworkStatus('online');
+        return true;
+      } else {
+        throw new Error('Invalid response from server');
       }
-      
-      console.log(`[LOGIN PAGE ${pageId}] Connection test successful:`, data);
-      
-      // If we had an error message before but now connection works, clear it
-      if (errorMessage && errorMessage.includes("Unable to connect")) {
-        setErrorMessage(null);
-      }
-      
-      return true;
     } catch (error: any) {
       console.error(`[LOGIN PAGE ${pageId}] Connection test error:`, error);
+      
+      // Set network status based on error type
+      if (error.name === 'AbortError') {
+        setNetworkStatus('offline');
+      } else if (error.message?.includes('fetch')) {
+        // Check if the failure is due to network connectivity
+        if (!navigator.onLine) {
+          setNetworkStatus('offline');
+        } else {
+          setNetworkStatus('online'); // Online but server unreachable
+        }
+      }
       
       // Add detail to error message based on the type of error
       let errorDetail = '';
@@ -131,7 +211,12 @@ export const useLoginState = (pageId: string) => {
     console.log(`[LOGIN PAGE ${pageId}] Attempting to recover connection...`);
     
     try {
-      // Try our edge function ping first
+      // Check network connectivity first
+      if (!navigator.onLine) {
+        throw new Error('You appear to be offline. Please check your internet connection.');
+      }
+      
+      // Try our connection test
       await testConnection();
       
       // If that works, try a simple auth check with timeout protection
@@ -183,6 +268,8 @@ export const useLoginState = (pageId: string) => {
           errorMessage = 'Connection timed out. The server might be experiencing high load or network issues.';
         } else if (error.message.includes('fetch') || error.message.includes('network')) {
           errorMessage = 'Network error. Please check your internet connection and try again.';
+        } else if (error.message.includes('offline')) {
+          errorMessage = error.message;
         }
       }
       
@@ -198,6 +285,7 @@ export const useLoginState = (pageId: string) => {
     setErrorMessage,
     isRecovering,
     handleRetryConnection,
-    connectionCheckCount
+    connectionCheckCount,
+    networkStatus
   };
 };

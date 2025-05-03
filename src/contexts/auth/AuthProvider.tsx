@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { AuthContextType } from './types';
@@ -5,6 +6,7 @@ import { useAuthActions } from './useAuthActions';
 import { useAuthState } from './useAuthState';
 import { useSessionRefresh } from './useSessionRefresh';
 import { useAuthSetup } from './useAuthSetup';
+import { safeAuthCheck } from '@/utils/redirectUtils';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -62,10 +64,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     window.isLoading = isLoading || actionLoading;
     
+    // Add a safety timer to reset loading state after maximum threshold
+    let loadingResetTimer: number | null = null;
+    
+    if (isLoading || actionLoading) {
+      loadingResetTimer = window.setTimeout(() => {
+        if (window.isLoading) {
+          console.warn('[AUTH PROVIDER] Loading state has been active for too long, forcing reset');
+          window.isLoading = false;
+          setIsLoading(false);
+        }
+      }, 30000); // Reset loading state after 30 seconds maximum
+    }
+    
     return () => {
       window.isLoading = undefined;
+      if (loadingResetTimer) {
+        clearTimeout(loadingResetTimer);
+      }
     };
-  }, [isLoading, actionLoading]);
+  }, [isLoading, actionLoading, setIsLoading]);
+
+  // Add a safe authentication check on route changes
+  useEffect(() => {
+    // Only run this check if we're done loading and know the user state
+    if (!isLoading && !actionLoading) {
+      safeAuthCheck();
+    }
+  }, [isLoading, actionLoading, window.location.pathname]);
 
   // Add a special listener for promoter logins
   useEffect(() => {
@@ -112,7 +138,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAdminBypass: localStorage.getItem('admin_bypass'),
       });
     }
-  }, [user, window.location.search]);
+    
+    // Check for forced reset from index page
+    if (urlParams.get('reset') === 'true') {
+      console.log('[AUTH PROVIDER] Detected reset flag, clearing auth state');
+      setUser(null);
+      setSession(null);
+      setIsEmailVerified(false);
+      setIsLoading(false);
+      window.isLoading = false;
+    }
+  }, [user, window.location.search, setUser, setSession, setIsEmailVerified, setIsLoading]);
 
   const handleSignOut = async () => {
     console.log("[AUTH PROVIDER] Starting sign out process...");
@@ -120,6 +156,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
     setSession(null);
     setIsEmailVerified(false);
+    
+    // Reset the loading indicator
+    setIsLoading(false);
+    window.isLoading = false;
     
     // Clear all login/bypass tracking from localStorage
     localStorage.removeItem('login_success');
@@ -129,6 +169,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem('login_attempt_timestamp');
     localStorage.removeItem('login_requested_usertype');
     localStorage.removeItem('login_redirect');
+    localStorage.removeItem('login_stuck_timestamp');
     
     localStorage.removeItem('bypass_attempt_id');
     localStorage.removeItem('bypass_timestamp');
