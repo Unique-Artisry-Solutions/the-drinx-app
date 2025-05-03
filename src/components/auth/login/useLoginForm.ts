@@ -1,8 +1,10 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth';
 import { supabase } from '@/lib/supabase';
+import { handleAuthRedirect } from '@/utils/redirectUtils';
 
 export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userType: 'individual' | 'establishment' | 'promoter' = 'individual') => {
   const [identifier, setIdentifier] = useState('');
@@ -106,16 +108,13 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
         console.log(`[LOGIN ${loginAttemptId}] Attempting regular login with identifier: ${identifier}`);
         const isEmail = identifier.includes('@');
         
-        // Set login tracking flags in localStorage for consistent access across tabs
+        // Set login tracking flags in localStorage for consistent access
         localStorage.setItem('login_attempt_id', loginAttemptId);
         localStorage.setItem('login_attempt_timestamp', Date.now().toString());
         localStorage.setItem('login_requested_usertype', userType);
         
         // Store the auth redirect for later use (after login success)
         const savedRedirect = localStorage.getItem('auth_redirect');
-        if (savedRedirect) {
-          localStorage.setItem('login_redirect', savedRedirect);
-        }
         
         if (isEmail) {
           console.log(`[LOGIN ${loginAttemptId}] Logging in with email`);
@@ -166,7 +165,7 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
           }
         }
         
-        // Set login success flags in localStorage for persistence across tabs
+        // Set login success flags in localStorage for persistence
         localStorage.setItem('login_success', 'true');
         localStorage.setItem('login_success_timestamp', Date.now().toString());
         
@@ -180,39 +179,20 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
           description: 'Welcome back!',
         });
         
-        // Get and clear redirect path
-        const redirectPath = localStorage.getItem('login_redirect') || 
-                             savedRedirect || 
-                             (storedUserType === 'promoter' ? '/promoter/dashboard' : 
-                              storedUserType === 'establishment' ? '/establishment/dashboard' : '/explore');
-                              
-        // Clear the saved redirect before performing navigation
-        localStorage.removeItem('auth_redirect');
-        localStorage.removeItem('login_redirect');
-        
-        // Specifically for promoters, handle direct navigation
-        if (storedUserType === 'promoter') {
-          console.log(`[LOGIN ${loginAttemptId}] Promoter login detected. Redirecting to ${redirectPath}`);
-          
-          // Force a direct URL navigation to ensure complete page refresh
-          const redirectUrl = new URL(redirectPath, window.location.origin);
-          redirectUrl.searchParams.set('login_ts', Date.now().toString());
-          redirectUrl.searchParams.set('login_id', loginAttemptId);
-          
-          // Log the full URL for debugging
-          console.log(`[LOGIN ${loginAttemptId}] Redirecting to full URL: ${redirectUrl.toString()}`);
-          
-          // For promoters, use window location to force a full page refresh
-          window.location.href = redirectUrl.toString();
-          return;
-        }
-        
-        // For non-promoters, use React Router navigation
+        // Handle callback or redirection
         if (onSuccess) {
           onSuccess();
         } else {
-          console.log(`[LOGIN ${loginAttemptId}] Navigating to: ${redirectPath}`);
-          navigate(redirectPath);
+          // Use centralized auth redirect handler
+          handleAuthRedirect(
+            { id: '1' }, // User is authenticated at this point
+            navigate,
+            {
+              savedRedirect,
+              userType: storedUserType,
+              source: `login_form_${loginAttemptId}`
+            }
+          );
         }
       }
     } catch (error: any) {
@@ -273,11 +253,6 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
         localStorage.setItem('admin_session_created', new Date().toISOString());
       }
       
-      // Set bypass tracking flags
-      sessionStorage.setItem('bypass_attempt_id', bypassAttemptId);
-      sessionStorage.setItem('bypass_timestamp', Date.now().toString());
-      sessionStorage.setItem('bypass_user_type', type);
-      
       // Force a refresh of the session to apply bypass
       console.log(`[BYPASS ${bypassAttemptId}] Refreshing session to apply bypass login`);
       await refreshSession();
@@ -293,38 +268,17 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
       // Check for saved redirect
       const savedRedirect = localStorage.getItem('auth_redirect');
       console.log(`[BYPASS ${bypassAttemptId}] Saved redirect path:`, savedRedirect);
-      localStorage.removeItem('auth_redirect');
       
-      // For promoter bypass, use direct navigation
-      if (type === 'promoter') {
-        const redirectPath = savedRedirect || '/promoter/dashboard';
-        console.log(`[BYPASS ${bypassAttemptId}] Redirecting bypass promoter to: ${redirectPath}`);
-        
-        const redirectUrl = new URL(redirectPath, window.location.origin);
-        redirectUrl.searchParams.set('bypass_ts', Date.now().toString());
-        redirectUrl.searchParams.set('bypass_id', bypassAttemptId);
-        
-        console.log(`[BYPASS ${bypassAttemptId}] Full redirect URL: ${redirectUrl.toString()}`);
-        window.location.href = redirectUrl.toString();
-        return;
-      }
-      
-      // For other user types, use React Router
-      if (savedRedirect) {
-        console.log(`[BYPASS ${bypassAttemptId}] Redirecting to saved path: ${savedRedirect}`);
-        navigate(savedRedirect);
-      } else {
-        if (type === 'admin') {
-          console.log(`[BYPASS ${bypassAttemptId}] Redirecting to admin dashboard`);
-          navigate('/admin/system-breakdown');
-        } else if (type === 'establishment') {
-          console.log(`[BYPASS ${bypassAttemptId}] Redirecting to establishment dashboard`);
-          navigate('/establishment/dashboard'); 
-        } else {
-          console.log(`[BYPASS ${bypassAttemptId}] Redirecting to explore page`);
-          navigate('/explore');
+      // Use centralized auth redirect handler
+      handleAuthRedirect(
+        { id: bypassUserId }, // Mock user object
+        navigate,
+        {
+          savedRedirect,
+          userType: type,
+          source: `bypass_${bypassAttemptId}`
         }
-      }
+      );
     } catch (error) {
       console.error(`[BYPASS ${bypassAttemptId}] Error during bypass login:`, error);
       toast({

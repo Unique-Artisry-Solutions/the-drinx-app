@@ -2,6 +2,7 @@
 import React, { useEffect } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth';
+import { isRedirectLoop } from '@/utils/redirectUtils';
 
 export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, isLoading, isEmailVerified } = useAuth();
@@ -25,12 +26,7 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
         hasUser: !!user, 
         isEmailVerified,
         isAdminBypass,
-        userType: localStorage.getItem('user_type'),
-        sessionStorage: {
-          loginSuccess: sessionStorage.getItem('login_success'),
-          loginUserType: sessionStorage.getItem('login_user_type'),
-          loginAttemptId: sessionStorage.getItem('login_attempt_id'),
-        }
+        userType: localStorage.getItem('user_type')
       });
     } else {
       console.log(`[PROTECTED ROUTE ${routeId}] Path: ${location.pathname}, hasUser: ${!!user}, isLoading: ${isLoading}`);
@@ -46,6 +42,27 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     console.log(`[PROTECTED ROUTE ${routeId}] Admin bypass enabled, allowing access`);
     // Admin bypass is enabled, allow access
     return <>{children}</>;
+  }
+  
+  // Check for redirect loops before redirecting
+  if (isRedirectLoop()) {
+    console.log(`[PROTECTED ROUTE ${routeId}] Detected potential redirect loop, showing error`);
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-4">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 max-w-md w-full text-center">
+          <h2 className="text-red-600 text-lg font-medium mb-2">Authentication Error</h2>
+          <p className="text-gray-700 mb-4">
+            A redirect loop was detected. Please try clearing your browser storage and refreshing the page.
+          </p>
+          <button
+            onClick={() => window.location.href = '/'}
+            className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors"
+          >
+            Return Home
+          </button>
+        </div>
+      </div>
+    );
   }
   
   if (!user) {
@@ -94,6 +111,24 @@ export const AdminRoute = ({ children }: { children: React.ReactNode }) => {
     });
   }, [isAdminAuthenticated, isAdminBypass, userType, routeId]);
   
+  // Check for redirect loops
+  if (isRedirectLoop()) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 max-w-md text-center">
+          <h2 className="text-red-600 font-medium">Authentication Error</h2>
+          <p className="text-gray-700">Redirect loop detected. Please clear your browser storage.</p>
+          <button
+            onClick={() => window.location.href = '/admin'}
+            className="mt-2 bg-red-600 text-white px-3 py-1 text-sm rounded"
+          >
+            Return to Admin Login
+          </button>
+        </div>
+      </div>
+    );
+  }
+  
   // Allow access if admin authenticated or admin bypass with userType=admin
   if (isAdminAuthenticated || (isAdminBypass && userType === 'admin')) {
     console.log(`[ADMIN ROUTE ${routeId}] Admin authentication verified, allowing access`);
@@ -129,21 +164,36 @@ export const TypedProtectedRoute = ({
       requiredType: userType,
       typesMatch: storedUserType === userType
     });
-    
-    // Check URL params for debugging
-    const urlParams = new URLSearchParams(window.location.search);
-    const loginTs = urlParams.get('login_ts');
-    const loginId = urlParams.get('login_id');
-    
-    if (loginTs && loginId) {
-      console.log(`[TYPED ROUTE ${routeId}] Detected login redirect params: ID=${loginId}, TS=${loginTs}`);
-      
-      // For promoters specifically, do additional checks
-      if (userType === 'promoter' && storedUserType === 'promoter') {
-        console.log(`[TYPED ROUTE ${routeId}] Promoter route confirmed with matching user type`);
-      }
-    }
   }, [isLoading, user, isEmailVerified, isAdminBypass, storedUserType, userType, location, routeId]);
+  
+  // Check for redirect loops
+  if (isRedirectLoop()) {
+    console.log(`[TYPED ROUTE ${routeId}] Detected redirect loop, showing error message`);
+    return (
+      <div className="flex items-center justify-center min-h-screen p-4">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 max-w-md text-center">
+          <h2 className="text-red-600 font-medium">Navigation Error</h2>
+          <p className="text-gray-700">
+            A redirect loop was detected. This may happen if you're trying to access content with the wrong account type.
+          </p>
+          <div className="mt-3 flex justify-center space-x-3">
+            <button
+              onClick={() => window.location.href = '/'}
+              className="bg-gray-500 text-white px-3 py-1 rounded text-sm"
+            >
+              Home
+            </button>
+            <button
+              onClick={() => window.location.href = '/login'}
+              className="bg-blue-600 text-white px-3 py-1 rounded text-sm"
+            >
+              Login
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
   
   if (isLoading) {
     console.log(`[TYPED ROUTE ${routeId}] Still loading auth state`);

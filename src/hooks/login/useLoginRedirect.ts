@@ -1,6 +1,7 @@
 
 import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { handleAuthRedirect, isRedirectLoop } from '@/utils/redirectUtils';
 
 interface UseLoginRedirectProps {
   user: any;
@@ -22,10 +23,9 @@ export const useLoginRedirect = ({ user, isLoading, pageId }: UseLoginRedirectPr
       return;
     }
     
-    // Check for redirect loops
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('auth_ts')) {
-      console.log(`[LOGIN PAGE ${pageId}] Detected potential redirect loop, skipping automatic redirect`);
+    // Check for redirect loops and prevent them
+    if (isRedirectLoop()) {
+      console.log(`[LOGIN PAGE ${pageId}] Detected redirect loop, skipping automatic redirect`);
       return;
     }
     
@@ -42,46 +42,11 @@ export const useLoginRedirect = ({ user, isLoading, pageId }: UseLoginRedirectPr
     localStorage.removeItem('login_success');
     localStorage.removeItem('login_success_timestamp');
     
-    if (savedRedirect) {
-      console.log(`[LOGIN PAGE ${pageId}] Found saved redirect path:`, savedRedirect);
-      
-      // For promoters, use window.location.href for consistent full page reload
-      if (userType === 'promoter') {
-        console.log(`[LOGIN PAGE ${pageId}] Redirecting authenticated promoter to saved path`);
-        // Add timestamp to force fresh load
-        const redirectUrl = new URL(savedRedirect, window.location.origin);
-        redirectUrl.searchParams.set('auth_ts', Date.now().toString());
-        redirectUrl.searchParams.set('login_page_id', pageId);
-        
-        // Clear redirect before navigation to prevent loops
-        localStorage.removeItem('auth_redirect');
-        
-        // Small timeout to avoid redirect race conditions
-        setTimeout(() => {
-          window.location.href = redirectUrl.toString();
-        }, 100);
-      } else {
-        localStorage.removeItem('auth_redirect');
-        navigate(savedRedirect);
-      }
-    } else {
-      // Default redirect based on user type
-      console.log(`[LOGIN PAGE ${pageId}] No saved redirect, using user type for redirect:`, userType);
-      
-      if (userType === 'promoter') {
-        console.log(`[LOGIN PAGE ${pageId}] Redirecting authenticated promoter to dashboard`);
-        const redirectUrl = new URL('/promoter/dashboard', window.location.origin);
-        redirectUrl.searchParams.set('auth_ts', Date.now().toString());
-        redirectUrl.searchParams.set('login_page_id', pageId);
-        
-        setTimeout(() => {
-          window.location.href = redirectUrl.toString();
-        }, 100);
-      } else if (userType === 'establishment') {
-        navigate('/establishment/dashboard');
-      } else {
-        navigate('/explore');
-      }
-    }
+    // Perform the redirect using our centralized utility
+    handleAuthRedirect(user, navigate, {
+      savedRedirect,
+      userType,
+      source: `login_page_${pageId}`
+    });
   }, [user, isLoading, navigate, pageId, location]);
 };

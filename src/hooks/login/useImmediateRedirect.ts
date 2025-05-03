@@ -1,18 +1,15 @@
 
 import { useEffect } from 'react';
-
-// Add this to extend the Window interface with our custom property
-declare global {
-  interface Window {
-    isLoading?: boolean;
-  }
-}
+import { useNavigate } from 'react-router-dom';
+import { performRedirect, isRedirectLoop } from '@/utils/redirectUtils';
 
 /**
  * Hook for handling immediate redirects after login
  * Uses localStorage consistently for all auth-related storage
  */
 export const useImmediateRedirect = (pageId: string) => {
+  const navigate = useNavigate();
+  
   useEffect(() => {
     // Log page load with timestamp
     const timestamp = new Date().toISOString();
@@ -21,14 +18,18 @@ export const useImmediateRedirect = (pageId: string) => {
       search: window.location.search,
     });
 
+    // Check for redirect loop prevention
+    if (isRedirectLoop()) {
+      console.log(`[LOGIN PAGE ${pageId}] Detected redirect loop, skipping immediate redirect`);
+      return;
+    }
+    
     // Log auth related storage flags
     console.log(`[LOGIN PAGE ${pageId}] Storage state:`, {
       // Auth state flags
       loginSuccess: localStorage.getItem('login_success'),
       loginTimestamp: localStorage.getItem('login_success_timestamp'),
       loginUserType: localStorage.getItem('login_user_type'),
-      loginAttemptId: localStorage.getItem('login_attempt_id'),
-      bypassAttemptId: localStorage.getItem('bypass_attempt_id'),
       
       // User state flags
       authenticated: localStorage.getItem('user_authenticated'),
@@ -36,12 +37,6 @@ export const useImmediateRedirect = (pageId: string) => {
       adminBypass: localStorage.getItem('admin_bypass'),
       redirectPath: localStorage.getItem('auth_redirect')
     });
-    
-    // Check URL params for debugging
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('debug_auth') === 'true') {
-      console.log(`[LOGIN PAGE ${pageId}] Auth debugging enabled`);
-    }
     
     // Check if we need an immediate redirect
     const checkForImmediateRedirect = () => {
@@ -58,13 +53,16 @@ export const useImmediateRedirect = (pageId: string) => {
           const savedRedirect = localStorage.getItem('auth_redirect') || '/promoter/dashboard';
           localStorage.removeItem('auth_redirect');
           
-          // Create URL with timestamp
-          const redirectUrl = new URL(savedRedirect, window.location.origin);
-          redirectUrl.searchParams.set('redirect_ts', Date.now().toString());
-          redirectUrl.searchParams.set('login_page_id', pageId);
+          // Perform the redirect
+          performRedirect(savedRedirect, navigate, {
+            userType: 'promoter',
+            isFullPageRefresh: true,
+            source: `immediate_${pageId}`,
+            params: {
+              login_page_id: pageId
+            }
+          });
           
-          console.log(`[LOGIN PAGE ${pageId}] Redirecting to: ${redirectUrl.toString()}`);
-          window.location.href = redirectUrl.toString();
           return true;
         }
         return false;
@@ -79,10 +77,9 @@ export const useImmediateRedirect = (pageId: string) => {
       checkForImmediateRedirect();
     }
     
-    // Also set up an interval to check for changes in localStorage
-    // This helps catch async login completions, but with a limit to prevent loops
+    // Set up an interval to check for changes in localStorage but with safeguards
     let checkCount = 0;
-    const maxChecks = 5; // Reduced from 10 to 5 to prevent excessive checks
+    const maxChecks = 3; // Reduced from 5 to 3 to minimize polling
     const intervalId = setInterval(() => {
       if (checkCount < maxChecks) {
         const didRedirect = checkForImmediateRedirect();
@@ -95,11 +92,11 @@ export const useImmediateRedirect = (pageId: string) => {
       } else {
         clearInterval(intervalId);
       }
-    }, 1500); // Increased from 1000ms to 1500ms to reduce frequency
+    }, 2000); // Increased from 1500ms to 2000ms to reduce frequency further
     
     return () => {
       clearInterval(intervalId);
       console.log(`[LOGIN PAGE ${pageId}] Page unloaded at ${new Date().toISOString()}`);
     };
-  }, [pageId]);
+  }, [pageId, navigate]);
 };

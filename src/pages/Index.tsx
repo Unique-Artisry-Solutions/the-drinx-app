@@ -4,12 +4,14 @@ import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/auth';
 import { emergencyResetAllStorage } from '@/utils/sessionCleaner';
+import { performRedirect, isRedirectLoop } from '@/utils/redirectUtils';
 
 const Index = () => {
   const { user, isLoading } = useAuth();
   const navigate = useNavigate();
   const [isResetting, setIsResetting] = useState(false);
   const [resetSuccess, setResetSuccess] = useState(false);
+  const [resetError, setResetError] = useState('');
   
   // Generate a unique ID for this page instance
   const pageId = React.useId();
@@ -43,6 +45,7 @@ const Index = () => {
   const handleEmergencyReset = () => {
     if (window.confirm('WARNING: This will reset ALL authentication data and may log you out of the application. Continue?')) {
       setIsResetting(true);
+      setResetError('');
       
       // Small delay to allow UI to update
       setTimeout(() => {
@@ -51,9 +54,15 @@ const Index = () => {
           const success = emergencyResetAllStorage();
           setResetSuccess(success);
           console.log(`[INDEX ${pageId}] Emergency reset completed successfully:`, success);
+          
+          // Reload the page after reset to ensure clean state
+          setTimeout(() => {
+            window.location.reload();
+          }, 1500);
         } catch (err) {
           console.error(`[INDEX ${pageId}] Error during emergency reset:`, err);
           setResetSuccess(false);
+          setResetError(err.message || 'Unknown error during reset');
         } finally {
           setIsResetting(false);
         }
@@ -64,9 +73,8 @@ const Index = () => {
   // Use useEffect to handle navigation properly
   useEffect(() => {
     // Check for redirect loop prevention
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('index_ts')) {
-      console.log(`[INDEX ${pageId}] Detected recent redirect to Index, skipping automatic redirect`);
+    if (isRedirectLoop()) {
+      console.log(`[INDEX ${pageId}] Detected redirect loop, staying on index page`);
       return;
     }
     
@@ -111,23 +119,12 @@ const Index = () => {
       redirectPath
     });
     
-    // For promoters, use window.location for a complete reload
-    if (isPromoter) {
-      console.log(`[INDEX ${pageId}] Redirecting promoter using direct navigation`);
-      const redirectUrl = new URL(redirectPath, window.location.origin);
-      redirectUrl.searchParams.set('index_ts', Date.now().toString());
-      redirectUrl.searchParams.set('index_id', pageId);
-      
-      // Add small timeout to avoid race conditions
-      setTimeout(() => {
-        window.location.href = redirectUrl.toString();
-      }, 100);
-      return;
-    }
-    
-    // For everyone else, use React Router
-    console.log(`[INDEX ${pageId}] Redirecting to: ${redirectPath}`);
-    navigate(redirectPath, { replace: true });
+    // Use the centralized redirect utility
+    performRedirect(redirectPath, navigate, {
+      userType,
+      isFullPageRefresh: isPromoter,
+      source: `index_${pageId}`
+    });
   }, [user, isLoading, navigate, pageId]);
 
   // If we're still loading, show a loading state
@@ -145,7 +142,13 @@ const Index = () => {
             
             {resetSuccess && (
               <div className="mb-4 p-2 bg-green-100 text-green-800 rounded-md">
-                Storage successfully cleared. Please refresh the page.
+                Storage successfully cleared. The page will refresh automatically.
+              </div>
+            )}
+            
+            {resetError && (
+              <div className="mb-4 p-2 bg-red-100 text-red-800 rounded-md">
+                Error: {resetError}
               </div>
             )}
             
