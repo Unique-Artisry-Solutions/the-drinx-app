@@ -6,14 +6,14 @@ import { useAuth } from '@/contexts/auth';
 import { checkAdminBypassStatus } from '@/utils/adminBypass';
 
 const Index = () => {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, session } = useAuth();
   const navigate = useNavigate();
   
   // Log information for debugging
   useEffect(() => {
     console.log("Index page loaded");
     console.log("Current URL:", window.location.href);
-    console.log("Auth state:", { user: !!user, isLoading });
+    console.log("Auth state:", { user: !!user, session: !!session, isLoading });
     
     // Check for admin bypass
     const { isEnabled: isAdminBypass, userType } = checkAdminBypassStatus();
@@ -21,7 +21,7 @@ const Index = () => {
     
     // Log all localStorage keys and values for debugging
     const localStorageKeys = Object.keys(localStorage);
-    const localStorageData = {};
+    const localStorageData: Record<string, string | null> = {};
     
     localStorageKeys.forEach(key => {
       if (!key.includes('supabase.auth.token')) { // Skip sensitive auth tokens
@@ -30,7 +30,7 @@ const Index = () => {
     });
     
     console.log("LocalStorage data:", localStorageData);
-  }, [user, isLoading]);
+  }, [user, session, isLoading]);
   
   // Use useEffect to handle navigation properly
   useEffect(() => {
@@ -60,8 +60,8 @@ const Index = () => {
     }
     
     // For normal authenticated users
-    if (user) {
-      console.log("Index page - User authenticated, redirecting");
+    if (user && session) {
+      console.log("Index page - User authenticated with valid session, redirecting");
       
       // Check if there's a saved redirect
       const savedRedirect = localStorage.getItem('auth_redirect');
@@ -88,12 +88,12 @@ const Index = () => {
     }
     
     // If user is not authenticated, redirect to landing
-    if (!user && !isLoading) {
-      console.log("Index page - No authenticated user, redirecting to landing");
+    if ((!user || !session) && !isLoading) {
+      console.log("Index page - No authenticated user/session, redirecting to landing");
       navigate('/landing', { replace: true });
       return;
     }
-  }, [user, isLoading, navigate]);
+  }, [user, session, isLoading, navigate]);
 
   // If we're still loading, show a loading state
   return (

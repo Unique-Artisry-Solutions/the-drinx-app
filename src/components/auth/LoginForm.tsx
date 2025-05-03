@@ -1,12 +1,13 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CardContent, CardFooter } from '@/components/ui/card';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import LoginFormFields from './login/LoginFormFields';
 import LoginFormActions from './login/LoginFormActions';
 import { supabase } from '@/lib/supabase';
 import { enableAdminBypass, redirectAfterLogin } from '@/utils/adminBypass';
+import { useAuth } from '@/contexts/auth';
 
 interface LoginFormProps {
   onSuccess?: () => void;
@@ -28,7 +29,18 @@ const LoginForm: React.FC<LoginFormProps> = ({
   const [isAdminLogin, setIsAdminLogin] = useState(false);
   
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
+  const { signIn } = useAuth();
+
+  // Check for redirects in location state
+  useEffect(() => {
+    const state = location.state as { from?: string };
+    if (state?.from) {
+      console.log("Login page - Setting redirect from location state:", state.from);
+      localStorage.setItem('auth_redirect', state.from);
+    }
+  }, [location]);
 
   const toggleAdminLogin = () => {
     setIsAdminLogin(!isAdminLogin);
@@ -87,43 +99,35 @@ const LoginForm: React.FC<LoginFormProps> = ({
             description: 'Welcome to the admin dashboard',
           });
           
-          if (onSuccess) {
-            onSuccess();
-          } else {
-            navigate('/admin/system-breakdown', { replace: true });
-          }
+          // Ensure we finish setting local storage before navigation
+          setTimeout(() => {
+            if (onSuccess) {
+              onSuccess();
+            } else {
+              navigate('/admin/system-breakdown', { replace: true });
+            }
+          }, 100);
           return;
         } else {
           throw new Error('Invalid admin credentials');
         }
       } else {
         console.log(`Attempting regular login with identifier: ${identifier}`);
-        const isEmail = identifier.includes('@');
         
-        if (isEmail) {
-          console.log("Logging in with email");
-          const { data, error } = await supabase.auth.signInWithPassword({
-            email: identifier,
-            password
-          });
-          
-          if (error) {
-            throw error;
+        // Use the signIn method from useAuth
+        await signIn(identifier, password);
+        console.log("Login successful, preparing to redirect");
+        
+        // Give the system time to properly set authentication state
+        setTimeout(() => {
+          if (onSuccess) {
+            onSuccess();
+          } else {
+            // Use the unified redirect function with a small delay
+            // This ensures that the session is fully established before redirecting
+            redirectAfterLogin();
           }
-          
-          if (!data.user.email_confirmed_at) {
-            console.log("Email not verified");
-            setShowResendVerification(true);
-            throw new Error('Email not verified. Please check your inbox for the verification link.');
-          }
-          
-          handleLoginSuccess(data.user);
-        } else {
-          // This is a simplified mock version for demo purposes
-          // In production, you'd need a proper username lookup 
-          console.log("Username login not supported in this version");
-          throw new Error('Username login is not supported. Please use your email address.');
-        }
+        }, 300);
       }
     } catch (error: any) {
       console.error('Login error:', error);
@@ -134,33 +138,6 @@ const LoginForm: React.FC<LoginFormProps> = ({
       }
     } finally {
       setIsSubmitting(false);
-    }
-  };
-  
-  const handleLoginSuccess = (user: any) => {
-    console.log("Login successful:", user);
-    
-    localStorage.setItem('user_authenticated', 'true');
-    localStorage.setItem('user_email', user.email || '');
-    
-    // Extract user_type from metadata if available
-    const userType = user.user_metadata?.user_type || 'individual';
-    localStorage.setItem('user_type', userType);
-    
-    // Extract username from metadata if available
-    if (user.user_metadata?.username) {
-      localStorage.setItem('user_username', user.user_metadata.username);
-    }
-    
-    toast({
-      title: 'Login successful',
-      description: 'Welcome back!',
-    });
-    
-    if (onSuccess) {
-      onSuccess();
-    } else {
-      redirectAfterLogin();
     }
   };
 
@@ -179,12 +156,15 @@ const LoginForm: React.FC<LoginFormProps> = ({
           'a business'} for testing purposes.`,
       });
       
-      if (onSuccess) {
-        onSuccess();
-      } else {
-        // Use the unified redirect function
-        redirectAfterLogin();
-      }
+      // Ensure bypass settings are applied before navigation
+      setTimeout(() => {
+        if (onSuccess) {
+          onSuccess();
+        } else {
+          // Use the unified redirect function
+          redirectAfterLogin();
+        }
+      }, 100);
     } catch (error) {
       console.error("Error during bypass login:", error);
       toast({

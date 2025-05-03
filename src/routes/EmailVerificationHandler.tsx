@@ -29,6 +29,9 @@ const EmailVerificationHandler = () => {
         console.log('Email confirmation parameter detected in URL');
         
         try {
+          // Wait a moment to ensure Supabase has processed the verification
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
           // Refresh the session to get the updated verification status
           const result = await refreshSession();
           console.log('Session refresh result:', result);

@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/auth';
 import { checkAdminBypassStatus } from '@/utils/adminBypass';
 
 export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, session } = useAuth();
   const location = useLocation();
   const { isEnabled: isAdminBypass } = checkAdminBypassStatus();
   
@@ -13,15 +13,23 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     console.log("ProtectedRoute - Auth state:", { 
       isLoading, 
-      hasUser: !!user, 
+      hasUser: !!user,
+      hasSession: !!session,
       isAdminBypass,
       path: location.pathname
     });
-  }, [isLoading, user, isAdminBypass, location.pathname]);
+  }, [isLoading, user, session, isAdminBypass, location.pathname]);
   
   if (isLoading) {
     console.log("ProtectedRoute - Still loading auth state");
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <p className="text-lg mb-2">Loading authentication...</p>
+          <div className="w-12 h-12 border-4 border-spiritless-pink border-t-transparent rounded-full animate-spin mx-auto"></div>
+        </div>
+      </div>
+    );
   }
   
   if (isAdminBypass) {
@@ -30,12 +38,12 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <>{children}</>;
   }
   
-  if (!user) {
-    console.log("ProtectedRoute - No authenticated user, redirecting to login");
+  if (!user || !session) {
+    console.log("ProtectedRoute - No authenticated user/session, redirecting to login");
     // Store the path the user was trying to access
     localStorage.setItem('auth_redirect', location.pathname);
-    // Non-logged in users should be redirected to the landing page
-    return <Navigate to="/login" replace />;
+    // Non-logged in users should be redirected to the login page
+    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
   
   // Check if user is trying to access Create Swig Circuit page but is not a promoter
@@ -59,7 +67,7 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
 export const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, session } = useAuth();
   const { isEnabled: isAdminBypass, userType } = checkAdminBypassStatus();
   const isAdminAuthenticated = localStorage.getItem('admin_authenticated') === 'true';
   
@@ -70,12 +78,20 @@ export const AdminRoute = ({ children }: { children: React.ReactNode }) => {
       userType,
       path: location.pathname,
       isLoading,
-      hasUser: !!user
+      hasUser: !!user,
+      hasSession: !!session
     });
-  }, [isAdminAuthenticated, isAdminBypass, userType, location.pathname, isLoading, user]);
+  }, [isAdminAuthenticated, isAdminBypass, userType, location.pathname, isLoading, user, session]);
   
   if (isLoading) {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <p className="text-lg mb-2">Loading authentication...</p>
+          <div className="w-12 h-12 border-4 border-spiritless-pink border-t-transparent rounded-full animate-spin mx-auto"></div>
+        </div>
+      </div>
+    );
   }
   
   // Allow access if admin authenticated or admin bypass with userType=admin
@@ -97,7 +113,7 @@ export const TypedProtectedRoute = ({
   userType: 'individual' | 'establishment' | 'promoter', 
   children: React.ReactNode 
 }) => {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, session } = useAuth();
   const location = useLocation();
   const { isEnabled: isAdminBypass } = checkAdminBypassStatus();
   const storedUserType = localStorage.getItem('user_type');
@@ -106,18 +122,26 @@ export const TypedProtectedRoute = ({
   useEffect(() => {
     console.log("TypedProtectedRoute - Auth state:", { 
       isLoading, 
-      hasUser: !!user, 
+      hasUser: !!user,
+      hasSession: !!session,
       isAdminBypass,
       storedUserType,
       requiredType: userType,
       path: location.pathname,
       typesMatch: storedUserType === userType
     });
-  }, [isLoading, user, isAdminBypass, storedUserType, userType, location.pathname]);
+  }, [isLoading, user, session, isAdminBypass, storedUserType, userType, location.pathname]);
   
   if (isLoading) {
     console.log("TypedProtectedRoute - Still loading auth state");
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <p className="text-lg mb-2">Loading authentication...</p>
+          <div className="w-12 h-12 border-4 border-spiritless-pink border-t-transparent rounded-full animate-spin mx-auto"></div>
+        </div>
+      </div>
+    );
   }
   
   if (isAdminBypass) {
@@ -135,8 +159,8 @@ export const TypedProtectedRoute = ({
     return <>{children}</>;
   }
   
-  if (!user) {
-    console.log("TypedProtectedRoute - No authenticated user, redirecting to login");
+  if (!user || !session) {
+    console.log("TypedProtectedRoute - No authenticated user/session, redirecting to login");
     // Store the intended destination
     localStorage.setItem('auth_redirect', location.pathname);
     return <Navigate to="/login" state={{ userType }} replace />;

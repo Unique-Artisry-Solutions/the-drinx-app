@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { checkAdminBypassStatus, createBypassUser } from '@/utils/adminBypass';
 import { AuthContextType } from './types';
+import { clearAllSessions } from '@/utils/sessionCleaner';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -16,6 +17,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { toast } = useToast();
 
   useEffect(() => {
+    console.log('AuthProvider initialized');
+    let isMounted = true;
+    
     // First check for admin bypass
     const { isEnabled } = checkAdminBypassStatus();
     if (isEnabled) {
@@ -27,41 +31,62 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
     
-    // Set up auth state listener FIRST
+    // Set up auth state listener FIRST before any async calls
+    console.log('Setting up auth state listener');
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log('Auth state changed:', event, !!session);
+      (event, newSession) => {
+        console.log('Auth state changed:', event, !!newSession);
         
-        // Use setTimeout to avoid nested Supabase calls
-        setTimeout(() => {
-          setSession(session);
-          setUser(session?.user ?? null);
-          
-          if (session?.user) {
-            setIsEmailVerified(!!session.user.email_confirmed_at);
-          } else if (event === 'SIGNED_OUT') {
-            setIsEmailVerified(false);
+        if (!isMounted) return;
+        
+        // Use direct state updates, not async calls
+        setSession(newSession);
+        setUser(newSession?.user ?? null);
+        
+        if (newSession?.user) {
+          setIsEmailVerified(!!newSession.user.email_confirmed_at);
+          // Store user type in localStorage
+          if (newSession.user.user_metadata?.user_type) {
+            localStorage.setItem('user_type', newSession.user.user_metadata.user_type);
           }
-        }, 0);
+          localStorage.setItem('user_authenticated', 'true');
+          localStorage.setItem('user_email', newSession.user.email || '');
+        } else if (event === 'SIGNED_OUT') {
+          setIsEmailVerified(false);
+          // Clear user data from localStorage on sign out
+          clearAllSessions();
+        }
       }
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('Initial session check result:', !!session);
+    console.log('Checking for existing session');
+    supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
+      console.log('Initial session check result:', !!existingSession);
       
-      if (session) {
-        setSession(session);
-        setUser(session.user);
-        setIsEmailVerified(!!session.user.email_confirmed_at);
+      if (!isMounted) return;
+      
+      if (existingSession) {
+        setSession(existingSession);
+        setUser(existingSession.user);
+        setIsEmailVerified(!!existingSession.user.email_confirmed_at);
+        
+        // Store user info in localStorage
+        if (existingSession.user.user_metadata?.user_type) {
+          localStorage.setItem('user_type', existingSession.user.user_metadata.user_type);
+        }
+        localStorage.setItem('user_authenticated', 'true');
+        localStorage.setItem('user_email', existingSession.user.email || '');
       }
       
       setIsLoading(false);
     }).catch(error => {
       console.error('Error checking session:', error);
-      setIsLoading(false);
-      setSession(null);
-      setUser(null);
+      if (isMounted) {
+        setIsLoading(false);
+        setSession(null);
+        setUser(null);
+      }
     });
     
     // Listen for admin bypass changes
@@ -70,6 +95,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const detail = customEvent.detail;
       
       console.log('Admin bypass changed in AuthProvider:', detail);
+      
+      if (!isMounted) return;
       
       if (detail.enabled) {
         const bypassUser = createBypassUser();
@@ -81,30 +108,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(null);
           setSession(null);
           setIsEmailVerified(false);
+          clearAllSessions();
         }
       }
     };
     
-    window.addEventListener('adminBypassChanged', handleBypassChange);
-    window.addEventListener('authReset', () => {
+    const handleAuthReset = () => {
+      if (!isMounted) return;
       setUser(null);
       setSession(null);
       setIsEmailVerified(false);
-    });
+      clearAllSessions();
+    };
+    
+    window.addEventListener('adminBypassChanged', handleBypassChange);
+    window.addEventListener('authReset', handleAuthReset);
 
     return () => {
+      isMounted = false;
       subscription.unsubscribe();
       window.removeEventListener('adminBypassChanged', handleBypassChange);
-      window.removeEventListener('authReset', () => {
-        setUser(null);
-        setSession(null);
-        setIsEmailVerified(false);
-      });
+      window.removeEventListener('authReset', handleAuthReset);
     };
   }, [toast]);
 
   const signIn = async (email: string, password: string) => {
     try {
+      console.log('Attempting to sign in:', email);
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       
       if (error) {
@@ -114,6 +144,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (data.user && !data.user.email_confirmed_at) {
         throw new Error('Email not verified. Please check your inbox.');
       }
+      
+      console.log('Login successful:', data);
+      
+      // Store user info in localStorage
+      localStorage.setItem('user_authenticated', 'true');
+      localStorage.setItem('user_email', data.user.email || '');
+      
+      if (data.user.user_metadata?.user_type) {
+        localStorage.setItem('user_type', data.user.user_metadata.user_type);
+      }
+      
+      // Wait for session storage to be updated
+      // This ensures our session data is fully persisted before any redirects
+      await new Promise(resolve => setTimeout(resolve, 100));
       
       toast({
         title: 'Login successful',
@@ -134,12 +178,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     emailRedirectTo?: string
   }) => {
     try {
+      console.log('Attempting to sign up:', email);
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: options?.data || {},
-          emailRedirectTo: options?.emailRedirectTo
+          emailRedirectTo: options?.emailRedirectTo || `${window.location.origin}/?email_confirmed=true`
         }
       });
 
@@ -147,6 +192,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw error;
       }
 
+      console.log('Signup successful:', data);
       toast({
         title: 'Signup successful',
         description: 'Please check your email to verify your account.',
@@ -207,28 +253,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     try {
+      console.log('Signing out');
+      
       // If we're in admin bypass mode, just clear the localStorage
       if (checkAdminBypassStatus().isEnabled) {
-        localStorage.removeItem('admin_bypass');
-        localStorage.removeItem('bypass_user_id');
-        localStorage.removeItem('user_authenticated');
-        localStorage.removeItem('user_email');
-        localStorage.removeItem('user_type');
-        localStorage.removeItem('user_username');
-        localStorage.removeItem('admin_authenticated');
-        localStorage.removeItem('admin_username');
-        localStorage.removeItem('admin_session_created');
+        clearAllSessions();
         
         // Trigger event to update state
         window.dispatchEvent(new CustomEvent('adminBypassChanged', { 
           detail: { enabled: false }
         }));
         
+        toast({
+          title: 'Signed out',
+          description: 'You have been successfully logged out',
+        });
+        
         return;
       }
       
       // Regular sign out
       await supabase.auth.signOut({ scope: 'global' });
+      clearAllSessions();
       
       toast({
         title: 'Signed out',
@@ -246,17 +292,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const refreshSession = async (): Promise<{ isEmailVerified: boolean }> => {
     try {
+      console.log('Refreshing session');
+      
       // Skip refresh for admin bypass
       if (checkAdminBypassStatus().isEnabled) {
+        console.log('Admin bypass active, skipping session refresh');
         return { isEmailVerified: true };
       }
       
       const { data, error } = await supabase.auth.refreshSession();
       
       if (error) {
-        throw error;
+        console.error('Error refreshing session:', error);
+        return { isEmailVerified: false };
       }
       
+      console.log('Session refresh result:', !!data.session);
+      
+      // Update session and user state with fresh data
       setSession(data.session);
       setUser(data.session?.user || null);
       
@@ -264,6 +317,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (data.session?.user) {
         setIsEmailVerified(newEmailVerifiedStatus);
+        // Update localStorage with fresh user data
+        if (data.session.user.user_metadata?.user_type) {
+          localStorage.setItem('user_type', data.session.user.user_metadata.user_type);
+        }
+        localStorage.setItem('user_authenticated', 'true');
+        localStorage.setItem('user_email', data.session.user.email || '');
       }
       
       return { isEmailVerified: newEmailVerifiedStatus };
