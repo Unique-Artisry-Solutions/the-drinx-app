@@ -68,3 +68,13 @@ export function breakRedirectLoop() {
     return false;
   }
 }
+
+/**
+ * Alias for emergencyResetAllStorage for more intuitive naming
+ * Used primarily by the landing page to clean up sessions
+ */
+export function clearAllSessions() {
+  console.log('[SESSION CLEANER] Clearing all sessions via alias function');
+  return emergencyResetAllStorage();
+}
+
