@@ -35,8 +35,7 @@ export const useLoginState = (pageId: string) => {
     console.log(`[LOGIN PAGE ${pageId}] Attempting to recover connection...`);
     
     try {
-      // Try a simple get request to check connection
-      // Instead of using _poke table which doesn't exist, we'll use a simple healthcheck
+      // Try a simple healthcheck request
       const { data, error } = await supabase.auth.getSession();
       
       if (error) {

@@ -21,6 +21,9 @@ export const useImmediateRedirect = (pageId: string) => {
     // Check for redirect loop prevention
     if (isRedirectLoop()) {
       console.log(`[LOGIN PAGE ${pageId}] Detected redirect loop, skipping immediate redirect`);
+      // Reset the redirect tracking counters to break the loop
+      localStorage.removeItem('redirect_count');
+      localStorage.removeItem('last_redirect_time');
       return;
     }
     
@@ -38,7 +41,15 @@ export const useImmediateRedirect = (pageId: string) => {
       redirectPath: localStorage.getItem('auth_redirect')
     });
     
-    // Check if we need an immediate redirect
+    // Check if we need an immediate redirect - but don't run if we're already in a post-login state
+    const isPostLogin = window.location.search.includes('auth_success=true') || 
+                        window.location.search.includes('redirect_ts=');
+    
+    if (isPostLogin) {
+      console.log(`[LOGIN PAGE ${pageId}] Already in post-login state, skipping immediate redirect`);
+      return;
+    }
+    
     const checkForImmediateRedirect = () => {
       try {
         // If just logged in as promoter (checked via localStorage)
@@ -48,6 +59,8 @@ export const useImmediateRedirect = (pageId: string) => {
           
           // Clear tracking flags 
           localStorage.removeItem('login_success');
+          localStorage.removeItem('login_success_timestamp');
+          localStorage.removeItem('login_user_type');
           
           // Get redirect path or use default
           const savedRedirect = localStorage.getItem('auth_redirect') || '/promoter/dashboard';
@@ -57,10 +70,7 @@ export const useImmediateRedirect = (pageId: string) => {
           performRedirect(savedRedirect, navigate, {
             userType: 'promoter',
             isFullPageRefresh: true,
-            source: `immediate_${pageId}`,
-            params: {
-              login_page_id: pageId
-            }
+            source: `immediate_${pageId}`
           });
           
           return true;
@@ -72,30 +82,11 @@ export const useImmediateRedirect = (pageId: string) => {
       }
     };
     
-    // Run initial check but don't get stuck in redirect loops
-    if (!window.location.href.includes('redirect_ts=')) {
-      checkForImmediateRedirect();
-    }
+    // Only run the initial redirect check once
+    checkForImmediateRedirect();
     
-    // Set up an interval to check for changes in localStorage but with safeguards
-    let checkCount = 0;
-    const maxChecks = 3; // Reduced from 5 to 3 to minimize polling
-    const intervalId = setInterval(() => {
-      if (checkCount < maxChecks) {
-        const didRedirect = checkForImmediateRedirect();
-        checkCount++;
-        
-        // If we redirected or reached the max checks, clear the interval
-        if (didRedirect || checkCount >= maxChecks) {
-          clearInterval(intervalId);
-        }
-      } else {
-        clearInterval(intervalId);
-      }
-    }, 2000); // Increased from 1500ms to 2000ms to reduce frequency further
-    
+    // We'll remove the interval checks to simplify the login flow
     return () => {
-      clearInterval(intervalId);
       console.log(`[LOGIN PAGE ${pageId}] Page unloaded at ${new Date().toISOString()}`);
     };
   }, [pageId, navigate]);

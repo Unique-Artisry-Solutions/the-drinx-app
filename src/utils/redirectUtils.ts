@@ -20,13 +20,32 @@ export function performRedirect(
   } = {}
 ) {
   const { userType, isFullPageRefresh = false, source = 'redirect', params = {} } = options;
+  
+  // Prevent redirecting to the same page
+  if (path === window.location.pathname) {
+    console.log(`[REDIRECT UTIL] Skipping redirect - already on ${path}`);
+    return;
+  }
+  
+  // Check for redirect loop before proceeding
+  if (isRedirectLoop()) {
+    console.error(`[REDIRECT UTIL] Redirect loop detected, cancelling redirect to ${path}`);
+    return;
+  }
+  
+  // Mark this redirect in localStorage
+  const currentTime = Date.now();
+  localStorage.setItem('last_redirect_time', currentTime.toString());
+  const redirectCount = parseInt(localStorage.getItem('redirect_count') || '0');
+  localStorage.setItem('redirect_count', (redirectCount + 1).toString());
+  
   const isPromoter = userType === 'promoter';
   
   // Create URL with tracking parameters
   const redirectUrl = new URL(path, window.location.origin);
   
   // Add standard tracking parameters
-  redirectUrl.searchParams.set('redirect_ts', Date.now().toString());
+  redirectUrl.searchParams.set('redirect_ts', currentTime.toString());
   redirectUrl.searchParams.set('redirect_source', source);
   
   // Add any additional parameters
@@ -46,7 +65,7 @@ export function performRedirect(
   }
   
   // For regular users, use React Router navigation
-  navigate(path);
+  navigate(redirectUrl.toString());
 }
 
 /**
@@ -71,6 +90,12 @@ export function handleAuthRedirect(
   // Clear any stored redirects to prevent loops
   localStorage.removeItem('auth_redirect');
   localStorage.removeItem('login_redirect');
+  localStorage.removeItem('login_success');
+  localStorage.removeItem('login_success_timestamp');
+  localStorage.removeItem('login_user_type');
+  
+  // Reset redirect counter to prevent false positives
+  localStorage.setItem('redirect_count', '0');
   
   // Default paths based on user type
   let redirectPath = '/explore'; // Default for individual users
@@ -104,35 +129,25 @@ export function isRedirectLoop(): boolean {
   // Check URL parameters for signs of recent redirects
   const urlParams = new URLSearchParams(window.location.search);
   const redirectTimestamp = urlParams.get('redirect_ts');
-  const authSuccess = urlParams.get('auth_success');
-  const loginTs = urlParams.get('login_ts');
-  const authTs = urlParams.get('auth_ts');
-  
-  // If we have multiple redirect parameters, potential loop
-  const redirectParams = [redirectTimestamp, authSuccess, loginTs, authTs].filter(Boolean);
-  
-  if (redirectParams.length > 1) {
-    console.warn('[REDIRECT UTIL] Potential redirect loop detected');
-    return true;
-  }
   
   // Check if we've redirected too many times in a short period
   const lastRedirectTime = localStorage.getItem('last_redirect_time');
   const currentTime = Date.now();
+  const redirectCount = parseInt(localStorage.getItem('redirect_count') || '0');
+  
+  // If redirect count exceeds threshold, it's a loop
+  if (redirectCount >= 3) {
+    console.error('[REDIRECT UTIL] Too many redirects in succession, breaking cycle');
+    return true;
+  }
   
   if (lastRedirectTime && (currentTime - parseInt(lastRedirectTime)) < 2000) {
     console.warn('[REDIRECT UTIL] Multiple redirects in short timeframe, potential loop');
-    localStorage.setItem('redirect_count', 
-      (parseInt(localStorage.getItem('redirect_count') || '0') + 1).toString());
     
-    if (parseInt(localStorage.getItem('redirect_count') || '0') > 3) {
+    if (redirectCount > 2) {
       console.error('[REDIRECT UTIL] Redirect loop detected, breaking cycle');
-      localStorage.setItem('redirect_count', '0');
       return true;
     }
-  } else {
-    localStorage.setItem('last_redirect_time', currentTime.toString());
-    localStorage.setItem('redirect_count', '1');
   }
   
   return false;

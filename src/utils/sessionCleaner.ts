@@ -1,110 +1,70 @@
 
 /**
- * Authentication storage utilities
- * This module provides functions to manage authentication-related storage
- * All auth data is consistently stored in localStorage for persistence
+ * Emergency utility to clear all authentication-related storage
+ * Used to recover from authentication issues
  */
 
-/**
- * Clear login-related storage items
- */
-export const clearLoginSessions = () => {
-  // Clear login tracking flags from localStorage
-  localStorage.removeItem('login_success');
-  localStorage.removeItem('login_success_timestamp');
-  localStorage.removeItem('login_user_type');
-  localStorage.removeItem('login_attempt_id');
-  localStorage.removeItem('login_attempt_timestamp');
-  localStorage.removeItem('login_requested_usertype');
-  localStorage.removeItem('login_redirect');
-  localStorage.removeItem('promoter_login_redirect');
-  
-  console.log('[AUTH STORAGE] Cleared login-related storage data');
-};
-
-/**
- * Clear bypass-related storage items
- */
-export const clearBypassSessions = () => {
-  // Clear bypass tracking flags from localStorage
-  localStorage.removeItem('bypass_login_timestamp');
-  localStorage.removeItem('bypass_user_type');
-  localStorage.removeItem('bypass_attempt_id');
-  localStorage.removeItem('bypass_timestamp');
-  
-  console.log('[AUTH STORAGE] Cleared bypass-related storage data');
-};
-
-/**
- * Clear all authentication storage
- * This is a comprehensive reset of all auth-related storage
- */
-export const clearAllSessions = () => {
-  // Clear specific authentication data
-  clearLoginSessions();
-  clearBypassSessions();
-  
-  // Clear core authentication state
-  localStorage.removeItem('user_authenticated');
-  localStorage.removeItem('user_email');
-  localStorage.removeItem('user_type');
-  localStorage.removeItem('user_username');
-  localStorage.removeItem('user_name');
-  localStorage.removeItem('user_join_date');
-  
-  // Clear admin-related data
-  localStorage.removeItem('admin_authenticated');
-  localStorage.removeItem('admin_username');
-  localStorage.removeItem('admin_session_created');
-  localStorage.removeItem('admin_bypass');
-  localStorage.removeItem('bypass_user_id');
-  
-  // Clear Supabase auth storage
-  localStorage.removeItem('supabase.auth.token');
-  localStorage.removeItem('spiritless-auth-storage');
-  
-  // Clear auth_redirect which can cause redirect loops
-  localStorage.removeItem('auth_redirect');
-  
-  // Clear redirect tracking
-  localStorage.removeItem('last_redirect_time');
-  localStorage.removeItem('redirect_count');
-  
-  console.log('[AUTH STORAGE] Performed complete authentication storage reset');
-};
-
-/**
- * Emergency reset of all browser storage (localStorage and sessionStorage)
- * Use this function only when troubleshooting severe authentication issues
- * @returns {Object} Result of the operation with status and message
- */
-export const emergencyResetAllStorage = () => {
+export function emergencyResetAllStorage() {
+  console.log('[SESSION CLEANER] Starting emergency storage reset');
   try {
-    // First clear all authentication-specific data
-    clearAllSessions();
+    // Clear authentication related localStorage items
+    const authKeys = [
+      'user_authenticated', 'user_email', 'user_type', 'user_username', 'user_name', 
+      'user_join_date', 'admin_authenticated', 'admin_username', 'admin_session_created', 
+      'admin_bypass', 'bypass_user_id', 'spiritless-auth-storage', 'login_success', 
+      'login_success_timestamp', 'login_user_type', 'login_attempt_id', 'login_attempt_timestamp',
+      'login_requested_usertype', 'auth_redirect', 'login_redirect', 'redirect_count',
+      'last_redirect_time'
+    ];
     
-    // Then clear any remaining localStorage items
-    const localStorageKeys = Object.keys(localStorage);
-    console.log(`[AUTH STORAGE] Clearing ${localStorageKeys.length} localStorage items`);
-    localStorage.clear();
+    authKeys.forEach(key => {
+      if (localStorage.getItem(key) !== null) {
+        console.log(`[SESSION CLEANER] Removing localStorage item: ${key}`);
+        localStorage.removeItem(key);
+      }
+    });
     
-    // Also clear sessionStorage for completeness
-    const sessionStorageKeys = Object.keys(sessionStorage);
-    console.log(`[AUTH STORAGE] Clearing ${sessionStorageKeys.length} sessionStorage items`);
+    // Clear any session storage as well
     sessionStorage.clear();
     
-    console.log('[AUTH STORAGE] EMERGENCY RESET: All browser storage has been cleared');
-    
+    console.log('[SESSION CLEANER] Storage reset complete');
     return {
       success: true,
-      message: 'All authentication data has been successfully cleared'
+      message: 'Authentication storage has been successfully reset.'
     };
   } catch (error) {
-    console.error('[AUTH STORAGE] Error during emergency reset:', error);
+    console.error('[SESSION CLEANER] Error during reset:', error);
     return {
       success: false,
-      message: error instanceof Error ? error.message : 'Unknown error during reset'
+      message: error instanceof Error ? error.message : 'Unknown error occurred during reset'
     };
   }
-};
+}
 
+/**
+ * Function to specifically break out of redirect loops
+ */
+export function breakRedirectLoop() {
+  console.log('[SESSION CLEANER] Breaking redirect loop');
+  try {
+    // Remove redirect tracking
+    localStorage.removeItem('redirect_count');
+    localStorage.removeItem('last_redirect_time');
+    localStorage.removeItem('login_success');
+    localStorage.removeItem('login_success_timestamp');
+    localStorage.removeItem('login_user_type');
+    localStorage.removeItem('auth_redirect');
+    localStorage.removeItem('login_redirect');
+    
+    // Clear URL parameters
+    if (window.history && window.history.replaceState) {
+      const cleanUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, cleanUrl);
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('[SESSION CLEANER] Error breaking redirect loop:', error);
+    return false;
+  }
+}
