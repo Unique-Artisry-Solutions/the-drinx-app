@@ -30,7 +30,9 @@ const LoginForm: React.FC<LoginFormProps> = ({
     toggleAdminLogin,
     handleResendVerification,
     handleLogin,
-    handleBypassLogin
+    handleBypassLogin,
+    resetError,
+    attemptRecovery
   } = useLoginForm(onSuccess, onClose, userType);
 
   // Log form render for debugging
@@ -71,6 +73,8 @@ const LoginForm: React.FC<LoginFormProps> = ({
           handleResendVerification={handleResendVerification}
           isAdminLogin={isAdminLogin}
           toggleAdminLogin={toggleAdminLogin}
+          resetError={resetError}
+          attemptRecovery={attemptRecovery}
         />
       </CardContent>
       

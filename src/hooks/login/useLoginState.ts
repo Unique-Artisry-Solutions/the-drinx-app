@@ -1,10 +1,12 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
+import { supabase } from '@/lib/supabase';
 
 export const useLoginState = (pageId: string) => {
   const [requiredUserType, setRequiredUserType] = useState<'individual' | 'establishment' | 'promoter'>('individual');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isRecovering, setIsRecovering] = useState(false);
   const location = useLocation();
   
   // Check for userType in the location state
@@ -26,10 +28,36 @@ export const useLoginState = (pageId: string) => {
       setErrorMessage(state.message);
     }
   }, [location, pageId]);
+  
+  // Handle retry/reconnect
+  const handleRetryConnection = useCallback(async () => {
+    setIsRecovering(true);
+    console.log(`[LOGIN PAGE ${pageId}] Attempting to recover connection...`);
+    
+    try {
+      // Try to ping Supabase to check connection
+      const { error } = await supabase.from('_poke').select('*').limit(1);
+      
+      if (error) {
+        console.error(`[LOGIN PAGE ${pageId}] Recovery connection test failed:`, error);
+        setErrorMessage('Still unable to connect. Please check your internet connection.');
+      } else {
+        console.log(`[LOGIN PAGE ${pageId}] Recovery connection test successful`);
+        setErrorMessage(null);
+      }
+    } catch (error) {
+      console.error(`[LOGIN PAGE ${pageId}] Error during recovery:`, error);
+      setErrorMessage('Connection issue persists. Please try again later.');
+    } finally {
+      setIsRecovering(false);
+    }
+  }, [pageId]);
 
   return {
     requiredUserType,
     errorMessage,
-    setErrorMessage
+    setErrorMessage,
+    isRecovering,
+    handleRetryConnection
   };
 };

@@ -1,10 +1,13 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth';
 import { supabase } from '@/lib/supabase';
 import { handleAuthRedirect } from '@/utils/redirectUtils';
+
+// Auth error types for better error handling
+type AuthErrorCategory = 'network' | 'credentials' | 'verification' | 'timeout' | 'server' | 'unknown';
 
 export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userType: 'individual' | 'establishment' | 'promoter' = 'individual') => {
   const [identifier, setIdentifier] = useState('');
@@ -14,6 +17,8 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
   const [isResendingEmail, setIsResendingEmail] = useState(false);
   const [showResendVerification, setShowResendVerification] = useState(false);
   const [isAdminLogin, setIsAdminLogin] = useState(false);
+  const [errorCategory, setErrorCategory] = useState<AuthErrorCategory>('unknown');
+  const [loginAttempts, setLoginAttempts] = useState(0);
   
   const navigate = useNavigate();
   const location = useLocation();
@@ -38,9 +43,67 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
     }
   }, [location]);
 
+  // Reset form error
+  const resetError = useCallback(() => {
+    setFormError('');
+    setErrorCategory('unknown');
+  }, []);
+
+  // Attempt recovery based on error type
+  const attemptRecovery = useCallback(() => {
+    console.log(`[LOGIN RECOVERY] Attempting recovery for ${errorCategory} error`);
+    
+    if (errorCategory === 'network' || errorCategory === 'timeout') {
+      // For network/timeout errors, try refreshing the session
+      toast({
+        title: "Reconnecting...",
+        description: "Attempting to reconnect to the authentication service",
+      });
+      
+      refreshSession()
+        .then(() => {
+          console.log('[LOGIN RECOVERY] Session refresh successful');
+          setFormError('');
+          toast({
+            title: "Connection restored",
+            description: "You can try logging in again",
+          });
+        })
+        .catch(err => {
+          console.error('[LOGIN RECOVERY] Recovery attempt failed:', err);
+          setFormError('Recovery attempt failed. Please try again later.');
+        });
+    } else if (errorCategory === 'credentials' && loginAttempts >= 3) {
+      // For repeated credential errors, suggest password reset
+      navigate('/reset-password', { 
+        state: { email: identifier.includes('@') ? identifier : '' } 
+      });
+    }
+  }, [errorCategory, loginAttempts, identifier, navigate, refreshSession, toast]);
+
   const toggleAdminLogin = () => {
     setIsAdminLogin(!isAdminLogin);
-    setFormError('');
+    resetError();
+  };
+
+  // Categorize auth errors for better handling
+  const categorizeError = (error: Error): AuthErrorCategory => {
+    const errorMessage = error.message.toLowerCase();
+    
+    if (errorMessage.includes('network') || errorMessage.includes('connection')) {
+      return 'network';
+    } else if (errorMessage.includes('invalid') || errorMessage.includes('password') || 
+               errorMessage.includes('not found') || errorMessage.includes('not exist')) {
+      return 'credentials';
+    } else if (errorMessage.includes('email') && errorMessage.includes('verify')) {
+      return 'verification';
+    } else if (errorMessage.includes('timeout')) {
+      return 'timeout';
+    } else if (errorMessage.includes('server')) {
+      return 'server';
+    }
+    
+    return 'unknown';
   };
 
   const handleResendVerification = async () => {
@@ -51,6 +114,7 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
     
     setIsResendingEmail(true);
     try {
+      console.log('[LOGIN HOOK] Resending verification email to:', identifier);
       const { error } = await supabase.auth.resend({
         type: 'signup',
         email: identifier,
@@ -60,6 +124,7 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
       });
       
       if (error) {
+        console.error('[LOGIN HOOK] Failed to resend verification:', error);
         throw error;
       }
       
@@ -67,9 +132,13 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
         title: 'Verification email sent',
         description: 'Please check your email for the verification link',
       });
+      
+      // Clear error after successful resend
+      resetError();
     } catch (error: any) {
       console.error("[LOGIN HOOK] Email verification error:", error);
       setFormError(error.message || 'Failed to resend verification email');
+      setErrorCategory(categorizeError(error));
     } finally {
       setIsResendingEmail(false);
     }
@@ -77,14 +146,18 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setFormError('');
+    resetError();
     setIsSubmitting(true);
     setShowResendVerification(false);
+    
+    // Increment login attempt counter
+    setLoginAttempts(prev => prev + 1);
     
     // Generate a unique login attempt ID for tracking this login process
     const loginAttemptId = `login_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
     console.log(`[LOGIN ${loginAttemptId}] Starting login process at ${new Date().toISOString()}`);
     console.log(`[LOGIN ${loginAttemptId}] User type requested: ${userType}`);
+    console.log(`[LOGIN ${loginAttemptId}] Login attempt number: ${loginAttempts + 1}`);
     
     try {
       if (isAdminLogin) {
@@ -116,33 +189,63 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
         // Store the auth redirect for later use (after login success)
         const savedRedirect = localStorage.getItem('auth_redirect');
         
-        if (isEmail) {
-          console.log(`[LOGIN ${loginAttemptId}] Logging in with email`);
-          await signIn(identifier, password);
-          console.log(`[LOGIN ${loginAttemptId}] Email login successful`);
-        } else {
-          console.log(`[LOGIN ${loginAttemptId}] Logging in with username`);
-          const { data, error } = await supabase
-            .from('profiles')
-            .select('id')
-            .eq('username', identifier)
-            .single();
+        try {
+          if (isEmail) {
+            console.log(`[LOGIN ${loginAttemptId}] Logging in with email`);
+            await signIn(identifier, password);
+            console.log(`[LOGIN ${loginAttemptId}] Email login successful`);
+          } else {
+            console.log(`[LOGIN ${loginAttemptId}] Logging in with username`);
+            const { data, error } = await supabase
+              .from('profiles')
+              .select('id')
+              .eq('username', identifier)
+              .maybeSingle();
+              
+            if (error) {
+              console.error(`[LOGIN ${loginAttemptId}] Username lookup error:`, error);
+              throw new Error('Error looking up username');
+            }
             
-          if (error || !data) {
-            console.error(`[LOGIN ${loginAttemptId}] Username lookup error:`, error);
-            throw new Error('Username not found');
+            if (!data) {
+              console.error(`[LOGIN ${loginAttemptId}] Username not found:`, identifier);
+              throw new Error('Username not found');
+            }
+              
+            const { data: userData, error: userError } = await supabase.auth.admin.getUserById(data.id);
+            
+            if (userError || !userData.user) {
+              console.error(`[LOGIN ${loginAttemptId}] User lookup error:`, userError);
+              throw new Error('User not found');
+            }
+              
+            console.log(`[LOGIN ${loginAttemptId}] Username found, attempting login with email`);
+            await signIn(userData.user.email || '', password);
+            console.log(`[LOGIN ${loginAttemptId}] Username login successful`);
           }
-            
-          const { data: userData, error: userError } = await supabase.auth.admin.getUserById(data.id);
+        } catch (err) {
+          // Use the error categorization function
+          const authError = err as Error;
+          const category = categorizeError(authError);
           
-          if (userError || !userData.user) {
-            console.error(`[LOGIN ${loginAttemptId}] User lookup error:`, userError);
-            throw new Error('User not found');
+          console.error(`[LOGIN ${loginAttemptId}] Login error (${category}):`, authError);
+          setErrorCategory(category);
+          
+          // Special handling for verification errors
+          if (category === 'verification') {
+            setShowResendVerification(true);
           }
-            
-          console.log(`[LOGIN ${loginAttemptId}] Username found, attempting login with email`);
-          await signIn(userData.user.email || '', password);
-          console.log(`[LOGIN ${loginAttemptId}] Username login successful`);
+          
+          // For network errors, set a retry attempt
+          if (category === 'network' || category === 'timeout') {
+            toast({
+              title: 'Connection issue',
+              description: 'There was a problem connecting to the authentication service',
+              variant: 'destructive',
+            });
+          }
+          
+          throw authError;
         }
         
         // Login was successful, check if the user_type matches the expected type
@@ -178,6 +281,9 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
           title: 'Login successful',
           description: 'Welcome back!',
         });
+        
+        // Reset login attempts counter on success
+        setLoginAttempts(0);
         
         // Handle callback or redirection
         if (onSuccess) {
@@ -253,6 +359,10 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
         localStorage.setItem('admin_session_created', new Date().toISOString());
       }
       
+      // Add bypass timestamp
+      localStorage.setItem('bypass_timestamp', Date.now().toString());
+      localStorage.setItem('bypass_user_type', type);
+      
       // Force a refresh of the session to apply bypass
       console.log(`[BYPASS ${bypassAttemptId}] Refreshing session to apply bypass login`);
       await refreshSession();
@@ -300,10 +410,14 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
     showResendVerification,
     isAdminLogin,
     isLoading,
+    errorCategory,
+    loginAttempts,
     toggleAdminLogin,
     handleResendVerification,
     handleLogin,
     handleBypassLogin,
-    redirectTo
+    redirectTo,
+    resetError,
+    attemptRecovery
   };
 };

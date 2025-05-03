@@ -14,7 +14,7 @@ const LoginPage = () => {
   const { user, isLoading } = useAuth();
   
   // Custom hooks for login page functionality
-  const { requiredUserType, errorMessage, setErrorMessage } = useLoginState(pageId);
+  const { requiredUserType, errorMessage, setErrorMessage, handleRetryConnection, isRecovering } = useLoginState(pageId);
   useLoginRedirect({ user, isLoading, pageId });
   useImmediateRedirect(pageId);
   useThemeForLogin();
@@ -27,6 +27,8 @@ const LoginPage = () => {
           requiredUserType={requiredUserType}
           errorMessage={errorMessage}
           setErrorMessage={setErrorMessage}
+          handleRetryConnection={handleRetryConnection}
+          isRecovering={isRecovering}
         />
       </div>
     </div>

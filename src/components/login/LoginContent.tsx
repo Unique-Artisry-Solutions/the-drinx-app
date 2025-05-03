@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
 import UserAuth from '@/components/UserAuth';
 import LoginErrorMessage from './LoginErrorMessage';
 
@@ -8,38 +7,47 @@ interface LoginContentProps {
   requiredUserType: 'individual' | 'establishment' | 'promoter';
   errorMessage: string | null;
   setErrorMessage: (message: string | null) => void;
+  handleRetryConnection?: () => void;
+  isRecovering?: boolean;
 }
 
-const LoginContent: React.FC<LoginContentProps> = ({ requiredUserType, errorMessage, setErrorMessage }) => {
+const LoginContent: React.FC<LoginContentProps> = ({ 
+  requiredUserType, 
+  errorMessage, 
+  setErrorMessage,
+  handleRetryConnection,
+  isRecovering
+}) => {
   return (
-    <div className="flex-1 flex items-center justify-center">
+    <div className="flex-1 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2">Welcome Back</h1>
-          <p className="text-gray-600">
-            Sign in to your Spiritless account 
-            {requiredUserType !== 'individual' ? ` as ${requiredUserType}` : ''}
-          </p>
-          
+        {errorMessage && (
           <LoginErrorMessage 
-            errorMessage={errorMessage}
-            setErrorMessage={setErrorMessage}
+            errorMessage={errorMessage} 
+            setErrorMessage={setErrorMessage} 
+            onRetry={handleRetryConnection}
           />
-        </div>
+        )}
         
         <UserAuth 
-          defaultTab="login" 
+          defaultTab="login"
           userType={requiredUserType}
+          onSuccess={() => {
+            // Clear any error messages on successful login
+            if (errorMessage) {
+              setErrorMessage(null);
+            }
+          }}
         />
         
-        <div className="text-center mt-6">
-          <p className="text-gray-600">
-            Don't have an account?{' '}
-            <Link to="/signup" className="text-material-primary hover:underline">
-              Sign Up
-            </Link>
-          </p>
-        </div>
+        {isRecovering && (
+          <div className="mt-4 text-center text-sm text-gray-500">
+            <div className="flex items-center justify-center">
+              <div className="animate-spin h-4 w-4 border-2 border-spiritless-pink border-t-transparent rounded-full mr-2"></div>
+              <span>Attempting to reconnect...</span>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
