@@ -1,13 +1,9 @@
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth';
 import { supabase } from '@/lib/supabase';
-import { handleAuthRedirect } from '@/utils/redirectUtils';
-
-// Auth error types for better error handling
-type AuthErrorCategory = 'network' | 'credentials' | 'verification' | 'timeout' | 'server' | 'unknown';
 
 export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userType: 'individual' | 'establishment' | 'promoter' = 'individual') => {
   const [identifier, setIdentifier] = useState('');
@@ -17,11 +13,6 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
   const [isResendingEmail, setIsResendingEmail] = useState(false);
   const [showResendVerification, setShowResendVerification] = useState(false);
   const [isAdminLogin, setIsAdminLogin] = useState(false);
-  const [errorCategory, setErrorCategory] = useState<AuthErrorCategory>('unknown');
-  const [loginAttempts, setLoginAttempts] = useState(0);
-  
-  // New: Add timeout to automatically reset submission state
-  const loginTimeoutRef = useRef<number | null>(null);
   
   const navigate = useNavigate();
   const location = useLocation();
@@ -31,117 +22,24 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
   // Check if there's a saved redirect destination
   const [redirectTo, setRedirectTo] = useState<string | null>(null);
   
-  // Clear timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (loginTimeoutRef.current) {
-        clearTimeout(loginTimeoutRef.current);
-      }
-    };
-  }, []);
-  
-  // Auto-reset isSubmitting after maximum allowed time
-  useEffect(() => {
-    if (isSubmitting) {
-      // Set a maximum submission time of 15 seconds
-      loginTimeoutRef.current = window.setTimeout(() => {
-        console.warn('[LOGIN FORM] Login submission timed out, resetting state');
-        setIsSubmitting(false);
-        setFormError('Login request timed out. Please try again.');
-        
-        // Clear login tracking flags if they exist
-        localStorage.removeItem('login_attempt_id');
-        localStorage.removeItem('login_attempt_timestamp');
-        localStorage.removeItem('login_stuck_timestamp');
-        
-        // If we've been stuck in a submitting state, force the loading state to reset
-        window.isLoading = false;
-      }, 15000);
-    } else {
-      // Clear the timeout when not submitting
-      if (loginTimeoutRef.current) {
-        clearTimeout(loginTimeoutRef.current);
-        loginTimeoutRef.current = null;
-      }
-    }
-  }, [isSubmitting]);
-  
   useEffect(() => {
     // Get any redirect path stored in localStorage
     const savedRedirect = localStorage.getItem('auth_redirect');
     if (savedRedirect) {
       setRedirectTo(savedRedirect);
-      console.log("[LOGIN HOOK] Found saved redirect:", savedRedirect);
+      console.log("Found saved redirect:", savedRedirect);
     }
     
     // Get any userType from location state
     const locationState = location.state as { userType?: 'individual' | 'establishment' | 'promoter' };
     if (locationState?.userType) {
-      console.log("[LOGIN HOOK] Setting user type from location state:", locationState.userType);
+      console.log("Setting user type from location state:", locationState.userType);
     }
   }, [location]);
 
-  // Reset form error
-  const resetError = useCallback(() => {
-    setFormError('');
-    setErrorCategory('unknown');
-  }, []);
-
-  // Attempt recovery based on error type
-  const attemptRecovery = useCallback(() => {
-    console.log(`[LOGIN RECOVERY] Attempting recovery for ${errorCategory} error`);
-    
-    if (errorCategory === 'network' || errorCategory === 'timeout') {
-      // For network/timeout errors, try refreshing the session
-      toast({
-        title: "Reconnecting...",
-        description: "Attempting to reconnect to the authentication service",
-      });
-      
-      refreshSession()
-        .then(() => {
-          console.log('[LOGIN RECOVERY] Session refresh successful');
-          setFormError('');
-          toast({
-            title: "Connection restored",
-            description: "You can try logging in again",
-          });
-        })
-        .catch(err => {
-          console.error('[LOGIN RECOVERY] Recovery attempt failed:', err);
-          setFormError('Recovery attempt failed. Please try again later.');
-        });
-    } else if (errorCategory === 'credentials' && loginAttempts >= 3) {
-      // For repeated credential errors, suggest password reset
-      navigate('/reset-password', { 
-        state: { email: identifier.includes('@') ? identifier : '' } 
-      });
-    }
-  }, [errorCategory, loginAttempts, identifier, navigate, refreshSession, toast]);
-
   const toggleAdminLogin = () => {
     setIsAdminLogin(!isAdminLogin);
-    resetError();
-  };
-
-  // Categorize auth errors for better handling
-  const categorizeError = (error: Error): AuthErrorCategory => {
-    const errorMessage = error.message.toLowerCase();
-    
-    if (errorMessage.includes('network') || errorMessage.includes('connection')) {
-      return 'network';
-    } else if (errorMessage.includes('invalid') || errorMessage.includes('password') || 
-               errorMessage.includes('not found') || errorMessage.includes('not exist')) {
-      return 'credentials';
-    } else if (errorMessage.includes('email') && errorMessage.includes('verify')) {
-      return 'verification';
-    } else if (errorMessage.includes('timeout')) {
-      return 'timeout';
-    } else if (errorMessage.includes('server')) {
-      return 'server';
-    }
-    
-    return 'unknown';
+    setFormError('');
   };
 
   const handleResendVerification = async () => {
@@ -152,7 +50,6 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
     
     setIsResendingEmail(true);
     try {
-      console.log('[LOGIN HOOK] Resending verification email to:', identifier);
       const { error } = await supabase.auth.resend({
         type: 'signup',
         email: identifier,
@@ -162,7 +59,6 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
       });
       
       if (error) {
-        console.error('[LOGIN HOOK] Failed to resend verification:', error);
         throw error;
       }
       
@@ -170,13 +66,9 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
         title: 'Verification email sent',
         description: 'Please check your email for the verification link',
       });
-      
-      // Clear error after successful resend
-      resetError();
     } catch (error: any) {
-      console.error("[LOGIN HOOK] Email verification error:", error);
+      console.error("Email verification error:", error);
       setFormError(error.message || 'Failed to resend verification email');
-      setErrorCategory(categorizeError(error));
     } finally {
       setIsResendingEmail(false);
     }
@@ -184,34 +76,15 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // If already submitting, prevent multiple submissions
-    if (isSubmitting) {
-      console.log('[LOGIN HOOK] Login already in progress, ignoring click');
-      return;
-    }
-    
-    resetError();
+    setFormError('');
     setIsSubmitting(true);
     setShowResendVerification(false);
     
-    // Increment login attempt counter
-    setLoginAttempts(prev => prev + 1);
-    
-    // Store the timestamp of when login began to help detect stuck states
-    localStorage.setItem('login_stuck_timestamp', Date.now().toString());
-    
-    // Generate a unique login attempt ID for tracking this login process
-    const loginAttemptId = `login_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-    console.log(`[LOGIN ${loginAttemptId}] Starting login process at ${new Date().toISOString()}`);
-    console.log(`[LOGIN ${loginAttemptId}] User type requested: ${userType}`);
-    console.log(`[LOGIN ${loginAttemptId}] Login attempt number: ${loginAttempts + 1}`);
-    
     try {
       if (isAdminLogin) {
-        console.log(`[LOGIN ${loginAttemptId}] Attempting admin login`);
+        console.log("Attempting admin login");
         if (identifier === 'admin@spiritless.com' && password === 'admin123') {
-          console.log(`[LOGIN ${loginAttemptId}] Admin credentials verified, setting admin session`);
+          console.log("Admin credentials verified, setting admin session");
           localStorage.setItem('admin_authenticated', 'true');
           localStorage.setItem('admin_username', 'Admin');
           localStorage.setItem('admin_session_created', new Date().toISOString());
@@ -220,183 +93,102 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
             title: 'Admin login successful',
             description: 'Welcome to the admin dashboard',
           });
-          
-          // Clear the stuck login timestamp since we're successful
-          localStorage.removeItem('login_stuck_timestamp');
-          
           navigate('/admin/dashboard');
           return;
         } else {
           throw new Error('Invalid admin credentials');
         }
       } else {
-        console.log(`[LOGIN ${loginAttemptId}] Attempting regular login with identifier: ${identifier}`);
+        console.log(`Attempting regular login with identifier: ${identifier}`);
         const isEmail = identifier.includes('@');
         
-        // Set login tracking flags in localStorage for consistent access
-        localStorage.setItem('login_attempt_id', loginAttemptId);
-        localStorage.setItem('login_attempt_timestamp', Date.now().toString());
-        localStorage.setItem('login_requested_usertype', userType);
-        
-        // Store the auth redirect for later use (after login success)
-        const savedRedirect = localStorage.getItem('auth_redirect');
-        
-        // Set up a timeout for the login request
-        const loginPromise = isEmail 
-          ? signIn(identifier, password)
-          : tryUsernameLogin(identifier, password, loginAttemptId);
+        if (isEmail) {
+          console.log("Logging in with email");
+          await signIn(identifier, password);
+          console.log("Email login successful");
+        } else {
+          console.log("Logging in with username");
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('username', identifier)
+            .single();
+            
+          if (error || !data) {
+            console.error("Username lookup error:", error);
+            throw new Error('Username not found');
+          }
+            
+          const { data: userData, error: userError } = await supabase.auth.admin.getUserById(data.id);
           
-        const loginTimeout = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('Login request timed out')), 10000);
-        });
-        
-        // Race the login against a timeout
-        await Promise.race([loginPromise, loginTimeout]);
-        
-        console.log(`[LOGIN ${loginAttemptId}] Login successful`);
+          if (userError || !userData.user) {
+            console.error("User lookup error:", userError);
+            throw new Error('User not found');
+          }
+            
+          console.log("Username found, attempting login with email");
+          await signIn(userData.user.email || '', password);
+          console.log("Username login successful");
+        }
         
         // Login was successful, check if the user_type matches the expected type
         const loggedInType = localStorage.getItem('user_type');
-        console.log(`[LOGIN ${loginAttemptId}] Login successful, user type is: ${loggedInType}, expected: ${userType}`);
+        console.log(`Login successful, user type is: ${loggedInType}, expected: ${userType}`);
         
         // If userType is specified and doesn't match, attempt to switch roles
         if (userType && loggedInType !== userType && userType !== 'individual') {
-          console.log(`[LOGIN ${loginAttemptId}] User type mismatch, attempting to switch to ${userType} role`);
+          console.log(`User type mismatch, attempting to switch to ${userType} role`);
           try {
-            const { error } = await supabase.rpc('switch_active_role', { role_to_activate: userType });
-            if (error) throw error;
-            
-            // Update localStorage after successful role switch
+            await supabase.rpc('switch_active_role', { role_to_activate: userType });
             localStorage.setItem('user_type', userType);
-            console.log(`[LOGIN ${loginAttemptId}] Successfully switched to ${userType} role`);
+            console.log(`Successfully switched to ${userType} role`);
           } catch (roleError) {
-            console.warn(`[LOGIN ${loginAttemptId}] Could not switch to ${userType} role:`, roleError);
+            console.warn(`Could not switch to ${userType} role:`, roleError);
             // Continue with login even if role switch fails
           }
         }
-        
-        // Clear the stuck login timestamp since we're successful
-        localStorage.removeItem('login_stuck_timestamp');
-        
-        // Set login success flags in localStorage for persistence
-        localStorage.setItem('login_success', 'true');
-        localStorage.setItem('login_success_timestamp', Date.now().toString());
-        
-        // Store userType at login time
-        const storedUserType = localStorage.getItem('user_type');
-        localStorage.setItem('login_user_type', storedUserType || '');
-        console.log(`[LOGIN ${loginAttemptId}] Stored login user type in localStorage: ${storedUserType}`);
         
         toast({
           title: 'Login successful',
           description: 'Welcome back!',
         });
         
-        // Reset login attempts counter on success
-        setLoginAttempts(0);
+        // Clear the saved redirect
+        const savedRedirect = localStorage.getItem('auth_redirect');
+        localStorage.removeItem('auth_redirect');
         
-        // Handle callback or redirection
         if (onSuccess) {
           onSuccess();
+        } else if (savedRedirect) {
+          console.log("Redirecting to saved path:", savedRedirect);
+          navigate(savedRedirect);
         } else {
-          // Use centralized auth redirect handler
-          handleAuthRedirect(
-            { id: '1' }, // User is authenticated at this point
-            navigate,
-            {
-              savedRedirect,
-              userType: storedUserType,
-              source: `login_form_${loginAttemptId}`
-            }
-          );
+          const storedUserType = localStorage.getItem('user_type');
+          console.log("Login redirect - user type:", storedUserType);
+          
+          if (storedUserType === 'establishment') {
+            navigate('/establishment/dashboard', { replace: true });
+          } else if (storedUserType === 'promoter') {
+            navigate('/promoter/dashboard', { replace: true });
+          } else {
+            navigate('/explore', { replace: true });
+          }
         }
       }
     } catch (error: any) {
-      console.error(`[LOGIN ${loginAttemptId}] Login error:`, error);
+      console.error('Login error:', error);
       setFormError(error.message || 'Failed to login');
       
-      // Categorize the error for better handling
-      const category = categorizeError(error);
-      setErrorCategory(category);
-      
-      // Clear login tracking flags on error
-      localStorage.removeItem('login_attempt_id');
-      localStorage.removeItem('login_attempt_timestamp');
-      localStorage.removeItem('login_stuck_timestamp');
-      
-      if (error.message && error.message.includes('Email not verified')) {
+      if (error.message.includes('Email not verified')) {
         setShowResendVerification(true);
       }
-      
-      // Add specific toast message based on error type
-      let toastMessage = 'An error occurred during login';
-      if (category === 'credentials') {
-        toastMessage = 'Invalid email or password';
-      } else if (category === 'verification') {
-        toastMessage = 'Please verify your email before logging in';
-      } else if (category === 'network') {
-        toastMessage = 'Connection error - please check your internet';
-      } else if (category === 'timeout') {
-        toastMessage = 'Login request timed out - please try again';
-      }
-      
-      toast({
-        title: 'Login failed',
-        description: toastMessage,
-        variant: 'destructive',
-      });
     } finally {
       setIsSubmitting(false);
-      
-      // Clear the stuck login timestamp
-      localStorage.removeItem('login_stuck_timestamp');
-    }
-  };
-  
-  // Helper function to try username-based login
-  const tryUsernameLogin = async (username: string, password: string, loginId: string) => {
-    console.log(`[LOGIN ${loginId}] Logging in with username`);
-    
-    try {
-      // First try to find the user by username
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('username', username)
-        .maybeSingle();
-          
-      if (error) {
-        console.error(`[LOGIN ${loginId}] Username lookup error:`, error);
-        throw new Error('Error looking up username');
-      }
-      
-      if (!data) {
-        console.error(`[LOGIN ${loginId}] Username not found:`, username);
-        throw new Error('Username not found');
-      }
-          
-      // Then get the user's email from the auth system
-      const { data: userData, error: userError } = await supabase.auth.admin.getUserById(data.id);
-      
-      if (userError || !userData.user) {
-        console.error(`[LOGIN ${loginId}] User lookup error:`, userError);
-        throw new Error('User not found');
-      }
-          
-      console.log(`[LOGIN ${loginId}] Username found, attempting login with email`);
-      
-      // Finally login with the email
-      await signIn(userData.user.email || '', password);
-      console.log(`[LOGIN ${loginId}] Username login successful`);
-    } catch (error) {
-      console.error(`[LOGIN ${loginId}] Username login error:`, error);
-      throw error;
     }
   };
 
   const handleBypassLogin = async (type: 'individual' | 'establishment' | 'promoter' | 'admin') => {
-    const bypassAttemptId = `bypass_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-    console.log(`[BYPASS ${bypassAttemptId}] Initiating bypass login for ${type} user type`);
+    console.log(`Initiating bypass login for ${type} user type from useLoginForm`);
     
     try {
       // Generate a proper UUID for the bypass user
@@ -435,12 +227,8 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
         localStorage.setItem('admin_session_created', new Date().toISOString());
       }
       
-      // Add bypass timestamp
-      localStorage.setItem('bypass_timestamp', Date.now().toString());
-      localStorage.setItem('bypass_user_type', type);
-      
       // Force a refresh of the session to apply bypass
-      console.log(`[BYPASS ${bypassAttemptId}] Refreshing session to apply bypass login`);
+      console.log("Refreshing session to apply bypass login");
       await refreshSession();
       
       toast({
@@ -453,20 +241,28 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
       
       // Check for saved redirect
       const savedRedirect = localStorage.getItem('auth_redirect');
-      console.log(`[BYPASS ${bypassAttemptId}] Saved redirect path:`, savedRedirect);
+      console.log("Saved redirect path:", savedRedirect);
+      localStorage.removeItem('auth_redirect');
       
-      // Use centralized auth redirect handler
-      handleAuthRedirect(
-        { id: bypassUserId }, // Mock user object
-        navigate,
-        {
-          savedRedirect,
-          userType: type,
-          source: `bypass_${bypassAttemptId}`
-        }
-      );
+      // Redirect based on user type or saved path
+      if (savedRedirect) {
+        console.log(`Redirecting to saved path: ${savedRedirect}`);
+        navigate(savedRedirect);
+      } else if (type === 'admin') {
+        console.log("Redirecting to admin dashboard");
+        navigate('/admin/system-breakdown');
+      } else if (type === 'establishment') {
+        console.log("Redirecting to establishment dashboard");
+        navigate('/establishment/dashboard');
+      } else if (type === 'promoter') {
+        console.log("Redirecting to promoter dashboard");
+        navigate('/promoter/dashboard');
+      } else {
+        console.log("Redirecting to explore page");
+        navigate('/explore');
+      }
     } catch (error) {
-      console.error(`[BYPASS ${bypassAttemptId}] Error during bypass login:`, error);
+      console.error("Error during bypass login:", error);
       toast({
         title: 'Login Error',
         description: 'An error occurred during bypass login. Please try again.',
@@ -486,14 +282,10 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
     showResendVerification,
     isAdminLogin,
     isLoading,
-    errorCategory,
-    loginAttempts,
     toggleAdminLogin,
     handleResendVerification,
     handleLogin,
     handleBypassLogin,
-    redirectTo,
-    resetError,
-    attemptRecovery
+    redirectTo
   };
 };

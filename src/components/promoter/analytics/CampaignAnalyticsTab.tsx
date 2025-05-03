@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -6,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Progress } from '@/components/ui/progress';
 import AnalyticsBarChart from '@/components/charts/AnalyticsBarChart';
-import { safeFormatDate } from '@/utils/dateUtils';
+import { safeFormatDate } from '@/utils/environment';
 
 interface CampaignAnalyticsTabProps {
   campaignPerformance: CampaignPerformance[];

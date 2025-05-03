@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
-import { logAuthError, categorizeAuthError } from '@/utils/authErrorLogger';
+import { Session, User } from '@supabase/supabase-js';
 
 export function useAuthActions() {
   const [isLoading, setIsLoading] = useState(false);
@@ -9,28 +9,23 @@ export function useAuthActions() {
 
   const refreshSession = async () => {
     try {
-      console.log('[AUTH] Refreshing session...');
+      console.log('Refreshing session in useAuthActions...');
       const { data, error } = await supabase.auth.refreshSession();
       if (error) {
-        // Enhanced error logging
-        logAuthError('refreshSession', error, { source: 'useAuthActions' });
+        console.error('Error refreshing session:', error);
         return { session: null, user: null, isEmailVerified: false };
       }
       
       const isVerified = data.session?.user ? (data.session.user.email_confirmed_at !== null) : false;
-      console.log('[AUTH] Session refreshed, email verified:', isVerified);
+      console.log('Session refreshed, email verified:', isVerified);
       
       return { 
         session: data.session, 
         user: data.session?.user || null,
         isEmailVerified: isVerified
       };
-    } catch (error: any) {
-      // Enhanced error logging with additional context
-      logAuthError('refreshSession', error, { 
-        source: 'useAuthActions',
-        caught: true
-      });
+    } catch (error) {
+      console.error('Error in refreshSession:', error);
       return { session: null, user: null, isEmailVerified: false };
     }
   };
@@ -38,35 +33,15 @@ export function useAuthActions() {
   const signIn = async (email: string, password: string) => {
     try {
       setIsLoading(true);
-      console.log('[AUTH] Signing in user:', email);
-      
-      // Add timeout protection for sign in to prevent hanging
-      const signInPromise = supabase.auth.signInWithPassword({ email, password });
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Sign in request timed out')), 10000);
-      });
-      
-      // Race the promises
-      const { data, error } = await Promise.race([
-        signInPromise,
-        timeoutPromise
-      ]) as { data: any, error: any };
+      console.log('Signing in user:', email);
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       
       if (error) {
-        // Enhanced error logging
-        const category = logAuthError('signIn', error, { emailProvided: !!email });
-        
-        // Custom handling based on error type
-        if (category === 'network') {
-          throw new Error('Unable to connect to authentication service. Please check your internet connection.');
-        } else if (category === 'timeout') {
-          throw new Error('Sign in request timed out. Please try again.');
-        } else {
-          throw error;
-        }
+        console.error('Sign in error:', error);
+        throw error;
       }
       
-      console.log('[AUTH] Sign in successful:', data);
+      console.log('Sign in successful:', data);
       
       if (data.user && !data.user.email_confirmed_at) {
         toast({
@@ -85,73 +60,17 @@ export function useAuthActions() {
         
         localStorage.setItem('user_authenticated', 'true');
         localStorage.setItem('user_email', data.user?.email || '');
-        localStorage.setItem('login_success_time', Date.now().toString());
-        
-        // Enhanced user type detection
-        let userType = data.user?.user_metadata.user_type;
-        console.log('[AUTH] User metadata from sign in:', data.user?.user_metadata);
-        
-        // If no user_type in metadata, try to determine from database roles
-        if (!userType) {
-          console.log('[AUTH] No user_type in metadata, checking roles from database');
-          
-          try {
-            // Query the user_roles table to see if this user has any roles
-            const { data: userRoles, error: rolesError } = await supabase
-              .from('user_roles')
-              .select('role, is_active')
-              .eq('user_id', data.user.id)
-              .eq('is_active', true)
-              .maybeSingle();
-              
-            if (!rolesError && userRoles) {
-              userType = userRoles.role;
-              console.log('[AUTH] Found active role in database:', userType);
-            }
-          } catch (roleCheckError) {
-            logAuthError('signIn.roleCheck', roleCheckError as Error, { userId: data.user.id });
-            console.warn('[AUTH] Error checking user roles:', roleCheckError);
-            // Default to individual if we can't determine the role
-            userType = 'individual';
-          }
-        }
-        
-        // Final fallback to 'individual' if still no type
-        userType = userType || 'individual';
-        console.log('[AUTH] Setting user type to:', userType);
-        localStorage.setItem('user_type', userType);
-        
-        // Explicitly log if this is a promoter account for debugging
-        if (userType === 'promoter') {
-          console.log('[AUTH] PROMOTER ACCOUNT DETECTED - Setting localStorage user_type=promoter');
-          localStorage.setItem('user_type_timestamp', Date.now().toString());
-        }
-        
+        localStorage.setItem('user_type', data.user?.user_metadata.user_type || 'individual');
         if (data.user?.user_metadata.username) {
           localStorage.setItem('user_username', data.user.user_metadata.username);
         }
       }
     } catch (error: any) {
-      // Use friendly toast messages based on error type
-      const category = categorizeAuthError(error);
-      
-      let toastMessage = 'An error occurred during login';
-      if (category === 'credentials') {
-        toastMessage = 'Invalid email or password';
-      } else if (category === 'verification') {
-        toastMessage = 'Please verify your email before logging in';
-      } else if (category === 'network') {
-        toastMessage = 'Connection error - please check your internet';
-      } else if (category === 'timeout') {
-        toastMessage = 'Login request timed out - please try again';
-      }
-      
       toast({
         title: 'Login failed',
-        description: toastMessage,
+        description: error.message || 'An error occurred during login',
         variant: 'destructive',
       });
-      
       throw error;
     } finally {
       setIsLoading(false);

@@ -1,12 +1,11 @@
 
-import React, { createContext, useContext, useEffect } from 'react';
+import React, { createContext, useContext } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { AuthContextType } from './types';
 import { useAuthActions } from './useAuthActions';
 import { useAuthState } from './useAuthState';
 import { useSessionRefresh } from './useSessionRefresh';
 import { useAuthSetup } from './useAuthSetup';
-import { safeAuthCheck } from '@/utils/redirectUtils';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -60,120 +59,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     toast
   });
 
-  // Make window.isLoading property available globally for other components
-  useEffect(() => {
-    window.isLoading = isLoading || actionLoading;
-    
-    // Add a safety timer to reset loading state after maximum threshold
-    let loadingResetTimer: number | null = null;
-    
-    if (isLoading || actionLoading) {
-      loadingResetTimer = window.setTimeout(() => {
-        if (window.isLoading) {
-          console.warn('[AUTH PROVIDER] Loading state has been active for too long, forcing reset');
-          window.isLoading = false;
-          setIsLoading(false);
-        }
-      }, 30000); // Reset loading state after 30 seconds maximum
-    }
-    
-    return () => {
-      window.isLoading = undefined;
-      if (loadingResetTimer) {
-        clearTimeout(loadingResetTimer);
-      }
-    };
-  }, [isLoading, actionLoading, setIsLoading]);
-
-  // Add a safe authentication check on route changes
-  useEffect(() => {
-    // Only run this check if we're done loading and know the user state
-    if (!isLoading && !actionLoading) {
-      safeAuthCheck();
-    }
-  }, [isLoading, actionLoading, window.location.pathname]);
-
-  // Add a special listener for promoter logins
-  useEffect(() => {
-    // Check if there are URL parameters indicating a recent login
-    const urlParams = new URLSearchParams(window.location.search);
-    const loginTs = urlParams.get('login_ts');
-    const loginId = urlParams.get('login_id');
-    const bypassTs = urlParams.get('bypass_ts');
-    const bypassId = urlParams.get('bypass_id');
-    
-    if (loginTs && loginId) {
-      console.log(`[AUTH PROVIDER] Detected login redirect with ID: ${loginId}, timestamp: ${loginTs}`);
-      
-      // Verify the user type is set correctly
-      const storedUserType = localStorage.getItem('user_type');
-      if (storedUserType === 'promoter') {
-        console.log(`[AUTH PROVIDER] Promoter login confirmed. Path: ${window.location.pathname}`);
-        
-        // Ensure we're on a promoter page
-        if (!window.location.pathname.startsWith('/promoter')) {
-          console.log(`[AUTH PROVIDER] Not on a promoter page, redirecting`);
-          window.location.href = '/promoter/dashboard';
-        }
-      }
-    }
-    
-    if (bypassTs && bypassId) {
-      console.log(`[AUTH PROVIDER] Detected bypass login redirect with ID: ${bypassId}, timestamp: ${bypassTs}`);
-      
-      // Ensure admin bypass is active
-      const isAdminBypass = localStorage.getItem('admin_bypass') === 'true';
-      if (!isAdminBypass) {
-        console.warn(`[AUTH PROVIDER] Admin bypass not active but bypass parameters detected`);
-      }
-    }
-    
-    // Debug logging for auth state
-    if (urlParams.get('debug_auth') === 'true') {
-      console.log('[AUTH PROVIDER] Auth debugging enabled. Current state:', { 
-        user: !!user,
-        session: !!session,
-        isLoading,
-        userType: localStorage.getItem('user_type'),
-        isAdminBypass: localStorage.getItem('admin_bypass'),
-      });
-    }
-    
-    // Check for forced reset from index page
-    if (urlParams.get('reset') === 'true') {
-      console.log('[AUTH PROVIDER] Detected reset flag, clearing auth state');
-      setUser(null);
-      setSession(null);
-      setIsEmailVerified(false);
-      setIsLoading(false);
-      window.isLoading = false;
-    }
-  }, [user, window.location.search, setUser, setSession, setIsEmailVerified, setIsLoading]);
-
   const handleSignOut = async () => {
-    console.log("[AUTH PROVIDER] Starting sign out process...");
+    console.log("Starting sign out process...");
     // Clear local user state first
     setUser(null);
     setSession(null);
     setIsEmailVerified(false);
-    
-    // Reset the loading indicator
-    setIsLoading(false);
-    window.isLoading = false;
-    
-    // Clear all login/bypass tracking from localStorage
-    localStorage.removeItem('login_success');
-    localStorage.removeItem('login_success_timestamp');
-    localStorage.removeItem('login_user_type');
-    localStorage.removeItem('login_attempt_id');
-    localStorage.removeItem('login_attempt_timestamp');
-    localStorage.removeItem('login_requested_usertype');
-    localStorage.removeItem('login_redirect');
-    localStorage.removeItem('login_stuck_timestamp');
-    
-    localStorage.removeItem('bypass_attempt_id');
-    localStorage.removeItem('bypass_timestamp');
-    localStorage.removeItem('bypass_user_type');
     
     // Then call the signOut action which handles backend and localStorage cleanup
     await signOutAction();

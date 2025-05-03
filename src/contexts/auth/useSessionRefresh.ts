@@ -1,7 +1,6 @@
-
 import { useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 
 interface UseSessionRefreshProps {
   refreshSessionAction: () => Promise<{
@@ -22,30 +21,14 @@ export function useSessionRefresh({
   setIsEmailVerified,
   updateLocalStorage
 }: UseSessionRefreshProps) {
-  // Refresh user session and profile data with improved error handling
+  // Refresh user session and profile data
   const refreshSession = useCallback(async () => {
-    console.log('[SESSION REFRESH] Starting session refresh...');
-    
-    // Clear any potential stuck states
-    clearTimeout(window.sessionRefreshTimeout);
-    window.sessionRefreshAttempts = (window.sessionRefreshAttempts || 0) + 1;
-    
-    // Prevent excessive refresh attempts
-    if (window.sessionRefreshAttempts > 3) {
-      console.warn('[SESSION REFRESH] Too many refresh attempts, forced reset of state');
-      setSession(null);
-      setUser(null);
-      setIsEmailVerified(false);
-      updateLocalStorage(null);
-      window.isLoading = false;
-      window.sessionRefreshAttempts = 0;
-      return { isEmailVerified: false, forceReset: true };
-    }
+    console.log('Refreshing session in useSessionRefresh...');
     
     // Check for admin bypass first
     const isAdminBypass = localStorage.getItem('admin_bypass') === 'true';
     if (isAdminBypass) {
-      console.log('[SESSION REFRESH] Admin bypass active, using bypass user');
+      console.log('Admin bypass active, skipping normal session refresh');
       
       // Create a pseudo user object for bypass
       const bypassUserId = localStorage.getItem('bypass_user_id');
@@ -55,7 +38,7 @@ export function useSessionRefresh({
       
       // Only create bypass user if we have all the required data
       if (bypassUserId && userType) {
-        console.log('[SESSION REFRESH] Creating bypass user for:', userType);
+        console.log('Creating bypass user for:', userType);
         
         const bypassUser = {
           id: bypassUserId,
@@ -71,38 +54,24 @@ export function useSessionRefresh({
         
         setUser(bypassUser);
         setIsEmailVerified(true);
-        window.isLoading = false;
-        window.sessionRefreshAttempts = 0;
+        
         return { isEmailVerified: true };
       }
     }
     
     // Regular session refresh
     try {
-      // First check for session manually with timeout protection
-      console.log('[SESSION REFRESH] Checking for existing session');
+      // First check for session manually
+      console.log('Checking for existing session');
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       
-      // Set up a promise with timeout to prevent hanging
-      const sessionPromise = new Promise(async (resolve, reject) => {
-        try {
-          const { data, error } = await supabase.auth.getSession();
-          if (error) throw error;
-          resolve(data);
-        } catch (err) {
-          reject(err);
-        }
-      });
-      
-      // Set a timeout of 5 seconds to prevent hanging
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Session check timed out')), 5000);
-      });
-      
-      // Race the promises
-      const sessionData = await Promise.race([sessionPromise, timeoutPromise]) as { session: Session | null };
+      if (sessionError) {
+        console.error('Error getting session:', sessionError);
+        throw sessionError;
+      }
       
       if (sessionData.session) {
-        console.log('[SESSION REFRESH] Session found, updating user state');
+        console.log('Session found, updating user state');
         setSession(sessionData.session);
         setUser(sessionData.session.user);
         setIsEmailVerified(true);
@@ -115,107 +84,42 @@ export function useSessionRefresh({
             .select('role, is_active')
             .eq('user_id', sessionData.session.user.id)
             .eq('is_active', true)
-            .maybeSingle();
+            .single();
             
           if (!rolesError && roles) {
-            console.log('[SESSION REFRESH] Found active role in database:', roles.role);
+            console.log('Found active role in database:', roles.role);
             localStorage.setItem('user_type', roles.role);
-            localStorage.setItem('login_user_type', roles.role);
           }
         } catch (roleError) {
-          console.warn('[SESSION REFRESH] Error fetching active role:', roleError);
+          console.warn('Error fetching active role:', roleError);
         }
-        
-        // Reset counter on success
-        window.sessionRefreshAttempts = 0;
-        window.isLoading = false;
         
         return { isEmailVerified: true };
       } else {
-        console.log('[SESSION REFRESH] No session found, attempting refresh');
+        console.log('No session found, attempting refresh');
       }
       
-      // If no session or needs refresh, use the action with timeout protection
-      const refreshPromise = refreshSessionAction();
-      const refreshTimeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Session refresh timed out')), 8000);
-      });
-      
-      const { session, user, isEmailVerified } = await Promise.race([
-        refreshPromise, 
-        refreshTimeoutPromise
-      ]) as { 
-        session: Session | null; 
-        user: User | null; 
-        isEmailVerified: boolean 
-      };
+      // If no session or needs refresh, use the action
+      const { session, user, isEmailVerified } = await refreshSessionAction();
       
       if (session && user) {
-        console.log('[SESSION REFRESH] Session refreshed successfully');
+        console.log('Session refreshed successfully');
         setSession(session);
         setUser(user);
         setIsEmailVerified(isEmailVerified);
         updateLocalStorage(user);
-        
-        // Reset attempt counter on success
-        window.sessionRefreshAttempts = 0;
-        window.isLoading = false;
-        
-        return { isEmailVerified };
       } else {
-        console.log('[SESSION REFRESH] No session after refresh, clearing state');
-        // Clean state to prevent UI from being stuck - this is critical
+        console.log('No session after refresh');
         setSession(null);
         setUser(null);
         setIsEmailVerified(false);
         updateLocalStorage(null);
-        
-        // Mark the loading as complete even if we couldn't get a session
-        window.isLoading = false;
-        return { isEmailVerified: false };
       }
+      
+      return { isEmailVerified };
     } catch (error) {
-      console.error('[SESSION REFRESH] Error refreshing session:', error);
-      
-      // Always reset the loading state to prevent UI from being stuck
-      window.isLoading = false;
-      
-      // Check if we still have a valid session stored in localStorage
-      try {
-        const storedSession = localStorage.getItem('spiritless-auth-storage');
-        if (storedSession) {
-          console.log('[SESSION REFRESH] Found stored session, using as fallback');
-          
-          // Attempt retry after small delay but only once
-          if (window.sessionRefreshAttempts <= 2) {
-            window.sessionRefreshTimeout = window.setTimeout(() => {
-              refreshSessionAction().catch(e => 
-                console.warn('[SESSION REFRESH] Retry also failed:', e));
-            }, 2000);
-          } else {
-            // After multiple attempts, clear auth state to prevent being stuck
-            console.warn('[SESSION REFRESH] Multiple refresh attempts failed, clearing auth state');
-            setSession(null);
-            setUser(null);
-            setIsEmailVerified(false);
-            updateLocalStorage(null);
-          }
-        } else {
-          // If no session in storage, clear the user state to avoid stuck UI
-          setSession(null);
-          setUser(null);
-          setIsEmailVerified(false);
-          updateLocalStorage(null);
-        }
-      } catch (storageError) {
-        console.warn('[SESSION REFRESH] Storage check failed:', storageError);
-        // Clear state in case of any storage errors
-        setSession(null);
-        setUser(null);
-        setIsEmailVerified(false);
-        updateLocalStorage(null);
-      }
-      
+      console.error('Error refreshing session:', error);
+      // Keep current state, don't clear on error
       return { isEmailVerified: false };
     }
   }, [refreshSessionAction, setSession, setUser, setIsEmailVerified, updateLocalStorage]);

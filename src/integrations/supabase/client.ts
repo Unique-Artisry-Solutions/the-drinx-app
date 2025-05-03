@@ -10,15 +10,10 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-/**
- * Supabase client configured for authentication
- * Always uses localStorage for session persistence with consistent storage key
- */
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
-    persistSession: true, // Always persist sessions
+    persistSession: !isPreviewEnvironment(), // Don't persist sessions in preview environment
     autoRefreshToken: true,
-    storageKey: 'spiritless-auth-storage',
-    storage: localStorage // Always use localStorage for consistency
+    storageKey: 'spiritless-auth-storage'
   }
 });

@@ -1,6 +1,6 @@
 
 import { useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 import { isPreviewEnvironment } from '@/utils/environment';
 
 interface UseAuthSetupProps {
@@ -27,17 +27,40 @@ export const useAuthSetup = ({
   toast
 }: UseAuthSetupProps) => {
   useEffect(() => {
-    const setupId = Date.now().toString();
-    console.log(`[AUTH SETUP ${setupId}] Starting AuthProvider setup...`);
+    console.log('Starting AuthProvider setup...');
     
     // Set loading state initially
     setIsLoading(true);
+    
+    // Skip full auth setup in preview environment
+    if (isPreviewEnvironment()) {
+      console.log('Preview environment detected: using simplified auth setup');
+      
+      // In preview, we can either:
+      // 1. Use a mock user (uncomment below)
+      // const mockUser = {
+      //   id: 'preview-user-id',
+      //   email: 'preview@example.com',
+      //   user_metadata: { full_name: 'Preview User' }
+      // };
+      // setUser(mockUser);
+      // setIsEmailVerified(true);
+      // setSession({ user: mockUser });
+      
+      // 2. Or just set null user (logged out state)
+      setUser(null);
+      setSession(null);
+      setIsEmailVerified(false);
+      
+      setIsLoading(false);
+      return;
+    }
     
     // First check for admin bypass
     const { isAdminBypass, bypassUser } = checkAdminBypass();
     
     if (isAdminBypass && bypassUser) {
-      console.log(`[AUTH SETUP ${setupId}] Admin bypass active, using bypass user:`, bypassUser.id);
+      console.log('Admin bypass active, using bypass user:', bypassUser.id);
       setUser(bypassUser);
       setIsEmailVerified(true);
       setIsLoading(false);
@@ -47,33 +70,26 @@ export const useAuthSetup = ({
     
     // Check if admin session has expired
     if (checkAdminSession()) {
-      console.log(`[AUTH SETUP ${setupId}] Admin session expired`);
+      console.log('Admin session expired');
       setIsLoading(false);
       return;
     }
     
-    console.log(`[AUTH SETUP ${setupId}] Setting up auth state listener...`);
-    
-    // Set up auth state listener FIRST - this order is important
+    console.log('Setting up auth state listener...');
+    // Set up auth state listener FIRST
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log(`[AUTH SETUP ${setupId}] Auth state changed:`, event, !!session);
+        console.log('Auth state changed:', event, !!session);
         
         // Log detailed info for debugging
         if (session?.user) {
-          console.log(`[AUTH SETUP ${setupId}] User ID:`, session.user.id);
-          console.log(`[AUTH SETUP ${setupId}] User email:`, session.user.email);
-          console.log(`[AUTH SETUP ${setupId}] User metadata:`, session.user.user_metadata);
-          
-          // Update our application state with the session information
-          setSession(session);
-          setUser(session.user);
-          setIsEmailVerified(true);
-          updateLocalStorage(session.user);
+          console.log('User ID:', session.user.id);
+          console.log('User email:', session.user.email);
+          console.log('User metadata:', session.user.user_metadata);
           
           // Check for user_type in metadata
           const userType = session.user.user_metadata?.user_type;
-          console.log(`[AUTH SETUP ${setupId}] User type from metadata:`, userType);
+          console.log('User type from metadata:', userType);
           
           // Check if we have an active role that might override metadata
           try {
@@ -82,37 +98,44 @@ export const useAuthSetup = ({
               .select('role, is_active')
               .eq('user_id', session.user.id);
               
-            console.log(`[AUTH SETUP ${setupId}] User roles from database:`, roles);
+            console.log('User roles from database:', roles);
             
             if (roles && roles.length > 0) {
               const activeRole = roles.find(r => r.is_active);
               if (activeRole) {
-                console.log(`[AUTH SETUP ${setupId}] Active role from database:`, activeRole.role);
-                localStorage.setItem('user_type', activeRole.role);
+                console.log('Active role from database:', activeRole.role);
               }
             }
           } catch (error) {
-            console.warn(`[AUTH SETUP ${setupId}] Error fetching user roles:`, error);
+            console.warn('Error fetching user roles:', error);
           }
-        } else if (event === 'SIGNED_OUT') {
-          console.log(`[AUTH SETUP ${setupId}] Sign out event received`);
-          setSession(null);
-          setUser(null);
-          setIsEmailVerified(false);
-          updateLocalStorage(null);
         }
+        
+        // We need some delay to avoid race conditions
+        setTimeout(() => {
+          setSession(session);
+          setUser(session?.user ?? null);
+          
+          if (session?.user) {
+            // We assume email is verified if we get here
+            setIsEmailVerified(true);
+            updateLocalStorage(session.user);
+          } else if (event === 'SIGNED_OUT') {
+            setIsEmailVerified(false);
+            updateLocalStorage(null);
+          }
+        }, 0);
       }
     );
     
-    console.log(`[AUTH SETUP ${setupId}] Checking for existing session...`);
-    
-    // THEN check for existing session - this order is important
+    console.log('Checking for existing session...');
+    // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log(`[AUTH SETUP ${setupId}] Initial session check result:`, !!session);
+      console.log('Initial session check result:', !!session);
       
       if (session) {
-        console.log(`[AUTH SETUP ${setupId}] User ID from session:`, session.user.id);
-        console.log(`[AUTH SETUP ${setupId}] User email from session:`, session.user.email);
+        console.log('User ID from session:', session.user.id);
+        console.log('User email from session:', session.user.email);
         
         setSession(session);
         setUser(session.user);
@@ -121,19 +144,25 @@ export const useAuthSetup = ({
       }
       
       setIsLoading(false);
-    }).catch(err => {
-      console.error(`[AUTH SETUP ${setupId}] Error during session check:`, err);
-      setIsLoading(false);
     });
     
-    // Force a session refresh to ensure we have the latest data
-    refreshSession().catch(e => {
-      console.error(`[AUTH SETUP ${setupId}] Error refreshing session:`, e);
-    });
+    // Show a notification if the session was recovered from storage
+    const hasStoredSession = localStorage.getItem('spiritless-auth-storage') ? true : false;
+    
+    if (hasStoredSession) {
+      console.log('Restoring session from storage, refreshing...');
+      refreshSession().catch(e => {
+        console.error('Error refreshing session:', e);
+        toast({
+          title: "Session Expired",
+          description: "Please sign in again",
+          variant: "destructive"
+        });
+      });
+    }
     
     return () => {
       authListener.subscription.unsubscribe();
-      console.log(`[AUTH SETUP ${setupId}] Auth setup cleanup`);
     };
   }, []);
 };
