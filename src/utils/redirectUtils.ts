@@ -30,6 +30,15 @@ export function performRedirect(
   // Check for redirect loop before proceeding
   if (isRedirectLoop()) {
     console.error(`[REDIRECT UTIL] Redirect loop detected, cancelling redirect to ${path}`);
+    // Force a full reset of redirect tracking to break any loops
+    localStorage.removeItem('redirect_count');
+    localStorage.removeItem('last_redirect_time');
+    localStorage.removeItem('login_success');
+    localStorage.removeItem('login_success_timestamp');
+    localStorage.removeItem('login_user_type');
+    localStorage.removeItem('auth_redirect');
+    localStorage.removeItem('login_redirect');
+    console.warn('[REDIRECT UTIL] All redirect tracking has been reset to break potential loops');
     return;
   }
   
@@ -135,8 +144,8 @@ export function isRedirectLoop(): boolean {
   const currentTime = Date.now();
   const redirectCount = parseInt(localStorage.getItem('redirect_count') || '0');
   
-  // If redirect count exceeds threshold, it's a loop
-  if (redirectCount >= 3) {
+  // More aggressive loop detection: if redirect count exceeds threshold, it's a loop
+  if (redirectCount >= 2) {
     console.error('[REDIRECT UTIL] Too many redirects in succession, breaking cycle');
     return true;
   }
@@ -144,7 +153,7 @@ export function isRedirectLoop(): boolean {
   if (lastRedirectTime && (currentTime - parseInt(lastRedirectTime)) < 2000) {
     console.warn('[REDIRECT UTIL] Multiple redirects in short timeframe, potential loop');
     
-    if (redirectCount > 2) {
+    if (redirectCount > 1) {
       console.error('[REDIRECT UTIL] Redirect loop detected, breaking cycle');
       return true;
     }

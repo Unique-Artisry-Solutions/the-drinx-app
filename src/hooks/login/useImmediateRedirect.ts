@@ -2,6 +2,7 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { performRedirect, isRedirectLoop } from '@/utils/redirectUtils';
+import { breakRedirectLoop } from '@/utils/sessionCleaner';
 
 /**
  * Hook for handling immediate redirects after login
@@ -18,12 +19,10 @@ export const useImmediateRedirect = (pageId: string) => {
       search: window.location.search,
     });
 
-    // Check for redirect loop prevention
+    // First check for a redirect loop, and proactively break it if detected
     if (isRedirectLoop()) {
-      console.log(`[LOGIN PAGE ${pageId}] Detected redirect loop, skipping immediate redirect`);
-      // Reset the redirect tracking counters to break the loop
-      localStorage.removeItem('redirect_count');
-      localStorage.removeItem('last_redirect_time');
+      console.log(`[LOGIN PAGE ${pageId}] Detected redirect loop, breaking it and staying on login page`);
+      breakRedirectLoop();
       return;
     }
     
@@ -41,7 +40,7 @@ export const useImmediateRedirect = (pageId: string) => {
       redirectPath: localStorage.getItem('auth_redirect')
     });
     
-    // Check if we need an immediate redirect - but don't run if we're already in a post-login state
+    // Check if we're already in a post-login state - skip redirect handling if so
     const isPostLogin = window.location.search.includes('auth_success=true') || 
                         window.location.search.includes('redirect_ts=');
     
@@ -85,7 +84,6 @@ export const useImmediateRedirect = (pageId: string) => {
     // Only run the initial redirect check once
     checkForImmediateRedirect();
     
-    // We'll remove the interval checks to simplify the login flow
     return () => {
       console.log(`[LOGIN PAGE ${pageId}] Page unloaded at ${new Date().toISOString()}`);
     };
