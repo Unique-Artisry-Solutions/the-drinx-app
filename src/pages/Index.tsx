@@ -5,13 +5,16 @@ import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/auth';
 import { emergencyResetAllStorage } from '@/utils/sessionCleaner';
 import { performRedirect, isRedirectLoop } from '@/utils/redirectUtils';
+import { Button } from '@/components/ui/button';
+import { debouncedToast } from '@/utils/debouncedToast';
 
 const Index = () => {
   const { user, isLoading } = useAuth();
   const navigate = useNavigate();
   const [isResetting, setIsResetting] = useState(false);
-  const [resetSuccess, setResetSuccess] = useState(false);
-  const [resetError, setResetError] = useState('');
+  const [resetSuccess, setResetSuccess] = useState<boolean | null>(null);
+  const [resetMessage, setResetMessage] = useState('');
+  const [showConfirm, setShowConfirm] = useState(false);
   
   // Generate a unique ID for this page instance
   const pageId = React.useId();
@@ -41,33 +44,47 @@ const Index = () => {
     }
   }, [user, isLoading, pageId]);
   
+  // Handle showing the confirmation dialog
+  const handleResetRequest = () => {
+    setShowConfirm(true);
+  };
+  
   // Handle the emergency reset
   const handleEmergencyReset = () => {
-    if (window.confirm('WARNING: This will reset ALL authentication data and may log you out of the application. Continue?')) {
-      setIsResetting(true);
-      setResetError('');
-      
-      // Small delay to allow UI to update
-      setTimeout(() => {
-        try {
-          // Perform the reset
-          const success = emergencyResetAllStorage();
-          setResetSuccess(success);
-          console.log(`[INDEX ${pageId}] Emergency reset completed successfully:`, success);
-          
-          // Reload the page after reset to ensure clean state
+    setIsResetting(true);
+    setResetSuccess(null);
+    setResetMessage('');
+    
+    // Small delay to allow UI to update
+    setTimeout(() => {
+      try {
+        // Perform the reset
+        const result = emergencyResetAllStorage();
+        setResetSuccess(result.success);
+        setResetMessage(result.message);
+        
+        console.log(`[INDEX ${pageId}] Emergency reset completed:`, result);
+        
+        // Reload the page after reset to ensure clean state
+        if (result.success) {
           setTimeout(() => {
             window.location.reload();
-          }, 1500);
-        } catch (err) {
-          console.error(`[INDEX ${pageId}] Error during emergency reset:`, err);
-          setResetSuccess(false);
-          setResetError(err.message || 'Unknown error during reset');
-        } finally {
-          setIsResetting(false);
+          }, 2000);
         }
-      }, 100);
-    }
+      } catch (err) {
+        console.error(`[INDEX ${pageId}] Error during emergency reset:`, err);
+        setResetSuccess(false);
+        setResetMessage(err instanceof Error ? err.message : 'Unknown error during reset');
+      } finally {
+        setIsResetting(false);
+        setShowConfirm(false);
+      }
+    }, 100);
+  };
+  
+  // Cancel the reset
+  const handleCancelReset = () => {
+    setShowConfirm(false);
   };
   
   // Use useEffect to handle navigation properly
@@ -140,28 +157,57 @@ const Index = () => {
           <div className="mt-8 border-t pt-4">
             <p className="text-sm font-medium text-gray-700 mb-2">Authentication Troubleshooting</p>
             
-            {resetSuccess && (
-              <div className="mb-4 p-2 bg-green-100 text-green-800 rounded-md">
-                Storage successfully cleared. The page will refresh automatically.
+            {resetSuccess === true && (
+              <div className="mb-4 p-3 bg-green-100 text-green-800 rounded-md">
+                <p className="font-medium">Reset Successful</p>
+                <p className="text-sm">{resetMessage}</p>
+                <p className="text-xs mt-2">The page will refresh automatically in 2 seconds</p>
               </div>
             )}
             
-            {resetError && (
-              <div className="mb-4 p-2 bg-red-100 text-red-800 rounded-md">
-                Error: {resetError}
+            {resetSuccess === false && (
+              <div className="mb-4 p-3 bg-red-100 text-red-800 rounded-md">
+                <p className="font-medium">Reset Failed</p>
+                <p className="text-sm">{resetMessage}</p>
               </div>
             )}
             
-            <button 
-              onClick={handleEmergencyReset}
-              disabled={isResetting}
-              className={`w-full mt-2 text-sm px-4 py-2 rounded-md transition-colors 
-                ${isResetting 
-                  ? 'bg-gray-300 text-gray-600 cursor-not-allowed' 
-                  : 'bg-red-100 text-red-600 hover:bg-red-200'}`}
-            >
-              {isResetting ? 'Clearing Storage...' : 'Emergency Authentication Reset'}
-            </button>
+            {showConfirm ? (
+              <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-md">
+                <p className="font-medium text-amber-800">Confirm Reset</p>
+                <p className="text-sm text-amber-700 mb-3">
+                  This will clear ALL authentication data and storage. 
+                  You will be logged out and redirected to the login page.
+                </p>
+                <div className="flex justify-between gap-3">
+                  <Button
+                    variant="outline"
+                    className="w-1/2"
+                    onClick={handleCancelReset}
+                    disabled={isResetting}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    className="w-1/2"
+                    onClick={handleEmergencyReset}
+                    disabled={isResetting}
+                  >
+                    {isResetting ? 'Clearing...' : 'Confirm Reset'}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <Button 
+                variant="outline"
+                className="w-full mt-2 text-sm border-red-200 hover:bg-red-50 text-red-600"
+                onClick={handleResetRequest}
+                disabled={isResetting}
+              >
+                {isResetting ? 'Clearing Storage...' : 'Emergency Authentication Reset'}
+              </Button>
+            )}
             
             <p className="text-xs text-gray-500 mt-2">
               This will reset all authentication data and may resolve login issues.
@@ -174,3 +220,4 @@ const Index = () => {
 };
 
 export default Index;
+

@@ -60,10 +60,15 @@ export const clearAllSessions = () => {
   localStorage.removeItem('bypass_user_id');
   
   // Clear Supabase auth storage
+  localStorage.removeItem('supabase.auth.token');
   localStorage.removeItem('spiritless-auth-storage');
   
   // Clear auth_redirect which can cause redirect loops
   localStorage.removeItem('auth_redirect');
+  
+  // Clear redirect tracking
+  localStorage.removeItem('last_redirect_time');
+  localStorage.removeItem('redirect_count');
   
   console.log('[AUTH STORAGE] Performed complete authentication storage reset');
 };
@@ -71,18 +76,35 @@ export const clearAllSessions = () => {
 /**
  * Emergency reset of all browser storage (localStorage and sessionStorage)
  * Use this function only when troubleshooting severe authentication issues
+ * @returns {Object} Result of the operation with status and message
  */
 export const emergencyResetAllStorage = () => {
-  // First clear all authentication-specific data
-  clearAllSessions();
-  
-  // Then clear any remaining localStorage items
-  localStorage.clear();
-  
-  // Also clear sessionStorage for completeness
-  sessionStorage.clear();
-  
-  console.log('[AUTH STORAGE] EMERGENCY RESET: All browser storage has been cleared');
-  
-  return true; // Return success flag for UI feedback
+  try {
+    // First clear all authentication-specific data
+    clearAllSessions();
+    
+    // Then clear any remaining localStorage items
+    const localStorageKeys = Object.keys(localStorage);
+    console.log(`[AUTH STORAGE] Clearing ${localStorageKeys.length} localStorage items`);
+    localStorage.clear();
+    
+    // Also clear sessionStorage for completeness
+    const sessionStorageKeys = Object.keys(sessionStorage);
+    console.log(`[AUTH STORAGE] Clearing ${sessionStorageKeys.length} sessionStorage items`);
+    sessionStorage.clear();
+    
+    console.log('[AUTH STORAGE] EMERGENCY RESET: All browser storage has been cleared');
+    
+    return {
+      success: true,
+      message: 'All authentication data has been successfully cleared'
+    };
+  } catch (error) {
+    console.error('[AUTH STORAGE] Error during emergency reset:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Unknown error during reset'
+    };
+  }
 };
+
