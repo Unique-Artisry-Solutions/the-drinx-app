@@ -1,14 +1,15 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/auth';
-import { clearAllSessions } from '@/utils/sessionCleaner';
-import { isPreviewEnvironment } from '@/utils/environment';
+import { emergencyResetAllStorage } from '@/utils/sessionCleaner';
 
 const Index = () => {
   const { user, isLoading } = useAuth();
   const navigate = useNavigate();
+  const [isResetting, setIsResetting] = useState(false);
+  const [resetSuccess, setResetSuccess] = useState(false);
   
   // Generate a unique ID for this page instance
   const pageId = React.useId();
@@ -35,25 +36,30 @@ const Index = () => {
       });
       
       console.log(`[INDEX ${pageId}] LocalStorage data:`, localStorageData);
-      
-      // Log all sessionStorage keys
-      const sessionStorageKeys = Object.keys(sessionStorage);
-      const sessionStorageData = {};
-      
-      sessionStorageKeys.forEach(key => {
-        sessionStorageData[key] = sessionStorage.getItem(key);
-      });
-      
-      console.log(`[INDEX ${pageId}] SessionStorage data:`, sessionStorageData);
-    }
-    
-    // Only clear sessions if explicitly requested via URL parameter
-    // Remove automatic clearing in preview environment
-    if (urlParams.get('clear_sessions') === 'true') {
-      console.log(`[INDEX ${pageId}] Explicitly requested to clear sessions`);
-      clearAllSessions();
     }
   }, [user, isLoading, pageId]);
+  
+  // Handle the emergency reset
+  const handleEmergencyReset = () => {
+    if (window.confirm('WARNING: This will reset ALL authentication data and may log you out of the application. Continue?')) {
+      setIsResetting(true);
+      
+      // Small delay to allow UI to update
+      setTimeout(() => {
+        try {
+          // Perform the reset
+          const success = emergencyResetAllStorage();
+          setResetSuccess(success);
+          console.log(`[INDEX ${pageId}] Emergency reset completed successfully:`, success);
+        } catch (err) {
+          console.error(`[INDEX ${pageId}] Error during emergency reset:`, err);
+          setResetSuccess(false);
+        } finally {
+          setIsResetting(false);
+        }
+      }, 100);
+    }
+  };
   
   // Use useEffect to handle navigation properly
   useEffect(() => {
@@ -128,16 +134,36 @@ const Index = () => {
   return (
     <Layout>
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <p className="text-lg mb-2">Loading application...</p>
+        <div className="text-center p-6 bg-white rounded-lg shadow-md max-w-md w-full">
+          <p className="text-lg mb-2 font-medium">Loading application...</p>
           <div className="w-12 h-12 border-4 border-spiritless-pink border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="text-sm text-gray-500 mt-2">Please wait while we prepare your experience</p>
-          <button 
-            onClick={() => localStorage.clear()}
-            className="mt-6 text-sm bg-red-100 text-red-600 px-4 py-2 rounded-md hover:bg-red-200"
-          >
-            Clear All Storage (Emergency Reset)
-          </button>
+          <p className="text-sm text-gray-500 mt-2 mb-6">Please wait while we prepare your experience</p>
+          
+          {/* Emergency Reset Section */}
+          <div className="mt-8 border-t pt-4">
+            <p className="text-sm font-medium text-gray-700 mb-2">Authentication Troubleshooting</p>
+            
+            {resetSuccess && (
+              <div className="mb-4 p-2 bg-green-100 text-green-800 rounded-md">
+                Storage successfully cleared. Please refresh the page.
+              </div>
+            )}
+            
+            <button 
+              onClick={handleEmergencyReset}
+              disabled={isResetting}
+              className={`w-full mt-2 text-sm px-4 py-2 rounded-md transition-colors 
+                ${isResetting 
+                  ? 'bg-gray-300 text-gray-600 cursor-not-allowed' 
+                  : 'bg-red-100 text-red-600 hover:bg-red-200'}`}
+            >
+              {isResetting ? 'Clearing Storage...' : 'Emergency Authentication Reset'}
+            </button>
+            
+            <p className="text-xs text-gray-500 mt-2">
+              This will reset all authentication data and may resolve login issues.
+            </p>
+          </div>
         </div>
       </div>
     </Layout>

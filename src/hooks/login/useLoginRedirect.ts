@@ -8,6 +8,10 @@ interface UseLoginRedirectProps {
   pageId: string;
 }
 
+/**
+ * Hook for handling redirects after login authentication
+ * Uses localStorage consistently for all auth-related storage
+ */
 export const useLoginRedirect = ({ user, isLoading, pageId }: UseLoginRedirectProps) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -49,9 +53,11 @@ export const useLoginRedirect = ({ user, isLoading, pageId }: UseLoginRedirectPr
         redirectUrl.searchParams.set('auth_ts', Date.now().toString());
         redirectUrl.searchParams.set('login_page_id', pageId);
         
+        // Clear redirect before navigation to prevent loops
+        localStorage.removeItem('auth_redirect');
+        
         // Small timeout to avoid redirect race conditions
         setTimeout(() => {
-          localStorage.removeItem('auth_redirect');
           window.location.href = redirectUrl.toString();
         }, 100);
       } else {
@@ -77,5 +83,5 @@ export const useLoginRedirect = ({ user, isLoading, pageId }: UseLoginRedirectPr
         navigate('/explore');
       }
     }
-  }, [user, isLoading, navigate, pageId]);
+  }, [user, isLoading, navigate, pageId, location]);
 };

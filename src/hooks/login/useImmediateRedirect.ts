@@ -8,6 +8,10 @@ declare global {
   }
 }
 
+/**
+ * Hook for handling immediate redirects after login
+ * Uses localStorage consistently for all auth-related storage
+ */
 export const useImmediateRedirect = (pageId: string) => {
   useEffect(() => {
     // Log page load with timestamp
@@ -19,14 +23,14 @@ export const useImmediateRedirect = (pageId: string) => {
 
     // Log auth related storage flags
     console.log(`[LOGIN PAGE ${pageId}] Storage state:`, {
-      // localStorage flags for consistency
+      // Auth state flags
       loginSuccess: localStorage.getItem('login_success'),
       loginTimestamp: localStorage.getItem('login_success_timestamp'),
       loginUserType: localStorage.getItem('login_user_type'),
       loginAttemptId: localStorage.getItem('login_attempt_id'),
       bypassAttemptId: localStorage.getItem('bypass_attempt_id'),
       
-      // Local storage flags
+      // User state flags
       authenticated: localStorage.getItem('user_authenticated'),
       userType: localStorage.getItem('user_type'),
       adminBypass: localStorage.getItem('admin_bypass'),
@@ -78,7 +82,7 @@ export const useImmediateRedirect = (pageId: string) => {
     // Also set up an interval to check for changes in localStorage
     // This helps catch async login completions, but with a limit to prevent loops
     let checkCount = 0;
-    const maxChecks = 10;
+    const maxChecks = 5; // Reduced from 10 to 5 to prevent excessive checks
     const intervalId = setInterval(() => {
       if (checkCount < maxChecks) {
         const didRedirect = checkForImmediateRedirect();
@@ -91,7 +95,7 @@ export const useImmediateRedirect = (pageId: string) => {
       } else {
         clearInterval(intervalId);
       }
-    }, 1000); // Check once per second instead of every 500ms
+    }, 1500); // Increased from 1000ms to 1500ms to reduce frequency
     
     return () => {
       clearInterval(intervalId);
