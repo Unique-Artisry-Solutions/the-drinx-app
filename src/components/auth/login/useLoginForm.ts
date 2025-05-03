@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -107,15 +106,15 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
         console.log(`[LOGIN ${loginAttemptId}] Attempting regular login with identifier: ${identifier}`);
         const isEmail = identifier.includes('@');
         
-        // Set login tracking flags before authentication
-        sessionStorage.setItem('login_attempt_id', loginAttemptId);
-        sessionStorage.setItem('login_attempt_timestamp', Date.now().toString());
-        sessionStorage.setItem('login_requested_usertype', userType);
+        // Set login tracking flags in localStorage for consistent access across tabs
+        localStorage.setItem('login_attempt_id', loginAttemptId);
+        localStorage.setItem('login_attempt_timestamp', Date.now().toString());
+        localStorage.setItem('login_requested_usertype', userType);
         
         // Store the auth redirect for later use (after login success)
         const savedRedirect = localStorage.getItem('auth_redirect');
         if (savedRedirect) {
-          sessionStorage.setItem('login_redirect', savedRedirect);
+          localStorage.setItem('login_redirect', savedRedirect);
         }
         
         if (isEmail) {
@@ -167,14 +166,14 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
           }
         }
         
-        // Set login success flags in sessionStorage
-        sessionStorage.setItem('login_success', 'true');
-        sessionStorage.setItem('login_success_timestamp', Date.now().toString());
+        // Set login success flags in localStorage for persistence across tabs
+        localStorage.setItem('login_success', 'true');
+        localStorage.setItem('login_success_timestamp', Date.now().toString());
         
         // Store userType at login time
         const storedUserType = localStorage.getItem('user_type');
-        sessionStorage.setItem('login_user_type', storedUserType || '');
-        console.log(`[LOGIN ${loginAttemptId}] Stored login user type in session: ${storedUserType}`);
+        localStorage.setItem('login_user_type', storedUserType || '');
+        console.log(`[LOGIN ${loginAttemptId}] Stored login user type in localStorage: ${storedUserType}`);
         
         toast({
           title: 'Login successful',
@@ -182,14 +181,14 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
         });
         
         // Get and clear redirect path
-        const redirectPath = sessionStorage.getItem('login_redirect') || 
+        const redirectPath = localStorage.getItem('login_redirect') || 
                              savedRedirect || 
                              (storedUserType === 'promoter' ? '/promoter/dashboard' : 
                               storedUserType === 'establishment' ? '/establishment/dashboard' : '/explore');
                               
         // Clear the saved redirect before performing navigation
         localStorage.removeItem('auth_redirect');
-        sessionStorage.removeItem('login_redirect');
+        localStorage.removeItem('login_redirect');
         
         // Specifically for promoters, handle direct navigation
         if (storedUserType === 'promoter') {
@@ -221,9 +220,9 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
       setFormError(error.message || 'Failed to login');
       
       // Clear login tracking flags on error
-      sessionStorage.removeItem('login_attempt_id');
-      sessionStorage.removeItem('login_attempt_timestamp');
-      sessionStorage.removeItem('login_requested_usertype');
+      localStorage.removeItem('login_attempt_id');
+      localStorage.removeItem('login_attempt_timestamp');
+      localStorage.removeItem('login_requested_usertype');
       
       if (error.message && error.message.includes('Email not verified')) {
         setShowResendVerification(true);

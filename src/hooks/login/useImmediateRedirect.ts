@@ -19,12 +19,12 @@ export const useImmediateRedirect = (pageId: string) => {
 
     // Log auth related storage flags
     console.log(`[LOGIN PAGE ${pageId}] Storage state:`, {
-      // Session storage flags
-      loginSuccess: sessionStorage.getItem('login_success'),
-      loginTimestamp: sessionStorage.getItem('login_success_timestamp'),
-      loginUserType: sessionStorage.getItem('login_user_type'),
-      loginAttemptId: sessionStorage.getItem('login_attempt_id'),
-      bypassAttemptId: sessionStorage.getItem('bypass_attempt_id'),
+      // localStorage flags for consistency
+      loginSuccess: localStorage.getItem('login_success'),
+      loginTimestamp: localStorage.getItem('login_success_timestamp'),
+      loginUserType: localStorage.getItem('login_user_type'),
+      loginAttemptId: localStorage.getItem('login_attempt_id'),
+      bypassAttemptId: localStorage.getItem('bypass_attempt_id'),
       
       // Local storage flags
       authenticated: localStorage.getItem('user_authenticated'),
@@ -41,14 +41,14 @@ export const useImmediateRedirect = (pageId: string) => {
     
     // Check if we need an immediate redirect
     const checkForImmediateRedirect = () => {
-      // If just logged in as promoter (checked via sessionStorage)
-      if (sessionStorage.getItem('login_success') === 'true' && 
-          sessionStorage.getItem('login_user_type') === 'promoter' && 
+      // If just logged in as promoter (checked via localStorage)
+      if (localStorage.getItem('login_success') === 'true' && 
+          localStorage.getItem('login_user_type') === 'promoter' && 
           !window.isLoading) {
         console.log(`[LOGIN PAGE ${pageId}] Detected successful promoter login, redirecting immediately`);
         
         // Clear tracking flags 
-        sessionStorage.removeItem('login_success');
+        localStorage.removeItem('login_success');
         
         // Get redirect path or use default
         const savedRedirect = localStorage.getItem('auth_redirect') || '/promoter/dashboard';
@@ -68,7 +68,7 @@ export const useImmediateRedirect = (pageId: string) => {
     // Run initial check
     checkForImmediateRedirect();
     
-    // Also set up an interval to check for changes in session storage
+    // Also set up an interval to check for changes in localStorage
     // This helps catch async login completions
     const intervalId = setInterval(checkForImmediateRedirect, 500);
     

@@ -1,3 +1,4 @@
+
 import { useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
@@ -89,6 +90,9 @@ export function useSessionRefresh({
           if (!rolesError && roles) {
             console.log('Found active role in database:', roles.role);
             localStorage.setItem('user_type', roles.role);
+            
+            // Store login information in localStorage instead of sessionStorage
+            localStorage.setItem('login_user_type', roles.role);
           }
         } catch (roleError) {
           console.warn('Error fetching active role:', roleError);

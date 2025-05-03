@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { AuthContextType } from './types';
@@ -59,6 +58,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     toast
   });
 
+  // Make window.isLoading property available globally for other components
+  useEffect(() => {
+    window.isLoading = isLoading || actionLoading;
+    
+    return () => {
+      window.isLoading = undefined;
+    };
+  }, [isLoading, actionLoading]);
+
   // Add a special listener for promoter logins
   useEffect(() => {
     // Check if there are URL parameters indicating a recent login
@@ -113,18 +121,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setSession(null);
     setIsEmailVerified(false);
     
-    // Clear all login/bypass tracking from sessionStorage
-    sessionStorage.removeItem('login_success');
-    sessionStorage.removeItem('login_success_timestamp');
-    sessionStorage.removeItem('login_user_type');
-    sessionStorage.removeItem('login_attempt_id');
-    sessionStorage.removeItem('login_attempt_timestamp');
-    sessionStorage.removeItem('login_requested_usertype');
-    sessionStorage.removeItem('login_redirect');
+    // Clear all login/bypass tracking from localStorage
+    localStorage.removeItem('login_success');
+    localStorage.removeItem('login_success_timestamp');
+    localStorage.removeItem('login_user_type');
+    localStorage.removeItem('login_attempt_id');
+    localStorage.removeItem('login_attempt_timestamp');
+    localStorage.removeItem('login_requested_usertype');
+    localStorage.removeItem('login_redirect');
     
-    sessionStorage.removeItem('bypass_attempt_id');
-    sessionStorage.removeItem('bypass_timestamp');
-    sessionStorage.removeItem('bypass_user_type');
+    localStorage.removeItem('bypass_attempt_id');
+    localStorage.removeItem('bypass_timestamp');
+    localStorage.removeItem('bypass_user_type');
     
     // Then call the signOut action which handles backend and localStorage cleanup
     await signOutAction();

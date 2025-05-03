@@ -47,9 +47,10 @@ const Index = () => {
       console.log(`[INDEX ${pageId}] SessionStorage data:`, sessionStorageData);
     }
     
-    // Clear sessions in preview environment to prevent stale data
-    if (isPreviewEnvironment()) {
-      console.log(`[INDEX ${pageId}] Preview environment detected, clearing sessions`);
+    // Only clear sessions if explicitly requested via URL parameter
+    // Remove automatic clearing in preview environment
+    if (urlParams.get('clear_sessions') === 'true') {
+      console.log(`[INDEX ${pageId}] Explicitly requested to clear sessions`);
       clearAllSessions();
     }
   }, [user, isLoading, pageId]);
