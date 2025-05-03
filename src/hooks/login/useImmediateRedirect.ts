@@ -41,36 +41,57 @@ export const useImmediateRedirect = (pageId: string) => {
     
     // Check if we need an immediate redirect
     const checkForImmediateRedirect = () => {
-      // If just logged in as promoter (checked via localStorage)
-      if (localStorage.getItem('login_success') === 'true' && 
-          localStorage.getItem('login_user_type') === 'promoter' && 
-          !window.isLoading) {
-        console.log(`[LOGIN PAGE ${pageId}] Detected successful promoter login, redirecting immediately`);
-        
-        // Clear tracking flags 
-        localStorage.removeItem('login_success');
-        
-        // Get redirect path or use default
-        const savedRedirect = localStorage.getItem('auth_redirect') || '/promoter/dashboard';
-        localStorage.removeItem('auth_redirect');
-        
-        // Create URL with timestamp
-        const redirectUrl = new URL(savedRedirect, window.location.origin);
-        redirectUrl.searchParams.set('redirect_ts', Date.now().toString());
-        redirectUrl.searchParams.set('login_page_id', pageId);
-        
-        console.log(`[LOGIN PAGE ${pageId}] Redirecting to: ${redirectUrl.toString()}`);
-        window.location.href = redirectUrl.toString();
-        return;
+      try {
+        // If just logged in as promoter (checked via localStorage)
+        if (localStorage.getItem('login_success') === 'true' && 
+            localStorage.getItem('login_user_type') === 'promoter') {
+          console.log(`[LOGIN PAGE ${pageId}] Detected successful promoter login, redirecting immediately`);
+          
+          // Clear tracking flags 
+          localStorage.removeItem('login_success');
+          
+          // Get redirect path or use default
+          const savedRedirect = localStorage.getItem('auth_redirect') || '/promoter/dashboard';
+          localStorage.removeItem('auth_redirect');
+          
+          // Create URL with timestamp
+          const redirectUrl = new URL(savedRedirect, window.location.origin);
+          redirectUrl.searchParams.set('redirect_ts', Date.now().toString());
+          redirectUrl.searchParams.set('login_page_id', pageId);
+          
+          console.log(`[LOGIN PAGE ${pageId}] Redirecting to: ${redirectUrl.toString()}`);
+          window.location.href = redirectUrl.toString();
+          return true;
+        }
+        return false;
+      } catch (err) {
+        console.error(`[LOGIN PAGE ${pageId}] Error in redirect check:`, err);
+        return false;
       }
     };
     
-    // Run initial check
-    checkForImmediateRedirect();
+    // Run initial check but don't get stuck in redirect loops
+    if (!window.location.href.includes('redirect_ts=')) {
+      checkForImmediateRedirect();
+    }
     
     // Also set up an interval to check for changes in localStorage
-    // This helps catch async login completions
-    const intervalId = setInterval(checkForImmediateRedirect, 500);
+    // This helps catch async login completions, but with a limit to prevent loops
+    let checkCount = 0;
+    const maxChecks = 10;
+    const intervalId = setInterval(() => {
+      if (checkCount < maxChecks) {
+        const didRedirect = checkForImmediateRedirect();
+        checkCount++;
+        
+        // If we redirected or reached the max checks, clear the interval
+        if (didRedirect || checkCount >= maxChecks) {
+          clearInterval(intervalId);
+        }
+      } else {
+        clearInterval(intervalId);
+      }
+    }, 1000); // Check once per second instead of every 500ms
     
     return () => {
       clearInterval(intervalId);

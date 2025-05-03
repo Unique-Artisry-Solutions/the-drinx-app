@@ -57,6 +57,13 @@ const Index = () => {
   
   // Use useEffect to handle navigation properly
   useEffect(() => {
+    // Check for redirect loop prevention
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('index_ts')) {
+      console.log(`[INDEX ${pageId}] Detected recent redirect to Index, skipping automatic redirect`);
+      return;
+    }
+    
     // Make sure we're not in a loading state
     if (isLoading) {
       console.log(`[INDEX ${pageId}] Auth is still loading, waiting...`);
@@ -104,7 +111,11 @@ const Index = () => {
       const redirectUrl = new URL(redirectPath, window.location.origin);
       redirectUrl.searchParams.set('index_ts', Date.now().toString());
       redirectUrl.searchParams.set('index_id', pageId);
-      window.location.href = redirectUrl.toString();
+      
+      // Add small timeout to avoid race conditions
+      setTimeout(() => {
+        window.location.href = redirectUrl.toString();
+      }, 100);
       return;
     }
     
@@ -121,6 +132,12 @@ const Index = () => {
           <p className="text-lg mb-2">Loading application...</p>
           <div className="w-12 h-12 border-4 border-spiritless-pink border-t-transparent rounded-full animate-spin mx-auto"></div>
           <p className="text-sm text-gray-500 mt-2">Please wait while we prepare your experience</p>
+          <button 
+            onClick={() => localStorage.clear()}
+            className="mt-6 text-sm bg-red-100 text-red-600 px-4 py-2 rounded-md hover:bg-red-200"
+          >
+            Clear All Storage (Emergency Reset)
+          </button>
         </div>
       </div>
     </Layout>
