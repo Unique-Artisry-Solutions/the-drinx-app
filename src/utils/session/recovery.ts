@@ -1,7 +1,6 @@
 
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
-import { ToastAction } from '@/components/ui/toast';
 import { clearAllSessions } from '@/utils/sessionCleaner';
 import { validateSessionState } from './validation';
 import { StuckStateHandler } from './types';
@@ -26,14 +25,10 @@ export const recoverFromStuckState = async (): Promise<boolean> => {
     toast({
       title: "Session reset",
       description: "Your session has been reset. Please sign in again.",
-      action: (
-        <ToastAction 
-          onClick={() => window.location.reload()} 
-          altText="Refresh Now"
-        >
-          Refresh Now
-        </ToastAction>
-      )
+      action: {
+        label: "Refresh Now",
+        onClick: () => window.location.reload()
+      }
     });
     
     // Force a page reload to ensure clean state
@@ -70,14 +65,10 @@ export const handlePotentialStuckState = (
         toast({
           title: "Loading issue detected",
           description: "The application seems to be stuck. Click to refresh.",
-          action: (
-            <ToastAction 
-              onClick={() => window.location.reload()} 
-              altText="Refresh Now"
-            >
-              Refresh Now
-            </ToastAction>
-          ),
+          action: {
+            label: "Refresh Now",
+            onClick: () => window.location.reload()
+          },
           duration: 0, // Won't dismiss automatically
         });
       }
