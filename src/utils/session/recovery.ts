@@ -66,7 +66,7 @@ export const handlePotentialStuckState = (
           title: "Loading issue detected",
           description: "The application seems to be stuck. Click to refresh.",
           action: {
-            label: "Refresh Now",
+            label: "Refresh Now", 
             onClick: () => window.location.reload()
           },
           duration: 0, // Won't dismiss automatically
