@@ -7,6 +7,7 @@ import { clearAllSessions } from '@/utils/sessionCleaner';
 import { validateSessionState } from './validation';
 import { StuckStateHandler } from './types';
 import { DEFAULT_STUCK_TIMEOUT_MS } from './constants';
+import { isValidSession } from './helpers';
 
 /**
  * Recovers from a stuck authentication state with JSX toast

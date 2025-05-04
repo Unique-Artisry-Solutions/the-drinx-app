@@ -2,6 +2,7 @@
 import { supabase } from '@/lib/supabase';
 import { SessionValidationResult } from './types';
 import { SESSION_VALIDATION_KEY, DEFAULT_SESSION_VALIDATION_INTERVAL_MS } from './constants';
+import { isValidSession, getSessionData } from './helpers';
 
 /**
  * Checks if there's a mismatch between localStorage state and Supabase session
@@ -15,29 +16,32 @@ export const validateSessionState = async (): Promise<SessionValidationResult> =
     
     // Directly check Supabase session
     const { data, error } = await supabase.auth.getSession();
-    const session = data?.session;
+    
+    // Use our helper to safely determine if session exists
+    const hasSession = isValidSession(data?.session);
+    const sessionData = getSessionData(data?.session);
     
     // Log state for debugging
     console.log("Session validation:", {
       localStorage: { userAuthenticated, userType, userEmail },
-      supabaseSession: !!session,
-      sessionUserId: session?.user?.id,
-      sessionUserEmail: session?.user?.email
+      supabaseSession: hasSession,
+      sessionUserId: sessionData.userId,
+      sessionUserEmail: sessionData.userEmail
     });
 
     // Set last validation time
     localStorage.setItem(SESSION_VALIDATION_KEY, Date.now().toString());
     
     // Check for actual mismatch conditions
-    const hasMismatch = (userAuthenticated && !session) || 
-                        (!userAuthenticated && session) ||
-                        (userEmail && session?.user?.email && userEmail !== session.user.email);
+    const hasMismatch = (userAuthenticated && !hasSession) || 
+                        (!userAuthenticated && hasSession) ||
+                        (userEmail && sessionData.userEmail && userEmail !== sessionData.userEmail);
 
     return {
       isValid: !hasMismatch && !error,
       hasMismatch,
       hasLocalStorage: userAuthenticated,
-      hasSupabaseSession: Boolean(session) as boolean, // Explicit type assertion to satisfy TypeScript
+      hasSupabaseSession: hasSession, // Now properly typed as boolean
       errorDetails: error ? error.message : undefined
     };
   } catch (error) {
