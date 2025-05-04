@@ -13,6 +13,7 @@ export const useEventMutations = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
+      // Step 1: Create the event
       const { data: eventResponse, error: eventError } = await supabase
         .from('events')
         .insert({
@@ -30,7 +31,8 @@ export const useEventMutations = () => {
 
       if (eventError) throw eventError;
 
-      if (eventData.ticketTypes.length > 0) {
+      // Step 2: Add ticket types if they exist
+      if (eventData.ticketTypes?.length > 0) {
         const { error: ticketError } = await supabase
           .from('event_ticket_types')
           .insert(
@@ -40,34 +42,41 @@ export const useEventMutations = () => {
             }))
           );
 
-        if (ticketError) throw ticketError;
+        if (ticketError) {
+          console.error('Error creating ticket types:', ticketError);
+          // Continue with event creation even if ticket creation fails
+        }
       }
 
-      if (eventData.notificationSchedules && eventData.notificationSchedules.length > 0) {
+      // Step 3: Handle notification schedules if they exist
+      if (eventData.notificationSchedules?.length > 0) {
         for (const schedule of eventData.notificationSchedules) {
-          // Store all notification data in the notifications table
-          const metadata: any = {
-            event_id: eventResponse.id,
-            scheduled_for: schedule.scheduledFor,
-            location_based: !!schedule.locationBased,
-            coordinates: schedule.coordinates || null,
-            target_radius: schedule.targetRadius || null,
-            notification_type: 'event_schedule'
-          };
-          
-          // Create a notification record
-          const { error: notificationError } = await supabase
-            .from('notifications')
-            .insert({
-              recipient_id: user.id,
-              recipient_type: 'promoter',
-              title: schedule.title || `Reminder: ${eventData.name}`,
-              content: schedule.content || `Don't forget: ${eventData.name} is happening soon!`,
-              priority: schedule.priority || 'medium',
-              metadata: metadata
-            });
-
-          if (notificationError) throw notificationError;
+          try {
+            // Store notification data
+            const metadata: any = {
+              event_id: eventResponse.id,
+              scheduled_for: schedule.scheduledFor,
+              location_based: !!schedule.locationBased,
+              coordinates: schedule.coordinates || null,
+              target_radius: schedule.targetRadius || null,
+              notification_type: 'event_schedule'
+            };
+            
+            // Attempt to create a notification record but don't fail if this errors
+            await supabase
+              .from('notifications')
+              .insert({
+                recipient_id: user.id,
+                recipient_type: 'promoter',
+                title: schedule.title || `Reminder: ${eventData.name}`,
+                content: schedule.content || `Don't forget: ${eventData.name} is happening soon!`,
+                priority: schedule.priority || 'medium',
+                metadata: metadata
+              });
+          } catch (notificationError) {
+            console.error('Error creating notification schedule:', notificationError);
+            // Continue with event creation even if notification creation fails
+          }
         }
       }
 
@@ -75,15 +84,12 @@ export const useEventMutations = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
-      toast({
-        title: 'Event created',
-        description: 'Your event has been created successfully.',
-      });
     },
     onError: (error: any) => {
+      console.error('Event creation error:', error);
       toast({
         title: 'Error creating event',
-        description: error.message,
+        description: error.message || 'An unexpected error occurred',
         variant: 'destructive',
       });
     },

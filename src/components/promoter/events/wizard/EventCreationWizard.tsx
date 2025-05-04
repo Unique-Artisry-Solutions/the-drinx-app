@@ -8,8 +8,9 @@ import TicketTypesStep from './TicketTypesStep';
 import PromotionalMaterialsStep from './PromotionalMaterialsStep';
 import NotificationSchedulingStep from './NotificationSchedulingStep';
 import { EventWizardProvider, useEventWizard } from './EventWizardContext';
-import { useEvents } from '@/hooks/events/useEvents';
+import { useEventMutations } from '@/hooks/events/useEventMutations';
 import { useNavigate } from 'react-router-dom';
+import { showToast } from '@/utils/toast/toastAdapter';
 
 const steps = [
   { id: 'basic', label: 'Event Details' },
@@ -22,7 +23,7 @@ const steps = [
 const EventCreationWizardContent: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const { formData, validateStep } = useEventWizard();
-  const { createEvent } = useEvents();
+  const { createEvent } = useEventMutations();
   const navigate = useNavigate();
   
   const handleNext = () => {
@@ -37,10 +38,33 @@ const EventCreationWizardContent: React.FC = () => {
   
   const handleCreateEvent = async () => {
     try {
-      await createEvent.mutateAsync(formData);
+      // Create a copy of the form data without notifications if needed
+      const eventData = {
+        ...formData,
+        // Remove notifications if they're not properly formed
+        notificationSchedules: formData.notificationSchedules?.filter(n => 
+          n.title && n.content && n.scheduledFor
+        )
+      };
+      
+      await createEvent.mutateAsync(eventData);
+      showToast(
+        'Event Created',
+        'Your event has been created successfully.',
+        {
+          label: 'View Events',
+          onClick: () => navigate('/promoter/events')
+        }
+      );
       navigate('/promoter/events');
     } catch (error) {
       console.error('Error creating event:', error);
+      showToast(
+        'Error',
+        'There was an issue creating your event. Please try again.',
+        undefined,
+        { variant: 'destructive' }
+      );
     }
   };
   

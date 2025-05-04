@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { CalendarIcon, MapPin, Plus, Trash } from 'lucide-react';
+import { CalendarIcon, MapPin, Plus, Trash, AlertTriangle } from 'lucide-react';
 import { useEventWizard } from './EventWizardContext';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import { Calendar } from '@/components/ui/calendar';
@@ -14,6 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { format } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
 import { Textarea } from '@/components/ui/textarea';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const NotificationSchedulingStep = () => {
   const { formData, updateFormData } = useEventWizard();
@@ -72,6 +73,15 @@ const NotificationSchedulingStep = () => {
           Set up notifications to remind attendees about your event
         </p>
       </div>
+      
+      <Alert variant="warning" className="mb-4">
+        <AlertTriangle className="h-4 w-4" />
+        <AlertTitle>Note</AlertTitle>
+        <AlertDescription>
+          Notifications are currently in beta. Some features may not work as expected. 
+          We recommend keeping your notifications simple.
+        </AlertDescription>
+      </Alert>
       
       <div className="space-y-4">
         {notificationSchedules.length === 0 ? (
