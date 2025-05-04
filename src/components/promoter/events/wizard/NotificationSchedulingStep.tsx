@@ -74,7 +74,7 @@ const NotificationSchedulingStep = () => {
         </p>
       </div>
       
-      <Alert variant="warning" className="mb-4">
+      <Alert variant="default" className="mb-4 border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-400 dark:bg-amber-900/20 dark:text-amber-400">
         <AlertTriangle className="h-4 w-4" />
         <AlertTitle>Note</AlertTitle>
         <AlertDescription>
