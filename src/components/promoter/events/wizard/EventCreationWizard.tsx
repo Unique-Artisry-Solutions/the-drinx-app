@@ -10,7 +10,7 @@ import NotificationSchedulingStep from './NotificationSchedulingStep';
 import { EventWizardProvider, useEventWizard } from './EventWizardContext';
 import { useEventMutations } from '@/hooks/events/useEventMutations';
 import { useNavigate } from 'react-router-dom';
-import { showToast } from '@/utils/toast/toastAdapter';
+import { toast } from '@/hooks/use-toast';
 
 const steps = [
   { id: 'basic', label: 'Event Details' },
@@ -48,23 +48,29 @@ const EventCreationWizardContent: React.FC = () => {
       };
       
       await createEvent.mutateAsync(eventData);
-      showToast(
-        'Event Created',
-        'Your event has been created successfully.',
-        {
-          label: 'View Events',
-          onClick: () => navigate('/promoter/events')
-        }
-      );
+      
+      toast({
+        title: 'Event Created',
+        description: 'Your event has been created successfully.',
+        action: (
+          <Button 
+            variant="outline" 
+            onClick={() => navigate('/promoter/events')}
+          >
+            View Events
+          </Button>
+        )
+      });
+      
       navigate('/promoter/events');
     } catch (error) {
       console.error('Error creating event:', error);
-      showToast(
-        'Error',
-        'There was an issue creating your event. Please try again.',
-        undefined,
-        { variant: 'destructive' }
-      );
+      
+      toast({
+        title: 'Error',
+        description: 'There was an issue creating your event. Please try again.',
+        variant: 'destructive'
+      });
     }
   };
   

@@ -2,6 +2,7 @@
 import { toast } from '@/hooks/use-toast';
 import { ToastActionElement } from '@/components/ui/toast';
 import { ButtonProps } from '@/components/ui/button';
+import { ReactElement } from 'react';
 
 /**
  * Helper to create toast actions for both JS and JSX contexts
@@ -23,17 +24,20 @@ export const createToast = (
   options?: { duration?: number; variant?: 'default' | 'destructive' }
 ) => {
   // In a .ts file, don't return JSX for the action
-  const toastConfig = {
+  const toastConfig: {
+    title: string;
+    description: string;
+    action?: ToastActionElement;
+    duration?: number;
+    variant?: 'default' | 'destructive';
+  } = {
     title,
     description,
     ...(options || {}),
   };
 
-  if (actionConfig) {
-    // The action property will be properly interpreted as a JSX element
-    // when used in recovery.tsx
-    toastConfig['action'] = actionConfig;
-  }
+  // We don't actually use this configuration directly in a TS file
+  // This is just a placeholder to be used in code that can render JSX
 
   return toastConfig;
 };
@@ -47,34 +51,50 @@ export const showToast = (
   actionConfig?: ToastActionConfig,
   options?: { duration?: number; variant?: 'default' | 'destructive' }
 ) => {
-  return toast(createToast(title, description, actionConfig, options));
+  // In a TS context, we can't directly create JSX, so we pass the config
+  // and let the toast function handle it internally
+  const toastConfig: {
+    title: string;
+    description: string;
+    duration?: number;
+    variant?: 'default' | 'destructive';
+  } = {
+    title,
+    description,
+    ...(options || {}),
+  };
+  
+  // Return the toast instance
+  return toast(toastConfig);
 };
 
 /**
  * Shows a recovery toast for session issues
  */
 export const showRecoveryToast = () => {
-  return showToast(
-    "Session reset",
-    "Your session has been reset. Please sign in again.",
-    {
-      label: "Refresh Now",
-      onClick: () => window.location.reload()
-    }
-  );
+  return toast({
+    title: "Session reset",
+    description: "Your session has been reset. Please sign in again.",
+    action: (
+      <ToastActionElement altText="Refresh Now" onClick={() => window.location.reload()}>
+        Refresh Now
+      </ToastActionElement>
+    )
+  });
 };
 
 /**
  * Shows a stuck state toast for loading issues
  */
 export const showStuckStateToast = () => {
-  return showToast(
-    "Loading issue detected",
-    "The application seems to be stuck. Click to refresh.",
-    {
-      label: "Refresh Now",
-      onClick: () => window.location.reload()
-    },
-    { duration: 0 }
-  );
+  return toast({
+    title: "Loading issue detected",
+    description: "The application seems to be stuck. Click to refresh.",
+    action: (
+      <ToastActionElement altText="Refresh Now" onClick={() => window.location.reload()}>
+        Refresh Now
+      </ToastActionElement>
+    ),
+    duration: 0
+  });
 };
