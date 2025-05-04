@@ -42,4 +42,3 @@ export const syncSessionState = async (): Promise<boolean> => {
     return false; // Failed to sync
   }
 };
-

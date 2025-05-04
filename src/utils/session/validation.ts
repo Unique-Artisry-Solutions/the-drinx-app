@@ -1,7 +1,7 @@
 
 import { supabase } from '@/lib/supabase';
 import { SessionValidationResult } from './types';
-import { SESSION_VALIDATION_KEY } from './constants';
+import { SESSION_VALIDATION_KEY, DEFAULT_SESSION_VALIDATION_INTERVAL_MS } from './constants';
 
 /**
  * Checks if there's a mismatch between localStorage state and Supabase session
@@ -61,9 +61,5 @@ export const isSessionValidationDue = (): boolean => {
   const lastValidationTime = parseInt(lastValidation, 10);
   const timeSinceValidation = Date.now() - lastValidationTime;
   
-  // Import from constants
-  const validationInterval = 1000 * 60 * 30; // 30 minutes
-  
-  return timeSinceValidation > validationInterval;
+  return timeSinceValidation > DEFAULT_SESSION_VALIDATION_INTERVAL_MS;
 };
-

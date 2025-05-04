@@ -19,4 +19,3 @@ export interface SessionRecoveryOptions {
 export interface StuckStateHandler {
   cancel: () => void;
 }
-
