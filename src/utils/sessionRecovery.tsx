@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
 import { clearAllSessions } from '@/utils/sessionCleaner';
@@ -117,6 +116,14 @@ export const recoverFromStuckState = async (): Promise<boolean> => {
     toast({
       title: "Session reset",
       description: "Your session has been reset. Please sign in again.",
+      action: (
+        <ToastAction 
+          onClick={() => window.location.reload()} 
+          altText="Refresh Now"
+        >
+          Refresh Now
+        </ToastAction>
+      )
     });
     
     // Force a page reload to ensure clean state
