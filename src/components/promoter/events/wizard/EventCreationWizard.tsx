@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -10,7 +9,7 @@ import NotificationSchedulingStep from './NotificationSchedulingStep';
 import { EventWizardProvider, useEventWizard } from './EventWizardContext';
 import { useEventMutations } from '@/hooks/events/useEventMutations';
 import { useNavigate } from 'react-router-dom';
-import { toast } from '@/hooks/use-toast';
+import { showToast } from '@/utils/toast/toastAdapter';
 
 const steps = [
   { id: 'basic', label: 'Event Details' },
@@ -49,28 +48,25 @@ const EventCreationWizardContent: React.FC = () => {
       
       await createEvent.mutateAsync(eventData);
       
-      toast({
-        title: 'Event Created',
-        description: 'Your event has been created successfully.',
-        action: (
-          <Button 
-            variant="outline" 
-            onClick={() => navigate('/promoter/events')}
-          >
-            View Events
-          </Button>
-        )
-      });
+      showToast(
+        'Event Created',
+        'Your event has been created successfully.',
+        {
+          label: 'View Events',
+          onClick: () => navigate('/promoter/events')
+        }
+      );
       
       navigate('/promoter/events');
     } catch (error) {
       console.error('Error creating event:', error);
       
-      toast({
-        title: 'Error',
-        description: 'There was an issue creating your event. Please try again.',
-        variant: 'destructive'
-      });
+      showToast(
+        'Error',
+        'There was an issue creating your event. Please try again.',
+        undefined,
+        { variant: 'destructive' }
+      );
     }
   };
   

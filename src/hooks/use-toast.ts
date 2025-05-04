@@ -14,7 +14,11 @@ type ToasterToast = ToastProps & {
   id: string;
   title?: React.ReactNode;
   description?: React.ReactNode;
-  action?: ToastActionElement;
+  action?: ToastActionElement | {
+    label: string;
+    onClick: () => void;
+    altText?: string;
+  };
 };
 
 const actionTypes = {

@@ -75,11 +75,11 @@ export const showRecoveryToast = () => {
   return toast({
     title: "Session reset",
     description: "Your session has been reset. Please sign in again.",
-    action: (
-      <ToastActionElement altText="Refresh Now" onClick={() => window.location.reload()}>
-        Refresh Now
-      </ToastActionElement>
-    )
+    action: {
+      label: "Refresh Now",
+      onClick: () => window.location.reload(),
+      altText: "Refresh Now"
+    }
   });
 };
 
@@ -90,11 +90,11 @@ export const showStuckStateToast = () => {
   return toast({
     title: "Loading issue detected",
     description: "The application seems to be stuck. Click to refresh.",
-    action: (
-      <ToastActionElement altText="Refresh Now" onClick={() => window.location.reload()}>
-        Refresh Now
-      </ToastActionElement>
-    ),
+    action: {
+      label: "Refresh Now",
+      onClick: () => window.location.reload(),
+      altText: "Refresh Now"
+    },
     duration: 0
   });
 };

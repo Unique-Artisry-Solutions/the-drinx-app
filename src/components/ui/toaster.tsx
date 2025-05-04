@@ -7,6 +7,7 @@ import {
   ToastProvider,
   ToastTitle,
   ToastViewport,
+  ToastAction,
 } from "@/components/ui/toast"
 
 export function Toaster() {
@@ -15,6 +16,19 @@ export function Toaster() {
   return (
     <ToastProvider>
       {toasts.map(function ({ id, title, description, action, className, ...props }) {
+        // Handle both JSX elements and action config objects
+        let actionElement = action;
+        
+        // If action is a configuration object instead of a JSX element
+        if (action && typeof action === 'object' && 'label' in action) {
+          const { label, onClick, altText } = action;
+          actionElement = (
+            <ToastAction altText={altText || label} onClick={onClick}>
+              {label}
+            </ToastAction>
+          );
+        }
+        
         return (
           <Toast key={id} className={className} {...props}>
             <div className="grid gap-1">
@@ -23,7 +37,7 @@ export function Toaster() {
                 <ToastDescription>{description}</ToastDescription>
               )}
             </div>
-            {action}
+            {actionElement}
             <ToastClose />
           </Toast>
         )
