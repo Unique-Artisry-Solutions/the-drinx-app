@@ -37,7 +37,7 @@ export const validateSessionState = async (): Promise<SessionValidationResult> =
       isValid: !hasMismatch && !error,
       hasMismatch,
       hasLocalStorage: userAuthenticated,
-      hasSupabaseSession: !!session,
+      hasSupabaseSession: Boolean(session), // Fixed: Use Boolean() to ensure proper type conversion
       errorDetails: error ? error.message : undefined
     };
   } catch (error) {
