@@ -1,3 +1,4 @@
+
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
 import { clearAllSessions } from '@/utils/sessionCleaner';
@@ -65,12 +66,14 @@ export const validateSessionState = async (): Promise<{
  */
 export const syncSessionState = async (): Promise<boolean> => {
   try {
+    // Use a typed destructuring to ensure we're handling the session properly
     const { data, error } = await supabase.auth.getSession();
     
     if (error) {
       throw error;
     }
     
+    // Extract session from data to make the code clearer
     const session = data.session;
     
     if (session) {
