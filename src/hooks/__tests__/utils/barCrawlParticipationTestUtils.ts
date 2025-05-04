@@ -51,13 +51,15 @@ export function setupMocks(authUser = mockUser) {
     } : null,
     isLoading: false,
     isEmailVerified: true,
-    authStable: true, // Add the missing property
+    authStable: true,
+    authError: null,
     signIn: vi.fn().mockResolvedValue({}),
     signUp: vi.fn().mockResolvedValue({}),
     signOut: vi.fn().mockResolvedValue({}),
     updateProfile: vi.fn().mockResolvedValue({}),
     refreshSession: vi.fn().mockResolvedValue({ isEmailVerified: true }),
-    resetPassword: vi.fn().mockResolvedValue({})
+    resetPassword: vi.fn().mockResolvedValue({}),
+    recoverAuthState: vi.fn().mockResolvedValue({}), // Add the missing property
   };
   
   // Setup auth mock with the complete context

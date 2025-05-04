@@ -2,6 +2,7 @@
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
 import { clearAllSessions } from '@/utils/sessionCleaner';
+import { ToastAction } from '@/components/ui/toast';
 
 const SESSION_VALIDATION_KEY = 'last_session_validation';
 const MAX_SESSION_AGE_MS = 1000 * 60 * 60 * 24; // 24 hours
@@ -152,10 +153,14 @@ export const handlePotentialStuckState = (
         toast({
           title: "Loading issue detected",
           description: "The application seems to be stuck. Click to refresh.",
-          action: {
-            label: "Refresh Now",
-            onClick: () => window.location.reload()
-          },
+          action: (
+            <ToastAction 
+              onClick={() => window.location.reload()} 
+              altText="Refresh Now"
+            >
+              Refresh Now
+            </ToastAction>
+          ),
           duration: 0, // Won't dismiss automatically
         });
       }

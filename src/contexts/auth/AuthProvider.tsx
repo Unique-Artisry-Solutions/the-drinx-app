@@ -12,6 +12,7 @@ import {
   handlePotentialStuckState,
   isSessionValidationDue 
 } from '@/utils/sessionRecovery';
+import { ToastAction } from '@/components/ui/toast';
 
 // Create a new utility function for stable session handling
 const AUTH_INTENT_KEY = 'auth_intent';
@@ -226,10 +227,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             title: 'Authentication Error',
             description: 'Failed to initialize authentication. Please try refreshing the page.',
             variant: 'destructive',
-            action: {
-              label: 'Refresh',
-              onClick: () => window.location.reload(),
-            },
+            action: (
+              <ToastAction 
+                onClick={() => window.location.reload()}
+                altText="Refresh"
+              >
+                Refresh
+              </ToastAction>
+            ),
           });
         }
       }
