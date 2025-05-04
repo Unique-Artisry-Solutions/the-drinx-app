@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
 import { clearAllSessions } from '@/utils/sessionCleaner';
@@ -66,11 +65,13 @@ export const validateSessionState = async (): Promise<{
  */
 export const syncSessionState = async (): Promise<boolean> => {
   try {
-    const { data: { session }, error } = await supabase.auth.getSession();
+    const { data, error } = await supabase.auth.getSession();
     
     if (error) {
       throw error;
     }
+    
+    const session = data.session;
     
     if (session) {
       // We have a valid Supabase session, update localStorage
@@ -83,18 +84,18 @@ export const syncSessionState = async (): Promise<boolean> => {
       }
       
       console.log("Session synced from Supabase to localStorage");
-      return true;
+      return true; // Successfully synced
     } else {
       // No Supabase session, clear localStorage auth data
       clearAllSessions();
       console.log("No session found, localStorage cleared");
-      return false;
+      return false; // No session to sync
     }
   } catch (error) {
     console.error("Error syncing session state:", error);
     // On error, safer to clear sessions to avoid stuck state
     clearAllSessions();
-    return false;
+    return false; // Failed to sync
   }
 };
 
