@@ -14,13 +14,14 @@ import { useToast } from '@/hooks/use-toast';
 const EventManagementPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all');
-  const { events, isLoading, fetchPublishedEvents } = useEvents();
+  const { events, isLoading, fetchEvents } = useEvents();
   const [showLocationFilter, setShowLocationFilter] = useState(false);
   const [userLocation, setUserLocation] = useState<{latitude: number, longitude: number} | null>(null);
   const [radiusMiles, setRadiusMiles] = useState<number>(10);
   const [isLocating, setIsLocating] = useState(false);
   const { toast } = useToast();
   
+  // Filter events based on search term and active tab
   const filteredEvents = events.filter(event => {
     const eventName = event.name?.toLowerCase() || '';
     const searchLower = searchTerm.toLowerCase();
@@ -30,6 +31,25 @@ const EventManagementPage = () => {
     if (activeTab === 'all') return matchesSearch;
     return matchesSearch && event.status === activeTab;
   });
+
+  // Handle tab changes to fetch appropriate events
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    
+    // Apply status filter based on tab
+    const statusFilter = value !== 'all' ? value : undefined;
+    
+    // If we have a location filter active, pass it along
+    if (userLocation) {
+      const locationFilter: LocationFilter = {
+        ...userLocation,
+        radiusMiles: radiusMiles
+      };
+      fetchEvents(locationFilter, statusFilter);
+    } else {
+      fetchEvents(undefined, statusFilter);
+    }
+  };
 
   // Get user location and filter events
   const handleLocationFilter = () => {
@@ -50,7 +70,9 @@ const EventManagementPage = () => {
             radiusMiles: radiusMiles
           };
           
-          fetchPublishedEvents(locationFilter);
+          // Pass current tab status if not 'all'
+          const statusFilter = activeTab !== 'all' ? activeTab : undefined;
+          fetchEvents(locationFilter, statusFilter);
           setIsLocating(false);
         },
         (error) => {
@@ -80,9 +102,11 @@ const EventManagementPage = () => {
         ...userLocation,
         radiusMiles: radiusMiles
       };
-      fetchPublishedEvents(locationFilter);
+      // Pass current tab status if not 'all'
+      const statusFilter = activeTab !== 'all' ? activeTab : undefined;
+      fetchEvents(locationFilter, statusFilter);
     }
-  }, [radiusMiles, userLocation, fetchPublishedEvents]);
+  }, [radiusMiles, userLocation, fetchEvents, activeTab]);
 
   return (
     <Layout>
@@ -160,7 +184,7 @@ const EventManagementPage = () => {
             </div>
           )}
           
-          <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
+          <Tabs defaultValue="all" value={activeTab} onValueChange={handleTabChange}>
             <TabsList className="mb-6">
               <TabsTrigger value="all">All Events</TabsTrigger>
               <TabsTrigger value="published">Active</TabsTrigger>

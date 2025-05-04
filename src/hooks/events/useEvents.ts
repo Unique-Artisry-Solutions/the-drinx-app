@@ -19,13 +19,13 @@ export const useEvents = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const fetchPublishedEvents = useCallback(async (locationFilter?: LocationFilter): Promise<EventType[]> => {
+  const fetchEvents = useCallback(async (locationFilter?: LocationFilter, statusFilter?: string): Promise<EventType[]> => {
     setIsLoading(true);
     setError(null);
 
     try {
-      // First fetch events joined with venues to get location data
-      const { data, error } = await supabase
+      // Build query for events joined with venues to get location data
+      let query = supabase
         .from('events')
         .select(`
           id,
@@ -54,8 +54,14 @@ export const useEvents = () => {
             latitude,
             longitude
           )
-        `)
-        .eq('status', 'published');
+        `);
+      
+      // Apply status filter if provided
+      if (statusFilter && statusFilter !== 'all') {
+        query = query.eq('status', statusFilter);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       if (!data) return [];
@@ -139,10 +145,15 @@ export const useEvents = () => {
     }
   }, [toast]);
 
-  // Fetch events on component mount without location filter
+  // Fetch published events for backward compatibility
+  const fetchPublishedEvents = useCallback(async (locationFilter?: LocationFilter): Promise<EventType[]> => {
+    return fetchEvents(locationFilter, 'published');
+  }, [fetchEvents]);
+
+  // Fetch events on component mount - get all events by default
   useEffect(() => {
-    fetchPublishedEvents();
-  }, [fetchPublishedEvents]);
+    fetchEvents();
+  }, [fetchEvents]);
 
   // Create event mutation
   const createEvent = useMutation({
@@ -228,6 +239,7 @@ export const useEvents = () => {
 
   return {
     events,
+    fetchEvents,
     fetchPublishedEvents,
     isLoading,
     error,
