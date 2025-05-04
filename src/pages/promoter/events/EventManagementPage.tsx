@@ -13,7 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 
 const EventManagementPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'draft' | 'published' | 'cancelled' | 'completed'>('all');
   const { events, isLoading, fetchEvents } = useEvents();
   const [showLocationFilter, setShowLocationFilter] = useState(false);
   const [userLocation, setUserLocation] = useState<{latitude: number, longitude: number} | null>(null);
@@ -33,7 +33,7 @@ const EventManagementPage = () => {
   });
 
   // Handle tab changes to fetch appropriate events
-  const handleTabChange = (value: string) => {
+  const handleTabChange = (value: 'all' | 'draft' | 'published' | 'cancelled' | 'completed') => {
     setActiveTab(value);
     
     // Apply status filter based on tab

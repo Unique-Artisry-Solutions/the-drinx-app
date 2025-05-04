@@ -19,7 +19,7 @@ export const useEvents = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const fetchEvents = useCallback(async (locationFilter?: LocationFilter, statusFilter?: string): Promise<EventType[]> => {
+  const fetchEvents = useCallback(async (locationFilter?: LocationFilter, statusFilter?: 'draft' | 'published' | 'cancelled' | 'completed' | 'all'): Promise<EventType[]> => {
     setIsLoading(true);
     setError(null);
 
