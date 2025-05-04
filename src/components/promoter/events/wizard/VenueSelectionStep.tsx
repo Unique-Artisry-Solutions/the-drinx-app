@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useEventWizard } from './EventWizardContext';
 import { Card, CardContent } from '@/components/ui/card';
@@ -12,21 +13,21 @@ type Venue = {
   address: string;
 };
 
-// Mock data - would be replaced with actual API calls
+// Mock data with proper UUID format
 const mockVenues: Venue[] = [{
-  id: '1',
+  id: '123e4567-e89b-12d3-a456-426614174000',
   name: 'The Purple Lounge',
   address: '123 Main St, City'
 }, {
-  id: '2',
+  id: '223e4567-e89b-12d3-a456-426614174001',
   name: 'Skybar',
   address: '456 Park Ave, City'
 }, {
-  id: '3',
+  id: '323e4567-e89b-12d3-a456-426614174002',
   name: 'Ocean View',
   address: '789 Beach Rd, Coast City'
 }, {
-  id: '4',
+  id: '423e4567-e89b-12d3-a456-426614174003',
   name: 'The Rooftop',
   address: '101 High St, Downtown'
 }];
