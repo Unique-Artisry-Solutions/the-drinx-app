@@ -9,10 +9,10 @@ import { StuckStateHandler } from './types';
 import { DEFAULT_STUCK_TIMEOUT_MS } from './constants';
 
 /**
- * Recovers from a stuck authentication state
+ * Recovers from a stuck authentication state with JSX toast
  */
-export const recoverFromStuckState = async (): Promise<boolean> => {
-  console.log("Attempting to recover from stuck auth state");
+export const recoverFromStuckStateJsx = async (): Promise<boolean> => {
+  console.log("Attempting to recover from stuck auth state (JSX version)");
   
   try {
     // First try to sign out globally to clear any problematic sessions
@@ -50,15 +50,15 @@ export const recoverFromStuckState = async (): Promise<boolean> => {
 };
 
 /**
- * Handles a potential stuck loading state with optional autoRecovery
+ * Handles a potential stuck loading state with optional autoRecovery (JSX version)
  * @param timeoutMs - Time in ms before considering the app stuck (default: 8 seconds)
  * @param autoRecovery - Whether to attempt automatic recovery
  */
-export const handlePotentialStuckState = (
+export const handlePotentialStuckStateJsx = (
   timeoutMs = DEFAULT_STUCK_TIMEOUT_MS, 
   autoRecovery = false
 ): StuckStateHandler => {
-  console.log(`Setting stuck state detection (${timeoutMs}ms timeout)`);
+  console.log(`Setting stuck state detection (${timeoutMs}ms timeout) - JSX version`);
   
   const timeoutId = setTimeout(async () => {
     const validationResult = await validateSessionState();
@@ -66,7 +66,7 @@ export const handlePotentialStuckState = (
     
     if (validationResult.hasMismatch || !validationResult.isValid) {
       if (autoRecovery) {
-        await recoverFromStuckState();
+        await recoverFromStuckStateJsx();
       } else {
         toast({
           title: "Loading issue detected",
@@ -92,3 +92,6 @@ export const handlePotentialStuckState = (
     }
   };
 };
+
+// Re-export the non-JSX functions as the primary ones for backward compatibility
+export { recoverFromStuckState, handlePotentialStuckState } from './recovery';

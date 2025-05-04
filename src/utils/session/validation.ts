@@ -14,7 +14,8 @@ export const validateSessionState = async (): Promise<SessionValidationResult> =
     const userEmail = localStorage.getItem('user_email');
     
     // Directly check Supabase session
-    const { data: { session }, error } = await supabase.auth.getSession();
+    const { data, error } = await supabase.auth.getSession();
+    const session = data?.session;
     
     // Log state for debugging
     console.log("Session validation:", {

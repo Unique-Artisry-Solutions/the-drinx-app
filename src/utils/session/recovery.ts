@@ -1,10 +1,10 @@
 
 import { supabase } from '@/lib/supabase';
-import { toast } from '@/hooks/use-toast';
 import { clearAllSessions } from '@/utils/sessionCleaner';
 import { validateSessionState } from './validation';
 import { StuckStateHandler } from './types';
 import { DEFAULT_STUCK_TIMEOUT_MS } from './constants';
+import { showRecoveryToast, showStuckStateToast } from '@/utils/toast/toastAdapter';
 
 /**
  * Recovers from a stuck authentication state
@@ -22,14 +22,8 @@ export const recoverFromStuckState = async (): Promise<boolean> => {
     // Clear the Supabase storage item explicitly
     localStorage.removeItem('spiritless-auth-storage');
     
-    toast({
-      title: "Session reset",
-      description: "Your session has been reset. Please sign in again.",
-      action: {
-        label: "Refresh Now",
-        onClick: () => window.location.reload()
-      }
-    });
+    // Show a toast notification using our adapter
+    showRecoveryToast();
     
     // Force a page reload to ensure clean state
     window.location.href = '/landing';
@@ -62,15 +56,8 @@ export const handlePotentialStuckState = (
       if (autoRecovery) {
         await recoverFromStuckState();
       } else {
-        toast({
-          title: "Loading issue detected",
-          description: "The application seems to be stuck. Click to refresh.",
-          action: {
-            label: "Refresh Now", 
-            onClick: () => window.location.reload()
-          },
-          duration: 0, // Won't dismiss automatically
-        });
+        // Show a stuck state toast using our adapter
+        showStuckStateToast();
       }
     }
   }, timeoutMs);
