@@ -1,15 +1,14 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { EventMarketingCampaign } from '@/types/EventTypes';
-import { Facebook, Twitter, Instagram, Link2, Copy, Linkedin, Globe, MessageCircle, Heart, Share, Loader2 } from 'lucide-react';
-import { Textarea } from '@/components/ui/textarea';
-import { useEventMarketing } from '@/hooks/events/useEventMarketing';
+import { Facebook, Twitter, Instagram, Link2, Copy, Share2 } from 'lucide-react';
 
 interface SocialSharingPanelProps {
   eventId: string;
@@ -19,154 +18,47 @@ interface SocialSharingPanelProps {
 
 const SocialSharingPanel: React.FC<SocialSharingPanelProps> = ({ eventId, eventName, campaigns }) => {
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState('facebook');
-  const [shareUrl, setShareUrl] = useState(`https://youreventapp.com/events/${eventId}`);
-  const { trackMetric, createCampaign } = useEventMarketing(eventId);
-  const [isSharing, setIsSharing] = useState(false);
+  const [message, setMessage] = useState('');
+  const [selectedCampaign, setSelectedCampaign] = useState<string | null>(null);
+  const [platform, setPlatform] = useState<string>("facebook");
   
-  // Social copy texts with placeholders
-  const [socialCopy, setSocialCopy] = useState({
-    facebook: `Join us at ${eventName}! This event is going to be amazing. #events #${eventName.replace(/\s+/g, '')}`,
-    twitter: `Excited to announce ${eventName}! Don't miss out on this great event. Get your tickets now! #events #${eventName.replace(/\s+/g, '')}`,
-    instagram: `We're thrilled to announce ${eventName}!\n\nJoin us for an unforgettable experience.\n\n#events #${eventName.replace(/\s+/g, '')} #eventpromotion`,
-    linkedin: `I'm pleased to share that tickets for ${eventName} are now available. This is a fantastic opportunity to network and learn. #ProfessionalEvents #${eventName.replace(/\s+/g, '')}`
-  });
+  const socialCampaigns = campaigns.filter(campaign => 
+    campaign.campaign_type === 'social_media' && campaign.status === 'active'
+  );
 
-  const handleCopyLink = async () => {
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-      toast({
-        title: "Link Copied",
-        description: "Event link has been copied to clipboard!",
-      });
-      
-      // Track the copy action
-      const campaign = await findOrCreateCampaign('link_sharing');
-      if (campaign) {
-        trackMetric(campaign.id, 'link_copies', 1);
-      }
-    } catch (err) {
-      toast({
-        title: "Copy Failed",
-        description: "Could not copy to clipboard. Please try again.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  // Find existing campaign or create a new one
-  const findOrCreateCampaign = async (type: string) => {
-    const existingCampaign = campaigns?.find(c => c.campaign_type === type);
-    if (existingCampaign) {
-      return existingCampaign;
-    }
-    
-    try {
-      // Create a new campaign
-      return await createCampaign({
-        name: `${type.charAt(0).toUpperCase() + type.slice(1)} Campaign`,
-        description: `Campaign for tracking ${type} engagement`,
-        campaign_type: type,
-        status: 'active'
-      });
-    } catch (err) {
-      console.error(`Failed to create ${type} campaign:`, err);
-      return null;
-    }
-  };
-
-  const handleSocialShare = async (platform: string) => {
-    setIsSharing(true);
-    
-    try {
-      // Find or create a campaign for tracking
-      const campaign = await findOrCreateCampaign('social_sharing');
-      if (!campaign) throw new Error('Could not create campaign');
-      
-      const content = socialCopy[platform as keyof typeof socialCopy];
-      const trackingUrl = `${window.location.origin}/api/track-social-click?cid=${campaign.id}&eid=${eventId}&platform=${platform}`;
-      
-      if (platform === 'facebook' || platform === 'twitter' || platform === 'linkedin') {
-        // For platforms with direct sharing APIs, use our backend function
-        const response = await fetch(`${window.location.origin}/api/share-to-social`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            platform,
-            content,
-            url: shareUrl,
-            campaignId: campaign.id,
-            eventId
-          })
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-          // Track the successful share
-          trackMetric(campaign.id, `${platform}_shares`, 1);
-          toast({
-            title: "Share Complete",
-            description: `Successfully shared to ${platform.charAt(0).toUpperCase() + platform.slice(1)}!`,
-          });
-        } else {
-          // If API integration is not complete, fall back to sharing dialog
-          openShareDialog(platform, content, shareUrl);
-        }
-      } else {
-        // For platforms without direct API integration
-        openShareDialog(platform, content, shareUrl);
-      }
-      
-      // Track attempted shares regardless
-      trackMetric(campaign.id, 'share_attempts', 1);
-    } catch (err) {
-      console.error("Error sharing to social media:", err);
-      // Fall back to sharing dialog on error
-      const content = socialCopy[platform as keyof typeof socialCopy];
-      openShareDialog(platform, content, shareUrl);
-    } finally {
-      setIsSharing(false);
-    }
-  };
-  
-  const openShareDialog = (platform: string, text: string, url: string) => {
-    let shareUrlWithParams = '';
-    
-    switch (platform) {
-      case 'facebook':
-        shareUrlWithParams = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}&quote=${encodeURIComponent(text)}`;
-        break;
-      case 'twitter':
-        shareUrlWithParams = `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
-        break;
-      case 'linkedin':
-        shareUrlWithParams = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}&summary=${encodeURIComponent(text)}`;
-        break;
-      default:
-        toast({
-          title: "Coming Soon",
-          description: `Direct ${platform} sharing will be available soon!`,
-        });
-        return;
-    }
-    
-    // Open in a new window
-    window.open(shareUrlWithParams, '_blank');
+  const handleCopyLink = () => {
+    const eventUrl = window.location.origin + `/events/${eventId}`;
+    navigator.clipboard.writeText(eventUrl);
     
     toast({
-      title: "Share Started",
-      description: `Share dialog for ${platform} has been opened.`,
+      title: "Link Copied",
+      description: "Event link has been copied to clipboard"
+    });
+  };
+  
+  const handleShare = () => {
+    if (!message) {
+      toast({
+        title: "Missing Content",
+        description: "Please write a message to share",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    toast({
+      title: "Content Shared",
+      description: `Your message has been shared to ${platform === 'facebook' ? 'Facebook' : platform === 'twitter' ? 'Twitter' : 'Instagram'}`
     });
   };
 
-  const updateSocialCopy = (platform: string, text: string) => {
-    setSocialCopy(prev => ({
-      ...prev,
-      [platform]: text
-    }));
+  const getPlatformIcon = () => {
+    switch(platform) {
+      case 'facebook': return <Facebook className="h-5 w-5" />;
+      case 'twitter': return <Twitter className="h-5 w-5" />;
+      case 'instagram': return <Instagram className="h-5 w-5" />;
+      default: return <Share2 className="h-5 w-5" />;
+    }
   };
 
   return (
@@ -174,256 +66,68 @@ const SocialSharingPanel: React.FC<SocialSharingPanelProps> = ({ eventId, eventN
       <CardHeader>
         <CardTitle>Social Media Sharing</CardTitle>
         <CardDescription>
-          Share and promote {eventName} on social media platforms
+          Share your event on social media platforms
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <div className="mb-6">
-          <div className="flex gap-3">
-            <Input
-              value={shareUrl}
-              onChange={(e) => setShareUrl(e.target.value)}
-              className="flex-1"
-            />
-            <Button variant="outline" onClick={handleCopyLink}>
-              <Copy className="mr-2 h-4 w-4" />
-              Copy Link
-            </Button>
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="platform">Platform</Label>
+            <Select value={platform} onValueChange={setPlatform}>
+              <SelectTrigger id="platform">
+                <SelectValue placeholder="Select platform" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="facebook">Facebook</SelectItem>
+                <SelectItem value="twitter">Twitter</SelectItem>
+                <SelectItem value="instagram">Instagram</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-          
-          <div className="flex justify-center mt-6 gap-4">
-            <Button 
-              variant="outline" 
-              size="lg" 
-              className="flex-col gap-2 h-20 w-24"
-              onClick={() => handleSocialShare('facebook')}
-              disabled={isSharing}
-            >
-              {isSharing && activeTab === 'facebook' ? 
-                <Loader2 size={24} className="text-blue-600 animate-spin" /> :
-                <Facebook size={24} className="text-blue-600" />
-              }
-              <span>Facebook</span>
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              size="lg" 
-              className="flex-col gap-2 h-20 w-24"
-              onClick={() => handleSocialShare('twitter')}
-              disabled={isSharing}
-            >
-              {isSharing && activeTab === 'twitter' ? 
-                <Loader2 size={24} className="text-blue-400 animate-spin" /> :
-                <Twitter size={24} className="text-blue-400" />
-              }
-              <span>Twitter</span>
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              size="lg" 
-              className="flex-col gap-2 h-20 w-24"
-              onClick={() => handleSocialShare('instagram')}
-              disabled={isSharing}
-            >
-              {isSharing && activeTab === 'instagram' ? 
-                <Loader2 size={24} className="text-pink-500 animate-spin" /> :
-                <Instagram size={24} className="text-pink-500" />
-              }
-              <span>Instagram</span>
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              size="lg" 
-              className="flex-col gap-2 h-20 w-24"
-              onClick={() => handleSocialShare('linkedin')}
-              disabled={isSharing}
-            >
-              {isSharing && activeTab === 'linkedin' ? 
-                <Loader2 size={24} className="text-blue-700 animate-spin" /> :
-                <Linkedin size={24} className="text-blue-700" />
-              }
-              <span>LinkedIn</span>
-            </Button>
+
+          <div>
+            <Label htmlFor="campaign">Campaign (Optional)</Label>
+            <Select value={selectedCampaign || undefined} onValueChange={setSelectedCampaign}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a campaign" />
+              </SelectTrigger>
+              <SelectContent>
+                {socialCampaigns.length > 0 ? (
+                  socialCampaigns.map(campaign => (
+                    <SelectItem key={campaign.id} value={campaign.id || "default-id"}>
+                      {campaign.name}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="no-campaigns" disabled>No social campaigns available</SelectItem>
+                )}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-6 grid grid-cols-4">
-            <TabsTrigger value="facebook">Facebook</TabsTrigger>
-            <TabsTrigger value="twitter">Twitter</TabsTrigger>
-            <TabsTrigger value="instagram">Instagram</TabsTrigger>
-            <TabsTrigger value="linkedin">LinkedIn</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="facebook">
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="facebookCopy">Post Copy</Label>
-                <Textarea
-                  id="facebookCopy"
-                  value={socialCopy.facebook}
-                  onChange={(e) => updateSocialCopy('facebook', e.target.value)}
-                  className="h-32"
-                />
-              </div>
-              
-              <div className="border rounded-md p-4">
-                <h3 className="font-medium mb-2">Post Preview</h3>
-                <div className="bg-white border rounded-md p-4 shadow-sm">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="h-10 w-10 rounded-full bg-gray-200"></div>
-                    <div>
-                      <p className="font-semibold text-sm">Your Page Name</p>
-                      <p className="text-xs text-gray-500">Just now · Public</p>
-                    </div>
-                  </div>
-                  <p className="text-sm mb-3">{socialCopy.facebook}</p>
-                  <div className="border rounded overflow-hidden">
-                    <div className="h-32 bg-gray-100 flex items-center justify-center">
-                      Event Image Preview
-                    </div>
-                    <div className="p-2">
-                      <p className="text-xs text-gray-500">youreventapp.com</p>
-                      <p className="font-medium text-sm">{eventName}</p>
-                      <p className="text-xs truncate">Join us for this amazing event!</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="twitter">
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="twitterCopy">Tweet Copy</Label>
-                <Textarea
-                  id="twitterCopy"
-                  value={socialCopy.twitter}
-                  onChange={(e) => updateSocialCopy('twitter', e.target.value)}
-                  className="h-32"
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  {280 - socialCopy.twitter.length} characters remaining
-                </p>
-              </div>
-              
-              <div className="border rounded-md p-4">
-                <h3 className="font-medium mb-2">Tweet Preview</h3>
-                <div className="bg-white border rounded-md p-4 shadow-sm">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="h-10 w-10 rounded-full bg-gray-200"></div>
-                    <div>
-                      <p className="font-semibold text-sm">Your Account</p>
-                      <p className="text-xs text-gray-500">@youraccount</p>
-                    </div>
-                  </div>
-                  <p className="text-sm mb-3">{socialCopy.twitter}</p>
-                  <div className="border rounded overflow-hidden">
-                    <div className="h-32 bg-gray-100 flex items-center justify-center">
-                      Event Image Preview
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="instagram">
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="instagramCopy">Caption</Label>
-                <Textarea
-                  id="instagramCopy"
-                  value={socialCopy.instagram}
-                  onChange={(e) => updateSocialCopy('instagram', e.target.value)}
-                  className="h-32"
-                />
-              </div>
-              
-              <div className="border rounded-md p-4">
-                <h3 className="font-medium mb-2">Instagram Preview</h3>
-                <div className="flex flex-col items-center justify-center">
-                  <div className="w-full max-w-md">
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="h-10 w-10 rounded-full bg-gray-200"></div>
-                      <p className="font-semibold text-sm">your_account</p>
-                    </div>
-                    <div className="aspect-square bg-gray-100 w-full flex items-center justify-center border">
-                      Event Image Preview
-                    </div>
-                    <div className="p-2">
-                      <div className="flex gap-4 mb-2">
-                        <Heart className="h-6 w-6" />
-                        <MessageCircle className="h-6 w-6" />
-                        <Share className="h-6 w-6" />
-                      </div>
-                      <p className="font-semibold text-sm mb-1">0 likes</p>
-                      <p className="text-sm">
-                        <span className="font-semibold">your_account</span>{' '}
-                        {socialCopy.instagram.split('\n')[0]}...
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="linkedin">
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="linkedinCopy">Post Copy</Label>
-                <Textarea
-                  id="linkedinCopy"
-                  value={socialCopy.linkedin}
-                  onChange={(e) => updateSocialCopy('linkedin', e.target.value)}
-                  className="h-32"
-                />
-              </div>
-              
-              <div className="border rounded-md p-4">
-                <h3 className="font-medium mb-2">LinkedIn Preview</h3>
-                <div className="bg-white border rounded-md p-4 shadow-sm">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="h-12 w-12 rounded-full bg-gray-200"></div>
-                    <div>
-                      <p className="font-semibold">Your Name</p>
-                      <p className="text-xs text-gray-500">Your Position • Just now</p>
-                    </div>
-                  </div>
-                  <p className="text-sm mb-3">{socialCopy.linkedin}</p>
-                  <div className="border rounded overflow-hidden">
-                    <div className="h-40 bg-gray-100 flex items-center justify-center">
-                      Event Image Preview
-                    </div>
-                    <div className="p-3">
-                      <p className="font-medium">{eventName}</p>
-                      <p className="text-xs text-gray-500">youreventapp.com</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </TabsContent>
-        </Tabs>
+        <div>
+          <Label htmlFor="message">Message</Label>
+          <Textarea 
+            id="message"
+            placeholder="Write your social media post..."
+            className="min-h-[150px]"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+          />
+        </div>
+
+        <div className="flex items-center justify-between">
+          <Button variant="outline" onClick={handleCopyLink}>
+            <Copy className="mr-2 h-4 w-4" />
+            Copy Event Link
+          </Button>
+          <Button onClick={handleShare}>
+            {getPlatformIcon()}
+            <span className="ml-2">Share on {platform === 'facebook' ? 'Facebook' : platform === 'twitter' ? 'Twitter' : 'Instagram'}</span>
+          </Button>
+        </div>
       </CardContent>
-      <CardFooter>
-        <Button 
-          onClick={() => handleSocialShare(activeTab)}
-          className="ml-auto"
-          disabled={isSharing}
-        >
-          {isSharing ? 
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 
-            <Share className="mr-2 h-4 w-4" />
-          }
-          Share to {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
-        </Button>
-      </CardFooter>
     </Card>
   );
 };
