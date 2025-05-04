@@ -94,12 +94,15 @@ const SocialSharingPanel: React.FC<SocialSharingPanelProps> = ({ eventId, eventN
               <SelectContent>
                 {socialCampaigns.length > 0 ? (
                   socialCampaigns.map(campaign => (
-                    <SelectItem key={campaign.id} value={campaign.id || "default-id"}>
+                    <SelectItem 
+                      key={campaign.id} 
+                      value={campaign.id || `campaign-${Math.random().toString(36).substring(2)}`}
+                    >
                       {campaign.name}
                     </SelectItem>
                   ))
                 ) : (
-                  <SelectItem value="no-campaigns" disabled>No social campaigns available</SelectItem>
+                  <SelectItem value="no-social-campaigns" disabled>No social campaigns available</SelectItem>
                 )}
               </SelectContent>
             </Select>

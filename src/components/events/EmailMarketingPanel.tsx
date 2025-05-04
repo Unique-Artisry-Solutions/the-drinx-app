@@ -77,12 +77,15 @@ const EmailMarketingPanel: React.FC<EmailMarketingPanelProps> = ({ eventId, even
               <SelectContent>
                 {emailCampaigns.length > 0 ? (
                   emailCampaigns.map(campaign => (
-                    <SelectItem key={campaign.id} value={campaign.id || "default-id"}>
+                    <SelectItem 
+                      key={campaign.id} 
+                      value={campaign.id || `campaign-${Math.random().toString(36).substring(2)}`}
+                    >
                       {campaign.name}
                     </SelectItem>
                   ))
                 ) : (
-                  <SelectItem value="no-campaigns" disabled>No email campaigns available</SelectItem>
+                  <SelectItem value="no-campaigns-available" disabled>No email campaigns available</SelectItem>
                 )}
               </SelectContent>
             </Select>
