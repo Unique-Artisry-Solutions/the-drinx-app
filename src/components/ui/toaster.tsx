@@ -22,7 +22,7 @@ export function Toaster() {
         // If action exists, process it
         if (action) {
           // If action is a configuration object instead of a JSX element
-          if (typeof action === 'object' && 'label' in action) {
+          if (typeof action === 'object' && !React.isValidElement(action) && 'label' in action) {
             const { label, onClick, altText } = action;
             actionElement = (
               <ToastAction altText={altText || label} onClick={onClick}>

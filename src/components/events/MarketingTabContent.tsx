@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { 
   Card, 
@@ -95,6 +96,10 @@ const MarketingTabContent: React.FC<MarketingTabContentProps> = ({ eventId, even
     });
   };
 
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+  };
+
   const formatCampaignType = (type: string) => {
     return type.split('_').map(word => 
       word.charAt(0).toUpperCase() + word.slice(1)
@@ -103,7 +108,7 @@ const MarketingTabContent: React.FC<MarketingTabContentProps> = ({ eventId, even
 
   return (
     <>
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <TabsList className="grid grid-cols-4 mb-6">
           <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
           <TabsTrigger value="email">Email Marketing</TabsTrigger>
@@ -174,7 +179,10 @@ const MarketingTabContent: React.FC<MarketingTabContentProps> = ({ eventId, even
                               <Button 
                                 size="sm" 
                                 variant="ghost"
-                                onClick={() => handleDeleteCampaign(campaign.id || '')}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (campaign.id) handleDeleteCampaign(campaign.id);
+                                }}
                               >
                                 Delete
                               </Button>
