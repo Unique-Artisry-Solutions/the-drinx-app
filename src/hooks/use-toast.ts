@@ -10,15 +10,17 @@ import {
 const TOAST_LIMIT = 10;
 const TOAST_REMOVE_DELAY = 1000;
 
+type ActionConfig = {
+  label: string;
+  onClick: () => void;
+  altText?: string;
+};
+
 type ToasterToast = ToastProps & {
   id: string;
   title?: React.ReactNode;
   description?: React.ReactNode;
-  action?: ToastActionElement | {
-    label: string;
-    onClick: () => void;
-    altText?: string;
-  };
+  action?: ToastActionElement | ActionConfig;
 };
 
 const actionTypes = {
@@ -192,4 +194,4 @@ function useToast() {
   };
 }
 
-export { useToast, toast };
+export { useToast, toast, type ActionConfig };

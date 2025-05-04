@@ -1,5 +1,5 @@
 
-import { toast } from '@/hooks/use-toast';
+import { toast, ActionConfig } from '@/hooks/use-toast';
 import { ToastActionElement } from '@/components/ui/toast';
 import { ButtonProps } from '@/components/ui/button';
 import { ReactElement } from 'react';
@@ -27,7 +27,7 @@ export const createToast = (
   const toastConfig: {
     title: string;
     description: string;
-    action?: ToastActionElement;
+    action?: ToastActionConfig;
     duration?: number;
     variant?: 'default' | 'destructive';
   } = {
@@ -36,8 +36,9 @@ export const createToast = (
     ...(options || {}),
   };
 
-  // We don't actually use this configuration directly in a TS file
-  // This is just a placeholder to be used in code that can render JSX
+  if (actionConfig) {
+    toastConfig.action = actionConfig;
+  }
 
   return toastConfig;
 };
@@ -56,6 +57,7 @@ export const showToast = (
   const toastConfig: {
     title: string;
     description: string;
+    action?: ToastActionConfig;
     duration?: number;
     variant?: 'default' | 'destructive';
   } = {
@@ -63,6 +65,10 @@ export const showToast = (
     description,
     ...(options || {}),
   };
+  
+  if (actionConfig) {
+    toastConfig.action = actionConfig;
+  }
   
   // Return the toast instance
   return toast(toastConfig);

@@ -17,16 +17,22 @@ export function Toaster() {
     <ToastProvider>
       {toasts.map(function ({ id, title, description, action, className, ...props }) {
         // Handle both JSX elements and action config objects
-        let actionElement = action;
+        let actionElement = null;
         
-        // If action is a configuration object instead of a JSX element
-        if (action && typeof action === 'object' && 'label' in action) {
-          const { label, onClick, altText } = action;
-          actionElement = (
-            <ToastAction altText={altText || label} onClick={onClick}>
-              {label}
-            </ToastAction>
-          );
+        // If action exists, process it
+        if (action) {
+          // If action is a configuration object instead of a JSX element
+          if (typeof action === 'object' && 'label' in action) {
+            const { label, onClick, altText } = action;
+            actionElement = (
+              <ToastAction altText={altText || label} onClick={onClick}>
+                {label}
+              </ToastAction>
+            );
+          } else {
+            // It's already a JSX element
+            actionElement = action;
+          }
         }
         
         return (
