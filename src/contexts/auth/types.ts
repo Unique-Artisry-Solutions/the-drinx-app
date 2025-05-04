@@ -1,12 +1,13 @@
 
-import { User, Session } from '@supabase/supabase-js';
+import { Session, User } from "@supabase/supabase-js";
 
-export interface AuthContextType {
+export type AuthContextType = {
   user: User | null;
   session: Session | null;
   isLoading: boolean;
   isEmailVerified: boolean;
-  authStable: boolean; // New property to track stable auth state
+  authStable: boolean;
+  authError?: Error | null;
   signIn: (email: string, password: string) => Promise<any>;
   signUp: (email: string, password: string, options?: {
     data?: { [key: string]: any },
@@ -14,6 +15,7 @@ export interface AuthContextType {
   }) => Promise<void>;
   signOut: () => Promise<void>;
   updateProfile: (data: { [key: string]: any }) => Promise<void>;
-  refreshSession: () => Promise<{ isEmailVerified: boolean }>;
   resetPassword: (email: string) => Promise<void>;
-}
+  refreshSession: () => Promise<{ isEmailVerified: boolean }>;
+  recoverAuthState: () => Promise<void>;
+};

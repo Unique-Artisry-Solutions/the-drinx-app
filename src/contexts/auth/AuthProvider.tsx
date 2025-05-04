@@ -6,6 +6,12 @@ import { useToast } from '@/hooks/use-toast';
 import { checkAdminBypassStatus, createBypassUser } from '@/utils/adminBypass';
 import { AuthContextType } from './types';
 import { clearAllSessions } from '@/utils/sessionCleaner';
+import { 
+  validateSessionState, 
+  syncSessionState,
+  handlePotentialStuckState,
+  isSessionValidationDue 
+} from '@/utils/sessionRecovery';
 
 // Create a new utility function for stable session handling
 const AUTH_INTENT_KEY = 'auth_intent';
@@ -44,6 +50,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
   const [isEmailVerified, setIsEmailVerified] = useState(false);
   const [authStable, setAuthStable] = useState(false);
+  const [authError, setAuthError] = useState<Error | null>(null);
   const { toast } = useToast();
 
   // Explicitly handle localStorage session restoration
@@ -66,120 +73,165 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     console.log('AuthProvider initialized');
     let isMounted = true;
     let authSubscription: { unsubscribe: () => void } | null = null;
+    let stuckStateHandler: { cancel: () => void } | null = null;
     
     const isAuthIntent = checkAuthIntent();
     console.log("Auth intent active:", isAuthIntent);
     
+    // Set up stuck state detection
+    stuckStateHandler = handlePotentialStuckState(10000, false);
+    
     // Initialize authentication state
     const initializeAuth = async () => {
-      // Check for admin bypass first as it overrides everything else
-      const { isEnabled } = checkAdminBypassStatus();
-      if (isEnabled) {
-        console.log('Admin bypass active in AuthProvider, creating bypass user');
-        const bypassUser = createBypassUser();
-        setUser(bypassUser);
-        setIsEmailVerified(true);
-        setIsLoading(false);
-        setAuthStable(true);
-        return;
-      }
-      
-      // Debug existing session in local storage
-      const hasStoredSession = restoreSession();
-      console.log("Has stored session data:", hasStoredSession);
-      
-      // Set up auth state listener FIRST before any async calls
-      console.log('Setting up auth state listener');
-      const { data } = trackAuthStateChange();
-      authSubscription = data.subscription;
-      
-      // Set up detailed auth state listener
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(
-        async (event, newSession) => {
-          console.log('Auth state changed:', event, !!newSession);
+      try {
+        // Check for admin bypass first as it overrides everything else
+        const { isEnabled } = checkAdminBypassStatus();
+        if (isEnabled) {
+          console.log('Admin bypass active in AuthProvider, creating bypass user');
+          const bypassUser = createBypassUser();
+          setUser(bypassUser);
+          setIsEmailVerified(true);
+          setIsLoading(false);
+          setAuthStable(true);
           
-          if (!isMounted) return;
+          if (stuckStateHandler) stuckStateHandler.cancel();
+          return;
+        }
+        
+        // Validate session state if needed
+        if (isSessionValidationDue()) {
+          const validationResult = await validateSessionState();
           
-          // Use direct state updates for sync operations
-          if (newSession) {
-            setSession(newSession);
-            setUser(newSession.user);
-            setIsEmailVerified(!!newSession.user?.email_confirmed_at);
-            
-            // Store essential user info in localStorage
-            if (newSession.user) {
-              localStorage.setItem('user_authenticated', 'true');
-              localStorage.setItem('user_email', newSession.user.email || '');
-              
-              // Store user type in localStorage
-              if (newSession.user.user_metadata?.user_type) {
-                localStorage.setItem('user_type', newSession.user.user_metadata.user_type);
-              }
-            }
-            
-            // Clear auth intent as we now have a session
-            if (event === 'SIGNED_IN') {
-              clearAuthIntent();
-              
-              // Small delay to ensure UI updates properly
-              setTimeout(() => {
-                setAuthStable(true);
-              }, 300);
-            }
-          } else if (event === 'SIGNED_OUT') {
-            setIsEmailVerified(false);
-            setSession(null);
-            setUser(null);
-            
-            // Clear user data from localStorage on sign out
-            clearAllSessions();
-            setAuthStable(true);
+          if (validationResult.hasMismatch) {
+            console.log("Session state mismatch detected, attempting to sync");
+            await syncSessionState();
           }
         }
-      );
-      
-      // THEN check for existing session - this is crucial for initial load
-      console.log('Checking for existing session');
-      const { session: existingSession, error } = await getSessionDebug();
-      
-      if (error) {
-        console.error('Error checking session:', error);
+        
+        // Debug existing session in local storage
+        const hasStoredSession = restoreSession();
+        console.log("Has stored session data:", hasStoredSession);
+        
+        // Set up auth state listener FIRST before any async calls
+        console.log('Setting up auth state listener');
+        const { data } = trackAuthStateChange();
+        authSubscription = data.subscription;
+        
+        // Set up detailed auth state listener
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+          async (event, newSession) => {
+            console.log('Auth state changed:', event, !!newSession);
+            
+            if (!isMounted) return;
+            
+            // Use direct state updates for sync operations
+            if (newSession) {
+              setSession(newSession);
+              setUser(newSession.user);
+              setIsEmailVerified(!!newSession.user?.email_confirmed_at);
+              
+              // Store essential user info in localStorage
+              if (newSession.user) {
+                localStorage.setItem('user_authenticated', 'true');
+                localStorage.setItem('user_email', newSession.user.email || '');
+                
+                // Store user type in localStorage
+                if (newSession.user.user_metadata?.user_type) {
+                  localStorage.setItem('user_type', newSession.user.user_metadata.user_type);
+                }
+              }
+              
+              // Clear auth intent as we now have a session
+              if (event === 'SIGNED_IN') {
+                clearAuthIntent();
+                
+                // Small delay to ensure UI updates properly
+                setTimeout(() => {
+                  if (isMounted) {
+                    setAuthStable(true);
+                    if (stuckStateHandler) stuckStateHandler.cancel();
+                  }
+                }, 300);
+              }
+            } else if (event === 'SIGNED_OUT') {
+              setIsEmailVerified(false);
+              setSession(null);
+              setUser(null);
+              
+              // Clear user data from localStorage on sign out
+              clearAllSessions();
+              setAuthStable(true);
+              if (stuckStateHandler) stuckStateHandler.cancel();
+            }
+          }
+        );
+        
+        // THEN check for existing session - this is crucial for initial load
+        console.log('Checking for existing session');
+        const { session: existingSession, error } = await getSessionDebug();
+        
+        if (error) {
+          console.error('Error checking session:', error);
+          setAuthError(new Error(error.message || 'Session check failed'));
+          if (isMounted) {
+            setIsLoading(false);
+            setAuthStable(true);
+          }
+          return;
+        }
+        
+        if (existingSession) {
+          console.log('Session found, updating user state');
+          if (isMounted) {
+            setSession(existingSession);
+            setUser(existingSession.user);
+            setIsEmailVerified(!!existingSession.user.email_confirmed_at);
+            
+            // Store user info in localStorage
+            if (existingSession.user.user_metadata?.user_type) {
+              localStorage.setItem('user_type', existingSession.user.user_metadata.user_type);
+            }
+            localStorage.setItem('user_authenticated', 'true');
+            localStorage.setItem('user_email', existingSession.user.email || '');
+            
+            // Intent is complete as we have a session
+            clearAuthIntent();
+          }
+        }
+        
+        // We've completed initial auth check, so exit loading state
+        if (isMounted) {
+          setIsLoading(false);
+          
+          // Mark auth as stable in a small delay to handle any pending state updates
+          setTimeout(() => {
+            if (isMounted) {
+              setAuthStable(true);
+              if (stuckStateHandler) stuckStateHandler.cancel();
+            }
+          }, 300);
+        }
+      } catch (err) {
+        // Catch any unexpected errors during initialization
+        console.error('Auth initialization error:', err);
+        setAuthError(err instanceof Error ? err : new Error('Unknown auth error'));
+        
         if (isMounted) {
           setIsLoading(false);
           setAuthStable(true);
-        }
-        return;
-      }
-      
-      if (existingSession) {
-        console.log('Session found, updating user state');
-        if (isMounted) {
-          setSession(existingSession);
-          setUser(existingSession.user);
-          setIsEmailVerified(!!existingSession.user.email_confirmed_at);
+          if (stuckStateHandler) stuckStateHandler.cancel();
           
-          // Store user info in localStorage
-          if (existingSession.user.user_metadata?.user_type) {
-            localStorage.setItem('user_type', existingSession.user.user_metadata.user_type);
-          }
-          localStorage.setItem('user_authenticated', 'true');
-          localStorage.setItem('user_email', existingSession.user.email || '');
-          
-          // Intent is complete as we have a session
-          clearAuthIntent();
+          // Show error toast for critical errors
+          toast({
+            title: 'Authentication Error',
+            description: 'Failed to initialize authentication. Please try refreshing the page.',
+            variant: 'destructive',
+            action: {
+              label: 'Refresh',
+              onClick: () => window.location.reload(),
+            },
+          });
         }
-      }
-      
-      // We've completed initial auth check, so exit loading state
-      if (isMounted) {
-        setIsLoading(false);
-        
-        // Mark auth as stable in a small delay to handle any pending state updates
-        setTimeout(() => {
-          if (isMounted) {
-            setAuthStable(true);
-          }
-        }, 100);
       }
     };
     
@@ -197,6 +249,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(bypassUser);
         setIsEmailVerified(true);
         setAuthStable(true);
+        if (stuckStateHandler) stuckStateHandler.cancel();
       } else {
         // Only clear user if we were in bypass mode
         if (checkAdminBypassStatus().isEnabled) {
@@ -205,6 +258,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setIsEmailVerified(false);
           clearAllSessions();
           setAuthStable(true);
+          if (stuckStateHandler) stuckStateHandler.cancel();
         }
       }
     };
@@ -216,6 +270,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsEmailVerified(false);
       clearAllSessions();
       setAuthStable(true);
+      if (stuckStateHandler) stuckStateHandler.cancel();
     };
     
     // Listen for relevant events
@@ -229,6 +284,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       isMounted = false;
       if (authSubscription) {
         authSubscription.unsubscribe();
+      }
+      if (stuckStateHandler) {
+        stuckStateHandler.cancel();
       }
       window.removeEventListener('adminBypassChanged', handleBypassChange);
       window.removeEventListener('authReset', handleAuthReset);
@@ -448,18 +506,71 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const recoverAuthState = async () => {
+    try {
+      setIsLoading(true);
+      setAuthError(null);
+      
+      // Validate and try to fix session state
+      const validationResult = await validateSessionState();
+      console.log("Auth recovery validation:", validationResult);
+      
+      if (validationResult.hasMismatch) {
+        await syncSessionState();
+        // Refresh page to ensure clean state
+        window.location.reload();
+        return;
+      }
+      
+      // If validation passed but we have no session, try refreshing
+      if (!validationResult.hasSupabaseSession && validationResult.hasLocalStorage) {
+        const { data, error } = await supabase.auth.refreshSession();
+        
+        if (error || !data.session) {
+          // No valid session, clear localStorage
+          clearAllSessions();
+          setIsLoading(false);
+          setAuthStable(true);
+          toast({
+            title: "Session expired",
+            description: "Your session has expired. Please sign in again.",
+          });
+        } else {
+          // Session refreshed successfully
+          setSession(data.session);
+          setUser(data.session.user);
+          setIsEmailVerified(!!data.session.user?.email_confirmed_at);
+          setIsLoading(false);
+          setAuthStable(true);
+        }
+      } else {
+        // Session validated, but do a refresh anyway
+        await refreshSession();
+        setIsLoading(false);
+        setAuthStable(true);
+      }
+    } catch (error) {
+      console.error("Error during auth recovery:", error);
+      setAuthError(error instanceof Error ? error : new Error('Recovery failed'));
+      setIsLoading(false);
+      setAuthStable(true);
+    }
+  };
+
   const value: AuthContextType = {
     user,
     session,
     isLoading,
     isEmailVerified,
     authStable,
+    authError,
     signIn,
     signUp,
     signOut,
     updateProfile,
     refreshSession,
     resetPassword,
+    recoverAuthState,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
