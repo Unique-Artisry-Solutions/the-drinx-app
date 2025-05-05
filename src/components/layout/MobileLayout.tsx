@@ -61,6 +61,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
       }
       
       // Define public paths that always use guest navigation
+      // Removed '/explore' from this list
       const publicPaths = ['/', '/landing', '/login', '/signup', '/mission'];
       const isPublicPath = publicPaths.includes(location.pathname) || forceGuestNavigation;
       
@@ -132,6 +133,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
     if (!user) return true;
     
     // For authenticated users, use guest navigation only on explicit public paths
+    // Removed '/explore' from this list
     const publicPaths = ['/', '/landing', '/login', '/signup', '/mission'];
     return publicPaths.includes(location.pathname);
   };

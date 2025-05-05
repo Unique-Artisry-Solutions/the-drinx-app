@@ -28,6 +28,7 @@ export const getNavItems = (
   }
   
   // Define public paths that should always show guest navigation
+  // Removing '/explore' from this list to ensure authenticated users see the user navigation
   const publicPaths = ['/', '/landing', '/login', '/signup', '/mission'];
   
   // Special case for public paths - show guest navigation
