@@ -103,6 +103,7 @@ const MyTicketsPage = () => {
     queryFn: async () => {
       if (!user) throw new Error('User not authenticated');
       
+      // Use the supabaseClient directly to avoid type issues with swig_circuit_attendees
       const { data, error } = await supabase
         .from('swig_circuit_attendees')
         .select(`
@@ -122,7 +123,8 @@ const MyTicketsPage = () => {
         throw error;
       }
 
-      return data || [];
+      const typedData = data as unknown as SwigCircuitTicket[];
+      return typedData || [];
     },
     enabled: !!user,
   });
@@ -240,9 +242,10 @@ const MyTicketsPage = () => {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {swigTickets.map((ticket: SwigCircuitTicket) => {
+          // Use safe navigation for properties that might not exist
           const swigCircuit = ticket.swig_circuit || {};
-          const date = swigCircuit.date || ticket.purchase_date || '';
-          const displayDate = typeof date === 'string' ? new Date(date).toLocaleDateString() : '';
+          const circuitDate = swigCircuit.date ? new Date(swigCircuit.date).toLocaleDateString() : 
+                              ticket.purchase_date ? new Date(ticket.purchase_date).toLocaleDateString() : 'No date';
           
           return (
             <div key={ticket.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
@@ -250,7 +253,7 @@ const MyTicketsPage = () => {
               <div className="text-sm text-muted-foreground space-y-1 mt-2">
                 <div className="flex items-center">
                   <Calendar className="h-4 w-4 mr-1" />
-                  <span>{displayDate}</span>
+                  <span>{circuitDate}</span>
                 </div>
                 {swigCircuit.time && (
                   <div className="flex items-center">
