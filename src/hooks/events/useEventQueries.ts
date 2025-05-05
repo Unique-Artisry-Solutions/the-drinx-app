@@ -16,7 +16,8 @@ export const useEventQueries = () => {
           *,
           venue:venue_id (id, name, address),
           event_ticket_types (*)
-        `);
+        `)
+        .eq('status', 'published'); // Only fetch published events
 
       if (error) {
         toast({
