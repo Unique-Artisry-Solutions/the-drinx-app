@@ -97,19 +97,34 @@ const MyTicketsPage = () => {
     enabled: !!user,
   });
 
-  // Fetch swig circuit tickets
+  // Fetch swig circuit tickets - Use the fromTable helper function to avoid TypeScript issues
   const { data: swigTickets = [], isLoading: loadingSwigTickets } = useQuery({
     queryKey: ['mySwigTickets'],
     queryFn: async () => {
       if (!user) throw new Error('User not authenticated');
       
-      // Use the supabaseClient directly to avoid type issues with swig_circuit_attendees
+      // Use the typed helper to avoid type issues 
       const { data, error } = await supabase
         .from('swig_circuit_attendees')
         .select(`
-          *,
-          swig_circuit:swig_circuit_id (*),
-          ticket_tier:ticket_type_id (*)
+          id,
+          swig_circuit_id,
+          user_id,
+          ticket_type_id,
+          purchase_date,
+          status,
+          ticket_code,
+          swig_circuit:swig_circuit_id (
+            id,
+            name,
+            date,
+            time
+          ),
+          ticket_tier:ticket_type_id (
+            id,
+            name,
+            price
+          )
         `)
         .eq('user_id', user.id)
         .order('purchase_date', { ascending: false });
@@ -123,8 +138,8 @@ const MyTicketsPage = () => {
         throw error;
       }
 
-      const typedData = data as unknown as SwigCircuitTicket[];
-      return typedData || [];
+      // Use type assertion for the returned data
+      return (data as unknown as SwigCircuitTicket[]) || [];
     },
     enabled: !!user,
   });
@@ -244,18 +259,18 @@ const MyTicketsPage = () => {
         {swigTickets.map((ticket: SwigCircuitTicket) => {
           // Use safe navigation for properties that might not exist
           const swigCircuit = ticket.swig_circuit || {};
-          const circuitDate = swigCircuit.date ? new Date(swigCircuit.date).toLocaleDateString() : 
+          const circuitDate = swigCircuit?.date ? new Date(swigCircuit.date).toLocaleDateString() : 
                               ticket.purchase_date ? new Date(ticket.purchase_date).toLocaleDateString() : 'No date';
           
           return (
             <div key={ticket.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-              <h3 className="font-semibold text-lg">{swigCircuit.name || 'Swig Circuit'}</h3>
+              <h3 className="font-semibold text-lg">{swigCircuit?.name || 'Swig Circuit'}</h3>
               <div className="text-sm text-muted-foreground space-y-1 mt-2">
                 <div className="flex items-center">
                   <Calendar className="h-4 w-4 mr-1" />
                   <span>{circuitDate}</span>
                 </div>
-                {swigCircuit.time && (
+                {swigCircuit?.time && (
                   <div className="flex items-center">
                     <Clock className="h-4 w-4 mr-1" />
                     <span>{swigCircuit.time}</span>
@@ -268,7 +283,7 @@ const MyTicketsPage = () => {
                 </span>
                 <Button size="sm" onClick={() => showTicketQR(
                   ticket.ticket_code || ticket.id,
-                  swigCircuit.name || 'Swig Circuit',
+                  swigCircuit?.name || 'Swig Circuit',
                   `Swig Circuit Pass`
                 )}>
                   Show QR Code
