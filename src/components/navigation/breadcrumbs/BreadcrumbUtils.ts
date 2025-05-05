@@ -1,4 +1,3 @@
-
 import { BreadcrumbConfig, routes, dynamicRoutes } from './BreadcrumbConfig';
 
 // Helper function to build breadcrumbs from a pathname
@@ -128,6 +127,7 @@ export function buildBreadcrumbs(pathname: string): BreadcrumbConfig[] {
       breadcrumbs.push({
         path: currentPath,
         label: displayLabel,
+        icon: isDynamicRoute.icon
       });
       break;
     }
