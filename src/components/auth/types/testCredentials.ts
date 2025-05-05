@@ -1,15 +1,16 @@
 
-export interface TestUserCredentials {
+export interface TestUserCredential {
   email: string;
   password: string;
   name: string;
   username: string;
-  userType: 'individual' | 'establishment' | 'promoter';
+  userType: string;
   phone: string;
 }
 
 export interface TestCredentialsData {
-  individual: TestUserCredentials;
-  establishment: TestUserCredentials;
-  promoter: TestUserCredentials;
+  individual: TestUserCredential;
+  establishment: TestUserCredential;
+  promoter: TestUserCredential;
+  admin: TestUserCredential;
 }

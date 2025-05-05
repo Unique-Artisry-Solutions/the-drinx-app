@@ -6,6 +6,7 @@ import { ArrowLeft } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/auth';
 import { Button } from '@/components/ui/button';
+import TestCredentials from '@/components/auth/TestCredentials';
 
 const LoginPage = () => {
   const [requiredUserType, setRequiredUserType] = useState<'individual' | 'establishment' | 'promoter'>('individual');
@@ -124,6 +125,11 @@ const LoginPage = () => {
                   Sign Up
                 </Link>
               </p>
+            </div>
+            
+            {/* Display test credentials */}
+            <div className="mt-8">
+              <TestCredentials />
             </div>
           </div>
         </div>

@@ -25,5 +25,13 @@ export const TEST_CREDENTIALS: TestCredentialsData = {
     username: 'testpromoter',
     userType: 'promoter',
     phone: '555-0103'
+  },
+  admin: {
+    email: 'admin@spiritless.com',
+    password: 'admin123',
+    name: 'Admin User',
+    username: 'admin',
+    userType: 'admin',
+    phone: '555-0104'
   }
 };

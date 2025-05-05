@@ -13,6 +13,7 @@ export async function generateEventAccessToken(eventId: string, daysValid: numbe
       });
 
     if (error) throw error;
+    console.log('Generated new token:', data);
     return data;
   } catch (error) {
     console.error('Error generating event access token:', error);
@@ -25,14 +26,20 @@ export async function generateEventAccessToken(eventId: string, daysValid: numbe
  */
 export async function verifyEventAccessToken(eventId: string, token: string): Promise<boolean> {
   try {
+    console.log('Verifying token for event:', eventId, 'token:', token);
     const { data, error } = await supabase
       .rpc('verify_event_access_token', {
         p_event_id: eventId,
         p_token: token
       });
 
-    if (error) throw error;
-    return data;
+    if (error) {
+      console.error('Token verification error:', error);
+      throw error;
+    }
+    
+    console.log('Token verification result:', data);
+    return data === true;
   } catch (error) {
     console.error('Error verifying event access token:', error);
     return false;
