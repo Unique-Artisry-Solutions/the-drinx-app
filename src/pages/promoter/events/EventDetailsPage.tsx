@@ -28,6 +28,7 @@ import { checkInAttendee } from '@/services/eventAttendeesService';
 import { toAttendeeStatus, safeJsonToRecord } from '@/utils/typeGuards';
 import MarketingTabContent from '@/components/events/MarketingTabContent';
 import ShareScannerButton from '@/components/events/ShareScannerButton';
+import { useEventStatus } from '@/hooks/events/useEventStatus';
 
 const EventDetailsPage: React.FC = () => {
   const { eventId } = useParams<{ eventId: string }>();
@@ -36,6 +37,7 @@ const EventDetailsPage: React.FC = () => {
   const [event, setEvent] = useState<EventType | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { updateStatus } = useEventStatus();
   
   // Ticket types state
   const [ticketTypes, setTicketTypes] = useState<EventTicketType[]>([]);
@@ -308,6 +310,18 @@ const EventDetailsPage: React.FC = () => {
     setIsAttendeeModalOpen(true);
   };
 
+  const handlePublishEvent = async () => {
+    if (!eventId) return;
+
+    if (confirm('Are you sure you want to publish this event? Published events will be visible to users.')) {
+      const success = await updateStatus(eventId, 'published');
+      if (success) {
+        // Update the local event state
+        setEvent(prev => prev ? { ...prev, status: 'published' } : null);
+      }
+    }
+  };
+
   if (loading) {
     return (
       <Layout>
@@ -349,12 +363,32 @@ const EventDetailsPage: React.FC = () => {
             >
               Back to Events
             </Button>
+            {event.status === 'draft' && (
+              <Button 
+                onClick={handlePublishEvent}
+                variant="secondary"
+              >
+                Publish Event
+              </Button>
+            )}
             <Button 
               onClick={() => navigate(`/promoter/events/create?edit=${event.id}`)}
             >
               Edit Event
             </Button>
           </div>
+        </div>
+
+        {/* Show event status badge */}
+        <div className="mb-6">
+          <span className={`px-2 py-1 rounded-full text-xs ${
+            event.status === 'published' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' :
+            event.status === 'draft' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300' :
+            event.status === 'cancelled' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' :
+            'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
+          }`}>
+            {event.status.toUpperCase()}
+          </span>
         </div>
 
         <Tabs defaultValue="attendees">
