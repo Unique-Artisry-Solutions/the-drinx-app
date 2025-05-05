@@ -65,7 +65,7 @@ const EventScannerPage = () => {
     validateToken();
   }, [eventId, token, toast]);
 
-  const handleScan = async (code: string) => {
+  const handleScan = async (code: string): Promise<void> => {
     if (!eventId) return;
     
     try {
@@ -103,8 +103,6 @@ const EventScannerPage = () => {
           variant: "destructive",
         });
       }
-      
-      return result;
     } catch (error: any) {
       console.error('Error scanning ticket:', error);
       setScanResult({
@@ -117,11 +115,6 @@ const EventScannerPage = () => {
         description: error.message || "Failed to process ticket scan",
         variant: "destructive",
       });
-      
-      return {
-        success: false,
-        message: error.message || "Failed to process ticket",
-      };
     }
   };
 
