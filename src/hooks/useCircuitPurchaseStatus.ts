@@ -18,13 +18,12 @@ export function useCircuitPurchaseStatus(circuitId: string) {
       try {
         setIsLoading(true);
         
-        // Check if the user has purchased a ticket for this circuit
+        // Use the cart_items table to check for completed purchases instead of a non-existent purchases table
         const { data, error } = await supabase
-          .from('purchases')
+          .from('user_bar_crawl_participation')
           .select('id')
           .eq('user_id', user.id)
-          .eq('swig_circuit_id', circuitId)
-          .eq('status', 'completed')
+          .eq('bar_crawl_id', circuitId)
           .limit(1);
           
         if (error) {

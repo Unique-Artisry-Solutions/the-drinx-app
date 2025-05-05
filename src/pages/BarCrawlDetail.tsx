@@ -14,6 +14,7 @@ import DrinkHighlights from '@/components/barCrawl/DrinkHighlights';
 import InteractiveElements from '@/components/barCrawl/InteractiveElements';
 import FeedbackMechanism from '@/components/barCrawl/FeedbackMechanism';
 import DetailPageMasthead from '@/components/shared/DetailPageMasthead';
+import JoinBarCrawlButton from '@/components/barCrawl/JoinBarCrawlButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
