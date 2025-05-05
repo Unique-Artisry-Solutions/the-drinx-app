@@ -18,6 +18,8 @@ const EventsSection: React.FC<EventsSectionProps> = ({ events: propEvents }) => 
   const scrollToTop = () => {
     window.scrollTo(0, 0);
   };
+
+  console.log('EventsSection - rendering with events:', events); // Debug log
   
   return (
     <div className="mb-6 p-5 bg-gradient-to-r from-purple-100/20 to-blue-100/20 rounded-lg border border-purple-200/30 shadow-md">
@@ -59,6 +61,8 @@ const EventsSection: React.FC<EventsSectionProps> = ({ events: propEvents }) => 
             
             // Calculate registered attendees safely
             const attendeeCount = event.attendees?.registered || 0;
+
+            console.log(`Creating event card for event ${event.id} with linkBasePath /event`); // Debug log
 
             return (
               <EventCard

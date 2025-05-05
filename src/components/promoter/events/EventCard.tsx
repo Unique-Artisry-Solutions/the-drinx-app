@@ -40,8 +40,13 @@ const EventCard: React.FC<EventCardProps> = ({
     completed: { color: 'bg-blue-200 text-blue-800', text: 'Completed' }
   };
 
+  const linkPath = `${linkBasePath}/${id}`;
+  console.log(`EventCard for ${name} (${id}) creating link to: ${linkPath}`); // Debug log
+
   return (
-    <Link to={`${linkBasePath}/${id}`}>
+    <Link to={linkPath} onClick={(e) => {
+      console.log(`Event card clicked, navigating to ${linkPath}`);
+    }}>
       <Card className="h-full overflow-hidden transition-shadow hover:shadow-lg">
         <div className="relative h-48 overflow-hidden">
           <img 

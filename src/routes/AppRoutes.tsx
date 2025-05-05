@@ -9,6 +9,8 @@ import { publicRoutes } from './config/publicRoutes';
 
 // Import the EventScannerPage component
 const EventScannerPage = React.lazy(() => import('@/pages/events/EventScannerPage'));
+// Import the EventDetailPage component 
+const EventDetailPage = React.lazy(() => import('@/pages/EventDetailPage'));
 
 const AppRoutes = () => {
   return (
@@ -18,6 +20,9 @@ const AppRoutes = () => {
         {publicRoutes.map((route) => (
           <Route key={route.path} path={route.path} element={route.element} />
         ))}
+
+        {/* Ensure we have a direct route for event details */}
+        <Route path="/event/:id" element={<EventDetailPage />} />
 
         {/* Special public route for event scanner that requires token */}
         <Route path="/events/scan/:eventId/:token" element={<EventScannerPage />} />
