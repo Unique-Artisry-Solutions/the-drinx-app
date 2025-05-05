@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { CheckCircle, ChevronLeft, ChevronRight, Loader2, Save } from 'lucide-react';
 import BasicInfoStep from './BasicInfoStep';
 import VenueSelectionStep from './VenueSelectionStep';
 import TicketTypesStep from './TicketTypesStep';
@@ -26,6 +26,7 @@ const EventCreationWizardContent: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const { createEvent, updateEvent } = useEventMutations();
   const navigate = useNavigate();
+  const [isSaving, setIsSaving] = useState(false);
   
   const handleNext = () => {
     if (validateStep(steps[currentStep].id)) {
@@ -37,8 +38,15 @@ const EventCreationWizardContent: React.FC = () => {
     setCurrentStep(Math.max(0, currentStep - 1));
   };
   
-  const handleSaveEvent = async () => {
+  const handleSaveEvent = async (navigateAfterSave = true) => {
+    // First validate the current step
+    if (!validateStep(steps[currentStep].id)) {
+      return;
+    }
+
     try {
+      setIsSaving(true);
+      
       // Create a copy of the form data without notifications if needed
       const eventData = {
         ...formData,
@@ -52,25 +60,27 @@ const EventCreationWizardContent: React.FC = () => {
         await updateEvent.mutateAsync(eventData);
         showToast(
           'Event Updated',
-          'Your event has been updated successfully.',
-          {
+          'Your changes have been saved successfully.',
+          navigateAfterSave ? {
             label: 'View Event',
             onClick: () => navigate(`/promoter/events/${eventData.id}`)
-          }
+          } : undefined
         );
       } else {
         await createEvent.mutateAsync(eventData);
         showToast(
           'Event Created',
           'Your event has been created successfully.',
-          {
+          navigateAfterSave ? {
             label: 'View Events',
             onClick: () => navigate('/promoter/events')
-          }
+          } : undefined
         );
       }
       
-      navigate('/promoter/events');
+      if (navigateAfterSave) {
+        navigate('/promoter/events');
+      }
     } catch (error) {
       console.error('Error saving event:', error);
       
@@ -80,7 +90,13 @@ const EventCreationWizardContent: React.FC = () => {
         undefined,
         { variant: 'destructive' }
       );
+    } finally {
+      setIsSaving(false);
     }
+  };
+
+  const handleSaveAndExit = () => {
+    handleSaveEvent(true);
   };
   
   const getStepContent = () => {
@@ -159,31 +175,50 @@ const EventCreationWizardContent: React.FC = () => {
       <div className="py-4">{getStepContent()}</div>
 
       {/* Navigation buttons */}
-      <div className="flex justify-between pt-4">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={handlePrevious}
-          disabled={currentStep === 0}
-        >
-          <ChevronLeft className="mr-2 h-4 w-4" /> Previous
-        </Button>
-
-        {currentStep < steps.length - 1 ? (
-          <Button type="button" onClick={handleNext}>
-            Next <ChevronRight className="ml-2 h-4 w-4" />
+      <div className="flex justify-between pt-4 border-t">
+        <div>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handlePrevious}
+            disabled={currentStep === 0 || isSaving}
+          >
+            <ChevronLeft className="mr-2 h-4 w-4" /> Previous
           </Button>
-        ) : (
+        </div>
+
+        <div className="flex gap-2">
+          {/* Save and Exit button - visible on all steps */}
           <Button 
             type="button" 
-            onClick={handleSaveEvent}
-            disabled={createEvent.isPending || updateEvent?.isPending}
+            variant="secondary"
+            onClick={handleSaveAndExit}
+            disabled={isSaving || createEvent.isPending || updateEvent?.isPending}
           >
-            {isEditMode 
-              ? (updateEvent?.isPending ? 'Updating...' : 'Update Event') 
-              : (createEvent.isPending ? 'Creating...' : 'Create Event')}
+            {isSaving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+            Save and Exit
           </Button>
-        )}
+
+          {currentStep < steps.length - 1 ? (
+            <Button 
+              type="button" 
+              onClick={handleNext}
+              disabled={isSaving}
+            >
+              Next <ChevronRight className="ml-2 h-4 w-4" />
+            </Button>
+          ) : (
+            <Button 
+              type="button" 
+              onClick={() => handleSaveEvent(false)}
+              disabled={isSaving || createEvent.isPending || updateEvent?.isPending}
+            >
+              {isEditMode 
+                ? (isSaving || updateEvent?.isPending ? 'Updating...' : 'Update Event') 
+                : (isSaving || createEvent.isPending ? 'Creating...' : 'Create Event')}
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );

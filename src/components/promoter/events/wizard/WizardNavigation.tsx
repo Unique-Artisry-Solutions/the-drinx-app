@@ -2,16 +2,22 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { useEventWizard } from './EventWizardContext';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface WizardNavigationProps {
   steps: number;
   onSubmit: () => void;
-  isSubmitting?: boolean; // Added isSubmitting prop
+  isSubmitting?: boolean;
+  onSaveAndExit?: () => void;
 }
 
-const WizardNavigation: React.FC<WizardNavigationProps> = ({ steps, onSubmit, isSubmitting = false }) => {
+const WizardNavigation: React.FC<WizardNavigationProps> = ({ 
+  steps, 
+  onSubmit, 
+  isSubmitting = false,
+  onSaveAndExit
+}) => {
   const { currentStep, nextStep, prevStep, formData } = useEventWizard();
   const { toast } = useToast();
   
@@ -65,28 +71,55 @@ const WizardNavigation: React.FC<WizardNavigationProps> = ({ steps, onSubmit, is
     }
   };
 
+  const handleSaveAndExit = () => {
+    if (validateStep() && onSaveAndExit) {
+      onSaveAndExit();
+    }
+  };
+
   return (
     <div className="flex justify-between pt-6 border-t">
       <Button
         variant="outline"
         onClick={prevStep}
-        disabled={currentStep === 0}
+        disabled={currentStep === 0 || isSubmitting}
         className={currentStep === 0 ? 'invisible' : ''}
       >
         <ArrowLeft className="w-4 h-4 mr-2" />
         Back
       </Button>
       
-      {currentStep < steps - 1 ? (
-        <Button onClick={handleNext}>
-          Next
-          <ArrowRight className="w-4 h-4 ml-2" />
-        </Button>
-      ) : (
-        <Button onClick={handleSubmit} className="bg-purple-600 hover:bg-purple-700" disabled={isSubmitting}>
-          {isSubmitting ? 'Creating...' : 'Create Event'}
-        </Button>
-      )}
+      <div className="flex gap-2">
+        {/* Save and Exit button - only shown if onSaveAndExit is provided */}
+        {onSaveAndExit && (
+          <Button 
+            onClick={handleSaveAndExit}
+            variant="secondary"
+            disabled={isSubmitting}
+          >
+            <Save className="w-4 h-4 mr-2" />
+            Save and Exit
+          </Button>
+        )}
+        
+        {currentStep < steps - 1 ? (
+          <Button 
+            onClick={handleNext}
+            disabled={isSubmitting}
+          >
+            Next
+            <ArrowRight className="w-4 h-4 ml-2" />
+          </Button>
+        ) : (
+          <Button 
+            onClick={handleSubmit} 
+            className="bg-purple-600 hover:bg-purple-700" 
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Creating...' : 'Create Event'}
+          </Button>
+        )}
+      </div>
     </div>
   );
 };
