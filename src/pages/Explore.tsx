@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import FeaturedEstablishmentsSection from '@/components/explore/FeaturedEstablishmentsSection';
 import BarCrawlSection from '@/components/explore/BarCrawlSection';
 import CocktailsSection from '@/components/explore/CocktailsSection';
+import EventsSection from '@/components/explore/EventsSection';
 import DataMigration from '@/components/admin/DataMigration';
 
 // Sample data - would be fetched from API in a real application
@@ -115,13 +116,16 @@ const Explore = () => {
           <DataMigration />
         </div>
 
-        {/* Swig Circuit Section - Now placed ABOVE Featured Establishments */}
+        {/* Events Section - NEW! */}
+        <EventsSection />
+
+        {/* Swig Circuit Section */}
         <BarCrawlSection 
           barCrawls={sampleBarCrawls} 
           isAuthenticated={!!user}
         />
 
-        {/* Featured Establishments Section - Now BELOW Swig Circuits */}
+        {/* Featured Establishments Section */}
         <div className="mt-6">
           <FeaturedEstablishmentsSection establishments={establishments} />
         </div>

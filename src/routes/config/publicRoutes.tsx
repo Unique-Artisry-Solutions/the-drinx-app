@@ -19,6 +19,8 @@ import ResourcesPage from '@/pages/ResourcesPage';
 import MissionPage from '@/pages/MissionPage';
 import PricingPage from '@/pages/PricingPage';
 import NotFound from '@/pages/NotFound';
+import EventsPage from '@/pages/EventsPage';
+import EventDetailPage from '@/pages/EventDetailPage';
 
 export const publicRoutes: RouteObject[] = [
   { path: '/', element: <Index /> },
@@ -40,5 +42,7 @@ export const publicRoutes: RouteObject[] = [
   { path: '/resources', element: <ResourcesPage /> },
   { path: '/mission', element: <MissionPage /> },
   { path: '/pricing', element: <PricingPage /> },
+  { path: '/events', element: <EventsPage /> },
+  { path: '/event/:id', element: <EventDetailPage /> },
   { path: '/404', element: <NotFound /> },
 ];
