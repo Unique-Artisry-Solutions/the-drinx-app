@@ -148,9 +148,9 @@ const CheckoutPage: React.FC = () => {
         <TopNavigation />
         <div className="container max-w-6xl mx-auto px-4 py-12 flex-1 flex flex-col items-center justify-center">
           <h1 className="text-2xl font-bold mb-4">Your Cart is Empty</h1>
-          <p className="text-gray-600 mb-8">Add some plans to your cart before checking out.</p>
-          <Link to="/pricing">
-            <Button>View Plans</Button>
+          <p className="text-gray-600 mb-8">Add some items to your cart before checking out.</p>
+          <Link to={user ? "/events" : "/pricing"}>
+            <Button>{user ? "View All Events" : "View Plans"}</Button>
           </Link>
         </div>
       </div>
