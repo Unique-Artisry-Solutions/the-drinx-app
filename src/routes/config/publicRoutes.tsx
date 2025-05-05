@@ -10,6 +10,7 @@ import BarCrawlDetail from '@/pages/BarCrawlDetail';
 import BarCrawlProfilePage from '@/pages/BarCrawlProfilePage';
 import SwigCircuitsPage from '@/pages/SwigCircuitsPage';
 import CheckoutPage from '@/pages/CheckoutPage';
+import PurchaseConfirmationPage from '@/pages/PurchaseConfirmationPage';
 import SignupPage from '@/pages/SignupPage';
 import LoginPage from '@/pages/LoginPage';
 import VerifyEmail from '@/pages/VerifyEmail';
@@ -34,6 +35,7 @@ export const publicRoutes: RouteObject[] = [
   { path: '/swig-circuits', element: <SwigCircuitsPage /> },
   { path: '/swig-circuits/:id', element: <BarCrawlDetail /> },
   { path: '/checkout', element: <CheckoutPage /> },
+  { path: '/purchase-confirmation', element: <PurchaseConfirmationPage /> },
   { path: '/signup', element: <SignupPage /> },
   { path: '/login', element: <LoginPage /> },
   { path: '/verify-email', element: <VerifyEmail /> },

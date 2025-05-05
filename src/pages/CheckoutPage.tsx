@@ -1,7 +1,6 @@
-
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, CreditCard, AlertCircle } from 'lucide-react';
+import { ArrowLeft, CreditCard, AlertCircle, CheckCircle } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,14 +9,28 @@ import { useToast } from '@/hooks/use-toast';
 import TopNavigation from '@/components/TopNavigation';
 import CartButton from '@/components/cart/CartButton';
 import ReCAPTCHA from 'react-google-recaptcha';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/contexts/auth';
+
+interface ContactInfo {
+  firstName: string;
+  lastName: string;
+  email: string;
+}
 
 const CheckoutPage: React.FC = () => {
   const { items, totalPrice, clearCart } = useCart();
   const [isProcessing, setIsProcessing] = useState(false);
   const [captchaValue, setCaptchaValue] = useState<string | null>(null);
   const [formValid, setFormValid] = useState(false);
+  const [contactInfo, setContactInfo] = useState<ContactInfo>({
+    firstName: '',
+    lastName: '',
+    email: ''
+  });
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const handleCaptchaChange = (value: string | null) => {
     setCaptchaValue(value);
@@ -25,7 +38,12 @@ const CheckoutPage: React.FC = () => {
     setFormValid(!!value);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setContactInfo(prev => ({ ...prev, [id]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!captchaValue) {
@@ -39,16 +57,74 @@ const CheckoutPage: React.FC = () => {
     
     setIsProcessing(true);
     
-    // Simulate payment processing
-    setTimeout(() => {
+    try {
+      // Filter only ticket items
+      const ticketItems = items.filter(item => 
+        item.type === 'event_ticket' || item.type === 'swig_circuit_ticket'
+      );
+
+      // Process ticket purchases if there are any ticket items
+      if (ticketItems.length > 0) {
+        const { data, error } = await supabase.functions.invoke('process-ticket-purchase', {
+          body: {
+            items: ticketItems,
+            userId: user?.id,
+            contactInfo: {
+              name: `${contactInfo.firstName} ${contactInfo.lastName}`,
+              email: contactInfo.email
+            }
+          }
+        });
+        
+        if (error) {
+          toast({
+            title: 'Error Processing Tickets',
+            description: error.message || 'Something went wrong while processing your tickets.',
+            variant: 'destructive',
+          });
+          setIsProcessing(false);
+          return;
+        }
+        
+        if (data && !data.success) {
+          toast({
+            title: 'Error Processing Tickets',
+            description: data.error || 'Something went wrong while processing your tickets.',
+            variant: 'destructive',
+          });
+          setIsProcessing(false);
+          return;
+        }
+      }
+      
+      // Simulate payment processing for all items
+      // In a real implementation, you'd have Stripe or another payment processor here
+      setTimeout(() => {
+        setIsProcessing(false);
+        toast({
+          title: 'Payment Successful',
+          description: 'Thank you for your purchase!',
+        });
+        clearCart();
+        navigate('/purchase-confirmation', { 
+          state: { 
+            items, 
+            contactInfo: {
+              name: `${contactInfo.firstName} ${contactInfo.lastName}`,
+              email: contactInfo.email
+            }
+          } 
+        });
+      }, 2000);
+      
+    } catch (error) {
       setIsProcessing(false);
       toast({
-        title: 'Payment Successful',
-        description: 'Thank you for your purchase!',
+        title: 'Payment Error',
+        description: error instanceof Error ? error.message : 'An unexpected error occurred',
+        variant: 'destructive',
       });
-      clearCart();
-      navigate('/');
-    }, 2000);
+    }
   };
 
   if (items.length === 0) {
@@ -161,23 +237,42 @@ const CheckoutPage: React.FC = () => {
                     <h3 className="font-medium">Contact Information</h3>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <label className="text-sm font-medium" htmlFor="first-name">
+                        <label className="text-sm font-medium" htmlFor="firstName">
                           First Name
                         </label>
-                        <Input id="first-name" placeholder="First Name" required />
+                        <Input 
+                          id="firstName" 
+                          placeholder="First Name" 
+                          required 
+                          value={contactInfo.firstName}
+                          onChange={handleInputChange}
+                        />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-medium" htmlFor="last-name">
+                        <label className="text-sm font-medium" htmlFor="lastName">
                           Last Name
                         </label>
-                        <Input id="last-name" placeholder="Last Name" required />
+                        <Input 
+                          id="lastName" 
+                          placeholder="Last Name" 
+                          required 
+                          value={contactInfo.lastName}
+                          onChange={handleInputChange}
+                        />
                       </div>
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm font-medium" htmlFor="email">
                         Email
                       </label>
-                      <Input id="email" type="email" placeholder="Email" required />
+                      <Input 
+                        id="email" 
+                        type="email" 
+                        placeholder="Email" 
+                        required 
+                        value={contactInfo.email}
+                        onChange={handleInputChange}
+                      />
                     </div>
                   </div>
 
