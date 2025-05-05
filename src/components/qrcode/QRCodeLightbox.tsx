@@ -8,6 +8,7 @@ export interface QRCodeLightboxProps {
   value: string;
   title?: string;
   subtitle?: string;
+  description?: string; // Added description for backward compatibility
   isOpen: boolean;
   onClose: () => void;
 }
@@ -16,16 +17,20 @@ const QRCodeLightbox: React.FC<QRCodeLightboxProps> = ({
   value, 
   title = "Scan QR Code", 
   subtitle,
+  description, // Support both subtitle and description
   isOpen,
   onClose
 }) => {
+  // Use description as subtitle if subtitle is not provided
+  const displaySubtitle = subtitle || description;
+  
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
-          {subtitle && (
-            <p className="text-sm text-muted-foreground">{subtitle}</p>
+          {displaySubtitle && (
+            <p className="text-sm text-muted-foreground">{displaySubtitle}</p>
           )}
         </DialogHeader>
         

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -75,11 +74,11 @@ const BarCrawlTab: React.FC<BarCrawlTabProps> = ({ barCrawlList, shareBarCrawl }
                 </div>
                 
                 <div className="flex flex-col space-y-3">
-                  {/* Replace static QR code with the new lightbox component */}
+                  {/* Update QRCodeLightbox to use subtitle instead of description */}
                   <QRCodeLightbox 
                     value={generateQRValue()} 
                     title="Check-In QR Code" 
-                    description="Scan this code at the establishment to check in" 
+                    subtitle="Scan this code at the establishment to check in" 
                   />
 
                   <div className="flex flex-col sm:flex-row gap-2">

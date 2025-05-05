@@ -23,7 +23,7 @@ const CheckInQRCode: React.FC<CheckInQRCodeProps> = ({ barCrawlId, establishment
     <QRCodeLightbox 
       value={qrCodeValue}
       title="Check-In QR Code" 
-      description="Present this code to the establishment host to check in"
+      subtitle="Present this code to the establishment host to check in"
     />
   );
 };

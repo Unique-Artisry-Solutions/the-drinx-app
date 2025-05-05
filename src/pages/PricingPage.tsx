@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -21,7 +20,7 @@ const PricingPage = () => {
   const { toast } = useToast();
   const { addItem } = useCart();
 
-  const handleAddToCart = (planName: string, planPrice: number, planType: 'user' | 'establishment', interval: string = 'monthly') => {
+  const handleAddToCart = (planName: string, planPrice: number, planType: 'user' | 'establishment', interval: 'monthly' | 'yearly' | 'one-time' = 'monthly') => {
     setIsLoading(true);
     
     // Add to cart with a slight delay to show loading state
