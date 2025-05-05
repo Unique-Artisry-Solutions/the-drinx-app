@@ -13,7 +13,7 @@ interface CartProps {
 }
 
 const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
-  const { items, clearCart, totalPrice } = useCart();
+  const { items, clearCart, totalPrice, serviceFee, totalWithFees } = useCart();
   const navigate = useNavigate();
 
   const handleCheckout = () => {
@@ -67,9 +67,19 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
 
         {items.length > 0 && (
           <div className="pt-4 border-t border-gray-200">
-            <div className="flex justify-between items-center mb-4">
-              <span className="font-semibold">Total:</span>
-              <span className="font-bold text-lg">${totalPrice.toFixed(2)}</span>
+            <div className="space-y-2 mb-4">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Subtotal:</span>
+                <span className="font-medium">${totalPrice.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Service Fee:</span>
+                <span className="font-medium">${serviceFee.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between items-center mt-2">
+                <span className="font-semibold">Total:</span>
+                <span className="font-bold text-lg">${totalWithFees.toFixed(2)}</span>
+              </div>
             </div>
             
             <DialogFooter className="flex sm:justify-between gap-2">

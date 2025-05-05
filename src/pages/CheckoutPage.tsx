@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, CreditCard, AlertCircle, CheckCircle } from 'lucide-react';
@@ -19,7 +20,7 @@ interface ContactInfo {
 }
 
 const CheckoutPage: React.FC = () => {
-  const { items, totalPrice, clearCart } = useCart();
+  const { items, totalPrice, serviceFee, serviceFeePercentage, totalWithFees, clearCart } = useCart();
   const [isProcessing, setIsProcessing] = useState(false);
   const [captchaValue, setCaptchaValue] = useState<string | null>(null);
   const [formValid, setFormValid] = useState(false);
@@ -69,6 +70,8 @@ const CheckoutPage: React.FC = () => {
           body: {
             items: ticketItems,
             userId: user?.id,
+            serviceFee: serviceFee,
+            serviceFeePercentage: serviceFeePercentage,
             contactInfo: {
               name: `${contactInfo.firstName} ${contactInfo.lastName}`,
               email: contactInfo.email
@@ -109,6 +112,9 @@ const CheckoutPage: React.FC = () => {
         navigate('/purchase-confirmation', { 
           state: { 
             items, 
+            serviceFee,
+            serviceFeePercentage,
+            totalWithFees,
             contactInfo: {
               name: `${contactInfo.firstName} ${contactInfo.lastName}`,
               email: contactInfo.email
@@ -362,10 +368,18 @@ const CheckoutPage: React.FC = () => {
                     </div>
                   )}
                   
-                  <div className="border-t pt-4 mt-4">
-                    <div className="flex justify-between font-bold">
-                      <span>Total</span>
+                  <div className="border-t pt-4 mt-4 space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Subtotal:</span>
                       <span>${totalPrice.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Service Fee ({serviceFeePercentage}%):</span>
+                      <span>${serviceFee.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between font-bold pt-2">
+                      <span>Total:</span>
+                      <span>${totalWithFees.toFixed(2)}</span>
                     </div>
                   </div>
                 </div>

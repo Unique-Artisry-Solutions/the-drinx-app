@@ -1,6 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/lib/supabase';
 
 export interface CartItem {
   id: string;
@@ -24,13 +25,43 @@ interface CartContextType {
   removeItem: (id: string) => void;
   clearCart: () => void;
   totalPrice: number;
+  serviceFee: number;
+  serviceFeePercentage: number;
+  totalWithFees: number;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [items, setItems] = useState<CartItem[]>([]);
+  const [serviceFeePercentage, setServiceFeePercentage] = useState<number>(1.5);
   const { toast } = useToast();
+
+  // Fetch service fee percentage from system settings when component mounts
+  useEffect(() => {
+    async function fetchServiceFeePercentage() {
+      try {
+        const { data, error } = await supabase
+          .from('system_settings')
+          .select('value')
+          .eq('key', 'payment.service_fee_percentage')
+          .single();
+        
+        if (error) {
+          console.error('Error fetching service fee percentage:', error);
+          return;
+        }
+        
+        if (data) {
+          setServiceFeePercentage(parseFloat(data.value));
+        }
+      } catch (error) {
+        console.error('Failed to fetch service fee percentage', error);
+      }
+    }
+    
+    fetchServiceFeePercentage();
+  }, []);
 
   // Calculate total price whenever items change
   const totalPrice = items.reduce((total, item) => {
@@ -40,6 +71,12 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     return total + item.price;
   }, 0);
+
+  // Calculate service fee based on total price and percentage
+  const serviceFee = parseFloat((totalPrice * (serviceFeePercentage / 100)).toFixed(2));
+
+  // Calculate total with fees
+  const totalWithFees = totalPrice + serviceFee;
 
   // Load cart from localStorage when component mounts
   useEffect(() => {
@@ -103,7 +140,16 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <CartContext.Provider value={{ items, addItem, removeItem, clearCart, totalPrice }}>
+    <CartContext.Provider value={{ 
+      items, 
+      addItem, 
+      removeItem, 
+      clearCart, 
+      totalPrice, 
+      serviceFee,
+      serviceFeePercentage,
+      totalWithFees
+    }}>
       {children}
     </CartContext.Provider>
   );

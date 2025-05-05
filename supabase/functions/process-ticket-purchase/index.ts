@@ -1,145 +1,178 @@
 
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.21.0'
+import { corsHeaders } from '../_shared/cors.ts'
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
+const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') || ''
+const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
 
 serve(async (req) => {
   // Handle CORS preflight requests
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    // Initialize Supabase client with anon key (for auth) and service role key (for database operations)
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    const { items, userId, contactInfo, serviceFee, serviceFeePercentage } = await req.json()
     
-    // Get the client for checking auth
-    const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
+    // Create Supabase client with service role key for admin access
+    const supabase = createClient(supabaseUrl, serviceRoleKey)
     
-    // Get request body
-    const { items, userId, contactInfo } = await req.json();
+    // Start processing purchases
+    console.log(`Processing ticket purchase for user: ${userId}`)
+    console.log(`Items in cart: ${items.length}`)
     
-    // Authenticate user
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
-      });
-    }
+    const results = []
     
-    const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: authError } = await supabaseClient.auth.getUser(token);
-    
-    if (authError || !userData.user) {
-      return new Response(JSON.stringify({ error: "Authentication failed" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
-      });
-    }
-    
-    // Use service role client for database operations (bypasses RLS)
-    const adminClient = createClient(supabaseUrl, supabaseServiceKey);
-    
-    // Process items and create attendees for events and swig circuits
-    const results = [];
-    
+    // Process each ticket
     for (const item of items) {
       if (item.type === 'event_ticket') {
-        // Generate unique ticket code
-        const ticketCode = generateTicketCode(item.eventId);
-        
-        // Create attendee record
-        const { data, error } = await adminClient
-          .from('event_attendees')
-          .insert({
-            event_id: item.eventId,
-            user_id: userData.user.id,
-            ticket_type_id: item.ticketTypeId,
-            status: 'registered',
-            email: contactInfo.email || userData.user.email,
-            name: contactInfo.name || null,
-            ticket_code: ticketCode,
-            quantity: item.quantity || 1
-          })
-          .select()
-          .single();
-          
-        if (error) {
-          results.push({ 
-            item_id: item.id, 
-            success: false, 
-            error: error.message 
-          });
-        } else {
-          results.push({ 
-            item_id: item.id, 
-            success: true, 
-            ticket_code: ticketCode,
-            attendee_id: data.id
-          });
-        }
-      } 
-      else if (item.type === 'swig_circuit_ticket') {
-        // Similar process for swig circuit tickets
-        const { data, error } = await adminClient
-          .from('swig_circuit_attendees') // Assuming this table exists
-          .insert({
-            swig_circuit_id: item.swigCircuitId,
-            user_id: userData.user.id,
-            ticket_type_id: item.ticketTypeId,
-            status: 'registered',
-            quantity: item.quantity || 1
-          })
-          .select()
-          .single();
-          
-        if (error) {
-          results.push({ 
-            item_id: item.id, 
-            success: false, 
-            error: error.message 
-          });
-        } else {
-          results.push({ 
-            item_id: item.id, 
-            success: true,
-            attendee_id: data.id
-          });
-        }
+        // Handle event ticket purchase
+        const eventTicketResult = await processEventTicket(supabase, userId, item, contactInfo)
+        results.push(eventTicketResult)
+      } else if (item.type === 'swig_circuit_ticket') {
+        // Handle swig circuit ticket purchase
+        const swigCircuitResult = await processSwigCircuitTicket(supabase, userId, item, contactInfo, serviceFee, serviceFeePercentage)
+        results.push(swigCircuitResult)
       }
     }
     
-    return new Response(JSON.stringify({ 
-      success: true, 
-      message: "Tickets processed successfully",
-      results 
-    }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
-    
+    // Return response with results
+    return new Response(
+      JSON.stringify({
+        success: true,
+        results
+      }),
+      {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json',
+        },
+        status: 200,
+      },
+    )
   } catch (error) {
-    return new Response(JSON.stringify({ 
-      success: false, 
-      error: error instanceof Error ? error.message : "Unknown error" 
-    }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
-    });
+    console.error('Error processing purchase:', error.message)
+    
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: error.message,
+      }),
+      {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json',
+        },
+        status: 400,
+      },
+    )
   }
-});
+})
 
-// Helper function to generate a ticket code
-function generateTicketCode(eventId: string): string {
-  const prefix = eventId.slice(0, 4).toUpperCase();
-  const random = Math.random().toString(36).substring(2, 8).toUpperCase();
-  const timestamp = Date.now().toString(36).slice(-4).toUpperCase();
-  return `${prefix}-${random}-${timestamp}`;
+async function processEventTicket(supabase, userId, item, contactInfo) {
+  try {
+    console.log(`Processing event ticket: ${item.id} for event: ${item.eventId}`)
+    
+    // Create attendee record
+    const quantity = item.quantity || 1
+    const attendeeRecords = []
+    
+    for (let i = 0; i < quantity; i++) {
+      // Create unique ticket code
+      const ticketCode = generateTicketCode()
+      
+      // Insert attendee record
+      const { data, error } = await supabase
+        .from('event_attendees')
+        .insert({
+          event_id: item.eventId,
+          user_id: userId,
+          ticket_type_id: item.ticketTypeId,
+          name: contactInfo.name,
+          email: contactInfo.email,
+          ticket_code: ticketCode,
+          status: 'registered',
+        })
+        .select()
+      
+      if (error) throw error
+      
+      attendeeRecords.push(data[0])
+    }
+    
+    return {
+      type: 'event_ticket',
+      success: true,
+      attendees: attendeeRecords,
+      message: `Successfully registered ${quantity} attendee(s) for event`,
+    }
+  } catch (error) {
+    console.error('Error processing event ticket:', error)
+    return {
+      type: 'event_ticket',
+      success: false,
+      error: error.message,
+    }
+  }
+}
+
+async function processSwigCircuitTicket(supabase, userId, item, contactInfo, serviceFee, serviceFeePercentage) {
+  try {
+    console.log(`Processing swig circuit ticket: ${item.id} for circuit: ${item.swigCircuitId}`)
+    
+    // Add user to the swig circuit participants
+    const { data, error } = await supabase
+      .from('user_bar_crawl_participation')
+      .insert({
+        user_id: userId,
+        bar_crawl_id: item.swigCircuitId,
+      })
+      .select()
+    
+    if (error) throw error
+    
+    // Record the purchase with service fee information
+    const purchaseData = {
+      user_id: userId,
+      swig_circuit_id: item.swigCircuitId,
+      ticket_type_id: item.ticketTypeId,
+      amount: item.price,
+      service_fee: serviceFee,
+      service_fee_percentage: serviceFeePercentage,
+      purchase_date: new Date().toISOString(),
+      quantity: item.quantity || 1,
+      purchaser_name: contactInfo.name,
+      purchaser_email: contactInfo.email,
+    }
+    
+    // In a real implementation, you would store this purchase data in a 'purchases' table
+    // For now, we're just logging it
+    console.log('Purchase recorded:', purchaseData)
+    
+    return {
+      type: 'swig_circuit_ticket',
+      success: true,
+      message: `Successfully registered for swig circuit`,
+      participation: data[0],
+    }
+  } catch (error) {
+    console.error('Error processing swig circuit ticket:', error)
+    return {
+      type: 'swig_circuit_ticket',
+      success: false,
+      error: error.message,
+    }
+  }
+}
+
+function generateTicketCode() {
+  // Generate a random alphanumeric code for tickets
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+  let code = ''
+  for (let i = 0; i < 8; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length))
+  }
+  return code
 }

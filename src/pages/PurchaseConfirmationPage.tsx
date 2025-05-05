@@ -9,6 +9,9 @@ import { CartItem } from '@/contexts/CartContext';
 
 interface LocationState {
   items: CartItem[];
+  serviceFee: number;
+  serviceFeePercentage: number;
+  totalWithFees: number;
   contactInfo: {
     name: string;
     email: string;
@@ -50,11 +53,19 @@ const PurchaseConfirmationPage: React.FC = () => {
     );
   }
 
-  const { items, contactInfo } = state;
+  const { items, serviceFee, serviceFeePercentage, totalWithFees, contactInfo } = state;
   
   const eventTickets = items.filter(item => item.type === 'event_ticket');
   const swigCircuitTickets = items.filter(item => item.type === 'swig_circuit_ticket');
   const subscriptions = items.filter(item => item.type === 'user' || item.type === 'establishment');
+  
+  // Calculate subtotal from items
+  const subtotal = items.reduce((total, item) => {
+    if (item.quantity && item.quantity > 1) {
+      return total + (item.price * item.quantity);
+    }
+    return total + item.price;
+  }, 0);
   
   return (
     <Layout>
@@ -138,9 +149,17 @@ const PurchaseConfirmationPage: React.FC = () => {
               )}
               
               <div className="border-t pt-4 mt-4">
-                <div className="flex justify-between font-bold">
+                <div className="flex justify-between text-sm">
+                  <span>Subtotal:</span>
+                  <span>${subtotal.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm mt-1">
+                  <span>Service Fee ({serviceFeePercentage}%):</span>
+                  <span>${serviceFee.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between font-bold text-lg mt-2">
                   <span>Total Amount Paid:</span>
-                  <span>${items.reduce((sum, item) => sum + item.price, 0).toFixed(2)}</span>
+                  <span>${totalWithFees.toFixed(2)}</span>
                 </div>
               </div>
             </div>

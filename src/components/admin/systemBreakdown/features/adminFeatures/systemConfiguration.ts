@@ -4,7 +4,7 @@ import { FeatureItem } from '../../types';
 export const systemConfiguration: FeatureItem = {
   id: "admin-5",
   name: "System Configuration",
-  description: "Configure system-wide settings such as email templates, payment gateways, and API keys.",
+  description: "Configure system-wide settings such as email templates, payment gateways, service fees, and API keys.",
   status: "implemented",
   adminAccess: "full",
   establishmentAccess: "none",
@@ -17,6 +17,7 @@ export const systemConfiguration: FeatureItem = {
     - [x] Settings table implemented with necessary fields
     - [x] Email templates table created for email management
     - [x] Payment gateways table implemented for payment configuration
+    - [x] Service fee percentage configuration implemented
     - [x] API keys table created for API management
     - [x] UI components for system configuration
   `,
@@ -25,6 +26,7 @@ export const systemConfiguration: FeatureItem = {
     "Update system settings",
     "Configure email templates",
     "Configure payment gateways",
+    "Adjust service fee percentage",
     "Configure API keys",
     "Verify that system settings are properly applied"
   ],
