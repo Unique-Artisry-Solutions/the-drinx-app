@@ -1,4 +1,5 @@
-import { Home, Map, User, Route, Megaphone, BarChart2, Building, Bell, Calendar } from 'lucide-react';
+
+import { Home, Map, User, Route, Megaphone, BarChart2, Building, Bell, Calendar, Ticket } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -47,6 +48,9 @@ export const getUserNavItems = (
     navItems.push({ icon: Calendar, label: 'Events', path: '/promoter/events' });
     navItems.push({ icon: Megaphone, label: 'Dashboard', path: '/promoter/dashboard' });
     navItems.push({ icon: BarChart2, label: 'Analytics', path: '/promoter/analytics' });
+  } else {
+    // Add My Tickets for individual users
+    navItems.push({ icon: Ticket, label: 'My Tickets', path: '/profile/my-tickets' });
   }
   
   // Add Profile for all user types

@@ -11,15 +11,51 @@ import { Skeleton } from '@/components/ui/skeleton';
 import QRCodeLightbox from '@/components/qrcode/QRCodeLightbox';
 import Layout from '@/components/Layout';
 
-// Simple type for swig circuit attendees until we have a proper table
-interface SwigCircuitAttendee {
+interface EventTicket {
+  id: string;
+  event_id: string;
+  user_id: string;
+  ticket_type_id?: string;
+  purchase_date: string;
+  checked_in_at?: string;
+  status: string;
+  ticket_code: string;
+  event: {
+    id: string;
+    name: string;
+    date: string;
+    time: string;
+    venue?: {
+      id: string;
+      name: string;
+    }
+  };
+  ticket_type?: {
+    id: string;
+    name: string;
+    price: number;
+  };
+}
+
+interface SwigCircuitTicket {
   id: string;
   swig_circuit_id: string;
   user_id: string;
   ticket_tier_id?: string;
-  ticket_code?: string;
   purchase_date: string;
   status: string;
+  ticket_code?: string;
+  swig_circuit?: {
+    id: string;
+    name: string;
+    date?: string;
+    time?: string;
+  };
+  ticket_tier?: {
+    id: string;
+    name: string;
+    price: number;
+  };
 }
 
 const MyTicketsPage = () => {
@@ -61,21 +97,18 @@ const MyTicketsPage = () => {
     enabled: !!user,
   });
 
-  // Mock data for swig circuit tickets until we have the table
+  // Fetch swig circuit tickets
   const { data: swigTickets = [], isLoading: loadingSwigTickets } = useQuery({
     queryKey: ['mySwigTickets'],
     queryFn: async () => {
-      // This is a mock implementation until the swig_circuit_attendees table exists
-      return []; // Return empty array for now
+      if (!user) throw new Error('User not authenticated');
       
-      // When the table exists, we'll use code like this:
-      /*
       const { data, error } = await supabase
         .from('swig_circuit_attendees')
         .select(`
           *,
           swig_circuit:swig_circuit_id (*),
-          ticket_tier:ticket_tier_id (*)
+          ticket_tier:ticket_type_id (*)
         `)
         .eq('user_id', user.id)
         .order('purchase_date', { ascending: false });
@@ -90,7 +123,6 @@ const MyTicketsPage = () => {
       }
 
       return data || [];
-      */
     },
     enabled: !!user,
   });
@@ -154,7 +186,7 @@ const MyTicketsPage = () => {
 
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {eventTickets.map((ticket) => (
+        {eventTickets.map((ticket: EventTicket) => (
           <div key={ticket.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
             <h3 className="font-semibold text-lg">{ticket.event.name}</h3>
             <div className="text-sm text-muted-foreground space-y-1 mt-2">
@@ -205,24 +237,9 @@ const MyTicketsPage = () => {
       );
     }
 
-    // This is a placeholder until we have the actual swig_circuit_attendees table
-    return (
-      <div className="text-center py-12">
-        <Ticket className="mx-auto h-12 w-12 text-gray-400" />
-        <h3 className="mt-4 text-lg font-medium">No Swig Circuit Tickets</h3>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Swig Circuit tickets functionality coming soon.
-        </p>
-        <Button className="mt-4" asChild>
-          <a href="/swig-circuits">Browse Swig Circuits</a>
-        </Button>
-      </div>
-    );
-    
-    /* This code will be used when we have the swig_circuit_attendees table
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {swigTickets.map((ticket) => {
+        {swigTickets.map((ticket: SwigCircuitTicket) => {
           const swigCircuit = ticket.swig_circuit || {};
           const date = swigCircuit.date || ticket.purchase_date || '';
           const displayDate = typeof date === 'string' ? new Date(date).toLocaleDateString() : '';
@@ -247,7 +264,7 @@ const MyTicketsPage = () => {
                   {(ticket.ticket_tier && ticket.ticket_tier.name) || 'Standard Ticket'}
                 </span>
                 <Button size="sm" onClick={() => showTicketQR(
-                  ticket.ticket_code || '',
+                  ticket.ticket_code || ticket.id,
                   swigCircuit.name || 'Swig Circuit',
                   `Swig Circuit Pass`
                 )}>
@@ -259,7 +276,6 @@ const MyTicketsPage = () => {
         })}
       </div>
     );
-    */
   };
 
   return (
