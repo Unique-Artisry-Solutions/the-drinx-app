@@ -53,7 +53,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         
         if (data) {
-          setServiceFeePercentage(parseFloat(data.value));
+          setServiceFeePercentage(parseFloat(data.value as string));
         }
       } catch (error) {
         console.error('Failed to fetch service fee percentage', error);

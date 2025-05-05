@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import SystemSettingsTable from '../SystemSettingsTable';
 import { SystemSetting } from '@/types/SupabaseTables';
-import { InfoCircle } from 'lucide-react';
+import { Info } from 'lucide-react';
 
 interface PaymentSettingsTabProps {
   settings: SystemSetting[];
@@ -40,7 +40,7 @@ const PaymentSettingsTab: React.FC<PaymentSettingsTabProps> = ({
         <div className="bg-blue-50 border border-blue-200 rounded-md p-4 mb-6">
           <div className="flex items-start">
             <div className="flex-shrink-0 pt-0.5">
-              <InfoCircle className="h-5 w-5 text-blue-500" />
+              <Info className="h-5 w-5 text-blue-500" />
             </div>
             <div className="ml-3">
               <h3 className="text-sm font-medium text-blue-800">Service Fee Configuration</h3>
