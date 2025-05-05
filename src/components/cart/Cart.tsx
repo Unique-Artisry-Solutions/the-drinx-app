@@ -21,6 +21,26 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
     navigate('/checkout');
   };
 
+  // Group items by type for better organization
+  const groupedItems = {
+    subscriptions: items.filter(item => item.type === 'user' || item.type === 'establishment'),
+    eventTickets: items.filter(item => item.type === 'event_ticket'),
+    swigCircuitTickets: items.filter(item => item.type === 'swig_circuit_ticket')
+  };
+
+  const renderSection = (title: string, sectionItems: typeof items) => {
+    if (sectionItems.length === 0) return null;
+    
+    return (
+      <div className="mb-4">
+        <h3 className="text-sm font-medium text-gray-500 mb-2 px-4">{title}</h3>
+        {sectionItems.map((item) => (
+          <CartItem key={item.id} item={item} />
+        ))}
+      </div>
+    );
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
@@ -38,9 +58,9 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
             </div>
           ) : (
             <div>
-              {items.map((item) => (
-                <CartItem key={item.id} item={item} />
-              ))}
+              {renderSection('Subscriptions', groupedItems.subscriptions)}
+              {renderSection('Event Tickets', groupedItems.eventTickets)}
+              {renderSection('Swig Circuit Tickets', groupedItems.swigCircuitTickets)}
             </div>
           )}
         </div>

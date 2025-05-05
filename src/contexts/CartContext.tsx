@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -32,7 +33,13 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { toast } = useToast();
 
   // Calculate total price whenever items change
-  const totalPrice = items.reduce((total, item) => total + item.price, 0);
+  const totalPrice = items.reduce((total, item) => {
+    // If the item has a quantity, multiply the price by the quantity
+    if (item.quantity && item.quantity > 1) {
+      return total + (item.price * item.quantity);
+    }
+    return total + item.price;
+  }, 0);
 
   // Load cart from localStorage when component mounts
   useEffect(() => {
@@ -64,8 +71,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
     
-    // If we add a new plan, remove any existing plan of the same type
-    const newItems = items.filter((i) => i.type !== item.type);
+    // For subscription plans, remove any existing plan of the same type
+    let newItems = items;
+    if (item.type === 'user' || item.type === 'establishment') {
+      newItems = items.filter((i) => i.type !== item.type);
+    }
     
     // Add the new item
     setItems([...newItems, item]);

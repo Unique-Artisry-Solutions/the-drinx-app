@@ -66,6 +66,78 @@ const CheckoutPage: React.FC = () => {
     );
   }
 
+  // Group items by type for the summary
+  const groupedItems = {
+    subscriptions: items.filter(item => item.type === 'user' || item.type === 'establishment'),
+    eventTickets: items.filter(item => item.type === 'event_ticket'),
+    swigCircuitTickets: items.filter(item => item.type === 'swig_circuit_ticket')
+  };
+
+  // Render order summary item
+  const renderOrderItem = (item: typeof items[0]) => {
+    switch (item.type) {
+      case 'event_ticket':
+        return (
+          <div key={item.id} className="py-2">
+            <div className="flex justify-between">
+              <div>
+                <p className="font-medium">{item.name}</p>
+                <p className="text-sm text-gray-600">
+                  {item.date} at {item.time}
+                </p>
+                {item.venue && (
+                  <p className="text-xs text-gray-500">Venue: {item.venue}</p>
+                )}
+                {item.quantity && item.quantity > 1 && (
+                  <p className="text-xs text-gray-600">Qty: {item.quantity}</p>
+                )}
+              </div>
+              <p className="font-semibold">${item.price.toFixed(2)}</p>
+            </div>
+          </div>
+        );
+        
+      case 'swig_circuit_ticket':
+        return (
+          <div key={item.id} className="py-2">
+            <div className="flex justify-between">
+              <div>
+                <p className="font-medium">{item.name}</p>
+                {item.ticketName && (
+                  <p className="text-sm text-gray-600">{item.ticketName}</p>
+                )}
+                {item.date && <p className="text-xs text-gray-500">{item.date}</p>}
+                {item.quantity && item.quantity > 1 && (
+                  <p className="text-xs text-gray-600">Qty: {item.quantity}</p>
+                )}
+              </div>
+              <p className="font-semibold">${item.price.toFixed(2)}</p>
+            </div>
+          </div>
+        );
+        
+      default:
+        return (
+          <div key={item.id} className="py-2">
+            <div className="flex justify-between">
+              <div>
+                <p className="font-medium">{item.name}</p>
+                <p className="text-sm text-gray-600">
+                  {item.type === 'user' ? 'User' : 'Establishment'} Plan
+                </p>
+              </div>
+              <p className="font-semibold">
+                ${item.price.toFixed(2)}
+                {item.interval !== 'one-time' && 
+                  (item.interval === 'monthly' ? '/mo' : '/yr')
+                }
+              </p>
+            </div>
+          </div>
+        );
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-white to-purple-50">
       <TopNavigation />
@@ -169,17 +241,32 @@ const CheckoutPage: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {items.map((item) => (
-                    <div key={item.id} className="flex justify-between">
-                      <div>
-                        <p className="font-medium">{item.name}</p>
-                        <p className="text-sm text-gray-600">
-                          {item.type === 'user' ? 'User' : 'Establishment'} Plan
-                        </p>
-                      </div>
-                      <p className="font-semibold">${item.price}{item.interval === 'monthly' ? '/mo' : '/yr'}</p>
+                  {/* Render subscription items */}
+                  {groupedItems.subscriptions.length > 0 && (
+                    <div>
+                      {groupedItems.subscriptions.length > 0 && (
+                        <h4 className="text-sm font-medium text-gray-500 mb-2">Subscriptions</h4>
+                      )}
+                      {groupedItems.subscriptions.map(renderOrderItem)}
                     </div>
-                  ))}
+                  )}
+                  
+                  {/* Render event ticket items */}
+                  {groupedItems.eventTickets.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-500 mb-2">Event Tickets</h4>
+                      {groupedItems.eventTickets.map(renderOrderItem)}
+                    </div>
+                  )}
+                  
+                  {/* Render swig circuit ticket items */}
+                  {groupedItems.swigCircuitTickets.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-500 mb-2">Swig Circuit Tickets</h4>
+                      {groupedItems.swigCircuitTickets.map(renderOrderItem)}
+                    </div>
+                  )}
+                  
                   <div className="border-t pt-4 mt-4">
                     <div className="flex justify-between font-bold">
                       <span>Total</span>
