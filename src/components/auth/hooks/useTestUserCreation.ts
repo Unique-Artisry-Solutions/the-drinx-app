@@ -2,13 +2,13 @@ import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { createProfileManually } from '../utils/testUserCreation';
-import { TestUserCredentials, TestCredentialsData } from '../types/testCredentials';
+import { TestUserCredential, TestCredentialsData } from '../types/testCredentials';
 
 export const useTestUserCreation = () => {
   const { toast } = useToast();
   const [isCreating, setIsCreating] = useState(false);
 
-  const createUserViaEdgeFunction = async (credentials: TestUserCredentials) => {
+  const createUserViaEdgeFunction = async (credentials: TestUserCredential) => {
     try {
       const { data, error } = await supabase.functions.invoke('create_test_user', {
         body: {
@@ -41,7 +41,7 @@ export const useTestUserCreation = () => {
     }
   };
 
-  const createTestUser = async (credentials: TestUserCredentials) => {
+  const createTestUser = async (credentials: TestUserCredential) => {
     try {
       const { data: existingUser, error: signInError } = await supabase.auth.signInWithPassword({
         email: credentials.email,
