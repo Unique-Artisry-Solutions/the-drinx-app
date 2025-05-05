@@ -68,7 +68,7 @@ const EventDetailPage = () => {
       name: `${event.name} - ${ticketType.name}`,
       price: ticketType.price * quantity,
       interval: 'one-time',
-      type: 'event_ticket',
+      type: 'event_ticket' as 'user' | 'establishment' | 'event_ticket' | 'swig_circuit_ticket',
       eventId: event.id,
       ticketTypeId: ticketType.id,
       ticketName: ticketType.name,
@@ -195,28 +195,34 @@ const EventDetailPage = () => {
                 {event.event_ticket_types && event.event_ticket_types.length > 0 ? (
                   <>
                     <div className="space-y-4 mb-6">
-                      {event.event_ticket_types.map((ticket) => (
-                        <div 
-                          key={ticket.id}
-                          className={`p-4 border rounded-md cursor-pointer ${
-                            selectedTicket === ticket.id ? 'border-purple-500 bg-purple-50' : ''
-                          }`}
-                          onClick={() => setSelectedTicket(ticket.id)}
-                        >
-                          <div className="flex justify-between items-center">
-                            <div>
-                              <h3 className="font-medium">{ticket.name}</h3>
-                              <p className="text-sm text-muted-foreground">{ticket.description}</p>
-                            </div>
-                            <div className="text-right">
-                              <p className="font-semibold">${ticket.price.toFixed(2)}</p>
-                              <p className="text-xs text-muted-foreground">
-                                {ticket.quantity - (ticket.sold || 0)} remaining
-                              </p>
+                      {event.event_ticket_types.map((ticket) => {
+                        // Calculate tickets sold - default to 0 if not available
+                        const ticketsSold = 0; // This will need to be updated when we have the data
+                        const remainingTickets = ticket.quantity - ticketsSold;
+                        
+                        return (
+                          <div 
+                            key={ticket.id}
+                            className={`p-4 border rounded-md cursor-pointer ${
+                              selectedTicket === ticket.id ? 'border-purple-500 bg-purple-50' : ''
+                            }`}
+                            onClick={() => setSelectedTicket(ticket.id)}
+                          >
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <h3 className="font-medium">{ticket.name}</h3>
+                                <p className="text-sm text-muted-foreground">{ticket.description}</p>
+                              </div>
+                              <div className="text-right">
+                                <p className="font-semibold">${ticket.price.toFixed(2)}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {remainingTickets} remaining
+                                </p>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
 
                     <Separator className="my-4" />

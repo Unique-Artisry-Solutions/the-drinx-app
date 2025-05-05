@@ -14,6 +14,7 @@ export const useEventQueries = () => {
         .from('events')
         .select(`
           *,
+          venue:venue_id (id, name, address),
           event_ticket_types (*)
         `);
 
@@ -26,7 +27,23 @@ export const useEventQueries = () => {
         throw error;
       }
 
-      return data;
+      return data.map(event => {
+        // Add computed/derived properties that match the EventType interface
+        return {
+          ...event,
+          attendees: {
+            registered: 0, // This will need real data in the future
+            capacity: event.capacity || 0,
+            checkedIn: 0 // This will need real data in the future
+          },
+          revenue: {
+            total: 0, // This will need real data in the future
+            ticketSales: 0, 
+            additionalSales: 0
+          },
+          distance: undefined // This will need real data in the future
+        } as EventType;
+      });
     },
   });
 

@@ -53,20 +53,28 @@ const EventsSection: React.FC<EventsSectionProps> = ({ events: propEvents }) => 
         </div>
       ) : events.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {events.slice(0, 3).map((event) => (
-            <EventCard
-              key={event.id}
-              id={event.id}
-              name={event.name}
-              date={new Date(event.date).toLocaleDateString()}
-              time={event.time}
-              venue={event.venue?.name || 'TBD'}
-              status={event.status}
-              imageUrl={event.image_url}
-              attendeeCount={event.attendees?.registered || 0}
-              distance={event.distance}
-            />
-          ))}
+          {events.slice(0, 3).map((event) => {
+            // Extract venue name safely
+            const venueName = event.venue?.name || 'TBD';
+            
+            // Calculate registered attendees safely
+            const attendeeCount = event.attendees?.registered || 0;
+
+            return (
+              <EventCard
+                key={event.id}
+                id={event.id}
+                name={event.name}
+                date={new Date(event.date).toLocaleDateString()}
+                time={event.time}
+                venue={venueName}
+                status={event.status}
+                imageUrl={event.image_url}
+                attendeeCount={attendeeCount}
+                distance={event.distance}
+              />
+            );
+          })}
         </div>
       ) : (
         <div className="py-10 text-center">

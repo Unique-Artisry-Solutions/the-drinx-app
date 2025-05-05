@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -6,8 +5,16 @@ export interface CartItem {
   id: string;
   name: string;
   price: number;
-  interval: string;
-  type: 'user' | 'establishment';
+  interval: 'monthly' | 'yearly' | 'one-time';
+  type: 'user' | 'establishment' | 'event_ticket' | 'swig_circuit_ticket';
+  eventId?: string;
+  swigCircuitId?: string;
+  ticketTypeId?: string; 
+  ticketName?: string;
+  date?: string;
+  time?: string;
+  venue?: string;
+  quantity?: number;
 }
 
 interface CartContextType {

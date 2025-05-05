@@ -73,20 +73,33 @@ const EventsPage = () => {
           </div>
         ) : filteredEvents.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {filteredEvents.map((event) => (
-              <EventCard
-                key={event.id}
-                id={event.id}
-                name={event.name}
-                date={new Date(event.date).toLocaleDateString()}
-                time={event.time}
-                venue={event.venue?.name || 'TBD'}
-                status={event.status}
-                imageUrl={event.image_url}
-                attendeeCount={event.attendees?.registered || 0}
-                distance={event.distance}
-              />
-            ))}
+            {filteredEvents.map((event) => {
+              // Extract venue name safely
+              const venueName = event.venue_id 
+                ? (event.venue?.name || 'TBD') 
+                : 'TBD';
+              
+              // Calculate registered attendees safely
+              const attendeeCount = 0; // Default to 0 since we don't have this data yet
+              
+              // Distance is also not available yet
+              const distance = undefined;
+              
+              return (
+                <EventCard
+                  key={event.id}
+                  id={event.id}
+                  name={event.name}
+                  date={new Date(event.date).toLocaleDateString()}
+                  time={event.time}
+                  venue={venueName}
+                  status={event.status}
+                  imageUrl={event.image_url}
+                  attendeeCount={attendeeCount}
+                  distance={distance}
+                />
+              );
+            })}
           </div>
         ) : (
           <div className="p-12 text-center border rounded-lg bg-gray-50">

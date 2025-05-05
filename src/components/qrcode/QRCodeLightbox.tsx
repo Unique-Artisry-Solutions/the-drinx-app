@@ -1,58 +1,48 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { QrCode } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import QRCode from 'react-qr-code';
 
-interface QRCodeLightboxProps {
+export interface QRCodeLightboxProps {
   value: string;
   title?: string;
-  description?: string;
+  subtitle?: string;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
 const QRCodeLightbox: React.FC<QRCodeLightboxProps> = ({ 
   value, 
   title = "Scan QR Code", 
-  description 
+  subtitle,
+  isOpen,
+  onClose
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
-
   return (
-    <>
-      <div 
-        className="flex justify-center items-center p-3 bg-gray-100 rounded-lg cursor-pointer hover:bg-gray-200 transition-colors"
-        onClick={() => setIsOpen(true)}
-      >
-        <div className="text-center">
-          <QrCode className="h-14 w-14 mx-auto mb-1 text-material-primary" />
-          <p className="text-xs text-material-on-surface-variant">Tap to enlarge QR code</p>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+          {subtitle && (
+            <p className="text-sm text-muted-foreground">{subtitle}</p>
+          )}
+        </DialogHeader>
+        
+        <div className="flex items-center justify-center p-6 bg-white rounded-md">
+          <QRCode
+            value={value}
+            size={250}
+            level="H"
+            className="mx-auto"
+          />
         </div>
-      </div>
-
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>{title}</DialogTitle>
-            {description && (
-              <p className="text-sm text-muted-foreground">{description}</p>
-            )}
-          </DialogHeader>
-          
-          <div className="flex items-center justify-center p-6 bg-white rounded-md">
-            <QRCode
-              value={value}
-              size={250}
-              level="H"
-              className="mx-auto"
-            />
-          </div>
-          
-          <div className="text-center text-sm text-muted-foreground mt-2">
-            Scan this code to check in to this establishment
-          </div>
-        </DialogContent>
-      </Dialog>
-    </>
+        
+        <div className="text-center text-sm text-muted-foreground mt-2">
+          Scan this code to check in to this event
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 
