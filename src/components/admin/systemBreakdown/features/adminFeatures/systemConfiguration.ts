@@ -21,6 +21,7 @@ export const systemConfiguration: FeatureItem = {
     - [x] API keys table created for API management
     - [x] UI components for system configuration
     - [x] Analytics tracking for service fees collected
+    - [x] Enhanced checkout UI with service fee display and back navigation
   `,
   testSteps: [
     "Log in as admin and navigate to System Configuration page",
@@ -30,7 +31,8 @@ export const systemConfiguration: FeatureItem = {
     "Adjust service fee percentage",
     "Configure API keys",
     "Verify that system settings are properly applied",
-    "Check analytics dashboard for service fee tracking"
+    "Check analytics dashboard for service fee tracking",
+    "Test the checkout process with back navigation and item removal"
   ],
   integrations: [
     "Email service providers",
@@ -39,6 +41,7 @@ export const systemConfiguration: FeatureItem = {
     "Social media platforms",
     "Venue management systems",
     "Financial tracking systems",
-    "Analytics dashboard"
+    "Analytics dashboard",
+    "Cart and checkout system"
   ]
 };

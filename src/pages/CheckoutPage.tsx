@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, CreditCard, AlertCircle, CheckCircle, HelpCircle } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
@@ -13,6 +14,8 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/auth';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAnalytics } from '@/hooks/useAnalytics';
+import BackButton from '@/components/navigation/BackButton';
+import CartItem from '@/components/cart/CartItem';
 
 interface ContactInfo {
   firstName: string;
@@ -21,7 +24,7 @@ interface ContactInfo {
 }
 
 const CheckoutPage: React.FC = () => {
-  const { items, totalPrice, serviceFee, serviceFeePercentage, totalWithFees, clearCart } = useCart();
+  const { items, totalPrice, serviceFee, serviceFeePercentage, totalWithFees, clearCart, removeItem } = useCart();
   const [isProcessing, setIsProcessing] = useState(false);
   const [captchaValue, setCaptchaValue] = useState<string | null>(null);
   const [formValid, setFormValid] = useState(false);
@@ -32,6 +35,7 @@ const CheckoutPage: React.FC = () => {
   });
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const { trackServiceFee } = useAnalytics();
 
@@ -153,6 +157,16 @@ const CheckoutPage: React.FC = () => {
     );
   }
 
+  // Generate navigation links based on cart items
+  const getDetailLink = (item: typeof items[0]) => {
+    if (item.type === 'event_ticket' && item.eventId) {
+      return `/event/${item.eventId}`;
+    } else if (item.type === 'swig_circuit_ticket' && item.swigCircuitId) {
+      return `/swig-circuit/${item.swigCircuitId}`;
+    }
+    return '';
+  };
+
   // Group items by type for the summary
   const groupedItems = {
     subscriptions: items.filter(item => item.type === 'user' || item.type === 'establishment'),
@@ -160,87 +174,28 @@ const CheckoutPage: React.FC = () => {
     swigCircuitTickets: items.filter(item => item.type === 'swig_circuit_ticket')
   };
 
-  // Render order summary item
-  const renderOrderItem = (item: typeof items[0]) => {
-    switch (item.type) {
-      case 'event_ticket':
-        return (
-          <div key={item.id} className="py-2">
-            <div className="flex justify-between">
-              <div>
-                <p className="font-medium">{item.name}</p>
-                <p className="text-sm text-gray-600">
-                  {item.date} at {item.time}
-                </p>
-                {item.venue && (
-                  <p className="text-xs text-gray-500">Venue: {item.venue}</p>
-                )}
-                {item.quantity && item.quantity > 1 && (
-                  <p className="text-xs text-gray-600">Qty: {item.quantity}</p>
-                )}
-              </div>
-              <p className="font-semibold">${item.price.toFixed(2)}</p>
-            </div>
-          </div>
-        );
-        
-      case 'swig_circuit_ticket':
-        return (
-          <div key={item.id} className="py-2">
-            <div className="flex justify-between">
-              <div>
-                <p className="font-medium">{item.name}</p>
-                {item.ticketName && (
-                  <p className="text-sm text-gray-600">{item.ticketName}</p>
-                )}
-                {item.date && <p className="text-xs text-gray-500">{item.date}</p>}
-                {item.quantity && item.quantity > 1 && (
-                  <p className="text-xs text-gray-600">Qty: {item.quantity}</p>
-                )}
-              </div>
-              <p className="font-semibold">${item.price.toFixed(2)}</p>
-            </div>
-          </div>
-        );
-        
-      default:
-        return (
-          <div key={item.id} className="py-2">
-            <div className="flex justify-between">
-              <div>
-                <p className="font-medium">{item.name}</p>
-                <p className="text-sm text-gray-600">
-                  {item.type === 'user' ? 'User' : 'Establishment'} Plan
-                </p>
-              </div>
-              <p className="font-semibold">
-                ${item.price.toFixed(2)}
-                {item.interval !== 'one-time' && 
-                  (item.interval === 'monthly' ? '/mo' : '/yr')
-                }
-              </p>
-            </div>
-          </div>
-        );
-    }
-  };
-
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-white to-purple-50">
       <TopNavigation />
       <div className="container max-w-6xl mx-auto px-4 py-8 flex-1">
-        <div className="mb-8">
-          <Link to="/pricing" className="inline-flex items-center text-material-primary hover:underline">
-            <ArrowLeft size={16} className="mr-2" />
-            Back to Pricing
-          </Link>
+        <div className="mb-6 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <BackButton 
+              fallbackPath="/pricing" 
+              variant="ghost" 
+              size="sm"
+              label="Back" 
+              showLabel={true}
+            />
+            <h1 className="text-2xl font-semibold">Checkout</h1>
+          </div>
         </div>
 
         <div className="grid md:grid-cols-3 gap-8">
           <div className="md:col-span-2">
             <Card>
               <CardHeader>
-                <CardTitle>Checkout</CardTitle>
+                <CardTitle>Complete Your Purchase</CardTitle>
               </CardHeader>
               <form onSubmit={handleSubmit}>
                 <CardContent className="space-y-4">
@@ -350,10 +305,14 @@ const CheckoutPage: React.FC = () => {
                   {/* Render subscription items */}
                   {groupedItems.subscriptions.length > 0 && (
                     <div>
-                      {groupedItems.subscriptions.length > 0 && (
-                        <h4 className="text-sm font-medium text-gray-500 mb-2">Subscriptions</h4>
-                      )}
-                      {groupedItems.subscriptions.map(renderOrderItem)}
+                      <h4 className="text-sm font-medium text-gray-500 mb-2">Subscriptions</h4>
+                      <div className="divide-y">
+                        {groupedItems.subscriptions.map(item => (
+                          <div key={item.id} className="py-3">
+                            <CartItem item={item} />
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                   
@@ -361,7 +320,23 @@ const CheckoutPage: React.FC = () => {
                   {groupedItems.eventTickets.length > 0 && (
                     <div>
                       <h4 className="text-sm font-medium text-gray-500 mb-2">Event Tickets</h4>
-                      {groupedItems.eventTickets.map(renderOrderItem)}
+                      <div className="divide-y">
+                        {groupedItems.eventTickets.map(item => (
+                          <div key={item.id} className="py-3">
+                            <CartItem item={item} />
+                            {item.eventId && (
+                              <div className="mt-2 text-right">
+                                <Link 
+                                  to={`/event/${item.eventId}`} 
+                                  className="text-xs text-material-primary hover:underline"
+                                >
+                                  View Event Details
+                                </Link>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                   
@@ -369,7 +344,23 @@ const CheckoutPage: React.FC = () => {
                   {groupedItems.swigCircuitTickets.length > 0 && (
                     <div>
                       <h4 className="text-sm font-medium text-gray-500 mb-2">Swig Circuit Tickets</h4>
-                      {groupedItems.swigCircuitTickets.map(renderOrderItem)}
+                      <div className="divide-y">
+                        {groupedItems.swigCircuitTickets.map(item => (
+                          <div key={item.id} className="py-3">
+                            <CartItem item={item} />
+                            {item.swigCircuitId && (
+                              <div className="mt-2 text-right">
+                                <Link 
+                                  to={`/swig-circuit/${item.swigCircuitId}`} 
+                                  className="text-xs text-material-primary hover:underline"
+                                >
+                                  View Circuit Details
+                                </Link>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                   

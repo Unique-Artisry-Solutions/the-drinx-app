@@ -3,6 +3,7 @@ import React from 'react';
 import { X } from 'lucide-react';
 import { CartItem as CartItemType } from '@/contexts/CartContext';
 import { useCart } from '@/contexts/CartContext';
+import { Button } from '@/components/ui/button';
 
 interface CartItemProps {
   item: CartItemType;
@@ -59,20 +60,20 @@ const CartItem: React.FC<CartItemProps> = ({ item }) => {
   };
 
   return (
-    <div className="flex items-center justify-between p-4 border-b border-gray-200">
+    <div className="flex items-center justify-between">
       <div className="flex-1">
         {renderItemDetails()}
       </div>
       <div className="flex items-center gap-4">
         <p className="font-semibold">
-          ${item.price}
+          ${item.price.toFixed(2)}
           {item.interval !== 'one-time' && 
             (item.interval === 'monthly' ? '/mo' : '/yr')
           }
         </p>
         <button 
           onClick={() => removeItem(item.id)}
-          className="text-gray-500 hover:text-red-500"
+          className="text-gray-500 hover:text-red-500 transition-colors"
           aria-label="Remove item"
         >
           <X size={18} />
