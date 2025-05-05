@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { EventFormData } from '@/types/EventTypes';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface TicketType {
   name: string;
@@ -81,6 +82,7 @@ export const EventWizardProvider: React.FC<EventWizardProviderProps> = ({ childr
           if (eventData) {
             // Convert event data to form data format
             const formattedData: EventFormData = {
+              id: eventData.id,
               name: eventData.name || '',
               description: eventData.description || '',
               date: eventData.date || '',

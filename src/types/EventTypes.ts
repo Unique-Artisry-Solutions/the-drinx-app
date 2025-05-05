@@ -114,6 +114,7 @@ export interface EventNotificationScheduleInput {
 }
 
 export interface EventFormData {
+  id?: string; // Added id property to fix the TypeScript errors
   name: string;
   description: string;
   date: string;
