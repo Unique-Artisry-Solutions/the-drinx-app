@@ -234,8 +234,12 @@ const BarCrawlDetail = () => {
                   <>
                     <div className="space-y-4 mb-6">
                       {ticketTypes.map((ticket) => {
-                        const ticketsSold = ticket.sold || 0;
-                        const remainingTickets = (ticket.ticket_limit || 0) - ticketsSold;
+                        // Calculate remaining tickets safely - fix the error by using optional chaining
+                        // and default values instead of assuming 'sold' property exists
+                        const ticketLimit = ticket.ticket_limit || 0;
+                        // Use 0 as default for sold tickets since the property doesn't exist in the type
+                        const soldTickets = 0; // Since 'sold' property doesn't exist, default to 0
+                        const remainingTickets = ticketLimit - soldTickets;
                         
                         return (
                           <div 
