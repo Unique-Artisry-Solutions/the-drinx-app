@@ -29,35 +29,60 @@ const BarCrawlDetail = () => {
   const [selectedTicket, setSelectedTicket] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
 
-  // Fetch swig circuit details
+  // Fetch swig circuit details with corrected table names and relationships
   const { data: swigCircuit, isLoading } = useQuery({
     queryKey: ['swigCircuit', id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('swig_circuits')
-        .select(`
-          *,
-          circuit_ticket_types (*),
-          establishments:swig_circuit_establishments (
-            establishment:establishment_id (id, name, address, image_url)
-          ),
-          swig_circuit_drink_highlights (*)
-        `)
-        .eq('id', id)
-        .single();
+      try {
+        console.log('Fetching swig circuit with ID:', id);
+        
+        const { data, error } = await supabase
+          .from('swig_circuits')
+          .select(`
+            *,
+            swig_circuit_ticket_tiers (*),
+            establishments:swig_circuit_venues (
+              establishment:establishment_id (id, name, address, image_url)
+            ),
+            swig_circuit_drink_highlights (*)
+          `)
+          .eq('id', id)
+          .single();
 
-      if (error) {
-        toast({
-          title: 'Error loading swig circuit',
-          description: error.message,
-          variant: 'destructive',
-        });
+        if (error) {
+          console.error('Error loading swig circuit:', error);
+          toast({
+            title: 'Error loading swig circuit',
+            description: error.message,
+            variant: 'destructive',
+          });
+          throw error;
+        }
+
+        console.log('Swig circuit data loaded:', data);
+        return data;
+      } catch (error: any) {
+        console.error('Error in swigCircuit query:', error);
+        
+        // Prevent multiple error toasts by using a debounce mechanism
+        if (!window.swigCircuitErrorToastShown) {
+          window.swigCircuitErrorToastShown = true;
+          toast({
+            title: 'Error loading swig circuit',
+            description: error.message || 'Failed to load circuit details',
+            variant: 'destructive',
+          });
+          
+          setTimeout(() => {
+            window.swigCircuitErrorToastShown = false;
+          }, 5000);
+        }
+        
         throw error;
       }
-
-      return data;
     },
     enabled: !!id,
+    retry: 1, // Limit retries to prevent multiple error toasts
   });
 
   const handleAddToCart = () => {
@@ -69,9 +94,9 @@ const BarCrawlDetail = () => {
       return;
     }
 
-    // Safely access circuit_ticket_types to avoid errors
-    const ticketTypes = Array.isArray(swigCircuit.circuit_ticket_types) 
-      ? swigCircuit.circuit_ticket_types 
+    // Safely access swig_circuit_ticket_tiers to avoid errors
+    const ticketTypes = Array.isArray(swigCircuit.swig_circuit_ticket_tiers) 
+      ? swigCircuit.swig_circuit_ticket_tiers 
       : [];
     
     const ticketType = ticketTypes.find(ticket => ticket.id === selectedTicket);
@@ -138,9 +163,9 @@ const BarCrawlDetail = () => {
     );
   }
 
-  // Safely access circuit_ticket_types to avoid errors
-  const ticketTypes = Array.isArray(swigCircuit.circuit_ticket_types) 
-    ? swigCircuit.circuit_ticket_types 
+  // Safely access swig_circuit_ticket_tiers to avoid errors
+  const ticketTypes = Array.isArray(swigCircuit.swig_circuit_ticket_tiers) 
+    ? swigCircuit.swig_circuit_ticket_tiers 
     : [];
   
   // Safely access establishments
@@ -214,7 +239,7 @@ const BarCrawlDetail = () => {
                     <div className="space-y-4 mb-6">
                       {ticketTypes.map((ticket) => {
                         const ticketsSold = ticket.sold || 0;
-                        const remainingTickets = ticket.quantity - ticketsSold;
+                        const remainingTickets = (ticket.ticket_limit || 0) - ticketsSold;
                         
                         return (
                           <div 
@@ -231,9 +256,11 @@ const BarCrawlDetail = () => {
                               </div>
                               <div className="text-right">
                                 <p className="font-semibold">${ticket.price.toFixed(2)}</p>
-                                <p className="text-xs text-muted-foreground">
-                                  {remainingTickets} remaining
-                                </p>
+                                {ticket.ticket_limit ? (
+                                  <p className="text-xs text-muted-foreground">
+                                    {remainingTickets} remaining
+                                  </p>
+                                ) : null}
                               </div>
                             </div>
                           </div>
@@ -308,5 +335,12 @@ const BarCrawlDetail = () => {
     </Layout>
   );
 };
+
+// Add TypeScript interface for the window object to support our debounce flag
+declare global {
+  interface Window {
+    swigCircuitErrorToastShown?: boolean;
+  }
+}
 
 export default BarCrawlDetail;
