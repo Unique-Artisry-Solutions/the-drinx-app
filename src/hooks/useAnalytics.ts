@@ -61,11 +61,22 @@ export function useAnalytics() {
     return track('error', { error_type: errorType, ...errorDetails });
   }, [track]);
   
+  // Add service fee tracking
+  const trackServiceFee = useCallback((feeAmount: number, percentage: number, transactionTotal: number) => {
+    return track('service_fee_collected', { 
+      fee_amount: feeAmount,
+      fee_percentage: percentage,
+      transaction_total: transactionTotal,
+      timestamp: new Date().toISOString()
+    });
+  }, [track]);
+  
   return {
     track,
     trackWithFeedback,
     trackPage,
     trackAction,
-    trackError
+    trackError,
+    trackServiceFee
   };
 }

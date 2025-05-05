@@ -47,6 +47,7 @@ const PaymentSettingsTab: React.FC<PaymentSettingsTabProps> = ({
               <div className="mt-2 text-sm text-blue-700">
                 <p>Changes to the service fee percentage will affect all future transactions. The percentage is applied to the total transaction amount before checkout.</p>
                 <p className="mt-1">For security reasons, changing this setting requires a reason to be provided.</p>
+                <p className="mt-1">Revenue from service fees is tracked in the analytics dashboard.</p>
               </div>
             </div>
           </div>

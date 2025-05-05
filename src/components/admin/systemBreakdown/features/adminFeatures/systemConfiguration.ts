@@ -17,9 +17,10 @@ export const systemConfiguration: FeatureItem = {
     - [x] Settings table implemented with necessary fields
     - [x] Email templates table created for email management
     - [x] Payment gateways table implemented for payment configuration
-    - [x] Service fee percentage configuration implemented
+    - [x] Service fee percentage configuration implemented with validation
     - [x] API keys table created for API management
     - [x] UI components for system configuration
+    - [x] Analytics tracking for service fees collected
   `,
   testSteps: [
     "Log in as admin and navigate to System Configuration page",
@@ -28,7 +29,8 @@ export const systemConfiguration: FeatureItem = {
     "Configure payment gateways",
     "Adjust service fee percentage",
     "Configure API keys",
-    "Verify that system settings are properly applied"
+    "Verify that system settings are properly applied",
+    "Check analytics dashboard for service fee tracking"
   ],
   integrations: [
     "Email service providers",
@@ -36,6 +38,7 @@ export const systemConfiguration: FeatureItem = {
     "Third-party APIs",
     "Social media platforms",
     "Venue management systems",
-    "Financial tracking systems"
+    "Financial tracking systems",
+    "Analytics dashboard"
   ]
 };

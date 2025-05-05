@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, CreditCard, AlertCircle, CheckCircle, HelpCircle } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
@@ -13,6 +12,7 @@ import ReCAPTCHA from 'react-google-recaptcha';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/auth';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useAnalytics } from '@/hooks/useAnalytics';
 
 interface ContactInfo {
   firstName: string;
@@ -33,6 +33,7 @@ const CheckoutPage: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { trackServiceFee } = useAnalytics();
 
   const handleCaptchaChange = (value: string | null) => {
     setCaptchaValue(value);
@@ -100,6 +101,9 @@ const CheckoutPage: React.FC = () => {
           return;
         }
       }
+      
+      // Track service fee collection 
+      await trackServiceFee(serviceFee, serviceFeePercentage, totalWithFees);
       
       // Simulate payment processing for all items
       // In a real implementation, you'd have Stripe or another payment processor here
