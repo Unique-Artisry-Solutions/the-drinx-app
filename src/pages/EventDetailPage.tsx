@@ -6,32 +6,64 @@ import DetailPageMasthead from '@/components/shared/DetailPageMasthead';
 import { Button } from '@/components/ui/button';
 import { useEventDetails } from '@/hooks/events/useEventDetails';
 import { useCart } from '@/contexts/CartContext';
-import { Loader2, MapPin, Calendar, Clock, Users, AlertCircle } from 'lucide-react';
+import { Loader2, MapPin, Calendar, Clock, Users, AlertCircle, ShoppingCart } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { formatCurrency } from '@/utils/formatters';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { useToast } from '@/hooks/use-toast';
 
 const EventDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const { event, isLoading, error } = useEventDetails(id || '');
-  const { addItem } = useCart();
+  const { addItem, items } = useCart();
+  const { toast } = useToast();
+  const [showConfirmation, setShowConfirmation] = React.useState(false);
+  const [selectedTicket, setSelectedTicket] = React.useState<any>(null);
 
   const handleBuyTicket = (ticketType: any) => {
-    if (!event) return;
+    setSelectedTicket(ticketType);
+    setShowConfirmation(true);
+  };
+
+  const confirmAddToCart = () => {
+    if (!event || !selectedTicket) return;
     
     addItem({
-      id: `${event.id}-${ticketType.id}`,
+      id: `${event.id}-${selectedTicket.id}`,
       type: 'event_ticket',
       name: event.name,
-      price: ticketType.price,
+      price: selectedTicket.price,
       quantity: 1,
-      ticketName: ticketType.name,
+      ticketName: selectedTicket.name,
       eventId: event.id,
       date: event.date,
       time: event.time,
       venue: event.venue.name,
       interval: 'one-time'
     });
+    
+    setShowConfirmation(false);
+    
+    // Show toast with action to go to checkout
+    toast({
+      title: "Ticket added to cart",
+      description: `${selectedTicket.name} for ${event.name} has been added to your cart.`,
+      action: {
+        label: "Checkout",
+        onClick: () => window.location.href = '/checkout',
+        altText: "Go to checkout"
+      }
+    });
+  };
+
+  // Check if this ticket is already in the cart
+  const isTicketInCart = (ticketTypeId: string): boolean => {
+    return items.some(item => 
+      item.type === 'event_ticket' && 
+      item.eventId === event?.id && 
+      item.id === `${event?.id}-${ticketTypeId}`
+    );
   };
 
   const renderContent = () => {
@@ -134,8 +166,10 @@ const EventDetailPage = () => {
                         <Button 
                           onClick={() => handleBuyTicket(ticket)}
                           className="w-full"
+                          variant={isTicketInCart(ticket.id) ? "secondary" : "default"}
+                          disabled={isTicketInCart(ticket.id)}
                         >
-                          Buy Ticket
+                          {isTicketInCart(ticket.id) ? 'In Cart' : 'Buy Ticket'}
                         </Button>
                       </div>
                     ))}
@@ -161,6 +195,51 @@ const EventDetailPage = () => {
         />
         
         {renderContent()}
+        
+        {/* Add to Cart Confirmation Dialog */}
+        <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <ShoppingCart className="h-5 w-5" />
+                Add to Cart
+              </DialogTitle>
+              <DialogDescription>
+                Add this ticket to your cart to continue with purchase.
+              </DialogDescription>
+            </DialogHeader>
+            
+            {selectedTicket && event && (
+              <div className="py-4">
+                <h3 className="font-medium text-lg">{event.name}</h3>
+                <p className="text-gray-600 text-sm">{event.date} at {event.time}</p>
+                <div className="mt-4 flex justify-between items-center bg-slate-50 p-3 rounded-md">
+                  <div>
+                    <p className="font-medium">{selectedTicket.name}</p>
+                    <p className="text-sm text-gray-500">{selectedTicket.description}</p>
+                  </div>
+                  <p className="font-bold">{formatCurrency(selectedTicket.price)}</p>
+                </div>
+              </div>
+            )}
+            
+            <DialogFooter className="flex sm:justify-between gap-2">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowConfirmation(false)}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={confirmAddToCart}
+                className="flex-1"
+              >
+                Add to Cart
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </Layout>
   );

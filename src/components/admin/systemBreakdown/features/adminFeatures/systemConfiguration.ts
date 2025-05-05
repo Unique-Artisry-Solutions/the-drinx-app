@@ -23,6 +23,8 @@ export const systemConfiguration: FeatureItem = {
     - [x] Analytics tracking for service fees collected
     - [x] Enhanced checkout UI with service fee display and back navigation
     - [x] Event detail page implementation with ticket purchasing
+    - [x] Cart integration with cart button in navigation
+    - [x] Add to cart feedback with confirmation dialog
   `,
   testSteps: [
     "Log in as admin and navigate to System Configuration page",
@@ -34,7 +36,9 @@ export const systemConfiguration: FeatureItem = {
     "Verify that system settings are properly applied",
     "Check analytics dashboard for service fee tracking",
     "Test the checkout process with back navigation and item removal",
-    "Test event detail pages and ticket purchasing functionality"
+    "Test event detail pages and ticket purchasing functionality",
+    "Test adding tickets to cart with confirmation dialog",
+    "Test cart functionality across the application"
   ],
   integrations: [
     "Email service providers",

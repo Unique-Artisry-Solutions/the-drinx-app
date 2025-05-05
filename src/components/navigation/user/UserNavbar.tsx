@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth';
@@ -9,6 +10,7 @@ import UserMobileMenu from './UserMobileMenu';
 import { useTheme } from '@/contexts/ThemeContext';
 import NotificationsPopover from '@/components/notifications/NotificationsPopover';
 import { RoleSwitcher } from '../RoleSwitcher';
+import CartButton from '@/components/cart/CartButton';
 
 interface TabOption {
   value: string;
@@ -134,6 +136,7 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
             
             <RoleSwitcher />
             <NotificationsPopover />
+            <CartButton />
             
             <UserProfileDropdown 
               username={username} 
