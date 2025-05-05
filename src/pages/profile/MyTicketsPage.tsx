@@ -161,7 +161,7 @@ const MyTicketsPage = () => {
       }
 
       // Process the raw data to ensure it matches our expected interface
-      const processedData: SwigCircuitTicket[] = (data as SwigCircuitAttendeeRaw[]).map(item => ({
+      const processedData: SwigCircuitTicket[] = (data as unknown as SwigCircuitAttendeeRaw[]).map(item => ({
         id: item.id,
         swig_circuit_id: item.swig_circuit_id,
         user_id: item.user_id,
@@ -292,7 +292,8 @@ const MyTicketsPage = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {swigTickets.map((ticket: SwigCircuitTicket) => {
           const swigCircuit = ticket.swig_circuit || {};
-          const circuitDate = swigCircuit && swigCircuit.date 
+          const hasCircuitDate = swigCircuit && 'date' in swigCircuit && swigCircuit.date;
+          const circuitDate = hasCircuitDate 
             ? new Date(swigCircuit.date).toLocaleDateString() 
             : ticket.purchase_date 
               ? new Date(ticket.purchase_date).toLocaleDateString() 
@@ -300,13 +301,15 @@ const MyTicketsPage = () => {
           
           return (
             <div key={ticket.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-              <h3 className="font-semibold text-lg">{swigCircuit && swigCircuit.name ? swigCircuit.name : 'Swig Circuit'}</h3>
+              <h3 className="font-semibold text-lg">
+                {swigCircuit && 'name' in swigCircuit && swigCircuit.name ? swigCircuit.name : 'Swig Circuit'}
+              </h3>
               <div className="text-sm text-muted-foreground space-y-1 mt-2">
                 <div className="flex items-center">
                   <Calendar className="h-4 w-4 mr-1" />
                   <span>{circuitDate}</span>
                 </div>
-                {swigCircuit && swigCircuit.time && (
+                {swigCircuit && 'time' in swigCircuit && swigCircuit.time && (
                   <div className="flex items-center">
                     <Clock className="h-4 w-4 mr-1" />
                     <span>{swigCircuit.time}</span>
@@ -319,7 +322,7 @@ const MyTicketsPage = () => {
                 </span>
                 <Button size="sm" onClick={() => showTicketQR(
                   ticket.ticket_code || ticket.id,
-                  (swigCircuit && swigCircuit.name) ? swigCircuit.name : 'Swig Circuit',
+                  (swigCircuit && 'name' in swigCircuit && swigCircuit.name) ? swigCircuit.name : 'Swig Circuit',
                   `Swig Circuit Pass`
                 )}>
                   Show QR Code
