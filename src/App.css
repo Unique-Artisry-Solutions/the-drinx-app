@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -286,4 +287,11 @@ a:focus, button:focus, [role="button"]:focus {
 
 .cart-badge-pulse {
   animation: cartBadgePulse 2s infinite;
+}
+
+/* Add a bit of CSS to prevent clipping issues */
+.cart-button-wrapper {
+  position: relative;
+  z-index: 50;
+  isolation: isolate;
 }

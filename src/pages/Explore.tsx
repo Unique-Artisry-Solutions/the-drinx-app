@@ -116,7 +116,7 @@ const Explore = () => {
           <DataMigration />
         </div>
 
-        {/* Events Section - NEW! */}
+        {/* Events Section */}
         <EventsSection />
 
         {/* Swig Circuit Section */}

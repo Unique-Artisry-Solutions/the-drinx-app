@@ -147,6 +147,18 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     return <AppFooter />;
   };
 
+  // Debug navigation state - remove in production
+  useEffect(() => {
+    console.log('Navigation state:', {
+      path: location.pathname,
+      isAdmin,
+      isAuthenticated: !!user, 
+      isEmailVerified,
+      navigationType,
+      useGuestNav: useGuestNavigation()
+    });
+  }, [location.pathname, user, isAdmin, isEmailVerified]);
+
   return (
     <div className={`flex flex-col min-h-screen w-full max-w-full bg-background transition-colors duration-300`}>
       {renderNavigation()}
