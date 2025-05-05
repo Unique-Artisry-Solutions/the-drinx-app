@@ -25,7 +25,7 @@ const DrinksTab: React.FC<DrinksTabProps> = ({
       </CardHeader>
       <CardContent className="space-y-6">
         <DrinkHighlights 
-          highlights={drinkHighlights}
+          drinkHighlights={drinkHighlights}
           onHighlightsChange={setDrinkHighlights}
         />
         

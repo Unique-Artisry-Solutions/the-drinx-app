@@ -40,7 +40,8 @@ const BarCrawlDetail = () => {
           circuit_ticket_types (*),
           establishments:swig_circuit_establishments (
             establishment:establishment_id (id, name, address, image_url)
-          )
+          ),
+          swig_circuit_drink_highlights (*)
         `)
         .eq('id', id)
         .single();
@@ -148,7 +149,9 @@ const BarCrawlDetail = () => {
     : [];
 
   // Extract drink highlights if they exist
-  const drinkHighlights = swigCircuit.drink_highlights || [];
+  const drinkHighlights = Array.isArray(swigCircuit.swig_circuit_drink_highlights) 
+    ? swigCircuit.swig_circuit_drink_highlights 
+    : [];
   
   return (
     <Layout>
