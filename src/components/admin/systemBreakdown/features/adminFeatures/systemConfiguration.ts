@@ -22,6 +22,7 @@ export const systemConfiguration: FeatureItem = {
     - [x] UI components for system configuration
     - [x] Analytics tracking for service fees collected
     - [x] Enhanced checkout UI with service fee display and back navigation
+    - [x] Event detail page implementation with ticket purchasing
   `,
   testSteps: [
     "Log in as admin and navigate to System Configuration page",
@@ -32,7 +33,8 @@ export const systemConfiguration: FeatureItem = {
     "Configure API keys",
     "Verify that system settings are properly applied",
     "Check analytics dashboard for service fee tracking",
-    "Test the checkout process with back navigation and item removal"
+    "Test the checkout process with back navigation and item removal",
+    "Test event detail pages and ticket purchasing functionality"
   ],
   integrations: [
     "Email service providers",
@@ -42,6 +44,7 @@ export const systemConfiguration: FeatureItem = {
     "Venue management systems",
     "Financial tracking systems",
     "Analytics dashboard",
-    "Cart and checkout system"
+    "Cart and checkout system",
+    "Event management system"
   ]
 };
