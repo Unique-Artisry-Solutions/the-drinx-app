@@ -1,21 +1,23 @@
 
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, CreditCard, AlertCircle, CheckCircle, HelpCircle } from 'lucide-react';
+import React, { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { CreditCard } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import TopNavigation from '@/components/TopNavigation';
-import CartButton from '@/components/cart/CartButton';
-import ReCAPTCHA from 'react-google-recaptcha';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/auth';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import BackButton from '@/components/navigation/BackButton';
-import CartItem from '@/components/cart/CartItem';
+
+// Import the new component files
+import EmptyCartView from '@/components/checkout/EmptyCartView';
+import CheckoutContactForm from '@/components/checkout/CheckoutContactForm';
+import CheckoutPaymentForm from '@/components/checkout/CheckoutPaymentForm';
+import CheckoutVerification from '@/components/checkout/CheckoutVerification';
+import CheckoutSummary from '@/components/checkout/CheckoutSummary';
 
 interface ContactInfo {
   firstName: string;
@@ -24,7 +26,7 @@ interface ContactInfo {
 }
 
 const CheckoutPage: React.FC = () => {
-  const { items, totalPrice, serviceFee, serviceFeePercentage, totalWithFees, clearCart, removeItem } = useCart();
+  const { items, totalPrice, serviceFee, serviceFeePercentage, totalWithFees, clearCart } = useCart();
   const [isProcessing, setIsProcessing] = useState(false);
   const [captchaValue, setCaptchaValue] = useState<string | null>(null);
   const [formValid, setFormValid] = useState(false);
@@ -146,35 +148,10 @@ const CheckoutPage: React.FC = () => {
     return (
       <div className="min-h-screen flex flex-col bg-gradient-to-b from-white to-purple-50">
         <TopNavigation />
-        <div className="container max-w-6xl mx-auto px-4 py-12 flex-1 flex flex-col items-center justify-center">
-          <div className="w-full flex justify-start mb-6">
-            <BackButton 
-              fallbackPath="/events" 
-              variant="ghost" 
-              size="sm"
-              label="Back" 
-              showLabel={true}
-            />
-          </div>
-          <h1 className="text-2xl font-bold mb-4">Your Cart is Empty</h1>
-          <p className="text-gray-600 mb-8">Add some items to your cart before checking out.</p>
-          <Link to={user ? "/events" : "/pricing"}>
-            <Button>{user ? "View All Events" : "View Plans"}</Button>
-          </Link>
-        </div>
+        <EmptyCartView isLoggedIn={!!user} />
       </div>
     );
   }
-
-  // Generate navigation links based on cart items
-  const getDetailLink = (item: typeof items[0]) => {
-    if (item.type === 'event_ticket' && item.eventId) {
-      return `/event/${item.eventId}`;
-    } else if (item.type === 'swig_circuit_ticket' && item.swigCircuitId) {
-      return `/swig-circuit/${item.swigCircuitId}`;
-    }
-    return '';
-  };
 
   // Group items by type for the summary
   const groupedItems = {
@@ -208,88 +185,17 @@ const CheckoutPage: React.FC = () => {
               </CardHeader>
               <form onSubmit={handleSubmit}>
                 <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <h3 className="font-medium">Contact Information</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium" htmlFor="firstName">
-                          First Name
-                        </label>
-                        <Input 
-                          id="firstName" 
-                          placeholder="First Name" 
-                          required 
-                          value={contactInfo.firstName}
-                          onChange={handleInputChange}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium" htmlFor="lastName">
-                          Last Name
-                        </label>
-                        <Input 
-                          id="lastName" 
-                          placeholder="Last Name" 
-                          required 
-                          value={contactInfo.lastName}
-                          onChange={handleInputChange}
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium" htmlFor="email">
-                        Email
-                      </label>
-                      <Input 
-                        id="email" 
-                        type="email" 
-                        placeholder="Email" 
-                        required 
-                        value={contactInfo.email}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                  </div>
+                  <CheckoutContactForm 
+                    contactInfo={contactInfo} 
+                    onInputChange={handleInputChange} 
+                  />
 
-                  <div className="space-y-2">
-                    <h3 className="font-medium">Payment Details</h3>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium" htmlFor="card-number">
-                        Card Number
-                      </label>
-                      <Input id="card-number" placeholder="1234 5678 9012 3456" required />
-                    </div>
-                    <div className="grid grid-cols-3 gap-4">
-                      <div className="space-y-2 col-span-2">
-                        <label className="text-sm font-medium" htmlFor="expiry">
-                          Expiry Date
-                        </label>
-                        <Input id="expiry" placeholder="MM/YY" required />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium" htmlFor="cvc">
-                          CVC
-                        </label>
-                        <Input id="cvc" placeholder="123" required />
-                      </div>
-                    </div>
-                  </div>
+                  <CheckoutPaymentForm />
                   
-                  <div className="pt-4">
-                    <h3 className="font-medium mb-2">Verification</h3>
-                    <div className="flex justify-center my-4">
-                      <ReCAPTCHA
-                        sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI" // This is Google's test key
-                        onChange={handleCaptchaChange}
-                      />
-                    </div>
-                    {!captchaValue && (
-                      <div className="text-destructive flex items-center text-sm mt-2">
-                        <AlertCircle className="h-4 w-4 mr-1" />
-                        Please complete the CAPTCHA verification
-                      </div>
-                    )}
-                  </div>
+                  <CheckoutVerification 
+                    captchaValue={captchaValue}
+                    handleCaptchaChange={handleCaptchaChange}
+                  />
                 </CardContent>
                 <CardFooter>
                   <Button 
@@ -305,105 +211,13 @@ const CheckoutPage: React.FC = () => {
           </div>
 
           <div>
-            <Card>
-              <CardHeader>
-                <CardTitle>Order Summary</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {/* Render subscription items */}
-                  {groupedItems.subscriptions.length > 0 && (
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-500 mb-2">Subscriptions</h4>
-                      <div className="divide-y">
-                        {groupedItems.subscriptions.map(item => (
-                          <div key={item.id} className="py-3">
-                            <CartItem item={item} />
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* Render event ticket items */}
-                  {groupedItems.eventTickets.length > 0 && (
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-500 mb-2">Event Tickets</h4>
-                      <div className="divide-y">
-                        {groupedItems.eventTickets.map(item => (
-                          <div key={item.id} className="py-3">
-                            <CartItem item={item} />
-                            {item.eventId && (
-                              <div className="mt-2 text-right">
-                                <Link 
-                                  to={`/event/${item.eventId}`} 
-                                  className="text-xs text-material-primary hover:underline"
-                                >
-                                  View Event Details
-                                </Link>
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* Render swig circuit ticket items */}
-                  {groupedItems.swigCircuitTickets.length > 0 && (
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-500 mb-2">Swig Circuit Tickets</h4>
-                      <div className="divide-y">
-                        {groupedItems.swigCircuitTickets.map(item => (
-                          <div key={item.id} className="py-3">
-                            <CartItem item={item} />
-                            {item.swigCircuitId && (
-                              <div className="mt-2 text-right">
-                                <Link 
-                                  to={`/swig-circuit/${item.swigCircuitId}`} 
-                                  className="text-xs text-material-primary hover:underline"
-                                >
-                                  View Circuit Details
-                                </Link>
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  
-                  <div className="border-t pt-4 mt-4 space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Subtotal:</span>
-                      <span>${totalPrice.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-600 flex items-center">
-                        Service Fee ({serviceFeePercentage}%):
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <span className="ml-1 inline-flex">
-                                <HelpCircle size={14} className="text-gray-400" />
-                              </span>
-                            </TooltipTrigger>
-                            <TooltipContent className="max-w-xs">
-                              <p>This service fee helps support platform maintenance and payment processing.</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      </span>
-                      <span>${serviceFee.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between font-bold pt-2 text-lg">
-                      <span>Total:</span>
-                      <span>${totalWithFees.toFixed(2)}</span>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <CheckoutSummary 
+              groupedItems={groupedItems}
+              totalPrice={totalPrice}
+              serviceFee={serviceFee}
+              serviceFeePercentage={serviceFeePercentage}
+              totalWithFees={totalWithFees}
+            />
           </div>
         </div>
       </div>
