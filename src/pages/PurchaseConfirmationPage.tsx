@@ -53,7 +53,7 @@ const PurchaseConfirmationPage: React.FC = () => {
     );
   }
 
-  const { items, serviceFee, serviceFeePercentage, totalWithFees, contactInfo } = state;
+  const { items, serviceFee, serviceFeePercentage, totalWithFees, contactInfo } = state!;
   
   const eventTickets = items.filter(item => item.type === 'event_ticket');
   const swigCircuitTickets = items.filter(item => item.type === 'swig_circuit_ticket');
@@ -149,15 +149,15 @@ const PurchaseConfirmationPage: React.FC = () => {
               )}
               
               <div className="border-t pt-4 mt-4">
-                <div className="flex justify-between text-sm">
-                  <span>Subtotal:</span>
-                  <span>${subtotal.toFixed(2)}</span>
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-gray-700">Subtotal:</span>
+                  <span className="text-gray-900">${subtotal.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between text-sm mt-1">
-                  <span>Service Fee ({serviceFeePercentage}%):</span>
-                  <span>${serviceFee.toFixed(2)}</span>
+                <div className="flex justify-between text-sm mb-3">
+                  <span className="text-gray-700">Service Fee ({serviceFeePercentage}%):</span>
+                  <span className="text-gray-900">${serviceFee.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between font-bold text-lg mt-2">
+                <div className="flex justify-between font-bold text-lg pt-2 border-t border-gray-100">
                   <span>Total Amount Paid:</span>
                   <span>${totalWithFees.toFixed(2)}</span>
                 </div>

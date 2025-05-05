@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, CreditCard, AlertCircle, CheckCircle } from 'lucide-react';
+import { ArrowLeft, CreditCard, AlertCircle, CheckCircle, HelpCircle } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,6 +12,7 @@ import CartButton from '@/components/cart/CartButton';
 import ReCAPTCHA from 'react-google-recaptcha';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/auth';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface ContactInfo {
   firstName: string;
@@ -373,11 +374,25 @@ const CheckoutPage: React.FC = () => {
                       <span className="text-gray-600">Subtotal:</span>
                       <span>${totalPrice.toFixed(2)}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Service Fee ({serviceFeePercentage}%):</span>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600 flex items-center">
+                        Service Fee ({serviceFeePercentage}%):
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="ml-1 inline-flex">
+                                <HelpCircle size={14} className="text-gray-400" />
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs">
+                              <p>This service fee helps support platform maintenance and payment processing.</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </span>
                       <span>${serviceFee.toFixed(2)}</span>
                     </div>
-                    <div className="flex justify-between font-bold pt-2">
+                    <div className="flex justify-between font-bold pt-2 text-lg">
                       <span>Total:</span>
                       <span>${totalWithFees.toFixed(2)}</span>
                     </div>
