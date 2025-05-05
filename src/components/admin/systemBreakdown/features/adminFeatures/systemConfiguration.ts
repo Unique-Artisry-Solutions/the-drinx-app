@@ -26,6 +26,7 @@ export const systemConfiguration: FeatureItem = {
     - [x] Cart integration with cart button in navigation
     - [x] Add to cart feedback with confirmation dialog
     - [x] Fixed cart item counter visibility and positioning
+    - [x] Improved cart badge styling and z-index for better visibility
   `,
   testSteps: [
     "Log in as admin and navigate to System Configuration page",
@@ -40,7 +41,7 @@ export const systemConfiguration: FeatureItem = {
     "Test event detail pages and ticket purchasing functionality",
     "Test adding tickets to cart with confirmation dialog",
     "Test cart functionality across the application",
-    "Verify cart item counter is properly visible"
+    "Verify cart item counter is properly visible across all navigation contexts"
   ],
   integrations: [
     "Email service providers",

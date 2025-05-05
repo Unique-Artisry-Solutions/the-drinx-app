@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -265,4 +264,26 @@ a:focus, button:focus, [role="button"]:focus {
 
 .animate-fade-in {
   animation: fadeIn 0.4s ease forwards;
+}
+
+/* Cart badge animation */
+@keyframes cartBadgePulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(217, 78, 143, 0.7);
+  }
+  
+  50% {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 5px rgba(217, 78, 143, 0);
+  }
+  
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(217, 78, 143, 0);
+  }
+}
+
+.cart-badge-pulse {
+  animation: cartBadgePulse 2s infinite;
 }

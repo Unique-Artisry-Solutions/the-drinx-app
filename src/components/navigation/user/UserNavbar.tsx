@@ -135,8 +135,15 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
             )}
             
             <RoleSwitcher />
-            <NotificationsPopover />
-            <CartButton />
+            
+            {/* Apply proper stacking context for notifications and cart */}
+            <div className="relative z-40">
+              <NotificationsPopover />
+            </div>
+            
+            <div className="relative z-40">
+              <CartButton />
+            </div>
             
             <UserProfileDropdown 
               username={username} 

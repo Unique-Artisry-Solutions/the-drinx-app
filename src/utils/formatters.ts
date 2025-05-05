@@ -42,3 +42,13 @@ export const formatTime = (timeStr: string): string => {
   
   return timeStr;
 };
+
+/**
+ * Format cart item count to ensure it displays properly even for large numbers
+ */
+export const formatCartCount = (count: number): string => {
+  if (count <= 99) {
+    return count.toString();
+  }
+  return '99+';
+};
