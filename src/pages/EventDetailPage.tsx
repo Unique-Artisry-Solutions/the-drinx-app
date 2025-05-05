@@ -68,7 +68,7 @@ const EventDetailPage = () => {
       name: `${event.name} - ${ticketType.name}`,
       price: ticketType.price * quantity,
       interval: 'one-time',
-      type: 'event_ticket' as 'user' | 'establishment' | 'event_ticket' | 'swig_circuit_ticket',
+      type: 'event_ticket',
       eventId: event.id,
       ticketTypeId: ticketType.id,
       ticketName: ticketType.name,
@@ -197,7 +197,7 @@ const EventDetailPage = () => {
                     <div className="space-y-4 mb-6">
                       {event.event_ticket_types.map((ticket) => {
                         // Calculate tickets sold - default to 0 if not available
-                        const ticketsSold = 0; // This will need to be updated when we have the data
+                        const ticketsSold = ticket.sold || 0;
                         const remainingTickets = ticket.quantity - ticketsSold;
                         
                         return (
