@@ -1,6 +1,7 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { CheckCircle, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import BasicInfoStep from './BasicInfoStep';
 import VenueSelectionStep from './VenueSelectionStep';
 import TicketTypesStep from './TicketTypesStep';
@@ -10,6 +11,7 @@ import { EventWizardProvider, useEventWizard } from './EventWizardContext';
 import { useEventMutations } from '@/hooks/events/useEventMutations';
 import { useNavigate } from 'react-router-dom';
 import { showToast } from '@/utils/toast/toastAdapter';
+import { supabase } from '@/integrations/supabase/client';
 
 const steps = [
   { id: 'basic', label: 'Event Details' },
@@ -20,9 +22,9 @@ const steps = [
 ];
 
 const EventCreationWizardContent: React.FC = () => {
+  const { formData, validateStep, isEditMode, isLoading } = useEventWizard();
   const [currentStep, setCurrentStep] = useState(0);
-  const { formData, validateStep } = useEventWizard();
-  const { createEvent } = useEventMutations();
+  const { createEvent, updateEvent } = useEventMutations();
   const navigate = useNavigate();
   
   const handleNext = () => {
@@ -35,7 +37,7 @@ const EventCreationWizardContent: React.FC = () => {
     setCurrentStep(Math.max(0, currentStep - 1));
   };
   
-  const handleCreateEvent = async () => {
+  const handleSaveEvent = async () => {
     try {
       // Create a copy of the form data without notifications if needed
       const eventData = {
@@ -46,24 +48,35 @@ const EventCreationWizardContent: React.FC = () => {
         )
       };
       
-      await createEvent.mutateAsync(eventData);
-      
-      showToast(
-        'Event Created',
-        'Your event has been created successfully.',
-        {
-          label: 'View Events',
-          onClick: () => navigate('/promoter/events')
-        }
-      );
+      if (isEditMode) {
+        await updateEvent.mutateAsync(eventData);
+        showToast(
+          'Event Updated',
+          'Your event has been updated successfully.',
+          {
+            label: 'View Event',
+            onClick: () => navigate(`/promoter/events/${eventData.id}`)
+          }
+        );
+      } else {
+        await createEvent.mutateAsync(eventData);
+        showToast(
+          'Event Created',
+          'Your event has been created successfully.',
+          {
+            label: 'View Events',
+            onClick: () => navigate('/promoter/events')
+          }
+        );
+      }
       
       navigate('/promoter/events');
     } catch (error) {
-      console.error('Error creating event:', error);
+      console.error('Error saving event:', error);
       
       showToast(
         'Error',
-        'There was an issue creating your event. Please try again.',
+        'There was an issue saving your event. Please try again.',
         undefined,
         { variant: 'destructive' }
       );
@@ -86,6 +99,15 @@ const EventCreationWizardContent: React.FC = () => {
         return null;
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12">
+        <Loader2 className="w-12 h-12 text-purple-600 animate-spin mb-4" />
+        <p className="text-gray-600">Loading event data...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -154,10 +176,12 @@ const EventCreationWizardContent: React.FC = () => {
         ) : (
           <Button 
             type="button" 
-            onClick={handleCreateEvent}
-            disabled={createEvent.isPending}
+            onClick={handleSaveEvent}
+            disabled={createEvent.isPending || updateEvent?.isPending}
           >
-            {createEvent.isPending ? 'Creating...' : 'Create Event'}
+            {isEditMode 
+              ? (updateEvent?.isPending ? 'Updating...' : 'Update Event') 
+              : (createEvent.isPending ? 'Creating...' : 'Create Event')}
           </Button>
         )}
       </div>
@@ -165,9 +189,13 @@ const EventCreationWizardContent: React.FC = () => {
   );
 };
 
-const EventCreationWizard: React.FC = () => {
+interface EventCreationWizardProps {
+  eventId?: string;
+}
+
+const EventCreationWizard: React.FC<EventCreationWizardProps> = ({ eventId }) => {
   return (
-    <EventWizardProvider>
+    <EventWizardProvider eventId={eventId}>
       <EventCreationWizardContent />
     </EventWizardProvider>
   );

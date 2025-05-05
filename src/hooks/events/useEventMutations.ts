@@ -95,7 +95,110 @@ export const useEventMutations = () => {
     },
   });
 
+  const updateEvent = useMutation({
+    mutationFn: async (eventData: EventFormData) => {
+      if (!eventData.id) throw new Error('Event ID is required for updates');
+      
+      // Step 1: Update the event
+      const { error: eventError } = await supabase
+        .from('events')
+        .update({
+          name: eventData.name,
+          description: eventData.description,
+          date: eventData.date,
+          time: eventData.time,
+          venue_id: eventData.venueId || null,
+          image_url: eventData.imageUrl,
+          promotional_materials: eventData.promotionalMaterials,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', eventData.id);
+
+      if (eventError) throw eventError;
+
+      // Step 2: Update ticket types - delete existing and insert new ones
+      // First remove all existing ticket types
+      const { error: deleteTicketsError } = await supabase
+        .from('event_ticket_types')
+        .delete()
+        .eq('event_id', eventData.id);
+
+      if (deleteTicketsError) {
+        console.error('Error deleting existing ticket types:', deleteTicketsError);
+      }
+
+      // Then insert the new tickets
+      if (eventData.ticketTypes?.length > 0) {
+        const { error: ticketError } = await supabase
+          .from('event_ticket_types')
+          .insert(
+            eventData.ticketTypes.map(ticket => ({
+              event_id: eventData.id,
+              name: ticket.name,
+              description: ticket.description,
+              price: ticket.price,
+              quantity: ticket.quantity
+            }))
+          );
+
+        if (ticketError) {
+          console.error('Error updating ticket types:', ticketError);
+        }
+      }
+
+      // Step 3: Handle notification schedules
+      // First delete existing notification schedules
+      const { error: deleteNotificationsError } = await supabase
+        .from('event_notification_schedules')
+        .delete()
+        .eq('event_id', eventData.id);
+
+      if (deleteNotificationsError) {
+        console.error('Error deleting existing notification schedules:', deleteNotificationsError);
+      }
+
+      // Then insert new notification schedules
+      if (eventData.notificationSchedules?.length > 0) {
+        for (const schedule of eventData.notificationSchedules) {
+          // Filter out schedule ID for database insert
+          const { id, ...scheduleData } = schedule;
+          
+          const { error: scheduleError } = await supabase
+            .from('event_notification_schedules')
+            .insert({
+              event_id: eventData.id,
+              title: scheduleData.title,
+              content: scheduleData.content,
+              priority: scheduleData.priority,
+              scheduled_for: scheduleData.scheduledFor,
+              location_based: scheduleData.locationBased,
+              coordinates: scheduleData.coordinates,
+              target_radius: scheduleData.targetRadius
+            });
+
+          if (scheduleError) {
+            console.error('Error updating notification schedule:', scheduleError);
+          }
+        }
+      }
+
+      return { id: eventData.id };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+    },
+    onError: (error: any) => {
+      console.error('Event update error:', error);
+      toast({
+        title: 'Error updating event',
+        description: error.message || 'An unexpected error occurred',
+        variant: 'destructive',
+      });
+    },
+  });
+
   return {
-    createEvent
+    createEvent,
+    updateEvent
   };
 };

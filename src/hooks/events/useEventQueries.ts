@@ -16,8 +16,8 @@ export const useEventQueries = () => {
           *,
           venue:venue_id (id, name, address),
           event_ticket_types (*)
-        `)
-        .eq('status', 'published'); // Only fetch published events
+        `);
+        // No longer filtering by status to show all events including drafts
 
       if (error) {
         toast({
@@ -51,7 +51,7 @@ export const useEventQueries = () => {
           venue: event.venue || { id: '', name: 'TBD', address: '' },
           image_url: event.image_url,
           promotional_materials: event.promotional_materials || [],
-          status: event.status || 'published',
+          status: event.status || 'draft',
           ticketTypes: ticketTypes,
           attendees: {
             registered: 0, // This will need real data in the future

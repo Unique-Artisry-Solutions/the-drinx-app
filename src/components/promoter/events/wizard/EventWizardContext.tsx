@@ -1,6 +1,7 @@
 
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { EventFormData } from '@/types/EventTypes';
+import { useToast } from '@/hooks/use-toast';
 
 interface TicketType {
   name: string;
@@ -28,16 +29,21 @@ interface EventWizardContextType {
   nextStep: () => void;
   prevStep: () => void;
   goToStep: (step: number) => void;
+  isEditMode: boolean;
+  isLoading: boolean;
 }
 
 const EventWizardContext = createContext<EventWizardContextType | undefined>(undefined);
 
 interface EventWizardProviderProps {
   children: React.ReactNode;
+  eventId?: string;
 }
 
-export const EventWizardProvider: React.FC<EventWizardProviderProps> = ({ children }) => {
+export const EventWizardProvider: React.FC<EventWizardProviderProps> = ({ children, eventId }) => {
   const [currentStep, setCurrentStep] = useState(0);
+  const [isLoading, setIsLoading] = useState(!!eventId);
+  const { toast } = useToast();
   const [formData, setFormData] = useState<EventFormData>({
     name: '',
     description: '',
@@ -48,6 +54,84 @@ export const EventWizardProvider: React.FC<EventWizardProviderProps> = ({ childr
     promotionalMaterials: [],
     notificationSchedules: []
   });
+
+  // Check if we're in edit mode
+  const isEditMode = !!eventId;
+
+  // If we're in edit mode, fetch the event data
+  useEffect(() => {
+    if (eventId) {
+      const fetchEventData = async () => {
+        try {
+          setIsLoading(true);
+          const { data: eventData, error } = await supabase
+            .from('events')
+            .select(`
+              *,
+              venue:venue_id (id, name, address),
+              event_ticket_types (*)
+            `)
+            .eq('id', eventId)
+            .single();
+
+          if (error) {
+            throw error;
+          }
+
+          if (eventData) {
+            // Convert event data to form data format
+            const formattedData: EventFormData = {
+              name: eventData.name || '',
+              description: eventData.description || '',
+              date: eventData.date || '',
+              time: eventData.time || '',
+              venueId: eventData.venue_id || undefined,
+              imageUrl: eventData.image_url || '',
+              promotionalMaterials: eventData.promotional_materials || [],
+              ticketTypes: eventData.event_ticket_types.map((ticket: any) => ({
+                name: ticket.name,
+                price: ticket.price,
+                description: ticket.description || '',
+                quantity: ticket.quantity
+              })),
+              notificationSchedules: []
+            };
+
+            // Fetch notification schedules if they exist
+            const { data: notificationData, error: notificationError } = await supabase
+              .from('event_notification_schedules')
+              .select('*')
+              .eq('event_id', eventId);
+
+            if (!notificationError && notificationData) {
+              formattedData.notificationSchedules = notificationData.map((notification) => ({
+                id: notification.id,
+                title: notification.title,
+                content: notification.content,
+                priority: notification.priority as 'low' | 'medium' | 'high' | 'urgent',
+                scheduledFor: notification.scheduled_for,
+                locationBased: notification.location_based,
+                coordinates: notification.coordinates,
+                targetRadius: notification.target_radius
+              }));
+            }
+
+            setFormData(formattedData);
+          }
+        } catch (error: any) {
+          toast({
+            title: "Error fetching event",
+            description: error.message || "Failed to load event data",
+            variant: "destructive"
+          });
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      fetchEventData();
+    }
+  }, [eventId, toast]);
 
   const updateFormData = (data: Partial<EventFormData>) => {
     setFormData(prev => ({ ...prev, ...data }));
@@ -90,7 +174,9 @@ export const EventWizardProvider: React.FC<EventWizardProviderProps> = ({ childr
       currentStep,
       nextStep,
       prevStep,
-      goToStep
+      goToStep,
+      isEditMode,
+      isLoading
     }}>
       {children}
     </EventWizardContext.Provider>
