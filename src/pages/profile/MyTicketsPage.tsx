@@ -41,7 +41,7 @@ interface SwigCircuitTicket {
   id: string;
   swig_circuit_id: string;
   user_id: string;
-  ticket_tier_id?: string;
+  ticket_type_id?: string;
   purchase_date: string;
   status: string;
   ticket_code?: string;
@@ -56,6 +56,28 @@ interface SwigCircuitTicket {
     name: string;
     price: number;
   };
+}
+
+// Define a type for raw Supabase response data
+type SwigCircuitAttendeeRaw = {
+  id: string;
+  swig_circuit_id: string;
+  user_id: string;
+  ticket_type_id?: string;
+  purchase_date: string;
+  status: string;
+  ticket_code?: string;
+  swig_circuit: {
+    id: string;
+    name: string;
+    date?: string;
+    time?: string;
+  } | null;
+  ticket_tier: {
+    id: string;
+    name: string;
+    price: number;
+  } | null;
 }
 
 const MyTicketsPage = () => {
@@ -97,15 +119,15 @@ const MyTicketsPage = () => {
     enabled: !!user,
   });
 
-  // Fetch swig circuit tickets - Use the fromTable helper function to avoid TypeScript issues
+  // Fetch swig circuit tickets using string literal to avoid TypeScript issues
   const { data: swigTickets = [], isLoading: loadingSwigTickets } = useQuery({
     queryKey: ['mySwigTickets'],
     queryFn: async () => {
       if (!user) throw new Error('User not authenticated');
       
-      // Use the typed helper to avoid type issues 
+      // Use raw string for table name to bypass type checking
       const { data, error } = await supabase
-        .from('swig_circuit_attendees')
+        .from('swig_circuit_attendees' as any)
         .select(`
           id,
           swig_circuit_id,
@@ -138,8 +160,20 @@ const MyTicketsPage = () => {
         throw error;
       }
 
-      // Use type assertion for the returned data
-      return (data as unknown as SwigCircuitTicket[]) || [];
+      // Process the raw data to ensure it matches our expected interface
+      const processedData: SwigCircuitTicket[] = (data as SwigCircuitAttendeeRaw[]).map(item => ({
+        id: item.id,
+        swig_circuit_id: item.swig_circuit_id,
+        user_id: item.user_id,
+        ticket_type_id: item.ticket_type_id,
+        purchase_date: item.purchase_date,
+        status: item.status,
+        ticket_code: item.ticket_code,
+        swig_circuit: item.swig_circuit || undefined,
+        ticket_tier: item.ticket_tier || undefined
+      }));
+
+      return processedData;
     },
     enabled: !!user,
   });
@@ -257,20 +291,22 @@ const MyTicketsPage = () => {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {swigTickets.map((ticket: SwigCircuitTicket) => {
-          // Use safe navigation for properties that might not exist
           const swigCircuit = ticket.swig_circuit || {};
-          const circuitDate = swigCircuit?.date ? new Date(swigCircuit.date).toLocaleDateString() : 
-                              ticket.purchase_date ? new Date(ticket.purchase_date).toLocaleDateString() : 'No date';
+          const circuitDate = swigCircuit && swigCircuit.date 
+            ? new Date(swigCircuit.date).toLocaleDateString() 
+            : ticket.purchase_date 
+              ? new Date(ticket.purchase_date).toLocaleDateString() 
+              : 'No date';
           
           return (
             <div key={ticket.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-              <h3 className="font-semibold text-lg">{swigCircuit?.name || 'Swig Circuit'}</h3>
+              <h3 className="font-semibold text-lg">{swigCircuit && swigCircuit.name ? swigCircuit.name : 'Swig Circuit'}</h3>
               <div className="text-sm text-muted-foreground space-y-1 mt-2">
                 <div className="flex items-center">
                   <Calendar className="h-4 w-4 mr-1" />
                   <span>{circuitDate}</span>
                 </div>
-                {swigCircuit?.time && (
+                {swigCircuit && swigCircuit.time && (
                   <div className="flex items-center">
                     <Clock className="h-4 w-4 mr-1" />
                     <span>{swigCircuit.time}</span>
@@ -283,7 +319,7 @@ const MyTicketsPage = () => {
                 </span>
                 <Button size="sm" onClick={() => showTicketQR(
                   ticket.ticket_code || ticket.id,
-                  swigCircuit?.name || 'Swig Circuit',
+                  (swigCircuit && swigCircuit.name) ? swigCircuit.name : 'Swig Circuit',
                   `Swig Circuit Pass`
                 )}>
                   Show QR Code
