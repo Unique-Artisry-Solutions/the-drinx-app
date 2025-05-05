@@ -17,6 +17,8 @@ export const barCrawlManagement: FeatureItem = {
     - [x] Bar crawls table implemented with necessary fields
     - [x] Locations table created for bar crawl locations
     - [x] Themes table implemented for bar crawl themes
+    - [x] Foreign key relationships established between tables
+    - [x] Row Level Security policies implemented
     - [x] API endpoints for bar crawl management
     - [x] UI components for bar crawl management
   `,

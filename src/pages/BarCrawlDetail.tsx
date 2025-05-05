@@ -29,13 +29,14 @@ const BarCrawlDetail = () => {
   const [selectedTicket, setSelectedTicket] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
 
-  // Fetch swig circuit details with corrected table names and relationships
-  const { data: swigCircuit, isLoading } = useQuery({
+  // Fetch swig circuit details with correct table relationships
+  const { data: swigCircuit, isLoading, error } = useQuery({
     queryKey: ['swigCircuit', id],
     queryFn: async () => {
       try {
         console.log('Fetching swig circuit with ID:', id);
         
+        // Attempt to fetch from Supabase
         const { data, error } = await supabase
           .from('swig_circuits')
           .select(`
@@ -50,26 +51,21 @@ const BarCrawlDetail = () => {
           .single();
 
         if (error) {
-          console.error('Error loading swig circuit:', error);
-          toast({
-            title: 'Error loading swig circuit',
-            description: error.message,
-            variant: 'destructive',
-          });
+          console.error('Error loading swig circuit from database:', error);
           throw error;
         }
 
-        console.log('Swig circuit data loaded:', data);
+        console.log('Swig circuit data loaded from database:', data);
         return data;
       } catch (error: any) {
         console.error('Error in swigCircuit query:', error);
         
-        // Prevent multiple error toasts by using a debounce mechanism
+        // Only show error toast once
         if (!window.swigCircuitErrorToastShown) {
           window.swigCircuitErrorToastShown = true;
           toast({
-            title: 'Error loading swig circuit',
-            description: error.message || 'Failed to load circuit details',
+            title: 'Error loading data',
+            description: 'There was an issue loading the circuit details',
             variant: 'destructive',
           });
           
