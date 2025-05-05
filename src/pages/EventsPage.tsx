@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import Layout from '@/components/Layout';
 import { useEventQueries } from '@/hooks/events/useEventQueries';
@@ -85,6 +84,11 @@ const EventsPage = () => {
               // Distance is also not available yet
               const distance = undefined;
               
+              // Determine the correct link path based on user type
+              const linkBasePath = user?.user_metadata?.user_type === 'promoter' 
+                ? '/promoter/events' 
+                : '/event';
+              
               return (
                 <EventCard
                   key={event.id}
@@ -97,6 +101,7 @@ const EventsPage = () => {
                   imageUrl={event.image_url}
                   attendeeCount={attendeeCount}
                   distance={distance}
+                  linkBasePath={linkBasePath}
                 />
               );
             })}

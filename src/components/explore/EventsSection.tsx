@@ -72,6 +72,7 @@ const EventsSection: React.FC<EventsSectionProps> = ({ events: propEvents }) => 
                 imageUrl={event.image_url}
                 attendeeCount={attendeeCount}
                 distance={event.distance}
+                linkBasePath="/event" // Set the correct link path for individual users
               />
             );
           })}

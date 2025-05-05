@@ -17,6 +17,7 @@ export interface EventCardProps {
   imageUrl?: string;
   attendeeCount?: number;
   distance?: number;
+  linkBasePath?: string; // New prop to make the link path configurable
 }
 
 const EventCard: React.FC<EventCardProps> = ({ 
@@ -28,7 +29,8 @@ const EventCard: React.FC<EventCardProps> = ({
   status, 
   imageUrl,
   attendeeCount = 0,
-  distance
+  distance,
+  linkBasePath = '/promoter/events' // Default to the promoter events path
 }) => {
   // Status colors
   const statusConfig = {
@@ -39,7 +41,7 @@ const EventCard: React.FC<EventCardProps> = ({
   };
 
   return (
-    <Link to={`/promoter/events/${id}`}>
+    <Link to={`${linkBasePath}/${id}`}>
       <Card className="h-full overflow-hidden transition-shadow hover:shadow-lg">
         <div className="relative h-48 overflow-hidden">
           <img 
