@@ -21,7 +21,7 @@ const CartButton: React.FC = () => {
         <ShoppingCart className="h-5 w-5" />
         {items.length > 0 && (
           <Badge 
-            className="absolute -top-1 -right-1 bg-spiritless-pink text-white h-5 w-5 flex items-center justify-center p-0 text-xs"
+            className="absolute -top-2 -right-2 bg-spiritless-pink text-white h-5 w-5 flex items-center justify-center p-0 text-xs rounded-full z-10 border border-white shadow-sm transition-all duration-200 scale-100"
           >
             {items.length}
           </Badge>
