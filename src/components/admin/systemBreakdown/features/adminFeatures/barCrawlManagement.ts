@@ -21,12 +21,18 @@ export const barCrawlManagement: FeatureItem = {
     - [x] Row Level Security policies implemented
     - [x] API endpoints for bar crawl management
     - [x] UI components for bar crawl management
+    - [x] Masthead images and enhanced UI for bar crawl details
+    - [x] Role-based access controls for administrative features
+    - [x] Conditional joining based on payment status
   `,
   testSteps: [
     "Log in as admin and navigate to Bar Crawl Management page",
     "Create a new bar crawl with different locations and themes",
     "Update bar crawl details",
     "Delete a bar crawl",
-    "Verify that bar crawl details are properly displayed"
+    "Verify that bar crawl details are properly displayed",
+    "Test role-based permissions for feedback controls",
+    "Verify masthead images display correctly",
+    "Test paid circuit flow with ticket purchases"
   ]
 };

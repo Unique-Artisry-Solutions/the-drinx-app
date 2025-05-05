@@ -13,11 +13,14 @@ import EstablishmentGrid from '@/components/barCrawl/EstablishmentGrid';
 import DrinkHighlights from '@/components/barCrawl/DrinkHighlights';
 import InteractiveElements from '@/components/barCrawl/InteractiveElements';
 import FeedbackMechanism from '@/components/barCrawl/FeedbackMechanism';
+import DetailPageMasthead from '@/components/shared/DetailPageMasthead';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Calendar, Clock, MapPin, Ticket, Users } from 'lucide-react';
+import { useRoleSwitch } from '@/hooks/useRoleSwitch';
+import { useCircuitPurchaseStatus } from '@/hooks/useCircuitPurchaseStatus';
 
 const BarCrawlDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -25,9 +28,17 @@ const BarCrawlDetail = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { addItem } = useCart();
+  const { currentRole } = useRoleSwitch();
+  
+  // Check if the user has admin/promoter privileges
+  const isAdminOrPromoter = currentRole === 'promoter' || currentRole === 'establishment' || 
+    localStorage.getItem('admin_authenticated') === 'true';
   
   const [selectedTicket, setSelectedTicket] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
+  
+  // Check if the user has purchased this circuit if they're logged in
+  const { hasPurchased, isLoading: isPurchaseCheckLoading } = useCircuitPurchaseStatus(id || '');
 
   // Fetch swig circuit details with correct table relationships
   const { data: swigCircuit, isLoading, error } = useQuery({
@@ -124,6 +135,7 @@ const BarCrawlDetail = () => {
     return (
       <Layout>
         <div className="container max-w-6xl mx-auto py-8 px-4">
+          <Skeleton className="h-64 w-full rounded-xl mb-8" /> {/* Masthead skeleton */}
           <Skeleton className="h-8 w-2/3 mb-4" />
           <Skeleton className="h-6 w-1/2 mb-8" />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -173,10 +185,23 @@ const BarCrawlDetail = () => {
   const drinkHighlights = Array.isArray(swigCircuit.swig_circuit_drink_highlights) 
     ? swigCircuit.swig_circuit_drink_highlights 
     : [];
+    
+  // Determine if this is a paid circuit (has ticket types with prices)
+  const isPaidCircuit = ticketTypes.some(ticket => ticket.price > 0);
+  
+  // Only show join button if it's a free circuit or the user has purchased it
+  const showJoinButton = !isPaidCircuit || hasPurchased;
   
   return (
     <Layout>
       <div className="container max-w-6xl mx-auto py-8 px-4">
+        {/* New Masthead */}
+        <DetailPageMasthead 
+          title={swigCircuit.name}
+          subtitle={swigCircuit.description}
+          imageUrl={swigCircuit.image_url}
+        />
+        
         <BarCrawlHeader 
           name={swigCircuit.name}
           organizer="Organizer" // This would need to be dynamically fetched
@@ -184,6 +209,7 @@ const BarCrawlDetail = () => {
           stops={establishments.length}
           description={swigCircuit.description}
           id={swigCircuit.id}
+          showJoinButton={showJoinButton} // Only show join button if free or purchased
         />
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8">
@@ -212,12 +238,15 @@ const BarCrawlDetail = () => {
               <InteractiveElements circuitId={swigCircuit.id} />
             </div>
             
-            <div className="mt-8">
-              <FeedbackMechanism 
-                enabledOptions={[]}
-                onToggleOption={() => {}}
-              />
-            </div>
+            {/* Only show Feedback & Engagement section for admin/promoter users */}
+            {isAdminOrPromoter && (
+              <div className="mt-8">
+                <FeedbackMechanism 
+                  enabledOptions={[]}
+                  onToggleOption={() => {}}
+                />
+              </div>
+            )}
           </div>
           
           {/* Ticket Selection Card */}
@@ -234,11 +263,10 @@ const BarCrawlDetail = () => {
                   <>
                     <div className="space-y-4 mb-6">
                       {ticketTypes.map((ticket) => {
-                        // Calculate remaining tickets safely - fix the error by using optional chaining
-                        // and default values instead of assuming 'sold' property exists
+                        // Calculate remaining tickets safely
                         const ticketLimit = ticket.ticket_limit || 0;
-                        // Use 0 as default for sold tickets since the property doesn't exist in the type
-                        const soldTickets = 0; // Since 'sold' property doesn't exist, default to 0
+                        // Use 0 as default for sold tickets since the property doesn't exist
+                        const soldTickets = 0; 
                         const remainingTickets = ticketLimit - soldTickets;
                         
                         return (
@@ -303,6 +331,13 @@ const BarCrawlDetail = () => {
                     <p className="text-sm text-muted-foreground mt-2">
                       Check back soon or contact the organizer for details.
                     </p>
+                    
+                    {/* Show join button for free circuits */}
+                    {!isPaidCircuit && user && (
+                      <div className="mt-4">
+                        <JoinBarCrawlButton barCrawlId={swigCircuit.id} />
+                      </div>
+                    )}
                   </div>
                 )}
                 

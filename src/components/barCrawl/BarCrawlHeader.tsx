@@ -11,6 +11,7 @@ interface BarCrawlHeaderProps {
   stops: number;
   description?: string;
   id?: string;
+  showJoinButton?: boolean; // New prop to control join button visibility
 }
 
 const BarCrawlHeader: React.FC<BarCrawlHeaderProps> = ({
@@ -19,7 +20,8 @@ const BarCrawlHeader: React.FC<BarCrawlHeaderProps> = ({
   date,
   stops,
   description,
-  id
+  id,
+  showJoinButton = true // Default to true for backward compatibility
 }) => {
   return (
     <div className="mb-4">
@@ -32,7 +34,7 @@ const BarCrawlHeader: React.FC<BarCrawlHeaderProps> = ({
             stops={stops}
           />
         </div>
-        {id && (
+        {id && showJoinButton && (
           <JoinBarCrawlButton barCrawlId={id} />
         )}
       </div>
