@@ -13,6 +13,16 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import Layout from '@/components/Layout';
 
+// Define extended ticket type interface to include the sold property
+interface EventTicketTypeWithSold {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  quantity: number;
+  sold?: number;
+}
+
 const EventDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
@@ -195,7 +205,7 @@ const EventDetailPage = () => {
                 {event.event_ticket_types && event.event_ticket_types.length > 0 ? (
                   <>
                     <div className="space-y-4 mb-6">
-                      {event.event_ticket_types.map((ticket) => {
+                      {event.event_ticket_types.map((ticket: EventTicketTypeWithSold) => {
                         // Calculate tickets sold - default to 0 if not available
                         const ticketsSold = ticket.sold || 0;
                         const remainingTickets = ticket.quantity - ticketsSold;
