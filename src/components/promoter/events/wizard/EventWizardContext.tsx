@@ -106,16 +106,34 @@ export const EventWizardProvider: React.FC<EventWizardProviderProps> = ({ childr
               .eq('event_id', eventId);
 
             if (!notificationError && notificationData) {
-              formattedData.notificationSchedules = notificationData.map((notification) => ({
-                id: notification.id,
-                title: notification.title,
-                content: notification.content,
-                priority: notification.priority as 'low' | 'medium' | 'high' | 'urgent',
-                scheduledFor: notification.scheduled_for,
-                locationBased: notification.location_based,
-                coordinates: notification.coordinates,
-                targetRadius: notification.target_radius
-              }));
+              formattedData.notificationSchedules = notificationData.map((notification) => {
+                // Transform coordinates from Json type to the expected object structure
+                let coordinates;
+                if (notification.coordinates) {
+                  // Check if coordinates is already an object or needs parsing
+                  if (typeof notification.coordinates === 'string') {
+                    try {
+                      coordinates = JSON.parse(notification.coordinates);
+                    } catch (e) {
+                      coordinates = undefined;
+                    }
+                  } else {
+                    // It's already an object
+                    coordinates = notification.coordinates as { latitude: number; longitude: number };
+                  }
+                }
+
+                return {
+                  id: notification.id,
+                  title: notification.title,
+                  content: notification.content,
+                  priority: notification.priority as 'low' | 'medium' | 'high' | 'urgent',
+                  scheduledFor: notification.scheduled_for,
+                  locationBased: notification.location_based,
+                  coordinates: coordinates,
+                  targetRadius: notification.target_radius
+                };
+              });
             }
 
             setFormData(formattedData);
