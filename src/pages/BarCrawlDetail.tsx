@@ -68,7 +68,12 @@ const BarCrawlDetail = () => {
       return;
     }
 
-    const ticketType = swigCircuit.circuit_ticket_types.find(ticket => ticket.id === selectedTicket);
+    // Safely access circuit_ticket_types to avoid errors
+    const ticketTypes = Array.isArray(swigCircuit.circuit_ticket_types) 
+      ? swigCircuit.circuit_ticket_types 
+      : [];
+    
+    const ticketType = ticketTypes.find(ticket => ticket.id === selectedTicket);
     if (!ticketType) return;
 
     addItem({
@@ -132,37 +137,62 @@ const BarCrawlDetail = () => {
     );
   }
 
-  const hasTickets = swigCircuit.circuit_ticket_types && swigCircuit.circuit_ticket_types.length > 0;
+  // Safely access circuit_ticket_types to avoid errors
+  const ticketTypes = Array.isArray(swigCircuit.circuit_ticket_types) 
+    ? swigCircuit.circuit_ticket_types 
+    : [];
+  
+  // Safely access establishments
+  const establishments = Array.isArray(swigCircuit.establishments) 
+    ? swigCircuit.establishments.map(e => e.establishment).filter(Boolean)
+    : [];
+
+  // Extract drink highlights if they exist
+  const drinkHighlights = swigCircuit.drink_highlights || [];
   
   return (
     <Layout>
       <div className="container max-w-6xl mx-auto py-8 px-4">
-        <BarCrawlHeader barCrawl={swigCircuit} />
+        <BarCrawlHeader 
+          name={swigCircuit.name}
+          organizer="Organizer" // This would need to be dynamically fetched
+          date={new Date(swigCircuit.start_date).toLocaleDateString()}
+          stops={establishments.length}
+          description={swigCircuit.description}
+          id={swigCircuit.id}
+        />
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8">
           <div className="md:col-span-2">
-            <BarCrawlDetails barCrawl={swigCircuit} />
+            <BarCrawlDetails 
+              organizer="Organizer" // This would need to be dynamically fetched
+              date={new Date(swigCircuit.start_date).toLocaleDateString()}
+              stops={establishments.length}
+            />
             
-            {swigCircuit.establishments && swigCircuit.establishments.length > 0 && (
+            {establishments.length > 0 && (
               <div className="mt-8">
                 <h2 className="text-2xl font-semibold mb-4">Participating Establishments</h2>
-                <EstablishmentGrid establishments={swigCircuit.establishments.map(e => e.establishment)} />
+                <EstablishmentGrid establishments={establishments} />
               </div>
             )}
             
-            {swigCircuit.featured_drinks && (
+            {drinkHighlights.length > 0 && (
               <div className="mt-8">
                 <h2 className="text-2xl font-semibold mb-4">Featured Drinks</h2>
-                <DrinkHighlights drinks={swigCircuit.featured_drinks} />
+                <DrinkHighlights drinkHighlights={drinkHighlights} />
               </div>
             )}
             
             <div className="mt-8">
-              <InteractiveElements barCrawl={swigCircuit} />
+              <InteractiveElements circuitId={swigCircuit.id} />
             </div>
             
             <div className="mt-8">
-              <FeedbackMechanism barCrawlId={id || ''} />
+              <FeedbackMechanism 
+                enabledOptions={[]}
+                onToggleOption={() => {}}
+              />
             </div>
           </div>
           
@@ -176,10 +206,10 @@ const BarCrawlDetail = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {hasTickets ? (
+                {ticketTypes.length > 0 ? (
                   <>
                     <div className="space-y-4 mb-6">
-                      {swigCircuit.circuit_ticket_types.map((ticket) => {
+                      {ticketTypes.map((ticket) => {
                         const ticketsSold = ticket.sold || 0;
                         const remainingTickets = ticket.quantity - ticketsSold;
                         
@@ -257,16 +287,11 @@ const BarCrawlDetail = () => {
                           {swigCircuit.end_date && ` - ${new Date(swigCircuit.end_date).toLocaleDateString()}`}
                         </span>
                       </div>
-                      {swigCircuit.start_time && (
-                        <div className="flex items-center">
-                          <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
-                          <span>{swigCircuit.start_time}</span>
-                        </div>
-                      )}
-                      {swigCircuit.max_participants && (
+                      {/* Use projected_attendance as a fallback for max_participants */}
+                      {swigCircuit.projected_attendance && (
                         <div className="flex items-center">
                           <Users className="h-4 w-4 mr-2 text-muted-foreground" />
-                          <span>Max {swigCircuit.max_participants} participants</span>
+                          <span>Max {swigCircuit.projected_attendance} participants</span>
                         </div>
                       )}
                     </div>
