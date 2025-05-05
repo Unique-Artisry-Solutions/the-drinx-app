@@ -1,8 +1,9 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { User, Share2, MapPin, Users, Beer, Tag } from 'lucide-react';
+import { User, Share2, MapPin, Users, Beer, Tag, QrCode } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import QRCodeLightbox from '@/components/qrcode/QRCodeLightbox';
 
@@ -17,6 +18,7 @@ const BarCrawlTab: React.FC<BarCrawlTabProps> = ({ barCrawlList, shareBarCrawl }
   const [isParticipating, setIsParticipating] = useState<boolean>(true);
   const [promoCode, setPromoCode] = useState<string>("SPIRITLESS25");
   const [barCrawlId, setBarCrawlId] = useState<string>("bc-123");
+  const [qrCodeOpen, setQrCodeOpen] = useState<boolean>(false);
 
   const toggleParticipation = () => {
     setIsParticipating(!isParticipating);
@@ -74,11 +76,21 @@ const BarCrawlTab: React.FC<BarCrawlTabProps> = ({ barCrawlList, shareBarCrawl }
                 </div>
                 
                 <div className="flex flex-col space-y-3">
-                  {/* Update QRCodeLightbox to use subtitle instead of description */}
+                  <Button 
+                    onClick={() => setQrCodeOpen(true)} 
+                    className="w-full flex items-center justify-center"
+                    variant="outline"
+                  >
+                    <QrCode className="mr-2 h-4 w-4" />
+                    Show Check-In QR Code
+                  </Button>
+                  
                   <QRCodeLightbox 
                     value={generateQRValue()} 
                     title="Check-In QR Code" 
                     subtitle="Scan this code at the establishment to check in" 
+                    isOpen={qrCodeOpen}
+                    onClose={() => setQrCodeOpen(false)}
                   />
 
                   <div className="flex flex-col sm:flex-row gap-2">
