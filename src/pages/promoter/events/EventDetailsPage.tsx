@@ -27,6 +27,7 @@ import { createTicketType, updateTicketType, deleteTicketType } from '@/services
 import { checkInAttendee } from '@/services/eventAttendeesService';
 import { toAttendeeStatus, safeJsonToRecord } from '@/utils/typeGuards';
 import MarketingTabContent from '@/components/events/MarketingTabContent';
+import ShareScannerButton from '@/components/events/ShareScannerButton';
 
 const EventDetailsPage: React.FC = () => {
   const { eventId } = useParams<{ eventId: string }>();
@@ -388,6 +389,7 @@ const EventDetailsPage: React.FC = () => {
                     </CardDescription>
                   </div>
                   <div className="flex gap-2">
+                    <ShareScannerButton eventId={eventId || ''} eventName={event.name} />
                     <Button 
                       variant="outline" 
                       onClick={() => setIsScannerOpen(true)}

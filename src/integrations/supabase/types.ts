@@ -702,6 +702,61 @@ export type Database = {
         }
         Relationships: []
       }
+      event_access_tokens: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          event_id: string
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          last_used_at: string | null
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          event_id: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          last_used_at?: string | null
+          token: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          event_id?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          last_used_at?: string | null
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_access_tokens_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_statistics"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "event_access_tokens_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_access_tokens_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "promoter_event_performance_view"
+            referencedColumns: ["event_id"]
+          },
+        ]
+      }
       event_analytics: {
         Row: {
           created_at: string
@@ -3815,6 +3870,10 @@ export type Database = {
         Args: { user_id: string }
         Returns: boolean
       }
+      generate_event_access_token: {
+        Args: { p_event_id: string; p_days_valid?: number }
+        Returns: string
+      }
       generate_expiring_promotion_notifications: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -3890,6 +3949,10 @@ export type Database = {
       update_user_points: {
         Args: { p_user_id: string; p_points: number }
         Returns: undefined
+      }
+      verify_event_access_token: {
+        Args: { p_event_id: string; p_token: string }
+        Returns: boolean
       }
     }
     Enums: {

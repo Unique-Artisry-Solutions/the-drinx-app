@@ -7,6 +7,9 @@ import { promoterRoutes } from './config/promoterRoutes';
 import { profileRoutes } from './config/profileRoutes';
 import { publicRoutes } from './config/publicRoutes';
 
+// Import the EventScannerPage component
+const EventScannerPage = React.lazy(() => import('@/pages/events/EventScannerPage'));
+
 const AppRoutes = () => {
   return (
     <Suspense fallback={<div>Loading...</div>}>
@@ -15,6 +18,9 @@ const AppRoutes = () => {
         {publicRoutes.map((route) => (
           <Route key={route.path} path={route.path} element={route.element} />
         ))}
+
+        {/* Special public route for event scanner that requires token */}
+        <Route path="/events/scan/:eventId/:token" element={<EventScannerPage />} />
 
         {/* Admin Routes */}
         {adminRoutes.map((route) => (
