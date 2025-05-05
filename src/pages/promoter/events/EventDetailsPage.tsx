@@ -1,6 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import Layout from '@/components/Layout';
 import { 
   Tabs, 
   TabsContent, 
@@ -309,287 +309,293 @@ const EventDetailsPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="container mx-auto p-6">
-        <h2 className="text-2xl font-bold mb-4">Loading event details...</h2>
-      </div>
+      <Layout>
+        <div className="container mx-auto p-6">
+          <h2 className="text-2xl font-bold mb-4">Loading event details...</h2>
+        </div>
+      </Layout>
     );
   }
 
   if (error || !event) {
     return (
-      <div className="container mx-auto p-6">
-        <h2 className="text-2xl font-bold text-red-500 mb-4">Error loading event</h2>
-        <p>{error || "Event not found"}</p>
-        <Button onClick={() => navigate('/promoter/events')} className="mt-4">
-          Back to Events
-        </Button>
-      </div>
+      <Layout>
+        <div className="container mx-auto p-6">
+          <h2 className="text-2xl font-bold text-red-500 mb-4">Error loading event</h2>
+          <p>{error || "Event not found"}</p>
+          <Button onClick={() => navigate('/promoter/events')} className="mt-4">
+            Back to Events
+          </Button>
+        </div>
+      </Layout>
     );
   }
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">{event.name}</h1>
-          <p className="text-muted-foreground">
-            {event.date} • {event.time} • {event.venue?.name || "No venue selected"}
-          </p>
+    <Layout>
+      <div className="container mx-auto p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-3xl font-bold">{event.name}</h1>
+            <p className="text-muted-foreground">
+              {event.date} • {event.time} • {event.venue?.name || "No venue selected"}
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button 
+              onClick={() => navigate(`/promoter/events`)}
+              variant="outline"
+            >
+              Back to Events
+            </Button>
+            <Button 
+              onClick={() => navigate(`/promoter/events/create?edit=${event.id}`)}
+            >
+              Edit Event
+            </Button>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Button 
-            onClick={() => navigate(`/promoter/events`)}
-            variant="outline"
-          >
-            Back to Events
-          </Button>
-          <Button 
-            onClick={() => navigate(`/promoter/events/create?edit=${event.id}`)}
-          >
-            Edit Event
-          </Button>
-        </div>
-      </div>
 
-      <Tabs defaultValue="attendees">
-        <TabsList className="mb-6">
-          <TabsTrigger value="attendees">
-            <Users className="mr-2 h-4 w-4" />
-            Attendees
-          </TabsTrigger>
-          <TabsTrigger value="tickets">
-            <Ticket className="mr-2 h-4 w-4" />
-            Tickets
-          </TabsTrigger>
-          <TabsTrigger value="marketing">
-            <Share2 className="mr-2 h-4 w-4" />
-            Marketing
-          </TabsTrigger>
-          <TabsTrigger value="analytics">
-            <BarChart3 className="mr-2 h-4 w-4" />
-            Analytics
-          </TabsTrigger>
-        </TabsList>
-        
-        {/* Attendees Tab */}
-        <TabsContent value="attendees">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Attendees Management</CardTitle>
-                  <CardDescription>
-                    Manage attendees and check-ins for {event.name}.
-                  </CardDescription>
+        <Tabs defaultValue="attendees">
+          <TabsList className="mb-6">
+            <TabsTrigger value="attendees">
+              <Users className="mr-2 h-4 w-4" />
+              Attendees
+            </TabsTrigger>
+            <TabsTrigger value="tickets">
+              <Ticket className="mr-2 h-4 w-4" />
+              Tickets
+            </TabsTrigger>
+            <TabsTrigger value="marketing">
+              <Share2 className="mr-2 h-4 w-4" />
+              Marketing
+            </TabsTrigger>
+            <TabsTrigger value="analytics">
+              <BarChart3 className="mr-2 h-4 w-4" />
+              Analytics
+            </TabsTrigger>
+          </TabsList>
+          
+          {/* Attendees Tab */}
+          <TabsContent value="attendees">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Attendees Management</CardTitle>
+                    <CardDescription>
+                      Manage attendees and check-ins for {event.name}.
+                    </CardDescription>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setIsScannerOpen(true)}
+                    >
+                      Scan Tickets
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setIsScannerOpen(true)}
-                  >
-                    Scan Tickets
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {attendees.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm text-left">
-                    <thead className="bg-muted text-muted-foreground">
-                      <tr>
-                        <th className="px-4 py-3">Name</th>
-                        <th className="px-4 py-3">Email</th>
-                        <th className="px-4 py-3">Ticket Code</th>
-                        <th className="px-4 py-3">Status</th>
-                        <th className="px-4 py-3">Purchase Date</th>
-                        <th className="px-4 py-3">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {attendees.map(attendee => (
-                        <tr 
-                          key={attendee.id} 
-                          className="border-b hover:bg-muted/50 cursor-pointer"
-                          onClick={() => openAttendeeModal(attendee)}
-                        >
-                          <td className="px-4 py-3">{attendee.name || 'N/A'}</td>
-                          <td className="px-4 py-3">{attendee.email || 'N/A'}</td>
-                          <td className="px-4 py-3 font-mono">{attendee.ticket_code}</td>
-                          <td className="px-4 py-3">
-                            <span className={`px-2 py-1 rounded-full text-xs ${
-                              attendee.status === 'checked_in' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' :
-                              attendee.status === 'cancelled' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' :
-                              'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
-                            }`}>
-                              {attendee.status}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3">
-                            {attendee.purchase_date ? new Date(attendee.purchase_date).toLocaleDateString() : 'N/A'}
-                          </td>
-                          <td className="px-4 py-3">
-                            {attendee.status !== 'checked_in' && attendee.status !== 'cancelled' && (
-                              <Button 
-                                size="sm" 
-                                variant="ghost" 
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  if (attendee.id) {
-                                    handleCheckIn(attendee.id);
-                                  }
-                                }}
-                              >
-                                Check In
-                              </Button>
-                            )}
-                          </td>
+              </CardHeader>
+              <CardContent>
+                {attendees.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-left">
+                      <thead className="bg-muted text-muted-foreground">
+                        <tr>
+                          <th className="px-4 py-3">Name</th>
+                          <th className="px-4 py-3">Email</th>
+                          <th className="px-4 py-3">Ticket Code</th>
+                          <th className="px-4 py-3">Status</th>
+                          <th className="px-4 py-3">Purchase Date</th>
+                          <th className="px-4 py-3">Actions</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground">No attendees found for this event.</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        {/* Tickets Tab */}
-        <TabsContent value="tickets">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Ticket Types</CardTitle>
-                  <CardDescription>
-                    Manage ticket types and pricing for {event.name}.
-                  </CardDescription>
-                </div>
-                <Button onClick={() => openTicketModal()}>
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Add Ticket Type
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {ticketTypes.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm text-left">
-                    <thead className="bg-muted text-muted-foreground">
-                      <tr>
-                        <th className="px-4 py-3">Name</th>
-                        <th className="px-4 py-3">Description</th>
-                        <th className="px-4 py-3">Price</th>
-                        <th className="px-4 py-3">Quantity</th>
-                        <th className="px-4 py-3">Sold</th>
-                        <th className="px-4 py-3">Available</th>
-                        <th className="px-4 py-3">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {ticketTypes.map(ticket => (
-                        <tr key={ticket.id} className="border-b hover:bg-muted/50">
-                          <td className="px-4 py-3 font-medium">{ticket.name}</td>
-                          <td className="px-4 py-3">{ticket.description}</td>
-                          <td className="px-4 py-3">${ticket.price.toFixed(2)}</td>
-                          <td className="px-4 py-3">{ticket.quantity}</td>
-                          <td className="px-4 py-3">{ticket.sold || 0}</td>
-                          <td className="px-4 py-3">{ticket.available || ticket.quantity}</td>
-                          <td className="px-4 py-3">
-                            <div className="flex gap-2">
-                              <Button 
-                                size="sm" 
-                                variant="ghost"
-                                onClick={() => openTicketModal(ticket)}
-                              >
-                                Edit
-                              </Button>
-                              <Button 
-                                size="sm" 
-                                variant="ghost"
-                                onClick={() => handleDeleteTicket(ticket.id || '')}
-                                disabled={(ticket.sold || 0) > 0}
-                              >
-                                Delete
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground">No ticket types found. Create your first ticket type to start selling tickets.</p>
-                  <Button 
-                    onClick={() => openTicketModal()}
-                    className="mt-4"
-                  >
+                      </thead>
+                      <tbody>
+                        {attendees.map(attendee => (
+                          <tr 
+                            key={attendee.id} 
+                            className="border-b hover:bg-muted/50 cursor-pointer"
+                            onClick={() => openAttendeeModal(attendee)}
+                          >
+                            <td className="px-4 py-3">{attendee.name || 'N/A'}</td>
+                            <td className="px-4 py-3">{attendee.email || 'N/A'}</td>
+                            <td className="px-4 py-3 font-mono">{attendee.ticket_code}</td>
+                            <td className="px-4 py-3">
+                              <span className={`px-2 py-1 rounded-full text-xs ${
+                                attendee.status === 'checked_in' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' :
+                                attendee.status === 'cancelled' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' :
+                                'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
+                              }`}>
+                                {attendee.status}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3">
+                              {attendee.purchase_date ? new Date(attendee.purchase_date).toLocaleDateString() : 'N/A'}
+                            </td>
+                            <td className="px-4 py-3">
+                              {attendee.status !== 'checked_in' && attendee.status !== 'cancelled' && (
+                                <Button 
+                                  size="sm" 
+                                  variant="ghost" 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (attendee.id) {
+                                      handleCheckIn(attendee.id);
+                                    }
+                                  }}
+                                >
+                                  Check In
+                                </Button>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground">No attendees found for this event.</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          {/* Tickets Tab */}
+          <TabsContent value="tickets">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Ticket Types</CardTitle>
+                    <CardDescription>
+                      Manage ticket types and pricing for {event.name}.
+                    </CardDescription>
+                  </div>
+                  <Button onClick={() => openTicketModal()}>
                     <PlusCircle className="mr-2 h-4 w-4" />
                     Add Ticket Type
                   </Button>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+              </CardHeader>
+              <CardContent>
+                {ticketTypes.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-left">
+                      <thead className="bg-muted text-muted-foreground">
+                        <tr>
+                          <th className="px-4 py-3">Name</th>
+                          <th className="px-4 py-3">Description</th>
+                          <th className="px-4 py-3">Price</th>
+                          <th className="px-4 py-3">Quantity</th>
+                          <th className="px-4 py-3">Sold</th>
+                          <th className="px-4 py-3">Available</th>
+                          <th className="px-4 py-3">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {ticketTypes.map(ticket => (
+                          <tr key={ticket.id} className="border-b hover:bg-muted/50">
+                            <td className="px-4 py-3 font-medium">{ticket.name}</td>
+                            <td className="px-4 py-3">{ticket.description}</td>
+                            <td className="px-4 py-3">${ticket.price.toFixed(2)}</td>
+                            <td className="px-4 py-3">{ticket.quantity}</td>
+                            <td className="px-4 py-3">{ticket.sold || 0}</td>
+                            <td className="px-4 py-3">{ticket.available || ticket.quantity}</td>
+                            <td className="px-4 py-3">
+                              <div className="flex gap-2">
+                                <Button 
+                                  size="sm" 
+                                  variant="ghost"
+                                  onClick={() => openTicketModal(ticket)}
+                                >
+                                  Edit
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="ghost"
+                                  onClick={() => handleDeleteTicket(ticket.id || '')}
+                                  disabled={(ticket.sold || 0) > 0}
+                                >
+                                  Delete
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground">No ticket types found. Create your first ticket type to start selling tickets.</p>
+                    <Button 
+                      onClick={() => openTicketModal()}
+                      className="mt-4"
+                    >
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      Add Ticket Type
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          {/* Marketing Tab - Now using the MarketingTabContent component */}
+          <TabsContent value="marketing">
+            <MarketingTabContent eventId={eventId || ''} eventName={event.name} />
+          </TabsContent>
+          
+          {/* Analytics Tab - Placeholder */}
+          <TabsContent value="analytics">
+            <Card>
+              <CardHeader>
+                <CardTitle>Analytics Dashboard</CardTitle>
+                <CardDescription>
+                  View insights about your event.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">Analytics data will be available soon.</p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
         
-        {/* Marketing Tab - Now using the MarketingTabContent component */}
-        <TabsContent value="marketing">
-          <MarketingTabContent eventId={eventId || ''} eventName={event.name} />
-        </TabsContent>
+        {/* Modals */}
+        <TicketTypeModal
+          isOpen={isTicketModalOpen}
+          onClose={() => {
+            setIsTicketModalOpen(false);
+            setEditingTicket(undefined);
+          }}
+          onSave={editingTicket ? handleUpdateTicket : handleCreateTicket}
+          ticketType={editingTicket}
+          isEditing={!!editingTicket}
+        />
         
-        {/* Analytics Tab - Placeholder */}
-        <TabsContent value="analytics">
-          <Card>
-            <CardHeader>
-              <CardTitle>Analytics Dashboard</CardTitle>
-              <CardDescription>
-                View insights about your event.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">Analytics data will be available soon.</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-      
-      {/* Modals */}
-      <TicketTypeModal
-        isOpen={isTicketModalOpen}
-        onClose={() => {
-          setIsTicketModalOpen(false);
-          setEditingTicket(undefined);
-        }}
-        onSave={editingTicket ? handleUpdateTicket : handleCreateTicket}
-        ticketType={editingTicket}
-        isEditing={!!editingTicket}
-      />
-      
-      <AttendeeDetailModal
-        isOpen={isAttendeeModalOpen}
-        onClose={() => {
-          setIsAttendeeModalOpen(false);
-          setSelectedAttendee(null);
-        }}
-        attendee={selectedAttendee}
-        onCheckIn={async (attendeeId) => {
-          if (attendeeId) await handleCheckIn(attendeeId);
-        }}
-      />
-      
-      <CheckInScannerModal
-        isOpen={isScannerOpen}
-        onClose={() => setIsScannerOpen(false)}
-        onCheckIn={handleScannerCheckIn}
-      />
-    </div>
+        <AttendeeDetailModal
+          isOpen={isAttendeeModalOpen}
+          onClose={() => {
+            setIsAttendeeModalOpen(false);
+            setSelectedAttendee(null);
+          }}
+          attendee={selectedAttendee}
+          onCheckIn={async (attendeeId) => {
+            if (attendeeId) await handleCheckIn(attendeeId);
+          }}
+        />
+        
+        <CheckInScannerModal
+          isOpen={isScannerOpen}
+          onClose={() => setIsScannerOpen(false)}
+          onCheckIn={handleScannerCheckIn}
+        />
+      </div>
+    </Layout>
   );
 };
 
