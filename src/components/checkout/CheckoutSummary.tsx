@@ -5,7 +5,7 @@ import { HelpCircle } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { CartItem } from '@/contexts/CartContext';
-import CartItem as CartItemComponent from '@/components/cart/CartItem';
+import { default as CartItemComponent } from '@/components/cart/CartItem';
 
 interface GroupedItems {
   subscriptions: CartItem[];
