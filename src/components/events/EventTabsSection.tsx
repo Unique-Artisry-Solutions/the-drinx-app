@@ -1,0 +1,54 @@
+
+import React from 'react';
+import { 
+  Tabs, 
+  TabsContent, 
+  TabsList, 
+  TabsTrigger 
+} from '@/components/ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import MarketingTabContent from '@/components/events/MarketingTabContent';
+
+interface EventTabsSectionProps {
+  eventId: string | undefined;
+  eventName: string;
+}
+
+const EventTabsSection: React.FC<EventTabsSectionProps> = ({ eventId, eventName }) => {
+  return (
+    <Tabs defaultValue="marketing" className="space-y-4">
+      <TabsList>
+        <TabsTrigger value="marketing">Marketing</TabsTrigger>
+        <TabsTrigger value="attendees">Attendees</TabsTrigger>
+        <TabsTrigger value="checkin">Check-in</TabsTrigger>
+      </TabsList>
+      <TabsContent value="marketing">
+        <MarketingTabContent eventId={eventId || ''} eventName={eventName} />
+      </TabsContent>
+      <TabsContent value="attendees">
+        <Card>
+          <CardHeader>
+            <CardTitle>Attendees</CardTitle>
+            <CardDescription>Manage event attendees</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p>Attendee management content goes here.</p>
+          </CardContent>
+        </Card>
+      </TabsContent>
+      <TabsContent value="checkin">
+        <Card>
+          <CardHeader>
+            <CardTitle>Check-in</CardTitle>
+            <CardDescription>Manage event check-ins</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p>Check-in content goes here.</p>
+          </CardContent>
+        </Card>
+      </TabsContent>
+    </Tabs>
+  );
+};
+
+export default EventTabsSection;
