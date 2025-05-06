@@ -1,3 +1,4 @@
+
 export type EventStatus = 'draft' | 'published' | 'cancelled' | 'completed';
 
 export interface EventLocation {
@@ -33,7 +34,7 @@ export interface EventMarketingCampaign {
   name: string;
   description?: string;
   campaign_type: string;
-  status: 'draft' | 'active' | 'completed' | 'cancelled';
+  status: 'draft' | 'active' | 'completed' | 'cancelled';  // Updated to match the actual status values used
   start_date?: string;
   end_date?: string;
   budget?: number;
