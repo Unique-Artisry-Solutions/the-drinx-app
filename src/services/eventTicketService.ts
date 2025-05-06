@@ -17,13 +17,18 @@ export const fetchEventTicketTypes = async (eventId: string): Promise<EventTicke
     }
     
     // Calculate availability for each ticket type
-    return data.map(ticket => ({
-      ...ticket,
-      // Calculate sold tickets if not provided
-      sold: ticket.sold !== undefined ? ticket.sold : 0,
-      // Calculate available tickets
-      available: ticket.quantity - (ticket.sold || 0)
-    }));
+    return data.map(ticket => {
+      // Safely handle sold property which might not exist in the database
+      const soldTickets = typeof ticket.sold !== 'undefined' ? ticket.sold : 0;
+      
+      return {
+        ...ticket,
+        // Ensure sold property exists
+        sold: soldTickets,
+        // Calculate available tickets
+        available: ticket.quantity - soldTickets
+      };
+    });
   } catch (error) {
     console.error('Error fetching ticket types:', error);
     throw error;
@@ -59,7 +64,7 @@ export const checkTicketAvailability = async (eventId: string, ticketTypeId: str
     }
     
     // Calculate sold tickets if not provided
-    const soldTickets = data.sold !== undefined ? data.sold : 0;
+    const soldTickets = typeof data.sold !== 'undefined' ? data.sold : 0;
     
     // Calculate available tickets
     const availableQuantity = data.quantity - soldTickets;
