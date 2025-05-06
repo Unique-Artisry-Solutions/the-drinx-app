@@ -186,6 +186,153 @@ export type Database = {
         }
         Relationships: []
       }
+      audience_segment_analytics: {
+        Row: {
+          campaign_id: string | null
+          conversion_rate: number | null
+          created_at: string
+          date: string
+          engagement_rate: number | null
+          id: string
+          segment_id: string
+          total_members: number
+          updated_at: string
+        }
+        Insert: {
+          campaign_id?: string | null
+          conversion_rate?: number | null
+          created_at?: string
+          date?: string
+          engagement_rate?: number | null
+          id?: string
+          segment_id: string
+          total_members?: number
+          updated_at?: string
+        }
+        Update: {
+          campaign_id?: string | null
+          conversion_rate?: number | null
+          created_at?: string
+          date?: string
+          engagement_rate?: number | null
+          id?: string
+          segment_id?: string
+          total_members?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audience_segment_analytics_segment_id_fkey"
+            columns: ["segment_id"]
+            isOneToOne: false
+            referencedRelation: "audience_segments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      audience_segment_criteria: {
+        Row: {
+          created_at: string
+          criteria_type: string
+          criteria_value: Json
+          id: string
+          operator: string
+          segment_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          criteria_type: string
+          criteria_value: Json
+          id?: string
+          operator: string
+          segment_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          criteria_type?: string
+          criteria_value?: Json
+          id?: string
+          operator?: string
+          segment_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audience_segment_criteria_segment_id_fkey"
+            columns: ["segment_id"]
+            isOneToOne: false
+            referencedRelation: "audience_segments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      audience_segment_memberships: {
+        Row: {
+          added_at: string
+          id: string
+          is_active: boolean
+          score: number | null
+          segment_id: string
+          user_id: string
+        }
+        Insert: {
+          added_at?: string
+          id?: string
+          is_active?: boolean
+          score?: number | null
+          segment_id: string
+          user_id: string
+        }
+        Update: {
+          added_at?: string
+          id?: string
+          is_active?: boolean
+          score?: number | null
+          segment_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audience_segment_memberships_segment_id_fkey"
+            columns: ["segment_id"]
+            isOneToOne: false
+            referencedRelation: "audience_segments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      audience_segments: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bar_crawl_check_ins: {
         Row: {
           bar_crawl_id: string
@@ -3956,6 +4103,16 @@ export type Database = {
       }
     }
     Enums: {
+      audience_filter_operator:
+        | "equals"
+        | "not_equals"
+        | "contains"
+        | "not_contains"
+        | "greater_than"
+        | "less_than"
+        | "between"
+        | "in_list"
+      audience_segment_status: "draft" | "active" | "archived"
       event_status: "draft" | "published" | "cancelled" | "completed"
       notification_channel: "in_app" | "email" | "push"
       notification_priority: "low" | "medium" | "high" | "urgent"
@@ -4076,6 +4233,17 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      audience_filter_operator: [
+        "equals",
+        "not_equals",
+        "contains",
+        "not_contains",
+        "greater_than",
+        "less_than",
+        "between",
+        "in_list",
+      ],
+      audience_segment_status: ["draft", "active", "archived"],
       event_status: ["draft", "published", "cancelled", "completed"],
       notification_channel: ["in_app", "email", "push"],
       notification_priority: ["low", "medium", "high", "urgent"],

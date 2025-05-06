@@ -1,4 +1,3 @@
-
 // Custom type definitions for database tables that aren't in the auto-generated Supabase types
 
 export interface UserVisitTable {
@@ -377,6 +376,48 @@ export interface FeatureToggle {
   name: string;
   status: boolean;
   description?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// Audience Management System Types
+export interface AudienceSegmentTable {
+  id: string;
+  name: string;
+  description?: string;
+  created_by: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AudienceSegmentCriteriaTable {
+  id: string;
+  segment_id: string;
+  criteria_type: string;
+  criteria_value: any;
+  operator: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AudienceSegmentMembershipTable {
+  id: string;
+  segment_id: string;
+  user_id: string;
+  added_at: string;
+  is_active: boolean;
+  score?: number;
+}
+
+export interface AudienceSegmentAnalyticsTable {
+  id: string;
+  segment_id: string;
+  date: string;
+  total_members: number;
+  engagement_rate?: number;
+  conversion_rate?: number;
+  campaign_id?: string;
   created_at: string;
   updated_at: string;
 }
