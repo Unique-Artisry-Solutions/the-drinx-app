@@ -1,11 +1,11 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { EventType } from '@/types/EventTypes';
+import { Event } from '@/types/EventTypes';
 import { useToast } from '@/hooks/use-toast';
 
 export const useEventDetails = (eventId: string) => {
-  const [event, setEvent] = useState<EventType | null>(null);
+  const [event, setEvent] = useState<Event | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
@@ -21,99 +21,77 @@ export const useEventDetails = (eventId: string) => {
       setError(null);
 
       try {
-        // Query events table with venue (establishment) and ticket types
-        const { data, error: queryError } = await supabase
+        // Get event details
+        const { data: eventData, error: eventError } = await supabase
           .from('events')
           .select(`
-            id,
-            name,
-            description,
-            date,
-            time,
-            venue_id,
-            image_url,
-            promotional_materials,
-            status,
-            created_at,
-            updated_at,
-            created_by,
-            event_ticket_types (
+            *,
+            venue:venue_id (
               id,
               name,
-              price,
-              description,
-              quantity
+              address
             ),
-            establishments:venue_id (
-              id, 
-              name, 
-              address,
-              latitude,
-              longitude
-            )
+            event_ticket_types (*)
           `)
           .eq('id', eventId)
           .single();
 
-        if (queryError) throw queryError;
-        
-        if (!data) {
-          setError('Event not found');
-          setIsLoading(false);
-          return;
-        }
+        if (eventError) throw eventError;
 
-        // Format the data according to EventType
-        const venueData = data.establishments;
-        
-        const formattedEvent: EventType = {
-          id: data.id,
-          name: data.name,
-          description: data.description || '',
-          date: data.date,
-          time: data.time,
-          venue_id: data.venue_id,
-          image_url: data.image_url || '',
-          promotional_materials: data.promotional_materials || [],
-          status: data.status,
-          ticketTypes: data.event_ticket_types.map(ticket => ({
-            id: ticket.id,
-            name: ticket.name,
-            price: ticket.price,
-            description: ticket.description,
-            quantity: ticket.quantity,
-            sold: 0, // We would need to fetch this separately
-            available: ticket.quantity
-          })),
-          venue: {
-            id: data.venue_id || '',
-            name: venueData?.name || '',
-            address: venueData?.address || ''
+        // Get attendee counts
+        const { data: attendeesCount, error: attendeesError } = await supabase
+          .from('event_attendees')
+          .select('status', { count: 'exact' })
+          .eq('event_id', eventId)
+          .eq('status', 'registered');
+
+        const { data: checkedInCount, error: checkedInError } = await supabase
+          .from('event_attendees')
+          .select('status', { count: 'exact' })
+          .eq('event_id', eventId)
+          .eq('status', 'checked_in');
+
+        if (attendeesError) console.error("Error fetching attendee count:", attendeesError);
+        if (checkedInError) console.error("Error fetching checked-in count:", checkedInError);
+
+        // Format the event data
+        const formattedEvent: Event = {
+          id: eventData.id,
+          name: eventData.name,
+          description: eventData.description || '',
+          date: eventData.date,
+          time: eventData.time,
+          venue_id: eventData.venue_id,
+          image_url: eventData.image_url,
+          promotional_materials: eventData.promotional_materials || [],
+          status: eventData.status || 'draft',
+          created_by: eventData.created_by || '',
+          created_at: eventData.created_at,
+          updated_at: eventData.updated_at,
+          capacity: eventData.capacity,
+          event_type: eventData.event_type,
+          location_details: eventData.location_details,
+          contact_info: eventData.contact_info,
+          venue: eventData.venue || {
+            id: '',
+            name: 'TBD',
+            address: ''
           },
           attendees: {
-            registered: 0, // We would need to fetch this separately
-            capacity: data.event_ticket_types.reduce((sum, ticket) => sum + ticket.quantity, 0),
-            checkedIn: 0 // We would need to fetch this separately
+            registered: attendeesCount?.count || 0,
+            checked_in: checkedInCount?.count || 0,
           },
-          revenue: {
-            total: 0,
-            ticketSales: 0,
-            additionalSales: 0
-          },
-          distance: 0,
-          createdAt: data.created_at,
-          updatedAt: data.updated_at,
-          createdBy: data.created_by
+          ticketTypes: eventData.event_ticket_types
         };
 
         setEvent(formattedEvent);
       } catch (err: any) {
         console.error('Error fetching event details:', err);
-        setError(err.message || 'Failed to fetch event details');
+        setError(err.message);
         toast({
-          title: 'Error',
-          description: 'Failed to load event details',
-          variant: 'destructive',
+          title: "Error loading event",
+          description: err.message,
+          variant: "destructive",
         });
       } finally {
         setIsLoading(false);

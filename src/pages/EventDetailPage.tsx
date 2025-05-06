@@ -39,7 +39,7 @@ const EventDetailPage = () => {
       eventId: event.id,
       date: event.date,
       time: event.time,
-      venue: event.venue.name,
+      venue: event.venue?.name || 'TBD',
       interval: 'one-time'
     });
     
@@ -134,16 +134,16 @@ const EventDetailPage = () => {
                 <MapPin className="h-5 w-5 text-gray-500 mt-1" />
                 <div>
                   <h4 className="font-medium">Location</h4>
-                  <p className="text-gray-700">{event.venue.name}</p>
-                  <p className="text-gray-500 text-sm">{event.venue.address}</p>
+                  <p className="text-gray-700">{event.venue?.name || 'TBD'}</p>
+                  <p className="text-gray-500 text-sm">{event.venue?.address || ''}</p>
                 </div>
               </div>
               
               <div className="flex items-start gap-3">
                 <Users className="h-5 w-5 text-gray-500 mt-1" />
                 <div>
-                  <h4 className="font-medium">Capacity</h4>
-                  <p className="text-gray-700">{event.attendees.capacity} attendees</p>
+                  <h4 className="font-medium">Attendees</h4>
+                  <p className="text-gray-700">{event.attendees?.registered || 0} registered</p>
                 </div>
               </div>
             </div>
@@ -154,7 +154,7 @@ const EventDetailPage = () => {
             <Card>
               <CardContent className="pt-6">
                 <h3 className="text-xl font-semibold mb-4">Tickets</h3>
-                {event.ticketTypes.length > 0 ? (
+                {event.ticketTypes && event.ticketTypes.length > 0 ? (
                   <div className="space-y-4">
                     {event.ticketTypes.map((ticket) => (
                       <div key={ticket.id} className="p-4 border rounded-md">
@@ -190,7 +190,7 @@ const EventDetailPage = () => {
       <div className="container max-w-6xl mx-auto py-8 px-4">
         <DetailPageMasthead 
           title={isLoading ? 'Loading...' : event?.name || 'Event Not Found'} 
-          subtitle={isLoading ? '' : event?.venue.name || ''}
+          subtitle={isLoading ? '' : event?.venue?.name || ''}
           imageUrl={event?.image_url}
         />
         

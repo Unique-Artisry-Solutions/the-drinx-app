@@ -164,16 +164,27 @@ export const useNotificationSystem = () => {
       let title = campaign.name;
       let content: string;
       
+      // Parse target_audience from JSON if needed
+      let targetAudience = null;
+      try {
+        targetAudience = campaign.target_audience ? 
+          (typeof campaign.target_audience === 'string' ? 
+            JSON.parse(campaign.target_audience) : campaign.target_audience) : null;
+      } catch (e) {
+        console.error('Error parsing target_audience:', e);
+        targetAudience = null;
+      }
+      
       // Handle A/B testing variations
-      if (abTestInfo && campaign.target_audience?.abTest) {
-        const abTest = campaign.target_audience.abTest;
+      if (abTestInfo && targetAudience?.abTest) {
+        const abTest = targetAudience.abTest;
         content = abTestInfo.variant === 'A' ? abTest.variantA : abTest.variantB;
       } else {
         content = campaign.description;
       }
       
       // Determine recipients based on segment
-      const targetSegmentId = segmentId || campaign.target_audience?.segmentId;
+      const targetSegmentId = segmentId || targetAudience?.segmentId;
       
       if (targetSegmentId) {
         const sentCount = await sendSegmentNotification(
@@ -185,22 +196,34 @@ export const useNotificationSystem = () => {
           { campaign_id: campaignId, marketing: true }
         );
         
-        // Update campaign metrics
+        // Update campaign metrics - parse metrics from JSON if needed
         if (sentCount > 0) {
-          const { data: metrics } = await supabase
+          // Get current metrics
+          const { data } = await supabase
             .from('event_marketing_campaigns')
             .select('metrics')
             .eq('id', campaignId)
             .single();
             
+          // Parse existing metrics from JSON if needed
+          let currentMetrics = {};
+          try {
+            currentMetrics = data?.metrics ? 
+              (typeof data.metrics === 'string' ? 
+                JSON.parse(data.metrics) : data.metrics) : {};
+          } catch (e) {
+            console.error('Error parsing metrics JSON:', e);
+            currentMetrics = {};
+          }
+          
           const updatedMetrics = {
-            ...(metrics?.metrics || {}),
-            notifications_sent: ((metrics?.metrics?.notifications_sent || 0) + sentCount),
+            ...currentMetrics,
+            notifications_sent: ((currentMetrics.notifications_sent || 0) + sentCount),
             segments: {
-              ...(metrics?.metrics?.segments || {}),
+              ...(currentMetrics.segments || {}),
               [targetSegmentId]: {
-                ...(metrics?.metrics?.segments?.[targetSegmentId] || {}),
-                notifications_sent: ((metrics?.metrics?.segments?.[targetSegmentId]?.notifications_sent || 0) + sentCount)
+                ...(currentMetrics.segments?.[targetSegmentId] || {}),
+                notifications_sent: ((currentMetrics.segments?.[targetSegmentId]?.notifications_sent || 0) + sentCount)
               }
             }
           };
@@ -209,17 +232,18 @@ export const useNotificationSystem = () => {
           if (abTestInfo) {
             const variantKey = abTestInfo.variant === 'A' ? 'variantA' : 'variantB';
             updatedMetrics.abTest = {
-              ...(metrics?.metrics?.abTest || { variantA: {}, variantB: {} }),
+              ...(currentMetrics.abTest || { variantA: {}, variantB: {} }),
               [variantKey]: {
-                ...(metrics?.metrics?.abTest?.[variantKey] || {}),
-                notifications_sent: ((metrics?.metrics?.abTest?.[variantKey]?.notifications_sent || 0) + sentCount)
+                ...(currentMetrics.abTest?.[variantKey] || {}),
+                notifications_sent: ((currentMetrics.abTest?.[variantKey]?.notifications_sent || 0) + sentCount)
               }
             };
           }
           
+          // Store metrics as JSON string
           await supabase
             .from('event_marketing_campaigns')
-            .update({ metrics: updatedMetrics })
+            .update({ metrics: JSON.stringify(updatedMetrics) })
             .eq('id', campaignId);
         }
         

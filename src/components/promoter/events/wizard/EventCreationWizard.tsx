@@ -60,7 +60,10 @@ const EventCreationWizardContent: React.FC = () => {
       };
       
       if (isEditMode && formData.id) {
-        await updateEvent.mutateAsync(eventData);
+        // Need to explicitly include id for the update mutation
+        const eventDataWithId = { ...eventData, id: formData.id };
+        await updateEvent.mutateAsync(eventDataWithId);
+        
         showToast(
           'Event Updated',
           'Your changes have been saved successfully.',

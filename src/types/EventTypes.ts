@@ -129,13 +129,16 @@ export interface Event {
   attendees?: {
     registered: number;
     checked_in?: number;
+    capacity?: number;
   };
+  ticketTypes?: EventTicketType[];
 }
 
 // Added missing types that were causing errors
 export type EventType = Event;
 
-export interface EventFormData extends Omit<Event, 'id' | 'created_at' | 'updated_at'> {
+export interface EventFormData extends Omit<Event, 'created_at' | 'updated_at'> {
+  id?: string; // Add id field to EventFormData
   location?: EventLocation;
   contact?: EventContactInfo;
   

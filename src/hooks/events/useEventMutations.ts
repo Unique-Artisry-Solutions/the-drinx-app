@@ -96,7 +96,7 @@ export const useEventMutations = () => {
   });
 
   const updateEvent = useMutation({
-    mutationFn: async (eventData: EventFormData) => {
+    mutationFn: async (eventData: EventFormData & { id: string }) => {
       if (!eventData.id) throw new Error('Event ID is required for updates');
       
       // Step 1: Update the event

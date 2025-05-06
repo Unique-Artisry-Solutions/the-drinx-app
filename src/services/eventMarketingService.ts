@@ -21,9 +21,16 @@ export const fetchEventCampaigns = async (eventId: string): Promise<EventMarketi
 export const createMarketingCampaign = async (
   campaignData: Omit<EventMarketingCampaign, 'id'>
 ): Promise<EventMarketingCampaign> => {
+  // Convert complex objects to JSON for storage
+  const preparedData = {
+    ...campaignData,
+    target_audience: campaignData.target_audience ? JSON.stringify(campaignData.target_audience) : null,
+    metrics: campaignData.metrics ? JSON.stringify(campaignData.metrics) : null
+  };
+
   const { data, error } = await supabase
     .from('event_marketing_campaigns')
-    .insert(campaignData)
+    .insert(preparedData)
     .select()
     .single();
 
@@ -39,9 +46,16 @@ export const updateMarketingCampaign = async (
   id: string, 
   updates: Partial<EventMarketingCampaign>
 ): Promise<EventMarketingCampaign> => {
+  // Convert complex objects to JSON for storage
+  const preparedUpdates = {
+    ...updates,
+    target_audience: updates.target_audience ? JSON.stringify(updates.target_audience) : undefined,
+    metrics: updates.metrics ? JSON.stringify(updates.metrics) : undefined
+  };
+
   const { data, error } = await supabase
     .from('event_marketing_campaigns')
-    .update(updates)
+    .update(preparedUpdates)
     .eq('id', id)
     .select()
     .single();
@@ -86,16 +100,23 @@ export const trackCampaignMetric = async (
       throw fetchError;
     }
 
-    // Convert metrics to a safe object using the utility function
-    const currentMetrics = safeJsonToRecord(campaign?.metrics);
+    // Parse the metrics JSON from the database
+    let currentMetrics = {};
+    try {
+      currentMetrics = campaign?.metrics ? (typeof campaign.metrics === 'string' ? JSON.parse(campaign.metrics) : campaign.metrics) : {};
+    } catch (e) {
+      console.error('Error parsing metrics JSON:', e);
+      currentMetrics = {};
+    }
     
     // Update the specific metric
     const updatedMetricValue = ((currentMetrics[metricName] || 0) + value);
     
     // Create a new metrics object with the updated value
-    const updatedMetrics = Object.assign({}, currentMetrics, {
+    const updatedMetrics = {
+      ...currentMetrics,
       [metricName]: updatedMetricValue
-    });
+    };
 
     // If segment targeting is used, track segment-specific metrics
     if (segmentId) {
@@ -128,10 +149,10 @@ export const trackCampaignMetric = async (
       };
     }
 
-    // Save updated metrics
+    // Save updated metrics as JSON
     const { error: updateError } = await supabase
       .from('event_marketing_campaigns')
-      .update({ metrics: updatedMetrics })
+      .update({ metrics: JSON.stringify(updatedMetrics) })
       .eq('id', campaignId);
 
     if (updateError) {
