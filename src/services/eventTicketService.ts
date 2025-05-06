@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { EventDiscountCode, EventTicketType } from '@/types/EventTypes';
 
@@ -58,10 +59,10 @@ export const checkTicketAvailability = async (eventId: string, ticketTypeId: str
     }
     
     // Calculate sold tickets if not provided
-    const sold = data.sold !== undefined ? data.sold : 0;
+    const soldTickets = data.sold !== undefined ? data.sold : 0;
     
     // Calculate available tickets
-    const availableQuantity = data.quantity - sold;
+    const availableQuantity = data.quantity - soldTickets;
     
     return {
       available: availableQuantity > 0,
@@ -362,7 +363,7 @@ export const processTicketPurchase = async ({
         await supabase
           .from('event_discount_codes')
           .update({
-            usage_count: supabase.rpc('increment', { i: 1 })
+            usage_count: supabase.rpc('increment_count', { row_id: discountData.id, table_name: 'event_discount_codes' })
           })
           .eq('id', discountData.id);
       }
@@ -411,7 +412,7 @@ export const createDiscountCode = async ({
         code,
         discount_type: discountType,
         discount_amount: discountAmount,
-        expires_at: expiresAt,
+        expires_at: expiresAt ? expiresAt.toISOString() : null,
         usage_limit: usageLimit,
         applicable_ticket_types: applicableTicketTypes,
         description
