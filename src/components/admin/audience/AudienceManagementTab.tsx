@@ -10,15 +10,16 @@ import { AudienceInsights } from './AudienceInsights';
 import { SegmentPerformance } from './SegmentPerformance';
 import { AudienceSegment } from '@/types/AudienceTypes';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, PlusCircle, RefreshCw, BarChart3, Users, Settings, ChartBar } from 'lucide-react';
+import { Search, PlusCircle, RefreshCw, BarChart3, Users, Settings, ChartBar, Network } from 'lucide-react';
 import { SegmentAnalyticsDashboard } from './analytics/SegmentAnalyticsDashboard';
+import { AudienceRelationshipMap } from './relationships/AudienceRelationshipMap';
 
 export const AudienceManagementTab = () => {
-  const [activeView, setActiveView] = useState<'list' | 'create' | 'edit' | 'analytics'>('list');
+  const [activeView, setActiveView] = useState<'list' | 'create' | 'edit' | 'analytics' | 'relationships'>('list');
   const [selectedSegment, setSelectedSegment] = useState<AudienceSegment | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [activeTab, setActiveTab] = useState<'segments' | 'insights' | 'performance' | 'analytics'>('segments');
+  const [activeTab, setActiveTab] = useState<'segments' | 'insights' | 'performance' | 'analytics' | 'relationships'>('segments');
   
   const { 
     segments,
@@ -33,6 +34,7 @@ export const AudienceManagementTab = () => {
   const filteredSegments = segments.filter(segment => {
     const matchesSearch = segment.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          (segment.description || '').toLowerCase().includes(searchQuery.toLowerCase());
+    
     const matchesStatus = statusFilter === 'all' || 
                          (statusFilter === 'active' && segment.is_active) ||
                          (statusFilter === 'inactive' && !segment.is_active);
@@ -116,6 +118,10 @@ export const AudienceManagementTab = () => {
                   <BarChart3 className="h-4 w-4 mr-2" />
                   Performance
                 </TabsTrigger>
+                <TabsTrigger value="relationships">
+                  <Network className="h-4 w-4 mr-2" />
+                  Relationships
+                </TabsTrigger>
               </TabsList>
               
               <TabsContent value="segments">
@@ -163,6 +169,18 @@ export const AudienceManagementTab = () => {
                   isLoading={isLoadingSegments}
                 />
               </TabsContent>
+              
+              <TabsContent value="relationships">
+                <AudienceRelationshipMap 
+                  selectedSegmentId={selectedSegment?.id}
+                  onSelectSegment={(segmentId) => {
+                    const segment = segments.find(s => s.id === segmentId);
+                    if (segment) {
+                      setSelectedSegment(segment);
+                    }
+                  }}
+                />
+              </TabsContent>
             </Tabs>
           )}
           
@@ -186,6 +204,10 @@ export const AudienceManagementTab = () => {
           
           {activeView === 'analytics' && (
             <SegmentAnalyticsDashboard />
+          )}
+          
+          {activeView === 'relationships' && (
+            <AudienceRelationshipMap />
           )}
         </CardContent>
       </Card>

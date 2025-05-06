@@ -89,6 +89,13 @@ import {
   isFeatureFlagRelated,
 } from './detection/coreDetection';
 
+import {
+  isAudienceRelationshipFeature,
+  isAudienceInfluencerFeature,
+  isCrossSegmentEngagementFeature,
+  isAudienceVisualizationFeature,
+} from './detection/audienceRelationshipDetection';
+
 /**
  * Detects if a feature is related to audience relationship mapping
  */
@@ -169,5 +176,8 @@ export {
   isEventManagementFeature,
   isPromoterDashboardFeature,
   isCustomPromotionFeature,
-  isPromoterNotificationFeature
+  isPromoterNotificationFeature,
+  isAudienceInfluencerFeature,
+  isCrossSegmentEngagementFeature,
+  isAudienceVisualizationFeature
 };
