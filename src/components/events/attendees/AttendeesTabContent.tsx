@@ -120,14 +120,14 @@ const AttendeesTabContent: React.FC<AttendeesTabContentProps> = ({ eventId }) =>
   const handleExport = () => {
     // Generate CSV data
     const csvHeaders = [
-      'Name', 'Email', 'Ticket Type', 'Status', 
+      'Name', 'Email', 'Ticket Type ID', 'Status', 
       'Purchase Date', 'Checked In Date', 'Ticket Code'
     ].join(',');
     
     const csvRows = filteredAttendees.map(attendee => [
       attendee.name?.replace(/,/g, ' '),
       attendee.email?.replace(/,/g, ' '),
-      attendee.ticket_type?.name || 'Standard',
+      attendee.ticket_type_id || 'Standard',
       attendee.status,
       new Date(attendee.purchase_date).toLocaleString(),
       attendee.checked_in_at ? new Date(attendee.checked_in_at).toLocaleString() : '',

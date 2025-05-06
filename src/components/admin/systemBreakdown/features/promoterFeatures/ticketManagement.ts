@@ -13,7 +13,7 @@ export const ticketManagement: FeatureItem = {
   databaseStatus: "in_progress",
   userImpact: "high",
   complexity: "high",
-  progress: 65,
+  implementationProgress: 65, // Changed from progress to implementationProgress which exists in the type
   tags: ["event management", "promoter", "ticketing"],
   databaseAnalysis: `
     Database Implementation:

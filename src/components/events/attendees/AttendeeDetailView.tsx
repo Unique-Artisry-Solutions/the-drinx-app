@@ -136,8 +136,8 @@ const AttendeeDetailView: React.FC<AttendeeDetailViewProps> = ({
               </div>
               <div className="flex items-center gap-2">
                 <Tag className="h-4 w-4 text-gray-500" />
-                <span className="text-sm font-medium">Ticket Type:</span>
-                <span>{attendee.ticket_type?.name || 'Standard'}</span>
+                <span className="text-sm font-medium">Ticket Type ID:</span>
+                <span>{attendee.ticket_type_id || 'Standard'}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-gray-500" />
@@ -163,7 +163,7 @@ const AttendeeDetailView: React.FC<AttendeeDetailViewProps> = ({
                   className="gap-2"
                   onClick={() => attendee.id && onCancel(attendee.id)}
                 >
-                  <X className="h-4 w-4" />
+                  <MessageSquare className="h-4 w-4" />
                   Cancel Registration
                 </Button>
               )}

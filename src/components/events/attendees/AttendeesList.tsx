@@ -72,7 +72,7 @@ const AttendeesList: React.FC<AttendeesListProps> = ({
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Email</TableHead>
-                  <TableHead>Ticket Type</TableHead>
+                  <TableHead>Ticket Type ID</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Purchase Date</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -83,7 +83,7 @@ const AttendeesList: React.FC<AttendeesListProps> = ({
                   <TableRow key={attendee.id}>
                     <TableCell className="font-medium">{attendee.name}</TableCell>
                     <TableCell>{attendee.email}</TableCell>
-                    <TableCell>{attendee.ticket_type?.name || 'Standard'}</TableCell>
+                    <TableCell>{attendee.ticket_type_id || 'Standard'}</TableCell>
                     <TableCell>{renderStatusBadge(attendee.status)}</TableCell>
                     <TableCell>{new Date(attendee.purchase_date).toLocaleDateString()}</TableCell>
                     <TableCell className="text-right">
