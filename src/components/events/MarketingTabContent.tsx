@@ -1,663 +1,629 @@
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { 
+  PlusCircle, 
+  Edit, 
+  Trash2, 
+  Link as LinkIcon, 
+  Copy, 
+  BarChart, 
+  Users, 
+  Check, 
+  X, 
+  MessageSquare, 
+  Bell,
+  CalendarDays,
+  DollarSign,
+  Tag,
+  ArrowUpRight
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Separator } from '@/components/ui/separator';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Copy, Users, AlertCircle, ChevronRight, LineChart, CheckCircle, Link as LinkIcon } from 'lucide-react';
-import { copyToClipboard } from '@/utils/clipboard';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
+import { copyToClipboard } from '@/utils/clipboard';
 import { EventMarketingCampaign } from '@/types/EventTypes';
-import { CampaignSegmentPanel, SegmentSelection } from './CampaignSegmentPanel';
+import { useEventMarketingWithSegments } from '@/hooks/events/useEventMarketingWithSegments';
+import { SegmentSelection, CampaignSegmentPanel } from '@/components/events/CampaignSegmentPanel';
 import { AudienceSegment } from '@/types/AudienceTypes';
-import { CampaignSegmentAnalytics } from '@/types/CampaignSegmentTypes';
 
 interface MarketingTabContentProps {
   eventId: string;
   eventName: string;
 }
 
-export const MarketingTabContent: React.FC<MarketingTabContentProps> = ({ eventId, eventName }) => {
+const MarketingTabContent: React.FC<MarketingTabContentProps> = ({ eventId, eventName }) => {
   const { toast } = useToast();
-  const [campaigns, setCampaigns] = useState<EventMarketingCampaign[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isCreating, setIsCreating] = useState(false);
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
-  const [campaignFormData, setCampaignFormData] = useState<Partial<EventMarketingCampaign>>({
+  const [newCampaign, setNewCampaign] = useState<Partial<EventMarketingCampaign>>({
     name: '',
     description: '',
-    campaign_type: 'social_media',
-    status: 'draft'
+    campaign_type: 'email',
+    status: 'draft' as const,
   });
   
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [currentCampaign, setCurrentCampaign] = useState<EventMarketingCampaign | null>(null);
+  const [copiedLinkId, setCopiedLinkId] = useState<string | null>(null);
+  const [isSegmentDialogOpen, setIsSegmentDialogOpen] = useState(false);
   const [availableSegments, setAvailableSegments] = useState<AudienceSegment[]>([]);
-  const [segmentMappings, setSegmentMappings] = useState<Record<string, any>>({});
-  const [segmentAnalytics, setSegmentAnalytics] = useState<Record<string, CampaignSegmentAnalytics[]>>({});
-  const [isLoadingSegments, setIsLoadingSegments] = useState(false);
-  
-  // Mock useEventMarketingWithSegments hook - in a real app you'd use the actual hook
-  const {
-    campaigns: fetchedCampaigns,
-    isLoading: isLoadingCampaigns,
-    createCampaign,
-    updateCampaign,
-    deleteCampaign,
-    trackMetric,
+  const [isLoading, setIsLoading] = useState(false);
+
+  const { 
+    campaigns, 
+    isLoading: isCampaignsLoading, 
+    createCampaign, 
+    updateCampaign, 
+    deleteCampaign, 
     getCampaignLink,
+    segmentMappings,
     assignSegments,
     getAvailableSegments,
-    segmentMappings: fetchedMappings,
-    segmentAnalytics: fetchedAnalytics,
-  } = {
-    campaigns: [],
-    isLoading: false,
-    createCampaign: async (campaign: Omit<EventMarketingCampaign, 'event_id'>) => {
-      // Mock implementation
-      const newCampaign = {
-        ...campaign,
-        id: `camp-${Date.now()}`,
-        event_id: eventId,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-      return newCampaign as EventMarketingCampaign;
-    },
-    updateCampaign: async (id: string, updates: Partial<EventMarketingCampaign>) => {
-      // Mock implementation
-      return { id, ...updates } as EventMarketingCampaign;
-    },
-    deleteCampaign: async (id: string) => {
-      // Mock implementation
-      return;
-    },
-    trackMetric: async (campaignId: string, metricName: string, value: number = 1) => {
-      // Mock implementation
-      return;
-    },
-    getCampaignLink: (campaignId: string, medium: string = 'website') => {
-      // Mock implementation
-      return `https://example.com/events/${eventId}?utm_campaign=${campaignId}&utm_medium=${medium}`;
-    },
-    assignSegments: async (campaignId: string, segments: any[]) => {
-      // Mock implementation
-      return segments.map(s => ({
-        id: `map-${Date.now()}-${s.segment_id}`,
-        campaign_id: campaignId,
-        segment_id: s.segment_id,
-        allocation_percentage: s.allocation_percentage || 100,
-        is_control_group: s.is_control_group || false,
-        is_active: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }));
-    },
-    getAvailableSegments: async (campaignId: string) => {
-      // Mock implementation
-      return [] as AudienceSegment[];
-    },
-    segmentMappings: {},
-    segmentAnalytics: {},
-  };
-  
+    refresh
+  } = useEventMarketingWithSegments(eventId);
+
+  // Fetch available segments when segment dialog opens
   useEffect(() => {
-    // In a real app, you'd fetch data from your hook
-    // For now, let's just simulate loading and then set some mock data
-    const loadData = async () => {
-      setIsLoading(true);
-      
-      // Mock campaigns
-      const mockCampaigns: EventMarketingCampaign[] = [
-        {
-          id: 'camp-1',
-          event_id: eventId,
-          name: 'Social Media Promotion',
-          description: 'Facebook and Instagram campaign to promote the event',
-          campaign_type: 'social_media',
-          status: 'active',
-          start_date: '2025-06-01T00:00:00Z',
-          end_date: '2025-06-15T00:00:00Z',
-          metrics: {
-            impressions: 1250,
-            clicks: 320,
-            conversions: 45
-          },
-          created_at: '2025-05-01T00:00:00Z',
-          updated_at: '2025-05-01T00:00:00Z'
-        },
-        {
-          id: 'camp-2',
-          event_id: eventId,
-          name: 'Email Newsletter',
-          description: 'Monthly newsletter featuring the event',
-          campaign_type: 'email',
-          status: 'draft',
-          metrics: {
-            emails_sent: 500,
-            open_rate: 32.4
-          },
-          created_at: '2025-05-02T00:00:00Z',
-          updated_at: '2025-05-02T00:00:00Z'
-        }
-      ];
-      
-      setCampaigns(mockCampaigns);
-      setIsLoading(false);
-      
-      // If a campaign is selected, also load its segments
-      if (selectedCampaignId) {
-        loadCampaignSegments(selectedCampaignId);
-      }
-    };
-    
-    loadData();
-  }, [eventId, selectedCampaignId]);
-  
-  const loadCampaignSegments = async (campaignId: string) => {
-    setIsLoadingSegments(true);
-    
-    // In a real app, you'd get this data from your hook
-    // For now, let's just set some mock data
-    const mockSegments: AudienceSegment[] = [
-      {
-        id: 'seg-1',
-        name: 'Young Professionals',
-        description: 'Ages 25-35 with high disposable income',
-        created_by: 'user-1',
-        is_active: true,
-        created_at: '2025-01-01T00:00:00Z',
-        updated_at: '2025-01-01T00:00:00Z'
-      },
-      {
-        id: 'seg-2',
-        name: 'College Students',
-        description: 'University students interested in social events',
-        created_by: 'user-1',
-        is_active: true,
-        created_at: '2025-01-02T00:00:00Z',
-        updated_at: '2025-01-02T00:00:00Z'
-      }
-    ];
-    
-    const mockMappings = {
-      [campaignId]: [
-        {
-          id: 'map-1',
-          campaign_id: campaignId,
-          segment_id: 'seg-1',
-          allocation_percentage: 70,
-          is_control_group: false,
-          is_active: true,
-          created_at: '2025-05-03T00:00:00Z',
-          updated_at: '2025-05-03T00:00:00Z'
-        }
-      ]
-    };
-    
-    const mockAnalytics = {
-      [campaignId]: [
-        {
-          campaign_id: campaignId,
-          segment_id: 'seg-1',
-          segment_name: 'Young Professionals',
-          campaign_name: 'Social Media Promotion',
-          campaign_type: 'social_media',
-          status: 'active',
-          allocation_percentage: 70,
-          is_control_group: false,
-          total_impressions: 875,
-          total_clicks: 224,
-          total_conversions: 32,
-          total_conversion_value: 1600,
-          click_through_rate: 25.6,
-          conversion_rate: 14.3
-        }
-      ]
-    };
-    
-    setAvailableSegments(mockSegments);
-    setSegmentMappings(mockMappings);
-    setSegmentAnalytics(mockAnalytics);
-    setIsLoadingSegments(false);
-  };
-  
-  const handleCreateCampaign = async () => {
-    if (!campaignFormData.name || !campaignFormData.campaign_type || !campaignFormData.status) {
-      toast({
-        title: "Missing Information",
-        description: "Please fill in all required fields",
-        variant: "destructive"
-      });
-      return;
+    if (isSegmentDialogOpen && currentCampaign) {
+      loadAvailableSegments(currentCampaign.id || '');
     }
-    
-    setIsCreating(true);
+  }, [isSegmentDialogOpen, currentCampaign]);
+
+  const loadAvailableSegments = async (campaignId: string) => {
+    setIsLoading(true);
     try {
-      const newCampaign = await createCampaign({
-        name: campaignFormData.name,
-        description: campaignFormData.description,
-        campaign_type: campaignFormData.campaign_type,
-        status: campaignFormData.status
-      });
-      
-      setCampaigns(prev => [...prev, newCampaign]);
-      setCampaignFormData({
-        name: '',
-        description: '',
-        campaign_type: 'social_media',
-        status: 'draft'
-      });
-      setShowCreateForm(false);
-      
+      const segments = await getAvailableSegments(campaignId);
+      setAvailableSegments(segments);
+    } catch (error) {
       toast({
-        title: "Campaign Created",
-        description: "Your marketing campaign has been created successfully",
-      });
-    } catch (err: any) {
-      toast({
-        title: "Error",
-        description: err.message || "Failed to create campaign",
-        variant: "destructive"
+        title: 'Error',
+        description: 'Failed to load available segments',
+        variant: 'destructive'
       });
     } finally {
-      setIsCreating(false);
+      setIsLoading(false);
     }
   };
-  
-  const handleCancelCreate = () => {
-    setCampaignFormData({
-      name: '',
-      description: '',
-      campaign_type: 'social_media',
-      status: 'draft'
-    });
-    setShowCreateForm(false);
-  };
-  
-  const handleAssignSegments = async (campaign: EventMarketingCampaign, selectedSegments: SegmentSelection[]) => {
+
+  const handleCreateCampaign = async () => {
+    if (!newCampaign.name) {
+      toast({
+        title: 'Validation Error',
+        description: 'Campaign name is required',
+        variant: 'destructive'
+      });
+      return;
+    }
+
     try {
-      if (!campaign.id) return;
-      
-      const segmentData = selectedSegments.map(segment => ({
-        segment_id: segment.id,
-        allocation_percentage: segment.allocation,
-        is_control_group: segment.isControlGroup,
-        description: segment.description
-      }));
-      
-      const mappings = await assignSegments(campaign.id, segmentData);
-      
-      // Update local state to show the new mappings
-      setSegmentMappings(prev => ({
-        ...prev,
-        [campaign.id!]: [...(prev[campaign.id!] || []), ...mappings]
-      }));
-      
-      toast({
-        title: "Segments Assigned",
-        description: `${selectedSegments.length} segments have been assigned to the campaign.`,
+      await createCampaign({
+        ...newCampaign,
+        event_id: eventId,
       });
       
-      return mappings;
-    } catch (err: any) {
+      setNewCampaign({
+        name: '',
+        description: '',
+        campaign_type: 'email',
+        status: 'draft' as const,
+      });
+      
+      setIsCreateDialogOpen(false);
+    } catch (error: any) {
       toast({
-        title: "Error",
-        description: err.message || "Failed to assign segments",
-        variant: "destructive"
+        title: 'Error',
+        description: error.message || 'Failed to create campaign',
+        variant: 'destructive'
       });
     }
   };
-  
-  const handleCopyLink = async (campaignId: string) => {
+
+  const handleEditCampaign = async () => {
+    if (!currentCampaign) return;
+    
+    try {
+      await updateCampaign(currentCampaign.id!, currentCampaign);
+      setIsEditDialogOpen(false);
+      toast({
+        title: 'Success',
+        description: 'Campaign updated successfully',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update campaign',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleDeleteCampaign = async () => {
+    if (!currentCampaign) return;
+    
+    try {
+      await deleteCampaign(currentCampaign.id!);
+      setIsDeleteDialogOpen(false);
+      toast({
+        title: 'Success',
+        description: 'Campaign deleted successfully',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to delete campaign',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleCopyLink = (campaignId: string) => {
     const link = getCampaignLink(campaignId);
-    const success = await copyToClipboard(link);
-    
-    if (success) {
-      toast({
-        title: "Link Copied",
-        description: "Campaign link copied to clipboard",
+    copyToClipboard(link)
+      .then(() => {
+        setCopiedLinkId(campaignId);
+        toast({
+          title: 'Link Copied',
+          description: 'Campaign link copied to clipboard',
+        });
+        
+        // Reset the copied status after 3 seconds
+        setTimeout(() => setCopiedLinkId(null), 3000);
+      })
+      .catch(() => {
+        toast({
+          title: 'Copy Failed',
+          description: 'Failed to copy link to clipboard',
+          variant: 'destructive'
+        });
       });
-    } else {
+  };
+
+  const handleAssignSegments = async (campaign: EventMarketingCampaign, segments: SegmentSelection[]) => {
+    try {
+      const segmentsForApi = segments.map(seg => ({
+        segment_id: seg.id,
+        allocation_percentage: seg.allocation || 100,
+        is_control_group: seg.isControlGroup || false,
+        description: seg.description
+      }));
+      
+      await assignSegments(campaign.id!, segmentsForApi);
+      setIsSegmentDialogOpen(false);
+      refresh(); // Refresh the campaigns list to show updated segments
+      
+      return true;
+    } catch (error) {
+      console.error('Failed to assign segments:', error);
       toast({
-        title: "Failed to Copy",
-        description: "Could not copy link to clipboard",
-        variant: "destructive"
+        title: 'Error',
+        description: 'Failed to assign segments to the campaign',
+        variant: 'destructive'
       });
+      return false;
     }
   };
-  
-  const getCampaignStatusBadge = (campaign: EventMarketingCampaign) => {
-    if (!campaign) return null;
-    
-    let variant: "default" | "destructive" | "outline" | "secondary" | "success";
-    
-    switch (campaign.status) {
+
+  const renderCampaignStatus = (status: 'draft' | 'active' | 'completed' | 'cancelled') => {
+    switch (status) {
       case 'active':
-        variant = "success";
-        break;
+        return <Badge className="bg-green-500">Active</Badge>;
       case 'draft':
-        variant = "secondary";
-        break;
+        return <Badge variant="outline">Draft</Badge>;
       case 'completed':
-        variant = "outline";
-        break;
+        return <Badge variant="secondary">Completed</Badge>;
       case 'cancelled':
-        variant = "destructive";
-        break;
+        return <Badge variant="destructive">Cancelled</Badge>;
       default:
-        variant = "outline";
+        return <Badge variant="outline">{status}</Badge>;
     }
-    
-    return (
-      <Badge variant={variant} className="ml-2">
-        {campaign.status.charAt(0).toUpperCase() + campaign.status.slice(1)}
-      </Badge>
-    );
   };
-  
-  const formatNumber = (num: number | undefined) => {
-    if (num === undefined) return '0';
-    return num.toLocaleString();
-  };
-  
-  const formatPercentage = (num: number | undefined) => {
-    if (num === undefined) return '0%';
-    return `${num.toFixed(1)}%`;
-  };
-  
-  const renderCampaignList = () => {
-    if (isLoading) {
-      return (
-        <div className="flex justify-center items-center py-10">
-          <p>Loading campaigns...</p>
-        </div>
-      );
+
+  const handleToggleStatus = async (campaign: EventMarketingCampaign) => {
+    try {
+      const newStatus = campaign.status === 'active' ? 'draft' as const : 'active' as const;
+      
+      await updateCampaign(campaign.id!, {
+        status: newStatus
+      });
+      
+      toast({
+        title: 'Status Updated',
+        description: `Campaign is now ${newStatus}`,
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update campaign status',
+        variant: 'destructive'
+      });
     }
-    
-    if (campaigns.length === 0) {
-      return (
-        <div className="py-8 text-center">
-          <AlertCircle className="mx-auto h-8 w-8 text-yellow-500 mb-2" />
-          <h3 className="text-lg font-medium">No Marketing Campaigns</h3>
-          <p className="text-sm text-gray-500 mt-1">
-            Create your first campaign to promote this event.
-          </p>
-          <Button 
-            onClick={() => setShowCreateForm(true)}
-            className="mt-4"
-            disabled={showCreateForm}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Create Campaign
-          </Button>
-        </div>
-      );
-    }
-    
-    return (
-      <div className="space-y-4">
-        {campaigns.map(campaign => (
-          <Card key={campaign.id} className="overflow-hidden">
-            <CardHeader className="bg-muted/30 pb-2">
-              <div className="flex justify-between">
-                <CardTitle className="flex items-center">
-                  {campaign.name}
-                  {getCampaignStatusBadge(campaign)}
-                </CardTitle>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => handleCopyLink(campaign.id!)}
-                >
-                  <LinkIcon className="h-4 w-4 mr-1" />
-                  Copy Link
-                </Button>
-              </div>
-              <CardDescription>
-                {campaign.campaign_type === 'social_media' ? 'Social Media' : 
-                campaign.campaign_type === 'email' ? 'Email' : 
-                campaign.campaign_type.charAt(0).toUpperCase() + campaign.campaign_type.slice(1)}
-                {' • '}
-                {campaign.created_at ? new Date(campaign.created_at).toLocaleDateString() : 'No date'}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="pt-4">
-              {campaign.description && (
-                <p className="text-sm mb-4">{campaign.description}</p>
-              )}
-              
-              <div className="grid grid-cols-3 gap-4 mb-4">
-                <div className="bg-muted/40 p-2 rounded">
-                  <p className="text-xs text-muted-foreground">Impressions</p>
-                  <p className="text-lg font-medium">{formatNumber(campaign.metrics?.impressions)}</p>
-                </div>
-                <div className="bg-muted/40 p-2 rounded">
-                  <p className="text-xs text-muted-foreground">Clicks</p>
-                  <p className="text-lg font-medium">{formatNumber(campaign.metrics?.clicks)}</p>
-                  {campaign.metrics?.clicks && campaign.metrics?.impressions && (
-                    <p className="text-xs text-muted-foreground">
-                      {formatPercentage((campaign.metrics.clicks / campaign.metrics.impressions) * 100)} CTR
-                    </p>
-                  )}
-                </div>
-                <div className="bg-muted/40 p-2 rounded">
-                  <p className="text-xs text-muted-foreground">Conversions</p>
-                  <p className="text-lg font-medium">{formatNumber(campaign.metrics?.conversions)}</p>
-                  {campaign.metrics?.conversions && campaign.metrics?.clicks && (
-                    <p className="text-xs text-muted-foreground">
-                      {formatPercentage((campaign.metrics.conversions / campaign.metrics.clicks) * 100)} CVR
-                    </p>
-                  )}
-                </div>
-              </div>
-              
-              <div className="flex justify-between mt-4">
-                <div className="flex items-center">
-                  <Users className="h-4 w-4 mr-1 text-muted-foreground" />
-                  <span className="text-sm">
-                    {segmentMappings[campaign.id!]?.length || 0} Segments
-                  </span>
-                </div>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => setSelectedCampaignId(selectedCampaignId === campaign.id ? null : campaign.id)}
-                  className="text-xs"
-                >
-                  {selectedCampaignId === campaign.id ? 'Hide Details' : 'View Details'}
-                  <ChevronRight className={`h-4 w-4 ml-1 transition-transform ${
-                    selectedCampaignId === campaign.id ? 'rotate-90' : ''
-                  }`} />
-                </Button>
-              </div>
-              
-              {selectedCampaignId === campaign.id && (
-                <div className="mt-4 pt-4 border-t">
-                  <Tabs defaultValue="segments">
-                    <TabsList className="w-full">
-                      <TabsTrigger value="segments" className="flex-1">Segments</TabsTrigger>
-                      <TabsTrigger value="performance" className="flex-1">Performance</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="segments" className="mt-4">
-                      <CampaignSegmentPanel
-                        campaign={campaign}
-                        availableSegments={availableSegments}
-                        existingMappings={segmentMappings[campaign.id!] || []}
-                        isLoading={isLoadingSegments}
-                        onAssignSegments={handleAssignSegments}
-                      />
-                    </TabsContent>
-                    <TabsContent value="performance" className="mt-4">
-                      <div className="space-y-4">
-                        {segmentAnalytics[campaign.id!]?.length ? (
-                          <>
-                            <h4 className="font-medium">Segment Performance</h4>
-                            <div className="space-y-3">
-                              {segmentAnalytics[campaign.id!].map(analytics => (
-                                <div key={analytics.segment_id} className="border rounded-md p-3">
-                                  <div className="flex justify-between items-start mb-2">
-                                    <h5 className="font-medium">{analytics.segment_name}</h5>
-                                    {analytics.is_control_group && (
-                                      <Badge variant="outline">Control Group</Badge>
-                                    )}
-                                  </div>
-                                  <p className="text-sm text-muted-foreground mb-3">
-                                    Allocation: {analytics.allocation_percentage}%
-                                  </p>
-                                  <div className="grid grid-cols-3 gap-2">
-                                    <div>
-                                      <p className="text-xs text-muted-foreground">Impressions</p>
-                                      <p className="text-sm font-medium">{formatNumber(analytics.total_impressions)}</p>
-                                    </div>
-                                    <div>
-                                      <p className="text-xs text-muted-foreground">CTR</p>
-                                      <p className="text-sm font-medium">{formatPercentage(analytics.click_through_rate)}</p>
-                                    </div>
-                                    <div>
-                                      <p className="text-xs text-muted-foreground">CVR</p>
-                                      <p className="text-sm font-medium">{formatPercentage(analytics.conversion_rate)}</p>
-                                    </div>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </>
-                        ) : (
-                          <Alert>
-                            <AlertDescription>
-                              No performance data available for segments yet. 
-                              Assign segments to this campaign to start tracking their performance.
-                            </AlertDescription>
-                          </Alert>
-                        )}
-                        
-                        <div className="flex justify-end">
-                          <Button variant="outline" size="sm">
-                            <LineChart className="h-4 w-4 mr-1" />
-                            Full Analytics
-                          </Button>
-                        </div>
-                      </div>
-                    </TabsContent>
-                  </Tabs>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    );
   };
-  
+
+  const getSegmentCount = (campaignId: string) => {
+    return segmentMappings[campaignId]?.length || 0;
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-semibold">Marketing Campaigns</h2>
-        {!showCreateForm && (
-          <Button onClick={() => setShowCreateForm(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Create Campaign
-          </Button>
-        )}
+        <h3 className="text-lg font-medium">Marketing Campaigns</h3>
+        <Button onClick={() => setIsCreateDialogOpen(true)}>
+          <PlusCircle className="mr-2 h-4 w-4" />
+          Create Campaign
+        </Button>
       </div>
       
-      {showCreateForm && (
+      {isCampaignsLoading ? (
+        <div className="py-10 text-center">
+          <div className="inline-block animate-spin rounded-full border-4 border-solid border-current border-r-transparent h-8 w-8 align-middle" />
+          <p className="mt-2 text-gray-500">Loading campaigns...</p>
+        </div>
+      ) : campaigns.length === 0 ? (
         <Card>
-          <CardHeader>
-            <CardTitle>Create Marketing Campaign</CardTitle>
-            <CardDescription>
-              Set up a new campaign to promote this event
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="campaign-name">Campaign Name</Label>
-                <Input 
-                  id="campaign-name" 
-                  value={campaignFormData.name} 
-                  onChange={e => setCampaignFormData(prev => ({ ...prev, name: e.target.value }))} 
-                  placeholder="Summer Event Promotion" 
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="campaign-description">Description (Optional)</Label>
-                <Textarea 
-                  id="campaign-description" 
-                  value={campaignFormData.description} 
-                  onChange={e => setCampaignFormData(prev => ({ ...prev, description: e.target.value }))} 
-                  placeholder="Brief description of this marketing campaign" 
-                />
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="campaign-type">Campaign Type</Label>
-                  <Select 
-                    value={campaignFormData.campaign_type} 
-                    onValueChange={value => setCampaignFormData(prev => ({ ...prev, campaign_type: value }))}
-                  >
-                    <SelectTrigger id="campaign-type">
-                      <SelectValue placeholder="Select type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="social_media">Social Media</SelectItem>
-                      <SelectItem value="email">Email Marketing</SelectItem>
-                      <SelectItem value="search">Search Engine</SelectItem>
-                      <SelectItem value="referral">Referral Program</SelectItem>
-                      <SelectItem value="partnership">Partnership</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div>
-                  <Label htmlFor="campaign-status">Status</Label>
-                  <Select 
-                    value={campaignFormData.status} 
-                    onValueChange={value => setCampaignFormData(prev => ({ ...prev, status: value }))}
-                  >
-                    <SelectTrigger id="campaign-status">
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="draft">Draft</SelectItem>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                      <SelectItem value="cancelled">Cancelled</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              
-              <div className="flex justify-end gap-2 pt-4">
-                <Button variant="outline" onClick={handleCancelCreate} disabled={isCreating}>
-                  Cancel
-                </Button>
-                <Button onClick={handleCreateCampaign} disabled={isCreating}>
-                  {isCreating && "Creating..."}
-                  {!isCreating && (
-                    <>
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      Create Campaign
-                    </>
-                  )}
-                </Button>
-              </div>
-            </div>
+          <CardContent className="py-10 text-center">
+            <h4 className="text-muted-foreground mb-2">No marketing campaigns yet</h4>
+            <p className="text-sm text-muted-foreground mb-4">
+              Create your first campaign to start promoting your event.
+            </p>
+            <Button onClick={() => setIsCreateDialogOpen(true)}>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Create First Campaign
+            </Button>
           </CardContent>
         </Card>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2">
+          {campaigns.map((campaign) => (
+            <Card key={campaign.id} className="overflow-hidden">
+              <CardHeader className="pb-3">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="text-lg">{campaign.name}</CardTitle>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {campaign.campaign_type} campaign
+                    </p>
+                  </div>
+                  {renderCampaignStatus(campaign.status)}
+                </div>
+              </CardHeader>
+              <CardContent className="pb-2">
+                <div className="space-y-4">
+                  <div className="text-sm">
+                    {campaign.description || 'No description provided'}
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div className="flex items-center">
+                      <CalendarDays className="h-4 w-4 mr-2 opacity-70" />
+                      <span>{campaign.start_date || 'Not scheduled'}</span>
+                    </div>
+                    <div className="flex items-center">
+                      <DollarSign className="h-4 w-4 mr-2 opacity-70" />
+                      <span>Budget: {campaign.budget ? `$${campaign.budget}` : 'N/A'}</span>
+                    </div>
+                    <div className="flex items-center">
+                      <Tag className="h-4 w-4 mr-2 opacity-70" />
+                      <span>{campaign.campaign_type}</span>
+                    </div>
+                    <div className="flex items-center">
+                      <Users className="h-4 w-4 mr-2 opacity-70" />
+                      <span>Segments: {getSegmentCount(campaign.id!)}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-3 gap-2 text-xs">
+                    <div className="bg-gray-100 dark:bg-gray-800 rounded p-2 text-center">
+                      <div className="text-lg font-medium">
+                        {campaign.metrics?.impressions || 0}
+                      </div>
+                      <div className="text-muted-foreground">Impressions</div>
+                    </div>
+                    <div className="bg-gray-100 dark:bg-gray-800 rounded p-2 text-center">
+                      <div className="text-lg font-medium">
+                        {campaign.metrics?.clicks || 0}
+                      </div>
+                      <div className="text-muted-foreground">Clicks</div>
+                    </div>
+                    <div className="bg-gray-100 dark:bg-gray-800 rounded p-2 text-center">
+                      <div className="text-lg font-medium">
+                        {campaign.metrics?.conversions || 0}
+                      </div>
+                      <div className="text-muted-foreground">Conversions</div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+              <div className="p-3 bg-gray-50 dark:bg-gray-900 flex flex-wrap items-center gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => {
+                    setCurrentCampaign(campaign);
+                    setIsEditDialogOpen(true);
+                  }}
+                >
+                  <Edit className="h-4 w-4 mr-1" /> Edit
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => {
+                    setCurrentCampaign(campaign);
+                    setIsSegmentDialogOpen(true);
+                  }}
+                >
+                  <Users className="h-4 w-4 mr-1" /> 
+                  Segments
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => handleCopyLink(campaign.id!)}
+                >
+                  {copiedLinkId === campaign.id ? (
+                    <Check className="h-4 w-4 mr-1" />
+                  ) : (
+                    <LinkIcon className="h-4 w-4 mr-1" />
+                  )}
+                  Link
+                </Button>
+                <Button
+                  variant={campaign.status === 'active' ? "outline" : "default"}
+                  size="sm"
+                  onClick={() => handleToggleStatus(campaign)}
+                >
+                  {campaign.status === 'active' ? (
+                    <X className="h-4 w-4 mr-1" />
+                  ) : (
+                    <ArrowUpRight className="h-4 w-4 mr-1" />
+                  )}
+                  {campaign.status === 'active' ? 'Deactivate' : 'Activate'}
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  className="text-red-500 hover:text-red-600"
+                  onClick={() => {
+                    setCurrentCampaign(campaign);
+                    setIsDeleteDialogOpen(true);
+                  }}
+                >
+                  <Trash2 className="h-4 w-4 mr-1" /> Delete
+                </Button>
+              </div>
+            </Card>
+          ))}
+        </div>
       )}
       
-      <Separator />
+      {/* Create Campaign Dialog */}
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Create New Campaign</DialogTitle>
+            <DialogDescription>
+              Create a new marketing campaign for {eventName}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Campaign Name</Label>
+              <Input 
+                id="name" 
+                value={newCampaign.name} 
+                onChange={(e) => setNewCampaign(prev => ({ ...prev, name: e.target.value }))} 
+                placeholder="Summer Special Promotion" 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="type">Campaign Type</Label>
+              <Select 
+                value={newCampaign.campaign_type} 
+                onValueChange={(value) => setNewCampaign(prev => ({ ...prev, campaign_type: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select campaign type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="email">Email</SelectItem>
+                  <SelectItem value="social">Social Media</SelectItem>
+                  <SelectItem value="notification">Push Notification</SelectItem>
+                  <SelectItem value="sms">SMS</SelectItem>
+                  <SelectItem value="referral">Referral</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea 
+                id="description" 
+                value={newCampaign.description || ''} 
+                onChange={(e) => setNewCampaign(prev => ({ ...prev, description: e.target.value }))} 
+                placeholder="Describe the campaign purpose and target audience..."
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="budget">Budget (Optional)</Label>
+              <Input 
+                id="budget" 
+                type="number" 
+                value={newCampaign.budget || ''} 
+                onChange={(e) => setNewCampaign(prev => ({ ...prev, budget: parseFloat(e.target.value) || undefined }))} 
+                placeholder="500" 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="start-date">Start Date (Optional)</Label>
+              <Input 
+                id="start-date" 
+                type="date" 
+                value={newCampaign.start_date || ''} 
+                onChange={(e) => setNewCampaign(prev => ({ ...prev, start_date: e.target.value }))} 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="end-date">End Date (Optional)</Label>
+              <Input 
+                id="end-date" 
+                type="date" 
+                value={newCampaign.end_date || ''} 
+                onChange={(e) => setNewCampaign(prev => ({ ...prev, end_date: e.target.value }))} 
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleCreateCampaign}>Create Campaign</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       
-      {renderCampaignList()}
+      {/* Edit Campaign Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Edit Campaign</DialogTitle>
+            <DialogDescription>
+              Update the campaign details.
+            </DialogDescription>
+          </DialogHeader>
+          {currentCampaign && (
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-name">Campaign Name</Label>
+                <Input 
+                  id="edit-name" 
+                  value={currentCampaign.name} 
+                  onChange={(e) => setCurrentCampaign(prev => prev ? { ...prev, name: e.target.value } : null)} 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-type">Campaign Type</Label>
+                <Select 
+                  value={currentCampaign.campaign_type} 
+                  onValueChange={(value) => setCurrentCampaign(prev => prev ? { ...prev, campaign_type: value } : null)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="email">Email</SelectItem>
+                    <SelectItem value="social">Social Media</SelectItem>
+                    <SelectItem value="notification">Push Notification</SelectItem>
+                    <SelectItem value="sms">SMS</SelectItem>
+                    <SelectItem value="referral">Referral</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-description">Description</Label>
+                <Textarea 
+                  id="edit-description" 
+                  value={currentCampaign.description || ''} 
+                  onChange={(e) => setCurrentCampaign(prev => prev ? { ...prev, description: e.target.value } : null)} 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-budget">Budget</Label>
+                <Input 
+                  id="edit-budget" 
+                  type="number" 
+                  value={currentCampaign.budget || ''} 
+                  onChange={(e) => setCurrentCampaign(prev => prev ? { ...prev, budget: parseFloat(e.target.value) || undefined } : null)} 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-start-date">Start Date</Label>
+                <Input 
+                  id="edit-start-date" 
+                  type="date" 
+                  value={currentCampaign.start_date || ''} 
+                  onChange={(e) => setCurrentCampaign(prev => prev ? { ...prev, start_date: e.target.value } : null)} 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-end-date">End Date</Label>
+                <Input 
+                  id="edit-end-date" 
+                  type="date" 
+                  value={currentCampaign.end_date || ''} 
+                  onChange={(e) => setCurrentCampaign(prev => prev ? { ...prev, end_date: e.target.value } : null)} 
+                />
+              </div>
+              <div className="flex items-center space-x-2">
+                <Switch 
+                  id="edit-status"
+                  checked={currentCampaign.status === 'active'}
+                  onCheckedChange={(checked) => {
+                    const newStatus = checked ? 'active' as const : 'draft' as const;
+                    setCurrentCampaign(prev => prev ? { ...prev, status: newStatus } : null);
+                  }}
+                />
+                <Label htmlFor="edit-status">Active</Label>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleEditCampaign}>Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Delete Campaign Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Delete Campaign</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this campaign? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            {currentCampaign && (
+              <div className="bg-gray-50 dark:bg-gray-900 p-3 rounded-md">
+                <p className="font-medium">{currentCampaign.name}</p>
+                <p className="text-sm text-muted-foreground mt-1">{currentCampaign.campaign_type} campaign</p>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>Cancel</Button>
+            <Button variant="destructive" onClick={handleDeleteCampaign}>Delete</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Segment Assignment Dialog */}
+      <Dialog open={isSegmentDialogOpen} onOpenChange={setIsSegmentDialogOpen}>
+        <DialogContent className="sm:max-w-[650px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Target Audience Segments</DialogTitle>
+            <DialogDescription>
+              Assign audience segments to this campaign for targeted marketing.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            {currentCampaign && (
+              <CampaignSegmentPanel
+                campaign={currentCampaign}
+                availableSegments={availableSegments}
+                existingMappings={segmentMappings[currentCampaign.id!] || []}
+                isLoading={isLoading}
+                onAssignSegments={handleAssignSegments}
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
