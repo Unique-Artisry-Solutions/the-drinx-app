@@ -359,11 +359,11 @@ export const processTicketPurchase = async ({
             discount_value: discountAmount * quantity
           });
           
-        // Update usage count
+        // Update usage count - Use a direct update instead of RPC
         await supabase
           .from('event_discount_codes')
           .update({
-            usage_count: supabase.rpc('increment_count', { row_id: discountData.id, table_name: 'event_discount_codes' })
+            usage_count: (discountData.usage_count || 0) + 1
           })
           .eq('id', discountData.id);
       }
