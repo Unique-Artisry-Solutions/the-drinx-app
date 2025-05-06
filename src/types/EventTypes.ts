@@ -1,4 +1,3 @@
-
 export type EventStatus = 'draft' | 'published' | 'cancelled' | 'completed';
 
 export interface EventLocation {
@@ -67,6 +66,34 @@ export interface EventTicketType {
   sold?: number;    // Added field for ticket sales count
   available?: number; // Added field for available tickets
   created_at?: string;
+  hasLimitedInventory?: boolean;
+  lowInventoryThreshold?: number;
+  hasDynamicPricing?: boolean;
+  pricingTiers?: EventTicketPricingTier[];
+}
+
+export interface EventTicketPricingTier {
+  id?: string;
+  name: string;
+  startDate?: string;
+  endDate?: string;
+  priceAdjustment: number;
+  adjustmentType: 'percentage' | 'fixed';
+}
+
+export interface EventDiscountCode {
+  id?: string;
+  event_id: string;
+  code: string;
+  discount_type: 'percentage' | 'fixed';
+  discount_amount: number;
+  expires_at?: string;
+  usage_limit?: number;
+  usage_count?: number;
+  is_active: boolean;
+  applicable_ticket_types?: string[];
+  created_at?: string;
+  description?: string;
 }
 
 export interface EventAttendee {
@@ -173,6 +200,19 @@ export interface EventFormData {
     coordinates?: { latitude: number; longitude: number };
     targetRadius?: number;
   }>;
+  
+  // Add discount codes
+  discountCodes?: EventDiscountCode[];
+  
+  // Add payment settings
+  paymentSettings?: {
+    enablePayments: boolean;
+    paymentProvider?: 'stripe' | 'paypal' | 'square' | 'other';
+    serviceFeePercentage?: number;
+    allowOfflinePayments?: boolean;
+    taxRate?: number;
+    currency?: string;
+  };
 }
 
 export interface EventCheckIn {

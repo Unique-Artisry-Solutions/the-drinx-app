@@ -1,4 +1,3 @@
-
 import { FeatureItem } from '../../types';
 import { matchesAnyKeyword } from './coreDetection';
 
@@ -140,4 +139,19 @@ export const isPromoterNotificationFeature = (feature: FeatureItem): boolean => 
        feature.id.includes('promoter')
      )) ||
     hasNotificationInfrastructure;
+};
+
+/**
+ * Detects if a feature is related to event ticket management
+ */
+export const isTicketManagementFeature = (feature: FeatureItem): boolean => {
+  return matchesAnyKeyword(feature, [
+    'ticket', 'ticketing', 'payment gateway', 'payment processing', 
+    'ticket inventory', 'ticket sales', 'discount code', 'discount codes',
+    'pricing', 'early bird', 'tiered pricing'
+  ]) ||
+  (Array.isArray(feature.tags) && 
+    (feature.tags.includes('tickets') || 
+     feature.tags.includes('ticketing') || 
+     feature.tags.includes('payments')));
 };

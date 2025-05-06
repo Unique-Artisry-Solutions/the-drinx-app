@@ -6,7 +6,8 @@ import {
   isPromoterAnalyticsFeature,
   isBrandConnectionFeature,
   isCustomPromotionFeature,
-  isPromoterNotificationFeature
+  isPromoterNotificationFeature,
+  isTicketManagementFeature
 } from '../detection';
 
 /**
@@ -138,6 +139,39 @@ export const analyzePromoterSystem = (
     }
   }
 
+  // Process ticket management features
+  updatedFeatures = updatedFeatures.map(feature => {
+    if (isTicketManagementFeature(feature)) {
+      // Set specific details for ticket management features
+      return {
+        ...feature,
+        dbStatus: feature.dbStatus || 'in_progress',
+        databaseStatus: feature.databaseStatus || 'in_progress',
+        statusUpdated: true,
+        implementationProgress: Math.max(feature.implementationProgress || 0, 65),
+        databaseAnalysis: feature.databaseAnalysis || 'Ticket management requires tables for ticket types, transactions, and discount codes',
+        testSteps: [
+          ...(feature.testSteps || []),
+          'Verify payment processing integration',
+          'Test ticket inventory updates after purchases',
+          'Validate discount code application',
+          'Test early bird and tiered pricing options',
+          'Verify secure checkout process',
+          'Test refund scenarios',
+          'Verify ticket delivery methods'
+        ]
+      };
+    }
+    return feature;
+  });
+
+  // Add analysis step for ticket system
+  updatedSteps.push({
+    name: 'Ticket management system analyzed',
+    completed: true,
+    details: 'Payment integration, inventory management, and discount features analyzed'
+  });
+
   return {
     updatedFeatures,
     updatedSteps
@@ -154,6 +188,7 @@ function determineFeatureType(feature: FeatureItem): string {
   if (isBrandConnectionFeature(feature)) return 'partnership';
   if (isCustomPromotionFeature(feature)) return 'promotion';
   if (isPromoterNotificationFeature(feature)) return 'notification';
+  if (isTicketManagementFeature(feature)) return 'ticket';
   
   // Extract keywords from feature name and description
   const name = feature.name.toLowerCase();
@@ -173,19 +208,26 @@ function determineFeatureType(feature: FeatureItem): string {
 function generateDatabaseRequirementsText(feature: FeatureItem, featureType: string): string {
   switch (featureType) {
     case 'ticket':
-      return 'Requires ticket_tiers, ticket_sales, ticket_transactions tables with payment integration';
+      return 'Requires ticket_tiers, ticket_sales, ticket_transactions tables with payment integration and discount_codes tables';
+    
     case 'analytics':
       return 'Requires event_analytics, audience_metrics, campaign_performance tables with time-series data';
+    
     case 'communication':
       return 'Requires promoter_venue_threads, promoter_venue_messages, venue_contacts tables with real-time capabilities';
+    
     case 'event':
       return 'Requires events, event_schedules, event_venues, event_attendees tables with geographic data';
+    
     case 'partnership':
       return 'Requires brand_partners, partnership_agreements, partnership_assets tables with contract management';
+    
     case 'promotion':
       return 'Requires promotions, promotion_codes, promotion_redemptions tables with validation rules';
+    
     case 'notification':
       return 'Requires notification_templates, notification_deliveries tables with multi-channel support';
+    
     default:
       return 'Standard promoter system database tables required';
   }
@@ -245,7 +287,11 @@ function generateTestSteps(feature: FeatureItem, featureType: string): string[] 
         'Validate ticket inventory management and availability tracking',
         'Test payment processing for ticket purchases',
         'Verify ticket delivery methods (email, app, etc.)',
-        'Test ticket validation at event check-in'
+        'Test discount code application and validation',
+        'Verify early bird and tiered pricing options',
+        'Test refund processing and ticket transfers',
+        'Verify ticket validation at event check-in',
+        'Test secure payment gateway integration'
       ];
       break;
     case 'promotion':

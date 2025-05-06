@@ -1,4 +1,3 @@
-
 import { FeatureItem } from "../types";
 
 export const promoterFeatures: FeatureItem[] = [
@@ -151,6 +150,85 @@ export const promoterFeatures: FeatureItem[] = [
     databaseStatus: "complete",
     userImpact: "medium",
     complexity: "medium"
+  },
+  {
+    id: "promoter-10",
+    name: "Ticket Management System",
+    description: "Advanced ticketing system with payment processing, inventory management, and pricing options",
+    status: "in_progress",
+    adminAccess: "moderate",
+    establishmentAccess: "read",
+    promoterAccess: "full",
+    individualAccess: "none",
+    databaseStatus: "in_progress",
+    userImpact: "high",
+    complexity: "high",
+    integrations: [
+      "Payment gateways",
+      "Ticketing service",
+      "Email notification system",
+      "QR code generation"
+    ],
+    implementationProgress: 65,
+    testSteps: [
+      "Test payment processing with multiple gateways",
+      "Verify ticket inventory updates in real-time",
+      "Test discount code application and validation",
+      "Verify early bird and tiered pricing options"
+    ],
+    tags: ["tickets", "payments", "events"]
+  },
+  
+  {
+    id: "promoter-11",
+    name: "Discount Code Management",
+    description: "Create and manage discount codes for events with advanced validation rules",
+    status: "in_progress",
+    adminAccess: "moderate",
+    establishmentAccess: "none",
+    promoterAccess: "full",
+    individualAccess: "none",
+    databaseStatus: "in_progress",
+    userImpact: "medium",
+    complexity: "medium",
+    implementationProgress: 50,
+    integrations: [
+      "Ticketing system",
+      "Analytics service"
+    ],
+    testSteps: [
+      "Create various discount code types (percentage, fixed amount)",
+      "Test code validation with expiration dates",
+      "Verify usage limits per code",
+      "Test combining discount codes with early bird pricing"
+    ],
+    tags: ["tickets", "discounts", "events"]
+  },
+  
+  {
+    id: "promoter-12",
+    name: "Advanced Ticket Pricing",
+    description: "Configure tiered pricing, early bird rates, and VIP packages for events",
+    status: "in_progress",
+    adminAccess: "moderate",
+    establishmentAccess: "read",
+    promoterAccess: "full",
+    individualAccess: "none",
+    databaseStatus: "in_progress",
+    userImpact: "high",
+    complexity: "medium",
+    implementationProgress: 40,
+    integrations: [
+      "Ticketing system",
+      "Payment processor"
+    ],
+    testSteps: [
+      "Configure early bird pricing with automatic cutoff dates",
+      "Test tiered pricing levels based on ticket quantities",
+      "Verify VIP package creation and customization",
+      "Test pricing changes for dynamic pricing models"
+    ],
+    tags: ["tickets", "pricing", "events"]
   }
 ];
 
