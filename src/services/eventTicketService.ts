@@ -22,7 +22,7 @@ export const fetchEventTicketTypes = async (eventId: string): Promise<EventTicke
   return data.map(ticket => ({
     ...ticket,
     sold: ticket.quantity - (ticket.available || 0),
-    available: ticket.available || ticket.quantity
+    available: ticket.available !== undefined ? ticket.available : ticket.quantity
   }));
 };
 
@@ -52,7 +52,7 @@ export const checkTicketAvailability = async (
     // Count sold tickets
     const { count: soldCount, error: countError } = await supabase
       .from('event_attendees')
-      .select('*', { count: true })
+      .select('*', { count: "exact" })
       .eq('ticket_type_id', ticketTypeId);
       
     if (countError) {
@@ -269,7 +269,7 @@ export const applyDiscountCode = async (
     if (discountData.usage_limit !== null) {
       const { count, error: countError } = await supabase
         .from('event_discount_redemptions')
-        .select('*', { count: true })
+        .select('*', { count: "exact" })
         .eq('discount_code_id', discountData.id);
         
       if (!countError && count !== null && count >= discountData.usage_limit) {
@@ -294,12 +294,14 @@ export const applyDiscountCode = async (
       };
     }
     
-    // Valid discount code
+    // Valid discount code - ensure we cast the discount_type to the correct type
+    const discountType = discountData.discount_type as 'percentage' | 'fixed';
+    
     return {
       valid: true,
       discountAmount: discountData.discount_amount,
-      discountType: discountData.discount_type as 'percentage' | 'fixed',
-      message: `Discount applied: ${discountData.discount_type === 'percentage' ? 
+      discountType,
+      message: `Discount applied: ${discountType === 'percentage' ? 
                 discountData.discount_amount + '%' : 
                 '$' + discountData.discount_amount}`
     };
@@ -310,6 +312,87 @@ export const applyDiscountCode = async (
       discountAmount: 0,
       discountType: 'fixed',
       message: 'Error applying discount code'
+    };
+  }
+};
+
+/**
+ * Process a ticket scan for event check-in
+ */
+export const processTicketScan = async (ticketCode: string): Promise<{
+  success: boolean;
+  attendee?: any;
+  message: string;
+}> => {
+  try {
+    // Find the attendee by ticket code
+    const { data: attendee, error: attendeeError } = await supabase
+      .from('event_attendees')
+      .select('*, event:event_id(*), ticket_type:ticket_type_id(*)')
+      .eq('ticket_code', ticketCode)
+      .single();
+
+    if (attendeeError || !attendee) {
+      return {
+        success: false,
+        message: 'Invalid ticket code'
+      };
+    }
+
+    // Check if the ticket has already been used
+    if (attendee.status === 'checked_in') {
+      return {
+        success: false,
+        attendee,
+        message: `This ticket has already been used at ${new Date(attendee.checked_in_at).toLocaleString()}`
+      };
+    }
+
+    // Check if the ticket has been cancelled
+    if (attendee.status === 'cancelled') {
+      return {
+        success: false,
+        attendee,
+        message: 'This ticket has been cancelled'
+      };
+    }
+
+    // Update attendee status to checked in
+    const { error: updateError } = await supabase
+      .from('event_attendees')
+      .update({
+        status: 'checked_in',
+        checked_in_at: new Date().toISOString()
+      })
+      .eq('id', attendee.id);
+
+    if (updateError) {
+      throw new Error('Failed to check in attendee');
+    }
+
+    // Record check-in
+    const { error: checkInError } = await supabase
+      .from('event_check_ins')
+      .insert({
+        event_id: attendee.event_id,
+        attendee_id: attendee.id,
+      });
+
+    if (checkInError) {
+      console.error('Error recording check-in:', checkInError);
+      // Don't fail the overall operation if just the check-in log fails
+    }
+
+    return {
+      success: true,
+      attendee,
+      message: 'Check-in successful'
+    };
+  } catch (error) {
+    console.error('Error processing ticket scan:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Unknown error processing ticket'
     };
   }
 };
@@ -417,7 +500,10 @@ export const fetchEventDiscountCodes = async (eventId: string): Promise<EventDis
       throw error;
     }
     
-    return data || [];
+    return data.map(code => ({
+      ...code,
+      discount_type: code.discount_type as 'percentage' | 'fixed'
+    })) as EventDiscountCode[];
   } catch (error) {
     console.error('Error fetching discount codes:', error);
     throw error;
