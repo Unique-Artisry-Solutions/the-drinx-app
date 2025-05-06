@@ -208,34 +208,41 @@ export const useNotificationSystem = () => {
           // Parse existing metrics from JSON if needed
           let currentMetrics = safeJsonToRecord(data?.metrics || {});
           
+          // Initialize with notifications_sent if it doesn't exist
+          if (!currentMetrics.notifications_sent) {
+            currentMetrics.notifications_sent = 0;
+          }
+          
           // Update metrics with the new data
           const updatedMetrics = {
             ...currentMetrics,
             notifications_sent: ((currentMetrics.notifications_sent || 0) + sentCount),
           };
 
-          // Initialize the segments object if it doesn't exist
+          // Initialize segments object if needed
           if (!updatedMetrics.segments) {
             updatedMetrics.segments = {};
           }
           
-          // Update segment-specific metrics
+          // Initialize segment entry if needed
           if (!updatedMetrics.segments[targetSegmentId]) {
             updatedMetrics.segments[targetSegmentId] = {};
           }
           
+          // Update segment-specific metrics
           updatedMetrics.segments[targetSegmentId].notifications_sent = 
             ((updatedMetrics.segments[targetSegmentId]?.notifications_sent || 0) + sentCount);
           
           // If A/B testing, update those metrics too
           if (abTestInfo) {
-            // Make sure abTest exists and has the variant objects
+            // Make sure abTest exists in metrics
             if (!updatedMetrics.abTest) {
               updatedMetrics.abTest = { variantA: {}, variantB: {} };
             }
             
             const variantKey = abTestInfo.variant === 'A' ? 'variantA' : 'variantB';
             
+            // Initialize the variant if needed
             if (!updatedMetrics.abTest[variantKey]) {
               updatedMetrics.abTest[variantKey] = {};
             }

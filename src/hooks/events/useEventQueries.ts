@@ -2,7 +2,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Event, EventType } from '@/types/EventTypes';
+import { Event, EventType, EventLocation, EventContactInfo } from '@/types/EventTypes';
+import { safeJsonToRecord, safeJsonToType } from '@/utils/typeGuards';
 
 export const useEventQueries = () => {
   const { toast } = useToast();
@@ -40,6 +41,33 @@ export const useEventQueries = () => {
           available: ticket.quantity // Default calculation
         }));
 
+        // Define default location and contact objects
+        const defaultLocation: EventLocation = {
+          address: '',
+          city: '',
+          state: '',
+          zip: '',
+          country: ''
+        };
+
+        const defaultContactInfo: EventContactInfo = {
+          name: '',
+          email: ''
+        };
+
+        // Convert location_details and contact_info from JSON if needed
+        const locationDetails = safeJsonToType<EventLocation>(
+          event.location_details,
+          defaultLocation
+        );
+
+        const contactInfo = safeJsonToType<EventContactInfo>(
+          event.contact_info,
+          defaultContactInfo
+        );
+
+        const customSettings = safeJsonToRecord(event.custom_settings);
+
         // Add computed/derived properties that match the EventType interface
         const formattedEvent: Event = {
           id: event.id,
@@ -57,15 +85,16 @@ export const useEventQueries = () => {
           updated_at: event.updated_at,
           capacity: event.capacity,
           event_type: event.event_type,
-          location_details: event.location_details,
-          contact_info: event.contact_info,
-          custom_settings: event.custom_settings,
+          location_details: locationDetails,
+          contact_info: contactInfo,
+          custom_settings: customSettings,
           is_public: event.is_public !== false,
           event_url: event.event_url,
           ticketTypes: ticketTypes,
           attendees: {
             registered: 0, // This will need real data in the future
-            checked_in: 0 // This will need real data in the future
+            checked_in: 0, // This will need real data in the future
+            capacity: event.capacity || 0
           },
           distance: undefined // This will need real data in the future
         };

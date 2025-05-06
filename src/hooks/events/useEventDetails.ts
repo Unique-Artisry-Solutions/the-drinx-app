@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Event, EventLocation, EventContactInfo } from '@/types/EventTypes';
 import { useToast } from '@/hooks/use-toast';
-import { safeJsonToRecord } from '@/utils/typeGuards';
+import { safeJsonToType, safeJsonToRecord } from '@/utils/typeGuards';
 
 export const useEventDetails = (eventId: string) => {
   const [event, setEvent] = useState<Event | null>(null);
@@ -52,7 +52,7 @@ export const useEventDetails = (eventId: string) => {
         const checkedInCount = attendeesData ? attendeesData.filter(a => a.status === 'checked_in').length : 0;
 
         // Parse location_details and contact_info from JSON if needed
-        let locationDetails: EventLocation = {
+        const defaultLocation: EventLocation = {
           address: '',
           city: '',
           state: '',
@@ -60,34 +60,22 @@ export const useEventDetails = (eventId: string) => {
           country: ''
         };
         
-        let contactInfo: EventContactInfo = {
+        const defaultContactInfo: EventContactInfo = {
           name: '',
           email: ''
         };
 
-        if (eventData.location_details) {
-          if (typeof eventData.location_details === 'string') {
-            try {
-              locationDetails = JSON.parse(eventData.location_details);
-            } catch (e) {
-              console.error('Error parsing location_details:', e);
-            }
-          } else {
-            locationDetails = eventData.location_details as unknown as EventLocation;
-          }
-        }
+        const locationDetails = safeJsonToType<EventLocation>(
+          eventData.location_details,
+          defaultLocation
+        );
 
-        if (eventData.contact_info) {
-          if (typeof eventData.contact_info === 'string') {
-            try {
-              contactInfo = JSON.parse(eventData.contact_info);
-            } catch (e) {
-              console.error('Error parsing contact_info:', e);
-            }
-          } else {
-            contactInfo = eventData.contact_info as unknown as EventContactInfo;
-          }
-        }
+        const contactInfo = safeJsonToType<EventContactInfo>(
+          eventData.contact_info,
+          defaultContactInfo
+        );
+
+        const customSettings = safeJsonToRecord(eventData.custom_settings);
 
         // Format the event data
         const formattedEvent: Event = {
@@ -121,7 +109,7 @@ export const useEventDetails = (eventId: string) => {
           distance: undefined,
           is_public: eventData.is_public !== false,
           event_url: eventData.event_url,
-          custom_settings: eventData.custom_settings
+          custom_settings: customSettings
         };
 
         setEvent(formattedEvent);

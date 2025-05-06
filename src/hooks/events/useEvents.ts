@@ -109,16 +109,11 @@ export const useEvents = () => {
           attendees: {
             registered: 0,
             capacity: event.event_ticket_types.reduce((sum, ticket) => sum + ticket.quantity, 0),
-            checkedIn: 0
+            checked_in: 0
           },
-          revenue: {
-            total: 0,
-            ticketSales: 0,
-            additionalSales: 0
-          },
-          createdAt: event.created_at,
-          updatedAt: event.updated_at,
-          createdBy: event.created_by
+          created_by: event.created_by,
+          created_at: event.created_at,
+          updated_at: event.updated_at
         };
       });
 

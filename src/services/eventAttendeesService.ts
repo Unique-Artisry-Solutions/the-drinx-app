@@ -32,7 +32,7 @@ export const fetchAttendeeDetails = async (attendeeId: string): Promise<EventAtt
   return data as EventAttendee;
 };
 
-export const addEventAttendee = async (attendeeData: Partial<EventAttendee>): Promise<EventAttendee> => {
+export const addEventAttendee = async (attendeeData: Partial<EventAttendee> & { event_id: string }): Promise<EventAttendee> => {
   // Ensure purchase_date is set if not provided
   if (!attendeeData.purchase_date) {
     attendeeData.purchase_date = new Date().toISOString();
@@ -234,7 +234,7 @@ export const importAttendeesFromCSV = async (eventId: string, csvContent: string
       };
     }
     
-    const attendees: Partial<EventAttendee>[] = [];
+    const attendees: (Partial<EventAttendee> & { event_id: string })[] = [];
     const errors: string[] = [];
     
     // Skip header row
@@ -273,7 +273,7 @@ export const importAttendeesFromCSV = async (eventId: string, csvContent: string
       };
     }
     
-    // Insert attendees in batches (to avoid potential size limits)
+    // Insert attendees in batches to avoid potential size limits
     const batchSize = 50;
     let imported = 0;
     
