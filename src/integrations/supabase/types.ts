@@ -514,6 +514,84 @@ export type Database = {
           },
         ]
       }
+      campaign_segment_mappings: {
+        Row: {
+          allocation_percentage: number
+          campaign_id: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          is_control_group: boolean
+          metrics: Json | null
+          segment_id: string
+          updated_at: string
+        }
+        Insert: {
+          allocation_percentage?: number
+          campaign_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_control_group?: boolean
+          metrics?: Json | null
+          segment_id: string
+          updated_at?: string
+        }
+        Update: {
+          allocation_percentage?: number
+          campaign_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_control_group?: boolean
+          metrics?: Json | null
+          segment_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      campaign_segment_performance: {
+        Row: {
+          campaign_id: string
+          clicks: number
+          conversion_value: number | null
+          conversions: number
+          created_at: string
+          date: string
+          id: string
+          impressions: number
+          segment_id: string
+          updated_at: string
+        }
+        Insert: {
+          campaign_id: string
+          clicks?: number
+          conversion_value?: number | null
+          conversions?: number
+          created_at?: string
+          date?: string
+          id?: string
+          impressions?: number
+          segment_id: string
+          updated_at?: string
+        }
+        Update: {
+          campaign_id?: string
+          clicks?: number
+          conversion_value?: number | null
+          conversions?: number
+          created_at?: string
+          date?: string
+          id?: string
+          impressions?: number
+          segment_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       cocktail_reviews: {
         Row: {
           cocktail_id: string
@@ -3761,6 +3839,25 @@ export type Database = {
       }
     }
     Views: {
+      campaign_segment_analytics: {
+        Row: {
+          allocation_percentage: number | null
+          campaign_id: string | null
+          campaign_name: string | null
+          campaign_type: string | null
+          click_through_rate: number | null
+          conversion_rate: number | null
+          is_control_group: boolean | null
+          segment_id: string | null
+          segment_name: string | null
+          status: string | null
+          total_clicks: number | null
+          total_conversion_value: number | null
+          total_conversions: number | null
+          total_impressions: number | null
+        }
+        Relationships: []
+      }
       cocktail_reviews_with_users: {
         Row: {
           avatar_url: string | null
@@ -4060,6 +4157,16 @@ export type Database = {
       is_allowed_multi_role_user: {
         Args: { user_email: string }
         Returns: boolean
+      }
+      record_campaign_segment_interaction: {
+        Args: {
+          p_campaign_id: string
+          p_segment_id: string
+          p_interaction_type: string
+          p_value?: number
+          p_date?: string
+        }
+        Returns: undefined
       }
       refresh_reward_analytics_materialized: {
         Args: Record<PropertyKey, never>

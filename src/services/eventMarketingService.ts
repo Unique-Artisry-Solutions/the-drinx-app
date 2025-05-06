@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { EventMarketingCampaign } from '@/types/EventTypes';
 import { safeJsonToRecord } from '@/utils/typeGuards';
