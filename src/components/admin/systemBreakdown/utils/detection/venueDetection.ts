@@ -14,6 +14,8 @@ import { isThemeFeature as originalIsThemeFeature } from './themeDetection';
 import { isMapFeature as originalIsMapFeature } from './mapDetection';
 import { isSignatureFeature as originalIsSignatureFeature } from './signatureFeatureDetection';
 import { isBarCrawlFeature as originalIsBarCrawlFeature } from './circuitDetection';
+import { isSwigCircuitFeature as originalIsSwigCircuitFeature } from './circuitDetection';
+import { isVisitTrackingFeature as originalIsVisitTrackingFeature } from './establishmentDetection';
 
 // Re-export all detection functions
 export const isAnalyticsFeature = originalIsAnalyticsFeature;
@@ -28,3 +30,5 @@ export const isThemeFeature = originalIsThemeFeature;
 export const isMapFeature = originalIsMapFeature;
 export const isSignatureFeature = originalIsSignatureFeature;
 export const isBarCrawlFeature = originalIsBarCrawlFeature;
+export const isSwigCircuitFeature = originalIsSwigCircuitFeature;
+export const isVisitTrackingFeature = originalIsVisitTrackingFeature;

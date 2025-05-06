@@ -41,3 +41,8 @@ export const isAIFeature = (feature: FeatureItem): boolean => {
 export const isSchedulingFeature = (feature: FeatureItem): boolean => {
   return matchesAnyKeyword(feature, ['schedule', 'calendar', 'event', 'appointment']);
 };
+
+// System Configuration features
+export const isSystemConfigurationFeature = (feature: FeatureItem): boolean => {
+  return matchesAnyKeyword(feature, ['system configuration', 'settings', 'config', 'system settings', 'admin settings']);
+};
