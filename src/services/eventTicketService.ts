@@ -18,16 +18,15 @@ export const fetchEventTicketTypes = async (eventId: string): Promise<EventTicke
     
     // Calculate availability for each ticket type
     return data.map(ticket => {
-      // Safely handle sold property which might not exist in the database
-      const soldTickets = typeof ticket.sold !== 'undefined' ? ticket.sold : 0;
-      
-      return {
+      // Create a properly typed ticket with default values for missing properties
+      const typedTicket: EventTicketType = {
         ...ticket,
-        // Ensure sold property exists
-        sold: soldTickets,
-        // Calculate available tickets
-        available: ticket.quantity - soldTickets
+        // Explicitly set default values for potentially missing properties
+        sold: 'sold' in ticket ? ticket.sold as number : 0,
+        available: 'quantity' in ticket ? ticket.quantity - ('sold' in ticket ? (ticket.sold as number) : 0) : 0
       };
+      
+      return typedTicket;
     });
   } catch (error) {
     console.error('Error fetching ticket types:', error);
@@ -63,8 +62,8 @@ export const checkTicketAvailability = async (eventId: string, ticketTypeId: str
       };
     }
     
-    // Calculate sold tickets if not provided
-    const soldTickets = typeof data.sold !== 'undefined' ? data.sold : 0;
+    // Calculate sold tickets with proper type checking
+    const soldTickets = 'sold' in data && typeof data.sold === 'number' ? data.sold : 0;
     
     // Calculate available tickets
     const availableQuantity = data.quantity - soldTickets;
@@ -368,7 +367,11 @@ export const processTicketPurchase = async ({
         await supabase
           .from('event_discount_codes')
           .update({
-            usage_count: (discountData.usage_count || 0) + 1
+            usage_count: supabase.rpc('increment_count', {
+              row_id: discountData.id,
+              table_name: 'event_discount_codes',
+              column_name: 'usage_count'
+            })
           })
           .eq('id', discountData.id);
       }

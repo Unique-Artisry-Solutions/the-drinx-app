@@ -1,5 +1,5 @@
 
-import { FeatureItem } from '../../../types';
+import { FeatureItem } from '../../types';
 
 export const isPromoterCommunicationFeature = (value: string | FeatureItem): boolean => {
   const keywords = ['communication', 'message', 'chat', 'contact', 'inbox', 'thread', 'conversation'];
