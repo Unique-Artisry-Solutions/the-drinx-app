@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { useAppNavigation } from '@/hooks/useAppNavigation';
 import GuestTopNavigation from '@/components/navigation/GuestTopNavigation';
 import { enableAdminBypass, checkAdminBypassStatus } from '@/utils/adminBypass';
 import { isPreviewEnvironment } from '@/utils/environment';
@@ -14,6 +15,7 @@ const AdminLogin: React.FC = () => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { goToAdminDashboard } = useAppNavigation();
   const { toast } = useToast();
   const showBypassButtons = isPreviewEnvironment() || process.env.NODE_ENV === 'development';
 
@@ -24,9 +26,9 @@ const AdminLogin: React.FC = () => {
     const isAdminBypass = isEnabled && userType === 'admin';
     
     if (isAdminAuth || isAdminBypass) {
-      navigate('/admin/system-breakdown', { replace: true });
+      goToAdminDashboard();
     }
-  }, [navigate]);
+  }, [navigate, goToAdminDashboard]);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,7 +48,7 @@ const AdminLogin: React.FC = () => {
           title: 'Login successful',
           description: 'Welcome to the admin dashboard',
         });
-        navigate('/admin/system-breakdown', { replace: true });
+        goToAdminDashboard();
       } else {
         toast({
           title: 'Login failed',
@@ -67,7 +69,7 @@ const AdminLogin: React.FC = () => {
         description: 'You now have access to the admin dashboard in testing mode',
       });
       
-      navigate('/admin/system-breakdown', { replace: true });
+      goToAdminDashboard();
     } catch (error) {
       console.error('Error during admin bypass login:', error);
       toast({

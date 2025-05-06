@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth';
+import { useAppNavigation } from '@/hooks/useAppNavigation';
 import { supabase } from '@/lib/supabase';
 
 export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userType: 'individual' | 'establishment' | 'promoter' = 'individual') => {
@@ -16,6 +17,7 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
   
   const navigate = useNavigate();
   const location = useLocation();
+  const { goToAfterLogin } = useAppNavigation();
   const { toast } = useToast();
   const { signIn, isLoading, refreshSession } = useAuth();
   
@@ -159,20 +161,9 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
         
         if (onSuccess) {
           onSuccess();
-        } else if (savedRedirect) {
-          console.log("Redirecting to saved path:", savedRedirect);
-          navigate(savedRedirect);
         } else {
-          const storedUserType = localStorage.getItem('user_type');
-          console.log("Login redirect - user type:", storedUserType);
-          
-          if (storedUserType === 'establishment') {
-            navigate('/establishment/dashboard', { replace: true });
-          } else if (storedUserType === 'promoter') {
-            navigate('/promoter/dashboard', { replace: true });
-          } else {
-            navigate('/explore', { replace: true });
-          }
+          // Use the navigation hook for consistent navigation
+          goToAfterLogin(localStorage.getItem('user_type'), savedRedirect);
         }
       }
     } catch (error: any) {
@@ -244,23 +235,8 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
       console.log("Saved redirect path:", savedRedirect);
       localStorage.removeItem('auth_redirect');
       
-      // Redirect based on user type or saved path
-      if (savedRedirect) {
-        console.log(`Redirecting to saved path: ${savedRedirect}`);
-        navigate(savedRedirect);
-      } else if (type === 'admin') {
-        console.log("Redirecting to admin dashboard");
-        navigate('/admin/system-breakdown');
-      } else if (type === 'establishment') {
-        console.log("Redirecting to establishment dashboard");
-        navigate('/establishment/dashboard');
-      } else if (type === 'promoter') {
-        console.log("Redirecting to promoter dashboard");
-        navigate('/promoter/dashboard');
-      } else {
-        console.log("Redirecting to explore page");
-        navigate('/explore');
-      }
+      // Use the navigation hook for consistent navigation
+      goToAfterLogin(type, savedRedirect);
     } catch (error) {
       console.error("Error during bypass login:", error);
       toast({

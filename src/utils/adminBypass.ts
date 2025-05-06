@@ -133,6 +133,9 @@ export function resetAuth() {
 /**
  * Performs a login redirection based on the user type
  * Works for both regular and bypass users
+ * 
+ * IMPORTANT: This function should only be used directly when React Router navigation is not available
+ * Otherwise, use the useAppNavigation hook to navigate
  */
 export function redirectAfterLogin() {
   const userType = localStorage.getItem('user_type');
@@ -142,6 +145,15 @@ export function redirectAfterLogin() {
   // Clear the saved redirect as we're handling it now
   localStorage.removeItem('auth_redirect');
   
+  // Log the navigation that will happen for debugging purposes
+  console.log('Redirecting after login:', {
+    userType,
+    isAdminAuthenticated,
+    savedRedirect
+  });
+  
+  // This direct navigation approach should be avoided when possible,
+  // but is kept for cases where the hook-based navigation is not available
   if (savedRedirect) {
     console.log(`Redirecting to saved path: ${savedRedirect}`);
     window.location.href = savedRedirect;

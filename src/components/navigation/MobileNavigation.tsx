@@ -2,6 +2,7 @@
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth';
+import { useAppNavigation } from '@/hooks/useAppNavigation';
 import { MobileNavigationProps } from './mobile/types';
 import ProfileMenu from './mobile/ProfileMenu';
 import NavigationBar from './mobile/NavigationBar';
@@ -19,13 +20,19 @@ const MobileNavigation: React.FC<ExtendedMobileNavigationProps> = ({
 }) => {
   const location = useLocation();
   const { user } = useAuth();
+  const { goToHomePage } = useAppNavigation();
   const {
     currentUserType,
     expanded,
     toggleExpand,
-    handleHomeClick,
     getProfilePath,
   } = useMobileNavigation(type, userType, forceGuestNavigation);
+
+  // Create a handleHomeClick that uses the new navigation hook
+  const handleHomeClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    goToHomePage(currentUserType);
+  };
 
   const handleProfileClick = (item: any, e: React.MouseEvent) => {
     if (item.path === getProfilePath() && shouldShowProfileItems) {

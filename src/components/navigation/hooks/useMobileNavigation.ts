@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth';
 import { NavigationType } from '../NavigationTypes';
 
@@ -10,7 +10,6 @@ export const useMobileNavigation = (
   forceGuestNavigation: boolean = false
 ) => {
   const location = useLocation();
-  const navigate = useNavigate();
   const [currentUserType, setCurrentUserType] = useState<'individual' | 'establishment' | 'promoter'>(userType);
   const [expanded, setExpanded] = useState(false);
   const { user } = useAuth();
@@ -27,7 +26,7 @@ export const useMobileNavigation = (
   }, [user, location.pathname]);
 
   useEffect(() => {
-    console.log('MobileNavigation Rendered:', { 
+    console.log('MobileNavigation State:', { 
       type, 
       userType: currentUserType, 
       user: !!user,
@@ -38,22 +37,6 @@ export const useMobileNavigation = (
 
   const toggleExpand = () => setExpanded(!expanded);
 
-  const handleHomeClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    if (user) {
-      if (currentUserType === 'establishment') {
-        navigate('/establishment/dashboard');
-      } else if (currentUserType === 'promoter') {
-        navigate('/promoter/dashboard');
-      } else {
-        navigate('/explore');
-      }
-    } else {
-      navigate('/landing');
-    }
-    window.scrollTo(0, 0);
-  };
-
   const getProfilePath = () => {
     return currentUserType === 'establishment' ? '/establishment/profile' : '/profile';
   };
@@ -62,7 +45,6 @@ export const useMobileNavigation = (
     currentUserType,
     expanded,
     toggleExpand,
-    handleHomeClick,
     getProfilePath,
   };
 };
