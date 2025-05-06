@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { EventMarketingCampaign } from '@/types/EventTypes';
@@ -215,18 +214,18 @@ export const useEventMarketingWithSegments = (eventId: string) => {
   ) => {
     try {
       const mappings = await assignSegmentsToCampaign(campaignId, segments);
-      
+    
       // Update local state
       setSegmentMappings(prev => ({
         ...prev,
         [campaignId]: [...(prev[campaignId] || []), ...mappings]
       }));
-      
+    
       toast({
         title: 'Success',
         description: 'Segments assigned to campaign successfully',
       });
-      
+    
       return mappings;
     } catch (err: any) {
       toast({
@@ -352,7 +351,7 @@ export const useEventMarketingWithSegments = (eventId: string) => {
     }
   };
 
-  // Get available segments for a campaign
+  // Gets all segments available to be added to a campaign
   const getAvailableSegments = async (campaignId: string): Promise<AudienceSegment[]> => {
     try {
       return await getAvailableSegmentsForCampaign(campaignId);

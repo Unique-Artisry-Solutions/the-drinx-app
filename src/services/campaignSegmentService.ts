@@ -30,8 +30,7 @@ export const assignSegmentsToCampaign = async (
     const { data, error } = await supabase
       .from('campaign_segment_mappings')
       .upsert(mappingsToCreate, { 
-        onConflict: 'campaign_id,segment_id',
-        returning: 'representation'
+        onConflict: 'campaign_id,segment_id'
       });
 
     if (error) {
@@ -39,7 +38,11 @@ export const assignSegmentsToCampaign = async (
       throw error;
     }
 
-    return data || [];
+    // Convert the database response to our expected type
+    return (data || []).map(item => ({
+      ...item,
+      metrics: safeJsonToRecord(item.metrics)
+    })) as CampaignSegmentMapping[];
   } catch (error) {
     console.error('Failed to assign segments to campaign:', error);
     throw error;
@@ -64,7 +67,11 @@ export const getCampaignSegmentMappings = async (
       throw error;
     }
 
-    return data || [];
+    // Convert the database response to our expected type
+    return (data || []).map(item => ({
+      ...item,
+      metrics: safeJsonToRecord(item.metrics)
+    })) as CampaignSegmentMapping[];
   } catch (error) {
     console.error('Failed to fetch campaign segment mappings:', error);
     throw error;
@@ -116,7 +123,11 @@ export const updateCampaignSegmentMapping = async (
       throw error;
     }
 
-    return data;
+    // Convert the database response to our expected type
+    return {
+      ...data,
+      metrics: safeJsonToRecord(data.metrics)
+    } as CampaignSegmentMapping;
   } catch (error) {
     console.error('Failed to update campaign segment mapping:', error);
     throw error;
