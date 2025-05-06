@@ -1,4 +1,3 @@
-
 import { useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
@@ -208,21 +207,17 @@ export const useNotificationSystem = () => {
           // Parse existing metrics from JSON if needed
           let currentMetrics = safeJsonToRecord(data?.metrics || {});
           
-          // Initialize with notifications_sent if it doesn't exist
-          if (!currentMetrics.notifications_sent) {
-            currentMetrics.notifications_sent = 0;
-          }
-          
-          // Update metrics with the new data
-          const updatedMetrics = {
+          // Initialize a properly structured metrics object with all required properties
+          const updatedMetrics: Record<string, any> = {
             ...currentMetrics,
             notifications_sent: ((currentMetrics.notifications_sent || 0) + sentCount),
+            // Initialize segments and abTest if they don't exist
+            segments: { ...(currentMetrics.segments || {}) },
+            abTest: { 
+              variantA: { ...(currentMetrics.abTest?.variantA || {}) },
+              variantB: { ...(currentMetrics.abTest?.variantB || {}) }
+            }
           };
-
-          // Initialize segments object if needed
-          if (!updatedMetrics.segments) {
-            updatedMetrics.segments = {};
-          }
           
           // Initialize segment entry if needed
           if (!updatedMetrics.segments[targetSegmentId]) {
@@ -235,14 +230,9 @@ export const useNotificationSystem = () => {
           
           // If A/B testing, update those metrics too
           if (abTestInfo) {
-            // Make sure abTest exists in metrics
-            if (!updatedMetrics.abTest) {
-              updatedMetrics.abTest = { variantA: {}, variantB: {} };
-            }
-            
             const variantKey = abTestInfo.variant === 'A' ? 'variantA' : 'variantB';
             
-            // Initialize the variant if needed
+            // Update variant metrics
             if (!updatedMetrics.abTest[variantKey]) {
               updatedMetrics.abTest[variantKey] = {};
             }
