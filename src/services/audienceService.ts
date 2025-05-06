@@ -263,3 +263,230 @@ export const fetchSegmentAnalytics = async (
   
   return data as AudienceSegmentAnalytics[];
 };
+
+// Segment membership calculation engine
+export const calculateSegmentMembership = async (segmentId: string): Promise<number> => {
+  // Fetch the segment criteria
+  const { criteria } = await fetchSegmentWithCriteria(segmentId);
+  
+  if (criteria.length === 0) {
+    return 0;
+  }
+  
+  // Build the query dynamically based on criteria
+  let userQuery = supabase.from('profiles').select('id');
+  
+  // Apply each criterion to the query
+  for (const criterion of criteria) {
+    const { criteria_type, criteria_value, operator } = criterion;
+    
+    // Process different criteria types
+    switch (criteria_type) {
+      case 'demographics':
+        if (operator === 'equals' && criteria_value.field) {
+          userQuery = userQuery.eq(criteria_value.field, criteria_value.value);
+        } else if (operator === 'not_equals' && criteria_value.field) {
+          userQuery = userQuery.neq(criteria_value.field, criteria_value.value);
+        } else if (operator === 'in_list' && criteria_value.field) {
+          userQuery = userQuery.in(criteria_value.field, criteria_value.values || []);
+        }
+        break;
+        
+      case 'behavior':
+        // This would typically join with activity tables
+        // For now, we'll use a simplified approach
+        if (criteria_value.activity_type) {
+          userQuery = userQuery.in('id', 
+            supabase
+              .from('analytics_events')
+              .select('user_id')
+              .eq('event_type', criteria_value.activity_type)
+              .in('user_id', userQuery)
+          );
+        }
+        break;
+        
+      case 'engagement':
+        // Check membership against engagement metrics
+        if (criteria_value.min_visits) {
+          userQuery = userQuery.in('id',
+            supabase
+              .from('user_visit_analytics')
+              .select('user_id')
+              .gte('total_visits', criteria_value.min_visits)
+              .in('user_id', userQuery)
+          );
+        }
+        break;
+    }
+  }
+  
+  // Execute the query to get matching users
+  const { data, error } = await userQuery;
+  
+  if (error) {
+    console.error('Error calculating segment membership:', error);
+    throw error;
+  }
+  
+  const matchingUsers = data?.length || 0;
+  
+  // Update the segment membership
+  await updateMemberships(segmentId, data?.map(user => user.id) || []);
+  
+  // Update analytics
+  await recordSegmentAnalytics(segmentId, matchingUsers);
+  
+  return matchingUsers;
+};
+
+// Helper to update segment memberships
+const updateMemberships = async (segmentId: string, userIds: string[]): Promise<void> => {
+  if (userIds.length === 0) return;
+  
+  // Remove users no longer in the segment
+  const { error: removeError } = await supabase
+    .from('audience_segment_memberships')
+    .update({ is_active: false })
+    .eq('segment_id', segmentId)
+    .not('user_id', 'in', `(${userIds.join(',')})`);
+    
+  if (removeError) {
+    console.error('Error removing users from segment:', removeError);
+  }
+  
+  // Add new users to the segment
+  const membershipData = userIds.map(userId => ({
+    segment_id: segmentId,
+    user_id: userId,
+    is_active: true
+  }));
+  
+  const { error: addError } = await supabase
+    .from('audience_segment_memberships')
+    .upsert(membershipData, { 
+      onConflict: 'segment_id,user_id',
+      ignoreDuplicates: false
+    });
+    
+  if (addError) {
+    console.error('Error adding users to segment:', addError);
+  }
+};
+
+// Record analytics for the segment
+const recordSegmentAnalytics = async (segmentId: string, totalMembers: number): Promise<void> => {
+  const today = new Date().toISOString().split('T')[0];
+  
+  // Check if we already have analytics for today
+  const { data, error: checkError } = await supabase
+    .from('audience_segment_analytics')
+    .select('id')
+    .eq('segment_id', segmentId)
+    .eq('date', today)
+    .single();
+    
+  if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+    console.error('Error checking segment analytics:', checkError);
+    return;
+  }
+  
+  if (data) {
+    // Update existing analytics
+    const { error: updateError } = await supabase
+      .from('audience_segment_analytics')
+      .update({ 
+        total_members: totalMembers,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', data.id);
+      
+    if (updateError) {
+      console.error('Error updating segment analytics:', updateError);
+    }
+  } else {
+    // Insert new analytics
+    const { error: insertError } = await supabase
+      .from('audience_segment_analytics')
+      .insert({
+        segment_id: segmentId,
+        date: today,
+        total_members: totalMembers
+      });
+      
+    if (insertError) {
+      console.error('Error inserting segment analytics:', insertError);
+    }
+  }
+};
+
+// Segmentation recommendation service
+export const generateSegmentRecommendations = async (): Promise<AudienceSegment[]> => {
+  // This would typically involve complex analytics and machine learning
+  // For now, we'll use a simplified approach based on user activity patterns
+  
+  // Find potential segment opportunities based on user behavior patterns
+  const { data: topActivities, error: activityError } = await supabase
+    .from('analytics_events')
+    .select('event_type, count(*)')
+    .group('event_type')
+    .order('count', { ascending: false })
+    .limit(5);
+    
+  if (activityError) {
+    console.error('Error fetching top activities:', activityError);
+    return [];
+  }
+  
+  // Check if we already have segments for these activities
+  const { data: existingSegments, error: segmentError } = await supabase
+    .from('audience_segments')
+    .select('*');
+    
+  if (segmentError) {
+    console.error('Error fetching existing segments:', segmentError);
+    return [];
+  }
+  
+  const existingEventTypes = new Set();
+  
+  // Extract criteria from existing segments
+  for (const segment of existingSegments) {
+    const { data: criteria, error: criteriaError } = await supabase
+      .from('audience_segment_criteria')
+      .select('*')
+      .eq('segment_id', segment.id);
+      
+    if (criteriaError) {
+      console.error('Error fetching segment criteria:', criteriaError);
+      continue;
+    }
+    
+    for (const criterion of criteria) {
+      if (criterion.criteria_type === 'behavior' && criterion.criteria_value?.activity_type) {
+        existingEventTypes.add(criterion.criteria_value.activity_type);
+      }
+    }
+  }
+  
+  // Generate recommendations for activities without segments
+  const recommendations: AudienceSegment[] = [];
+  
+  for (const activity of topActivities) {
+    if (!existingEventTypes.has(activity.event_type)) {
+      recommendations.push({
+        id: `rec-${activity.event_type}`,
+        name: `${activity.event_type.replace('_', ' ')} Users`,
+        description: `Users who have performed the ${activity.event_type.replace('_', ' ')} activity`,
+        created_by: '',
+        is_active: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        status: 'draft',
+        memberCount: activity.count
+      });
+    }
+  }
+  
+  return recommendations;
+};
