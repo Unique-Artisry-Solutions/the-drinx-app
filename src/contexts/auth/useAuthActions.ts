@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { Session, User } from '@supabase/supabase-js';
+import { clearAllSessions } from '@/utils/sessionCleaner';
 
 export function useAuthActions() {
   const [isLoading, setIsLoading] = useState(false);
@@ -130,19 +131,8 @@ export function useAuthActions() {
       setIsLoading(true);
       console.log('Signing out user and ending all sessions...');
       
-      // First clear all auth-related localStorage items
-      localStorage.removeItem('user_authenticated');
-      localStorage.removeItem('user_email');
-      localStorage.removeItem('user_type');
-      localStorage.removeItem('user_username');
-      localStorage.removeItem('user_name');
-      localStorage.removeItem('user_join_date');
-      localStorage.removeItem('admin_authenticated');
-      localStorage.removeItem('admin_username');
-      localStorage.removeItem('admin_session_created');
-      localStorage.removeItem('admin_bypass');
-      localStorage.removeItem('bypass_user_id');
-      localStorage.removeItem('spiritless-auth-storage');
+      // First clear all auth-related localStorage items using our utility
+      clearAllSessions();
       
       // Use scope: 'global' to terminate all sessions across all devices
       const { error } = await supabase.auth.signOut({ scope: 'global' });
@@ -159,7 +149,8 @@ export function useAuthActions() {
       
       console.log('User successfully signed out from all sessions');
       
-      // Explicitly redirect to landing page on logout
+      // Explicitly redirect to landing page on logout using window.location
+      // This ensures a full page reload and clears any React Router state
       window.location.href = '/landing';
     } catch (error: any) {
       console.error('Sign out error:', error);

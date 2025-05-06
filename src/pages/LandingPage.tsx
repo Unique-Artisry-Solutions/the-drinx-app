@@ -44,6 +44,7 @@ const LandingPage = () => {
   // If user is already authenticated, redirect to appropriate page
   useEffect(() => {
     // Only redirect if we're not in a loading state and have a valid user
+    // Wait until authStable to prevent redirection during logout process
     if (!isLoading && user && authStable) {
       console.log('User is authenticated, redirecting from landing page');
       const userType = localStorage.getItem('user_type');
@@ -69,10 +70,14 @@ const LandingPage = () => {
       return;
     }
     
-    // Run once on initial load
-    console.log('Landing page loaded, clearing sessions...');
-    clearAllSessions();
-  }, []);
+    // Only run session cleanup if no valid user is detected
+    if (!user) {
+      console.log('Landing page loaded with no authenticated user, clearing sessions...');
+      clearAllSessions();
+    } else {
+      console.log('User is authenticated, skipping session cleanup on landing page');
+    }
+  }, [user]);
   
   // Handle session recovery button click
   const handleRecoveryClick = async () => {

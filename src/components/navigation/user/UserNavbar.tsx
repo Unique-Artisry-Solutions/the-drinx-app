@@ -75,10 +75,14 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
   
   const handleLogout = async () => {
     try {
+      console.log('UserNavbar: Initiating logout via Auth context');
+      // Use the Auth context signOut method to ensure consistent behavior
       await signOut();
-      navigate('/login');
+      // No need to navigate here as signOut already redirects to landing
     } catch (error) {
       console.error('Error during logout:', error);
+      // Fallback redirect in case the signOut method fails
+      window.location.href = '/landing';
     }
   };
   

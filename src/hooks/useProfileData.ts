@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth';
@@ -92,7 +93,8 @@ export function useProfileData() {
 
   const handleLogout = async () => {
     try {
-      // Use the Auth context signOut method to end all sessions
+      console.log('useProfileData: Initiating logout via Auth context');
+      // Use the Auth context signOut method to ensure consistent behavior
       await signOut();
       setIsAuthenticated(false);
       
@@ -106,7 +108,7 @@ export function useProfileData() {
       });
       
       // In case of error, still try to redirect to landing
-      navigate('/landing', { replace: true });
+      window.location.href = '/landing';
     }
   };
 

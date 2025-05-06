@@ -13,6 +13,7 @@ export const clearAllSessions = () => {
   localStorage.removeItem('user_username');
   localStorage.removeItem('auth_redirect');
   localStorage.removeItem('auth_intent');
+  localStorage.removeItem('spiritless-auth-storage'); // Critical: Clear Supabase auth storage
   
   // Role-specific items
   localStorage.removeItem('establishment_name');
