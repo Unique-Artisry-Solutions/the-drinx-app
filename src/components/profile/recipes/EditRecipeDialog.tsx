@@ -15,7 +15,7 @@ const EditRecipeDialog: React.FC<EditRecipeDialogProps> = ({
   // Prevent default form submission
   const handleUpdate = (e: React.MouseEvent) => {
     e.preventDefault();
-    onUpdate(e);
+    onUpdate();
   };
 
   return (
@@ -37,12 +37,14 @@ const EditRecipeDialog: React.FC<EditRecipeDialogProps> = ({
             
             <DialogFooter>
               <Button 
+                type="button"
                 variant="outline" 
                 onClick={onClose}
               >
                 Cancel
               </Button>
               <Button 
+                type="button"
                 onClick={handleUpdate}
                 disabled={isUpdating}
               >

@@ -100,6 +100,7 @@ const RecipeItem: React.FC<RecipeItemProps> = ({
             </div>
             <div className="flex gap-2">
               <Button 
+                type="button"
                 variant="ghost" 
                 size="icon" 
                 onClick={handleShare}
@@ -108,6 +109,7 @@ const RecipeItem: React.FC<RecipeItemProps> = ({
                 <Share2 className="h-4 w-4" />
               </Button>
               <Button 
+                type="button"
                 variant="ghost" 
                 size="icon" 
                 onClick={handleSuggestToEstablishment}
@@ -116,6 +118,7 @@ const RecipeItem: React.FC<RecipeItemProps> = ({
                 <Building2 className="h-4 w-4 text-spiritless-green" />
               </Button>
               <Button 
+                type="button"
                 variant="ghost" 
                 size="icon" 
                 onClick={handleEdit}
@@ -124,6 +127,7 @@ const RecipeItem: React.FC<RecipeItemProps> = ({
                 <PenSquare className="h-4 w-4" />
               </Button>
               <Button 
+                type="button"
                 variant="ghost" 
                 size="icon" 
                 onClick={handleDelete}

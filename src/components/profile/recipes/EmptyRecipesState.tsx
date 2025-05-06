@@ -1,23 +1,30 @@
 
 import React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { GlassWater } from 'lucide-react';
+import { PlusCircle } from 'lucide-react';
 
 interface EmptyRecipesStateProps {
-  onCreate: () => void;
+  isPromoter?: boolean;
+  onCreateNew: () => void;
 }
 
-const EmptyRecipesState: React.FC<EmptyRecipesStateProps> = ({ onCreate }) => {
+const EmptyRecipesState: React.FC<EmptyRecipesStateProps> = ({ isPromoter = false, onCreateNew }) => {
   return (
-    <Card className="border-dashed">
-      <CardContent className="pt-6 text-center">
-        <GlassWater className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
-        <h3 className="text-lg font-medium">No recipes yet</h3>
-        <p className="text-muted-foreground mt-2 mb-6">You haven't created any mocktail recipes yet.</p>
-        <Button onClick={onCreate}>Create Your First Recipe</Button>
-      </CardContent>
-    </Card>
+    <div className="text-center py-10">
+      <p className="text-gray-500 mb-5">
+        {isPromoter 
+          ? "As a promoter, you can create signature mocktail recipes for venues."
+          : "You haven't created any recipes yet. Share your favorite mocktail creations!"}
+      </p>
+      <Button 
+        type="button"
+        onClick={onCreateNew}
+        className={isPromoter ? "bg-purple-600 hover:bg-purple-700" : ""}
+      >
+        <PlusCircle className="h-4 w-4 mr-2" />
+        Create New Recipe
+      </Button>
+    </div>
   );
 };
 
