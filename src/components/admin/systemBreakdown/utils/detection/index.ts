@@ -57,7 +57,8 @@ export {
 } from './engagementDetection';
 
 export {
-  isThemeFeature as isThemeDetectionFeature
+  isThemeFeature as isThemeDetectionFeature,
+  isThemeConfigurationFeature
 } from './themeDetection';
 
 export {
@@ -94,6 +95,15 @@ export {
   isAudienceVisualizationFeature
 } from './audienceRelationshipDetection';
 
+// Export UX detection functions
+export {
+  isSystemConfigurationFeature,
+  isAccessibilityFeature,
+  isAIFeature,
+  isRewardProgramFeature,
+  isThemeFeature
+} from './uxDetection';
+
 // Re-export the core detection functions with their original names
 export { isIngredientPairingFeature, isMocktailSuggestionFeature, isMocktailTrendsFeature, isRecipeFeature } from './mocktailDetection';
 export { isPromotionFeature } from './promotionDetection';
@@ -103,6 +113,3 @@ export {
   isNotificationFeature, isRewardProgramFeature, isSocialFeature, isThemeFeature, isMapFeature,
   isSignatureFeature, isBarCrawlFeature
 } from './venueDetection';
-
-// Export system configuration feature
-export { isSystemConfigurationFeature } from './uxDetection';
