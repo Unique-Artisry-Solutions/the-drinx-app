@@ -1,4 +1,3 @@
-
 import { supabaseClient } from '@/lib/supabaseClient';
 
 export type AnalyticsEvent = {
@@ -165,6 +164,155 @@ export async function getPopularPages(startDate: Date, endDate: Date, limit: num
     return result;
   } catch (error) {
     console.error('Failed to get popular pages data:', error);
+    return null;
+  }
+}
+
+/**
+ * Get segment analytics data
+ */
+export async function getSegmentAnalytics(segmentId: string, startDate: Date, endDate: Date) {
+  try {
+    const { data, error } = await supabaseClient
+      .from('audience_segment_analytics')
+      .select('*')
+      .eq('segment_id', segmentId)
+      .gte('date', startDate.toISOString().split('T')[0])
+      .lte('date', endDate.toISOString().split('T')[0])
+      .order('date', { ascending: true });
+      
+    if (error) {
+      console.error('Error fetching segment analytics:', error);
+      return null;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Failed to get segment analytics data:', error);
+    return null;
+  }
+}
+
+/**
+ * Get segment growth data over time
+ */
+export async function getSegmentGrowthData(segmentId: string, timeframe: 'weekly' | 'monthly') {
+  try {
+    // We'll use a different approach based on the timeframe
+    const groupBy = timeframe === 'weekly' ? 'week' : 'month';
+    
+    const { data, error } = await supabaseClient.rpc('get_segment_growth', {
+      p_segment_id: segmentId,
+      p_timeframe: groupBy
+    });
+    
+    if (error) {
+      console.error('Error fetching segment growth data:', error);
+      return null;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Failed to get segment growth data:', error);
+    return null;
+  }
+}
+
+/**
+ * Get segment overlap analysis
+ * This shows how different segments overlap with each other
+ */
+export async function getSegmentOverlap(segmentIds: string[]) {
+  try {
+    if (segmentIds.length < 2) {
+      return []; // Need at least 2 segments to compare
+    }
+    
+    const { data, error } = await supabaseClient.rpc('analyze_segment_overlap', {
+      p_segment_ids: segmentIds
+    });
+    
+    if (error) {
+      console.error('Error fetching segment overlap:', error);
+      return null;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Failed to get segment overlap data:', error);
+    return null;
+  }
+}
+
+/**
+ * Get user movement between segments over time
+ */
+export async function getSegmentMovementAnalytics(segmentId: string, startDate: Date, endDate: Date) {
+  try {
+    const { data, error } = await supabaseClient.rpc('analyze_segment_movement', {
+      p_segment_id: segmentId,
+      p_start_date: startDate.toISOString().split('T')[0],
+      p_end_date: endDate.toISOString().split('T')[0]
+    });
+    
+    if (error) {
+      console.error('Error fetching segment movement analytics:', error);
+      return null;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Failed to get segment movement analytics:', error);
+    return null;
+  }
+}
+
+/**
+ * Schedule a report for export
+ */
+export async function scheduleReport(
+  reportType: string,
+  frequency: 'daily' | 'weekly' | 'monthly',
+  recipients: string[],
+  parameters: Record<string, any>
+) {
+  try {
+    const { data, error } = await supabaseClient.rpc('schedule_analytics_report', {
+      p_report_type: reportType,
+      p_frequency: frequency,
+      p_recipients: recipients,
+      p_parameters: parameters
+    });
+    
+    if (error) {
+      console.error('Error scheduling report:', error);
+      return null;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Failed to schedule report:', error);
+    return null;
+  }
+}
+
+/**
+ * Calculate estimated audience size for segment criteria in real-time
+ */
+export async function calculateAudienceSize(criteria: any[]) {
+  try {
+    const { data, error } = await supabaseClient.rpc('estimate_audience_size', {
+      p_criteria: JSON.stringify(criteria)
+    });
+    
+    if (error) {
+      console.error('Error calculating audience size:', error);
+      return null;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Failed to calculate audience size:', error);
     return null;
   }
 }
