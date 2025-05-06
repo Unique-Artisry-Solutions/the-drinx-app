@@ -1,5 +1,21 @@
 
-import { audience_filter_operator, audience_segment_status } from "@/integrations/supabase/types";
+// Define our own types instead of importing from integrations/supabase/types
+// since those types are not available yet
+
+export type audience_filter_operator = 
+  | 'equals' 
+  | 'not_equals' 
+  | 'contains' 
+  | 'not_contains' 
+  | 'greater_than' 
+  | 'less_than' 
+  | 'between' 
+  | 'in_list';
+
+export type audience_segment_status = 
+  | 'draft' 
+  | 'active' 
+  | 'archived';
 
 export type AudienceSegment = {
   id: string;

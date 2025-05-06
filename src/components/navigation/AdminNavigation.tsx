@@ -1,7 +1,6 @@
+
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
-import { useUser } from '@/hooks/useUser';
 import { Home, Settings, Users, LayoutDashboard, Calendar, Mailbox, ShoppingBag, Gift, BadgeCheck, ListChecks, PieChart, MessageSquare } from 'lucide-react';
 
 interface NavItemProps {
@@ -29,8 +28,7 @@ const NavItem: React.FC<NavItemProps> = ({ to, icon, label }) => {
 };
 
 export const AdminNavigation = () => {
-  const { logout } = useAuth();
-  const { user } = useUser();
+  // Remove useAuth and useUser hooks as they aren't available
   
   return (
     <nav className="space-y-1">
