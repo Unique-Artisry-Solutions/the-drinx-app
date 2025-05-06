@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useEventWizard } from './EventWizardContext';
 import { Card, CardContent } from '@/components/ui/card';
@@ -11,7 +12,7 @@ const TicketTypesStep: React.FC = () => {
   const { formData, updateFormData } = useEventWizard();
   
   const addTicketType = () => {
-    const newTicketTypes = [...formData.ticketTypes, {
+    const newTicketTypes = [...(formData.ticketTypes || []), {
       name: '',
       price: 0,
       description: '',
@@ -21,12 +22,12 @@ const TicketTypesStep: React.FC = () => {
   };
 
   const removeTicketType = (index: number) => {
-    const newTicketTypes = formData.ticketTypes.filter((_, i) => i !== index);
+    const newTicketTypes = (formData.ticketTypes || []).filter((_, i) => i !== index);
     updateFormData({ ticketTypes: newTicketTypes });
   };
   
   const updateTicketType = (index: number, field: string, value: string | number) => {
-    const newTicketTypes = [...formData.ticketTypes];
+    const newTicketTypes = [...(formData.ticketTypes || [])];
     newTicketTypes[index] = {
       ...newTicketTypes[index],
       [field]: field === 'price' || field === 'quantity' ? Number(value) : value
@@ -50,7 +51,7 @@ const TicketTypesStep: React.FC = () => {
           </Button>
         </div>
         
-        {formData.ticketTypes.length === 0 ? (
+        {!formData.ticketTypes || formData.ticketTypes.length === 0 ? (
           <div className="text-center py-8 bg-gray-50 border border-dashed border-gray-200 rounded-md">
             <p className="text-gray-500">No ticket types added yet. Click the button above to add your first ticket type.</p>
           </div>

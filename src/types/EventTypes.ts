@@ -118,6 +118,18 @@ export interface Event {
   contact_info?: EventContactInfo;
   custom_settings?: Record<string, any>;
   is_public?: boolean;
+  
+  // Add additional fields for EventsSection compatibility
+  venue?: {
+    id: string;
+    name: string;
+    address?: string;
+  };
+  distance?: number;
+  attendees?: {
+    registered: number;
+    checked_in?: number;
+  };
 }
 
 // Added missing types that were causing errors
@@ -126,6 +138,22 @@ export type EventType = Event;
 export interface EventFormData extends Omit<Event, 'id' | 'created_at' | 'updated_at'> {
   location?: EventLocation;
   contact?: EventContactInfo;
+  
+  // Add fields needed by the event wizard components
+  venueId?: string;
+  imageUrl?: string;
+  ticketTypes: EventTicketType[];
+  promotionalMaterials?: string[];
+  notificationSchedules?: Array<{
+    id: string;
+    title: string;
+    content: string;
+    priority: 'low' | 'medium' | 'high' | 'urgent';
+    scheduledFor: string;
+    locationBased: boolean;
+    coordinates?: { latitude: number; longitude: number };
+    targetRadius?: number;
+  }>;
 }
 
 export interface EventCheckIn {

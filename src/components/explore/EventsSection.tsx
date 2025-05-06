@@ -59,8 +59,11 @@ const EventsSection: React.FC<EventsSectionProps> = ({ events: propEvents }) => 
             // Extract venue name safely
             const venueName = event.venue?.name || 'TBD';
             
-            // Calculate registered attendees safely
+            // Calculate registered attendees safely  
             const attendeeCount = event.attendees?.registered || 0;
+            
+            // Handle distance safely
+            const distance = event.distance;
 
             console.log(`Creating event card for event ${event.id} with linkBasePath /event`); // Debug log
 
@@ -75,7 +78,7 @@ const EventsSection: React.FC<EventsSectionProps> = ({ events: propEvents }) => 
                 status={event.status}
                 imageUrl={event.image_url}
                 attendeeCount={attendeeCount}
-                distance={event.distance}
+                distance={distance}
                 linkBasePath="/event" // Set the correct link path for individual users
               />
             );

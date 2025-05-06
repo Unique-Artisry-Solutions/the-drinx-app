@@ -1,26 +1,8 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { EventFormData } from '@/types/EventTypes';
+import { EventFormData, EventLocation, EventContactInfo } from '@/types/EventTypes';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-
-interface TicketType {
-  name: string;
-  price: number;
-  description: string;
-  quantity: number;
-}
-
-export interface NotificationSchedule {
-  id: string;
-  title: string;
-  content: string;
-  priority: 'low' | 'medium' | 'high' | 'urgent';
-  scheduledFor: string;
-  locationBased: boolean;
-  coordinates?: { latitude: number; longitude: number };
-  targetRadius?: number;
-}
 
 interface EventWizardContextType {
   formData: EventFormData;
@@ -50,8 +32,9 @@ export const EventWizardProvider: React.FC<EventWizardProviderProps> = ({ childr
     description: '',
     date: '',
     time: '',
+    created_by: '',
     ticketTypes: [],
-    imageUrl: '', // Added the required imageUrl property with default empty string
+    imageUrl: '',
     promotionalMaterials: [],
     notificationSchedules: []
   });
@@ -82,12 +65,12 @@ export const EventWizardProvider: React.FC<EventWizardProviderProps> = ({ childr
           if (eventData) {
             // Convert event data to form data format
             const formattedData: EventFormData = {
-              id: eventData.id,
               name: eventData.name || '',
               description: eventData.description || '',
               date: eventData.date || '',
               time: eventData.time || '',
               venueId: eventData.venue_id || undefined,
+              created_by: eventData.created_by || '',
               imageUrl: eventData.image_url || '',
               promotionalMaterials: eventData.promotional_materials || [],
               ticketTypes: eventData.event_ticket_types.map((ticket: any) => ({

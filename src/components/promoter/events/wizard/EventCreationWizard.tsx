@@ -47,23 +47,26 @@ const EventCreationWizardContent: React.FC = () => {
     try {
       setIsSaving(true);
       
-      // Create a copy of the form data without notifications if needed
+      // Transform form data to match the API expectations
       const eventData = {
         ...formData,
+        image_url: formData.imageUrl,
+        promotional_materials: formData.promotionalMaterials,
+        venue_id: formData.venueId,
         // Remove notifications if they're not properly formed
         notificationSchedules: formData.notificationSchedules?.filter(n => 
           n.title && n.content && n.scheduledFor
         )
       };
       
-      if (isEditMode) {
+      if (isEditMode && formData.id) {
         await updateEvent.mutateAsync(eventData);
         showToast(
           'Event Updated',
           'Your changes have been saved successfully.',
           navigateAfterSave ? {
             label: 'View Event',
-            onClick: () => navigate(`/promoter/events/${eventData.id}`)
+            onClick: () => navigate(`/promoter/events/${formData.id}`)
           } : undefined
         );
       } else {

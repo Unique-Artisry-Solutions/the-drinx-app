@@ -29,18 +29,18 @@ const MediaStep: React.FC = () => {
   
   const addPromotionalMaterial = () => {
     updateFormData({
-      promotionalMaterials: [...formData.promotionalMaterials, '']
+      promotionalMaterials: [...(formData.promotionalMaterials || []), '']
     });
   };
   
   const updatePromotionalMaterial = (index: number, url: string) => {
-    const updatedMaterials = [...formData.promotionalMaterials];
+    const updatedMaterials = [...(formData.promotionalMaterials || [])];
     updatedMaterials[index] = url;
     updateFormData({ promotionalMaterials: updatedMaterials });
   };
   
   const removePromotionalMaterial = (index: number) => {
-    const updatedMaterials = formData.promotionalMaterials.filter((_, i) => i !== index);
+    const updatedMaterials = (formData.promotionalMaterials || []).filter((_, i) => i !== index);
     updateFormData({ promotionalMaterials: updatedMaterials });
   };
 
@@ -111,7 +111,7 @@ const MediaStep: React.FC = () => {
             </div>
             
             <div className="space-y-3">
-              {formData.promotionalMaterials.map((material, index) => (
+              {(formData.promotionalMaterials || []).map((material, index) => (
                 <div key={index} className="flex items-center space-x-2">
                   <Input
                     value={material}
@@ -133,7 +133,7 @@ const MediaStep: React.FC = () => {
                 </div>
               ))}
               
-              {formData.promotionalMaterials.length === 0 && (
+              {(formData.promotionalMaterials || []).length === 0 && (
                 <p className="text-center py-2 text-gray-500">
                   No promotional materials added. Click the button above to add links to your promotional materials.
                 </p>

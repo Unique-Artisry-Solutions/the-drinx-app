@@ -4,7 +4,7 @@ import { AudienceSegment } from '@/types/AudienceTypes';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ResponsiveContainer, VennDiagram, Venn } from 'recharts';
+import { ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { Label } from '@/components/ui/label';
 
 interface SegmentOverlapAnalysisProps {
@@ -20,49 +20,36 @@ export function SegmentOverlapAnalysis({
   onSegmentToggle, 
   isLoading 
 }: SegmentOverlapAnalysisProps) {
-  const [view, setView] = useState<'venn' | 'matrix'>('venn');
+  const [view, setView] = useState<'chart' | 'matrix'>('chart');
   
   // Mock data - In a real application, this would come from an API
   const getOverlapData = () => {
-    // Create overlap data for Venn diagram (limited to 3 segments for clarity)
+    // Create overlap data for visualization (limited to 3 segments for clarity)
     if (selectedSegments.length === 0) return [];
     
     const displaySegments = selectedSegments.slice(0, 3);
-    const segmentData = displaySegments.map(id => {
+    
+    // Create data for each segment
+    return displaySegments.map(id => {
       const segment = segments.find(s => s.id === id);
       return {
         id,
         name: segment?.name || 'Unknown',
         value: Math.floor(Math.random() * 500) + 200,
-        sets: [id]
+        color: getSegmentColor(id, displaySegments)
       };
     });
-    
-    // Add intersections if we have multiple segments
-    if (displaySegments.length > 1) {
-      for (let i = 0; i < displaySegments.length - 1; i++) {
-        for (let j = i + 1; j < displaySegments.length; j++) {
-          segmentData.push({
-            sets: [displaySegments[i], displaySegments[j]],
-            value: Math.floor(Math.random() * 100) + 50
-          });
-        }
-      }
-    }
-    
-    // If we have 3 segments, add the triple intersection
-    if (displaySegments.length === 3) {
-      segmentData.push({
-        sets: displaySegments,
-        value: Math.floor(Math.random() * 30) + 10
-      });
-    }
-    
-    return segmentData;
+  };
+  
+  // Simple function to get different colors based on segment position
+  const getSegmentColor = (id: string, displaySegments: string[]) => {
+    const colors = ['#8884d8', '#82ca9d', '#ffc658', '#ff8042', '#a4de6c'];
+    const index = displaySegments.indexOf(id);
+    return colors[index % colors.length];
   };
 
   const generateOverlapMatrix = () => {
-    const matrix: Array<{id: string, name: string, overlaps: {id: string, count: number}[]}> = [];
+    const matrix: Array<{id: string, name: string, overlaps: {id: string, name: string, count: number}[]}> = [];
     
     selectedSegments.forEach(segId => {
       const segment = segments.find(s => s.id === segId);
@@ -98,26 +85,38 @@ export function SegmentOverlapAnalysis({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="md:col-span-2">
           <CardContent className="pt-6">
-            <Tabs value={view} onValueChange={(v) => setView(v as 'venn' | 'matrix')}>
+            <Tabs value={view} onValueChange={(v) => setView(v as 'chart' | 'matrix')}>
               <TabsList className="mb-4">
-                <TabsTrigger value="venn">Venn Diagram</TabsTrigger>
+                <TabsTrigger value="chart">Chart View</TabsTrigger>
                 <TabsTrigger value="matrix">Matrix View</TabsTrigger>
               </TabsList>
               
-              <TabsContent value="venn" className="min-h-[300px]">
+              <TabsContent value="chart" className="min-h-[300px]">
                 {selectedSegments.length === 0 ? (
                   <div className="flex items-center justify-center h-[300px]">
                     <p className="text-muted-foreground">Select segments to visualize overlap</p>
                   </div>
                 ) : selectedSegments.length > 3 ? (
                   <div className="flex items-center justify-center h-[300px]">
-                    <p className="text-muted-foreground">Venn diagram limited to 3 segments. Using first 3 selected.</p>
+                    <p className="text-muted-foreground">Chart visualization limited to 3 segments. Using first 3 selected.</p>
                   </div>
                 ) : (
                   <ResponsiveContainer width="100%" height={300}>
-                    <VennDiagram data={getOverlapData()}>
-                      <Venn />
-                    </VennDiagram>
+                    <PieChart>
+                      <Pie
+                        data={getOverlapData()}
+                        dataKey="value"
+                        nameKey="name"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={100}
+                        label={(entry) => entry.name}
+                      >
+                        {getOverlapData().map((entry) => (
+                          <Cell key={entry.id} fill={entry.color} />
+                        ))}
+                      </Pie>
+                    </PieChart>
                   </ResponsiveContainer>
                 )}
               </TabsContent>
@@ -184,9 +183,9 @@ export function SegmentOverlapAnalysis({
                 </div>
               ))}
             </div>
-            {view === 'venn' && selectedSegments.length > 3 && (
+            {view === 'chart' && selectedSegments.length > 3 && (
               <p className="text-xs text-muted-foreground mt-4">
-                Note: Venn diagram is limited to 3 segments for clarity
+                Note: Chart visualization is limited to 3 segments for clarity
               </p>
             )}
           </CardContent>

@@ -16,7 +16,7 @@ const PreviewStep: React.FC = () => {
       formData.venueId
     ];
     
-    return requiredFields.every(field => !!field) && formData.ticketTypes.length > 0;
+    return requiredFields.every(field => !!field) && (formData.ticketTypes || []).length > 0;
   };
 
   // Format date if available
@@ -80,7 +80,7 @@ const PreviewStep: React.FC = () => {
                 Ticket Information
               </h3>
               <div className="mt-2 space-y-3">
-                {formData.ticketTypes.map((ticket, index) => (
+                {(formData.ticketTypes || []).map((ticket, index) => (
                   <div key={index} className="p-3 border rounded-md">
                     <div className="flex justify-between items-center">
                       <h4 className="font-medium">{ticket.name}</h4>
