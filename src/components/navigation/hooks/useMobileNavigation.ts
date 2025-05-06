@@ -1,5 +1,5 @@
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth';
 import { NavigationType } from '../NavigationTypes';
@@ -37,16 +37,16 @@ export const useMobileNavigation = (
     });
   }, [type, currentUserType, user, forceGuestNavigation, location.pathname]);
 
-  const toggleExpand = useCallback(() => setExpanded(!expanded), [expanded]);
+  const toggleExpand = () => setExpanded(!expanded);
 
-  const getProfilePath = useCallback(() => {
+  const getProfilePath = () => {
     return currentUserType === 'establishment' ? '/establishment/profile' : '/profile';
-  }, [currentUserType]);
+  };
 
-  const navigateToProfile = useCallback((e?: React.MouseEvent) => {
+  const navigateToProfile = (e?: React.MouseEvent) => {
     if (e) e.preventDefault();
     navigate(getProfilePath());
-  }, [navigate, getProfilePath]);
+  };
 
   return {
     currentUserType,

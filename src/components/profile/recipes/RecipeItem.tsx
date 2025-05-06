@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Share2, PenSquare, Trash2, Building2 } from 'lucide-react';
 import { RecipeItemProps } from './types';
-import { useAppNavigation } from '@/hooks/useAppNavigation';
 
 const RecipeItem: React.FC<RecipeItemProps> = ({
   recipe,
@@ -16,8 +15,6 @@ const RecipeItem: React.FC<RecipeItemProps> = ({
   isDeleting,
   deletingId
 }) => {
-  const { navigate } = useAppNavigation();
-  
   if (!recipe) return null;
 
   const formatDate = (dateString?: string) => {
@@ -27,7 +24,6 @@ const RecipeItem: React.FC<RecipeItemProps> = ({
 
   const handleEdit = (e: React.MouseEvent) => {
     e.preventDefault();
-    // Call onEdit directly with recipe - don't navigate directly from here
     onEdit(recipe);
   };
 
@@ -108,7 +104,6 @@ const RecipeItem: React.FC<RecipeItemProps> = ({
                 size="icon" 
                 onClick={handleShare}
                 title="Share"
-                type="button"
               >
                 <Share2 className="h-4 w-4" />
               </Button>
@@ -117,7 +112,6 @@ const RecipeItem: React.FC<RecipeItemProps> = ({
                 size="icon" 
                 onClick={handleSuggestToEstablishment}
                 title="Suggest to Establishment"
-                type="button"
               >
                 <Building2 className="h-4 w-4 text-spiritless-green" />
               </Button>
@@ -126,7 +120,6 @@ const RecipeItem: React.FC<RecipeItemProps> = ({
                 size="icon" 
                 onClick={handleEdit}
                 title="Edit"
-                type="button"
               >
                 <PenSquare className="h-4 w-4" />
               </Button>
@@ -136,7 +129,6 @@ const RecipeItem: React.FC<RecipeItemProps> = ({
                 onClick={handleDelete}
                 disabled={isDeleting && deletingId === recipe.id}
                 title="Delete"
-                type="button"
               >
                 <Trash2 className="h-4 w-4 text-red-500" />
               </Button>

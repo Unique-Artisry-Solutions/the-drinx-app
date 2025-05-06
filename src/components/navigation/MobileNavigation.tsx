@@ -20,7 +20,7 @@ const MobileNavigation: React.FC<ExtendedMobileNavigationProps> = ({
 }) => {
   const location = useLocation();
   const { user } = useAuth();
-  const appNavigation = useAppNavigation();
+  const { goToHomePage } = useAppNavigation();
   const {
     currentUserType,
     expanded,
@@ -31,7 +31,7 @@ const MobileNavigation: React.FC<ExtendedMobileNavigationProps> = ({
   // Create a handleHomeClick that uses the navigation hook and prevents default
   const handleHomeClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    appNavigation.goToHomePage(currentUserType);
+    goToHomePage(currentUserType);
   };
 
   const handleProfileClick = (item: any, e: React.MouseEvent) => {

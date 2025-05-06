@@ -1,6 +1,5 @@
 
 import { useNavigate } from 'react-router-dom';
-import { useCallback } from 'react';
 
 /**
  * A custom hook for handling app navigation consistently
@@ -12,7 +11,7 @@ export const useAppNavigation = () => {
   /**
    * Navigate to the appropriate home page based on user type
    */
-  const goToHomePage = useCallback((userType?: string | null) => {
+  const goToHomePage = (userType?: string | null) => {
     if (!userType) {
       navigate('/landing');
       return;
@@ -31,12 +30,12 @@ export const useAppNavigation = () => {
       default:
         navigate('/explore');
     }
-  }, [navigate]);
+  };
   
   /**
    * Navigate to the profile page based on user type
    */
-  const goToProfilePage = useCallback((userType?: string | null) => {
+  const goToProfilePage = (userType?: string | null) => {
     if (!userType || userType === 'individual') {
       navigate('/profile');
     } else if (userType === 'establishment') {
@@ -44,26 +43,26 @@ export const useAppNavigation = () => {
     } else if (userType === 'promoter') {
       navigate('/promoter/profile');
     }
-  }, [navigate]);
+  };
   
   /**
    * Navigate after successful login
    */
-  const goToAfterLogin = useCallback((userType?: string | null, savedRedirect?: string | null) => {
+  const goToAfterLogin = (userType?: string | null, savedRedirect?: string | null) => {
     if (savedRedirect) {
       navigate(savedRedirect);
       return;
     }
     
     goToHomePage(userType);
-  }, [navigate, goToHomePage]);
+  };
   
   /**
    * Navigate to admin dashboard
    */
-  const goToAdminDashboard = useCallback(() => {
+  const goToAdminDashboard = () => {
     navigate('/admin/system-breakdown');
-  }, [navigate]);
+  };
 
   /**
    * Navigate to edit page for different entity types
@@ -71,14 +70,13 @@ export const useAppNavigation = () => {
    * @param id ID of the entity
    * @param preventRefresh If true, use React Router navigation to prevent page refresh
    */
-  const goToEditPage = useCallback((entityType: string, id: string, preventRefresh = true) => {
-    console.log(`Navigating to edit page: /${entityType}/edit/${id}, preventRefresh: ${preventRefresh}`);
+  const goToEditPage = (entityType: string, id: string, preventRefresh = true) => {
     const path = `/${entityType}/edit/${id}`;
     if (preventRefresh) {
       navigate(path);
     }
     return path;
-  }, [navigate]);
+  };
 
   return {
     goToHomePage,
