@@ -10,14 +10,15 @@ import { AudienceInsights } from './AudienceInsights';
 import { SegmentPerformance } from './SegmentPerformance';
 import { AudienceSegment } from '@/types/AudienceTypes';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, PlusCircle, RefreshCw, BarChart3, Users, Settings } from 'lucide-react';
+import { Search, PlusCircle, RefreshCw, BarChart3, Users, Settings, ChartBar } from 'lucide-react';
+import { SegmentAnalyticsDashboard } from './analytics/SegmentAnalyticsDashboard';
 
 export const AudienceManagementTab = () => {
-  const [activeView, setActiveView] = useState<'list' | 'create' | 'edit'>('list');
+  const [activeView, setActiveView] = useState<'list' | 'create' | 'edit' | 'analytics'>('list');
   const [selectedSegment, setSelectedSegment] = useState<AudienceSegment | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [activeTab, setActiveTab] = useState<'segments' | 'insights' | 'performance'>('segments');
+  const [activeTab, setActiveTab] = useState<'segments' | 'insights' | 'performance' | 'analytics'>('segments');
   
   const { 
     segments,
@@ -79,10 +80,16 @@ export const AudienceManagementTab = () => {
               </CardDescription>
             </div>
             {activeView === 'list' ? (
-              <Button onClick={() => setActiveView('create')}>
-                <PlusCircle className="h-4 w-4 mr-2" />
-                Create Segment
-              </Button>
+              <div className="flex gap-2">
+                <Button onClick={() => setActiveView('create')}>
+                  <PlusCircle className="h-4 w-4 mr-2" />
+                  Create Segment
+                </Button>
+                <Button variant="outline" onClick={() => setActiveView('analytics')}>
+                  <ChartBar className="h-4 w-4 mr-2" />
+                  Analytics
+                </Button>
+              </div>
             ) : (
               <Button variant="outline" onClick={() => {
                 setActiveView('list');
@@ -175,6 +182,10 @@ export const AudienceManagementTab = () => {
                 setSelectedSegment(null);
               }}
             />
+          )}
+          
+          {activeView === 'analytics' && (
+            <SegmentAnalyticsDashboard />
           )}
         </CardContent>
       </Card>

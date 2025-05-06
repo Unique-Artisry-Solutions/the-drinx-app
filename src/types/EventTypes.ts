@@ -44,6 +44,7 @@ export interface EventMarketingCampaign {
     conversions?: number;
     emails_sent?: number;
     open_rate?: number;
+    notifications_sent?: number;
     segments?: Record<string, Record<string, number>>;
     abTest?: {
       variantA: Record<string, number>;
@@ -63,6 +64,8 @@ export interface EventTicketType {
   description: string;
   price: number;
   quantity: number;
+  sold?: number;    // Added field for ticket sales count
+  available?: number; // Added field for available tickets
   created_at?: string;
 }
 
@@ -73,7 +76,7 @@ export interface EventAttendee {
   ticket_type_id?: string;
   email?: string;
   name?: string;
-  status: 'registered' | 'checked_in' | 'cancelled';
+  status: 'registered' | 'checked_in' | 'cancelled' | 'no_show';
   ticket_code?: string;
   purchase_date: string;
   checked_in_at?: string;
@@ -115,4 +118,34 @@ export interface Event {
   contact_info?: EventContactInfo;
   custom_settings?: Record<string, any>;
   is_public?: boolean;
+}
+
+// Added missing types that were causing errors
+export type EventType = Event;
+
+export interface EventFormData extends Omit<Event, 'id' | 'created_at' | 'updated_at'> {
+  location?: EventLocation;
+  contact?: EventContactInfo;
+}
+
+export interface EventCheckIn {
+  id?: string;
+  event_id: string;
+  attendee_id: string;
+  checked_in_by?: string;
+  checked_in_at: string;
+  location?: string;
+  notes?: string;
+  created_at?: string;
+}
+
+export interface EventStatistics {
+  total_attendees: number;
+  checked_in_attendees: number;
+  cancelled_attendees: number;
+  total_revenue: number;
+  event_id: string;
+  event_name?: string;
+  date?: string;
+  status?: EventStatus;
 }

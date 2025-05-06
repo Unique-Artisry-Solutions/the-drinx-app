@@ -1,3 +1,4 @@
+
 export interface NotificationMetadata {
   priority: 'low' | 'medium' | 'high' | 'urgent';
   sound: boolean;
