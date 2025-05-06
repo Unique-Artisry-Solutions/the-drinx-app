@@ -1,591 +1,500 @@
 
 import React, { useState, useEffect } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { 
+  Card,
+  CardContent, 
+  CardDescription, 
+  CardHeader, 
+  CardTitle
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AlertCircle, Calendar, Copy, Edit, Link, Mail, Loader2, Plus, Send, Trash2, X } from 'lucide-react';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { 
+  Dialog,
+  DialogContent, 
+  DialogDescription, 
+  DialogHeader, 
+  DialogTitle,
+  DialogFooter
+} from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { EventMarketingCampaign, EventTargetAudience } from '@/types/EventTypes';
-import { useEventMarketing } from '@/hooks/events/useEventMarketing';
-import { copyToClipboard } from '@/utils/clipboard';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from '@/components/ui/alert-dialog';
+import { 
+  BarChart3, 
+  Users, 
+  Globe, 
+  Mail, 
+  Bell, 
+  Smartphone, 
+  Plus, 
+  Trash, 
+  Copy, 
+  Link, 
+  CheckCircle2
+} from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { AudienceSegment } from '@/types/AudienceTypes';
-import { CampaignSegmentMapping } from '@/types/CampaignSegmentTypes';
-import { CampaignSegmentPanel, SegmentSelection } from '@/components/events/CampaignSegmentPanel';
+import { useEventMarketing } from '@/hooks/events/useEventMarketing';
+import { EventMarketingCampaign } from '@/types/EventTypes';
+import { copyToClipboard } from '@/utils/clipboard';
 
-// Use default export to match import in EventDetailsPage
-const MarketingTabContent = ({ eventId, eventName }: { eventId: string; eventName: string }) => {
-  const { campaigns, isLoading, createCampaign, updateCampaign, deleteCampaign, getCampaignLink, refresh } = useEventMarketing(eventId);
+// Type definition for audience segments (to match the mock data)
+interface AudienceSegment {
+  id: string;
+  name: string;
+  description: string;
+  memberCount: number;
+  type: string;
+  // Adding properties from mock data
+  segmentId?: string;
+  recentActivity?: string;
+}
+
+const MarketingTabContent = ({ eventId, eventName }: { eventId?: string, eventName: string }) => {
+  const { campaigns, isLoading, createCampaign, updateCampaign, deleteCampaign, getCampaignLink } = useEventMarketing(eventId || '');
+  const { toast } = useToast();
   const [isCreatingCampaign, setIsCreatingCampaign] = useState(false);
-  const [isEditingCampaign, setIsEditingCampaign] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [newCampaign, setNewCampaign] = useState<Partial<EventMarketingCampaign>>({
+  const [campaignFormData, setCampaignFormData] = useState<Partial<EventMarketingCampaign>>({
     name: '',
     description: '',
     campaign_type: 'email',
     status: 'draft'
   });
-  const [currentCampaign, setCurrentCampaign] = useState<Partial<EventMarketingCampaign> | null>(null);
+  const [activeTab, setActiveTab] = useState('campaigns');
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [campaignToDelete, setCampaignToDelete] = useState<string | null>(null);
-  const [copiedLink, setCopiedLink] = useState<string | null>(null);
-  const { toast } = useToast();
+  const [showLinkCopied, setShowLinkCopied] = useState<string | null>(null);
+  
+  // Mock audience segments data
+  const audienceSegments: AudienceSegment[] = [
+    { 
+      id: '1', 
+      name: 'Recent Attendees', 
+      description: 'People who attended events in the last 30 days', 
+      memberCount: 1245, 
+      type: 'behavior',
+      segmentId: 'recent-attendees',
+      recentActivity: 'high'
+    },
+    { 
+      id: '2', 
+      name: 'VIP Members', 
+      description: 'Members with VIP status', 
+      memberCount: 328, 
+      type: 'status',
+      segmentId: 'vip-members',
+      recentActivity: 'medium'
+    },
+    { 
+      id: '3', 
+      name: 'New Subscribers', 
+      description: 'Users who subscribed in the last 14 days', 
+      memberCount: 892, 
+      type: 'acquisition',
+      segmentId: 'new-subscribers',
+      recentActivity: 'high'
+    },
+    { 
+      id: '4', 
+      name: 'Location Based', 
+      description: 'Users within 10 miles of venue', 
+      memberCount: 2150, 
+      type: 'location',
+      segmentId: 'location-nearby',
+      recentActivity: 'low'
+    }
+  ];
 
-  const [availableSegments, setAvailableSegments] = useState<AudienceSegment[]>([]);
-  const [campaignSegmentMappings, setCampaignSegmentMappings] = useState<Record<string, CampaignSegmentMapping[]>>({});
-  const [isLoadingSegments, setIsLoadingSegments] = useState(false);
-
-  useEffect(() => {
-    // Mock data for available segments
-    setAvailableSegments([
-      { id: '1', name: 'First-time Attendees', description: 'People who have never attended an event', criteria: {} },
-      { id: '2', name: 'Regular Attendees', description: 'People who have attended multiple events', criteria: {} },
-      { id: '3', name: 'Local Residents', description: 'People who live within 10 miles of the event', criteria: {} },
-      { id: '4', name: 'High Spenders', description: 'People who typically purchase premium tickets', criteria: {} }
-    ]);
-
-    // Mock data for campaign segment mappings
-    setCampaignSegmentMappings({
-      'campaign-1': [
-        { id: 'map-1', campaign_id: 'campaign-1', segment_id: '1', allocation_percentage: 50, is_control_group: false, is_active: true, created_at: '', updated_at: '', metrics: {} }
-      ]
-    });
-  }, []);
+  const handleCampaignChange = (field: string, value: any) => {
+    setCampaignFormData(prev => ({ ...prev, [field]: value }));
+  };
 
   const handleCreateCampaign = async () => {
     try {
-      // Remove event_id from the object passed to createCampaign
-      const { name, description, campaign_type, status, start_date, end_date, budget, metrics, target_audience } = newCampaign;
+      if (!eventId) return;
       
+      // Create campaign without including event_id in the object
+      // as it's already provided by the hook
       const campaignData = {
-        name: name || '',
-        description,
-        campaign_type: campaign_type || 'email',
-        status: status || 'draft',
-        start_date,
-        end_date,
-        budget,
-        metrics,
-        target_audience
+        name: campaignFormData.name || '',
+        description: campaignFormData.description,
+        campaign_type: campaignFormData.campaign_type || 'email',
+        status: campaignFormData.status as 'draft' | 'active' | 'completed' | 'cancelled'
       };
-
+      
       await createCampaign(campaignData);
-      setNewCampaign({
+      setIsCreatingCampaign(false);
+      setCampaignFormData({
         name: '',
         description: '',
         campaign_type: 'email',
         status: 'draft'
       });
-      setIsCreatingCampaign(false);
-      refresh();
+      
+      toast({
+        title: "Campaign Created",
+        description: "Your marketing campaign has been created successfully."
+      });
     } catch (error) {
-      console.error('Failed to create campaign:', error);
+      console.error("Error creating campaign:", error);
+      toast({
+        title: "Creation Failed",
+        description: "Failed to create marketing campaign. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 
-  const handleUpdateCampaign = async () => {
-    if (!currentCampaign || !currentCampaign.id) return;
-
+  const handleUpdateStatus = async (id: string, status: 'draft' | 'active' | 'completed' | 'cancelled') => {
     try {
-      await updateCampaign(currentCampaign.id, currentCampaign);
-      setIsEditingCampaign(false);
-      setCurrentCampaign(null);
-      refresh();
+      await updateCampaign(id, { status });
+      toast({
+        title: "Status Updated",
+        description: `Campaign status updated to ${status}.`
+      });
     } catch (error) {
-      console.error('Failed to update campaign:', error);
+      toast({
+        title: "Update Failed",
+        description: "Failed to update campaign status.",
+        variant: "destructive"
+      });
     }
+  };
+
+  const confirmDeleteCampaign = (id: string) => {
+    setCampaignToDelete(id);
+    setShowDeleteDialog(true);
   };
 
   const handleDeleteCampaign = async () => {
     if (!campaignToDelete) return;
-
+    
     try {
       await deleteCampaign(campaignToDelete);
       setCampaignToDelete(null);
-      setIsDeleteDialogOpen(false);
-      refresh();
-    } catch (error) {
-      console.error('Failed to delete campaign:', error);
-    }
-  };
-
-  const handleCopyLink = (campaignId: string, medium: string = 'website') => {
-    const link = getCampaignLink(campaignId, medium);
-    copyToClipboard(link)
-      .then(() => {
-        setCopiedLink(campaignId);
-        toast({ title: 'Link copied to clipboard' });
-        setTimeout(() => setCopiedLink(null), 3000);
-      })
-      .catch(() => {
-        toast({ title: 'Failed to copy link', variant: 'destructive' });
+      setShowDeleteDialog(false);
+      
+      toast({
+        title: "Campaign Deleted",
+        description: "Marketing campaign has been deleted successfully."
       });
-  };
-
-  const getCampaignStatusBadge = (status: string) => {
-    let variant: "default" | "destructive" | "outline" | "secondary" | "success" = "default";
-    
-    switch (status) {
-      case 'active':
-        variant = "success";
-        break;
-      case 'draft':
-        variant = "secondary";
-        break;
-      case 'completed':
-        variant = "outline";
-        break;
-      case 'cancelled':
-        variant = "destructive";
-        break;
-      default:
-        variant = "default";
+    } catch (error) {
+      toast({
+        title: "Deletion Failed",
+        description: "Failed to delete marketing campaign.",
+        variant: "destructive"
+      });
     }
-    
-    return <Badge variant={variant}>{status}</Badge>;
   };
 
-  const handleAssignSegments = async (campaign: EventMarketingCampaign, segments: SegmentSelection[]) => {
-    console.log('Assigning segments:', segments, 'to campaign:', campaign.id);
-    // This would call an API to save the segment mappings
-    return new Promise<void>((resolve) => {
-      setTimeout(() => {
-        toast({
-          title: "Segments assigned",
-          description: `${segments.length} segments assigned to campaign: ${campaign.name}`
-        });
-        resolve();
-      }, 1000);
+  const handleCopyLink = (campaignId: string) => {
+    const link = getCampaignLink(campaignId);
+    copyToClipboard(link).then(() => {
+      setShowLinkCopied(campaignId);
+      setTimeout(() => setShowLinkCopied(null), 2000);
+      
+      toast({
+        title: "Link Copied",
+        description: "Campaign link copied to clipboard"
+      });
     });
   };
 
   return (
-    <div className="space-y-8">
-      <div className="flex justify-between items-center">
-        <h3 className="text-2xl font-semibold">Marketing & Promotion</h3>
-        <Button onClick={() => setIsCreatingCampaign(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Create Campaign
-        </Button>
-      </div>
-
-      <Tabs defaultValue="campaigns">
-        <TabsList className="grid w-full md:w-auto md:inline-grid grid-cols-3">
+    <div className="space-y-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid grid-cols-2 md:grid-cols-3 lg:w-[400px]">
           <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
+          <TabsTrigger value="audience">Audience</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="campaigns" className="space-y-4 mt-4">
+        <TabsContent value="campaigns" className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-medium">Marketing Campaigns</h3>
+            <Button onClick={() => setIsCreatingCampaign(true)} size="sm">
+              <Plus className="h-4 w-4 mr-2" /> New Campaign
+            </Button>
+          </div>
+          
           {isLoading ? (
-            <div className="flex justify-center items-center h-40">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <div className="flex justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
-          ) : campaigns.length === 0 ? (
-            <div className="text-center py-10 border rounded-md bg-muted/20">
-              <h4 className="text-lg font-medium mb-2">No Marketing Campaigns Yet</h4>
-              <p className="text-gray-500 mb-4">Create your first campaign to promote this event.</p>
-              <Button onClick={() => setIsCreatingCampaign(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                Create Campaign
-              </Button>
-            </div>
-          ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {campaigns.map((campaign) => (
+          ) : campaigns.length > 0 ? (
+            <div className="grid gap-4">
+              {campaigns.map(campaign => (
                 <Card key={campaign.id} className="overflow-hidden">
                   <CardHeader className="pb-2">
                     <div className="flex justify-between items-start">
                       <div>
                         <CardTitle>{campaign.name}</CardTitle>
-                        <CardDescription>
-                          {campaign.campaign_type}
+                        <CardDescription className="mt-1">
+                          {campaign.campaign_type === 'email' && <Mail className="h-4 w-4 inline mr-1" />}
+                          {campaign.campaign_type === 'notification' && <Bell className="h-4 w-4 inline mr-1" />}
+                          {campaign.campaign_type === 'social' && <Globe className="h-4 w-4 inline mr-1" />}
+                          {campaign.campaign_type === 'sms' && <Smartphone className="h-4 w-4 inline mr-1" />}
+                          {campaign.campaign_type.charAt(0).toUpperCase() + campaign.campaign_type.slice(1)}
                         </CardDescription>
                       </div>
-                      {getCampaignStatusBadge(campaign.status)}
+                      <Badge variant={
+                        campaign.status === 'active' ? 'default' : 
+                        campaign.status === 'completed' ? 'secondary' :
+                        campaign.status === 'cancelled' ? 'destructive' : 'outline'
+                      }>
+                        {campaign.status.charAt(0).toUpperCase() + campaign.status.slice(1)}
+                      </Badge>
                     </div>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    {campaign.description && (
-                      <p className="text-sm text-gray-500">{campaign.description}</p>
+                  <CardContent>
+                    <p className="text-sm text-gray-600 mb-4">
+                      {campaign.description || 'No description provided.'}
+                    </p>
+                    
+                    {campaign.metrics && (
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
+                        <div className="bg-slate-50 p-2 rounded">
+                          <p className="text-xs text-gray-500">Impressions</p>
+                          <p className="font-semibold">{campaign.metrics.impressions || 0}</p>
+                        </div>
+                        <div className="bg-slate-50 p-2 rounded">
+                          <p className="text-xs text-gray-500">Clicks</p>
+                          <p className="font-semibold">{campaign.metrics.clicks || 0}</p>
+                        </div>
+                        <div className="bg-slate-50 p-2 rounded">
+                          <p className="text-xs text-gray-500">Conversions</p>
+                          <p className="font-semibold">{campaign.metrics.conversions || 0}</p>
+                        </div>
+                        <div className="bg-slate-50 p-2 rounded">
+                          <p className="text-xs text-gray-500">Open Rate</p>
+                          <p className="font-semibold">
+                            {campaign.metrics.open_rate ? `${campaign.metrics.open_rate}%` : 'N/A'}
+                          </p>
+                        </div>
+                      </div>
                     )}
                     
-                    <div className="grid grid-cols-2 gap-2 text-sm">
-                      {campaign.start_date && (
-                        <div>
-                          <span className="font-medium">Starts:</span> {campaign.start_date}
-                        </div>
-                      )}
-                      {campaign.end_date && (
-                        <div>
-                          <span className="font-medium">Ends:</span> {campaign.end_date}
-                        </div>
-                      )}
-                      {campaign.budget && (
-                        <div className="col-span-2">
-                          <span className="font-medium">Budget:</span> ${campaign.budget}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex flex-col gap-2">
-                      <h5 className="text-sm font-medium">Campaign Link:</h5>
-                      <div className="flex items-center gap-2">
-                        <Input 
-                          value={getCampaignLink(campaign.id || '')}
-                          readOnly 
-                          className="text-xs"
-                        />
+                    <div className="flex flex-wrap gap-2 mt-4">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => handleCopyLink(campaign.id || '')}
+                      >
+                        {showLinkCopied === campaign.id ? (
+                          <>
+                            <CheckCircle2 className="h-4 w-4 mr-2 text-green-500" />
+                            Copied!
+                          </>
+                        ) : (
+                          <>
+                            <Link className="h-4 w-4 mr-2" />
+                            Copy Link
+                          </>
+                        )}
+                      </Button>
+                      
+                      {campaign.status === 'draft' && (
                         <Button 
-                          variant="outline" 
                           size="sm" 
-                          className="shrink-0"
-                          onClick={() => handleCopyLink(campaign.id || '')}
+                          onClick={() => handleUpdateStatus(campaign.id || '', 'active')}
                         >
-                          {copiedLink === campaign.id ? (
-                            <span className="text-green-500 flex items-center">
-                              Copied <span className="ml-1">✓</span>
-                            </span>
-                          ) : (
-                            <Copy className="h-4 w-4" />
-                          )}
+                          Activate
                         </Button>
-                      </div>
-                    </div>
-
-                    <div className="flex justify-end gap-2 pt-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setCurrentCampaign(campaign);
-                          setIsEditingCampaign(true);
-                        }}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-destructive hover:text-destructive"
-                        onClick={() => {
-                          setCampaignToDelete(campaign.id || '');
-                          setIsDeleteDialogOpen(true);
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      )}
+                      
+                      {campaign.status === 'active' && (
+                        <Button 
+                          variant="secondary"
+                          size="sm" 
+                          onClick={() => handleUpdateStatus(campaign.id || '', 'completed')}
+                        >
+                          Complete
+                        </Button>
+                      )}
+                      
+                      {(campaign.status === 'draft' || campaign.status === 'active') && (
+                        <Button 
+                          variant="destructive"
+                          size="sm" 
+                          onClick={() => confirmDeleteCampaign(campaign.id || '')}
+                        >
+                          <Trash className="h-4 w-4 mr-2" />
+                          Delete
+                        </Button>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
               ))}
             </div>
+          ) : (
+            <Card className="bg-slate-50">
+              <CardContent className="flex flex-col items-center justify-center py-8">
+                <div className="text-center space-y-2">
+                  <h3 className="text-lg font-medium">No Campaigns Yet</h3>
+                  <p className="text-sm text-gray-600">Create your first marketing campaign for {eventName}</p>
+                  <Button 
+                    onClick={() => setIsCreatingCampaign(true)}
+                    className="mt-2"
+                  >
+                    <Plus className="h-4 w-4 mr-2" /> Create Campaign
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           )}
         </TabsContent>
         
-        <TabsContent value="analytics" className="space-y-4 mt-4">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            <Card>
-              <CardHeader>
-                <CardTitle>Impressions</CardTitle>
-                <CardDescription>Total number of times your campaigns were seen</CardDescription>
-              </CardHeader>
-              <CardContent className="text-3xl font-bold">1,245</CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>Clicks</CardTitle>
-                <CardDescription>Number of clicks on your campaign links</CardDescription>
-              </CardHeader>
-              <CardContent className="text-3xl font-bold">357</CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>Conversions</CardTitle>
-                <CardDescription>Ticket sales from marketing campaigns</CardDescription>
-              </CardHeader>
-              <CardContent className="text-3xl font-bold">89</CardContent>
-            </Card>
+        <TabsContent value="audience" className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-medium">Audience Segments</h3>
+            <Button size="sm" variant="outline">
+              <Plus className="h-4 w-4 mr-2" /> Create Segment
+            </Button>
+          </div>
+          
+          <div className="grid md:grid-cols-2 gap-4">
+            {audienceSegments.map(segment => (
+              <Card key={segment.id}>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base">{segment.name}</CardTitle>
+                  <CardDescription>{segment.description}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex justify-between items-center mb-4">
+                    <div className="flex items-center">
+                      <Users className="h-4 w-4 mr-2 text-gray-500" />
+                      <span className="text-sm">{segment.memberCount.toLocaleString()} members</span>
+                    </div>
+                    <Badge variant="outline">{segment.type}</Badge>
+                  </div>
+                  <Button size="sm" className="w-full">Target This Segment</Button>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </TabsContent>
         
-        <TabsContent value="settings" className="space-y-4 mt-4">
-          {campaigns.map(campaign => (
-            <div key={`segment-${campaign.id}`} className="mb-6">
-              <CampaignSegmentPanel
-                campaign={campaign}
-                availableSegments={availableSegments}
-                existingMappings={campaignSegmentMappings[campaign.id || ''] || []}
-                isLoading={isLoadingSegments}
-                onAssignSegments={handleAssignSegments}
-              />
-            </div>
-          ))}
+        <TabsContent value="analytics" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Campaign Performance</CardTitle>
+              <CardDescription>Visualize the performance of your marketing campaigns</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[300px] flex items-center justify-center bg-slate-50 rounded-md">
+                <div className="text-center p-8">
+                  <BarChart3 className="h-10 w-10 mx-auto text-gray-400 mb-2" />
+                  <h3 className="text-lg font-medium">Analytics Dashboard</h3>
+                  <p className="text-sm text-gray-500 max-w-md mx-auto">
+                    Track the performance of your marketing campaigns across different channels and audience segments.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
-
+      
       {/* Create Campaign Dialog */}
       <Dialog open={isCreatingCampaign} onOpenChange={setIsCreatingCampaign}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Create Marketing Campaign</DialogTitle>
             <DialogDescription>
-              Create a new campaign to promote your event.
+              Create a new marketing campaign for your event. Fill out the details below.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <label htmlFor="campaign-name" className="text-sm font-medium">Campaign Name</label>
+          
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="name">Campaign Name</Label>
               <Input
-                id="campaign-name"
-                value={newCampaign.name}
-                onChange={(e) => setNewCampaign({ ...newCampaign, name: e.target.value })}
-                placeholder="Enter campaign name"
+                id="name"
+                value={campaignFormData.name || ''}
+                onChange={(e) => handleCampaignChange('name', e.target.value)}
+                placeholder="Summer Promotion"
               />
             </div>
-            <div className="space-y-2">
-              <label htmlFor="campaign-type" className="text-sm font-medium">Campaign Type</label>
+            
+            <div className="grid gap-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                value={campaignFormData.description || ''}
+                onChange={(e) => handleCampaignChange('description', e.target.value)}
+                placeholder="Describe your campaign purpose and goals"
+                rows={3}
+              />
+            </div>
+            
+            <div className="grid gap-2">
+              <Label htmlFor="campaign-type">Campaign Type</Label>
               <Select
-                value={newCampaign.campaign_type}
-                onValueChange={(value) => setNewCampaign({ ...newCampaign, campaign_type: value })}
+                value={campaignFormData.campaign_type || 'email'}
+                onValueChange={(value) => handleCampaignChange('campaign_type', value)}
               >
-                <SelectTrigger>
+                <SelectTrigger id="campaign-type">
                   <SelectValue placeholder="Select campaign type" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="email">Email</SelectItem>
+                  <SelectItem value="notification">Push Notification</SelectItem>
                   <SelectItem value="social">Social Media</SelectItem>
-                  <SelectItem value="web">Website</SelectItem>
-                  <SelectItem value="push">Push Notification</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="campaign-desc" className="text-sm font-medium">Description</label>
-              <Textarea
-                id="campaign-desc"
-                value={newCampaign.description || ''}
-                onChange={(e) => setNewCampaign({ ...newCampaign, description: e.target.value })}
-                placeholder="Enter campaign description"
-                rows={3}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label htmlFor="start-date" className="text-sm font-medium">Start Date</label>
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-2.5 h-4 w-4 text-gray-500" />
-                  <Input
-                    id="start-date"
-                    type="date"
-                    className="pl-9"
-                    value={newCampaign.start_date || ''}
-                    onChange={(e) => setNewCampaign({ ...newCampaign, start_date: e.target.value })}
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <label htmlFor="end-date" className="text-sm font-medium">End Date</label>
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-2.5 h-4 w-4 text-gray-500" />
-                  <Input
-                    id="end-date"
-                    type="date"
-                    className="pl-9"
-                    value={newCampaign.end_date || ''}
-                    onChange={(e) => setNewCampaign({ ...newCampaign, end_date: e.target.value })}
-                  />
-                </div>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="campaign-budget" className="text-sm font-medium">Budget (optional)</label>
-              <Input
-                id="campaign-budget"
-                type="number"
-                value={newCampaign.budget || ''}
-                onChange={(e) => setNewCampaign({ ...newCampaign, budget: parseFloat(e.target.value) })}
-                placeholder="Enter campaign budget"
-              />
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="campaign-status" className="text-sm font-medium">Status</label>
-              <Select
-                value={newCampaign.status}
-                onValueChange={(value) => {
-                  // Ensure we only set valid status values from the EventMarketingCampaign type
-                  const typedStatus = value as "draft" | "active" | "completed" | "cancelled";
-                  setNewCampaign({ ...newCampaign, status: typedStatus });
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                  <SelectItem value="sms">SMS</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
+          
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCreatingCampaign(false)}>Cancel</Button>
-            <Button onClick={handleCreateCampaign}>Create Campaign</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit Campaign Dialog */}
-      <Dialog open={isEditingCampaign} onOpenChange={setIsEditingCampaign}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>Edit Campaign</DialogTitle>
-            <DialogDescription>
-              Update the campaign details.
-            </DialogDescription>
-          </DialogHeader>
-          {currentCampaign && (
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <label htmlFor="edit-campaign-name" className="text-sm font-medium">Campaign Name</label>
-                <Input
-                  id="edit-campaign-name"
-                  value={currentCampaign.name || ''}
-                  onChange={(e) => setCurrentCampaign({ ...currentCampaign, name: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <label htmlFor="edit-campaign-type" className="text-sm font-medium">Campaign Type</label>
-                <Select
-                  value={currentCampaign.campaign_type || ''}
-                  onValueChange={(value) => setCurrentCampaign({ ...currentCampaign, campaign_type: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select campaign type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="email">Email</SelectItem>
-                    <SelectItem value="social">Social Media</SelectItem>
-                    <SelectItem value="web">Website</SelectItem>
-                    <SelectItem value="push">Push Notification</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <label htmlFor="edit-campaign-desc" className="text-sm font-medium">Description</label>
-                <Textarea
-                  id="edit-campaign-desc"
-                  value={currentCampaign.description || ''}
-                  onChange={(e) => setCurrentCampaign({ ...currentCampaign, description: e.target.value })}
-                  rows={3}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label htmlFor="edit-start-date" className="text-sm font-medium">Start Date</label>
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-2.5 h-4 w-4 text-gray-500" />
-                    <Input
-                      id="edit-start-date"
-                      type="date"
-                      className="pl-9"
-                      value={currentCampaign.start_date || ''}
-                      onChange={(e) => setCurrentCampaign({ ...currentCampaign, start_date: e.target.value })}
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <label htmlFor="edit-end-date" className="text-sm font-medium">End Date</label>
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-2.5 h-4 w-4 text-gray-500" />
-                    <Input
-                      id="edit-end-date"
-                      type="date"
-                      className="pl-9"
-                      value={currentCampaign.end_date || ''}
-                      onChange={(e) => setCurrentCampaign({ ...currentCampaign, end_date: e.target.value })}
-                    />
-                  </div>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <label htmlFor="edit-campaign-budget" className="text-sm font-medium">Budget</label>
-                <Input
-                  id="edit-campaign-budget"
-                  type="number"
-                  value={currentCampaign.budget || ''}
-                  onChange={(e) => setCurrentCampaign({ ...currentCampaign, budget: parseFloat(e.target.value) })}
-                />
-              </div>
-              <div className="space-y-2">
-                <label htmlFor="edit-campaign-status" className="text-sm font-medium">Status</label>
-                <Select
-                  value={currentCampaign.status || ''}
-                  onValueChange={(value) => {
-                    // Ensure we only set valid status values
-                    const typedStatus = value as "draft" | "active" | "completed" | "cancelled";
-                    setCurrentCampaign({ ...currentCampaign, status: typedStatus });
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="draft">Draft</SelectItem>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
-                    <SelectItem value="cancelled">Cancelled</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditingCampaign(false)}>Cancel</Button>
-            <Button onClick={handleUpdateCampaign}>Update Campaign</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Campaign Dialog */}
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-destructive">
-              <AlertCircle className="h-5 w-5" />
-              Delete Campaign
-            </DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete this campaign? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="gap-2 sm:justify-start">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setCampaignToDelete(null);
-                setIsDeleteDialogOpen(false);
-              }}
-            >
+            <Button variant="outline" onClick={() => setIsCreatingCampaign(false)}>
               Cancel
             </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDeleteCampaign}
-            >
-              Delete Campaign
+            <Button onClick={handleCreateCampaign}>
+              Create Campaign
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this marketing campaign and remove all associated data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteCampaign} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
 
-// Use default export to match the import in EventDetailsPage
 export default MarketingTabContent;

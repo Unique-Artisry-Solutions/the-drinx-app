@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { 
@@ -16,13 +17,14 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Pencil, Trash, Users, Calendar, Clock, MapPin, ArrowRight, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 import Layout from '@/components/Layout';
 import { useEventDetails } from '@/hooks/events/useEventDetails';
 import { useEventService } from '@/hooks/events/useEventService';
 import ShareScannerButton from '@/components/events/ShareScannerButton';
 import MarketingTabContent from '@/components/events/MarketingTabContent';
+import { EventStatus } from '@/types/EventTypes';
 
 const EventDetailsPage = () => {
   const { eventId } = useParams<{ eventId: string }>();
@@ -37,7 +39,7 @@ const EventDetailsPage = () => {
     }
   }, [error]);
 
-  const handleStatusUpdate = async (newStatus: string) => {
+  const handleStatusUpdate = async (newStatus: EventStatus) => {
     if (!eventId) return;
     const success = await updateStatus(eventId, newStatus);
     if (success) {
@@ -110,7 +112,7 @@ const EventDetailsPage = () => {
                   <div>
                     <h3 className="text-lg font-semibold mb-2">Actions</h3>
                     <div className="space-y-2">
-                      <ShareScannerButton eventId={eventId} />
+                      <ShareScannerButton eventId={eventId || ''} eventName={event.name} />
                       {event.status !== 'cancelled' && (
                         <Button
                           variant="destructive"
