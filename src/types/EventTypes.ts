@@ -1,38 +1,31 @@
 
-// This is a new file to properly define event types
-export interface EventTicketType {
-  id?: string;
+export type EventStatus = 'draft' | 'published' | 'cancelled' | 'completed';
+
+export interface EventLocation {
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
+  country: string;
+  latitude?: number;
+  longitude?: number;
+}
+
+export interface EventContactInfo {
   name: string;
-  description: string;
-  price: number;
-  quantity: number;
-  sold?: number;
-  available?: number;
+  email: string;
+  phone?: string;
 }
 
-export interface EventAttendee {
-  id?: string;
-  event_id: string;
-  user_id?: string;
-  ticket_type_id?: string;
-  status: 'registered' | 'checked_in' | 'cancelled' | 'no_show';
-  email?: string;
-  name?: string;
-  purchase_date?: string;
-  ticket_code?: string;
-  checked_in_at?: string;
-  notes?: string;
-  custom_fields?: Record<string, any>;
+export interface ABTestConfig {
+  variantA: string;
+  variantB: string;
+  distribution: number; // Percentage for variant A (0-100)
 }
 
-export interface EventCheckIn {
-  id?: string;
-  event_id: string;
-  attendee_id: string;
-  checked_in_by?: string;
-  checked_in_at: string;
-  location?: string;
-  notes?: string;
+export interface EventTargetAudience {
+  segmentId?: string;
+  abTest?: ABTestConfig;
 }
 
 export interface EventMarketingCampaign {
@@ -45,117 +38,81 @@ export interface EventMarketingCampaign {
   start_date?: string;
   end_date?: string;
   budget?: number;
-  metrics?: Record<string, any>;
-  target_audience?: Record<string, any>;
+  metrics?: {
+    impressions?: number;
+    clicks?: number;
+    conversions?: number;
+    emails_sent?: number;
+    open_rate?: number;
+    segments?: Record<string, Record<string, number>>;
+    abTest?: {
+      variantA: Record<string, number>;
+      variantB: Record<string, number>;
+    };
+    [key: string]: any;
+  };
+  target_audience?: EventTargetAudience;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface EventTicketType {
+  id?: string;
+  event_id?: string;
+  name: string;
+  description: string;
+  price: number;
+  quantity: number;
+  created_at?: string;
+}
+
+export interface EventAttendee {
+  id?: string;
+  event_id: string;
+  user_id?: string;
+  ticket_type_id?: string;
+  email?: string;
+  name?: string;
+  status: 'registered' | 'checked_in' | 'cancelled';
+  ticket_code?: string;
+  purchase_date: string;
+  checked_in_at?: string;
+  custom_fields?: Record<string, any>;
+  notes?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface EventCustomField {
   id?: string;
   event_id: string;
   field_name: string;
-  field_type: 'text' | 'number' | 'boolean' | 'date' | 'select' | 'multiselect';
+  field_type: string;
   field_value?: any;
-  is_required: boolean;
-  display_order: number;
+  is_required?: boolean;
+  display_order?: number;
+  created_at?: string;
+  updated_at?: string;
 }
 
-export interface EventAnalytics {
+export interface Event {
   id?: string;
-  event_id: string;
-  date: string;
-  page_views: number;
-  ticket_views: number;
-  ticket_sales: number;
-  revenue: number;
-  social_shares: number;
-  referral_sources?: Record<string, any>;
-}
-
-export interface EventStatistics {
-  event_id: string;
-  event_name: string;
-  promoter_id: string;
-  date: string;
-  status: string;
-  total_attendees: number;
-  checked_in_attendees: number;
-  cancelled_attendees: number;
-  total_revenue: number;
-  marketing_campaign_count: number;
-}
-
-export interface EventAttendees {
-  registered: number;
-  capacity: number;
-  checkedIn: number;
-}
-
-export interface EventRevenue {
-  total: number;
-  ticketSales: number;
-  additionalSales: number;
-}
-
-export interface EventVenue {
-  id: string;
   name: string;
-  address: string;
-}
-
-export interface EventNotificationScheduleInput {
-  id: string; 
-  title: string;
-  content: string;
-  priority: 'low' | 'medium' | 'high' | 'urgent';
-  scheduledFor: string;
-  locationBased?: boolean;
-  coordinates?: { latitude: number; longitude: number };
-  targetRadius?: number;
-}
-
-export interface EventFormData {
-  id?: string; // Added id property to fix the TypeScript errors
-  name: string;
-  description: string;
-  date: string;
-  time: string;
-  venueId?: string;
-  imageUrl?: string;
-  promotionalMaterials?: string[];
-  ticketTypes: Omit<EventTicketType, 'id' | 'sold' | 'available'>[];
-  notificationSchedules?: EventNotificationScheduleInput[];
-  capacity?: number;
-  eventType?: string;
-  locationDetails?: Record<string, any>;
-  contactInfo?: Record<string, any>;
-  customSettings?: Record<string, any>;
-  isPublic?: boolean;
-  eventUrl?: string;
-}
-
-export interface EventType {
-  id: string;
-  name: string;
-  description: string;
+  description?: string;
   date: string;
   time: string;
   venue_id?: string;
-  venue: EventVenue;
   image_url?: string;
   promotional_materials?: string[];
-  status: 'draft' | 'published' | 'cancelled' | 'completed';
-  ticketTypes: EventTicketType[];
-  attendees: EventAttendees;
-  revenue: EventRevenue;
-  distance?: number;
-  createdAt: string;
-  updatedAt: string;
-  createdBy: string;
+  status?: EventStatus;
+  created_by: string;
+  created_at?: string;
+  updated_at?: string;
   capacity?: number;
-  eventType?: string;
-  locationDetails?: Record<string, any>;
-  contactInfo?: Record<string, any>;
-  customSettings?: Record<string, any>;
-  isPublic?: boolean;
-  eventUrl?: string;
+  event_type?: string;
+  event_url?: string;
+  location_details?: EventLocation;
+  contact_info?: EventContactInfo;
+  custom_settings?: Record<string, any>;
+  is_public?: boolean;
 }

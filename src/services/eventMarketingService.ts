@@ -69,7 +69,9 @@ export const deleteMarketingCampaign = async (id: string): Promise<void> => {
 export const trackCampaignMetric = async (
   campaignId: string, 
   metricName: string, 
-  value: number = 1
+  value: number = 1,
+  segmentId?: string,
+  abTestVariant?: 'A' | 'B'
 ): Promise<void> => {
   try {
     // Get current metrics
@@ -95,6 +97,37 @@ export const trackCampaignMetric = async (
       [metricName]: updatedMetricValue
     });
 
+    // If segment targeting is used, track segment-specific metrics
+    if (segmentId) {
+      const segmentMetrics = currentMetrics.segments || {};
+      const currentSegmentMetrics = segmentMetrics[segmentId] || {};
+      
+      // Update segment metrics
+      updatedMetrics.segments = {
+        ...segmentMetrics,
+        [segmentId]: {
+          ...currentSegmentMetrics,
+          [metricName]: (currentSegmentMetrics[metricName] || 0) + value
+        }
+      };
+    }
+    
+    // If A/B testing is used, track variant-specific metrics
+    if (abTestVariant) {
+      const abTestMetrics = currentMetrics.abTest || { variantA: {}, variantB: {} };
+      const variantKey = abTestVariant === 'A' ? 'variantA' : 'variantB';
+      const currentVariantMetrics = abTestMetrics[variantKey] || {};
+      
+      // Update A/B test metrics
+      updatedMetrics.abTest = {
+        ...abTestMetrics,
+        [variantKey]: {
+          ...currentVariantMetrics,
+          [metricName]: (currentVariantMetrics[metricName] || 0) + value
+        }
+      };
+    }
+
     // Save updated metrics
     const { error: updateError } = await supabase
       .from('event_marketing_campaigns')
@@ -113,8 +146,111 @@ export const trackCampaignMetric = async (
 export const generateCampaignLink = (
   eventId: string, 
   campaignId: string, 
-  medium: string = 'website'
+  medium: string = 'website',
+  segmentId?: string,
+  abTestVariant?: 'A' | 'B'
 ): string => {
   const baseUrl = window.location.origin;
-  return `${baseUrl}/events/${eventId}?utm_source=event_app&utm_medium=${medium}&utm_campaign=${campaignId}`;
+  let url = `${baseUrl}/events/${eventId}?utm_source=event_app&utm_medium=${medium}&utm_campaign=${campaignId}`;
+  
+  // Add segment ID if provided
+  if (segmentId) {
+    url += `&utm_segment=${segmentId}`;
+  }
+  
+  // Add A/B test variant if provided
+  if (abTestVariant) {
+    url += `&utm_variant=${abTestVariant.toLowerCase()}`;
+  }
+  
+  return url;
+};
+
+export const getSegmentTargetedContent = (
+  campaign: EventMarketingCampaign
+): { content: string, isVariantA?: boolean } => {
+  // Check if campaign has A/B testing configured
+  const abTest = campaign.target_audience?.abTest;
+  
+  if (abTest?.variantA && abTest?.variantB) {
+    // Determine which variant to show based on distribution
+    const distribution = abTest.distribution || 50;
+    const random = Math.random() * 100;
+    const isVariantA = random <= distribution;
+    
+    // Return the appropriate variant
+    return {
+      content: isVariantA ? abTest.variantA : abTest.variantB,
+      isVariantA
+    };
+  }
+  
+  // If no A/B test, return the campaign description
+  return { content: campaign.description || '' };
+};
+
+export const getCampaignABTestResults = (campaign: EventMarketingCampaign) => {
+  const metrics = campaign.metrics || {};
+  const abTestMetrics = metrics.abTest || { variantA: {}, variantB: {} };
+  
+  const variantA = abTestMetrics.variantA || {};
+  const variantB = abTestMetrics.variantB || {};
+  
+  // Calculate conversion rates
+  const impressionsA = variantA.impressions || 0;
+  const conversionsA = variantA.conversions || 0;
+  const conversionRateA = impressionsA > 0 ? (conversionsA / impressionsA) * 100 : 0;
+  
+  const impressionsB = variantB.impressions || 0;
+  const conversionsB = variantB.conversions || 0;
+  const conversionRateB = impressionsB > 0 ? (conversionsB / impressionsB) * 100 : 0;
+  
+  // Determine winner
+  let winner = null;
+  let improvement = 0;
+  
+  if (impressionsA > 10 && impressionsB > 10) {
+    if (conversionRateA > conversionRateB) {
+      winner = 'A';
+      improvement = conversionRateB > 0 ? ((conversionRateA - conversionRateB) / conversionRateB) * 100 : 100;
+    } else if (conversionRateB > conversionRateA) {
+      winner = 'B';
+      improvement = conversionRateA > 0 ? ((conversionRateB - conversionRateA) / conversionRateA) * 100 : 100;
+    }
+  }
+  
+  return {
+    variantA: {
+      impressions: impressionsA,
+      conversions: conversionsA,
+      conversionRate: conversionRateA
+    },
+    variantB: {
+      impressions: impressionsB,
+      conversions: conversionsB,
+      conversionRate: conversionRateB
+    },
+    winner,
+    improvement: improvement > 0 ? improvement : 0,
+    significantResult: (impressionsA > 50 && impressionsB > 50) // Basic significance check
+  };
+};
+
+export const createSegmentBasedNotification = async (
+  eventId: string, 
+  campaignId: string, 
+  segmentId: string, 
+  title: string, 
+  content: string
+): Promise<void> => {
+  try {
+    // This would integrate with your notification system
+    // For now, we'll log that this would send a notification to users in the segment
+    console.log(`Notification for segment ${segmentId} created: ${title}`);
+    
+    // Track this in the campaign metrics
+    await trackCampaignMetric(campaignId, 'notifications_sent', 1, segmentId);
+  } catch (err: any) {
+    console.error('Failed to create segment notification:', err);
+  }
 };

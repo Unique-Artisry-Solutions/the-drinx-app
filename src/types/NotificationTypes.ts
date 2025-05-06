@@ -1,4 +1,3 @@
-
 export interface NotificationMetadata {
   priority: 'low' | 'medium' | 'high' | 'urgent';
   sound: boolean;
@@ -12,6 +11,12 @@ export interface NotificationMetadata {
     longitude: number;
   };
   targetRadius?: number;
+  segmentId?: string;
+  abTest?: {
+    variant: 'A' | 'B';
+    content: string;
+  };
+  campaignId?: string;
 }
 
 export interface NotificationDeliveryStatus {
@@ -141,6 +146,7 @@ export interface NotificationFormData {
       start: string;
       end: string;
     };
+    segments?: Record<string, boolean>; // Which segments should receive this notification type
   }>;
 }
 
@@ -159,4 +165,11 @@ export interface EventNotificationSchedule {
   target_radius?: number;
   created_at: string;
   updated_at: string;
+  segment_id?: string;
+  ab_test_enabled?: boolean;
+  content_variants?: {
+    a: string;
+    b: string;
+    distribution: number;
+  };
 }
