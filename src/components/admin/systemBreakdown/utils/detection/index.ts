@@ -86,6 +86,14 @@ export {
   isPromoterNotificationFeature
 } from './promoterDetection';
 
+// Export audience relationship functions
+export {
+  isAudienceRelationshipFeature,
+  isAudienceInfluencerFeature,
+  isCrossSegmentEngagementFeature,
+  isAudienceVisualizationFeature
+} from './audienceRelationshipDetection';
+
 // Re-export the core detection functions with their original names
 export { isIngredientPairingFeature, isMocktailSuggestionFeature, isMocktailTrendsFeature, isRecipeFeature } from './mocktailDetection';
 export { isPromotionFeature } from './promotionDetection';
@@ -95,3 +103,4 @@ export {
   isNotificationFeature, isRewardProgramFeature, isSocialFeature, isThemeFeature, isMapFeature,
   isSignatureFeature, isBarCrawlFeature
 } from './venueDetection';
+

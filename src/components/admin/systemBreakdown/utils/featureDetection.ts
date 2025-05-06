@@ -90,7 +90,7 @@ import {
 } from './detection/coreDetection';
 
 import {
-  isAudienceRelationshipFeature,
+  isAudienceRelationshipFeature as importedAudienceRelationshipFeature,
   isAudienceInfluencerFeature,
   isCrossSegmentEngagementFeature,
   isAudienceVisualizationFeature,
@@ -98,34 +98,11 @@ import {
 
 /**
  * Detects if a feature is related to audience relationship mapping
+ * @deprecated Use imported function from audienceRelationshipDetection.ts instead
  */
 export function isAudienceRelationshipFeature(feature: any): boolean {
-  if (!feature) return false;
-  
-  const name = (feature.name || '').toLowerCase();
-  const description = (feature.description || '').toLowerCase();
-  
-  const relationshipKeywords = [
-    'relationship', 'mapping', 'network', 'connection', 
-    'influence', 'influencer', 'link', 'relation', 
-    'connection strength', 'user graph', 'social network'
-  ];
-  
-  const audienceKeywords = [
-    'audience', 'segment', 'user group', 'customer', 
-    'attendee', 'demographic', 'targeting'
-  ];
-  
-  // Check if both relationship and audience keywords are present
-  const hasRelationshipKeyword = relationshipKeywords.some(keyword => 
-    name.includes(keyword) || description.includes(keyword)
-  );
-  
-  const hasAudienceKeyword = audienceKeywords.some(keyword => 
-    name.includes(keyword) || description.includes(keyword)
-  );
-  
-  return hasRelationshipKeyword && hasAudienceKeyword;
+  // Call the imported function to maintain consistent behavior
+  return importedAudienceRelationshipFeature(feature);
 }
 
 // Export all detection functions
@@ -181,3 +158,4 @@ export {
   isCrossSegmentEngagementFeature,
   isAudienceVisualizationFeature
 };
+

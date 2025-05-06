@@ -47,7 +47,10 @@ import {
   isVisitTrackingFeature,
   isEstablishmentManagementFeature,
   isBarCrawlFeature,
-  isAudienceRelationshipFeature
+  isAudienceRelationshipFeature,
+  isAudienceInfluencerFeature,
+  isCrossSegmentEngagementFeature,
+  isAudienceVisualizationFeature
 } from './featureDetection';
 import { isTaskCompleted, parseTasks } from './taskDetection';
 import { 
@@ -124,6 +127,9 @@ export {
   isEstablishmentManagementFeature,
   isBarCrawlFeature,
   isAudienceRelationshipFeature,
+  isAudienceInfluencerFeature,
+  isCrossSegmentEngagementFeature,
+  isAudienceVisualizationFeature,
   isTaskCompleted,
   parseTasks,
   mapFeaturesToReleaseFeatures,
@@ -146,3 +152,4 @@ export { determineShowcaseCategory } from './featureShowcase/categoryDetection';
 export { generateMarketingPoints } from './featureShowcase/marketingUtils';
 export { determineFeatureIcon } from './featureShowcase/iconSelection';
 export { generateMockImplementationStats } from './featureShowcase/mockStats';
+
