@@ -45,6 +45,7 @@ export {
   isMapFeature as isMapDetectionFeature
 } from './mapDetection';
 
+// Export from aiDetection.ts
 export {
   isAIFeature as isAIDetectionFeature
 } from './aiDetection';
@@ -98,10 +99,7 @@ export {
 // Export UX detection functions
 export {
   isSystemConfigurationFeature,
-  isAccessibilityFeature,
-  isAIFeature,
-  isRewardProgramFeature,
-  isThemeFeature
+  isAccessibilityFeature
 } from './uxDetection';
 
 // Re-export the core detection functions with their original names
@@ -109,7 +107,12 @@ export { isIngredientPairingFeature, isMocktailSuggestionFeature, isMocktailTren
 export { isPromotionFeature } from './promotionDetection';
 export { isUserManagementFeature } from './userContentDetection';
 export { 
-  isAnalyticsFeature, isDashboardFeature, isSystemBreakdownFeature, isAIFeature, isExplorationFeature,
-  isNotificationFeature, isRewardProgramFeature, isSocialFeature, isThemeFeature, isMapFeature,
+  isAnalyticsFeature, isDashboardFeature, isSystemBreakdownFeature, isExplorationFeature,
+  isNotificationFeature, isSocialFeature, isMapFeature,
   isSignatureFeature, isBarCrawlFeature
 } from './venueDetection';
+
+// Export these functions from their original source files to avoid duplicates
+export { isAIFeature } from './aiDetection';
+export { isRewardProgramFeature } from './engagementDetection';
+export { isThemeFeature } from './themeDetection';

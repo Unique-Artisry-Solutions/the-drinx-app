@@ -3,6 +3,7 @@ import { FeatureItem } from '../../types';
 import { isSwigCircuitFeature, isBarCrawlFeature } from './circuitDetection';
 import { isRewardProgramFeature } from './engagementDetection';
 import { isPromotionFeature } from './promotionDetection';
+import { isAIFeature } from './aiDetection';
 
 /**
  * Checks if a feature is a signature feature of the system

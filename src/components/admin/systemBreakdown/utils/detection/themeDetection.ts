@@ -11,9 +11,9 @@ export const isThemeFeature = (feature: FeatureItem): boolean => {
 };
 
 /**
- * Detects if a feature is specifically about theme customization
+ * Detects if a feature is specifically about theme configuration
  */
-export const isThemeCustomizationFeature = (feature: FeatureItem): boolean => {
+export const isThemeConfigurationFeature = (feature: FeatureItem): boolean => {
   return matchesAnyKeyword(feature, ['theme customization', 'customize theme', 'theme editor', 'color picker']) ||
          (isThemeFeature(feature) && matchesAnyKeyword(feature, ['custom', 'create', 'editor', 'picker']));
 };
