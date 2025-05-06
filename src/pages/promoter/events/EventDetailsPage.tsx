@@ -1,396 +1,386 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
-import Layout from '@/components/Layout';
+
+import React, { useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { 
+  Tabs, 
+  TabsContent, 
+  TabsList, 
+  TabsTrigger 
+} from '@/components/ui/tabs';
+import { 
+  Calendar, 
+  MapPin, 
+  Users, 
+  Ticket, 
+  Share, 
+  BarChart3, 
+  MessageCircle,
+  ChevronLeft,
+  Edit,
+  Check,
+  X,
+  AlertTriangle
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
+import Layout from '@/components/Layout';
 import { useEventDetails } from '@/hooks/events/useEventDetails';
-import { useEventStatus } from '@/hooks/events/useEventStatus';
-import { AlertCircle, Calendar, Clock, MapPin, Ticket, Users, Check, Globe, X, AlertTriangle, Loader2 } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import QRCodeScanner from '@/components/events/QrCodeScanner';
-import AttendeeDetailModal from '@/components/events/AttendeeDetailModal';
-import AnalyticsDashboard from '@/components/events/AnalyticsDashboard';
-import TicketTypeModal from '@/components/events/TicketTypeModal';
-import IntegrationsPanel from '@/components/events/IntegrationsPanel';
-import SocialSharingPanel from '@/components/events/SocialSharingPanel';
-import { useEventAttendees } from '@/hooks/events/useEventAttendees';
-import { checkInAttendee } from '@/services/eventAttendeesService';
-import { toAttendeeStatus, safeJsonToRecord } from '@/utils/typeGuards';
-import { MarketingTabContent } from '@/components/events/MarketingTabContent';
+import { useEventService } from '@/hooks/events/useEventService';
 import ShareScannerButton from '@/components/events/ShareScannerButton';
+import { MarketingTabContent } from '@/components/events/MarketingTabContent';
 
 const EventDetailsPage = () => {
-  const { eventId } = useParams<{ eventId: string }>();
+  const { id } = useParams<{ id: string }>();
+  const eventId = id || '';
   const navigate = useNavigate();
-  const { event, isLoading, error } = useEventDetails(eventId || '');
-  const { updateEventStatus } = useEventStatus(eventId || '');
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState('details');
-  const [showScanner, setShowScanner] = useState(false);
-  const [selectedAttendee, setSelectedAttendee] = useState(null);
-  const [showAttendeeModal, setShowAttendeeModal] = useState(false);
-  const [showTicketTypeModal, setShowTicketTypeModal] = useState(false);
-  const [isOnlineEvent, setIsOnlineEvent] = useState(false);
-  const [showConfirmation, setShowConfirmation] = useState(false);
-  const [statusChange, setStatusChange] = useState('');
-
-  const { 
-    attendees, 
-    isLoading: isLoadingAttendees, 
-    error: attendeesError,
-    refresh: refreshAttendees
-  } = useEventAttendees(eventId || '');
-
-  useEffect(() => {
-    if (event) {
-      setIsOnlineEvent(event.event_type === 'online');
-    }
-  }, [event]);
-
-  const handleStatusChange = async (status: string) => {
-    setStatusChange(status);
-    setShowConfirmation(true);
-  };
-
-  const confirmStatusChange = async () => {
+  const [activeTab, setActiveTab] = useState('overview');
+  
+  const { event, isLoading, error } = useEventDetails(eventId);
+  const { updateStatus } = useEventService();
+  
+  const [isChangingStatus, setIsChangingStatus] = useState(false);
+  const [isScannerDialogOpen, setIsScannerDialogOpen] = useState(false);
+  const [isTicketTypeDialogOpen, setIsTicketTypeDialogOpen] = useState(false);
+  const [selectedAttendee, setSelectedAttendee] = useState<any>(null);
+  const [isAttendeeDetailOpen, setIsAttendeeDetailOpen] = useState(false);
+  
+  const handleStatusChange = async (newStatus: 'draft' | 'published' | 'cancelled' | 'completed') => {
     if (!eventId) return;
-
+    
+    setIsChangingStatus(true);
     try {
-      await updateEventStatus(statusChange);
+      await updateStatus(eventId, newStatus);
+      
       toast({
-        title: "Event status updated",
-        description: `Event status changed to ${statusChange}.`,
+        title: "Status Updated",
+        description: `Event status has been updated to ${newStatus}`,
       });
-    } catch (error: any) {
+    } catch (error) {
       toast({
-        title: "Error updating event status",
-        description: error.message,
-        variant: "destructive",
+        title: "Update Failed",
+        description: "Could not update event status",
+        variant: "destructive"
       });
     } finally {
-      setShowConfirmation(false);
-      setStatusChange('');
+      setIsChangingStatus(false);
     }
   };
-
-  const handleAttendeeCheckIn = async (attendeeId: string) => {
-    try {
-      await checkInAttendee(attendeeId);
-      refreshAttendees();
-      toast({
-        title: "Attendee checked in",
-        description: "Attendee has been successfully checked in.",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error checking in attendee",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
+  
+  const handleEditEvent = () => {
+    navigate(`/promoter/events/create?edit=${eventId}`);
   };
-
-  const handleAttendeeClick = (attendee: any) => {
-    setSelectedAttendee(attendee);
-    setShowAttendeeModal(true);
-  };
-
-  const renderStatusBadge = () => {
+  
+  const getStatusBadge = () => {
     if (!event) return null;
-
-    let badgeVariant = "default";
-    if (event.status === "draft") badgeVariant = "outline";
-    if (event.status === "cancelled") badgeVariant = "destructive";
-    if (event.status === "live") badgeVariant = "success";
-    if (event.status === "past") badgeVariant = "secondary";
-
+    
+    let variant: "default" | "destructive" | "outline" | "secondary" | "success" | "warning";
+    
+    switch (event.status) {
+      case 'published':
+        variant = "success";
+        break;
+      case 'draft':
+        variant = "secondary";
+        break;
+      case 'cancelled':
+        variant = "destructive";
+        break;
+      case 'completed':
+        variant = "outline";
+        break;
+      default:
+        variant = "outline";
+    }
+    
+    const statusText = event.status === 'published' ? 'Published' : 
+                       event.status === 'draft' ? 'Draft' :
+                       event.status === 'cancelled' ? 'Cancelled' :
+                       event.status === 'completed' ? 'Completed' : 'Unknown';
+    
     return (
-      <Badge variant={badgeVariant}>
-        {event.status}
+      <Badge variant={variant} className="ml-2">
+        {statusText}
       </Badge>
     );
   };
-
-  const renderContent = () => {
-    if (isLoading) {
-      return (
-        <div className="flex justify-center items-center py-20">
-          <Loader2 className="h-10 w-10 animate-spin text-primary" />
-          <span className="ml-4 text-lg">Loading event details...</span>
-        </div>
-      );
-    }
-
-    if (error) {
-      return (
-        <div className="flex flex-col items-center py-20">
-          <AlertCircle className="h-12 w-12 text-destructive mb-4" />
-          <h3 className="text-xl font-semibold mb-2">Error Loading Event</h3>
-          <p className="text-gray-600 mb-6">{error}</p>
-          <Link to="/promoter/events">
-            <Button variant="outline">View All Events</Button>
-          </Link>
-        </div>
-      );
-    }
-
-    if (!event) {
-      return (
-        <div className="flex flex-col items-center py-20">
-          <AlertCircle className="h-12 w-12 text-warning mb-4" />
-          <h3 className="text-xl font-semibold mb-2">Event Not Found</h3>
-          <p className="text-gray-600 mb-6">The event you're looking for doesn't exist or has been removed.</p>
-          <Link to="/promoter/events">
-            <Button variant="outline">View All Events</Button>
-          </Link>
-        </div>
-      );
-    }
-
+  
+  if (isLoading) {
     return (
-      <>
-        <div className="md:flex justify-between items-start mb-6">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">{event.name}</h1>
-            <div className="flex items-center gap-2">
-              {renderStatusBadge()}
-              {event.is_public ? (
-                <Badge variant="success"><Globe className="h-3 w-3 mr-1" /> Public</Badge>
-              ) : (
-                <Badge variant="secondary"><X className="h-3 w-3 mr-1" /> Private</Badge>
-              )}
+      <Layout>
+        <div className="container max-w-7xl mx-auto py-8 px-4">
+          <div className="animate-pulse">
+            <div className="h-12 w-3/5 bg-slate-200 rounded mb-4"></div>
+            <div className="h-60 bg-slate-200 rounded mb-6"></div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="h-40 bg-slate-200 rounded"></div>
+              <div className="h-40 bg-slate-200 rounded"></div>
+              <div className="h-40 bg-slate-200 rounded"></div>
             </div>
           </div>
-          <div className="space-x-2 mt-4 md:mt-0">
-            <Button onClick={() => navigate(`/promoter/events/edit/${eventId}`)}>
-              Edit Event
-            </Button>
-            <Button variant="destructive" onClick={() => handleStatusChange('cancelled')}>
-              Cancel Event
+        </div>
+      </Layout>
+    );
+  }
+  
+  if (error || !event) {
+    return (
+      <Layout>
+        <div className="container max-w-7xl mx-auto py-8 px-4">
+          <div className="flex flex-col items-center justify-center py-12">
+            <AlertTriangle className="h-12 w-12 text-amber-500 mb-4" />
+            <h2 className="text-2xl font-bold mb-2">Event Not Found</h2>
+            <p className="text-gray-500 mb-6">
+              {error || "The event you're looking for doesn't exist or has been removed."}
+            </p>
+            <Button onClick={() => navigate('/promoter/events')}>
+              <ChevronLeft className="mr-2 h-4 w-4" />
+              Back to Events
             </Button>
           </div>
         </div>
-
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="details">Details</TabsTrigger>
-            <TabsTrigger value="attendees">Attendees</TabsTrigger>
-            <TabsTrigger value="analytics">Analytics</TabsTrigger>
-            <TabsTrigger value="marketing">Marketing</TabsTrigger>
-            <TabsTrigger value="integrations">Integrations</TabsTrigger>
-            <TabsTrigger value="social">Social Sharing</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="details" className="space-y-4">
-            <Card>
-              <CardContent className="space-y-4">
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <h2 className="text-xl font-semibold mb-4">Event Information</h2>
-                    <div className="flex items-start gap-3 mb-3">
-                      <Calendar className="h-5 w-5 text-gray-500 mt-1" />
-                      <div>
-                        <h4 className="font-medium">Date</h4>
-                        <p className="text-gray-700">{format(parseISO(event.date), 'MMMM dd, yyyy')}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-3 mb-3">
-                      <Clock className="h-5 w-5 text-gray-500 mt-1" />
-                      <div>
-                        <h4 className="font-medium">Time</h4>
-                        <p className="text-gray-700">{event.time}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-3 mb-3">
-                      <MapPin className="h-5 w-5 text-gray-500 mt-1" />
-                      <div>
-                        <h4 className="font-medium">Location</h4>
-                        <p className="text-gray-700">{event.venue?.name || 'TBD'}</p>
-                        <p className="text-gray-500 text-sm">{event.venue?.address || ''}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-3 mb-3">
-                      <Users className="h-5 w-5 text-gray-500 mt-1" />
-                      <div>
-                        <h4 className="font-medium">Attendees</h4>
-                        <p className="text-gray-700">{event.attendees?.registered || 0} registered</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h2 className="text-xl font-semibold mb-4">Description</h2>
-                    <p className="text-gray-700 whitespace-pre-line">{event.description}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent>
-                <h2 className="text-xl font-semibold mb-4">Tickets</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {event.ticketTypes && event.ticketTypes.length > 0 ? (
-                    event.ticketTypes.map((ticket) => (
-                      <div key={ticket.id} className="flex items-center justify-between p-3 border rounded-md">
-                        <div>
-                          <h4 className="font-medium">{ticket.name}</h4>
-                          <p className="text-sm text-gray-500">{ticket.description}</p>
-                        </div>
-                        <div>
-                          <Badge variant="secondary">{ticket.price > 0 ? `$${ticket.price}` : 'Free'}</Badge>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-gray-500 italic">No tickets available for this event.</div>
-                  )}
-                </div>
-                <Button onClick={() => setShowTicketTypeModal(true)} className="mt-4">
-                  <Ticket className="h-4 w-4 mr-2" />
-                  Manage Tickets
-                </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="attendees" className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h2 className="text-xl font-semibold">Attendees</h2>
-              <div className="flex space-x-2">
-                <ShareScannerButton eventId={eventId} />
-                <Button onClick={() => setShowScanner(true)}>
-                  <Check className="h-4 w-4 mr-2" />
-                  Check-In Attendees
-                </Button>
-              </div>
-            </div>
-
-            {isLoadingAttendees ? (
-              <div className="flex justify-center items-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-primary mr-2" />
-                <span>Loading attendees...</span>
-              </div>
-            ) : attendeesError ? (
-              <div className="text-red-500">{attendeesError}</div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {attendees?.map(attendee => (
-                  <Card key={attendee.id} className="cursor-pointer" onClick={() => handleAttendeeClick(attendee)}>
-                    <CardContent className="flex items-center justify-between">
-                      <div>
-                        <h3 className="font-medium">{attendee.name}</h3>
-                        <p className="text-sm text-gray-500">{attendee.email}</p>
-                      </div>
-                      {attendee.status === 'checked_in' ? (
-                        <Badge variant="success">Checked In</Badge>
-                      ) : (
-                        <Button size="sm" onClick={(e) => {
-                          e.stopPropagation();
-                          handleAttendeeCheckIn(attendee.id);
-                        }}>Check In</Button>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="analytics">
-            <AnalyticsDashboard eventId={eventId} />
-          </TabsContent>
-
-          <TabsContent value="marketing">
-            <MarketingTabContent eventId={eventId} eventName={event.name} />
-          </TabsContent>
-
-          <TabsContent value="integrations">
-            <IntegrationsPanel eventId={eventId} />
-          </TabsContent>
-
-          <TabsContent value="social">
-            <SocialSharingPanel eventId={eventId} eventName={event.name} eventUrl={event.event_url || ''} />
-          </TabsContent>
-        </Tabs>
-      </>
+      </Layout>
     );
-  };
-
+  }
+  
   return (
     <Layout>
-      <div className="container mx-auto py-10">
-        {renderContent()}
-
-        {/* QR Code Scanner Dialog */}
-        <Dialog open={showScanner} onOpenChange={setShowScanner}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Scan Attendee QR Code</DialogTitle>
-              <DialogDescription>
-                Point your camera at the attendee's QR code to check them in.
-              </DialogDescription>
-            </DialogHeader>
-            <QRCodeScanner 
-              onResult={(result) => {
-                handleAttendeeCheckIn(result);
-                setShowScanner(false);
-              }}
-              onError={(error) => {
-                console.error(error);
-                toast({
-                  title: "Error scanning QR code",
-                  description: error.message,
-                  variant: "destructive",
-                });
-                setShowScanner(false);
-              }}
+      <div className="container max-w-7xl mx-auto py-8 px-4">
+        {/* Header */}
+        <div className="flex justify-between items-start mb-6">
+          <div className="flex flex-col">
+            <div className="flex items-center mb-1">
+              <Button 
+                variant="ghost" 
+                className="pl-0" 
+                onClick={() => navigate('/promoter/events')}
+              >
+                <ChevronLeft className="mr-1 h-4 w-4" />
+                Back
+              </Button>
+            </div>
+            <div className="flex items-center">
+              <h1 className="text-3xl font-bold">{event.name}</h1>
+              {getStatusBadge()}
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleEditEvent}>
+              <Edit className="mr-2 h-4 w-4" />
+              Edit
+            </Button>
+            
+            {event.status === 'draft' && (
+              <Button 
+                onClick={() => handleStatusChange('published')} 
+                disabled={isChangingStatus}
+              >
+                <Check className="mr-2 h-4 w-4" />
+                Publish Event
+              </Button>
+            )}
+            
+            {event.status === 'published' && (
+              <Button 
+                variant="destructive" 
+                onClick={() => handleStatusChange('cancelled')} 
+                disabled={isChangingStatus}
+              >
+                <X className="mr-2 h-4 w-4" />
+                Cancel Event
+              </Button>
+            )}
+          </div>
+        </div>
+        
+        {/* Event Banner */}
+        <div 
+          className="w-full h-60 rounded-lg bg-cover bg-center mb-8 relative"
+          style={{ 
+            backgroundImage: event.image_url ? `url(${event.image_url})` : 'url(/featuresBG.jpg)'
+          }}
+        >
+          <div className="absolute inset-0 bg-black bg-opacity-30 rounded-lg"></div>
+          <div className="absolute bottom-0 left-0 p-6 text-white">
+            <div className="flex items-center mb-2">
+              <Calendar className="h-5 w-5 mr-2" />
+              <span>{event.date} at {event.time}</span>
+            </div>
+            <div className="flex items-center">
+              <MapPin className="h-5 w-5 mr-2" />
+              <span>{event.venue?.name || 'Location TBD'}</span>
+            </div>
+          </div>
+          <div className="absolute bottom-6 right-6 flex gap-2">
+            <ShareScannerButton 
+              eventId={event.id!} 
+              eventName={event.name}
             />
-            <DialogFooter>
-              <Button type="button" variant="secondary" onClick={() => setShowScanner(false)}>
-                Cancel
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* Attendee Detail Modal */}
-        <AttendeeDetailModal 
-          open={showAttendeeModal}
-          onOpenChange={setShowAttendeeModal}
-          attendee={selectedAttendee}
-        />
-
-        {/* Ticket Type Modal */}
-        <TicketTypeModal 
-          open={showTicketTypeModal}
-          onOpenChange={setShowTicketTypeModal}
-          eventId={eventId}
-        />
-
-        {/* Status Change Confirmation Dialog */}
-        <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Confirm Status Change</DialogTitle>
-              <DialogDescription>
-                Are you sure you want to change the event status to {statusChange}?
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button type="button" variant="secondary" onClick={() => setShowConfirmation(false)}>
-                Cancel
-              </Button>
-              <Button type="button" onClick={confirmStatusChange}>
-                Confirm
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+          </div>
+        </div>
+        
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="w-full max-w-3xl mb-6">
+            <TabsTrigger value="overview" className="flex-1">
+              <Users className="h-4 w-4 mr-2" />
+              Overview
+            </TabsTrigger>
+            <TabsTrigger value="attendees" className="flex-1">
+              <Ticket className="h-4 w-4 mr-2" />
+              Attendees
+            </TabsTrigger>
+            <TabsTrigger value="marketing" className="flex-1">
+              <Share className="h-4 w-4 mr-2" />
+              Marketing
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="flex-1">
+              <BarChart3 className="h-4 w-4 mr-2" />
+              Analytics
+            </TabsTrigger>
+            <TabsTrigger value="messages" className="flex-1">
+              <MessageCircle className="h-4 w-4 mr-2" />
+              Messages
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="overview" className="mt-0">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Card className="md:col-span-2">
+                <CardHeader>
+                  <CardTitle>Event Details</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="font-semibold text-lg mb-2">Description</h3>
+                      <p className="text-gray-600 whitespace-pre-line">
+                        {event.description || "No description provided for this event."}
+                      </p>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                      <div>
+                        <h3 className="font-semibold text-lg mb-2">Date & Time</h3>
+                        <div className="flex items-center mb-2">
+                          <Calendar className="h-4 w-4 mr-2 text-gray-500" />
+                          <span>{event.date}</span>
+                        </div>
+                        <div className="flex items-center">
+                          <div className="h-4 w-4 mr-2" /> {/* Spacer for alignment */}
+                          <span>{event.time}</span>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <h3 className="font-semibold text-lg mb-2">Location</h3>
+                        <div className="flex items-start">
+                          <MapPin className="h-4 w-4 mr-2 mt-1 text-gray-500" />
+                          <div>
+                            <div>{event.venue?.name || 'Location TBD'}</div>
+                            <div className="text-sm text-gray-500">
+                              {event.venue?.address || ''}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <h3 className="font-semibold text-lg mb-2">Capacity</h3>
+                      <div className="flex items-center">
+                        <Users className="h-4 w-4 mr-2 text-gray-500" />
+                        <span>
+                          {event.capacity ? `${event.capacity} attendees maximum` : 'No capacity limit set'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle>Quick Stats</CardTitle>
+                  <CardDescription>
+                    Key metrics for your event
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    <div>
+                      <p className="text-sm font-medium text-gray-500 mb-1">Registrations</p>
+                      <div className="flex items-baseline">
+                        <span className="text-3xl font-bold">
+                          {event.attendees?.registered || 0}
+                        </span>
+                        {event.capacity ? (
+                          <span className="ml-2 text-sm text-gray-500">
+                            of {event.capacity} capacity
+                          </span>
+                        ) : null}
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <p className="text-sm font-medium text-gray-500 mb-1">Check-ins</p>
+                      <div className="flex items-baseline">
+                        <span className="text-3xl font-bold">
+                          {event.attendees?.checked_in || 0}
+                        </span>
+                        <span className="ml-2 text-sm text-gray-500">
+                          attendees
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <p className="text-sm font-medium text-gray-500 mb-1">Tickets</p>
+                      <div className="flex items-baseline">
+                        <span className="text-3xl font-bold">
+                          {event.ticketTypes?.length || 0}
+                        </span>
+                        <span className="ml-2 text-sm text-gray-500">
+                          types available
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="attendees" className="mt-0">
+            <div>
+              <h2 className="text-2xl font-semibold mb-6">Event Attendees</h2>
+              <p>This tab will contain the list of attendees, check-in functionality, etc.</p>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="marketing" className="mt-0">
+            <MarketingTabContent 
+              eventId={eventId} 
+              eventName={event.name} 
+            />
+          </TabsContent>
+          
+          <TabsContent value="analytics" className="mt-0">
+            <div>
+              <h2 className="text-2xl font-semibold mb-6">Event Analytics</h2>
+              <p>This tab will contain analytics and reporting for the event.</p>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="messages" className="mt-0">
+            <div>
+              <h2 className="text-2xl font-semibold mb-6">Event Messages</h2>
+              <p>This tab will contain messaging functionality for attendees.</p>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </Layout>
   );

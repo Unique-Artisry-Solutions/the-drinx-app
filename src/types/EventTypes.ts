@@ -1,4 +1,3 @@
-
 export type EventStatus = 'draft' | 'published' | 'cancelled' | 'completed';
 
 export interface EventLocation {
