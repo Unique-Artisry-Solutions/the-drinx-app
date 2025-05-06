@@ -1,5 +1,6 @@
 
 import { Ingredient, UserRecipe } from '@/types/DatabaseTypes';
+import { NavigateFunction } from 'react-router-dom';
 
 export type CreateRecipeInput = Omit<UserRecipe, 'id' | 'user_id' | 'created_at' | 'updated_at'>;
 
@@ -23,4 +24,5 @@ export interface RecipeHookReturn {
     isPending: boolean;
     variables?: string;
   };
+  navigate: NavigateFunction;
 }
