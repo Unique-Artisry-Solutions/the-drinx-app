@@ -8,6 +8,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Edit, MoreHorizontal, Trash } from 'lucide-react';
+import { useAppNavigation } from '@/hooks/useAppNavigation';
 
 interface Establishment {
   id: string;
@@ -30,6 +31,12 @@ const CocktailsTable: React.FC<CocktailsTableProps> = ({
   cocktails,
   onDeleteCocktail
 }) => {
+  const { navigate } = useAppNavigation();
+
+  const handleEditClick = (id: string) => {
+    navigate(`/cocktail/edit/${id}`);
+  };
+
   return (
     <div className="bg-white rounded-md shadow-sm overflow-hidden">
       <Table>
@@ -79,7 +86,7 @@ const CocktailsTable: React.FC<CocktailsTableProps> = ({
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleEditClick(cocktail.id)}>
                         <Edit className="mr-2 h-4 w-4" />
                         Edit
                       </DropdownMenuItem>

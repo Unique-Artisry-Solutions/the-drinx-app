@@ -22,6 +22,28 @@ const RecipeItem: React.FC<RecipeItemProps> = ({
     return new Date(dateString).toLocaleDateString();
   };
 
+  const handleEdit = (e: React.MouseEvent) => {
+    e.preventDefault();
+    onEdit(recipe);
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.preventDefault();
+    onDelete(recipe.id);
+  };
+
+  const handleShare = (e: React.MouseEvent) => {
+    e.preventDefault();
+    onShare(recipe);
+  };
+
+  const handleSuggestToEstablishment = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (onSuggestToEstablishment) {
+      onSuggestToEstablishment(recipe);
+    }
+  };
+
   const ingredients = recipe.ingredients || [];
 
   return (
@@ -80,7 +102,7 @@ const RecipeItem: React.FC<RecipeItemProps> = ({
               <Button 
                 variant="ghost" 
                 size="icon" 
-                onClick={() => onShare(recipe)}
+                onClick={handleShare}
                 title="Share"
               >
                 <Share2 className="h-4 w-4" />
@@ -88,7 +110,7 @@ const RecipeItem: React.FC<RecipeItemProps> = ({
               <Button 
                 variant="ghost" 
                 size="icon" 
-                onClick={() => onSuggestToEstablishment && onSuggestToEstablishment(recipe)}
+                onClick={handleSuggestToEstablishment}
                 title="Suggest to Establishment"
               >
                 <Building2 className="h-4 w-4 text-spiritless-green" />
@@ -96,7 +118,7 @@ const RecipeItem: React.FC<RecipeItemProps> = ({
               <Button 
                 variant="ghost" 
                 size="icon" 
-                onClick={() => onEdit(recipe)}
+                onClick={handleEdit}
                 title="Edit"
               >
                 <PenSquare className="h-4 w-4" />
@@ -104,7 +126,7 @@ const RecipeItem: React.FC<RecipeItemProps> = ({
               <Button 
                 variant="ghost" 
                 size="icon" 
-                onClick={() => onDelete(recipe.id)}
+                onClick={handleDelete}
                 disabled={isDeleting && deletingId === recipe.id}
                 title="Delete"
               >

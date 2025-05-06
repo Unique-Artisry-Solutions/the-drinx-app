@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth';
 import { NavigationType } from '../NavigationTypes';
+import { useAppNavigation } from '@/hooks/useAppNavigation';
 
 export const useMobileNavigation = (
   type: NavigationType,
@@ -10,6 +11,7 @@ export const useMobileNavigation = (
   forceGuestNavigation: boolean = false
 ) => {
   const location = useLocation();
+  const { navigate } = useAppNavigation();
   const [currentUserType, setCurrentUserType] = useState<'individual' | 'establishment' | 'promoter'>(userType);
   const [expanded, setExpanded] = useState(false);
   const { user } = useAuth();
@@ -41,10 +43,16 @@ export const useMobileNavigation = (
     return currentUserType === 'establishment' ? '/establishment/profile' : '/profile';
   };
 
+  const navigateToProfile = (e?: React.MouseEvent) => {
+    if (e) e.preventDefault();
+    navigate(getProfilePath());
+  };
+
   return {
     currentUserType,
     expanded,
     toggleExpand,
     getProfilePath,
+    navigateToProfile
   };
 };

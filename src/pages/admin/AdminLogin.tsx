@@ -1,6 +1,5 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,7 +13,6 @@ const AdminLogin: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
   const { goToAdminDashboard } = useAppNavigation();
   const { toast } = useToast();
   const showBypassButtons = isPreviewEnvironment() || process.env.NODE_ENV === 'development';
@@ -28,7 +26,7 @@ const AdminLogin: React.FC = () => {
     if (isAdminAuth || isAdminBypass) {
       goToAdminDashboard();
     }
-  }, [navigate, goToAdminDashboard]);
+  }, [goToAdminDashboard]);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();

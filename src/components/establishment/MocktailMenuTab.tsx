@@ -22,14 +22,21 @@ const MocktailMenuTab: React.FC<MocktailMenuTabProps> = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentDrink, setCurrentDrink] = useState<Drink | null>(null);
 
-  const handleAddClick = () => {
+  const handleAddClick = (e: React.MouseEvent) => {
+    e.preventDefault();
     setCurrentDrink(null);
     setIsModalOpen(true);
   };
 
-  const handleEditClick = (drink: Drink) => {
+  const handleEditClick = (drink: Drink, e: React.MouseEvent) => {
+    e.preventDefault();
     setCurrentDrink(drink);
     setIsModalOpen(true);
+  };
+
+  const handleDeleteClick = (id: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    onDeleteDrink(id);
   };
 
   const handleSaveDrink = (drink: Drink) => {
@@ -93,7 +100,7 @@ const MocktailMenuTab: React.FC<MocktailMenuTabProps> = ({
                         <Button 
                           variant="outline" 
                           size="icon" 
-                          onClick={() => handleEditClick(drink)}
+                          onClick={(e) => handleEditClick(drink, e)}
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
@@ -113,7 +120,7 @@ const MocktailMenuTab: React.FC<MocktailMenuTabProps> = ({
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => onDeleteDrink(drink.id)}>
+                              <AlertDialogAction onClick={(e) => handleDeleteClick(drink.id, e)}>
                                 Delete
                               </AlertDialogAction>
                             </AlertDialogFooter>

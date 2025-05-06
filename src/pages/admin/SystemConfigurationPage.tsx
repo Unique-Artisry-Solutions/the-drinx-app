@@ -3,6 +3,8 @@ import React, { useState } from 'react';
 import { useSystemConfiguration } from '@/hooks/admin/useSystemConfiguration';
 import ConfigurationTabs from '@/components/admin/systemConfiguration/ConfigurationTabs';
 import AdminHeader from '@/components/admin/AdminHeader';
+import { useNavigate } from 'react-router-dom';
+import { useAppNavigation } from '@/hooks/useAppNavigation';
 
 const SystemConfigurationPage: React.FC = () => {
   const [category, setCategory] = useState<string>('general');
@@ -14,6 +16,8 @@ const SystemConfigurationPage: React.FC = () => {
     category,
     initialFetch: true
   });
+  
+  const { navigate } = useAppNavigation();
 
   // State to track edited settings
   const [editingSettingId, setEditingSettingId] = useState<string | null>(null);
@@ -32,8 +36,8 @@ const SystemConfigurationPage: React.FC = () => {
     localStorage.removeItem('user_type');
     localStorage.removeItem('user_username');
     
-    // Force a complete page reload and navigation to landing page
-    window.location.href = '/landing';
+    // Use React Router navigation instead of direct page reload
+    navigate('/landing');
   };
 
   const handleEditClick = (settingId: string, currentValue: any) => {

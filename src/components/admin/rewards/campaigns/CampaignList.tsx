@@ -59,6 +59,21 @@ export const CampaignList = ({
     }
   };
 
+  const handleEdit = (campaign: RewardCampaign, e: React.MouseEvent) => {
+    e.preventDefault();
+    onEdit(campaign);
+  };
+
+  const handleDelete = (campaignId: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    onDelete(campaignId);
+  };
+
+  const handleToggleActivation = (campaign: RewardCampaign, e: React.MouseEvent) => {
+    e.preventDefault();
+    onToggleActivation(campaign);
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-2">
@@ -129,13 +144,13 @@ export const CampaignList = ({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => onEdit(campaign)}>
+                  <DropdownMenuItem onClick={(e) => handleEdit(campaign, e)}>
                     <Edit className="mr-2 h-4 w-4" />
                     Edit
                   </DropdownMenuItem>
                   
                   {campaign.status !== 'completed' && campaign.status !== 'cancelled' && (
-                    <DropdownMenuItem onClick={() => onToggleActivation(campaign)}>
+                    <DropdownMenuItem onClick={(e) => handleToggleActivation(campaign, e)}>
                       {campaign.is_active ? (
                         <>
                           <PauseCircle className="mr-2 h-4 w-4" />
@@ -173,7 +188,7 @@ export const CampaignList = ({
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => onDelete(campaign.id)}>
+                        <AlertDialogAction onClick={(e) => handleDelete(campaign.id, e)}>
                           Delete
                         </AlertDialogAction>
                       </AlertDialogFooter>

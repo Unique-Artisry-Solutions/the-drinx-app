@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { 
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
 } from '@/components/ui/table';
@@ -10,6 +9,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Edit, MoreHorizontal, Trash } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAppNavigation } from '@/hooks/useAppNavigation';
 
 interface Establishment {
   id: string;
@@ -27,8 +27,12 @@ const EstablishmentsTable: React.FC<EstablishmentsTableProps> = ({
   establishments,
   onDeleteEstablishment
 }) => {
-  const navigate = useNavigate();
+  const { navigate } = useAppNavigation();
   const { toast } = useToast();
+
+  const handleEditClick = (id: string) => {
+    navigate(`/establishment/${id}`);
+  };
 
   return (
     <div className="bg-white rounded-md shadow-sm overflow-hidden">
@@ -56,7 +60,7 @@ const EstablishmentsTable: React.FC<EstablishmentsTableProps> = ({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => navigate(`/establishment/${est.id}`)}>
+                    <DropdownMenuItem onClick={() => handleEditClick(est.id)}>
                       <Edit className="mr-2 h-4 w-4" />
                       Edit
                     </DropdownMenuItem>

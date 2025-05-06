@@ -28,7 +28,7 @@ const MobileNavigation: React.FC<ExtendedMobileNavigationProps> = ({
     getProfilePath,
   } = useMobileNavigation(type, userType, forceGuestNavigation);
 
-  // Create a handleHomeClick that uses the new navigation hook
+  // Create a handleHomeClick that uses the navigation hook and prevents default
   const handleHomeClick = (e: React.MouseEvent) => {
     e.preventDefault();
     goToHomePage(currentUserType);

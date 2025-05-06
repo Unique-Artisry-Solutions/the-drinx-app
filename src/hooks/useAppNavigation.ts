@@ -64,11 +64,26 @@ export const useAppNavigation = () => {
     navigate('/admin/system-breakdown');
   };
 
+  /**
+   * Navigate to edit page for different entity types
+   * @param entityType Type of entity being edited
+   * @param id ID of the entity
+   * @param preventRefresh If true, use React Router navigation to prevent page refresh
+   */
+  const goToEditPage = (entityType: string, id: string, preventRefresh = true) => {
+    const path = `/${entityType}/edit/${id}`;
+    if (preventRefresh) {
+      navigate(path);
+    }
+    return path;
+  };
+
   return {
     goToHomePage,
     goToProfilePage,
     goToAfterLogin,
     goToAdminDashboard,
+    goToEditPage,
     navigate
   };
 };
