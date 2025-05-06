@@ -9,6 +9,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import MarketingTabContent from '@/components/events/MarketingTabContent';
 import AttendeeSegmentsTab from '@/components/events/AttendeeSegmentsTab';
+import AttendeesTabContent from '@/components/events/attendees/AttendeesTabContent';
 
 interface EventTabsSectionProps {
   eventId: string | undefined;
@@ -31,15 +32,19 @@ const EventTabsSection: React.FC<EventTabsSectionProps> = ({ eventId, eventName 
         <AttendeeSegmentsTab eventId={eventId || ''} eventName={eventName} />
       </TabsContent>
       <TabsContent value="attendees">
-        <Card>
-          <CardHeader>
-            <CardTitle>Attendees</CardTitle>
-            <CardDescription>Manage event attendees</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p>Attendee management content goes here.</p>
-          </CardContent>
-        </Card>
+        {eventId ? (
+          <AttendeesTabContent eventId={eventId} />
+        ) : (
+          <Card>
+            <CardHeader>
+              <CardTitle>Attendees</CardTitle>
+              <CardDescription>Manage event attendees</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p>Please save the event first to manage attendees.</p>
+            </CardContent>
+          </Card>
+        )}
       </TabsContent>
       <TabsContent value="checkin">
         <Card>
@@ -48,7 +53,7 @@ const EventTabsSection: React.FC<EventTabsSectionProps> = ({ eventId, eventName 
             <CardDescription>Manage event check-ins</CardDescription>
           </CardHeader>
           <CardContent>
-            <p>Check-in content goes here.</p>
+            <p>Check-in functionality coming soon.</p>
           </CardContent>
         </Card>
       </TabsContent>
