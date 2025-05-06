@@ -12,10 +12,10 @@ const EditRecipeDialog: React.FC<EditRecipeDialogProps> = ({
   isUpdating,
   formProps
 }) => {
-  // Prevent default form submission
+  // Prevent default form submission and call onUpdate without passing the event
   const handleUpdate = (e: React.MouseEvent) => {
     e.preventDefault();
-    onUpdate(e);
+    onUpdate();
   };
 
   return (
