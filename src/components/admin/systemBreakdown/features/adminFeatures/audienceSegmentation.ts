@@ -4,7 +4,7 @@ import { FeatureItem } from '../../types';
 export const audienceSegmentation: FeatureItem = {
   id: "admin-8",
   name: "Audience Segmentation System",
-  description: "Advanced segmentation system that allows targeting specific audience groups for marketing campaigns, with A/B testing capabilities, personalized content delivery, enhanced analytics and improved segment builder UI.",
+  description: "Advanced segmentation system that allows targeting specific audience groups for marketing campaigns, with A/B testing capabilities, personalized content delivery, enhanced analytics, relationship mapping and improved segment builder UI.",
   status: "implemented",
   adminAccess: "full",
   establishmentAccess: "none",
@@ -27,6 +27,8 @@ export const audienceSegmentation: FeatureItem = {
     - [x] User movement between segments tracking
     - [x] Scheduled report configurations
     - [x] Nested condition support for segments
+    - [x] Relationship mapping between segments
+    - [x] User relationship network analysis storage
   `,
   testSteps: [
     "Create audience segments with different criteria",
@@ -41,6 +43,9 @@ export const audienceSegmentation: FeatureItem = {
     "Export segment performance reports via scheduler",
     "Create complex segments using nested AND/OR conditions",
     "Verify real-time audience size preview functionality",
-    "Compare performance metrics across different segments"
+    "Compare performance metrics across different segments",
+    "Map relationships between audience segments",
+    "Analyze influencer networks within segments",
+    "Test cross-segment relationship visualization"
   ]
 };

@@ -67,3 +67,73 @@ export type AudienceSegmentAnalytics = {
   created_at: string;
   updated_at: string;
 };
+
+// New types for relationship mapping
+
+export type AudienceRelationship = {
+  id: string;
+  source_user_id: string;
+  target_user_id: string;
+  relationship_type: 'influence' | 'interaction' | 'similarity';
+  strength: number;
+  created_at: string;
+  updated_at: string;
+  metadata?: Record<string, any>;
+};
+
+export type AudienceNetworkNode = {
+  id: string;
+  user_id: string;
+  segment_ids: string[];
+  influence_score: number;
+  position?: { x: number, y: number }; // For visualizations
+  metadata?: Record<string, any>;
+};
+
+export type AudienceNetworkEdge = {
+  source: string; // User ID
+  target: string; // User ID
+  weight: number;
+  relationship_type: string;
+  metadata?: Record<string, any>;
+};
+
+export type AudienceNetwork = {
+  nodes: AudienceNetworkNode[];
+  edges: AudienceNetworkEdge[];
+  metadata?: {
+    density?: number;
+    centrality?: Record<string, number>;
+    clusters?: Array<{id: string, members: string[]}>;
+  };
+};
+
+export type SegmentConnectionStrength = {
+  source_segment_id: string;
+  target_segment_id: string;
+  connection_strength: number;
+  shared_members: number;
+  interaction_frequency: number;
+  conversion_rate?: number;
+  similarity_score?: number;
+};
+
+export type InfluentialUser = {
+  user_id: string;
+  display_name?: string;
+  influence_score: number;
+  follower_count: number;
+  engagement_rate: number;
+  connected_segments: number;
+  expertise_areas?: string[];
+};
+
+export type CrossSegmentEngagement = {
+  primary_segment_id: string;
+  secondary_segment_id: string;
+  timeframe: string;
+  engagement_rate: number;
+  conversion_rate: number;
+  overlap_percentage: number;
+  correlation_score: number;
+};

@@ -1,3 +1,4 @@
+
 import { renderStatusBadge, renderDatabaseStatusBadge, renderAccessIcon } from './statusRenderers';
 import { 
   createProgressSnapshot,
@@ -45,7 +46,8 @@ import {
   isSignatureFeature,
   isVisitTrackingFeature,
   isEstablishmentManagementFeature,
-  isBarCrawlFeature
+  isBarCrawlFeature,
+  isAudienceRelationshipFeature
 } from './featureDetection';
 import { isTaskCompleted, parseTasks } from './taskDetection';
 import { 
@@ -121,6 +123,7 @@ export {
   isVisitTrackingFeature,
   isEstablishmentManagementFeature,
   isBarCrawlFeature,
+  isAudienceRelationshipFeature,
   isTaskCompleted,
   parseTasks,
   mapFeaturesToReleaseFeatures,

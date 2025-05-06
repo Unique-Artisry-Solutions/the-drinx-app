@@ -1,3 +1,4 @@
+
 import { supabaseClient } from '@/lib/supabaseClient';
 
 export type AnalyticsEvent = {
@@ -313,6 +314,131 @@ export async function calculateAudienceSize(criteria: any[]) {
     return data;
   } catch (error) {
     console.error('Failed to calculate audience size:', error);
+    return null;
+  }
+}
+
+/**
+ * Analyze audience segment relationships
+ * Maps connections between users in different segments
+ */
+export async function analyzeSegmentRelationships(segmentId: string, relationshipType: 'influence' | 'interaction' | 'similarity' = 'interaction') {
+  try {
+    const { data, error } = await supabaseClient.rpc('analyze_segment_relationships', {
+      p_segment_id: segmentId,
+      p_relationship_type: relationshipType
+    });
+    
+    if (error) {
+      console.error('Error analyzing segment relationships:', error);
+      return null;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Failed to analyze segment relationships:', error);
+    return null;
+  }
+}
+
+/**
+ * Find influential users within segments
+ * Identifies users with high engagement and connection metrics
+ */
+export async function findInfluentialUsers(segmentId: string, limit: number = 20) {
+  try {
+    const { data, error } = await supabaseClient.rpc('find_segment_influencers', {
+      p_segment_id: segmentId,
+      p_limit: limit
+    });
+    
+    if (error) {
+      console.error('Error finding influential users:', error);
+      return null;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Failed to find influential users:', error);
+    return null;
+  }
+}
+
+/**
+ * Analyze relationship strength between two segments
+ * Measures the connection strength between user groups
+ */
+export async function analyzeSegmentConnectionStrength(
+  sourceSegmentId: string, 
+  targetSegmentId: string, 
+  connectionMetric: 'interaction' | 'conversion' | 'similarity' = 'interaction'
+) {
+  try {
+    const { data, error } = await supabaseClient.rpc('analyze_segment_connection_strength', {
+      p_source_segment_id: sourceSegmentId,
+      p_target_segment_id: targetSegmentId,
+      p_connection_metric: connectionMetric
+    });
+    
+    if (error) {
+      console.error('Error analyzing segment connection strength:', error);
+      return null;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Failed to analyze segment connection strength:', error);
+    return null;
+  }
+}
+
+/**
+ * Map audience relationship network
+ * Creates a network graph of relationships between users across segments
+ */
+export async function mapAudienceNetwork(
+  segmentIds: string[], 
+  depth: number = 2,
+  minStrength: number = 0.3
+) {
+  try {
+    const { data, error } = await supabaseClient.rpc('map_audience_network', {
+      p_segment_ids: segmentIds,
+      p_depth: depth,
+      p_min_strength: minStrength
+    });
+    
+    if (error) {
+      console.error('Error mapping audience network:', error);
+      return null;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Failed to map audience network:', error);
+    return null;
+  }
+}
+
+/**
+ * Get cross-segment engagement patterns
+ * Analyzes how users engage across multiple segments
+ */
+export async function getCrossSegmentEngagement(segmentIds: string[], timeframe: 'week' | 'month' | 'quarter' = 'month') {
+  try {
+    const { data, error } = await supabaseClient.rpc('get_cross_segment_engagement', {
+      p_segment_ids: segmentIds,
+      p_timeframe: timeframe
+    });
+    
+    if (error) {
+      console.error('Error getting cross-segment engagement:', error);
+      return null;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Failed to get cross-segment engagement:', error);
     return null;
   }
 }
