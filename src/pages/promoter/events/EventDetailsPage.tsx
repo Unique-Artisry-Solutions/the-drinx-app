@@ -1,635 +1,396 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
-import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
-} from '@/components/ui/tabs';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { PlusCircle, Users, Ticket, BarChart3, Share2 } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { EventType, EventTicketType, EventAttendee } from '@/types/EventTypes';
-import { supabase } from '@/integrations/supabase/client';
-import TicketTypeModal from '@/components/events/TicketTypeModal';
+import { useEventDetails } from '@/hooks/events/useEventDetails';
+import { useEventStatus } from '@/hooks/events/useEventStatus';
+import { AlertCircle, Calendar, Clock, MapPin, Ticket, Users, Check, Globe, X, AlertTriangle, Loader2 } from 'lucide-react';
+import { format, parseISO } from 'date-fns';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import QRCodeScanner from '@/components/events/QrCodeScanner';
 import AttendeeDetailModal from '@/components/events/AttendeeDetailModal';
-import CheckInScannerModal from '@/components/events/CheckInScannerModal';
-import { createTicketType, updateTicketType, deleteTicketType } from '@/services/eventTicketService';
+import AnalyticsDashboard from '@/components/events/AnalyticsDashboard';
+import TicketTypeModal from '@/components/events/TicketTypeModal';
+import IntegrationsPanel from '@/components/events/IntegrationsPanel';
+import SocialSharingPanel from '@/components/events/SocialSharingPanel';
+import { useEventAttendees } from '@/hooks/events/useEventAttendees';
 import { checkInAttendee } from '@/services/eventAttendeesService';
 import { toAttendeeStatus, safeJsonToRecord } from '@/utils/typeGuards';
-import MarketingTabContent from '@/components/events/MarketingTabContent';
+import { MarketingTabContent } from '@/components/events/MarketingTabContent';
 import ShareScannerButton from '@/components/events/ShareScannerButton';
-import { useEventStatus } from '@/hooks/events/useEventStatus';
 
-const EventDetailsPage: React.FC = () => {
+const EventDetailsPage = () => {
   const { eventId } = useParams<{ eventId: string }>();
   const navigate = useNavigate();
+  const { event, isLoading, error } = useEventDetails(eventId || '');
+  const { updateEventStatus } = useEventStatus(eventId || '');
   const { toast } = useToast();
-  const [event, setEvent] = useState<EventType | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const { updateStatus } = useEventStatus();
-  
-  // Ticket types state
-  const [ticketTypes, setTicketTypes] = useState<EventTicketType[]>([]);
-  const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
-  const [editingTicket, setEditingTicket] = useState<EventTicketType | undefined>(undefined);
+  const [activeTab, setActiveTab] = useState('details');
+  const [showScanner, setShowScanner] = useState(false);
+  const [selectedAttendee, setSelectedAttendee] = useState(null);
+  const [showAttendeeModal, setShowAttendeeModal] = useState(false);
+  const [showTicketTypeModal, setShowTicketTypeModal] = useState(false);
+  const [isOnlineEvent, setIsOnlineEvent] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [statusChange, setStatusChange] = useState('');
 
-  // Attendees state
-  const [attendees, setAttendees] = useState<EventAttendee[]>([]);
-  const [selectedAttendee, setSelectedAttendee] = useState<EventAttendee | null>(null);
-  const [isAttendeeModalOpen, setIsAttendeeModalOpen] = useState(false);
-  
-  // Check-in scanner state
-  const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const { 
+    attendees, 
+    isLoading: isLoadingAttendees, 
+    error: attendeesError,
+    refresh: refreshAttendees
+  } = useEventAttendees(eventId || '');
 
   useEffect(() => {
-    if (eventId) {
-      fetchEventDetails(eventId);
-      fetchTicketTypes(eventId);
-      fetchAttendees(eventId);
+    if (event) {
+      setIsOnlineEvent(event.event_type === 'online');
     }
-  }, [eventId]);
+  }, [event]);
 
-  const fetchEventDetails = async (id: string) => {
+  const handleStatusChange = async (status: string) => {
+    setStatusChange(status);
+    setShowConfirmation(true);
+  };
+
+  const confirmStatusChange = async () => {
+    if (!eventId) return;
+
     try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('events')
-        .select(`
-          *,
-          venue:venue_id (
-            id,
-            name,
-            address
-          )
-        `)
-        .eq('id', id)
-        .single();
-
-      if (error) throw error;
-      
-      // Convert the data to our EventType
-      setEvent(data as unknown as EventType);
-    } catch (err: any) {
-      console.error('Error fetching event details:', err);
-      setError(err.message);
+      await updateEventStatus(statusChange);
+      toast({
+        title: "Event status updated",
+        description: `Event status changed to ${statusChange}.`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error updating event status",
+        description: error.message,
+        variant: "destructive",
+      });
     } finally {
-      setLoading(false);
+      setShowConfirmation(false);
+      setStatusChange('');
     }
   };
 
-  const fetchTicketTypes = async (eventId: string) => {
+  const handleAttendeeCheckIn = async (attendeeId: string) => {
     try {
-      const { data, error } = await supabase
-        .from('event_ticket_types')
-        .select('*')
-        .eq('event_id', eventId);
-
-      if (error) throw error;
-
-      // Get ticket sales data for available counts
-      const { data: attendeeData, error: attendeeError } = await supabase
-        .from('event_attendees')
-        .select('ticket_type_id, status')
-        .eq('event_id', eventId);
-
-      if (attendeeError) throw attendeeError;
-
-      // Calculate sales counts manually since we can't use .group()
-      const salesByTicketType: Record<string, number> = {};
-      
-      // Count tickets that haven't been cancelled
-      attendeeData.forEach(attendee => {
-        if (attendee.status !== 'cancelled' && attendee.ticket_type_id) {
-          salesByTicketType[attendee.ticket_type_id] = (salesByTicketType[attendee.ticket_type_id] || 0) + 1;
-        }
-      });
-
-      // Calculate available tickets and add to response
-      const enrichedTicketTypes = data.map(ticket => {
-        const sold = salesByTicketType[ticket.id] || 0;
-        const available = ticket.quantity - sold;
-        
-        return {
-          id: ticket.id,
-          name: ticket.name,
-          description: ticket.description,
-          price: ticket.price,
-          quantity: ticket.quantity,
-          sold,
-          available
-        };
-      });
-
-      setTicketTypes(enrichedTicketTypes);
-    } catch (err) {
-      console.error('Error fetching ticket types:', err);
-    }
-  };
-
-  const fetchAttendees = async (eventId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('event_attendees')
-        .select('*')
-        .eq('event_id', eventId)
-        .order('purchase_date', { ascending: false });
-
-      if (error) throw error;
-      
-      // Convert the data to match our EventAttendee type
-      const typedAttendees: EventAttendee[] = (data || []).map(attendee => ({
-        id: attendee.id,
-        event_id: attendee.event_id,
-        user_id: attendee.user_id,
-        ticket_type_id: attendee.ticket_type_id,
-        status: toAttendeeStatus(attendee.status),
-        email: attendee.email || '',
-        name: attendee.name || '',
-        purchase_date: attendee.purchase_date,
-        ticket_code: attendee.ticket_code || '',
-        checked_in_at: attendee.checked_in_at,
-        notes: attendee.notes || '',
-        custom_fields: safeJsonToRecord(attendee.custom_fields)
-      }));
-
-      setAttendees(typedAttendees);
-    } catch (err) {
-      console.error('Error fetching attendees:', err);
-    }
-  };
-
-  const handleCreateTicket = async (ticketData: Omit<EventTicketType, 'id' | 'sold' | 'available'>) => {
-    if (!eventId) return;
-
-    try {
-      // Create the ticket type with the event ID
-      const newTicket = await createTicketType({
-        ...ticketData,
-        event_id: eventId
-      });
-
-      // Update local state
-      setTicketTypes(prev => [...prev, newTicket]);
-
+      await checkInAttendee(attendeeId);
+      refreshAttendees();
       toast({
-        title: "Ticket Created",
-        description: "New ticket type has been created successfully.",
+        title: "Attendee checked in",
+        description: "Attendee has been successfully checked in.",
       });
-    } catch (err: any) {
+    } catch (error: any) {
       toast({
-        title: "Error Creating Ticket",
-        description: err.message,
+        title: "Error checking in attendee",
+        description: error.message,
         variant: "destructive",
       });
     }
   };
 
-  const handleUpdateTicket = async (ticketData: Omit<EventTicketType, 'id' | 'sold' | 'available'>) => {
-    if (!editingTicket?.id) return;
-
-    try {
-      const updatedTicket = await updateTicketType(editingTicket.id, ticketData);
-
-      // Update local state
-      setTicketTypes(prev => 
-        prev.map(ticket => ticket.id === updatedTicket.id ? updatedTicket : ticket)
-      );
-
-      toast({
-        title: "Ticket Updated",
-        description: "Ticket type has been updated successfully.",
-      });
-    } catch (err: any) {
-      toast({
-        title: "Error Updating Ticket",
-        description: err.message,
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleDeleteTicket = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this ticket type? This action cannot be undone.")) {
-      return;
-    }
-
-    try {
-      await deleteTicketType(id);
-      
-      // Update local state
-      setTicketTypes(prev => prev.filter(ticket => ticket.id !== id));
-
-      toast({
-        title: "Ticket Deleted",
-        description: "Ticket type has been deleted successfully.",
-      });
-    } catch (err: any) {
-      toast({
-        title: "Error Deleting Ticket",
-        description: err.message,
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleCheckIn = async (attendeeId: string): Promise<void> => {
-    if (!eventId) return Promise.resolve();
-    
-    try {
-      await checkInAttendee(eventId, attendeeId);
-      
-      // Update local state
-      setAttendees(prev => prev.map(attendee => {
-        if (attendee.id === attendeeId) {
-          return {
-            ...attendee,
-            status: 'checked_in',
-            checked_in_at: new Date().toISOString()
-          };
-        }
-        return attendee;
-      }));
-
-      toast({
-        title: "Check-In Successful",
-        description: "Attendee has been checked in successfully.",
-      });
-      
-      // Close modal if it's open
-      if (isAttendeeModalOpen) {
-        setIsAttendeeModalOpen(false);
-      }
-      
-      return Promise.resolve();
-    } catch (err: any) {
-      toast({
-        title: "Check-In Failed",
-        description: err.message,
-        variant: "destructive",
-      });
-      return Promise.reject(err);
-    }
-  };
-
-  const handleScannerCheckIn = (attendee: EventAttendee) => {
-    // Update local state with the checked-in attendee
-    setAttendees(prev => {
-      // Check if attendee already exists in the list
-      const exists = prev.some(a => a.id === attendee.id);
-      
-      if (exists) {
-        // Update existing attendee
-        return prev.map(a => a.id === attendee.id ? attendee : a);
-      } else {
-        // Add new attendee to the list
-        return [attendee, ...prev];
-      }
-    });
-    
-    // We don't need to call checkInAttendee because the scanner already did that
-  };
-
-  const openTicketModal = (ticket?: EventTicketType) => {
-    setEditingTicket(ticket);
-    setIsTicketModalOpen(true);
-  };
-
-  const openAttendeeModal = (attendee: EventAttendee) => {
+  const handleAttendeeClick = (attendee: any) => {
     setSelectedAttendee(attendee);
-    setIsAttendeeModalOpen(true);
+    setShowAttendeeModal(true);
   };
 
-  const handlePublishEvent = async () => {
-    if (!eventId) return;
+  const renderStatusBadge = () => {
+    if (!event) return null;
 
-    if (confirm('Are you sure you want to publish this event? Published events will be visible to users.')) {
-      const success = await updateStatus(eventId, 'published');
-      if (success) {
-        // Update the local event state
-        setEvent(prev => prev ? { ...prev, status: 'published' } : null);
-      }
+    let badgeVariant = "default";
+    if (event.status === "draft") badgeVariant = "outline";
+    if (event.status === "cancelled") badgeVariant = "destructive";
+    if (event.status === "live") badgeVariant = "success";
+    if (event.status === "past") badgeVariant = "secondary";
+
+    return (
+      <Badge variant={badgeVariant}>
+        {event.status}
+      </Badge>
+    );
+  };
+
+  const renderContent = () => {
+    if (isLoading) {
+      return (
+        <div className="flex justify-center items-center py-20">
+          <Loader2 className="h-10 w-10 animate-spin text-primary" />
+          <span className="ml-4 text-lg">Loading event details...</span>
+        </div>
+      );
     }
+
+    if (error) {
+      return (
+        <div className="flex flex-col items-center py-20">
+          <AlertCircle className="h-12 w-12 text-destructive mb-4" />
+          <h3 className="text-xl font-semibold mb-2">Error Loading Event</h3>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <Link to="/promoter/events">
+            <Button variant="outline">View All Events</Button>
+          </Link>
+        </div>
+      );
+    }
+
+    if (!event) {
+      return (
+        <div className="flex flex-col items-center py-20">
+          <AlertCircle className="h-12 w-12 text-warning mb-4" />
+          <h3 className="text-xl font-semibold mb-2">Event Not Found</h3>
+          <p className="text-gray-600 mb-6">The event you're looking for doesn't exist or has been removed.</p>
+          <Link to="/promoter/events">
+            <Button variant="outline">View All Events</Button>
+          </Link>
+        </div>
+      );
+    }
+
+    return (
+      <>
+        <div className="md:flex justify-between items-start mb-6">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">{event.name}</h1>
+            <div className="flex items-center gap-2">
+              {renderStatusBadge()}
+              {event.is_public ? (
+                <Badge variant="success"><Globe className="h-3 w-3 mr-1" /> Public</Badge>
+              ) : (
+                <Badge variant="secondary"><X className="h-3 w-3 mr-1" /> Private</Badge>
+              )}
+            </div>
+          </div>
+          <div className="space-x-2 mt-4 md:mt-0">
+            <Button onClick={() => navigate(`/promoter/events/edit/${eventId}`)}>
+              Edit Event
+            </Button>
+            <Button variant="destructive" onClick={() => handleStatusChange('cancelled')}>
+              Cancel Event
+            </Button>
+          </div>
+        </div>
+
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="details">Details</TabsTrigger>
+            <TabsTrigger value="attendees">Attendees</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            <TabsTrigger value="marketing">Marketing</TabsTrigger>
+            <TabsTrigger value="integrations">Integrations</TabsTrigger>
+            <TabsTrigger value="social">Social Sharing</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="details" className="space-y-4">
+            <Card>
+              <CardContent className="space-y-4">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <h2 className="text-xl font-semibold mb-4">Event Information</h2>
+                    <div className="flex items-start gap-3 mb-3">
+                      <Calendar className="h-5 w-5 text-gray-500 mt-1" />
+                      <div>
+                        <h4 className="font-medium">Date</h4>
+                        <p className="text-gray-700">{format(parseISO(event.date), 'MMMM dd, yyyy')}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3 mb-3">
+                      <Clock className="h-5 w-5 text-gray-500 mt-1" />
+                      <div>
+                        <h4 className="font-medium">Time</h4>
+                        <p className="text-gray-700">{event.time}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3 mb-3">
+                      <MapPin className="h-5 w-5 text-gray-500 mt-1" />
+                      <div>
+                        <h4 className="font-medium">Location</h4>
+                        <p className="text-gray-700">{event.venue?.name || 'TBD'}</p>
+                        <p className="text-gray-500 text-sm">{event.venue?.address || ''}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3 mb-3">
+                      <Users className="h-5 w-5 text-gray-500 mt-1" />
+                      <div>
+                        <h4 className="font-medium">Attendees</h4>
+                        <p className="text-gray-700">{event.attendees?.registered || 0} registered</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h2 className="text-xl font-semibold mb-4">Description</h2>
+                    <p className="text-gray-700 whitespace-pre-line">{event.description}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent>
+                <h2 className="text-xl font-semibold mb-4">Tickets</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {event.ticketTypes && event.ticketTypes.length > 0 ? (
+                    event.ticketTypes.map((ticket) => (
+                      <div key={ticket.id} className="flex items-center justify-between p-3 border rounded-md">
+                        <div>
+                          <h4 className="font-medium">{ticket.name}</h4>
+                          <p className="text-sm text-gray-500">{ticket.description}</p>
+                        </div>
+                        <div>
+                          <Badge variant="secondary">{ticket.price > 0 ? `$${ticket.price}` : 'Free'}</Badge>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-gray-500 italic">No tickets available for this event.</div>
+                  )}
+                </div>
+                <Button onClick={() => setShowTicketTypeModal(true)} className="mt-4">
+                  <Ticket className="h-4 w-4 mr-2" />
+                  Manage Tickets
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="attendees" className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold">Attendees</h2>
+              <div className="flex space-x-2">
+                <ShareScannerButton eventId={eventId} />
+                <Button onClick={() => setShowScanner(true)}>
+                  <Check className="h-4 w-4 mr-2" />
+                  Check-In Attendees
+                </Button>
+              </div>
+            </div>
+
+            {isLoadingAttendees ? (
+              <div className="flex justify-center items-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-primary mr-2" />
+                <span>Loading attendees...</span>
+              </div>
+            ) : attendeesError ? (
+              <div className="text-red-500">{attendeesError}</div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {attendees?.map(attendee => (
+                  <Card key={attendee.id} className="cursor-pointer" onClick={() => handleAttendeeClick(attendee)}>
+                    <CardContent className="flex items-center justify-between">
+                      <div>
+                        <h3 className="font-medium">{attendee.name}</h3>
+                        <p className="text-sm text-gray-500">{attendee.email}</p>
+                      </div>
+                      {attendee.status === 'checked_in' ? (
+                        <Badge variant="success">Checked In</Badge>
+                      ) : (
+                        <Button size="sm" onClick={(e) => {
+                          e.stopPropagation();
+                          handleAttendeeCheckIn(attendee.id);
+                        }}>Check In</Button>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="analytics">
+            <AnalyticsDashboard eventId={eventId} />
+          </TabsContent>
+
+          <TabsContent value="marketing">
+            <MarketingTabContent eventId={eventId} eventName={event.name} />
+          </TabsContent>
+
+          <TabsContent value="integrations">
+            <IntegrationsPanel eventId={eventId} />
+          </TabsContent>
+
+          <TabsContent value="social">
+            <SocialSharingPanel eventId={eventId} eventName={event.name} eventUrl={event.event_url || ''} />
+          </TabsContent>
+        </Tabs>
+      </>
+    );
   };
-
-  if (loading) {
-    return (
-      <Layout>
-        <div className="container mx-auto p-6">
-          <h2 className="text-2xl font-bold mb-4">Loading event details...</h2>
-        </div>
-      </Layout>
-    );
-  }
-
-  if (error || !event) {
-    return (
-      <Layout>
-        <div className="container mx-auto p-6">
-          <h2 className="text-2xl font-bold text-red-500 mb-4">Error loading event</h2>
-          <p>{error || "Event not found"}</p>
-          <Button onClick={() => navigate('/promoter/events')} className="mt-4">
-            Back to Events
-          </Button>
-        </div>
-      </Layout>
-    );
-  }
 
   return (
     <Layout>
-      <div className="container mx-auto p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-3xl font-bold">{event.name}</h1>
-            <p className="text-muted-foreground">
-              {event.date} • {event.time} • {event.venue?.name || "No venue selected"}
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Button 
-              onClick={() => navigate(`/promoter/events`)}
-              variant="outline"
-            >
-              Back to Events
-            </Button>
-            {event.status === 'draft' && (
-              <Button 
-                onClick={handlePublishEvent}
-                variant="secondary"
-              >
-                Publish Event
+      <div className="container mx-auto py-10">
+        {renderContent()}
+
+        {/* QR Code Scanner Dialog */}
+        <Dialog open={showScanner} onOpenChange={setShowScanner}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Scan Attendee QR Code</DialogTitle>
+              <DialogDescription>
+                Point your camera at the attendee's QR code to check them in.
+              </DialogDescription>
+            </DialogHeader>
+            <QRCodeScanner 
+              onResult={(result) => {
+                handleAttendeeCheckIn(result);
+                setShowScanner(false);
+              }}
+              onError={(error) => {
+                console.error(error);
+                toast({
+                  title: "Error scanning QR code",
+                  description: error.message,
+                  variant: "destructive",
+                });
+                setShowScanner(false);
+              }}
+            />
+            <DialogFooter>
+              <Button type="button" variant="secondary" onClick={() => setShowScanner(false)}>
+                Cancel
               </Button>
-            )}
-            <Button 
-              onClick={() => navigate(`/promoter/events/create?edit=${event.id}`)}
-            >
-              Edit Event
-            </Button>
-          </div>
-        </div>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
-        {/* Show event status badge */}
-        <div className="mb-6">
-          <span className={`px-2 py-1 rounded-full text-xs ${
-            event.status === 'published' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' :
-            event.status === 'draft' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300' :
-            event.status === 'cancelled' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' :
-            'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
-          }`}>
-            {event.status.toUpperCase()}
-          </span>
-        </div>
-
-        <Tabs defaultValue="attendees">
-          <TabsList className="mb-6">
-            <TabsTrigger value="attendees">
-              <Users className="mr-2 h-4 w-4" />
-              Attendees
-            </TabsTrigger>
-            <TabsTrigger value="tickets">
-              <Ticket className="mr-2 h-4 w-4" />
-              Tickets
-            </TabsTrigger>
-            <TabsTrigger value="marketing">
-              <Share2 className="mr-2 h-4 w-4" />
-              Marketing
-            </TabsTrigger>
-            <TabsTrigger value="analytics">
-              <BarChart3 className="mr-2 h-4 w-4" />
-              Analytics
-            </TabsTrigger>
-          </TabsList>
-          
-          {/* Attendees Tab */}
-          <TabsContent value="attendees">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Attendees Management</CardTitle>
-                    <CardDescription>
-                      Manage attendees and check-ins for {event.name}.
-                    </CardDescription>
-                  </div>
-                  <div className="flex gap-2">
-                    <ShareScannerButton eventId={eventId || ''} eventName={event.name} />
-                    <Button 
-                      variant="outline" 
-                      onClick={() => setIsScannerOpen(true)}
-                    >
-                      Scan Tickets
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {attendees.length > 0 ? (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left">
-                      <thead className="bg-muted text-muted-foreground">
-                        <tr>
-                          <th className="px-4 py-3">Name</th>
-                          <th className="px-4 py-3">Email</th>
-                          <th className="px-4 py-3">Ticket Code</th>
-                          <th className="px-4 py-3">Status</th>
-                          <th className="px-4 py-3">Purchase Date</th>
-                          <th className="px-4 py-3">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {attendees.map(attendee => (
-                          <tr 
-                            key={attendee.id} 
-                            className="border-b hover:bg-muted/50 cursor-pointer"
-                            onClick={() => openAttendeeModal(attendee)}
-                          >
-                            <td className="px-4 py-3">{attendee.name || 'N/A'}</td>
-                            <td className="px-4 py-3">{attendee.email || 'N/A'}</td>
-                            <td className="px-4 py-3 font-mono">{attendee.ticket_code}</td>
-                            <td className="px-4 py-3">
-                              <span className={`px-2 py-1 rounded-full text-xs ${
-                                attendee.status === 'checked_in' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' :
-                                attendee.status === 'cancelled' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' :
-                                'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
-                              }`}>
-                                {attendee.status}
-                              </span>
-                            </td>
-                            <td className="px-4 py-3">
-                              {attendee.purchase_date ? new Date(attendee.purchase_date).toLocaleDateString() : 'N/A'}
-                            </td>
-                            <td className="px-4 py-3">
-                              {attendee.status !== 'checked_in' && attendee.status !== 'cancelled' && (
-                                <Button 
-                                  size="sm" 
-                                  variant="ghost" 
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (attendee.id) {
-                                      handleCheckIn(attendee.id);
-                                    }
-                                  }}
-                                >
-                                  Check In
-                                </Button>
-                              )}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <p className="text-muted-foreground">No attendees found for this event.</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          {/* Tickets Tab */}
-          <TabsContent value="tickets">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Ticket Types</CardTitle>
-                    <CardDescription>
-                      Manage ticket types and pricing for {event.name}.
-                    </CardDescription>
-                  </div>
-                  <Button onClick={() => openTicketModal()}>
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Add Ticket Type
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {ticketTypes.length > 0 ? (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left">
-                      <thead className="bg-muted text-muted-foreground">
-                        <tr>
-                          <th className="px-4 py-3">Name</th>
-                          <th className="px-4 py-3">Description</th>
-                          <th className="px-4 py-3">Price</th>
-                          <th className="px-4 py-3">Quantity</th>
-                          <th className="px-4 py-3">Sold</th>
-                          <th className="px-4 py-3">Available</th>
-                          <th className="px-4 py-3">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {ticketTypes.map(ticket => (
-                          <tr key={ticket.id} className="border-b hover:bg-muted/50">
-                            <td className="px-4 py-3 font-medium">{ticket.name}</td>
-                            <td className="px-4 py-3">{ticket.description}</td>
-                            <td className="px-4 py-3">${ticket.price.toFixed(2)}</td>
-                            <td className="px-4 py-3">{ticket.quantity}</td>
-                            <td className="px-4 py-3">{ticket.sold || 0}</td>
-                            <td className="px-4 py-3">{ticket.available || ticket.quantity}</td>
-                            <td className="px-4 py-3">
-                              <div className="flex gap-2">
-                                <Button 
-                                  size="sm" 
-                                  variant="ghost"
-                                  onClick={() => openTicketModal(ticket)}
-                                >
-                                  Edit
-                                </Button>
-                                <Button 
-                                  size="sm" 
-                                  variant="ghost"
-                                  onClick={() => handleDeleteTicket(ticket.id || '')}
-                                  disabled={(ticket.sold || 0) > 0}
-                                >
-                                  Delete
-                                </Button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <p className="text-muted-foreground">No ticket types found. Create your first ticket type to start selling tickets.</p>
-                    <Button 
-                      onClick={() => openTicketModal()}
-                      className="mt-4"
-                    >
-                      <PlusCircle className="mr-2 h-4 w-4" />
-                      Add Ticket Type
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          {/* Marketing Tab - Now using the MarketingTabContent component */}
-          <TabsContent value="marketing">
-            <MarketingTabContent eventId={eventId || ''} eventName={event.name} />
-          </TabsContent>
-          
-          {/* Analytics Tab - Placeholder */}
-          <TabsContent value="analytics">
-            <Card>
-              <CardHeader>
-                <CardTitle>Analytics Dashboard</CardTitle>
-                <CardDescription>
-                  View insights about your event.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">Analytics data will be available soon.</p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-        
-        {/* Modals */}
-        <TicketTypeModal
-          isOpen={isTicketModalOpen}
-          onClose={() => {
-            setIsTicketModalOpen(false);
-            setEditingTicket(undefined);
-          }}
-          onSave={editingTicket ? handleUpdateTicket : handleCreateTicket}
-          ticketType={editingTicket}
-          isEditing={!!editingTicket}
-        />
-        
-        <AttendeeDetailModal
-          isOpen={isAttendeeModalOpen}
-          onClose={() => {
-            setIsAttendeeModalOpen(false);
-            setSelectedAttendee(null);
-          }}
+        {/* Attendee Detail Modal */}
+        <AttendeeDetailModal 
+          open={showAttendeeModal}
+          onOpenChange={setShowAttendeeModal}
           attendee={selectedAttendee}
-          onCheckIn={async (attendeeId) => {
-            if (attendeeId) await handleCheckIn(attendeeId);
-          }}
         />
-        
-        <CheckInScannerModal
-          isOpen={isScannerOpen}
-          onClose={() => setIsScannerOpen(false)}
-          onCheckIn={handleScannerCheckIn}
+
+        {/* Ticket Type Modal */}
+        <TicketTypeModal 
+          open={showTicketTypeModal}
+          onOpenChange={setShowTicketTypeModal}
+          eventId={eventId}
         />
+
+        {/* Status Change Confirmation Dialog */}
+        <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Confirm Status Change</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to change the event status to {statusChange}?
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button type="button" variant="secondary" onClick={() => setShowConfirmation(false)}>
+                Cancel
+              </Button>
+              <Button type="button" onClick={confirmStatusChange}>
+                Confirm
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </Layout>
   );

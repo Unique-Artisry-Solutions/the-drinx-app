@@ -1,404 +1,455 @@
+
 import React, { useState, useEffect } from 'react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Loader2, Plus, Search, AlertCircle, XCircle } from 'lucide-react';
+import { AlertCircle, Link, Loader2, Plus, Search, Share2, Users } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
+import { copyToClipboard } from '@/utils/clipboard';
+import { useToast } from '@/hooks/use-toast';
 import { EventMarketingCampaign } from '@/types/EventTypes';
 import { AudienceSegment } from '@/types/AudienceTypes';
+import { useEventMarketingWithSegments } from '@/hooks/events/useEventMarketingWithSegments';
+import { useAudienceSegments } from '@/hooks/useAudienceSegments';
+import { CampaignSegmentPanel, SegmentSelection } from './CampaignSegmentPanel';
 import { CampaignSegmentMapping } from '@/types/CampaignSegmentTypes';
-import { useToast } from '@/hooks/use-toast';
-
-export interface SegmentSelection {
-  id: string;
-  name: string;
-  allocation?: number;
-  isControlGroup?: boolean;
-  description?: string;
-}
 
 interface MarketingTabContentProps {
-  campaigns: EventMarketingCampaign[];
-  isLoading: boolean;
-  error: string | null;
-  createCampaign: (campaign: Omit<EventMarketingCampaign, 'event_id'>) => Promise<EventMarketingCampaign>;
-  updateCampaign: (id: string, updates: Partial<EventMarketingCampaign>) => Promise<EventMarketingCampaign>;
-  deleteCampaign: (id: string) => Promise<void>;
-  trackMetric: (campaignId: string, metricName: string, value?: number) => Promise<void>;
-  getCampaignLink: (campaignId: string, medium?: string, segmentId?: string) => string;
-  refresh: () => void;
-  
-  // Segment-related props
-  segmentMappings: Record<string, CampaignSegmentMapping[]>;
-  createCampaignWithSegments?: (
-    campaign: Omit<EventMarketingCampaign, 'event_id'>,
-    segments: { segment_id: string; allocation_percentage?: number; is_control_group?: boolean }[]
-  ) => Promise<EventMarketingCampaign>;
-  assignSegments?: (
-    campaignId: string,
-    segments: { segment_id: string; allocation_percentage?: number; is_control_group?: boolean; description?: string }[]
-  ) => Promise<CampaignSegmentMapping[]>;
-  updateSegmentMapping?: (
-    mappingId: string,
-    campaignId: string,
-    updates: Partial<CampaignSegmentMapping>
-  ) => Promise<CampaignSegmentMapping>;
-  removeSegment?: (
-    mappingId: string,
-    campaignId: string
-  ) => Promise<void>;
-  getAvailableSegments?: (campaignId: string) => Promise<AudienceSegment[]>;
-  refreshCampaignAnalytics?: (campaignId: string) => Promise<void>;
+  eventId: string;
+  eventName: string;
+  defaultActiveTab?: string;
 }
 
-interface CampaignSegmentPanelProps {
-  campaign: EventMarketingCampaign;
-  availableSegments: AudienceSegment[];
-  existingMappings: CampaignSegmentMapping[];
-  isLoading: boolean;
-  onAssignSegments: (campaign: EventMarketingCampaign, segments: SegmentSelection[]) => Promise<any>;
-}
-
-export const CampaignSegmentPanel: React.FC<CampaignSegmentPanelProps> = ({
-  campaign,
-  availableSegments,
-  existingMappings,
-  isLoading,
-  onAssignSegments
+export const MarketingTabContent: React.FC<MarketingTabContentProps> = ({ 
+  eventId, 
+  eventName,
+  defaultActiveTab = "campaigns"
 }) => {
-  const [selectedSegments, setSelectedSegments] = useState<SegmentSelection[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
-  
-  useEffect(() => {
-    // Initialize selected segments with existing mappings
-    const initialSegments = existingMappings.map(mapping => ({
-      id: mapping.segment_id,
-      name: '', // You might need to fetch the name if it's not in the mapping
-      allocation: mapping.allocation_percentage,
-      isControlGroup: mapping.is_control_group,
-      description: mapping.description
-    }));
-    setSelectedSegments(initialSegments);
-  }, [existingMappings]);
+  const [activeTab, setActiveTab] = useState(defaultActiveTab);
+  const [isCreatingCampaign, setIsCreatingCampaign] = useState(false);
+  const [showCreateCampaign, setShowCreateCampaign] = useState(false);
+  const [newCampaign, setNewCampaign] = useState<Partial<EventMarketingCampaign>>({
+    name: '',
+    description: '',
+    type: 'email',
+    status: 'draft',
+    is_active: true
+  });
+  const [activeCampaign, setActiveCampaign] = useState<EventMarketingCampaign | null>(null);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [showSegmentsPanel, setShowSegmentsPanel] = useState(false);
 
-  const handleSegmentToggle = (segment: AudienceSegment) => {
-    const isSelected = selectedSegments.some(s => s.id === segment.id);
-    
-    if (isSelected) {
-      setSelectedSegments(prev => prev.filter(s => s.id !== segment.id));
-    } else {
-      setSelectedSegments(prev => [...prev, { 
-        id: segment.id, 
-        name: segment.name,
-        allocation: 100,
-        isControlGroup: false,
-        description: ''
-      }]);
+  const { 
+    campaigns, 
+    isLoading, 
+    createCampaign, 
+    refresh,
+    segmentMappings,
+    assignSegments,
+    getAvailableSegments
+  } = useEventMarketingWithSegments(eventId);
+
+  const { segments: allSegments, isLoadingSegments } = useAudienceSegments();
+  const [availableSegments, setAvailableSegments] = useState<AudienceSegment[]>([]);
+  const [loadingSegments, setLoadingSegments] = useState(false);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (activeCampaign) {
+      loadAvailableSegments(activeCampaign.id);
+    }
+  }, [activeCampaign]);
+
+  const loadAvailableSegments = async (campaignId: string) => {
+    setLoadingSegments(true);
+    try {
+      const segments = await getAvailableSegments(campaignId);
+      setAvailableSegments(segments);
+    } catch (err) {
+      console.error('Failed to load available segments:', err);
+    } finally {
+      setLoadingSegments(false);
     }
   };
 
-  const handleAllocationChange = (segmentId: string, value: number) => {
-    setSelectedSegments(prev =>
-      prev.map(segment =>
-        segment.id === segmentId ? { ...segment, allocation: value } : segment
-      )
-    );
+  const getCampaignLink = (campaign: EventMarketingCampaign) => {
+    const baseUrl = window.location.origin;
+    return `${baseUrl}/events/${eventId}?utm_campaign=${campaign.id}&utm_source=marketing&utm_medium=email`;
   };
 
-  const handleControlGroupChange = (segmentId: string, checked: boolean) => {
-    setSelectedSegments(prev =>
-      prev.map(segment =>
-        segment.id === segmentId ? { ...segment, isControlGroup: checked } : segment
-      )
-    );
-  };
-
-  const handleDescriptionChange = (segmentId: string, description: string) => {
-    setSelectedSegments(prev =>
-      prev.map(segment =>
-        segment.id === segmentId ? { ...segment, description: description } : segment
-      )
-    );
-  };
-
-  const handleSubmit = async () => {
-    try {
-      setLoading(true);
-      await onAssignSegments(campaign, selectedSegments);
+  const handleCreateCampaign = async () => {
+    if (!newCampaign.name) {
       toast({
-        title: "Success",
-        description: "Segments assigned successfully",
+        title: "Campaign name required",
+        description: "Please provide a name for your campaign.",
+        variant: "destructive"
       });
-    } catch (error) {
-      console.error("Error assigning segments:", error);
+      return;
+    }
+
+    setIsCreatingCampaign(true);
+    try {
+      await createCampaign({
+        ...newCampaign,
+        event_id: eventId
+      });
+      setShowCreateCampaign(false);
+      setNewCampaign({
+        name: '',
+        description: '',
+        type: 'email',
+        status: 'draft',
+        is_active: true
+      });
+      toast({
+        title: "Campaign created",
+        description: "Marketing campaign created successfully."
+      });
+      // Refresh campaigns list
+      refresh();
+    } catch (err) {
       toast({
         title: "Error",
-        description: "Failed to assign segments",
-        variant: "destructive",
+        description: "Failed to create campaign. Please try again.",
+        variant: "destructive"
       });
     } finally {
-      setLoading(false);
+      setIsCreatingCampaign(false);
     }
   };
 
-  const filteredSegments = availableSegments.filter(segment =>
-    segment.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Targeted Segments</CardTitle>
-        <CardDescription>
-          Assign audience segments to this campaign for targeted marketing.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex items-center space-x-2">
-          <Input
-            type="search"
-            placeholder="Search segments..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          <Search className="h-4 w-4 text-muted-foreground" />
-        </div>
-        <Separator />
-        <ScrollArea className="h-[300px] pr-4">
-          {isLoading ? (
-            <div className="flex items-center justify-center h-full">
-              <Loader2 className="h-6 w-6 animate-spin" />
-            </div>
-          ) : filteredSegments.length === 0 ? (
-            <div className="flex items-center justify-center h-full text-muted-foreground">
-              <AlertCircle className="h-6 w-6 mr-2" />
-              No segments found.
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {filteredSegments.map(segment => {
-                const isSelected = selectedSegments.some(s => s.id === segment.id);
-                const selectedSegment = selectedSegments.find(s => s.id === segment.id);
-
-                return (
-                  <div key={segment.id} className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`segment-${segment.id}`}
-                        checked={isSelected}
-                        onCheckedChange={() => handleSegmentToggle(segment)}
-                      />
-                      <Label htmlFor={`segment-${segment.id}`}>{segment.name}</Label>
-                    </div>
-                    {isSelected && (
-                      <div className="flex items-center space-x-2">
-                        <div className="flex items-center space-x-1">
-                          <Label htmlFor={`allocation-${segment.id}`} className="text-sm">
-                            Allocation:
-                          </Label>
-                          <Input
-                            type="number"
-                            id={`allocation-${segment.id}`}
-                            className="w-20 text-sm"
-                            value={selectedSegment?.allocation?.toString() || '100'}
-                            onChange={(e) =>
-                              handleAllocationChange(segment.id, parseInt(e.target.value))
-                            }
-                            min="1"
-                            max="100"
-                          />
-                          <span className="text-sm">%</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <Label htmlFor={`control-group-${segment.id}`} className="text-sm">
-                            Control Group:
-                          </Label>
-                          <Checkbox
-                            id={`control-group-${segment.id}`}
-                            checked={selectedSegment?.isControlGroup || false}
-                            onCheckedChange={(checked) =>
-                              handleControlGroupChange(segment.id, checked)
-                            }
-                          />
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <Label htmlFor={`description-${segment.id}`} className="text-sm">
-                            Description:
-                          </Label>
-                          <Input
-                            type="text"
-                            id={`description-${segment.id}`}
-                            className="w-40 text-sm"
-                            value={selectedSegment?.description || ''}
-                            onChange={(e) =>
-                              handleDescriptionChange(segment.id, e.target.value)
-                            }
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </ScrollArea>
-        <Separator />
-        <div className="flex justify-end">
-          <Button onClick={handleSubmit} disabled={loading}>
-            {loading ? (
-              <>
-                Assigning... <Loader2 className="h-4 w-4 animate-spin ml-2" />
-              </>
-            ) : (
-              <>
-                Assign Segments <Plus className="h-4 w-4 ml-2" />
-              </>
-            )}
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
-
-export const MarketingTabContent: React.FC<MarketingTabContentProps> = ({
-  campaigns,
-  isLoading,
-  error,
-  createCampaign,
-  updateCampaign,
-  deleteCampaign,
-  trackMetric,
-  getCampaignLink,
-  refresh,
-  segmentMappings,
-  createCampaignWithSegments,
-  assignSegments,
-  updateSegmentMapping,
-  removeSegment,
-  getAvailableSegments,
-  refreshCampaignAnalytics
-}) => {
-  const [isSegmentPanelOpen, setIsSegmentPanelOpen] = useState(false);
-  const [selectedCampaign, setSelectedCampaign] = useState<EventMarketingCampaign | null>(null);
-  const [availableSegments, setAvailableSegments] = useState<AudienceSegment[]>([]);
-  const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
-  
-  const marketingHook = {
-    refreshCampaignAnalytics,
+  const handleCampaignClick = (campaign: EventMarketingCampaign) => {
+    setActiveCampaign(campaign);
+    setShowShareModal(true);
   };
 
-  const handleOpenSegmentPanel = async (campaign: EventMarketingCampaign) => {
-    setSelectedCampaign(campaign);
-    
-    if (getAvailableSegments && campaign.id) {
-      try {
-        setLoading(true);
-        const segments = await getAvailableSegments(campaign.id);
-        setAvailableSegments(segments);
-        setIsSegmentPanelOpen(true);
-      } catch (error) {
-        console.error("Error fetching available segments:", error);
-        toast({
-          title: "Error",
-          description: "Failed to fetch available segments",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
-      }
-    }
+  const handleOpenSegments = (campaign: EventMarketingCampaign) => {
+    setActiveCampaign(campaign);
+    setShowSegmentsPanel(true);
   };
 
-  const handleCloseSegmentPanel = () => {
-    setIsSegmentPanelOpen(false);
-    setSelectedCampaign(null);
-    setAvailableSegments([]);
+  const handleCopyLink = (link: string) => {
+    copyToClipboard(link);
+    toast({
+      title: "Link copied",
+      description: "Campaign link copied to clipboard."
+    });
   };
 
-  const handleAssignSegments = async (campaign: EventMarketingCampaign, segments: SegmentSelection[]): Promise<void> => {
-    if (!campaign.id) return;
-    
+  const handleAssignSegments = async (campaign: EventMarketingCampaign, segments: SegmentSelection[]) => {
     try {
-      setLoading(true);
-      
       const segmentAssignments = segments.map(s => ({
         segment_id: s.id,
         allocation_percentage: s.allocation || 100,
         is_control_group: s.isControlGroup || false,
         description: s.description
       }));
-      
-      await assignSegmentsToCampaign(campaign.id, segmentAssignments);
-      
-      // Refresh mappings and analytics data
-      if (marketingHook) {
-        await marketingHook.refreshCampaignAnalytics(campaign.id);
-      }
+
+      // Call the assignSegments function from useEventMarketingWithSegments
+      await assignSegments(campaign.id, segmentAssignments);
       
       toast({
-        title: "Success",
-        description: "Segments assigned successfully",
+        title: "Segments assigned",
+        description: "Segments have been assigned to the campaign."
       });
-    } catch (error) {
-      console.error("Error assigning segments:", error);
+      
+      setShowSegmentsPanel(false);
+    } catch (err) {
+      console.error('Error assigning segments:', err);
       toast({
         title: "Error",
-        description: "Failed to assign segments",
-        variant: "destructive",
+        description: "Failed to assign segments. Please try again.",
+        variant: "destructive"
       });
-    } finally {
-      setLoading(false);
     }
   };
 
+  const renderCampaignsList = () => {
+    if (isLoading) {
+      return (
+        <div className="flex justify-center items-center py-8">
+          <Loader2 className="h-6 w-6 animate-spin text-primary mr-2" />
+          <span>Loading campaigns...</span>
+        </div>
+      );
+    }
+
+    if (campaigns.length === 0) {
+      return (
+        <div className="text-center py-8">
+          <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground" />
+          <h3 className="mt-4 font-medium text-lg">No campaigns found</h3>
+          <p className="text-muted-foreground mt-1">Create a marketing campaign to promote your event.</p>
+          <Button className="mt-4" onClick={() => setShowCreateCampaign(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Create Campaign
+          </Button>
+        </div>
+      );
+    }
+
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {campaigns.map(campaign => {
+          // Get segment count for this campaign
+          const campaignSegments = segmentMappings[campaign.id] || [];
+          
+          return (
+            <Card key={campaign.id} className="overflow-hidden">
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between">
+                  <CardTitle className="text-lg">{campaign.name}</CardTitle>
+                  <Badge variant={campaign.is_active ? "default" : "outline"}>
+                    {campaign.status}
+                  </Badge>
+                </div>
+                <CardDescription className="truncate">{campaign.description || 'No description'}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center text-sm text-muted-foreground mb-4">
+                  <Users className="h-4 w-4 mr-1" />
+                  <span>{campaignSegments.length} segments</span>
+                </div>
+                <div className="flex justify-between mt-4">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => handleOpenSegments(campaign)}
+                  >
+                    <Users className="h-4 w-4 mr-2" />
+                    Segments
+                  </Button>
+                  <Button 
+                    size="sm"
+                    onClick={() => handleCampaignClick(campaign)}
+                  >
+                    <Share2 className="h-4 w-4 mr-2" />
+                    Share
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+    );
+  };
+
   return (
-    <div className="grid gap-4">
-      {campaigns.map(campaign => (
-        <Card key={campaign.id}>
-          <CardHeader>
-            <CardTitle>{campaign.name}</CardTitle>
-            <CardDescription>{campaign.description}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <p>Type: {campaign.campaign_type}</p>
-            <p>Status: {campaign.status}</p>
-            {segmentMappings && segmentMappings[campaign.id || ''] && (
-              <div>
-                <p>Segments: {segmentMappings[campaign.id || ''].length}</p>
-              </div>
-            )}
-            <Button onClick={() => handleOpenSegmentPanel(campaign)} disabled={loading}>
-              {loading ? (
-                <>
-                  Loading... <Loader2 className="h-4 w-4 animate-spin ml-2" />
-                </>
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">Marketing & Promotion</h2>
+        <Button onClick={() => setShowCreateCampaign(true)}>
+          <Plus className="mr-2 h-4 w-4" />
+          Create Campaign
+        </Button>
+      </div>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="mb-4">
+          <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          <TabsTrigger value="segments">Audience Segments</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="campaigns" className="space-y-4">
+          {renderCampaignsList()}
+        </TabsContent>
+
+        <TabsContent value="analytics">
+          <Card>
+            <CardHeader>
+              <CardTitle>Campaign Analytics</CardTitle>
+              <CardDescription>
+                Track the performance of your marketing campaigns.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {/* Analytics content would go here */}
+              <p className="text-muted-foreground">Analytics dashboard coming soon.</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="segments">
+          <Card>
+            <CardHeader>
+              <CardTitle>Audience Segments</CardTitle>
+              <CardDescription>
+                Manage audience segments for targeted marketing.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isLoadingSegments ? (
+                <div className="flex justify-center items-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary mr-2" />
+                  <span>Loading segments...</span>
+                </div>
               ) : (
-                <>
-                  Manage Segments <Users className="h-4 w-4 ml-2" />
-                </>
+                <ScrollArea className="h-[400px] pr-2">
+                  {allSegments.map(segment => (
+                    <div key={segment.id} className="py-3 border-b last:border-b-0">
+                      <h3 className="font-medium">{segment.name}</h3>
+                      <p className="text-sm text-muted-foreground mt-1">{segment.description}</p>
+                    </div>
+                  ))}
+                </ScrollArea>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      {/* Create Campaign Dialog */}
+      <Dialog open={showCreateCampaign} onOpenChange={setShowCreateCampaign}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create Marketing Campaign</DialogTitle>
+            <DialogDescription>
+              Create a new marketing campaign for {eventName}.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="campaign-name">Campaign Name</Label>
+              <Input
+                id="campaign-name"
+                placeholder="Enter campaign name"
+                value={newCampaign.name}
+                onChange={(e) => setNewCampaign(prev => ({ ...prev, name: e.target.value }))}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="campaign-description">Description (Optional)</Label>
+              <Input
+                id="campaign-description"
+                placeholder="Enter campaign description"
+                value={newCampaign.description || ''}
+                onChange={(e) => setNewCampaign(prev => ({ ...prev, description: e.target.value }))}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="campaign-type">Campaign Type</Label>
+              <select
+                id="campaign-type"
+                className="w-full px-3 py-2 border rounded-md"
+                value={newCampaign.type}
+                onChange={(e) => setNewCampaign(prev => ({ ...prev, type: e.target.value }))}
+              >
+                <option value="email">Email</option>
+                <option value="social">Social Media</option>
+                <option value="sms">SMS</option>
+                <option value="web">Website</option>
+              </select>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="is-active" 
+                checked={newCampaign.is_active}
+                onCheckedChange={(checked) => setNewCampaign(prev => ({ ...prev, is_active: !!checked }))}
+              />
+              <Label htmlFor="is-active">Make campaign active immediately</Label>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCreateCampaign(false)}>Cancel</Button>
+            <Button onClick={handleCreateCampaign} disabled={isCreatingCampaign}>
+              {isCreatingCampaign ? (
+                <>Creating... <Loader2 className="ml-2 h-4 w-4 animate-spin" /></>
+              ) : (
+                'Create Campaign'
               )}
             </Button>
-          </CardContent>
-        </Card>
-      ))}
-      
-      {isSegmentPanelOpen && selectedCampaign && (
-        <CampaignSegmentPanel
-          campaign={selectedCampaign}
-          availableSegments={availableSegments}
-          existingMappings={segmentMappings[selectedCampaign.id || ''] || []}
-          isLoading={loading}
-          onAssignSegments={handleAssignSegments}
-        />
-      )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Share Campaign Dialog */}
+      <Dialog open={showShareModal} onOpenChange={setShowShareModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Share Campaign</DialogTitle>
+            <DialogDescription>
+              Share this marketing campaign link with your audience.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {activeCampaign && (
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label>Campaign Link</Label>
+                <div className="flex items-center">
+                  <Input
+                    readOnly
+                    value={getCampaignLink(activeCampaign)}
+                    className="pr-10"
+                  />
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    className="ml-[-40px]"
+                    onClick={() => handleCopyLink(getCampaignLink(activeCampaign))}
+                  >
+                    <Link className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              
+              <div>
+                <h4 className="text-sm font-medium mb-2">Share on:</h4>
+                <div className="flex space-x-2">
+                  <Button variant="outline" size="sm">Twitter</Button>
+                  <Button variant="outline" size="sm">Facebook</Button>
+                  <Button variant="outline" size="sm">LinkedIn</Button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowShareModal(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Segments Panel Dialog */}
+      <Dialog open={showSegmentsPanel} onOpenChange={setShowSegmentsPanel}>
+        <DialogContent className="sm:max-w-md md:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Manage Campaign Segments</DialogTitle>
+            <DialogDescription>
+              Assign audience segments to this campaign to target specific groups.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {activeCampaign && (
+            <div className="py-4">
+              <CampaignSegmentPanel 
+                campaign={activeCampaign}
+                availableSegments={availableSegments}
+                existingMappings={segmentMappings[activeCampaign.id] || []}
+                isLoading={loadingSegments}
+                onAssignSegments={handleAssignSegments}
+              />
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowSegmentsPanel(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

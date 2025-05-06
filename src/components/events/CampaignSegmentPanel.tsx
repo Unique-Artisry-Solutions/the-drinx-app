@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -168,7 +169,7 @@ export const CampaignSegmentPanel: React.FC<CampaignSegmentPanelProps> = ({
                         <Checkbox
                           id={`control-group-${segment.id}`}
                           checked={selectedSegments.find(s => s.id === segment.id)?.isControlGroup || false}
-                          onCheckedChange={(checked) => handleControlGroupChange(segment.id, checked!)}
+                          onCheckedChange={(checked) => handleControlGroupChange(segment.id, !!checked)}
                         />
                       </div>
                       <div className="space-y-1">
