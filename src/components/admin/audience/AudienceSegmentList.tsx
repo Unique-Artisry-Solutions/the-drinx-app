@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Edit, MoreHorizontal, Trash2, Users } from 'lucide-react';
+import { Edit, MoreHorizontal, Trash2, Users, ExternalLink } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface AudienceSegmentListProps {
@@ -14,13 +14,15 @@ interface AudienceSegmentListProps {
   isLoading: boolean;
   onEdit: (segment: AudienceSegment) => void;
   onDelete: (segmentId: string) => void;
+  onSelect?: (segment: AudienceSegment) => void;
 }
 
 export const AudienceSegmentList: React.FC<AudienceSegmentListProps> = ({ 
   segments, 
   isLoading,
   onEdit,
-  onDelete
+  onDelete,
+  onSelect
 }) => {
   const [segmentToDelete, setSegmentToDelete] = React.useState<string | null>(null);
   
@@ -70,7 +72,7 @@ export const AudienceSegmentList: React.FC<AudienceSegmentListProps> = ({
         </TableHeader>
         <TableBody>
           {segments.map((segment) => (
-            <TableRow key={segment.id}>
+            <TableRow key={segment.id} className={onSelect ? "cursor-pointer hover:bg-muted/50" : ""} onClick={() => onSelect?.(segment)}>
               <TableCell className="font-medium">
                 <div>
                   {segment.name}
@@ -96,27 +98,44 @@ export const AudienceSegmentList: React.FC<AudienceSegmentListProps> = ({
                 {format(new Date(segment.updated_at), 'MMM d, yyyy')}
               </TableCell>
               <TableCell className="text-right">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm">
-                      <MoreHorizontal className="h-4 w-4" />
-                      <span className="sr-only">Open menu</span>
+                <div className="flex justify-end items-center space-x-1">
+                  {onSelect && (
+                    <Button variant="ghost" size="sm" onClick={(e) => {
+                      e.stopPropagation();
+                      onSelect(segment);
+                    }}>
+                      <ExternalLink className="h-4 w-4" />
+                      <span className="sr-only">View details</span>
                     </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => onEdit(segment)}>
-                      <Edit className="h-4 w-4 mr-2" />
-                      Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      className="text-red-600"
-                      onClick={() => handleDeleteClick(segment.id)}
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                  )}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                      <Button variant="ghost" size="sm">
+                        <MoreHorizontal className="h-4 w-4" />
+                        <span className="sr-only">Open menu</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={(e) => {
+                        e.stopPropagation();
+                        onEdit(segment);
+                      }}>
+                        <Edit className="h-4 w-4 mr-2" />
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        className="text-red-600"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteClick(segment.id);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </TableCell>
             </TableRow>
           ))}

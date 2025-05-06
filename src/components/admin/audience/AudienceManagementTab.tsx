@@ -6,15 +6,18 @@ import { Input } from '@/components/ui/input';
 import { useAudienceSegments } from '@/hooks/useAudienceSegments';
 import { AudienceSegmentList } from './AudienceSegmentList';
 import { AudienceSegmentForm } from './AudienceSegmentForm';
+import { AudienceInsights } from './AudienceInsights';
+import { SegmentPerformance } from './SegmentPerformance';
 import { AudienceSegment } from '@/types/AudienceTypes';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, PlusCircle, RefreshCw } from 'lucide-react';
+import { Search, PlusCircle, RefreshCw, BarChart3, Users, Settings } from 'lucide-react';
 
 export const AudienceManagementTab = () => {
   const [activeView, setActiveView] = useState<'list' | 'create' | 'edit'>('list');
   const [selectedSegment, setSelectedSegment] = useState<AudienceSegment | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [activeTab, setActiveTab] = useState<'segments' | 'insights' | 'performance'>('segments');
   
   const { 
     segments,
@@ -22,7 +25,8 @@ export const AudienceManagementTab = () => {
     refetchSegments,
     createSegment,
     updateSegment,
-    deleteSegment
+    deleteSegment,
+    useSegmentAnalytics
   } = useAudienceSegments();
 
   const filteredSegments = segments.filter(segment => {
@@ -52,6 +56,11 @@ export const AudienceManagementTab = () => {
   const handleEditSegment = (segment: AudienceSegment) => {
     setSelectedSegment(segment);
     setActiveView('edit');
+  };
+  
+  const handleSelectSegment = (segment: AudienceSegment) => {
+    setSelectedSegment(segment);
+    setActiveTab('insights');
   };
   
   const handleRefresh = () => {
@@ -86,39 +95,68 @@ export const AudienceManagementTab = () => {
         </CardHeader>
         <CardContent>
           {activeView === 'list' && (
-            <>
-              <div className="flex items-center space-x-2 mb-4">
-                <div className="relative flex-1 max-w-sm">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search segments..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-8"
-                  />
+            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)}>
+              <TabsList className="mb-4">
+                <TabsTrigger value="segments">
+                  <Users className="h-4 w-4 mr-2" />
+                  Segments
+                </TabsTrigger>
+                <TabsTrigger value="insights">
+                  <Settings className="h-4 w-4 mr-2" />
+                  Insights
+                </TabsTrigger>
+                <TabsTrigger value="performance">
+                  <BarChart3 className="h-4 w-4 mr-2" />
+                  Performance
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="segments">
+                <div className="flex items-center space-x-2 mb-4">
+                  <div className="relative flex-1 max-w-sm">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search segments..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-8"
+                    />
+                  </div>
+                  
+                  <Tabs defaultValue={statusFilter} onValueChange={setStatusFilter}>
+                    <TabsList>
+                      <TabsTrigger value="all">All</TabsTrigger>
+                      <TabsTrigger value="active">Active</TabsTrigger>
+                      <TabsTrigger value="inactive">Inactive</TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                  
+                  <Button variant="outline" size="sm" onClick={handleRefresh}>
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Refresh
+                  </Button>
                 </div>
                 
-                <Tabs defaultValue={statusFilter} onValueChange={setStatusFilter}>
-                  <TabsList>
-                    <TabsTrigger value="all">All</TabsTrigger>
-                    <TabsTrigger value="active">Active</TabsTrigger>
-                    <TabsTrigger value="inactive">Inactive</TabsTrigger>
-                  </TabsList>
-                </Tabs>
-                
-                <Button variant="outline" size="sm" onClick={handleRefresh}>
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Refresh
-                </Button>
-              </div>
+                <AudienceSegmentList 
+                  segments={filteredSegments} 
+                  isLoading={isLoadingSegments}
+                  onEdit={handleEditSegment}
+                  onDelete={handleDeleteSegment}
+                  onSelect={handleSelectSegment}
+                />
+              </TabsContent>
               
-              <AudienceSegmentList 
-                segments={filteredSegments} 
-                isLoading={isLoadingSegments}
-                onEdit={handleEditSegment}
-                onDelete={handleDeleteSegment}
-              />
-            </>
+              <TabsContent value="insights">
+                <AudienceInsights segmentId={selectedSegment?.id} />
+              </TabsContent>
+              
+              <TabsContent value="performance">
+                <SegmentPerformance 
+                  segments={segments}
+                  isLoading={isLoadingSegments}
+                />
+              </TabsContent>
+            </Tabs>
           )}
           
           {activeView === 'create' && (
