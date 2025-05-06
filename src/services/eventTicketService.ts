@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { EventDiscountCode, EventTicketType } from '@/types/EventTypes';
 
@@ -367,11 +366,11 @@ export const processTicketPurchase = async ({
         await supabase
           .from('event_discount_codes')
           .update({
-            usage_count: supabase.rpc('increment_count', {
-              row_id: discountData.id,
-              table_name: 'event_discount_codes',
-              column_name: 'usage_count'
-            })
+            usage_count: (await supabase
+              .from('event_discount_codes')
+              .select('usage_count')
+              .eq('id', discountData.id)
+              .single()).data?.usage_count + 1 || 1
           })
           .eq('id', discountData.id);
       }
