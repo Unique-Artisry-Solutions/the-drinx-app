@@ -85,7 +85,8 @@ export {
   isEventManagementFeature,
   isPromoterDashboardFeature,
   isCustomPromotionFeature,
-  isPromoterNotificationFeature
+  isPromoterNotificationFeature,
+  isTicketManagementFeature
 } from './promoterDetection';
 
 // Export audience relationship functions

@@ -1,240 +1,243 @@
-import { supabase } from '@/integrations/supabase/client';
-import { EventAttendee, EventTicketType } from '@/types/EventTypes';
-import { checkInAttendee } from './eventAttendeesService';
+
+import { supabase } from '@/lib/supabase';
+import { EventTicketType, EventDiscountCode } from '@/types/EventTypes';
+import { v4 as uuidv4 } from 'uuid';
+import { fromTable } from '@/lib/typedSupabase';
 
 /**
- * Fetch ticket types for an event
+ * Fetches ticket types for a specific event
  */
-export async function fetchEventTicketTypes(eventId: string): Promise<EventTicketType[]> {
-  try {
-    const { data, error } = await supabase
-      .from('event_ticket_types')
-      .select('*')
-      .eq('event_id', eventId);
-
-    if (error) throw error;
-
-    // Get ticket sales data for available counts
-    const { data: attendeeData, error: attendeeError } = await supabase
-      .from('event_attendees')
-      .select('ticket_type_id, status')
-      .eq('event_id', eventId);
-
-    if (attendeeError) throw attendeeError;
-
-    // Calculate sales counts manually since we can't use .group()
-    const salesByTicketType: Record<string, number> = {};
+export const fetchEventTicketTypes = async (eventId: string): Promise<EventTicketType[]> => {
+  const { data, error } = await supabase
+    .from('event_ticket_types')
+    .select('*')
+    .eq('event_id', eventId);
     
-    // Count tickets that haven't been cancelled
-    attendeeData.forEach(attendee => {
-      if (attendee.status !== 'cancelled' && attendee.ticket_type_id) {
-        salesByTicketType[attendee.ticket_type_id] = (salesByTicketType[attendee.ticket_type_id] || 0) + 1;
-      }
-    });
-
-    // Calculate available tickets and add to response
-    return data.map(ticket => {
-      const sold = salesByTicketType[ticket.id] || 0;
-      const available = ticket.quantity - sold;
-      
-      return {
-        id: ticket.id,
-        name: ticket.name,
-        description: ticket.description,
-        price: ticket.price,
-        quantity: ticket.quantity,
-        sold,
-        available
-      };
-    });
-  } catch (error) {
-    console.error('Error fetching event ticket types:', error);
-    throw error;
+  if (error) {
+    console.error('Error fetching ticket types:', error);
+    throw new Error('Failed to fetch ticket types');
   }
-}
+
+  // Calculate available tickets
+  return data.map(ticket => ({
+    ...ticket,
+    sold: ticket.quantity - (ticket.available || 0),
+    available: ticket.available || ticket.quantity
+  }));
+};
 
 /**
- * Create a new ticket type
+ * Checks ticket availability for a specific ticket type
  */
-export async function createTicketType(ticketType: Omit<EventTicketType, 'id'> & { event_id: string }): Promise<EventTicketType> {
-  try {
-    const { data, error } = await supabase
-      .from('event_ticket_types')
-      .insert(ticketType)
-      .select()
-      .single();
-
-    if (error) throw error;
-    
-    return {
-      ...data,
-      sold: 0,
-      available: data.quantity
-    };
-  } catch (error) {
-    console.error('Error creating ticket type:', error);
-    throw error;
-  }
-}
-
-/**
- * Update a ticket type
- */
-export async function updateTicketType(id: string, updates: Partial<EventTicketType>): Promise<EventTicketType> {
-  try {
-    const { data, error } = await supabase
-      .from('event_ticket_types')
-      .update(updates)
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    // Get sales count manually since we can't use .count() with filters directly
-    const { data: attendeeData, error: attendeeError } = await supabase
-      .from('event_attendees')
-      .select('id')
-      .eq('ticket_type_id', id)
-      .neq('status', 'cancelled');
-      
-    if (attendeeError) throw attendeeError;
-    
-    const sold = attendeeData.length;
-    
-    return {
-      ...data,
-      sold,
-      available: data.quantity - sold
-    };
-  } catch (error) {
-    console.error('Error updating ticket type:', error);
-    throw error;
-  }
-}
-
-/**
- * Delete a ticket type (if no tickets have been sold)
- */
-export async function deleteTicketType(id: string): Promise<void> {
-  try {
-    // Check if tickets have been sold
-    const { data: attendeeData, error: attendeeError } = await supabase
-      .from('event_attendees')
-      .select('id')
-      .eq('ticket_type_id', id);
-      
-    if (attendeeError) throw attendeeError;
-    
-    if (attendeeData.length > 0) {
-      throw new Error(`Cannot delete ticket type with ${attendeeData.length} tickets sold`);
-    }
-    
-    const { error } = await supabase
-      .from('event_ticket_types')
-      .delete()
-      .eq('id', id);
-
-    if (error) throw error;
-  } catch (error) {
-    console.error('Error deleting ticket type:', error);
-    throw error;
-  }
-}
-
-/**
- * Process a ticket scan
- */
-export async function processTicketScan(
-  ticketCode: string,
-  location?: string,
-  notes?: string
+export const checkTicketAvailability = async (
+  eventId: string,
+  ticketTypeId: string
 ): Promise<{
-  success: boolean;
-  message: string;
-  attendee?: EventAttendee;
-}> {
+  available: boolean;
+  remainingQuantity: number;
+  message?: string;
+}> => {
   try {
-    // First validate the ticket
-    const { data: attendeeData, error: attendeeError } = await supabase
+    const { data, error } = await supabase
+      .from('event_ticket_types')
+      .select('quantity, id')
+      .eq('id', ticketTypeId)
+      .eq('event_id', eventId)
+      .single();
+
+    if (error || !data) {
+      throw new Error('Ticket type not found');
+    }
+    
+    // Count sold tickets
+    const { count: soldCount, error: countError } = await supabase
       .from('event_attendees')
-      .select('*')
-      .eq('ticket_code', ticketCode)
+      .select('*', { count: true })
+      .eq('ticket_type_id', ticketTypeId);
+      
+    if (countError) {
+      throw new Error('Error checking ticket availability');
+    }
+    
+    const soldTickets = soldCount || 0;
+    const remainingQuantity = data.quantity - soldTickets;
+    
+    return {
+      available: remainingQuantity > 0,
+      remainingQuantity,
+      message: remainingQuantity > 0 
+        ? `${remainingQuantity} tickets available` 
+        : 'Sold out'
+    };
+  } catch (error) {
+    console.error("Error checking ticket availability:", error);
+    throw error;
+  }
+};
+
+/**
+ * Process ticket purchase
+ */
+export const processTicketPurchase = async ({
+  eventId,
+  ticketTypeId,
+  quantity,
+  userId,
+  customerName,
+  customerEmail,
+  discountCode,
+  paymentMethodId,
+}: {
+  eventId: string;
+  ticketTypeId: string;
+  quantity: number;
+  userId?: string;
+  customerName: string;
+  customerEmail: string;
+  discountCode?: string;
+  paymentMethodId?: string;
+}): Promise<{ 
+  success: boolean;
+  purchaseId?: string;
+  error?: string;
+}> => {
+  const purchaseId = uuidv4();
+  
+  try {
+    // Check availability
+    const availability = await checkTicketAvailability(eventId, ticketTypeId);
+    if (!availability.available || availability.remainingQuantity < quantity) {
+      return {
+        success: false,
+        error: 'Insufficient ticket quantity available'
+      };
+    }
+    
+    // Get ticket price
+    const { data: ticketData, error: ticketError } = await supabase
+      .from('event_ticket_types')
+      .select('price')
+      .eq('id', ticketTypeId)
       .single();
       
-    if (attendeeError) {
-      return {
-        success: false,
-        message: 'Invalid ticket code'
-      };
+    if (ticketError || !ticketData) {
+      throw new Error('Could not retrieve ticket information');
     }
     
-    const attendee = attendeeData as EventAttendee;
+    // Handle discount if provided
+    let finalPrice = ticketData.price;
+    let discountAmount = 0;
     
-    // Check if ticket has already been used
-    if (attendee.status === 'checked_in') {
-      return {
-        success: false,
-        message: 'Ticket has already been used',
-        attendee
-      };
+    if (discountCode) {
+      const discountResult = await applyDiscountCode(discountCode, eventId, ticketTypeId);
+      
+      if (discountResult.valid) {
+        if (discountResult.discountType === 'percentage') {
+          discountAmount = (ticketData.price * quantity) * (discountResult.discountAmount / 100);
+        } else {
+          discountAmount = Math.min(ticketData.price * quantity, discountResult.discountAmount * quantity);
+        }
+        
+        finalPrice = ticketData.price - (discountAmount / quantity);
+      }
     }
     
-    // Check if ticket is cancelled
-    if (attendee.status === 'cancelled') {
-      return {
-        success: false,
-        message: 'Ticket has been cancelled',
-        attendee
-      };
+    // Process payment (placeholder for a real payment processing)
+    if (paymentMethodId) {
+      // We would process the payment through a payment gateway here
+      console.log(`Processing payment of ${finalPrice * quantity}$ with payment method ${paymentMethodId}`);
     }
     
-    // Process the check-in
-    const updatedAttendee = await checkInAttendee(
-      attendee.event_id, 
-      attendee.id as string, 
-      location, 
-      notes
-    );
+    // Create attendee records
+    const attendees = [];
     
+    for (let i = 0; i < quantity; i++) {
+      const ticketCode = `E${eventId.substring(0, 4)}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+      
+      attendees.push({
+        event_id: eventId,
+        user_id: userId,
+        ticket_type_id: ticketTypeId,
+        email: customerEmail,
+        name: customerName,
+        ticket_code: ticketCode,
+        status: 'registered',
+        purchase_date: new Date().toISOString()
+      });
+    }
+    
+    const { error: attendeesError } = await supabase
+      .from('event_attendees')
+      .insert(attendees);
+      
+    if (attendeesError) {
+      throw new Error(`Failed to create attendee records: ${attendeesError.message}`);
+    }
+    
+    // Record discount code usage if applicable
+    if (discountCode && discountAmount > 0) {
+      try {
+        // Get the discount code ID
+        const { data: discountData } = await supabase
+          .from('event_discount_codes')
+          .select('id, usage_count')
+          .eq('code', discountCode)
+          .eq('event_id', eventId)
+          .single();
+          
+        if (discountData) {
+          // Increment usage count
+          await supabase
+            .from('event_discount_codes')
+            .update({ usage_count: (discountData.usage_count || 0) + 1 })
+            .eq('id', discountData.id);
+            
+          // Record the redemption
+          await supabase
+            .from('event_discount_redemptions')
+            .insert({
+              discount_code_id: discountData.id,
+              user_id: userId,
+              ticket_type_id: ticketTypeId,
+              order_value: ticketData.price * quantity,
+              discount_value: discountAmount
+            });
+        }
+      } catch (discountError) {
+        // Just log the error but don't fail the purchase
+        console.error('Error recording discount usage:', discountError);
+      }
+    }
+    
+    // Return success
     return {
       success: true,
-      message: 'Check-in successful',
-      attendee: updatedAttendee
+      purchaseId
     };
   } catch (error) {
-    console.error('Error processing ticket scan:', error);
+    console.error('Error processing ticket purchase:', error);
     return {
       success: false,
-      message: `Error processing ticket: ${(error as Error).message}`
+      error: error instanceof Error ? error.message : 'Unknown error during purchase'
     };
   }
-}
+};
 
 /**
- * Generate a QR code for a ticket 
- * (In a real app, we would encode more data and add security)
+ * Apply discount code to a ticket purchase
  */
-export function generateTicketCode(eventId: string, attendeeId: string): string {
-  const random = Math.random().toString(36).substring(2, 8).toUpperCase();
-  return `${eventId.substring(0, 4)}-${attendeeId.substring(0, 4)}-${random}`;
-}
-
-/**
- * Apply a discount code to a ticket purchase
- */
-export async function applyDiscountCode(
+export const applyDiscountCode = async (
   code: string, 
-  eventId: string, 
+  eventId: string,
   ticketTypeId: string
 ): Promise<{
   valid: boolean;
   discountAmount: number;
   discountType: 'percentage' | 'fixed';
   message?: string;
-}> {
+}> => {
   try {
-    // Check if the discount code exists and is valid for this event
+    // Check if the event_discount_codes table exists in the database
     const { data: discountData, error: discountError } = await supabase
       .from('event_discount_codes')
       .select('*')
@@ -252,68 +255,78 @@ export async function applyDiscountCode(
       };
     }
     
-    // Check if the code has expired
+    // Check for expiration
     if (discountData.expires_at && new Date(discountData.expires_at) < new Date()) {
       return {
         valid: false,
         discountAmount: 0,
         discountType: 'fixed',
-        message: 'Discount code has expired'
+        message: 'This discount code has expired'
       };
     }
     
-    // Check if usage limit has been reached
-    if (discountData.usage_limit) {
-      const { count, error: usageError } = await supabase
+    // Check for usage limit
+    if (discountData.usage_limit !== null) {
+      const { count, error: countError } = await supabase
         .from('event_discount_redemptions')
-        .select('*', { count: 'exact', head: true })
+        .select('*', { count: true })
         .eq('discount_code_id', discountData.id);
         
-      if (usageError) throw usageError;
-      
-      if (count && count >= discountData.usage_limit) {
+      if (!countError && count !== null && count >= discountData.usage_limit) {
         return {
           valid: false,
           discountAmount: 0,
           discountType: 'fixed',
-          message: 'Discount code usage limit reached'
+          message: 'This discount code has reached its usage limit'
         };
       }
     }
     
-    // Check if the discount is applicable for this ticket type
+    // Check for ticket type restrictions
     if (discountData.applicable_ticket_types && 
-        Array.isArray(discountData.applicable_ticket_types) && 
+        discountData.applicable_ticket_types.length > 0 && 
         !discountData.applicable_ticket_types.includes(ticketTypeId)) {
       return {
         valid: false,
         discountAmount: 0,
         discountType: 'fixed',
-        message: 'Discount code not applicable for this ticket type'
+        message: 'This discount code is not valid for the selected ticket type'
       };
     }
     
+    // Valid discount code
     return {
       valid: true,
       discountAmount: discountData.discount_amount,
       discountType: discountData.discount_type as 'percentage' | 'fixed',
-      message: 'Discount applied successfully'
+      message: `Discount applied: ${discountData.discount_type === 'percentage' ? 
+                discountData.discount_amount + '%' : 
+                '$' + discountData.discount_amount}`
     };
   } catch (error) {
-    console.error('Error applying discount code:', error);
+    console.error("Error applying discount code:", error);
     return {
       valid: false,
       discountAmount: 0,
       discountType: 'fixed',
-      message: `Error: ${(error as Error).message}`
+      message: 'Error applying discount code'
     };
   }
-}
+};
 
 /**
- * Create a new discount code
+ * Create a new discount code for an event
  */
-export async function createDiscountCode(discountData: {
+export const createDiscountCode = async ({
+  eventId,
+  code,
+  discountType,
+  discountAmount,
+  expiresAt,
+  usageLimit,
+  applicableTicketTypes,
+  description
+}: {
   eventId: string;
   code: string;
   discountType: 'percentage' | 'fixed';
@@ -322,218 +335,91 @@ export async function createDiscountCode(discountData: {
   usageLimit?: number;
   applicableTicketTypes?: string[];
   description?: string;
-}) {
+}): Promise<EventDiscountCode> => {
   try {
-    const { data, error } = await supabase
+    // Format the code
+    const formattedCode = code.toUpperCase().trim().replace(/\s+/g, '');
+    
+    // Validate discount amount
+    if (discountType === 'percentage' && (discountAmount < 0 || discountAmount > 100)) {
+      throw new Error('Percentage discount must be between 0 and 100');
+    }
+    
+    if (discountType === 'fixed' && discountAmount < 0) {
+      throw new Error('Fixed discount amount cannot be negative');
+    }
+    
+    // Check for duplicate codes
+    const { data: existingCode } = await supabase
+      .from('event_discount_codes')
+      .select('id')
+      .eq('code', formattedCode)
+      .eq('event_id', eventId)
+      .maybeSingle();
+      
+    if (existingCode) {
+      throw new Error('A discount code with this name already exists for this event');
+    }
+    
+    // Create the new discount code
+    const { data: newCode, error: insertError } = await supabase
       .from('event_discount_codes')
       .insert({
-        event_id: discountData.eventId,
-        code: discountData.code.toUpperCase(),
-        discount_type: discountData.discountType,
-        discount_amount: discountData.discountAmount,
-        expires_at: discountData.expiresAt,
-        usage_limit: discountData.usageLimit,
-        applicable_ticket_types: discountData.applicableTicketTypes,
-        description: discountData.description,
+        event_id: eventId,
+        code: formattedCode,
+        discount_type: discountType,
+        discount_amount: discountAmount,
+        expires_at: expiresAt ? expiresAt.toISOString() : null,
+        usage_limit: usageLimit || null,
+        usage_count: 0,
         is_active: true,
-        created_at: new Date().toISOString()
+        applicable_ticket_types: applicableTicketTypes || null,
+        description: description || null
       })
       .select()
       .single();
       
-    if (error) throw error;
-    return data;
+    if (insertError || !newCode) {
+      throw new Error(`Failed to create discount code: ${insertError?.message || 'Unknown error'}`);
+    }
+    
+    return {
+      id: newCode.id,
+      event_id: newCode.event_id,
+      code: newCode.code,
+      discount_type: newCode.discount_type as 'percentage' | 'fixed',
+      discount_amount: newCode.discount_amount,
+      expires_at: newCode.expires_at,
+      usage_limit: newCode.usage_limit,
+      usage_count: newCode.usage_count || 0,
+      is_active: newCode.is_active,
+      applicable_ticket_types: newCode.applicable_ticket_types,
+      description: newCode.description,
+      created_at: newCode.created_at
+    };
   } catch (error) {
     console.error('Error creating discount code:', error);
     throw error;
   }
-}
+};
 
 /**
- * Check ticket availability for an event
+ * Fetch discount codes for an event
  */
-export async function checkTicketAvailability(
-  eventId: string,
-  ticketTypeId: string
-): Promise<{
-  available: boolean;
-  remainingTickets: number;
-  totalCapacity: number;
-}> {
+export const fetchEventDiscountCodes = async (eventId: string): Promise<EventDiscountCode[]> => {
   try {
-    // Get the ticket type details
-    const { data: ticketType, error: ticketError } = await supabase
-      .from('event_ticket_types')
+    const { data, error } = await supabase
+      .from('event_discount_codes')
       .select('*')
-      .eq('id', ticketTypeId)
-      .single();
+      .eq('event_id', eventId);
       
-    if (ticketError) throw ticketError;
+    if (error) {
+      throw error;
+    }
     
-    // Count tickets sold (excluding cancelled)
-    const { count, error: soldError } = await supabase
-      .from('event_attendees')
-      .select('*', { count: 'exact', head: true })
-      .eq('event_id', eventId)
-      .eq('ticket_type_id', ticketTypeId)
-      .neq('status', 'cancelled');
-      
-    if (soldError) throw soldError;
-    
-    const soldCount = count || 0;
-    const remainingTickets = ticketType.quantity - soldCount;
-    
-    return {
-      available: remainingTickets > 0,
-      remainingTickets,
-      totalCapacity: ticketType.quantity
-    };
+    return data || [];
   } catch (error) {
-    console.error('Error checking ticket availability:', error);
+    console.error('Error fetching discount codes:', error);
     throw error;
   }
-}
-
-/**
- * Process ticket purchase with payment gateway
- */
-export async function processTicketPurchase(purchaseData: {
-  eventId: string;
-  ticketTypeId: string;
-  quantity: number;
-  userId?: string;
-  customerName: string;
-  customerEmail: string;
-  discountCode?: string;
-  paymentMethodId?: string;
-}): Promise<{
-  success: boolean;
-  ticketIds?: string[];
-  error?: string;
-  transactionId?: string;
-}> {
-  try {
-    // Get ticket type details
-    const { data: ticketType, error: ticketError } = await supabase
-      .from('event_ticket_types')
-      .select('*')
-      .eq('id', purchaseData.ticketTypeId)
-      .single();
-      
-    if (ticketError) throw ticketError;
-    
-    // Check availability
-    const availability = await checkTicketAvailability(
-      purchaseData.eventId,
-      purchaseData.ticketTypeId
-    );
-    
-    if (!availability.available || availability.remainingTickets < purchaseData.quantity) {
-      return {
-        success: false,
-        error: `Only ${availability.remainingTickets} tickets available`
-      };
-    }
-    
-    // Apply discount if provided
-    let finalPrice = ticketType.price;
-    let discountId = null;
-    
-    if (purchaseData.discountCode) {
-      const discount = await applyDiscountCode(
-        purchaseData.discountCode,
-        purchaseData.eventId,
-        purchaseData.ticketTypeId
-      );
-      
-      if (discount.valid) {
-        if (discount.discountType === 'percentage') {
-          finalPrice = ticketType.price * (1 - (discount.discountAmount / 100));
-        } else {
-          finalPrice = Math.max(0, ticketType.price - discount.discountAmount);
-        }
-        
-        // Get discount ID for recording
-        const { data: discountData } = await supabase
-          .from('event_discount_codes')
-          .select('id')
-          .eq('code', purchaseData.discountCode.toUpperCase())
-          .single();
-          
-        if (discountData) {
-          discountId = discountData.id;
-        }
-      }
-    }
-    
-    // Create a transaction record - in a production app, this would integrate with a payment gateway
-    const { data: transaction, error: transactionError } = await supabase
-      .from('ticket_purchases')
-      .insert({
-        event_id: purchaseData.eventId,
-        user_id: purchaseData.userId,
-        ticket_type_id: purchaseData.ticketTypeId,
-        quantity: purchaseData.quantity,
-        price_per_ticket: finalPrice,
-        total_amount: finalPrice * purchaseData.quantity,
-        discount_code_id: discountId,
-        payment_status: 'completed', // In production, this would be pending until confirmed
-        contact_name: purchaseData.customerName,
-        contact_email: purchaseData.customerEmail,
-        payment_method_id: purchaseData.paymentMethodId,
-        purchase_date: new Date().toISOString()
-      })
-      .select()
-      .single();
-      
-    if (transactionError) throw transactionError;
-    
-    // Create attendee records
-    const attendees = [];
-    for (let i = 0; i < purchaseData.quantity; i++) {
-      const ticketCode = generateTicketCode(purchaseData.eventId, i.toString());
-      
-      const { data: attendee, error: attendeeError } = await supabase
-        .from('event_attendees')
-        .insert({
-          event_id: purchaseData.eventId,
-          user_id: purchaseData.userId,
-          ticket_type_id: purchaseData.ticketTypeId,
-          status: 'registered',
-          email: purchaseData.customerEmail,
-          name: purchaseData.customerName,
-          ticket_code: ticketCode,
-          purchase_date: new Date().toISOString()
-        })
-        .select()
-        .single();
-        
-      if (attendeeError) throw attendeeError;
-      attendees.push(attendee);
-    }
-    
-    // If discount was used, record redemption
-    if (discountId) {
-      await supabase
-        .from('event_discount_redemptions')
-        .insert({
-          discount_code_id: discountId,
-          transaction_id: transaction.id,
-          user_id: purchaseData.userId,
-          redeemed_at: new Date().toISOString()
-        });
-    }
-    
-    return {
-      success: true,
-      ticketIds: attendees.map(a => a.id),
-      transactionId: transaction.id
-    };
-  } catch (error) {
-    console.error('Error processing ticket purchase:', error);
-    return {
-      success: false,
-      error: (error as Error).message
-    };
-  }
-}
+};

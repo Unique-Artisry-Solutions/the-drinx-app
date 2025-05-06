@@ -1246,6 +1246,121 @@ export type Database = {
           },
         ]
       }
+      event_discount_codes: {
+        Row: {
+          applicable_ticket_types: string[] | null
+          code: string
+          created_at: string
+          description: string | null
+          discount_amount: number
+          discount_type: string
+          event_id: string
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          usage_count: number | null
+          usage_limit: number | null
+        }
+        Insert: {
+          applicable_ticket_types?: string[] | null
+          code: string
+          created_at?: string
+          description?: string | null
+          discount_amount: number
+          discount_type: string
+          event_id: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          usage_count?: number | null
+          usage_limit?: number | null
+        }
+        Update: {
+          applicable_ticket_types?: string[] | null
+          code?: string
+          created_at?: string
+          description?: string | null
+          discount_amount?: number
+          discount_type?: string
+          event_id?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          usage_count?: number | null
+          usage_limit?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_discount_codes_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_statistics"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "event_discount_codes_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_discount_codes_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "promoter_event_performance_view"
+            referencedColumns: ["event_id"]
+          },
+        ]
+      }
+      event_discount_redemptions: {
+        Row: {
+          discount_code_id: string
+          discount_value: number
+          id: string
+          metadata: Json | null
+          order_value: number
+          redemption_date: string
+          ticket_type_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          discount_code_id: string
+          discount_value?: number
+          id?: string
+          metadata?: Json | null
+          order_value?: number
+          redemption_date?: string
+          ticket_type_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          discount_code_id?: string
+          discount_value?: number
+          id?: string
+          metadata?: Json | null
+          order_value?: number
+          redemption_date?: string
+          ticket_type_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_discount_redemptions_discount_code_id_fkey"
+            columns: ["discount_code_id"]
+            isOneToOne: false
+            referencedRelation: "event_discount_codes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_discount_redemptions_ticket_type_id_fkey"
+            columns: ["ticket_type_id"]
+            isOneToOne: false
+            referencedRelation: "event_ticket_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_marketing_campaigns: {
         Row: {
           budget: number | null
