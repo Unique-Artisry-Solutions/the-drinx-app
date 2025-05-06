@@ -8,6 +8,7 @@ import {
 } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import MarketingTabContent from '@/components/events/MarketingTabContent';
+import AttendeeSegmentsTab from '@/components/events/AttendeeSegmentsTab';
 
 interface EventTabsSectionProps {
   eventId: string | undefined;
@@ -20,10 +21,14 @@ const EventTabsSection: React.FC<EventTabsSectionProps> = ({ eventId, eventName 
       <TabsList>
         <TabsTrigger value="marketing">Marketing</TabsTrigger>
         <TabsTrigger value="attendees">Attendees</TabsTrigger>
+        <TabsTrigger value="segments">Segments</TabsTrigger>
         <TabsTrigger value="checkin">Check-in</TabsTrigger>
       </TabsList>
       <TabsContent value="marketing">
         <MarketingTabContent eventId={eventId || ''} eventName={eventName} />
+      </TabsContent>
+      <TabsContent value="segments">
+        <AttendeeSegmentsTab eventId={eventId || ''} eventName={eventName} />
       </TabsContent>
       <TabsContent value="attendees">
         <Card>
