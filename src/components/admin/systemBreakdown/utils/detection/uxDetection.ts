@@ -1,48 +1,61 @@
 
-import { FeatureItem } from '../../types';
-import { matchesAnyKeyword } from './coreDetection';
+/**
+ * Detection functions for UX and system configuration features
+ */
 
-// Theme and customization features
-export const isThemeFeature = (feature: FeatureItem): boolean => {
-  return matchesAnyKeyword(feature, ['theme', 'appearance', 'customization', 'style']);
-};
+/**
+ * Detect if a feature is related to system configuration
+ */
+export function isSystemConfigurationFeature(feature: any): boolean {
+  if (!feature) return false;
+  
+  const name = (feature.name || '').toLowerCase();
+  const description = (feature.description || '').toLowerCase();
+  
+  const configKeywords = [
+    'config', 'configuration', 'setting', 'preference', 
+    'system setup', 'global parameter', 'system option'
+  ];
+  
+  return configKeywords.some(keyword => 
+    name.includes(keyword) || description.includes(keyword)
+  );
+}
 
-// Notification features
-export const isNotificationFeature = (feature: FeatureItem): boolean => {
-  return matchesAnyKeyword(feature, ['notification', 'alert', 'message']);
-};
+/**
+ * Detect if a feature is related to theming
+ */
+export function isThemeConfigurationFeature(feature: any): boolean {
+  if (!feature) return false;
+  
+  const name = (feature.name || '').toLowerCase();
+  const description = (feature.description || '').toLowerCase();
+  
+  const themeKeywords = [
+    'theme', 'color', 'appearance', 'style', 
+    'dark mode', 'light mode', 'visual', 'ui'
+  ];
+  
+  return themeKeywords.some(keyword => 
+    name.includes(keyword) || description.includes(keyword)
+  );
+}
 
-// Social features
-export const isSocialFeature = (feature: FeatureItem): boolean => {
-  return matchesAnyKeyword(feature, ['social', 'share', 'follow', 'friend']);
-};
-
-// Favorites and collection features
-export const isFavoriteFeature = (feature: FeatureItem): boolean => {
-  return matchesAnyKeyword(feature, ['favorite', 'bookmark', 'collection', 'save']);
-};
-
-// Reward and point systems
-export const isRewardProgramFeature = (feature: FeatureItem): boolean => {
-  return matchesAnyKeyword(feature, ['reward', 'point', 'loyalty', 'achievement']);
-};
-
-// Exploration features
-export const isExplorationFeature = (feature: FeatureItem): boolean => {
-  return matchesAnyKeyword(feature, ['explore', 'discover', 'find']);
-};
-
-// AI and recommendation features
-export const isAIFeature = (feature: FeatureItem): boolean => {
-  return matchesAnyKeyword(feature, ['ai', 'artificial intelligence', 'machine learning', 'recommendation']);
-};
-
-// Schedule-related features
-export const isSchedulingFeature = (feature: FeatureItem): boolean => {
-  return matchesAnyKeyword(feature, ['schedule', 'calendar', 'event', 'appointment']);
-};
-
-// System Configuration features
-export const isSystemConfigurationFeature = (feature: FeatureItem): boolean => {
-  return matchesAnyKeyword(feature, ['system configuration', 'settings', 'config', 'system settings', 'admin settings']);
-};
+/**
+ * Detect if a feature is related to accessibility
+ */
+export function isAccessibilityFeature(feature: any): boolean {
+  if (!feature) return false;
+  
+  const name = (feature.name || '').toLowerCase();
+  const description = (feature.description || '').toLowerCase();
+  
+  const accessibilityKeywords = [
+    'a11y', 'accessibility', 'screen reader', 'contrast', 
+    'keyboard navigation', 'focus', 'aria'
+  ];
+  
+  return accessibilityKeywords.some(keyword => 
+    name.includes(keyword) || description.includes(keyword)
+  );
+}

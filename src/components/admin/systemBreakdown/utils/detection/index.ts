@@ -104,3 +104,5 @@ export {
   isSignatureFeature, isBarCrawlFeature
 } from './venueDetection';
 
+// Export system configuration feature
+export { isSystemConfigurationFeature } from './uxDetection';

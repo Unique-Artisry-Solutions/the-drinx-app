@@ -1,40 +1,93 @@
 
-import { FeatureItem } from '../../types';
-import { matchesAnyKeyword } from './coreDetection';
+/**
+ * Detection functions for audience relationship features
+ */
 
-// Audience relationship mapping features
-export const isAudienceRelationshipFeature = (feature: FeatureItem): boolean => {
-  return matchesAnyKeyword(feature, [
+/**
+ * Detect if a feature is related to audience relationship mapping
+ */
+export function isAudienceRelationshipFeature(feature: any): boolean {
+  if (!feature) return false;
+  
+  const name = (feature.name || '').toLowerCase();
+  const description = (feature.description || '').toLowerCase();
+  
+  const relationshipKeywords = [
     'relationship', 'mapping', 'network', 'connection', 
-    'influence', 'influencer', 'link', 'relation',
-    'audience relationship', 'user graph', 'social network',
-    'segment relationship', 'audience network'
-  ]);
-};
+    'influence', 'influencer', 'link', 'relation', 
+    'connection strength', 'user graph', 'social network'
+  ];
+  
+  const audienceKeywords = [
+    'audience', 'segment', 'user group', 'customer', 
+    'attendee', 'demographic', 'targeting'
+  ];
+  
+  // Check if both relationship and audience keywords are present
+  const hasRelationshipKeyword = relationshipKeywords.some(keyword => 
+    name.includes(keyword) || description.includes(keyword)
+  );
+  
+  const hasAudienceKeyword = audienceKeywords.some(keyword => 
+    name.includes(keyword) || description.includes(keyword)
+  );
+  
+  return hasRelationshipKeyword && hasAudienceKeyword;
+}
 
-// Audience influencer features
-export const isAudienceInfluencerFeature = (feature: FeatureItem): boolean => {
-  return matchesAnyKeyword(feature, [
-    'influencer', 'influential', 'impact', 'follower',
-    'key user', 'leader', 'ambassador', 'advocate',
-    'audience influencer', 'brand ambassador'
-  ]);
-};
+/**
+ * Detect if a feature is related to audience influencer identification
+ */
+export function isAudienceInfluencerFeature(feature: any): boolean {
+  if (!feature) return false;
+  
+  const name = (feature.name || '').toLowerCase();
+  const description = (feature.description || '').toLowerCase();
+  
+  const influencerKeywords = [
+    'influencer', 'opinion leader', 'key customer', 'brand ambassador',
+    'high impact user', 'social capital', 'influence score'
+  ];
+  
+  return influencerKeywords.some(keyword => 
+    name.includes(keyword) || description.includes(keyword)
+  );
+}
 
-// Cross-segment engagement features
-export const isCrossSegmentEngagementFeature = (feature: FeatureItem): boolean => {
-  return matchesAnyKeyword(feature, [
-    'cross-segment', 'between segments', 'segment correlation',
-    'segment engagement', 'segment interaction', 'segment overlap',
-    'cross audience', 'audience crossover', 'segment bridge'
-  ]);
-};
+/**
+ * Detect if a feature is related to cross-segment engagement
+ */
+export function isCrossSegmentEngagementFeature(feature: any): boolean {
+  if (!feature) return false;
+  
+  const name = (feature.name || '').toLowerCase();
+  const description = (feature.description || '').toLowerCase();
+  
+  const crossSegmentKeywords = [
+    'cross-segment', 'cross segment', 'segment interaction', 
+    'audience overlap', 'segment bridge', 'demographic crossover'
+  ];
+  
+  return crossSegmentKeywords.some(keyword => 
+    name.includes(keyword) || description.includes(keyword)
+  );
+}
 
-// Audience visualization features
-export const isAudienceVisualizationFeature = (feature: FeatureItem): boolean => {
-  return matchesAnyKeyword(feature, [
-    'visualization', 'diagram', 'graph', 'chart', 'map',
-    'network view', 'audience map', 'relationship view',
-    'visual analytics', 'segment visualization', 'network graph'
-  ]);
-};
+/**
+ * Detect if a feature is related to audience visualization
+ */
+export function isAudienceVisualizationFeature(feature: any): boolean {
+  if (!feature) return false;
+  
+  const name = (feature.name || '').toLowerCase();
+  const description = (feature.description || '').toLowerCase();
+  
+  const visualizationKeywords = [
+    'visualization', 'heatmap', 'network graph', 'relationship matrix',
+    'audience map', 'connection diagram', 'segment visualization'
+  ];
+  
+  return visualizationKeywords.some(keyword => 
+    name.includes(keyword) || description.includes(keyword)
+  );
+}

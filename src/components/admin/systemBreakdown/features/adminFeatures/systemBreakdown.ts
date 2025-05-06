@@ -54,6 +54,10 @@ export const systemBreakdown: FeatureItem = {
     - [x] Integrated QR code scanning for ticket validation
     - [x] Developed comprehensive marketing campaign management interface
     - [x] Built interactive analytics dashboards with visual reports
+    - [x] Audience relationship mapping visualization
+    - [x] Audience segment cross-engagement analysis
+    - [x] Influencer identification algorithms
+    - [x] Audience visualization heatmaps and relationship matrices
   `,
   testSteps: [
     "Log in as admin and navigate to System Breakdown page",
@@ -87,6 +91,10 @@ export const systemBreakdown: FeatureItem = {
     "Verify attendee management interface functionality",
     "Test QR code scanning integration for tickets",
     "Verify marketing campaign creation and analytics",
-    "Test reporting dashboards and chart visualizations"
+    "Test reporting dashboards and chart visualizations",
+    "Verify audience relationship mapping visualization",
+    "Test audience segment cross-engagement analysis",
+    "Check influencer identification algorithms",
+    "Verify audience visualization heatmaps and relationship matrices"
   ]
 };

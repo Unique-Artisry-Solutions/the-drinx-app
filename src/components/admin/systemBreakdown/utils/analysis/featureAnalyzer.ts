@@ -1,7 +1,7 @@
-
 import { FeatureItem, AnalysisStep } from '../../types';
 import { updateFeaturesDbStatus } from './databaseStatusUpdater';
 import { analyzeRewardSystem } from './rewardSystemAnalyzer';
+import { analyzeAudienceRelationshipSystem } from './audienceRelationshipAnalyzer';
 
 /**
  * Analyzes all features in the system to update their status based on database implementation
@@ -65,23 +65,29 @@ export function analyzeAllFeatures(
     { name: 'Reward points transaction system', completed: true },
     { name: 'Reward redemption tracking', completed: true },
     { name: 'Reward tier management system', completed: true },
-    // Add promoter notification system implementation to the database tasks
     { name: 'Promoter notification system', completed: true },
     { name: 'Promoter messaging system', completed: true },
-    { name: 'Promoter event management', completed: true }
+    { name: 'Promoter event management', completed: true },
+    { name: 'Audience relationship mapping', completed: true },
+    { name: 'Audience influencer identification', completed: true },
+    { name: 'Cross-segment engagement tracking', completed: true },
+    { name: 'Audience visualization components', completed: true }
   ];
   
   // Apply our updated analysis to all feature sets
   const analyzedAdminFeatures = updateFeaturesDbStatus(updatedAdminFeatures);
   const analyzedEstablishmentFeatures = updateFeaturesDbStatus(updatedEstablishmentFeatures);
   let analyzedIndividualFeatures = updateFeaturesDbStatus(updatedIndividualFeatures);
-  const analyzedPromoterFeatures = updateFeaturesDbStatus(updatedPromoterFeatures); // Analyze promoter features too
+  let analyzedPromoterFeatures = updateFeaturesDbStatus(updatedPromoterFeatures); // Analyze promoter features too
   
   // Apply reward system analysis to individual features
   analyzedIndividualFeatures = analyzeRewardSystem(analyzedIndividualFeatures);
   
+  // Apply audience relationship analysis to admin features
+  const adminWithAudienceFeatures = analyzeAudienceRelationshipSystem(analyzedAdminFeatures);
+  
   // Ensure all features have a valid databaseStatus
-  const finalAdminFeatures = analyzedAdminFeatures.map(feature => ({
+  const finalAdminFeatures = adminWithAudienceFeatures.map(feature => ({
     ...feature,
     databaseStatus: feature.databaseStatus || feature.dbStatus || 'not_started'
   }));

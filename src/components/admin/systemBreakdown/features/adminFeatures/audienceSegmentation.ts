@@ -2,98 +2,44 @@
 import { FeatureItem } from '../../types';
 
 export const audienceSegmentation: FeatureItem = {
-  id: "admin-8",
-  name: "Audience Segmentation System",
-  description: "Advanced segmentation system that allows targeting specific audience groups for marketing campaigns, with A/B testing capabilities, personalized content delivery, enhanced analytics, relationship mapping and improved segment builder UI.",
+  id: "admin-11",
+  name: "Audience Relationship Management",
+  description: "Tools for mapping audience relationships, identifying influencers, and analyzing cross-segment engagement patterns.",
   status: "implemented",
   adminAccess: "full",
   establishmentAccess: "none",
   individualAccess: "none",
   databaseStatus: "complete",
-  userImpact: "medium",
+  userImpact: "high",
   complexity: "high",
+  tags: ["audience", "analytics", "relationship", "marketing"],
+  implementationProgress: 100,
   databaseAnalysis: `
     Database Implementation:
-    - [x] Audience segments table
-    - [x] Segment criteria definition storage
-    - [x] Segment membership tracking
-    - [x] Campaign-segment mapping tables
-    - [x] Campaign segment performance tracking
-    - [x] A/B testing metrics storage
-    - [x] Segment analytics for tracking engagement
-    - [x] Content variation storage for segments
-    - [x] Notification delivery tracking by segment
-    - [x] Segment growth tracking data structures
-    - [x] User movement between segments tracking
-    - [x] Scheduled report configurations
-    - [x] Nested condition support for segments
-    - [x] Relationship mapping between segments
-    - [x] User relationship network analysis storage
-    - [x] Influencer identification and scoring tables
-    - [x] Cross-segment engagement metrics
+    - [x] User connections table with relationship strength
+    - [x] User segment grouping tables
+    - [x] Cross-segment engagement tracking
+    - [x] Influencer identification algorithms
+    - [x] API endpoints for relationship data retrieval
+    - [x] Visualization components for network graphs
+    - [x] Audience segment tables with relationship metadata
+    - [x] Engagement pattern tracking tables
+    - [x] Influencer score calculation stored procedures
+    - [x] Connection strength analysis functions
+    - [x] Historical relationship trend tracking tables
+    - [x] Relationship matrix calculation views
+    - [x] Visualization data transformation stored procedures
   `,
   testSteps: [
-    "Create audience segments with different criteria",
-    "Associate segments with marketing campaigns", 
-    "Test A/B content variations across different segments",
-    "Verify campaign performance metrics by segment",
-    "Test segment-targeted notifications",
-    "Validate dynamic content selection based on segment membership",
-    "Test personalized marketing materials for different segments",
-    "Verify notification delivery to specific segments",
-    "Monitor segment growth analytics over time",
-    "Export segment performance reports via scheduler",
-    "Create complex segments using nested AND/OR conditions",
-    "Verify real-time audience size preview functionality",
-    "Compare performance metrics across different segments",
-    "Map relationships between audience segments",
-    "Analyze influencer networks within segments",
-    "Test cross-segment relationship visualization",
-    "Identify key influencers within audience segments",
-    "Measure cross-segment engagement and correlation",
-    "Visualize audience relationship networks with filtering options"
-  ],
-  subFeatures: [
-    {
-      name: "Segment Builder",
-      status: "implemented",
-      description: "Interface for creating and editing audience segments with complex conditions",
-      progress: 100
-    },
-    {
-      name: "Segment Analytics",
-      status: "implemented",
-      description: "Performance metrics for segments including growth, engagement, and conversions",
-      progress: 100
-    },
-    {
-      name: "Relationship Mapping",
-      status: "implemented",
-      description: "Tools for visualizing and analyzing relationships between audience segments",
-      progress: 100,
-      phases: [
-        {
-          name: "Network Visualization",
-          status: "implemented",
-          tasks: ["User node mapping", "Connection strength visualization", "Interactive filtering"]
-        },
-        {
-          name: "Influencer Identification",
-          status: "implemented",
-          tasks: ["Influence scoring algorithm", "Key user identification", "Engagement analytics"]
-        },
-        {
-          name: "Cross-Segment Analysis",
-          status: "implemented",
-          tasks: ["Relationship matrix", "Correlation scoring", "Overlap measurement"]
-        }
-      ]
-    },
-    {
-      name: "Segment Targeting",
-      status: "implemented",
-      description: "Tools for targeting specific audience segments with campaigns and content",
-      progress: 100
-    }
+    "Log in as admin and navigate to Audience Management page",
+    "View the audience relationship network visualization",
+    "Test filtering by audience segments",
+    "Verify that relationship strengths are correctly displayed",
+    "Identify top influencers using the influencer leaderboard",
+    "Analyze cross-segment engagement patterns",
+    "Test the relationship matrix visualization",
+    "Export relationship data for external analysis",
+    "Verify API endpoints for relationship data retrieval",
+    "Test the audience visualization heatmap component"
   ]
 };
