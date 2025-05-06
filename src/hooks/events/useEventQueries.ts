@@ -2,7 +2,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { EventType } from '@/types/EventTypes';
+import { Event, EventType } from '@/types/EventTypes';
 
 export const useEventQueries = () => {
   const { toast } = useToast();
@@ -41,7 +41,7 @@ export const useEventQueries = () => {
         }));
 
         // Add computed/derived properties that match the EventType interface
-        return {
+        const formattedEvent: Event = {
           id: event.id,
           name: event.name,
           description: event.description || '',
@@ -52,29 +52,25 @@ export const useEventQueries = () => {
           image_url: event.image_url,
           promotional_materials: event.promotional_materials || [],
           status: event.status || 'draft',
+          created_by: event.created_by,
+          created_at: event.created_at,
+          updated_at: event.updated_at,
+          capacity: event.capacity,
+          event_type: event.event_type,
+          location_details: event.location_details,
+          contact_info: event.contact_info,
+          custom_settings: event.custom_settings,
+          is_public: event.is_public !== false,
+          event_url: event.event_url,
           ticketTypes: ticketTypes,
           attendees: {
             registered: 0, // This will need real data in the future
-            capacity: event.capacity || 0,
-            checkedIn: 0 // This will need real data in the future
+            checked_in: 0 // This will need real data in the future
           },
-          revenue: {
-            total: 0, // This will need real data in the future
-            ticketSales: 0, 
-            additionalSales: 0
-          },
-          distance: undefined, // This will need real data in the future
-          createdAt: event.created_at || new Date().toISOString(),
-          updatedAt: event.updated_at || new Date().toISOString(),
-          createdBy: event.created_by || '',
-          capacity: event.capacity,
-          eventType: event.event_type,
-          locationDetails: event.location_details || {},
-          contactInfo: event.contact_info || {},
-          customSettings: event.custom_settings || {},
-          isPublic: event.is_public !== false,
-          eventUrl: event.event_url
-        } as EventType;
+          distance: undefined // This will need real data in the future
+        };
+
+        return formattedEvent;
       });
     },
   });

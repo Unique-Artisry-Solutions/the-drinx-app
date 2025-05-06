@@ -119,7 +119,7 @@ export interface Event {
   custom_settings?: Record<string, any>;
   is_public?: boolean;
   
-  // Add additional fields for EventsSection compatibility
+  // Fields for EventsSection compatibility
   venue?: {
     id: string;
     name: string;
@@ -137,16 +137,32 @@ export interface Event {
 // Added missing types that were causing errors
 export type EventType = Event;
 
-export interface EventFormData extends Omit<Event, 'created_at' | 'updated_at'> {
-  id?: string; // Add id field to EventFormData
-  location?: EventLocation;
-  contact?: EventContactInfo;
+export interface EventFormData {
+  id?: string; 
+  name: string;
+  description?: string;
+  date: string;
+  time: string;
+  venue_id?: string;
+  venueId?: string; // Alternative name used in wizard
+  image_url?: string;
+  imageUrl?: string; // Alternative name used in wizard
+  promotional_materials?: string[];
+  promotionalMaterials?: string[]; // Alternative name used in wizard
+  status?: EventStatus;
+  created_by: string;
+  capacity?: number;
+  event_type?: string;
+  event_url?: string;
+  location_details?: EventLocation;
+  location?: EventLocation; // Alternative name used in wizard
+  contact_info?: EventContactInfo;
+  contact?: EventContactInfo; // Alternative name used in wizard
+  custom_settings?: Record<string, any>;
+  is_public?: boolean;
   
   // Add fields needed by the event wizard components
-  venueId?: string;
-  imageUrl?: string;
   ticketTypes: EventTicketType[];
-  promotionalMaterials?: string[];
   notificationSchedules?: Array<{
     id: string;
     title: string;

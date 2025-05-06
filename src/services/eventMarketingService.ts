@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { EventMarketingCampaign } from '@/types/EventTypes';
 import { safeJsonToRecord } from '@/utils/typeGuards';
@@ -15,7 +14,25 @@ export const fetchEventCampaigns = async (eventId: string): Promise<EventMarketi
     throw error;
   }
 
-  return data as EventMarketingCampaign[];
+  return data.map(campaign => {
+    // Parse JSON fields if needed
+    let metricsData = {};
+    let targetAudienceData = {};
+    
+    if (campaign.metrics) {
+      metricsData = safeJsonToRecord(campaign.metrics);
+    }
+    
+    if (campaign.target_audience) {
+      targetAudienceData = safeJsonToRecord(campaign.target_audience);
+    }
+    
+    return {
+      ...campaign,
+      metrics: metricsData,
+      target_audience: targetAudienceData
+    } as EventMarketingCampaign;
+  });
 };
 
 export const createMarketingCampaign = async (
@@ -30,7 +47,18 @@ export const createMarketingCampaign = async (
 
   const { data, error } = await supabase
     .from('event_marketing_campaigns')
-    .insert(preparedData)
+    .insert({
+      event_id: preparedData.event_id,
+      name: preparedData.name,
+      description: preparedData.description,
+      campaign_type: preparedData.campaign_type,
+      status: preparedData.status,
+      start_date: preparedData.start_date,
+      end_date: preparedData.end_date,
+      budget: preparedData.budget,
+      metrics: preparedData.metrics,
+      target_audience: preparedData.target_audience
+    })
     .select()
     .single();
 
@@ -39,7 +67,14 @@ export const createMarketingCampaign = async (
     throw error;
   }
 
-  return data as EventMarketingCampaign;
+  // Parse JSON fields back to objects
+  const result = {
+    ...data,
+    metrics: data.metrics ? safeJsonToRecord(data.metrics) : {},
+    target_audience: data.target_audience ? safeJsonToRecord(data.target_audience) : {}
+  } as EventMarketingCampaign;
+
+  return result;
 };
 
 export const updateMarketingCampaign = async (
@@ -47,11 +82,18 @@ export const updateMarketingCampaign = async (
   updates: Partial<EventMarketingCampaign>
 ): Promise<EventMarketingCampaign> => {
   // Convert complex objects to JSON for storage
-  const preparedUpdates = {
-    ...updates,
-    target_audience: updates.target_audience ? JSON.stringify(updates.target_audience) : undefined,
-    metrics: updates.metrics ? JSON.stringify(updates.metrics) : undefined
-  };
+  const preparedUpdates: Record<string, any> = {};
+  
+  // Only include fields that are present in updates
+  Object.keys(updates).forEach(key => {
+    if (key === 'target_audience' && updates.target_audience) {
+      preparedUpdates.target_audience = JSON.stringify(updates.target_audience);
+    } else if (key === 'metrics' && updates.metrics) {
+      preparedUpdates.metrics = JSON.stringify(updates.metrics);
+    } else {
+      preparedUpdates[key] = updates[key as keyof typeof updates];
+    }
+  });
 
   const { data, error } = await supabase
     .from('event_marketing_campaigns')
@@ -65,7 +107,14 @@ export const updateMarketingCampaign = async (
     throw error;
   }
 
-  return data as EventMarketingCampaign;
+  // Parse JSON fields back to objects
+  const result = {
+    ...data,
+    metrics: data.metrics ? safeJsonToRecord(data.metrics) : {},
+    target_audience: data.target_audience ? safeJsonToRecord(data.target_audience) : {}
+  } as EventMarketingCampaign;
+
+  return result;
 };
 
 export const deleteMarketingCampaign = async (id: string): Promise<void> => {
@@ -101,13 +150,7 @@ export const trackCampaignMetric = async (
     }
 
     // Parse the metrics JSON from the database
-    let currentMetrics = {};
-    try {
-      currentMetrics = campaign?.metrics ? (typeof campaign.metrics === 'string' ? JSON.parse(campaign.metrics) : campaign.metrics) : {};
-    } catch (e) {
-      console.error('Error parsing metrics JSON:', e);
-      currentMetrics = {};
-    }
+    let currentMetrics = safeJsonToRecord(campaign?.metrics || {});
     
     // Update the specific metric
     const updatedMetricValue = ((currentMetrics[metricName] || 0) + value);
@@ -120,33 +163,34 @@ export const trackCampaignMetric = async (
 
     // If segment targeting is used, track segment-specific metrics
     if (segmentId) {
-      const segmentMetrics = currentMetrics.segments || {};
-      const currentSegmentMetrics = segmentMetrics[segmentId] || {};
+      if (!updatedMetrics.segments) {
+        updatedMetrics.segments = {};
+      }
+      
+      if (!updatedMetrics.segments[segmentId]) {
+        updatedMetrics.segments[segmentId] = {};
+      }
       
       // Update segment metrics
-      updatedMetrics.segments = {
-        ...segmentMetrics,
-        [segmentId]: {
-          ...currentSegmentMetrics,
-          [metricName]: (currentSegmentMetrics[metricName] || 0) + value
-        }
-      };
+      updatedMetrics.segments[segmentId][metricName] = 
+        (updatedMetrics.segments[segmentId][metricName] || 0) + value;
     }
     
     // If A/B testing is used, track variant-specific metrics
     if (abTestVariant) {
-      const abTestMetrics = currentMetrics.abTest || { variantA: {}, variantB: {} };
+      if (!updatedMetrics.abTest) {
+        updatedMetrics.abTest = { variantA: {}, variantB: {} };
+      }
+      
       const variantKey = abTestVariant === 'A' ? 'variantA' : 'variantB';
-      const currentVariantMetrics = abTestMetrics[variantKey] || {};
+      
+      if (!updatedMetrics.abTest[variantKey]) {
+        updatedMetrics.abTest[variantKey] = {};
+      }
       
       // Update A/B test metrics
-      updatedMetrics.abTest = {
-        ...abTestMetrics,
-        [variantKey]: {
-          ...currentVariantMetrics,
-          [metricName]: (currentVariantMetrics[metricName] || 0) + value
-        }
-      };
+      updatedMetrics.abTest[variantKey][metricName] = 
+        (updatedMetrics.abTest[variantKey][metricName] || 0) + value;
     }
 
     // Save updated metrics as JSON

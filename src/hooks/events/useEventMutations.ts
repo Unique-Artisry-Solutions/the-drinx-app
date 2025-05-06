@@ -21,9 +21,9 @@ export const useEventMutations = () => {
           description: eventData.description,
           date: eventData.date,
           time: eventData.time,
-          venue_id: eventData.venueId || null,
-          image_url: eventData.imageUrl,
-          promotional_materials: eventData.promotionalMaterials,
+          venue_id: eventData.venue_id || eventData.venueId || null,
+          image_url: eventData.image_url || eventData.imageUrl,
+          promotional_materials: eventData.promotional_materials || eventData.promotionalMaterials,
           created_by: user.id
         })
         .select()
@@ -96,7 +96,7 @@ export const useEventMutations = () => {
   });
 
   const updateEvent = useMutation({
-    mutationFn: async (eventData: EventFormData & { id: string }) => {
+    mutationFn: async (eventData: EventFormData) => {
       if (!eventData.id) throw new Error('Event ID is required for updates');
       
       // Step 1: Update the event
@@ -107,9 +107,9 @@ export const useEventMutations = () => {
           description: eventData.description,
           date: eventData.date,
           time: eventData.time,
-          venue_id: eventData.venueId || null,
-          image_url: eventData.imageUrl,
-          promotional_materials: eventData.promotionalMaterials,
+          venue_id: eventData.venue_id || eventData.venueId || null,
+          image_url: eventData.image_url || eventData.imageUrl,
+          promotional_materials: eventData.promotional_materials || eventData.promotionalMaterials,
           updated_at: new Date().toISOString()
         })
         .eq('id', eventData.id);

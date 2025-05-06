@@ -42,7 +42,7 @@ export const useEventAttendees = (eventId: string) => {
     loadAttendees();
   }, [eventId]);
 
-  const addAttendee = async (attendee: EventAttendee) => {
+  const addAttendee = async (attendee: Partial<EventAttendee>) => {
     setIsLoading(true);
     try {
       const newAttendee = await addEventAttendee({

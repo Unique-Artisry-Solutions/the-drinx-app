@@ -2,6 +2,7 @@
 import { useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
+import { safeJsonToRecord } from '@/utils/typeGuards';
 
 // Define the allowed notification channel types
 export type NotificationChannel = 'push' | 'in_app' | 'email';
@@ -168,8 +169,7 @@ export const useNotificationSystem = () => {
       let targetAudience = null;
       try {
         targetAudience = campaign.target_audience ? 
-          (typeof campaign.target_audience === 'string' ? 
-            JSON.parse(campaign.target_audience) : campaign.target_audience) : null;
+          safeJsonToRecord(campaign.target_audience) : null;
       } catch (e) {
         console.error('Error parsing target_audience:', e);
         targetAudience = null;
@@ -206,38 +206,42 @@ export const useNotificationSystem = () => {
             .single();
             
           // Parse existing metrics from JSON if needed
-          let currentMetrics = {};
-          try {
-            currentMetrics = data?.metrics ? 
-              (typeof data.metrics === 'string' ? 
-                JSON.parse(data.metrics) : data.metrics) : {};
-          } catch (e) {
-            console.error('Error parsing metrics JSON:', e);
-            currentMetrics = {};
-          }
+          let currentMetrics = safeJsonToRecord(data?.metrics || {});
           
+          // Update metrics with the new data
           const updatedMetrics = {
             ...currentMetrics,
             notifications_sent: ((currentMetrics.notifications_sent || 0) + sentCount),
-            segments: {
-              ...(currentMetrics.segments || {}),
-              [targetSegmentId]: {
-                ...(currentMetrics.segments?.[targetSegmentId] || {}),
-                notifications_sent: ((currentMetrics.segments?.[targetSegmentId]?.notifications_sent || 0) + sentCount)
-              }
-            }
           };
+
+          // Initialize the segments object if it doesn't exist
+          if (!updatedMetrics.segments) {
+            updatedMetrics.segments = {};
+          }
+          
+          // Update segment-specific metrics
+          if (!updatedMetrics.segments[targetSegmentId]) {
+            updatedMetrics.segments[targetSegmentId] = {};
+          }
+          
+          updatedMetrics.segments[targetSegmentId].notifications_sent = 
+            ((updatedMetrics.segments[targetSegmentId]?.notifications_sent || 0) + sentCount);
           
           // If A/B testing, update those metrics too
           if (abTestInfo) {
+            // Make sure abTest exists and has the variant objects
+            if (!updatedMetrics.abTest) {
+              updatedMetrics.abTest = { variantA: {}, variantB: {} };
+            }
+            
             const variantKey = abTestInfo.variant === 'A' ? 'variantA' : 'variantB';
-            updatedMetrics.abTest = {
-              ...(currentMetrics.abTest || { variantA: {}, variantB: {} }),
-              [variantKey]: {
-                ...(currentMetrics.abTest?.[variantKey] || {}),
-                notifications_sent: ((currentMetrics.abTest?.[variantKey]?.notifications_sent || 0) + sentCount)
-              }
-            };
+            
+            if (!updatedMetrics.abTest[variantKey]) {
+              updatedMetrics.abTest[variantKey] = {};
+            }
+            
+            updatedMetrics.abTest[variantKey].notifications_sent = 
+              ((updatedMetrics.abTest[variantKey]?.notifications_sent || 0) + sentCount);
           }
           
           // Store metrics as JSON string

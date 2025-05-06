@@ -1,8 +1,9 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Event } from '@/types/EventTypes';
+import { Event, EventLocation, EventContactInfo } from '@/types/EventTypes';
 import { useToast } from '@/hooks/use-toast';
+import { safeJsonToRecord } from '@/utils/typeGuards';
 
 export const useEventDetails = (eventId: string) => {
   const [event, setEvent] = useState<Event | null>(null);
@@ -39,20 +40,54 @@ export const useEventDetails = (eventId: string) => {
         if (eventError) throw eventError;
 
         // Get attendee counts
-        const { data: attendeesCount, error: attendeesError } = await supabase
+        const { data: attendeesData, error: attendeesError } = await supabase
           .from('event_attendees')
-          .select('status', { count: 'exact' })
-          .eq('event_id', eventId)
-          .eq('status', 'registered');
-
-        const { data: checkedInCount, error: checkedInError } = await supabase
-          .from('event_attendees')
-          .select('status', { count: 'exact' })
-          .eq('event_id', eventId)
-          .eq('status', 'checked_in');
+          .select('status')
+          .eq('event_id', eventId);
 
         if (attendeesError) console.error("Error fetching attendee count:", attendeesError);
-        if (checkedInError) console.error("Error fetching checked-in count:", checkedInError);
+
+        // Calculate registration and check-in counts
+        const registeredCount = attendeesData ? attendeesData.filter(a => a.status === 'registered').length : 0;
+        const checkedInCount = attendeesData ? attendeesData.filter(a => a.status === 'checked_in').length : 0;
+
+        // Parse location_details and contact_info from JSON if needed
+        let locationDetails: EventLocation = {
+          address: '',
+          city: '',
+          state: '',
+          zip: '',
+          country: ''
+        };
+        
+        let contactInfo: EventContactInfo = {
+          name: '',
+          email: ''
+        };
+
+        if (eventData.location_details) {
+          if (typeof eventData.location_details === 'string') {
+            try {
+              locationDetails = JSON.parse(eventData.location_details);
+            } catch (e) {
+              console.error('Error parsing location_details:', e);
+            }
+          } else {
+            locationDetails = eventData.location_details as unknown as EventLocation;
+          }
+        }
+
+        if (eventData.contact_info) {
+          if (typeof eventData.contact_info === 'string') {
+            try {
+              contactInfo = JSON.parse(eventData.contact_info);
+            } catch (e) {
+              console.error('Error parsing contact_info:', e);
+            }
+          } else {
+            contactInfo = eventData.contact_info as unknown as EventContactInfo;
+          }
+        }
 
         // Format the event data
         const formattedEvent: Event = {
@@ -70,18 +105,23 @@ export const useEventDetails = (eventId: string) => {
           updated_at: eventData.updated_at,
           capacity: eventData.capacity,
           event_type: eventData.event_type,
-          location_details: eventData.location_details,
-          contact_info: eventData.contact_info,
+          location_details: locationDetails,
+          contact_info: contactInfo,
           venue: eventData.venue || {
             id: '',
             name: 'TBD',
             address: ''
           },
           attendees: {
-            registered: attendeesCount?.count || 0,
-            checked_in: checkedInCount?.count || 0,
+            registered: registeredCount,
+            checked_in: checkedInCount,
+            capacity: eventData.capacity || 0
           },
-          ticketTypes: eventData.event_ticket_types
+          ticketTypes: eventData.event_ticket_types,
+          distance: undefined,
+          is_public: eventData.is_public !== false,
+          event_url: eventData.event_url,
+          custom_settings: eventData.custom_settings
         };
 
         setEvent(formattedEvent);

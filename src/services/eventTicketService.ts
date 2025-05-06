@@ -1,7 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { EventAttendee, EventTicketType } from '@/types/EventTypes';
-import { checkInAttendee, validateTicketCode } from './eventAttendeesService';
+import { checkInAttendee } from './eventAttendeesService';
 
 /**
  * Fetch ticket types for an event
@@ -157,40 +157,57 @@ export async function processTicketScan(
 }> {
   try {
     // First validate the ticket
-    const validation = await validateTicketCode(ticketCode);
-    
-    if (!validation.valid) {
+    const { data: attendeeData, error: attendeeError } = await supabase
+      .from('event_attendees')
+      .select('*')
+      .eq('ticket_code', ticketCode)
+      .single();
+      
+    if (attendeeError) {
       return {
         success: false,
-        message: validation.message,
-        attendee: validation.attendee
+        message: 'Invalid ticket code'
       };
     }
     
-    if (!validation.attendee) {
+    const attendee = attendeeData as EventAttendee;
+    
+    // Check if ticket has already been used
+    if (attendee.status === 'checked_in') {
       return {
         success: false,
-        message: 'Ticket information not found'
+        message: 'Ticket has already been used',
+        attendee
+      };
+    }
+    
+    // Check if ticket is cancelled
+    if (attendee.status === 'cancelled') {
+      return {
+        success: false,
+        message: 'Ticket has been cancelled',
+        attendee
       };
     }
     
     // Process the check-in
-    await checkInAttendee(validation.attendee.event_id, validation.attendee.id, location, notes);
+    const updatedAttendee = await checkInAttendee(
+      attendee.event_id, 
+      attendee.id as string, 
+      location, 
+      notes
+    );
     
     return {
       success: true,
       message: 'Check-in successful',
-      attendee: {
-        ...validation.attendee,
-        status: 'checked_in',
-        checked_in_at: new Date().toISOString()
-      }
+      attendee: updatedAttendee
     };
   } catch (error) {
     console.error('Error processing ticket scan:', error);
     return {
       success: false,
-      message: `Error processing ticket: ${error.message}`
+      message: `Error processing ticket: ${(error as Error).message}`
     };
   }
 }
