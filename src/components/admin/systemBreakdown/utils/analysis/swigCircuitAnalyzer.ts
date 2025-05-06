@@ -1,8 +1,7 @@
 
-
 import { FeatureItem } from '../../types';
 import { isSwigCircuitFeature, isVipFeature } from '../detection/circuitDetection';
-import { isThemeCustomizationFeature } from '../detection/themeDetection';
+import { isThemeConfigurationFeature } from '../detection/themeDetection';
 import { isPromoterCommunicationFeature, isEventManagementFeature } from '../detection/promoterDetection';
 
 /**
@@ -49,7 +48,7 @@ export const analyzeSwigCircuitFeatures = (features: FeatureItem[]): FeatureItem
       };
     }
     
-    if (isThemeCustomizationFeature(feature)) {
+    if (isThemeConfigurationFeature(feature)) {
       return {
         ...feature,
         dbStatus: feature.dbStatus || 'complete',
