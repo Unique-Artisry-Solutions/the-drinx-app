@@ -1,3 +1,4 @@
+
 /**
  * Database helper functions for common operations
  */
