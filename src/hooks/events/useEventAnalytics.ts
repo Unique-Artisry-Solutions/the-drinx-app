@@ -147,7 +147,7 @@ export const useEventAnalytics = (eventId: string, initialDateRange?: DateRange)
   // Track marketing campaign performance
   const trackCampaignConversion = async (
     campaignId: string, 
-    conversionType: 'view' | 'click' | 'purchase',
+    conversionType: 'impression' | 'click' | 'conversion',
     data: {
       quantity?: number;
       revenue?: number;
