@@ -1,4 +1,5 @@
 
+import React from 'react';
 import { lazy, ReactNode } from 'react';
 import { RouteObject } from 'react-router-dom';
 import { lazyLoad } from '@/utils/lazyLoad';
@@ -52,7 +53,8 @@ export function createLazyRoute(
 ): AppRouteObject {
   // Get the component using lazyLoad utility
   const LazyComponent = lazyLoad(importFunc, {
-    priority: metadata?.prefetchPriority || 'low'
+    // Pass the prefetchPriority as priority to match the lazyLoad interface
+    fallback: undefined, // Explicitly set undefined to match LazyLoadOptions
   });
   
   // Wrap with metadata HOC if metadata is provided

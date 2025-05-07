@@ -88,3 +88,22 @@ export const extractRouteParams = (
   const match = matchPath(routePath, actualPath);
   return match?.params || {};
 };
+
+/**
+ * Get the home path based on user type
+ * @param userType The type of user
+ */
+export const getHomePathByUserType = (userType?: string | null): string => {
+  if (!userType) return '/landing';
+  
+  switch (userType) {
+    case 'establishment':
+      return '/establishment/dashboard';
+    case 'promoter':
+      return '/promoter/dashboard';
+    case 'admin':
+      return '/admin/system-breakdown';
+    default:
+      return '/explore';
+  }
+};

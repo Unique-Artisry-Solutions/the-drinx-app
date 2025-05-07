@@ -3,6 +3,7 @@ import React, { Suspense } from 'react';
 
 interface LazyLoadOptions {
   fallback?: React.ReactNode;
+  priority?: 'high' | 'medium' | 'low';
 }
 
 /**
@@ -15,6 +16,22 @@ export function lazyLoad<T extends React.ComponentType<any>>(
   options: LazyLoadOptions = {}
 ): React.ComponentType<React.ComponentProps<T>> {
   const LazyComponent = React.lazy(importFunc);
+  
+  // Set prefetch priority based on options
+  if (typeof document !== 'undefined' && options.priority) {
+    if (options.priority === 'high') {
+      // High priority: prefetch immediately
+      setTimeout(() => {
+        importFunc().catch(err => console.error('Error prefetching high priority component:', err));
+      }, 0);
+    } else if (options.priority === 'medium') {
+      // Medium priority: prefetch after a delay
+      setTimeout(() => {
+        importFunc().catch(err => console.error('Error prefetching medium priority component:', err));
+      }, 2000);
+    }
+    // Low priority components are not prefetched
+  }
   
   const fallback = options.fallback || (
     <div className="w-full h-full flex items-center justify-center">
