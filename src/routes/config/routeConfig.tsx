@@ -12,6 +12,7 @@ export interface RouteMetadata {
   hideInNav?: boolean;
   analyticsName?: string;
   icon?: React.ElementType;
+  prefetchPriority?: 'high' | 'medium' | 'low';
 }
 
 // Define our extended route type
@@ -56,7 +57,8 @@ export const userProfileRoute = createLazyRoute(
     requiresAuth: true,
     userType: 'individual',
     breadcrumb: 'Profile',
-    analyticsName: 'user_profile_page'
+    analyticsName: 'user_profile_page',
+    prefetchPriority: 'high'
   }
 );
 

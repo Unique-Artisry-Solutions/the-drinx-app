@@ -1,7 +1,7 @@
 
-import { toast, ActionConfig } from '@/hooks/use-toast';
+import { toast } from '@/hooks/use-toast';
+import { ActionConfig } from '@/hooks/use-toast';
 import { ToastActionElement } from '@/components/ui/toast';
-import { ButtonProps } from '@/components/ui/button';
 import { ReactElement } from 'react';
 
 /**
