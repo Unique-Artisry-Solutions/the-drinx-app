@@ -1,5 +1,5 @@
 
-import { supabase } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabase';
 
 /**
  * Generate an access token for an event's check-in system
@@ -21,6 +21,26 @@ export const generateEventAccessToken = async (eventId: string, daysValid = 30):
   } catch (error: any) {
     console.error('Error generating event access token:', error);
     throw new Error('Failed to generate access token');
+  }
+};
+
+/**
+ * Get the current active token for an event if it exists
+ */
+export const getCurrentEventToken = async (eventId: string): Promise<string | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('event_access_tokens')
+      .select('token')
+      .eq('event_id', eventId)
+      .eq('is_active', true)
+      .maybeSingle();
+
+    if (error) throw error;
+    return data?.token || null;
+  } catch (error: any) {
+    console.error('Error getting event access token:', error);
+    return null;
   }
 };
 
