@@ -1,7 +1,8 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
-import type { PushSubscription } from '@/types/notification';
+import { Notification, PushSubscription } from '@/types/notification';
 import { useServiceWorkerStatus } from './service-worker/useServiceWorkerStatus';
 import { useServiceWorkerRegistration } from './notifications/useServiceWorkerRegistration';
 import { usePushSubscription } from './notifications/usePushSubscription';
@@ -171,15 +172,17 @@ export function usePushNotifications() {
               .limit(1);
             
             if (subscriptions && subscriptions.length > 0) {
-              const dbSubscription = subscriptions[0];
+              const dbSubscription = subscriptions[0] as DbPushSubscription;
               
               let userAgent: string | undefined;
+              let platform: string | undefined;
               let language: string | undefined;
               
               if (dbSubscription.device_info && typeof dbSubscription.device_info === 'object') {
                 if (!Array.isArray(dbSubscription.device_info)) {
-                  userAgent = dbSubscription.device_info.userAgent as string;
-                  language = dbSubscription.device_info.language as string;
+                  userAgent = dbSubscription.device_info.userAgent;
+                  platform = dbSubscription.device_info.platform;
+                  language = dbSubscription.device_info.language;
                 }
               }
               
@@ -191,7 +194,8 @@ export function usePushNotifications() {
                 user_id: dbSubscription.user_id,
                 device_info: { 
                   userAgent, 
-                  language 
+                  platform,
+                  language
                 },
                 created_at: dbSubscription.created_at,
                 updated_at: dbSubscription.updated_at

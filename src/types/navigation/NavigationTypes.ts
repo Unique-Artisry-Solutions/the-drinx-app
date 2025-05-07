@@ -17,7 +17,7 @@ export enum NavigationType {
 export interface UnifiedNavItem {
   label: string;
   path: string;
-  icon?: LucideIcon;
+  icon: LucideIcon; // Changed from optional to required
   isActive?: boolean;
   children?: UnifiedNavItem[];
   onClick?: (e: React.MouseEvent) => void;
@@ -29,6 +29,12 @@ export interface UnifiedNavItem {
     }[];
   };
 }
+
+// Define AdminNavItem as an alias to UnifiedNavItem for compatibility
+export type AdminNavItem = UnifiedNavItem;
+
+// Export NavItem for use in ProfileItems
+export type NavItem = UnifiedNavItem;
 
 /**
  * Interface for grouped navigation sections

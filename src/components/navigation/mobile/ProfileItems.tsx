@@ -1,6 +1,6 @@
 
 import { Route, Star, CheckSquare } from 'lucide-react';
-import { NavItem } from './types';
+import { NavItem } from '@/types/navigation/NavigationTypes';
 
 export const getProfileItems = (): NavItem[] => [
   { icon: Route, label: 'Swig Circuits', path: '/profile/bar-crawls' },

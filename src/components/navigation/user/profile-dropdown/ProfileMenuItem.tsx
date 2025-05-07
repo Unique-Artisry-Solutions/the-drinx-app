@@ -16,7 +16,7 @@ interface ProfileMenuItemProps {
 
 const ProfileMenuItem: React.FC<ProfileMenuItemProps> = ({
   to,
-  icon,
+  icon: IconComponent,
   children,
   isDarkTheme,
   isActive = false,
@@ -26,7 +26,7 @@ const ProfileMenuItem: React.FC<ProfileMenuItemProps> = ({
   // Use the UnifiedNavItem component with a custom renderer for profile dropdown
   const content = (
     <div className={profileDropdownStyles.menuItem(isDarkTheme, isActive, customColor)}>
-      <icon.type 
+      <IconComponent 
         className={`mr-2 h-4 w-4 ${customColor && isActive ? customColor : ''}`} 
       />
       <span>{children}</span>
@@ -48,7 +48,7 @@ const ProfileMenuItem: React.FC<ProfileMenuItemProps> = ({
   return (
     <UnifiedNavItem
       path={to}
-      icon={icon}
+      icon={IconComponent}
       label={children as string}
       isActive={isActive}
       onClick={onClick}

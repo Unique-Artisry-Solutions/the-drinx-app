@@ -1,4 +1,3 @@
-
 import { lazy, ReactNode } from 'react';
 import { RouteObject } from 'react-router-dom';
 import { lazyLoad } from '@/utils/lazyLoad';
@@ -11,7 +10,7 @@ export interface RouteMetadata {
   breadcrumb?: string;
   hideInNav?: boolean;
   analyticsName?: string;
-  icon?: React.ElementType; // Add icon support for consistent navigation
+  icon?: React.ElementType;
 }
 
 // Define our extended route type
@@ -23,7 +22,7 @@ export interface AppRouteObject extends Omit<RouteObject, 'children'> {
 // Helper function to create routes with metadata
 export function createRoute(
   path: string,
-  element: ReactNode,
+  element: React.ReactElement | null,
   metadata?: RouteMetadata
 ): AppRouteObject {
   return {
