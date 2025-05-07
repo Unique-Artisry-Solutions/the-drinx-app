@@ -59,7 +59,7 @@ export function setupMocks(authUser = mockUser) {
     updateProfile: vi.fn().mockResolvedValue({}),
     refreshSession: vi.fn().mockResolvedValue({ isEmailVerified: true }),
     resetPassword: vi.fn().mockResolvedValue({}),
-    recoverAuthState: vi.fn().mockResolvedValue({}), // Add the missing property
+    recoverAuthState: vi.fn().mockResolvedValue(true), // Return a boolean to match the type
   };
   
   // Setup auth mock with the complete context

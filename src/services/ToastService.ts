@@ -1,6 +1,6 @@
 
 import { toast } from '@/hooks/use-toast';
-import { Toast, NotificationOptions, ActionConfig } from '@/types/NotificationTypes';
+import { Notification, NotificationType, ActionConfig } from '@/types/notification';
 
 /**
  * A singleton service that provides a unified interface for displaying toasts
@@ -24,7 +24,17 @@ class ToastService {
   /**
    * Show a toast with the specified options
    */
-  public show(options: NotificationOptions): { id: string; dismiss: () => void } {
+  public show(options: {
+    title: string;
+    message: string;
+    type?: NotificationType;
+    duration?: number;
+    action?: {
+      label: string;
+      onClick: () => void;
+      altText?: string;
+    };
+  }): { id: string; dismiss: () => void } {
     const { title, message, type = 'info', duration = 5000, action } = options;
     
     // Map notification types to valid toast variants
@@ -54,7 +64,14 @@ class ToastService {
   /**
    * Show a success toast
    */
-  public success(title: string, message: string, options?: Partial<NotificationOptions>): { id: string; dismiss: () => void } {
+  public success(title: string, message: string, options?: {
+    action?: {
+      label: string;
+      onClick: () => void;
+      altText?: string;
+    };
+    duration?: number;
+  }): { id: string; dismiss: () => void } {
     return this.show({
       title,
       message,
@@ -66,7 +83,14 @@ class ToastService {
   /**
    * Show an error toast
    */
-  public error(title: string, message: string, options?: Partial<NotificationOptions>): { id: string; dismiss: () => void } {
+  public error(title: string, message: string, options?: {
+    action?: {
+      label: string;
+      onClick: () => void;
+      altText?: string;
+    };
+    duration?: number;
+  }): { id: string; dismiss: () => void } {
     return this.show({
       title,
       message,
@@ -78,7 +102,14 @@ class ToastService {
   /**
    * Show an info toast
    */
-  public info(title: string, message: string, options?: Partial<NotificationOptions>): { id: string; dismiss: () => void } {
+  public info(title: string, message: string, options?: {
+    action?: {
+      label: string;
+      onClick: () => void;
+      altText?: string;
+    };
+    duration?: number;
+  }): { id: string; dismiss: () => void } {
     return this.show({
       title,
       message,
@@ -90,7 +121,14 @@ class ToastService {
   /**
    * Show a warning toast
    */
-  public warning(title: string, message: string, options?: Partial<NotificationOptions>): { id: string; dismiss: () => void } {
+  public warning(title: string, message: string, options?: {
+    action?: {
+      label: string;
+      onClick: () => void;
+      altText?: string;
+    };
+    duration?: number;
+  }): { id: string; dismiss: () => void } {
     return this.show({
       title,
       message,
@@ -102,7 +140,17 @@ class ToastService {
   /**
    * Show a debounced toast (prevents duplicate toasts)
    */
-  public debounced(key: string, options: NotificationOptions, debounceMs: number = 5000): void {
+  public debounced(key: string, options: {
+    title: string;
+    message: string;
+    type?: NotificationType;
+    duration?: number;
+    action?: {
+      label: string;
+      onClick: () => void;
+      altText?: string;
+    };
+  }, debounceMs: number = 5000): void {
     if (this.toastTimeouts[key]) {
       clearTimeout(this.toastTimeouts[key]);
     }
