@@ -1,169 +1,20 @@
-// Event types with proper structure and all required fields
 
-export interface Event {
-  id: string;
-  name: string;
-  description: string;
-  date: string;
-  time: string;
-  venue_id?: string;
-  venue?: {
-    id: string;
-    name: string;
-    address: string;
-  };
-  image_url?: string;
-  promotional_materials?: string[];
-  status: EventStatus;
-  created_by: string;
-  created_at?: string;
-  updated_at?: string;
-  capacity?: number;
-  event_type?: string;
-  location_details: EventLocation;
-  contact_info: EventContactInfo;
-  custom_settings: Record<string, any>;
-  is_public: boolean;
-  event_url?: string;
-  ticketTypes: EventTicketType[];
-  attendees: {
-    registered: number;
-    checked_in: number;
-    capacity: number;
-  };
-  distance?: number;
-}
-
-export interface EventLocation {
-  address: string;
-  city: string;
-  state: string;
-  zip: string;
-  country: string;
-}
-
-export interface EventContactInfo {
-  name: string;
-  email: string;
-}
-
-export interface EventTicketType {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  quantity: number;
-  sold: number;
-  available: number;
-  hasLimitedInventory?: boolean;
-  lowInventoryThreshold?: number;
-  hasDynamicPricing?: boolean;
-}
+// Define event-related types
 
 export interface EventMarketingCampaign {
   id: string;
-  event_id: string;
-  name: string;
-  description?: string;
-  campaign_type: string;
-  status: string;
-  start_date?: string;
-  end_date?: string;
-  budget?: number;
-  metrics: {
-    impressions: number;
-    clicks: number;
-    conversions: number;
-    revenue: number;
-    sources?: Record<string, any>;
-  };
-  target_audience?: Record<string, any>;
-  isABTesting?: boolean;
-  trafficSplit?: number;
-}
-
-export type EventStatus = 'draft' | 'published' | 'cancelled' | 'completed';
-
-export interface EventAttendee {
-  id?: string;
-  event_id: string;
-  user_id?: string;
-  email?: string;
-  name?: string;
-  ticket_type_id?: string;
-  purchase_date: string;
-  checked_in_at?: string;
-  status: 'registered' | 'checked_in' | 'cancelled' | 'no_show';
-  ticket_code?: string;
-  notes?: string;
-  custom_fields?: Record<string, any>;
-}
-
-// For EventWizardContext and useEventMutations
-export interface EventFormData {
-  id?: string;
   name: string;
   description: string;
-  date: string;
-  time: string;
-  venue?: {
-    id: string;
-    name: string;
-  } | null;
-  venueId?: string;
-  venue_id?: string;
-  created_by: string;
-  ticketTypes: {
-    id?: string;
-    name: string;
-    price: number;
-    description: string;
-    quantity: number;
-    hasLimitedInventory?: boolean;
-    lowInventoryThreshold?: number;
-    hasDynamicPricing?: boolean;
-  }[];
-  imageUrl: string;
-  image_url?: string;
-  promotionalMaterials: string[];
-  promotional_materials?: string[];
-  notificationSchedules?: Array<{
-    id?: string;
-    title: string;
-    content: string;
-    priority: 'low' | 'medium' | 'high' | 'urgent';
-    scheduledFor: string;
-    locationBased: boolean;
-    coordinates?: { latitude: number; longitude: number };
-    targetRadius?: number;
-  }>;
+  campaign_type: string;
+  status: string;
+  start_date: string;
+  end_date: string;
+  budget: number;
+  metrics: Record<string, any>;
+  target_audience: Record<string, any>;
+  event_id: string;
 }
 
-// For analytics components that expect typeName (compatibility layer)
-export interface TicketAnalyticsData {
-  name: string;
-  typeName?: string; // Added for backwards compatibility
-  sold: number;
-  available: number;
-  revenue: number;
-  total?: number; // Added for RealTimeSalesTracker
-}
-
-// Define ReferralSource interface with both frontend and backend properties
-export interface ReferralSource {
-  // Backend properties
-  name: string;
-  visits: number;
-  conversions: number;
-  conversionRate: number;
-  
-  // Frontend properties
-  source: string;
-  count: number;
-  percentage: number;
-}
-
-// For A/B testing and campaign analytics - expanded with all required properties
 export interface ABTestResult {
   variants: Array<{
     id: string;
@@ -172,11 +23,37 @@ export interface ABTestResult {
     traffic?: number;
   }>;
   winner: string | null;
-  variantA?: { id: string; name: string; conversionRate: number; traffic?: number };
-  variantB?: { id: string; name: string; conversionRate: number; traffic?: number };
+  variantA?: {
+    id: string;
+    name: string;
+    conversionRate: number;
+    traffic?: number;
+  };
+  variantB?: {
+    id: string;
+    name: string;
+    conversionRate: number;
+    traffic?: number;
+  };
   improvement: number;
   significantResult: boolean;
 }
 
-// Alias for backward compatibility
-export type EventType = Event;
+export interface ReferralSource {
+  source: string;
+  name: string;
+  count: number;
+  visits: number;
+  percentage: number;
+  conversionRate: number;
+  conversions: number;
+}
+
+export interface TicketAnalyticsData {
+  typeName: string;
+  sold: number;
+  available?: number;
+  total?: number;
+  revenue?: number;
+  percentage?: number;
+}

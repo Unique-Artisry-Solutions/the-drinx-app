@@ -1,466 +1,226 @@
+
 import { supabase } from '@/integrations/supabase/client';
-import { AudienceSegment, SegmentCriteria, SegmentMapping } from '@/types/CampaignSegmentTypes';
+import { CampaignSegmentMapping, SegmentSelection } from '@/types/CampaignSegmentTypes';
+import { AudienceSegment } from '@/types/AudienceTypes';
 import { safeJsonToRecord } from '@/utils/typeGuards';
 
-// Helper function to safely handle JSON data
-function safeJsonProcess(input: any, defaultValue: any = {}) {
-  if (typeof input === 'string') {
-    try {
-      return JSON.parse(input);
-    } catch (e) {
-      return defaultValue;
-    }
-  }
-  return input || defaultValue;
-}
-
-// Fetch audience segments
-export const fetchAudienceSegments = async (): Promise<AudienceSegment[]> => {
-  try {
-    const { data, error } = await supabase
-      .from('audience_segments')
-      .select('*, audience_segment_criteria(*)');
-
-    if (error) throw error;
-    
-    return (data || []).map(segment => ({
-      id: segment.id,
-      name: segment.name,
-      description: segment.description || '',
-      created_at: segment.created_at,
-      is_active: segment.is_active,
-      criteria: (segment.audience_segment_criteria || []).map((criteria: any) => ({
-        id: criteria.id,
-        segment_id: criteria.segment_id,
-        criteria_type: criteria.criteria_type,
-        operator: criteria.operator,
-        criteria_value: safeJsonProcess(criteria.criteria_value)
-      }))
-    }));
-  } catch (error) {
-    console.error('Error fetching audience segments:', error);
-    return [];
-  }
-};
-
-export const fetchCampaignSegmentMappings = async (
-  campaignId: string
-): Promise<CampaignSegmentMapping[]> => {
+export const fetchCampaignSegmentMappings = async (campaignId: string): Promise<CampaignSegmentMapping[]> => {
   try {
     const { data, error } = await supabase
       .from('campaign_segment_mappings')
       .select('*')
-      .eq('campaign_id', campaignId)
-      .eq('is_active', true);
+      .eq('campaign_id', campaignId);
       
     if (error) throw error;
-    
-    // Convert JSON metrics to Record<string, any>
-    return (data || []).map(item => {
-      // Handle metrics which might be null, a string, or an object
-      let metricsObject: Record<string, any> = {};
-      if (item.metrics) {
-        // Safely convert to record, with empty object as fallback
-        metricsObject = safeJsonToRecord(item.metrics);
-      }
-      
-      return {
-        ...item,
-        metrics: metricsObject
-      };
-    }) as CampaignSegmentMapping[];
+    return data || [];
   } catch (err: any) {
-    console.error('Error fetching campaign segment mappings:', err);
-    throw new Error(`Failed to fetch segment mappings: ${err.message}`);
-  }
-};
-
-// Alias for backwards compatibility
-export const getCampaignSegmentMappings = fetchCampaignSegmentMappings;
-
-export const getAvailableSegmentsForCampaign = async (
-  eventId: string,
-  campaignId?: string
-): Promise<{ id: string; name: string; memberCount: number; description: string }[]> => {
-  try {
-    // Get all audience segments for this event
-    const { data: segments, error: segmentError } = await supabase
-      .from('audience_segments')
-      .select('id, name, description')
-      .eq('event_id', eventId)
-      .eq('is_active', true);
-      
-    if (segmentError) throw segmentError;
-    
-    if (!segments) return [];
-    
-    // Process segments and add member count property
-    const processedSegments = segments.map(segment => ({
-      id: segment.id,
-      name: segment.name,
-      description: segment.description || '',
-      memberCount: 0 // Default value
-    }));
-    
-    // If a campaignId is provided, exclude segments already assigned to this campaign
-    if (campaignId) {
-      const { data: existingMappings, error: mappingsError } = await supabase
-        .from('campaign_segment_mappings')
-        .select('segment_id')
-        .eq('campaign_id', campaignId)
-        .eq('is_active', true);
-        
-      if (mappingsError) throw mappingsError;
-      
-      const assignedSegmentIds = new Set(existingMappings?.map(m => m.segment_id) || []);
-      
-      return processedSegments.filter(s => !assignedSegmentIds.has(s.id));
-    }
-    
-    // Return all segments
-    return processedSegments;
-  } catch (err: any) {
-    console.error('Error getting available segments:', err);
-    return [];
+    console.error('Error fetching segment mappings:', err);
+    throw err;
   }
 };
 
 export const assignSegmentsToCampaign = async (
   campaignId: string,
-  segments: SegmentSelection[]
-): Promise<CampaignSegmentMapping[]> => {
+  segmentSelections: SegmentSelection[]
+): Promise<boolean> => {
   try {
-    // First, get existing mappings
-    const { data: existingMappings, error: fetchError } = await supabase
-      .from('campaign_segment_mappings')
-      .select('id, segment_id')
-      .eq('campaign_id', campaignId);
-      
-    if (fetchError) throw fetchError;
-    
-    // Determine segments to add and update
-    const existingSegmentIds = new Set(existingMappings?.map(m => m.segment_id) || []);
-    const segmentsToAdd = segments.filter(s => !existingSegmentIds.has(s.id));
-    
-    // Prepare data for insertion
-    const newMappings = segmentsToAdd.map(segment => ({
+    // Map segment selections to the format expected by the database
+    const mappings = segmentSelections.map(segment => ({
       campaign_id: campaignId,
       segment_id: segment.id,
       allocation_percentage: segment.allocation || 100,
       is_control_group: segment.isControlGroup || false,
       is_active: true,
-      description: segment.description || null
+      description: segment.description || '',
+      metrics: JSON.stringify({
+        impressions: 0,
+        clicks: 0,
+        conversions: 0
+      })
     }));
     
-    // Insert new mappings if there are any
-    if (newMappings.length > 0) {
-      const { error: insertError } = await supabase
-        .from('campaign_segment_mappings')
-        .insert(newMappings);
-        
-      if (insertError) throw insertError;
-    }
-    
-    // Update existing mappings
-    for (const segment of segments.filter(s => existingSegmentIds.has(s.id))) {
-      const mapping = existingMappings?.find(m => m.segment_id === segment.id);
-      if (mapping) {
-        const { error: updateError } = await supabase
-          .from('campaign_segment_mappings')
-          .update({
-            allocation_percentage: segment.allocation || 100,
-            is_control_group: segment.isControlGroup || false,
-            description: segment.description
-          })
-          .eq('id', mapping.id);
-          
-        if (updateError) throw updateError;
-      }
-    }
-    
-    // Fetch the updated mappings
-    return await fetchCampaignSegmentMappings(campaignId);
+    // Insert mappings
+    const { error } = await supabase
+      .from('campaign_segment_mappings')
+      .insert(mappings);
+      
+    if (error) throw error;
+    return true;
   } catch (err: any) {
     console.error('Error assigning segments to campaign:', err);
-    throw new Error(`Failed to assign segments: ${err.message}`);
+    return false;
   }
 };
 
-export const removeCampaignSegment = async (
-  mappingId: string
-): Promise<void> => {
+export const removeCampaignSegment = async (mappingId: string): Promise<boolean> => {
   try {
-    // Soft delete by marking as inactive
     const { error } = await supabase
       .from('campaign_segment_mappings')
-      .update({ is_active: false })
+      .delete()
       .eq('id', mappingId);
       
     if (error) throw error;
+    return true;
   } catch (err: any) {
-    console.error('Error removing campaign segment:', err);
-    throw new Error(`Failed to remove segment: ${err.message}`);
+    console.error('Error removing segment from campaign:', err);
+    return false;
+  }
+};
+
+export const getAvailableSegmentsForCampaign = async (
+  campaignId: string
+): Promise<AudienceSegment[]> => {
+  try {
+    // First get all segments
+    const { data: segments, error: segmentsError } = await supabase
+      .from('audience_segments')
+      .select('*')
+      .eq('is_active', true);
+      
+    if (segmentsError) throw segmentsError;
+    
+    // Then get existing mappings for this campaign
+    const { data: mappings, error: mappingsError } = await supabase
+      .from('campaign_segment_mappings')
+      .select('segment_id')
+      .eq('campaign_id', campaignId);
+      
+    if (mappingsError) throw mappingsError;
+    
+    const mappedSegmentIds = (mappings || []).map(m => m.segment_id);
+    
+    // Filter out segments that are already mapped
+    return (segments || []).filter(segment => !mappedSegmentIds.includes(segment.id));
+  } catch (err: any) {
+    console.error('Error fetching available segments:', err);
+    return [];
   }
 };
 
 export const getCampaignSegmentPerformance = async (
   campaignId: string
-): Promise<CampaignSegmentAnalytics[]> => {
+): Promise<any[]> => {
   try {
-    // Check if the table exists
-    try {
-      const { count, error } = await supabase
-        .from('information_schema.tables')
-        .select('table_name', { count: 'exact' })
-        .eq('table_schema', 'public')
-        .eq('table_name', 'campaign_segment_analytics')
-        .single();
-      
-      // If table doesn't exist or error occurred, return mock data
-      if (error || !count) {
-        return getMockSegmentPerformance(campaignId);
-      }
-    } catch {
-      return getMockSegmentPerformance(campaignId);
-    }
-    
-    // Try to get data from the actual table
-    const { data, error } = await supabase
+    // Check if the table exists before querying
+    const { data: tableInfo } = await supabase
       .from('campaign_segment_analytics')
       .select('*')
-      .eq('campaign_id', campaignId);
-      
-    if (error) {
-      console.error('Error querying campaign_segment_analytics:', error);
-      return getMockSegmentPerformance(campaignId);
-    }
+      .eq('campaign_id', campaignId)
+      .limit(1);
     
-    return data as CampaignSegmentAnalytics[];
-  } catch (err: any) {
-    console.error('Error getting campaign segment performance:', err);
-    return getMockSegmentPerformance(campaignId);
-  }
-};
-
-// Helper to generate mock performance data
-const getMockSegmentPerformance = (campaignId: string): CampaignSegmentAnalytics[] => {
-  return [
-    {
-      campaign_id: campaignId,
-      segment_id: '1',
-      segment_name: 'High Value Customers',
-      campaign_name: 'Summer Promotion',
-      campaign_type: 'email',
-      status: 'active',
-      allocation_percentage: 50,
-      is_control_group: false,
-      total_impressions: 1250,
-      total_clicks: 320,
-      total_conversions: 85,
-      total_conversion_value: 4250,
-      click_through_rate: 25.6,
-      conversion_rate: 26.5
-    },
-    {
-      campaign_id: campaignId,
-      segment_id: '2',
-      segment_name: 'New Subscribers',
-      campaign_name: 'Summer Promotion',
-      campaign_type: 'email',
-      status: 'active',
-      allocation_percentage: 30,
-      is_control_group: false,
-      total_impressions: 980,
-      total_clicks: 210,
-      total_conversions: 45,
-      total_conversion_value: 2250,
-      click_through_rate: 21.4,
-      conversion_rate: 21.4
-    },
-    {
-      campaign_id: campaignId,
-      segment_id: '3',
-      segment_name: 'Control Group',
-      campaign_name: 'Summer Promotion',
-      campaign_type: 'email',
-      status: 'active',
-      allocation_percentage: 20,
-      is_control_group: true,
-      total_impressions: 650,
-      total_clicks: 110,
-      total_conversions: 25,
-      total_conversion_value: 1250,
-      click_through_rate: 16.9,
-      conversion_rate: 22.7
+    if (tableInfo && tableInfo.length > 0) {
+      // Table exists, proceed with the real query
+      const { data, error } = await supabase
+        .from('campaign_segment_analytics')
+        .select('*')
+        .eq('campaign_id', campaignId);
+        
+      if (error) throw error;
+      return data || [];
+    } else {
+      // Table doesn't exist or is empty, return mock data
+      return [
+        {
+          campaign_id: campaignId,
+          segment_id: 'segment1',
+          segment_name: 'New Users',
+          total_impressions: 500,
+          total_clicks: 120,
+          total_conversions: 45,
+          click_through_rate: 0.24,
+          conversion_rate: 0.375
+        },
+        {
+          campaign_id: campaignId,
+          segment_id: 'segment2',
+          segment_name: 'Returning Users',
+          total_impressions: 800,
+          total_clicks: 160,
+          total_conversions: 52,
+          click_through_rate: 0.2,
+          conversion_rate: 0.325
+        }
+      ];
     }
-  ];
+  } catch (err: any) {
+    console.error('Error fetching segment performance:', err);
+    // Return mock data as fallback
+    return [
+      {
+        campaign_id: campaignId,
+        segment_id: 'segment1',
+        segment_name: 'New Users',
+        total_impressions: 500,
+        total_clicks: 120,
+        total_conversions: 45,
+        click_through_rate: 0.24,
+        conversion_rate: 0.375
+      },
+      {
+        campaign_id: campaignId,
+        segment_id: 'segment2',
+        segment_name: 'Returning Users',
+        total_impressions: 800,
+        total_clicks: 160,
+        total_conversions: 52,
+        click_through_rate: 0.2,
+        conversion_rate: 0.325
+      }
+    ];
+  }
 };
 
 export const trackSegmentMetric = async (
   campaignId: string,
   segmentId: string,
-  metricName: string,
+  metricType: 'impression' | 'click' | 'conversion',
   value: number = 1
-): Promise<void> => {
+): Promise<boolean> => {
   try {
-    // Get mapping to update
-    const { data: mapping, error: fetchError } = await supabase
+    // Get current mapping
+    const { data: mappings, error: fetchError } = await supabase
       .from('campaign_segment_mappings')
-      .select('id, metrics')
+      .select('*')
       .eq('campaign_id', campaignId)
       .eq('segment_id', segmentId)
-      .eq('is_active', true)
       .single();
       
     if (fetchError) throw fetchError;
+    if (!mappings) return false;
     
-    if (!mapping) {
-      throw new Error('Segment mapping not found');
-    }
-    
-    // Parse existing metrics
-    const metricsData = safeJsonToRecord(mapping.metrics, {
-      impressions: 0,
-      clicks: 0,
-      conversions: 0,
-      revenue: 0
+    // Parse current metrics
+    const metrics = safeJsonToRecord(mappings.metrics, {
+      impressions: 0, 
+      clicks: 0, 
+      conversions: 0
     });
     
-    // Update metric
-    metricsData[metricName] = (metricsData[metricName] || 0) + value;
+    // Update the specific metric
+    switch (metricType) {
+      case 'impression':
+        metrics.impressions = (metrics.impressions || 0) + value;
+        break;
+      case 'click':
+        metrics.clicks = (metrics.clicks || 0) + value;
+        break;
+      case 'conversion':
+        metrics.conversions = (metrics.conversions || 0) + value;
+        break;
+    }
     
-    // Save updated metrics as JSON
+    // Save updated metrics
     const { error: updateError } = await supabase
       .from('campaign_segment_mappings')
-      .update({ metrics: metricsData })
-      .eq('id', mapping.id);
+      .update({ 
+        metrics: JSON.stringify(metrics),
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', mappings.id);
       
     if (updateError) throw updateError;
-    
-    // Also update the performance tracking table if it exists
-    try {
-      const today = new Date().toISOString().split('T')[0];
-      
-      // Check if table exists
-      const { count } = await supabase
-        .from('information_schema.tables')
-        .select('*', { count: 'exact', head: true })
-        .eq('table_schema', 'public')
-        .eq('table_name', 'campaign_segment_performance');
-        
-      if (!count) return; // Skip if table doesn't exist
-      
-      const { data: performance, error: perfFetchError } = await supabase
-        .from('campaign_segment_performance')
-        .select('*')
-        .eq('campaign_id', campaignId)
-        .eq('segment_id', segmentId)
-        .eq('date', today)
-        .maybeSingle(); // Use maybeSingle instead of single to avoid errors
-        
-      if (perfFetchError && perfFetchError.code !== 'PGRST116') {
-        // PGRST116 means no rows returned, which is fine
-        throw perfFetchError;
-      }
-      
-      if (performance) {
-        // Update existing entry
-        const updates: Record<string, any> = {};
-        
-        switch (metricName) {
-          case 'impressions':
-            updates.impressions = performance.impressions + value;
-            break;
-          case 'clicks':
-            updates.clicks = performance.clicks + value;
-            break;
-          case 'conversions':
-            updates.conversions = performance.conversions + value;
-            break;
-          case 'conversion_value':
-            updates.conversion_value = performance.conversion_value + value;
-            break;
-        }
-        
-        const { error: perfUpdateError } = await supabase
-          .from('campaign_segment_performance')
-          .update(updates)
-          .eq('id', performance.id);
-          
-        if (perfUpdateError) throw perfUpdateError;
-      } else {
-        // Create new entry
-        const newEntry = {
-          campaign_id: campaignId,
-          segment_id: segmentId,
-          date: today,
-          impressions: metricName === 'impressions' ? value : 0,
-          clicks: metricName === 'clicks' ? value : 0,
-          conversions: metricName === 'conversions' ? value : 0,
-          conversion_value: metricName === 'conversion_value' ? value : 0
-        };
-        
-        const { error: perfInsertError } = await supabase
-          .from('campaign_segment_performance')
-          .insert(newEntry);
-          
-        if (perfInsertError) throw perfInsertError;
-      }
-    } catch (err) {
-      console.warn('Performance tracking update failed:', err);
-      // Don't re-throw this error as it's not critical
-    }
+    return true;
   } catch (err: any) {
-    console.error('Error tracking segment metric:', err);
-    throw new Error(`Failed to track segment metric: ${err.message}`);
-  }
-};
-
-// For information_schema.tables queries, use a different method
-export const checkIfTableExists = async (tableName: string): Promise<boolean> => {
-  try {
-    const { data, error } = await supabase
-      .rpc('table_exists', { table_name: tableName });
-
-    if (error) {
-      console.error('Error checking if table exists:', error);
-      return false;
-    }
-    
-    return !!data;
-  } catch (error) {
-    console.error('Error calling table_exists RPC:', error);
+    console.error(`Failed to track ${metricType} for segment:`, err);
     return false;
-  }
-};
-
-// For other cases where safeJsonToRecord is used with potentially numeric input
-export const updateSegmentCriteria = async (criteriaId: string, updatedValues: Partial<SegmentCriteria>): Promise<SegmentCriteria> => {
-  try {
-    // Handle criteria_value separately to ensure it's properly formatted
-    let formattedCriteriaValue = updatedValues.criteria_value;
-    if (updatedValues.criteria_value && typeof updatedValues.criteria_value === 'object') {
-      formattedCriteriaValue = updatedValues.criteria_value;
-    }
-
-    const { data, error } = await supabase
-      .from('audience_segment_criteria')
-      .update({
-        ...updatedValues,
-        criteria_value: formattedCriteriaValue
-      })
-      .eq('id', criteriaId)
-      .select()
-      .single();
-
-    if (error) throw error;
-    
-    return {
-      ...data,
-      criteria_value: safeJsonProcess(data.criteria_value)
-    };
-  } catch (error) {
-    console.error('Error updating segment criteria:', error);
-    throw error;
   }
 };

@@ -1,12 +1,11 @@
 
 import { ABTestResult, ReferralSource } from '@/types/EventTypes';
-import { safeJsonToRecord } from '@/utils/typeGuards';
-import { NotificationChannel, NotificationPriority } from '@/types/CampaignSegmentTypes';
+import { NotificationPriority } from '@/types/CampaignSegmentTypes';
 
 /**
- * Converts raw campaign data to frontend ABTestResult
+ * Converts raw data to an ABTestResult object
  */
-export function convertToABTestResult(data: any): ABTestResult {
+export const convertToABTestResult = (data: any): ABTestResult => {
   if (!data) {
     return {
       variants: [],
@@ -17,107 +16,57 @@ export function convertToABTestResult(data: any): ABTestResult {
       significantResult: false
     };
   }
-
-  const variants = Array.isArray(data.variants) ? data.variants : [];
-  let variantA = undefined;
-  let variantB = undefined;
-  let improvement = 0;
-
-  if (variants.length >= 1) {
-    variantA = variants[0];
-  }
   
-  if (variants.length >= 2) {
-    variantB = variants[1];
-    
-    if (variantA && variantB && variantA.conversionRate > 0) {
-      improvement = ((variantB.conversionRate - variantA.conversionRate) / variantA.conversionRate) * 100;
-    }
-  }
-
+  const variants = data.variants || [];
+  
   return {
-    variants,
+    variants: variants,
     winner: data.winner || null,
-    variantA,
-    variantB,
-    improvement,
-    significantResult: data.significantResult || Math.abs(improvement) > 10
+    variantA: data.variantA || variants[0],
+    variantB: data.variantB || variants[1],
+    improvement: data.improvement || 0,
+    significantResult: data.significantResult || false
   };
-}
+};
 
 /**
- * Converts raw referral source data to consistent ReferralSource format
+ * Converts raw data to a ReferralSource object
  */
-export function convertToReferralSource(data: any): ReferralSource {
+export const convertToReferralSource = (data: any): ReferralSource => {
   if (!data) {
     return {
-      source: '',
+      source: 'unknown',
+      name: 'Unknown',
       count: 0,
-      percentage: 0,
-      name: '',
       visits: 0,
-      conversions: 0,
-      conversionRate: 0
+      percentage: 0,
+      conversionRate: 0,
+      conversions: 0
     };
   }
   
-  // Create consistent object with both frontend and backend properties
   return {
-    // Frontend properties
-    source: data.source || data.name || '',
-    count: data.count || data.visits || 0,
-    percentage: data.percentage || data.conversionRate || 0,
-    
-    // Backend properties
-    name: data.name || data.source || '',
+    source: data.source || 'unknown',
+    name: data.name || data.source || 'Unknown',
+    count: data.count || 0,
     visits: data.visits || data.count || 0,
-    conversions: data.conversions || 0,
-    conversionRate: data.conversionRate || data.percentage || 0
+    percentage: data.percentage || 0,
+    conversionRate: data.conversionRate || 0,
+    conversions: data.conversions || 0
   };
-}
+};
 
 /**
- * Validates and converts string array to notification channels
+ * Validates and normalizes notification priority
  */
-export function convertToNotificationChannels(channels: string[]): NotificationChannel[] {
-  const validChannels: NotificationChannel[] = [];
-  const validOptions: NotificationChannel[] = ['email', 'in_app', 'push'];
-  
-  channels.forEach(channel => {
-    if (validOptions.includes(channel as NotificationChannel)) {
-      validChannels.push(channel as NotificationChannel);
-    }
-  });
-  
-  // Default to in_app if no valid channels
-  return validChannels.length > 0 ? validChannels : ['in_app'];
-}
-
-/**
- * Validates notification priority string
- */
-export function validateNotificationPriority(priority: string): NotificationPriority {
+export const validateNotificationPriority = (
+  priority: string | undefined
+): NotificationPriority => {
   const validPriorities: NotificationPriority[] = ['low', 'medium', 'high', 'urgent'];
   
-  if (validPriorities.includes(priority as NotificationPriority)) {
-    return priority as NotificationPriority;
+  if (!priority || !validPriorities.includes(priority as NotificationPriority)) {
+    return 'medium'; // Default priority
   }
   
-  return 'medium';
-}
-
-/**
- * Converts metric value to the appropriate type for DB storage
- */
-export function convertMetricValue(value: any, defaultValue: number = 0): number {
-  if (typeof value === 'number') {
-    return value;
-  }
-  
-  if (typeof value === 'string') {
-    const parsed = parseFloat(value);
-    return isNaN(parsed) ? defaultValue : parsed;
-  }
-  
-  return defaultValue;
-}
+  return priority as NotificationPriority;
+};
