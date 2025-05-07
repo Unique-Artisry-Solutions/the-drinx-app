@@ -1,70 +1,90 @@
 
-/**
- * Navigation utility functions for consistent route handling
- */
+import { matchPath } from 'react-router-dom';
 
 /**
- * Checks if a path is active based on the current location
- * @param currentPath The current location path
- * @param targetPath The path to check
- * @returns boolean indicating if the path is active
+ * Check if a path is active based on the current pathname
+ * @param currentPath The current URL path
+ * @param menuPath The path to check against
+ * @param exact If true, requires an exact match
  */
-export const isPathActive = (currentPath: string, targetPath: string): boolean => {
-  // Exact match
-  if (currentPath === targetPath) {
+export const isPathActive = (currentPath: string, menuPath: string, exact = false): boolean => {
+  if (exact) {
+    return currentPath === menuPath;
+  }
+  
+  // Special case for root path
+  if (menuPath === '/' && currentPath === '/') {
     return true;
   }
   
-  // Special case for home page
-  if (targetPath === '/' && currentPath !== '/') {
-    return false;
-  }
-  
-  // Check if the current path starts with the target path and is followed by / or nothing
-  // This allows /profile and /profile/settings to both have /profile as active
-  if (currentPath.startsWith(targetPath)) {
-    // Get the character after the target path in the current path
-    const nextChar = currentPath.charAt(targetPath.length);
-    return nextChar === '' || nextChar === '/' || nextChar === '?';
+  // Handle nested paths
+  if (menuPath !== '/' && currentPath.startsWith(menuPath)) {
+    // Handle potential partial matches (e.g. /user and /users)
+    const nextCharInPath = currentPath.charAt(menuPath.length);
+    return nextCharInPath === '' || nextCharInPath === '/' || nextCharInPath === '?';
   }
   
   return false;
 };
 
 /**
- * Gets the appropriate profile path based on user type
- * @param userType The type of user
- * @returns The appropriate profile path
+ * Creates a breadcrumb trail from dynamic routes
+ * @param pathname The current pathname
+ * @param routeConfigs The array of route configurations
  */
-export const getProfilePathByUserType = (userType: string): string => {
-  switch (userType) {
-    case 'establishment':
-      return '/establishment/profile';
-    case 'promoter':
-      return '/promoter/profile';
-    case 'admin':
-      return '/admin/profile';
-    default:
-      return '/profile';
+export const createBreadcrumbsFromPath = (
+  pathname: string,
+  routeConfigs: Array<{ path: string; metadata?: { breadcrumb?: string } }>
+) => {
+  const segments = pathname.split('/').filter(Boolean);
+  const breadcrumbs = [];
+  
+  let currentPath = '';
+  
+  // Always include home if not on home page
+  if (pathname !== '/') {
+    breadcrumbs.push({ 
+      path: '/',
+      label: 'Home'
+    });
   }
+  
+  // Build up breadcrumbs from path segments
+  segments.forEach((segment, index) => {
+    currentPath += `/${segment}`;
+    
+    // Try to find a matching route config
+    const matchingConfig = routeConfigs.find(config => {
+      // Use matchPath from react-router to handle dynamic segments
+      return matchPath(config.path, currentPath);
+    });
+    
+    if (matchingConfig) {
+      breadcrumbs.push({
+        path: currentPath,
+        label: matchingConfig.metadata?.breadcrumb || segment.charAt(0).toUpperCase() + segment.slice(1)
+      });
+    } else {
+      // If no configuration exists, use the segment as the label
+      breadcrumbs.push({
+        path: currentPath,
+        label: segment.charAt(0).toUpperCase() + segment.slice(1)
+      });
+    }
+  });
+  
+  return breadcrumbs;
 };
 
 /**
- * Gets the appropriate home path based on user type
- * @param userType The type of user
- * @returns The appropriate home path
+ * Extract dynamic parameters from a route path
+ * @param routePath The route path pattern (e.g. /users/:userId)
+ * @param actualPath The actual URL path (e.g. /users/123)
  */
-export const getHomePathByUserType = (userType: string): string => {
-  switch (userType) {
-    case 'establishment':
-      return '/establishment/dashboard';
-    case 'promoter':
-      return '/promoter/dashboard';
-    case 'admin':
-      return '/admin/dashboard';
-    case 'individual':
-      return '/explore';
-    default:
-      return '/landing';
-  }
+export const extractRouteParams = (
+  routePath: string,
+  actualPath: string
+): Record<string, string> => {
+  const match = matchPath(routePath, actualPath);
+  return match?.params || {};
 };

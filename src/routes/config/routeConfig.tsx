@@ -3,6 +3,7 @@ import { lazy, ReactNode } from 'react';
 import { RouteObject } from 'react-router-dom';
 import { lazyLoad } from '@/utils/lazyLoad';
 import { UserType } from '@/types/navigation/NavigationTypes';
+import withRouteMetadata from '@/hoc/withRouteMetadata';
 
 // Define common metadata for routes
 export interface RouteMetadata {
@@ -13,6 +14,7 @@ export interface RouteMetadata {
   analyticsName?: string;
   icon?: React.ElementType;
   prefetchPriority?: 'high' | 'medium' | 'low';
+  transitionEffect?: 'fade' | 'slide' | 'none';
 }
 
 // Define our extended route type
@@ -27,9 +29,17 @@ export function createRoute(
   element: React.ReactElement | null,
   metadata?: RouteMetadata
 ): AppRouteObject {
+  // Apply metadata HOC to element if metadata exists
+  const enhancedElement = metadata 
+    ? React.createElement(withRouteMetadata(
+        () => element, 
+        { metadata }
+      ))
+    : element;
+  
   return {
     path,
-    element,
+    element: enhancedElement,
     metadata
   };
 }
@@ -40,11 +50,19 @@ export function createLazyRoute(
   importFunc: () => Promise<{ default: React.ComponentType<any> }>,
   metadata?: RouteMetadata
 ): AppRouteObject {
-  // Get the component from lazyLoad, then create a JSX element with it
-  const LazyComponent = lazyLoad(importFunc);
+  // Get the component using lazyLoad utility
+  const LazyComponent = lazyLoad(importFunc, {
+    priority: metadata?.prefetchPriority || 'low'
+  });
+  
+  // Wrap with metadata HOC if metadata is provided
+  const EnhancedComponent = metadata
+    ? withRouteMetadata(LazyComponent, { metadata })
+    : LazyComponent;
+  
   return {
     path,
-    element: <LazyComponent />,  // Convert component to ReactNode using JSX
+    element: <EnhancedComponent />,
     metadata
   };
 }
@@ -70,4 +88,23 @@ export const flattenRoutes = (routes: AppRouteObject[]): AppRouteObject[] => {
     }
     return acc;
   }, []);
+};
+
+// Helper for dynamic route handling
+export const extractRouteParams = (
+  path: string, 
+  url: string
+): Record<string, string> => {
+  const pathSegments = path.split('/').filter(Boolean);
+  const urlSegments = url.split('/').filter(Boolean);
+  const params: Record<string, string> = {};
+  
+  pathSegments.forEach((segment, index) => {
+    if (segment.startsWith(':') && urlSegments[index]) {
+      const paramName = segment.slice(1);
+      params[paramName] = urlSegments[index];
+    }
+  });
+  
+  return params;
 };
