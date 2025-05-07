@@ -21,7 +21,11 @@ export const createToast = (
   title: string,
   description: string,
   actionConfig?: ToastActionConfig,
-  options?: { duration?: number; variant?: 'default' | 'destructive' }
+  options?: { 
+    duration?: number; 
+    variant?: 'default' | 'destructive' | 'success' | 'warning' | 'info';
+    priority?: 'low' | 'medium' | 'high' | 'urgent'; 
+  }
 ) => {
   // In a .ts file, don't return JSX for the action
   const toastConfig: {
@@ -29,7 +33,8 @@ export const createToast = (
     description: string;
     action?: ToastActionConfig;
     duration?: number;
-    variant?: 'default' | 'destructive';
+    variant?: 'default' | 'destructive' | 'success' | 'warning' | 'info';
+    priority?: 'low' | 'medium' | 'high' | 'urgent';
   } = {
     title,
     description,
@@ -50,7 +55,11 @@ export const showToast = (
   title: string,
   description: string,
   actionConfig?: ToastActionConfig,
-  options?: { duration?: number; variant?: 'default' | 'destructive' }
+  options?: { 
+    duration?: number; 
+    variant?: 'default' | 'destructive' | 'success' | 'warning' | 'info';
+    priority?: 'low' | 'medium' | 'high' | 'urgent';
+  }
 ) => {
   // In a TS context, we can't directly create JSX, so we pass the config
   // and let the toast function handle it internally
@@ -59,7 +68,8 @@ export const showToast = (
     description: string;
     action?: ToastActionConfig;
     duration?: number;
-    variant?: 'default' | 'destructive';
+    variant?: 'default' | 'destructive' | 'success' | 'warning' | 'info';
+    priority?: 'low' | 'medium' | 'high' | 'urgent';
   } = {
     title,
     description,
@@ -85,7 +95,9 @@ export const showRecoveryToast = () => {
       label: "Refresh Now",
       onClick: () => window.location.reload(),
       altText: "Refresh Now"
-    }
+    },
+    priority: 'high',
+    variant: 'warning'
   });
 };
 
@@ -101,6 +113,8 @@ export const showStuckStateToast = () => {
       onClick: () => window.location.reload(),
       altText: "Refresh Now"
     },
+    priority: 'urgent',
+    variant: 'destructive',
     duration: 0
   });
 };

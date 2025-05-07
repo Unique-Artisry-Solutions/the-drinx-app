@@ -4,16 +4,23 @@ import { NotificationType } from './NotificationTypes';
 
 /**
  * Toast variant type mapping to notification types
+ * We're standardizing on shadcn/ui's toast variants
  */
-export type ToastVariant = 'default' | 'destructive';
+export type ToastVariant = 'default' | 'destructive' | 'success' | 'warning' | 'info';
 
 /**
  * Helper function to map notification types to toast variants
  */
 export const mapNotificationTypeToToastVariant = (type?: NotificationType): ToastVariant => {
   switch (type) {
+    case 'success':
+      return 'success';
     case 'error':
       return 'destructive';
+    case 'warning':
+      return 'warning';
+    case 'info':
+      return 'info';
     default:
       return 'default';
   }
@@ -31,4 +38,5 @@ export interface Toast {
   onOpenChange?: (open: boolean) => void;
   variant?: ToastVariant;
   duration?: number;
+  priority?: 'low' | 'medium' | 'high' | 'urgent';
 }

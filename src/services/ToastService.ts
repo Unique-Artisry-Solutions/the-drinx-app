@@ -1,6 +1,10 @@
-
 import { toast } from '@/hooks/use-toast';
-import { Notification, NotificationType, ActionConfig } from '@/types/notification';
+import { 
+  Notification, 
+  NotificationType, 
+  ActionConfig 
+} from '@/types/notification';
+import { mapNotificationTypeToToastVariant } from '@/types/notification/ToastTypes';
 
 /**
  * A singleton service that provides a unified interface for displaying toasts
@@ -29,16 +33,17 @@ class ToastService {
     message: string;
     type?: NotificationType;
     duration?: number;
+    priority?: 'low' | 'medium' | 'high' | 'urgent';
     action?: {
       label: string;
       onClick: () => void;
       altText?: string;
     };
   }): { id: string; dismiss: () => void } {
-    const { title, message, type = 'info', duration = 5000, action } = options;
+    const { title, message, type = 'info', duration = 5000, priority = 'medium', action } = options;
     
     // Map notification types to valid toast variants
-    const variant = type === 'error' ? 'destructive' : 'default';
+    const variant = mapNotificationTypeToToastVariant(type);
     
     // Convert the NotificationOptions action to a ToastAction
     let toastAction: ActionConfig | undefined;
@@ -54,6 +59,7 @@ class ToastService {
       title,
       description: message,
       variant,
+      priority,
       duration,
       action: toastAction
     });
@@ -71,6 +77,7 @@ class ToastService {
       altText?: string;
     };
     duration?: number;
+    priority?: 'low' | 'medium' | 'high' | 'urgent';
   }): { id: string; dismiss: () => void } {
     return this.show({
       title,
@@ -90,11 +97,13 @@ class ToastService {
       altText?: string;
     };
     duration?: number;
+    priority?: 'low' | 'medium' | 'high' | 'urgent';
   }): { id: string; dismiss: () => void } {
     return this.show({
       title,
       message,
       type: 'error',
+      priority: options?.priority || 'high',
       ...(options || {})
     });
   }
@@ -109,6 +118,7 @@ class ToastService {
       altText?: string;
     };
     duration?: number;
+    priority?: 'low' | 'medium' | 'high' | 'urgent';
   }): { id: string; dismiss: () => void } {
     return this.show({
       title,
@@ -128,11 +138,13 @@ class ToastService {
       altText?: string;
     };
     duration?: number;
+    priority?: 'low' | 'medium' | 'high' | 'urgent';
   }): { id: string; dismiss: () => void } {
     return this.show({
       title,
       message,
       type: 'warning',
+      priority: options?.priority || 'medium',
       ...(options || {})
     });
   }

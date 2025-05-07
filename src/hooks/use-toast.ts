@@ -21,6 +21,7 @@ type ToasterToast = ToastProps & {
   title?: React.ReactNode;
   description?: React.ReactNode;
   action?: ToastActionElement | ActionConfig;
+  priority?: 'low' | 'medium' | 'high' | 'urgent';
 };
 
 const actionTypes = {

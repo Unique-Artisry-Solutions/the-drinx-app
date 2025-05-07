@@ -18,7 +18,7 @@ export function Toaster() {
 
   return (
     <ToastProvider>
-      {toasts.map(function ({ id, title, description, action, className, ...props }) {
+      {toasts.map(function ({ id, title, description, action, className, priority, ...props }) {
         // Handle both JSX elements and action config objects
         let actionElement = null;
         
@@ -39,7 +39,7 @@ export function Toaster() {
         }
         
         return (
-          <Toast key={id} className={className} {...props}>
+          <Toast key={id} className={className} priority={priority} {...props}>
             <div className="grid gap-1">
               {title && <ToastTitle>{title}</ToastTitle>}
               {description && (

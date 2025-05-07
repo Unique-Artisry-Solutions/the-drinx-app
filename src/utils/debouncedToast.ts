@@ -11,6 +11,7 @@ interface DebouncedToastOptions {
     altText?: string;
   };
   duration?: number;
+  priority?: 'low' | 'medium' | 'high' | 'urgent';
 }
 
 /**
@@ -24,7 +25,10 @@ export const debouncedToast = {
   error: (title: string, description: string, options: DebouncedToastOptions | number = {}) => {
     const opts = typeof options === 'number' ? { debounceMs: options } : options;
     const { debounceMs = 5000, ...restOptions } = opts;
-    toastService.error(title, description, { ...restOptions });
+    toastService.error(title, description, { 
+      ...restOptions,
+      priority: restOptions.priority || 'high'
+    });
   },
 
   /**
@@ -33,7 +37,10 @@ export const debouncedToast = {
   success: (title: string, description: string, options: DebouncedToastOptions | number = {}) => {
     const opts = typeof options === 'number' ? { debounceMs: options } : options;
     const { debounceMs = 5000, ...restOptions } = opts;
-    toastService.success(title, description, { ...restOptions });
+    toastService.success(title, description, { 
+      ...restOptions,
+      priority: restOptions.priority || 'medium'
+    });
   },
 
   /**
@@ -42,7 +49,10 @@ export const debouncedToast = {
   info: (title: string, description: string, options: DebouncedToastOptions | number = {}) => {
     const opts = typeof options === 'number' ? { debounceMs: options } : options;
     const { debounceMs = 5000, ...restOptions } = opts;
-    toastService.info(title, description, { ...restOptions });
+    toastService.info(title, description, { 
+      ...restOptions,
+      priority: restOptions.priority || 'low'
+    });
   },
 
   /**
@@ -51,7 +61,10 @@ export const debouncedToast = {
   warning: (title: string, description: string, options: DebouncedToastOptions | number = {}) => {
     const opts = typeof options === 'number' ? { debounceMs: options } : options;
     const { debounceMs = 5000, ...restOptions } = opts;
-    toastService.warning(title, description, { ...restOptions });
+    toastService.warning(title, description, { 
+      ...restOptions,
+      priority: restOptions.priority || 'medium'
+    });
   },
 
   /**
@@ -61,18 +74,24 @@ export const debouncedToast = {
     const opts = typeof options === 'number' ? { debounceMs: options } : options;
     const { debounceMs = 5000, ...restOptions } = opts;
     
+    // Set appropriate default priority based on notification type
+    const priority = restOptions.priority || 
+      (type === 'error' ? 'high' : 
+       type === 'warning' ? 'medium' : 
+       type === 'success' ? 'medium' : 'low');
+    
     switch (type) {
       case 'error':
-        toastService.error(title, description, restOptions);
+        toastService.error(title, description, { ...restOptions, priority });
         break;
       case 'success':
-        toastService.success(title, description, restOptions);
+        toastService.success(title, description, { ...restOptions, priority });
         break;
       case 'warning':
-        toastService.warning(title, description, restOptions);
+        toastService.warning(title, description, { ...restOptions, priority });
         break;
       default:
-        toastService.info(title, description, restOptions);
+        toastService.info(title, description, { ...restOptions, priority });
     }
   },
 
