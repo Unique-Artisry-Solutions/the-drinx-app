@@ -1,271 +1,436 @@
+
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { ArrowLeft, Check, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Check, ArrowLeft } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import TopNavigation from '@/components/TopNavigation';
-import { useCart } from '@/contexts/CartContext';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import Layout from '@/components/Layout';
+import LinkComponent from '@/components/navigation/LinkComponent';
+import { useAppNavigation } from '@/hooks/useAppNavigation';
 
-const PricingFeature = ({ children }: { children: React.ReactNode }) => (
-  <div className="flex items-center space-x-2">
-    <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
-    <span className="text-sm text-gray-700">{children}</span>
-  </div>
-);
+// FAQ data
+const faqItems = [
+  {
+    question: "What happens after my trial ends?",
+    answer: "After your trial period ends, your account will automatically transition to our free tier. You can upgrade to any paid plan at any time to unlock additional features."
+  },
+  {
+    question: "Can I switch between plans?",
+    answer: "Yes, you can upgrade, downgrade, or cancel your subscription at any time. Changes to your subscription will take effect at the start of your next billing cycle."
+  },
+  {
+    question: "Are there any setup fees?",
+    answer: "No, there are no setup fees for any of our plans. You only pay the advertised subscription price."
+  },
+  {
+    question: "Do you offer discounts for annual billing?",
+    answer: "Yes, we offer a 15% discount when you choose annual billing instead of monthly billing."
+  },
+  {
+    question: "What payment methods do you accept?",
+    answer: "We accept all major credit cards, PayPal, and bank transfers for annual plans."
+  },
+  {
+    question: "How do promoter plans differ from establishment plans?",
+    answer: "Promoter plans focus on event management, ticket sales, and promotional tools while establishment plans focus on venue management, menu customization, and customer engagement."
+  },
+  {
+    question: "Can I use promotional tools with my establishment account?",
+    answer: "Basic promotional tools are included with establishment accounts, but for advanced promotional features, we recommend upgrading to a promoter account."
+  }
+];
 
-const PricingPage = () => {
-  const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
-  const { addItem } = useCart();
+// Individual plans data
+const individualPlans = [
+  {
+    name: "Free",
+    price: "0",
+    description: "Basic features for casual users",
+    features: [
+      "Access to cocktail database",
+      "Map view of local establishments",
+      "Save favorite venues",
+      "Personal profile",
+      "Join bar crawls"
+    ],
+    recommended: false,
+    buttonText: "Get Started",
+    buttonVariant: "outline"
+  },
+  {
+    name: "Premium",
+    price: "9.99",
+    description: "Enhanced features for enthusiasts",
+    features: [
+      "Everything in Free",
+      "No advertisements",
+      "Early access to events",
+      "Exclusive rewards",
+      "Priority support",
+      "Custom bar crawl creation"
+    ],
+    recommended: true,
+    buttonText: "Start Free Trial",
+    buttonVariant: "default"
+  },
+  {
+    name: "Family",
+    price: "19.99",
+    description: "Share the experience with your family",
+    features: [
+      "Everything in Premium",
+      "Up to 5 family accounts",
+      "Family event planning",
+      "Shared collections",
+      "Discounted event tickets",
+      "Premium support"
+    ],
+    recommended: false,
+    buttonText: "Start Free Trial",
+    buttonVariant: "outline"
+  }
+];
 
-  const handleAddToCart = (planName: string, planPrice: number, planType: 'user' | 'establishment', interval: 'monthly' | 'yearly' | 'one-time' = 'monthly') => {
-    setIsLoading(true);
-    
-    // Add to cart with a slight delay to show loading state
-    setTimeout(() => {
-      addItem({
-        id: `${planType}-${planName.toLowerCase()}-${interval}`,
-        name: planName,
-        price: planPrice,
-        type: planType,
-        interval: interval
-      });
-      setIsLoading(false);
-    }, 500);
+// Establishment plans data
+const establishmentPlans = [
+  {
+    name: "Basic",
+    price: "29.99",
+    description: "Essential tools for small venues",
+    features: [
+      "Full venue profile",
+      "Menu management",
+      "Basic analytics",
+      "Customer reviews",
+      "Event listings",
+      "Standard support"
+    ],
+    recommended: false,
+    buttonText: "Start Free Trial",
+    buttonVariant: "outline"
+  },
+  {
+    name: "Professional",
+    price: "79.99",
+    description: "Advanced tools for growing businesses",
+    features: [
+      "Everything in Basic",
+      "Premium placement on map",
+      "Advanced analytics",
+      "Promotional tools",
+      "Menu design features",
+      "Priority support",
+      "Reservation management"
+    ],
+    recommended: true,
+    buttonText: "Start Free Trial",
+    buttonVariant: "default"
+  },
+  {
+    name: "Enterprise",
+    price: "149.99",
+    description: "Complete solution for large venues & chains",
+    features: [
+      "Everything in Professional",
+      "Multiple location management",
+      "Custom branding",
+      "API access",
+      "Dedicated account manager",
+      "Staff management tools",
+      "Inventory tracking",
+      "Private events features"
+    ],
+    recommended: false,
+    buttonText: "Contact Sales",
+    buttonVariant: "outline"
+  }
+];
+
+// New promoter plans data
+const promoterPlans = [
+  {
+    name: "Basic",
+    price: "39.99",
+    description: "Essential tools for event promoters",
+    features: [
+      "Event creation and management",
+      "Basic ticketing system",
+      "Promotional code generation",
+      "Event listings on platform",
+      "Basic analytics",
+      "Standard support"
+    ],
+    recommended: false,
+    buttonText: "Start Free Trial",
+    buttonVariant: "outline"
+  },
+  {
+    name: "Professional",
+    price: "79.99",
+    description: "Advanced tools for experienced promoters",
+    features: [
+      "Everything in Basic",
+      "Advanced ticketing options",
+      "Multiple ticket tiers",
+      "Attendee management",
+      "Event notification scheduling",
+      "Marketing tools",
+      "Priority support",
+      "Custom event pages"
+    ],
+    recommended: true,
+    buttonText: "Start Free Trial",
+    buttonVariant: "gradient"
+  },
+  {
+    name: "Enterprise",
+    price: "149.99",
+    description: "Complete solution for professional event companies",
+    features: [
+      "Everything in Professional",
+      "Multi-event management",
+      "Custom branding",
+      "API access",
+      "Dedicated account manager",
+      "Staff management tools",
+      "Advanced analytics dashboard",
+      "Custom attendee fields",
+      "White-label ticketing"
+    ],
+    recommended: false,
+    buttonText: "Contact Sales",
+    buttonVariant: "outline"
+  }
+];
+
+const PricingCard = ({
+  name,
+  price,
+  description,
+  features,
+  recommended,
+  buttonText,
+  buttonVariant,
+  userType
+}: {
+  name: string;
+  price: string;
+  description: string;
+  features: string[];
+  recommended: boolean;
+  buttonText: string;
+  buttonVariant: "default" | "outline" | "gradient";
+  userType: "individual" | "establishment" | "promoter";
+}) => {
+  const { goToRoute } = useAppNavigation();
+  
+  // Determine colors based on user type
+  const getBadgeColor = () => {
+    switch (userType) {
+      case "promoter":
+        return "bg-purple-600 text-white";
+      case "establishment":
+        return "bg-green-600 text-white";
+      default:
+        return "bg-spiritless-pink text-white";
+    }
+  };
+  
+  const getButtonStyles = () => {
+    if (buttonVariant === "gradient" && userType === "promoter") {
+      return "bg-gradient-to-r from-purple-500 to-purple-700 text-white hover:from-purple-600 hover:to-purple-800";
+    }
+    return "";
+  };
+
+  const handleGetStarted = () => {
+    // Direct to sign up page with plan info
+    goToRoute('/signup', { 
+      state: { plan: name, userType },
+      showToast: true,
+      toastMessage: `Selected the ${name} plan for ${userType} account`,
+      toastType: "info"
+    });
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-white to-purple-50">
-      <TopNavigation />
-      
-      <div className="container max-w-6xl mx-auto px-4 py-12 flex-1">
-        <div className="mb-8">
-          <Link to="/" className="inline-flex items-center text-material-primary hover:underline">
-            <ArrowLeft size={16} className="mr-2" />
+    <Card className={`flex flex-col h-full ${recommended ? 'border-2 shadow-lg' : 'border'} ${
+      userType === "promoter" && recommended ? 'border-purple-500' : 
+      userType === "establishment" && recommended ? 'border-green-500' : 
+      recommended ? 'border-spiritless-pink' : ''
+    }`}>
+      <CardHeader className="pb-1">
+        {recommended && (
+          <div className={`${getBadgeColor()} text-xs font-medium py-1 px-2 rounded-full w-fit mx-auto mb-2 flex items-center gap-1`}>
+            <Crown className="h-3 w-3" /> Recommended
+          </div>
+        )}
+        <CardTitle className="text-xl font-bold text-center">{name}</CardTitle>
+        <div className="text-center mt-2">
+          <span className="text-3xl font-bold">${price}</span>
+          <span className="text-sm text-muted-foreground">/month</span>
+        </div>
+        <p className="text-sm text-muted-foreground text-center mt-2">{description}</p>
+      </CardHeader>
+      <CardContent className="flex-grow">
+        <ul className="space-y-2 text-sm">
+          {features.map((feature, i) => (
+            <li key={i} className="flex items-start">
+              <Check className={`h-4 w-4 mr-2 mt-1 ${
+                userType === "promoter" ? "text-purple-500" : 
+                userType === "establishment" ? "text-green-600" : 
+                "text-spiritless-pink"
+              }`} />
+              <span>{feature}</span>
+            </li>
+          ))}
+        </ul>
+      </CardContent>
+      <CardFooter className="pt-4">
+        <Button 
+          onClick={handleGetStarted} 
+          variant={buttonVariant === "gradient" ? "default" : buttonVariant} 
+          className={`w-full ${getButtonStyles()}`}
+        >
+          {buttonText}
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+};
+
+const PricingPage: React.FC = () => {
+  const { goToHomePage } = useAppNavigation();
+  const [activeTab, setActiveTab] = useState<string>("individual");
+  
+  // Determine tab styles based on active tab
+  const getTabStyles = (tabValue: string) => {
+    if (tabValue === activeTab) {
+      if (tabValue === "promoter") {
+        return "bg-purple-600 text-white";
+      } else if (tabValue === "establishment") {
+        return "bg-green-600 text-white";
+      } else {
+        return "bg-spiritless-pink text-white";
+      }
+    }
+    return "";
+  };
+
+  return (
+    <Layout>
+      <div className="container py-12 max-w-7xl mx-auto">
+        <div className="flex items-center justify-between mb-8">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="text-muted-foreground"
+            onClick={() => goToHomePage()}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Home
-          </Link>
+          </Button>
         </div>
         
-        <div className="text-center mb-16">
-          <h1 className="text-4xl font-bold mb-4">Pricing Plans</h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Choose the perfect plan for your Spiritless journey
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-extrabold tracking-tight">Simple, Transparent Pricing</h1>
+          <p className="mt-4 text-xl text-muted-foreground">
+            Choose the right plan for your needs. All plans include a 14-day free trial.
           </p>
         </div>
-        
-        <Tabs defaultValue="users" className="w-full">
-          <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-12">
-            <TabsTrigger value="users">For Users</TabsTrigger>
-            <TabsTrigger value="establishments">For Establishments</TabsTrigger>
+
+        <Tabs 
+          defaultValue="individual" 
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="w-full mb-12"
+        >
+          <TabsList className="grid w-full grid-cols-3 mb-8">
+            <TabsTrigger 
+              value="individual"
+              className={`text-base py-3 ${getTabStyles('individual')}`}
+            >
+              For Users
+            </TabsTrigger>
+            <TabsTrigger 
+              value="establishment"
+              className={`text-base py-3 ${getTabStyles('establishment')}`}
+            >
+              For Establishments
+            </TabsTrigger>
+            <TabsTrigger 
+              value="promoter"
+              className={`text-base py-3 ${getTabStyles('promoter')}`}
+            >
+              For Promoters
+            </TabsTrigger>
           </TabsList>
           
-          <TabsContent value="users" className="space-y-8">
-            <div className="grid md:grid-cols-3 gap-8">
-              {/* Free Plan */}
-              <Card className="flex flex-col h-full">
-                <CardHeader>
-                  <CardTitle className="flex flex-col items-center">
-                    <span className="text-xl">Free</span>
-                    <span className="text-3xl font-bold mt-2">$0</span>
-                    <span className="text-sm text-gray-500">forever</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="flex-grow">
-                  <div className="space-y-3">
-                    <PricingFeature>Find nearby non-alcoholic options</PricingFeature>
-                    <PricingFeature>View establishment details</PricingFeature>
-                    <PricingFeature>Create user profile</PricingFeature>
-                  </div>
-                </CardContent>
-                <CardFooter>
-                  <Link to="/signup" className="w-full">
-                    <Button variant="outline" className="w-full">Sign Up</Button>
-                  </Link>
-                </CardFooter>
-              </Card>
-              
-              {/* Premium Plan */}
-              <Card className="flex flex-col h-full border-material-primary">
-                <div className="bg-material-primary text-white py-2 text-center text-sm font-medium">
-                  MOST POPULAR
-                </div>
-                <CardHeader>
-                  <CardTitle className="flex flex-col items-center">
-                    <span className="text-xl">Premium</span>
-                    <span className="text-3xl font-bold mt-2">$6.99</span>
-                    <span className="text-sm text-gray-500">per month</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="flex-grow">
-                  <div className="space-y-3">
-                    <PricingFeature>Everything in Free</PricingFeature>
-                    <PricingFeature>Save favorite mocktails</PricingFeature>
-                    <PricingFeature>Create and share bar crawls</PricingFeature>
-                    <PricingFeature>Ad-free experience</PricingFeature>
-                    <PricingFeature>Early access to new features</PricingFeature>
-                  </div>
-                </CardContent>
-                <CardFooter>
-                  <Button 
-                    className="w-full" 
-                    onClick={() => handleAddToCart("Premium", 6.99, "user", "monthly")}
-                    disabled={isLoading}
-                  >
-                    {isLoading ? "Adding to cart..." : "Add to Cart"}
-                  </Button>
-                </CardFooter>
-              </Card>
-              
-              {/* Annual Plan */}
-              <Card className="flex flex-col h-full">
-                <CardHeader>
-                  <CardTitle className="flex flex-col items-center">
-                    <span className="text-xl">Annual</span>
-                    <span className="text-3xl font-bold mt-2">$59.99</span>
-                    <span className="text-sm text-gray-500">per year</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="flex-grow">
-                  <div className="space-y-3">
-                    <PricingFeature>Everything in Premium</PricingFeature>
-                    <PricingFeature>Save 28% compared to monthly</PricingFeature>
-                    <PricingFeature>Priority customer support</PricingFeature>
-                    <PricingFeature>Exclusive seasonal guides</PricingFeature>
-                  </div>
-                </CardContent>
-                <CardFooter>
-                  <Button 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => handleAddToCart("Annual", 59.99, "user", "yearly")}
-                    disabled={isLoading}
-                  >
-                    {isLoading ? "Adding to cart..." : "Add to Cart"}
-                  </Button>
-                </CardFooter>
-              </Card>
+          <TabsContent value="individual" className="mt-4">
+            <div className="grid gap-6 md:grid-cols-3">
+              {individualPlans.map((plan) => (
+                <PricingCard
+                  key={plan.name}
+                  {...plan}
+                  userType="individual"
+                />
+              ))}
             </div>
           </TabsContent>
           
-          <TabsContent value="establishments" className="space-y-8">
-            <div className="grid md:grid-cols-3 gap-8">
-              {/* Basic Plan */}
-              <Card className="flex flex-col h-full">
-                <CardHeader>
-                  <CardTitle className="flex flex-col items-center">
-                    <span className="text-xl">Basic</span>
-                    <span className="text-3xl font-bold mt-2">$29.99</span>
-                    <span className="text-sm text-gray-500">per month</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="flex-grow">
-                  <div className="space-y-3">
-                    <PricingFeature>List your establishment</PricingFeature>
-                    <PricingFeature>Add up to 5 mocktails</PricingFeature>
-                    <PricingFeature>Basic analytics</PricingFeature>
-                    <PricingFeature>Email support</PricingFeature>
-                  </div>
-                </CardContent>
-                <CardFooter>
-                  <Button 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => handleAddToCart("Basic Establishment", 29.99, "establishment", "monthly")}
-                    disabled={isLoading}
-                  >
-                    {isLoading ? "Adding to cart..." : "Add to Cart"}
-                  </Button>
-                </CardFooter>
-              </Card>
-              
-              {/* Pro Plan */}
-              <Card className="flex flex-col h-full border-material-primary">
-                <div className="bg-material-primary text-white py-2 text-center text-sm font-medium">
-                  RECOMMENDED
-                </div>
-                <CardHeader>
-                  <CardTitle className="flex flex-col items-center">
-                    <span className="text-xl">Pro</span>
-                    <span className="text-3xl font-bold mt-2">$79.99</span>
-                    <span className="text-sm text-gray-500">per month</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="flex-grow">
-                  <div className="space-y-3">
-                    <PricingFeature>Everything in Basic</PricingFeature>
-                    <PricingFeature>Unlimited mocktails</PricingFeature>
-                    <PricingFeature>Featured in search results</PricingFeature>
-                    <PricingFeature>Advanced analytics</PricingFeature>
-                    <PricingFeature>Priority support</PricingFeature>
-                    <PricingFeature>Promotional tools</PricingFeature>
-                  </div>
-                </CardContent>
-                <CardFooter>
-                  <Button 
-                    className="w-full"
-                    onClick={() => handleAddToCart("Pro Establishment", 79.99, "establishment", "monthly")}
-                    disabled={isLoading}
-                  >
-                    {isLoading ? "Adding to cart..." : "Add to Cart"}
-                  </Button>
-                </CardFooter>
-              </Card>
-              
-              {/* Enterprise Plan */}
-              <Card className="flex flex-col h-full">
-                <CardHeader>
-                  <CardTitle className="flex flex-col items-center">
-                    <span className="text-xl">Enterprise</span>
-                    <span className="text-3xl font-bold mt-2">$199.99</span>
-                    <span className="text-sm text-gray-500">per month</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="flex-grow">
-                  <div className="space-y-3">
-                    <PricingFeature>Everything in Pro</PricingFeature>
-                    <PricingFeature>Multiple location management</PricingFeature>
-                    <PricingFeature>API access</PricingFeature>
-                    <PricingFeature>Custom integrations</PricingFeature>
-                    <PricingFeature>Dedicated account manager</PricingFeature>
-                    <PricingFeature>Premium placement</PricingFeature>
-                  </div>
-                </CardContent>
-                <CardFooter>
-                  <Button 
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => handleAddToCart("Enterprise", 199.99, "establishment", "monthly")}
-                    disabled={isLoading}
-                  >
-                    {isLoading ? "Adding to cart..." : "Add to Cart"}
-                  </Button>
-                </CardFooter>
-              </Card>
+          <TabsContent value="establishment" className="mt-4">
+            <div className="grid gap-6 md:grid-cols-3">
+              {establishmentPlans.map((plan) => (
+                <PricingCard
+                  key={plan.name}
+                  {...plan}
+                  userType="establishment"
+                />
+              ))}
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="promoter" className="mt-4">
+            <div className="grid gap-6 md:grid-cols-3">
+              {promoterPlans.map((plan) => (
+                <PricingCard
+                  key={plan.name}
+                  {...plan}
+                  userType="promoter"
+                />
+              ))}
             </div>
           </TabsContent>
         </Tabs>
-        
-        <div className="mt-16 text-center">
-          <h2 className="text-2xl font-semibold mb-4">Frequently Asked Questions</h2>
-          <div className="max-w-3xl mx-auto space-y-6 text-left">
-            <div>
-              <h3 className="font-medium mb-2">Can I cancel my subscription anytime?</h3>
-              <p className="text-gray-600">Yes, you can cancel your subscription at any time. Your plan will remain active until the end of the current billing cycle.</p>
-            </div>
-            <div>
-              <h3 className="font-medium mb-2">Is there a free trial?</h3>
-              <p className="text-gray-600">We offer a 14-day free trial for all premium plans. No credit card required.</p>
-            </div>
-            <div>
-              <h3 className="font-medium mb-2">How do I update my payment information?</h3>
-              <p className="text-gray-600">You can update your payment information in your account settings at any time.</p>
-            </div>
+
+        <section className="mt-20">
+          <h2 className="text-3xl font-bold text-center mb-8">Frequently Asked Questions</h2>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {faqItems.map((item, i) => (
+              <div key={i} className="bg-card border rounded-lg p-6">
+                <h3 className="text-lg font-semibold mb-2">{item.question}</h3>
+                <p className="text-muted-foreground">{item.answer}</p>
+              </div>
+            ))}
           </div>
-        </div>
+        </section>
+
+        <section className="mt-20 text-center">
+          <h2 className="text-3xl font-bold mb-4">Still have questions?</h2>
+          <p className="text-xl text-muted-foreground mb-6">
+            Contact our team for more information about our pricing plans.
+          </p>
+          <div className="flex flex-wrap justify-center gap-4">
+            <Button size="lg">
+              Contact Sales
+            </Button>
+            <Button variant="outline" size="lg">
+              View Documentation
+            </Button>
+          </div>
+        </section>
       </div>
-    </div>
+    </Layout>
   );
 };
 
