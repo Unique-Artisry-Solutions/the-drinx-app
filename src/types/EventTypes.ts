@@ -56,6 +56,9 @@ export interface EventTicketType {
   quantity: number;
   sold: number;
   available: number;
+  hasLimitedInventory?: boolean;
+  lowInventoryThreshold?: number;
+  hasDynamicPricing?: boolean;
 }
 
 export interface EventMarketingCampaign {
@@ -122,6 +125,9 @@ export interface EventFormData {
     price: number;
     description: string;
     quantity: number;
+    hasLimitedInventory?: boolean;
+    lowInventoryThreshold?: number;
+    hasDynamicPricing?: boolean;
   }[];
   imageUrl: string;
   image_url?: string;

@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import * as eventTicketService from '@/services/eventTicketService';
-import { DiscountCodeResult } from '@/services/eventTicketService';
+import { DiscountCodeResult } from '@/services/tickets/baseTicketService';
 
 export const useEventTicketing = (eventId: string) => {
   const { toast } = useToast();
@@ -18,7 +18,7 @@ export const useEventTicketing = (eventId: string) => {
     error: ticketTypesError 
   } = useQuery({
     queryKey: ['eventTicketTypes', eventId],
-    queryFn: () => eventTicketService.fetchEventTicketTypes(eventId),
+    queryFn: () => eventTicketService.getEventTicketTypes(eventId),
     enabled: !!eventId
   });
 
@@ -137,9 +137,9 @@ export const useEventTicketing = (eventId: string) => {
     
     if (appliedDiscount?.valid) {
       if (appliedDiscount.discountType === 'percentage') {
-        discount = subtotal * (appliedDiscount.discountAmount / 100);
+        discount = subtotal * (appliedDiscount.discountAmount! / 100);
       } else {
-        discount = Math.min(subtotal, appliedDiscount.discountAmount * quantity);
+        discount = Math.min(subtotal, appliedDiscount.discountAmount! * quantity);
       }
     }
     

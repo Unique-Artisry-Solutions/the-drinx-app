@@ -42,7 +42,7 @@ export const useEventDetails = (eventId: string) => {
         // Get attendee counts
         const { data: attendeesData, error: attendeesError } = await supabase
           .from('event_attendees')
-          .select('status')
+          .select('status, ticket_type_id')
           .eq('event_id', eventId);
 
         if (attendeesError) console.error("Error fetching attendee count:", attendeesError);
@@ -79,7 +79,7 @@ export const useEventDetails = (eventId: string) => {
         
         // Transform event_ticket_types to include computed properties
         const ticketTypes: EventTicketType[] = eventData.event_ticket_types.map((ticket: any) => {
-          // Calculate sold tickets for each type
+          // Calculate sold tickets for each type - ensure we check the ticket_type_id exists 
           const soldTickets = attendeesData 
             ? attendeesData.filter(a => 
                 a.ticket_type_id === ticket.id && 

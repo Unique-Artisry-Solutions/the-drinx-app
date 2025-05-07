@@ -1,57 +1,37 @@
 
 /**
- * Safely converts a JSON value to a Record<string, any>
- * Handles string JSON, JSON objects, and nullish values
+ * Safely converts a JSON string or object to a specified type with fallback defaults
+ * @param input JSON string or already parsed object
+ * @param defaultValue Default value if conversion fails
+ * @returns Typed object
  */
-export const safeJsonToRecord = (jsonValue: any): Record<string, any> => {
-  if (!jsonValue) {
-    return {};
+export function safeJsonToType<T>(input: string | object | null | undefined, defaultValue: T): T {
+  if (input === null || input === undefined) {
+    return defaultValue;
   }
   
-  if (typeof jsonValue === 'string') {
-    try {
-      return JSON.parse(jsonValue);
-    } catch (e) {
-      console.error('Error parsing JSON string:', e);
-      return {};
+  try {
+    if (typeof input === 'string') {
+      return JSON.parse(input) as T;
+    } else if (typeof input === 'object') {
+      return input as T;
     }
+    return defaultValue;
+  } catch (error) {
+    console.error('Error parsing JSON:', error);
+    return defaultValue;
   }
-  
-  if (typeof jsonValue === 'object') {
-    return jsonValue as Record<string, any>;
-  }
-  
-  return {};
-};
+}
 
 /**
- * Converts a string value to the appropriate attendee status type
- * Ensures the status value is one of the valid options: 'registered', 'checked_in', 'cancelled', 'no_show'
+ * Safely converts a JSON string or object to a Record<string, any> with fallback
+ * @param input JSON string or already parsed object
+ * @param defaultValue Optional default value if conversion fails
+ * @returns Record object
  */
-export const toAttendeeStatus = (status: string | undefined): 'registered' | 'checked_in' | 'cancelled' | 'no_show' => {
-  if (!status) return 'registered';
-
-  switch (status.toLowerCase()) {
-    case 'checked_in':
-    case 'checked-in': 
-      return 'checked_in';
-    case 'cancelled':
-    case 'canceled':
-      return 'cancelled';
-    case 'no_show':
-    case 'no-show':
-      return 'no_show';
-    case 'registered':
-    default:
-      return 'registered';
-  }
-};
-
-/**
- * Type-safe conversion from JSON to specific interface types
- * Used for complex types like EventLocation, EventContactInfo, etc.
- */
-export const safeJsonToType = <T>(jsonValue: any, defaultValue: T): T => {
-  const record = safeJsonToRecord(jsonValue);
-  return { ...defaultValue, ...record };
-};
+export function safeJsonToRecord(
+  input: string | object | null | undefined, 
+  defaultValue: Record<string, any> = {}
+): Record<string, any> {
+  return safeJsonToType<Record<string, any>>(input, defaultValue);
+}

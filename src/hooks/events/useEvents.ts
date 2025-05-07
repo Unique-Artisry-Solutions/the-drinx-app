@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { EventType, EventFormData } from '@/types/EventTypes';
 import { useToast } from '@/hooks/use-toast';
@@ -113,7 +112,21 @@ export const useEvents = () => {
           },
           created_by: event.created_by,
           created_at: event.created_at,
-          updated_at: event.updated_at
+          updated_at: event.updated_at,
+          // Add required fields from the Event interface
+          location_details: {
+            address: venueData?.address || '',
+            city: '',
+            state: '',
+            zip: '',
+            country: ''
+          },
+          contact_info: {
+            name: '',
+            email: ''
+          },
+          custom_settings: {},
+          is_public: true
         };
       });
 

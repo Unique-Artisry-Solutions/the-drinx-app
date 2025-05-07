@@ -36,6 +36,29 @@ export const generateEventAccessToken = async (eventId: string): Promise<string>
   }
 };
 
+export const getCurrentEventToken = async (eventId: string): Promise<string | null> => {
+  try {
+    // Look up the most recent active token for this event
+    const { data, error } = await supabase
+      .from('event_access_tokens')
+      .select('token')
+      .eq('event_id', eventId)
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+      
+    if (error || !data) {
+      return null;
+    }
+    
+    return data.token;
+  } catch (error) {
+    console.error('Error fetching current event token:', error);
+    return null;
+  }
+};
+
 export const validateEventAccessToken = async (
   eventId: string, 
   token: string
