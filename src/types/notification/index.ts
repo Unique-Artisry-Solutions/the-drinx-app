@@ -27,6 +27,9 @@ export interface NotificationInterface {
   target_radius?: number;
 }
 
+// Create a type alias for backward compatibility
+export type Notification = NotificationInterface;
+
 export interface NotificationFormData {
   email_notifications: boolean;
   push_notifications: boolean;
