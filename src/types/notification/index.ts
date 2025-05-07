@@ -86,3 +86,6 @@ export interface PushSubscription {
     platform?: string;
   };
 }
+
+// Define NotificationType type
+export type NotificationType = 'success' | 'error' | 'warning' | 'info';

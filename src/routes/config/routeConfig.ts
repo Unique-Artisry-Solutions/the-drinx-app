@@ -1,5 +1,5 @@
 
-import { lazy } from 'react';
+import { lazy, ReactNode } from 'react';
 import { RouteObject } from 'react-router-dom';
 import { lazyLoad } from '@/utils/lazyLoad';
 import { UserType } from '@/types/navigation';
@@ -22,7 +22,7 @@ export interface AppRouteObject extends Omit<RouteObject, 'children'> {
 // Helper function to create routes with metadata
 export function createRoute(
   path: string,
-  element: React.ReactNode,
+  element: ReactNode,
   metadata?: RouteMetadata
 ): AppRouteObject {
   return {
@@ -40,7 +40,7 @@ export function createLazyRoute(
 ): AppRouteObject {
   return {
     path,
-    element: lazyLoad(importFunc),
+    element: lazyLoad(importFunc) as ReactNode,
     metadata
   };
 }
