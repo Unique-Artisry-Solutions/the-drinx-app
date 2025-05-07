@@ -1,67 +1,44 @@
 
 import React from 'react';
-import { useLocation } from 'react-router-dom';
-import { Home, Map, Route, Megaphone, BarChart2, Building, MessageSquare, Calendar } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import UnifiedNavItem from '../UnifiedNavItem';
-import { isPathActive, getHomePathByUserType } from '@/utils/navigation';
-import { useAppNavigation } from '@/hooks/useAppNavigation';
+import { useNavigation } from '@/contexts/NavigationContext';
+import { LinkProps } from '@/types/LinkTypes';
 
-interface UserNavLinksProps {
-  userType: 'individual' | 'establishment' | 'promoter';
-}
-
-const UserNavLinks: React.FC<UserNavLinksProps> = ({ userType }) => {
-  const location = useLocation();
-  const { goToHomePage } = useAppNavigation();
+const NavLink: React.FC<LinkProps & { className?: string }> = ({
+  href,
+  children,
+  className,
+  activeClassName = "text-primary",
+  ...props
+}) => {
+  const { isPathActive } = useNavigation();
+  const isActive = isPathActive(href);
   
-  const handleHomeClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    goToHomePage(userType);
-  };
-  
-  const getNavItems = () => {
-    const homePath = getHomePathByUserType(userType);
-    
-    const navItems = [
-      { icon: Home, label: 'Home', path: homePath },
-      { icon: Map, label: 'Map', path: '/map' },
-      { icon: Route, label: 'Circuits', path: '/swig-circuits' },
-    ];
-    
-    if (userType === 'promoter') {
-      navItems.push(
-        { icon: Calendar, label: 'Events', path: '/promoter/events' },
-        { icon: Building, label: 'Venues', path: '/explore' },
-        { icon: Megaphone, label: 'Dashboard', path: '/promoter/dashboard' },
-        { icon: BarChart2, label: 'Analytics', path: '/promoter/analytics' }
-      );
-    } else if (userType === 'establishment') {
-      navItems.push({ icon: MessageSquare, label: 'Messages', path: '/establishment/communication' });
-    }
-    
-    return navItems;
-  };
-
   return (
-    <div className="user-nav-links hidden md:flex space-x-1">
-      {getNavItems().map((item) => {
-        const isActive = isPathActive(location.pathname, item.path);
-        
-        return (
-          <UnifiedNavItem
-            key={item.path}
-            path={item.path}
-            icon={item.icon}
-            label={item.label}
-            isActive={isActive}
-            onClick={item.path.includes('Home') ? handleHomeClick : undefined}
-            variant="default"
-            userType={userType}
-          />
-        );
-      })}
-    </div>
+    <Link 
+      to={href} 
+      className={cn(
+        "px-3 py-2 text-sm font-medium transition-colors hover:text-primary",
+        isActive ? activeClassName : "text-foreground/70",
+        className
+      )} 
+      {...props}
+    >
+      {children}
+    </Link>
+  );
+};
+
+const UserNavLinks = () => {
+  return (
+    <nav className="hidden md:flex items-center gap-1">
+      <NavLink href="/explore">Explore</NavLink>
+      <NavLink href="/map">Map</NavLink>
+      <NavLink href="/swig-circuits">Swig Circuits</NavLink>
+      <NavLink href="/events">Events</NavLink>
+      <NavLink href="/pricing">Pricing</NavLink>
+    </nav>
   );
 };
 
