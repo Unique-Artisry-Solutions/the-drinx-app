@@ -11,6 +11,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/auth';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import BackButton from '@/components/navigation/BackButton';
+import { processPayment } from '@/services/paymentService';
 
 // Import the new component files
 import EmptyCartView from '@/components/checkout/EmptyCartView';
@@ -30,6 +31,8 @@ const CheckoutPage: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [captchaValue, setCaptchaValue] = useState<string | null>(null);
   const [formValid, setFormValid] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<any>(null);
+  const [paymentError, setPaymentError] = useState<string | undefined>();
   const [contactInfo, setContactInfo] = useState<ContactInfo>({
     firstName: '',
     lastName: '',
@@ -43,30 +46,76 @@ const CheckoutPage: React.FC = () => {
 
   const handleCaptchaChange = (value: string | null) => {
     setCaptchaValue(value);
-    // Only allow form submission if captcha is verified
-    setFormValid(!!value);
+    checkFormValidity();
+  };
+
+  const handlePaymentMethodChange = (method: any) => {
+    setPaymentMethod(method);
+    checkFormValidity();
+  };
+
+  const checkFormValidity = () => {
+    // Check if all required fields are filled
+    const validContact = contactInfo.firstName && contactInfo.lastName && contactInfo.email;
+    const validPayment = !!paymentMethod;
+    const validCaptcha = !!captchaValue;
+    
+    setFormValid(validContact && validPayment && validCaptcha);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
     setContactInfo(prev => ({ ...prev, [id]: value }));
+    checkFormValidity();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!captchaValue) {
+    if (!formValid) {
       toast({
-        title: "CAPTCHA Required",
-        description: "Please complete the CAPTCHA verification",
+        title: "Form Incomplete",
+        description: "Please complete all required fields",
         variant: "destructive",
       });
       return;
     }
     
     setIsProcessing(true);
+    setPaymentError(undefined);
     
     try {
+      // Process payment through Stripe
+      const paymentResult = await processPayment({
+        paymentMethodId: paymentMethod.id,
+        amount: Math.round(totalWithFees * 100), // Convert to cents
+        currency: 'usd',
+        description: `Purchase of ${items.length} items`,
+        metadata: {
+          items: JSON.stringify(items.map(item => ({
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity || 1,
+            type: item.type
+          }))),
+          customerName: `${contactInfo.firstName} ${contactInfo.lastName}`,
+          customerEmail: contactInfo.email,
+          serviceFee,
+          serviceFeePercentage
+        }
+      });
+      
+      if (!paymentResult.success) {
+        toast({
+          title: 'Payment Failed',
+          description: `Payment status: ${paymentResult.status}`,
+          variant: 'destructive',
+        });
+        setIsProcessing(false);
+        return;
+      }
+      
       // Filter only ticket items
       const ticketItems = items.filter(item => 
         item.type === 'event_ticket' || item.type === 'swig_circuit_ticket'
@@ -80,6 +129,7 @@ const CheckoutPage: React.FC = () => {
             userId: user?.id,
             serviceFee: serviceFee,
             serviceFeePercentage: serviceFeePercentage,
+            paymentTransactionId: paymentResult.transactionId,
             contactInfo: {
               name: `${contactInfo.firstName} ${contactInfo.lastName}`,
               email: contactInfo.email
@@ -111,31 +161,30 @@ const CheckoutPage: React.FC = () => {
       // Track service fee collection 
       await trackServiceFee(serviceFee, serviceFeePercentage, totalWithFees);
       
-      // Simulate payment processing for all items
-      // In a real implementation, you'd have Stripe or another payment processor here
-      setTimeout(() => {
-        setIsProcessing(false);
-        toast({
-          title: 'Payment Successful',
-          description: 'Thank you for your purchase!',
-        });
-        clearCart();
-        navigate('/purchase-confirmation', { 
-          state: { 
-            items, 
-            serviceFee,
-            serviceFeePercentage,
-            totalWithFees,
-            contactInfo: {
-              name: `${contactInfo.firstName} ${contactInfo.lastName}`,
-              email: contactInfo.email
-            }
-          } 
-        });
-      }, 2000);
+      // Show success message
+      toast({
+        title: 'Payment Successful',
+        description: 'Thank you for your purchase!',
+      });
       
+      // Clear cart and navigate to confirmation
+      clearCart();
+      navigate('/purchase-confirmation', { 
+        state: { 
+          items, 
+          serviceFee,
+          serviceFeePercentage,
+          totalWithFees,
+          transactionId: paymentResult.transactionId,
+          contactInfo: {
+            name: `${contactInfo.firstName} ${contactInfo.lastName}`,
+            email: contactInfo.email
+          }
+        } 
+      });
     } catch (error) {
       setIsProcessing(false);
+      setPaymentError(error instanceof Error ? error.message : 'An unexpected error occurred');
       toast({
         title: 'Payment Error',
         description: error instanceof Error ? error.message : 'An unexpected error occurred',
@@ -190,7 +239,10 @@ const CheckoutPage: React.FC = () => {
                     onInputChange={handleInputChange} 
                   />
 
-                  <CheckoutPaymentForm />
+                  <CheckoutPaymentForm 
+                    onPaymentMethodChange={handlePaymentMethodChange}
+                    error={paymentError}
+                  />
                   
                   <CheckoutVerification 
                     captchaValue={captchaValue}

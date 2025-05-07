@@ -1,17 +1,20 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle, CalendarPlus, MapPin, Ticket, ArrowRight } from 'lucide-react';
+import { CheckCircle, CalendarPlus, MapPin, Ticket, ArrowRight, Download, Printer, Mail } from 'lucide-react';
 import { CartItem } from '@/contexts/CartContext';
+import { getReceipt } from '@/services/paymentService';
+import { PaymentReceipt } from '@/types/PaymentTypes';
 
 interface LocationState {
   items: CartItem[];
   serviceFee: number;
   serviceFeePercentage: number;
   totalWithFees: number;
+  transactionId?: string;
   contactInfo: {
     name: string;
     email: string;
@@ -22,6 +25,8 @@ const PurchaseConfirmationPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const state = location.state as LocationState | undefined;
+  const [receipt, setReceipt] = useState<PaymentReceipt | null>(null);
+  const [isLoadingReceipt, setIsLoadingReceipt] = useState(false);
 
   // If no state (direct URL access), redirect to events
   if (!state || !state.items || state.items.length === 0) {
@@ -53,7 +58,26 @@ const PurchaseConfirmationPage: React.FC = () => {
     );
   }
 
-  const { items, serviceFee, serviceFeePercentage, totalWithFees, contactInfo } = state!;
+  const { items, serviceFee, serviceFeePercentage, totalWithFees, transactionId, contactInfo } = state!;
+  
+  // Fetch the receipt if we have a transaction ID
+  useEffect(() => {
+    async function fetchReceipt() {
+      if (transactionId) {
+        try {
+          setIsLoadingReceipt(true);
+          const receiptData = await getReceipt(transactionId);
+          setReceipt(receiptData);
+        } catch (error) {
+          console.error('Error fetching receipt:', error);
+        } finally {
+          setIsLoadingReceipt(false);
+        }
+      }
+    }
+    
+    fetchReceipt();
+  }, [transactionId]);
   
   const eventTickets = items.filter(item => item.type === 'event_ticket');
   const swigCircuitTickets = items.filter(item => item.type === 'swig_circuit_ticket');
@@ -66,6 +90,98 @@ const PurchaseConfirmationPage: React.FC = () => {
     }
     return total + item.price;
   }, 0);
+  
+  const handleDownloadReceipt = () => {
+    if (!receipt) return;
+    
+    // Generate a simple HTML receipt
+    const receiptHtml = `
+      <html>
+      <head>
+        <title>Receipt #${receipt.receipt_number}</title>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 20px; }
+          h1 { border-bottom: 1px solid #ddd; padding-bottom: 10px; }
+          .receipt-container { max-width: 800px; margin: 0 auto; border: 1px solid #eee; padding: 20px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+          .receipt-header { display: flex; justify-content: space-between; margin-bottom: 20px; }
+          .receipt-details { margin-bottom: 30px; }
+          table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+          th, td { text-align: left; padding: 10px; border-bottom: 1px solid #eee; }
+          .total { font-weight: bold; text-align: right; }
+        </style>
+      </head>
+      <body>
+        <div class="receipt-container">
+          <div class="receipt-header">
+            <div>
+              <h1>Receipt</h1>
+              <p>Receipt Number: ${receipt.receipt_number}</p>
+              <p>Date: ${new Date().toLocaleString()}</p>
+            </div>
+          </div>
+          
+          <div class="receipt-details">
+            <h2>Customer Information</h2>
+            <p>Name: ${contactInfo.name}</p>
+            <p>Email: ${contactInfo.email}</p>
+          </div>
+          
+          <table>
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>Quantity</th>
+                <th>Price</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${items.map(item => `
+                <tr>
+                  <td>${item.name}</td>
+                  <td>${item.quantity || 1}</td>
+                  <td>$${item.price.toFixed(2)}</td>
+                  <td>$${((item.quantity || 1) * item.price).toFixed(2)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          
+          <div class="totals">
+            <p>Subtotal: $${subtotal.toFixed(2)}</p>
+            <p>Service Fee (${serviceFeePercentage}%): $${serviceFee.toFixed(2)}</p>
+            <p class="total">Total: $${totalWithFees.toFixed(2)}</p>
+          </div>
+          
+          <div class="footer">
+            <p>Thank you for your purchase!</p>
+            <p>Transaction ID: ${transactionId}</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+    
+    // Create a blob from the HTML and download it
+    const blob = new Blob([receiptHtml], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `receipt-${receipt.receipt_number}.html`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+  
+  const handleEmailReceipt = () => {
+    // In a real application, this would call an API to send the receipt via email
+    // For now, we'll just show a toast
+    alert(`Receipt would be emailed to ${contactInfo.email}`);
+  };
+  
+  const handlePrintReceipt = () => {
+    window.print();
+  };
   
   return (
     <Layout>
@@ -80,7 +196,48 @@ const PurchaseConfirmationPage: React.FC = () => {
           </p>
         </div>
         
-        <Card className="mb-8">
+        {receipt && (
+          <Card className="mb-6 print:shadow-none">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span>Receipt #{receipt.receipt_number}</span>
+                <div className="flex items-center space-x-2">
+                  <Button size="sm" variant="outline" onClick={handleDownloadReceipt}>
+                    <Download className="h-4 w-4 mr-1" />
+                    Download
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={handlePrintReceipt}>
+                    <Printer className="h-4 w-4 mr-1" />
+                    Print
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={handleEmailReceipt}>
+                    <Mail className="h-4 w-4 mr-1" />
+                    Email
+                  </Button>
+                </div>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="border-b pb-4">
+                  <p className="text-sm text-gray-500">Transaction ID</p>
+                  <p className="font-mono">{transactionId}</p>
+                </div>
+                <div className="border-b pb-4">
+                  <p className="text-sm text-gray-500">Date</p>
+                  <p>{new Date().toLocaleString()}</p>
+                </div>
+                <div className="border-b pb-4">
+                  <p className="text-sm text-gray-500">Customer</p>
+                  <p>{contactInfo.name}</p>
+                  <p>{contactInfo.email}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+        
+        <Card className="mb-8 print:shadow-none">
           <CardHeader>
             <CardTitle className="text-xl font-semibold">Order Details</CardTitle>
           </CardHeader>
