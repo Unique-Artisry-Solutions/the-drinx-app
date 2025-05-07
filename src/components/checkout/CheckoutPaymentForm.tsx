@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Input } from '@/components/ui/input';
+import { CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { Label } from '@/components/ui/label';
 import { FormMessage } from '@/components/ui/form';
 import { Card } from '@/components/ui/card';
@@ -10,33 +10,54 @@ interface CheckoutPaymentFormProps {
   error?: string;
 }
 
-// Simplified payment form that doesn't use Stripe Elements yet
-const CheckoutPaymentFormContent: React.FC<CheckoutPaymentFormProps> = ({ 
+const CheckoutPaymentForm: React.FC<CheckoutPaymentFormProps> = ({ 
   onPaymentMethodChange,
   error 
 }) => {
-  const [cardNumber, setCardNumber] = useState('');
-  const [expiry, setExpiry] = useState('');
-  const [cvc, setCvc] = useState('');
+  const stripe = useStripe();
+  const elements = useElements();
   const [cardError, setCardError] = useState<string | undefined>();
+  const [isCardComplete, setIsCardComplete] = useState(false);
   
-  const handleFormChange = () => {
-    // Simple validation
-    if (cardNumber && expiry && cvc) {
-      // Create a mock payment method object for now
-      // This will be replaced with actual Stripe functionality once dependencies are installed
-      const mockPaymentMethod = {
-        id: 'mock_payment_method_id',
-        type: 'card',
-        card: {
-          brand: 'visa',
-          last4: cardNumber.slice(-4),
-          exp_month: parseInt(expiry.split('/')[0]),
-          exp_year: parseInt(expiry.split('/')[1]),
+  const cardElementOptions = {
+    style: {
+      base: {
+        fontSize: '16px',
+        color: '#424770',
+        '::placeholder': {
+          color: '#aab7c4',
+        },
+      },
+      invalid: {
+        color: '#9e2146',
+      },
+    },
+    hidePostalCode: true,
+  };
+
+  const handleCardChange = async (event: any) => {
+    setIsCardComplete(event.complete);
+    setCardError(event.error ? event.error.message : undefined);
+    
+    if (event.complete && stripe && elements) {
+      try {
+        const cardElement = elements.getElement(CardElement);
+        if (cardElement) {
+          const result = await stripe.createPaymentMethod({
+            type: 'card',
+            card: cardElement,
+          });
+          
+          if (result.error) {
+            setCardError(result.error.message);
+          } else if (result.paymentMethod) {
+            onPaymentMethodChange(result.paymentMethod);
+          }
         }
-      };
-      
-      onPaymentMethodChange(mockPaymentMethod);
+      } catch (err) {
+        console.error("Error creating payment method:", err);
+        setCardError('An unexpected error occurred while processing your payment method.');
+      }
     }
   };
 
@@ -45,42 +66,12 @@ const CheckoutPaymentFormContent: React.FC<CheckoutPaymentFormProps> = ({
       <h3 className="font-medium">Payment Details</h3>
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="card-number">Card Number</Label>
-          <Input
-            id="card-number"
-            placeholder="1234 1234 1234 1234"
-            value={cardNumber}
-            onChange={(e) => {
-              setCardNumber(e.target.value);
-              handleFormChange();
-            }}
-          />
-        </div>
-        
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="expiry">Expiration (MM/YY)</Label>
-            <Input
-              id="expiry"
-              placeholder="MM/YY"
-              value={expiry}
-              onChange={(e) => {
-                setExpiry(e.target.value);
-                handleFormChange();
-              }}
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="cvc">CVC</Label>
-            <Input
-              id="cvc"
-              placeholder="123"
-              value={cvc}
-              onChange={(e) => {
-                setCvc(e.target.value);
-                handleFormChange();
-              }}
+          <Label htmlFor="card-element">Card Details</Label>
+          <div className="p-3 border rounded-md bg-white">
+            <CardElement 
+              id="card-element" 
+              options={cardElementOptions}
+              onChange={handleCardChange}
             />
           </div>
         </div>
@@ -88,12 +79,13 @@ const CheckoutPaymentFormContent: React.FC<CheckoutPaymentFormProps> = ({
         {(cardError || error) && (
           <FormMessage>{cardError || error}</FormMessage>
         )}
+        
+        <div className="text-sm text-gray-500">
+          <p>Your card information is processed securely by Stripe.</p>
+        </div>
       </div>
     </div>
   );
 };
 
-// Temporary implementation without Stripe wrapper
-export default function CheckoutPaymentForm(props: CheckoutPaymentFormProps) {
-  return <CheckoutPaymentFormContent {...props} />;
-}
+export default CheckoutPaymentForm;
