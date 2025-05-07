@@ -91,11 +91,23 @@ export const purchaseTicket = async ({
     
     // If we have a discount code, increment its usage count
     if (discountCode) {
-      await supabase
+      // First, get the current count
+      const { data: discountData } = await supabase
         .from('event_discount_codes')
-        .update({ usage_count: supabase.rpc('increment', { value: 1 }) })
+        .select('usage_count')
         .eq('code', discountCode)
-        .eq('event_id', eventId);
+        .eq('event_id', eventId)
+        .single();
+      
+      // Then update with incremented count
+      if (discountData) {
+        const newCount = (discountData.usage_count || 0) + 1;
+        await supabase
+          .from('event_discount_codes')
+          .update({ usage_count: newCount })
+          .eq('code', discountCode)
+          .eq('event_id', eventId);
+      }
     }
     
     return {

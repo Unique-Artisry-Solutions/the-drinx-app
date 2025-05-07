@@ -102,7 +102,7 @@ export const createDiscountCode = async ({
       code,
       discount_type: discountType,
       discount_amount: discountAmount,
-      expires_at: expiresAt,
+      expires_at: expiresAt ? expiresAt.toISOString() : null, // Convert Date to string
       usage_limit: usageLimit,
       applicable_ticket_types: applicableTicketTypes,
       description: description || `${discountType === 'percentage' ? discountAmount + '%' : '$' + discountAmount} off`
