@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Event, EventLocation, EventContactInfo } from '@/types/EventTypes';
+import { Event, EventLocation, EventContactInfo, EventTicketType } from '@/types/EventTypes';
 import { useToast } from '@/hooks/use-toast';
 import { safeJsonToType, safeJsonToRecord } from '@/utils/typeGuards';
 

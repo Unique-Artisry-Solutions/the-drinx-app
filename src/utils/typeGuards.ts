@@ -55,3 +55,14 @@ export const safeJsonToType = <T>(jsonValue: any, defaultValue: T): T => {
   const record = safeJsonToRecord(jsonValue);
   return { ...defaultValue, ...record };
 };
+
+/**
+ * Helper functions for specific event-related types
+ */
+export const safeJsonToEventLocation = (jsonValue: any): Record<string, any> => {
+  return safeJsonToRecord(jsonValue);
+};
+
+export const safeJsonToEventContactInfo = (jsonValue: any): Record<string, any> => {
+  return safeJsonToRecord(jsonValue);
+};

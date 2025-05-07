@@ -1,5 +1,5 @@
-
 import { supabase } from '@/integrations/supabase/client';
+import { safeJsonToRecord } from '@/utils/typeGuards';
 
 /**
  * Fetch overall event analytics
@@ -286,3 +286,50 @@ export async function recordEventAnalyticsEvent(
     // Don't throw, just log - analytics errors shouldn't break the app
   }
 }
+
+/**
+ * Updates campaign metrics for a specific event marketing campaign
+ */
+export const updateCampaignMetrics = async (
+  campaignId: string,
+  metricUpdates: Record<string, number | Record<string, any>>
+): Promise<void> => {
+  try {
+    // First get current metrics
+    const { data: campaign, error: fetchError } = await supabase
+      .from('event_marketing_campaigns')
+      .select('metrics')
+      .eq('id', campaignId)
+      .single();
+
+    if (fetchError) {
+      console.error('Error fetching campaign metrics:', fetchError);
+      throw fetchError;
+    }
+
+    // Parse existing metrics or initialize empty object
+    const existingMetrics = safeJsonToRecord(campaign?.metrics || {});
+    
+    // Merge with new metrics
+    const updatedMetrics = {
+      ...existingMetrics,
+      ...metricUpdates
+    };
+
+    // Update in database
+    const { error: updateError } = await supabase
+      .from('event_marketing_campaigns')
+      .update({
+        metrics: updatedMetrics
+      })
+      .eq('id', campaignId);
+
+    if (updateError) {
+      console.error('Error updating campaign metrics:', updateError);
+      throw updateError;
+    }
+  } catch (err) {
+    console.error('Failed to update campaign metrics:', err);
+    throw err;
+  }
+};

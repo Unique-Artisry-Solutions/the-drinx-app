@@ -41,7 +41,7 @@ export const assignSegmentsToCampaign = async (
     // Convert the database response to our expected type
     return (data || []).map(item => ({
       ...item,
-      metrics: safeJsonToRecord(item.metrics)
+      metrics: safeJsonToRecord(item.metrics || {})
     })) as CampaignSegmentMapping[];
   } catch (error) {
     console.error('Failed to assign segments to campaign:', error);
