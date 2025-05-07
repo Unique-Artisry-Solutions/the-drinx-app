@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useServiceWorkerCheck } from './useServiceWorkerCheck';
 import { debouncedToast } from '@/utils/debouncedToast';
@@ -50,7 +49,7 @@ export const useServiceWorkerStatus = () => {
             debouncedToast.info(
               "Service Worker Required", 
               "Permissions are granted but service worker needs to be initialized",
-              10000 // Increase debounce time to prevent frequent toasts
+              { debounceMs: 10000 } // Increase debounce time to prevent frequent toasts
             );
           }
         });

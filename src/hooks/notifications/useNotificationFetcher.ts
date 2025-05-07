@@ -1,8 +1,7 @@
-
 import { useRef, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { debouncedToast } from '@/utils/debouncedToast';
-import { Notification } from '@/types/NotificationTypes';
+import { Notification } from '@/types/notification';
 
 interface FetcherOptions {
   userId: string | undefined;

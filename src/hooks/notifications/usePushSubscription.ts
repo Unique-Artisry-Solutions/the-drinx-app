@@ -1,7 +1,7 @@
 
 import { useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
-import { PushSubscription } from '@/types/NotificationTypes';
+import { PushSubscription } from '@/types/notification';
 import { urlB64ToUint8Array } from '@/hooks/utils/pushUtils';
 
 // Maximum number of retries for getting VAPID key

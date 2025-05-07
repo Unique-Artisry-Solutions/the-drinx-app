@@ -1,4 +1,3 @@
-
 import { lazy, ReactNode } from 'react';
 import { RouteObject } from 'react-router-dom';
 import { lazyLoad } from '@/utils/lazyLoad';
@@ -40,7 +39,7 @@ export function createLazyRoute(
 ): AppRouteObject {
   return {
     path,
-    element: (lazyLoad(importFunc) as unknown) as ReactNode,
+    element: lazyLoad(importFunc) as ReactNode,
     metadata
   };
 }

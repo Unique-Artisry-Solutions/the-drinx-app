@@ -1,9 +1,8 @@
-
 import React, { useCallback, KeyboardEvent } from 'react';
 import { AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import NotificationItem from './NotificationItem';
-import { Notification } from '@/types/NotificationTypes';
+import { Notification } from '@/types/notification';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface EnhancedNotificationsListProps {

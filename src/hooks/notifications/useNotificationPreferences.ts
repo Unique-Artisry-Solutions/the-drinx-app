@@ -1,8 +1,7 @@
-
 import { useCallback, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
-import { NotificationPreferences, NotificationMetadata } from '@/types/NotificationTypes';
+import { NotificationPreferences, NotificationMetadata } from '@/types/notification';
 
 export const useNotificationPreferences = (userId?: string) => {
   const [isLoading, setIsLoading] = useState(false);

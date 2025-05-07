@@ -1,5 +1,5 @@
 
-import { Notification } from '@/types/NotificationTypes';
+import { Notification } from '@/types/notification';
 import NotificationItem from '@/components/notifications/NotificationItem';
 import { useNotifications } from '@/hooks/useNotifications';
 import { AlertCircle } from 'lucide-react';

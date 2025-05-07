@@ -4,7 +4,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Notification } from '@/types/NotificationTypes';
+import { Notification } from '@/types/notification';
 import NotificationContent from './NotificationContent';
 
 interface NotificationItemProps {

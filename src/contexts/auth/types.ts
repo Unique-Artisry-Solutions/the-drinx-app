@@ -17,5 +17,6 @@ export type AuthContextType = {
   updateProfile: (data: { [key: string]: any }) => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   refreshSession: () => Promise<{ isEmailVerified: boolean }>;
+  // Update the return type to be Promise<boolean> to match the expected type
   recoverAuthState: () => Promise<boolean>;
 };

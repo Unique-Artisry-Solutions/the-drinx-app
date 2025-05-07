@@ -1,6 +1,5 @@
-
 import { useCallback } from 'react';
-import { Notification } from '@/types/NotificationTypes';
+import { Notification } from '@/types/notification';
 
 export function usePushNotificationHandler({ setNotifications, setUnreadCount, toast }: {
   setNotifications: React.Dispatch<React.SetStateAction<Notification[]>>;

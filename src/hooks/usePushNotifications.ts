@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
-import type { PushSubscription } from '@/types/NotificationTypes';
+import type { PushSubscription } from '@/types/notification';
 import { useServiceWorkerStatus } from './service-worker/useServiceWorkerStatus';
 import { useServiceWorkerRegistration } from './notifications/useServiceWorkerRegistration';
 import { usePushSubscription } from './notifications/usePushSubscription';

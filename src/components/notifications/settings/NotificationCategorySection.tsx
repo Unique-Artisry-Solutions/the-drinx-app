@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent } from '@/components/ui/card';
@@ -11,7 +10,7 @@ import {
 } from '@/components/ui/form';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { NotificationType } from '@/types/NotificationTypes';
+import { NotificationType } from '@/types/notification';
 import { cn } from '@/lib/utils';
 
 interface NotificationCategorySectionProps {

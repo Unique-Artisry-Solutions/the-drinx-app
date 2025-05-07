@@ -1,7 +1,6 @@
-
 import { useAuth } from '@/contexts/auth';
 import { useNotifications } from '../useNotifications';
-import { Notification } from '@/types/NotificationTypes';
+import { Notification } from '@/types/notification';
 
 export const useRoleNotifications = () => {
   const { user } = useAuth();

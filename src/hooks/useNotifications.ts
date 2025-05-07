@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@/contexts/auth';
 import { useToast } from '@/hooks/use-toast';
-import { Notification } from '@/types/NotificationTypes';
+import { Notification } from '@/types/notification';
 import { useUserLocation } from '@/hooks/useUserLocation';
 
 import { useNotificationFetcher } from './notifications/useNotificationFetcher';

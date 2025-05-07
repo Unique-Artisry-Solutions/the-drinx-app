@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Notification } from '@/types/NotificationTypes';
+import { Notification } from '@/types/notification';
 import { 
   Bell, AlertCircle, MessageCircle, 
   Glasses, Store, UserCheck 

@@ -1,7 +1,6 @@
-
 import { useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { Notification } from '@/types/NotificationTypes';
+import { Notification } from '@/types/notification';
 
 interface NotificationMarkingParams {
   userId?: string;

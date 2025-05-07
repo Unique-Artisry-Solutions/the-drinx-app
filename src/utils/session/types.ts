@@ -14,4 +14,5 @@ export interface SessionRecoveryOptions {
 
 export type StuckStateHandler = {
   cancel: () => void;
+  // Add any other properties that might exist in the implementation
 };
