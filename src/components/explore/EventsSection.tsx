@@ -2,8 +2,8 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import EventCard from './EventCard';
 import { Skeleton } from '@/components/ui/skeleton';
-import EventCard from '@/components/explore/EventCard';  // Updated import path
 
 const useEvents = (limit: number = 6) => {
   return useQuery({
