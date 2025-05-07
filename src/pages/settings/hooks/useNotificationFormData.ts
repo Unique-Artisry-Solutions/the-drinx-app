@@ -1,10 +1,11 @@
+
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '@/contexts/auth';
 import { useNotificationPreferences } from '@/hooks/notifications/useNotificationPreferences';
-import { NotificationFormData, NotificationMetadata } from '@/types/NotificationTypes';
+import { NotificationFormData, NotificationMetadata, NotificationCategory } from '@/types/notification';
 import { useToast } from '@/hooks/use-toast';
 
 const notificationFormSchema = z.object({
@@ -110,7 +111,7 @@ export const useNotificationFormData = () => {
   useEffect(() => {
     if (!preferences) return;
     
-    const notificationCategories: Record<string, any> = {};
+    const notificationCategories: Record<string, NotificationCategory> = {};
     
     ['system-updates', 'bar-crawl', 'establishment', 'promotions'].forEach(categoryId => {
       notificationCategories[categoryId] = form.getValues(`notification_categories.${categoryId}`);

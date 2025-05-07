@@ -12,4 +12,6 @@ export interface SessionRecoveryOptions {
   resetLocalStorage?: boolean;
 }
 
-export type StuckStateHandler = (result: SessionValidationResult) => Promise<boolean>;
+export type StuckStateHandler = {
+  cancel: () => void;
+};

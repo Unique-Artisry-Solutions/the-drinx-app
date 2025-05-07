@@ -21,40 +21,45 @@ export const debouncedToast = {
   /**
    * Show an error toast with debouncing
    */
-  error: (title: string, description: string, options: DebouncedToastOptions = {}) => {
-    const { debounceMs = 5000, ...restOptions } = options;
-    toastService.error(title, description, { ...restOptions, duration: options.duration });
+  error: (title: string, description: string, options: DebouncedToastOptions | number = {}) => {
+    const opts = typeof options === 'number' ? { debounceMs: options } : options;
+    const { debounceMs = 5000, ...restOptions } = opts;
+    toastService.error(title, description, { ...restOptions });
   },
 
   /**
    * Show a success toast with debouncing
    */
-  success: (title: string, description: string, options: DebouncedToastOptions = {}) => {
-    const { debounceMs = 5000, ...restOptions } = options;
-    toastService.success(title, description, { ...restOptions, duration: options.duration });
+  success: (title: string, description: string, options: DebouncedToastOptions | number = {}) => {
+    const opts = typeof options === 'number' ? { debounceMs: options } : options;
+    const { debounceMs = 5000, ...restOptions } = opts;
+    toastService.success(title, description, { ...restOptions });
   },
 
   /**
    * Show an info toast with debouncing
    */
-  info: (title: string, description: string, options: DebouncedToastOptions = {}) => {
-    const { debounceMs = 5000, ...restOptions } = options;
-    toastService.info(title, description, { ...restOptions, duration: options.duration });
+  info: (title: string, description: string, options: DebouncedToastOptions | number = {}) => {
+    const opts = typeof options === 'number' ? { debounceMs: options } : options;
+    const { debounceMs = 5000, ...restOptions } = opts;
+    toastService.info(title, description, { ...restOptions });
   },
 
   /**
    * Show a warning toast with debouncing
    */
-  warning: (title: string, description: string, options: DebouncedToastOptions = {}) => {
-    const { debounceMs = 5000, ...restOptions } = options;
-    toastService.warning(title, description, { ...restOptions, duration: options.duration });
+  warning: (title: string, description: string, options: DebouncedToastOptions | number = {}) => {
+    const opts = typeof options === 'number' ? { debounceMs: options } : options;
+    const { debounceMs = 5000, ...restOptions } = opts;
+    toastService.warning(title, description, { ...restOptions });
   },
 
   /**
    * Generic toast method for any notification type
    */
-  show: (title: string, description: string, type: NotificationType = 'info', options: DebouncedToastOptions = {}) => {
-    const { debounceMs = 5000, ...restOptions } = options;
+  show: (title: string, description: string, type: NotificationType = 'info', options: DebouncedToastOptions | number = {}) => {
+    const opts = typeof options === 'number' ? { debounceMs: options } : options;
+    const { debounceMs = 5000, ...restOptions } = opts;
     
     switch (type) {
       case 'error':

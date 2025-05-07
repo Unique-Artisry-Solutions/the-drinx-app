@@ -40,7 +40,7 @@ export function createLazyRoute(
 ): AppRouteObject {
   return {
     path,
-    element: lazyLoad(importFunc) as ReactNode,
+    element: (lazyLoad(importFunc) as unknown) as ReactNode,
     metadata
   };
 }

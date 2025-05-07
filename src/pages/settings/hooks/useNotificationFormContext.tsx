@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext } from 'react';
 import { UseFormReturn } from 'react-hook-form';
-import { NotificationFormData } from '@/types/NotificationTypes';
+import { NotificationFormData } from '@/types/notification';
 
 // Context for notification preferences form
 export type NotificationFormContextType = UseFormReturn<NotificationFormData>;
