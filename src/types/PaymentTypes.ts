@@ -63,3 +63,20 @@ export interface ProcessRefundResponse {
   status: string;
   transactionId: string;
 }
+
+export interface CardInputDetails {
+  cardNumber: string;
+  expiry: string;
+  cvc: string;
+}
+
+export interface PaymentMethod {
+  id: string;
+  type: string;
+  card?: {
+    brand: string;
+    last4: string;
+    exp_month: number;
+    exp_year: number;
+  };
+}
