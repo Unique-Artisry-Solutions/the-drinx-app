@@ -15,7 +15,7 @@ export const debouncedToast = {
         variant: "destructive"
       });
       delete toastTimeouts[key];
-    }, debounceMs); // Use the provided debounceMs parameter
+    }, debounceMs); 
   },
 
   success: (title: string, description: string, debounceMs = 5000) => {
@@ -27,7 +27,7 @@ export const debouncedToast = {
         description,
       });
       delete toastTimeouts[key];
-    }, debounceMs); // Use the provided debounceMs parameter
+    }, debounceMs);
   },
 
   info: (title: string, description: string, debounceMs = 5000) => {
@@ -40,7 +40,7 @@ export const debouncedToast = {
         variant: "default"
       });
       delete toastTimeouts[key];
-    }, debounceMs); // Use the provided debounceMs parameter
+    }, debounceMs);
   },
 
   // Clear all pending toasts

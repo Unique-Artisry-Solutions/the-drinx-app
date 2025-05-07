@@ -1,7 +1,10 @@
 
 import { safeJsonToRecord } from '@/utils/typeGuards';
 
-// Adapt campaign data for A/B testing display
+/**
+ * Adapt campaign data for A/B testing display
+ * Converts raw campaign data into a standardized format for the A/B testing component
+ */
 export const adaptToABTestingData = (campaignData: any) => {
   if (!campaignData || !campaignData.metrics) {
     return {
@@ -41,4 +44,4 @@ export const adaptToABTestingData = (campaignData: any) => {
   };
 };
 
-// Additional adapter functions...
+// Additional adapter functions can be added here

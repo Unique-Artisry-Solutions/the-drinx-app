@@ -13,6 +13,10 @@ interface NotificationOptions {
   };
 }
 
+/**
+ * Hook that provides a unified notification system across the application
+ * Acts as a wrapper around the shadcn/ui toast system
+ */
 export const useNotificationSystem = () => {
   const { toast } = useToast();
 
@@ -20,10 +24,9 @@ export const useNotificationSystem = () => {
     (options: NotificationOptions) => {
       const { title, message, type = 'info', duration = 5000, action } = options;
 
-      // Modified variant mapping to use only valid variants that match the toast component expectations
-      const variant = 
-        type === 'error' ? 'destructive' : 
-        'default'; // All other types (success, warning, info) use default variant
+      // Map notification types to valid toast variants
+      // Note: shadcn/ui toast only supports 'default' and 'destructive' variants
+      const variant = type === 'error' ? 'destructive' : 'default';
 
       toast({
         title,

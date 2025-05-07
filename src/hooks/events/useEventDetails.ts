@@ -5,6 +5,9 @@ import { Event, EventLocation, EventContactInfo, EventTicketType } from '@/types
 import { useToast } from '@/hooks/use-toast';
 import { safeJsonToType, safeJsonToRecord } from '@/utils/typeGuards';
 
+/**
+ * Hook for fetching and managing event details 
+ */
 export const useEventDetails = (eventId: string) => {
   const [event, setEvent] = useState<Event | null>(null);
   const [isLoading, setIsLoading] = useState(true);
