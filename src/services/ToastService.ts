@@ -1,10 +1,11 @@
+
 import { toast } from '@/hooks/use-toast';
 import { 
   Notification, 
-  NotificationType, 
-  ActionConfig 
+  NotificationType
 } from '@/types/notification';
 import { mapNotificationTypeToToastVariant } from '@/types/notification/ToastTypes';
+import { ActionConfig } from '@/hooks/use-toast';
 
 /**
  * A singleton service that provides a unified interface for displaying toasts
@@ -45,7 +46,7 @@ class ToastService {
     // Map notification types to valid toast variants
     const variant = mapNotificationTypeToToastVariant(type);
     
-    // Convert the NotificationOptions action to a ToastAction
+    // Convert the NotificationOptions action to an ActionConfig
     let toastAction: ActionConfig | undefined;
     if (action) {
       toastAction = {

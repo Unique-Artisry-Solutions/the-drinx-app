@@ -12,6 +12,7 @@ import {
   ToastViewport,
   ToastAction,
 } from "@/components/ui/toast"
+import { ActionConfig } from "@/hooks/use-toast"
 
 export function Toaster() {
   const { toasts } = useToast()
@@ -26,7 +27,7 @@ export function Toaster() {
         if (action) {
           // If action is a configuration object instead of a JSX element
           if (typeof action === 'object' && !React.isValidElement(action) && 'label' in action) {
-            const { label, onClick, altText } = action;
+            const { label, onClick, altText } = action as ActionConfig;
             actionElement = (
               <ToastAction altText={altText || label} onClick={onClick}>
                 {label}

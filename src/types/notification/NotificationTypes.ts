@@ -1,6 +1,7 @@
 
 import { ReactNode } from 'react';
 import { ToastActionElement } from '@/components/ui/toast';
+import { ActionConfig } from '@/hooks/use-toast';
 
 /**
  * Notification types used throughout the application
@@ -16,13 +17,4 @@ export interface NotificationOptions {
   type?: NotificationType;
   duration?: number;
   action?: ActionConfig;
-}
-
-/**
- * Interface for notification action configuration
- */
-export interface ActionConfig {
-  label: string;
-  onClick: () => void;
-  altText?: string;
 }

@@ -1,6 +1,7 @@
 
 import { ReactNode } from 'react';
 import { ToastActionElement } from '@/components/ui/toast';
+import { ActionConfig } from '@/hooks/use-toast';
 
 /**
  * Central definition for notification-related types
@@ -11,11 +12,7 @@ export interface NotificationOptions {
   message: string;
   type?: 'success' | 'error' | 'warning' | 'info';
   duration?: number;
-  action?: {
-    label: string;
-    onClick: () => void;
-    altText?: string;
-  };
+  action?: ActionConfig;
 }
 
 export interface Toast {
@@ -25,12 +22,9 @@ export interface Toast {
   action?: ToastActionElement | ActionConfig;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
-  variant?: 'default' | 'destructive';
+  variant?: 'default' | 'destructive' | 'success' | 'warning' | 'info';
   duration?: number;
 }
 
-export interface ActionConfig {
-  label: string;
-  onClick: () => void;
-  altText?: string;
-}
+// Re-export the ActionConfig type from use-toast for consistency
+export { ActionConfig };

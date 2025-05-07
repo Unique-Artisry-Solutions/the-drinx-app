@@ -1,6 +1,7 @@
 
 import { ReactNode } from 'react';
 import { NotificationType } from './NotificationTypes';
+import { ActionConfig } from '@/hooks/use-toast';
 
 /**
  * Toast variant type mapping to notification types
@@ -33,7 +34,7 @@ export interface Toast {
   id: string;
   title?: ReactNode;
   description?: ReactNode;
-  action?: React.ReactNode;
+  action?: React.ReactNode | ActionConfig;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   variant?: ToastVariant;

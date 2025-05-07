@@ -31,7 +31,7 @@ export const createToast = (
   const toastConfig: {
     title: string;
     description: string;
-    action?: ToastActionConfig;
+    action?: ActionConfig;
     duration?: number;
     variant?: 'default' | 'destructive' | 'success' | 'warning' | 'info';
     priority?: 'low' | 'medium' | 'high' | 'urgent';
@@ -42,7 +42,11 @@ export const createToast = (
   };
 
   if (actionConfig) {
-    toastConfig.action = actionConfig;
+    toastConfig.action = {
+      label: actionConfig.label,
+      onClick: actionConfig.onClick,
+      altText: actionConfig.altText
+    };
   }
 
   return toastConfig;
@@ -66,7 +70,7 @@ export const showToast = (
   const toastConfig: {
     title: string;
     description: string;
-    action?: ToastActionConfig;
+    action?: ActionConfig;
     duration?: number;
     variant?: 'default' | 'destructive' | 'success' | 'warning' | 'info';
     priority?: 'low' | 'medium' | 'high' | 'urgent';
@@ -77,7 +81,11 @@ export const showToast = (
   };
   
   if (actionConfig) {
-    toastConfig.action = actionConfig;
+    toastConfig.action = {
+      label: actionConfig.label,
+      onClick: actionConfig.onClick,
+      altText: actionConfig.altText
+    };
   }
   
   // Return the toast instance
