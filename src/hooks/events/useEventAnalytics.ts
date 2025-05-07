@@ -8,6 +8,48 @@ interface DateRange {
   endDate: string;
 }
 
+// Define the interface for EventAnalyticsData
+interface EventAnalyticsData {
+  views: number;
+  uniqueVisitors: number;
+  ticketSales: number;
+  revenue: number;
+  conversionRate: number;
+}
+
+// Define the interface for DailyMetrics
+interface DailyMetrics {
+  dates: string[];
+  views: number[];
+  ticketSales: number[];
+  revenue: number[];
+}
+
+// Define the interface for ReferralSource
+interface ReferralSource {
+  source: string;
+  count: number;
+  percentage: number;
+}
+
+// Define the interface for TicketSalesAnalytics
+interface TicketSalesAnalytics {
+  totalTickets: number;
+  soldTickets: number;
+  attendanceRate: number;
+  salesByType: Array<{
+    typeName: string;
+    sold: number;
+    total: number;
+    percentage: number;
+  }>;
+  recentSales: Array<{
+    date: string;
+    quantity: number;
+    revenue: number;
+  }>;
+}
+
 export const useEventAnalytics = (eventId: string, initialDateRange?: DateRange) => {
   const [dateRange, setDateRange] = useState<DateRange>(initialDateRange || {
     startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days ago
@@ -17,7 +59,7 @@ export const useEventAnalytics = (eventId: string, initialDateRange?: DateRange)
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   
-  const [eventAnalytics, setEventAnalytics] = useState({
+  const [eventAnalytics, setEventAnalytics] = useState<EventAnalyticsData>({
     views: 0,
     uniqueVisitors: 0,
     ticketSales: 0,
@@ -25,34 +67,21 @@ export const useEventAnalytics = (eventId: string, initialDateRange?: DateRange)
     conversionRate: 0
   });
   
-  const [dailyMetrics, setDailyMetrics] = useState({
-    dates: [] as string[],
-    views: [] as number[],
-    ticketSales: [] as number[],
-    revenue: [] as number[]
+  const [dailyMetrics, setDailyMetrics] = useState<DailyMetrics>({
+    dates: [],
+    views: [],
+    ticketSales: [],
+    revenue: []
   });
   
-  const [referralSources, setReferralSources] = useState<Array<{
-    source: string;
-    count: number;
-    percentage: number;
-  }>>([]);
+  const [referralSources, setReferralSources] = useState<ReferralSource[]>([]);
   
-  const [ticketSalesAnalytics, setTicketSalesAnalytics] = useState({
+  const [ticketSalesAnalytics, setTicketSalesAnalytics] = useState<TicketSalesAnalytics>({
     totalTickets: 0,
     soldTickets: 0,
     attendanceRate: 0,
-    salesByType: [] as Array<{
-      typeName: string;
-      sold: number;
-      total: number;
-      percentage: number;
-    }>,
-    recentSales: [] as Array<{
-      date: string;
-      quantity: number;
-      revenue: number;
-    }>
+    salesByType: [],
+    recentSales: []
   });
   
   const { toast } = useToast();

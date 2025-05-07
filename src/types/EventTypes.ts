@@ -1,4 +1,39 @@
-export type EventStatus = 'draft' | 'published' | 'cancelled' | 'completed';
+
+// If this file doesn't exist yet, we'll create it with some necessary types
+
+export interface Event {
+  id: string;
+  name: string;
+  description: string;
+  date: string;
+  time: string;
+  venue_id?: string;
+  venue?: {
+    id: string;
+    name: string;
+    address: string;
+  };
+  image_url?: string;
+  promotional_materials?: string[];
+  status: string;
+  created_by: string;
+  created_at?: string;
+  updated_at?: string;
+  capacity?: number;
+  event_type?: string;
+  location_details: EventLocation;
+  contact_info: EventContactInfo;
+  custom_settings: Record<string, any>;
+  is_public: boolean;
+  event_url?: string;
+  ticketTypes: EventTicketType[];
+  attendees: {
+    registered: number;
+    checked_in: number;
+    capacity: number;
+  };
+  distance?: number;
+}
 
 export interface EventLocation {
   address: string;
@@ -6,233 +41,44 @@ export interface EventLocation {
   state: string;
   zip: string;
   country: string;
-  latitude?: number;
-  longitude?: number;
 }
 
 export interface EventContactInfo {
   name: string;
   email: string;
-  phone?: string;
-}
-
-export interface ABTestConfig {
-  variantA: string;
-  variantB: string;
-  distribution: number; // Percentage for variant A (0-100)
-}
-
-export interface EventTargetAudience {
-  segmentId?: string;
-  abTest?: ABTestConfig;
-}
-
-export interface EventMarketingCampaign {
-  id?: string;
-  event_id: string;
-  name: string;
-  description?: string;
-  campaign_type: string;
-  status: 'draft' | 'active' | 'completed' | 'cancelled';  // Updated to match the actual status values used
-  start_date?: string;
-  end_date?: string;
-  budget?: number;
-  metrics?: {
-    impressions?: number;
-    clicks?: number;
-    conversions?: number;
-    emails_sent?: number;
-    open_rate?: number;
-    notifications_sent?: number;
-    segments?: Record<string, Record<string, number>>;
-    abTest?: {
-      variantA: Record<string, number>;
-      variantB: Record<string, number>;
-    };
-    [key: string]: any;
-  };
-  target_audience?: EventTargetAudience;
-  created_at?: string;
-  updated_at?: string;
 }
 
 export interface EventTicketType {
-  id?: string;
-  event_id?: string;
+  id: string;
   name: string;
   description: string;
   price: number;
   quantity: number;
-  sold?: number;    // Added field for ticket sales count
-  available?: number; // Added field for available tickets
-  created_at?: string;
-  hasLimitedInventory?: boolean;
-  lowInventoryThreshold?: number;
-  hasDynamicPricing?: boolean;
-  pricingTiers?: EventTicketPricingTier[];
+  sold: number;
+  available: number;
 }
 
-export interface EventTicketPricingTier {
-  id?: string;
-  name: string;
-  startDate?: string;
-  endDate?: string;
-  priceAdjustment: number;
-  adjustmentType: 'percentage' | 'fixed';
-}
-
-export interface EventDiscountCode {
-  id?: string;
+export interface EventMarketingCampaign {
+  id: string;
   event_id: string;
-  code: string;
-  discount_type: 'percentage' | 'fixed';
-  discount_amount: number;
-  expires_at?: string;
-  usage_limit?: number;
-  usage_count?: number;
-  is_active: boolean;
-  applicable_ticket_types?: string[];
-  created_at?: string;
-  description?: string;
-}
-
-export interface EventAttendee {
-  id?: string;
-  event_id: string;
-  user_id?: string;
-  ticket_type_id?: string;
-  email?: string;
-  name?: string;
-  status: 'registered' | 'checked_in' | 'cancelled' | 'no_show';
-  ticket_code?: string;
-  purchase_date: string;
-  checked_in_at?: string;
-  custom_fields?: Record<string, any>;
-  notes?: string;
-  created_at?: string;
-  updated_at?: string;
-}
-
-export interface EventCustomField {
-  id?: string;
-  event_id: string;
-  field_name: string;
-  field_type: string;
-  field_value?: any;
-  is_required?: boolean;
-  display_order?: number;
-  created_at?: string;
-  updated_at?: string;
-}
-
-export interface Event {
-  id?: string;
   name: string;
   description?: string;
-  date: string;
-  time: string;
-  venue_id?: string;
-  image_url?: string;
-  promotional_materials?: string[];
-  status?: EventStatus;
-  created_by: string;
-  created_at?: string;
-  updated_at?: string;
-  capacity?: number;
-  event_type?: string;
-  event_url?: string;
-  location_details?: EventLocation;
-  contact_info?: EventContactInfo;
-  custom_settings?: Record<string, any>;
-  is_public?: boolean;
-  
-  // Fields for EventsSection compatibility
-  venue?: {
-    id: string;
-    name: string;
-    address?: string;
+  campaign_type: string;
+  status: string;
+  start_date?: string;
+  end_date?: string;
+  budget?: number;
+  metrics?: {
+    impressions: number;
+    clicks: number;
+    conversions: number;
+    revenue: number;
+    sources?: Record<string, {
+      impressions: number;
+      clicks: number;
+      conversions: number;
+      revenue: number;
+    }>;
   };
-  distance?: number;
-  attendees?: {
-    registered: number;
-    checked_in?: number;
-    capacity?: number;
-  };
-  ticketTypes?: EventTicketType[];
-}
-
-// Added missing types that were causing errors
-export type EventType = Event;
-
-export interface EventFormData {
-  id?: string; 
-  name: string;
-  description?: string;
-  date: string;
-  time: string;
-  venue_id?: string;
-  venueId?: string; // Alternative name used in wizard
-  image_url?: string;
-  imageUrl?: string; // Alternative name used in wizard
-  promotional_materials?: string[];
-  promotionalMaterials?: string[]; // Alternative name used in wizard
-  status?: EventStatus;
-  created_by: string;
-  capacity?: number;
-  event_type?: string;
-  event_url?: string;
-  location_details?: EventLocation;
-  location?: EventLocation; // Alternative name used in wizard
-  contact_info?: EventContactInfo;
-  contact?: EventContactInfo; // Alternative name used in wizard
-  custom_settings?: Record<string, any>;
-  is_public?: boolean;
-  
-  // Add fields needed by the event wizard components
-  ticketTypes: EventTicketType[];
-  notificationSchedules?: Array<{
-    id: string;
-    title: string;
-    content: string;
-    priority: 'low' | 'medium' | 'high' | 'urgent';
-    scheduledFor: string;
-    locationBased: boolean;
-    coordinates?: { latitude: number; longitude: number };
-    targetRadius?: number;
-  }>;
-  
-  // Add discount codes
-  discountCodes?: EventDiscountCode[];
-  
-  // Add payment settings
-  paymentSettings?: {
-    enablePayments: boolean;
-    paymentProvider?: 'stripe' | 'paypal' | 'square' | 'other';
-    serviceFeePercentage?: number;
-    allowOfflinePayments?: boolean;
-    taxRate?: number;
-    currency?: string;
-  };
-}
-
-export interface EventCheckIn {
-  id?: string;
-  event_id: string;
-  attendee_id: string;
-  checked_in_by?: string;
-  checked_in_at: string;
-  location?: string;
-  notes?: string;
-  created_at?: string;
-}
-
-export interface EventStatistics {
-  total_attendees: number;
-  checked_in_attendees: number;
-  cancelled_attendees: number;
-  total_revenue: number;
-  event_id: string;
-  event_name?: string;
-  date?: string;
-  status?: EventStatus;
+  target_audience?: Record<string, any>;
 }
