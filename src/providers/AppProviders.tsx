@@ -5,6 +5,7 @@ import { AuthProvider } from '@/contexts/auth';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { CartProvider } from '@/contexts/CartContext';
 import { StripeProvider } from '@/contexts/StripeContext';
+import { NavigationProvider } from '@/contexts/NavigationContext';
 import { Toaster } from '@/components/ui/toaster';
 
 const queryClient = new QueryClient({
@@ -26,13 +27,15 @@ const AppProviders: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <ThemeProvider>
-          <CartProvider>
-            {/* Now the StripeProvider uses lazy loading and only initializes when needed */}
-            <StripeProvider>
-              {children}
-              <Toaster />
-            </StripeProvider>
-          </CartProvider>
+          <NavigationProvider>
+            <CartProvider>
+              {/* Now the StripeProvider uses lazy loading and only initializes when needed */}
+              <StripeProvider>
+                {children}
+                <Toaster />
+              </StripeProvider>
+            </CartProvider>
+          </NavigationProvider>
         </ThemeProvider>
       </AuthProvider>
     </QueryClientProvider>

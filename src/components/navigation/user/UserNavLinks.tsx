@@ -3,7 +3,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useNavigation } from '@/contexts/NavigationContext';
-import { LinkProps } from '@/types/LinkTypes';
+import { LinkProps } from '@/types/navigation/LinkTypes';
 
 interface NavLinkProps extends LinkProps {
   className?: string;
