@@ -1,4 +1,3 @@
-
 import { EventLocation, EventContactInfo, ABTestResult, ReferralSource } from '@/types/EventTypes';
 import { NotificationChannel } from '@/types/CampaignSegmentTypes';
 

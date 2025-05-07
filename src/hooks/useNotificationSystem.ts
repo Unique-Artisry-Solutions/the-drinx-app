@@ -55,9 +55,9 @@ export const useNotificationSystem = (userId?: string) => {
       // Process notifications to handle JSON metadata
       const processedNotifications = data.map(notification => {
         // Parse metadata if it exists and is valid
-        let parsedMetadata = {};
+        let metadata = {};
         if (notification.metadata) {
-          parsedMetadata = safeJsonToRecord(notification.metadata, {});
+          metadata = safeJsonToRecord(notification.metadata, {});
         }
 
         return {
@@ -65,7 +65,7 @@ export const useNotificationSystem = (userId?: string) => {
           // Ensure priority is a valid value
           priority: validateNotificationPriority(notification.priority),
           // Use parsed metadata
-          metadata: parsedMetadata
+          metadata: metadata
         };
       });
 

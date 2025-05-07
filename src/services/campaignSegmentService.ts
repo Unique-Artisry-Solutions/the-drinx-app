@@ -205,15 +205,20 @@ export const trackSegmentMetric = async (
     }
     
     // Parse existing metrics
-    const metricsObj = safeJsonToRecord(mapping.metrics, {});
+    const metricsData = safeJsonToRecord(mapping.metrics, {
+      impressions: 0,
+      clicks: 0,
+      conversions: 0,
+      revenue: 0
+    });
     
     // Update metric
-    metricsObj[metricName] = (metricsObj[metricName] || 0) + value;
+    metricsData[metricName] = (metricsData[metricName] || 0) + value;
     
     // Save updated metrics as JSON
     const { error: updateError } = await supabase
       .from('campaign_segment_mappings')
-      .update({ metrics: metricsObj })
+      .update({ metrics: metricsData })
       .eq('id', mapping.id);
       
     if (updateError) throw updateError;

@@ -1,4 +1,5 @@
 
+
 export interface CampaignSegmentMapping {
   id: string;
   campaign_id: string;
