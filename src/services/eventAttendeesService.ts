@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { EventAttendee } from '@/types/EventTypes';
 
@@ -333,16 +332,29 @@ export const generateAttendeeSummary = (attendees: EventAttendee[]): {
   };
 };
 
-export const getAttendeeCheckInStats = (
-  attendees: EventAttendee[]
-): { total: number; checkedIn: number; checkInRate: number } => {
+/**
+ * Get summarized attendee check-in statistics for an event
+ */
+export function getAttendeeCheckInStats(attendees: EventAttendee[]): {
+  total: number;
+  checkedIn: number;
+  notCheckedIn: number;
+  cancelled: number;
+  noShow: number;
+  checkInRate: number;
+} {
   const total = attendees.length;
-  const checkedIn = attendees.filter((a) => a.status === 'checked_in').length;
-  const checkInRate = total > 0 ? (checkedIn / total) * 100 : 0;
-
+  const checkedIn = attendees.filter(a => a.status === 'checked_in').length;
+  const notCheckedIn = attendees.filter(a => a.status === 'registered').length;
+  const cancelled = attendees.filter(a => a.status === 'cancelled').length;
+  const noShow = attendees.filter(a => a.status === 'no_show').length;
+  
   return {
     total,
     checkedIn,
-    checkInRate,
+    notCheckedIn,
+    cancelled,
+    noShow,
+    checkInRate: total > 0 ? (checkedIn / total) * 100 : 0
   };
-};
+}

@@ -1,5 +1,5 @@
 
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 
 /**
  * Fetch overall event analytics
@@ -284,5 +284,281 @@ export async function recordEventAnalyticsEvent(
   } catch (error) {
     console.error('Error recording event analytics:', error);
     // Don't throw, just log - analytics errors shouldn't break the app
+  }
+}
+
+/**
+ * Get real-time ticket sales analytics including attendance rates
+ */
+export async function getTicketSalesAnalytics(eventId: string): Promise<{
+  totalTickets: number;
+  soldTickets: number;
+  attendanceRate: number;
+  salesByType: Array<{
+    typeName: string;
+    sold: number;
+    total: number;
+    percentage: number;
+  }>;
+  recentSales: Array<{
+    date: string;
+    quantity: number;
+    revenue: number;
+  }>;
+}> {
+  try {
+    // Get ticket types
+    const { data: ticketTypes, error: typesError } = await supabase
+      .from('event_ticket_types')
+      .select('id, name, price, quantity')
+      .eq('event_id', eventId);
+      
+    if (typesError) throw typesError;
+    
+    // Get attendees
+    const { data: attendees, error: attendeesError } = await supabase
+      .from('event_attendees')
+      .select('ticket_type_id, status, checked_in_at, purchase_date')
+      .eq('event_id', eventId);
+      
+    if (attendeesError) throw attendeesError;
+    
+    // Calculate totals and attendance
+    const totalTickets = ticketTypes.reduce((sum, type) => sum + type.quantity, 0);
+    const soldTickets = attendees.length;
+    const checkedInAttendees = attendees.filter(a => a.status === 'checked_in').length;
+    const attendanceRate = soldTickets > 0 ? (checkedInAttendees / soldTickets) * 100 : 0;
+    
+    // Calculate sales by type
+    const salesByType = ticketTypes.map(type => {
+      const sold = attendees.filter(a => a.ticket_type_id === type.id).length;
+      return {
+        typeName: type.name,
+        sold,
+        total: type.quantity,
+        percentage: type.quantity > 0 ? (sold / type.quantity) * 100 : 0
+      };
+    });
+    
+    // Get recent sales (last 7 days)
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    
+    const recentSalesMap = new Map<string, {quantity: number, revenue: number}>();
+    
+    attendees.forEach(attendee => {
+      if (!attendee.purchase_date) return;
+      
+      const purchaseDate = new Date(attendee.purchase_date);
+      if (purchaseDate < sevenDaysAgo) return;
+      
+      const dateStr = purchaseDate.toISOString().split('T')[0];
+      const ticketType = ticketTypes.find(t => t.id === attendee.ticket_type_id);
+      const price = ticketType?.price || 0;
+      
+      const existing = recentSalesMap.get(dateStr) || {quantity: 0, revenue: 0};
+      recentSalesMap.set(dateStr, {
+        quantity: existing.quantity + 1,
+        revenue: existing.revenue + price
+      });
+    });
+    
+    const recentSales = Array.from(recentSalesMap.entries()).map(([date, data]) => ({
+      date,
+      quantity: data.quantity,
+      revenue: data.revenue
+    })).sort((a, b) => a.date.localeCompare(b.date));
+    
+    return {
+      totalTickets,
+      soldTickets,
+      attendanceRate,
+      salesByType,
+      recentSales
+    };
+  } catch (error) {
+    console.error('Error fetching ticket sales analytics:', error);
+    return {
+      totalTickets: 0,
+      soldTickets: 0,
+      attendanceRate: 0,
+      salesByType: [],
+      recentSales: []
+    };
+  }
+}
+
+/**
+ * Track marketing campaign performance including conversions
+ */
+export async function trackCampaignConversion(
+  campaignId: string,
+  eventId: string,
+  conversionType: 'view' | 'click' | 'purchase',
+  data: {
+    quantity?: number;
+    revenue?: number;
+    referrer?: string;
+    source?: string;
+  } = {}
+): Promise<void> {
+  try {
+    // First get the campaign
+    const { data: campaign, error: campaignError } = await supabase
+      .from('event_marketing_campaigns')
+      .select('metrics, id')
+      .eq('id', campaignId)
+      .single();
+      
+    if (campaignError) throw campaignError;
+    
+    // Update metrics
+    const metrics = campaign.metrics || {};
+    
+    switch (conversionType) {
+      case 'view':
+        metrics.impressions = (metrics.impressions || 0) + 1;
+        break;
+      case 'click':
+        metrics.clicks = (metrics.clicks || 0) + 1;
+        break;
+      case 'purchase':
+        metrics.conversions = (metrics.conversions || 0) + 1;
+        if (data.revenue) {
+          metrics.revenue = (metrics.revenue || 0) + data.revenue;
+        }
+        break;
+    }
+    
+    // Store timestamp of last activity
+    metrics.last_activity = new Date().toISOString();
+    
+    // Update source metrics if available
+    if (data.source) {
+      if (!metrics.sources) metrics.sources = {};
+      if (!metrics.sources[data.source]) metrics.sources[data.source] = {};
+      
+      const sourceMetrics = metrics.sources[data.source];
+      
+      switch (conversionType) {
+        case 'view':
+          sourceMetrics.impressions = (sourceMetrics.impressions || 0) + 1;
+          break;
+        case 'click':
+          sourceMetrics.clicks = (sourceMetrics.clicks || 0) + 1;
+          break;
+        case 'purchase':
+          sourceMetrics.conversions = (sourceMetrics.conversions || 0) + 1;
+          if (data.revenue) {
+            sourceMetrics.revenue = (sourceMetrics.revenue || 0) + data.revenue;
+          }
+          break;
+      }
+    }
+    
+    // Calculate conversion rates
+    if (metrics.impressions && metrics.impressions > 0) {
+      // Click-through rate
+      if (metrics.clicks) {
+        metrics.ctr = (metrics.clicks / metrics.impressions) * 100;
+      }
+      
+      // Conversion rate
+      if (metrics.conversions) {
+        metrics.conversion_rate = (metrics.conversions / metrics.impressions) * 100;
+      }
+    }
+    
+    // Update the campaign
+    const { error: updateError } = await supabase
+      .from('event_marketing_campaigns')
+      .update({ metrics })
+      .eq('id', campaignId);
+      
+    if (updateError) throw updateError;
+    
+    // Also record in event analytics for consistency
+    if (conversionType === 'purchase' && data.revenue && data.quantity) {
+      await recordEventAnalyticsEvent(eventId, 'purchase', {
+        amount: data.revenue,
+        quantity: data.quantity,
+        campaign_id: campaignId,
+        source: data.source || 'campaign'
+      });
+    }
+    
+  } catch (error) {
+    console.error('Error tracking campaign conversion:', error);
+    // Don't throw, just log - analytics errors shouldn't break the app
+  }
+}
+
+/**
+ * Get marketing campaign analytics
+ */
+export async function getCampaignAnalytics(campaignId: string): Promise<{
+  impressions: number;
+  clicks: number;
+  conversions: number;
+  revenue: number;
+  ctr: number;
+  conversionRate: number;
+  sources: Record<string, {
+    impressions: number;
+    clicks: number;
+    conversions: number;
+    revenue: number;
+    ctr: number;
+    conversionRate: number;
+  }>;
+}> {
+  try {
+    const { data: campaign, error } = await supabase
+      .from('event_marketing_campaigns')
+      .select('metrics')
+      .eq('id', campaignId)
+      .single();
+      
+    if (error) throw error;
+    
+    const metrics = campaign.metrics || {};
+    
+    // Format source metrics
+    const sources: Record<string, any> = {};
+    
+    if (metrics.sources) {
+      Object.entries(metrics.sources).forEach(([source, sourceData]) => {
+        const data = sourceData as any;
+        sources[source] = {
+          impressions: data.impressions || 0,
+          clicks: data.clicks || 0,
+          conversions: data.conversions || 0,
+          revenue: data.revenue || 0,
+          ctr: data.impressions > 0 ? ((data.clicks || 0) / data.impressions) * 100 : 0,
+          conversionRate: data.impressions > 0 ? ((data.conversions || 0) / data.impressions) * 100 : 0
+        };
+      });
+    }
+    
+    return {
+      impressions: metrics.impressions || 0,
+      clicks: metrics.clicks || 0,
+      conversions: metrics.conversions || 0,
+      revenue: metrics.revenue || 0,
+      ctr: metrics.ctr || 0,
+      conversionRate: metrics.conversion_rate || 0,
+      sources
+    };
+  } catch (error) {
+    console.error('Error fetching campaign analytics:', error);
+    return {
+      impressions: 0,
+      clicks: 0,
+      conversions: 0,
+      revenue: 0,
+      ctr: 0,
+      conversionRate: 0,
+      sources: {}
+    };
   }
 }
