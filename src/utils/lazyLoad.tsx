@@ -13,7 +13,7 @@ interface LazyLoadOptions {
 export function lazyLoad<T extends React.ComponentType<any>>(
   importFunc: () => Promise<{ default: T }>,
   options: LazyLoadOptions = {}
-): React.ReactNode {
+): React.ComponentType<React.ComponentProps<T>> {
   const LazyComponent = React.lazy(importFunc);
   
   const fallback = options.fallback || (
@@ -22,11 +22,14 @@ export function lazyLoad<T extends React.ComponentType<any>>(
     </div>
   );
   
-  return (
-    <Suspense fallback={fallback}>
-      <LazyComponent />
-    </Suspense>
-  );
+  // Return a component that accepts the same props as the lazy-loaded component
+  return function LazyLoadWrapper(props: React.ComponentProps<T>) {
+    return (
+      <Suspense fallback={fallback}>
+        <LazyComponent {...props} />
+      </Suspense>
+    );
+  };
 }
 
 /**
