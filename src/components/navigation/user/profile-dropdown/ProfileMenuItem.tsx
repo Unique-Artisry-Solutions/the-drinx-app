@@ -1,8 +1,8 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { LucideIcon } from 'lucide-react';
+import UnifiedNavItem from '../../UnifiedNavItem';
 import { profileDropdownStyles } from './profileDropdownStyles';
+import { LucideIcon } from 'lucide-react';
 
 interface ProfileMenuItemProps {
   to: string;
@@ -16,47 +16,44 @@ interface ProfileMenuItemProps {
 
 const ProfileMenuItem: React.FC<ProfileMenuItemProps> = ({
   to,
-  icon: Icon,
+  icon,
   children,
   isDarkTheme,
   isActive = false,
   onClick,
   customColor
 }) => {
-  const handleClick = (e: React.MouseEvent) => {
-    if (onClick) {
-      onClick(e);
-    }
-  };
-  
-  const iconClass = customColor && isActive 
-    ? customColor 
-    : '';
-  
+  // Use the UnifiedNavItem component with a custom renderer for profile dropdown
   const content = (
     <div className={profileDropdownStyles.menuItem(isDarkTheme, isActive, customColor)}>
-      <Icon 
-        className={`mr-2 h-4 w-4 ${iconClass}`} 
+      <icon.type 
+        className={`mr-2 h-4 w-4 ${customColor && isActive ? customColor : ''}`} 
       />
       <span>{children}</span>
     </div>
   );
   
-  return to === "#" ? (
-    <button 
-      type="button" 
-      className="w-full text-left"
-      onClick={handleClick}
-    >
-      {content}
-    </button>
-  ) : (
-    <Link 
-      to={to}
-      onClick={handleClick}
-    >
-      {content}
-    </Link>
+  if (to === "#") {
+    return (
+      <button 
+        type="button" 
+        className="w-full text-left"
+        onClick={onClick}
+      >
+        {content}
+      </button>
+    );
+  }
+  
+  return (
+    <UnifiedNavItem
+      path={to}
+      icon={icon}
+      label={children as string}
+      isActive={isActive}
+      onClick={onClick}
+      variant="sidebar"
+    />
   );
 };
 

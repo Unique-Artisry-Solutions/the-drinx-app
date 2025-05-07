@@ -1,8 +1,9 @@
 
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { LinkProps } from '@/types/navigation';
+import { LinkProps } from '@/types/navigation/LinkTypes';
+import { isPathActive } from '@/utils/navigation';
 
 /**
  * A standardized link component that wraps React Router's Link
@@ -19,7 +20,11 @@ const LinkComponent: React.FC<LinkProps> = ({
   ...props
 }) => {
   const navigate = useNavigate();
+  const location = useLocation();
 
+  // Determine if this link is active
+  const isActive = activeClassName ? isPathActive(location.pathname, href) : false;
+  
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     // Allow custom click handlers to override default behavior
     if (onClick) {
@@ -41,7 +46,7 @@ const LinkComponent: React.FC<LinkProps> = ({
     <Link
       to={href}
       onClick={handleClick}
-      className={cn(className)}
+      className={cn(className, isActive && activeClassName)}
       preventScrollReset={preventScrollReset}
       replace={replace}
       {...props}

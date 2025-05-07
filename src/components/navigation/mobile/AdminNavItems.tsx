@@ -1,8 +1,8 @@
 
 import { Home, Map, Plus, User } from 'lucide-react';
-import { NavItem } from './types';
+import { UnifiedNavItem } from '@/types/navigation/NavigationTypes';
 
-export const getAdminNavItems = (): NavItem[] => [
+export const getAdminNavItems = (): UnifiedNavItem[] => [
   { icon: Home, label: 'Home', path: '/' },
   { icon: Map, label: 'Map', path: '/map' },
   { icon: Plus, label: 'Add', path: '/add' },

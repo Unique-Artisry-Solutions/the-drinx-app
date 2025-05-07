@@ -2,10 +2,11 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { NavItem as NavItemType } from './types';
+import { UnifiedNavItem } from '@/types/navigation/NavigationTypes';
+import UnifiedNavItemComponent from '../UnifiedNavItem';
 
 interface NavItemProps {
-  item: NavItemType;
+  item: UnifiedNavItem;
   isActive: boolean;
   onClick?: (e: React.MouseEvent) => void;
   isPromoter?: boolean;
@@ -18,9 +19,7 @@ const NavItem: React.FC<NavItemProps> = ({
   isPromoter = false
 }) => {
   const navigate = useNavigate();
-  const activeColor = isPromoter ? 'text-purple-600' : 'text-spiritless-pink';
-  const inactiveColor = 'text-gray-500 hover:text-gray-700';
-
+  
   const handleClick = (e: React.MouseEvent) => {
     if (onClick) {
       onClick(e);
@@ -31,33 +30,16 @@ const NavItem: React.FC<NavItemProps> = ({
   };
 
   return (
-    <button
+    <UnifiedNavItemComponent
+      path={item.path}
+      icon={item.icon}
+      label={item.label}
+      isActive={isActive}
       onClick={handleClick}
-      className={cn(
-        "flex flex-col items-center justify-center w-full h-full py-2 transition-all duration-300",
-        isActive ? activeColor : inactiveColor
-      )}
-      aria-label={item.label}
-    >
-      <div className={cn(
-        "flex items-center justify-center mb-1 relative",
-        isActive && (
-          "after:content-[''] after:absolute after:-bottom-1 after:left-1/2 after:-translate-x-1/2 " +
-          `after:w-1.5 after:h-1.5 after:${isPromoter ? 'bg-purple-600' : 'bg-spiritless-pink'} after:rounded-full after:animate-pulse`
-        )
-      )}>
-        <item.icon size={22} className={cn(
-          "transition-transform duration-300",
-          isActive ? "scale-110" : "scale-100"
-        )} />
-      </div>
-      <span className={cn(
-        "text-xs font-medium transition-all duration-300",
-        isActive ? "opacity-100" : "opacity-80"
-      )}>
-        {item.label}
-      </span>
-    </button>
+      variant="mobile"
+      userType={isPromoter ? 'promoter' : 'individual'}
+      dropdown={item.dropdown}
+    />
   );
 };
 

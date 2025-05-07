@@ -1,15 +1,15 @@
 
 import { Home, BookOpen, LogIn, UserPlus } from 'lucide-react';
-import { NavItem } from './types';
+import { UnifiedNavItem } from '@/types/navigation/NavigationTypes';
 
-export const getGuestNavItems = (): NavItem[] => [
+export const getGuestNavItems = (): UnifiedNavItem[] => [
   { icon: Home, label: 'Home', path: '/landing' },
   { icon: BookOpen, label: 'Our Mission', path: '/mission' },
   { icon: LogIn, label: 'Login', path: '/login' },
   { icon: UserPlus, label: 'Sign Up', path: '/signup' },
 ];
 
-export const getCartGuestNavItems = (): NavItem[] => [
+export const getCartGuestNavItems = (): UnifiedNavItem[] => [
   { icon: Home, label: 'Home', path: '/landing' },
   { icon: BookOpen, label: 'Our Mission', path: '/mission' },
   { icon: LogIn, label: 'Login', path: '/login' },

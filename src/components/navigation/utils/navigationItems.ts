@@ -1,5 +1,6 @@
 
-import { NavigationType } from '../NavigationTypes';
+import { NavigationType } from '@/types/navigation/NavigationTypes';
+import { UnifiedNavItem } from '@/types/navigation/NavigationTypes';
 import { getGuestNavItems, getCartGuestNavItems } from '../mobile/GuestNavItems';
 import { getUserNavItems } from '../mobile/UserNavItems';
 import { getAdminNavItems } from '../mobile/AdminNavItems';
@@ -11,7 +12,7 @@ export const getNavItems = (
   user: any,
   location: { pathname: string },
   getProfilePath: () => string
-) => {
+): UnifiedNavItem[] => {
   // Check for admin login page first
   if (location.pathname === '/admin' || location.pathname === '/admin/login') {
     return getGuestNavItems();

@@ -2,7 +2,7 @@
 import { lazy, ReactNode } from 'react';
 import { RouteObject } from 'react-router-dom';
 import { lazyLoad } from '@/utils/lazyLoad';
-import { UserType } from '@/types/navigation';
+import { UserType } from '@/types/navigation/NavigationTypes';
 
 // Define common metadata for routes
 export interface RouteMetadata {
@@ -11,6 +11,7 @@ export interface RouteMetadata {
   breadcrumb?: string;
   hideInNav?: boolean;
   analyticsName?: string;
+  icon?: React.ElementType; // Add icon support for consistent navigation
 }
 
 // Define our extended route type

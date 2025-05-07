@@ -1,14 +1,9 @@
 
 import { Home, Users, Building2, LayoutDashboard, FileBarChart2, Image, Palette, Layers, BookOpen, Settings, Bell, Activity, FileText, Award } from 'lucide-react';
+import { UnifiedNavItem } from '@/types/navigation/NavigationTypes';
 
-type AdminNavItem = {
-  label: string;
-  path: string;
-  icon: typeof Home;
-  showInNav: boolean;
-}
-
-export const adminNavItems: AdminNavItem[] = [
+// Convert to the unified navigation item format
+export const adminNavItems: UnifiedNavItem[] = [
   {
     label: 'Dashboard',
     path: '/admin/dashboard',

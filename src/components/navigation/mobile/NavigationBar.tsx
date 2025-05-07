@@ -4,14 +4,14 @@ import { useLocation } from 'react-router-dom';
 import { useTheme } from '@/contexts/ThemeContext';
 import HomeButton from './HomeButton';
 import NavItem from './NavItem';
-import { NavItem as NavItemType } from './types';
-import { NavigationType } from '../NavigationTypes';
+import { UnifiedNavItem } from '@/types/navigation/NavigationTypes';
+import { NavigationType } from '@/types/navigation/NavigationTypes';
 
 interface NavigationBarProps {
-  navItems: NavItemType[];
+  navItems: UnifiedNavItem[];
   type: NavigationType;
   handleHomeClick: (e: React.MouseEvent) => void;
-  handleProfileClick: (item: NavItemType, e: React.MouseEvent) => void;
+  handleProfileClick: (item: UnifiedNavItem, e: React.MouseEvent) => void;
   getProfilePath: () => string;
   currentUserType: 'individual' | 'establishment' | 'promoter';
 }
@@ -44,7 +44,7 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
               (item.path === '/establishment/dashboard' && 
                 (location.pathname.startsWith('/establishment/') || location.pathname === '/establishment'));
             
-            if (item.label === 'Home' && type === 'user') {
+            if (item.label === 'Home' && type === NavigationType.USER) {
               return (
                 <HomeButton
                   key="home"

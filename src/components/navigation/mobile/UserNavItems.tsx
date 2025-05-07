@@ -7,14 +7,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { NavItem } from './types';
+import { UnifiedNavItem } from '@/types/navigation/NavigationTypes';
 import { Link } from 'react-router-dom';
 
 export const getUserNavItems = (
   userType: 'individual' | 'establishment' | 'promoter', 
   getProfilePath: () => string
-): NavItem[] => {
-  const navItems: NavItem[] = [];
+): UnifiedNavItem[] => {
+  const navItems: UnifiedNavItem[] = [];
   
   // Add appropriate home path based on user type
   if (userType === 'establishment') {

@@ -1,5 +1,6 @@
 
 import { ReactNode } from 'react';
+import { LucideIcon } from 'lucide-react';
 
 /**
  * Enum for different navigation types in the application
@@ -11,14 +12,22 @@ export enum NavigationType {
 }
 
 /**
- * Interface for navigation items used throughout the application
+ * Standard unified navigation item interface used across the application
  */
-export interface NavItem {
+export interface UnifiedNavItem {
   label: string;
-  href: string;
-  icon?: React.ComponentType<any>;
+  path: string;
+  icon?: LucideIcon;
   isActive?: boolean;
-  children?: NavItem[];
+  children?: UnifiedNavItem[];
+  onClick?: (e: React.MouseEvent) => void;
+  showInNav?: boolean;
+  dropdown?: {
+    items: {
+      label: string;
+      path: string;
+    }[];
+  };
 }
 
 /**
@@ -26,7 +35,7 @@ export interface NavItem {
  */
 export interface NavSection {
   title?: string;
-  items: NavItem[];
+  items: UnifiedNavItem[];
 }
 
 /**

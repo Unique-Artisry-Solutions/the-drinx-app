@@ -1,18 +1,11 @@
 
 import { LucideIcon } from 'lucide-react';
-import { NavigationType } from '../NavigationTypes';
+import { NavigationType } from '@/types/navigation/NavigationTypes';
 
-export interface NavItem {
-  icon: LucideIcon;
-  label: string;
-  path: string;
-  dropdown?: {
-    items: Array<{
-      label: string;
-      path: string;
-    }>;
-  };
-}
+// This file now inherits from the unified nav item type
+import { UnifiedNavItem } from '@/types/navigation/NavigationTypes';
+
+export type { UnifiedNavItem };
 
 export interface MobileNavigationProps {
   type: NavigationType;

@@ -8,6 +8,7 @@ import ProfileMenu from './mobile/ProfileMenu';
 import NavigationBar from './mobile/NavigationBar';
 import { useMobileNavigation } from './hooks/useMobileNavigation';
 import { getNavItems } from './utils/navigationItems';
+import { useNavigation } from '@/contexts/NavigationContext';
 
 interface ExtendedMobileNavigationProps extends MobileNavigationProps {
   forceGuestNavigation?: boolean;
