@@ -8,7 +8,6 @@ export const useNotificationToasts = () => {
     toast({
       title: "Success",
       description: "Test notification sent successfully!",
-      variant: "success"
     });
   };
 
@@ -24,22 +23,13 @@ export const useNotificationToasts = () => {
     toast({
       title: "Authentication Required",
       description: "Please log in to use push notifications",
-      variant: "warning"
-    });
-  };
-
-  const showInfoToast = (message: string) => {
-    toast({
-      title: "Information",
-      description: message,
-      variant: "info"
+      variant: "destructive"
     });
   };
 
   return {
     showSuccessToast,
     showErrorToast,
-    showAuthErrorToast,
-    showInfoToast
+    showAuthErrorToast
   };
 };

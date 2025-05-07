@@ -6,6 +6,7 @@ import { ThemeProvider } from '@/contexts/ThemeContext';
 import { CartProvider } from '@/contexts/CartContext';
 import { StripeProvider } from '@/contexts/StripeContext';
 import { Toaster } from '@/components/ui/toaster';
+import { Toaster as SonnerToaster } from 'sonner';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -30,6 +31,7 @@ const AppProviders: React.FC<{ children: React.ReactNode }> = ({ children }) => 
             <StripeProvider>
               {children}
               <Toaster />
+              <SonnerToaster position="top-right" />
             </StripeProvider>
           </CartProvider>
         </ThemeProvider>

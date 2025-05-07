@@ -89,7 +89,3 @@ export interface PushSubscription {
 
 // Define NotificationType type
 export type NotificationType = 'success' | 'error' | 'warning' | 'info';
-
-// Re-export toast-related types for convenience
-export type { ActionConfig } from '@/hooks/use-toast';
-export type { ToastVariant } from './ToastTypes';

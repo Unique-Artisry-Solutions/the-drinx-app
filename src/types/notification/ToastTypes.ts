@@ -4,9 +4,8 @@ import { NotificationType } from './NotificationTypes';
 
 /**
  * Toast variant type mapping to notification types
- * Now includes all variants defined in the toast component
  */
-export type ToastVariant = 'default' | 'destructive' | 'success' | 'warning' | 'info';
+export type ToastVariant = 'default' | 'destructive';
 
 /**
  * Helper function to map notification types to toast variants
@@ -15,12 +14,6 @@ export const mapNotificationTypeToToastVariant = (type?: NotificationType): Toas
   switch (type) {
     case 'error':
       return 'destructive';
-    case 'success':
-      return 'success';
-    case 'warning':
-      return 'warning';
-    case 'info':
-      return 'info';
     default:
       return 'default';
   }

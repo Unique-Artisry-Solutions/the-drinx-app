@@ -1,6 +1,8 @@
 
 import { toast, ActionConfig } from '@/hooks/use-toast';
-import { ToastVariant } from '@/types/notification/ToastTypes';
+import { ToastActionElement } from '@/components/ui/toast';
+import { ButtonProps } from '@/components/ui/button';
+import { ReactElement } from 'react';
 
 /**
  * Helper to create toast actions for both JS and JSX contexts
@@ -19,7 +21,7 @@ export const createToast = (
   title: string,
   description: string,
   actionConfig?: ToastActionConfig,
-  options?: { duration?: number; variant?: ToastVariant }
+  options?: { duration?: number; variant?: 'default' | 'destructive' }
 ) => {
   // In a .ts file, don't return JSX for the action
   const toastConfig: {
@@ -27,7 +29,7 @@ export const createToast = (
     description: string;
     action?: ToastActionConfig;
     duration?: number;
-    variant?: ToastVariant;
+    variant?: 'default' | 'destructive';
   } = {
     title,
     description,
@@ -48,7 +50,7 @@ export const showToast = (
   title: string,
   description: string,
   actionConfig?: ToastActionConfig,
-  options?: { duration?: number; variant?: ToastVariant }
+  options?: { duration?: number; variant?: 'default' | 'destructive' }
 ) => {
   // In a TS context, we can't directly create JSX, so we pass the config
   // and let the toast function handle it internally
@@ -57,7 +59,7 @@ export const showToast = (
     description: string;
     action?: ToastActionConfig;
     duration?: number;
-    variant?: ToastVariant;
+    variant?: 'default' | 'destructive';
   } = {
     title,
     description,
@@ -73,80 +75,32 @@ export const showToast = (
 };
 
 /**
- * Shows a success toast
- */
-export const showSuccessToast = (
-  title: string,
-  description: string,
-  actionConfig?: ToastActionConfig,
-  duration?: number
-) => {
-  return showToast(title, description, actionConfig, { duration, variant: 'success' });
-};
-
-/**
- * Shows an error toast
- */
-export const showErrorToast = (
-  title: string,
-  description: string,
-  actionConfig?: ToastActionConfig,
-  duration?: number
-) => {
-  return showToast(title, description, actionConfig, { duration, variant: 'destructive' });
-};
-
-/**
- * Shows a warning toast
- */
-export const showWarningToast = (
-  title: string,
-  description: string,
-  actionConfig?: ToastActionConfig,
-  duration?: number
-) => {
-  return showToast(title, description, actionConfig, { duration, variant: 'warning' });
-};
-
-/**
- * Shows an info toast
- */
-export const showInfoToast = (
-  title: string,
-  description: string,
-  actionConfig?: ToastActionConfig,
-  duration?: number
-) => {
-  return showToast(title, description, actionConfig, { duration, variant: 'info' });
-};
-
-/**
  * Shows a recovery toast for session issues
  */
 export const showRecoveryToast = () => {
-  return showWarningToast(
-    "Session reset",
-    "Your session has been reset. Please sign in again.",
-    {
+  return toast({
+    title: "Session reset",
+    description: "Your session has been reset. Please sign in again.",
+    action: {
       label: "Refresh Now",
       onClick: () => window.location.reload(),
       altText: "Refresh Now"
     }
-  );
+  });
 };
 
 /**
  * Shows a stuck state toast for loading issues
  */
 export const showStuckStateToast = () => {
-  return showErrorToast(
-    "Loading issue detected",
-    "The application seems to be stuck. Click to refresh.",
-    {
+  return toast({
+    title: "Loading issue detected",
+    description: "The application seems to be stuck. Click to refresh.",
+    action: {
       label: "Refresh Now",
       onClick: () => window.location.reload(),
       altText: "Refresh Now"
     },
-    0 // Duration of 0 means it won't auto-dismiss
-  );
+    duration: 0
+  });
 };
