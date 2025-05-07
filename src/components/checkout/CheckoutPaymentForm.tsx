@@ -1,9 +1,11 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { Label } from '@/components/ui/label';
 import { FormMessage } from '@/components/ui/form';
 import { Card } from '@/components/ui/card';
+import { useStripe as useStripeContext } from '@/contexts/StripeContext';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface CheckoutPaymentFormProps {
   onPaymentMethodChange: (paymentMethod: any) => void;
@@ -14,6 +16,14 @@ const CheckoutPaymentForm: React.FC<CheckoutPaymentFormProps> = ({
   onPaymentMethodChange,
   error 
 }) => {
+  // Ensure Stripe is enabled
+  const { enableStripe, isStripeLoading } = useStripeContext();
+  
+  // Make sure Stripe is enabled on component mount
+  useEffect(() => {
+    enableStripe();
+  }, [enableStripe]);
+  
   const stripe = useStripe();
   const elements = useElements();
   const [cardError, setCardError] = useState<string | undefined>();
@@ -60,6 +70,24 @@ const CheckoutPaymentForm: React.FC<CheckoutPaymentFormProps> = ({
       }
     }
   };
+
+  // Show loading state when Stripe is loading
+  if (isStripeLoading) {
+    return (
+      <div className="space-y-2">
+        <h3 className="font-medium">Payment Details</h3>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label>Card Details</Label>
+            <Skeleton className="h-[42px] w-full" />
+          </div>
+          <div className="text-sm text-gray-500">
+            <p>Loading payment processor...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-2">

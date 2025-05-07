@@ -27,6 +27,7 @@ const AppProviders: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       <AuthProvider>
         <ThemeProvider>
           <CartProvider>
+            {/* Now the StripeProvider uses lazy loading and only initializes when needed */}
             <StripeProvider>
               {children}
               <Toaster />
