@@ -17,11 +17,20 @@ export const fetchEventCampaigns = async (eventId: string): Promise<EventMarketi
 
   return data.map(campaign => {
     // Parse JSON fields if needed
-    let metricsData = {};
+    let metricsData = {
+      impressions: 0,
+      clicks: 0,
+      conversions: 0,
+      revenue: 0
+    };
+    
     let targetAudienceData = {};
     
     if (campaign.metrics) {
-      metricsData = safeJsonToRecord(campaign.metrics);
+      metricsData = {
+        ...metricsData,
+        ...safeJsonToRecord(campaign.metrics)
+      };
     }
     
     if (campaign.target_audience) {
@@ -29,9 +38,17 @@ export const fetchEventCampaigns = async (eventId: string): Promise<EventMarketi
     }
     
     return {
-      ...campaign,
+      id: campaign.id,
+      name: campaign.name,
+      description: campaign.description,
+      campaign_type: campaign.campaign_type,
+      status: campaign.status,
+      start_date: campaign.start_date,
+      end_date: campaign.end_date,
+      budget: campaign.budget,
       metrics: metricsData,
-      target_audience: targetAudienceData
+      target_audience: targetAudienceData,
+      event_id: campaign.event_id
     } as EventMarketingCampaign;
   });
 };
@@ -43,13 +60,18 @@ export const createMarketingCampaign = async (
   const preparedData = {
     ...campaignData,
     target_audience: campaignData.target_audience ? JSON.stringify(campaignData.target_audience) : null,
-    metrics: campaignData.metrics ? JSON.stringify(campaignData.metrics) : null
+    metrics: campaignData.metrics ? JSON.stringify(campaignData.metrics) : JSON.stringify({
+      impressions: 0,
+      clicks: 0,
+      conversions: 0,
+      revenue: 0
+    })
   };
 
   const { data, error } = await supabase
     .from('event_marketing_campaigns')
     .insert({
-      event_id: preparedData.event_id,
+      event_id: campaignData.event_id,
       name: preparedData.name,
       description: preparedData.description,
       campaign_type: preparedData.campaign_type,
@@ -69,13 +91,28 @@ export const createMarketingCampaign = async (
   }
 
   // Parse JSON fields back to objects
-  const result = {
-    ...data,
-    metrics: data.metrics ? safeJsonToRecord(data.metrics) : {},
-    target_audience: data.target_audience ? safeJsonToRecord(data.target_audience) : {}
+  const metricsData = data.metrics ? safeJsonToRecord(data.metrics) : {
+    impressions: 0,
+    clicks: 0,
+    conversions: 0,
+    revenue: 0
+  };
+  
+  const targetAudienceData = data.target_audience ? safeJsonToRecord(data.target_audience) : {};
+  
+  return {
+    id: data.id,
+    name: data.name,
+    description: data.description,
+    campaign_type: data.campaign_type,
+    status: data.status,
+    start_date: data.start_date,
+    end_date: data.end_date,
+    budget: data.budget,
+    metrics: metricsData,
+    target_audience: targetAudienceData,
+    event_id: data.event_id
   } as EventMarketingCampaign;
-
-  return result;
 };
 
 export const updateMarketingCampaign = async (
@@ -109,13 +146,28 @@ export const updateMarketingCampaign = async (
   }
 
   // Parse JSON fields back to objects
-  const result = {
-    ...data,
-    metrics: data.metrics ? safeJsonToRecord(data.metrics) : {},
-    target_audience: data.target_audience ? safeJsonToRecord(data.target_audience) : {}
+  const metricsData = data.metrics ? safeJsonToRecord(data.metrics) : {
+    impressions: 0,
+    clicks: 0,
+    conversions: 0,
+    revenue: 0
+  };
+  
+  const targetAudienceData = data.target_audience ? safeJsonToRecord(data.target_audience) : {};
+  
+  return {
+    id: data.id,
+    name: data.name,
+    description: data.description,
+    campaign_type: data.campaign_type,
+    status: data.status,
+    start_date: data.start_date,
+    end_date: data.end_date,
+    budget: data.budget,
+    metrics: metricsData,
+    target_audience: targetAudienceData,
+    event_id: data.event_id
   } as EventMarketingCampaign;
-
-  return result;
 };
 
 export const deleteMarketingCampaign = async (id: string): Promise<void> => {
@@ -133,9 +185,7 @@ export const deleteMarketingCampaign = async (id: string): Promise<void> => {
 export const trackCampaignMetric = async (
   campaignId: string, 
   metricName: string, 
-  value: number = 1,
-  segmentId?: string,
-  abTestVariant?: 'A' | 'B'
+  value: number = 1
 ): Promise<void> => {
   try {
     // Get current metrics
@@ -151,53 +201,28 @@ export const trackCampaignMetric = async (
     }
 
     // Parse the metrics JSON from the database
-    let currentMetrics = safeJsonToRecord(campaign?.metrics || {});
+    const currentMetrics = safeJsonToRecord(campaign?.metrics || {});
+    
+    // Create default metrics if not present
+    const metrics = {
+      impressions: currentMetrics.impressions || 0,
+      clicks: currentMetrics.clicks || 0,
+      conversions: currentMetrics.conversions || 0,
+      revenue: currentMetrics.revenue || 0,
+      ...currentMetrics
+    };
     
     // Update the specific metric
-    const updatedMetricValue = ((currentMetrics[metricName] || 0) + value);
-    
-    // Create a new metrics object with the updated value
-    const updatedMetrics = {
-      ...currentMetrics,
-      [metricName]: updatedMetricValue
-    };
-
-    // If segment targeting is used, track segment-specific metrics
-    if (segmentId) {
-      if (!updatedMetrics.segments) {
-        updatedMetrics.segments = {};
-      }
-      
-      if (!updatedMetrics.segments[segmentId]) {
-        updatedMetrics.segments[segmentId] = {};
-      }
-      
-      // Update segment metrics
-      updatedMetrics.segments[segmentId][metricName] = 
-        (updatedMetrics.segments[segmentId][metricName] || 0) + value;
+    if (metricName in metrics) {
+      metrics[metricName] = ((metrics[metricName] || 0) + value);
+    } else {
+      metrics[metricName] = value;
     }
     
-    // If A/B testing is used, track variant-specific metrics
-    if (abTestVariant) {
-      if (!updatedMetrics.abTest) {
-        updatedMetrics.abTest = { variantA: {}, variantB: {} };
-      }
-      
-      const variantKey = abTestVariant === 'A' ? 'variantA' : 'variantB';
-      
-      if (!updatedMetrics.abTest[variantKey]) {
-        updatedMetrics.abTest[variantKey] = {};
-      }
-      
-      // Update A/B test metrics
-      updatedMetrics.abTest[variantKey][metricName] = 
-        (updatedMetrics.abTest[variantKey][metricName] || 0) + value;
-    }
-
     // Save updated metrics as JSON
     const { error: updateError } = await supabase
       .from('event_marketing_campaigns')
-      .update({ metrics: JSON.stringify(updatedMetrics) })
+      .update({ metrics: JSON.stringify(metrics) })
       .eq('id', campaignId);
 
     if (updateError) {
@@ -206,117 +231,15 @@ export const trackCampaignMetric = async (
     }
   } catch (err: any) {
     console.error('Failed to track metric:', err);
+    throw err;
   }
 };
 
 export const generateCampaignLink = (
   eventId: string, 
   campaignId: string, 
-  medium: string = 'website',
-  segmentId?: string,
-  abTestVariant?: 'A' | 'B'
+  medium: string = 'website'
 ): string => {
   const baseUrl = window.location.origin;
-  let url = `${baseUrl}/events/${eventId}?utm_source=event_app&utm_medium=${medium}&utm_campaign=${campaignId}`;
-  
-  // Add segment ID if provided
-  if (segmentId) {
-    url += `&utm_segment=${segmentId}`;
-  }
-  
-  // Add A/B test variant if provided
-  if (abTestVariant) {
-    url += `&utm_variant=${abTestVariant.toLowerCase()}`;
-  }
-  
-  return url;
-};
-
-export const getSegmentTargetedContent = (
-  campaign: EventMarketingCampaign
-): { content: string, isVariantA?: boolean } => {
-  // Check if campaign has A/B testing configured
-  const abTest = campaign.target_audience?.abTest;
-  
-  if (abTest?.variantA && abTest?.variantB) {
-    // Determine which variant to show based on distribution
-    const distribution = abTest.distribution || 50;
-    const random = Math.random() * 100;
-    const isVariantA = random <= distribution;
-    
-    // Return the appropriate variant
-    return {
-      content: isVariantA ? abTest.variantA : abTest.variantB,
-      isVariantA
-    };
-  }
-  
-  // If no A/B test, return the campaign description
-  return { content: campaign.description || '' };
-};
-
-export const getCampaignABTestResults = (campaign: EventMarketingCampaign) => {
-  const metrics = campaign.metrics || {};
-  const abTestMetrics = metrics.abTest || { variantA: {}, variantB: {} };
-  
-  const variantA = abTestMetrics.variantA || {};
-  const variantB = abTestMetrics.variantB || {};
-  
-  // Calculate conversion rates
-  const impressionsA = variantA.impressions || 0;
-  const conversionsA = variantA.conversions || 0;
-  const conversionRateA = impressionsA > 0 ? (conversionsA / impressionsA) * 100 : 0;
-  
-  const impressionsB = variantB.impressions || 0;
-  const conversionsB = variantB.conversions || 0;
-  const conversionRateB = impressionsB > 0 ? (conversionsB / impressionsB) * 100 : 0;
-  
-  // Determine winner
-  let winner = null;
-  let improvement = 0;
-  
-  if (impressionsA > 10 && impressionsB > 10) {
-    if (conversionRateA > conversionRateB) {
-      winner = 'A';
-      improvement = conversionRateB > 0 ? ((conversionRateA - conversionRateB) / conversionRateB) * 100 : 100;
-    } else if (conversionRateB > conversionRateA) {
-      winner = 'B';
-      improvement = conversionRateA > 0 ? ((conversionRateB - conversionRateA) / conversionRateA) * 100 : 100;
-    }
-  }
-  
-  return {
-    variantA: {
-      impressions: impressionsA,
-      conversions: conversionsA,
-      conversionRate: conversionRateA
-    },
-    variantB: {
-      impressions: impressionsB,
-      conversions: conversionsB,
-      conversionRate: conversionRateB
-    },
-    winner,
-    improvement: improvement > 0 ? improvement : 0,
-    significantResult: (impressionsA > 50 && impressionsB > 50) // Basic significance check
-  };
-};
-
-export const createSegmentBasedNotification = async (
-  eventId: string, 
-  campaignId: string, 
-  segmentId: string, 
-  title: string, 
-  content: string
-): Promise<void> => {
-  try {
-    // This would integrate with your notification system
-    // For now, we'll log that this would send a notification to users in the segment
-    console.log(`Notification for segment ${segmentId} created: ${title}`);
-    
-    // Track this in the campaign metrics
-    await trackCampaignMetric(campaignId, 'notifications_sent', 1, segmentId);
-  } catch (err: any) {
-    console.error('Failed to create segment notification:', err);
-  }
+  return `${baseUrl}/events/${eventId}?utm_source=event_app&utm_medium=${medium}&utm_campaign=${campaignId}`;
 };

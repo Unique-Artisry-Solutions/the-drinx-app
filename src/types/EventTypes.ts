@@ -84,6 +84,7 @@ export interface EventMarketingCampaign {
     }>;
   };
   target_audience?: Record<string, any>;
+  event_id?: string; // Added to fix the error
 }
 
 // Add missing types referenced in errors

@@ -6,10 +6,11 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, QrCode } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import QrCodeScanner from '@/components/events/QrCodeScanner';
-import { verifyEventAccessToken } from '@/services/eventAccessService';
+import { validateEventAccessToken } from '@/services/eventAccessService';
 import { processTicketScan } from '@/services/eventTicketService';
 import { EventAttendee } from '@/types/EventTypes';
 import { supabase } from '@/integrations/supabase/client';
+import { toAttendeeStatus } from '@/utils/typeGuards';
 
 const EventScannerPage = () => {
   const { eventId, token } = useParams<{ eventId: string; token: string }>();
@@ -32,7 +33,7 @@ const EventScannerPage = () => {
 
       try {
         // Verify the access token
-        const isTokenValid = await verifyEventAccessToken(eventId, token);
+        const isTokenValid = await validateEventAccessToken(eventId, token);
         
         if (isTokenValid) {
           // Get event details
@@ -72,17 +73,38 @@ const EventScannerPage = () => {
       // Process the ticket scan
       const result = await processTicketScan(code);
       
+      // Create a proper attendee object from the scan result
+      let attendee: EventAttendee | undefined;
+      
+      if (result.success && result.ticket) {
+        const ticket = result.ticket;
+        attendee = {
+          id: ticket.id,
+          event_id: ticket.event_id || eventId,
+          user_id: ticket.user_id,
+          email: ticket.email,
+          name: ticket.name,
+          ticket_type_id: ticket.ticket_type_id,
+          purchase_date: ticket.purchase_date || new Date().toISOString(),
+          checked_in_at: ticket.checked_in_at || new Date().toISOString(),
+          status: toAttendeeStatus(ticket.status, 'checked_in'),
+          ticket_code: ticket.ticket_code || code,
+          notes: ticket.notes,
+          custom_fields: ticket.custom_fields || {}
+        };
+      }
+      
       // Update scan result status
       setScanResult({
         success: result.success,
-        message: result.message
+        message: result.message || (result.success ? 'Check-in successful' : 'Check-in failed')
       });
       
-      // Add to recent scans
-      if (result.attendee) {
+      // Add to recent scans if we have an attendee
+      if (attendee) {
         setRecentScans(prev => [
           { 
-            attendee: result.attendee!, 
+            attendee,
             timestamp: new Date().toISOString(),
             success: result.success 
           },
@@ -94,12 +116,12 @@ const EventScannerPage = () => {
       if (result.success) {
         toast({
           title: "Check-in Successful",
-          description: `${result.attendee?.name || 'Attendee'} has been checked in.`,
+          description: `${attendee?.name || 'Attendee'} has been checked in.`,
         });
       } else {
         toast({
           title: "Check-in Failed",
-          description: result.message,
+          description: result.message || result.error || "Invalid ticket",
           variant: "destructive",
         });
       }

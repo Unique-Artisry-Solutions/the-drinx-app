@@ -1,5 +1,3 @@
-
-// Basic discount service implementation - will be expanded later
 import { supabase } from '@/integrations/supabase/client';
 
 export const getEventDiscountCodes = async (eventId: string) => {

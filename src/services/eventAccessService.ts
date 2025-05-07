@@ -101,6 +101,11 @@ export const validateEventAccessToken = async (
   }
 };
 
+// Fix the missing function: just renaming from validateEventAccessToken
+export const verifyEventAccessToken = async (eventId: string, token: string): Promise<boolean> => {
+  return validateEventAccessToken(eventId, token);
+};
+
 export const revokeEventAccessToken = async (token: string): Promise<boolean> => {
   try {
     const { error } = await supabase

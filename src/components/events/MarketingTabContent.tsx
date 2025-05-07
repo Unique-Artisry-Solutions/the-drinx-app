@@ -33,7 +33,8 @@ const MarketingTabContent: React.FC<MarketingTabContentProps> = ({ eventId, even
   
   const handleCreateCampaign = async (data: any) => {
     try {
-      await createCampaign({
+      // Properly structure campaign object according to EventMarketingCampaign interface
+      const newCampaign: Omit<EventMarketingCampaign, 'id'> = {
         name: data.name,
         description: data.description,
         campaign_type: data.campaignType,
@@ -48,8 +49,11 @@ const MarketingTabContent: React.FC<MarketingTabContentProps> = ({ eventId, even
           demographics: data.demographics || {},
           interests: data.interests ? data.interests.split(',').map((i: string) => i.trim()) : [],
           behavior: data.behavior || {}
-        } : {}
-      });
+        } : {},
+        event_id: eventId
+      };
+      
+      await createCampaign(newCampaign);
       
       setIsCreating(false);
       reset();

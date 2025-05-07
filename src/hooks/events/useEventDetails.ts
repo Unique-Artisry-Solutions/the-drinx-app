@@ -51,7 +51,7 @@ export const useEventDetails = (eventId: string) => {
         const registeredCount = attendeesData ? attendeesData.filter(a => a.status === 'registered').length : 0;
         const checkedInCount = attendeesData ? attendeesData.filter(a => a.status === 'checked_in').length : 0;
 
-        // Parse location_details and contact_info from JSON if needed
+        // Parse location_details and contact_info JSON
         const defaultLocation: EventLocation = {
           address: '',
           city: '',
@@ -65,17 +65,43 @@ export const useEventDetails = (eventId: string) => {
           email: ''
         };
 
-        const locationDetails = safeJsonToType<EventLocation>(
-          eventData.location_details,
-          defaultLocation
-        );
+        let locationDetails: EventLocation;
+        if (typeof eventData.location_details === 'string') {
+          try {
+            locationDetails = JSON.parse(eventData.location_details);
+          } catch (e) {
+            locationDetails = defaultLocation;
+          }
+        } else if (eventData.location_details && typeof eventData.location_details === 'object') {
+          locationDetails = eventData.location_details as EventLocation;
+        } else {
+          locationDetails = defaultLocation;
+        }
 
-        const contactInfo = safeJsonToType<EventContactInfo>(
-          eventData.contact_info,
-          defaultContactInfo
-        );
+        let contactInfo: EventContactInfo;
+        if (typeof eventData.contact_info === 'string') {
+          try {
+            contactInfo = JSON.parse(eventData.contact_info);
+          } catch (e) {
+            contactInfo = defaultContactInfo;
+          }
+        } else if (eventData.contact_info && typeof eventData.contact_info === 'object') {
+          contactInfo = eventData.contact_info as EventContactInfo;
+        } else {
+          contactInfo = defaultContactInfo;
+        }
 
-        const customSettings = safeJsonToRecord(eventData.custom_settings);
+        // Handle custom_settings safely
+        let customSettings = {};
+        if (typeof eventData.custom_settings === 'string') {
+          try {
+            customSettings = JSON.parse(eventData.custom_settings);
+          } catch (e) {
+            customSettings = {};
+          }
+        } else if (eventData.custom_settings && typeof eventData.custom_settings === 'object') {
+          customSettings = eventData.custom_settings;
+        }
         
         // Transform event_ticket_types to include computed properties
         const ticketTypes: EventTicketType[] = eventData.event_ticket_types.map((ticket: any) => {
@@ -94,7 +120,10 @@ export const useEventDetails = (eventId: string) => {
             price: ticket.price,
             quantity: ticket.quantity,
             sold: soldTickets,
-            available: ticket.quantity - soldTickets
+            available: ticket.quantity - soldTickets,
+            hasLimitedInventory: ticket.hasLimitedInventory || false,
+            lowInventoryThreshold: ticket.lowInventoryThreshold,
+            hasDynamicPricing: ticket.hasDynamicPricing || false
           };
         });
 
@@ -130,7 +159,7 @@ export const useEventDetails = (eventId: string) => {
           distance: undefined,
           is_public: eventData.is_public !== false,
           event_url: eventData.event_url,
-          custom_settings: customSettings
+          custom_settings: customSettings as Record<string, any>
         };
 
         setEvent(formattedEvent);

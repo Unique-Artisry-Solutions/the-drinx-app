@@ -139,19 +139,23 @@ export const processTicketScan = async (code: string) => {
     if (!response.ok) {
       return {
         success: false,
-        error: data.message || 'Invalid ticket'
+        error: data.message || 'Invalid ticket',
+        message: data.message || 'Invalid ticket'
       };
     }
     
     return {
       success: true,
-      ticket: data.ticket
+      ticket: data.ticket,
+      attendee: data.ticket,
+      message: 'Ticket scanned successfully'
     };
   } catch (error: any) {
     console.error('Error processing ticket scan:', error);
     return {
       success: false,
-      error: error.message || 'Error processing ticket'
+      error: error.message || 'Error processing ticket',
+      message: error.message || 'Error processing ticket'
     };
   }
 };

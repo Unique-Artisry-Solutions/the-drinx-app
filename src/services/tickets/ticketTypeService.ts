@@ -1,4 +1,3 @@
-
 // Basic ticket type service implementation - will be expanded later
 import { supabase } from '@/integrations/supabase/client';
 

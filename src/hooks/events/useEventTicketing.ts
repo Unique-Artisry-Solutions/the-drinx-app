@@ -3,13 +3,12 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import * as eventTicketService from '@/services/eventTicketService';
-import { DiscountCodeResult } from '@/services/tickets/baseTicketService';
 
 export const useEventTicketing = (eventId: string) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [discountCode, setDiscountCode] = useState('');
-  const [appliedDiscount, setAppliedDiscount] = useState<DiscountCodeResult | null>(null);
+  const [appliedDiscount, setAppliedDiscount] = useState<eventTicketService.DiscountCodeResult | null>(null);
 
   // Fetch ticket types for the event
   const { 

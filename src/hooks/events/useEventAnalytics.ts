@@ -8,48 +8,6 @@ interface DateRange {
   endDate: string;
 }
 
-// Define the interface for EventAnalyticsData
-interface EventAnalyticsData {
-  views: number;
-  uniqueVisitors: number;
-  ticketSales: number;
-  revenue: number;
-  conversionRate: number;
-}
-
-// Define the interface for DailyMetrics
-interface DailyMetrics {
-  dates: string[];
-  views: number[];
-  ticketSales: number[];
-  revenue: number[];
-}
-
-// Define the interface for ReferralSource
-interface ReferralSource {
-  source: string;
-  count: number;
-  percentage: number;
-}
-
-// Define the interface for TicketSalesAnalytics
-interface TicketSalesAnalytics {
-  totalTickets: number;
-  soldTickets: number;
-  attendanceRate: number;
-  salesByType: Array<{
-    typeName: string;
-    sold: number;
-    total: number;
-    percentage: number;
-  }>;
-  recentSales: Array<{
-    date: string;
-    quantity: number;
-    revenue: number;
-  }>;
-}
-
 export const useEventAnalytics = (eventId: string, initialDateRange?: DateRange) => {
   const [dateRange, setDateRange] = useState<DateRange>(initialDateRange || {
     startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days ago
@@ -59,7 +17,7 @@ export const useEventAnalytics = (eventId: string, initialDateRange?: DateRange)
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   
-  const [eventAnalytics, setEventAnalytics] = useState<EventAnalyticsData>({
+  const [eventAnalytics, setEventAnalytics] = useState<eventAnalyticsService.EventAnalyticsData>({
     views: 0,
     uniqueVisitors: 0,
     ticketSales: 0,
@@ -67,16 +25,16 @@ export const useEventAnalytics = (eventId: string, initialDateRange?: DateRange)
     conversionRate: 0
   });
   
-  const [dailyMetrics, setDailyMetrics] = useState<DailyMetrics>({
+  const [dailyMetrics, setDailyMetrics] = useState<eventAnalyticsService.DailyMetrics>({
     dates: [],
     views: [],
     ticketSales: [],
     revenue: []
   });
   
-  const [referralSources, setReferralSources] = useState<ReferralSource[]>([]);
+  const [referralSources, setReferralSources] = useState<eventAnalyticsService.ReferralSource[]>([]);
   
-  const [ticketSalesAnalytics, setTicketSalesAnalytics] = useState<TicketSalesAnalytics>({
+  const [ticketSalesAnalytics, setTicketSalesAnalytics] = useState<eventAnalyticsService.TicketSalesAnalytics>({
     totalTickets: 0,
     soldTickets: 0,
     attendanceRate: 0,
@@ -134,7 +92,7 @@ export const useEventAnalytics = (eventId: string, initialDateRange?: DateRange)
     if (!eventId) return;
     
     try {
-      await eventAnalyticsService.recordEventAnalyticsEvent(eventId, 'view', { referrer });
+      await eventAnalyticsService.recordEventAnalyticsEvent(eventId, 'page_view', { referrer });
     } catch (err) {
       console.error('Error tracking event view:', err);
     }
@@ -156,7 +114,7 @@ export const useEventAnalytics = (eventId: string, initialDateRange?: DateRange)
     if (!eventId) return;
     
     try {
-      await eventAnalyticsService.recordEventAnalyticsEvent(eventId, 'share');
+      await eventAnalyticsService.recordEventAnalyticsEvent(eventId, 'social_share');
     } catch (err) {
       console.error('Error tracking social share:', err);
     }
@@ -167,7 +125,7 @@ export const useEventAnalytics = (eventId: string, initialDateRange?: DateRange)
     if (!eventId) return;
     
     try {
-      await eventAnalyticsService.recordEventAnalyticsEvent(eventId, 'purchase', { quantity, amount });
+      await eventAnalyticsService.recordEventAnalyticsEvent(eventId, 'ticket_sale', { quantity, amount });
     } catch (err) {
       console.error('Error tracking purchase:', err);
     }

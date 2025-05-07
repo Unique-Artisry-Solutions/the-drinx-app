@@ -42,13 +42,10 @@ export const useEventMarketing = (eventId: string) => {
     loadCampaigns();
   }, [eventId]);
 
-  const createCampaign = async (campaign: Omit<EventMarketingCampaign, 'event_id'>) => {
+  const createCampaign = async (campaign: Omit<EventMarketingCampaign, 'id'>) => {
     setIsLoading(true);
     try {
-      const newCampaign = await createMarketingCampaign({
-        ...campaign,
-        event_id: eventId
-      });
+      const newCampaign = await createMarketingCampaign(campaign);
       setCampaigns(prev => [...prev, newCampaign]);
       toast({
         title: 'Success',
