@@ -22,6 +22,60 @@ export const fetchCampaignSegmentMappings = async (
   }
 };
 
+// Alias for backwards compatibility
+export const getCampaignSegmentMappings = fetchCampaignSegmentMappings;
+
+export const getAvailableSegmentsForCampaign = async (
+  eventId: string,
+  campaignId?: string
+): Promise<{ id: string; name: string; memberCount: number; description: string }[]> => {
+  try {
+    // Get all audience segments for this event
+    const { data: segments, error: segmentError } = await supabase
+      .from('audience_segments')
+      .select('id, name, description, member_count')
+      .eq('event_id', eventId)
+      .eq('is_active', true);
+      
+    if (segmentError) throw segmentError;
+    
+    if (!segments) return [];
+    
+    // If a campaignId is provided, exclude segments already assigned to this campaign
+    if (campaignId) {
+      const { data: existingMappings, error: mappingsError } = await supabase
+        .from('campaign_segment_mappings')
+        .select('segment_id')
+        .eq('campaign_id', campaignId)
+        .eq('is_active', true);
+        
+      if (mappingsError) throw mappingsError;
+      
+      const assignedSegmentIds = new Set(existingMappings?.map(m => m.segment_id) || []);
+      
+      return segments
+        .filter(s => !assignedSegmentIds.has(s.id))
+        .map(s => ({
+          id: s.id,
+          name: s.name,
+          description: s.description || '',
+          memberCount: s.member_count || 0
+        }));
+    }
+    
+    // Return all segments
+    return segments.map(s => ({
+      id: s.id,
+      name: s.name,
+      description: s.description || '',
+      memberCount: s.member_count || 0
+    }));
+  } catch (err: any) {
+    console.error('Error getting available segments:', err);
+    return [];
+  }
+};
+
 export const assignSegmentsToCampaign = async (
   campaignId: string,
   segments: Array<{

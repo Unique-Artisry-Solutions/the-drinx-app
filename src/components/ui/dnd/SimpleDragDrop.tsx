@@ -26,7 +26,7 @@ export interface DragDropContextProps {
 }
 
 // Simple context to manage drag state
-const DragDropContext = React.createContext<{
+const DragDropStateContext = React.createContext<{
   onDragEnd: (result: { source: { index: number }; destination?: { index: number } }) => void;
 }>({
   onDragEnd: () => {}
@@ -66,7 +66,7 @@ export const Draggable: React.FC<DraggableProps> = ({ draggableId, index, childr
 
 export const Droppable: React.FC<DroppableProps> = ({ droppableId, children }) => {
   const ref = useRef<HTMLElement>(null);
-  const { onDragEnd } = React.useContext(DragDropContext);
+  const { onDragEnd } = React.useContext(DragDropStateContext);
   
   const droppableProps = {
     'data-droppable-id': droppableId,
@@ -117,8 +117,8 @@ export const DragDropContext: React.FC<DragDropContextProps> = ({ onDragEnd, chi
   const contextValue = { onDragEnd };
   
   return (
-    <DragDropContext.Provider value={contextValue}>
+    <DragDropStateContext.Provider value={contextValue}>
       {children}
-    </DragDropContext.Provider>
+    </DragDropStateContext.Provider>
   );
 };

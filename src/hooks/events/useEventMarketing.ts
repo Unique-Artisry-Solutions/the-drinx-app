@@ -124,8 +124,11 @@ export const useEventMarketing = (eventId: string) => {
               revenue: 0
             }) };
             
-            metrics[metricName as keyof typeof metrics] = 
-              ((metrics[metricName as keyof typeof metrics] || 0) as number) + value;
+            // Safely update the metric
+            if (metricName in metrics) {
+              metrics[metricName as keyof typeof metrics] = 
+                ((metrics[metricName as keyof typeof metrics] || 0) as number) + value;
+            }
             
             return { ...c, metrics };
           }

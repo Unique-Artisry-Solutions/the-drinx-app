@@ -19,7 +19,8 @@ import {
   assignSegmentsToCampaign,
   removeCampaignSegment,
   getCampaignSegmentPerformance,
-  trackSegmentMetric
+  trackSegmentMetric,
+  getAvailableSegmentsForCampaign
 } from '@/services/campaignSegmentService';
 
 // Import audience segment hooks
@@ -179,8 +180,10 @@ export const useEventMarketingWithSegments = (eventId: string) => {
             const updatedMetrics = { ...c.metrics };
             
             // Safely update the specific metric
-            updatedMetrics[metricName as keyof typeof updatedMetrics] = 
-              ((updatedMetrics[metricName as keyof typeof updatedMetrics] || 0) as number) + value;
+            if (metricName in updatedMetrics) {
+              updatedMetrics[metricName as keyof typeof updatedMetrics] = 
+                ((updatedMetrics[metricName as keyof typeof updatedMetrics] || 0) as number) + value;
+            }
             
             return { ...c, metrics: updatedMetrics };
           }
@@ -194,8 +197,10 @@ export const useEventMarketingWithSegments = (eventId: string) => {
           if (!prev) return prev;
           
           const updatedMetrics = { ...prev.metrics };
-          updatedMetrics[metricName as keyof typeof updatedMetrics] = 
-            ((updatedMetrics[metricName as keyof typeof updatedMetrics] || 0) as number) + value;
+          if (metricName in updatedMetrics) {
+            updatedMetrics[metricName as keyof typeof updatedMetrics] = 
+              ((updatedMetrics[metricName as keyof typeof updatedMetrics] || 0) as number) + value;
+          }
           
           return { ...prev, metrics: updatedMetrics };
         });
@@ -289,9 +294,6 @@ export const useEventMarketingWithSegments = (eventId: string) => {
       await trackCampaignMetric(campaignId, conversionType, value);
       await trackSegmentMetric(campaignId, segmentId, conversionType, value);
       
-      // Update local state (if needed)
-      // ... (similar to trackMetric implementation)
-      
       return true;
     } catch (err: any) {
       console.error(`Failed to track segment ${conversionType}:`, err);
@@ -325,7 +327,14 @@ export const useEventMarketingWithSegments = (eventId: string) => {
       return await getCampaignABTestResults(campaignId);
     } catch (err: any) {
       console.error('Failed to get A/B test results:', err);
-      return { variants: [], winner: null };
+      return { 
+        variants: [], 
+        winner: null,
+        variantA: undefined,
+        variantB: undefined,
+        improvement: 0,
+        significantResult: false
+      };
     }
   };
 

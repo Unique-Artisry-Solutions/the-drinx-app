@@ -144,5 +144,33 @@ export interface EventFormData {
   }>;
 }
 
+// For analytics components that expect typeName (compatibility layer)
+export interface TicketAnalyticsData {
+  name: string;
+  typeName?: string; // Added for backwards compatibility
+  sold: number;
+  available: number;
+  revenue: number;
+  total?: number; // Added for RealTimeSalesTracker
+}
+
+// For A/B testing and campaign analytics
+export interface ABTestResult {
+  variants: { id: string; name: string; conversionRate: number }[];
+  winner: string | null;
+  variantA?: {
+    id: string;
+    name: string;
+    conversionRate: number;
+  };
+  variantB?: {
+    id: string; 
+    name: string;
+    conversionRate: number;
+  };
+  improvement?: number;
+  significantResult?: boolean;
+}
+
 // Alias for backward compatibility
 export type EventType = Event;
