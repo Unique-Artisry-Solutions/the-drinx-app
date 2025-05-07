@@ -1,58 +1,9 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { CampaignSegmentMapping, CampaignSegmentPerformance, CampaignSegmentAnalytics, InteractionType } from '@/types/CampaignSegmentTypes';
-import { AudienceSegment } from '@/types/AudienceTypes';
+import { CampaignSegmentMapping, CampaignSegmentAnalytics } from '@/types/CampaignSegmentTypes';
 import { safeJsonToRecord } from '@/utils/typeGuards';
 
-/**
- * Assigns audience segments to a campaign
- */
-export const assignSegmentsToCampaign = async (
-  campaignId: string,
-  segmentAssignments: {
-    segment_id: string;
-    allocation_percentage?: number;
-    is_control_group?: boolean;
-    description?: string;
-  }[]
-): Promise<CampaignSegmentMapping[]> => {
-  try {
-    // First, build our insert data
-    const mappingsToCreate = segmentAssignments.map(assignment => ({
-      campaign_id: campaignId,
-      segment_id: assignment.segment_id,
-      allocation_percentage: assignment.allocation_percentage || 100,
-      is_control_group: assignment.is_control_group || false,
-      description: assignment.description
-    }));
-
-    // Insert the mappings
-    const { data, error } = await supabase
-      .from('campaign_segment_mappings')
-      .upsert(mappingsToCreate, { 
-        onConflict: 'campaign_id,segment_id'
-      });
-
-    if (error) {
-      console.error('Error assigning segments to campaign:', error);
-      throw error;
-    }
-
-    // Convert the database response to our expected type
-    return (data || []).map(item => ({
-      ...item,
-      metrics: safeJsonToRecord(item.metrics)
-    })) as CampaignSegmentMapping[];
-  } catch (error) {
-    console.error('Failed to assign segments to campaign:', error);
-    throw error;
-  }
-};
-
-/**
- * Gets all segment mappings for a campaign
- */
-export const getCampaignSegmentMappings = async (
+export const fetchCampaignSegmentMappings = async (
   campaignId: string
 ): Promise<CampaignSegmentMapping[]> => {
   try {
@@ -60,217 +11,239 @@ export const getCampaignSegmentMappings = async (
       .from('campaign_segment_mappings')
       .select('*')
       .eq('campaign_id', campaignId)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching campaign segment mappings:', error);
-      throw error;
-    }
-
-    // Convert the database response to our expected type
-    return (data || []).map(item => ({
-      ...item,
-      metrics: safeJsonToRecord(item.metrics)
-    })) as CampaignSegmentMapping[];
-  } catch (error) {
-    console.error('Failed to fetch campaign segment mappings:', error);
-    throw error;
-  }
-};
-
-/**
- * Gets all campaigns that use a specific segment
- */
-export const getCampaignsBySegment = async (
-  segmentId: string
-): Promise<{ campaign_id: string; campaign_name: string; status: string }[]> => {
-  try {
-    const { data, error } = await supabase
-      .from('campaign_segment_analytics')
-      .select('campaign_id, campaign_name, status')
-      .eq('segment_id', segmentId)
-      .order('campaign_name');
-
-    if (error) {
-      console.error('Error fetching campaigns by segment:', error);
-      throw error;
-    }
-
+      .eq('is_active', true);
+      
+    if (error) throw error;
+    
     return data || [];
-  } catch (error) {
-    console.error('Failed to fetch campaigns by segment:', error);
-    throw error;
+  } catch (err: any) {
+    console.error('Error fetching campaign segment mappings:', err);
+    throw new Error(`Failed to fetch segment mappings: ${err.message}`);
   }
 };
 
-/**
- * Updates a campaign-segment mapping
- */
-export const updateCampaignSegmentMapping = async (
-  mappingId: string,
-  updates: Partial<CampaignSegmentMapping>
-): Promise<CampaignSegmentMapping> => {
+export const assignSegmentsToCampaign = async (
+  campaignId: string,
+  segments: Array<{
+    id: string;
+    allocation?: number;
+    isControlGroup?: boolean;
+    description?: string;
+  }>
+): Promise<CampaignSegmentMapping[]> => {
   try {
-    const { data, error } = await supabase
+    // First, get existing mappings
+    const { data: existingMappings, error: fetchError } = await supabase
       .from('campaign_segment_mappings')
-      .update(updates)
-      .eq('id', mappingId)
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error updating campaign segment mapping:', error);
-      throw error;
+      .select('id, segment_id')
+      .eq('campaign_id', campaignId);
+      
+    if (fetchError) throw fetchError;
+    
+    // Determine segments to add and update
+    const existingSegmentIds = new Set(existingMappings?.map(m => m.segment_id) || []);
+    const segmentsToAdd = segments.filter(s => !existingSegmentIds.has(s.id));
+    
+    // Prepare data for insertion
+    const newMappings = segmentsToAdd.map(segment => ({
+      campaign_id: campaignId,
+      segment_id: segment.id,
+      allocation_percentage: segment.allocation || 100,
+      is_control_group: segment.isControlGroup || false,
+      is_active: true,
+      description: segment.description || null
+    }));
+    
+    // Insert new mappings if there are any
+    if (newMappings.length > 0) {
+      const { error: insertError } = await supabase
+        .from('campaign_segment_mappings')
+        .insert(newMappings);
+        
+      if (insertError) throw insertError;
     }
-
-    // Convert the database response to our expected type
-    return {
-      ...data,
-      metrics: safeJsonToRecord(data.metrics)
-    } as CampaignSegmentMapping;
-  } catch (error) {
-    console.error('Failed to update campaign segment mapping:', error);
-    throw error;
+    
+    // Update existing mappings
+    for (const segment of segments.filter(s => existingSegmentIds.has(s.id))) {
+      const mapping = existingMappings?.find(m => m.segment_id === segment.id);
+      if (mapping) {
+        const { error: updateError } = await supabase
+          .from('campaign_segment_mappings')
+          .update({
+            allocation_percentage: segment.allocation || 100,
+            is_control_group: segment.isControlGroup || false,
+            description: segment.description
+          })
+          .eq('id', mapping.id);
+          
+        if (updateError) throw updateError;
+      }
+    }
+    
+    // Fetch the updated mappings
+    const { data: updatedMappings, error: refetchError } = await supabase
+      .from('campaign_segment_mappings')
+      .select('*')
+      .eq('campaign_id', campaignId)
+      .eq('is_active', true);
+      
+    if (refetchError) throw refetchError;
+    
+    return updatedMappings || [];
+  } catch (err: any) {
+    console.error('Error assigning segments to campaign:', err);
+    throw new Error(`Failed to assign segments: ${err.message}`);
   }
 };
 
-/**
- * Removes a segment from a campaign
- */
-export const removeSegmentFromCampaign = async (
+export const removeCampaignSegment = async (
   mappingId: string
 ): Promise<void> => {
   try {
+    // Soft delete by marking as inactive
     const { error } = await supabase
       .from('campaign_segment_mappings')
-      .delete()
+      .update({ is_active: false })
       .eq('id', mappingId);
-
-    if (error) {
-      console.error('Error removing segment from campaign:', error);
-      throw error;
-    }
-  } catch (error) {
-    console.error('Failed to remove segment from campaign:', error);
-    throw error;
+      
+    if (error) throw error;
+  } catch (err: any) {
+    console.error('Error removing campaign segment:', err);
+    throw new Error(`Failed to remove segment: ${err.message}`);
   }
 };
 
-/**
- * Gets performance analytics for campaign segments
- */
-export const getCampaignSegmentAnalytics = async (
+export const getCampaignSegmentPerformance = async (
   campaignId: string
 ): Promise<CampaignSegmentAnalytics[]> => {
   try {
+    // This would typically be a database view or a complex query
+    // For simplicity, we're using a sample implementation
     const { data, error } = await supabase
       .from('campaign_segment_analytics')
       .select('*')
       .eq('campaign_id', campaignId);
-
-    if (error) {
-      console.error('Error fetching campaign segment analytics:', error);
-      throw error;
-    }
-
-    return data || [];
-  } catch (error) {
-    console.error('Failed to fetch campaign segment analytics:', error);
-    throw error;
+      
+    if (error) throw error;
+    
+    return data as CampaignSegmentAnalytics[];
+  } catch (err: any) {
+    console.error('Error getting campaign segment performance:', err);
+    return [];
   }
 };
 
-/**
- * Records an interaction with a campaign by a user in a segment
- */
-export const recordSegmentInteraction = async (
+export const trackSegmentMetric = async (
   campaignId: string,
   segmentId: string,
-  interactionType: InteractionType,
+  metricName: string,
   value: number = 1
 ): Promise<void> => {
   try {
-    // Use the database function to record the interaction
-    const { error } = await supabase.rpc('record_campaign_segment_interaction', {
-      p_campaign_id: campaignId,
-      p_segment_id: segmentId,
-      p_interaction_type: interactionType,
-      p_value: value
-    });
-
-    if (error) {
-      console.error(`Error recording ${interactionType} for campaign segment:`, error);
-      throw error;
-    }
-  } catch (error) {
-    console.error(`Failed to record ${interactionType} for campaign segment:`, error);
-    throw error;
-  }
-};
-
-/**
- * Gets performance metrics for a specific segment across all campaigns
- */
-export const getSegmentPerformanceAcrossCampaigns = async (
-  segmentId: string
-): Promise<CampaignSegmentAnalytics[]> => {
-  try {
-    const { data, error } = await supabase
-      .from('campaign_segment_analytics')
-      .select('*')
-      .eq('segment_id', segmentId);
-
-    if (error) {
-      console.error('Error fetching segment performance across campaigns:', error);
-      throw error;
-    }
-
-    return data || [];
-  } catch (error) {
-    console.error('Failed to fetch segment performance across campaigns:', error);
-    throw error;
-  }
-};
-
-/**
- * Gets all segments available to be added to a campaign
- * that are not already assigned to this campaign
- */
-export const getAvailableSegmentsForCampaign = async (
-  campaignId: string
-): Promise<AudienceSegment[]> => {
-  try {
-    // First get the ids of segments already assigned to this campaign
-    const { data: existingMappings, error: mappingsError } = await supabase
+    // Get mapping to update
+    const { data: mapping, error: fetchError } = await supabase
       .from('campaign_segment_mappings')
-      .select('segment_id')
-      .eq('campaign_id', campaignId);
-
-    if (mappingsError) {
-      console.error('Error fetching existing segment mappings:', mappingsError);
-      throw mappingsError;
-    }
-
-    const existingSegmentIds = (existingMappings || []).map(m => m.segment_id);
-
-    // Then fetch all active segments that are not in the existingSegmentIds list
-    const { data: segments, error: segmentsError } = await supabase
-      .from('audience_segments')
-      .select('*')
+      .select('id, metrics')
+      .eq('campaign_id', campaignId)
+      .eq('segment_id', segmentId)
       .eq('is_active', true)
-      .order('name');
-
-    if (segmentsError) {
-      console.error('Error fetching available segments:', segmentsError);
-      throw segmentsError;
+      .single();
+      
+    if (fetchError) throw fetchError;
+    
+    if (!mapping) {
+      throw new Error('Segment mapping not found');
     }
-
-    // Filter out segments that are already assigned to this campaign
-    return (segments || []).filter(
-      segment => !existingSegmentIds.includes(segment.id)
-    );
-  } catch (error) {
-    console.error('Failed to fetch available segments for campaign:', error);
-    throw error;
+    
+    // Parse existing metrics
+    const metrics = safeJsonToRecord(mapping.metrics);
+    
+    // Update metric
+    metrics[metricName] = (metrics[metricName] || 0) + value;
+    
+    // Save updated metrics
+    const { error: updateError } = await supabase
+      .from('campaign_segment_mappings')
+      .update({ metrics })
+      .eq('id', mapping.id);
+      
+    if (updateError) throw updateError;
+    
+    // Also update the performance tracking table
+    const today = new Date().toISOString().split('T')[0];
+    
+    const { data: performance, error: perfFetchError } = await supabase
+      .from('campaign_segment_performance')
+      .select('*')
+      .eq('campaign_id', campaignId)
+      .eq('segment_id', segmentId)
+      .eq('date', today)
+      .single();
+      
+    if (perfFetchError && perfFetchError.code !== 'PGRST116') {
+      // PGRST116 means no rows returned, which is fine
+      throw perfFetchError;
+    }
+    
+    if (performance) {
+      // Update existing entry
+      const updates: Record<string, any> = {};
+      
+      switch (metricName) {
+        case 'impressions':
+          updates.impressions = performance.impressions + value;
+          break;
+        case 'clicks':
+          updates.clicks = performance.clicks + value;
+          break;
+        case 'conversions':
+          updates.conversions = performance.conversions + value;
+          break;
+        case 'conversion_value':
+          updates.conversion_value = performance.conversion_value + value;
+          break;
+      }
+      
+      const { error: perfUpdateError } = await supabase
+        .from('campaign_segment_performance')
+        .update(updates)
+        .eq('id', performance.id);
+        
+      if (perfUpdateError) throw perfUpdateError;
+    } else {
+      // Create new entry
+      const newEntry: Record<string, any> = {
+        campaign_id: campaignId,
+        segment_id: segmentId,
+        date: today,
+        impressions: 0,
+        clicks: 0,
+        conversions: 0,
+        conversion_value: 0
+      };
+      
+      switch (metricName) {
+        case 'impressions':
+          newEntry.impressions = value;
+          break;
+        case 'clicks':
+          newEntry.clicks = value;
+          break;
+        case 'conversions':
+          newEntry.conversions = value;
+          break;
+        case 'conversion_value':
+          newEntry.conversion_value = value;
+          break;
+      }
+      
+      const { error: perfInsertError } = await supabase
+        .from('campaign_segment_performance')
+        .insert(newEntry);
+        
+      if (perfInsertError) throw perfInsertError;
+    }
+  } catch (err: any) {
+    console.error('Error tracking segment metric:', err);
   }
 };

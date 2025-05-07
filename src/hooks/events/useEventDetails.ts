@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Event, EventLocation, EventContactInfo, EventTicketType } from '@/types/EventTypes';
 import { useToast } from '@/hooks/use-toast';
-import { safeJsonToType, safeJsonToRecord } from '@/utils/typeGuards';
+import { safeJsonToEventLocation, safeJsonToEventContactInfo, safeJsonToRecord } from '@/utils/typeGuards';
 
 export const useEventDetails = (eventId: string) => {
   const [event, setEvent] = useState<Event | null>(null);
@@ -51,45 +51,9 @@ export const useEventDetails = (eventId: string) => {
         const registeredCount = attendeesData ? attendeesData.filter(a => a.status === 'registered').length : 0;
         const checkedInCount = attendeesData ? attendeesData.filter(a => a.status === 'checked_in').length : 0;
 
-        // Parse location_details and contact_info JSON
-        const defaultLocation: EventLocation = {
-          address: '',
-          city: '',
-          state: '',
-          zip: '',
-          country: ''
-        };
-        
-        const defaultContactInfo: EventContactInfo = {
-          name: '',
-          email: ''
-        };
-
-        let locationDetails: EventLocation;
-        if (typeof eventData.location_details === 'string') {
-          try {
-            locationDetails = JSON.parse(eventData.location_details);
-          } catch (e) {
-            locationDetails = defaultLocation;
-          }
-        } else if (eventData.location_details && typeof eventData.location_details === 'object') {
-          locationDetails = eventData.location_details as EventLocation;
-        } else {
-          locationDetails = defaultLocation;
-        }
-
-        let contactInfo: EventContactInfo;
-        if (typeof eventData.contact_info === 'string') {
-          try {
-            contactInfo = JSON.parse(eventData.contact_info);
-          } catch (e) {
-            contactInfo = defaultContactInfo;
-          }
-        } else if (eventData.contact_info && typeof eventData.contact_info === 'object') {
-          contactInfo = eventData.contact_info as EventContactInfo;
-        } else {
-          contactInfo = defaultContactInfo;
-        }
+        // Parse location_details and contact_info using our safe conversion functions
+        const locationDetails: EventLocation = safeJsonToEventLocation(eventData.location_details);
+        const contactInfo: EventContactInfo = safeJsonToEventContactInfo(eventData.contact_info);
 
         // Handle custom_settings safely
         let customSettings = {};

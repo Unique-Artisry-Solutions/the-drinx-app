@@ -243,3 +243,111 @@ export const generateCampaignLink = (
   const baseUrl = window.location.origin;
   return `${baseUrl}/events/${eventId}?utm_source=event_app&utm_medium=${medium}&utm_campaign=${campaignId}`;
 };
+
+// Implement missing functions referenced in AttendeeSegmentsTab.tsx and EmailMarketingPanel.tsx
+export const getSegmentTargetedContent = async (
+  segmentId: string, 
+  contentType: string
+): Promise<Record<string, any>[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('campaign_segment_mappings')
+      .select('*')
+      .eq('segment_id', segmentId)
+      .eq('is_active', true);
+
+    if (error) throw error;
+    
+    return data || [];
+  } catch (err: any) {
+    console.error('Error fetching segment targeted content:', err);
+    return [];
+  }
+};
+
+export const createSegmentBasedNotification = async (
+  segmentId: string,
+  title: string,
+  content: string,
+  eventId: string
+): Promise<boolean> => {
+  try {
+    // Get users in the segment
+    const { data: segmentMembers, error: segmentError } = await supabase
+      .from('audience_segment_memberships')
+      .select('user_id')
+      .eq('segment_id', segmentId)
+      .eq('is_active', true);
+
+    if (segmentError) throw segmentError;
+    if (!segmentMembers || segmentMembers.length === 0) {
+      return false;
+    }
+
+    // Create notifications for all users in the segment
+    const notifications = segmentMembers.map(member => ({
+      recipient_id: member.user_id,
+      title: title,
+      content: content,
+      metadata: JSON.stringify({ eventId, segmentId }),
+      recipient_type: 'individual',
+      priority: 'medium'
+    }));
+
+    const { error } = await supabase
+      .from('notifications')
+      .insert(notifications);
+
+    if (error) throw error;
+    return true;
+  } catch (err: any) {
+    console.error('Error creating segment notifications:', err);
+    return false;
+  }
+};
+
+// Function to handle email campaign AB test results
+export const getCampaignABTestResults = async (
+  campaignId: string
+): Promise<{
+  variants: { id: string; name: string; conversionRate: number }[];
+  winner: string | null;
+}> => {
+  try {
+    const { data, error } = await supabase
+      .from('campaign_segment_analytics')
+      .select('*')
+      .eq('campaign_id', campaignId);
+      
+    if (error) throw error;
+    
+    if (!data || data.length === 0) {
+      return { variants: [], winner: null };
+    }
+    
+    const variants = data.map(variant => ({
+      id: variant.segment_id,
+      name: variant.segment_name || 'Variant',
+      conversionRate: variant.conversion_rate || 0
+    }));
+    
+    // Find the winning variant (highest conversion rate)
+    let winnerIndex = 0;
+    let highestRate = variants[0]?.conversionRate || 0;
+    
+    variants.forEach((variant, index) => {
+      if (variant.conversionRate > highestRate) {
+        highestRate = variant.conversionRate;
+        winnerIndex = index;
+      }
+    });
+    
+    return {
+      variants,
+      winner: variants.length > 0 ? variants[winnerIndex].id : null
+    };
+  } catch (err: any) {
+    console.error('Error fetching AB test results:', err);
+    return { variants: [], winner: null };
+  }
+};

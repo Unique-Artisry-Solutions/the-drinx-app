@@ -1,38 +1,153 @@
-import { useCallback } from 'react';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/lib/supabase';
+
+import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from './use-toast';
 import { safeJsonToRecord } from '@/utils/typeGuards';
-
-// Define the allowed notification channel types
-export type NotificationChannel = 'push' | 'in_app' | 'email';
-
-export interface NotificationPreference {
-  id: string;
-  user_id: string;
-  category_id: string;
-  channels: NotificationChannel[];
-  is_enabled: boolean;
-}
 
 export interface Notification {
   id: string;
-  recipient_id: string;
   title: string;
   content: string;
-  priority: 'low' | 'medium' | 'high' | 'urgent';
-  category_id?: string;
   is_read: boolean;
   created_at: string;
-  notification_categories?: {
-    name: string;
-    description: string;
-  } | null;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  category_id?: string;
+  recipient_id: string;
+  metadata?: Record<string, any>;
 }
 
-export const useNotificationSystem = () => {
+interface NotificationCategory {
+  id: string;
+  name: string;
+  description?: string;
+}
+
+interface NotificationPreference {
+  id: string;
+  category_id: string;
+  is_enabled: boolean;
+  channels: string[];
+}
+
+export const useNotificationSystem = (userId?: string) => {
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [categories, setCategories] = useState<NotificationCategory[]>([]);
+  const [preferences, setPreferences] = useState<NotificationPreference[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
-  const markAsRead = useCallback(async (notificationId: string) => {
+  const loadNotifications = useCallback(async () => {
+    if (!userId) return;
+    
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('recipient_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(30);
+
+      if (error) throw error;
+
+      // Process notifications to handle JSON metadata
+      const processedNotifications = data.map(notification => ({
+        ...notification,
+        // Parse metadata if it exists
+        metadata: safeJsonToRecord(notification.metadata)
+      }));
+
+      setNotifications(processedNotifications);
+      setUnreadCount(processedNotifications.filter(n => !n.is_read).length);
+    } catch (error: any) {
+      console.error('Error loading notifications:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load notifications',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [userId, toast]);
+
+  const loadCategories = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('notification_categories')
+        .select('*');
+
+      if (error) throw error;
+      
+      setCategories(data);
+    } catch (error: any) {
+      console.error('Error loading notification categories:', error);
+    }
+  }, []);
+
+  const loadPreferences = useCallback(async () => {
+    if (!userId) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('notification_preferences')
+        .select('*')
+        .eq('user_id', userId);
+
+      if (error) throw error;
+      
+      setPreferences(data);
+    } catch (error: any) {
+      console.error('Error loading notification preferences:', error);
+    }
+  }, [userId]);
+
+  // Initial data loading
+  useEffect(() => {
+    loadCategories();
+    if (userId) {
+      loadNotifications();
+      loadPreferences();
+      
+      // Set up real-time subscription for new notifications
+      const subscription = supabase
+        .channel('notifications-channel')
+        .on(
+          'postgres_changes',
+          { 
+            event: 'INSERT', 
+            schema: 'public', 
+            table: 'notifications',
+            filter: `recipient_id=eq.${userId}`
+          },
+          (payload) => {
+            const newNotification = {
+              ...payload.new as Notification,
+              // Parse metadata if it exists
+              metadata: safeJsonToRecord(payload.new.metadata)
+            };
+            
+            // Update notifications state
+            setNotifications(prev => [newNotification, ...prev]);
+            setUnreadCount(prev => prev + 1);
+            
+            // Show toast for new notification
+            toast({
+              title: newNotification.title,
+              description: newNotification.content,
+            });
+          }
+        )
+        .subscribe();
+        
+      return () => {
+        subscription.unsubscribe();
+      };
+    }
+  }, [userId, loadNotifications, loadCategories, loadPreferences, toast]);
+
+  const markAsRead = async (notificationId: string) => {
     try {
       const { error } = await supabase
         .from('notifications')
@@ -40,235 +155,159 @@ export const useNotificationSystem = () => {
         .eq('id', notificationId);
 
       if (error) throw error;
-    } catch (error) {
-      console.error('Error marking notification as read:', error);
-      toast({
-        title: "Error",
-        description: "Failed to mark notification as read",
-        variant: "destructive",
-      });
-    }
-  }, [toast]);
 
-  const updatePreferences = useCallback(async (
-    categoryId: string,
-    channels: NotificationChannel[],
-    isEnabled: boolean
-  ) => {
+      // Update local state
+      setNotifications(prev => 
+        prev.map(n => n.id === notificationId ? { ...n, is_read: true } : n)
+      );
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    } catch (error: any) {
+      console.error('Error marking notification as read:', error);
+    }
+  };
+
+  const markAllAsRead = async () => {
+    if (!userId || notifications.filter(n => !n.is_read).length === 0) return;
+    
     try {
       const { error } = await supabase
-        .from('notification_preferences')
-        .update({ 
-          channels,
-          is_enabled: isEnabled
-        })
-        .eq('category_id', categoryId);
+        .from('notifications')
+        .update({ is_read: true })
+        .eq('recipient_id', userId)
+        .eq('is_read', false);
 
       if (error) throw error;
 
-      toast({
-        title: "Success",
-        description: "Notification preferences updated",
-      });
-    } catch (error) {
-      console.error('Error updating notification preferences:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update notification preferences",
-        variant: "destructive",
-      });
+      // Update local state
+      setNotifications(prev => 
+        prev.map(n => ({ ...n, is_read: true }))
+      );
+      setUnreadCount(0);
+    } catch (error: any) {
+      console.error('Error marking all notifications as read:', error);
     }
-  }, [toast]);
+  };
 
-  const sendSegmentNotification = useCallback(async (
-    segmentId: string,
-    title: string,
-    content: string,
-    priority: 'low' | 'medium' | 'high' | 'urgent' = 'medium',
-    categoryId?: string,
-    metadata?: Record<string, any>
-  ) => {
+  const deleteNotification = async (notificationId: string) => {
     try {
-      const { data: segmentMembers, error: membersError } = await supabase
-        .from('audience_segment_memberships')
-        .select('user_id')
-        .eq('segment_id', segmentId)
-        .eq('is_active', true);
+      const { error } = await supabase
+        .from('notifications')
+        .delete()
+        .eq('id', notificationId);
 
-      if (membersError) throw membersError;
+      if (error) throw error;
 
-      if (!segmentMembers || segmentMembers.length === 0) {
-        console.warn('No members found in segment:', segmentId);
-        return;
+      // Update local state
+      const removedNotification = notifications.find(n => n.id === notificationId);
+      setNotifications(prev => prev.filter(n => n.id !== notificationId));
+      
+      if (removedNotification && !removedNotification.is_read) {
+        setUnreadCount(prev => Math.max(0, prev - 1));
       }
-
-      // Prepare batch notifications for members
-      const notifications = segmentMembers.map(member => ({
-        recipient_id: member.user_id,
-        title,
-        content,
-        priority,
-        category_id: categoryId,
-        metadata: {
-          ...metadata,
-          segment_id: segmentId,
-          is_segment_notification: true
-        }
-      }));
-
-      // Insert notifications in batches to avoid hitting limits
-      const batchSize = 100;
-      for (let i = 0; i < notifications.length; i += batchSize) {
-        const batch = notifications.slice(i, i + batchSize);
-        const { error: insertError } = await supabase
-          .from('notifications')
-          .insert(batch);
-
-        if (insertError) {
-          console.error(`Error sending notifications for batch ${i}:`, insertError);
-        }
-      }
-
-      toast({
-        title: "Success",
-        description: `Sent notification to ${notifications.length} segment members`,
-      });
-
-      return notifications.length;
-    } catch (error) {
-      console.error('Error sending segment notification:', error);
-      toast({
-        title: "Error",
-        description: "Failed to send segment notification",
-        variant: "destructive",
-      });
-      return 0;
+    } catch (error: any) {
+      console.error('Error deleting notification:', error);
     }
-  }, [toast]);
+  };
 
-  const sendMarketingNotification = useCallback(async (
-    campaignId: string,
-    segmentId?: string,
-    abTestInfo?: { variant: 'A' | 'B', distribution: number }
-  ) => {
+  const updatePreference = async (categoryId: string, isEnabled: boolean, channels: string[]) => {
+    if (!userId) return;
+    
     try {
-      // First get campaign details
-      const { data: campaign, error: campaignError } = await supabase
-        .from('event_marketing_campaigns')
-        .select('*')
-        .eq('id', campaignId)
-        .single();
-
-      if (campaignError) throw campaignError;
+      const existingPref = preferences.find(p => p.category_id === categoryId);
       
-      let title = campaign.name;
-      let content: string;
-      
-      // Parse target_audience from JSON if needed
-      let targetAudience = null;
-      try {
-        targetAudience = campaign.target_audience ? 
-          safeJsonToRecord(campaign.target_audience) : null;
-      } catch (e) {
-        console.error('Error parsing target_audience:', e);
-        targetAudience = null;
-      }
-      
-      // Handle A/B testing variations
-      if (abTestInfo && targetAudience?.abTest) {
-        const abTest = targetAudience.abTest;
-        content = abTestInfo.variant === 'A' ? abTest.variantA : abTest.variantB;
+      if (existingPref) {
+        // Update existing preference
+        const { error } = await supabase
+          .from('notification_preferences')
+          .update({ is_enabled: isEnabled, channels })
+          .eq('id', existingPref.id);
+          
+        if (error) throw error;
       } else {
-        content = campaign.description;
+        // Create new preference
+        const { error } = await supabase
+          .from('notification_preferences')
+          .insert({
+            user_id: userId,
+            category_id: categoryId,
+            is_enabled: isEnabled,
+            channels
+          });
+          
+        if (error) throw error;
       }
       
-      // Determine recipients based on segment
-      const targetSegmentId = segmentId || targetAudience?.segmentId;
-      
-      if (targetSegmentId) {
-        const sentCount = await sendSegmentNotification(
-          targetSegmentId,
+      // Refresh preferences
+      loadPreferences();
+    } catch (error: any) {
+      console.error('Error updating notification preference:', error);
+    }
+  };
+
+  const sendNotification = async (
+    recipientId: string, 
+    title: string, 
+    content: string, 
+    options: {
+      priority?: 'low' | 'medium' | 'high' | 'urgent';
+      categoryId?: string;
+      metadata?: Record<string, any>;
+    } = {}
+  ) => {
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .insert({
+          recipient_id: recipientId,
           title,
           content,
-          'medium',
-          undefined, // Use default category
-          { campaign_id: campaignId, marketing: true }
-        );
+          priority: options.priority || 'medium',
+          category_id: options.categoryId,
+          metadata: options.metadata ? JSON.stringify(options.metadata) : null
+        });
         
-        // Update campaign metrics - parse metrics from JSON if needed
-        if (sentCount > 0) {
-          // Get current metrics
-          const { data } = await supabase
-            .from('event_marketing_campaigns')
-            .select('metrics')
-            .eq('id', campaignId)
-            .single();
-            
-          // Parse existing metrics from JSON if needed
-          let currentMetrics = safeJsonToRecord(data?.metrics || {});
-          
-          // Initialize a properly structured metrics object with all required properties
-          const updatedMetrics: Record<string, any> = {
-            ...currentMetrics,
-            notifications_sent: ((currentMetrics.notifications_sent || 0) + sentCount),
-            // Initialize segments and abTest if they don't exist
-            segments: { ...(currentMetrics.segments || {}) },
-            abTest: { 
-              variantA: { ...(currentMetrics.abTest?.variantA || {}) },
-              variantB: { ...(currentMetrics.abTest?.variantB || {}) }
-            }
-          };
-          
-          // Initialize segment entry if needed
-          if (!updatedMetrics.segments[targetSegmentId]) {
-            updatedMetrics.segments[targetSegmentId] = {};
-          }
-          
-          // Update segment-specific metrics
-          updatedMetrics.segments[targetSegmentId].notifications_sent = 
-            ((updatedMetrics.segments[targetSegmentId]?.notifications_sent || 0) + sentCount);
-          
-          // If A/B testing, update those metrics too
-          if (abTestInfo) {
-            const variantKey = abTestInfo.variant === 'A' ? 'variantA' : 'variantB';
-            
-            // Update variant metrics
-            if (!updatedMetrics.abTest[variantKey]) {
-              updatedMetrics.abTest[variantKey] = {};
-            }
-            
-            updatedMetrics.abTest[variantKey].notifications_sent = 
-              ((updatedMetrics.abTest[variantKey]?.notifications_sent || 0) + sentCount);
-          }
-          
-          // Store metrics as JSON string
-          await supabase
-            .from('event_marketing_campaigns')
-            .update({ metrics: JSON.stringify(updatedMetrics) })
-            .eq('id', campaignId);
-        }
-        
-        return sentCount;
-      } else {
-        // If no segment, just return 0 - we don't send to everyone automatically
-        console.warn('No segment specified for marketing notification');
-        return 0;
-      }
-    } catch (error) {
-      console.error('Error sending marketing notification:', error);
-      toast({
-        title: "Error",
-        description: "Failed to send marketing notification",
-        variant: "destructive",
-      });
-      return 0;
+      if (error) throw error;
+      
+      return true;
+    } catch (error: any) {
+      console.error('Error sending notification:', error);
+      return false;
     }
-  }, [toast, sendSegmentNotification]);
+  };
+  
+  const broadcastNotification = async (
+    title: string, 
+    content: string, 
+    options: {
+      priority?: 'low' | 'medium' | 'high' | 'urgent';
+      categoryId?: string;
+      metadata?: Record<string, any>;
+      recipientFilter?: string; // SQL where clause for recipients, e.g. "user_type = 'admin'"
+    } = {}
+  ) => {
+    try {
+      // This would typically call an edge function or server API for broadcasting
+      // For demo purposes, we'll just log it
+      console.log('Broadcasting notification:', { title, content, options });
+      return true;
+    } catch (error: any) {
+      console.error('Error broadcasting notification:', error);
+      return false;
+    }
+  };
 
   return {
+    notifications,
+    unreadCount,
+    categories,
+    preferences,
+    isLoading,
     markAsRead,
-    updatePreferences,
-    sendSegmentNotification,
-    sendMarketingNotification
+    markAllAsRead,
+    deleteNotification,
+    updatePreference,
+    sendNotification,
+    broadcastNotification,
+    refresh: loadNotifications
   };
 };

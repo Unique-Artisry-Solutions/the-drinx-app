@@ -1,5 +1,5 @@
 
-// If this file doesn't exist yet, we'll create it with some necessary types
+// Event types with proper structure and all required fields
 
 export interface Event {
   id: string;
@@ -75,7 +75,7 @@ export interface EventMarketingCampaign {
     clicks: number;
     conversions: number;
     revenue: number;
-    open_rate?: number; // Added for MarketingTabContent
+    open_rate?: number;
     sources?: Record<string, {
       impressions: number;
       clicks: number;
@@ -84,10 +84,9 @@ export interface EventMarketingCampaign {
     }>;
   };
   target_audience?: Record<string, any>;
-  event_id?: string; // Added to fix the error
+  event_id?: string;
 }
 
-// Add missing types referenced in errors
 export type EventStatus = 'draft' | 'published' | 'cancelled' | 'completed';
 
 export interface EventAttendee {

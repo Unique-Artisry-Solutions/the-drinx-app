@@ -124,10 +124,8 @@ export const useEventMarketing = (eventId: string) => {
               revenue: 0
             }) };
             
-            if (metricName === 'impressions') metrics.impressions = (metrics.impressions || 0) + value;
-            if (metricName === 'clicks') metrics.clicks = (metrics.clicks || 0) + value;
-            if (metricName === 'conversions') metrics.conversions = (metrics.conversions || 0) + value;
-            if (metricName === 'revenue') metrics.revenue = (metrics.revenue || 0) + value;
+            metrics[metricName as keyof typeof metrics] = 
+              ((metrics[metricName as keyof typeof metrics] || 0) as number) + value;
             
             return { ...c, metrics };
           }

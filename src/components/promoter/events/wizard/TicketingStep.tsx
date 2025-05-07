@@ -1,13 +1,13 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
-import { v4 as uuidv4 } from 'uuid';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Trash2, GripVertical } from 'lucide-react';
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
+import { DragDropContext, Droppable, Draggable } from '@/components/ui/dnd/SimpleDragDrop';
 
 interface TicketType {
   id?: string;
@@ -52,7 +52,10 @@ const TicketingStep: React.FC<TicketingStepProps> = ({ onDataChange, initialData
 
   const updateTicket = (index: number, field: string, value: any) => {
     const updatedTicketTypes = [...ticketTypes];
-    updatedTicketTypes[index][field] = value;
+    updatedTicketTypes[index] = {
+      ...updatedTicketTypes[index],
+      [field]: value
+    };
     setTicketTypes(updatedTicketTypes);
   };
 
@@ -93,7 +96,7 @@ const TicketingStep: React.FC<TicketingStepProps> = ({ onDataChange, initialData
           {(provided) => (
             <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-4">
               {ticketTypes.map((ticket, index) => (
-                <Draggable key={ticket.id || index.toString()} draggableId={ticket.id || index.toString()} index={index}>
+                <Draggable key={ticket.id || `ticket-${index}`} draggableId={ticket.id || `ticket-${index}`} index={index}>
                   {(provided) => (
                     <div
                       ref={provided.innerRef}

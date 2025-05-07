@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import Layout from '@/components/Layout';
 import { useEventQueries } from '@/hooks/events/useEventQueries';
@@ -5,6 +6,7 @@ import EventCard from '@/components/promoter/events/EventCard';
 import { Button } from '@/components/ui/button';
 import { Calendar, Filter } from 'lucide-react';
 import { useAuth } from '@/contexts/auth';
+import { EventStatus } from '@/types/EventTypes';
 
 const EventsPage = () => {
   const { events, isLoading } = useEventQueries();
@@ -105,7 +107,7 @@ const EventsPage = () => {
                 : 'TBD';
               
               // Calculate registered attendees safely
-              const attendeeCount = 0; // Default to 0 since we don't have this data yet
+              const attendeeCount = event.attendees?.registered || 0;
               
               // Distance is also not available yet
               const distance = undefined;
