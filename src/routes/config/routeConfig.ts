@@ -39,9 +39,11 @@ export function createLazyRoute(
   importFunc: () => Promise<{ default: React.ComponentType<any> }>,
   metadata?: RouteMetadata
 ): AppRouteObject {
+  // Get the component from lazyLoad, then create a JSX element with it
+  const LazyComponent = lazyLoad(importFunc);
   return {
     path,
-    element: lazyLoad(importFunc),
+    element: <LazyComponent />,  // Convert component to ReactNode using JSX
     metadata
   };
 }
