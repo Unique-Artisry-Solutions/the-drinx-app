@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { CampaignSegmentMapping, CampaignSegmentAnalytics } from '@/types/CampaignSegmentTypes';
+import { CampaignSegmentMapping, CampaignSegmentAnalytics, SegmentSelection } from '@/types/CampaignSegmentTypes';
 import { safeJsonToRecord } from '@/utils/typeGuards';
 
 export const fetchCampaignSegmentMappings = async (
@@ -15,7 +15,11 @@ export const fetchCampaignSegmentMappings = async (
       
     if (error) throw error;
     
-    return data || [];
+    // Convert JSON metrics to Record<string, any>
+    return (data || []).map(item => ({
+      ...item,
+      metrics: safeJsonToRecord(item.metrics)
+    })) as CampaignSegmentMapping[];
   } catch (err: any) {
     console.error('Error fetching campaign segment mappings:', err);
     throw new Error(`Failed to fetch segment mappings: ${err.message}`);
@@ -33,13 +37,21 @@ export const getAvailableSegmentsForCampaign = async (
     // Get all audience segments for this event
     const { data: segments, error: segmentError } = await supabase
       .from('audience_segments')
-      .select('id, name, description, member_count')
+      .select('id, name, description')
       .eq('event_id', eventId)
       .eq('is_active', true);
       
     if (segmentError) throw segmentError;
     
     if (!segments) return [];
+    
+    // Process segments and add member count property
+    const processedSegments = segments.map(segment => ({
+      id: segment.id,
+      name: segment.name,
+      description: segment.description || '',
+      memberCount: 0 // Default value
+    }));
     
     // If a campaignId is provided, exclude segments already assigned to this campaign
     if (campaignId) {
@@ -53,23 +65,11 @@ export const getAvailableSegmentsForCampaign = async (
       
       const assignedSegmentIds = new Set(existingMappings?.map(m => m.segment_id) || []);
       
-      return segments
-        .filter(s => !assignedSegmentIds.has(s.id))
-        .map(s => ({
-          id: s.id,
-          name: s.name,
-          description: s.description || '',
-          memberCount: s.member_count || 0
-        }));
+      return processedSegments.filter(s => !assignedSegmentIds.has(s.id));
     }
     
     // Return all segments
-    return segments.map(s => ({
-      id: s.id,
-      name: s.name,
-      description: s.description || '',
-      memberCount: s.member_count || 0
-    }));
+    return processedSegments;
   } catch (err: any) {
     console.error('Error getting available segments:', err);
     return [];
@@ -78,12 +78,7 @@ export const getAvailableSegmentsForCampaign = async (
 
 export const assignSegmentsToCampaign = async (
   campaignId: string,
-  segments: Array<{
-    id: string;
-    allocation?: number;
-    isControlGroup?: boolean;
-    description?: string;
-  }>
+  segments: SegmentSelection[]
 ): Promise<CampaignSegmentMapping[]> => {
   try {
     // First, get existing mappings
@@ -143,7 +138,11 @@ export const assignSegmentsToCampaign = async (
       
     if (refetchError) throw refetchError;
     
-    return updatedMappings || [];
+    // Convert JSON metrics to Record<string, any>
+    return (updatedMappings || []).map(item => ({
+      ...item,
+      metrics: safeJsonToRecord(item.metrics)
+    })) as CampaignSegmentMapping[];
   } catch (err: any) {
     console.error('Error assigning segments to campaign:', err);
     throw new Error(`Failed to assign segments: ${err.message}`);

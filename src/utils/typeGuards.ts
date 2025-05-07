@@ -1,5 +1,5 @@
 
-import { EventLocation, EventContactInfo } from '@/types/EventTypes';
+import { EventLocation, EventContactInfo, ABTestResult, ReferralSource } from '@/types/EventTypes';
 
 type Json = string | number | boolean | null | { [key: string]: Json } | Json[];
 
@@ -142,4 +142,116 @@ export function toAttendeeStatus(
   }
   
   return defaultStatus;
+}
+
+/**
+ * Safely converts a JSON string or object to ABTestResult with fallback defaults
+ * @param input JSON string or already parsed object
+ * @returns ABTestResult object
+ */
+export function safeJsonToABTestResult(
+  input: string | object | null | undefined
+): ABTestResult {
+  const defaultResult: ABTestResult = {
+    variants: [],
+    winner: null,
+    variantA: undefined,
+    variantB: undefined,
+    improvement: 0,
+    significantResult: false
+  };
+  
+  if (!input) return defaultResult;
+  
+  try {
+    let resultData: any;
+    
+    if (typeof input === 'string') {
+      try {
+        resultData = JSON.parse(input);
+      } catch (e) {
+        return defaultResult;
+      }
+    } else if (typeof input === 'object') {
+      resultData = input;
+    } else {
+      return defaultResult;
+    }
+    
+    return {
+      variants: resultData.variants || [],
+      winner: resultData.winner || null,
+      variantA: resultData.variantA,
+      variantB: resultData.variantB,
+      improvement: resultData.improvement !== undefined ? resultData.improvement : 0,
+      significantResult: resultData.significantResult || false
+    };
+  } catch (error) {
+    console.error('Error converting to ABTestResult:', error);
+    return defaultResult;
+  }
+}
+
+/**
+ * Adapter function to convert between backend and frontend ReferralSource formats
+ * @param input Backend referral source data
+ * @returns Frontend-compatible ReferralSource object
+ */
+export function adaptReferralSource(input: any): ReferralSource {
+  if (!input) return { source: '', count: 0, percentage: 0 };
+  
+  // If data is already in frontend format
+  if (input.source !== undefined) {
+    return {
+      source: input.source || '',
+      count: input.count || 0,
+      percentage: input.percentage || 0,
+      name: input.source || '',
+      visits: input.count || 0,
+      conversions: 0,
+      conversionRate: 0
+    };
+  }
+  
+  // If data is in backend format
+  if (input.name !== undefined) {
+    return {
+      source: input.name || '',
+      count: input.visits || 0,
+      percentage: input.conversionRate || 0,
+      name: input.name || '',
+      visits: input.visits || 0,
+      conversions: input.conversions || 0,
+      conversionRate: input.conversionRate || 0
+    };
+  }
+  
+  // Default empty object with all properties
+  return {
+    source: '',
+    count: 0,
+    percentage: 0,
+    name: '',
+    visits: 0,
+    conversions: 0,
+    conversionRate: 0
+  };
+}
+
+/**
+ * Type guard function to check if a value is a valid notification channel
+ * @param value Value to check
+ * @returns Boolean indicating if value is a valid notification channel
+ */
+export function isNotificationChannel(value: string): value is 'email' | 'in_app' | 'push' {
+  return ['email', 'in_app', 'push'].includes(value);
+}
+
+/**
+ * Safely convert string array to notification channels array
+ * @param channels Array of strings to convert
+ * @returns Array of valid notification channels
+ */
+export function toNotificationChannels(channels: string[]): ('email' | 'in_app' | 'push')[] {
+  return channels.filter(isNotificationChannel);
 }

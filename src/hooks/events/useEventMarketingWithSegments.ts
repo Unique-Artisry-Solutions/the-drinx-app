@@ -25,7 +25,7 @@ import {
 
 // Import audience segment hooks
 import { useAudienceSegments } from '@/hooks/useAudienceSegments';
-import { SegmentSelection } from '@/components/events/CampaignSegmentPanel';
+import { SegmentSelection } from '@/types/CampaignSegmentTypes';
 
 export const useEventMarketingWithSegments = (eventId: string) => {
   const [campaigns, setCampaigns] = useState<EventMarketingCampaign[]>([]);
@@ -67,7 +67,7 @@ export const useEventMarketingWithSegments = (eventId: string) => {
     setIsLoading(true);
     try {
       // Ensure required fields are set
-      const completeMetrics: EventMarketingCampaign['metrics'] = {
+      const completeMetrics = {
         impressions: 0,
         clicks: 0,
         conversions: 0,
@@ -167,10 +167,17 @@ export const useEventMarketingWithSegments = (eventId: string) => {
     }
   };
 
-  // Track campaign metrics
-  const trackMetric = async (campaignId: string, metricName: string, value: number = 1) => {
+  // Track campaign metrics - updated signature to match service function
+  const trackMetric = async (
+    campaignId: string, 
+    metricName: string, 
+    value: number = 1, 
+    source?: string,
+    metadata?: Record<string, any>
+  ) => {
     try {
-      await trackCampaignMetric(campaignId, metricName, value);
+      // Call the service function with the appropriate parameters
+      await trackCampaignMetric(campaignId, metricName, value, source, metadata);
       
       // Update local state to reflect the new metric value
       setCampaigns(prev => 
@@ -182,7 +189,18 @@ export const useEventMarketingWithSegments = (eventId: string) => {
             // Safely update the specific metric
             if (metricName in updatedMetrics) {
               updatedMetrics[metricName as keyof typeof updatedMetrics] = 
-                ((updatedMetrics[metricName as keyof typeof updatedMetrics] || 0) as number) + value;
+                (updatedMetrics[metricName as keyof typeof updatedMetrics] as number) + value;
+            }
+            
+            // Update source metrics if applicable
+            if (source && updatedMetrics.sources) {
+              if (!updatedMetrics.sources[source]) {
+                updatedMetrics.sources[source] = { impressions: 0, clicks: 0, conversions: 0, revenue: 0 };
+              }
+              
+              if (metricName in updatedMetrics.sources[source]) {
+                updatedMetrics.sources[source][metricName] += value;
+              }
             }
             
             return { ...c, metrics: updatedMetrics };
@@ -199,7 +217,18 @@ export const useEventMarketingWithSegments = (eventId: string) => {
           const updatedMetrics = { ...prev.metrics };
           if (metricName in updatedMetrics) {
             updatedMetrics[metricName as keyof typeof updatedMetrics] = 
-              ((updatedMetrics[metricName as keyof typeof updatedMetrics] || 0) as number) + value;
+              (updatedMetrics[metricName as keyof typeof updatedMetrics] as number) + value;
+          }
+          
+          // Update source metrics if applicable
+          if (source && updatedMetrics.sources) {
+            if (!updatedMetrics.sources[source]) {
+              updatedMetrics.sources[source] = { impressions: 0, clicks: 0, conversions: 0, revenue: 0 };
+            }
+            
+            if (metricName in updatedMetrics.sources[source]) {
+              updatedMetrics.sources[source][metricName] += value;
+            }
           }
           
           return { ...prev, metrics: updatedMetrics };
@@ -311,17 +340,22 @@ export const useEventMarketingWithSegments = (eventId: string) => {
     }
   };
   
-  // Helper function to create a notification for a segment
-  const createSegmentNotification = async (segmentId: string, title: string, content: string) => {
+  // Helper function to create a notification for a segment - updated signature
+  const createSegmentNotification = async (
+    segmentId: string, 
+    title: string, 
+    content: string,
+    priority: 'low' | 'medium' | 'high' | 'urgent' = 'medium'
+  ) => {
     try {
-      return await createSegmentBasedNotification(segmentId, title, content, eventId);
+      return await createSegmentBasedNotification(segmentId, title, content, eventId, priority);
     } catch (err: any) {
       console.error('Failed to create segment notification:', err);
       return false;
     }
   };
   
-  // Get A/B test results from campaigns
+  // Get A/B test results from campaigns - now properly returns the full ABTestResult
   const getABTestResults = async (campaignId: string) => {
     try {
       return await getCampaignABTestResults(campaignId);

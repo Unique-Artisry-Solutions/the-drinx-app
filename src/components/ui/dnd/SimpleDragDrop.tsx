@@ -47,15 +47,19 @@ export const Draggable: React.FC<DraggableProps> = ({ draggableId, index, childr
       e.dataTransfer.setData('text/plain', `${draggableId}:${index}`);
       e.dataTransfer.effectAllowed = 'move';
       
-      if (e.currentTarget instanceof HTMLElement) {
+      // Type guard to ensure we're working with an HTMLElement
+      const target = e.currentTarget;
+      if (target instanceof HTMLElement) {
         setTimeout(() => {
-          e.currentTarget.style.opacity = '0.5';
+          target.style.opacity = '0.5';
         }, 0);
       }
     },
     onDragEnd: (e: React.DragEvent) => {
-      if (e.currentTarget instanceof HTMLElement) {
-        e.currentTarget.style.opacity = '1';
+      // Type guard to ensure we're working with an HTMLElement
+      const target = e.currentTarget;
+      if (target instanceof HTMLElement) {
+        target.style.opacity = '1';
       }
     },
     style: { cursor: 'grab' }

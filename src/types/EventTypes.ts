@@ -154,7 +154,21 @@ export interface TicketAnalyticsData {
   total?: number; // Added for RealTimeSalesTracker
 }
 
-// For A/B testing and campaign analytics
+// Define ReferralSource interface with both frontend and backend properties
+export interface ReferralSource {
+  // Backend properties
+  name?: string;
+  visits?: number;
+  conversions?: number;
+  conversionRate?: number;
+  
+  // Frontend properties
+  source?: string;
+  count?: number;
+  percentage?: number;
+}
+
+// For A/B testing and campaign analytics - expanded with all required properties
 export interface ABTestResult {
   variants: { id: string; name: string; conversionRate: number }[];
   winner: string | null;

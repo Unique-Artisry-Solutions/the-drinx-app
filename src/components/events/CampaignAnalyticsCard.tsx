@@ -1,8 +1,10 @@
+
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell } from 'recharts';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import { ExternalLink } from 'lucide-react';
 import { getCampaignAnalytics } from '@/services/eventAnalyticsService';
+import { adaptReferralSource } from '@/utils/typeGuards';
 
 interface CampaignAnalyticsCardProps {
   campaignId: string;
@@ -10,8 +12,6 @@ interface CampaignAnalyticsCardProps {
   campaignType: string;
   eventId: string;
 }
-
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
 export const CampaignAnalyticsCard: React.FC<CampaignAnalyticsCardProps> = ({ 
   campaignId, 

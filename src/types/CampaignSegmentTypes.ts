@@ -8,7 +8,7 @@ export interface CampaignSegmentMapping {
   is_active: boolean;
   created_at: string;
   updated_at: string;
-  metrics?: Record<string, any>;
+  metrics: Record<string, any>;
   description?: string;
 }
 
@@ -43,3 +43,15 @@ export interface CampaignSegmentAnalytics {
 }
 
 export type InteractionType = 'impression' | 'click' | 'conversion';
+
+// This interface aligns with the expected structure in AttendeeSegmentsTab
+export interface SegmentSelection {
+  id: string;
+  name: string;
+  allocation?: number;
+  isControlGroup?: boolean;
+  description?: string;
+}
+
+// Notification channel types for type safety
+export type NotificationChannel = 'email' | 'in_app' | 'push';

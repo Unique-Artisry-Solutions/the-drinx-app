@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { EventMarketingCampaign } from '@/types/EventTypes';
+import { EventMarketingCampaign, ABTestResult } from '@/types/EventTypes';
 import { safeJsonToRecord } from '@/utils/typeGuards';
 
 export const fetchEventCampaigns = async (eventId: string): Promise<EventMarketingCampaign[]> => {
@@ -185,7 +185,9 @@ export const deleteMarketingCampaign = async (id: string): Promise<void> => {
 export const trackCampaignMetric = async (
   campaignId: string, 
   metricName: string, 
-  value: number = 1
+  value: number = 1,
+  source?: string,
+  metadata?: Record<string, any>
 ): Promise<void> => {
   try {
     // Get current metrics
@@ -217,6 +219,31 @@ export const trackCampaignMetric = async (
       metrics[metricName] = ((metrics[metricName] || 0) + value);
     } else {
       metrics[metricName] = value;
+    }
+    
+    // If source is provided, update the source-specific metrics
+    if (source) {
+      if (!metrics.sources) {
+        metrics.sources = {};
+      }
+      
+      if (!metrics.sources[source]) {
+        metrics.sources[source] = {
+          impressions: 0,
+          clicks: 0,
+          conversions: 0,
+          revenue: 0
+        };
+      }
+      
+      if (metricName in metrics.sources[source]) {
+        metrics.sources[source][metricName] = (metrics.sources[source][metricName] || 0) + value;
+      }
+    }
+    
+    // Include any additional metadata if provided
+    if (metadata) {
+      metrics.metadata = { ...(metrics.metadata || {}), ...metadata };
     }
     
     // Save updated metrics as JSON
@@ -269,7 +296,8 @@ export const createSegmentBasedNotification = async (
   segmentId: string,
   title: string,
   content: string,
-  eventId: string
+  eventId: string,
+  priority: 'low' | 'medium' | 'high' | 'urgent' = 'medium'
 ): Promise<boolean> => {
   try {
     // Get users in the segment
@@ -291,7 +319,7 @@ export const createSegmentBasedNotification = async (
       content: content,
       metadata: JSON.stringify({ eventId, segmentId }),
       recipient_type: 'individual',
-      priority: 'medium'
+      priority: priority
     }));
 
     const { error } = await supabase
@@ -309,10 +337,7 @@ export const createSegmentBasedNotification = async (
 // Function to handle email campaign AB test results
 export const getCampaignABTestResults = async (
   campaignId: string
-): Promise<{
-  variants: { id: string; name: string; conversionRate: number }[];
-  winner: string | null;
-}> => {
+): Promise<ABTestResult> => {
   try {
     const { data, error } = await supabase
       .from('campaign_segment_analytics')
@@ -322,7 +347,14 @@ export const getCampaignABTestResults = async (
     if (error) throw error;
     
     if (!data || data.length === 0) {
-      return { variants: [], winner: null };
+      return { 
+        variants: [], 
+        winner: null,
+        variantA: undefined,
+        variantB: undefined,
+        improvement: 0,
+        significantResult: false
+      };
     }
     
     const variants = data.map(variant => ({
@@ -342,12 +374,37 @@ export const getCampaignABTestResults = async (
       }
     });
     
+    let variantA = undefined;
+    let variantB = undefined;
+    let improvement = 0;
+    
+    // Set up A/B variants for comparison
+    if (variants.length >= 2) {
+      variantA = variants[0];
+      variantB = variants[1];
+      
+      if (variantA && variantB && variantA.conversionRate > 0) {
+        improvement = ((variantB.conversionRate - variantA.conversionRate) / variantA.conversionRate) * 100;
+      }
+    }
+    
     return {
       variants,
-      winner: variants.length > 0 ? variants[winnerIndex].id : null
+      winner: variants.length > 0 ? variants[winnerIndex].id : null,
+      variantA,
+      variantB,
+      improvement,
+      significantResult: Math.abs(improvement) > 10 // Simple rule for significance
     };
   } catch (err: any) {
     console.error('Error fetching AB test results:', err);
-    return { variants: [], winner: null };
+    return { 
+      variants: [], 
+      winner: null,
+      variantA: undefined,
+      variantB: undefined,
+      improvement: 0,
+      significantResult: false
+    };
   }
 };
