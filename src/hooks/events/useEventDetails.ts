@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Event, EventLocation, EventContactInfo } from '@/types/EventTypes';
+import { Event, EventLocation, EventContactInfo, EventTicketType } from '@/types/EventTypes';
 import { useToast } from '@/hooks/use-toast';
 import { safeJsonToType, safeJsonToRecord } from '@/utils/typeGuards';
 
@@ -76,6 +76,27 @@ export const useEventDetails = (eventId: string) => {
         );
 
         const customSettings = safeJsonToRecord(eventData.custom_settings);
+        
+        // Transform event_ticket_types to include computed properties
+        const ticketTypes: EventTicketType[] = eventData.event_ticket_types.map((ticket: any) => {
+          // Calculate sold tickets for each type
+          const soldTickets = attendeesData 
+            ? attendeesData.filter(a => 
+                a.ticket_type_id === ticket.id && 
+                a.status !== 'cancelled'
+              ).length 
+            : 0;
+          
+          return {
+            id: ticket.id,
+            name: ticket.name,
+            description: ticket.description || '',
+            price: ticket.price,
+            quantity: ticket.quantity,
+            sold: soldTickets,
+            available: ticket.quantity - soldTickets
+          };
+        });
 
         // Format the event data
         const formattedEvent: Event = {
@@ -105,7 +126,7 @@ export const useEventDetails = (eventId: string) => {
             checked_in: checkedInCount,
             capacity: eventData.capacity || 0
           },
-          ticketTypes: eventData.event_ticket_types,
+          ticketTypes: ticketTypes,
           distance: undefined,
           is_public: eventData.is_public !== false,
           event_url: eventData.event_url,

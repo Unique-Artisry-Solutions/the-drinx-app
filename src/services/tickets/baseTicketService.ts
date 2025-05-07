@@ -1,157 +1,123 @@
 
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { EventAttendee } from '@/types/EventTypes';
+import { toAttendeeStatus } from '@/utils/typeGuards';
 
-/**
- * Processes a ticket scan for event check-in
- */
-export const processTicketScan = async (ticketCode: string): Promise<{
-  success: boolean;
-  message: string;
-  attendee?: EventAttendee;
-}> => {
-  try {
-    // Validate the ticket code
-    const validationResult = await validateTicketCode(ticketCode);
-    
-    if (!validationResult.valid) {
-      return {
-        success: false,
-        message: validationResult.message,
-        attendee: validationResult.attendee
-      };
-    }
-    
-    // If validation passed, update the attendee status
-    if (validationResult.attendee) {
-      const { id: attendeeId, event_id: eventId } = validationResult.attendee;
-      
-      // Update the attendee status to checked_in
-      const { data: attendeeData, error: attendeeError } = await supabase
-        .from('event_attendees')
-        .update({
-          status: 'checked_in',
-          checked_in_at: new Date().toISOString()
-        })
-        .eq('id', attendeeId)
-        .select()
-        .single();
-        
-      if (attendeeError) {
-        throw attendeeError;
-      }
-      
-      // Create a check-in record
-      const { error: checkInError } = await supabase
-        .from('event_check_ins')
-        .insert({
-          event_id: eventId,
-          attendee_id: attendeeId,
-        });
-        
-      if (checkInError) {
-        console.error('Error creating check-in record:', checkInError);
-      }
-      
-      // Convert status to the correct enum type and properly handle custom_fields
-      const typedAttendeeData: EventAttendee = {
-        ...attendeeData,
-        status: attendeeData.status as "registered" | "checked_in" | "cancelled" | "no_show",
-        custom_fields: attendeeData.custom_fields as Record<string, any> || {}
-      };
-      
-      return {
-        success: true,
-        message: 'Attendee checked in successfully',
-        attendee: typedAttendeeData
-      };
-    }
-    
-    return {
-      success: false,
-      message: 'Failed to process ticket'
-    };
-  } catch (error) {
-    console.error('Error processing ticket scan:', error);
-    throw new Error('Failed to process ticket scan');
-  }
-};
-
-/**
- * Validates a ticket code
- */
-export const validateTicketCode = async (
+export const processTicketScan = async (
   ticketCode: string
-): Promise<{
-  valid: boolean;
-  message: string;
-  attendee?: EventAttendee;
-}> => {
+): Promise<{ success: boolean; message: string; attendee?: EventAttendee }> => {
   try {
-    // Find the attendee with this ticket code
-    const { data: attendee, error } = await supabase
+    // Look up the ticket code
+    const { data, error } = await supabase
       .from('event_attendees')
-      .select(`
-        *,
-        event:event_id (
-          id,
-          name,
-          date,
-          time,
-          venue_id
-        )
-      `)
+      .select('*, event:event_id(name, status)')
       .eq('ticket_code', ticketCode)
       .single();
 
     if (error) {
       return {
-        valid: false,
+        success: false,
         message: 'Invalid ticket code'
       };
     }
 
-    if (!attendee) {
+    if (!data) {
       return {
-        valid: false,
+        success: false,
         message: 'Ticket not found'
       };
     }
 
-    // Check if already checked in
-    if (attendee.status === 'checked_in') {
+    // Check if the ticket is already used
+    if (data.status === 'checked_in') {
       return {
-        valid: false,
-        message: 'Ticket already used',
-        attendee: attendee as EventAttendee
+        success: false,
+        message: 'Ticket has already been used',
+        attendee: {
+          id: data.id,
+          event_id: data.event_id,
+          user_id: data.user_id || undefined,
+          email: data.email || undefined,
+          name: data.name || undefined,
+          ticket_type_id: data.ticket_type_id || undefined,
+          purchase_date: data.purchase_date,
+          checked_in_at: data.checked_in_at,
+          status: toAttendeeStatus(data.status),
+          ticket_code: data.ticket_code,
+          notes: data.notes,
+          custom_fields: data.custom_fields || {}
+        }
       };
     }
 
-    // Check if cancelled
-    if (attendee.status === 'cancelled') {
+    // Check if the ticket is cancelled
+    if (data.status === 'cancelled') {
       return {
-        valid: false,
-        message: 'Ticket has been cancelled',
-        attendee: attendee as EventAttendee
+        success: false,
+        message: 'This ticket has been cancelled',
+        attendee: {
+          id: data.id,
+          event_id: data.event_id,
+          user_id: data.user_id || undefined,
+          email: data.email || undefined,
+          name: data.name || undefined,
+          ticket_type_id: data.ticket_type_id || undefined,
+          purchase_date: data.purchase_date,
+          checked_in_at: data.checked_in_at || undefined,
+          status: toAttendeeStatus(data.status),
+          ticket_code: data.ticket_code,
+          notes: data.notes,
+          custom_fields: data.custom_fields || {}
+        }
       };
     }
 
-    // Valid ticket
+    // Check if the event is valid
+    if (data.event?.status === 'cancelled') {
+      return {
+        success: false,
+        message: 'This event has been cancelled',
+        attendee: {
+          id: data.id,
+          event_id: data.event_id,
+          user_id: data.user_id || undefined,
+          email: data.email || undefined,
+          name: data.name || undefined,
+          ticket_type_id: data.ticket_type_id || undefined,
+          purchase_date: data.purchase_date,
+          checked_in_at: data.checked_in_at || undefined,
+          status: toAttendeeStatus(data.status),
+          ticket_code: data.ticket_code,
+          notes: data.notes,
+          custom_fields: data.custom_fields || {}
+        }
+      };
+    }
+
+    // All validations passed - the ticket is valid
     return {
-      valid: true,
-      message: 'Valid ticket',
-      attendee: attendee as EventAttendee
+      success: true,
+      message: `Valid ticket for ${data.name || 'attendee'} - ${data.event?.name || 'event'}`,
+      attendee: {
+        id: data.id,
+        event_id: data.event_id,
+        user_id: data.user_id || undefined,
+        email: data.email || undefined,
+        name: data.name || undefined,
+        ticket_type_id: data.ticket_type_id || undefined,
+        purchase_date: data.purchase_date,
+        checked_in_at: data.checked_in_at || undefined,
+        status: toAttendeeStatus(data.status),
+        ticket_code: data.ticket_code,
+        notes: data.notes,
+        custom_fields: data.custom_fields || {}
+      }
     };
   } catch (error) {
-    console.error('Error validating ticket:', error);
+    console.error("Error processing ticket scan:", error);
     return {
-      valid: false,
-      message: 'Error validating ticket'
+      success: false,
+      message: 'An error occurred while processing the ticket'
     };
   }
-};
-
-// Basic ticket service functionality
-export const createTicket = async () => {
-  // Implementation details to be added as needed
 };

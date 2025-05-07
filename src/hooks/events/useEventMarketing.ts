@@ -120,8 +120,18 @@ export const useEventMarketing = (eventId: string) => {
       setCampaigns(prev => 
         prev.map(c => {
           if (c.id === campaignId) {
-            const metrics = { ...(c.metrics || {}) };
-            metrics[metricName] = (metrics[metricName] || 0) + value;
+            const metrics = { ...(c.metrics || {
+              impressions: 0,
+              clicks: 0,
+              conversions: 0,
+              revenue: 0
+            }) };
+            
+            if (metricName === 'impressions') metrics.impressions = (metrics.impressions || 0) + value;
+            if (metricName === 'clicks') metrics.clicks = (metrics.clicks || 0) + value;
+            if (metricName === 'conversions') metrics.conversions = (metrics.conversions || 0) + value;
+            if (metricName === 'revenue') metrics.revenue = (metrics.revenue || 0) + value;
+            
             return { ...c, metrics };
           }
           return c;

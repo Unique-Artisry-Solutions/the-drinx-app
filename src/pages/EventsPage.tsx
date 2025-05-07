@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/auth';
 const EventsPage = () => {
   const { events, isLoading } = useEventQueries();
   const [filter, setFilter] = useState('all'); // all, upcoming, past
+  const [statusFilter, setStatusFilter] = useState<EventStatus | undefined>(undefined);
   const { user } = useAuth();
   
   // Filter events based on selected filter
@@ -27,6 +28,31 @@ const EventsPage = () => {
         return events;
     }
   }, [events, filter]);
+
+  const handleStatusFilter = (status: string) => {
+    // Convert string status to EventStatus type
+    let eventStatus: EventStatus | undefined;
+    
+    switch (status) {
+      case 'draft':
+        eventStatus = 'draft';
+        break;
+      case 'published':
+        eventStatus = 'published';
+        break;
+      case 'cancelled':
+        eventStatus = 'cancelled';
+        break;
+      case 'completed':
+        eventStatus = 'completed';
+        break;
+      default:
+        eventStatus = undefined;
+        break;
+    }
+    
+    setStatusFilter(eventStatus);
+  };
 
   return (
     <Layout>

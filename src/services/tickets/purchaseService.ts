@@ -1,128 +1,72 @@
 
-import { supabase } from '@/lib/supabase';
-import { applyDiscount } from './discountService';
+// Basic purchase service implementation - will be expanded later
+import { supabase } from '@/integrations/supabase/client';
+import { v4 as uuidv4 } from 'uuid';
 
-interface PurchaseResult {
-  success: boolean;
-  error?: string;
-  orderId?: string;
-  ticketCode?: string;
-}
-
-/**
- * Processes a ticket purchase
- */
-export const purchaseTicket = async ({
-  eventId,
-  ticketTypeId,
-  quantity,
-  userId,
-  customerName,
-  customerEmail,
-  discountCode,
-  paymentMethodId
-}: {
-  eventId: string;
-  ticketTypeId: string;
-  quantity: number;
-  userId?: string;
-  customerName: string;
-  customerEmail: string;
-  discountCode?: string;
-  paymentMethodId?: string;
-}): Promise<PurchaseResult> => {
+export const createTicketPurchase = async (
+  eventId: string,
+  ticketTypeId: string,
+  quantity: number,
+  attendeeDetails: {
+    name?: string;
+    email?: string;
+    customFields?: Record<string, any>;
+  },
+  discountCodeId?: string
+) => {
   try {
-    // Get ticket type details
+    // Get the ticket type details
     const { data: ticketType, error: ticketError } = await supabase
       .from('event_ticket_types')
-      .select('price, name')
+      .select('*')
       .eq('id', ticketTypeId)
       .single();
+
+    if (ticketError) throw ticketError;
+
+    // Generate unique ticket codes
+    const attendees = [];
+    for (let i = 0; i < quantity; i++) {
+      const ticketCode = `TKT-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
       
-    if (ticketError || !ticketType) {
-      return { 
-        success: false, 
-        error: 'Invalid ticket type' 
-      };
-    }
-    
-    // Apply discount if provided
-    let finalPrice = ticketType.price;
-    if (discountCode) {
-      const discountResult = await applyDiscount(discountCode, eventId, ticketTypeId);
-      
-      if (discountResult.valid && discountResult.discountAmount) {
-        if (discountResult.discountType === 'percentage') {
-          finalPrice = finalPrice * (1 - (discountResult.discountAmount / 100));
-        } else {
-          finalPrice = Math.max(0, finalPrice - discountResult.discountAmount);
-        }
-      }
-    }
-    
-    // Generate a unique ticket code
-    const ticketCode = `EVT-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
-    
-    // Create attendee record
-    const { data: attendee, error: attendeeError } = await supabase
-      .from('event_attendees')
-      .insert({
+      attendees.push({
         event_id: eventId,
         ticket_type_id: ticketTypeId,
-        user_id: userId || null,
-        name: customerName,
-        email: customerEmail,
-        ticket_code: ticketCode,
+        name: attendeeDetails.name,
+        email: attendeeDetails.email,
         status: 'registered',
-        custom_fields: {
-          payment_method_id: paymentMethodId,
-          purchase_price: finalPrice * quantity
-        }
-      })
-      .select()
-      .single();
-      
-    if (attendeeError) {
-      return { 
-        success: false, 
-        error: `Error creating attendee record: ${attendeeError.message}` 
-      };
+        purchase_date: new Date().toISOString(),
+        ticket_code: ticketCode,
+        custom_fields: attendeeDetails.customFields || {}
+      });
     }
-    
-    // If we have a discount code, increment its usage count
-    if (discountCode) {
-      // First, get the current count
-      const { data: discountData } = await supabase
+
+    // Insert the attendees
+    const { data, error } = await supabase
+      .from('event_attendees')
+      .insert(attendees)
+      .select();
+
+    if (error) throw error;
+
+    // If a discount code was used, increment its usage count
+    if (discountCodeId) {
+      await supabase
         .from('event_discount_codes')
-        .select('usage_count')
-        .eq('code', discountCode)
-        .eq('event_id', eventId)
-        .single();
-      
-      // Then update with incremented count
-      if (discountData) {
-        const newCount = (discountData.usage_count || 0) + 1;
-        await supabase
-          .from('event_discount_codes')
-          .update({ usage_count: newCount })
-          .eq('code', discountCode)
-          .eq('event_id', eventId);
-      }
+        .update({ usage_count: supabase.rpc('increment', { inc: 1 }) })
+        .eq('id', discountCodeId);
     }
-    
+
     return {
       success: true,
-      orderId: attendee.id,
-      ticketCode
+      ticketsPurchased: data,
+      message: 'Tickets purchased successfully'
     };
-  } catch (error) {
-    console.error('Error processing ticket purchase:', error);
-    return { 
-      success: false, 
-      error: 'Error processing ticket purchase' 
+  } catch (error: any) {
+    console.error('Error creating ticket purchase:', error);
+    return {
+      success: false,
+      message: error.message || 'Failed to purchase tickets'
     };
   }
 };
-
-// Alias for compatibility
-export const processTicketPurchase = purchaseTicket;

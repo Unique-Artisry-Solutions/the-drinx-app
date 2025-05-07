@@ -15,7 +15,7 @@ export interface Event {
   };
   image_url?: string;
   promotional_materials?: string[];
-  status: string;
+  status: EventStatus;
   created_by: string;
   created_at?: string;
   updated_at?: string;
@@ -73,6 +73,7 @@ export interface EventMarketingCampaign {
     clicks: number;
     conversions: number;
     revenue: number;
+    open_rate?: number; // Added for MarketingTabContent
     sources?: Record<string, {
       impressions: number;
       clicks: number;
@@ -82,3 +83,62 @@ export interface EventMarketingCampaign {
   };
   target_audience?: Record<string, any>;
 }
+
+// Add missing types referenced in errors
+export type EventStatus = 'draft' | 'published' | 'cancelled' | 'completed';
+
+export interface EventAttendee {
+  id?: string;
+  event_id: string;
+  user_id?: string;
+  email?: string;
+  name?: string;
+  ticket_type_id?: string;
+  purchase_date: string;
+  checked_in_at?: string;
+  status: 'registered' | 'checked_in' | 'cancelled' | 'no_show';
+  ticket_code?: string;
+  notes?: string;
+  custom_fields?: Record<string, any>;
+}
+
+// For EventWizardContext and useEventMutations
+export interface EventFormData {
+  id?: string;
+  name: string;
+  description: string;
+  date: string;
+  time: string;
+  venue?: {
+    id: string;
+    name: string;
+  } | null;
+  venueId?: string;
+  venue_id?: string;
+  created_by: string;
+  ticketTypes: {
+    id?: string;
+    name: string;
+    price: number;
+    description: string;
+    quantity: number;
+  }[];
+  imageUrl: string;
+  image_url?: string;
+  promotionalMaterials: string[];
+  promotional_materials?: string[];
+  notificationSchedules?: Array<{
+    id?: string;
+    title: string;
+    content: string;
+    priority: 'low' | 'medium' | 'high' | 'urgent';
+    scheduledFor: string;
+    locationBased: boolean;
+    coordinates?: { latitude: number; longitude: number };
+    targetRadius?: number;
+  }>;
+}
+
+// Alias for backward compatibility
+export type EventType = Event;
+
