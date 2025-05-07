@@ -1,3 +1,4 @@
+
 import { RouteObject } from 'react-router-dom';
 import { TypedProtectedRoute } from '../protectedRoutes';
 import PromoterDashboardPage from '@/pages/promoter/PromoterDashboardPage';
@@ -8,6 +9,7 @@ import PromoterNotificationsPage from '@/pages/promoter/notifications/PromoterNo
 import EventManagementPage from '@/pages/promoter/events/EventManagementPage';
 import CreateEventPage from '@/pages/promoter/events/CreateEventPage';
 import EventDetailsPage from '@/pages/promoter/events/EventDetailsPage';
+import PromotionalToolsPage from '@/pages/promoter/marketing/PromotionalToolsPage';
 
 const wrapPromoterRoute = (element: JSX.Element) => (
   <TypedProtectedRoute userType="promoter">{element}</TypedProtectedRoute>
@@ -53,5 +55,9 @@ export const promoterRoutes: RouteObject[] = [
   {
     path: '/promoter/events/:eventId',
     element: wrapPromoterRoute(<EventDetailsPage />),
+  },
+  {
+    path: '/promoter/marketing',
+    element: wrapPromoterRoute(<PromotionalToolsPage />),
   }
 ];

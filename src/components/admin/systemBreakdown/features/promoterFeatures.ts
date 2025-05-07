@@ -1,4 +1,6 @@
 import { FeatureItem } from "../types";
+import { ticketManagement } from "./promoterFeatures/ticketManagement";
+import { promotionalTools } from "./promoterFeatures/promotionalTools";
 
 export const promoterFeatures: FeatureItem[] = [
   {
