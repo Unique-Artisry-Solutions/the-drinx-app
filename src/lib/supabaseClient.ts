@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 import { Database } from '@/integrations/supabase/types';
 
@@ -257,6 +256,111 @@ interface CustomDatabase extends Database {
           last_visit_date: string;
           total_mocktails_tried: number;
           visited_establishments: string[];
+        };
+      };
+      payment_transactions: {
+        Row: {
+          id: string;
+          user_id: string;
+          amount: number;
+          currency: string;
+          status: 'pending' | 'completed' | 'failed' | 'refunded';
+          provider: string;
+          provider_transaction_id?: string;
+          payment_method_id?: string;
+          metadata: Record<string, any>;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          amount: number;
+          currency: string;
+          status?: 'pending' | 'completed' | 'failed' | 'refunded';
+          provider: string;
+          provider_transaction_id?: string;
+          payment_method_id?: string;
+          metadata?: Record<string, any>;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          amount?: number;
+          currency?: string;
+          status?: 'pending' | 'completed' | 'failed' | 'refunded';
+          provider?: string;
+          provider_transaction_id?: string;
+          payment_method_id?: string;
+          metadata?: Record<string, any>;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      payment_refunds: {
+        Row: {
+          id: string;
+          transaction_id: string;
+          amount: number;
+          status: 'pending' | 'completed' | 'failed';
+          reason?: string;
+          provider_refund_id?: string;
+          refunded_by?: string;
+          metadata: Record<string, any>;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          transaction_id: string;
+          amount: number;
+          status?: 'pending' | 'completed' | 'failed';
+          reason?: string;
+          provider_refund_id?: string;
+          refunded_by?: string;
+          metadata?: Record<string, any>;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          transaction_id?: string;
+          amount?: number;
+          status?: 'pending' | 'completed' | 'failed';
+          reason?: string;
+          provider_refund_id?: string;
+          refunded_by?: string;
+          metadata?: Record<string, any>;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      payment_receipts: {
+        Row: {
+          id: string;
+          transaction_id: string;
+          receipt_number: string;
+          receipt_url?: string;
+          receipt_data: Record<string, any>;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          transaction_id: string;
+          receipt_number: string;
+          receipt_url?: string;
+          receipt_data?: Record<string, any>;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          transaction_id?: string;
+          receipt_number?: string;
+          receipt_url?: string;
+          receipt_data?: Record<string, any>;
+          created_at?: string;
         };
       };
     }
