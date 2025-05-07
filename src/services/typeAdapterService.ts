@@ -1,7 +1,7 @@
 
 import { ABTestResult, ReferralSource } from '@/types/EventTypes';
 import { safeJsonToRecord } from '@/utils/typeGuards';
-import { NotificationChannel } from '@/types/CampaignSegmentTypes';
+import { NotificationChannel, NotificationPriority } from '@/types/CampaignSegmentTypes';
 
 /**
  * Converts raw campaign data to frontend ABTestResult
@@ -91,6 +91,19 @@ export function convertToNotificationChannels(channels: string[]): NotificationC
   
   // Default to in_app if no valid channels
   return validChannels.length > 0 ? validChannels : ['in_app'];
+}
+
+/**
+ * Validates notification priority string
+ */
+export function validateNotificationPriority(priority: string): NotificationPriority {
+  const validPriorities: NotificationPriority[] = ['low', 'medium', 'high', 'urgent'];
+  
+  if (validPriorities.includes(priority as NotificationPriority)) {
+    return priority as NotificationPriority;
+  }
+  
+  return 'medium';
 }
 
 /**

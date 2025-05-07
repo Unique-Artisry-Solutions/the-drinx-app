@@ -1,4 +1,3 @@
-
 // Event types with proper structure and all required fields
 
 export interface Event {
@@ -157,15 +156,15 @@ export interface TicketAnalyticsData {
 // Define ReferralSource interface with both frontend and backend properties
 export interface ReferralSource {
   // Backend properties
-  name?: string;
-  visits?: number;
-  conversions?: number;
-  conversionRate?: number;
+  name: string;
+  visits: number;
+  conversions: number;
+  conversionRate: number;
   
   // Frontend properties
-  source?: string;
-  count?: number;
-  percentage?: number;
+  source: string;
+  count: number;
+  percentage: number;
 }
 
 // For A/B testing and campaign analytics - expanded with all required properties
@@ -182,8 +181,8 @@ export interface ABTestResult {
     name: string;
     conversionRate: number;
   };
-  improvement?: number;
-  significantResult?: boolean;
+  improvement: number;
+  significantResult: boolean;
 }
 
 // Alias for backward compatibility

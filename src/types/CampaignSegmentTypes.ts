@@ -51,7 +51,11 @@ export interface SegmentSelection {
   allocation?: number;
   isControlGroup?: boolean;
   description?: string;
+  segment_id?: string; // Added to accommodate existing usage
 }
 
 // Notification channel types for type safety
 export type NotificationChannel = 'email' | 'in_app' | 'push';
+
+// Priority levels for notifications
+export type NotificationPriority = 'low' | 'medium' | 'high' | 'urgent';

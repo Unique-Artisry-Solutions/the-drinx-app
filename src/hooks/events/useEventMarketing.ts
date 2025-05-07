@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { EventMarketingCampaign } from '@/types/EventTypes';
@@ -109,25 +108,35 @@ export const useEventMarketing = (eventId: string) => {
     }
   };
 
-  const trackMetric = async (campaignId: string, metricName: string, value: number = 1) => {
+  const trackMetric = async (
+    campaignId: string, 
+    metricName: string, 
+    value: number = 1, 
+    source?: string
+  ) => {
     try {
-      await trackCampaignMetric(campaignId, metricName, value);
+      await trackCampaignMetric(campaignId, metricName, value, source);
       
       // Update local state to reflect the new metric value
       setCampaigns(prev => 
         prev.map(c => {
           if (c.id === campaignId) {
-            const metrics = { ...(c.metrics || {
-              impressions: 0,
-              clicks: 0,
-              conversions: 0,
-              revenue: 0
-            }) };
+            const metrics = { ...c.metrics };
             
             // Safely update the metric
-            if (metricName in metrics) {
-              metrics[metricName as keyof typeof metrics] = 
-                ((metrics[metricName as keyof typeof metrics] || 0) as number) + value;
+            if (typeof metrics[metricName] === 'number') {
+              metrics[metricName] = (metrics[metricName] || 0) + value;
+            }
+            
+            // Update source metrics if applicable
+            if (source && metrics.sources) {
+              if (!metrics.sources[source]) {
+                metrics.sources[source] = { impressions: 0, clicks: 0, conversions: 0, revenue: 0 };
+              }
+              
+              if (metricName in metrics.sources[source]) {
+                metrics.sources[source][metricName] += value;
+              }
             }
             
             return { ...c, metrics };

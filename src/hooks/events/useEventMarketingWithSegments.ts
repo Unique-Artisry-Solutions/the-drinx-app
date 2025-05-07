@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { EventMarketingCampaign } from '@/types/EventTypes';
+import { EventMarketingCampaign, ABTestResult } from '@/types/EventTypes';
 import { 
   fetchEventCampaigns,
   createMarketingCampaign,
@@ -25,7 +24,8 @@ import {
 
 // Import audience segment hooks
 import { useAudienceSegments } from '@/hooks/useAudienceSegments';
-import { SegmentSelection } from '@/types/CampaignSegmentTypes';
+import { SegmentSelection, NotificationPriority } from '@/types/CampaignSegmentTypes';
+import { validateNotificationPriority } from '@/services/typeAdapterService';
 
 export const useEventMarketingWithSegments = (eventId: string) => {
   const [campaigns, setCampaigns] = useState<EventMarketingCampaign[]>([]);
@@ -187,9 +187,8 @@ export const useEventMarketingWithSegments = (eventId: string) => {
             const updatedMetrics = { ...c.metrics };
             
             // Safely update the specific metric
-            if (metricName in updatedMetrics) {
-              updatedMetrics[metricName as keyof typeof updatedMetrics] = 
-                (updatedMetrics[metricName as keyof typeof updatedMetrics] as number) + value;
+            if (typeof updatedMetrics[metricName] === 'number') {
+              updatedMetrics[metricName] = (updatedMetrics[metricName] || 0) + value;
             }
             
             // Update source metrics if applicable
@@ -215,9 +214,8 @@ export const useEventMarketingWithSegments = (eventId: string) => {
           if (!prev) return prev;
           
           const updatedMetrics = { ...prev.metrics };
-          if (metricName in updatedMetrics) {
-            updatedMetrics[metricName as keyof typeof updatedMetrics] = 
-              (updatedMetrics[metricName as keyof typeof updatedMetrics] as number) + value;
+          if (typeof updatedMetrics[metricName] === 'number') {
+            updatedMetrics[metricName] = (updatedMetrics[metricName] || 0) + value;
           }
           
           // Update source metrics if applicable
@@ -340,23 +338,25 @@ export const useEventMarketingWithSegments = (eventId: string) => {
     }
   };
   
-  // Helper function to create a notification for a segment - updated signature
+  // Helper function to create a notification for a segment
   const createSegmentNotification = async (
     segmentId: string, 
     title: string, 
     content: string,
-    priority: 'low' | 'medium' | 'high' | 'urgent' = 'medium'
-  ) => {
+    priority: NotificationPriority = 'medium'
+  ): Promise<boolean> => {
     try {
-      return await createSegmentBasedNotification(segmentId, title, content, eventId, priority);
+      // Validate priority before sending
+      const validPriority = validateNotificationPriority(priority);
+      return await createSegmentBasedNotification(segmentId, title, content, eventId, validPriority);
     } catch (err: any) {
       console.error('Failed to create segment notification:', err);
       return false;
     }
   };
   
-  // Get A/B test results from campaigns - now properly returns the full ABTestResult
-  const getABTestResults = async (campaignId: string) => {
+  // Get A/B test results from campaigns
+  const getABTestResults = async (campaignId: string): Promise<ABTestResult> => {
     try {
       return await getCampaignABTestResults(campaignId);
     } catch (err: any) {

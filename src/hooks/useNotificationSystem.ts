@@ -1,8 +1,9 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from './use-toast';
 import { safeJsonToRecord } from '@/utils/typeGuards';
+import { NotificationChannel, NotificationPriority } from '@/types/CampaignSegmentTypes';
+import { convertToNotificationChannels, validateNotificationPriority } from '@/services/typeAdapterService';
 
 export interface Notification {
   id: string;
@@ -10,7 +11,7 @@ export interface Notification {
   content: string;
   is_read: boolean;
   created_at: string;
-  priority: 'low' | 'medium' | 'high' | 'urgent';
+  priority: NotificationPriority;
   category_id?: string;
   recipient_id: string;
   metadata?: Record<string, any>;
@@ -26,7 +27,7 @@ interface NotificationPreference {
   id: string;
   category_id: string;
   is_enabled: boolean;
-  channels: string[];
+  channels: NotificationChannel[];
 }
 
 export const useNotificationSystem = (userId?: string) => {
@@ -52,11 +53,21 @@ export const useNotificationSystem = (userId?: string) => {
       if (error) throw error;
 
       // Process notifications to handle JSON metadata
-      const processedNotifications = data.map(notification => ({
-        ...notification,
-        // Parse metadata if it exists
-        metadata: safeJsonToRecord(notification.metadata)
-      }));
+      const processedNotifications = data.map(notification => {
+        // Parse metadata if it exists and is valid
+        let parsedMetadata = {};
+        if (notification.metadata) {
+          parsedMetadata = safeJsonToRecord(notification.metadata, {});
+        }
+
+        return {
+          ...notification,
+          // Ensure priority is a valid value
+          priority: validateNotificationPriority(notification.priority),
+          // Use parsed metadata
+          metadata: parsedMetadata
+        };
+      });
 
       setNotifications(processedNotifications);
       setUnreadCount(processedNotifications.filter(n => !n.is_read).length);
@@ -212,6 +223,9 @@ export const useNotificationSystem = (userId?: string) => {
   const updatePreference = async (categoryId: string, isEnabled: boolean, channels: string[]) => {
     if (!userId) return;
     
+    // Convert channels to valid notification channels
+    const validChannels = convertToNotificationChannels(channels);
+    
     try {
       const existingPref = preferences.find(p => p.category_id === categoryId);
       
@@ -219,7 +233,10 @@ export const useNotificationSystem = (userId?: string) => {
         // Update existing preference
         const { error } = await supabase
           .from('notification_preferences')
-          .update({ is_enabled: isEnabled, channels })
+          .update({ 
+            is_enabled: isEnabled, 
+            channels: validChannels 
+          })
           .eq('id', existingPref.id);
           
         if (error) throw error;
@@ -231,7 +248,7 @@ export const useNotificationSystem = (userId?: string) => {
             user_id: userId,
             category_id: categoryId,
             is_enabled: isEnabled,
-            channels
+            channels: validChannels
           });
           
         if (error) throw error;
@@ -249,37 +266,40 @@ export const useNotificationSystem = (userId?: string) => {
     title: string, 
     content: string, 
     options: {
-      priority?: 'low' | 'medium' | 'high' | 'urgent';
+      priority?: NotificationPriority;
       categoryId?: string;
       metadata?: Record<string, any>;
     } = {}
   ) => {
     try {
+      // Validate the priority
+      const validPriority = validateNotificationPriority(options.priority || 'medium');
+      
       const { error } = await supabase
         .from('notifications')
         .insert({
           recipient_id: recipientId,
           title,
           content,
-          priority: options.priority || 'medium',
+          priority: validPriority,
           category_id: options.categoryId,
           metadata: options.metadata ? JSON.stringify(options.metadata) : null
         });
-        
+
       if (error) throw error;
-      
+
       return true;
     } catch (error: any) {
       console.error('Error sending notification:', error);
       return false;
     }
   };
-  
+
   const broadcastNotification = async (
     title: string, 
     content: string, 
     options: {
-      priority?: 'low' | 'medium' | 'high' | 'urgent';
+      priority?: NotificationPriority;
       categoryId?: string;
       metadata?: Record<string, any>;
       recipientFilter?: string; // SQL where clause for recipients, e.g. "user_type = 'admin'"

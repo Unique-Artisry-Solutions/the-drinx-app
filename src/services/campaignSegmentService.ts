@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { CampaignSegmentMapping, CampaignSegmentAnalytics, SegmentSelection } from '@/types/CampaignSegmentTypes';
 import { safeJsonToRecord } from '@/utils/typeGuards';
@@ -16,10 +15,19 @@ export const fetchCampaignSegmentMappings = async (
     if (error) throw error;
     
     // Convert JSON metrics to Record<string, any>
-    return (data || []).map(item => ({
-      ...item,
-      metrics: safeJsonToRecord(item.metrics)
-    })) as CampaignSegmentMapping[];
+    return (data || []).map(item => {
+      // Handle metrics which might be null, a string, or an object
+      let metricsObject: Record<string, any> = {};
+      if (item.metrics) {
+        // Safely convert to record, with empty object as fallback
+        metricsObject = safeJsonToRecord(item.metrics, {});
+      }
+      
+      return {
+        ...item,
+        metrics: metricsObject
+      };
+    }) as CampaignSegmentMapping[];
   } catch (err: any) {
     console.error('Error fetching campaign segment mappings:', err);
     throw new Error(`Failed to fetch segment mappings: ${err.message}`);
@@ -130,19 +138,7 @@ export const assignSegmentsToCampaign = async (
     }
     
     // Fetch the updated mappings
-    const { data: updatedMappings, error: refetchError } = await supabase
-      .from('campaign_segment_mappings')
-      .select('*')
-      .eq('campaign_id', campaignId)
-      .eq('is_active', true);
-      
-    if (refetchError) throw refetchError;
-    
-    // Convert JSON metrics to Record<string, any>
-    return (updatedMappings || []).map(item => ({
-      ...item,
-      metrics: safeJsonToRecord(item.metrics)
-    })) as CampaignSegmentMapping[];
+    return await fetchCampaignSegmentMappings(campaignId);
   } catch (err: any) {
     console.error('Error assigning segments to campaign:', err);
     throw new Error(`Failed to assign segments: ${err.message}`);
@@ -209,15 +205,15 @@ export const trackSegmentMetric = async (
     }
     
     // Parse existing metrics
-    const metrics = safeJsonToRecord(mapping.metrics);
+    const metricsObj = safeJsonToRecord(mapping.metrics, {});
     
     // Update metric
-    metrics[metricName] = (metrics[metricName] || 0) + value;
+    metricsObj[metricName] = (metricsObj[metricName] || 0) + value;
     
-    // Save updated metrics
+    // Save updated metrics as JSON
     const { error: updateError } = await supabase
       .from('campaign_segment_mappings')
-      .update({ metrics })
+      .update({ metrics: metricsObj })
       .eq('id', mapping.id);
       
     if (updateError) throw updateError;
@@ -265,30 +261,15 @@ export const trackSegmentMetric = async (
       if (perfUpdateError) throw perfUpdateError;
     } else {
       // Create new entry
-      const newEntry: Record<string, any> = {
+      const newEntry = {
         campaign_id: campaignId,
         segment_id: segmentId,
         date: today,
-        impressions: 0,
-        clicks: 0,
-        conversions: 0,
-        conversion_value: 0
+        impressions: metricName === 'impressions' ? value : 0,
+        clicks: metricName === 'clicks' ? value : 0,
+        conversions: metricName === 'conversions' ? value : 0,
+        conversion_value: metricName === 'conversion_value' ? value : 0
       };
-      
-      switch (metricName) {
-        case 'impressions':
-          newEntry.impressions = value;
-          break;
-        case 'clicks':
-          newEntry.clicks = value;
-          break;
-        case 'conversions':
-          newEntry.conversions = value;
-          break;
-        case 'conversion_value':
-          newEntry.conversion_value = value;
-          break;
-      }
       
       const { error: perfInsertError } = await supabase
         .from('campaign_segment_performance')

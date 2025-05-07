@@ -1,5 +1,6 @@
 
 import { EventLocation, EventContactInfo, ABTestResult, ReferralSource } from '@/types/EventTypes';
+import { NotificationChannel } from '@/types/CampaignSegmentTypes';
 
 type Json = string | number | boolean | null | { [key: string]: Json } | Json[];
 
@@ -37,6 +38,12 @@ export function safeJsonToRecord(
   input: string | object | null | undefined, 
   defaultValue: Record<string, any> = {}
 ): Record<string, any> {
+  // Handle non-object primitives that might come from database
+  if (typeof input === 'number' || typeof input === 'boolean') {
+    console.warn(`Attempted to convert non-object type (${typeof input}) to record:`, input);
+    return defaultValue;
+  }
+  
   return safeJsonToType<Record<string, any>>(input, defaultValue);
 }
 
@@ -198,7 +205,7 @@ export function safeJsonToABTestResult(
  * @returns Frontend-compatible ReferralSource object
  */
 export function adaptReferralSource(input: any): ReferralSource {
-  if (!input) return { source: '', count: 0, percentage: 0 };
+  if (!input) return { source: '', count: 0, percentage: 0, name: '', visits: 0, conversions: 0, conversionRate: 0 };
   
   // If data is already in frontend format
   if (input.source !== undefined) {
@@ -209,7 +216,7 @@ export function adaptReferralSource(input: any): ReferralSource {
       name: input.source || '',
       visits: input.count || 0,
       conversions: 0,
-      conversionRate: 0
+      conversionRate: input.percentage || 0
     };
   }
   
@@ -243,7 +250,7 @@ export function adaptReferralSource(input: any): ReferralSource {
  * @param value Value to check
  * @returns Boolean indicating if value is a valid notification channel
  */
-export function isNotificationChannel(value: string): value is 'email' | 'in_app' | 'push' {
+export function isNotificationChannel(value: string): value is NotificationChannel {
   return ['email', 'in_app', 'push'].includes(value);
 }
 
@@ -252,6 +259,6 @@ export function isNotificationChannel(value: string): value is 'email' | 'in_app
  * @param channels Array of strings to convert
  * @returns Array of valid notification channels
  */
-export function toNotificationChannels(channels: string[]): ('email' | 'in_app' | 'push')[] {
+export function toNotificationChannels(channels: string[]): NotificationChannel[] {
   return channels.filter(isNotificationChannel);
 }
