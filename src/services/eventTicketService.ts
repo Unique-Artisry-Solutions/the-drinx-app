@@ -51,10 +51,11 @@ export const processTicketScan = async (ticketCode: string): Promise<{
         console.error('Error creating check-in record:', checkInError);
       }
       
-      // Convert status to the correct enum type before returning
+      // Convert status to the correct enum type and properly handle custom_fields
       const typedAttendeeData: EventAttendee = {
         ...attendeeData,
-        status: attendeeData.status as "registered" | "checked_in" | "cancelled" | "no_show"
+        status: attendeeData.status as "registered" | "checked_in" | "cancelled" | "no_show",
+        custom_fields: attendeeData.custom_fields as Record<string, any> || {}
       };
       
       return {
@@ -317,14 +318,26 @@ export const processTicketPurchase = async (purchaseData: {
         }
         
         // Update usage count for the discount code
-        const { error: updateError } = await supabase
+        // Using a direct increment approach instead of RPC
+        const { data: currentData, error: fetchError } = await supabase
           .from('event_discount_codes')
-          .update({ usage_count: supabase.rpc('increment') })
+          .select('usage_count')
           .eq('code', purchaseData.discountCode)
-          .eq('event_id', purchaseData.eventId);
+          .eq('event_id', purchaseData.eventId)
+          .single();
         
-        if (updateError) {
-          console.error('Error updating discount code usage count:', updateError);
+        if (!fetchError && currentData) {
+          const newCount = (currentData.usage_count || 0) + 1;
+          
+          const { error: updateError } = await supabase
+            .from('event_discount_codes')
+            .update({ usage_count: newCount })
+            .eq('code', purchaseData.discountCode)
+            .eq('event_id', purchaseData.eventId);
+          
+          if (updateError) {
+            console.error('Error updating discount code usage count:', updateError);
+          }
         }
       }
     }
@@ -352,10 +365,11 @@ export const processTicketPurchase = async (purchaseData: {
         
       if (error) throw error;
       
-      // Convert to the correct type
+      // Convert to the correct type with proper handling of custom_fields
       const typedAttendee: EventAttendee = {
         ...attendee,
-        status: attendee.status as "registered" | "checked_in" | "cancelled" | "no_show"
+        status: attendee.status as "registered" | "checked_in" | "cancelled" | "no_show",
+        custom_fields: attendee.custom_fields as Record<string, any> || {}
       };
       
       attendees.push(typedAttendee);
