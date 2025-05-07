@@ -5,7 +5,15 @@ import { cn } from '@/lib/utils';
 import { useNavigation } from '@/contexts/NavigationContext';
 import { LinkProps } from '@/types/LinkTypes';
 
-const NavLink: React.FC<LinkProps & { className?: string }> = ({
+interface NavLinkProps extends LinkProps {
+  className?: string;
+}
+
+interface UserNavLinksProps {
+  userType?: 'individual' | 'establishment' | 'promoter';
+}
+
+const NavLink: React.FC<NavLinkProps> = ({
   href,
   children,
   className,
@@ -30,7 +38,7 @@ const NavLink: React.FC<LinkProps & { className?: string }> = ({
   );
 };
 
-const UserNavLinks = () => {
+const UserNavLinks: React.FC<UserNavLinksProps> = ({ userType = 'individual' }) => {
   return (
     <nav className="hidden md:flex items-center gap-1">
       <NavLink href="/explore">Explore</NavLink>
