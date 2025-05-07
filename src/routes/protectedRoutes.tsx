@@ -30,3 +30,17 @@ export const TypedProtectedRoute = (
 ) => {
   return withUserTypeProtection(Component, userType);
 };
+
+/**
+ * Higher order component for creating routes with children prop support
+ * This allows TypedProtectedRoute to be used as JSX element
+ */
+export const ProtectedRouteWithChildren: React.FC<{
+  children: React.ReactElement;
+  userType: UserType;
+}> = ({ children, userType }) => {
+  // The component is the child element
+  const Component = () => children;
+  const Protected = TypedProtectedRoute(Component, userType);
+  return <Protected />;
+};

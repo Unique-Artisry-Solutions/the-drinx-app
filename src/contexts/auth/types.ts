@@ -7,7 +7,7 @@ export type AuthContextType = {
   isLoading: boolean;
   isEmailVerified: boolean;
   authStable: boolean;
-  authError?: Error | null;
+  authError: Error | null;  // Make this required to match AuthProviderFactory type
   signIn: (email: string, password: string) => Promise<any>;
   signUp: (email: string, password: string, options?: {
     data?: { [key: string]: any },

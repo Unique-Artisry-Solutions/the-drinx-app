@@ -16,7 +16,6 @@ const LinkComponent: React.FC<LinkProps> = ({
   onClick,
   preventScrollReset,
   replace,
-  prefetch,
   ...props
 }) => {
   const navigate = useNavigate();
@@ -45,7 +44,6 @@ const LinkComponent: React.FC<LinkProps> = ({
       className={cn(className)}
       preventScrollReset={preventScrollReset}
       replace={replace}
-      prefetch={prefetch}
       {...props}
     >
       {children}

@@ -12,5 +12,5 @@ export interface LinkProps {
   onClick?: (e: MouseEvent<HTMLAnchorElement>) => void;
   preventScrollReset?: boolean;
   replace?: boolean;
-  prefetch?: 'intent' | 'render' | 'none';
+  [key: string]: any; // Allow for additional props
 }

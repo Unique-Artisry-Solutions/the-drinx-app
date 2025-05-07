@@ -2,6 +2,27 @@
 import { supabase } from '@/lib/supabase';
 import { SessionValidationResult } from '@/types/auth';
 
+// Constants for session validation
+export const SESSION_VALIDATION_KEY = 'last_session_validation';
+export const MAX_SESSION_AGE_MS = 1000 * 60 * 30; // 30 minutes
+
+/**
+ * Checks if session validation is due based on the last validation time
+ */
+export function isSessionValidationDue(): boolean {
+  const lastValidation = localStorage.getItem(SESSION_VALIDATION_KEY);
+  
+  if (!lastValidation) {
+    return true;
+  }
+  
+  const lastValidationTime = parseInt(lastValidation, 10);
+  const currentTime = new Date().getTime();
+  
+  // If the last validation was more than MAX_SESSION_AGE_MS ago, validation is due
+  return currentTime - lastValidationTime > MAX_SESSION_AGE_MS;
+}
+
 /**
  * Validates the current session state for consistency between localStorage and Supabase
  */
@@ -54,6 +75,10 @@ export async function validateSessionState(): Promise<SessionValidationResult> {
     
     // If we're here, session state is valid
     result.isValid = isAuthenticatedInLocalStorage === hasSupabaseSession;
+    
+    // Update the last validation timestamp
+    localStorage.setItem(SESSION_VALIDATION_KEY, new Date().getTime().toString());
+    
     return result;
     
   } catch (error: any) {

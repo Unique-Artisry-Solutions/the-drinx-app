@@ -1,8 +1,4 @@
 
-/**
- * Types for the session management system
- */
-
 export interface SessionValidationResult {
   isValid: boolean;
   hasMismatch: boolean;
@@ -12,10 +8,8 @@ export interface SessionValidationResult {
 }
 
 export interface SessionRecoveryOptions {
-  timeoutMs?: number;
-  autoRecovery?: boolean;
+  forceRefresh?: boolean;
+  resetLocalStorage?: boolean;
 }
 
-export interface StuckStateHandler {
-  cancel: () => void;
-}
+export type StuckStateHandler = (result: SessionValidationResult) => Promise<boolean>;

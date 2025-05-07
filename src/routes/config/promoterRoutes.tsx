@@ -1,6 +1,6 @@
 
 import { RouteObject } from 'react-router-dom';
-import { TypedProtectedRoute } from '../protectedRoutes';
+import { ProtectedRouteWithChildren } from '../protectedRoutes';
 import PromoterDashboardPage from '@/pages/promoter/PromoterDashboardPage';
 import PromoterCommunicationPage from '@/pages/promoter/PromoterCommunicationPage';
 import PromoterAnalyticsPage from '@/pages/promoter/PromoterAnalyticsPage';
@@ -12,7 +12,9 @@ import EventDetailsPage from '@/pages/promoter/events/EventDetailsPage';
 import PromotionalToolsPage from '@/pages/promoter/marketing/PromotionalToolsPage';
 
 const wrapPromoterRoute = (element: JSX.Element) => (
-  <TypedProtectedRoute userType="promoter">{element}</TypedProtectedRoute>
+  <ProtectedRouteWithChildren userType="promoter">
+    {element}
+  </ProtectedRouteWithChildren>
 );
 
 export const promoterRoutes: RouteObject[] = [

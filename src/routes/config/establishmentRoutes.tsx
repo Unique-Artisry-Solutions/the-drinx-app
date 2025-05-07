@@ -1,5 +1,6 @@
+
 import { RouteObject } from 'react-router-dom';
-import { TypedProtectedRoute } from '../protectedRoutes';
+import { ProtectedRouteWithChildren } from '../protectedRoutes';
 import EstablishmentDashboardPage from '@/pages/establishment/EstablishmentDashboardPage';
 import EstablishmentProfilePage from '@/pages/establishment/EstablishmentProfilePage';
 import MocktailMenuPage from '@/pages/establishment/MocktailMenuPage';
@@ -14,7 +15,9 @@ import AllActionsPage from '@/pages/establishment/AllActionsPage';
 import EstablishmentNotificationsPage from '@/pages/establishment/notifications/EstablishmentNotificationsPage';
 
 const wrapEstablishmentRoute = (element: JSX.Element) => (
-  <TypedProtectedRoute userType="establishment">{element}</TypedProtectedRoute>
+  <ProtectedRouteWithChildren userType="establishment">
+    {element}
+  </ProtectedRouteWithChildren>
 );
 
 export const establishmentRoutes: RouteObject[] = [

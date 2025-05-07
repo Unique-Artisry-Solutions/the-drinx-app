@@ -14,7 +14,7 @@ export interface RouteMetadata {
 }
 
 // Define our extended route type
-export interface AppRouteObject extends RouteObject {
+export interface AppRouteObject extends Omit<RouteObject, 'children'> {
   metadata?: RouteMetadata;
   children?: AppRouteObject[];
 }
@@ -40,7 +40,7 @@ export function createLazyRoute(
 ): AppRouteObject {
   return {
     path,
-    element: lazyLoad(importFunc)(),
+    element: lazyLoad(importFunc),
     metadata
   };
 }
