@@ -10,6 +10,7 @@ import EventManagementPage from '@/pages/promoter/events/EventManagementPage';
 import CreateEventPage from '@/pages/promoter/events/CreateEventPage';
 import EventDetailsPage from '@/pages/promoter/events/EventDetailsPage';
 import PromotionalToolsPage from '@/pages/promoter/marketing/PromotionalToolsPage';
+import EventScannerPage from '@/pages/events/EventScannerPage';
 
 const wrapPromoterRoute = (element: JSX.Element) => (
   <TypedProtectedRoute userType="promoter">{element}</TypedProtectedRoute>
@@ -59,5 +60,9 @@ export const promoterRoutes: RouteObject[] = [
   {
     path: '/promoter/marketing',
     element: wrapPromoterRoute(<PromotionalToolsPage />),
+  },
+  {
+    path: '/events/scanner/:eventId/:token',
+    element: wrapPromoterRoute(<EventScannerPage />),
   }
 ];
