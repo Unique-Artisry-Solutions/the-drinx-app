@@ -1,6 +1,7 @@
 
 import { toast } from '@/hooks/use-toast';
-import { Notification, NotificationType, ActionConfig } from '@/types/notification';
+import { NotificationType, ActionConfig } from '@/types/notification';
+import { mapNotificationTypeToToastVariant } from '@/types/notification/ToastTypes';
 
 /**
  * A singleton service that provides a unified interface for displaying toasts
@@ -37,8 +38,8 @@ class ToastService {
   }): { id: string; dismiss: () => void } {
     const { title, message, type = 'info', duration = 5000, action } = options;
     
-    // Map notification types to valid toast variants
-    const variant = type === 'error' ? 'destructive' : 'default';
+    // Map notification types to toast variants with enhanced styling
+    const variant = mapNotificationTypeToToastVariant(type);
     
     // Convert the NotificationOptions action to a ToastAction
     let toastAction: ActionConfig | undefined;
