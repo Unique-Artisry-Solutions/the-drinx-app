@@ -1,7 +1,7 @@
 
 import { useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
-import { PushSubscription, WebPushSubscription, DbPushSubscription } from '@/types/notification';
+import { PushSubscription, WebPushSubscription, DbPushSubscription, PushSubscriptionJSON } from '@/types/notification/PushNotificationTypes';
 import { urlB64ToUint8Array } from '@/hooks/utils/pushUtils';
 
 // Maximum number of retries for getting VAPID key
@@ -80,7 +80,23 @@ export function usePushSubscription() {
       
       if (error) throw error;
       
-      return data[0] as PushSubscription;
+      // Convert database response to our app's PushSubscription type
+      if (data && data.length > 0) {
+        const dbSub = data[0] as DbPushSubscription;
+        const subscription: PushSubscription = {
+          id: dbSub.id,
+          endpoint: dbSub.endpoint,
+          p256dh: dbSub.p256dh,
+          auth: dbSub.auth,
+          user_id: dbSub.user_id,
+          device_info: dbSub.device_info,
+          created_at: dbSub.created_at,
+          updated_at: dbSub.updated_at
+        };
+        return subscription;
+      }
+      
+      return null;
     } catch (error) {
       console.error('Error saving push subscription:', error);
       return null;
@@ -94,20 +110,20 @@ export function usePushSubscription() {
       setError(null);
       
       // Check for existing subscription
-      let pushSubscription = await serviceWorkerReg.pushManager.getSubscription();
+      let browserSubscription = await serviceWorkerReg.pushManager.getSubscription();
       
-      if (!pushSubscription) {
+      if (!browserSubscription) {
         // Get VAPID key and convert to Uint8Array
         const vapidPublicKey = await getVapidPublicKey();
         const applicationServerKey = urlB64ToUint8Array(vapidPublicKey);
         
         // Create new subscription
         try {
-          pushSubscription = await serviceWorkerReg.pushManager.subscribe({
+          browserSubscription = await serviceWorkerReg.pushManager.subscribe({
             userVisibleOnly: true,
             applicationServerKey
           });
-          console.log('Created new push subscription:', pushSubscription);
+          console.log('Created new push subscription:', browserSubscription);
         } catch (subscribeError: any) {
           console.error('Error subscribing to push:', subscribeError);
           if (subscribeError.name === 'NotAllowedError') {
@@ -117,12 +133,21 @@ export function usePushSubscription() {
           }
         }
       } else {
-        console.log('Using existing push subscription:', pushSubscription);
+        console.log('Using existing push subscription:', browserSubscription);
       }
+      
+      // Convert browser subscription to our WebPushSubscription type
+      const webPushSub: WebPushSubscription = {
+        endpoint: browserSubscription.endpoint,
+        keys: {
+          p256dh: browserSubscription.toJSON().keys?.p256dh || '',
+          auth: browserSubscription.toJSON().keys?.auth || ''
+        }
+      };
       
       // Save subscription to the backend
       const savedSubscription = await saveSubscription(
-        pushSubscription.toJSON(), 
+        webPushSub,
         userId
       );
       

@@ -8,7 +8,7 @@ export * from './ToastTypes';
 export * from './PushNotificationTypes';
 
 // Re-export the Notification interface
-export interface Notification {
+export interface NotificationInterface {
   id: string;
   title: string;
   content: string;
@@ -73,19 +73,6 @@ export interface NotificationMetadata {
   quietHoursStart?: string;
   quietHoursEnd?: string;
   [key: string]: any;
-}
-
-export interface PushSubscription {
-  endpoint: string;
-  keys: {
-    p256dh: string;
-    auth: string;
-  };
-  user_id: string;
-  device_info?: {
-    userAgent?: string;
-    platform?: string;
-  };
 }
 
 // Define NotificationType type

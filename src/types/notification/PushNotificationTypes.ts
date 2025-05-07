@@ -3,7 +3,7 @@
  * Types related to Push Notifications
  */
 
-// Define the interface for the push subscription
+// Define the interface for our app's push subscription model
 export interface PushSubscription {
   id: string;
   endpoint: string;
@@ -13,7 +13,7 @@ export interface PushSubscription {
   device_info?: {
     userAgent?: string;
     platform?: string;
-    language?: string;  // Added language property
+    language?: string;
   };
   created_at?: string;
   updated_at?: string;
@@ -42,4 +42,14 @@ export interface DbPushSubscription {
   };
   created_at?: string;
   updated_at?: string;
+}
+
+// Type for PushSubscriptionJSON from browser API
+export interface PushSubscriptionJSON {
+  endpoint?: string;
+  expirationTime?: number | null;
+  keys?: {
+    p256dh: string;
+    auth: string;
+  };
 }

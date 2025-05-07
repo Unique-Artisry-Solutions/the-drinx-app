@@ -17,7 +17,7 @@ export enum NavigationType {
 export interface UnifiedNavItem {
   label: string;
   path: string;
-  icon: LucideIcon; // Changed from optional to required
+  icon: LucideIcon; // Required field to match AdminNavItem
   isActive?: boolean;
   children?: UnifiedNavItem[];
   onClick?: (e: React.MouseEvent) => void;

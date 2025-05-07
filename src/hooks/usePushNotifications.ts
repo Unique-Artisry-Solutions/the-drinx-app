@@ -2,11 +2,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
-import { Notification, PushSubscription } from '@/types/notification';
+import { PushSubscription, DbPushSubscription } from '@/types/notification/PushNotificationTypes';
 import { useServiceWorkerStatus } from './service-worker/useServiceWorkerStatus';
 import { useServiceWorkerRegistration } from './notifications/useServiceWorkerRegistration';
 import { usePushSubscription } from './notifications/usePushSubscription';
 
+// Avoid name conflict with browser's Notification API
 export function usePushNotifications() {
   const [subscription, setSubscription] = useState<PushSubscription | null>(null);
   const [isSupported, setIsSupported] = useState(false);
@@ -100,25 +101,7 @@ export function usePushNotifications() {
       const savedSubscription = await createPushSubscription(registration, user.id);
       
       if (savedSubscription) {
-        const transformedSubscription: PushSubscription = {
-          id: savedSubscription.id,
-          endpoint: savedSubscription.endpoint,
-          p256dh: savedSubscription.p256dh,
-          auth: savedSubscription.auth,
-          user_id: savedSubscription.user_id,
-          device_info: savedSubscription.device_info ? {
-            userAgent: typeof savedSubscription.device_info === 'object' 
-              ? savedSubscription.device_info.userAgent 
-              : undefined,
-            language: typeof savedSubscription.device_info === 'object' 
-              ? savedSubscription.device_info.language 
-              : undefined
-          } : { userAgent: undefined, language: undefined },
-          created_at: savedSubscription.created_at,
-          updated_at: savedSubscription.updated_at
-        };
-        
-        setSubscription(transformedSubscription);
+        setSubscription(savedSubscription);
       }
       
       toast({
