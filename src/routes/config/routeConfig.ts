@@ -2,11 +2,12 @@
 import { lazy } from 'react';
 import { RouteObject } from 'react-router-dom';
 import { lazyLoad } from '@/utils/lazyLoad';
+import { UserType } from '@/types/navigation';
 
 // Define common metadata for routes
 export interface RouteMetadata {
   requiresAuth?: boolean;
-  userType?: 'individual' | 'establishment' | 'promoter' | 'admin' | string[];
+  userType?: UserType | UserType[];
   breadcrumb?: string;
   hideInNav?: boolean;
   analyticsName?: string;

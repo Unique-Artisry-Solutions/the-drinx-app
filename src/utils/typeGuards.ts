@@ -48,6 +48,27 @@ export const toAttendeeStatus = (status: string | undefined): 'registered' | 'ch
 };
 
 /**
+ * Type guard to check if a value is a non-empty string
+ */
+export const isNonEmptyString = (value: any): value is string => {
+  return typeof value === 'string' && value.trim().length > 0;
+};
+
+/**
+ * Type guard to check if a value is a valid number
+ */
+export const isValidNumber = (value: any): value is number => {
+  return typeof value === 'number' && !isNaN(value) && isFinite(value);
+};
+
+/**
+ * Type guard to check if a value exists and is not null or undefined
+ */
+export const exists = <T>(value: T | null | undefined): value is T => {
+  return value !== null && value !== undefined;
+};
+
+/**
  * Type-safe conversion from JSON to specific interface types
  * Used for complex types like EventLocation, EventContactInfo, etc.
  */

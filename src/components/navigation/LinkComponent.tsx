@@ -2,23 +2,13 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-
-interface LinkComponentProps {
-  href: string;
-  children: React.ReactNode;
-  className?: string;
-  activeClassName?: string;
-  onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
-  preventScrollReset?: boolean;
-  replace?: boolean;
-  prefetch?: 'intent' | 'render' | 'none';
-}
+import { LinkProps } from '@/types/navigation';
 
 /**
  * A standardized link component that wraps React Router's Link
  * Provides consistent styling and behavior across the application
  */
-const LinkComponent: React.FC<LinkComponentProps> = ({
+const LinkComponent: React.FC<LinkProps> = ({
   href,
   children,
   className,

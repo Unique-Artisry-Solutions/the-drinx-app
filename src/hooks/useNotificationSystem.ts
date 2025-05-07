@@ -1,7 +1,7 @@
 
 import { useCallback } from 'react';
 import { toastService } from '@/services/ToastService';
-import { NotificationOptions } from '@/types/NotificationTypes';
+import { NotificationOptions, NotificationType } from '@/types/notification';
 
 /**
  * Hook that provides a unified notification system across the application

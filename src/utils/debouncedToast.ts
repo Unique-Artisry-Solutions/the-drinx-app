@@ -1,5 +1,6 @@
 
 import { toastService } from '@/services/ToastService';
+import { NotificationType } from '@/types/notification';
 
 /**
  * Create a debounced toast system to prevent duplicate toasts
@@ -25,6 +26,20 @@ export const debouncedToast = {
    */
   info: (title: string, description: string, debounceMs = 5000) => {
     toastService.debouncedInfo(title, description, debounceMs);
+  },
+
+  /**
+   * Show a warning toast with debouncing
+   */
+  warning: (title: string, description: string, debounceMs = 5000) => {
+    toastService.debouncedWarning(title, description, debounceMs);
+  },
+
+  /**
+   * Generic toast method for any notification type
+   */
+  show: (title: string, description: string, type: NotificationType = 'info', debounceMs = 5000) => {
+    toastService.debouncedToast(title, description, type, debounceMs);
   },
 
   /**
