@@ -1,0 +1,164 @@
+
+import { toast } from '@/hooks/use-toast';
+import { Toast, NotificationOptions, ActionConfig } from '@/types/NotificationTypes';
+
+/**
+ * A singleton service that provides a unified interface for displaying toasts
+ * Wraps the shadcn/ui toast system
+ */
+class ToastService {
+  private static instance: ToastService;
+  private toastTimeouts: Record<string, NodeJS.Timeout> = {};
+
+  private constructor() {
+    // Private constructor for singleton pattern
+  }
+
+  public static getInstance(): ToastService {
+    if (!ToastService.instance) {
+      ToastService.instance = new ToastService();
+    }
+    return ToastService.instance;
+  }
+
+  /**
+   * Show a toast with the specified options
+   */
+  public show(options: NotificationOptions): { id: string; dismiss: () => void } {
+    const { title, message, type = 'info', duration = 5000, action } = options;
+    
+    // Map notification types to valid toast variants
+    const variant = type === 'error' ? 'destructive' : 'default';
+    
+    // Convert the NotificationOptions action to a ToastAction
+    let toastAction: ActionConfig | undefined;
+    if (action) {
+      toastAction = {
+        label: action.label,
+        onClick: action.onClick,
+        altText: action.altText || action.label
+      };
+    }
+
+    const toastResult = toast({
+      title,
+      description: message,
+      variant,
+      duration,
+      action: toastAction
+    });
+
+    return toastResult;
+  }
+
+  /**
+   * Show a success toast
+   */
+  public success(title: string, message: string, options?: Partial<NotificationOptions>): { id: string; dismiss: () => void } {
+    return this.show({
+      title,
+      message,
+      type: 'success',
+      ...(options || {})
+    });
+  }
+
+  /**
+   * Show an error toast
+   */
+  public error(title: string, message: string, options?: Partial<NotificationOptions>): { id: string; dismiss: () => void } {
+    return this.show({
+      title,
+      message,
+      type: 'error',
+      ...(options || {})
+    });
+  }
+
+  /**
+   * Show an info toast
+   */
+  public info(title: string, message: string, options?: Partial<NotificationOptions>): { id: string; dismiss: () => void } {
+    return this.show({
+      title,
+      message,
+      type: 'info',
+      ...(options || {})
+    });
+  }
+
+  /**
+   * Show a warning toast
+   */
+  public warning(title: string, message: string, options?: Partial<NotificationOptions>): { id: string; dismiss: () => void } {
+    return this.show({
+      title,
+      message,
+      type: 'warning',
+      ...(options || {})
+    });
+  }
+
+  /**
+   * Show a debounced toast (prevents duplicate toasts)
+   */
+  public debounced(key: string, options: NotificationOptions, debounceMs: number = 5000): void {
+    if (this.toastTimeouts[key]) {
+      clearTimeout(this.toastTimeouts[key]);
+    }
+    
+    this.toastTimeouts[key] = setTimeout(() => {
+      this.show(options);
+      delete this.toastTimeouts[key];
+    }, debounceMs);
+  }
+
+  /**
+   * Show a debounced success toast
+   */
+  public debouncedSuccess(title: string, message: string, debounceMs: number = 5000): void {
+    const key = `success-${title}-${message}`;
+    this.debounced(key, {
+      title,
+      message,
+      type: 'success'
+    }, debounceMs);
+  }
+
+  /**
+   * Show a debounced error toast
+   */
+  public debouncedError(title: string, message: string, debounceMs: number = 5000): void {
+    const key = `error-${title}-${message}`;
+    this.debounced(key, {
+      title,
+      message,
+      type: 'error'
+    }, debounceMs);
+  }
+
+  /**
+   * Show a debounced info toast
+   */
+  public debouncedInfo(title: string, message: string, debounceMs: number = 5000): void {
+    const key = `info-${title}-${message}`;
+    this.debounced(key, {
+      title,
+      message,
+      type: 'info'
+    }, debounceMs);
+  }
+
+  /**
+   * Clear all pending toasts
+   */
+  public clearAll(): void {
+    Object.keys(this.toastTimeouts).forEach(key => {
+      clearTimeout(this.toastTimeouts[key]);
+      delete this.toastTimeouts[key];
+    });
+  }
+}
+
+// Export a singleton instance
+export const toastService = ToastService.getInstance();

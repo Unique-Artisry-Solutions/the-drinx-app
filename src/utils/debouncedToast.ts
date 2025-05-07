@@ -1,53 +1,36 @@
 
-import { toast } from '@/hooks/use-toast';
+import { toastService } from '@/services/ToastService';
 
-// Create a debounced toast system to prevent duplicate toasts
-const toastTimeouts: Record<string, NodeJS.Timeout> = {};
-
+/**
+ * Create a debounced toast system to prevent duplicate toasts
+ * This uses the ToastService singleton for consistency
+ */
 export const debouncedToast = {
+  /**
+   * Show an error toast with debouncing
+   */
   error: (title: string, description: string, debounceMs = 5000) => {
-    const key = `${title}-${description}`;
-    if (toastTimeouts[key]) clearTimeout(toastTimeouts[key]);
-    toastTimeouts[key] = setTimeout(() => {
-      toast({
-        title,
-        description,
-        variant: "destructive"
-      });
-      delete toastTimeouts[key];
-    }, debounceMs); 
+    toastService.debouncedError(title, description, debounceMs);
   },
 
+  /**
+   * Show a success toast with debouncing
+   */
   success: (title: string, description: string, debounceMs = 5000) => {
-    const key = `${title}-${description}`;
-    if (toastTimeouts[key]) clearTimeout(toastTimeouts[key]);
-    toastTimeouts[key] = setTimeout(() => {
-      toast({
-        title,
-        description,
-      });
-      delete toastTimeouts[key];
-    }, debounceMs);
+    toastService.debouncedSuccess(title, description, debounceMs);
   },
 
+  /**
+   * Show an info toast with debouncing
+   */
   info: (title: string, description: string, debounceMs = 5000) => {
-    const key = `${title}-${description}`;
-    if (toastTimeouts[key]) clearTimeout(toastTimeouts[key]);
-    toastTimeouts[key] = setTimeout(() => {
-      toast({
-        title,
-        description,
-        variant: "default"
-      });
-      delete toastTimeouts[key];
-    }, debounceMs);
+    toastService.debouncedInfo(title, description, debounceMs);
   },
 
-  // Clear all pending toasts
+  /**
+   * Clear all pending toasts
+   */
   clear: () => {
-    Object.keys(toastTimeouts).forEach(key => {
-      clearTimeout(toastTimeouts[key]);
-      delete toastTimeouts[key];
-    });
+    toastService.clearAll();
   }
 };

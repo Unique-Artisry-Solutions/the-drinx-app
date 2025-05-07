@@ -1,8 +1,8 @@
 
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
 import { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import LinkComponent from './LinkComponent';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,6 +25,10 @@ interface NavItemProps {
   };
 }
 
+/**
+ * A standardized navigation item component
+ * Supports both regular links and dropdown menus
+ */
 const NavItem: React.FC<NavItemProps> = ({ 
   href, 
   icon: Icon, 
@@ -33,8 +37,6 @@ const NavItem: React.FC<NavItemProps> = ({
   onClick,
   dropdown
 }) => {
-  const navigate = useNavigate();
-  
   if (dropdown) {
     return (
       <DropdownMenu>
@@ -55,12 +57,12 @@ const NavItem: React.FC<NavItemProps> = ({
         <DropdownMenuContent className="w-48 bg-white z-50">
           {dropdown.items.map((item) => (
             <DropdownMenuItem key={item.path} asChild>
-              <Link
-                to={item.path}
+              <LinkComponent
+                href={item.path}
                 className="flex items-center w-full px-2 py-1.5"
               >
                 <span className="text-sm">{item.label}</span>
-              </Link>
+              </LinkComponent>
             </DropdownMenuItem>
           ))}
         </DropdownMenuContent>
@@ -68,19 +70,27 @@ const NavItem: React.FC<NavItemProps> = ({
     );
   }
 
-  const handleClick = (e: React.MouseEvent) => {
-    if (onClick) {
-      onClick();
-    } else {
-      e.preventDefault();
-      navigate(href);
-    }
-  };
+  if (onClick) {
+    return (
+      <Button
+        variant="ghost"
+        onClick={onClick}
+        className={cn(
+          "flex items-center px-3 py-2 rounded-md transition-colors w-auto justify-start",
+          active
+            ? "bg-white/20 text-white"
+            : "text-white/80 hover:bg-white/10 hover:text-white"
+        )}
+      >
+        <Icon className="mr-2 h-4 w-4" />
+        <span className="text-sm font-medium">{label}</span>
+      </Button>
+    );
+  }
 
   return (
-    <a
+    <LinkComponent
       href={href}
-      onClick={handleClick}
       className={cn(
         "flex items-center px-3 py-2 rounded-md transition-colors",
         active
@@ -90,7 +100,7 @@ const NavItem: React.FC<NavItemProps> = ({
     >
       <Icon className="mr-2 h-4 w-4" />
       <span className="text-sm font-medium">{label}</span>
-    </a>
+    </LinkComponent>
   );
 };
 

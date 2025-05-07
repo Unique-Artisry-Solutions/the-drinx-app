@@ -1,5 +1,7 @@
 
 import { useNavigate } from 'react-router-dom';
+import { useCallback } from 'react';
+import { debouncedToast } from '@/utils/debouncedToast';
 
 /**
  * A custom hook for handling app navigation consistently
@@ -11,7 +13,7 @@ export const useAppNavigation = () => {
   /**
    * Navigate to the appropriate home page based on user type
    */
-  const goToHomePage = (userType?: string | null) => {
+  const goToHomePage = useCallback((userType?: string | null) => {
     if (!userType) {
       navigate('/landing');
       return;
@@ -30,12 +32,12 @@ export const useAppNavigation = () => {
       default:
         navigate('/explore');
     }
-  };
+  }, [navigate]);
   
   /**
    * Navigate to the profile page based on user type
    */
-  const goToProfilePage = (userType?: string | null) => {
+  const goToProfilePage = useCallback((userType?: string | null) => {
     if (!userType || userType === 'individual') {
       navigate('/profile');
     } else if (userType === 'establishment') {
@@ -43,26 +45,26 @@ export const useAppNavigation = () => {
     } else if (userType === 'promoter') {
       navigate('/promoter/profile');
     }
-  };
+  }, [navigate]);
   
   /**
    * Navigate after successful login
    */
-  const goToAfterLogin = (userType?: string | null, savedRedirect?: string | null) => {
+  const goToAfterLogin = useCallback((userType?: string | null, savedRedirect?: string | null) => {
     if (savedRedirect) {
       navigate(savedRedirect);
       return;
     }
     
     goToHomePage(userType);
-  };
+  }, [navigate, goToHomePage]);
   
   /**
    * Navigate to admin dashboard
    */
-  const goToAdminDashboard = () => {
+  const goToAdminDashboard = useCallback(() => {
     navigate('/admin/system-breakdown');
-  };
+  }, [navigate]);
 
   /**
    * Navigate to edit page for different entity types
@@ -70,13 +72,41 @@ export const useAppNavigation = () => {
    * @param id ID of the entity
    * @param preventRefresh If true, use React Router navigation to prevent page refresh
    */
-  const goToEditPage = (entityType: string, id: string, preventRefresh = true) => {
+  const goToEditPage = useCallback((entityType: string, id: string, preventRefresh = true) => {
     const path = `/${entityType}/edit/${id}`;
     if (preventRefresh) {
       navigate(path);
     }
     return path;
-  };
+  }, [navigate]);
+  
+  /**
+   * Navigate to a specific route with optional toast notification
+   */
+  const goToRoute = useCallback((path: string, options?: { 
+    replace?: boolean; 
+    state?: any;
+    showToast?: boolean;
+    toastMessage?: string;
+    toastTitle?: string;
+    toastType?: 'success' | 'error' | 'info'
+  }) => {
+    navigate(path, { replace: options?.replace, state: options?.state });
+    
+    if (options?.showToast && options.toastMessage) {
+      const toastType = options?.toastType || 'info';
+      const toastTitle = options?.toastTitle || (toastType === 'success' ? 'Success' : 
+                                                toastType === 'error' ? 'Error' : 'Information');
+      
+      if (toastType === 'success') {
+        debouncedToast.success(toastTitle, options.toastMessage);
+      } else if (toastType === 'error') {
+        debouncedToast.error(toastTitle, options.toastMessage);
+      } else {
+        debouncedToast.info(toastTitle, options.toastMessage);
+      }
+    }
+  }, [navigate]);
 
   return {
     goToHomePage,
@@ -84,6 +114,9 @@ export const useAppNavigation = () => {
     goToAfterLogin,
     goToAdminDashboard,
     goToEditPage,
+    goToRoute,
     navigate
   };
 };
+
+export default useAppNavigation;

@@ -1,74 +1,46 @@
 
 import { useCallback } from 'react';
-import { useToast } from '@/hooks/use-toast';
-
-interface NotificationOptions {
-  title: string;
-  message: string;
-  type?: 'success' | 'error' | 'warning' | 'info';
-  duration?: number;
-  action?: {
-    label: string;
-    onClick: () => void;
-  };
-}
+import { toastService } from '@/services/ToastService';
+import { NotificationOptions } from '@/types/NotificationTypes';
 
 /**
  * Hook that provides a unified notification system across the application
- * Acts as a wrapper around the shadcn/ui toast system
+ * Acts as a wrapper around the ToastService
  */
 export const useNotificationSystem = () => {
-  const { toast } = useToast();
-
   const showNotification = useCallback(
     (options: NotificationOptions) => {
-      const { title, message, type = 'info', duration = 5000, action } = options;
-
-      // Map notification types to valid toast variants
-      // Note: shadcn/ui toast only supports 'default' and 'destructive' variants
-      const variant = type === 'error' ? 'destructive' : 'default';
-
-      toast({
-        title,
-        description: message,
-        variant,
-        duration,
-        action: action ? {
-          label: action.label,
-          onClick: action.onClick,
-          altText: action.label
-        } : undefined
-      });
+      return toastService.show(options);
     },
-    [toast]
+    []
   );
 
   const showSuccess = useCallback(
-    (message: string, title: string = 'Success') => {
-      showNotification({ title, message, type: 'success' });
+    (message: string, title: string = 'Success', options?: Partial<Omit<NotificationOptions, 'title' | 'message' | 'type'>>) => {
+      return toastService.success(title, message, options);
     },
-    [showNotification]
+    []
   );
 
   const showError = useCallback(
-    (message: string, title: string = 'Error') => {
-      showNotification({ title, message, type: 'error' });
+    (message: string, title: string = 'Error', options?: Partial<Omit<NotificationOptions, 'title' | 'message' | 'type'>>) => {
+      return toastService.error(title, message, options);
     },
-    [showNotification]
+    []
   );
 
   const showWarning = useCallback(
-    (message: string, title: string = 'Warning') => {
-      showNotification({ title, message, type: 'warning' });
+    (message: string, title: string = 'Warning', options?: Partial<Omit<NotificationOptions, 'title' | 'message' | 'type'>>) => {
+      return toastService.warning(title, message, options);
     },
-    [showNotification]
+    []
   );
 
   const showInfo = useCallback(
-    (message: string, title: string = 'Information') => {
-      showNotification({ title, message, type: 'info' });
+    (message: string, title: string = 'Information', options?: Partial<Omit<NotificationOptions, 'title' | 'message' | 'type'>>) => {
+      return toastService.info(title, message, options);
     },
-    [showNotification]
+    []
   );
 
   return {

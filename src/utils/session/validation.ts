@@ -1,8 +1,25 @@
 
 import { supabase } from '@/lib/supabase';
-import { SessionValidationResult } from './types';
+import { SessionValidationResult } from '@/types/AuthTypes';
 import { SESSION_VALIDATION_KEY, DEFAULT_SESSION_VALIDATION_INTERVAL_MS } from './constants';
-import { isValidSession, getSessionData } from './helpers';
+import { sessionManager } from './SessionManager';
+
+/**
+ * Checks if a Supabase session is valid
+ */
+export const isValidSession = (session: any): boolean => {
+  return !!(session && session.user && session.access_token);
+};
+
+/**
+ * Gets session data from a Supabase session
+ */
+export const getSessionData = (session: any): { userId: string | undefined; userEmail: string | undefined } => {
+  return {
+    userId: session?.user?.id,
+    userEmail: session?.user?.email,
+  };
+};
 
 /**
  * Checks if there's a mismatch between localStorage state and Supabase session
@@ -30,7 +47,7 @@ export const validateSessionState = async (): Promise<SessionValidationResult> =
     });
 
     // Set last validation time
-    localStorage.setItem(SESSION_VALIDATION_KEY, Date.now().toString());
+    sessionManager.markSessionValidated();
     
     // Check for actual mismatch conditions
     const hasMismatch = (userAuthenticated && !hasSession) || 
@@ -41,7 +58,7 @@ export const validateSessionState = async (): Promise<SessionValidationResult> =
       isValid: !hasMismatch && !error,
       hasMismatch,
       hasLocalStorage: userAuthenticated,
-      hasSupabaseSession: hasSession, // Now properly typed as boolean
+      hasSupabaseSession: hasSession,
       errorDetails: error ? error.message : undefined
     };
   } catch (error) {
@@ -60,11 +77,5 @@ export const validateSessionState = async (): Promise<SessionValidationResult> =
  * Checks if the session validation is due (not performed recently)
  */
 export const isSessionValidationDue = (): boolean => {
-  const lastValidation = localStorage.getItem(SESSION_VALIDATION_KEY);
-  if (!lastValidation) return true;
-  
-  const lastValidationTime = parseInt(lastValidation, 10);
-  const timeSinceValidation = Date.now() - lastValidationTime;
-  
-  return timeSinceValidation > DEFAULT_SESSION_VALIDATION_INTERVAL_MS;
+  return sessionManager.isSessionValidationDue(DEFAULT_SESSION_VALIDATION_INTERVAL_MS);
 };
