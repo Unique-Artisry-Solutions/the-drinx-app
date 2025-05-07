@@ -1,7 +1,7 @@
 
 import { ReactNode } from 'react';
 import { ToastActionElement } from '@/components/ui/toast';
-import { ActionConfig } from '@/hooks/use-toast';
+import type { ActionConfig } from '@/hooks/use-toast';
 
 /**
  * Central definition for notification-related types
@@ -27,4 +27,4 @@ export interface Toast {
 }
 
 // Re-export the ActionConfig type from use-toast for consistency
-export { ActionConfig };
+export type { ActionConfig };

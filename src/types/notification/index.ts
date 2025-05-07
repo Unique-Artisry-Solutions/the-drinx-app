@@ -6,9 +6,9 @@
 export * from './NotificationTypes';
 export * from './ToastTypes';
 export * from './PushNotificationTypes';
-import { ActionConfig } from '@/hooks/use-toast';
+import type { ActionConfig } from '@/hooks/use-toast';
 
-// Re-export the Notification interface
+// Re-export the NotificationInterface
 export interface NotificationInterface {
   id: string;
   title: string;
@@ -83,4 +83,4 @@ export interface NotificationMetadata {
 export type NotificationType = 'success' | 'error' | 'warning' | 'info';
 
 // Re-export ActionConfig
-export { ActionConfig };
+export type { ActionConfig };
