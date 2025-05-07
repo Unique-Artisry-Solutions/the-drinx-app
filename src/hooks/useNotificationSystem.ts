@@ -20,11 +20,10 @@ export const useNotificationSystem = () => {
     (options: NotificationOptions) => {
       const { title, message, type = 'info', duration = 5000, action } = options;
 
+      // Modified variant mapping to use only valid variants that match the toast component expectations
       const variant = 
         type === 'error' ? 'destructive' : 
-        type === 'success' ? 'default' : 
-        type === 'warning' ? 'warning' : 
-        'default';
+        'default'; // All other types (success, warning, info) use default variant
 
       toast({
         title,
