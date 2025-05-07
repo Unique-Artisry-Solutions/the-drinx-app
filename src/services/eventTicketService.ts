@@ -51,10 +51,16 @@ export const processTicketScan = async (ticketCode: string): Promise<{
         console.error('Error creating check-in record:', checkInError);
       }
       
+      // Convert status to the correct enum type before returning
+      const typedAttendeeData: EventAttendee = {
+        ...attendeeData,
+        status: attendeeData.status as "registered" | "checked_in" | "cancelled" | "no_show"
+      };
+      
       return {
         success: true,
         message: 'Attendee checked in successfully',
-        attendee: attendeeData
+        attendee: typedAttendeeData
       };
     }
     
@@ -151,10 +157,13 @@ export const applyDiscountCode = async (
       };
     }
     
+    // Ensure the discount_type is correctly typed
+    const discountType = discountCode.discount_type as 'percentage' | 'fixed';
+    
     return {
       valid: true,
       discountAmount: discountCode.discount_amount,
-      discountType: discountCode.discount_type as 'percentage' | 'fixed',
+      discountType,
       message: 'Discount applied successfully'
     };
   } catch (error) {
@@ -179,6 +188,9 @@ export const createDiscountCode = async (discountData: {
   description?: string;
 }): Promise<EventDiscountCode> => {
   try {
+    // Convert expiresAt to ISO string if it exists
+    const expiresAtString = discountData.expiresAt ? discountData.expiresAt.toISOString() : undefined;
+    
     const { data, error } = await supabase
       .from('event_discount_codes')
       .insert({
@@ -186,7 +198,7 @@ export const createDiscountCode = async (discountData: {
         code: discountData.code,
         discount_type: discountData.discountType,
         discount_amount: discountData.discountAmount,
-        expires_at: discountData.expiresAt,
+        expires_at: expiresAtString,
         usage_limit: discountData.usageLimit,
         applicable_ticket_types: discountData.applicableTicketTypes,
         description: discountData.description,
@@ -196,7 +208,14 @@ export const createDiscountCode = async (discountData: {
       .single();
 
     if (error) throw error;
-    return data;
+    
+    // Ensure the returned data matches the EventDiscountCode type
+    const typedData: EventDiscountCode = {
+      ...data,
+      discount_type: data.discount_type as 'percentage' | 'fixed'
+    };
+    
+    return typedData;
   } catch (error) {
     console.error('Error creating discount code:', error);
     throw new Error('Failed to create discount code');
@@ -298,11 +317,15 @@ export const processTicketPurchase = async (purchaseData: {
         }
         
         // Update usage count for the discount code
-        await supabase
+        const { error: updateError } = await supabase
           .from('event_discount_codes')
-          .update({ usage_count: supabase.rpc('increment', { inc: 1 }) })
+          .update({ usage_count: supabase.rpc('increment') })
           .eq('code', purchaseData.discountCode)
           .eq('event_id', purchaseData.eventId);
+        
+        if (updateError) {
+          console.error('Error updating discount code usage count:', updateError);
+        }
       }
     }
     
@@ -328,7 +351,14 @@ export const processTicketPurchase = async (purchaseData: {
         .single();
         
       if (error) throw error;
-      attendees.push(attendee);
+      
+      // Convert to the correct type
+      const typedAttendee: EventAttendee = {
+        ...attendee,
+        status: attendee.status as "registered" | "checked_in" | "cancelled" | "no_show"
+      };
+      
+      attendees.push(typedAttendee);
     }
     
     // In a real app, you would integrate with a payment processor here

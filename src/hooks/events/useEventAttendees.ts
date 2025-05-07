@@ -6,7 +6,8 @@ import {
   fetchEventAttendees, 
   checkInAttendee, 
   cancelAttendeeRegistration, 
-  markAttendeeAsNoShow 
+  markAttendeeAsNoShow,
+  updateEventAttendee
 } from '@/services/eventAttendeesService';
 
 export const useEventAttendees = (eventId: string) => {
@@ -44,6 +45,15 @@ export const useEventAttendees = (eventId: string) => {
     }
   });
 
+  // Update attendee mutation
+  const updateAttendeeMutation = useMutation({
+    mutationFn: (data: { attendeeId: string, updates: Partial<EventAttendee> }) => 
+      updateEventAttendee(data.attendeeId, data.updates),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['eventAttendees', eventId] });
+    }
+  });
+
   // Filter and search attendees
   const filteredAttendees = attendees.filter(attendee => {
     const matchesSearch = !searchQuery || 
@@ -72,6 +82,11 @@ export const useEventAttendees = (eventId: string) => {
     await markNoShowMutation.mutateAsync(attendeeId);
   };
 
+  // Add the update attendee function
+  const updateAttendee = async (attendeeId: string, updates: Partial<EventAttendee>): Promise<void> => {
+    await updateAttendeeMutation.mutateAsync({ attendeeId, updates });
+  };
+
   return {
     attendees: filteredAttendees,
     allAttendees: attendees,
@@ -84,6 +99,7 @@ export const useEventAttendees = (eventId: string) => {
     checkIn,
     cancelRegistration,
     markAsNoShow,
+    updateAttendee,
     refresh: () => queryClient.invalidateQueries({ queryKey: ['eventAttendees', eventId] })
   };
 };
