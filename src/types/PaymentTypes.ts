@@ -80,3 +80,20 @@ export interface PaymentMethod {
     exp_year: number;
   };
 }
+
+export interface StripeCardElement {
+  update: (options: any) => void;
+  on: (event: string, handler: (event: any) => void) => void;
+  mount: (element: HTMLElement | string) => void;
+  unmount: () => void;
+}
+
+export interface StripeElements {
+  create: (type: string, options?: any) => StripeCardElement;
+}
+
+export interface StripeInstance {
+  elements: (options?: any) => StripeElements;
+  createPaymentMethod: (params: any) => Promise<any>;
+  confirmCardPayment: (clientSecret: string, data: any) => Promise<any>;
+}
