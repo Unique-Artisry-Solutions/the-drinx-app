@@ -29,6 +29,7 @@ export const systemConfiguration: FeatureItem = {
     - [x] Improved cart badge styling and z-index for better visibility
     - [x] Completely redesigned cart badge to appear outside button boundaries
     - [x] Fixed navigation context on explore and public pages
+    - [x] Comprehensive payment settings UI for processing fee management
   `,
   testSteps: [
     "Log in as admin and navigate to System Configuration page",
@@ -44,7 +45,8 @@ export const systemConfiguration: FeatureItem = {
     "Test adding tickets to cart with confirmation dialog",
     "Test cart functionality across the application",
     "Verify cart item counter is properly visible across all navigation contexts",
-    "Verify navigation displays correctly on all pages (explore, landing, etc.)"
+    "Verify navigation displays correctly on all pages (explore, landing, etc.)",
+    "Test processing fee updates and verify they apply to new transactions"
   ],
   integrations: [
     "Email service providers",

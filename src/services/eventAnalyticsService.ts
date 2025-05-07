@@ -1,5 +1,231 @@
 import { supabase } from '@/lib/supabase';
-import { safeJsonToRecord } from '@/utils/typeGuards';
+import { formatDate } from '@/utils/databaseHelpers';
+import { getEventById } from './eventService';
+
+/**
+ * Track a campaign impression
+ */
+export const trackCampaignImpression = async (campaignId: string, source?: string): Promise<void> => {
+  try {
+    // First, fetch the campaign analytics record to get current data
+    const { data: existingAnalytics, error: fetchError } = await supabase
+      .from('event_marketing_campaigns')
+      .select('id, metrics')
+      .eq('id', campaignId)
+      .single();
+
+    if (fetchError) {
+      console.error('Error fetching campaign analytics:', fetchError);
+      return;
+    }
+
+    // Prepare updated metrics
+    const metrics = existingAnalytics.metrics || {};
+    metrics.impressions = (metrics.impressions || 0) + 1;
+    
+    // Add to source data if provided
+    if (source) {
+      metrics.sources = metrics.sources || {};
+      metrics.sources[source] = metrics.sources[source] || {};
+      metrics.sources[source].impressions = (metrics.sources[source].impressions || 0) + 1;
+    }
+
+    // Update the record with new metrics
+    const { error: updateError } = await supabase
+      .from('event_marketing_campaigns')
+      .update({ 
+        metrics,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', campaignId);
+
+    if (updateError) {
+      console.error('Error updating campaign impressions:', updateError);
+    }
+  } catch (error) {
+    console.error('Error tracking campaign impression:', error);
+  }
+};
+
+/**
+ * Track a campaign click
+ */
+export const trackCampaignClick = async (campaignId: string, source?: string): Promise<void> => {
+  try {
+    // First, fetch the campaign analytics record to get current data
+    const { data: existingAnalytics, error: fetchError } = await supabase
+      .from('event_marketing_campaigns')
+      .select('id, metrics')
+      .eq('id', campaignId)
+      .single();
+
+    if (fetchError) {
+      console.error('Error fetching campaign analytics:', fetchError);
+      return;
+    }
+
+    // Prepare updated metrics
+    const metrics = existingAnalytics.metrics || {};
+    metrics.clicks = (metrics.clicks || 0) + 1;
+    
+    // Calculate CTR
+    if (metrics.impressions) {
+      metrics.ctr = (metrics.clicks / metrics.impressions) * 100;
+    }
+    
+    // Add to source data if provided
+    if (source) {
+      metrics.sources = metrics.sources || {};
+      metrics.sources[source] = metrics.sources[source] || {};
+      metrics.sources[source].clicks = (metrics.sources[source].clicks || 0) + 1;
+      
+      // Calculate source CTR
+      if (metrics.sources[source].impressions) {
+        metrics.sources[source].ctr = 
+          (metrics.sources[source].clicks / metrics.sources[source].impressions) * 100;
+      }
+    }
+
+    // Update the record with new metrics
+    const { error: updateError } = await supabase
+      .from('event_marketing_campaigns')
+      .update({ 
+        metrics,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', campaignId);
+
+    if (updateError) {
+      console.error('Error updating campaign clicks:', updateError);
+    }
+  } catch (error) {
+    console.error('Error tracking campaign click:', error);
+  }
+};
+
+/**
+ * Track a campaign conversion (ticket purchase)
+ */
+export const trackCampaignConversion = async (
+  campaignId: string, 
+  revenue: number, 
+  source?: string
+): Promise<void> => {
+  try {
+    // First, fetch the campaign analytics record to get current data
+    const { data: existingAnalytics, error: fetchError } = await supabase
+      .from('event_marketing_campaigns')
+      .select('id, metrics')
+      .eq('id', campaignId)
+      .single();
+
+    if (fetchError) {
+      console.error('Error fetching campaign analytics:', fetchError);
+      return;
+    }
+
+    // Prepare updated metrics
+    const metrics = existingAnalytics.metrics || {};
+    metrics.conversions = (metrics.conversions || 0) + 1;
+    metrics.revenue = (metrics.revenue || 0) + revenue;
+    
+    // Calculate conversion rate
+    if (metrics.clicks) {
+      metrics.conversionRate = (metrics.conversions / metrics.clicks) * 100;
+    }
+    
+    // Add to source data if provided
+    if (source) {
+      metrics.sources = metrics.sources || {};
+      metrics.sources[source] = metrics.sources[source] || {};
+      metrics.sources[source].conversions = (metrics.sources[source].conversions || 0) + 1;
+      metrics.sources[source].revenue = (metrics.sources[source].revenue || 0) + revenue;
+      
+      // Calculate source conversion rate
+      if (metrics.sources[source].clicks) {
+        metrics.sources[source].conversionRate = 
+          (metrics.sources[source].conversions / metrics.sources[source].clicks) * 100;
+      }
+    }
+
+    // Update the record with new metrics
+    const { error: updateError } = await supabase
+      .from('event_marketing_campaigns')
+      .update({ 
+        metrics,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', campaignId);
+
+    if (updateError) {
+      console.error('Error updating campaign conversions:', updateError);
+    }
+  } catch (error) {
+    console.error('Error tracking campaign conversion:', error);
+  }
+};
+
+/**
+ * Get campaign analytics
+ */
+export const getCampaignAnalytics = async (campaignId: string): Promise<{
+  impressions: number;
+  clicks: number;
+  conversions: number;
+  revenue: number;
+  ctr: number;
+  conversionRate: number;
+  sources: Record<string, any>;
+}> => {
+  try {
+    const { data, error } = await supabase
+      .from('event_marketing_campaigns')
+      .select('metrics')
+      .eq('id', campaignId)
+      .single();
+      
+    if (error) {
+      console.error('Error fetching campaign analytics:', error);
+      throw error;
+    }
+    
+    // Default values if no metrics exist
+    const defaultMetrics = {
+      impressions: 0,
+      clicks: 0,
+      conversions: 0,
+      revenue: 0,
+      ctr: 0,
+      conversionRate: 0,
+      sources: {}
+    };
+    
+    // Extract metrics or use defaults
+    const metrics = data?.metrics || {};
+    
+    return {
+      impressions: metrics.impressions || defaultMetrics.impressions,
+      clicks: metrics.clicks || defaultMetrics.clicks,
+      conversions: metrics.conversions || defaultMetrics.conversions,
+      revenue: metrics.revenue || defaultMetrics.revenue,
+      ctr: metrics.ctr || defaultMetrics.ctr,
+      conversionRate: metrics.conversionRate || defaultMetrics.conversionRate,
+      sources: metrics.sources || defaultMetrics.sources
+    };
+  } catch (error) {
+    console.error('Error in getCampaignAnalytics:', error);
+    // Return default values on error
+    return {
+      impressions: 0,
+      clicks: 0,
+      conversions: 0,
+      revenue: 0,
+      ctr: 0,
+      conversionRate: 0,
+      sources: {}
+    };
+  }
+};
 
 /**
  * Records an analytics event for an event
@@ -119,42 +345,52 @@ export const recordEventAnalyticsEvent = async (
  */
 export const getEventAnalytics = async (eventId: string) => {
   try {
-    // Calculate total metrics across all days for this event
+    // First check if the event exists
+    const event = await getEventById(eventId);
+    if (!event) {
+      throw new Error('Event not found');
+    }
+    
+    // Get analytics data from the event_analytics table
     const { data, error } = await supabase
       .from('event_analytics')
       .select('*')
-      .eq('event_id', eventId);
-    
-    if (error) {
+      .eq('event_id', eventId)
+      .single();
+      
+    if (error && error.code !== 'PGRST116') {
+      // PGRST116 is the error code for no rows returned
       console.error('Error fetching event analytics:', error);
       throw error;
     }
     
-    // Calculate totals
-    let totalViews = 0;
-    let uniqueVisitors = 0; // Note: This would require additional tracking
-    let totalTicketSales = 0;
-    let totalRevenue = 0;
+    // If no analytics record exists yet, return default values
+    if (!data) {
+      return {
+        page_views: 0,
+        ticket_views: 0,
+        social_shares: 0,
+        ticket_sales: 0,
+        revenue: 0,
+        referral_sources: {},
+        event: {
+          name: event.name,
+          date: formatDate(event.start_date)
+        }
+      };
+    }
     
-    data.forEach(day => {
-      totalViews += day.page_views || 0;
-      totalTicketSales += day.ticket_sales || 0;
-      totalRevenue += day.revenue || 0;
-    });
-    
-    // Calculate conversion rate (ticket sales / views)
-    const conversionRate = totalViews > 0 ? (totalTicketSales / totalViews) * 100 : 0;
-    
+    // Return the analytics data
     return {
-      views: totalViews,
-      uniqueVisitors: uniqueVisitors || Math.round(totalViews * 0.8), // Estimate unique visitors
-      ticketSales: totalTicketSales,
-      revenue: totalRevenue,
-      conversionRate
+      ...data,
+      event: {
+        name: event.name,
+        date: formatDate(event.start_date)
+      }
     };
-  } catch (err) {
-    console.error('Error in getEventAnalytics:', err);
-    throw err;
+  } catch (error) {
+    console.error('Error in getEventAnalytics:', error);
+    throw error;
   }
 };
 
@@ -344,95 +580,6 @@ export const getTicketSalesAnalytics = async (eventId: string) => {
 };
 
 /**
- * Track a marketing campaign conversion
- */
-export const trackCampaignConversion = async (
-  campaignId: string,
-  eventId: string,
-  conversionType: 'view' | 'click' | 'purchase',
-  data: {
-    quantity?: number;
-    revenue?: number;
-    referrer?: string;
-    source?: string;
-  } = {}
-) => {
-  try {
-    // Get the campaign
-    const { data: campaign, error: campaignError } = await supabase
-      .from('event_marketing_campaigns')
-      .select('metrics')
-      .eq('id', campaignId)
-      .single();
-    
-    if (campaignError) {
-      console.error('Error fetching campaign:', campaignError);
-      throw campaignError;
-    }
-    
-    // Parse existing metrics or create new ones
-    const metrics = safeJsonToRecord(campaign.metrics) || {};
-    
-    // Update appropriate metric
-    if (conversionType === 'view') {
-      metrics.impressions = (metrics.impressions || 0) + 1;
-    } else if (conversionType === 'click') {
-      metrics.clicks = (metrics.clicks || 0) + 1;
-    } else if (conversionType === 'purchase') {
-      metrics.conversions = (metrics.conversions || 0) + (data.quantity || 1);
-      metrics.revenue = (metrics.revenue || 0) + (data.revenue || 0);
-    }
-    
-    // Handle source tracking
-    if (data.source) {
-      if (!metrics.sources) {
-        metrics.sources = {};
-      }
-      
-      if (!metrics.sources[data.source]) {
-        metrics.sources[data.source] = {
-          impressions: 0,
-          clicks: 0,
-          conversions: 0,
-          revenue: 0
-        };
-      }
-      
-      const sourceData = metrics.sources[data.source];
-      
-      if (conversionType === 'view') {
-        sourceData.impressions = (sourceData.impressions || 0) + 1;
-      } else if (conversionType === 'click') {
-        sourceData.clicks = (sourceData.clicks || 0) + 1;
-      } else if (conversionType === 'purchase') {
-        sourceData.conversions = (sourceData.conversions || 0) + (data.quantity || 1);
-        sourceData.revenue = (sourceData.revenue || 0) + (data.revenue || 0);
-      }
-      
-      metrics.sources[data.source] = sourceData;
-    }
-    
-    // Update the campaign metrics in the database
-    const { error: updateError } = await supabase
-      .from('event_marketing_campaigns')
-      .update({ 
-        metrics: metrics,
-        updated_at: new Date().toISOString() 
-      })
-      .eq('id', campaignId);
-    
-    if (updateError) {
-      console.error('Error updating campaign metrics:', updateError);
-      throw updateError;
-    }
-    
-  } catch (err) {
-    console.error('Error tracking campaign conversion:', err);
-    throw err;
-  }
-};
-
-/**
  * Compare multiple events by their analytics
  */
 export const compareEvents = async (eventIds: string[]) => {
@@ -491,45 +638,51 @@ export const compareEvents = async (eventIds: string[]) => {
  */
 export const getCampaignAnalytics = async (campaignId: string) => {
   try {
-    // Get the campaign
-    const { data: campaign, error: campaignError } = await supabase
+    const { data, error } = await supabase
       .from('event_marketing_campaigns')
       .select('metrics')
       .eq('id', campaignId)
       .single();
-    
-    if (campaignError) {
-      console.error('Error fetching campaign:', campaignError);
-      throw campaignError;
+      
+    if (error) {
+      console.error('Error fetching campaign analytics:', error);
+      throw error;
     }
     
-    // Parse metrics
-    const metrics = safeJsonToRecord(campaign.metrics) || {};
+    // Default values if no metrics exist
+    const defaultMetrics = {
+      impressions: 0,
+      clicks: 0,
+      conversions: 0,
+      revenue: 0,
+      ctr: 0,
+      conversionRate: 0,
+      sources: {}
+    };
     
-    // Calculate derived metrics
-    const impressions = metrics.impressions || 0;
-    const clicks = metrics.clicks || 0;
-    const conversions = metrics.conversions || 0;
-    const revenue = metrics.revenue || 0;
-    
-    // Calculate rates
-    const ctr = impressions > 0 ? (clicks / impressions) * 100 : 0;
-    const conversionRate = clicks > 0 ? (conversions / clicks) * 100 : 0;
-    
-    // Format sources for easier use in UI
-    const sources = metrics.sources || {};
+    // Extract metrics or use defaults
+    const metrics = data?.metrics || {};
     
     return {
-      impressions,
-      clicks,
-      conversions,
-      revenue,
-      ctr,
-      conversionRate,
-      sources
+      impressions: metrics.impressions || defaultMetrics.impressions,
+      clicks: metrics.clicks || defaultMetrics.clicks,
+      conversions: metrics.conversions || defaultMetrics.conversions,
+      revenue: metrics.revenue || defaultMetrics.revenue,
+      ctr: metrics.ctr || defaultMetrics.ctr,
+      conversionRate: metrics.conversionRate || defaultMetrics.conversionRate,
+      sources: metrics.sources || defaultMetrics.sources
     };
-  } catch (err) {
-    console.error('Error getting campaign analytics:', err);
-    throw err;
+  } catch (error) {
+    console.error('Error in getCampaignAnalytics:', error);
+    // Return default values on error
+    return {
+      impressions: 0,
+      clicks: 0,
+      conversions: 0,
+      revenue: 0,
+      ctr: 0,
+      conversionRate: 0,
+      sources: {}
+    };
   }
 };
