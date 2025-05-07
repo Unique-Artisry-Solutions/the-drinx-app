@@ -37,14 +37,29 @@ const CheckInScannerModal: React.FC<CheckInScannerModalProps> = ({
     try {
       const result = await processTicketScan(code);
       
-      if (result.success && result.attendee) {
+      if (result.success && result.ticket) {
+        const attendee: EventAttendee = {
+          id: result.ticket.id,
+          event_id: result.ticket.event_id,
+          user_id: result.ticket.user_id || undefined,
+          email: result.ticket.email || undefined,
+          name: result.ticket.name || undefined,
+          ticket_type_id: result.ticket.ticket_type_id || undefined,
+          purchase_date: result.ticket.purchase_date,
+          checked_in_at: result.ticket.checked_in_at || undefined,
+          status: result.ticket.status as any,
+          ticket_code: result.ticket.ticket_code || undefined,
+          notes: result.ticket.notes || undefined,
+          custom_fields: result.ticket.custom_fields || {}
+        };
+        
         toast({
           title: "Check-in Successful",
           description: "Attendee has been checked in.",
         });
-        onCheckIn(result.attendee);
+        onCheckIn(attendee);
       } else {
-        throw new Error(result.message || "Failed to validate ticket");
+        throw new Error(result.error || "Failed to validate ticket");
       }
     } catch (error: any) {
       toast({

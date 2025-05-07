@@ -63,7 +63,6 @@ export interface EventTicketType {
 
 export interface EventMarketingCampaign {
   id: string;
-  event_id: string;
   name: string;
   description?: string;
   campaign_type: string;
@@ -71,7 +70,7 @@ export interface EventMarketingCampaign {
   start_date?: string;
   end_date?: string;
   budget?: number;
-  metrics?: {
+  metrics: {
     impressions: number;
     clicks: number;
     conversions: number;
@@ -147,4 +146,3 @@ export interface EventFormData {
 
 // Alias for backward compatibility
 export type EventType = Event;
-

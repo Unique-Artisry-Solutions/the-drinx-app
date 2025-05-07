@@ -38,8 +38,6 @@ const MarketingTabContent: React.FC<MarketingTabContentProps> = ({ eventId, even
         description: data.description,
         campaign_type: data.campaignType,
         status: 'draft',
-        event_id: eventId,
-        budget: data.budget ? parseFloat(data.budget) : undefined,
         metrics: {
           impressions: 0,
           clicks: 0, 

@@ -32,23 +32,44 @@ const CheckInScanner: React.FC<CheckInScannerProps> = ({ eventId, onCheckIn, onS
     setIsProcessing(true);
     try {
       const result = await processTicketScan(code);
-      setScanResult(result);
       
-      if (result.success && result.attendee) {
+      if (result.success && result.ticket) {
+        // Convert ticket to attendee format
+        const attendee: EventAttendee = {
+          id: result.ticket.id,
+          event_id: result.ticket.event_id,
+          user_id: result.ticket.user_id || undefined,
+          email: result.ticket.email || undefined,
+          name: result.ticket.name || undefined,
+          ticket_type_id: result.ticket.ticket_type_id || undefined,
+          purchase_date: result.ticket.purchase_date,
+          checked_in_at: result.ticket.checked_in_at || undefined,
+          status: result.ticket.status as any,
+          ticket_code: result.ticket.ticket_code || undefined,
+          notes: result.ticket.notes || undefined,
+          custom_fields: result.ticket.custom_fields || {}
+        };
+        
         // Check if this attendee is for this event
-        if (result.attendee.event_id === eventId) {
-          await onCheckIn(result.attendee.id!);
+        if (attendee.event_id === eventId) {
+          await onCheckIn(attendee.id!);
           onSuccess();
+          
+          setScanResult({
+            success: true,
+            message: `${attendee.name || 'Attendee'} has been checked in.`,
+            attendee
+          });
           
           toast({
             title: "Check-in Successful",
-            description: `${result.attendee.name || 'Attendee'} has been checked in.`,
+            description: `${attendee.name || 'Attendee'} has been checked in.`,
           });
         } else {
           setScanResult({
             success: false,
             message: "This ticket is for a different event",
-            attendee: result.attendee
+            attendee
           });
           
           toast({
@@ -58,9 +79,14 @@ const CheckInScanner: React.FC<CheckInScannerProps> = ({ eventId, onCheckIn, onS
           });
         }
       } else {
+        setScanResult({
+          success: false,
+          message: result.error || "Failed to validate ticket"
+        });
+        
         toast({
           title: "Check-in Failed",
-          description: result.message,
+          description: result.error || "Invalid ticket",
           variant: "destructive",
         });
       }

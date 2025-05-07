@@ -35,3 +35,23 @@ export function safeJsonToRecord(
 ): Record<string, any> {
   return safeJsonToType<Record<string, any>>(input, defaultValue);
 }
+
+/**
+ * Converts a string to valid attendee status or returns a fallback
+ * @param status string value to convert
+ * @param defaultStatus default value if conversion fails
+ * @returns valid attendee status
+ */
+export function toAttendeeStatus(
+  status: string | null | undefined,
+  defaultStatus: 'registered' | 'checked_in' | 'cancelled' | 'no_show' = 'registered'
+): 'registered' | 'checked_in' | 'cancelled' | 'no_show' {
+  if (!status) return defaultStatus;
+  
+  const validStatuses = ['registered', 'checked_in', 'cancelled', 'no_show'];
+  if (validStatuses.includes(status)) {
+    return status as 'registered' | 'checked_in' | 'cancelled' | 'no_show';
+  }
+  
+  return defaultStatus;
+}
