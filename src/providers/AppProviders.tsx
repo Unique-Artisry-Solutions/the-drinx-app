@@ -8,8 +8,20 @@ import { StripeProvider } from '@/contexts/StripeContext';
 import { Toaster } from '@/components/ui/toaster';
 import { Toaster as SonnerToaster } from 'sonner';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60 * 1000, // 1 minute
+      retry: 1,
+      refetchOnWindowFocus: false
+    }
+  }
+});
 
+/**
+ * Main providers wrapper for the application
+ * Contains all the context providers needed for the app to function
+ */
 const AppProviders: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
     <QueryClientProvider client={queryClient}>
