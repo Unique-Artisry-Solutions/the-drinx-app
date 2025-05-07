@@ -10,31 +10,72 @@ export const recordEventAnalyticsEvent = async (
   data: Record<string, any> = {}
 ) => {
   try {
-    const { error } = await supabase
+    // Get the current date in YYYY-MM-DD format
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Prepare the update data with required fields
+    const updateData = {
+      event_id: eventId,
+      date: today,
+    };
+    
+    // Add the appropriate field based on event type
+    const fieldToUpdate = 
+      eventType === 'view' ? 'page_views' : 
+      eventType === 'ticket_view' ? 'ticket_views' : 
+      eventType === 'share' ? 'social_shares' : 
+      'ticket_sales';
+    
+    // Check if record exists
+    const { data: existingRecord, error: checkError } = await supabase
       .from('event_analytics')
-      .upsert([
-        {
-          event_id: eventId,
-          date: new Date().toISOString().split('T')[0],
-          [eventType === 'view' ? 'page_views' : 
-            eventType === 'ticket_view' ? 'ticket_views' : 
-            eventType === 'share' ? 'social_shares' : 
-            'ticket_sales']: supabase.rpc('increment', { x: 1 }),
+      .select('id')
+      .eq('event_id', eventId)
+      .eq('date', today)
+      .single();
+    
+    if (checkError && checkError.code !== 'PGRST116') {
+      throw checkError;
+    }
+    
+    if (existingRecord) {
+      // Update existing record
+      const { error } = await supabase
+        .from('event_analytics')
+        .update({
+          [fieldToUpdate]: supabase.rpc('get_incremented_value', { row_id: existingRecord.id, column_name: fieldToUpdate }),
           ...(eventType === 'purchase' && { 
-            revenue: supabase.rpc('increment', { x: data.amount || 0 }) 
+            revenue: supabase.rpc('get_incremented_value', { row_id: existingRecord.id, column_name: 'revenue', increment_by: data.amount || 0 })
           }),
           ...(eventType === 'view' && data.referrer && {
-            referral_sources: supabase.rpc('update_referral_source', { 
-              p_source: data.referrer,
-              p_count: 1
+            referral_sources: supabase.rpc('update_source_count', { 
+              record_id: existingRecord.id,
+              source_name: data.referrer
             })
-          })
-        }
-      ], { 
-        onConflict: 'event_id,date' 
-      });
-
-    if (error) throw error;
+          }),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', existingRecord.id);
+      
+      if (error) throw error;
+    } else {
+      // Insert new record
+      const initialData: Record<string, any> = {
+        event_id: eventId,
+        date: today,
+        [fieldToUpdate]: 1,
+        ...(eventType === 'purchase' && { revenue: data.amount || 0 }),
+        ...(eventType === 'view' && data.referrer && {
+          referral_sources: { [data.referrer]: 1 }
+        })
+      };
+      
+      const { error } = await supabase
+        .from('event_analytics')
+        .insert([initialData]);
+        
+      if (error) throw error;
+    }
   } catch (err) {
     console.error('Error recording event analytics:', err);
     throw err;
@@ -60,13 +101,25 @@ export const trackCampaignConversion = async (
       .from('event_marketing_campaigns')
       .update({
         metrics: {
-          [conversionType + '_count']: supabase.rpc('increment', { x: 1 }),
-          ...(conversionType === 'purchase' && { 
-            revenue: supabase.rpc('increment', { x: data.revenue || 0 }),
-            ticket_quantity: supabase.rpc('increment', { x: data.quantity || 0 })
+          [conversionType + '_count']: supabase.rpc('get_incremented_value', { 
+            row_id: campaignId, 
+            column_name: `metrics->${conversionType}_count`,
+            increment_by: 1
           }),
-          updated_at: new Date().toISOString()
-        }
+          ...(conversionType === 'purchase' && { 
+            revenue: supabase.rpc('get_incremented_value', { 
+              row_id: campaignId, 
+              column_name: 'metrics->revenue',
+              increment_by: data.revenue || 0
+            }),
+            ticket_quantity: supabase.rpc('get_incremented_value', { 
+              row_id: campaignId, 
+              column_name: 'metrics->ticket_quantity',
+              increment_by: data.quantity || 0
+            })
+          })
+        },
+        updated_at: new Date().toISOString()
       })
       .eq('id', campaignId)
       .eq('event_id', eventId);
@@ -312,45 +365,98 @@ export const compareEvents = async (eventIds: string[]) => {
   try {
     if (!eventIds.length) return [];
 
-    const { data, error } = await supabase
+    // First get the events data
+    const { data: eventsData, error: eventsError } = await supabase
+      .from('events')
+      .select('id, name, date')
+      .in('id', eventIds);
+    
+    if (eventsError) throw eventsError;
+    
+    // Then get analytics for those events
+    const { data: analyticsData, error: analyticsError } = await supabase
       .from('event_analytics')
-      .select(`
-        event_analytics.*, 
-        events:event_id (
-          name, 
-          date
-        )
-      `)
+      .select('*')
       .in('event_id', eventIds)
       .order('date', { ascending: false });
-
-    if (error) throw error;
-
+      
+    if (analyticsError) throw analyticsError;
+    
     // Group by event and get the latest data points
     const eventData: Record<string, any> = {};
     
-    data.forEach(record => {
+    analyticsData.forEach(record => {
       const eventId = record.event_id;
       
       if (!eventData[eventId] || new Date(record.date) > new Date(eventData[eventId].date)) {
         eventData[eventId] = record;
       }
     });
-
+    
     // Format the data for comparison
-    return Object.values(eventData).map(record => ({
-      id: record.event_id,
-      name: record.events.name,
-      date: record.events.date,
-      views: record.page_views || 0,
-      ticketSales: record.ticket_sales || 0,
-      revenue: record.revenue || 0,
-      conversionRate: record.page_views > 0 
-        ? (record.ticket_sales / record.page_views) * 100
-        : 0
-    }));
+    return eventsData.map(event => {
+      const analytics = eventData[event.id] || {
+        page_views: 0,
+        ticket_sales: 0,
+        revenue: 0
+      };
+      
+      return {
+        id: event.id,
+        name: event.name,
+        date: event.date,
+        views: analytics.page_views || 0,
+        ticketSales: analytics.ticket_sales || 0,
+        revenue: analytics.revenue || 0,
+        conversionRate: analytics.page_views > 0 
+          ? (analytics.ticket_sales / analytics.page_views) * 100
+          : 0
+      };
+    });
   } catch (err) {
     console.error('Error comparing events:', err);
     return [];
+  }
+};
+
+/**
+ * Gets analytics data for a specific campaign
+ */
+export const getCampaignAnalytics = async (campaignId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('event_marketing_campaigns')
+      .select('name, campaign_type, metrics')
+      .eq('id', campaignId)
+      .single();
+
+    if (error) throw error;
+    
+    const metrics = data.metrics || {};
+    const impressions = metrics.impressions || 0;
+    const clicks = metrics.clicks || 0;
+    const conversions = metrics.conversions || 0;
+    const revenue = metrics.revenue || 0;
+    
+    return {
+      impressions,
+      clicks,
+      conversions,
+      revenue,
+      ctr: impressions > 0 ? (clicks / impressions) * 100 : 0,
+      conversionRate: clicks > 0 ? (conversions / clicks) * 100 : 0,
+      sources: metrics.sources || {}
+    };
+  } catch (err) {
+    console.error('Error fetching campaign analytics:', err);
+    return {
+      impressions: 0,
+      clicks: 0,
+      conversions: 0,
+      revenue: 0,
+      ctr: 0,
+      conversionRate: 0,
+      sources: {}
+    };
   }
 };
