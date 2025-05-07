@@ -1,96 +1,73 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { Calendar, ArrowRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import EventCard from '@/components/promoter/events/EventCard';
-import { EventType } from '@/types/EventTypes';
-import { useEventQueries } from '@/hooks/events/useEventQueries';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import EventCard from './EventCard';
+import { Skeleton } from '@/components/ui/skeleton';
 
-interface EventsSectionProps {
-  events?: EventType[];
-}
+const useEvents = (limit: number = 6) => {
+  return useQuery({
+    queryKey: ['featuredEvents', limit],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .eq('is_public', true)
+        .eq('status', 'published')
+        .order('created_at', { ascending: false })
+        .limit(limit);
 
-const EventsSection: React.FC<EventsSectionProps> = ({ events: propEvents }) => {
-  const { events: fetchedEvents, isLoading } = useEventQueries();
-  const events = propEvents || fetchedEvents || [];
-  
-  const scrollToTop = () => {
-    window.scrollTo(0, 0);
-  };
+      if (error) throw error;
+      return data || [];
+    }
+  });
+};
 
-  console.log('EventsSection - rendering with events:', events); // Debug log
-  
+const EventsSection = () => {
+  const { data: events, isLoading, error } = useEvents();
+
+  if (error) {
+    console.error('Error loading events:', error);
+  }
+
   return (
-    <div className="mb-6 p-5 bg-gradient-to-r from-purple-100/20 to-blue-100/20 rounded-lg border border-purple-200/30 shadow-md">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
-        <div>
-          <h2 className="text-xl font-semibold text-purple-700 mb-2">Upcoming Events</h2>
-          <p className="text-sm text-muted-foreground">
-            Discover spirit-free events in your area
-          </p>
-        </div>
+    <section className="py-12">
+      <div className="container">
+        <h2 className="text-3xl font-bold mb-8">Upcoming Events</h2>
         
-        <div className="flex gap-2 mt-3 sm:mt-0 w-full sm:w-auto">
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-1 border-purple-500 text-purple-700 flex-1 sm:flex-none"
-            asChild
-          >
-            <Link to="/events" onClick={scrollToTop}>
-              <Calendar className="h-4 w-4" />
-              <span>All Events</span>
-              <ArrowRight className="h-3 w-3 ml-1" />
-            </Link>
-          </Button>
-        </div>
-      </div>
-      
-      {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-64 bg-gray-100 animate-pulse rounded-md"></div>
-          ))}
-        </div>
-      ) : events.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {events.slice(0, 3).map((event) => {
-            // Extract venue name safely
-            const venueName = event.venue?.name || 'TBD';
-            
-            // Calculate registered attendees safely  
-            const attendeeCount = event.attendees?.registered || 0;
-            
-            // Handle distance safely
-            const distance = event.distance;
-
-            console.log(`Creating event card for event ${event.id} with linkBasePath /event`); // Debug log
-
-            return (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {isLoading ? (
+            // Loading skeletons
+            Array(6).fill(0).map((_, i) => (
+              <div key={i} className="border rounded-lg overflow-hidden shadow-sm">
+                <Skeleton className="h-48 w-full" />
+                <div className="p-4 space-y-3">
+                  <Skeleton className="h-6 w-3/4" />
+                  <Skeleton className="h-4 w-1/2" />
+                  <Skeleton className="h-4 w-5/6" />
+                </div>
+              </div>
+            ))
+          ) : events?.length === 0 ? (
+            <div className="col-span-full text-center py-12">
+              <p className="text-xl">No upcoming events found.</p>
+              <p className="text-gray-500 mt-2">Check back soon for new events!</p>
+            </div>
+          ) : (
+            events?.map((event) => (
               <EventCard
                 key={event.id}
                 id={event.id}
                 name={event.name}
-                date={new Date(event.date).toLocaleDateString()}
-                time={event.time}
-                venue={venueName}
-                status={event.status}
+                description={event.description || ''}
+                date={event.date}
                 imageUrl={event.image_url}
-                attendeeCount={attendeeCount}
-                distance={distance}
-                linkBasePath="/event" // Set the correct link path for individual users
               />
-            );
-          })}
+            ))
+          )}
         </div>
-      ) : (
-        <div className="py-10 text-center">
-          <h3 className="text-lg font-medium text-gray-500">No upcoming events</h3>
-          <p className="text-sm text-muted-foreground mt-2">Check back soon for new events</p>
-        </div>
-      )}
-    </div>
+      </div>
+    </section>
   );
 };
 

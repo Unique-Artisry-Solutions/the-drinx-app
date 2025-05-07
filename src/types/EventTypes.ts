@@ -62,6 +62,7 @@ export interface EventTicketType {
 
 export interface EventMarketingCampaign {
   id: string;
+  event_id: string;
   name: string;
   description?: string;
   campaign_type: string;
@@ -74,16 +75,11 @@ export interface EventMarketingCampaign {
     clicks: number;
     conversions: number;
     revenue: number;
-    open_rate?: number;
-    sources?: Record<string, {
-      impressions: number;
-      clicks: number;
-      conversions: number;
-      revenue: number;
-    }>;
+    sources?: Record<string, any>;
   };
   target_audience?: Record<string, any>;
-  event_id?: string;
+  isABTesting?: boolean;
+  trafficSplit?: number;
 }
 
 export type EventStatus = 'draft' | 'published' | 'cancelled' | 'completed';
@@ -169,18 +165,15 @@ export interface ReferralSource {
 
 // For A/B testing and campaign analytics - expanded with all required properties
 export interface ABTestResult {
-  variants: { id: string; name: string; conversionRate: number }[];
-  winner: string | null;
-  variantA?: {
+  variants: Array<{
     id: string;
     name: string;
     conversionRate: number;
-  };
-  variantB?: {
-    id: string; 
-    name: string;
-    conversionRate: number;
-  };
+    traffic?: number;
+  }>;
+  winner: string | null;
+  variantA?: { id: string; name: string; conversionRate: number; traffic?: number };
+  variantB?: { id: string; name: string; conversionRate: number; traffic?: number };
   improvement: number;
   significantResult: boolean;
 }

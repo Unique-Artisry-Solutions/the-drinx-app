@@ -1,376 +1,385 @@
+
 import React, { useState, useEffect } from 'react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Separator } from '@/components/ui/separator';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Loader2, Plus, Search, AlertCircle, XCircle, Bell, MessageSquare } from 'lucide-react';
-import { EventMarketingCampaign } from '@/types/EventTypes';
-import { AudienceSegment } from '@/types/AudienceTypes';
-import { CampaignSegmentMapping, NotificationPriority } from '@/types/CampaignSegmentTypes';
-import { useToast } from '@/hooks/use-toast';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
+import { CampaignSegmentPanel, SegmentSelection } from './CampaignSegmentPanel';
+import { Loader2, Plus, Users, Send } from 'lucide-react';
+import { useEventMarketingWithSegments } from '@/hooks/events/useEventMarketingWithSegments';
+import { useAudienceSegments } from '@/hooks/useAudienceSegments';
+import { 
+  CampaignSegmentMapping,
+  CampaignSegmentAnalytics,
+  NotificationPriority
+} from '@/types/CampaignSegmentTypes';
 import { validateNotificationPriority } from '@/services/typeAdapterService';
 
-export interface SegmentSelection {
-  id: string;
-  name: string;
-  allocation?: number;
-  isControlGroup?: boolean;
-  description?: string;
-  segment_id?: string;
-}
-
 interface AttendeeSegmentsTabProps {
-  campaign: EventMarketingCampaign;
-  availableSegments: AudienceSegment[];
-  existingMappings: CampaignSegmentMapping[];
-  isLoading: boolean;
-  segmentsLoading: boolean;
-  onAssignSegments: (campaign: EventMarketingCampaign, segments: SegmentSelection[]) => Promise<any>;
-  onRemoveSegment: (mappingId: string) => Promise<any>;
-  getTargetedContent: (segmentId: string, contentType: string) => Promise<any>;
-  createSegmentNotification: (segmentId: string, title: string, content: string, priority: NotificationPriority) => Promise<boolean>;
+  eventId: string;
+  eventName: string;
 }
 
-export const AttendeeSegmentsTab: React.FC<AttendeeSegmentsTabProps> = ({
-  campaign,
-  availableSegments,
-  existingMappings,
-  isLoading,
-  segmentsLoading,
-  onAssignSegments,
-  onRemoveSegment,
-  getTargetedContent,
-  createSegmentNotification
-}) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedSegments, setSelectedSegments] = useState<SegmentSelection[]>([]);
-  const [isAssigning, setIsAssigning] = useState(false);
-  const [showDescriptionInput, setShowDescriptionInput] = useState<string | null>(null);
-  const [notificationDetails, setNotificationDetails] = useState<{
-    segmentId: string;
-    title: string;
-    content: string;
-    priority: NotificationPriority;
-  } | null>(null);
+export const AttendeeSegmentsTab: React.FC<AttendeeSegmentsTabProps> = ({ eventId, eventName }) => {
+  const [activeTab, setActiveTab] = useState('targeting');
+  const [loading, setLoading] = useState(false);
+  const [segmentMappings, setSegmentMappings] = useState<CampaignSegmentMapping[]>([]);
+  const [selectedCampaign, setSelectedCampaign] = useState<string | null>(null);
+  const [segmentPerformance, setSegmentPerformance] = useState<CampaignSegmentAnalytics[]>([]);
+  const [notificationTitle, setNotificationTitle] = useState('');
+  const [notificationContent, setNotificationContent] = useState('');
+  const [notificationPriority, setNotificationPriority] = useState<NotificationPriority>('medium');
+  const [selectedSegmentIds, setSelectedSegmentIds] = useState<string[]>([]);
+  const [isSendingNotification, setIsSendingNotification] = useState(false);
+  
   const { toast } = useToast();
+  const { 
+    campaigns, 
+    isLoading: campaignsLoading,
+    segmentsLoading,
+    activeCampaign,
+    selectCampaign,
+    getSegmentMappings,
+    getSegmentPerformance,
+    assignSegments,
+    removeSegment,
+    createSegmentNotification
+  } = useEventMarketingWithSegments(eventId);
+  
+  const { segments, isLoading: segmentsDataLoading } = useAudienceSegments(eventId);
 
   useEffect(() => {
-    // Initialize selected segments with existing mappings
-    const initialSegments = existingMappings.map(mapping => ({
-      id: mapping.segment_id,
-      name: availableSegments.find(s => s.id === mapping.segment_id)?.name || 'Unknown Segment',
-      allocation: mapping.allocation_percentage,
-      isControlGroup: mapping.is_control_group,
-      description: mapping.description,
-      segment_id: mapping.segment_id
-    }));
-    setSelectedSegments(initialSegments);
-  }, [existingMappings, availableSegments]);
-
-  const handleSegmentSelect = (segment: AudienceSegment) => {
-    const isSelected = selectedSegments.some(s => s.id === segment.id);
-    
-    if (isSelected) {
-      setSelectedSegments(prev => prev.filter(s => s.id !== segment.id));
-    } else {
-      setSelectedSegments(prev => [...prev, { 
-        id: segment.id, 
-        name: segment.name,
-        allocation: 100,
-        isControlGroup: false,
-        segment_id: segment.id
-      }]);
+    if (campaigns.length > 0 && !selectedCampaign) {
+      // Auto-select the first campaign
+      handleCampaignSelect(campaigns[0].id);
     }
-  };
+  }, [campaigns, selectedCampaign]);
 
-  const handleAllocationChange = (segmentId: string, value: number) => {
-    setSelectedSegments(prev => 
-      prev.map(s => s.id === segmentId ? { ...s, allocation: value } : s)
-    );
-  };
+  useEffect(() => {
+    if (selectedCampaign) {
+      loadSegmentData(selectedCampaign);
+    }
+  }, [selectedCampaign]);
 
-  const handleControlGroupChange = (segmentId: string, checked: boolean) => {
-    setSelectedSegments(prev =>
-      prev.map(s => s.id === segmentId ? { ...s, isControlGroup: checked } : s)
-    );
-  };
-
-  const handleDescriptionChange = (segmentId: string, description: string) => {
-    setSelectedSegments(prev =>
-      prev.map(s => s.id === segmentId ? { ...s, description: description } : s)
-    );
-  };
-
-  const handleAssign = async () => {
-    setIsAssigning(true);
+  const loadSegmentData = async (campaignId: string) => {
+    setLoading(true);
     try {
-      await onAssignSegments(campaign, selectedSegments);
-    } finally {
-      setIsAssigning(false);
-    }
-  };
-
-  const handleRemove = async (mappingId: string) => {
-    setIsAssigning(true);
-    try {
-      await onRemoveSegment(mappingId);
-    } finally {
-      setIsAssigning(false);
-    }
-  };
-
-  const filteredSegments = availableSegments.filter(segment =>
-    segment.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const isSegmentSelected = (segmentId: string) => {
-    return selectedSegments.some(s => s.id === segmentId);
-  };
-
-  const handleNotificationDetailsChange = (
-    segmentId: string,
-    field: 'title' | 'content' | 'priority',
-    value: string
-  ) => {
-    setNotificationDetails(prev => ({
-      ...prev,
-      segmentId: segmentId,
-      [field]: value,
-    } as any));
-  };
-
-  const handleCreateNotification = async (segmentId: string) => {
-    if (!notificationDetails?.title || !notificationDetails?.content) {
+      const mappings = await getSegmentMappings(campaignId);
+      setSegmentMappings(mappings);
+      
+      const performance = await getSegmentPerformance(campaignId);
+      setSegmentPerformance(performance);
+    } catch (error) {
+      console.error("Error loading segment data:", error);
       toast({
-        title: 'Error',
-        description: 'Please fill in both title and content for the notification.',
-        variant: 'destructive',
+        title: "Error",
+        description: "Failed to load segment data",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCampaignSelect = (campaignId: string) => {
+    setSelectedCampaign(campaignId);
+    selectCampaign(campaignId);
+  };
+
+  const handleAssignSegments = async (segments: SegmentSelection[]) => {
+    if (!activeCampaign) return;
+    
+    const success = await assignSegments(activeCampaign, segments);
+    if (success) {
+      await loadSegmentData(activeCampaign.id);
+    }
+  };
+
+  const handleRemoveSegment = async (mappingId: string) => {
+    const success = await removeSegment(mappingId);
+    if (success && selectedCampaign) {
+      await loadSegmentData(selectedCampaign);
+    }
+  };
+
+  const handleSendNotification = async () => {
+    if (!notificationTitle || !notificationContent || selectedSegmentIds.length === 0) {
+      toast({
+        title: "Validation Error",
+        description: "Please fill in all required fields",
+        variant: "destructive",
       });
       return;
     }
-
+    
+    setIsSendingNotification(true);
+    
     try {
-      const success = await createSegmentNotification(
-        segmentId,
-        notificationDetails.title,
-        notificationDetails.content,
-        notificationDetails.priority
+      // Validate and normalize the notification priority
+      const validPriority = validateNotificationPriority(notificationPriority);
+      
+      // Send notification to each selected segment
+      const results = await Promise.all(
+        selectedSegmentIds.map(segmentId => 
+          createSegmentNotification(segmentId, notificationTitle, notificationContent, validPriority)
+        )
       );
-
-      if (success) {
+      
+      const allSuccess = results.every(result => result === true);
+      
+      if (allSuccess) {
         toast({
-          title: 'Success',
-          description: 'Notification created and sent to segment members.',
+          title: "Success",
+          description: `Notification sent to ${selectedSegmentIds.length} segment(s)`,
         });
-        setNotificationDetails(null);
+        
+        // Reset form
+        setNotificationTitle('');
+        setNotificationContent('');
+        setSelectedSegmentIds([]);
       } else {
         toast({
-          title: 'Error',
-          description: 'Failed to create notification.',
-          variant: 'destructive',
+          title: "Partial Success",
+          description: "Some notifications may not have been sent",
+          variant: "warning",
         });
       }
-    } catch (error: any) {
-      console.error('Error creating segment notification:', error);
+    } catch (error) {
+      console.error("Error sending notifications:", error);
       toast({
-        title: 'Error',
-        description: error.message || 'Failed to create notification.',
-        variant: 'destructive',
+        title: "Error",
+        description: "Failed to send notifications",
+        variant: "destructive",
       });
+    } finally {
+      setIsSendingNotification(false);
     }
   };
 
+  // Map segments with existing mappings
+  const getSegmentsWithMappings = (): SegmentSelection[] => {
+    if (!segments) return [];
+    
+    return segments.map(segmentItem => {
+      const existingMapping = segmentMappings.find(m => m.segment_id === segmentItem.id);
+      const segmentSelection: SegmentSelection = {
+        id: segmentItem.id || segmentItem.segment_id, // Use either id if available
+        name: segmentItem.name || 'Unknown Segment',
+        allocation: existingMapping?.allocation_percentage || 100,
+        isControlGroup: existingMapping?.is_control_group || false,
+        description: existingMapping?.description
+      };
+      return segmentSelection;
+    });
+  };
+
+  const isLoading = campaignsLoading || segmentsLoading || loading || segmentsDataLoading;
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Campaign Segments</CardTitle>
-        <CardDescription>
-          Target specific audience segments with this campaign.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex items-center space-x-2">
-          <Search className="h-4 w-4 text-gray-500" />
-          <Input
-            type="search"
-            placeholder="Search segments..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full"
-          />
+    <div className="space-y-4">
+      <h2 className="text-2xl font-bold">Audience Segments for {eventName}</h2>
+      
+      <div className="mb-4">
+        <Label htmlFor="campaign-selector" className="mb-2 block">Select Campaign:</Label>
+        <div className="flex space-x-2">
+          <select 
+            id="campaign-selector"
+            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+            value={selectedCampaign || ''}
+            onChange={(e) => handleCampaignSelect(e.target.value)}
+            disabled={isLoading || campaigns.length === 0}
+          >
+            {campaigns.length === 0 ? (
+              <option value="" disabled>No campaigns available</option>
+            ) : (
+              campaigns.map(campaign => (
+                <option key={campaign.id} value={campaign.id}>
+                  {campaign.name}
+                </option>
+              ))
+            )}
+          </select>
+          
+          <Button disabled={isLoading} onClick={() => selectedCampaign && loadSegmentData(selectedCampaign)}>
+            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Refresh"}
+          </Button>
         </div>
-        <Separator />
+      </div>
+      
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="targeting">Segment Targeting</TabsTrigger>
+          <TabsTrigger value="notification">Segment Notifications</TabsTrigger>
+          <TabsTrigger value="analytics">Segment Analytics</TabsTrigger>
+        </TabsList>
         
-        {segmentsLoading ? (
-          <div className="flex items-center justify-center h-32">
-            <Loader2 className="h-6 w-6 animate-spin" />
-          </div>
-        ) : (
-          <ScrollArea className="h-[400px] pr-2">
-            {filteredSegments.length === 0 ? (
-              <div className="text-sm text-gray-500 text-center mt-4">
-                No segments found.
+        <TabsContent value="targeting" className="space-y-4 pt-4">
+          <div className="grid grid-cols-1 gap-4">
+            {isLoading ? (
+              <div className="flex items-center justify-center h-64">
+                <Loader2 className="h-8 w-8 animate-spin" />
               </div>
             ) : (
-              filteredSegments.map(segment => {
-                const s = segment as any;
-                const existingMapping = existingMappings.find(m => m.segment_id === s.id);
-                const segment: SegmentSelection = {
-                  id: s.id || s.segment_id, // Use either id if available
-                  name: s.name || 'Unknown Segment',
-                  segment_id: s.segment_id
-                };
-
-                return (
-                  <div key={segment.id} className="py-2">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor={`segment-${segment.id}`} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`segment-${segment.id}`}
-                          checked={isSegmentSelected(segment.id)}
-                          onCheckedChange={() => handleSegmentSelect(segment)}
-                          disabled={!!existingMapping}
-                        />
-                        <span>{segment.name}</span>
-                      </Label>
-                      {existingMapping && (
-                        <Button variant="destructive" size="icon" onClick={() => handleRemove(existingMapping.id)}>
-                          <XCircle className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                    {isSegmentSelected(segment.id) && (
-                      <div className="mt-2 pl-6 space-y-2">
-                        <div className="flex items-center space-x-2">
-                          <Label htmlFor={`allocation-${segment.id}`} className="text-sm">
-                            Allocation %:
-                          </Label>
-                          <Input
-                            type="number"
-                            id={`allocation-${segment.id}`}
-                            value={selectedSegments.find(s => s.id === segment.id)?.allocation || 100}
-                            onChange={(e) => handleAllocationChange(segment.id, Number(e.target.value))}
-                            min="1"
-                            max="100"
-                            className="w-20 text-sm"
-                            disabled={!!existingMapping}
-                          />
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Label htmlFor={`control-group-${segment.id}`} className="text-sm">
-                            Control Group:
-                          </Label>
-                          <Checkbox
-                            id={`control-group-${segment.id}`}
-                            checked={selectedSegments.find(s => s.id === segment.id)?.isControlGroup || false}
-                            onCheckedChange={(checked) => handleControlGroupChange(segment.id, !!checked)}
-                            disabled={!!existingMapping}
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <Label htmlFor={`description-${segment.id}`} className="text-sm">
-                            Description:
-                          </Label>
-                          {showDescriptionInput === segment.id ? (
-                            <div className="flex items-center space-x-2">
-                              <Input
-                                type="text"
-                                id={`description-${segment.id}`}
-                                value={selectedSegments.find(s => s.id === segment.id)?.description || ''}
-                                onChange={(e) => handleDescriptionChange(segment.id, e.target.value)}
-                                className="text-sm"
-                                disabled={!!existingMapping}
-                              />
-                              <Button variant="ghost" size="icon" onClick={() => setShowDescriptionInput(null)}>
-                                <XCircle className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          ) : (
-                            <Button variant="link" size="sm" onClick={() => setShowDescriptionInput(segment.id)} disabled={!!existingMapping}>
-                              Add Description
-                            </Button>
-                          )}
-                        </div>
-                        <Separator />
-                        <div className="space-y-1">
-                          <Label htmlFor={`notification-title-${segment.id}`} className="text-sm">
-                            Notification Title:
-                          </Label>
-                          <Input
-                            type="text"
-                            id={`notification-title-${segment.id}`}
-                            value={notificationDetails?.segmentId === segment.id ? notificationDetails.title : ''}
-                            onChange={(e) => handleNotificationDetailsChange(segment.id, 'title', e.target.value)}
-                            className="text-sm"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <Label htmlFor={`notification-content-${segment.id}`} className="text-sm">
-                            Notification Content:
-                          </Label>
-                          <Input
-                            type="text"
-                            id={`notification-content-${segment.id}`}
-                            value={notificationDetails?.segmentId === segment.id ? notificationDetails.content : ''}
-                            onChange={(e) => handleNotificationDetailsChange(segment.id, 'content', e.target.value)}
-                            className="text-sm"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <Label htmlFor={`notification-priority-${segment.id}`} className="text-sm">
-                            Notification Priority:
-                          </Label>
-                          <select
-                            id={`notification-priority-${segment.id}`}
-                            className="w-full text-sm rounded-md border border-gray-200 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                            value={notificationDetails?.segmentId === segment.id ? notificationDetails.priority : 'medium'}
-                            onChange={(e) => handleNotificationDetailsChange(segment.id, 'priority', e.target.value)}
-                          >
-                            <option value="low">Low</option>
-                            <option value="medium">Medium</option>
-                            <option value="high">High</option>
-                            <option value="urgent">Urgent</option>
-                          </select>
-                        </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="mt-2"
-                          onClick={() => {
-                            if (segment.segment_id) {
-                              handleCreateNotification(segment.segment_id);
+              <CampaignSegmentPanel
+                campaign={activeCampaign!}
+                availableSegments={segments}
+                existingMappings={segmentMappings}
+                isLoading={isLoading}
+                onAssignSegments={handleAssignSegments}
+              />
+            )}
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="notification" className="pt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Send Notifications to Segments</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="notification-title">Notification Title</Label>
+                <Input
+                  id="notification-title"
+                  value={notificationTitle}
+                  onChange={(e) => setNotificationTitle(e.target.value)}
+                  placeholder="Enter notification title"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="notification-content">Message Content</Label>
+                <textarea
+                  id="notification-content"
+                  value={notificationContent}
+                  onChange={(e) => setNotificationContent(e.target.value)}
+                  placeholder="Enter your message here..."
+                  className="flex min-h-24 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="notification-priority">Priority</Label>
+                <select
+                  id="notification-priority"
+                  value={notificationPriority}
+                  onChange={(e) => setNotificationPriority(e.target.value as NotificationPriority)}
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                  <option value="urgent">Urgent</option>
+                </select>
+              </div>
+              
+              <div>
+                <Label className="block mb-2">Select Segments</Label>
+                <div className="space-y-2 max-h-60 overflow-y-auto border rounded-md p-2">
+                  {segments.length === 0 ? (
+                    <p className="text-sm text-gray-500 dark:text-gray-400">No segments available</p>
+                  ) : (
+                    segments.map(seg => (
+                      <div key={seg.id} className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id={`segment-${seg.id}`}
+                          checked={selectedSegmentIds.includes(seg.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedSegmentIds(prev => [...prev, seg.id]);
+                            } else {
+                              setSelectedSegmentIds(prev => prev.filter(id => id !== seg.id));
                             }
                           }}
-                        >
-                          <Bell className="mr-2 h-4 w-4" />
-                          Create Notification
-                        </Button>
+                          className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                        />
+                        <Label htmlFor={`segment-${seg.id}`} className="text-sm cursor-pointer">
+                          {seg.name}
+                        </Label>
                       </div>
-                    )}
-                  </div>
-                );
-              })
-            )}
-          </ScrollArea>
-        )}
-
-        <Button onClick={handleAssign} disabled={isLoading || isAssigning}>
-          {isAssigning ? (
-            <>
-              Assigning...
-              <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-            </>
-          ) : (
-            <>
-              <Plus className="mr-2 h-4 w-4" />
-              Assign Segments
-            </>
-          )}
-        </Button>
-      </CardContent>
-    </Card>
+                    ))
+                  )}
+                </div>
+              </div>
+              
+              <Button 
+                onClick={handleSendNotification} 
+                disabled={isSendingNotification || isLoading}
+                className="w-full"
+              >
+                {isSendingNotification ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <Send className="mr-2 h-4 w-4" />
+                    Send Notification
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="analytics" className="pt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Segment Performance Analytics</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <div className="flex items-center justify-center h-64">
+                  <Loader2 className="h-8 w-8 animate-spin" />
+                </div>
+              ) : segmentPerformance.length === 0 ? (
+                <div className="text-center py-8">
+                  <Users className="mx-auto h-12 w-12 text-gray-300" />
+                  <h3 className="mt-2 text-lg font-medium">No segment data available</h3>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Select a campaign and assign segments to view analytics.
+                  </p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr>
+                        <th className="text-left py-2">Segment</th>
+                        <th className="text-left py-2">Allocation</th>
+                        <th className="text-left py-2">Control Group</th>
+                        <th className="text-left py-2">Impressions</th>
+                        <th className="text-left py-2">Clicks</th>
+                        <th className="text-left py-2">CTR</th>
+                        <th className="text-left py-2">Conversions</th>
+                        <th className="text-left py-2">Conv. Rate</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {segmentPerformance.map((perf) => (
+                        <tr key={perf.segment_id} className="border-t">
+                          <td className="py-2">{perf.segment_name}</td>
+                          <td className="py-2">{perf.allocation_percentage}%</td>
+                          <td className="py-2">{perf.is_control_group ? 'Yes' : 'No'}</td>
+                          <td className="py-2">{perf.total_impressions}</td>
+                          <td className="py-2">{perf.total_clicks}</td>
+                          <td className="py-2">{perf.click_through_rate.toFixed(2)}%</td>
+                          <td className="py-2">{perf.total_conversions}</td>
+                          <td className="py-2">{perf.conversion_rate.toFixed(2)}%</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 };

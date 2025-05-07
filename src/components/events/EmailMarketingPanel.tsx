@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import {
   Card,
@@ -53,6 +54,8 @@ const EmailMarketingPanel: React.FC<EmailMarketingPanelProps> = ({
   useEffect(() => {
     if (campaign) {
       setSelectedCampaign(campaign);
+      setIsABTesting(campaign.isABTesting || false);
+      setTrafficSplit(campaign.trafficSplit || 50);
     }
   }, [campaign]);
 
@@ -67,7 +70,10 @@ const EmailMarketingPanel: React.FC<EmailMarketingPanelProps> = ({
     setIsABTesting(checked);
     try {
       if (selectedCampaign) {
-        await updateCampaign(selectedCampaign.id, { isABTesting: checked });
+        await updateCampaign(selectedCampaign.id, { 
+          isABTesting: checked 
+        } as Partial<EventMarketingCampaign>);
+        
         toast({
           title: "Success",
           description: `A/B testing ${checked ? 'enabled' : 'disabled'}`,
@@ -87,7 +93,10 @@ const EmailMarketingPanel: React.FC<EmailMarketingPanelProps> = ({
     setTrafficSplit(newValue);
     try {
       if (selectedCampaign) {
-        await updateCampaign(selectedCampaign.id, { trafficSplit: newValue });
+        await updateCampaign(selectedCampaign.id, { 
+          trafficSplit: newValue 
+        } as Partial<EventMarketingCampaign>);
+        
         toast({
           title: "Success",
           description: `Traffic split updated to ${newValue}%`,

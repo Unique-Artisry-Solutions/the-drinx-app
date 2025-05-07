@@ -1,6 +1,7 @@
 
 import { EventMarketingCampaign, ABTestResult, ReferralSource } from '@/types/EventTypes';
 import { convertToABTestResult, convertToReferralSource } from '@/services/typeAdapterService';
+import { safeJsonToRecord } from '@/utils/typeGuards';
 
 /**
  * Converts a campaign ID to an ABTestResult by fetching and processing data
@@ -32,14 +33,49 @@ export const adaptCampaignToABTest = async (
     
     // Handle campaign object
     // This would extract relevant data from the campaign
-    // For now just return a default ABTestResult
+    const metricsData = campaignData.metrics ? safeJsonToRecord(campaignData.metrics, {}) : {};
+    
+    // Check if campaign has A/B testing data
+    const variants = [];
+    const controlVariant = {
+      id: '1',
+      name: 'Control',
+      conversionRate: metricsData.controlConversionRate || 0,
+      traffic: metricsData.controlTraffic || 50
+    };
+    
+    const testVariant = {
+      id: '2',
+      name: 'Test',
+      conversionRate: metricsData.testConversionRate || 0,
+      traffic: metricsData.testTraffic || 50
+    };
+    
+    variants.push(controlVariant);
+    variants.push(testVariant);
+    
+    // Calculate improvement if both variants have data
+    let improvement = 0;
+    if (controlVariant.conversionRate > 0) {
+      improvement = ((testVariant.conversionRate - controlVariant.conversionRate) / controlVariant.conversionRate) * 100;
+    }
+    
+    // Determine if the result is significant (simple threshold for now)
+    const significantResult = Math.abs(improvement) > 10;
+    
+    // Determine winner
+    let winner = null;
+    if (significantResult) {
+      winner = testVariant.conversionRate > controlVariant.conversionRate ? testVariant.id : controlVariant.id;
+    }
+    
     return {
-      variants: [],
-      winner: null,
-      variantA: undefined,
-      variantB: undefined,
-      improvement: 0,
-      significantResult: false
+      variants,
+      winner,
+      variantA: controlVariant,
+      variantB: testVariant,
+      improvement,
+      significantResult
     };
   } catch (error) {
     console.error('Error adapting campaign to AB test:', error);

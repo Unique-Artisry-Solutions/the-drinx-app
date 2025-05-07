@@ -38,12 +38,40 @@ export function safeJsonToRecord(
   defaultValue: Record<string, any> = {}
 ): Record<string, any> {
   // Handle non-object primitives that might come from database
+  if (input === null || input === undefined) {
+    return defaultValue;
+  }
+  
   if (typeof input === 'number' || typeof input === 'boolean') {
     console.warn(`Attempted to convert non-object type (${typeof input}) to record:`, input);
     return defaultValue;
   }
   
-  return safeJsonToType<Record<string, any>>(input, defaultValue);
+  try {
+    let result: Record<string, any>;
+    
+    if (typeof input === 'string') {
+      try {
+        result = JSON.parse(input);
+        // Ensure the parsed result is an object
+        if (typeof result !== 'object' || result === null || Array.isArray(result)) {
+          console.warn('JSON parsing did not result in an object:', result);
+          return defaultValue;
+        }
+      } catch (e) {
+        console.warn('Failed to parse JSON string:', e);
+        return defaultValue;
+      }
+    } else {
+      // Input is already an object
+      result = input as Record<string, any>;
+    }
+    
+    return result;
+  } catch (error) {
+    console.error('Error in safeJsonToRecord:', error);
+    return defaultValue;
+  }
 }
 
 /**

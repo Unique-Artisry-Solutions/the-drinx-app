@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import MarketingTabContent from '@/components/events/MarketingTabContent';
-import AttendeeSegmentsTab from '@/components/events/AttendeeSegmentsTab';
+import { AttendeeSegmentsTab } from '@/components/events/AttendeeSegmentsTab';
 import AttendeesTabContent from '@/components/events/attendees/AttendeesTabContent';
 import CheckInTabContent from '@/components/events/check-in/CheckInTabContent';
 
