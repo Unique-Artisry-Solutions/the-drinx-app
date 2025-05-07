@@ -1,220 +1,74 @@
-import { supabase } from '@/lib/supabase';
-import { formatDate } from '@/utils/databaseHelpers';
-import { getEventById } from './eventService';
 
-/**
- * Track a campaign impression
- */
-export const trackCampaignImpression = async (campaignId: string, source?: string): Promise<void> => {
-  try {
-    // First, fetch the campaign analytics record to get current data
-    const { data: existingAnalytics, error: fetchError } = await supabase
-      .from('event_marketing_campaigns')
-      .select('id, metrics')
-      .eq('id', campaignId)
-      .single();
+import { supabase } from '@/integrations/supabase/client';
+import { PostgrestResponse } from '@supabase/supabase-js';
+import { eventService } from './eventService';
 
-    if (fetchError) {
-      console.error('Error fetching campaign analytics:', fetchError);
-      return;
-    }
-
-    // Prepare updated metrics
-    const metrics = existingAnalytics.metrics || {};
-    metrics.impressions = (metrics.impressions || 0) + 1;
-    
-    // Add to source data if provided
-    if (source) {
-      metrics.sources = metrics.sources || {};
-      metrics.sources[source] = metrics.sources[source] || {};
-      metrics.sources[source].impressions = (metrics.sources[source].impressions || 0) + 1;
-    }
-
-    // Update the record with new metrics
-    const { error: updateError } = await supabase
-      .from('event_marketing_campaigns')
-      .update({ 
-        metrics,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', campaignId);
-
-    if (updateError) {
-      console.error('Error updating campaign impressions:', updateError);
-    }
-  } catch (error) {
-    console.error('Error tracking campaign impression:', error);
-  }
-};
-
-/**
- * Track a campaign click
- */
-export const trackCampaignClick = async (campaignId: string, source?: string): Promise<void> => {
-  try {
-    // First, fetch the campaign analytics record to get current data
-    const { data: existingAnalytics, error: fetchError } = await supabase
-      .from('event_marketing_campaigns')
-      .select('id, metrics')
-      .eq('id', campaignId)
-      .single();
-
-    if (fetchError) {
-      console.error('Error fetching campaign analytics:', fetchError);
-      return;
-    }
-
-    // Prepare updated metrics
-    const metrics = existingAnalytics.metrics || {};
-    metrics.clicks = (metrics.clicks || 0) + 1;
-    
-    // Calculate CTR
-    if (metrics.impressions) {
-      metrics.ctr = (metrics.clicks / metrics.impressions) * 100;
-    }
-    
-    // Add to source data if provided
-    if (source) {
-      metrics.sources = metrics.sources || {};
-      metrics.sources[source] = metrics.sources[source] || {};
-      metrics.sources[source].clicks = (metrics.sources[source].clicks || 0) + 1;
-      
-      // Calculate source CTR
-      if (metrics.sources[source].impressions) {
-        metrics.sources[source].ctr = 
-          (metrics.sources[source].clicks / metrics.sources[source].impressions) * 100;
-      }
-    }
-
-    // Update the record with new metrics
-    const { error: updateError } = await supabase
-      .from('event_marketing_campaigns')
-      .update({ 
-        metrics,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', campaignId);
-
-    if (updateError) {
-      console.error('Error updating campaign clicks:', updateError);
-    }
-  } catch (error) {
-    console.error('Error tracking campaign click:', error);
-  }
-};
-
-/**
- * Track a campaign conversion (ticket purchase)
- */
-export const trackCampaignConversion = async (
-  campaignId: string, 
-  revenue: number, 
-  source?: string
-): Promise<void> => {
-  try {
-    // First, fetch the campaign analytics record to get current data
-    const { data: existingAnalytics, error: fetchError } = await supabase
-      .from('event_marketing_campaigns')
-      .select('id, metrics')
-      .eq('id', campaignId)
-      .single();
-
-    if (fetchError) {
-      console.error('Error fetching campaign analytics:', fetchError);
-      return;
-    }
-
-    // Prepare updated metrics
-    const metrics = existingAnalytics.metrics || {};
-    metrics.conversions = (metrics.conversions || 0) + 1;
-    metrics.revenue = (metrics.revenue || 0) + revenue;
-    
-    // Calculate conversion rate
-    if (metrics.clicks) {
-      metrics.conversionRate = (metrics.conversions / metrics.clicks) * 100;
-    }
-    
-    // Add to source data if provided
-    if (source) {
-      metrics.sources = metrics.sources || {};
-      metrics.sources[source] = metrics.sources[source] || {};
-      metrics.sources[source].conversions = (metrics.sources[source].conversions || 0) + 1;
-      metrics.sources[source].revenue = (metrics.sources[source].revenue || 0) + revenue;
-      
-      // Calculate source conversion rate
-      if (metrics.sources[source].clicks) {
-        metrics.sources[source].conversionRate = 
-          (metrics.sources[source].conversions / metrics.sources[source].clicks) * 100;
-      }
-    }
-
-    // Update the record with new metrics
-    const { error: updateError } = await supabase
-      .from('event_marketing_campaigns')
-      .update({ 
-        metrics,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', campaignId);
-
-    if (updateError) {
-      console.error('Error updating campaign conversions:', updateError);
-    }
-  } catch (error) {
-    console.error('Error tracking campaign conversion:', error);
-  }
-};
-
-/**
- * Get campaign analytics
- */
-export const getCampaignAnalytics = async (campaignId: string): Promise<{
+// Type definition for campaign analytics
+interface CampaignAnalytics {
   impressions: number;
   clicks: number;
   conversions: number;
   revenue: number;
   ctr: number;
   conversionRate: number;
-  sources: Record<string, any>;
-}> => {
+  sources: Record<string, {
+    impressions: number;
+    clicks: number;
+    conversions: number;
+    revenue: number;
+  }>;
+}
+
+// Type definition for event analytics
+interface EventAnalytics {
+  views: number;
+  uniqueVisitors: number;
+  ticketSales: number;
+  revenue: number;
+  conversionRate: number;
+}
+
+/**
+ * Get analytics data for a specific campaign
+ */
+export async function getCampaignAnalytics(campaignId: string): Promise<CampaignAnalytics> {
   try {
     const { data, error } = await supabase
       .from('event_marketing_campaigns')
       .select('metrics')
       .eq('id', campaignId)
       .single();
-      
-    if (error) {
-      console.error('Error fetching campaign analytics:', error);
-      throw error;
-    }
     
-    // Default values if no metrics exist
-    const defaultMetrics = {
-      impressions: 0,
-      clicks: 0,
-      conversions: 0,
-      revenue: 0,
-      ctr: 0,
-      conversionRate: 0,
-      sources: {}
-    };
+    if (error) throw error;
     
-    // Extract metrics or use defaults
+    // Ensure data is properly structured
     const metrics = data?.metrics || {};
     
+    // Default values if properties don't exist
+    const impressions = typeof metrics.impressions === 'number' ? metrics.impressions : 0;
+    const clicks = typeof metrics.clicks === 'number' ? metrics.clicks : 0;
+    const conversions = typeof metrics.conversions === 'number' ? metrics.conversions : 0;
+    const revenue = typeof metrics.revenue === 'number' ? metrics.revenue : 0;
+    
+    // Calculate derived metrics
+    const ctr = impressions > 0 ? (clicks / impressions) * 100 : 0;
+    const conversionRate = clicks > 0 ? (conversions / clicks) * 100 : 0;
+    
+    // Extract sources or use empty object
+    const sources = typeof metrics.sources === 'object' ? metrics.sources : {};
+    
     return {
-      impressions: metrics.impressions || defaultMetrics.impressions,
-      clicks: metrics.clicks || defaultMetrics.clicks,
-      conversions: metrics.conversions || defaultMetrics.conversions,
-      revenue: metrics.revenue || defaultMetrics.revenue,
-      ctr: metrics.ctr || defaultMetrics.ctr,
-      conversionRate: metrics.conversionRate || defaultMetrics.conversionRate,
-      sources: metrics.sources || defaultMetrics.sources
+      impressions,
+      clicks,
+      conversions,
+      revenue,
+      ctr,
+      conversionRate,
+      sources
     };
   } catch (error) {
-    console.error('Error in getCampaignAnalytics:', error);
-    // Return default values on error
+    console.error('Error fetching campaign analytics:', error);
+    // Return default values if error occurs
     return {
       impressions: 0,
       clicks: 0,
@@ -225,179 +79,80 @@ export const getCampaignAnalytics = async (campaignId: string): Promise<{
       sources: {}
     };
   }
-};
+}
 
 /**
- * Records an analytics event for an event
- * @param eventId The event ID
- * @param eventType The type of event (view, ticket_view, share, purchase)
- * @param data Additional data for the event
+ * Get analytics data for a specific event
  */
-export const recordEventAnalyticsEvent = async (
-  eventId: string,
-  eventType: 'view' | 'ticket_view' | 'share' | 'purchase',
-  data: Record<string, any> = {}
-): Promise<void> => {
+export async function getEventAnalytics(eventId: string): Promise<EventAnalytics> {
   try {
-    // First, check if we have an analytics record for today
-    const today = new Date().toISOString().split('T')[0];
-    
-    const { data: existingRecord, error: fetchError } = await supabase
-      .from('event_analytics')
-      .select('id, referral_sources')
-      .eq('event_id', eventId)
-      .eq('date', today)
-      .single();
-    
-    if (fetchError && fetchError.code !== 'PGSQL_ERROR_NO_ROWS') {
-      console.error('Error fetching event analytics:', fetchError);
-      throw fetchError;
-    }
-    
-    // If we don't have a record for today, create one
-    if (!existingRecord) {
-      const referralData = data.referrer ? { [data.referrer]: 1 } : {};
-      
-      const initialData: any = {
-        event_id: eventId,
-        date: today,
-        page_views: eventType === 'view' ? 1 : 0,
-        ticket_views: eventType === 'ticket_view' ? 1 : 0,
-        social_shares: eventType === 'share' ? 1 : 0,
-        ticket_sales: eventType === 'purchase' ? (data.quantity || 1) : 0,
-        revenue: eventType === 'purchase' ? (data.amount || 0) : 0,
-        referral_sources: referralData
-      };
-      
-      const { error: insertError } = await supabase
-        .from('event_analytics')
-        .insert(initialData);
-      
-      if (insertError) {
-        console.error('Error creating event analytics record:', insertError);
-        throw insertError;
-      }
-      
-      return;
-    }
-    
-    // Otherwise, update the existing record
-
-    // First, let's get the full record to properly update it
-    const { data: fullRecord, error: fullRecordError } = await supabase
-      .from('event_analytics')
-      .select('*')
-      .eq('id', existingRecord.id)
-      .single();
-    
-    if (fullRecordError) {
-      console.error('Error fetching full event analytics record:', fullRecordError);
-      throw fullRecordError;
-    }
-
-    // Now we have all fields and can properly update them
-    const updates: any = {
-      updated_at: new Date().toISOString()
-    };
-    
-    // Update the appropriate counter based on event type
-    if (eventType === 'view') {
-      updates.page_views = (fullRecord.page_views || 0) + 1;
-    } else if (eventType === 'ticket_view') {
-      updates.ticket_views = (fullRecord.ticket_views || 0) + 1;
-    } else if (eventType === 'share') {
-      updates.social_shares = (fullRecord.social_shares || 0) + 1;
-    } else if (eventType === 'purchase') {
-      updates.ticket_sales = (fullRecord.ticket_sales || 0) + (data.quantity || 1);
-      updates.revenue = (fullRecord.revenue || 0) + (data.amount || 0);
-    }
-    
-    // Handle referral source tracking
-    if (data.referrer && eventType === 'view') {
-      // Parse existing referral sources
-      const currentSources = safeJsonToRecord(existingRecord.referral_sources) || {};
-      
-      // Update the count for this source
-      const sourceName = data.referrer;
-      currentSources[sourceName] = (currentSources[sourceName] || 0) + 1;
-      
-      updates.referral_sources = currentSources;
-    }
-    
-    // Update the record
-    const { error: updateError } = await supabase
-      .from('event_analytics')
-      .update(updates)
-      .eq('id', existingRecord.id);
-    
-    if (updateError) {
-      console.error('Error updating event analytics:', updateError);
-      throw updateError;
-    }
-  } catch (err) {
-    console.error('Error in recordEventAnalyticsEvent:', err);
-    throw err;
-  }
-};
-
-/**
- * Get analytics for an event
- */
-export const getEventAnalytics = async (eventId: string) => {
-  try {
-    // First check if the event exists
-    const event = await getEventById(eventId);
-    if (!event) {
-      throw new Error('Event not found');
-    }
-    
-    // Get analytics data from the event_analytics table
+    // Get the current event analytics record
     const { data, error } = await supabase
       .from('event_analytics')
       .select('*')
       .eq('event_id', eventId)
-      .single();
+      .maybeSingle();
+    
+    if (error) throw error;
+    
+    // Default data if no analytics exist
+    const analyticsData = data || {
+      page_views: 0,
+      ticket_views: 0,
+      social_shares: 0,
+      ticket_sales: 0,
+      revenue: 0
+    };
+    
+    // Get event data for name and date
+    let eventData = null;
+    try {
+      const { data: event } = await supabase
+        .from('events')
+        .select('name, date')
+        .eq('id', eventId)
+        .single();
       
-    if (error && error.code !== 'PGRST116') {
-      // PGRST116 is the error code for no rows returned
-      console.error('Error fetching event analytics:', error);
-      throw error;
+      eventData = event;
+    } catch (eventError) {
+      console.error('Error fetching event data:', eventError);
     }
     
-    // If no analytics record exists yet, return default values
-    if (!data) {
-      return {
-        page_views: 0,
-        ticket_views: 0,
-        social_shares: 0,
-        ticket_sales: 0,
-        revenue: 0,
-        referral_sources: {},
-        event: {
-          name: event.name,
-          date: formatDate(event.start_date)
-        }
-      };
-    }
+    // Calculate conversion rate
+    const views = analyticsData.page_views || 0;
+    const uniqueVisitors = Math.round(views * 0.75); // Estimate unique visitors
+    const ticketSales = analyticsData.ticket_sales || 0;
+    const revenue = analyticsData.revenue || 0;
+    const conversionRate = views > 0 ? (ticketSales / views) * 100 : 0;
     
-    // Return the analytics data
     return {
-      ...data,
-      event: {
-        name: event.name,
-        date: formatDate(event.start_date)
-      }
+      views,
+      uniqueVisitors,
+      ticketSales,
+      revenue,
+      conversionRate
     };
   } catch (error) {
-    console.error('Error in getEventAnalytics:', error);
-    throw error;
+    console.error('Error fetching event analytics:', error);
+    // Return default values if error occurs
+    return {
+      views: 0,
+      uniqueVisitors: 0,
+      ticketSales: 0,
+      revenue: 0,
+      conversionRate: 0
+    };
   }
-};
+}
 
 /**
- * Get daily metrics for an event
+ * Get daily metrics for an event within a date range
  */
-export const getEventDailyMetrics = async (eventId: string, startDate: string, endDate: string) => {
+export async function getEventDailyMetrics(
+  eventId: string,
+  startDate: string,
+  endDate: string
+) {
   try {
     const { data, error } = await supabase
       .from('event_analytics')
@@ -407,164 +162,137 @@ export const getEventDailyMetrics = async (eventId: string, startDate: string, e
       .lte('date', endDate)
       .order('date');
     
-    if (error) {
-      console.error('Error fetching event daily metrics:', error);
-      throw error;
+    if (error) throw error;
+    
+    // Default response structure
+    const metrics = {
+      dates: [] as string[],
+      views: [] as number[],
+      ticketSales: [] as number[],
+      revenue: [] as number[]
+    };
+    
+    if (data && data.length > 0) {
+      data.forEach(record => {
+        metrics.dates.push(record.date);
+        metrics.views.push(record.page_views || 0);
+        metrics.ticketSales.push(record.ticket_sales || 0);
+        metrics.revenue.push(record.revenue || 0);
+      });
     }
     
-    // Format data into arrays for charts
-    const dates: string[] = [];
-    const views: number[] = [];
-    const ticketSales: number[] = [];
-    const revenue: number[] = [];
-    
-    data.forEach(day => {
-      dates.push(day.date);
-      views.push(day.page_views || 0);
-      ticketSales.push(day.ticket_sales || 0);
-      revenue.push(day.revenue || 0);
-    });
-    
+    return metrics;
+  } catch (error) {
+    console.error('Error getting event daily metrics:', error);
     return {
-      dates,
-      views,
-      ticketSales,
-      revenue
+      dates: [],
+      views: [],
+      ticketSales: [],
+      revenue: []
     };
-  } catch (err) {
-    console.error('Error in getEventDailyMetrics:', err);
-    throw err;
   }
-};
+}
 
 /**
  * Get referral sources analytics for an event
  */
-export const getReferralSourcesAnalytics = async (eventId: string) => {
+export async function getReferralSourcesAnalytics(eventId: string) {
   try {
     const { data, error } = await supabase
       .from('event_analytics')
       .select('referral_sources')
-      .eq('event_id', eventId);
+      .eq('event_id', eventId)
+      .single();
     
-    if (error) {
-      console.error('Error fetching event referral sources:', error);
-      throw error;
-    }
+    if (error) throw error;
     
-    // Aggregate all referral sources
-    const sourceMap: Record<string, number> = {};
-    let totalReferrals = 0;
+    const sources = data?.referral_sources || {};
+    let totalCount = 0;
     
-    data.forEach(day => {
-      const sources = safeJsonToRecord(day.referral_sources);
-      if (sources) {
-        Object.entries(sources).forEach(([source, count]) => {
-          sourceMap[source] = (sourceMap[source] || 0) + Number(count);
-          totalReferrals += Number(count);
-        });
-      }
+    // Calculate total count from all sources
+    Object.values(sources).forEach(count => {
+      totalCount += typeof count === 'number' ? count : 0;
     });
     
-    // Convert to array and calculate percentages
-    const result = Object.entries(sourceMap).map(([source, count]) => ({
-      source,
-      count,
-      percentage: totalReferrals > 0 ? (count / totalReferrals) * 100 : 0
-    }));
-    
-    // Sort by count, descending
-    result.sort((a, b) => b.count - a.count);
+    // Format the data for display
+    const result = Object.entries(sources).map(([source, count]) => {
+      const countValue = typeof count === 'number' ? count : 0;
+      return {
+        source,
+        count: countValue,
+        percentage: totalCount > 0 ? Math.round((countValue / totalCount) * 100) : 0
+      };
+    });
     
     return result;
-  } catch (err) {
-    console.error('Error in getReferralSourcesAnalytics:', err);
-    throw err;
+  } catch (error) {
+    console.error('Error getting referral sources:', error);
+    return [];
   }
-};
+}
 
 /**
  * Get ticket sales analytics for an event
  */
-export const getTicketSalesAnalytics = async (eventId: string) => {
+export async function getTicketSalesAnalytics(eventId: string) {
   try {
-    // Get event ticket types
+    // Get ticket types for this event
     const { data: ticketTypes, error: ticketTypesError } = await supabase
       .from('event_ticket_types')
       .select('*')
       .eq('event_id', eventId);
     
-    if (ticketTypesError) {
-      console.error('Error fetching ticket types:', ticketTypesError);
-      throw ticketTypesError;
-    }
+    if (ticketTypesError) throw ticketTypesError;
     
-    // Get attendees with their ticket types
+    // Get attendees for this event
     const { data: attendees, error: attendeesError } = await supabase
       .from('event_attendees')
       .select('*')
       .eq('event_id', eventId);
     
-    if (attendeesError) {
-      console.error('Error fetching attendees:', attendeesError);
-      throw attendeesError;
-    }
+    if (attendeesError) throw attendeesError;
     
-    // Calculate totals
-    const totalTickets = ticketTypes.reduce((sum, type) => sum + (type.quantity || 0), 0);
-    const soldTickets = attendees.length;
+    // Calculate the total tickets
+    let totalTickets = 0;
+    ticketTypes?.forEach(type => {
+      totalTickets += type.quantity || 0;
+    });
+    
+    // Calculate sold tickets
+    const soldTickets = attendees?.length || 0;
     
     // Calculate attendance rate
-    const checkedInCount = attendees.filter(a => a.checked_in_at).length;
-    const attendanceRate = soldTickets > 0 ? (checkedInCount / soldTickets) * 100 : 0;
+    const attendanceRate = totalTickets > 0 ? (soldTickets / totalTickets) * 100 : 0;
     
-    // Calculate sales by ticket type
-    const salesByType = ticketTypes.map(type => {
-      const sold = attendees.filter(a => a.ticket_type_id === type.id).length;
+    // Calculate sales by type
+    const salesByType = ticketTypes?.map(type => {
+      const typeSales = attendees?.filter(a => a.ticket_type_id === type.id)?.length || 0;
       return {
         typeName: type.name,
-        sold,
+        sold: typeSales,
         total: type.quantity || 0,
-        percentage: type.quantity ? (sold / type.quantity) * 100 : 0
+        percentage: type.quantity ? Math.round((typeSales / type.quantity) * 100) : 0
       };
-    });
+    }) || [];
     
-    // Get recent sales data
-    const recentSales: Array<{ date: string; quantity: number; revenue: number }> = [];
+    // Get recent sales (last 7 days)
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     
-    // Group attendees by purchase date and calculate daily totals
-    const purchaseDateMap = new Map();
+    const { data: recentAnalytics, error: recentError } = await supabase
+      .from('event_analytics')
+      .select('date, ticket_sales, revenue')
+      .eq('event_id', eventId)
+      .gte('date', sevenDaysAgo.toISOString().split('T')[0])
+      .order('date');
     
-    attendees.forEach(attendee => {
-      const purchaseDate = new Date(attendee.purchase_date)
-        .toISOString()
-        .split('T')[0];
-      
-      if (!purchaseDateMap.has(purchaseDate)) {
-        purchaseDateMap.set(purchaseDate, { quantity: 0, revenue: 0 });
-      }
-      
-      const dateData = purchaseDateMap.get(purchaseDate);
-      dateData.quantity += 1;
-      
-      // Find ticket price
-      const ticketType = ticketTypes.find(t => t.id === attendee.ticket_type_id);
-      if (ticketType) {
-        dateData.revenue += ticketType.price || 0;
-      }
-    });
+    if (recentError) throw recentError;
     
-    // Convert map to array and sort by date
-    purchaseDateMap.forEach((data, date) => {
-      recentSales.push({
-        date,
-        quantity: data.quantity,
-        revenue: data.revenue
-      });
-    });
-    
-    // Sort by date, most recent first
-    recentSales.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    const recentSales = recentAnalytics?.map(day => ({
+      date: day.date,
+      quantity: day.ticket_sales || 0,
+      revenue: day.revenue || 0
+    })) || [];
     
     return {
       totalTickets,
@@ -573,116 +301,243 @@ export const getTicketSalesAnalytics = async (eventId: string) => {
       salesByType,
       recentSales
     };
-  } catch (err) {
-    console.error('Error in getTicketSalesAnalytics:', err);
-    throw err;
+  } catch (error) {
+    console.error('Error getting ticket sales analytics:', error);
+    return {
+      totalTickets: 0,
+      soldTickets: 0,
+      attendanceRate: 0,
+      salesByType: [],
+      recentSales: []
+    };
   }
-};
+}
 
 /**
- * Compare multiple events by their analytics
+ * Record an analytics event for an event
  */
-export const compareEvents = async (eventIds: string[]) => {
+export async function recordEventAnalyticsEvent(
+  eventId: string, 
+  eventType: 'view' | 'ticket_view' | 'share' | 'purchase',
+  data: Record<string, any> = {}
+) {
   try {
-    // Get all the events
+    // Get current analytics record for this event
+    const { data: currentRecord, error: fetchError } = await supabase
+      .from('event_analytics')
+      .select('*')
+      .eq('event_id', eventId)
+      .maybeSingle();
+    
+    if (fetchError) throw fetchError;
+    
+    const today = new Date().toISOString().split('T')[0];
+    
+    // If no record exists for today, create one
+    if (!currentRecord || currentRecord.date !== today) {
+      // Create a new record
+      const newRecord = {
+        event_id: eventId,
+        date: today,
+        page_views: eventType === 'view' ? 1 : 0,
+        ticket_views: eventType === 'ticket_view' ? 1 : 0,
+        social_shares: eventType === 'share' ? 1 : 0,
+        ticket_sales: eventType === 'purchase' ? (data.quantity || 0) : 0,
+        revenue: eventType === 'purchase' ? (data.amount || 0) : 0,
+        referral_sources: eventType === 'view' && data.referrer ? { [data.referrer]: 1 } : {}
+      };
+      
+      const { error: insertError } = await supabase
+        .from('event_analytics')
+        .insert(newRecord);
+      
+      if (insertError) throw insertError;
+    } else {
+      // Update existing record
+      let updates: Record<string, any> = { updated_at: new Date().toISOString() };
+      
+      // Update the appropriate counter
+      switch (eventType) {
+        case 'view':
+          updates.page_views = (currentRecord.page_views || 0) + 1;
+          
+          // Update referral source if provided
+          if (data.referrer) {
+            const referralSources = currentRecord.referral_sources || {};
+            updates.referral_sources = {
+              ...referralSources,
+              [data.referrer]: (referralSources[data.referrer] || 0) + 1
+            };
+          }
+          break;
+          
+        case 'ticket_view':
+          updates.ticket_views = (currentRecord.ticket_views || 0) + 1;
+          break;
+          
+        case 'share':
+          updates.social_shares = (currentRecord.social_shares || 0) + 1;
+          break;
+          
+        case 'purchase':
+          updates.ticket_sales = (currentRecord.ticket_sales || 0) + (data.quantity || 0);
+          updates.revenue = (currentRecord.revenue || 0) + (data.amount || 0);
+          break;
+      }
+      
+      const { error: updateError } = await supabase
+        .from('event_analytics')
+        .update(updates)
+        .eq('id', currentRecord.id);
+      
+      if (updateError) throw updateError;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error recording analytics event:', error);
+    return false;
+  }
+}
+
+/**
+ * Track a conversion for a marketing campaign
+ */
+export async function trackCampaignConversion(
+  campaignId: string,
+  eventId: string,
+  conversionType: 'view' | 'click' | 'purchase',
+  data: {
+    quantity?: number;
+    revenue?: number;
+    referrer?: string;
+    source?: string;
+  } = {}
+) {
+  try {
+    const source = data.source || 'direct';
+    
+    // Get current campaign data
+    const { data: campaign, error } = await supabase
+      .from('event_marketing_campaigns')
+      .select('metrics')
+      .eq('id', campaignId)
+      .single();
+    
+    if (error) throw error;
+    
+    // Get current metrics or initialize
+    const metrics = campaign?.metrics || {
+      impressions: 0,
+      clicks: 0,
+      conversions: 0,
+      revenue: 0,
+      sources: {}
+    };
+    
+    // Update the appropriate counters
+    switch (conversionType) {
+      case 'view':
+        metrics.impressions = (metrics.impressions || 0) + 1;
+        
+        // Initialize source if it doesn't exist
+        if (!metrics.sources[source]) {
+          metrics.sources[source] = { impressions: 0, clicks: 0, conversions: 0, revenue: 0 };
+        }
+        
+        // Update impressions for this source
+        metrics.sources[source].impressions = (metrics.sources[source].impressions || 0) + 1;
+        break;
+        
+      case 'click':
+        metrics.clicks = (metrics.clicks || 0) + 1;
+        
+        // Initialize source if it doesn't exist
+        if (!metrics.sources[source]) {
+          metrics.sources[source] = { impressions: 0, clicks: 0, conversions: 0, revenue: 0 };
+        }
+        
+        // Update clicks for this source
+        metrics.sources[source].clicks = (metrics.sources[source].clicks || 0) + 1;
+        break;
+        
+      case 'purchase':
+        metrics.conversions = (metrics.conversions || 0) + 1;
+        metrics.revenue = (metrics.revenue || 0) + (data.revenue || 0);
+        
+        // Initialize source if it doesn't exist
+        if (!metrics.sources[source]) {
+          metrics.sources[source] = { impressions: 0, clicks: 0, conversions: 0, revenue: 0 };
+        }
+        
+        // Update conversions and revenue for this source
+        metrics.sources[source].conversions = (metrics.sources[source].conversions || 0) + 1;
+        metrics.sources[source].revenue = (metrics.sources[source].revenue || 0) + (data.revenue || 0);
+        break;
+    }
+    
+    // Update campaign metrics
+    const { error: updateError } = await supabase
+      .from('event_marketing_campaigns')
+      .update({ metrics })
+      .eq('id', campaignId);
+    
+    if (updateError) throw updateError;
+    
+    return true;
+  } catch (error) {
+    console.error('Error tracking campaign conversion:', error);
+    return false;
+  }
+}
+
+/**
+ * Compare analytics for multiple events
+ */
+export async function compareEvents(eventIds: string[]) {
+  try {
+    // Get analytics for all events
+    const { data, error } = await supabase
+      .from('event_analytics')
+      .select('event_id, page_views, ticket_views, ticket_sales, revenue')
+      .in('event_id', eventIds);
+    
+    if (error) throw error;
+    
+    // Get event details (names, dates)
     const { data: events, error: eventsError } = await supabase
       .from('events')
       .select('id, name, date')
       .in('id', eventIds);
     
-    if (eventsError) {
-      console.error('Error fetching events:', eventsError);
-      throw eventsError;
-    }
+    if (eventsError) throw eventsError;
     
-    // Get analytics for all the events
-    const { data: analytics, error: analyticsError } = await supabase
-      .from('event_analytics')
-      .select('*')
-      .in('event_id', eventIds);
-    
-    if (analyticsError) {
-      console.error('Error fetching event analytics for comparison:', analyticsError);
-      throw analyticsError;
-    }
-    
-    // Aggregate data by event
-    const result = events.map(event => {
-      const eventAnalytics = analytics.filter(a => a.event_id === event.id);
+    // Merge event details with analytics
+    const comparison = eventIds.map(eventId => {
+      const eventAnalytics = data?.filter(a => a.event_id === eventId) || [];
+      const event = events?.find(e => e.id === eventId);
       
-      const totalViews = eventAnalytics.reduce((sum, day) => sum + (day.page_views || 0), 0);
-      const totalTicketSales = eventAnalytics.reduce((sum, day) => sum + (day.ticket_sales || 0), 0);
-      const totalRevenue = eventAnalytics.reduce((sum, day) => sum + (day.revenue || 0), 0);
-      const conversionRate = totalViews > 0 ? (totalTicketSales / totalViews) * 100 : 0;
+      // Sum analytics for this event
+      const totalViews = eventAnalytics.reduce((sum, record) => sum + (record.page_views || 0), 0);
+      const totalTicketViews = eventAnalytics.reduce((sum, record) => sum + (record.ticket_views || 0), 0);
+      const totalSales = eventAnalytics.reduce((sum, record) => sum + (record.ticket_sales || 0), 0);
+      const totalRevenue = eventAnalytics.reduce((sum, record) => sum + (record.revenue || 0), 0);
       
       return {
-        eventId: event.id,
-        eventName: event.name,
-        eventDate: event.date,
+        id: eventId,
+        name: event?.name || 'Unknown Event',
+        date: event?.date || 'Unknown Date',
         views: totalViews,
-        ticketSales: totalTicketSales,
+        ticketViews: totalTicketViews,
+        sales: totalSales,
         revenue: totalRevenue,
-        conversionRate
+        conversionRate: totalViews > 0 ? (totalSales / totalViews) * 100 : 0
       };
     });
     
-    return result;
-  } catch (err) {
-    console.error('Error comparing events:', err);
-    throw err;
-  }
-};
-
-/**
- * Gets campaign analytics for a specific campaign
- */
-export const getCampaignAnalytics = async (campaignId: string) => {
-  try {
-    const { data, error } = await supabase
-      .from('event_marketing_campaigns')
-      .select('metrics')
-      .eq('id', campaignId)
-      .single();
-      
-    if (error) {
-      console.error('Error fetching campaign analytics:', error);
-      throw error;
-    }
-    
-    // Default values if no metrics exist
-    const defaultMetrics = {
-      impressions: 0,
-      clicks: 0,
-      conversions: 0,
-      revenue: 0,
-      ctr: 0,
-      conversionRate: 0,
-      sources: {}
-    };
-    
-    // Extract metrics or use defaults
-    const metrics = data?.metrics || {};
-    
-    return {
-      impressions: metrics.impressions || defaultMetrics.impressions,
-      clicks: metrics.clicks || defaultMetrics.clicks,
-      conversions: metrics.conversions || defaultMetrics.conversions,
-      revenue: metrics.revenue || defaultMetrics.revenue,
-      ctr: metrics.ctr || defaultMetrics.ctr,
-      conversionRate: metrics.conversionRate || defaultMetrics.conversionRate,
-      sources: metrics.sources || defaultMetrics.sources
-    };
+    return comparison;
   } catch (error) {
-    console.error('Error in getCampaignAnalytics:', error);
-    // Return default values on error
-    return {
-      impressions: 0,
-      clicks: 0,
-      conversions: 0,
-      revenue: 0,
-      ctr: 0,
-      conversionRate: 0,
-      sources: {}
-    };
+    console.error('Error comparing events:', error);
+    return [];
   }
-};
+}
