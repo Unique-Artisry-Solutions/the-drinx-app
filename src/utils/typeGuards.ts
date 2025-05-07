@@ -273,6 +273,22 @@ export function adaptReferralSource(input: any): ReferralSource {
 }
 
 /**
+ * Adapter function to convert ReferralSource objects to TicketAnalyticsData format
+ * @param source ReferralSource object
+ * @returns TicketAnalyticsData object
+ */
+export function adaptToTicketAnalyticsData(source: ReferralSource): any {
+  return {
+    name: source.name || source.source,
+    typeName: source.name || source.source,
+    sold: source.count || source.visits || 0,
+    available: 0,
+    revenue: 0,
+    total: (source.count || source.visits || 0) * 2 // Just a mock calculation for total
+  };
+}
+
+/**
  * Type guard function to check if a value is a valid notification channel
  * @param value Value to check
  * @returns Boolean indicating if value is a valid notification channel

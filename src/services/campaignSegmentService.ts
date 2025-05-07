@@ -1,7 +1,47 @@
-
 import { supabase } from '@/integrations/supabase/client';
-import { CampaignSegmentMapping, CampaignSegmentAnalytics, SegmentSelection } from '@/types/CampaignSegmentTypes';
+import { AudienceSegment, SegmentCriteria, SegmentMapping } from '@/types/CampaignSegmentTypes';
 import { safeJsonToRecord } from '@/utils/typeGuards';
+
+// Helper function to safely handle JSON data
+function safeJsonProcess(input: any, defaultValue: any = {}) {
+  if (typeof input === 'string') {
+    try {
+      return JSON.parse(input);
+    } catch (e) {
+      return defaultValue;
+    }
+  }
+  return input || defaultValue;
+}
+
+// Fetch audience segments
+export const fetchAudienceSegments = async (): Promise<AudienceSegment[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('audience_segments')
+      .select('*, audience_segment_criteria(*)');
+
+    if (error) throw error;
+    
+    return (data || []).map(segment => ({
+      id: segment.id,
+      name: segment.name,
+      description: segment.description || '',
+      created_at: segment.created_at,
+      is_active: segment.is_active,
+      criteria: (segment.audience_segment_criteria || []).map((criteria: any) => ({
+        id: criteria.id,
+        segment_id: criteria.segment_id,
+        criteria_type: criteria.criteria_type,
+        operator: criteria.operator,
+        criteria_value: safeJsonProcess(criteria.criteria_value)
+      }))
+    }));
+  } catch (error) {
+    console.error('Error fetching audience segments:', error);
+    return [];
+  }
+};
 
 export const fetchCampaignSegmentMappings = async (
   campaignId: string
@@ -373,5 +413,54 @@ export const trackSegmentMetric = async (
   } catch (err: any) {
     console.error('Error tracking segment metric:', err);
     throw new Error(`Failed to track segment metric: ${err.message}`);
+  }
+};
+
+// For information_schema.tables queries, use a different method
+export const checkIfTableExists = async (tableName: string): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase
+      .rpc('table_exists', { table_name: tableName });
+
+    if (error) {
+      console.error('Error checking if table exists:', error);
+      return false;
+    }
+    
+    return !!data;
+  } catch (error) {
+    console.error('Error calling table_exists RPC:', error);
+    return false;
+  }
+};
+
+// For other cases where safeJsonToRecord is used with potentially numeric input
+export const updateSegmentCriteria = async (criteriaId: string, updatedValues: Partial<SegmentCriteria>): Promise<SegmentCriteria> => {
+  try {
+    // Handle criteria_value separately to ensure it's properly formatted
+    let formattedCriteriaValue = updatedValues.criteria_value;
+    if (updatedValues.criteria_value && typeof updatedValues.criteria_value === 'object') {
+      formattedCriteriaValue = updatedValues.criteria_value;
+    }
+
+    const { data, error } = await supabase
+      .from('audience_segment_criteria')
+      .update({
+        ...updatedValues,
+        criteria_value: formattedCriteriaValue
+      })
+      .eq('id', criteriaId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    
+    return {
+      ...data,
+      criteria_value: safeJsonProcess(data.criteria_value)
+    };
+  } catch (error) {
+    console.error('Error updating segment criteria:', error);
+    throw error;
   }
 };

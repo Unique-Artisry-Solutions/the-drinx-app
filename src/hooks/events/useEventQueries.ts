@@ -18,21 +18,31 @@ export const useEventQuery = (eventId: string | undefined) => {
       if (error) throw error;
       if (!data) throw new Error('Event not found');
 
-      // Process location details safely
-      const locationDetails = safeJsonToRecord(data.location_details, {
-        address: '',
-        city: '',
-        state: '',
-        zip: '',
-        country: ''
-      });
+      // Process location details safely - ensure we're passing an object or string
+      const locationDetails = safeJsonToRecord(
+        typeof data.location_details === 'object' || typeof data.location_details === 'string' 
+          ? data.location_details 
+          : null,
+        {
+          address: '',
+          city: '',
+          state: '',
+          zip: '',
+          country: ''
+        }
+      );
 
-      // Process contact info safely
-      const contactInfo = safeJsonToRecord(data.contact_info, {
-        name: '',
-        email: '',
-        phone: ''
-      });
+      // Process contact info safely - ensure we're passing an object or string
+      const contactInfo = safeJsonToRecord(
+        typeof data.contact_info === 'object' || typeof data.contact_info === 'string'
+          ? data.contact_info
+          : null,
+        {
+          name: '',
+          email: '',
+          phone: ''
+        }
+      );
 
       return {
         ...data,
@@ -67,7 +77,7 @@ export const useEventsByStatusQuery = (status: string, limit: number = 10) => {
       const { data, error } = await supabase
         .from('events')
         .select('*')
-        .eq('status', status)
+        .eq('status', status as any) // Type assertion to handle string parameter
         .order('created_at', { ascending: false })
         .limit(limit);
 
