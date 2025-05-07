@@ -1,89 +1,111 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { safeJsonToRecord } from '@/utils/typeGuards';
+import { useToast } from '@/hooks/use-toast';
+import { Event, EventType, EventLocation, EventContactInfo } from '@/types/EventTypes';
+import { safeJsonToRecord, safeJsonToType } from '@/utils/typeGuards';
 
-export const useEventQuery = (eventId: string | undefined) => {
-  return useQuery({
-    queryKey: ['event', eventId],
+export const useEventQueries = () => {
+  const { toast } = useToast();
+
+  const { data: events = [], isLoading } = useQuery({
+    queryKey: ['events'],
     queryFn: async () => {
-      if (!eventId) throw new Error('Event ID is required');
-      
       const { data, error } = await supabase
         .from('events')
-        .select('*')
-        .eq('id', eventId)
-        .single();
+        .select(`
+          *,
+          venue:venue_id (id, name, address),
+          event_ticket_types (*)
+        `);
+        // No longer filtering by status to show all events including drafts
 
-      if (error) throw error;
-      if (!data) throw new Error('Event not found');
+      if (error) {
+        toast({
+          title: 'Error fetching events',
+          description: error.message,
+          variant: 'destructive',
+        });
+        throw error;
+      }
 
-      // Process location details safely - ensure we're passing an object or string
-      const locationDetails = safeJsonToRecord(
-        typeof data.location_details === 'object' || typeof data.location_details === 'string' 
-          ? data.location_details 
-          : null,
-        {
+      return data.map(event => {
+        // Transform event_ticket_types to ticketTypes format required by EventType
+        const ticketTypes = event.event_ticket_types.map(ticket => ({
+          id: ticket.id,
+          name: ticket.name,
+          description: ticket.description,
+          price: ticket.price,
+          quantity: ticket.quantity,
+          sold: 0, // Default value since we don't have this data yet
+          available: ticket.quantity // Default calculation
+        }));
+
+        // Define default location and contact objects
+        const defaultLocation: EventLocation = {
           address: '',
           city: '',
           state: '',
           zip: '',
           country: ''
-        }
-      );
+        };
 
-      // Process contact info safely - ensure we're passing an object or string
-      const contactInfo = safeJsonToRecord(
-        typeof data.contact_info === 'object' || typeof data.contact_info === 'string'
-          ? data.contact_info
-          : null,
-        {
+        const defaultContactInfo: EventContactInfo = {
           name: '',
-          email: '',
-          phone: ''
-        }
-      );
+          email: ''
+        };
 
-      return {
-        ...data,
-        location_details: locationDetails,
-        contact_info: contactInfo
-      };
+        // Convert location_details and contact_info from JSON if needed
+        const locationDetails = safeJsonToType<EventLocation>(
+          event.location_details,
+          defaultLocation
+        );
+
+        const contactInfo = safeJsonToType<EventContactInfo>(
+          event.contact_info,
+          defaultContactInfo
+        );
+
+        const customSettings = safeJsonToRecord(event.custom_settings);
+
+        // Add computed/derived properties that match the EventType interface
+        const formattedEvent: Event = {
+          id: event.id,
+          name: event.name,
+          description: event.description || '',
+          date: event.date,
+          time: event.time,
+          venue_id: event.venue_id,
+          venue: event.venue || { id: '', name: 'TBD', address: '' },
+          image_url: event.image_url,
+          promotional_materials: event.promotional_materials || [],
+          status: event.status || 'draft',
+          created_by: event.created_by,
+          created_at: event.created_at,
+          updated_at: event.updated_at,
+          capacity: event.capacity,
+          event_type: event.event_type,
+          location_details: locationDetails,
+          contact_info: contactInfo,
+          custom_settings: customSettings,
+          is_public: event.is_public !== false,
+          event_url: event.event_url,
+          ticketTypes: ticketTypes,
+          attendees: {
+            registered: 0, // This will need real data in the future
+            checked_in: 0, // This will need real data in the future
+            capacity: event.capacity || 0
+          },
+          distance: undefined // This will need real data in the future
+        };
+
+        return formattedEvent;
+      });
     },
-    enabled: !!eventId
   });
-};
 
-export const useEventsQuery = (limit: number = 10) => {
-  return useQuery({
-    queryKey: ['events', limit],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('events')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(limit);
-
-      if (error) throw error;
-      return data || [];
-    }
-  });
-};
-
-export const useEventsByStatusQuery = (status: string, limit: number = 10) => {
-  return useQuery({
-    queryKey: ['events', status, limit],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('events')
-        .select('*')
-        .eq('status', status as any) // Type assertion to handle string parameter
-        .order('created_at', { ascending: false })
-        .limit(limit);
-
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!status
-  });
+  return {
+    events,
+    isLoading
+  };
 };

@@ -1,42 +1,35 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { EventMarketingCampaign, ABTestResult } from '@/types/EventTypes';
+import { EventMarketingCampaign } from '@/types/EventTypes';
 import { 
   fetchEventCampaigns,
   createMarketingCampaign,
   updateMarketingCampaign,
   deleteMarketingCampaign,
   trackCampaignMetric,
-  getSegmentTargetedContent,
-  getCampaignABTestResults,
-  createSegmentBasedNotification
+  generateCampaignLink
 } from '@/services/eventMarketingService';
-
-// Import segment-related services
-import {
-  fetchCampaignSegmentMappings,
+import { 
   assignSegmentsToCampaign,
-  removeCampaignSegment,
-  getCampaignSegmentPerformance,
-  trackSegmentMetric,
+  getCampaignSegmentMappings,
+  updateCampaignSegmentMapping,
+  removeSegmentFromCampaign,
+  getCampaignSegmentAnalytics,
+  recordSegmentInteraction,
   getAvailableSegmentsForCampaign
 } from '@/services/campaignSegmentService';
-
-// Import audience segment hooks
-import { useAudienceSegments } from '@/hooks/useAudienceSegments';
-import { SegmentSelection, NotificationPriority } from '@/types/CampaignSegmentTypes';
-import { validateNotificationPriority } from '@/services/typeAdapterService';
+import { CampaignSegmentMapping, CampaignSegmentAnalytics, InteractionType } from '@/types/CampaignSegmentTypes';
+import { AudienceSegment } from '@/types/AudienceTypes';
 
 export const useEventMarketingWithSegments = (eventId: string) => {
   const [campaigns, setCampaigns] = useState<EventMarketingCampaign[]>([]);
-  const [activeCampaign, setActiveCampaign] = useState<EventMarketingCampaign | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [segmentsLoading, setSegmentsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [segmentMappings, setSegmentMappings] = useState<Record<string, CampaignSegmentMapping[]>>({});
+  const [segmentAnalytics, setSegmentAnalytics] = useState<Record<string, CampaignSegmentAnalytics[]>>({});
   const { toast } = useToast();
-  const { segments } = useAudienceSegments();
 
-  // Load campaigns data
+  // Load campaigns
   const loadCampaigns = async () => {
     if (!eventId) return;
     
@@ -46,6 +39,25 @@ export const useEventMarketingWithSegments = (eventId: string) => {
     try {
       const data = await fetchEventCampaigns(eventId);
       setCampaigns(data);
+      
+      // Load segment mappings for each campaign
+      const mappingsObj: Record<string, CampaignSegmentMapping[]> = {};
+      const analyticsObj: Record<string, CampaignSegmentAnalytics[]> = {};
+      
+      await Promise.all(data.map(async (campaign) => {
+        try {
+          const mappings = await getCampaignSegmentMappings(campaign.id);
+          mappingsObj[campaign.id] = mappings;
+          
+          const analytics = await getCampaignSegmentAnalytics(campaign.id);
+          analyticsObj[campaign.id] = analytics;
+        } catch (err) {
+          console.error(`Error loading segment data for campaign ${campaign.id}:`, err);
+        }
+      }));
+      
+      setSegmentMappings(mappingsObj);
+      setSegmentAnalytics(analyticsObj);
     } catch (err: any) {
       setError(err.message);
       toast({
@@ -62,27 +74,14 @@ export const useEventMarketingWithSegments = (eventId: string) => {
     loadCampaigns();
   }, [eventId]);
 
-  // Create a new campaign
-  const createCampaign = async (campaign: Omit<EventMarketingCampaign, 'id'>) => {
+  // Create campaign (original function)
+  const createCampaign = async (campaign: Omit<EventMarketingCampaign, 'event_id'>) => {
     setIsLoading(true);
     try {
-      // Ensure required fields are set
-      const completeMetrics = {
-        impressions: 0,
-        clicks: 0,
-        conversions: 0,
-        revenue: 0,
-        ...campaign.metrics
-      };
-      
-      const completeData: Omit<EventMarketingCampaign, 'id'> = {
+      const newCampaign = await createMarketingCampaign({
         ...campaign,
-        metrics: completeMetrics,
         event_id: eventId
-      };
-      
-      const newCampaign = await createMarketingCampaign(completeData);
-      
+      });
       setCampaigns(prev => [...prev, newCampaign]);
       toast({
         title: 'Success',
@@ -101,20 +100,43 @@ export const useEventMarketingWithSegments = (eventId: string) => {
     }
   };
 
-  // Update an existing campaign
+  // Create campaign with segments
+  const createCampaignWithSegments = async (
+    campaign: Omit<EventMarketingCampaign, 'event_id'>,
+    segments: { segment_id: string; allocation_percentage?: number; is_control_group?: boolean }[]
+  ) => {
+    try {
+      // First create the campaign
+      const newCampaign = await createCampaign(campaign);
+      
+      // Then assign segments if there are any
+      if (segments.length > 0) {
+        const mappings = await assignSegmentsToCampaign(newCampaign.id, segments);
+        setSegmentMappings(prev => ({
+          ...prev,
+          [newCampaign.id]: mappings
+        }));
+      }
+      
+      return newCampaign;
+    } catch (err: any) {
+      toast({
+        title: 'Error',
+        description: 'Failed to create campaign with segments',
+        variant: 'destructive'
+      });
+      throw err;
+    }
+  };
+
+  // Update campaign (original function)
   const updateCampaign = async (id: string, updates: Partial<EventMarketingCampaign>) => {
     setIsLoading(true);
     try {
       const updated = await updateMarketingCampaign(id, updates);
-      
       setCampaigns(prev => 
         prev.map(c => c.id === id ? { ...c, ...updated } : c)
       );
-      
-      if (activeCampaign?.id === id) {
-        setActiveCampaign(prev => prev ? { ...prev, ...updated } : prev);
-      }
-      
       toast({
         title: 'Success',
         description: 'Campaign updated successfully',
@@ -132,16 +154,21 @@ export const useEventMarketingWithSegments = (eventId: string) => {
     }
   };
 
-  // Delete a campaign
+  // Delete campaign (original function)
   const deleteCampaign = async (id: string) => {
     setIsLoading(true);
     try {
       await deleteMarketingCampaign(id);
       setCampaigns(prev => prev.filter(c => c.id !== id));
       
-      if (activeCampaign?.id === id) {
-        setActiveCampaign(null);
-      }
+      // Also remove any segment mappings and analytics for this campaign
+      const updatedMappings = { ...segmentMappings };
+      delete updatedMappings[id];
+      setSegmentMappings(updatedMappings);
+      
+      const updatedAnalytics = { ...segmentAnalytics };
+      delete updatedAnalytics[id];
+      setSegmentAnalytics(updatedAnalytics);
       
       toast({
         title: 'Success',
@@ -159,239 +186,228 @@ export const useEventMarketingWithSegments = (eventId: string) => {
     }
   };
 
-  // Set active campaign for segment operations
-  const selectCampaign = (campaignId: string) => {
-    const campaign = campaigns.find(c => c.id === campaignId);
-    if (campaign) {
-      setActiveCampaign(campaign);
-    }
-  };
-
-  // Track campaign metrics - updated signature to match service function
-  const trackMetric = async (
-    campaignId: string, 
-    metricName: string, 
-    value: number = 1, 
-    source?: string,
-    metadata?: Record<string, any>
-  ) => {
+  // Track generic campaign metric (original function)
+  const trackMetric = async (campaignId: string, metricName: string, value: number = 1) => {
     try {
-      // Call the service function with the appropriate parameters
-      await trackCampaignMetric(campaignId, metricName, value, source, metadata);
+      await trackCampaignMetric(campaignId, metricName, value);
       
       // Update local state to reflect the new metric value
       setCampaigns(prev => 
         prev.map(c => {
           if (c.id === campaignId) {
-            // Make a deep copy of the metrics to avoid reference issues
-            const updatedMetrics = { ...c.metrics };
-            
-            // Safely update the specific metric
-            if (typeof updatedMetrics[metricName] === 'number') {
-              updatedMetrics[metricName] = (updatedMetrics[metricName] || 0) + value;
-            }
-            
-            // Update source metrics if applicable
-            if (source && updatedMetrics.sources) {
-              if (!updatedMetrics.sources[source]) {
-                updatedMetrics.sources[source] = { impressions: 0, clicks: 0, conversions: 0, revenue: 0 };
-              }
-              
-              if (metricName in updatedMetrics.sources[source]) {
-                updatedMetrics.sources[source][metricName] += value;
-              }
-            }
-            
-            return { ...c, metrics: updatedMetrics };
+            const metrics = { ...(c.metrics || {}) };
+            metrics[metricName] = (metrics[metricName] || 0) + value;
+            return { ...c, metrics };
           }
           return c;
         })
       );
-      
-      // Also update active campaign if it's the one being modified
-      if (activeCampaign?.id === campaignId) {
-        setActiveCampaign(prev => {
-          if (!prev) return prev;
-          
-          const updatedMetrics = { ...prev.metrics };
-          if (typeof updatedMetrics[metricName] === 'number') {
-            updatedMetrics[metricName] = (updatedMetrics[metricName] || 0) + value;
-          }
-          
-          // Update source metrics if applicable
-          if (source && updatedMetrics.sources) {
-            if (!updatedMetrics.sources[source]) {
-              updatedMetrics.sources[source] = { impressions: 0, clicks: 0, conversions: 0, revenue: 0 };
-            }
-            
-            if (metricName in updatedMetrics.sources[source]) {
-              updatedMetrics.sources[source][metricName] += value;
-            }
-          }
-          
-          return { ...prev, metrics: updatedMetrics };
-        });
-      }
     } catch (err: any) {
       console.error('Failed to track metric:', err);
     }
   };
 
-  // Segment-related functions
-  const assignSegments = async (campaign: EventMarketingCampaign, segmentSelections: SegmentSelection[]) => {
-    if (!campaign?.id) return;
+  // Assign segments to a campaign
+  const assignSegments = async (
+    campaignId: string,
+    segments: { segment_id: string; allocation_percentage?: number; is_control_group?: boolean; description?: string }[]
+  ) => {
+    try {
+      const mappings = await assignSegmentsToCampaign(campaignId, segments);
     
-    setSegmentsLoading(true);
-    try {
-      await assignSegmentsToCampaign(campaign.id, segmentSelections);
-      
+      // Update local state
+      setSegmentMappings(prev => ({
+        ...prev,
+        [campaignId]: [...(prev[campaignId] || []), ...mappings]
+      }));
+    
       toast({
         title: 'Success',
-        description: 'Segments assigned successfully',
+        description: 'Segments assigned to campaign successfully',
       });
-      
-      return true;
+    
+      return mappings;
     } catch (err: any) {
       toast({
         title: 'Error',
-        description: 'Failed to assign segments',
+        description: 'Failed to assign segments to campaign',
         variant: 'destructive'
       });
-      return false;
-    } finally {
-      setSegmentsLoading(false);
+      throw err;
     }
   };
 
-  const removeSegment = async (mappingId: string) => {
-    setSegmentsLoading(true);
+  // Update a segment mapping
+  const updateSegmentMapping = async (
+    mappingId: string,
+    campaignId: string,
+    updates: Partial<CampaignSegmentMapping>
+  ) => {
     try {
-      await removeCampaignSegment(mappingId);
+      const updated = await updateCampaignSegmentMapping(mappingId, updates);
+      
+      // Update local state
+      setSegmentMappings(prev => ({
+        ...prev,
+        [campaignId]: prev[campaignId]?.map(m => 
+          m.id === mappingId ? { ...m, ...updated } : m
+        ) || []
+      }));
       
       toast({
         title: 'Success',
-        description: 'Segment removed successfully',
+        description: 'Campaign segment mapping updated successfully',
       });
       
-      return true;
+      return updated;
     } catch (err: any) {
       toast({
         title: 'Error',
-        description: 'Failed to remove segment',
+        description: 'Failed to update segment mapping',
         variant: 'destructive'
       });
-      return false;
-    } finally {
-      setSegmentsLoading(false);
+      throw err;
     }
   };
 
-  const getSegmentMappings = async (campaignId: string) => {
-    setSegmentsLoading(true);
+  // Remove a segment from a campaign
+  const removeSegment = async (
+    mappingId: string,
+    campaignId: string
+  ) => {
     try {
-      return await fetchCampaignSegmentMappings(campaignId);
+      await removeSegmentFromCampaign(mappingId);
+      
+      // Update local state
+      setSegmentMappings(prev => ({
+        ...prev,
+        [campaignId]: prev[campaignId]?.filter(m => m.id !== mappingId) || []
+      }));
+      
+      toast({
+        title: 'Success',
+        description: 'Segment removed from campaign successfully',
+      });
     } catch (err: any) {
-      console.error('Failed to fetch segment mappings:', err);
-      return [];
-    } finally {
-      setSegmentsLoading(false);
+      toast({
+        title: 'Error',
+        description: 'Failed to remove segment from campaign',
+        variant: 'destructive'
+      });
+      throw err;
     }
   };
 
-  const getSegmentPerformance = async (campaignId: string) => {
-    setSegmentsLoading(true);
-    try {
-      return await getCampaignSegmentPerformance(campaignId);
-    } catch (err: any) {
-      console.error('Failed to fetch segment performance:', err);
-      return [];
-    } finally {
-      setSegmentsLoading(false);
-    }
-  };
-
-  const trackSegmentConversion = async (
+  // Record a segment-specific interaction
+  const trackSegmentInteraction = async (
     campaignId: string,
     segmentId: string,
-    conversionType: 'impression' | 'click' | 'conversion',
+    interactionType: InteractionType,
     value: number = 1
   ) => {
     try {
-      // Track in both the campaign and the segment
-      await trackCampaignMetric(campaignId, conversionType, value);
-      await trackSegmentMetric(campaignId, segmentId, conversionType, value);
+      await recordSegmentInteraction(campaignId, segmentId, interactionType, value);
       
-      return true;
+      // We could refresh the analytics here but that might be expensive
+      // Instead, optimistically update the local state
+      setSegmentAnalytics(prev => {
+        const campaignAnalytics = prev[campaignId] || [];
+        return {
+          ...prev,
+          [campaignId]: campaignAnalytics.map(analytic => {
+            if (analytic.segment_id === segmentId) {
+              const updatedAnalytic = { ...analytic };
+              
+              switch (interactionType) {
+                case 'impression':
+                  updatedAnalytic.total_impressions += value;
+                  break;
+                case 'click':
+                  updatedAnalytic.total_clicks += value;
+                  // Recalculate click-through rate
+                  if (updatedAnalytic.total_impressions > 0) {
+                    updatedAnalytic.click_through_rate = 
+                      (updatedAnalytic.total_clicks / updatedAnalytic.total_impressions) * 100;
+                  }
+                  break;
+                case 'conversion':
+                  updatedAnalytic.total_conversions += value;
+                  // Recalculate conversion rate
+                  if (updatedAnalytic.total_clicks > 0) {
+                    updatedAnalytic.conversion_rate = 
+                      (updatedAnalytic.total_conversions / updatedAnalytic.total_clicks) * 100;
+                  }
+                  break;
+              }
+              
+              return updatedAnalytic;
+            }
+            return analytic;
+          })
+        };
+      });
     } catch (err: any) {
-      console.error(`Failed to track segment ${conversionType}:`, err);
-      return false;
+      console.error(`Failed to track ${interactionType} for segment:`, err);
     }
   };
-  
-  // Helper function to get targeted content for a segment
-  const getTargetedContent = async (segmentId: string, contentType: string) => {
+
+  // Gets all segments available to be added to a campaign
+  const getAvailableSegments = async (campaignId: string): Promise<AudienceSegment[]> => {
     try {
-      return await getSegmentTargetedContent(segmentId, contentType);
+      return await getAvailableSegmentsForCampaign(campaignId);
     } catch (err: any) {
-      console.error('Failed to get targeted content:', err);
-      return [];
+      console.error('Failed to get available segments:', err);
+      throw err;
     }
   };
-  
-  // Helper function to create a notification for a segment
-  const createSegmentNotification = async (
-    segmentId: string, 
-    title: string, 
-    content: string,
-    priority: NotificationPriority = 'medium'
-  ): Promise<boolean> => {
-    try {
-      // Validate priority before sending
-      const validPriority = validateNotificationPriority(priority);
-      return await createSegmentBasedNotification(segmentId, title, content, eventId, validPriority);
-    } catch (err: any) {
-      console.error('Failed to create segment notification:', err);
-      return false;
+
+  // Get campaign link (original function)
+  const getCampaignLink = (campaignId: string, medium: string = 'website', segmentId?: string) => {
+    if (segmentId) {
+      // If segmentId is provided, add it to the UTM parameters
+      return generateCampaignLink(eventId, campaignId, medium, segmentId);
     }
+    return generateCampaignLink(eventId, campaignId, medium);
   };
-  
-  // Get A/B test results from campaigns
-  const getABTestResults = async (campaignId: string): Promise<ABTestResult> => {
+
+  // Refresh the campaign segment analytics
+  const refreshCampaignAnalytics = async (campaignId: string) => {
     try {
-      return await getCampaignABTestResults(campaignId);
+      const analytics = await getCampaignSegmentAnalytics(campaignId);
+      setSegmentAnalytics(prev => ({
+        ...prev,
+        [campaignId]: analytics
+      }));
     } catch (err: any) {
-      console.error('Failed to get A/B test results:', err);
-      return { 
-        variants: [], 
-        winner: null,
-        variantA: undefined,
-        variantB: undefined,
-        improvement: 0,
-        significantResult: false
-      };
+      console.error('Failed to refresh campaign analytics:', err);
     }
   };
 
   return {
+    // Original properties
     campaigns,
-    activeCampaign,
     isLoading,
-    segmentsLoading,
     error,
-    segments,
+    
+    // Original methods
     createCampaign,
     updateCampaign,
     deleteCampaign,
-    selectCampaign,
     trackMetric,
+    getCampaignLink,
+    refresh: loadCampaigns,
+    
+    // New segment-related properties
+    segmentMappings,
+    segmentAnalytics,
+    
+    // New segment-related methods
+    createCampaignWithSegments,
     assignSegments,
+    updateSegmentMapping,
     removeSegment,
-    getSegmentMappings,
-    getSegmentPerformance,
-    trackSegmentConversion,
-    getTargetedContent,
-    createSegmentNotification,
-    getABTestResults,
-    refresh: loadCampaigns
+    trackSegmentInteraction,
+    getAvailableSegments,
+    refreshCampaignAnalytics
   };
 };

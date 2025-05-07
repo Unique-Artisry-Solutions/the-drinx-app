@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { EventMarketingCampaign } from '@/types/EventTypes';
@@ -41,10 +42,13 @@ export const useEventMarketing = (eventId: string) => {
     loadCampaigns();
   }, [eventId]);
 
-  const createCampaign = async (campaign: Omit<EventMarketingCampaign, 'id'>) => {
+  const createCampaign = async (campaign: Omit<EventMarketingCampaign, 'event_id'>) => {
     setIsLoading(true);
     try {
-      const newCampaign = await createMarketingCampaign(campaign);
+      const newCampaign = await createMarketingCampaign({
+        ...campaign,
+        event_id: eventId
+      });
       setCampaigns(prev => [...prev, newCampaign]);
       toast({
         title: 'Success',
@@ -108,37 +112,16 @@ export const useEventMarketing = (eventId: string) => {
     }
   };
 
-  const trackMetric = async (
-    campaignId: string, 
-    metricName: string, 
-    value: number = 1, 
-    source?: string
-  ) => {
+  const trackMetric = async (campaignId: string, metricName: string, value: number = 1) => {
     try {
-      await trackCampaignMetric(campaignId, metricName, value, source);
+      await trackCampaignMetric(campaignId, metricName, value);
       
       // Update local state to reflect the new metric value
       setCampaigns(prev => 
         prev.map(c => {
           if (c.id === campaignId) {
-            const metrics = { ...c.metrics };
-            
-            // Safely update the metric
-            if (typeof metrics[metricName] === 'number') {
-              metrics[metricName] = (metrics[metricName] || 0) + value;
-            }
-            
-            // Update source metrics if applicable
-            if (source && metrics.sources) {
-              if (!metrics.sources[source]) {
-                metrics.sources[source] = { impressions: 0, clicks: 0, conversions: 0, revenue: 0 };
-              }
-              
-              if (metricName in metrics.sources[source]) {
-                metrics.sources[source][metricName] += value;
-              }
-            }
-            
+            const metrics = { ...(c.metrics || {}) };
+            metrics[metricName] = (metrics[metricName] || 0) + value;
             return { ...c, metrics };
           }
           return c;

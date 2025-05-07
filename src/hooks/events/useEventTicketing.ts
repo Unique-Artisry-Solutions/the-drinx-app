@@ -8,7 +8,12 @@ export const useEventTicketing = (eventId: string) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [discountCode, setDiscountCode] = useState('');
-  const [appliedDiscount, setAppliedDiscount] = useState<eventTicketService.DiscountCodeResult | null>(null);
+  const [appliedDiscount, setAppliedDiscount] = useState<{
+    valid: boolean;
+    discountAmount: number;
+    discountType: 'percentage' | 'fixed';
+    message?: string;
+  } | null>(null);
 
   // Fetch ticket types for the event
   const { 
@@ -17,7 +22,7 @@ export const useEventTicketing = (eventId: string) => {
     error: ticketTypesError 
   } = useQuery({
     queryKey: ['eventTicketTypes', eventId],
-    queryFn: () => eventTicketService.getEventTicketTypes(eventId),
+    queryFn: () => eventTicketService.fetchEventTicketTypes(eventId),
     enabled: !!eventId
   });
 
@@ -136,9 +141,9 @@ export const useEventTicketing = (eventId: string) => {
     
     if (appliedDiscount?.valid) {
       if (appliedDiscount.discountType === 'percentage') {
-        discount = subtotal * (appliedDiscount.discountAmount! / 100);
+        discount = subtotal * (appliedDiscount.discountAmount / 100);
       } else {
-        discount = Math.min(subtotal, appliedDiscount.discountAmount! * quantity);
+        discount = Math.min(subtotal, appliedDiscount.discountAmount * quantity);
       }
     }
     

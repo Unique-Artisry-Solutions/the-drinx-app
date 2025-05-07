@@ -1,9 +1,9 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Event, EventLocation, EventContactInfo, EventTicketType } from '@/types/EventTypes';
+import { Event, EventLocation, EventContactInfo } from '@/types/EventTypes';
 import { useToast } from '@/hooks/use-toast';
-import { safeJsonToEventLocation, safeJsonToEventContactInfo, safeJsonToRecord } from '@/utils/typeGuards';
+import { safeJsonToType, safeJsonToRecord } from '@/utils/typeGuards';
 
 export const useEventDetails = (eventId: string) => {
   const [event, setEvent] = useState<Event | null>(null);
@@ -42,7 +42,7 @@ export const useEventDetails = (eventId: string) => {
         // Get attendee counts
         const { data: attendeesData, error: attendeesError } = await supabase
           .from('event_attendees')
-          .select('status, ticket_type_id')
+          .select('status')
           .eq('event_id', eventId);
 
         if (attendeesError) console.error("Error fetching attendee count:", attendeesError);
@@ -51,45 +51,31 @@ export const useEventDetails = (eventId: string) => {
         const registeredCount = attendeesData ? attendeesData.filter(a => a.status === 'registered').length : 0;
         const checkedInCount = attendeesData ? attendeesData.filter(a => a.status === 'checked_in').length : 0;
 
-        // Parse location_details and contact_info using our safe conversion functions
-        const locationDetails: EventLocation = safeJsonToEventLocation(eventData.location_details);
-        const contactInfo: EventContactInfo = safeJsonToEventContactInfo(eventData.contact_info);
-
-        // Handle custom_settings safely
-        let customSettings = {};
-        if (typeof eventData.custom_settings === 'string') {
-          try {
-            customSettings = JSON.parse(eventData.custom_settings);
-          } catch (e) {
-            customSettings = {};
-          }
-        } else if (eventData.custom_settings && typeof eventData.custom_settings === 'object') {
-          customSettings = eventData.custom_settings;
-        }
+        // Parse location_details and contact_info from JSON if needed
+        const defaultLocation: EventLocation = {
+          address: '',
+          city: '',
+          state: '',
+          zip: '',
+          country: ''
+        };
         
-        // Transform event_ticket_types to include computed properties
-        const ticketTypes: EventTicketType[] = eventData.event_ticket_types.map((ticket: any) => {
-          // Calculate sold tickets for each type - ensure we check the ticket_type_id exists 
-          const soldTickets = attendeesData 
-            ? attendeesData.filter(a => 
-                a.ticket_type_id === ticket.id && 
-                a.status !== 'cancelled'
-              ).length 
-            : 0;
-          
-          return {
-            id: ticket.id,
-            name: ticket.name,
-            description: ticket.description || '',
-            price: ticket.price,
-            quantity: ticket.quantity,
-            sold: soldTickets,
-            available: ticket.quantity - soldTickets,
-            hasLimitedInventory: ticket.hasLimitedInventory || false,
-            lowInventoryThreshold: ticket.lowInventoryThreshold,
-            hasDynamicPricing: ticket.hasDynamicPricing || false
-          };
-        });
+        const defaultContactInfo: EventContactInfo = {
+          name: '',
+          email: ''
+        };
+
+        const locationDetails = safeJsonToType<EventLocation>(
+          eventData.location_details,
+          defaultLocation
+        );
+
+        const contactInfo = safeJsonToType<EventContactInfo>(
+          eventData.contact_info,
+          defaultContactInfo
+        );
+
+        const customSettings = safeJsonToRecord(eventData.custom_settings);
 
         // Format the event data
         const formattedEvent: Event = {
@@ -119,11 +105,11 @@ export const useEventDetails = (eventId: string) => {
             checked_in: checkedInCount,
             capacity: eventData.capacity || 0
           },
-          ticketTypes: ticketTypes,
+          ticketTypes: eventData.event_ticket_types,
           distance: undefined,
           is_public: eventData.is_public !== false,
           event_url: eventData.event_url,
-          custom_settings: customSettings as Record<string, any>
+          custom_settings: customSettings
         };
 
         setEvent(formattedEvent);

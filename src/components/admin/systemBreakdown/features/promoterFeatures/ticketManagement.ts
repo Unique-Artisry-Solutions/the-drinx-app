@@ -30,9 +30,6 @@ export const ticketManagement: FeatureItem = {
     - [✓] Payment processing flow (completed)
     - [✓] Stripe integration (completed)
     - [✓] Stripe Elements integration (completed)
-    - [✓] Check-in scanner functionality (completed)
-    - [✓] Offline check-in capability (completed)
-    - [✓] Check-in analytics (completed)
   `,
   testSteps: [
     "Create an event with multiple ticket types",
@@ -44,9 +41,6 @@ export const ticketManagement: FeatureItem = {
     "Manage and verify attendees at the entrance",
     "Process payment for tickets through Stripe",
     "View payment receipts and transaction history",
-    "Process refunds when necessary",
-    "Scan QR codes for rapid check-in",
-    "Check in attendees offline without internet connection",
-    "View check-in analytics and reports"
+    "Process refunds when necessary"
   ]
 };

@@ -15,7 +15,6 @@ import QrCodeScanner from './QrCodeScanner';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { processTicketScan } from '@/services/eventTicketService';
-import { toAttendeeStatus } from '@/utils/typeGuards';
 
 interface CheckInScannerModalProps {
   isOpen: boolean;
@@ -38,30 +37,14 @@ const CheckInScannerModal: React.FC<CheckInScannerModalProps> = ({
     try {
       const result = await processTicketScan(code);
       
-      if (result.success && result.ticket) {
-        const ticket = result.ticket;
-        const attendee: EventAttendee = {
-          id: ticket.id,
-          event_id: ticket.event_id,
-          user_id: ticket.user_id || undefined,
-          email: ticket.email || undefined,
-          name: ticket.name || undefined,
-          ticket_type_id: ticket.ticket_type_id || undefined,
-          purchase_date: ticket.purchase_date,
-          checked_in_at: ticket.checked_in_at || undefined,
-          status: toAttendeeStatus(ticket.status, 'registered'),
-          ticket_code: ticket.ticket_code || undefined,
-          notes: ticket.notes || undefined,
-          custom_fields: ticket.custom_fields || {}
-        };
-        
+      if (result.success && result.attendee) {
         toast({
           title: "Check-in Successful",
           description: "Attendee has been checked in.",
         });
-        onCheckIn(attendee);
+        onCheckIn(result.attendee);
       } else {
-        throw new Error(result.error || result.message || "Failed to validate ticket");
+        throw new Error(result.message || "Failed to validate ticket");
       }
     } catch (error: any) {
       toast({
@@ -69,6 +52,7 @@ const CheckInScannerModal: React.FC<CheckInScannerModalProps> = ({
         description: error.message || "Failed to process ticket",
         variant: "destructive",
       });
+      throw error;
     } finally {
       setIsProcessing(false);
     }
@@ -81,11 +65,9 @@ const CheckInScannerModal: React.FC<CheckInScannerModalProps> = ({
     setIsProcessing(true);
     try {
       await handleScan(ticketCode.trim());
-      setTicketCode('');
-    } catch (error) {
-      // Error is already handled in handleScan
     } finally {
       setIsProcessing(false);
+      setTicketCode('');
     }
   };
 

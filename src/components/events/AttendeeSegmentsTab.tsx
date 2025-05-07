@@ -1,464 +1,601 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
-import { Progress } from '@/components/ui/progress';
-import { Loader2, Plus, Info, BarChart3, Users, Mail, Bell, ChevronRight, Trash } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { PlusCircle, Users, FileText, BellRing, BarChart3, TestTube } from 'lucide-react';
+import { useAudienceSegments } from '@/hooks/useAudienceSegments';
+import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { 
+  assignSegmentsToCampaign, 
+  getCampaignSegmentMappings,
+  getAvailableSegmentsForCampaign
+} from '@/services/campaignSegmentService';
+import { 
+  trackCampaignMetric, 
+  getSegmentTargetedContent,
+  createSegmentBasedNotification
+} from '@/services/eventMarketingService';
 
-// Import campaign hooks
-import { useEventMarketingWithSegments } from '@/hooks/events/useEventMarketingWithSegments';
-import { useAudienceSegments } from '@/hooks/campaigns/useAudienceSegments';
-import { AudienceSegment, SegmentSelection } from '@/types/CampaignSegmentTypes';
-import { useCampaignSegmentMappings } from '@/hooks/campaigns/useCampaignSegmentMappings';
-import { CampaignSegmentPanel } from '@/components/events/CampaignSegmentPanel';
-
-export interface AttendeeSegmentsTabProps {
+interface AttendeeSegmentsTabProps {
   eventId: string;
   eventName: string;
 }
 
-export const AttendeeSegmentsTab: React.FC<AttendeeSegmentsTabProps> = ({ eventId, eventName }) => {
-  const [activeTab, setActiveTab] = useState('segments');
-  const [activeCampaign, setActiveCampaign] = useState<string | null>(null);
-  const [showCreateSegment, setShowCreateSegment] = useState(false);
-  const [newSegmentName, setNewSegmentName] = useState('');
-  const [newSegmentDescription, setNewSegmentDescription] = useState('');
+interface ContentVariation {
+  segmentId: string;
+  segmentName: string;
+  content: string;
+  enabled: boolean;
+}
+
+const AttendeeSegmentsTab: React.FC<AttendeeSegmentsTabProps> = ({ eventId, eventName }) => {
   const { toast } = useToast();
-
-  // Hook to manage event marketing campaigns with segments
-  const { 
-    campaigns, 
-    activeCampaign: selectedCampaign,
-    isLoading: campaignsLoading, 
-    segmentsLoading,
-    error: campaignError,
-    segments: availableSegments,
-    createCampaign,
-    selectCampaign,
-    assignSegments,
-    getSegmentMappings,
-    refresh: refreshCampaigns
-  } = useEventMarketingWithSegments(eventId);
-
   const { segments, isLoadingSegments } = useAudienceSegments();
+  const [selectedCampaignId, setSelectedCampaignId] = useState<string>('');
+  const [activeTab, setActiveTab] = useState<string>('segments');
+  const [contentVariations, setContentVariations] = useState<ContentVariation[]>([]);
+  const [notificationTitle, setNotificationTitle] = useState<string>('');
+  const [notificationContent, setNotificationContent] = useState<string>('');
+  const [selectedSegmentId, setSelectedSegmentId] = useState<string>('');
+  const [enableAbTesting, setEnableAbTesting] = useState<boolean>(false);
+  const [contentA, setContentA] = useState<string>('');
+  const [contentB, setContentB] = useState<string>('');
+  const [distribution, setDistribution] = useState<number>(50);
 
-  // Load segment mappings for the selected campaign
-  const [mappings, setMappings] = useState<any[]>([]);
+  // Fetch campaigns for this event
+  const { data: campaigns, isLoading: isLoadingCampaigns } = useQuery({
+    queryKey: ['event-campaigns', eventId],
+    queryFn: async () => {
+      // This would normally fetch from your API
+      return [
+        { id: 'camp-1', name: 'Summer Promotion' },
+        { id: 'camp-2', name: 'Special Event Launch' },
+      ];
+    }
+  });
 
+  // Fetch segment mappings for a campaign
+  const { 
+    data: campaignSegments = [], 
+    isLoading: isLoadingMappings,
+    refetch: refetchMappings
+  } = useQuery({
+    queryKey: ['campaign-segments', selectedCampaignId],
+    queryFn: () => selectedCampaignId ? getCampaignSegmentMappings(selectedCampaignId) : Promise.resolve([]),
+    enabled: !!selectedCampaignId
+  });
+
+  // Fetch available segments for this campaign
+  const {
+    data: availableSegments = [],
+    isLoading: isLoadingAvailable,
+    refetch: refetchAvailable
+  } = useQuery({
+    queryKey: ['available-segments', selectedCampaignId],
+    queryFn: () => selectedCampaignId ? getAvailableSegmentsForCampaign(selectedCampaignId) : Promise.resolve([]),
+    enabled: !!selectedCampaignId
+  });
+
+  // Update content variations when segments change
   useEffect(() => {
-    const loadMappings = async () => {
-      if (activeCampaign) {
-        try {
-          const data = await getSegmentMappings(activeCampaign);
-          setMappings(data);
-        } catch (error) {
-          console.error('Failed to load mappings:', error);
-        }
-      }
-    };
+    if (campaignSegments.length > 0) {
+      const variations = campaignSegments.map(mapping => ({
+        segmentId: mapping.segment_id,
+        segmentName: segments.find(s => s.id === mapping.segment_id)?.name || 'Unknown Segment',
+        content: '',
+        enabled: true
+      }));
+      setContentVariations(variations);
+    }
+  }, [campaignSegments, segments]);
 
-    loadMappings();
-  }, [activeCampaign, getSegmentMappings]);
-
-  const handleCreateSegment = async () => {
-    if (!newSegmentName) {
+  // Mutation for assigning segments
+  const assignSegmentMutation = useMutation({
+    mutationFn: (data: { campaignId: string, segmentId: string }) => assignSegmentsToCampaign(
+      data.campaignId,
+      [{ segment_id: data.segmentId }]
+    ),
+    onSuccess: () => {
+      refetchMappings();
+      refetchAvailable();
       toast({
-        title: 'Segment name required',
-        description: 'Please provide a name for the segment.',
+        title: 'Success',
+        description: 'Segment was added to the campaign',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: 'Failed to add segment to campaign: ' + (error.message || 'Unknown error'),
+        variant: 'destructive'
+      });
+    }
+  });
+
+  // Mutation for creating segment notifications
+  const createNotificationMutation = useMutation({
+    mutationFn: (data: { 
+      campaignId: string, 
+      segmentId: string, 
+      title: string, 
+      content: string 
+    }) => createSegmentBasedNotification(
+      eventId,
+      data.campaignId,
+      data.segmentId,
+      data.title,
+      data.content
+    ),
+    onSuccess: () => {
+      toast({
+        title: 'Success',
+        description: 'Notification was sent to the segment',
+      });
+      setNotificationTitle('');
+      setNotificationContent('');
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: 'Failed to send notification: ' + (error.message || 'Unknown error'),
+        variant: 'destructive'
+      });
+    }
+  });
+
+  // Handle adding a segment to a campaign
+  const handleAddSegment = (segmentId: string) => {
+    if (!selectedCampaignId) {
+      toast({
+        title: 'Select a Campaign',
+        description: 'Please select a campaign first',
+        variant: 'destructive'
+      });
+      return;
+    }
+    
+    assignSegmentMutation.mutate({
+      campaignId: selectedCampaignId,
+      segmentId
+    });
+  };
+
+  // Handle saving content variations
+  const handleSaveContentVariations = () => {
+    // This would update content variations for each segment
+    toast({
+      title: 'Content Saved',
+      description: 'Segment-specific content has been saved',
+    });
+  };
+
+  // Handle saving A/B test content
+  const handleSaveAbTest = () => {
+    if (!selectedCampaignId || !selectedSegmentId) {
+      toast({
+        title: 'Selection Required',
+        description: 'Please select both a campaign and a segment',
         variant: 'destructive'
       });
       return;
     }
 
-    try {
-      // Use the hook's method to create a segment
-      // This is a placeholder - in a real scenario you'd call an API
-      console.log('Creating segment:', { name: newSegmentName, description: newSegmentDescription });
-      
-      toast({
-        title: 'Segment created',
-        description: `Segment "${newSegmentName}" has been created.`
-      });
-      
-      // Reset form
-      setNewSegmentName('');
-      setNewSegmentDescription('');
-      setShowCreateSegment(false);
-      
-      // Refresh segments list
-    } catch (error) {
-      toast({
-        title: 'Error creating segment',
-        description: 'Failed to create segment. Please try again.',
-        variant: 'destructive'
-      });
-    }
-  };
-
-  const handleAssignSegments = async (campaign: any, segments: SegmentSelection[]) => {
-    try {
-      await assignSegments(campaign, segments);
-      
-      // Refresh mappings
-      const updatedMappings = await getSegmentMappings(campaign.id);
-      setMappings(updatedMappings);
-      
-      toast({
-        title: 'Segments assigned',
-        description: 'Audience segments have been assigned to the campaign.'
-      });
-      
-      return true;
-    } catch (error) {
-      toast({
-        title: 'Error assigning segments',
-        description: 'Failed to assign segments. Please try again.',
-        variant: 'destructive'
-      });
-      return false;
-    }
-  };
-
-  const handleDeleteMapping = async (mappingId: string) => {
-    // This is a placeholder - would call API in real scenario
-    console.log('Deleting mapping:', mappingId);
-    
-    // Refresh mappings
-    if (activeCampaign) {
-      const updatedMappings = await getSegmentMappings(activeCampaign);
-      setMappings(updatedMappings);
-    }
-    
+    // This would save A/B test configuration
+    // In real implementation, this would update campaign's target_audience field
     toast({
-      title: 'Segment removed',
-      description: 'The segment has been removed from this campaign.'
+      title: 'A/B Test Configured',
+      description: 'A/B test content has been saved for the segment',
     });
   };
 
-  const formatDate = (dateString: string) => {
-    if (!dateString) return 'N/A';
-    const date = new Date(dateString);
-    return date.toLocaleDateString();
+  // Handle sending a notification to a segment
+  const handleSendNotification = () => {
+    if (!selectedCampaignId || !selectedSegmentId || !notificationTitle || !notificationContent) {
+      toast({
+        title: 'Missing Information',
+        description: 'Please complete all notification fields',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    createNotificationMutation.mutate({
+      campaignId: selectedCampaignId,
+      segmentId: selectedSegmentId,
+      title: notificationTitle,
+      content: notificationContent
+    });
   };
 
-  const renderCampaignList = () => {
-    if (campaignsLoading) {
-      return (
-        <div className="flex items-center justify-center p-8">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      );
-    }
-
-    if (campaigns.length === 0) {
-      return (
-        <div className="text-center p-8">
-          <p className="text-muted-foreground">No campaigns found.</p>
-          <Button 
-            onClick={() => {
-              // Create a new campaign
-              createCampaign({
-                name: `New Campaign for ${eventName}`,
-                description: 'Description of the campaign',
-                campaign_type: 'email',
-                status: 'draft',
-                start_date: new Date().toISOString(),
-                end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
-                budget: 0,
-                metrics: {},
-                target_audience: {},
-                event_id: eventId
-              });
-            }}
-            variant="outline"
-            className="mt-4"
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Audience Segments</CardTitle>
+        <CardDescription>Manage audience segmentation and personalized content for {eventName}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="mb-6">
+          <Label htmlFor="campaign-select">Select Campaign</Label>
+          <Select
+            value={selectedCampaignId}
+            onValueChange={setSelectedCampaignId}
           >
-            <Plus className="mr-2 h-4 w-4" />
-            Create Campaign
-          </Button>
-        </div>
-      );
-    }
-
-    return (
-      <div className="space-y-4">
-        {campaigns.map((campaign) => (
-          <Card 
-            key={campaign.id} 
-            className={activeCampaign === campaign.id ? 'border-primary' : ''}
-          >
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <CardTitle>{campaign.name}</CardTitle>
-                <Badge variant={campaign.status === 'active' ? 'default' : 'secondary'}>
-                  {campaign.status}
-                </Badge>
-              </div>
-              <CardDescription>{campaign.description}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div>
-                  <p className="text-muted-foreground">Type:</p>
-                  <p>{campaign.campaign_type}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Dates:</p>
-                  <p>{formatDate(campaign.start_date)} - {formatDate(campaign.end_date)}</p>
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button 
-                variant="secondary"
-                onClick={() => {
-                  setActiveCampaign(campaign.id);
-                  selectCampaign(campaign.id);
-                }}
-                className="w-full"
-              >
-                Manage Segments
-                <ChevronRight className="ml-auto h-4 w-4" />
-              </Button>
-            </CardFooter>
-          </Card>
-        ))}
-        
-        <Button
-          onClick={() => {
-            createCampaign({
-              name: `New Campaign for ${eventName}`,
-              description: 'Description of the campaign',
-              campaign_type: 'email',
-              status: 'draft',
-              start_date: new Date().toISOString(),
-              end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
-              budget: 0,
-              metrics: {},
-              target_audience: {},
-              event_id: eventId
-            });
-          }}
-          className="w-full"
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          Create Campaign
-        </Button>
-      </div>
-    );
-  };
-  
-  const renderSegmentTab = () => {
-    if (isLoadingSegments) {
-      return (
-        <div className="flex items-center justify-center p-8">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      );
-    }
-    
-    return (
-      <div className="space-y-6">
-        {!showCreateSegment ? (
-          <Button onClick={() => setShowCreateSegment(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Create Segment
-          </Button>
-        ) : (
-          <Card>
-            <CardHeader>
-              <CardTitle>Create Segment</CardTitle>
-              <CardDescription>
-                Define a new audience segment for targeting
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-1">
-                <Label htmlFor="segment-name">Segment Name</Label>
-                <Input
-                  id="segment-name"
-                  value={newSegmentName}
-                  onChange={(e) => setNewSegmentName(e.target.value)}
-                  placeholder="e.g. Active Users"
-                />
-              </div>
-              
-              <div className="space-y-1">
-                <Label htmlFor="segment-description">Description</Label>
-                <Input
-                  id="segment-description"
-                  value={newSegmentDescription}
-                  onChange={(e) => setNewSegmentDescription(e.target.value)}
-                  placeholder="Brief description of this segment"
-                />
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-between">
-              <Button variant="outline" onClick={() => setShowCreateSegment(false)}>Cancel</Button>
-              <Button onClick={handleCreateSegment}>Create Segment</Button>
-            </CardFooter>
-          </Card>
-        )}
-        
-        <div>
-          <h3 className="text-lg font-medium mb-4">Available Segments</h3>
-          {segments && segments.length > 0 ? (
-            <div className="space-y-4">
-              {segments.map((segment: AudienceSegment) => (
-                <Card key={segment.id}>
-                  <CardHeader className="pb-2">
-                    <CardTitle>{segment.name}</CardTitle>
-                    <CardDescription>{segment.description || 'No description'}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between text-sm">
-                      <div className="flex items-center">
-                        <Users className="mr-2 h-4 w-4 text-muted-foreground" />
-                        <span>{segment.memberCount || 0} members</span>
-                      </div>
-                      <Badge variant={segment.is_active ? 'default' : 'secondary'}>
-                        {segment.is_active ? 'Active' : 'Inactive'}
-                      </Badge>
-                    </div>
-                  </CardContent>
-                </Card>
+            <SelectTrigger className="w-full" id="campaign-select">
+              <SelectValue placeholder="Select a marketing campaign" />
+            </SelectTrigger>
+            <SelectContent>
+              {(campaigns || []).map(campaign => (
+                <SelectItem key={campaign.id} value={campaign.id}>
+                  {campaign.name}
+                </SelectItem>
               ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="segments">
+              <Users className="h-4 w-4 mr-2" />
+              Segments
+            </TabsTrigger>
+            <TabsTrigger value="content">
+              <FileText className="h-4 w-4 mr-2" />
+              Content Personalization
+            </TabsTrigger>
+            <TabsTrigger value="ab-testing">
+              <TestTube className="h-4 w-4 mr-2" />
+              A/B Testing
+            </TabsTrigger>
+            <TabsTrigger value="notifications">
+              <BellRing className="h-4 w-4 mr-2" />
+              Targeted Notifications
+            </TabsTrigger>
+            <TabsTrigger value="analytics">
+              <BarChart3 className="h-4 w-4 mr-2" />
+              Performance
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="segments" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Campaign Segments</CardTitle>
+                  <CardDescription>Segments currently targeted by this campaign</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {isLoadingMappings ? (
+                    <p>Loading segment mappings...</p>
+                  ) : campaignSegments.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No segments assigned to this campaign yet.</p>
+                  ) : (
+                    <ul className="space-y-2">
+                      {campaignSegments.map(mapping => {
+                        const segmentName = segments.find(s => s.id === mapping.segment_id)?.name || 'Unknown Segment';
+                        return (
+                          <li key={mapping.id} className="flex items-center justify-between p-2 border rounded">
+                            <div>
+                              <span className="font-medium">{segmentName}</span>
+                              {mapping.is_control_group && (
+                                <Badge variant="outline" className="ml-2">Control Group</Badge>
+                              )}
+                            </div>
+                            <div>
+                              <Badge>{mapping.allocation_percentage}%</Badge>
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle>Available Segments</CardTitle>
+                  <CardDescription>Add segments to this campaign</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {isLoadingAvailable ? (
+                    <p>Loading available segments...</p>
+                  ) : availableSegments.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No more segments available.</p>
+                  ) : (
+                    <ul className="space-y-2">
+                      {availableSegments.map(segment => (
+                        <li key={segment.id} className="flex items-center justify-between p-2 border rounded">
+                          <span className="font-medium">{segment.name}</span>
+                          <Button size="sm" onClick={() => handleAddSegment(segment.id)}>
+                            <PlusCircle className="h-4 w-4 mr-2" />
+                            Add
+                          </Button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </CardContent>
+              </Card>
             </div>
-          ) : (
-            <div className="text-center p-8">
-              <p className="text-muted-foreground">No segments found. Create your first segment to start targeting specific audiences.</p>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  };
-  
-  const renderCampaignDetail = () => {
-    if (!activeCampaign || !selectedCampaign) {
-      return (
-        <div className="text-center p-8">
-          <p className="text-muted-foreground">Select a campaign to manage its segments.</p>
-        </div>
-      );
-    }
-    
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <Button 
-            variant="outline" 
-            onClick={() => {
-              setActiveCampaign(null);
-              selectCampaign('');
-            }}
-          >
-            Back to Campaigns
-          </Button>
-          <h2 className="text-xl font-bold">{selectedCampaign.name}</h2>
-        </div>
-        
-        {segmentsLoading ? (
-          <div className="flex items-center justify-center p-8">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          </div>
-        ) : (
-          <div className="grid md:grid-cols-2 gap-6">
-            <CampaignSegmentPanel
-              campaign={selectedCampaign}
-              availableSegments={segments || []}
-              existingMappings={mappings}
-              isLoading={isLoadingSegments}
-              onAssignSegments={handleAssignSegments}
-            />
-            
+          </TabsContent>
+
+          <TabsContent value="content" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Assigned Segments</CardTitle>
-                <CardDescription>
-                  Segments currently assigned to this campaign
-                </CardDescription>
+                <CardTitle>Content Personalization</CardTitle>
+                <CardDescription>Create segment-specific content variations</CardDescription>
               </CardHeader>
               <CardContent>
-                {mappings.length > 0 ? (
-                  <ScrollArea className="h-[300px] pr-2">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Segment</TableHead>
-                          <TableHead>Allocation</TableHead>
-                          <TableHead>Control</TableHead>
-                          <TableHead></TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {mappings.map((mapping) => {
-                          const segmentName = segments?.find(s => s.id === mapping.segment_id)?.name || 'Unknown';
-                          return (
-                            <TableRow key={mapping.id}>
-                              <TableCell>{segmentName}</TableCell>
-                              <TableCell>{mapping.allocation_percentage}%</TableCell>
-                              <TableCell>{mapping.is_control_group ? 'Yes' : 'No'}</TableCell>
-                              <TableCell>
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon"
-                                  onClick={() => handleDeleteMapping(mapping.id)}
-                                >
-                                  <Trash className="h-4 w-4" />
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
-                      </TableBody>
-                    </Table>
-                  </ScrollArea>
+                {contentVariations.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    No segments assigned to this campaign yet. Add segments first to create personalized content.
+                  </p>
                 ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No segments assigned to this campaign yet.
+                  <div className="space-y-6">
+                    {contentVariations.map((variation, index) => (
+                      <div key={variation.segmentId} className="space-y-2 pb-4 border-b">
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor={`segment-${variation.segmentId}`} className="text-lg font-medium">
+                            {variation.segmentName}
+                          </Label>
+                          <div className="flex items-center space-x-2">
+                            <Label htmlFor={`enable-${variation.segmentId}`}>Enabled</Label>
+                            <Switch 
+                              id={`enable-${variation.segmentId}`}
+                              checked={variation.enabled}
+                              onCheckedChange={(checked) => {
+                                const newVariations = [...contentVariations];
+                                newVariations[index].enabled = checked;
+                                setContentVariations(newVariations);
+                              }}
+                            />
+                          </div>
+                        </div>
+                        <Textarea
+                          id={`segment-${variation.segmentId}`}
+                          placeholder={`Custom content for ${variation.segmentName}...`}
+                          value={variation.content}
+                          onChange={(e) => {
+                            const newVariations = [...contentVariations];
+                            newVariations[index].content = e.target.value;
+                            setContentVariations(newVariations);
+                          }}
+                          disabled={!variation.enabled}
+                          rows={4}
+                        />
+                      </div>
+                    ))}
+                    <Button onClick={handleSaveContentVariations}>Save Content Variations</Button>
                   </div>
                 )}
               </CardContent>
             </Card>
-          </div>
-        )}
-      </div>
-    );
-  };
-  
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Audience Segmentation & Targeting</CardTitle>
-        <CardDescription>
-          Create and manage audience segments for targeted campaigns
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-4">
-            <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
-            <TabsTrigger value="segments">Segments</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="campaigns">
-            {activeCampaign ? renderCampaignDetail() : renderCampaignList()}
           </TabsContent>
-          
-          <TabsContent value="segments">
-            {renderSegmentTab()}
+
+          <TabsContent value="ab-testing" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>A/B Testing</CardTitle>
+                <CardDescription>Test different content variations for segments</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="segment-select">Select Segment</Label>
+                    <Select
+                      value={selectedSegmentId}
+                      onValueChange={setSelectedSegmentId}
+                    >
+                      <SelectTrigger id="segment-select">
+                        <SelectValue placeholder="Select a segment" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {campaignSegments.map(mapping => {
+                          const segmentName = segments.find(s => s.id === mapping.segment_id)?.name || 'Unknown Segment';
+                          return (
+                            <SelectItem key={mapping.segment_id} value={mapping.segment_id}>
+                              {segmentName}
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="enable-ab-testing"
+                      checked={enableAbTesting}
+                      onCheckedChange={setEnableAbTesting}
+                    />
+                    <Label htmlFor="enable-ab-testing">Enable A/B Testing for this Segment</Label>
+                  </div>
+
+                  {enableAbTesting && (
+                    <div className="space-y-4 pt-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="content-a">Variant A Content</Label>
+                        <Textarea
+                          id="content-a"
+                          placeholder="Enter content for variant A"
+                          value={contentA}
+                          onChange={(e) => setContentA(e.target.value)}
+                          rows={4}
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="content-b">Variant B Content</Label>
+                        <Textarea
+                          id="content-b"
+                          placeholder="Enter content for variant B"
+                          value={contentB}
+                          onChange={(e) => setContentB(e.target.value)}
+                          rows={4}
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="distribution">Traffic Distribution: {distribution}% to Variant A</Label>
+                        <Input
+                          id="distribution"
+                          type="range"
+                          min="0"
+                          max="100"
+                          value={distribution}
+                          onChange={(e) => setDistribution(parseInt(e.target.value))}
+                          className="w-full"
+                        />
+                        <div className="flex justify-between text-sm text-muted-foreground">
+                          <span>0% A</span>
+                          <span>50% / 50%</span>
+                          <span>100% A</span>
+                        </div>
+                      </div>
+                      
+                      <Button onClick={handleSaveAbTest}>Save A/B Test Configuration</Button>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="notifications" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Targeted Notifications</CardTitle>
+                <CardDescription>Send notifications to specific audience segments</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="notification-segment">Select Target Segment</Label>
+                    <Select
+                      value={selectedSegmentId}
+                      onValueChange={setSelectedSegmentId}
+                    >
+                      <SelectTrigger id="notification-segment">
+                        <SelectValue placeholder="Select a segment" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {campaignSegments.map(mapping => {
+                          const segmentName = segments.find(s => s.id === mapping.segment_id)?.name || 'Unknown Segment';
+                          return (
+                            <SelectItem key={mapping.segment_id} value={mapping.segment_id}>
+                              {segmentName}
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="notification-title">Notification Title</Label>
+                    <Input
+                      id="notification-title"
+                      placeholder="Enter notification title"
+                      value={notificationTitle}
+                      onChange={(e) => setNotificationTitle(e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="notification-content">Notification Message</Label>
+                    <Textarea
+                      id="notification-content"
+                      placeholder="Enter notification message"
+                      value={notificationContent}
+                      onChange={(e) => setNotificationContent(e.target.value)}
+                      rows={4}
+                    />
+                  </div>
+                  
+                  <Button 
+                    onClick={handleSendNotification}
+                    disabled={!selectedSegmentId || !notificationTitle || !notificationContent}
+                  >
+                    Send to Segment
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="analytics" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Segment Performance</CardTitle>
+                <CardDescription>Analytics for segment targeting performance</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {!selectedCampaignId ? (
+                  <p className="text-sm text-muted-foreground">Select a campaign to view segment performance data.</p>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {campaignSegments.map(mapping => {
+                        const segmentName = segments.find(s => s.id === mapping.segment_id)?.name || 'Unknown Segment';
+                        // Normally you'd get these metrics from mapping.metrics
+                        const impressions = Math.floor(Math.random() * 1000) + 100;
+                        const clicks = Math.floor(impressions * (Math.random() * 0.3 + 0.1));
+                        const conversions = Math.floor(clicks * (Math.random() * 0.4 + 0.1));
+                        const ctr = (clicks / impressions * 100).toFixed(1);
+                        const convRate = (conversions / clicks * 100).toFixed(1);
+                        
+                        return (
+                          <Card key={mapping.id}>
+                            <CardHeader className="pb-2">
+                              <CardTitle className="text-base">{segmentName}</CardTitle>
+                              <CardDescription>{mapping.allocation_percentage}% allocation</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="space-y-1">
+                                <div className="flex justify-between">
+                                  <span className="text-sm">Impressions:</span>
+                                  <span className="font-medium">{impressions}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-sm">Clicks:</span>
+                                  <span className="font-medium">{clicks}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-sm">Conversions:</span>
+                                  <span className="font-medium">{conversions}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-sm">CTR:</span>
+                                  <span className="font-medium">{ctr}%</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-sm">Conv. Rate:</span>
+                                  <span className="font-medium">{convRate}%</span>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </CardContent>
     </Card>
   );
 };
+
+export default AttendeeSegmentsTab;

@@ -1,65 +1,57 @@
-export const safeJsonParse = (str: string | null | undefined): any => {
-  try {
-    if (!str) return null;
-    return JSON.parse(str);
-  } catch (e) {
-    console.error("Failed to parse JSON", str, e);
-    return null;
+
+/**
+ * Safely converts a JSON value to a Record<string, any>
+ * Handles string JSON, JSON objects, and nullish values
+ */
+export const safeJsonToRecord = (jsonValue: any): Record<string, any> => {
+  if (!jsonValue) {
+    return {};
   }
-};
-
-export const safeJsonStringify = (obj: any): string | null => {
-  try {
-    if (!obj) return null;
-    return JSON.stringify(obj);
-  } catch (e) {
-    console.error("Failed to stringify JSON", obj, e);
-    return null;
-  }
-};
-
-export const safeJsonToRecord = <T extends Record<string, any>>(
-  json: string | null | undefined | Record<string, any>,
-  defaultRecord: T
-): T => {
-  try {
-    if (!json) return defaultRecord;
-
-    let parsed: Record<string, any>;
-
-    if (typeof json === 'string') {
-      parsed = JSON.parse(json);
-    } else if (typeof json === 'object') {
-      parsed = json;
-    } else {
-      return defaultRecord;
+  
+  if (typeof jsonValue === 'string') {
+    try {
+      return JSON.parse(jsonValue);
+    } catch (e) {
+      console.error('Error parsing JSON string:', e);
+      return {};
     }
+  }
+  
+  if (typeof jsonValue === 'object') {
+    return jsonValue as Record<string, any>;
+  }
+  
+  return {};
+};
 
-    return { ...defaultRecord, ...parsed };
-  } catch (e) {
-    console.error("Failed to convert JSON to record", json, e);
-    return defaultRecord;
+/**
+ * Converts a string value to the appropriate attendee status type
+ * Ensures the status value is one of the valid options: 'registered', 'checked_in', 'cancelled', 'no_show'
+ */
+export const toAttendeeStatus = (status: string | undefined): 'registered' | 'checked_in' | 'cancelled' | 'no_show' => {
+  if (!status) return 'registered';
+
+  switch (status.toLowerCase()) {
+    case 'checked_in':
+    case 'checked-in': 
+      return 'checked_in';
+    case 'cancelled':
+    case 'canceled':
+      return 'cancelled';
+    case 'no_show':
+    case 'no-show':
+      return 'no_show';
+    case 'registered':
+    default:
+      return 'registered';
   }
 };
 
-// Add the adapter function for ReferralSource objects
-export const adaptReferralSource = (source: any): { name: string; visits: number; percentage?: number } => {
-  if (!source) return { name: 'Unknown', visits: 0 };
-  
-  return {
-    name: source.name || source.source || 'Unknown',
-    visits: source.visits || source.count || 0,
-    percentage: source.percentage || 0
-  };
-};
-
-// Add the adapter function for ticket analytics data
-export const adaptToTicketAnalyticsData = (source: any): { typeName: string; sold: number; percentage: number } => {
-  if (!source) return { typeName: 'Unknown', sold: 0, percentage: 0 };
-  
-  return {
-    typeName: source.name || source.source || source.typeName || 'Unknown',
-    sold: source.visits || source.count || source.sold || 0,
-    percentage: source.percentage || 0
-  };
+/**
+ * Type-safe conversion from JSON to specific interface types
+ * Used for complex types like EventLocation, EventContactInfo, etc.
+ */
+export const safeJsonToType = <T>(jsonValue: any, defaultValue: T): T => {
+  const record = safeJsonToRecord(jsonValue);
+  return { ...defaultValue, ...record };
 };
