@@ -7,12 +7,27 @@ import { useNavigate } from 'react-router-dom';
 import PricingTierCard from '@/components/pricing/PricingTierCard';
 import FeatureTierComparison from '@/components/pricing/FeatureTierComparison';
 import { useToast } from '@/hooks/use-toast';
+import Layout from '@/components/Layout';
+import BackButton from '@/components/navigation/BackButton';
 
 const PricingPage = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
+  const [userType, setUserType] = useState<'individual' | 'establishment' | 'promoter'>('individual');
+  
+  // Get user type from localStorage if available
+  React.useEffect(() => {
+    const storedUserType = localStorage.getItem('user_type');
+    if (storedUserType === 'establishment') {
+      setUserType('establishment');
+    } else if (storedUserType === 'promoter') {
+      setUserType('promoter');
+    } else {
+      setUserType('individual');
+    }
+  }, []);
   
   // Pricing tiers
   const pricingTiers = [
@@ -66,70 +81,93 @@ const PricingPage = () => {
   };
 
   return (
-    <div className="container py-12 px-4 md:px-6">
-      <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold mb-4">Simple, Transparent Pricing</h1>
-        <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-          Choose the perfect plan for your needs. All plans include access to our core features.
-        </p>
+    <Layout>
+      <div className="container py-12 px-4 md:px-6">
+        <div className="mb-8">
+          <BackButton fallbackPath="/" label="Back to Home" variant="outline" />
+        </div>
         
-        {/* Billing period toggle */}
-        <div className="mt-6 inline-block">
-          <Tabs 
-            defaultValue="monthly" 
-            value={billingPeriod}
-            onValueChange={(value) => setBillingPeriod(value as 'monthly' | 'yearly')}
-            className="w-[300px]"
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold mb-4">Simple, Transparent Pricing</h1>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            Choose the perfect plan for your needs. All plans include access to our core features.
+          </p>
+          
+          {/* User type selection */}
+          <div className="mt-6 inline-block">
+            <Tabs 
+              defaultValue={userType} 
+              value={userType}
+              onValueChange={(value) => setUserType(value as 'individual' | 'establishment' | 'promoter')}
+              className="w-[400px]"
+            >
+              <TabsList className="grid grid-cols-3">
+                <TabsTrigger value="individual">Individual</TabsTrigger>
+                <TabsTrigger value="establishment">Establishment</TabsTrigger>
+                <TabsTrigger value="promoter">Promoter</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+          
+          {/* Billing period toggle */}
+          <div className="mt-6 inline-block">
+            <Tabs 
+              defaultValue="monthly" 
+              value={billingPeriod}
+              onValueChange={(value) => setBillingPeriod(value as 'monthly' | 'yearly')}
+              className="w-[300px]"
+            >
+              <TabsList className="grid grid-cols-2">
+                <TabsTrigger value="monthly">Monthly</TabsTrigger>
+                <TabsTrigger value="yearly">
+                  Yearly <span className="ml-1 text-xs text-green-500 font-medium">Save 20%</span>
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+        </div>
+
+        {/* Pricing cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16 relative mt-8">
+          {pricingTiers.map((tier) => (
+            <PricingTierCard
+              key={tier.tier}
+              name={tier.name}
+              tier={tier.tier as 'free' | 'basic' | 'premium' | 'vip'}
+              price={tier.price}
+              description={tier.description}
+              isPopular={tier.isPopular}
+              onSubscribe={() => handleSubscribe(tier.tier)}
+              className={userType !== 'individual' && tier.tier === 'free' ? "opacity-70" : ""}
+            />
+          ))}
+        </div>
+
+        {/* Feature comparison */}
+        <div className="mt-16">
+          <h2 className="text-2xl font-bold text-center mb-8">Compare Features</h2>
+          <FeatureTierComparison 
+            highlightTier="premium" 
+            className="max-w-5xl mx-auto"
+          />
+        </div>
+
+        {/* FAQ or additional info */}
+        <div className="mt-20 max-w-3xl mx-auto text-center">
+          <h2 className="text-2xl font-bold mb-6">Questions? We're here to help.</h2>
+          <p className="text-muted-foreground mb-8">
+            Our support team is just a click away to help you choose the right plan for your {userType}.
+          </p>
+          <Button 
+            onClick={() => navigate('/contact')}
+            variant="outline"
+            className="min-w-[150px]"
           >
-            <TabsList className="grid grid-cols-2">
-              <TabsTrigger value="monthly">Monthly</TabsTrigger>
-              <TabsTrigger value="yearly">
-                Yearly <span className="ml-1 text-xs text-green-500 font-medium">Save 20%</span>
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
+            Contact Support
+          </Button>
         </div>
       </div>
-
-      {/* Pricing cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16 relative mt-8">
-        {pricingTiers.map((tier) => (
-          <PricingTierCard
-            key={tier.tier}
-            name={tier.name}
-            tier={tier.tier as 'free' | 'basic' | 'premium' | 'vip'}
-            price={tier.price}
-            description={tier.description}
-            isPopular={tier.isPopular}
-            onSubscribe={() => handleSubscribe(tier.tier)}
-          />
-        ))}
-      </div>
-
-      {/* Feature comparison */}
-      <div className="mt-16">
-        <h2 className="text-2xl font-bold text-center mb-8">Compare Features</h2>
-        <FeatureTierComparison 
-          highlightTier="premium" 
-          className="max-w-5xl mx-auto"
-        />
-      </div>
-
-      {/* FAQ or additional info */}
-      <div className="mt-20 max-w-3xl mx-auto text-center">
-        <h2 className="text-2xl font-bold mb-6">Questions? We're here to help.</h2>
-        <p className="text-muted-foreground mb-8">
-          Our support team is just a click away to help you choose the right plan.
-        </p>
-        <Button 
-          onClick={() => navigate('/contact')}
-          variant="outline"
-          className="min-w-[150px]"
-        >
-          Contact Support
-        </Button>
-      </div>
-    </div>
+    </Layout>
   );
 };
 

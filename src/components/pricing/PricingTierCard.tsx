@@ -15,6 +15,7 @@ interface PricingTierProps {
   isPopular?: boolean;
   className?: string;
   onSubscribe?: () => void;
+  userType?: 'individual' | 'establishment' | 'promoter';
 }
 
 const PricingTierCard: React.FC<PricingTierProps> = ({
@@ -25,32 +26,61 @@ const PricingTierCard: React.FC<PricingTierProps> = ({
   isPopular = false,
   className,
   onSubscribe,
+  userType = 'individual',
 }) => {
   // Get the features for this tier
   const tierFeatures = featuresByTier[tier] || [];
 
-  // Get the top features to display (limit to 5)
-  const displayFeatures = tierFeatures.slice(0, 6).map(featureId => getFeature(featureId)).filter(Boolean);
+  // Get the top features to display (limit to 6)
+  const displayFeatures = tierFeatures
+    .slice(0, 6)
+    .map(featureId => getFeature(featureId))
+    .filter(Boolean);
+  
+  // Determine if this tier is recommended for the current user type
+  const isRecommendedForUserType = 
+    (userType === 'individual' && ['basic', 'premium'].includes(tier)) ||
+    (userType === 'establishment' && ['premium', 'vip'].includes(tier)) ||
+    (userType === 'promoter' && tier === 'vip');
+  
+  // Determine if this tier is suitable for the current user type
+  const isSuitableForUserType = 
+    (userType === 'individual') ||
+    (userType === 'establishment' && tier !== 'free') ||
+    (userType === 'promoter' && ['premium', 'vip'].includes(tier));
+  
+  const cardClass = cn(
+    "flex flex-col justify-between",
+    isPopular ? "border-primary shadow-lg" : "",
+    !isSuitableForUserType ? "opacity-70" : "",
+    className
+  );
+  
+  const badgeLabel = isRecommendedForUserType 
+    ? `Recommended for ${userType}s` 
+    : tier.charAt(0).toUpperCase() + tier.slice(1);
   
   return (
-    <Card className={cn(
-      "flex flex-col justify-between",
-      isPopular ? "border-primary shadow-lg" : "",
-      className
-    )}>
+    <Card className={cardClass}>
       {isPopular && (
         <div className="absolute inset-x-0 -top-5 mx-auto w-fit px-4 py-1 rounded-full bg-primary text-white text-xs font-medium">
           Most Popular
         </div>
       )}
       
-      <CardHeader className={cn(isPopular ? "pt-8" : "")}>
+      {isRecommendedForUserType && !isPopular && (
+        <div className="absolute inset-x-0 -top-5 mx-auto w-fit px-4 py-1 rounded-full bg-green-500 text-white text-xs font-medium">
+          Recommended
+        </div>
+      )}
+      
+      <CardHeader className={cn(isPopular || isRecommendedForUserType ? "pt-8" : "")}>
         <div className="flex justify-between items-start">
           <div>
             <CardTitle className="text-xl font-bold">{name}</CardTitle>
             <CardDescription className="mt-1.5">{description}</CardDescription>
           </div>
-          <FeatureBadge tier={tier} />
+          <FeatureBadge tier={tier} label={badgeLabel} />
         </div>
         <div className="mt-4">
           <span className="text-4xl font-bold">${price}</span>
@@ -77,7 +107,8 @@ const PricingTierCard: React.FC<PricingTierProps> = ({
         <Button
           onClick={onSubscribe}
           className="w-full"
-          variant={isPopular ? "default" : "outline"}
+          variant={isPopular || isRecommendedForUserType ? "default" : "outline"}
+          disabled={!isSuitableForUserType && tier === 'free'}
         >
           {tier === 'free' ? 'Get Started' : 'Subscribe Now'}
         </Button>

@@ -6,9 +6,10 @@ import { cn } from '@/lib/utils';
 interface FeatureBadgeProps {
   tier: 'free' | 'basic' | 'premium' | 'vip';
   className?: string;
+  label?: string;
 }
 
-const FeatureBadge: React.FC<FeatureBadgeProps> = ({ tier, className }) => {
+const FeatureBadge: React.FC<FeatureBadgeProps> = ({ tier, className, label }) => {
   const variants = {
     free: 'bg-gray-200 text-gray-800',
     basic: 'bg-blue-100 text-blue-800',
@@ -18,7 +19,7 @@ const FeatureBadge: React.FC<FeatureBadgeProps> = ({ tier, className }) => {
 
   return (
     <Badge variant="outline" className={cn(variants[tier], className)}>
-      {tier.charAt(0).toUpperCase() + tier.slice(1)}
+      {label || tier.charAt(0).toUpperCase() + tier.slice(1)}
     </Badge>
   );
 };
