@@ -15,7 +15,10 @@ interface FeatureContextType {
 const FeatureContext = createContext<FeatureContextType | undefined>(undefined);
 
 export const FeatureProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, isAdmin } = useAuth();
+  const { user } = useAuth();
+  // Get isAdmin value safely (assuming admin users have user_type === 'admin' in their user metadata)
+  const isAdmin = user?.user_metadata?.user_type === 'admin' || false;
+  
   const [featureAccess, setFeatureAccess] = useState<Record<FeatureId, boolean>>({} as Record<FeatureId, boolean>);
   const [loading, setLoading] = useState<Record<FeatureId, boolean>>({} as Record<FeatureId, boolean>);
 

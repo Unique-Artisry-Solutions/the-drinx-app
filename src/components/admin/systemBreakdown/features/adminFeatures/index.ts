@@ -1,3 +1,4 @@
+
 import { userManagement } from './userManagement';
 import { establishmentManagement } from './establishmentManagement';
 import { barCrawlManagement } from './barCrawlManagement';
@@ -9,6 +10,7 @@ import { photoModeration } from './photoModeration';
 import { systemBreakdown } from './systemBreakdown';
 import { contentModeration } from './contentModeration';
 import { audienceSegmentation } from './audienceSegmentation';
+import { FeatureItem } from '../../types';
 
 // Add the feature flags system to the admin features
 export const adminFeatures: FeatureItem[] = [

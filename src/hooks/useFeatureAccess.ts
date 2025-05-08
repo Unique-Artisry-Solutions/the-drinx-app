@@ -9,7 +9,10 @@ import { checkFeatureAccess, trackFeatureEvent } from '@/lib/features/api';
  * Hook to check if a user has access to a particular feature
  */
 export function useFeatureAccess() {
-  const { user, isAdmin } = useAuth();
+  const { user } = useAuth();
+  // Get isAdmin value safely (assuming admin users have user_type === 'admin' in their user metadata)
+  const isAdmin = user?.user_metadata?.user_type === 'admin' || false;
+  
   const [featureAccess, setFeatureAccess] = useState<Record<FeatureId, boolean>>({} as Record<FeatureId, boolean>);
   const [loading, setLoading] = useState<Record<FeatureId, boolean>>({} as Record<FeatureId, boolean>);
 
