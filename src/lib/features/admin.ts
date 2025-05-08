@@ -1,6 +1,16 @@
 
 import { supabase } from '@/lib/supabase';
 import { FeatureId, FEATURES, featureRegistry, featuresByTier } from './registry';
+import { 
+  createFeatureFlag as apiCreateFeatureFlag,
+  deleteFeatureFlag as apiDeleteFeatureFlag,
+  associateFeatureWithTier as apiAssociateFeatureWithTier
+} from './api';
+
+// Re-export functions from api.ts
+export const createFeatureFlag = apiCreateFeatureFlag;
+export const deleteFeatureFlag = apiDeleteFeatureFlag;
+export const associateFeatureWithTier = apiAssociateFeatureWithTier;
 
 /**
  * Creates or updates feature flags in the database to match the registry
