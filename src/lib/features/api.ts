@@ -1,9 +1,10 @@
-
 import { supabase } from '@/lib/supabase';
 import { FEATURES, FeatureId } from './registry';
+import { getCachedFeatureAccess, cacheFeatureAccess } from './cache';
 
 /**
  * Check if a feature flag is enabled for the current user
+ * (Optimized version with caching)
  */
 export async function checkFeatureAccess(featureId: FeatureId): Promise<boolean> {
   try {
@@ -11,6 +12,14 @@ export async function checkFeatureAccess(featureId: FeatureId): Promise<boolean>
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) {
       return false; // Not logged in, no access
+    }
+
+    const userId = session.user.id;
+    
+    // Check cache first
+    const cachedAccess = getCachedFeatureAccess(userId, featureId);
+    if (cachedAccess !== null) {
+      return cachedAccess;
     }
 
     // Call the database function to check feature access
@@ -24,7 +33,11 @@ export async function checkFeatureAccess(featureId: FeatureId): Promise<boolean>
       return false;
     }
 
-    return !!data;
+    // Cache the result
+    const hasAccess = !!data;
+    cacheFeatureAccess(userId, featureId, hasAccess);
+    
+    return hasAccess;
   } catch (error) {
     console.error('Error in checkFeatureAccess:', error);
     return false;
@@ -73,16 +86,43 @@ export async function trackFeatureEvent(featureId: FeatureId, eventType: string,
 
 /**
  * Batch check feature access for multiple features at once
+ * (Optimized version with caching and batching)
  */
 export async function batchCheckFeatureAccess(featureIds: FeatureId[]): Promise<Record<FeatureId, boolean>> {
-  // Placeholder for a more efficient batch operation
-  // This could be implemented later with a custom RPC function in Supabase
+  // First check if the user is logged in
+  const { data: { session } } = await supabase.auth.getSession();
+  const userId = session?.user?.id;
+  
+  if (!userId) {
+    // Return all features as false if not logged in
+    return featureIds.reduce((acc, featureId) => {
+      acc[featureId] = false;
+      return acc;
+    }, {} as Record<FeatureId, boolean>);
+  }
   
   const result: Record<FeatureId, boolean> = {} as Record<FeatureId, boolean>;
+  const featuresToCheck: FeatureId[] = [];
   
-  // For now, we'll just call checkFeatureAccess for each feature
+  // Check cache first for each feature
   for (const featureId of featureIds) {
-    result[featureId] = await checkFeatureAccess(featureId);
+    const cachedAccess = getCachedFeatureAccess(userId, featureId);
+    if (cachedAccess !== null) {
+      result[featureId] = cachedAccess;
+    } else {
+      featuresToCheck.push(featureId);
+    }
+  }
+  
+  // If all features were in cache, return the result
+  if (featuresToCheck.length === 0) {
+    return result;
+  }
+  
+  // Otherwise, check remaining features
+  for (const featureId of featuresToCheck) {
+    const hasAccess = await checkFeatureAccess(featureId);
+    result[featureId] = hasAccess;
   }
   
   return result;

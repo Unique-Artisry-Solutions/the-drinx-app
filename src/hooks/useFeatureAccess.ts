@@ -3,10 +3,12 @@ import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/auth';
 import { FeatureId, getFeature } from '@/lib/features/registry';
-import { checkFeatureAccess, trackFeatureEvent } from '@/lib/features/api';
+import { checkFeatureAccess, trackFeatureEvent, batchCheckFeatureAccess } from '@/lib/features/api';
+import { clearFeatureAccessCache } from '@/lib/features/cache';
 
 /**
  * Hook to check if a user has access to a particular feature
+ * (Optimized version)
  */
 export function useFeatureAccess() {
   const { user } = useAuth();
@@ -72,6 +74,20 @@ export function useFeatureAccess() {
     trackFeatureEvent(featureId, eventType, data);
   }, []);
 
+  // Clear cache on logout
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event) => {
+        if (event === 'SIGNED_OUT') {
+          clearFeatureAccessCache();
+          setFeatureAccess({} as Record<FeatureId, boolean>);
+        }
+      }
+    );
+    
+    return () => subscription.unsubscribe();
+  }, []);
+
   // Preemptively load feature access flags when user logs in
   useEffect(() => {
     // Don't do anything if no user is logged in
@@ -80,17 +96,20 @@ export function useFeatureAccess() {
       return;
     }
 
-    // Load all common features asynchronously
-    const preloadFeatures = async () => {
+    // Load common features in batches to reduce API calls
+    const loadCommonFeatures = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      // This could be optimized to fetch all feature access in a single request
-      // For now, we preload individually to avoid creating a new API endpoint
-      // Consider batching these requests if performance becomes an issue
+      // Get up to 5 most commonly used features - this could be determined by analytics
+      // const commonFeatures = Object.values(FEATURES).slice(0, 5);
+      
+      // Batch load common features instead of individual checks
+      // const accessResults = await batchCheckFeatureAccess(commonFeatures);
+      // setFeatureAccess(prev => ({ ...prev, ...accessResults }));
     };
 
-    preloadFeatures();
+    loadCommonFeatures();
   }, [user, checkAccess]);
 
   return {

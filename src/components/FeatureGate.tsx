@@ -6,15 +6,36 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 
 interface FeatureGateProps {
+  /**
+   * The feature ID to check access for
+   */
   feature: FeatureId;
+  /**
+   * The content to render if the user has access to the feature
+   */
   children: React.ReactNode;
+  /**
+   * Optional fallback content to render if the user doesn't have access
+   */
   fallback?: React.ReactNode;
+  /**
+   * Whether to show an upgrade prompt when access is denied
+   * @default true
+   */
   showUpgradePrompt?: boolean;
+  /**
+   * Event name to use when tracking feature access attempts
+   * @default "view"
+   */
   trackingEventName?: string;
 }
 
 /**
  * FeatureGate component to conditionally render content based on feature access
+ * 
+ * This component renders its children only if the user has access to the specified feature.
+ * Otherwise, it renders fallback content or an upgrade prompt.
+ * 
  * @example
  * <FeatureGate feature={FEATURES.ADVANCED_ANALYTICS}>
  *   <AdvancedAnalytics />
@@ -75,8 +96,8 @@ export const FeatureGate: React.FC<FeatureGateProps> = ({
 };
 
 /**
- * FeatureToggle component to toggle behavior based on feature access
- * Similar to FeatureGate but doesn't render anything, just conditionally executes functions
+ * Hook for conditionally executing code based on feature access
+ * 
  * @example
  * const { whenEnabled } = useFeatureToggle(FEATURES.BULK_MESSAGING);
  * 
@@ -91,6 +112,12 @@ export const FeatureGate: React.FC<FeatureGateProps> = ({
 export const useFeatureToggle = (featureId: FeatureId) => {
   const { hasAccess, trackFeatureUsage } = useFeatures();
   
+  /**
+   * Conditionally executes a callback if the user has access to the feature
+   * @param callback Function to execute if the user has access
+   * @param fallback Optional function to execute if the user doesn't have access
+   * @returns The result of the executed callback, or undefined
+   */
   const whenEnabled = (callback: Function, fallback?: Function) => {
     if (hasAccess(featureId)) {
       trackFeatureUsage(featureId, 'use');
