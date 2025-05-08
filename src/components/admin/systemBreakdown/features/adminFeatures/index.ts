@@ -31,10 +31,8 @@ export const adminFeatures: FeatureItem[] = [
     description: 'A system to manage feature access based on subscription tiers and user segments',
     status: 'implemented',
     statusUpdated: true,
-    // Removing completionPercentage as it's not in the FeatureItem type
-    category: 'system',
+    category: 'system', // Now this is valid with the updated interface
     complexity: 'medium',
-    // Adding the required properties based on the FeatureItem interface
     adminAccess: 'full',
     establishmentAccess: 'partial',
     individualAccess: 'partial',

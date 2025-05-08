@@ -1,3 +1,4 @@
+
 export type FeatureStatus = 'implemented' | 'in_progress' | 'planned' | 'blocked' | 'partial';
 export type DatabaseStatus = 'complete' | 'in_progress' | 'not_started' | 'implemented' | 'partial';
 export type AccessLevel = 'full' | 'partial' | 'read' | 'none' | 'write' | 'moderate';
@@ -29,6 +30,18 @@ export interface FeatureItem {
   dependsOn?: string[];
   scheduledFor?: string;
   integrations?: string[]; // Added integrations property
+  category?: FeatureCategory; // Added category property
+  components?: Component[]; // Added components property
+  lastUpdated?: string; // Added lastUpdated property
+  assignedTo?: string; // Added assignedTo property
+  dependencies?: string[]; // Added dependencies property
+}
+
+// Add Component interface for the components property
+export interface Component {
+  name: string;
+  type: string;
+  status: string;
 }
 
 export interface Phase {
