@@ -14,7 +14,8 @@ vi.mock('@/contexts/auth', () => ({
 
 vi.mock('@/lib/features/api', () => ({
   checkFeatureAccess: vi.fn(),
-  trackFeatureEvent: vi.fn()
+  // Fix: Update the mock to accept all three parameters that the actual function accepts
+  trackFeatureEvent: vi.fn((featureId, eventType, data) => {})
 }));
 
 describe('useFeatureAccess', () => {
@@ -65,7 +66,7 @@ describe('useFeatureAccess', () => {
       result.current.trackFeatureUsage(FEATURES.SOCIAL_SHARING, 'click', { element: 'share-button' });
     });
     
-    // Fix: Ensure correct parameters are passed to match the function signature
+    // Check that trackFeatureEvent was called with all three parameters
     expect(trackFeatureEvent).toHaveBeenCalledWith(
       FEATURES.SOCIAL_SHARING,
       'click',
