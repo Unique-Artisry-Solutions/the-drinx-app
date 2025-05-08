@@ -50,7 +50,7 @@ const PricingTierCard: React.FC<PricingTierProps> = ({
     (userType === 'promoter' && ['premium', 'vip'].includes(tier));
   
   const cardClass = cn(
-    "flex flex-col justify-between",
+    "flex flex-col justify-between relative",
     isPopular ? "border-primary shadow-lg" : "",
     !isSuitableForUserType ? "opacity-70" : "",
     className
@@ -101,13 +101,13 @@ const PricingTierCard: React.FC<PricingTierProps> = ({
   return (
     <Card className={cardClass}>
       {isPopular && (
-        <div className="absolute inset-x-0 -top-5 mx-auto w-fit px-4 py-1 rounded-full bg-primary text-white text-xs font-medium">
+        <div className="absolute left-0 right-0 -top-4 mx-auto w-fit px-4 py-1 rounded-full bg-primary text-white text-xs font-medium">
           Most Popular
         </div>
       )}
       
       {isRecommendedForUserType && !isPopular && (
-        <div className="absolute inset-x-0 -top-5 mx-auto w-fit px-4 py-1 rounded-full bg-green-500 text-white text-xs font-medium">
+        <div className="absolute left-0 right-0 -top-4 mx-auto w-fit px-4 py-1 rounded-full bg-green-500 text-white text-xs font-medium">
           Recommended
         </div>
       )}
