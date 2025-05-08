@@ -17,11 +17,15 @@ import PromoterRequirementsTab from '@/components/admin/systemBreakdown/Promoter
 import SystemBreakdownNavigation, { MobileSystemBreakdownNavigation } from '@/components/admin/systemBreakdown/SystemBreakdownNavigation';
 import SystemHealthCheck from '@/components/admin/systemBreakdown/components/SystemHealthCheck';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { Button } from '@/components/ui/button';
+import { Settings } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 // Import improvements data
 import { proposedImprovements as improvementsData } from '@/components/admin/systemBreakdown/improvementsData';
 
 const SystemFunctionalityBreakdown: React.FC = () => {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const initialTab = searchParams.get('tab') || 'overview';
   
@@ -50,16 +54,31 @@ const SystemFunctionalityBreakdown: React.FC = () => {
     setSearchParams({ tab: value });
   };
   
+  const handleConfigureFeatures = () => {
+    navigate('/admin/system-configuration?tab=features');
+  };
+  
   const isMobile = useIsMobile();
 
   return (
     <Layout>
       <div className="p-4 md:p-8 max-w-7xl mx-auto">
-        <SystemHeader
-          onAnalyzeFeatures={handleAnalyzeFeatures}
-          onExportCSV={handleExportCSV}
-          analyzing={analyzing}
-        />
+        <div className="flex justify-between items-start mb-6">
+          <SystemHeader
+            onAnalyzeFeatures={handleAnalyzeFeatures}
+            onExportCSV={handleExportCSV}
+            analyzing={analyzing}
+          />
+          
+          <Button 
+            variant="outline" 
+            className="flex items-center gap-2" 
+            onClick={handleConfigureFeatures}
+          >
+            <Settings className="h-4 w-4" />
+            Configure Features
+          </Button>
+        </div>
 
         {analyzing && (
           <AnalysisProgress
