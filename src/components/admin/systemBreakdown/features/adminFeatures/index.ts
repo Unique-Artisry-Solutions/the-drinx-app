@@ -1,4 +1,3 @@
-
 import { userManagement } from './userManagement';
 import { establishmentManagement } from './establishmentManagement';
 import { barCrawlManagement } from './barCrawlManagement';
@@ -11,7 +10,8 @@ import { systemBreakdown } from './systemBreakdown';
 import { contentModeration } from './contentModeration';
 import { audienceSegmentation } from './audienceSegmentation';
 
-export const adminFeatures = [
+// Add the feature flags system to the admin features
+export const adminFeatures: FeatureItem[] = [
   userManagement,
   establishmentManagement,
   barCrawlManagement,
@@ -22,5 +22,45 @@ export const adminFeatures = [
   photoModeration,
   systemBreakdown,
   contentModeration,
-  audienceSegmentation
+  audienceSegmentation,
+  {
+    id: 'feature-access-system',
+    name: 'Feature Access System',
+    description: 'A system to manage feature access based on subscription tiers and user segments',
+    status: 'completed',
+    statusUpdated: true, // Mark as recently updated
+    completionPercentage: 100,
+    category: 'system',
+    complexity: 'medium',
+    components: [
+      {
+        name: 'Feature Flags Database',
+        type: 'database',
+        status: 'completed',
+      },
+      {
+        name: 'Feature Registry',
+        type: 'library',
+        status: 'completed',
+      },
+      {
+        name: 'Feature Context',
+        type: 'context',
+        status: 'completed',
+      },
+      {
+        name: 'FeatureGate Component',
+        type: 'component',
+        status: 'completed',
+      },
+      {
+        name: 'API Client',
+        type: 'api',
+        status: 'completed',
+      },
+    ],
+    lastUpdated: new Date().toISOString(),
+    assignedTo: 'dev-team',
+    dependencies: ['auth-system', 'subscription-system'],
+  },
 ];

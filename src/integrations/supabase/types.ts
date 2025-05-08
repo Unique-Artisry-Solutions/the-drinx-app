@@ -1689,6 +1689,13 @@ export type Database = {
             referencedRelation: "feature_segments"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_feature_segment"
+            columns: ["segment_id"]
+            isOneToOne: false
+            referencedRelation: "feature_segments"
+            referencedColumns: ["id"]
+          },
         ]
       }
       feature_metrics: {
@@ -3328,6 +3335,41 @@ export type Database = {
           },
         ]
       }
+      subscription_features: {
+        Row: {
+          created_at: string
+          feature_id: string
+          id: string
+          is_enabled: boolean
+          tier_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          feature_id: string
+          id?: string
+          is_enabled?: boolean
+          tier_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          feature_id?: string
+          id?: string
+          is_enabled?: boolean
+          tier_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_features_feature_id_fkey"
+            columns: ["feature_id"]
+            isOneToOne: false
+            referencedRelation: "feature_flags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suggestion_feedback: {
         Row: {
           comments: string | null
@@ -4227,6 +4269,10 @@ export type Database = {
       }
       can_join_bar_crawl: {
         Args: { user_id: string }
+        Returns: boolean
+      }
+      check_feature_access: {
+        Args: { p_feature_name: string; p_user_id?: string }
         Returns: boolean
       }
       generate_event_access_token: {

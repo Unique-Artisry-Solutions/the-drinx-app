@@ -6,6 +6,7 @@ import { ThemeProvider } from '@/contexts/ThemeContext';
 import { CartProvider } from '@/contexts/CartContext';
 import { StripeProvider } from '@/contexts/StripeContext';
 import { NavigationProvider } from '@/contexts/NavigationContext';
+import { FeatureProvider } from '@/contexts/FeatureContext';
 import { Toaster } from '@/components/ui/toaster';
 
 const queryClient = new QueryClient({
@@ -31,8 +32,10 @@ const AppProviders: React.FC<{ children: React.ReactNode }> = ({ children }) => 
             <CartProvider>
               {/* Now the StripeProvider uses lazy loading and only initializes when needed */}
               <StripeProvider>
-                {children}
-                <Toaster />
+                <FeatureProvider>
+                  {children}
+                  <Toaster />
+                </FeatureProvider>
               </StripeProvider>
             </CartProvider>
           </NavigationProvider>

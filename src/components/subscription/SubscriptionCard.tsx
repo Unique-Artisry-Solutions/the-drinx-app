@@ -5,6 +5,8 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/componen
 import { useAuth } from '@/contexts/auth';
 import { useSubscriptions } from '@/hooks/useSubscriptions';
 import { SubscriptionTier } from '@/types/SubscriptionTypes';
+import { featuresByTier, getFeature } from '@/lib/features/registry';
+import { CheckIcon } from 'lucide-react';
 
 interface SubscriptionCardProps {
   tier: SubscriptionTier;
@@ -31,6 +33,9 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
   };
 
   const isLoading = subscribe.isPending || unsubscribe.isPending;
+  
+  // Get the features for this tier
+  const tierFeatures = featuresByTier[tier.tier || 'basic'] || [];
 
   return (
     <Card className="w-full max-w-sm">
@@ -43,12 +48,31 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
           <span className="text-sm text-gray-500">/month</span>
         </p>
         <ul className="space-y-2 text-left mb-6">
-          {Array.isArray(tier.features) && tier.features.map((feature: any, index: number) => (
-            <li key={index} className="flex items-center">
-              <span className="mr-2">•</span>
-              {typeof feature === 'string' ? feature : JSON.stringify(feature)}
-            </li>
-          ))}
+          {/* Display features included in this tier */}
+          {tierFeatures.map((featureId) => {
+            const feature = getFeature(featureId);
+            if (!feature) return null;
+            
+            return (
+              <li key={feature.id} className="flex items-center">
+                <CheckIcon className="h-5 w-5 text-green-500 mr-2" />
+                <span>{feature.name}</span>
+              </li>
+            );
+          })}
+          
+          {/* Display original features from the tier if any */}
+          {Array.isArray(tier.features) && tier.features.map((feature: any, index: number) => {
+            // Skip if this is a string that might be a duplicate with our feature registry
+            if (typeof feature === 'string' && tierFeatures.length > 0) return null;
+            
+            return (
+              <li key={index} className="flex items-center">
+                <CheckIcon className="h-5 w-5 text-green-500 mr-2" />
+                {typeof feature === 'string' ? feature : JSON.stringify(feature)}
+              </li>
+            );
+          })}
         </ul>
       </CardContent>
       <CardFooter className="flex justify-center">
