@@ -12,6 +12,7 @@ import FeatureBadge from '@/components/pricing/FeatureBadge';
 
 const tiers = ['free', 'basic', 'premium', 'vip'];
 
+// Updated to accept SettingsTabProps but not use them since this component has its own state management
 const FeatureTierMappingTab: React.FC<SettingsTabProps> = () => {
   const [selectedTier, setSelectedTier] = useState('free');
   const [mappings, setMappings] = useState<Record<string, boolean>>({});

@@ -9,6 +9,8 @@ import SecuritySettingsTab from './tabs/SecuritySettingsTab';
 import ApiSettingsTab from './tabs/ApiSettingsTab';
 import PaymentSettingsTab from './tabs/PaymentSettingsTab';
 import FeatureTogglesTab from './tabs/FeatureTogglesTab';
+import FeatureTierMappingTab from './tabs/FeatureTierMappingTab';
+import FeatureAnalyticsTab from './tabs/FeatureAnalyticsTab';
 
 interface ConfigurationTabsProps {
   category: string;
@@ -39,98 +41,54 @@ const ConfigurationTabs: React.FC<ConfigurationTabsProps> = ({
   setEditValue,
   setChangeReason,
 }) => {
+  // Create props object to pass to the tabs
+  const settingsTabProps = {
+    settings,
+    isLoading,
+    editingSettingId,
+    editValue,
+    changeReason,
+    onEditClick,
+    onSaveClick,
+    onCancelClick,
+    setEditValue,
+    setChangeReason,
+  };
+
   return (
     <Tabs defaultValue="general" className="w-full" onValueChange={setCategory}>
       <TabNavigation currentCategory={category} />
 
       <TabsContent value="general" className="space-y-4">
-        <GeneralSettingsTab
-          settings={settings}
-          isLoading={isLoading}
-          editingSettingId={editingSettingId}
-          editValue={editValue}
-          changeReason={changeReason}
-          onEditClick={onEditClick}
-          onSaveClick={onSaveClick}
-          onCancelClick={onCancelClick}
-          setEditValue={setEditValue}
-          setChangeReason={setChangeReason}
-        />
+        <GeneralSettingsTab {...settingsTabProps} />
       </TabsContent>
       
       <TabsContent value="email" className="space-y-4">
-        <EmailSettingsTab
-          settings={settings}
-          isLoading={isLoading}
-          editingSettingId={editingSettingId}
-          editValue={editValue}
-          changeReason={changeReason}
-          onEditClick={onEditClick}
-          onSaveClick={onSaveClick}
-          onCancelClick={onCancelClick}
-          setEditValue={setEditValue}
-          setChangeReason={setChangeReason}
-        />
+        <EmailSettingsTab {...settingsTabProps} />
       </TabsContent>
       
       <TabsContent value="security" className="space-y-4">
-        <SecuritySettingsTab
-          settings={settings}
-          isLoading={isLoading}
-          editingSettingId={editingSettingId}
-          editValue={editValue}
-          changeReason={changeReason}
-          onEditClick={onEditClick}
-          onSaveClick={onSaveClick}
-          onCancelClick={onCancelClick}
-          setEditValue={setEditValue}
-          setChangeReason={setChangeReason}
-        />
+        <SecuritySettingsTab {...settingsTabProps} />
       </TabsContent>
       
       <TabsContent value="api" className="space-y-4">
-        <ApiSettingsTab
-          settings={settings}
-          isLoading={isLoading}
-          editingSettingId={editingSettingId}
-          editValue={editValue}
-          changeReason={changeReason}
-          onEditClick={onEditClick}
-          onSaveClick={onSaveClick}
-          onCancelClick={onCancelClick}
-          setEditValue={setEditValue}
-          setChangeReason={setChangeReason}
-        />
+        <ApiSettingsTab {...settingsTabProps} />
       </TabsContent>
       
       <TabsContent value="payment" className="space-y-4">
-        <PaymentSettingsTab
-          settings={settings}
-          isLoading={isLoading}
-          editingSettingId={editingSettingId}
-          editValue={editValue}
-          changeReason={changeReason}
-          onEditClick={onEditClick}
-          onSaveClick={onSaveClick}
-          onCancelClick={onCancelClick}
-          setEditValue={setEditValue}
-          setChangeReason={setChangeReason}
-        />
+        <PaymentSettingsTab {...settingsTabProps} />
       </TabsContent>
       
       <TabsContent value="features" className="space-y-4">
-        <FeatureTogglesTab
-          settings={settings}
-          isLoading={isLoading}
-          editingSettingId={editingSettingId}
-          editValue={editValue}
-          changeReason={changeReason}
-          onEditClick={onEditClick}
-          onSaveClick={onSaveClick}
-          onCancelClick={onCancelClick}
-          setEditValue={setEditValue}
-          setChangeReason={setChangeReason}
-        />
+        <FeatureTogglesTab {...settingsTabProps} />
+      </TabsContent>
+
+      <TabsContent value="feature-tiers" className="space-y-4">
+        <FeatureTierMappingTab {...settingsTabProps} />
+      </TabsContent>
+
+      <TabsContent value="feature-analytics" className="space-y-4">
+        <FeatureAnalyticsTab {...settingsTabProps} />
       </TabsContent>
     </Tabs>
   );

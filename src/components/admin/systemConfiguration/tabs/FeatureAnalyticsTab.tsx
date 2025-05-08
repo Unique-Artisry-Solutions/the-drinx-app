@@ -5,115 +5,71 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
 import { FeatureId, FEATURES, featureRegistry } from '@/lib/features/registry';
-import { getFeatureMetrics } from '@/lib/features/api';
 
-// Sample data structure for metrics
-interface FeatureMetric {
-  id: string;
-  feature_id: string;
-  user_id: string;
-  event_type: string;
-  event_data: any;
-  created_at: string;
-}
-
-// For visualization purposes
-interface UsageDataPoint {
-  date: string;
-  count: number;
-}
-
-interface TierUsageData {
-  tier: string;
-  usage: number;
+// Sample data structure for feature usage stats
+interface FeatureUsageStats {
+  featureId: string;
+  usageCount: number;
+  lastUsed: string;
+  tierDistribution: {
+    [tier: string]: number;
+  };
 }
 
 const FeatureAnalyticsTab: React.FC<SettingsTabProps> = () => {
-  const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
-  const [metrics, setMetrics] = useState<FeatureMetric[]>([]);
+  const [selectedFeature, setSelectedFeature] = useState<FeatureId | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [usageData, setUsageData] = useState<UsageDataPoint[]>([]);
-  const [tierUsageData, setTierUsageData] = useState<TierUsageData[]>([]);
+  const [usageStats, setUsageStats] = useState<FeatureUsageStats | null>(null);
   const { toast } = useToast();
 
+  // Load feature usage stats when a feature is selected
   useEffect(() => {
     if (selectedFeature) {
-      fetchFeatureMetrics(selectedFeature);
+      fetchFeatureUsageStats(selectedFeature);
     }
   }, [selectedFeature]);
 
-  // Helper function to safely check if a feature ID is a valid FeatureId
-  const isValidFeatureId = (id: string | null): id is FeatureId => {
-    if (!id) return false;
-    return Object.values(FEATURES).includes(id as any);
-  };
-
-  const fetchFeatureMetrics = async (featureId: string) => {
+  const fetchFeatureUsageStats = async (featureId: FeatureId) => {
     setIsLoading(true);
+    
     try {
-      // Validate the feature ID
-      if (!isValidFeatureId(featureId)) {
-        throw new Error('Invalid feature ID');
-      }
+      // This would be replaced with an actual API call in a real implementation
+      // Simulate API call with timeout
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      const data = await getFeatureMetrics(featureId);
-      setMetrics(data || []);
+      // Mock data for demonstration
+      const mockStats: FeatureUsageStats = {
+        featureId,
+        usageCount: Math.floor(Math.random() * 1000),
+        lastUsed: new Date().toISOString(),
+        tierDistribution: {
+          free: Math.floor(Math.random() * 100),
+          basic: Math.floor(Math.random() * 100),
+          premium: Math.floor(Math.random() * 100),
+          vip: Math.floor(Math.random() * 100),
+        }
+      };
       
-      // Process data for charts
-      processMetricsForCharts(data || []);
+      setUsageStats(mockStats);
     } catch (error) {
-      console.error('Error fetching feature metrics:', error);
+      console.error('Error fetching feature usage stats:', error);
       toast({
         variant: 'destructive',
-        title: 'Failed to load metrics',
-        description: 'Could not load feature usage data',
+        title: 'Failed to load stats',
+        description: 'Could not load feature usage statistics',
       });
-      setMetrics([]);
-      setUsageData([]);
-      setTierUsageData([]);
+      setUsageStats(null);
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const processMetricsForCharts = (data: FeatureMetric[]) => {
-    // Process for time-based usage
-    const usageByDate = new Map<string, number>();
-    const usageByTier = new Map<string, number>();
-    
-    // Group by date for time series
-    data.forEach(metric => {
-      const date = new Date(metric.created_at).toISOString().split('T')[0];
-      usageByDate.set(date, (usageByDate.get(date) || 0) + 1);
-      
-      // Extract tier from event data if available
-      const tier = metric.event_data?.tier || 'unknown';
-      usageByTier.set(tier, (usageByTier.get(tier) || 0) + 1);
-    });
-    
-    // Convert to chart format - time series
-    const timeSeriesData = Array.from(usageByDate.entries()).map(([date, count]) => ({
-      date,
-      count
-    }));
-
-    // Convert to chart format - tier usage
-    const tierData = Array.from(usageByTier.entries()).map(([tier, usage]) => ({
-      tier,
-      usage
-    }));
-    
-    setUsageData(timeSeriesData);
-    setTierUsageData(tierData);
   };
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Feature Analytics</CardTitle>
-        <CardDescription>Track feature usage and adoption across subscription tiers</CardDescription>
+        <CardDescription>Track feature usage across different subscription tiers</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-6">
@@ -121,7 +77,7 @@ const FeatureAnalyticsTab: React.FC<SettingsTabProps> = () => {
             <label htmlFor="feature-select" className="text-sm font-medium">Select Feature</label>
             <Select 
               value={selectedFeature || ''} 
-              onValueChange={(value) => setSelectedFeature(value)}
+              onValueChange={(value) => setSelectedFeature(value as FeatureId)}
             >
               <SelectTrigger id="feature-select" className="w-full sm:w-[300px]">
                 <SelectValue placeholder="Select a feature to analyze" />
@@ -137,109 +93,77 @@ const FeatureAnalyticsTab: React.FC<SettingsTabProps> = () => {
           </div>
 
           {isLoading ? (
-            <div className="py-12 text-center text-muted-foreground">Loading feature metrics...</div>
+            <div className="py-12 text-center text-muted-foreground">Loading feature analytics...</div>
           ) : !selectedFeature ? (
             <div className="py-12 text-center text-muted-foreground">
               Select a feature to view usage analytics
             </div>
-          ) : (
-            <div className="space-y-8">
-              <div>
-                <h3 className="text-lg font-medium mb-4">Usage Over Time</h3>
-                <div className="h-[300px] w-full">
-                  {usageData.length > 0 ? (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart
-                        data={usageData}
-                        margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="date" />
-                        <YAxis />
-                        <Tooltip />
-                        <Area 
-                          type="monotone" 
-                          dataKey="count" 
-                          name="Usage Count"
-                          stroke="#8884d8" 
-                          fill="#8884d8" 
-                        />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="flex items-center justify-center h-full border rounded-md bg-muted/20">
-                      <p className="text-muted-foreground">No usage data available</p>
+          ) : usageStats ? (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="text-2xl font-bold">{usageStats.usageCount}</div>
+                    <p className="text-sm text-muted-foreground">Total Usage Count</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="text-2xl font-bold">
+                      {new Date(usageStats.lastUsed).toLocaleDateString()}
                     </div>
-                  )}
-                </div>
+                    <p className="text-sm text-muted-foreground">Last Used</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="text-2xl font-bold">
+                      {Math.max(...Object.values(usageStats.tierDistribution))}
+                    </div>
+                    <p className="text-sm text-muted-foreground">Peak Usage</p>
+                  </CardContent>
+                </Card>
               </div>
               
-              <div>
-                <h3 className="text-lg font-medium mb-4">Usage By Subscription Tier</h3>
-                <div className="h-[300px] w-full">
-                  {tierUsageData.length > 0 ? (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart
-                        data={tierUsageData}
-                        margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="tier" />
-                        <YAxis />
-                        <Tooltip />
-                        <Legend />
-                        <Bar 
-                          dataKey="usage" 
-                          name="Feature Usage"
-                          fill="#82ca9d" 
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="flex items-center justify-center h-full border rounded-md bg-muted/20">
-                      <p className="text-muted-foreground">No tier-specific usage data available</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-lg font-medium mb-4">Recent Activity</h3>
-                {metrics.length > 0 ? (
-                  <div className="rounded-md border overflow-hidden">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b bg-muted/50">
-                          <th className="p-2 text-left font-medium">Date</th>
-                          <th className="p-2 text-left font-medium">Event Type</th>
-                          <th className="p-2 text-left font-medium">User ID</th>
-                          <th className="p-2 text-left font-medium">Details</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {metrics.slice(0, 10).map((metric) => (
-                          <tr key={metric.id} className="border-b">
-                            <td className="p-2">
-                              {new Date(metric.created_at).toLocaleString()}
-                            </td>
-                            <td className="p-2">{metric.event_type}</td>
-                            <td className="p-2">{metric.user_id.substring(0, 8)}...</td>
-                            <td className="p-2">
-                              <Button variant="outline" size="sm">
-                                View Details
-                              </Button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Tier Distribution</CardTitle>
+                  <CardDescription>Feature usage breakdown by subscription tier</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {Object.entries(usageStats.tierDistribution).map(([tier, count]) => (
+                      <div key={tier} className="flex items-center justify-between">
+                        <span className="capitalize">{tier}</span>
+                        <div className="flex items-center gap-2">
+                          <div className="w-64 h-4 bg-muted rounded-full overflow-hidden">
+                            <div 
+                              className="h-full bg-primary"
+                              style={{ 
+                                width: `${(count / usageStats.usageCount) * 100}%` 
+                              }}
+                            />
+                          </div>
+                          <span className="text-sm">{count}</span>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ) : (
-                  <div className="p-8 text-center border rounded-md bg-muted/20">
-                    <p className="text-muted-foreground">No recent activity for this feature</p>
-                  </div>
-                )}
+                </CardContent>
+              </Card>
+              
+              <div className="text-center">
+                <Button
+                  onClick={() => fetchFeatureUsageStats(selectedFeature)}
+                  disabled={isLoading}
+                >
+                  Refresh Analytics
+                </Button>
               </div>
+            </div>
+          ) : (
+            <div className="py-12 text-center text-muted-foreground">
+              No analytics data available for this feature
             </div>
           )}
         </div>
