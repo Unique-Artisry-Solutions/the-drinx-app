@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
@@ -5,6 +6,7 @@ import { CheckIcon } from 'lucide-react';
 import { FeatureId, featuresByTier, getFeature } from '@/lib/features/registry';
 import FeatureBadge from './FeatureBadge';
 import { cn } from '@/lib/utils';
+
 interface PricingTierProps {
   name: string;
   tier: 'free' | 'basic' | 'premium' | 'vip';
@@ -14,7 +16,9 @@ interface PricingTierProps {
   className?: string;
   onSubscribe?: () => void;
   userType?: 'individual' | 'establishment' | 'promoter';
+  billingPeriod?: 'monthly' | 'yearly';
 }
+
 const PricingTierCard: React.FC<PricingTierProps> = ({
   name,
   tier,
@@ -23,7 +27,8 @@ const PricingTierCard: React.FC<PricingTierProps> = ({
   isPopular = false,
   className,
   onSubscribe,
-  userType = 'individual'
+  userType = 'individual',
+  billingPeriod = 'monthly'
 }) => {
   // Get the features for this tier
   const tierFeatures = featuresByTier[tier] || [];
@@ -36,8 +41,10 @@ const PricingTierCard: React.FC<PricingTierProps> = ({
 
   // Determine if this tier is suitable for the current user type
   const isSuitableForUserType = userType === 'individual' || userType === 'establishment' && tier !== 'free' || userType === 'promoter' && ['premium', 'vip'].includes(tier);
+  
   const cardClass = cn("flex flex-col justify-between relative", isPopular ? "border-primary shadow-lg" : "", !isSuitableForUserType ? "opacity-70" : "", className);
   const badgeLabel = isRecommendedForUserType ? `Recommended for ${userType}s` : tier.charAt(0).toUpperCase() + tier.slice(1);
+  
   const getPricingFeaturesByUserType = () => {
     // User type specific features to highlight
     if (userType === 'individual') {
@@ -49,7 +56,9 @@ const PricingTierCard: React.FC<PricingTierProps> = ({
       return ['Event listing', tier === 'basic' || tier === 'premium' || tier === 'vip' ? 'Attendee management' : null, tier === 'basic' || tier === 'premium' || tier === 'vip' ? 'Promotional tools' : null, tier === 'premium' || tier === 'vip' ? 'Marketing analytics' : null, tier === 'premium' || tier === 'vip' ? 'Ticket sales integration' : null, tier === 'vip' ? 'Custom branding options' : null, tier === 'vip' ? 'Priority support' : null].filter(Boolean);
     }
   };
+  
   const userTypeFeatures = getPricingFeaturesByUserType();
+  
   return <Card className={cardClass}>
       {isPopular && <div className="absolute left-0 right-0 -top-4 mx-auto w-fit px-4 py-1 rounded-full bg-primary text-white text-xs font-medium">
           Most Popular
@@ -69,7 +78,7 @@ const PricingTierCard: React.FC<PricingTierProps> = ({
         </div>
         <div className="mt-4">
           <span className="text-4xl font-bold">${price}</span>
-          <span className="text-muted-foreground">/Year</span>
+          <span className="text-muted-foreground">/{billingPeriod === 'monthly' ? 'Month' : 'Year'}</span>
         </div>
       </CardHeader>
       <CardContent>
@@ -91,4 +100,5 @@ const PricingTierCard: React.FC<PricingTierProps> = ({
       </CardFooter>
     </Card>;
 };
+
 export default PricingTierCard;

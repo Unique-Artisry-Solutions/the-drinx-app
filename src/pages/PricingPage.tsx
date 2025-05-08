@@ -204,6 +204,7 @@ const PricingPage = () => {
               isPopular={tier.isPopular}
               onSubscribe={() => handleSubscribe(tier.tier)}
               userType={userType}
+              billingPeriod={billingPeriod}
             />
           ))}
         </div>
