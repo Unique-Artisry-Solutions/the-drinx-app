@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useSystemConfiguration } from '@/hooks/admin/useSystemConfiguration';
-import AdminLayout from '@/components/admin/AdminLayout';
+import Layout from '@/components/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
@@ -9,14 +9,14 @@ import { Spinner } from '@/components/ui/spinner';
 import ConfigurationTabs from '@/components/admin/systemConfiguration/ConfigurationTabs';
 import { updateSystemSetting } from '@/lib/admin';
 import { useToast } from '@/hooks/use-toast';
-import { Metric, ArrowDown } from 'lucide-react';
+import { ArrowDown, BarChart3 } from 'lucide-react';
 import { SystemSetting } from '@/types/SupabaseTables';
 import FeatureTogglesTab from '@/components/admin/systemConfiguration/tabs/FeatureTogglesTab';
 import FeatureTierMappingTab from '@/components/admin/systemConfiguration/tabs/FeatureTierMappingTab';
 import FeatureAnalyticsTab from '@/components/admin/systemConfiguration/tabs/FeatureAnalyticsTab';
 
 const SystemConfigurationPage = () => {
-  const { settings, isLoading, refetchSettings } = useSystemConfiguration();
+  const { settings, isLoading, fetchSettings } = useSystemConfiguration();
   const [category, setCategory] = useState('general');
   const [editingSettingId, setEditingSettingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState<string>('');
@@ -92,7 +92,7 @@ const SystemConfigurationPage = () => {
       setChangeReason('');
       
       // Refetch settings
-      refetchSettings();
+      fetchSettings();
     } catch (error) {
       console.error('Error updating setting:', error);
       toast({
@@ -118,7 +118,7 @@ const SystemConfigurationPage = () => {
   };
 
   return (
-    <AdminLayout>
+    <Layout>
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">System Configuration</h1>
@@ -143,7 +143,7 @@ const SystemConfigurationPage = () => {
           />
         )}
       </div>
-    </AdminLayout>
+    </Layout>
   );
 };
 
