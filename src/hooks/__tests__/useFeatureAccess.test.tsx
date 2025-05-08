@@ -65,6 +65,7 @@ describe('useFeatureAccess', () => {
       result.current.trackFeatureUsage(FEATURES.SOCIAL_SHARING, 'click', { element: 'share-button' });
     });
     
+    // Fix: Ensure correct parameters are passed to match the function signature
     expect(trackFeatureEvent).toHaveBeenCalledWith(
       FEATURES.SOCIAL_SHARING,
       'click',

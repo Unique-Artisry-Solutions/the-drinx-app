@@ -57,7 +57,8 @@ describe('Feature Access Flow Integration Tests', () => {
   it('should execute the full feature flag check flow', async () => {
     // 1. Mock feature flag lookup
     vi.mocked(supabase.from).mockImplementation((table) => {
-      if (table === 'feature_flags') {
+      // Fix: Use type assertion to avoid type comparison issues
+      if (table === 'feature_flags' as any) {
         return {
           select: () => ({
             eq: () => ({
@@ -107,7 +108,8 @@ describe('Feature Access Flow Integration Tests', () => {
     
     // Mock feature lookup
     vi.mocked(supabase.from).mockImplementation((table) => {
-      if (table === 'subscription_features') {
+      // Fix: Use type assertion to avoid type comparison issues
+      if (table === 'subscription_features' as any) {
         return {
           select: () => ({
             eq: () => ({
