@@ -29,11 +29,17 @@ export const adminFeatures: FeatureItem[] = [
     id: 'feature-access-system',
     name: 'Feature Access System',
     description: 'A system to manage feature access based on subscription tiers and user segments',
-    status: 'implemented', // Changed from 'completed' to 'implemented' to match the FeatureStatus type
-    statusUpdated: true, 
-    completionPercentage: 100,
+    status: 'implemented',
+    statusUpdated: true,
+    // Removing completionPercentage as it's not in the FeatureItem type
     category: 'system',
     complexity: 'medium',
+    // Adding the required properties based on the FeatureItem interface
+    adminAccess: 'full',
+    establishmentAccess: 'partial',
+    individualAccess: 'partial',
+    databaseStatus: 'implemented',
+    userImpact: 'medium',
     components: [
       {
         name: 'Feature Flags Database',
