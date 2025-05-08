@@ -29,8 +29,8 @@ export const adminFeatures: FeatureItem[] = [
     id: 'feature-access-system',
     name: 'Feature Access System',
     description: 'A system to manage feature access based on subscription tiers and user segments',
-    status: 'completed',
-    statusUpdated: true, // Mark as recently updated
+    status: 'implemented', // Changed from 'completed' to 'implemented' to match the FeatureStatus type
+    statusUpdated: true, 
     completionPercentage: 100,
     category: 'system',
     complexity: 'medium',
