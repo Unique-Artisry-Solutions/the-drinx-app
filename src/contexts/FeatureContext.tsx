@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useCallback, useEffect } fr
 import { useAuth } from './auth';
 import { FeatureId, FEATURES, getFeature } from '@/lib/features/registry';
 import { checkFeatureAccess, trackFeatureEvent } from '@/lib/features/api';
+import { useToast } from '@/hooks/use-toast';
 
 interface FeatureContextType {
   hasAccess: (featureId: FeatureId) => boolean;
@@ -16,6 +17,8 @@ const FeatureContext = createContext<FeatureContextType | undefined>(undefined);
 
 export const FeatureProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
+  const { toast } = useToast();
+  
   // Get isAdmin value safely (assuming admin users have user_type === 'admin' in their user metadata)
   const isAdmin = user?.user_metadata?.user_type === 'admin' || false;
   
@@ -42,11 +45,16 @@ export const FeatureProvider: React.FC<{ children: React.ReactNode }> = ({ child
       return hasAccess;
     } catch (error) {
       console.error(`Error checking access for feature ${featureId}:`, error);
+      toast({
+        title: "Feature Access Error",
+        description: `Unable to check access for this feature. Please try again later.`,
+        variant: "destructive",
+      });
       return false;
     } finally {
       setLoading(prev => ({ ...prev, [featureId]: false }));
     }
-  }, [user, isAdmin]);
+  }, [user, isAdmin, toast]);
 
   const hasAccess = useCallback((featureId: FeatureId): boolean => {
     // Admin override

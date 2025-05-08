@@ -15,6 +15,10 @@ interface FeatureGateProps {
 
 /**
  * FeatureGate component to conditionally render content based on feature access
+ * @example
+ * <FeatureGate feature={FEATURES.ADVANCED_ANALYTICS}>
+ *   <AdvancedAnalytics />
+ * </FeatureGate>
  */
 export const FeatureGate: React.FC<FeatureGateProps> = ({
   feature,
@@ -73,6 +77,16 @@ export const FeatureGate: React.FC<FeatureGateProps> = ({
 /**
  * FeatureToggle component to toggle behavior based on feature access
  * Similar to FeatureGate but doesn't render anything, just conditionally executes functions
+ * @example
+ * const { whenEnabled } = useFeatureToggle(FEATURES.BULK_MESSAGING);
+ * 
+ * whenEnabled(() => {
+ *   // This code only runs if the user has access to bulk messaging
+ *   sendBulkMessages();
+ * }, () => {
+ *   // Optional fallback function if access is denied
+ *   showUpgradeMessage();
+ * });
  */
 export const useFeatureToggle = (featureId: FeatureId) => {
   const { hasAccess, trackFeatureUsage } = useFeatures();

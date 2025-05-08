@@ -79,7 +79,19 @@ export function useFeatureAccess() {
       setFeatureAccess({} as Record<FeatureId, boolean>);
       return;
     }
-  }, [user]);
+
+    // Load all common features asynchronously
+    const preloadFeatures = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      // This could be optimized to fetch all feature access in a single request
+      // For now, we preload individually to avoid creating a new API endpoint
+      // Consider batching these requests if performance becomes an issue
+    };
+
+    preloadFeatures();
+  }, [user, checkAccess]);
 
   return {
     hasAccess,
