@@ -29,37 +29,102 @@ const PricingPage = () => {
     }
   }, []);
   
-  // Pricing tiers
-  const pricingTiers = [
-    {
-      name: 'Free',
-      tier: 'free',
-      price: 0,
-      description: 'Basic features for individuals',
-      isPopular: false,
-    },
-    {
-      name: 'Basic',
-      tier: 'basic',
-      price: billingPeriod === 'monthly' ? 9.99 : 99.99,
-      description: 'Everything you need to get started',
-      isPopular: false,
-    },
-    {
-      name: 'Premium',
-      tier: 'premium',
-      price: billingPeriod === 'monthly' ? 19.99 : 199.99,
-      description: 'Advanced features for professionals',
-      isPopular: true,
-    },
-    {
-      name: 'VIP',
-      tier: 'vip',
-      price: billingPeriod === 'monthly' ? 49.99 : 499.99,
-      description: 'Complete access to all features',
-      isPopular: false,
-    }
-  ];
+  // Define pricing tiers for each user type
+  const pricingTiersByType = {
+    individual: [
+      {
+        name: 'Free',
+        tier: 'free',
+        price: 0,
+        description: 'Basic features for casual users',
+        isPopular: false,
+      },
+      {
+        name: 'Basic',
+        tier: 'basic',
+        price: billingPeriod === 'monthly' ? 9.99 : 99.99,
+        description: 'Enhanced experience for regulars',
+        isPopular: false,
+      },
+      {
+        name: 'Premium',
+        tier: 'premium',
+        price: billingPeriod === 'monthly' ? 19.99 : 199.99,
+        description: 'Complete access for enthusiasts',
+        isPopular: true,
+      },
+      {
+        name: 'VIP',
+        tier: 'vip',
+        price: billingPeriod === 'monthly' ? 49.99 : 499.99,
+        description: 'Ultimate experience with priority access',
+        isPopular: false,
+      }
+    ],
+    establishment: [
+      {
+        name: 'Free',
+        tier: 'free',
+        price: 0,
+        description: 'Basic listing for your venue',
+        isPopular: false,
+      },
+      {
+        name: 'Basic',
+        tier: 'basic',
+        price: billingPeriod === 'monthly' ? 29.99 : 299.99,
+        description: 'Enhanced visibility and analytics',
+        isPopular: false,
+      },
+      {
+        name: 'Premium',
+        tier: 'premium',
+        price: billingPeriod === 'monthly' ? 79.99 : 799.99,
+        description: 'Full marketing tools and insights',
+        isPopular: true,
+      },
+      {
+        name: 'VIP',
+        tier: 'vip',
+        price: billingPeriod === 'monthly' ? 149.99 : 1499.99,
+        description: 'Enterprise features for large venues',
+        isPopular: false,
+      }
+    ],
+    promoter: [
+      {
+        name: 'Free',
+        tier: 'free',
+        price: 0,
+        description: 'Basic tools for event promotion',
+        isPopular: false,
+      },
+      {
+        name: 'Basic',
+        tier: 'basic',
+        price: billingPeriod === 'monthly' ? 49.99 : 499.99,
+        description: 'Advanced promotion capabilities',
+        isPopular: false,
+      },
+      {
+        name: 'Premium',
+        tier: 'premium',
+        price: billingPeriod === 'monthly' ? 99.99 : 999.99,
+        description: 'Complete marketing suite',
+        isPopular: true,
+      },
+      {
+        name: 'VIP',
+        tier: 'vip',
+        price: billingPeriod === 'monthly' ? 199.99 : 1999.99,
+        description: 'Enterprise-level promotion platform',
+        isPopular: false,
+      }
+    ]
+  };
+  
+  // Get current tiers based on selected user type
+  const currentPricingTiers = pricingTiersByType[userType];
 
   const handleSubscribe = (tier: string) => {
     if (!user) {
@@ -75,7 +140,7 @@ const PricingPage = () => {
     // Handle subscription logic here
     toast({
       title: "Subscription Request",
-      description: `You've selected the ${tier} plan. This feature is coming soon!`,
+      description: `You've selected the ${tier} plan for ${userType} account. This feature is coming soon!`,
       variant: "default",
     });
   };
@@ -90,7 +155,7 @@ const PricingPage = () => {
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold mb-4">Simple, Transparent Pricing</h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Choose the perfect plan for your needs. All plans include access to our core features.
+            Choose the perfect plan for your needs. Select your user type to see relevant pricing options.
           </p>
           
           {/* User type selection */}
@@ -129,7 +194,7 @@ const PricingPage = () => {
 
         {/* Pricing cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16 relative mt-8">
-          {pricingTiers.map((tier) => (
+          {currentPricingTiers.map((tier) => (
             <PricingTierCard
               key={tier.tier}
               name={tier.name}
@@ -138,7 +203,7 @@ const PricingPage = () => {
               description={tier.description}
               isPopular={tier.isPopular}
               onSubscribe={() => handleSubscribe(tier.tier)}
-              className={userType !== 'individual' && tier.tier === 'free' ? "opacity-70" : ""}
+              userType={userType}
             />
           ))}
         </div>
@@ -149,6 +214,7 @@ const PricingPage = () => {
           <FeatureTierComparison 
             highlightTier="premium" 
             className="max-w-5xl mx-auto"
+            userType={userType}
           />
         </div>
 
@@ -156,7 +222,7 @@ const PricingPage = () => {
         <div className="mt-20 max-w-3xl mx-auto text-center">
           <h2 className="text-2xl font-bold mb-6">Questions? We're here to help.</h2>
           <p className="text-muted-foreground mb-8">
-            Our support team is just a click away to help you choose the right plan for your {userType}.
+            Our support team is just a click away to help you choose the right plan for your {userType} account.
           </p>
           <Button 
             onClick={() => navigate('/contact')}
