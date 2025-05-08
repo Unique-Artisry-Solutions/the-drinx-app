@@ -51,7 +51,7 @@ export const TestProgressSection: React.FC<TestProgressSectionProps> = ({
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium">{category.category}</span>
                       {category.completed === category.total && (
-                        <Badge className="bg-green-100 text-green-800">
+                        <Badge variant="outline" className="bg-green-100 text-green-800">
                           Complete
                         </Badge>
                       )}

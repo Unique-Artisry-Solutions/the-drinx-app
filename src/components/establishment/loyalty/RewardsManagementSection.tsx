@@ -102,7 +102,7 @@ const RewardsManagementSection: React.FC<RewardsManagementSectionProps> = ({
                   </div>
                 )}
                 <div className="absolute top-2 right-2">
-                  <Badge variant={reward.isActive ? "success" : "secondary"} className="px-2 py-0">
+                  <Badge variant={reward.isActive ? "default" : "secondary"} className={reward.isActive ? "bg-green-100 text-green-800" : ""}>
                     {reward.isActive ? 'Active' : 'Inactive'}
                   </Badge>
                 </div>

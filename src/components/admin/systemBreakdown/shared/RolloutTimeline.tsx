@@ -24,7 +24,7 @@ export const RolloutTimeline: React.FC = () => {
         <div className="mt-2 space-y-1">
           <div className="flex items-center justify-between text-xs">
             <span>Alpha Testing</span>
-            <Badge variant="success">Completed</Badge>
+            <Badge variant="outline" className="bg-green-100 text-green-800">Completed</Badge>
           </div>
           <div className="flex items-center justify-between text-xs">
             <span>Beta Program</span>

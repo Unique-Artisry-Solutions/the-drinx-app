@@ -32,11 +32,11 @@ export const RolloutTimeline: React.FC = () => {
           </div>
           <div className="flex items-center justify-between text-xs">
             <span>Feature Freeze</span>
-            <Badge className="bg-gray-100 text-gray-800">Sep 2025</Badge>
+            <Badge variant="secondary">Sep 2025</Badge>
           </div>
           <div className="flex items-center justify-between text-xs">
             <span>Public Launch</span>
-            <Badge className="bg-gray-100 text-gray-800">Oct 2025</Badge>
+            <Badge variant="secondary">Oct 2025</Badge>
           </div>
         </div>
       </div>

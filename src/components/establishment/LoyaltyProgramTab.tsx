@@ -99,7 +99,7 @@ const LoyaltyProgramTab: React.FC<LoyaltyProgramTabProps> = ({
           <p className="text-gray-500">Manage your rewards program and increase customer retention.</p>
         </div>
         <div className="mt-3 md:mt-0">
-          <Badge variant={loyaltyProgram.isActive ? "success" : "secondary"} className="px-3 py-1">
+          <Badge variant={loyaltyProgram.isActive ? "default" : "secondary"} className={loyaltyProgram.isActive ? "bg-green-100 text-green-800" : ""}>
             {loyaltyProgram.isActive ? 'Active' : 'Inactive'}
           </Badge>
         </div>
