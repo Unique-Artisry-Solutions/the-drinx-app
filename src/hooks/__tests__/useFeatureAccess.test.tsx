@@ -15,7 +15,7 @@ vi.mock('@/contexts/auth', () => ({
 vi.mock('@/lib/features/api', () => ({
   checkFeatureAccess: vi.fn(),
   // Fix: Update the mock to accept all three parameters that the actual function accepts
-  trackFeatureEvent: vi.fn((featureId, eventType, data) => {})
+  trackFeatureEvent: vi.fn((featureId, eventType, data) => Promise.resolve())
 }));
 
 describe('useFeatureAccess', () => {
