@@ -12,10 +12,14 @@ vi.mock('@/contexts/auth', () => ({
   }))
 }));
 
+// Create properly typed mocks
+const mockCheckFeatureAccess = vi.fn();
+const mockTrackFeatureEvent = vi.fn();
+
+// Mock the feature API with properly typed functions
 vi.mock('@/lib/features/api', () => ({
-  checkFeatureAccess: vi.fn(),
-  // Fix: Update the mock to accept all three parameters that the actual function accepts
-  trackFeatureEvent: vi.fn((featureId, eventType, data) => Promise.resolve())
+  checkFeatureAccess: mockCheckFeatureAccess,
+  trackFeatureEvent: mockTrackFeatureEvent,
 }));
 
 describe('useFeatureAccess', () => {
@@ -45,7 +49,7 @@ describe('useFeatureAccess', () => {
   });
 
   it('should check access for non-admin users', async () => {
-    vi.mocked(checkFeatureAccess).mockResolvedValue(true);
+    mockCheckFeatureAccess.mockResolvedValue(true);
     
     const { result } = renderHook(() => useFeatureAccess());
     
@@ -56,7 +60,7 @@ describe('useFeatureAccess', () => {
     });
     
     expect(accessResult).toBe(true);
-    expect(checkFeatureAccess).toHaveBeenCalledWith(FEATURES.BULK_MESSAGING);
+    expect(mockCheckFeatureAccess).toHaveBeenCalledWith(FEATURES.BULK_MESSAGING);
   });
 
   it('should track feature usage', () => {
@@ -66,8 +70,8 @@ describe('useFeatureAccess', () => {
       result.current.trackFeatureUsage(FEATURES.SOCIAL_SHARING, 'click', { element: 'share-button' });
     });
     
-    // Check that trackFeatureEvent was called with all three parameters
-    expect(trackFeatureEvent).toHaveBeenCalledWith(
+    // Use mock function that doesn't specify implementation
+    expect(mockTrackFeatureEvent).toHaveBeenCalledWith(
       FEATURES.SOCIAL_SHARING,
       'click',
       { element: 'share-button' }
