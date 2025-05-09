@@ -56,7 +56,10 @@ const createMockAuthContext = (userType: 'individual' | 'admin'): AuthContextTyp
     signUp: vi.fn().mockResolvedValue({ error: null, data: {} }),
     signOut: vi.fn().mockResolvedValue(undefined),
     refreshSession: vi.fn().mockResolvedValue({ isEmailVerified: true }),
-    recoverAuthState: vi.fn().mockResolvedValue(true)
+    recoverAuthState: vi.fn().mockResolvedValue(true),
+    // Add missing methods required by AuthContextType
+    updateProfile: vi.fn().mockResolvedValue(undefined),
+    resetPassword: vi.fn().mockResolvedValue(undefined)
   };
 };
 
