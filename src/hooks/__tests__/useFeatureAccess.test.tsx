@@ -4,27 +4,22 @@ import { renderHook, act } from '@testing-library/react';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import { FEATURES } from '@/lib/features/registry';
 import * as featureApi from '@/lib/features/api';
-
-// Import MockedFunction type from vitest
 import type { MockedFunction } from 'vitest';
 
-// Mock the dependencies
+// Mock the auth context
 vi.mock('@/contexts/auth', () => ({
   useAuth: vi.fn(() => ({
     user: { id: 'test-user', user_metadata: { user_type: 'individual' } }
   }))
 }));
 
-// Mock the feature API module
-vi.mock('@/lib/features/api', () => {
-  return {
-    // Use type assertion to create properly typed mocks
-    checkFeatureAccess: vi.fn().mockResolvedValue(false),
-    trackFeatureEvent: vi.fn(),
-  };
-});
+// Mock the feature API module - Create properly typed mocks
+vi.mock('@/lib/features/api', () => ({
+  checkFeatureAccess: vi.fn().mockResolvedValue(false),
+  trackFeatureEvent: vi.fn(),
+}));
 
-// Get references to the mocked functions
+// Get typed references to the mocked functions
 const mockCheckFeatureAccess = featureApi.checkFeatureAccess as MockedFunction<typeof featureApi.checkFeatureAccess>;
 const mockTrackFeatureEvent = featureApi.trackFeatureEvent as MockedFunction<typeof featureApi.trackFeatureEvent>;
 
@@ -42,6 +37,7 @@ describe('useFeatureAccess', () => {
   });
 
   it('should grant access to features for admins', () => {
+    // Override the mock for this specific test
     vi.mock('@/contexts/auth', () => ({
       useAuth: vi.fn(() => ({
         user: { id: 'admin-user', user_metadata: { user_type: 'admin' } }
@@ -73,9 +69,11 @@ describe('useFeatureAccess', () => {
     const { result } = renderHook(() => useFeatureAccess());
     
     act(() => {
+      // Call with only two arguments to match the implementation
       result.current.trackFeatureUsage(FEATURES.SOCIAL_SHARING, 'click');
     });
     
+    // Expect only two arguments in the call
     expect(mockTrackFeatureEvent).toHaveBeenCalledWith(
       FEATURES.SOCIAL_SHARING,
       'click'
