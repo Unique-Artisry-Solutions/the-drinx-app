@@ -29,9 +29,10 @@ export const systemConfiguration: FeatureItem = {
     - [x] Improved cart badge styling and z-index for better visibility
     - [x] Completely redesigned cart badge to appear outside button boundaries
     - [x] Fixed navigation context on explore and public pages
-    - [x] Completed UI for all settings tabs: general, email, security, API, payment
+    - [x] Completed UI for all settings tabs: general, email, security, API, payment, features, feature tiers, and feature analytics
     - [x] Implemented feature access monitoring page
     - [x] Added empty state components for better UX
+    - [x] Fixed infinite update loop in system configuration hooks
   `,
   testSteps: [
     "Log in as admin and navigate to System Configuration page",
@@ -49,7 +50,10 @@ export const systemConfiguration: FeatureItem = {
     "Verify cart item counter is properly visible across all navigation contexts",
     "Verify navigation displays correctly on all pages (explore, landing, etc.)",
     "Test all settings tabs for proper functionality",
-    "Verify feature access monitoring page works correctly"
+    "Verify feature access monitoring page works correctly",
+    "Test feature toggles functionality",
+    "Test feature tier mapping functionality",
+    "Test feature analytics functionality"
   ],
   integrations: [
     "Email service providers",

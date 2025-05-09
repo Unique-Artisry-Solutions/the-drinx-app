@@ -17,8 +17,22 @@ export const useSystemSettings = (options: UseSystemSettingsOptions = {}) => {
   const { toast } = useToast();
   const requestIdRef = useRef<string>('');
   const loadingRef = useRef<boolean>(false);
+  const categoryRef = useRef<string | undefined>(options.category);
+  const isMountedRef = useRef<boolean>(true);
   
   const { category, initialFetch = true } = options;
+
+  // Update category ref when category changes
+  useEffect(() => {
+    categoryRef.current = category;
+  }, [category]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   const { executeWithRetry, isRetrying } = useRetry({ 
     maxAttempts: 3, 
@@ -42,7 +56,9 @@ export const useSystemSettings = (options: UseSystemSettingsOptions = {}) => {
     const requestId = generateRequestId();
     requestIdRef.current = requestId;
     
-    setIsLoading(true);
+    if (isMountedRef.current) {
+      setIsLoading(true);
+    }
     loadingRef.current = true;
     setError(null);
     
@@ -57,8 +73,8 @@ export const useSystemSettings = (options: UseSystemSettingsOptions = {}) => {
           .from('system_settings')
           .select('*');
           
-        if (category) {
-          query = query.eq('category', category);
+        if (categoryRef.current) {
+          query = query.eq('category', categoryRef.current);
         }
         
         const { data, error } = await query.order('category', { ascending: true });
@@ -70,13 +86,13 @@ export const useSystemSettings = (options: UseSystemSettingsOptions = {}) => {
       // Use the retry mechanism
       const data = await executeWithRetry(fetchData);
       
-      // Only update state if this is still the most recent request
-      if (requestId === requestIdRef.current) {
+      // Only update state if this is still the most recent request and component is mounted
+      if (requestId === requestIdRef.current && isMountedRef.current) {
         setSettings(data);
       }
     } catch (err) {
-      // Only update error state if this is still the most recent request
-      if (requestId === requestIdRef.current) {
+      // Only update error state if this is still the most recent request and component is mounted
+      if (requestId === requestIdRef.current && isMountedRef.current) {
         console.error('Error fetching system settings:', err);
         setError(err instanceof Error ? err.message : 'Failed to load system settings');
         
@@ -90,13 +106,13 @@ export const useSystemSettings = (options: UseSystemSettingsOptions = {}) => {
         }
       }
     } finally {
-      // Update loading state only if this is the current request
-      if (requestId === requestIdRef.current) {
+      // Update loading state only if this is the current request and component is mounted
+      if (requestId === requestIdRef.current && isMountedRef.current) {
         setIsLoading(false);
-        loadingRef.current = false;
       }
+      loadingRef.current = false;
     }
-  }, [category, toast, executeWithRetry, isRetrying, generateRequestId]);
+  }, [toast, executeWithRetry, isRetrying, generateRequestId]);
 
   // Update a system setting
   const updateSetting = useCallback(async (id: string, value: any, reason?: string) => {
@@ -144,7 +160,9 @@ export const useSystemSettings = (options: UseSystemSettingsOptions = {}) => {
       }
       
       // Update local state
-      setSettings(prev => prev.map(s => s.id === id ? updatedSetting as SystemSetting : s));
+      if (isMountedRef.current) {
+        setSettings(prev => prev.map(s => s.id === id ? updatedSetting as SystemSetting : s));
+      }
       
       toast({
         title: 'Success',
@@ -175,7 +193,7 @@ export const useSystemSettings = (options: UseSystemSettingsOptions = {}) => {
 
   // Initial fetch effect - stabilized with proper dependencies
   useEffect(() => {
-    if (initialFetch && !loadingRef.current) {
+    if (initialFetch && !loadingRef.current && isMountedRef.current) {
       fetchSettings();
     }
   }, [initialFetch, fetchSettings]);

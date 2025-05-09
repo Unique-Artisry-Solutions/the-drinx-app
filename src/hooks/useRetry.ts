@@ -1,5 +1,5 @@
 
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useRef } from 'react';
 
 interface RetryConfig {
   maxAttempts?: number;
@@ -21,13 +21,19 @@ export const useRetry = (config: RetryConfig = {}) => {
   const [attempts, setAttempts] = useState<number>(0);
   const [isRetrying, setIsRetrying] = useState<boolean>(false);
   const [lastError, setLastError] = useState<Error | null>(null);
+  const retryingRef = useRef<boolean>(false);
 
   const executeWithRetry = useCallback(async <T>(
     operation: () => Promise<T>,
     attempt = 1
   ): Promise<T> => {
     try {
-      setIsRetrying(attempt > 1);
+      const isNewRetry = attempt > 1 && !retryingRef.current;
+      if (isNewRetry) {
+        setIsRetrying(true);
+        retryingRef.current = true;
+      }
+      
       setAttempts(attempt);
       return await operation();
     } catch (error) {
@@ -58,16 +64,18 @@ export const useRetry = (config: RetryConfig = {}) => {
       // Recursive retry with incremented attempt count
       return executeWithRetry(operation, attempt + 1);
     } finally {
-      if (attempt === maxAttempts || !isRetrying) {
+      if (attempt === maxAttempts || attempt === 1) {
         setIsRetrying(false);
+        retryingRef.current = false;
       }
     }
-  }, [maxAttempts, baseDelay, maxDelay, onRetry, onFailure, isRetrying]);
+  }, [maxAttempts, baseDelay, maxDelay, onRetry, onFailure]);
 
   const reset = useCallback(() => {
     setAttempts(0);
     setIsRetrying(false);
     setLastError(null);
+    retryingRef.current = false;
   }, []);
 
   return { 

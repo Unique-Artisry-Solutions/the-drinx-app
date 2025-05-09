@@ -60,11 +60,16 @@ const ConfigurationTabs: React.FC<ConfigurationTabsProps> = ({
   };
 
   // Check if we have settings for the current category
-  const hasSettingsForCategory = settings.length > 0;
+  const hasSettingsForCategory = settings.filter(s => s.category === category).length > 0;
   const isLoadingNewCategory = isLoading && !hasSettingsForCategory;
 
+  // Determine which tabs should show the default loading/empty state
+  // Feature-related tabs should always render their components
+  const isFeatureTab = ['features', 'feature-tiers', 'feature-analytics'].includes(category);
+
   const renderTabContent = () => {
-    if (isLoadingNewCategory) {
+    // Only show loading or empty state for non-feature tabs
+    if (!isFeatureTab && isLoadingNewCategory) {
       return (
         <Card>
           <CardContent className="py-10">
@@ -77,7 +82,7 @@ const ConfigurationTabs: React.FC<ConfigurationTabsProps> = ({
       );
     }
 
-    if (!hasSettingsForCategory && !isLoading) {
+    if (!isFeatureTab && !hasSettingsForCategory && !isLoading) {
       return <EmptyState category={category} />;
     }
 
@@ -111,16 +116,17 @@ const ConfigurationTabs: React.FC<ConfigurationTabsProps> = ({
         {renderTabContent() || <PaymentSettingsTab {...settingsTabProps} />}
       </TabsContent>
       
+      {/* Feature tabs always render their components regardless of settings */}
       <TabsContent value="features" className="space-y-4">
-        {renderTabContent() || <FeatureTogglesTab {...settingsTabProps} />}
+        <FeatureTogglesTab {...settingsTabProps} />
       </TabsContent>
 
       <TabsContent value="feature-tiers" className="space-y-4">
-        {renderTabContent() || <FeatureTierMappingTab {...settingsTabProps} />}
+        <FeatureTierMappingTab {...settingsTabProps} />
       </TabsContent>
 
       <TabsContent value="feature-analytics" className="space-y-4">
-        {renderTabContent() || <FeatureAnalyticsTab {...settingsTabProps} />}
+        <FeatureAnalyticsTab {...settingsTabProps} />
       </TabsContent>
     </Tabs>
   );
