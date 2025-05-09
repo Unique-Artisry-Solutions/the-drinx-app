@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -90,13 +89,16 @@ export const SubscriptionManagement = () => {
         }
       };
       
-      // Update the location data if we have it
+      // Update the location data if we have it and location sharing is enabled
       if (locationSharing && userLocation) {
         updatedBio.location = {
           latitude: userLocation.latitude,
           longitude: userLocation.longitude,
           updated_at: new Date().toISOString()
         };
+      } else if (!locationSharing) {
+        // Remove location data if location sharing is disabled
+        delete updatedBio.location;
       }
       
       const { error } = await supabase
