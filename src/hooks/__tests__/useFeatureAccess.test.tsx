@@ -5,6 +5,7 @@ import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import { FEATURES } from '@/lib/features/registry';
 import * as featureApi from '@/lib/features/api';
 import type { MockedFunction } from 'vitest';
+import * as authContext from '@/contexts/auth';
 
 // Mock the auth context
 vi.mock('@/contexts/auth', () => ({
@@ -22,10 +23,15 @@ vi.mock('@/lib/features/api', () => ({
 // Get typed references to the mocked functions
 const mockCheckFeatureAccess = featureApi.checkFeatureAccess as MockedFunction<typeof featureApi.checkFeatureAccess>;
 const mockTrackFeatureEvent = featureApi.trackFeatureEvent as MockedFunction<typeof featureApi.trackFeatureEvent>;
+const mockUseAuth = authContext.useAuth as MockedFunction<typeof authContext.useAuth>;
 
 describe('useFeatureAccess', () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    // Reset useAuth to default mock implementation
+    mockUseAuth.mockImplementation(() => ({
+      user: { id: 'test-user', user_metadata: { user_type: 'individual' } }
+    }));
   });
 
   it('should provide feature access functions', () => {
@@ -37,12 +43,10 @@ describe('useFeatureAccess', () => {
   });
 
   it('should grant access to features for admins', () => {
-    // Override the mock for this specific test
-    vi.mock('@/contexts/auth', () => ({
-      useAuth: vi.fn(() => ({
-        user: { id: 'admin-user', user_metadata: { user_type: 'admin' } }
-      }))
-    }), { virtual: true });
+    // Instead of re-mocking the module, temporarily change the implementation
+    mockUseAuth.mockImplementationOnce(() => ({
+      user: { id: 'admin-user', user_metadata: { user_type: 'admin' } }
+    }));
     
     const { result } = renderHook(() => useFeatureAccess());
     
