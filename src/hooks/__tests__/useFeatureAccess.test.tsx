@@ -12,17 +12,18 @@ vi.mock('@/contexts/auth', () => ({
   }))
 }));
 
-// Mock the entire feature API module
+// Mock the feature API module
 vi.mock('@/lib/features/api', () => {
   return {
-    checkFeatureAccess: vi.fn(),
+    // Use type assertion to create properly typed mocks
+    checkFeatureAccess: vi.fn().mockResolvedValue(false),
     trackFeatureEvent: vi.fn(),
   };
 });
 
-// Get typed references to the mocked functions
-const mockedCheckFeatureAccess = vi.mocked(featureApi.checkFeatureAccess);
-const mockedTrackFeatureEvent = vi.mocked(featureApi.trackFeatureEvent);
+// Get references to the mocked functions
+const mockCheckFeatureAccess = featureApi.checkFeatureAccess as jest.Mock;
+const mockTrackFeatureEvent = featureApi.trackFeatureEvent as jest.Mock;
 
 describe('useFeatureAccess', () => {
   beforeEach(() => {
@@ -51,7 +52,7 @@ describe('useFeatureAccess', () => {
   });
 
   it('should check access for non-admin users', async () => {
-    mockedCheckFeatureAccess.mockResolvedValue(true);
+    mockCheckFeatureAccess.mockResolvedValue(true);
     
     const { result } = renderHook(() => useFeatureAccess());
     
@@ -62,7 +63,7 @@ describe('useFeatureAccess', () => {
     });
     
     expect(accessResult).toBe(true);
-    expect(mockedCheckFeatureAccess).toHaveBeenCalledWith(FEATURES.BULK_MESSAGING);
+    expect(mockCheckFeatureAccess).toHaveBeenCalledWith(FEATURES.BULK_MESSAGING);
   });
 
   it('should track feature usage', () => {
@@ -72,7 +73,7 @@ describe('useFeatureAccess', () => {
       result.current.trackFeatureUsage(FEATURES.SOCIAL_SHARING, 'click', { element: 'share-button' });
     });
     
-    expect(mockedTrackFeatureEvent).toHaveBeenCalledWith(
+    expect(mockTrackFeatureEvent).toHaveBeenCalledWith(
       FEATURES.SOCIAL_SHARING,
       'click',
       { element: 'share-button' }
