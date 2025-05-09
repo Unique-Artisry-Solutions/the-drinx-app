@@ -5,6 +5,9 @@ import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import { FEATURES } from '@/lib/features/registry';
 import * as featureApi from '@/lib/features/api';
 
+// Import MockedFunction type from vitest
+import type { MockedFunction } from 'vitest';
+
 // Mock the dependencies
 vi.mock('@/contexts/auth', () => ({
   useAuth: vi.fn(() => ({
@@ -24,9 +27,6 @@ vi.mock('@/lib/features/api', () => {
 // Get references to the mocked functions
 const mockCheckFeatureAccess = featureApi.checkFeatureAccess as MockedFunction<typeof featureApi.checkFeatureAccess>;
 const mockTrackFeatureEvent = featureApi.trackFeatureEvent as MockedFunction<typeof featureApi.trackFeatureEvent>;
-
-// Import MockedFunction type from vitest
-import type { MockedFunction } from 'vitest';
 
 describe('useFeatureAccess', () => {
   beforeEach(() => {
