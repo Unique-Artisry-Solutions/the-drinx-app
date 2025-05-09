@@ -84,10 +84,13 @@ const ConfigurationTabs: React.FC<ConfigurationTabsProps> = ({
     return null;
   };
 
+  // Always render TabNavigation first, then the tab content
   return (
     <Tabs value={category} className="w-full" onValueChange={setCategory}>
+      {/* TabNavigation always renders, even during loading or errors */}
       <TabNavigation currentCategory={category} />
 
+      {/* Tab content */}
       <TabsContent value="general" className="space-y-4">
         {renderTabContent() || <GeneralSettingsTab {...settingsTabProps} />}
       </TabsContent>

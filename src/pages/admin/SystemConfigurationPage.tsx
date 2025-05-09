@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSystemConfiguration } from '@/hooks/admin/useSystemConfiguration';
 import Layout from '@/components/Layout';
 import { Card, CardContent } from '@/components/ui/card';
@@ -11,6 +11,8 @@ import { RefreshCw } from 'lucide-react';
 import ConfigurationTabs from '@/components/admin/systemConfiguration/ConfigurationTabs';
 import { updateSystemSetting } from '@/lib/admin';
 import { useToast } from '@/hooks/use-toast';
+import PageSuspense from '@/components/loading/PageSuspense';
+import ComponentSuspense from '@/components/loading/ComponentSuspense';
 
 const SystemConfigurationPage = () => {
   const { 
@@ -31,36 +33,28 @@ const SystemConfigurationPage = () => {
   const settingsForCategory = settings.filter(setting => setting.category === category);
   const hasSettings = settings.length > 0;
 
-  // Only fetch settings when the component mounts, not on every render
-  useEffect(() => {
-    // This effect runs only once when the component mounts
-    if (!hasAttemptedFetch) {
-      fetchSettings();
-    }
-  }, [fetchSettings, hasAttemptedFetch]);
-
-  const handleRefresh = () => {
+  const handleRefresh = useCallback(() => {
     fetchSettings();
     setRetryCount(prev => prev + 1);
     toast({
       title: 'Refreshing',
       description: 'Fetching the latest configuration settings...',
     });
-  };
+  }, [fetchSettings, toast]);
 
-  const handleEditClick = (settingId: string, currentValue: any) => {
+  const handleEditClick = useCallback((settingId: string, currentValue: any) => {
     setEditingSettingId(settingId);
     setEditValue(typeof currentValue === 'string' ? currentValue : JSON.stringify(currentValue, null, 2));
     setChangeReason('');
-  };
+  }, []);
 
-  const handleCancelClick = () => {
+  const handleCancelClick = useCallback(() => {
     setEditingSettingId(null);
     setEditValue('');
     setChangeReason('');
-  };
+  }, []);
 
-  const handleSaveClick = async (settingId: string, isProtected: boolean) => {
+  const handleSaveClick = useCallback(async (settingId: string, isProtected: boolean) => {
     try {
       // For protected settings, we require a reason
       if (isProtected && !changeReason) {
@@ -109,9 +103,9 @@ const SystemConfigurationPage = () => {
         description: error instanceof Error ? error.message : 'There was an error updating the setting.',
       });
     }
-  };
+  }, [editValue, changeReason, toast, fetchSettings]);
 
-  // Create props object to pass to the tabs
+  // Create settings tab props object
   const settingsTabProps = {
     settings: settingsForCategory,
     isLoading,
@@ -125,51 +119,37 @@ const SystemConfigurationPage = () => {
     setChangeReason,
   };
 
-  const renderContent = () => {
-    if (isLoading && !hasSettings) {
-      return (
-        <Card>
-          <CardContent className="py-10">
-            <div className="flex flex-col justify-center items-center gap-4">
-              <Spinner size="lg" />
-              <p className="text-muted-foreground">Loading system configuration...</p>
-            </div>
-          </CardContent>
-        </Card>
-      );
-    }
+  const renderErrorState = () => (
+    <Card>
+      <CardContent className="py-10">
+        <Alert variant="destructive" className="mb-4">
+          <AlertTitle>Error loading settings</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+        <div className="flex justify-center">
+          <Button 
+            variant="outline" 
+            onClick={handleRefresh}
+            className="flex items-center gap-2"
+          >
+            <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} />
+            Retry {retryCount > 0 ? `(${retryCount})` : ''}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
 
-    if (error) {
-      return (
-        <Card>
-          <CardContent className="py-10">
-            <Alert variant="destructive" className="mb-4">
-              <AlertTitle>Error loading settings</AlertTitle>
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-            <div className="flex justify-center">
-              <Button 
-                variant="outline" 
-                onClick={handleRefresh}
-                className="flex items-center gap-2"
-              >
-                <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} />
-                Retry {retryCount > 0 ? `(${retryCount})` : ''}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      );
-    }
-
-    return (
-      <ConfigurationTabs
-        category={category}
-        setCategory={setCategory}
-        {...settingsTabProps}
-      />
-    );
-  };
+  const renderLoadingState = () => (
+    <Card>
+      <CardContent className="py-10">
+        <div className="flex flex-col justify-center items-center gap-4">
+          <Spinner size="lg" />
+          <p className="text-muted-foreground">Loading system configuration...</p>
+        </div>
+      </CardContent>
+    </Card>
+  );
 
   return (
     <Layout>
@@ -194,7 +174,20 @@ const SystemConfigurationPage = () => {
           )}
         </div>
 
-        {renderContent()}
+        <PageSuspense>
+          <Tabs value={category} className="w-full" onValueChange={setCategory}>
+            <ComponentSuspense>
+              <ConfigurationTabs
+                category={category}
+                setCategory={setCategory}
+                {...settingsTabProps}
+              />
+            </ComponentSuspense>
+
+            {error && renderErrorState()}
+            {isLoading && !hasSettings && renderLoadingState()}
+          </Tabs>
+        </PageSuspense>
       </div>
     </Layout>
   );

@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { SystemSetting } from '@/types/SupabaseTables';
@@ -15,19 +15,44 @@ export const useSystemSettings = (options: UseSystemSettingsOptions = {}) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-  const { executeWithRetry } = useRetry({ maxAttempts: 3, baseDelay: 1000 });
-
+  const requestIdRef = useRef<string>('');
+  const loadingRef = useRef<boolean>(false);
+  
   const { category, initialFetch = true } = options;
 
-  // Fetch system settings
+  const { executeWithRetry, isRetrying } = useRetry({ 
+    maxAttempts: 3, 
+    baseDelay: 1000,
+    onRetry: (attempt, error) => {
+      console.log(`Retrying system settings fetch, attempt ${attempt} after error: ${error.message}`);
+    }
+  });
+
+  // Stable function to generate request ID
+  const generateRequestId = useCallback(() => {
+    return Date.now().toString(36) + Math.random().toString(36).substring(2);
+  }, []);
+
+  // Fetch system settings - properly memoized and stable
   const fetchSettings = useCallback(async () => {
-    if (isLoading) return; // Prevent concurrent fetches
+    // Prevent concurrent fetches using ref instead of state to avoid re-renders
+    if (loadingRef.current) return;
+    
+    // Generate a unique request ID to track this specific request
+    const requestId = generateRequestId();
+    requestIdRef.current = requestId;
     
     setIsLoading(true);
+    loadingRef.current = true;
     setError(null);
     
     try {
       const fetchData = async () => {
+        // If request ID doesn't match, another request has superseded this one
+        if (requestId !== requestIdRef.current) {
+          throw new Error('Request superseded');
+        }
+        
         let query = supabase
           .from('system_settings')
           .select('*');
@@ -44,22 +69,37 @@ export const useSystemSettings = (options: UseSystemSettingsOptions = {}) => {
       
       // Use the retry mechanism
       const data = await executeWithRetry(fetchData);
-      setSettings(data);
+      
+      // Only update state if this is still the most recent request
+      if (requestId === requestIdRef.current) {
+        setSettings(data);
+      }
     } catch (err) {
-      console.error('Error fetching system settings:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load system settings');
-      toast({
-        title: 'Error',
-        description: 'Failed to load system settings. We will automatically retry.',
-        variant: 'destructive'
-      });
+      // Only update error state if this is still the most recent request
+      if (requestId === requestIdRef.current) {
+        console.error('Error fetching system settings:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load system settings');
+        
+        // Don't show toast during retries
+        if (!isRetrying) {
+          toast({
+            title: 'Error',
+            description: 'Failed to load system settings. Please try again.',
+            variant: 'destructive'
+          });
+        }
+      }
     } finally {
-      setIsLoading(false);
+      // Update loading state only if this is the current request
+      if (requestId === requestIdRef.current) {
+        setIsLoading(false);
+        loadingRef.current = false;
+      }
     }
-  }, [category, toast, executeWithRetry, isLoading]);
+  }, [category, toast, executeWithRetry, isRetrying, generateRequestId]);
 
   // Update a system setting
-  const updateSetting = async (id: string, value: any, reason?: string) => {
+  const updateSetting = useCallback(async (id: string, value: any, reason?: string) => {
     try {
       // First check if the setting is protected
       const setting = settings.find(s => s.id === id);
@@ -121,18 +161,24 @@ export const useSystemSettings = (options: UseSystemSettingsOptions = {}) => {
       });
       throw err;
     }
-  };
+  }, [settings, toast]);
 
-  // Get a setting by key
-  const getSettingByKey = (key: string): SystemSetting | undefined => {
+  // Getter functions - memoized to be stable across renders
+  const getSettingByKey = useCallback((key: string): SystemSetting | undefined => {
     return settings.find(s => s.key === key);
-  };
+  }, [settings]);
 
-  // Get a setting value by key
-  const getSettingValue = (key: string): any | null => {
+  const getSettingValue = useCallback((key: string): any | null => {
     const setting = settings.find(s => s.key === key);
     return setting ? setting.value : null;
-  };
+  }, [settings]);
+
+  // Initial fetch effect - stabilized with proper dependencies
+  useEffect(() => {
+    if (initialFetch && !loadingRef.current) {
+      fetchSettings();
+    }
+  }, [initialFetch, fetchSettings]);
 
   return {
     settings,

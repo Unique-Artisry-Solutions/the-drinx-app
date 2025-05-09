@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSystemSettings } from './useSystemSettings';
 import { useAuditLogs } from './useAuditLogs';
 import { useEmailTemplates } from './useEmailTemplates';
@@ -20,6 +20,16 @@ export const useSystemConfiguration = (options: UseSystemConfigurationOptions = 
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [hasAttemptedFetch, setHasAttemptedFetch] = useState<boolean>(false);
+  const fetchInProgressRef = useRef<boolean>(false);
+
+  // Use refs for tracking loading states to prevent infinite loops
+  const loadingStatesRef = useRef<{
+    settings: boolean;
+    auditLogs: boolean;
+  }>({
+    settings: false,
+    auditLogs: false
+  });
 
   const {
     settings,
@@ -72,22 +82,62 @@ export const useSystemConfiguration = (options: UseSystemConfigurationOptions = 
     deleteFeatureToggle
   } = useFeatureToggles();
 
-  // Setup realtime updates
+  // Setup realtime updates with memoized callback
+  const handleSettingsChange = useCallback(() => {
+    if (!fetchInProgressRef.current) {
+      fetchSettings();
+    }
+  }, [fetchSettings]);
+
+  const handleAuditLogChange = useCallback(() => {
+    if (!fetchInProgressRef.current) {
+      fetchAuditLogs();
+    }
+  }, [fetchAuditLogs]);
+
   useRealtimeUpdates({
-    onSettingsChange: fetchSettings,
-    onAuditLogChange: fetchAuditLogs
+    onSettingsChange: handleSettingsChange,
+    onAuditLogChange: handleAuditLogChange
   });
+
+  // Track loading states via ref
+  useEffect(() => {
+    loadingStatesRef.current.settings = settingsLoading;
+    updateLoadingState();
+  }, [settingsLoading]);
+
+  useEffect(() => {
+    loadingStatesRef.current.auditLogs = auditLogsLoading;
+    updateLoadingState();
+  }, [auditLogsLoading]);
+
+  // Update global loading state based on individual loading states
+  const updateLoadingState = useCallback(() => {
+    const anyLoading = Object.values(loadingStatesRef.current).some(Boolean);
+    setIsLoading(anyLoading);
+  }, []);
+
+  // Update global error state when individual errors occur
+  useEffect(() => {
+    if (settingsError) {
+      setError(settingsError);
+    }
+  }, [settingsError]);
 
   // Fetch all configuration data
   const fetchAllConfigData = useCallback(async () => {
-    if (isLoading) return; // Prevent concurrent fetches
+    if (fetchInProgressRef.current) return; // Prevent concurrent fetches
     
+    fetchInProgressRef.current = true;
     setIsLoading(true);
     setHasAttemptedFetch(true);
     
     try {
+      // Fetch essential data first
+      await fetchSettings();
+      
+      // Then fetch the rest in parallel
       await Promise.all([
-        fetchSettings(),
         fetchEmailTemplates(),
         fetchApiKeyConfigurations(),
         fetchPaymentGateways(),
@@ -103,29 +153,28 @@ export const useSystemConfiguration = (options: UseSystemConfigurationOptions = 
         variant: 'destructive'
       });
     } finally {
+      fetchInProgressRef.current = false;
       setIsLoading(false);
     }
-  }, [fetchSettings, fetchEmailTemplates, fetchApiKeyConfigurations, fetchPaymentGateways, fetchFeatureToggles, fetchAuditLogs, toast, isLoading]);
+  }, [
+    fetchSettings, 
+    fetchEmailTemplates, 
+    fetchApiKeyConfigurations, 
+    fetchPaymentGateways, 
+    fetchFeatureToggles, 
+    fetchAuditLogs, 
+    toast
+  ]);
 
   // Initial fetch only on component mount, not on every render
   useEffect(() => {
-    if (initialFetch && !hasAttemptedFetch) {
+    if (initialFetch && !hasAttemptedFetch && !fetchInProgressRef.current) {
       // Only fetch settings initially (others will be fetched on demand)
-      fetchSettings();
+      fetchSettings().finally(() => {
+        setHasAttemptedFetch(true);
+      });
     }
   }, [initialFetch, fetchSettings, hasAttemptedFetch]);
-
-  // Update global error state when individual errors occur
-  useEffect(() => {
-    if (settingsError) {
-      setError(settingsError);
-    }
-  }, [settingsError]);
-
-  // Update global loading state when individual loadings change
-  useEffect(() => {
-    setIsLoading(settingsLoading || auditLogsLoading);
-  }, [settingsLoading, auditLogsLoading]);
 
   return {
     // Data
