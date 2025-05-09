@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -5,6 +6,7 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Slider } from '@/components/ui/slider';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import { useSubscriptions } from '@/hooks/useSubscriptions';
 import { useAuth } from '@/contexts/auth';
@@ -69,13 +71,18 @@ export const SubscriptionManagement = () => {
         .single();
       
       let bioData = {};
-      try {
-        bioData = profile?.bio ? JSON.parse(profile.bio) : {};
-      } catch (e) {
-        bioData = {};
+      
+      if (profile?.bio) {
+        try {
+          bioData = JSON.parse(profile.bio);
+        } catch (e) {
+          // If the bio isn't valid JSON, just use an empty object
+          console.warn('Existing bio was not valid JSON:', e);
+        }
       }
       
-      bioData = {
+      // Update the location settings within the bio
+      const updatedBio = {
         ...bioData,
         location_settings: {
           sharing: locationSharing,
@@ -83,11 +90,19 @@ export const SubscriptionManagement = () => {
         }
       };
       
+      // Update the location data if we have it
+      if (locationSharing && userLocation) {
+        updatedBio.location = {
+          latitude: userLocation.latitude,
+          longitude: userLocation.longitude,
+          updated_at: new Date().toISOString()
+        };
+      }
+      
       const { error } = await supabase
         .from('profiles')
         .update({
-          bio: JSON.stringify(bioData),
-          updated_at: new Date().toISOString()
+          bio: JSON.stringify(updatedBio)
         })
         .eq('id', user.id);
       
@@ -95,20 +110,26 @@ export const SubscriptionManagement = () => {
       
       toast({
         title: 'Settings saved',
-        description: 'Your subscription settings have been updated.',
+        description: 'Your subscription settings have been updated',
       });
       
-      if (locationSharing && userLocation === null) {
-        refreshLocation();
-      }
-    } catch (error: any) {
+    } catch (err: any) {
       toast({
-        title: 'Error saving settings',
-        description: error.message,
+        title: 'Failed to save settings',
+        description: err.message,
         variant: 'destructive',
       });
+      console.error('Error saving subscription settings:', err);
     } finally {
       setUpdatingSettings(false);
+    }
+  };
+
+  const handleLocationSharingToggle = (enabled: boolean) => {
+    setLocationSharing(enabled);
+    
+    if (enabled && !userLocation) {
+      refreshLocation();
     }
   };
 
@@ -116,98 +137,121 @@ export const SubscriptionManagement = () => {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="text-xl">Subscription Settings</CardTitle>
+          <CardTitle>Subscription Settings</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="location-sharing">Location Sharing</Label>
-              <p className="text-sm text-gray-500">
-                Allow promoters to send you notifications based on your location
-              </p>
-            </div>
-            <Switch
-              id="location-sharing"
-              checked={locationSharing}
-              onCheckedChange={setLocationSharing}
-            />
-          </div>
-          
-          {locationSharing && (
-            <div className="space-y-2 pt-2">
-              <Label htmlFor="notification-radius">
-                Notification Radius (miles)
-              </Label>
-              <div className="flex items-center gap-4">
-                <input
-                  id="notification-radius"
-                  type="range"
-                  min="1"
-                  max="50"
-                  value={notificationRadius}
-                  onChange={(e) => setNotificationRadius(parseInt(e.target.value))}
-                  className="flex-1"
-                />
-                <span className="w-12 text-center">{notificationRadius}</span>
+        <CardContent className="space-y-6">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-medium">Location-Based Notifications</h3>
+                <p className="text-sm text-muted-foreground">
+                  Receive notifications about events happening near you
+                </p>
               </div>
+              <Switch
+                checked={locationSharing}
+                onCheckedChange={handleLocationSharingToggle}
+              />
             </div>
-          )}
-          
-          <Button 
-            onClick={saveSubscriptionSettings} 
-            className="w-full mt-4"
-            disabled={updatingSettings}
-          >
-            {updatingSettings ? 'Saving...' : 'Save Settings'}
-          </Button>
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-xl">My Subscriptions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="text-center py-4">Loading subscriptions...</div>
-          ) : subscriptions.length > 0 ? (
-            <div className="space-y-4">
-              {subscriptions.map((subscription) => (
-                <div key={subscription.id} className="flex justify-between items-center">
-                  <div>
-                    <p className="font-medium">{subscription.promoter_name || 'Promoter'}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Badge variant={subscription.status === 'active' ? 'default' : 'outline'}>
-                        {subscription.status}
-                      </Badge>
-                      {subscription.tier_name && (
-                        <Badge variant="secondary">{subscription.tier_name}</Badge>
-                      )}
-                    </div>
+            
+            {locationSharing && (
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="notification-radius">Notification Radius</Label>
+                    <span className="text-sm font-medium">{notificationRadius} miles</span>
                   </div>
+                  <Slider
+                    id="notification-radius"
+                    min={1}
+                    max={50}
+                    step={1}
+                    value={[notificationRadius]}
+                    onValueChange={(values) => setNotificationRadius(values[0])}
+                    className="w-full"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    You'll receive notifications for events within {notificationRadius} miles of your location
+                  </p>
+                </div>
+                
+                <div className="space-y-2">
+                  <h4 className="text-sm font-medium">Current Location</h4>
+                  {userLocation ? (
+                    <div className="text-sm">
+                      <Badge variant="outline" className="mr-2">
+                        Lat: {userLocation.latitude.toFixed(4)}
+                      </Badge>
+                      <Badge variant="outline">
+                        Long: {userLocation.longitude.toFixed(4)}
+                      </Badge>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      Location not available. Please enable location services in your browser.
+                    </p>
+                  )}
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => unsubscribe.mutate(subscription.id)}
-                    disabled={unsubscribe.isPending}
+                    onClick={refreshLocation}
+                    disabled={!locationSharing}
                   >
-                    Unsubscribe
+                    Refresh Location
                   </Button>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <p className="text-gray-500 mb-4">
-                You are not subscribed to any promoters yet
-              </p>
-              <Button variant="outline" onClick={() => window.location.href = '/promoter'}>
-                Discover Promoters
+              </div>
+            )}
+            
+            <div className="pt-4">
+              <Button 
+                onClick={saveSubscriptionSettings}
+                disabled={updatingSettings}
+              >
+                {updatingSettings ? 'Saving...' : 'Save Settings'}
               </Button>
             </div>
-          )}
+          </div>
+
+          <Separator />
+          
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Active Subscriptions</h3>
+            {isLoading ? (
+              <p className="text-sm text-muted-foreground">Loading subscriptions...</p>
+            ) : subscriptions && subscriptions.length > 0 ? (
+              <div className="space-y-2">
+                {subscriptions.map((sub) => (
+                  <Card key={sub.id} className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="font-medium">{sub.promoter_name || 'Unknown Promoter'}</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {sub.tier_name ? `${sub.tier_name} tier` : 'Basic subscription'}
+                        </p>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => unsubscribe.mutate(sub.id)}
+                        disabled={unsubscribe.isPending}
+                      >
+                        Unsubscribe
+                      </Button>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                You don't have any active subscriptions.
+              </p>
+            )}
+          </div>
         </CardContent>
       </Card>
     </div>
   );
 };
+
+export default SubscriptionManagement;

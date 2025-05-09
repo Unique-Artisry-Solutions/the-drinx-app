@@ -33,6 +33,11 @@ export const systemConfiguration: FeatureItem = {
     - [x] Implemented feature access monitoring page
     - [x] Added empty state components for better UX
     - [x] Fixed infinite update loop in system configuration hooks
+    - [x] Event notification scheduling table implemented with location-based radius filtering
+    - [x] Row level security policies for subscription management
+    - [x] Database functions for location-based notification matching
+    - [x] Enhanced subscription settings with location sharing and notification radius
+    - [x] Functions for processing subscription notifications and analytics
   `,
   testSteps: [
     "Log in as admin and navigate to System Configuration page",
@@ -53,7 +58,10 @@ export const systemConfiguration: FeatureItem = {
     "Verify feature access monitoring page works correctly",
     "Test feature toggles functionality",
     "Test feature tier mapping functionality",
-    "Test feature analytics functionality"
+    "Test feature analytics functionality",
+    "Test event notification scheduling with location-based filtering",
+    "Verify subscription settings correctly store and apply location preferences",
+    "Test receiving notifications based on location proximity"
   ],
   integrations: [
     "Email service providers",
@@ -65,6 +73,8 @@ export const systemConfiguration: FeatureItem = {
     "Analytics dashboard",
     "Cart and checkout system",
     "Event management system",
-    "Feature access control system"
+    "Feature access control system",
+    "Location-based notification system",
+    "Subscription management system"
   ]
 };
