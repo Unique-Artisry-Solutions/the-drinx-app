@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,6 +12,20 @@ import { useSubscriptions } from '@/hooks/useSubscriptions';
 import { useAuth } from '@/contexts/auth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
+
+// Define BioData type to properly handle the properties
+interface BioData {
+  location_settings?: {
+    sharing: boolean;
+    radius: number;
+  };
+  location?: {
+    latitude: number;
+    longitude: number;
+    updated_at: string;
+  };
+  [key: string]: any; // Allow for other properties
+}
 
 export const SubscriptionManagement = () => {
   const { user } = useAuth();
@@ -40,7 +55,7 @@ export const SubscriptionManagement = () => {
         
         if (data) {
           try {
-            const bioData = data.bio ? JSON.parse(data.bio) : {};
+            const bioData: BioData = data.bio ? JSON.parse(data.bio) : {};
             if (bioData.location_settings) {
               setLocationSharing(bioData.location_settings.sharing || false);
               setNotificationRadius(bioData.location_settings.radius || 10);
@@ -69,7 +84,7 @@ export const SubscriptionManagement = () => {
         .eq('id', user.id)
         .single();
       
-      let bioData = {};
+      let bioData: BioData = {};
       
       if (profile?.bio) {
         try {
@@ -81,7 +96,7 @@ export const SubscriptionManagement = () => {
       }
       
       // Update the location settings within the bio
-      const updatedBio = {
+      const updatedBio: BioData = {
         ...bioData,
         location_settings: {
           sharing: locationSharing,
@@ -98,7 +113,9 @@ export const SubscriptionManagement = () => {
         };
       } else if (!locationSharing) {
         // Remove location data if location sharing is disabled
-        delete updatedBio.location;
+        if (updatedBio.location) {
+          delete updatedBio.location;
+        }
       }
       
       const { error } = await supabase
