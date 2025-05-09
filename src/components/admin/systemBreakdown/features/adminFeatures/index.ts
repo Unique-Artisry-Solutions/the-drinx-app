@@ -64,6 +64,16 @@ export const adminFeatures: FeatureItem[] = [
         type: 'api',
         status: 'completed',
       },
+      {
+        name: 'Feature Usage Analytics',
+        type: 'dashboard',
+        status: 'completed',
+      },
+      {
+        name: 'Feature Monitoring',
+        type: 'dashboard',
+        status: 'completed',
+      },
     ],
     lastUpdated: new Date().toISOString(),
     assignedTo: 'dev-team',
