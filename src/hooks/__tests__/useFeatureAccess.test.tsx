@@ -22,8 +22,11 @@ vi.mock('@/lib/features/api', () => {
 });
 
 // Get references to the mocked functions
-const mockCheckFeatureAccess = featureApi.checkFeatureAccess as jest.Mock;
-const mockTrackFeatureEvent = featureApi.trackFeatureEvent as jest.Mock;
+const mockCheckFeatureAccess = featureApi.checkFeatureAccess as MockedFunction<typeof featureApi.checkFeatureAccess>;
+const mockTrackFeatureEvent = featureApi.trackFeatureEvent as MockedFunction<typeof featureApi.trackFeatureEvent>;
+
+// Import MockedFunction type from vitest
+import type { MockedFunction } from 'vitest';
 
 describe('useFeatureAccess', () => {
   beforeEach(() => {
