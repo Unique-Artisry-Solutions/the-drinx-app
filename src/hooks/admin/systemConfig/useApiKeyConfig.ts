@@ -32,7 +32,13 @@ export const useApiKeyConfig = (): UseApiKeyConfigResult => {
         .order('service_name');
         
       if (error) throw new Error(error.message);
-      setApiKeys(data || []);
+      // Convert the metadata field to ensure it's a proper Record
+      const processedData = (data || []).map(item => ({
+        ...item,
+        metadata: item.metadata ? (typeof item.metadata === 'string' ? JSON.parse(item.metadata) : item.metadata) : {}
+      })) as ApiKeyConfiguration[];
+      
+      setApiKeys(processedData);
     } catch (err) {
       console.error('Error fetching API key configurations:', err);
       setError(err instanceof Error ? err.message : 'Failed to load API key configurations');
@@ -48,10 +54,16 @@ export const useApiKeyConfig = (): UseApiKeyConfigResult => {
 
   const updateApiKeyConfiguration = async (id: string, updates: Partial<ApiKeyConfiguration>) => {
     try {
+      // Ensure metadata is treated properly
+      const updatesWithFormattedMetadata = {
+        ...updates,
+        metadata: updates.metadata || {}
+      };
+      
       const { data, error } = await supabase
         .from('api_key_configurations')
         .update({
-          ...updates,
+          ...updatesWithFormattedMetadata,
           updated_at: new Date().toISOString()
         })
         .eq('id', id)
@@ -62,7 +74,10 @@ export const useApiKeyConfig = (): UseApiKeyConfigResult => {
       
       // Update local state
       setApiKeys(prev => 
-        prev.map(key => key.id === id ? data as ApiKeyConfiguration : key)
+        prev.map(key => key.id === id ? {
+          ...data,
+          metadata: data.metadata ? (typeof data.metadata === 'string' ? JSON.parse(data.metadata) : data.metadata) : {}
+        } as ApiKeyConfiguration : key)
       );
       
       toast({
@@ -84,27 +99,39 @@ export const useApiKeyConfig = (): UseApiKeyConfigResult => {
 
   const createApiKeyConfiguration = async (config: Partial<ApiKeyConfiguration>) => {
     try {
+      // Ensure required fields are present
+      if (!config.service_name || !config.api_key_name) {
+        throw new Error('Service name and API key name are required');
+      }
+      
       const { data, error } = await supabase
         .from('api_key_configurations')
         .insert({
-          ...config,
+          service_name: config.service_name,
+          api_key_name: config.api_key_name,
           is_active: config.is_active ?? true,
-          metadata: config.metadata ?? {},
+          metadata: config.metadata || {}
         })
         .select()
         .single();
         
       if (error) throw new Error(error.message);
       
+      // Process the response
+      const processedData = {
+        ...data,
+        metadata: data.metadata ? (typeof data.metadata === 'string' ? JSON.parse(data.metadata) : data.metadata) : {}
+      } as ApiKeyConfiguration;
+      
       // Update local state
-      setApiKeys(prev => [...prev, data as ApiKeyConfiguration]);
+      setApiKeys(prev => [...prev, processedData]);
       
       toast({
         title: 'Success',
         description: 'API key configuration created successfully.',
       });
       
-      return data as ApiKeyConfiguration;
+      return processedData;
     } catch (err) {
       console.error('Error creating API key configuration:', err);
       toast({
@@ -161,9 +188,14 @@ export const useApiKeyConfig = (): UseApiKeyConfigResult => {
         
       if (error) throw new Error(error.message);
       
-      // Update local state
+      // Update local state with proper type handling
+      const processedData = {
+        ...data,
+        metadata: data.metadata ? (typeof data.metadata === 'string' ? JSON.parse(data.metadata) : data.metadata) : {}
+      } as ApiKeyConfiguration;
+      
       setApiKeys(prev => 
-        prev.map(key => key.id === id ? data as ApiKeyConfiguration : key)
+        prev.map(key => key.id === id ? processedData : key)
       );
       
       toast({

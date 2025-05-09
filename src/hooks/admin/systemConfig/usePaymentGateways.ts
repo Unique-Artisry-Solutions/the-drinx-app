@@ -32,7 +32,14 @@ export const usePaymentGateways = (): UsePaymentGatewaysResult => {
         .order('gateway_name');
         
       if (error) throw new Error(error.message);
-      setPaymentGateways(data || []);
+      
+      // Process the data to ensure configuration is properly formatted
+      const processedData = (data || []).map(item => ({
+        ...item,
+        configuration: item.configuration ? (typeof item.configuration === 'string' ? JSON.parse(item.configuration) : item.configuration) : {}
+      })) as PaymentGatewayConfig[];
+      
+      setPaymentGateways(processedData);
     } catch (err) {
       console.error('Error fetching payment gateways:', err);
       setError(err instanceof Error ? err.message : 'Failed to load payment gateways');
@@ -60,9 +67,15 @@ export const usePaymentGateways = (): UsePaymentGatewaysResult => {
         
       if (error) throw new Error(error.message);
       
+      // Process the response
+      const processedData = {
+        ...data,
+        configuration: data.configuration ? (typeof data.configuration === 'string' ? JSON.parse(data.configuration) : data.configuration) : {}
+      } as PaymentGatewayConfig;
+      
       // Update local state
       setPaymentGateways(prev => 
-        prev.map(gateway => gateway.id === id ? data as PaymentGatewayConfig : gateway)
+        prev.map(gateway => gateway.id === id ? processedData : gateway)
       );
       
       toast({
@@ -70,7 +83,7 @@ export const usePaymentGateways = (): UsePaymentGatewaysResult => {
         description: 'Payment gateway updated successfully.',
       });
       
-      return data as PaymentGatewayConfig;
+      return processedData;
     } catch (err) {
       console.error('Error updating payment gateway:', err);
       toast({
@@ -84,10 +97,15 @@ export const usePaymentGateways = (): UsePaymentGatewaysResult => {
 
   const createPaymentGateway = async (gateway: Partial<PaymentGatewayConfig>) => {
     try {
+      // Ensure gateway_name is provided
+      if (!gateway.gateway_name) {
+        throw new Error('Gateway name is required');
+      }
+      
       const { data, error } = await supabase
         .from('payment_gateway_configs')
         .insert({
-          ...gateway,
+          gateway_name: gateway.gateway_name,
           is_active: gateway.is_active ?? true,
           test_mode: gateway.test_mode ?? true,
           configuration: gateway.configuration ?? {},
@@ -97,15 +115,21 @@ export const usePaymentGateways = (): UsePaymentGatewaysResult => {
         
       if (error) throw new Error(error.message);
       
+      // Process the response
+      const processedData = {
+        ...data,
+        configuration: data.configuration ? (typeof data.configuration === 'string' ? JSON.parse(data.configuration) : data.configuration) : {}
+      } as PaymentGatewayConfig;
+      
       // Update local state
-      setPaymentGateways(prev => [...prev, data as PaymentGatewayConfig]);
+      setPaymentGateways(prev => [...prev, processedData]);
       
       toast({
         title: 'Success',
         description: 'Payment gateway created successfully.',
       });
       
-      return data as PaymentGatewayConfig;
+      return processedData;
     } catch (err) {
       console.error('Error creating payment gateway:', err);
       toast({
@@ -163,14 +187,20 @@ export const usePaymentGateways = (): UsePaymentGatewaysResult => {
         
       if (error) throw new Error(error.message);
       
+      // Process the response
+      const processedData = {
+        ...data,
+        configuration: data.configuration ? (typeof data.configuration === 'string' ? JSON.parse(data.configuration) : data.configuration) : {}
+      } as PaymentGatewayConfig;
+      
       // Update local state
       setPaymentGateways(prev => 
-        prev.map(g => g.id === id ? data as PaymentGatewayConfig : g)
+        prev.map(g => g.id === id ? processedData : g)
       );
       
       toast({
         title: 'Success',
-        description: `Test mode ${data.test_mode ? 'enabled' : 'disabled'} successfully.`,
+        description: `Test mode ${processedData.test_mode ? 'enabled' : 'disabled'} successfully.`,
       });
       
       return true;

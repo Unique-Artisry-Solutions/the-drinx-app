@@ -31,7 +31,7 @@ export const useFeatureToggles = (): UseFeatureTogglesResult => {
         .order('name');
         
       if (error) throw new Error(error.message);
-      setFeatureToggles(data || []);
+      setFeatureToggles(data as FeatureToggle[] || []);
     } catch (err) {
       console.error('Error fetching feature toggles:', err);
       setError(err instanceof Error ? err.message : 'Failed to load feature toggles');
@@ -96,10 +96,16 @@ export const useFeatureToggles = (): UseFeatureTogglesResult => {
 
   const createFeatureToggle = async (toggle: Partial<FeatureToggle>) => {
     try {
+      // Make sure name is provided
+      if (!toggle.name) {
+        throw new Error('Feature name is required');
+      }
+      
       const { data, error } = await supabase
         .from('feature_flags')
         .insert({
-          ...toggle,
+          name: toggle.name,
+          description: toggle.description,
           status: toggle.status ?? false
         })
         .select()

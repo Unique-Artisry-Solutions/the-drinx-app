@@ -32,7 +32,7 @@ export const useEmailTemplates = (): UseEmailTemplatesResult => {
         .order('name');
         
       if (error) throw new Error(error.message);
-      setEmailTemplates(data || []);
+      setEmailTemplates(data as SystemEmailTemplate[] || []);
     } catch (err) {
       console.error('Error fetching email templates:', err);
       setError(err instanceof Error ? err.message : 'Failed to load email templates');
@@ -85,10 +85,18 @@ export const useEmailTemplates = (): UseEmailTemplatesResult => {
 
   const createEmailTemplate = async (template: Partial<SystemEmailTemplate>) => {
     try {
+      // Make sure all required fields are provided
+      if (!template.name || !template.subject || !template.body_html || !template.body_text) {
+        throw new Error('Name, subject, and body content are required');
+      }
+      
       const { data, error } = await supabase
         .from('email_templates')
         .insert({
-          ...template,
+          name: template.name,
+          subject: template.subject,
+          body_html: template.body_html,
+          body_text: template.body_text,
           is_active: template.is_active ?? true,
           variables: template.variables ?? [],
           last_updated_by: (await supabase.auth.getUser()).data.user?.id,
