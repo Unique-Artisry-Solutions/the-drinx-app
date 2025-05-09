@@ -6,12 +6,12 @@ import { FEATURES } from '@/lib/features/registry';
 import * as featureApi from '@/lib/features/api';
 import type { MockedFunction } from 'vitest';
 import * as authContext from '@/contexts/auth';
+import type { AuthContextType } from '@/contexts/auth/types';
+import { User } from '@supabase/supabase-js';
 
 // Mock the auth context
 vi.mock('@/contexts/auth', () => ({
-  useAuth: vi.fn(() => ({
-    user: { id: 'test-user', user_metadata: { user_type: 'individual' } }
-  }))
+  useAuth: vi.fn()
 }));
 
 // Mock the feature API module - Create properly typed mocks
@@ -25,26 +25,46 @@ const mockCheckFeatureAccess = featureApi.checkFeatureAccess as MockedFunction<t
 const mockTrackFeatureEvent = featureApi.trackFeatureEvent as MockedFunction<typeof featureApi.trackFeatureEvent>;
 const mockUseAuth = authContext.useAuth as MockedFunction<typeof authContext.useAuth>;
 
+// Helper function to create a complete mock auth context
+const createMockAuthContext = (userType: 'individual' | 'admin'): AuthContextType => {
+  const userId = userType === 'admin' ? 'admin-user' : 'test-user';
+  const email = userType === 'admin' ? 'admin@example.com' : 'test@example.com';
+  
+  const user = {
+    id: userId,
+    user_metadata: { user_type: userType },
+    app_metadata: {},
+    aud: 'authenticated',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    email,
+    phone: '',
+    confirmed_at: new Date().toISOString(),
+    last_sign_in_at: new Date().toISOString(),
+    role: '',
+    factors: null
+  } as User;
+  
+  return {
+    user,
+    session: null,
+    isLoading: false,
+    isEmailVerified: true,
+    authStable: true,
+    authError: null,
+    signIn: vi.fn().mockResolvedValue({ error: null, data: {} }),
+    signUp: vi.fn().mockResolvedValue({ error: null, data: {} }),
+    signOut: vi.fn().mockResolvedValue(undefined),
+    refreshSession: vi.fn().mockResolvedValue({ isEmailVerified: true }),
+    recoverAuthState: vi.fn().mockResolvedValue(true)
+  };
+};
+
 describe('useFeatureAccess', () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    // Reset useAuth to default mock implementation
-    mockUseAuth.mockImplementation(() => ({
-      user: { 
-        id: 'test-user', 
-        user_metadata: { user_type: 'individual' },
-        app_metadata: {},
-        aud: 'authenticated',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        email: 'test@example.com',
-        phone: '',
-        confirmed_at: new Date().toISOString(),
-        last_sign_in_at: new Date().toISOString(),
-        role: '',
-        factors: null
-      }
-    }));
+    // Reset useAuth to default mock implementation (individual user)
+    mockUseAuth.mockImplementation(() => createMockAuthContext('individual'));
   });
 
   it('should provide feature access functions', () => {
@@ -57,22 +77,7 @@ describe('useFeatureAccess', () => {
 
   it('should grant access to features for admins', () => {
     // Instead of re-mocking the module, temporarily change the implementation
-    mockUseAuth.mockImplementationOnce(() => ({
-      user: { 
-        id: 'admin-user', 
-        user_metadata: { user_type: 'admin' },
-        app_metadata: {},
-        aud: 'authenticated',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        email: 'admin@example.com',
-        phone: '',
-        confirmed_at: new Date().toISOString(),
-        last_sign_in_at: new Date().toISOString(),
-        role: '',
-        factors: null
-      }
-    }));
+    mockUseAuth.mockImplementationOnce(() => createMockAuthContext('admin'));
     
     const { result } = renderHook(() => useFeatureAccess());
     
