@@ -30,7 +30,20 @@ describe('useFeatureAccess', () => {
     vi.resetAllMocks();
     // Reset useAuth to default mock implementation
     mockUseAuth.mockImplementation(() => ({
-      user: { id: 'test-user', user_metadata: { user_type: 'individual' } }
+      user: { 
+        id: 'test-user', 
+        user_metadata: { user_type: 'individual' },
+        app_metadata: {},
+        aud: 'authenticated',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        email: 'test@example.com',
+        phone: '',
+        confirmed_at: new Date().toISOString(),
+        last_sign_in_at: new Date().toISOString(),
+        role: '',
+        factors: null
+      }
     }));
   });
 
@@ -45,7 +58,20 @@ describe('useFeatureAccess', () => {
   it('should grant access to features for admins', () => {
     // Instead of re-mocking the module, temporarily change the implementation
     mockUseAuth.mockImplementationOnce(() => ({
-      user: { id: 'admin-user', user_metadata: { user_type: 'admin' } }
+      user: { 
+        id: 'admin-user', 
+        user_metadata: { user_type: 'admin' },
+        app_metadata: {},
+        aud: 'authenticated',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        email: 'admin@example.com',
+        phone: '',
+        confirmed_at: new Date().toISOString(),
+        last_sign_in_at: new Date().toISOString(),
+        role: '',
+        factors: null
+      }
     }));
     
     const { result } = renderHook(() => useFeatureAccess());
