@@ -2,8 +2,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
-import { checkFeatureAccess, trackFeatureEvent } from '@/lib/features/api';
 import { FEATURES } from '@/lib/features/registry';
+import * as featureApi from '@/lib/features/api';
 
 // Mock the dependencies
 vi.mock('@/contexts/auth', () => ({
@@ -12,15 +12,17 @@ vi.mock('@/contexts/auth', () => ({
   }))
 }));
 
-// Create properly typed mocks
-const mockCheckFeatureAccess = vi.fn();
-const mockTrackFeatureEvent = vi.fn();
+// Mock the entire feature API module
+vi.mock('@/lib/features/api', () => {
+  return {
+    checkFeatureAccess: vi.fn(),
+    trackFeatureEvent: vi.fn(),
+  };
+});
 
-// Mock the feature API with properly typed functions
-vi.mock('@/lib/features/api', () => ({
-  checkFeatureAccess: mockCheckFeatureAccess,
-  trackFeatureEvent: mockTrackFeatureEvent,
-}));
+// Get typed references to the mocked functions
+const mockedCheckFeatureAccess = vi.mocked(featureApi.checkFeatureAccess);
+const mockedTrackFeatureEvent = vi.mocked(featureApi.trackFeatureEvent);
 
 describe('useFeatureAccess', () => {
   beforeEach(() => {
@@ -49,7 +51,7 @@ describe('useFeatureAccess', () => {
   });
 
   it('should check access for non-admin users', async () => {
-    mockCheckFeatureAccess.mockResolvedValue(true);
+    mockedCheckFeatureAccess.mockResolvedValue(true);
     
     const { result } = renderHook(() => useFeatureAccess());
     
@@ -60,7 +62,7 @@ describe('useFeatureAccess', () => {
     });
     
     expect(accessResult).toBe(true);
-    expect(mockCheckFeatureAccess).toHaveBeenCalledWith(FEATURES.BULK_MESSAGING);
+    expect(mockedCheckFeatureAccess).toHaveBeenCalledWith(FEATURES.BULK_MESSAGING);
   });
 
   it('should track feature usage', () => {
@@ -70,8 +72,7 @@ describe('useFeatureAccess', () => {
       result.current.trackFeatureUsage(FEATURES.SOCIAL_SHARING, 'click', { element: 'share-button' });
     });
     
-    // Use mock function that doesn't specify implementation
-    expect(mockTrackFeatureEvent).toHaveBeenCalledWith(
+    expect(mockedTrackFeatureEvent).toHaveBeenCalledWith(
       FEATURES.SOCIAL_SHARING,
       'click',
       { element: 'share-button' }
