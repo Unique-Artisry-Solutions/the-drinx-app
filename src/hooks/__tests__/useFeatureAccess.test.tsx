@@ -73,13 +73,12 @@ describe('useFeatureAccess', () => {
     const { result } = renderHook(() => useFeatureAccess());
     
     act(() => {
-      result.current.trackFeatureUsage(FEATURES.SOCIAL_SHARING, 'click', { element: 'share-button' });
+      result.current.trackFeatureUsage(FEATURES.SOCIAL_SHARING, 'click');
     });
     
     expect(mockTrackFeatureEvent).toHaveBeenCalledWith(
       FEATURES.SOCIAL_SHARING,
-      'click',
-      { element: 'share-button' }
+      'click'
     );
   });
 
