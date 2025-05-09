@@ -13,6 +13,20 @@ const FeatureAccessMonitoringPage: React.FC = () => {
   const { trackPage } = useAnalytics();
   const [activeTab, setActiveTab] = useState<string>('metrics');
   
+  // Mock props needed for FeatureAnalyticsTab
+  const analyticsTabProps = {
+    settings: [],
+    isLoading: false,
+    editingSettingId: null,
+    editValue: '',
+    changeReason: '',
+    onEditClick: (settingId: string, currentValue: any) => {},
+    onSaveClick: (settingId: string, isProtected: boolean) => {},
+    onCancelClick: () => {},
+    setEditValue: (value: any) => {},
+    setChangeReason: (reason: string) => {}
+  };
+  
   useEffect(() => {
     trackPage('admin_feature_access_monitoring');
   }, [trackPage]);
@@ -59,7 +73,7 @@ const FeatureAccessMonitoringPage: React.FC = () => {
           </TabsContent>
           
           <TabsContent value="analytics" className={activeTab === 'analytics' ? 'block' : 'hidden'}>
-            <FeatureAnalyticsTab />
+            <FeatureAnalyticsTab {...analyticsTabProps} />
           </TabsContent>
           
           <TabsContent value="segments" className={activeTab === 'segments' ? 'block' : 'hidden'}>
