@@ -2,18 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import { useSystemConfiguration } from '@/hooks/admin/useSystemConfiguration';
 import Layout from '@/components/Layout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent } from '@/components/ui/tabs';
+import { Card, CardContent } from '@/components/ui/card';
+import { Tabs } from '@/components/ui/tabs';
 import { Spinner } from '@/components/ui/spinner';
 import ConfigurationTabs from '@/components/admin/systemConfiguration/ConfigurationTabs';
 import { updateSystemSetting } from '@/lib/admin';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowDown, BarChart3 } from 'lucide-react';
-import { SystemSetting } from '@/types/SupabaseTables';
-import FeatureTogglesTab from '@/components/admin/systemConfiguration/tabs/FeatureTogglesTab';
-import FeatureTierMappingTab from '@/components/admin/systemConfiguration/tabs/FeatureTierMappingTab';
-import FeatureAnalyticsTab from '@/components/admin/systemConfiguration/tabs/FeatureAnalyticsTab';
 
 const SystemConfigurationPage = () => {
   const { settings, isLoading, fetchSettings } = useSystemConfiguration();
@@ -23,26 +17,16 @@ const SystemConfigurationPage = () => {
   const [changeReason, setChangeReason] = useState('');
   const { toast } = useToast();
   
-  const settingsForCategory = settings.filter(setting => {
-    switch (category) {
-      case 'general':
-        return setting.category === 'general';
-      case 'email':
-        return setting.category === 'email';
-      case 'security':
-        return setting.category === 'security';
-      case 'api':
-        return setting.category === 'api';
-      case 'payment':
-        return setting.category === 'payment';
-      default:
-        return false;
-    }
-  });
+  const settingsForCategory = settings.filter(setting => setting.category === category);
+
+  // Fetch settings when category changes
+  useEffect(() => {
+    fetchSettings();
+  }, [category, fetchSettings]);
 
   const handleEditClick = (settingId: string, currentValue: any) => {
     setEditingSettingId(settingId);
-    setEditValue(typeof currentValue === 'string' ? currentValue : JSON.stringify(currentValue));
+    setEditValue(typeof currentValue === 'string' ? currentValue : JSON.stringify(currentValue, null, 2));
     setChangeReason('');
   };
 
@@ -98,7 +82,7 @@ const SystemConfigurationPage = () => {
       toast({
         variant: 'destructive',
         title: 'Update failed',
-        description: 'There was an error updating the setting.',
+        description: error instanceof Error ? error.message : 'There was an error updating the setting.',
       });
     }
   };

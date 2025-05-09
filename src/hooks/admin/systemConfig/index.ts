@@ -39,25 +39,36 @@ export const useSystemConfiguration = (options: UseSystemConfigurationOptions = 
   const {
     emailTemplates,
     fetchEmailTemplates,
-    updateEmailTemplate
+    updateEmailTemplate,
+    createEmailTemplate,
+    deleteEmailTemplate,
+    previewEmailTemplate
   } = useEmailTemplates();
 
   const {
     apiKeys,
     fetchApiKeyConfigurations,
-    updateApiKeyConfiguration
+    updateApiKeyConfiguration,
+    createApiKeyConfiguration,
+    deleteApiKeyConfiguration,
+    verifyApiKey
   } = useApiKeyConfig();
 
   const {
     paymentGateways,
     fetchPaymentGateways,
-    updatePaymentGateway
+    updatePaymentGateway,
+    createPaymentGateway,
+    deletePaymentGateway,
+    toggleTestMode
   } = usePaymentGateways();
 
   const {
     featureToggles,
     fetchFeatureToggles,
-    updateFeatureToggle
+    updateFeatureToggle,
+    createFeatureToggle,
+    deleteFeatureToggle
   } = useFeatureToggles();
 
   // Setup realtime updates
@@ -72,11 +83,10 @@ export const useSystemConfiguration = (options: UseSystemConfigurationOptions = 
     
     try {
       await fetchSettings();
-      // These are placeholders and would be implemented as actual tables exist
-      // await fetchEmailTemplates();
-      // await fetchApiKeyConfigurations();
-      // await fetchPaymentGateways();
-      // await fetchFeatureToggles();
+      await fetchEmailTemplates();
+      await fetchApiKeyConfigurations();
+      await fetchPaymentGateways();
+      await fetchFeatureToggles();
       await fetchAuditLogs();
     } catch (err) {
       console.error('Error fetching all configuration data:', err);
@@ -127,18 +137,29 @@ export const useSystemConfiguration = (options: UseSystemConfigurationOptions = 
     // Email template operations
     fetchEmailTemplates,
     updateEmailTemplate,
+    createEmailTemplate,
+    deleteEmailTemplate,
+    previewEmailTemplate,
     
     // API key operations
     fetchApiKeyConfigurations,
     updateApiKeyConfiguration,
+    createApiKeyConfiguration,
+    deleteApiKeyConfiguration,
+    verifyApiKey,
     
     // Payment gateway operations
     fetchPaymentGateways,
     updatePaymentGateway,
+    createPaymentGateway,
+    deletePaymentGateway,
+    toggleTestMode,
     
     // Feature toggle operations
     fetchFeatureToggles,
     updateFeatureToggle,
+    createFeatureToggle,
+    deleteFeatureToggle,
     
     // Audit log operations
     fetchAuditLogs,
@@ -146,4 +167,15 @@ export const useSystemConfiguration = (options: UseSystemConfigurationOptions = 
     // Convenience methods
     fetchAllConfigData
   };
+};
+
+// Re-export individual hooks for direct usage
+export {
+  useSystemSettings,
+  useAuditLogs,
+  useEmailTemplates,
+  useApiKeyConfig,
+  usePaymentGateways,
+  useFeatureToggles,
+  useRealtimeUpdates
 };
