@@ -1,6 +1,9 @@
 
 import React from 'react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
+import { Card, CardContent } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Spinner } from '@/components/ui/spinner';
 import { SystemSetting } from '@/types/SupabaseTables';
 import TabNavigation from './TabNavigation';
 import GeneralSettingsTab from './tabs/GeneralSettingsTab';
@@ -11,6 +14,7 @@ import PaymentSettingsTab from './tabs/PaymentSettingsTab';
 import FeatureTogglesTab from './tabs/FeatureTogglesTab';
 import FeatureTierMappingTab from './tabs/FeatureTierMappingTab';
 import FeatureAnalyticsTab from './tabs/FeatureAnalyticsTab';
+import EmptyState from './EmptyState';
 
 interface ConfigurationTabsProps {
   category: string;
@@ -55,40 +59,65 @@ const ConfigurationTabs: React.FC<ConfigurationTabsProps> = ({
     setChangeReason,
   };
 
+  // Check if we have settings for the current category
+  const hasSettingsForCategory = settings.length > 0;
+  const isLoadingNewCategory = isLoading && !hasSettingsForCategory;
+
+  const renderTabContent = () => {
+    if (isLoadingNewCategory) {
+      return (
+        <Card>
+          <CardContent className="py-10">
+            <div className="flex justify-center items-center">
+              <Spinner size="md" />
+              <span className="ml-2">Loading settings...</span>
+            </div>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    if (!hasSettingsForCategory && !isLoading) {
+      return <EmptyState category={category} />;
+    }
+
+    return null;
+  };
+
   return (
-    <Tabs defaultValue="general" className="w-full" onValueChange={setCategory}>
+    <Tabs value={category} className="w-full" onValueChange={setCategory}>
       <TabNavigation currentCategory={category} />
 
       <TabsContent value="general" className="space-y-4">
-        <GeneralSettingsTab {...settingsTabProps} />
+        {renderTabContent() || <GeneralSettingsTab {...settingsTabProps} />}
       </TabsContent>
       
       <TabsContent value="email" className="space-y-4">
-        <EmailSettingsTab {...settingsTabProps} />
+        {renderTabContent() || <EmailSettingsTab {...settingsTabProps} />}
       </TabsContent>
       
       <TabsContent value="security" className="space-y-4">
-        <SecuritySettingsTab {...settingsTabProps} />
+        {renderTabContent() || <SecuritySettingsTab {...settingsTabProps} />}
       </TabsContent>
       
       <TabsContent value="api" className="space-y-4">
-        <ApiSettingsTab {...settingsTabProps} />
+        {renderTabContent() || <ApiSettingsTab {...settingsTabProps} />}
       </TabsContent>
       
       <TabsContent value="payment" className="space-y-4">
-        <PaymentSettingsTab {...settingsTabProps} />
+        {renderTabContent() || <PaymentSettingsTab {...settingsTabProps} />}
       </TabsContent>
       
       <TabsContent value="features" className="space-y-4">
-        <FeatureTogglesTab {...settingsTabProps} />
+        {renderTabContent() || <FeatureTogglesTab {...settingsTabProps} />}
       </TabsContent>
 
       <TabsContent value="feature-tiers" className="space-y-4">
-        <FeatureTierMappingTab {...settingsTabProps} />
+        {renderTabContent() || <FeatureTierMappingTab {...settingsTabProps} />}
       </TabsContent>
 
       <TabsContent value="feature-analytics" className="space-y-4">
-        <FeatureAnalyticsTab {...settingsTabProps} />
+        {renderTabContent() || <FeatureAnalyticsTab {...settingsTabProps} />}
       </TabsContent>
     </Tabs>
   );

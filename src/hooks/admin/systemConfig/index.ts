@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSystemSettings } from './useSystemSettings';
 import { useAuditLogs } from './useAuditLogs';
 import { useEmailTemplates } from './useEmailTemplates';
@@ -19,6 +19,7 @@ export const useSystemConfiguration = (options: UseSystemConfigurationOptions = 
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasAttemptedFetch, setHasAttemptedFetch] = useState<boolean>(false);
 
   const {
     settings,
@@ -28,7 +29,7 @@ export const useSystemConfiguration = (options: UseSystemConfigurationOptions = 
     updateSetting,
     getSettingByKey,
     getSettingValue
-  } = useSystemSettings({ category, initialFetch });
+  } = useSystemSettings({ category, initialFetch: false });
 
   const {
     auditLogs,
@@ -78,41 +79,50 @@ export const useSystemConfiguration = (options: UseSystemConfigurationOptions = 
   });
 
   // Fetch all configuration data
-  const fetchAllConfigData = async () => {
+  const fetchAllConfigData = useCallback(async () => {
+    if (isLoading) return; // Prevent concurrent fetches
+    
     setIsLoading(true);
+    setHasAttemptedFetch(true);
     
     try {
-      await fetchSettings();
-      await fetchEmailTemplates();
-      await fetchApiKeyConfigurations();
-      await fetchPaymentGateways();
-      await fetchFeatureToggles();
-      await fetchAuditLogs();
+      await Promise.all([
+        fetchSettings(),
+        fetchEmailTemplates(),
+        fetchApiKeyConfigurations(),
+        fetchPaymentGateways(),
+        fetchFeatureToggles(),
+        fetchAuditLogs()
+      ]);
     } catch (err) {
       console.error('Error fetching all configuration data:', err);
+      setError('Some configuration data could not be loaded. Please refresh the page or try again later.');
       toast({
-        title: 'Error',
-        description: 'Some configuration data could not be loaded',
+        title: 'Warning',
+        description: 'Some configuration data could not be loaded. The page will continue to function with available data.',
         variant: 'destructive'
       });
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [fetchSettings, fetchEmailTemplates, fetchApiKeyConfigurations, fetchPaymentGateways, fetchFeatureToggles, fetchAuditLogs, toast, isLoading]);
 
-  // Initial fetch
+  // Initial fetch only on component mount, not on every render
   useEffect(() => {
-    if (initialFetch) {
+    if (initialFetch && !hasAttemptedFetch) {
+      // Only fetch settings initially (others will be fetched on demand)
       fetchSettings();
     }
-  }, [category, initialFetch]);
+  }, [initialFetch, fetchSettings, hasAttemptedFetch]);
 
+  // Update global error state when individual errors occur
   useEffect(() => {
     if (settingsError) {
       setError(settingsError);
     }
   }, [settingsError]);
 
+  // Update global loading state when individual loadings change
   useEffect(() => {
     setIsLoading(settingsLoading || auditLogsLoading);
   }, [settingsLoading, auditLogsLoading]);
@@ -127,6 +137,7 @@ export const useSystemConfiguration = (options: UseSystemConfigurationOptions = 
     auditLogs,
     isLoading,
     error,
+    hasAttemptedFetch,
     
     // Setting operations
     fetchSettings,

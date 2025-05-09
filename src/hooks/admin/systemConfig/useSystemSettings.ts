@@ -1,8 +1,9 @@
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { SystemSetting } from '@/types/SupabaseTables';
+import { useRetry } from '@/hooks/useRetry';
 
 interface UseSystemSettingsOptions {
   category?: string;
@@ -14,39 +15,48 @@ export const useSystemSettings = (options: UseSystemSettingsOptions = {}) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const { executeWithRetry } = useRetry({ maxAttempts: 3, baseDelay: 1000 });
 
   const { category, initialFetch = true } = options;
 
   // Fetch system settings
-  const fetchSettings = async () => {
+  const fetchSettings = useCallback(async () => {
+    if (isLoading) return; // Prevent concurrent fetches
+    
     setIsLoading(true);
     setError(null);
     
     try {
-      let query = supabase
-        .from('system_settings')
-        .select('*');
+      const fetchData = async () => {
+        let query = supabase
+          .from('system_settings')
+          .select('*');
+          
+        if (category) {
+          query = query.eq('category', category);
+        }
         
-      if (category) {
-        query = query.eq('category', category);
-      }
+        const { data, error } = await query.order('category', { ascending: true });
+        
+        if (error) throw error;
+        return data as SystemSetting[];
+      };
       
-      const { data, error } = await query.order('category', { ascending: true });
-      
-      if (error) throw new Error(error.message);
-      setSettings(data as SystemSetting[]);
+      // Use the retry mechanism
+      const data = await executeWithRetry(fetchData);
+      setSettings(data);
     } catch (err) {
       console.error('Error fetching system settings:', err);
       setError(err instanceof Error ? err.message : 'Failed to load system settings');
       toast({
         title: 'Error',
-        description: 'Failed to load system settings. Please try again.',
+        description: 'Failed to load system settings. We will automatically retry.',
         variant: 'destructive'
       });
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [category, toast, executeWithRetry, isLoading]);
 
   // Update a system setting
   const updateSetting = async (id: string, value: any, reason?: string) => {

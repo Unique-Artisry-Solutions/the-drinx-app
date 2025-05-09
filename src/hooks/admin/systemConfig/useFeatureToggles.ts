@@ -1,8 +1,9 @@
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { FeatureToggle } from '@/types/SupabaseTables';
+import { useRetry } from '@/hooks/useRetry';
 
 interface UseFeatureTogglesResult {
   featureToggles: FeatureToggle[];
@@ -19,31 +20,39 @@ export const useFeatureToggles = (): UseFeatureTogglesResult => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const { executeWithRetry } = useRetry({ maxAttempts: 3, baseDelay: 1000 });
 
-  const fetchFeatureToggles = async () => {
+  const fetchFeatureToggles = useCallback(async () => {
+    if (isLoading) return; // Prevent concurrent fetches
+    
     setIsLoading(true);
     setError(null);
     
     try {
-      const { data, error } = await supabase
-        .from('feature_flags')
-        .select('*')
-        .order('name');
-        
-      if (error) throw new Error(error.message);
-      setFeatureToggles(data as FeatureToggle[] || []);
+      const fetchData = async () => {
+        const { data, error } = await supabase
+          .from('feature_flags')
+          .select('*')
+          .order('name');
+          
+        if (error) throw new Error(error.message);
+        return data as FeatureToggle[] || [];
+      };
+      
+      const data = await executeWithRetry(fetchData);
+      setFeatureToggles(data);
     } catch (err) {
       console.error('Error fetching feature toggles:', err);
       setError(err instanceof Error ? err.message : 'Failed to load feature toggles');
       toast({
         title: 'Error',
-        description: 'Failed to load feature toggles. Please try again.',
+        description: 'Failed to load feature toggles. We will automatically retry.',
         variant: 'destructive'
       });
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [toast, executeWithRetry, isLoading]);
 
   const updateFeatureToggle = async (id: string, updates: Partial<FeatureToggle>) => {
     try {

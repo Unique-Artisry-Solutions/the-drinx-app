@@ -5,24 +5,48 @@ import Layout from '@/components/Layout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs } from '@/components/ui/tabs';
 import { Spinner } from '@/components/ui/spinner';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { RefreshCw } from 'lucide-react';
 import ConfigurationTabs from '@/components/admin/systemConfiguration/ConfigurationTabs';
 import { updateSystemSetting } from '@/lib/admin';
 import { useToast } from '@/hooks/use-toast';
 
 const SystemConfigurationPage = () => {
-  const { settings, isLoading, fetchSettings } = useSystemConfiguration();
+  const { 
+    settings, 
+    isLoading, 
+    error, 
+    fetchSettings, 
+    hasAttemptedFetch 
+  } = useSystemConfiguration({ initialFetch: true });
+  
   const [category, setCategory] = useState('general');
   const [editingSettingId, setEditingSettingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState<string>('');
   const [changeReason, setChangeReason] = useState('');
+  const [retryCount, setRetryCount] = useState(0);
   const { toast } = useToast();
   
   const settingsForCategory = settings.filter(setting => setting.category === category);
+  const hasSettings = settings.length > 0;
 
-  // Fetch settings when category changes
+  // Only fetch settings when the component mounts, not on every render
   useEffect(() => {
+    // This effect runs only once when the component mounts
+    if (!hasAttemptedFetch) {
+      fetchSettings();
+    }
+  }, [fetchSettings, hasAttemptedFetch]);
+
+  const handleRefresh = () => {
     fetchSettings();
-  }, [category, fetchSettings]);
+    setRetryCount(prev => prev + 1);
+    toast({
+      title: 'Refreshing',
+      description: 'Fetching the latest configuration settings...',
+    });
+  };
 
   const handleEditClick = (settingId: string, currentValue: any) => {
     setEditingSettingId(settingId);
@@ -101,31 +125,76 @@ const SystemConfigurationPage = () => {
     setChangeReason,
   };
 
+  const renderContent = () => {
+    if (isLoading && !hasSettings) {
+      return (
+        <Card>
+          <CardContent className="py-10">
+            <div className="flex flex-col justify-center items-center gap-4">
+              <Spinner size="lg" />
+              <p className="text-muted-foreground">Loading system configuration...</p>
+            </div>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    if (error) {
+      return (
+        <Card>
+          <CardContent className="py-10">
+            <Alert variant="destructive" className="mb-4">
+              <AlertTitle>Error loading settings</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+            <div className="flex justify-center">
+              <Button 
+                variant="outline" 
+                onClick={handleRefresh}
+                className="flex items-center gap-2"
+              >
+                <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} />
+                Retry {retryCount > 0 ? `(${retryCount})` : ''}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    return (
+      <ConfigurationTabs
+        category={category}
+        setCategory={setCategory}
+        {...settingsTabProps}
+      />
+    );
+  };
+
   return (
     <Layout>
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">System Configuration</h1>
-          <p className="text-muted-foreground">
-            Manage system-wide settings and configurations
-          </p>
+        <div className="mb-8 flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">System Configuration</h1>
+            <p className="text-muted-foreground">
+              Manage system-wide settings and configurations
+            </p>
+          </div>
+          {hasSettings && (
+            <Button 
+              variant="outline" 
+              onClick={handleRefresh} 
+              disabled={isLoading}
+              className="flex items-center gap-2"
+            >
+              <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} />
+              Refresh
+            </Button>
+          )}
         </div>
 
-        {isLoading ? (
-          <Card>
-            <CardContent className="py-10">
-              <div className="flex justify-center items-center">
-                <Spinner size="lg" />
-              </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <ConfigurationTabs
-            category={category}
-            setCategory={setCategory}
-            {...settingsTabProps}
-          />
-        )}
+        {renderContent()}
       </div>
     </Layout>
   );

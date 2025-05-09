@@ -25,13 +25,16 @@ export const useRetry = (config: RetryConfig = {}) => {
         throw error;
       }
 
+      // Calculate exponential backoff with jitter
       const delay = Math.min(
         Math.pow(2, attempt) * baseDelay + Math.random() * 1000,
         maxDelay
       );
 
+      // Wait before retrying
       await new Promise(resolve => setTimeout(resolve, delay));
       
+      // Recursive retry with incremented attempt count
       return executeWithRetry(operation, attempt + 1);
     }
   }, [maxAttempts, baseDelay, maxDelay]);
