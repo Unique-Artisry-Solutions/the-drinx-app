@@ -7,7 +7,7 @@ import Phase6Testing from '../Phase6Testing';
 describe('Phase6Testing', () => {
   it('renders the component title', () => {
     render(<Phase6Testing />);
-    expect(screen.getByText(/Phase 6: Testing and Rollout/)).toBeInTheDocument();
+    expect(screen.getByText("Phase 6: Testing and Rollout")).toBeInTheDocument();
   });
 
   it('displays all test categories', () => {

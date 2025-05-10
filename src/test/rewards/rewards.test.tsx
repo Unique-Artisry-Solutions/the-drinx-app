@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { render } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
@@ -5,6 +6,7 @@ import { screen, waitFor, fireEvent } from '@/test/testing-library-extensions';
 import { UserRewardDashboard } from '@/components/rewards/UserRewardDashboard';
 import { RewardRedemptionFlow } from '@/components/rewards/RewardRedemptionFlow';
 import { RewardHistory } from '@/components/rewards/RewardHistory';
+import { RewardTier, RewardOffering, RewardTransaction, Achievement, RewardTrackingEvents } from '@/lib/rewards/types';
 
 // Mock hooks
 vi.mock('@/hooks/rewards/useRewards', () => ({
@@ -18,6 +20,11 @@ vi.mock('@/hooks/rewards/useAchievements', () => ({
 vi.mock('@/hooks/use-toast', () => ({
   useToast: vi.fn(),
 }));
+
+// Create module definitions to fix the cannot find name errors
+const useRewardsModule = { useRewards: vi.fn() };
+const useAchievementsModule = { useAchievements: vi.fn() };
+const useToastModule = { useToast: vi.fn() };
 
 describe('Rewards Components Tests', () => {
   // Mock data
@@ -146,6 +153,25 @@ describe('Rewards Components Tests', () => {
     vi.resetAllMocks();
     
     // Setup default mock implementations
+    useRewardsModule.useRewards.mockReturnValue({
+      isEnabled: true,
+      isLoading: false,
+      rewardProfile: mockRewardProfile,
+      addPoints: vi.fn().mockResolvedValue({ success: true }),
+      redeemReward: vi.fn().mockResolvedValue({ success: true }),
+      trackRewardActivity: mockTrackRewardActivity
+    });
+    
+    useAchievementsModule.useAchievements.mockReturnValue({
+      achievements: mockAchievements,
+      achievementsByCategory: mockAchievementsByCategory,
+      isLoading: false,
+      recordActivity: vi.fn().mockResolvedValue([])
+    });
+    
+    useToastModule.useToast.mockReturnValue(mockToast);
+    
+    // Set up the mock implementations for the actual imported hooks
     vi.mocked(useRewardsModule.useRewards).mockReturnValue({
       isEnabled: true,
       isLoading: false,

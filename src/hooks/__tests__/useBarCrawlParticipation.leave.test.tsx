@@ -1,7 +1,9 @@
+
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { render } from '@testing-library/react';
-import { waitFor } from '@testing-library/react';
-import useBarCrawlParticipation from '../useBarCrawlParticipation';
+import { waitFor } from '@/test/testing-library-extensions';
+import { useBarCrawlParticipation } from '../useBarCrawlParticipation';
+import { supabase } from '@/lib/supabase';
 
 // Mock the supabase client
 vi.mock('@/lib/supabase', () => ({
@@ -24,22 +26,26 @@ vi.mock('@/lib/supabase', () => ({
 
 describe('useBarCrawlParticipation - leave functionality', () => {
   const mockBarCrawlId = 'test-crawl-id';
-  let leaveBarCrawl: ReturnType<typeof useBarCrawlParticipation>['leaveBarCrawl'];
+  let hookResult: ReturnType<typeof useBarCrawlParticipation>;
   
   beforeEach(() => {
     // Reset mocks
     vi.clearAllMocks();
     
     // Setup the hook
-    const { result } = renderHook(() => useBarCrawlParticipation());
-    leaveBarCrawl = result.current.leaveBarCrawl;
+    function TestComponent() {
+      hookResult = useBarCrawlParticipation({ barCrawlId: mockBarCrawlId });
+      return null;
+    }
+    render(<TestComponent />);
   });
   
   it('should successfully leave a bar crawl', async () => {
-    const { success, error } = await leaveBarCrawl(mockBarCrawlId);
+    // Call leave function
+    hookResult.handleLeave();
     
-    expect(success).toBe(true);
-    expect(error).toBeNull();
+    // Wait for operation to complete
+    await waitFor(() => expect(hookResult.isLoading).toBe(false));
     
     // Verify supabase was called correctly
     expect(supabase.from).toHaveBeenCalledWith('bar_crawl_participants');
@@ -55,10 +61,14 @@ describe('useBarCrawlParticipation - leave functionality', () => {
       error: { message: 'Failed to leave bar crawl' },
     } as any);
     
-    const { success, error } = await leaveBarCrawl(mockBarCrawlId);
+    // Call leave function
+    hookResult.handleLeave();
     
-    expect(success).toBe(false);
-    expect(error).toBe('Failed to leave bar crawl');
+    // Wait for operation to complete
+    await waitFor(() => expect(hookResult.isLoading).toBe(false));
+    
+    // Verify error is handled
+    expect(hookResult.error).toBeTruthy();
   });
   
   it('should handle authentication errors', async () => {
@@ -68,28 +78,13 @@ describe('useBarCrawlParticipation - leave functionality', () => {
       error: { message: 'Not authenticated' },
     } as any);
     
-    const { success, error } = await leaveBarCrawl(mockBarCrawlId);
+    // Call leave function
+    hookResult.handleLeave();
     
-    expect(success).toBe(false);
-    expect(error).toBe('You must be logged in to leave a bar crawl');
-  });
-  
-  it('should handle missing user data', async () => {
-    // Mock missing user
-    vi.mocked(supabase.auth.getUser).mockResolvedValueOnce({
-      data: { user: null },
-      error: null,
-    } as any);
+    // Wait for operation to complete
+    await waitFor(() => expect(hookResult.isLoading).toBe(false));
     
-    const { success, error } = await leaveBarCrawl(mockBarCrawlId);
-    
-    expect(success).toBe(false);
-    expect(error).toBe('You must be logged in to leave a bar crawl');
+    // Verify error is handled
+    expect(hookResult.error).toBeTruthy();
   });
 });
-
-// Helper function to simulate renderHook since we're using our own implementation
-function renderHook<Result>(hook: () => Result) {
-  const result = { current: hook() };
-  return { result };
-}

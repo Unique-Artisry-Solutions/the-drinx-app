@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { render } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -58,7 +59,7 @@ describe('FeatureGate', () => {
       </FeatureGate>
     );
 
-    expect(screen.getByText(/This feature requires a subscription upgrade/i)).toBeInTheDocument();
+    expect(screen.getByText("This feature requires a subscription upgrade")).toBeInTheDocument();
     expect(screen.getByText('View Pricing')).toBeInTheDocument();
     expect(screen.queryByText('Protected Content')).not.toBeInTheDocument();
   });
@@ -74,7 +75,7 @@ describe('FeatureGate', () => {
     );
 
     expect(screen.queryByText('Protected Content')).not.toBeInTheDocument();
-    expect(screen.queryByText(/This feature requires a subscription upgrade/i)).not.toBeInTheDocument();
+    expect(screen.queryByText("This feature requires a subscription upgrade")).not.toBeInTheDocument();
     expect(screen.queryByText('View Pricing')).not.toBeInTheDocument();
   });
 });

@@ -12,11 +12,33 @@ import { render } from '@testing-library/react';
 
 // Add screen object with test utility functions
 export const screen = {
-  getByText: (content: string) => document.querySelector(`*:contains(${content})`) as HTMLElement,
-  getAllByText: (content: string) => Array.from(document.querySelectorAll(`*:contains(${content})`)) as HTMLElement[],
+  getByText: (content: string | RegExp) => {
+    if (content instanceof RegExp) {
+      // Find by regex
+      const elements = Array.from(document.querySelectorAll('*'));
+      const match = elements.find(el => content.test(el.textContent || ''));
+      return match as HTMLElement;
+    }
+    return document.querySelector(`*:contains(${content})`) as HTMLElement;
+  },
+  getAllByText: (content: string | RegExp) => {
+    if (content instanceof RegExp) {
+      // Find all by regex
+      const elements = Array.from(document.querySelectorAll('*'));
+      return elements.filter(el => content.test(el.textContent || '')) as HTMLElement[];
+    }
+    return Array.from(document.querySelectorAll(`*:contains(${content})`)) as HTMLElement[];
+  },
   getByTestId: (id: string) => document.querySelector(`[data-testid="${id}"]`) as HTMLElement,
   getAllByTestId: (id: string) => Array.from(document.querySelectorAll(`[data-testid="${id}"]`)) as HTMLElement[],
-  queryByText: (content: string) => document.querySelector(`*:contains(${content})`) as HTMLElement | null,
+  queryByText: (content: string | RegExp) => {
+    if (content instanceof RegExp) {
+      const elements = Array.from(document.querySelectorAll('*'));
+      const match = elements.find(el => content.test(el.textContent || ''));
+      return match as HTMLElement || null;
+    }
+    return document.querySelector(`*:contains(${content})`) as HTMLElement | null;
+  },
   queryByTestId: (id: string) => document.querySelector(`[data-testid="${id}"]`) as HTMLElement | null,
   getByRole: (role: string) => document.querySelector(`[role="${role}"]`) as HTMLElement,
   queryByRole: (role: string) => document.querySelector(`[role="${role}"]`) as HTMLElement | null,
@@ -57,16 +79,18 @@ export const fireEvent = {
 export { render };
 
 // Export renderHook
-export const renderHook = <Result, Props>(hook: (props: Props) => Result) => {
+export const renderHook = <Result, Props>(hook: (props: Props) => Result, options?: any) => {
   let result: Result;
   
-  const TestComponent = (props: Props) => {
+  function TestComponent(props: Props) {
     result = hook(props);
     return null;
-  };
+  }
+  
+  render(<TestComponent {...(options?.initialProps || {} as any)} />);
   
   return {
-    result: { current: {} } as { current: Result },
-    rerender: () => {}
+    result: { current: result } as { current: Result },
+    rerender: (newProps: Props) => render(<TestComponent {...newProps} />)
   };
 };
