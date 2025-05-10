@@ -1,10 +1,9 @@
-
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { FeatureGate, useFeatureToggle } from '@/components/FeatureGate';
 import { FEATURES } from '@/lib/features/registry';
-import { renderHook } from '@testing-library/react';
+import { screen, renderHook } from '@/test/testing-library-extensions';
 
 // Mock the features context
 vi.mock('@/contexts/FeatureContext', () => ({

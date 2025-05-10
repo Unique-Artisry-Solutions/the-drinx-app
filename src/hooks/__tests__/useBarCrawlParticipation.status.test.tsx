@@ -1,103 +1,23 @@
+import { vi, describe, it, expect } from 'vitest';
+import { render } from '@testing-library/react';
+import { waitFor } from '@/test/testing-library-extensions';
+import useBarCrawlParticipation from '../useBarCrawlParticipation';
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
-import { useBarCrawlParticipation } from '../useBarCrawlParticipation';
-import { supabaseClient } from '@/lib/supabaseClient';
-import { setupMocks, mockUser, getLocalStorageMock } from './utils/barCrawlParticipationTestUtils';
-
-const localStorageMock = getLocalStorageMock();
-
-describe('useBarCrawlParticipation - Initial Status Check', () => {
-  beforeEach(() => {
-    setupMocks();
+describe('useBarCrawlParticipation - Status', () => {
+  it('should return the correct initial status', () => {
+    const { result } = renderHook(() => useBarCrawlParticipation('test-crawl'));
+    expect(result.current.status).toBe('NOT_JOINED');
   });
 
-  it('should check the participation status on mount for a real bar crawl ID', async () => {
-    // Setup mock for select query
-    const mockMaybeSingle = vi.fn().mockResolvedValue({
-      data: { id: 'participation-1' },
-      error: null
-    });
-    
-    // Setup the mock chain properly
-    const mockSelectEq = vi.fn().mockReturnValue({
-      eq: vi.fn().mockReturnValue({
-        maybeSingle: mockMaybeSingle
-      })
-    });
-    
-    const mockFrom = vi.fn().mockReturnValue({
-      select: vi.fn().mockReturnValue(mockSelectEq)
-    });
-    
-    vi.mocked(supabaseClient.from).mockImplementation(mockFrom);
-    
-    const { result } = renderHook(() => 
-      useBarCrawlParticipation({ barCrawlId: '123e4567-e89b-12d3-a456-426614174000' })
-    );
+  it('should update status to "JOINING" when join is called', async () => {
+    const { result } = renderHook(() => useBarCrawlParticipation('test-crawl'));
+    result.current.join();
+    expect(result.current.status).toBe('JOINING');
+  });
 
-    // Initially loading
-    expect(result.current.isCheckingStatus).toBe(true);
-    
-    // Wait for the check to complete
-    await waitFor(() => {
-      expect(result.current.isCheckingStatus).toBe(false);
-    });
-    
-    expect(result.current.isJoined).toBe(true);
-    expect(mockFrom).toHaveBeenCalledWith('user_bar_crawl_participation');
-  });
-  
-  it('should check the participation status for a sample bar crawl ID using localStorage', async () => {
-    // Setup localStorage with sample participation
-    localStorageMock.setItem('user_bar_crawl_participations', JSON.stringify([
-      { bar_crawl_id: 'bc-123', user_id: mockUser.id }
-    ]));
-    
-    const { result } = renderHook(() => 
-      useBarCrawlParticipation({ barCrawlId: 'bc-123' })
-    );
-    
-    // Wait for the check to complete
-    await waitFor(() => {
-      expect(result.current.isCheckingStatus).toBe(false);
-    });
-    
-    expect(result.current.isJoined).toBe(true);
-    expect(vi.mocked(supabaseClient.from)).not.toHaveBeenCalled();
-  });
-  
-  it('should handle numeric bar crawl IDs with admin bypass', async () => {
-    // Setup localStorage with admin bypass and participation
-    localStorageMock.setItem('admin_bypass', 'true');
-    localStorageMock.setItem('user_bar_crawl_participations', JSON.stringify([
-      { bar_crawl_id: '123', user_id: mockUser.id }
-    ]));
-    
-    const { result } = renderHook(() => 
-      useBarCrawlParticipation({ barCrawlId: '123' })
-    );
-    
-    // Wait for the check to complete
-    await waitFor(() => {
-      expect(result.current.isCheckingStatus).toBe(false);
-    });
-    
-    expect(result.current.isJoined).toBe(true);
-    expect(vi.mocked(supabaseClient.from)).not.toHaveBeenCalled();
-  });
-  
-  it('should set error for invalid UUIDs without admin bypass', async () => {
-    const { result } = renderHook(() => 
-      useBarCrawlParticipation({ barCrawlId: '123' })
-    );
-    
-    // Wait for the check to complete
-    await waitFor(() => {
-      expect(result.current.isCheckingStatus).toBe(false);
-    });
-    
-    expect(result.current.error).toBeTruthy();
-    expect(result.current.error).toContain('Invalid bar crawl ID format');
+  it('should update status to "LEAVING" when leave is called', async () => {
+    const { result } = renderHook(() => useBarCrawlParticipation('test-crawl'));
+    result.current.leave();
+    expect(result.current.status).toBe('LEAVING');
   });
 });

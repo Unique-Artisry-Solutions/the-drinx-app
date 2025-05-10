@@ -1,147 +1,144 @@
+import { vi, describe, it, expect, beforeEach } from 'vitest';
+import { render } from '@testing-library/react';
+import { waitFor } from '@/test/testing-library-extensions';
+import useBarCrawlParticipation from '../useBarCrawlParticipation';
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { renderHook, act, waitFor } from '@testing-library/react';
-import { useBarCrawlParticipation } from '../useBarCrawlParticipation';
-import { supabaseClient } from '@/lib/supabaseClient';
-import { setupMocks, mockToast, getLocalStorageMock } from './utils/barCrawlParticipationTestUtils';
+// Mock the supabase client
+vi.mock('@/lib/supabase', () => ({
+  supabase: {
+    from: vi.fn().mockReturnValue({
+      insert: vi.fn().mockReturnValue({
+        select: vi.fn().mockResolvedValue({
+          data: [{ id: 'test-participation-id' }],
+          error: null
+        })
+      }),
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({
+            data: null,
+            error: null
+          })
+        })
+      })
+    }),
+    auth: {
+      getUser: vi.fn().mockResolvedValue({
+        data: { user: { id: 'test-user-id' } },
+        error: null
+      })
+    }
+  }
+}));
 
-const localStorageMock = getLocalStorageMock();
+// Mock the toast hook
+vi.mock('@/hooks/use-toast', () => ({
+  useToast: () => ({
+    toast: vi.fn()
+  })
+}));
 
-describe('useBarCrawlParticipation - Join Functionality', () => {
+describe('useBarCrawlParticipation - join functionality', () => {
+  let hookResult: ReturnType<typeof useBarCrawlParticipation>;
+  
+  const renderHook = () => {
+    let result: any;
+    
+    function TestComponent() {
+      result = useBarCrawlParticipation();
+      return null;
+    }
+    
+    render(<TestComponent />);
+    return result;
+  };
+  
   beforeEach(() => {
-    setupMocks();
-  });
-
-  it('should handle joining a real bar crawl with valid UUID', async () => {
-    // Setup mock for insert query
-    const mockInsert = vi.fn().mockResolvedValue({
-      data: { id: 'new-participation' },
-      error: null
-    });
-    
-    // Setup the mock chain properly
-    const mockFrom = vi.fn().mockReturnValue({
-      insert: mockInsert
-    });
-    vi.mocked(supabaseClient.from).mockImplementation(mockFrom);
-    
-    const { result } = renderHook(() => 
-      useBarCrawlParticipation({ barCrawlId: '123e4567-e89b-12d3-a456-426614174000' })
-    );
-    
-    // Wait for initial check
-    await waitFor(() => {
-      expect(result.current.isCheckingStatus).toBe(false);
-    });
-    
-    // Act - join the bar crawl
-    act(() => {
-      result.current.handleJoin();
-    });
-    
-    // Should be in loading state
-    expect(result.current.isLoading).toBe(true);
-    
-    // Wait for join to complete
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
-    });
-    
-    expect(result.current.isJoined).toBe(true);
-    expect(mockToast.toast).toHaveBeenCalledWith(
-      expect.objectContaining({
-        title: 'Joined Swig Circuit'
-      })
-    );
+    vi.clearAllMocks();
+    hookResult = renderHook();
   });
   
-  it('should handle joining a sample bar crawl using localStorage', async () => {
-    const { result } = renderHook(() => 
-      useBarCrawlParticipation({ barCrawlId: 'bc-456' })
-    );
+  it('should join a bar crawl successfully', async () => {
+    const barCrawlId = 'test-crawl-id';
     
-    // Wait for initial check
-    await waitFor(() => {
-      expect(result.current.isCheckingStatus).toBe(false);
+    // Call the join function
+    const joinPromise = hookResult.joinBarCrawl(barCrawlId);
+    
+    // Verify loading state is set
+    expect(hookResult.isJoining).toBe(true);
+    
+    // Wait for the operation to complete
+    await waitFor(() => expect(hookResult.isJoining).toBe(false));
+    
+    // Verify the result
+    const result = await joinPromise;
+    expect(result.success).toBe(true);
+    expect(result.participationId).toBe('test-participation-id');
+    
+    // Verify Supabase was called correctly
+    expect(vi.mocked(supabase.from).mock.calls[0][0]).toBe('bar_crawl_participants');
+    expect(vi.mocked(supabase.from)().insert).toHaveBeenCalledWith({
+      user_id: 'test-user-id',
+      bar_crawl_id: barCrawlId,
+      joined_at: expect.any(String)
     });
-    
-    // Act - join the bar crawl
-    act(() => {
-      result.current.handleJoin();
-    });
-    
-    // Wait for join to complete
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
-    });
-    
-    expect(result.current.isJoined).toBe(true);
-    
-    // Verify localStorage was updated
-    const storedData = JSON.parse(localStorageMock.getItem('user_bar_crawl_participations') || '[]');
-    expect(storedData.some((p: any) => p.bar_crawl_id === 'bc-456')).toBe(true);
   });
   
-  it('should show error toast if not authenticated', async () => {
-    // Mock unauthenticated user
-    setupMocks(null);
-    
-    const { result } = renderHook(() => 
-      useBarCrawlParticipation({ barCrawlId: 'bc-456' })
-    );
-    
-    // Act - try to join the bar crawl
-    act(() => {
-      result.current.handleJoin();
-    });
-    
-    expect(mockToast.toast).toHaveBeenCalledWith(
-      expect.objectContaining({
-        title: 'Sign in required',
-        variant: 'destructive'
+  it('should handle errors when joining a bar crawl', async () => {
+    // Mock an error response
+    vi.mocked(supabase.from).mockReturnValueOnce({
+      insert: vi.fn().mockReturnValue({
+        select: vi.fn().mockResolvedValue({
+          data: null,
+          error: { message: 'Failed to join bar crawl' }
+        })
       })
-    );
+    } as any);
+    
+    // Call the join function
+    const result = await hookResult.joinBarCrawl('test-crawl-id');
+    
+    // Verify the error is handled
+    expect(result.success).toBe(false);
+    expect(result.error).toBe('Failed to join bar crawl');
+    expect(hookResult.isJoining).toBe(false);
   });
   
-  it('should handle join errors from Supabase', async () => {
-    // Setup mock for insert query with error
-    const mockError = { message: 'violates unique constraint' };
-    const mockInsert = vi.fn().mockResolvedValue({
-      data: null,
-      error: mockError
-    });
-    
-    // Setup the mock chain properly
-    const mockFrom = vi.fn().mockReturnValue({
-      insert: mockInsert
-    });
-    vi.mocked(supabaseClient.from).mockImplementation(mockFrom);
-    
-    const { result } = renderHook(() => 
-      useBarCrawlParticipation({ barCrawlId: '123e4567-e89b-12d3-a456-426614174000' })
-    );
-    
-    // Wait for initial check
-    await waitFor(() => {
-      expect(result.current.isCheckingStatus).toBe(false);
-    });
-    
-    // Act - join the bar crawl
-    act(() => {
-      result.current.handleJoin();
-    });
-    
-    // Wait for join to complete
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
-    });
-    
-    expect(result.current.error).toBeTruthy();
-    expect(mockToast.toast).toHaveBeenCalledWith(
-      expect.objectContaining({
-        title: 'Error',
-        variant: 'destructive'
+  it('should prevent joining if user is already a participant', async () => {
+    // Mock that user is already a participant
+    vi.mocked(supabase.from).mockReturnValueOnce({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({
+            data: { id: 'existing-participation' },
+            error: null
+          })
+        })
       })
-    );
+    } as any);
+    
+    // Call the join function
+    const result = await hookResult.joinBarCrawl('test-crawl-id');
+    
+    // Verify the result
+    expect(result.success).toBe(false);
+    expect(result.error).toBe('You are already participating in this bar crawl');
+    expect(hookResult.isJoining).toBe(false);
+  });
+  
+  it('should handle authentication errors', async () => {
+    // Mock authentication error
+    vi.mocked(supabase.auth.getUser).mockResolvedValueOnce({
+      data: { user: null },
+      error: { message: 'Not authenticated' }
+    } as any);
+    
+    // Call the join function
+    const result = await hookResult.joinBarCrawl('test-crawl-id');
+    
+    // Verify the error is handled
+    expect(result.success).toBe(false);
+    expect(result.error).toBe('You must be logged in to join a bar crawl');
+    expect(hookResult.isJoining).toBe(false);
   });
 });

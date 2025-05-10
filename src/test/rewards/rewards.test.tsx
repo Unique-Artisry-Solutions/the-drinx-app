@@ -1,15 +1,10 @@
-
 import React from 'react';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
+import { screen, waitFor, fireEvent } from '@/test/testing-library-extensions';
 import { UserRewardDashboard } from '@/components/rewards/UserRewardDashboard';
 import { RewardRedemptionFlow } from '@/components/rewards/RewardRedemptionFlow';
 import { RewardHistory } from '@/components/rewards/RewardHistory';
-import * as useRewardsModule from '@/hooks/rewards/useRewards';
-import * as useAchievementsModule from '@/hooks/rewards/useAchievements';
-import * as useToastModule from '@/hooks/use-toast';
-import { RewardOffering, RewardTransaction, RewardTier, Achievement } from '@/lib/rewards/types';
-import { RewardTrackingEvents } from '@/hooks/rewards/useRewardTracking';
 
 // Mock hooks
 vi.mock('@/hooks/rewards/useRewards', () => ({

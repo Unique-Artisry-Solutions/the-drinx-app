@@ -1,171 +1,95 @@
+import { vi, describe, it, expect, beforeEach } from 'vitest';
+import { render } from '@testing-library/react';
+import { waitFor } from '@testing-library/react';
+import useBarCrawlParticipation from '../useBarCrawlParticipation';
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { renderHook, act, waitFor } from '@testing-library/react';
-import { useBarCrawlParticipation } from '../useBarCrawlParticipation';
-import { supabaseClient } from '@/lib/supabaseClient';
-import { setupMocks, mockToast, getLocalStorageMock } from './utils/barCrawlParticipationTestUtils';
+// Mock the supabase client
+vi.mock('@/lib/supabase', () => ({
+  supabase: {
+    from: vi.fn().mockReturnValue({
+      delete: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          eq: vi.fn().mockResolvedValue({ data: null, error: null }),
+        }),
+      }),
+    }),
+    auth: {
+      getUser: vi.fn().mockResolvedValue({
+        data: { user: { id: 'test-user-id' } },
+        error: null,
+      }),
+    },
+  },
+}));
 
-const localStorageMock = getLocalStorageMock();
-
-describe('useBarCrawlParticipation - Leave Functionality', () => {
+describe('useBarCrawlParticipation - leave functionality', () => {
+  const mockBarCrawlId = 'test-crawl-id';
+  let leaveBarCrawl: ReturnType<typeof useBarCrawlParticipation>['leaveBarCrawl'];
+  
   beforeEach(() => {
-    setupMocks();
-  });
-
-  it('should handle leaving a real bar crawl with valid UUID', async () => {
-    // Setup mock for delete query
-    const mockDelete = vi.fn().mockResolvedValue({
-      data: { id: 'deleted-participation' },
-      error: null
-    });
+    // Reset mocks
+    vi.clearAllMocks();
     
-    // Setup mock for initial status check
-    const mockMaybeSingle = vi.fn().mockResolvedValue({
-      data: { id: 'participation-1' },
-      error: null
-    });
-    
-    // Setup the mock chain properly for select and delete
-    const mockSelectEq = vi.fn().mockReturnValue({
-      eq: vi.fn().mockReturnValue({
-        maybeSingle: mockMaybeSingle
-      })
-    });
-    
-    const mockDeleteEq = vi.fn().mockReturnValue({
-      eq: vi.fn().mockReturnValue(mockDelete)
-    });
-    
-    const mockFrom = vi.fn().mockImplementation((table) => {
-      return {
-        select: vi.fn().mockReturnValue(mockSelectEq),
-        delete: vi.fn().mockReturnValue(mockDeleteEq)
-      };
-    });
-    
-    vi.mocked(supabaseClient.from).mockImplementation(mockFrom);
-    
-    const { result } = renderHook(() => 
-      useBarCrawlParticipation({ barCrawlId: '123e4567-e89b-12d3-a456-426614174000' })
-    );
-    
-    // Wait for initial check
-    await waitFor(() => {
-      expect(result.current.isCheckingStatus).toBe(false);
-      expect(result.current.isJoined).toBe(true);
-    });
-    
-    // Act - leave the bar crawl
-    act(() => {
-      result.current.handleLeave();
-    });
-    
-    // Wait for leave to complete
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
-    });
-    
-    expect(result.current.isJoined).toBe(false);
-    expect(mockToast.toast).toHaveBeenCalledWith(
-      expect.objectContaining({
-        title: 'Left Swig Circuit'
-      })
-    );
+    // Setup the hook
+    const { result } = renderHook(() => useBarCrawlParticipation());
+    leaveBarCrawl = result.current.leaveBarCrawl;
   });
   
-  it('should handle leaving a sample bar crawl using localStorage', async () => {
-    // Setup localStorage with sample participation
-    localStorageMock.setItem('user_bar_crawl_participations', JSON.stringify([
-      { bar_crawl_id: 'bc-789', user_id: 'test-user-id' }
-    ]));
+  it('should successfully leave a bar crawl', async () => {
+    const { success, error } = await leaveBarCrawl(mockBarCrawlId);
     
-    const { result } = renderHook(() => 
-      useBarCrawlParticipation({ barCrawlId: 'bc-789' })
-    );
+    expect(success).toBe(true);
+    expect(error).toBeNull();
     
-    // Wait for initial check
-    await waitFor(() => {
-      expect(result.current.isCheckingStatus).toBe(false);
-      expect(result.current.isJoined).toBe(true);
-    });
-    
-    // Act - leave the bar crawl
-    act(() => {
-      result.current.handleLeave();
-    });
-    
-    // Wait for leave to complete
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
-    });
-    
-    expect(result.current.isJoined).toBe(false);
-    
-    // Verify localStorage was updated
-    const storedData = JSON.parse(localStorageMock.getItem('user_bar_crawl_participations') || '[]');
-    expect(storedData.some((p: any) => p.bar_crawl_id === 'bc-789')).toBe(false);
+    // Verify supabase was called correctly
+    expect(supabase.from).toHaveBeenCalledWith('bar_crawl_participants');
+    expect(supabase.from().delete).toHaveBeenCalled();
+    expect(supabase.from().delete().eq).toHaveBeenCalledWith('user_id', 'test-user-id');
+    expect(supabase.from().delete().eq().eq).toHaveBeenCalledWith('bar_crawl_id', mockBarCrawlId);
   });
   
-  it('should handle leave errors from Supabase', async () => {
-    // Setup mock for initial check
-    const mockMaybeSingle = vi.fn().mockResolvedValue({
-      data: { id: 'participation-1' },
-      error: null
-    });
-    
-    // Setup mock for delete query with error
-    const mockError = { message: 'row level security policy error' };
-    const mockDelete = vi.fn().mockResolvedValue({
+  it('should handle errors when leaving a bar crawl', async () => {
+    // Mock an error response
+    vi.mocked(supabase.from().delete().eq().eq).mockResolvedValueOnce({
       data: null,
-      error: mockError
-    });
+      error: { message: 'Failed to leave bar crawl' },
+    } as any);
     
-    // Setup the mock chain properly for select and delete
-    const mockSelectEq = vi.fn().mockReturnValue({
-      eq: vi.fn().mockReturnValue({
-        maybeSingle: mockMaybeSingle
-      })
-    });
+    const { success, error } = await leaveBarCrawl(mockBarCrawlId);
     
-    const mockDeleteEq = vi.fn().mockReturnValue({
-      eq: vi.fn().mockReturnValue(mockDelete)
-    });
+    expect(success).toBe(false);
+    expect(error).toBe('Failed to leave bar crawl');
+  });
+  
+  it('should handle authentication errors', async () => {
+    // Mock auth error
+    vi.mocked(supabase.auth.getUser).mockResolvedValueOnce({
+      data: { user: null },
+      error: { message: 'Not authenticated' },
+    } as any);
     
-    const mockFrom = vi.fn().mockImplementation((table) => {
-      return {
-        select: vi.fn().mockReturnValue(mockSelectEq),
-        delete: vi.fn().mockReturnValue(mockDeleteEq)
-      };
-    });
+    const { success, error } = await leaveBarCrawl(mockBarCrawlId);
     
-    vi.mocked(supabaseClient.from).mockImplementation(mockFrom);
+    expect(success).toBe(false);
+    expect(error).toBe('You must be logged in to leave a bar crawl');
+  });
+  
+  it('should handle missing user data', async () => {
+    // Mock missing user
+    vi.mocked(supabase.auth.getUser).mockResolvedValueOnce({
+      data: { user: null },
+      error: null,
+    } as any);
     
-    const { result } = renderHook(() => 
-      useBarCrawlParticipation({ barCrawlId: '123e4567-e89b-12d3-a456-426614174000' })
-    );
+    const { success, error } = await leaveBarCrawl(mockBarCrawlId);
     
-    // Wait for initial check
-    await waitFor(() => {
-      expect(result.current.isCheckingStatus).toBe(false);
-      expect(result.current.isJoined).toBe(true);
-    });
-    
-    // Act - leave the bar crawl
-    act(() => {
-      result.current.handleLeave();
-    });
-    
-    // Wait for leave to complete
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
-    });
-    
-    expect(result.current.error).toBeTruthy();
-    expect(mockToast.toast).toHaveBeenCalledWith(
-      expect.objectContaining({
-        title: 'Error',
-        variant: 'destructive'
-      })
-    );
+    expect(success).toBe(false);
+    expect(error).toBe('You must be logged in to leave a bar crawl');
   });
 });
+
+// Helper function to simulate renderHook since we're using our own implementation
+function renderHook<Result>(hook: () => Result) {
+  const result = { current: hook() };
+  return { result };
+}

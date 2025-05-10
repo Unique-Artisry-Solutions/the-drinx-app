@@ -3,11 +3,11 @@ import React, { useState } from 'react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
-import Phase1Setup from "./phases/Phase1Setup";
-import Phase2Authentication from "./phases/Phase2Authentication";
-import Phase3UserExperience from "./phases/Phase3UserExperience";
-import Phase4Integration from "./phases/Phase4Integration";
-import Phase5Analysis from "./phases/Phase5Analysis";
+import Phase1Ideation from "./phases/Phase1Ideation";
+import Phase2Planning from "./phases/Phase2Planning";
+import Phase3Design from "./phases/Phase3Design";
+import Phase4Development from "./phases/Phase4Development";
+import Phase5Refinement from "./phases/Phase5Refinement";
 import Phase6Testing from "./phases/Phase6Testing";
 import Phase7FeatureSystemRollout from './phases/Phase7FeatureSystemRollout';
 import { useSystemData } from '@/hooks/useSystemData';
@@ -48,11 +48,11 @@ const SystemBreakdownContent: React.FC = () => {
         <h2 className="text-2xl font-bold">System Implementation Phases</h2>
         
         <div className="space-y-4">
-          <Phase1Setup />
-          <Phase2Authentication />
-          <Phase3UserExperience />
-          <Phase4Integration />
-          <Phase5Analysis />
+          <Phase1Ideation />
+          <Phase2Planning />
+          <Phase3Design />
+          <Phase4Development />
+          <Phase5Refinement />
           <Phase6Testing />
           <Phase7FeatureSystemRollout />
         </div>

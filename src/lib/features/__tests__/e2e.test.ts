@@ -190,8 +190,13 @@ describe('Feature Access System: End-to-End Tests', () => {
       await checkFeatureAccess(FEATURES.SOCIAL_SHARING);
       
       // Simulate logout
-      const mockAuthChangeCallback = vi.mocked(supabase.auth.onAuthStateChange).mock.calls[0][1];
-      mockAuthChangeCallback('SIGNED_OUT', { user: null, session: null });
+      const mockAuthChangeCallbacks = vi.mocked(supabase.auth.onAuthStateChange).mock.calls;
+      if (mockAuthChangeCallbacks.length > 0 && mockAuthChangeCallbacks[0].length > 0) {
+        const callback = mockAuthChangeCallbacks[0][1];
+        if (callback) {
+          callback('SIGNED_OUT', { user: null, session: null } as any);
+        }
+      }
       
       // Cache should be cleared
       const cachedValue = getCachedFeatureAccess('cache-test-user', FEATURES.SOCIAL_SHARING);

@@ -1,6 +1,7 @@
 
-import { render, screen } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
+import { screen } from '@/test/testing-library-extensions';
 import Phase6Testing from '../Phase6Testing';
 
 describe('Phase6Testing', () => {
