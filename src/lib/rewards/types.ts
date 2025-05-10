@@ -166,6 +166,7 @@ export interface PerformanceTestResult {
   };
 }
 
+// Centralize these interfaces that were previously defined in different files
 export interface RewardOperationResponse {
   success: boolean;
   message?: string;

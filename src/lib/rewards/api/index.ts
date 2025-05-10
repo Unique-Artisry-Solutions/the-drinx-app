@@ -1,9 +1,11 @@
 
 import { getUserAchievements, recordActivity } from './achievements';
 import { getRewardAnalytics, processRewardAnalytics } from './analytics';
-import { getUserRewardProfile, redeemReward, RewardOperationResponse } from './profile';
-import { addPoints, batchUpdatePoints, BatchRewardOperationResponse } from './operations';
+import { getUserRewardProfile, redeemReward } from './profile';
+import { addPoints, batchUpdatePoints } from './operations';
 import { getUserPreference, setUserPreference } from './preferences';
+import { trackRewardEvent } from './tracking';
+import { RewardOperationResponse, BatchRewardOperationResponse } from '../types';
 
 // Export all the API functions as a single object
 export const rewardsApi = {
@@ -26,6 +28,9 @@ export const rewardsApi = {
   // Preference functions
   getUserPreference,
   setUserPreference,
+  
+  // Tracking function
+  trackRewardEvent,
   
   // System check function
   isRewardsEnabled: async (userId: string): Promise<boolean> => {
@@ -51,6 +56,7 @@ export {
   setUserPreference,
   redeemReward,
   processRewardAnalytics,
+  trackRewardEvent,
   RewardOperationResponse,
   BatchRewardOperationResponse
 };

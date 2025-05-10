@@ -1,6 +1,5 @@
-
 import { supabase } from '@/lib/supabase';
-import { UserRewardProfile, RewardTransaction, transformRewardTier, transformTransaction } from '../types';
+import { UserRewardProfile, RewardTransaction, transformRewardTier, transformTransaction, RewardOperationResponse } from '../types';
 import { RewardsCache } from '../system/RewardsCache';
 
 export async function getUserRewardProfile(userId: string): Promise<UserRewardProfile | null> {

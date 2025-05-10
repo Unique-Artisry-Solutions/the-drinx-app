@@ -1,16 +1,8 @@
-
 import { supabase } from '@/lib/supabase';
-import { RewardOperationResponse } from '../types';
+import { RewardOperationResponse, BatchRewardOperationResponse } from '../types';
 import { RewardsCache } from '../system/RewardsCache';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { trackRewardEvent } from './tracking';
-
-// Define the missing BatchRewardOperationResponse type
-export interface BatchRewardOperationResponse extends RewardOperationResponse {
-  userId?: string;
-  pointsChanged?: number;
-  newBalance?: number;
-}
 
 export async function addPoints(
   userId: string, 
