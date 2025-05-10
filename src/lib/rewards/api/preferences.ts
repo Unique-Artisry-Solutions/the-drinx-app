@@ -2,84 +2,127 @@
 import { supabase } from '@/lib/supabase';
 import { UserRewardPreference } from '../types';
 
-// Update the return type to include the structure expected by consumers
+/**
+ * Get a user preference value
+ * @param userId - User ID
+ * @param key - Preference key
+ * @returns Preference value or null if not found
+ */
 export async function getUserPreference(
-  userId: string,
-  preferenceKey: string
-): Promise<{ value: any; success: boolean; preference_key?: string; preference_value?: any; id?: string }> {
+  userId: string, 
+  key: string
+): Promise<any> {
   try {
     const { data, error } = await supabase
       .from('user_reward_preferences')
-      .select('id, preference_key, preference_value')
+      .select('preference_value')
       .eq('user_id', userId)
-      .eq('preference_key', preferenceKey)
-      .single();
-
+      .eq('preference_key', key)
+      .maybeSingle();
+      
     if (error) {
-      if (error.code === 'PGRST116') { // Not found
-        return { 
-          value: null, 
-          success: true, 
-          preference_key: preferenceKey, 
-          preference_value: null,
-          id: undefined 
-        };
-      }
       console.error('Error fetching user preference:', error);
-      return { value: null, success: false };
+      return null;
     }
-
-    return { 
-      value: data.preference_value, 
-      success: true,
-      preference_key: data.preference_key,
-      preference_value: data.preference_value,
-      id: data.id
-    };
+    
+    return data?.preference_value || null;
   } catch (error) {
-    console.error('Exception fetching user preference:', error);
-    return { value: null, success: false };
+    console.error('Unexpected error in getUserPreference:', error);
+    return null;
   }
 }
 
-export async function saveUserPreference(
-  userId: string,
-  preferenceKey: string,
-  preferenceValue: string | object
-): Promise<{ success: boolean; error?: string }> {
+/**
+ * Set a user preference value
+ * @param userId - User ID
+ * @param key - Preference key
+ * @param value - Preference value
+ * @returns true if successful
+ */
+export async function setUserPreference(
+  userId: string, 
+  key: string, 
+  value: any
+): Promise<boolean> {
   try {
-    // Check if the preference already exists
-    const { data } = await supabase
+    // Check if preference exists
+    const { data: existing, error: checkError } = await supabase
       .from('user_reward_preferences')
       .select('id')
       .eq('user_id', userId)
-      .eq('preference_key', preferenceKey)
+      .eq('preference_key', key)
       .maybeSingle();
-
-    // Convert preferenceValue to JSON compatible format
-    const jsonPreferenceValue = typeof preferenceValue === 'string' 
-      ? preferenceValue
-      : JSON.stringify(preferenceValue);
-
-    // Use upsert to either insert or update based on existence
-    const { error } = await supabase
-      .from('user_reward_preferences')
-      .upsert({
-        id: data?.id, // Will be null for new records
-        user_id: userId,
-        preference_key: preferenceKey,
-        preference_value: jsonPreferenceValue,
-        updated_at: new Date().toISOString()
-      });
-
-    if (error) {
-      console.error('Error saving user preference:', error);
-      return { success: false, error: error.message };
+      
+    if (checkError && checkError.code !== 'PGRST116') { // Not found is okay
+      console.error('Error checking existing preference:', checkError);
+      return false;
     }
+    
+    if (existing) {
+      // Update existing preference
+      const { error: updateError } = await supabase
+        .from('user_reward_preferences')
+        .update({
+          preference_value: value,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', existing.id);
+        
+      if (updateError) {
+        console.error('Error updating user preference:', updateError);
+        return false;
+      }
+    } else {
+      // Insert new preference
+      const { error: insertError } = await supabase
+        .from('user_reward_preferences')
+        .insert({
+          user_id: userId,
+          preference_key: key,
+          preference_value: value
+        });
+        
+      if (insertError) {
+        console.error('Error inserting user preference:', insertError);
+        return false;
+      }
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Unexpected error in setUserPreference:', error);
+    return false;
+  }
+}
 
-    return { success: true };
-  } catch (error: any) {
-    console.error('Exception saving user preference:', error);
-    return { success: false, error: error.message };
+/**
+ * Get all user preferences
+ * @param userId - User ID
+ * @returns Object with all user preferences
+ */
+export async function getAllUserPreferences(
+  userId: string
+): Promise<Record<string, any>> {
+  try {
+    const { data, error } = await supabase
+      .from('user_reward_preferences')
+      .select('preference_key, preference_value')
+      .eq('user_id', userId);
+      
+    if (error) {
+      console.error('Error fetching user preferences:', error);
+      return {};
+    }
+    
+    // Convert array to object
+    const preferences: Record<string, any> = {};
+    data?.forEach(pref => {
+      preferences[pref.preference_key] = pref.preference_value;
+    });
+    
+    return preferences;
+  } catch (error) {
+    console.error('Unexpected error in getAllUserPreferences:', error);
+    return {};
   }
 }

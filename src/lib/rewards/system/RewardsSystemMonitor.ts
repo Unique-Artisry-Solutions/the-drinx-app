@@ -1,6 +1,33 @@
 
 import { supabase } from '@/lib/supabase';
-import type { SystemHealthMetric, PerformanceMetric, PerformanceTestResult } from '../types';
+
+// Define missing or inconsistent types
+interface SystemHealthMetric {
+  id?: string;
+  status: 'healthy' | 'degraded' | 'error';
+  response_time_ms: number;
+  transaction_count: number;
+  error_count: number;
+  timestamp?: string;
+  details?: Record<string, any>;
+}
+
+interface PerformanceMetric {
+  id?: string;
+  metric_type: string;
+  metric_name: string;
+  metric_value: number;
+  context?: Record<string, any>;
+  timestamp?: string;
+}
+
+interface PerformanceTestResult {
+  [key: string]: {
+    duration_ms: number;
+    status: 'fast' | 'average' | 'slow' | 'error';
+    rows_processed?: number;
+  };
+}
 
 type HealthStatus = 'healthy' | 'degraded' | 'error';
 
@@ -104,19 +131,19 @@ export class RewardsSystemMonitor {
     }
   }
 
-  static async runPerformanceTests(): Promise<PerformanceTestResult | null> {
+  static async runPerformanceTests(): Promise<PerformanceTestResult> {
     try {
       const { data, error } = await supabase
         .rpc('test_reward_system_performance');
 
       if (error) {
         console.error('Error running performance tests:', error);
-        return null;
+        return {};
       }
 
       if (!data || !Array.isArray(data)) {
         console.error('Invalid performance test data format:', data);
-        return null;
+        return {};
       }
 
       const transformedData: PerformanceTestResult = {};
@@ -147,7 +174,7 @@ export class RewardsSystemMonitor {
       return transformedData;
     } catch (error) {
       console.error('Exception running performance tests:', error);
-      return null;
+      return {};
     }
   }
 }

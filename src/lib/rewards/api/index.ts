@@ -1,61 +1,56 @@
 
-/**
- * Rewards API module
- * Provides access to rewards system functionality
- */
+import { getUserAchievements, recordActivity } from './achievements';
+import { getRewardAnalytics, processRewardAnalytics } from './analytics';
+import { getUserRewardProfile, redeemReward, RewardOperationResponse } from './profile';
+import { addPoints, batchUpdatePoints, BatchRewardOperationResponse } from './operations';
+import { getUserPreference, setUserPreference } from './preferences';
 
-import { RewardAnalytics, Achievement, RewardOperationResponse, UserRewardPreference } from '../types';
-
-// Mock implementation for testing
+// Export all the API functions as a single object
 export const rewardsApi = {
-  getUserAchievements: async (userId: string): Promise<Achievement[]> => {
-    return [];
-  },
+  // Achievement functions
+  getUserAchievements,
+  recordActivity,
   
-  recordActivity: async (userId: string, activityType: string, metadata?: Record<string, any>) => {
-    return {
-      completedAchievements: []
-    };
-  },
+  // Analytics functions
+  getRewardAnalytics,
+  processRewardAnalytics,
   
-  getRewardAnalytics: async (establishmentId?: string): Promise<RewardAnalytics> => {
-    return {
-      totalPointsEarned: 0,
-      totalPointsRedeemed: 0,
-      pointsEconomyBalance: 0,
-      redemptionRate: 0,
-      sourcesBreakdown: {},
-      timeSeriesData: [],
-      totalUsers: 0,
-      activeUsers: 0,
-      averagePointsPerUser: 0,
-      tierDistribution: {}
-    };
-  },
-
-  // Add missing API functions
-  batchUpdatePoints: async (operations: any[]): Promise<RewardOperationResponse[]> => {
-    // Mock implementation for now
-    return operations.map(op => ({
-      success: true,
-      userId: op.userId,
-      pointsChanged: op.points,
-      newBalance: 100 + op.points
-    }));
-  },
-
-  getUserPreference: async (userId: string, preferenceKey: string): Promise<UserRewardPreference> => {
-    // Mock implementation
-    return {
-      id: 'mock-id',
-      user_id: userId,
-      preference_key: preferenceKey,
-      preference_value: {}
-    };
-  },
-
-  saveUserPreference: async (userId: string, preferenceKey: string, preferenceValue: any): Promise<RewardOperationResponse> => {
-    // Mock implementation
-    return { success: true };
+  // Profile functions
+  getUserRewardProfile,
+  redeemReward,
+  
+  // Point operations
+  addPoints,
+  batchUpdatePoints,
+  
+  // Preference functions
+  getUserPreference,
+  setUserPreference,
+  
+  // System check function
+  isRewardsEnabled: async (userId: string): Promise<boolean> => {
+    try {
+      const profile = await getUserRewardProfile(userId);
+      return !!profile;
+    } catch (error) {
+      console.error('Error checking if rewards are enabled:', error);
+      return false;
+    }
   }
+};
+
+// Export individual functions for direct imports
+export {
+  getUserAchievements,
+  recordActivity,
+  getRewardAnalytics,
+  getUserRewardProfile,
+  addPoints,
+  batchUpdatePoints,
+  getUserPreference,
+  setUserPreference,
+  redeemReward,
+  processRewardAnalytics,
+  RewardOperationResponse,
+  BatchRewardOperationResponse
 };

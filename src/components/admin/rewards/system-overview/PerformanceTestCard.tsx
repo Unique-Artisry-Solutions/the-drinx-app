@@ -15,15 +15,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 
-interface PerformanceTestResult {
+// Update PerformanceTestResult to match the actual return type from the API
+interface PerformanceTestItem {
   name: string;
   duration_ms: number;
   status: string;
-  timestamp: string;
+  timestamp?: string;
 }
 
 interface PerformanceTestCardProps {
-  performanceTest: PerformanceTestResult[] | null;
+  performanceTest: PerformanceTestItem[] | null;
   isLoading: boolean;
   error: Error | null;
   onRefresh: () => void;

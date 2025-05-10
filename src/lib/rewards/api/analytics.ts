@@ -1,249 +1,145 @@
 import { supabase } from '@/lib/supabase';
-import { RewardAnalytics, TimeSeriesDataPoint, RewardTransactionRow } from '../types';
+import { RewardAnalytics, TimeSeriesData, RewardTransactionRow } from '../types';
+import { RewardsCache } from '../system/RewardsCache';
 
-export async function getRewardAnalytics(establishmentId?: string): Promise<RewardAnalytics> {
+export async function getRewardAnalytics(establishmentId?: string): Promise<RewardAnalytics | null> {
+  const cacheKey = `reward_analytics_${establishmentId || 'global'}`;
+  const cacheStatus = await RewardsCache.getCacheStatus(cacheKey);
+  
+  if (cacheStatus && !cacheStatus.is_invalidated) {
+    console.log('Cache hit for reward analytics');
+    const cachedData = cacheStatus.metadata?.cached_data;
+    if (cachedData) {
+      return JSON.parse(cachedData);
+    }
+  }
+
   try {
-    // Get total points earned
-    const earnedQuery = supabase
+    // Fetch all transactions or filter by establishment
+    let query = supabase
       .from('reward_transactions')
-      .select('points')
-      .eq('transaction_type', 'earn');
-      
-    // Add establishment filter if provided
-    const { data: earnedData, error: earnedError } = establishmentId 
-      ? await earnedQuery.eq('establishment_id', establishmentId)
-      : await earnedQuery;
-
-    if (earnedError) {
-      console.error('Error fetching earned points:', earnedError);
-      return createEmptyAnalytics();
-    }
-
-    // Get total points redeemed
-    const redeemedQuery = supabase
-      .from('reward_transactions')
-      .select('points')
-      .eq('transaction_type', 'spend');
+      .select('*');
     
-    // Add establishment filter if provided
-    const { data: redeemedData, error: redeemedError } = establishmentId
-      ? await redeemedQuery.eq('establishment_id', establishmentId)
-      : await redeemedQuery;
-
-    if (redeemedError) {
-      console.error('Error fetching redeemed points:', redeemedError);
-      return createEmptyAnalytics();
-    }
-
-    // Get user counts
-    const userQuery = supabase
-      .from('user_rewards')
-      .select('user_id, points');
-    
-    // Add establishment filter if provided
-    const { data: userData, error: userError } = establishmentId
-      ? await userQuery.eq('establishment_id', establishmentId)
-      : await userQuery;
-
-    if (userError) {
-      console.error('Error fetching user data:', userError);
-      return createEmptyAnalytics();
-    }
-
-    // Get transaction count and sources
-    const transactionsQuery = supabase
-      .from('reward_transactions')
-      .select('source, points');
-    
-    // Add establishment filter if provided
-    const { data: transactions, error: transactionsError } = establishmentId
-      ? await transactionsQuery.eq('establishment_id', establishmentId)
-      : await transactionsQuery;
-
-    if (transactionsError) {
-      console.error('Error fetching transactions:', transactionsError);
-      return createEmptyAnalytics();
-    }
-
-    // Calculate total points earned and redeemed
-    const totalPointsEarned = earnedData?.reduce((sum, item) => sum + item.points, 0) || 0;
-    const totalPointsRedeemed = redeemedData?.reduce((sum, item) => sum + item.points, 0) || 0;
-
-    // Calculate sources breakdown
-    const sourcesBreakdown: Record<string, number> = {};
-    transactions?.forEach(transaction => {
-      const source = transaction.source;
-      if (!sourcesBreakdown[source]) {
-        sourcesBreakdown[source] = 0;
-      }
-      sourcesBreakdown[source] += transaction.points;
-    });
-
-    // Get tier distribution
-    const tierDistribution: Record<string, number> = {
-      'Bronze': 0,
-      'Silver': 0,
-      'Gold': 0,
-      'Platinum': 0,
-      'None': 0
-    };
-    
-    // Mock tier distribution for now
-    const totalUsers = userData?.length || 0;
-    const activeUsers = userData?.filter(u => u.points > 0).length || 0;
-    
-    if (totalUsers > 0) {
-      tierDistribution['Bronze'] = Math.floor(totalUsers * 0.5);
-      tierDistribution['Silver'] = Math.floor(totalUsers * 0.3);
-      tierDistribution['Gold'] = Math.floor(totalUsers * 0.15);
-      tierDistribution['Platinum'] = Math.floor(totalUsers * 0.05);
-      tierDistribution['None'] = totalUsers - Object.values(tierDistribution).reduce((a, b) => a + b, 0);
+    if (establishmentId) {
+      query = query.eq('establishment_id', establishmentId);
     }
     
-    // Calculate average points per user
-    const averagePointsPerUser = totalUsers > 0 ? 
-      totalPointsEarned / totalUsers : 0;
-
-    // Get time series data for the last 30 days
-    const timeSeriesData = await createTimeSeriesData(establishmentId);
-
-    return {
-      totalPointsEarned,
-      totalPointsRedeemed,
-      pointsEconomyBalance: totalPointsEarned - totalPointsRedeemed,
-      transactionCount: transactions?.length || 0,
-      redemptionRate: totalPointsEarned > 0 ? (totalPointsRedeemed / totalPointsEarned) * 100 : 0,
-      sourcesBreakdown,
-      timeSeriesData,
-      // Add missing fields
-      totalUsers,
-      activeUsers,
-      averagePointsPerUser,
-      tierDistribution
-    };
+    const { data: transactions, error } = await query;
+    
+    if (error) {
+      console.error('Error fetching reward transactions:', error);
+      return null;
+    }
+    
+    const analytics = processRewardAnalytics(transactions);
+    
+    // Cache the analytics for 15 minutes
+    await RewardsCache.updateCache(cacheKey, 900, analytics);
+    
+    return analytics;
   } catch (error) {
-    console.error('Exception in getRewardAnalytics:', error);
-    return createEmptyAnalytics();
+    console.error('Unexpected error in getRewardAnalytics:', error);
+    return null;
   }
 }
 
-function createEmptyAnalytics(): RewardAnalytics {
-  return {
+export function processRewardAnalytics(transactions: RewardTransactionRow[]): RewardAnalytics {
+  // Initialize with default values
+  const analytics: RewardAnalytics = {
     totalPointsEarned: 0,
     totalPointsRedeemed: 0,
     pointsEconomyBalance: 0,
-    transactionCount: 0,
     redemptionRate: 0,
     sourcesBreakdown: {},
     timeSeriesData: [],
+    transactionCount: transactions.length,
     totalUsers: 0,
     activeUsers: 0,
-    averagePointsPerUser: 0,
-    tierDistribution: {
-      'Bronze': 0,
-      'Silver': 0,
-      'Gold': 0,
-      'Platinum': 0,
-      'None': 0
-    }
+    averagePointsPerUser: 0
   };
-}
-
-export async function createTimeSeriesData(establishmentId?: string): Promise<TimeSeriesDataPoint[]> {
-  try {
-    // Get transactions for the last 30 days
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    
-    // Build the query
-    const query = supabase
-      .from('reward_transactions')
-      .select('created_at, points, transaction_type')
-      .gte('created_at', thirtyDaysAgo.toISOString());
-    
-    // Add establishment filter if provided
-    const { data, error } = establishmentId
-      ? await query.eq('establishment_id', establishmentId)
-      : await query;
-
-    if (error) {
-      console.error('Error fetching time series data:', error);
-      return [];
-    }
-
-    // Create a map of dates to points earned/redeemed
-    const dateMap = new Map<string, { earned: number, redeemed: number }>();
-    
-    // Initialize the last 30 days
-    for (let i = 0; i < 30; i++) {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      const dateStr = date.toISOString().split('T')[0];
-      dateMap.set(dateStr, { earned: 0, redeemed: 0 });
-    }
-    
-    // Fill in the data
-    data?.forEach(transaction => {
-      const dateStr = transaction.created_at.split('T')[0];
-      const entry = dateMap.get(dateStr);
-      
-      if (entry) {
-        if (transaction.transaction_type === 'earn') {
-          entry.earned += transaction.points;
-        } else {
-          entry.redeemed += transaction.points;
-        }
-      }
-    });
-    
-    // Convert to array and sort by date
-    return Array.from(dateMap.entries())
-      .map(([date, { earned, redeemed }]) => ({
-        date,
-        pointsEarned: earned,
-        pointsRedeemed: redeemed,
-        netPoints: earned - redeemed
-      }))
-      .sort((a, b) => a.date.localeCompare(b.date));
-  } catch (error) {
-    console.error('Exception in createTimeSeriesData:', error);
-    return [];
+  
+  if (!transactions.length) {
+    return analytics;
   }
+  
+  // Process transactions
+  const userPointsMap = new Map<string, number>();
+  const userTransactionsMap = new Map<string, number>();
+  const dailyDataMap = new Map<string, { earned: number, redeemed: number }>();
+  
+  transactions.forEach(tx => {
+    const txType = (tx.type || tx.transaction_type || '').toLowerCase();
+    const points = tx.points || tx.pointsAmount || 0;
+    const userId = tx.userId || tx.user_id || 'unknown';
+    
+    // Track points by type
+    if (txType === 'earn') {
+      analytics.totalPointsEarned += points;
+      
+      // Track source
+      const source = tx.source || 'unknown';
+      analytics.sourcesBreakdown[source] = (analytics.sourcesBreakdown[source] || 0) + points;
+    } 
+    else if (txType === 'redeem') {
+      analytics.totalPointsRedeemed += Math.abs(points);
+    }
+    
+    // Track user points and transactions
+    if (!userPointsMap.has(userId)) {
+      userPointsMap.set(userId, 0);
+      userTransactionsMap.set(userId, 0);
+    }
+    
+    userPointsMap.set(userId, userPointsMap.get(userId)! + points);
+    userTransactionsMap.set(userId, userTransactionsMap.get(userId)! + 1);
+    
+    // Track daily data
+    const date = new Date(tx.timestamp || tx.date || '').toISOString().split('T')[0];
+    if (!dailyDataMap.has(date)) {
+      dailyDataMap.set(date, { earned: 0, redeemed: 0 });
+    }
+    
+    if (txType === 'earn') {
+      dailyDataMap.get(date)!.earned += points;
+    } else if (txType === 'redeem') {
+      dailyDataMap.get(date)!.redeemed += Math.abs(points);
+    }
+  });
+  
+  // Calculate derived metrics
+  analytics.pointsEconomyBalance = analytics.totalPointsEarned - analytics.totalPointsRedeemed;
+  analytics.redemptionRate = analytics.totalPointsEarned > 0 ? 
+    analytics.totalPointsRedeemed / analytics.totalPointsEarned : 0;
+  
+  // User metrics
+  analytics.totalUsers = userPointsMap.size;
+  analytics.activeUsers = [...userTransactionsMap.values()].filter(count => count > 0).length;
+  
+  const totalUserPoints = [...userPointsMap.values()].reduce((sum, points) => sum + points, 0);
+  analytics.averagePointsPerUser = analytics.totalUsers > 0 ? 
+    totalUserPoints / analytics.totalUsers : 0;
+  
+  // Convert daily data to time series
+  analytics.timeSeriesData = [...dailyDataMap.entries()]
+    .sort(([dateA], [dateB]) => dateA.localeCompare(dateB))
+    .map(([date, data]) => ({
+      date,
+      earned: data.earned,
+      redeemed: data.redeemed
+    }));
+  
+  return analytics;
 }
 
-export function processRewardAnalytics(data: any[]): any {
-  // Calculate total points earned and redeemed
-  const totalTransactions = data.length;
-  const totalPoints = data.reduce((sum, item) => sum + item.points, 0);
-  const averagePointsPerTransaction = totalTransactions > 0 ? totalPoints / totalTransactions : 0;
-  
-  // Get points by transaction type
-  const earnTransactions = data.filter(t => t.transaction_type === 'earn');
-  const redeemTransactions = data.filter(t => t.transaction_type === 'redeem' || t.transaction_type === 'spend');
-  
-  const totalPointsEarned = earnTransactions.reduce((sum, t) => sum + t.points, 0);
-  const totalPointsRedeemed = redeemTransactions.reduce((sum, t) => sum + t.points, 0);
-  
-  // Calculate sources breakdown
-  const sourcesBreakdown: Record<string, number> = {};
-  data.forEach(transaction => {
-    const source = transaction.source;
-    if (!sourcesBreakdown[source]) {
-      sourcesBreakdown[source] = 0;
-    }
-    sourcesBreakdown[source] += transaction.points;
-  });
-
-  return {
-    totalPointsEarned,
-    totalPointsRedeemed,
-    pointsEconomyBalance: totalPointsEarned - totalPointsRedeemed,
-    transactionCount: totalTransactions,
-    redemptionRate: totalPointsEarned > 0 ? (totalPointsRedeemed / totalPointsEarned) * 100 : 0,
-    sourcesBreakdown,
-    summary: {
-      totalTransactions,
-      averagePointsPerTransaction
-    }
-  };
+// Helper function to convert analytics to TimeSeriesData format expected by charts
+export function convertToTimeSeriesData(analytics: RewardAnalytics): TimeSeriesData[] {
+  return analytics.timeSeriesData.map(point => ({
+    date: point.date,
+    pointsEarned: point.earned,
+    pointsRedeemed: point.redeemed,
+    netPoints: point.earned - point.redeemed,
+    // Keep compatibility with both formats
+    earned: point.earned,
+    redeemed: point.redeemed
+  }));
 }

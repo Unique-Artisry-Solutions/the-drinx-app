@@ -21,6 +21,13 @@ export interface RewardTransaction {
   created_at: string;
   source: string;
   metadata?: Record<string, any>;
+  // Add compatibility fields for lib/rewards/types
+  userId?: string;
+  user_id?: string;
+  pointsAmount?: number;
+  type?: 'EARN' | 'REDEEM';
+  timestamp?: string;
+  date?: string;
 }
 
 export interface RewardOffering {
@@ -33,12 +40,22 @@ export interface RewardOffering {
   expiration_days?: number;
   quantity_available?: number;
   is_active?: boolean;
+  // Add compatibility fields for lib/rewards/types
+  pointCost?: number;
+  pointsRequired?: number;
+  availableQuantity?: number;
 }
 
 export interface UserRewardProfile {
   id: string;
   points: number;
   lifetime_points: number;
+  // Add compatibility fields for lib/rewards/types
+  lifetimePoints?: number;
+  currentTier?: any;
+  availableRewards?: RewardOffering[];
+  transactionHistory?: RewardTransaction[];
+  redemptionHistory?: RewardOffering[];
 }
 
 export interface TimeSeriesData {
@@ -46,4 +63,7 @@ export interface TimeSeriesData {
   pointsEarned: number;
   pointsRedeemed: number;
   netPoints: number;
+  // Add compatibility fields for lib/rewards/types
+  earned?: number;
+  redeemed?: number;
 }

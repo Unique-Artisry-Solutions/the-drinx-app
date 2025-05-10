@@ -10,6 +10,7 @@ import { AchievementsList } from './AchievementsList';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useRewards } from '@/hooks/rewards/useRewards';
 import { useAchievements } from '@/hooks/rewards/useAchievements';
+import { RewardTransaction } from '@/types/RewardTypes';
 
 export function UserRewardDashboard() {
   const { rewardProfile, isLoading } = useRewards();
@@ -29,6 +30,18 @@ export function UserRewardDashboard() {
     );
   }
 
+  // Ensure transactionHistory is compatible with RewardHistory component
+  const formattedTransactions: RewardTransaction[] = (rewardProfile?.transactionHistory || []).map(transaction => {
+    return {
+      id: transaction.id,
+      transaction_type: transaction.type || transaction.transaction_type || 'EARN',
+      points: transaction.points || transaction.pointsAmount || 0,
+      description: transaction.description || '',
+      created_at: transaction.timestamp || transaction.date || transaction.created_at || new Date().toISOString(),
+      source: transaction.source || ''
+    };
+  });
+
   return (
     <div className="space-y-6 p-4">
       {/* Points Overview */}
@@ -46,7 +59,9 @@ export function UserRewardDashboard() {
               <div className="text-sm text-muted-foreground">Current Points</div>
             </div>
             <div className="text-center group hover:scale-105 transition-transform">
-              <div className="text-3xl font-bold text-primary group-hover:text-primary/80 transition-colors">{rewardProfile?.lifetimePoints || 0}</div>
+              <div className="text-3xl font-bold text-primary group-hover:text-primary/80 transition-colors">
+                {rewardProfile?.lifetimePoints || rewardProfile?.lifetime_points || 0}
+              </div>
               <div className="text-sm text-muted-foreground">Lifetime Points</div>
             </div>
             <div className="text-center group hover:scale-105 transition-transform">
@@ -136,7 +151,7 @@ export function UserRewardDashboard() {
 
         <TabsContent value="history" className="mt-6 p-4">
           {/* Reward History */}
-          <RewardHistory transactions={rewardProfile?.transactionHistory || []} />
+          <RewardHistory transactions={formattedTransactions} />
         </TabsContent>
       </Tabs>
     </div>

@@ -1,13 +1,13 @@
 
-import { Achievement } from './types';
+// Define reward system types - this is separate from types/RewardTypes.ts
+// in the future these two files should be merged
 
 export interface RewardTier {
   id: string;
   name: string;
-  minimumPoints?: number; // Keep for backward compatibility
-  benefits: string[] | {type?: string; description: string}[];
-  // Add missing fields
+  minimumPoints?: number;
   points_required?: number;
+  benefits: string[] | {type?: string; description: string}[];
   description?: string;
   color?: string;
   icon?: string;
@@ -20,28 +20,28 @@ export interface RewardOffering {
   name: string;
   description: string;
   pointCost: number;
-  availableQuantity?: number;
-  // Database field equivalents for backwards compatibility
   points_required?: number;
+  availableQuantity?: number;
   quantity_available?: number;
   expiration_days?: number;
   is_active?: boolean;
   image_url?: string;
   establishment_id?: string;
-  category?: string; // Add missing category field
+  category?: string;
 }
 
 export interface RewardTransaction {
   id: string;
   userId: string;
+  user_id?: string;
   pointsAmount: number;
-  type: 'EARN' | 'REDEEM';
-  timestamp: string;
-  description: string;
-  // Additional fields for compatibility
-  source?: string;
   points?: number;
+  type: 'EARN' | 'REDEEM';
+  transaction_type?: 'EARN' | 'REDEEM';
+  timestamp: string;
   date?: string;
+  description: string;
+  source?: string;
 }
 
 export interface Achievement {
@@ -69,9 +69,10 @@ export interface RewardTrackingEvents {
 }
 
 export interface UserRewardProfile {
-  id?: string; // Make id optional for compatibility
+  id?: string;
   points: number;
   lifetimePoints: number;
+  lifetime_points?: number;
   currentTier: RewardTier | null;
   availableRewards: RewardOffering[];
   transactionHistory: RewardTransaction[];
@@ -83,6 +84,8 @@ export interface TimeSeriesData {
   pointsEarned: number;
   pointsRedeemed: number;
   netPoints: number;
+  earned?: number;
+  redeemed?: number;
 }
 
 export interface RewardAnalytics {
@@ -138,38 +141,41 @@ export interface RewardCampaign {
   rewards?: CampaignReward[];
   trigger_conditions?: TriggerCondition[];
   is_active: boolean;
-  establishment_id?: string; // Add missing field
-  performance_metrics?: any; // Add missing field
-}
-
-export interface PerformanceTestResult {
-  testId: string;
-  testName: string;
-  duration: number;
-  status: 'success' | 'warning' | 'error';
-  timestamp: string;
-  details?: Record<string, any>;
-  // Add fields to match system component
-  name?: string;
-  duration_ms?: number;
+  establishment_id?: string;
+  performance_metrics?: any;
 }
 
 export interface SystemHealthMetric {
-  id: string;
-  name: string;
-  value: number;
+  id?: string;
+  name?: string;
   status: 'healthy' | 'degraded' | 'error';
   timestamp: string;
-  // Add fields to match system component
+  // Match the structure used in components
   response_time_ms: number;
   transaction_count: number;
   error_count: number;
+  value?: number;
+  details?: Record<string, any>;
+}
+
+export interface PerformanceTestResult {
+  [key: string]: {
+    duration_ms: number;
+    status: 'fast' | 'average' | 'slow' | 'error';
+    rows_processed?: number;
+  };
 }
 
 export interface RewardOperationResponse {
   success: boolean;
   message?: string;
   error?: string;
+}
+
+export interface BatchRewardOperationResponse extends RewardOperationResponse {
+  userId?: string;
+  pointsChanged?: number;
+  newBalance?: number;
 }
 
 export interface UserRewardPreference {
@@ -185,12 +191,13 @@ export const transformTransaction = (transaction: any): RewardTransaction => {
   return {
     id: transaction.id,
     userId: transaction.user_id,
+    user_id: transaction.user_id,
     pointsAmount: transaction.points,
+    points: transaction.points,
     type: transaction.transaction_type === 'EARN' ? 'EARN' : 'REDEEM',
+    transaction_type: transaction.transaction_type,
     timestamp: transaction.created_at,
     description: transaction.description || transaction.source,
-    // Additional fields for backward compatibility
-    points: transaction.points,
     source: transaction.source,
     date: transaction.created_at
   };

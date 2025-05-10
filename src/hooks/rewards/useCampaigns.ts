@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { RewardCampaign } from '@/lib/rewards/types';
 import { useToast } from '@/hooks/use-toast';
@@ -37,8 +38,6 @@ const sampleCampaigns: RewardCampaign[] = [
       }
     ],
     establishment_id: 'default',
-    created_at: '2025-04-15T10:30:00Z',
-    updated_at: '2025-04-15T10:30:00Z',
     status: 'scheduled',
     performance_metrics: {
       total_users_reached: 0,
@@ -80,8 +79,6 @@ const sampleCampaigns: RewardCampaign[] = [
       }
     ],
     establishment_id: 'default',
-    created_at: '2025-03-20T15:45:00Z',
-    updated_at: '2025-03-20T15:45:00Z',
     status: 'active',
     performance_metrics: {
       total_users_reached: 238,
@@ -138,8 +135,6 @@ export function useCampaigns() {
         rewards: campaignData.rewards || [],
         trigger_conditions: campaignData.trigger_conditions || [],
         establishment_id: campaignData.establishment_id || 'default',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
         status: campaignData.status as any || 'draft',
         performance_metrics: {
           total_users_reached: 0,
@@ -169,7 +164,7 @@ export function useCampaigns() {
       setCampaigns(prev => 
         prev.map(camp => 
           camp.id === campaignId 
-            ? { ...camp, ...campaignData, updated_at: new Date().toISOString() } 
+            ? { ...camp, ...campaignData } 
             : camp
         )
       );

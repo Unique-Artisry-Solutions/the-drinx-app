@@ -45,6 +45,17 @@ const SystemOverviewTab = () => {
     }
   };
 
+  // Convert performance test results to array format if needed
+  const formattedPerformanceTests = performanceTests 
+    ? Array.isArray(performanceTests) 
+        ? performanceTests 
+        : Object.entries(performanceTests).map(([name, data]) => ({
+            name,
+            duration_ms: data.duration_ms,
+            status: data.status,
+          })) 
+    : null;
+
   return (
     <div className="grid gap-6">
       <div className="grid gap-4 md:grid-cols-3">
@@ -71,7 +82,7 @@ const SystemOverviewTab = () => {
       </div>
 
       <PerformanceTestCard
-        performanceTest={performanceTests}
+        performanceTest={formattedPerformanceTests}
         isLoading={testLoading}
         error={testError}
         onRefresh={handleRefreshTests}
