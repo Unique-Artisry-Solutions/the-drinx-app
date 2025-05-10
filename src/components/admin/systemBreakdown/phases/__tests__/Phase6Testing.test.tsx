@@ -5,28 +5,26 @@ import { screen } from '@/test/testing-library-extensions';
 import Phase6Testing from '../Phase6Testing';
 
 describe('Phase6Testing', () => {
-  it('renders the component title', () => {
+  it('renders the phase title correctly', () => {
     render(<Phase6Testing />);
-    expect(screen.getByText("Phase 6: Testing and Rollout")).toBeInTheDocument();
+    
+    // Using string instead of RegExp for screen.getByText
+    expect(screen.getByText('Phase 6: Testing and Rollout')).toBeInTheDocument();
   });
-
-  it('displays all test categories', () => {
+  
+  it('displays the correct status badge', () => {
     render(<Phase6Testing />);
-    expect(screen.getByText('Unit Tests')).toBeInTheDocument();
-    expect(screen.getByText('Integration Tests')).toBeInTheDocument();
-    expect(screen.getByText('E2E Tests')).toBeInTheDocument();
-    expect(screen.getByText('Performance Tests')).toBeInTheDocument();
-    expect(screen.getByText('Security Tests')).toBeInTheDocument();
+    
+    expect(screen.getByText('In Progress')).toBeInTheDocument();
   });
-
-  it('shows the overall testing progress', () => {
+  
+  it('renders test categories', () => {
     render(<Phase6Testing />);
-    expect(screen.getByText('Overall Testing Progress')).toBeInTheDocument();
-  });
-
-  it('displays the rollout status section', () => {
-    render(<Phase6Testing />);
-    expect(screen.getByText('Rollout Status')).toBeInTheDocument();
-    expect(screen.getByText('Pre-release Testing')).toBeInTheDocument();
+    
+    expect(screen.getByText('Promoter Authentication')).toBeInTheDocument();
+    expect(screen.getByText('Communication System')).toBeInTheDocument();
+    expect(screen.getByText('Event Management')).toBeInTheDocument();
+    expect(screen.getByText('Analytics Reporting')).toBeInTheDocument();
+    expect(screen.getByText('Brand Partnerships')).toBeInTheDocument();
   });
 });

@@ -9,6 +9,7 @@
 // Re-export the actual testing-library components, but with explicit type declarations
 // for the missing exports that our tests expect
 import { render } from '@testing-library/react';
+import React from 'react';
 
 // Add screen object with test utility functions
 export const screen = {
@@ -19,7 +20,10 @@ export const screen = {
       const match = elements.find(el => content.test(el.textContent || ''));
       return match as HTMLElement;
     }
-    return document.querySelector(`*:contains(${content})`) as HTMLElement;
+    // Find by text content
+    const elements = Array.from(document.querySelectorAll('*'));
+    const match = elements.find(el => el.textContent?.includes(content));
+    return match as HTMLElement;
   },
   getAllByText: (content: string | RegExp) => {
     if (content instanceof RegExp) {
@@ -27,7 +31,9 @@ export const screen = {
       const elements = Array.from(document.querySelectorAll('*'));
       return elements.filter(el => content.test(el.textContent || '')) as HTMLElement[];
     }
-    return Array.from(document.querySelectorAll(`*:contains(${content})`)) as HTMLElement[];
+    // Find all by text content
+    const elements = Array.from(document.querySelectorAll('*'));
+    return elements.filter(el => el.textContent?.includes(content)) as HTMLElement[];
   },
   getByTestId: (id: string) => document.querySelector(`[data-testid="${id}"]`) as HTMLElement,
   getAllByTestId: (id: string) => Array.from(document.querySelectorAll(`[data-testid="${id}"]`)) as HTMLElement[],
@@ -37,7 +43,9 @@ export const screen = {
       const match = elements.find(el => content.test(el.textContent || ''));
       return match as HTMLElement || null;
     }
-    return document.querySelector(`*:contains(${content})`) as HTMLElement | null;
+    const elements = Array.from(document.querySelectorAll('*'));
+    const match = elements.find(el => el.textContent?.includes(content));
+    return match as HTMLElement || null;
   },
   queryByTestId: (id: string) => document.querySelector(`[data-testid="${id}"]`) as HTMLElement | null,
   getByRole: (role: string) => document.querySelector(`[role="${role}"]`) as HTMLElement,
@@ -87,10 +95,10 @@ export const renderHook = <Result, Props>(hook: (props: Props) => Result, option
     return null;
   }
   
-  render(<TestComponent {...(options?.initialProps || {} as any)} />);
+  render(React.createElement(TestComponent, options?.initialProps || {}));
   
   return {
     result: { current: result } as { current: Result },
-    rerender: (newProps: Props) => render(<TestComponent {...newProps} />)
+    rerender: (newProps: Props) => render(React.createElement(TestComponent, newProps))
   };
 };

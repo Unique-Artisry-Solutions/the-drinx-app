@@ -1,3 +1,4 @@
+
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { supabase } from '@/lib/supabase';
 
@@ -31,7 +32,7 @@ describe('Feature flag system - E2E tests', () => {
     // Setup mock responses for feature flag queries
     const mockTable = 'feature_flags';
     
-    // This was causing a type error - fixed by using string comparison
+    // Fix the comparison by using string comparison rather than type comparison
     if (mockTable === 'feature_flags') {
       expect(mockTable).toBe('feature_flags');
     }
@@ -48,8 +49,7 @@ describe('Feature flag system - E2E tests', () => {
       return { data: { subscription: { unsubscribe: vi.fn() } } };
     });
     
-    // Simulate auth state change
-    // This was causing a type error - fixed with optional chaining
+    // Simulate auth state change with optional chaining to prevent the error
     if (authChangeCallback) {
       authChangeCallback('SIGNED_OUT', { user: null, session: null });
     }
