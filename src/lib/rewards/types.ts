@@ -4,8 +4,15 @@ import { Achievement } from './types';
 export interface RewardTier {
   id: string;
   name: string;
-  minimumPoints: number;
-  benefits: string[];
+  minimumPoints?: number; // Keep for backward compatibility
+  benefits: string[] | {type?: string; description: string}[];
+  // Add missing fields
+  points_required?: number;
+  description?: string;
+  color?: string;
+  icon?: string;
+  establishment_id?: string;
+  is_active?: boolean;
 }
 
 export interface RewardOffering {
@@ -30,6 +37,10 @@ export interface RewardTransaction {
   type: 'EARN' | 'REDEEM';
   timestamp: string;
   description: string;
+  // Additional fields for compatibility
+  source?: string;
+  points?: number;
+  date?: string;
 }
 
 export interface Achievement {
@@ -119,6 +130,8 @@ export interface RewardCampaign {
   rewards?: CampaignReward[];
   trigger_conditions?: TriggerCondition[];
   is_active: boolean;
+  establishment_id?: string; // Add missing field
+  performance_metrics?: any; // Add missing field
 }
 
 export interface PerformanceTestResult {
@@ -128,6 +141,14 @@ export interface PerformanceTestResult {
   status: 'success' | 'warning' | 'error';
   timestamp: string;
   details?: Record<string, any>;
+}
+
+export interface SystemHealthMetric {
+  id: string;
+  name: string;
+  value: number;
+  status: 'healthy' | 'degraded' | 'error';
+  timestamp: string;
 }
 
 export interface RewardOperationResponse {
@@ -144,7 +165,7 @@ export interface UserRewardPreference {
   updated_at?: string;
 }
 
-// Helper function needed by UserRewardProfile component
+// Helper functions
 export const transformTransaction = (transaction: any): RewardTransaction => {
   return {
     id: transaction.id,
@@ -152,6 +173,26 @@ export const transformTransaction = (transaction: any): RewardTransaction => {
     pointsAmount: transaction.points,
     type: transaction.transaction_type === 'EARN' ? 'EARN' : 'REDEEM',
     timestamp: transaction.created_at,
-    description: transaction.description || transaction.source
+    description: transaction.description || transaction.source,
+    // Additional fields for backward compatibility
+    points: transaction.points,
+    source: transaction.source,
+    date: transaction.created_at
+  };
+};
+
+// Add missing function for tier transformation
+export const transformRewardTier = (tier: any): RewardTier => {
+  return {
+    id: tier.id,
+    name: tier.name,
+    minimumPoints: tier.points_required,
+    points_required: tier.points_required,
+    benefits: Array.isArray(tier.benefits) ? tier.benefits : [],
+    description: tier.description,
+    color: tier.color || '#4f46e5',
+    icon: tier.icon,
+    establishment_id: tier.establishment_id,
+    is_active: tier.is_active
   };
 };

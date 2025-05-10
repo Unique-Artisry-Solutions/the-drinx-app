@@ -32,9 +32,9 @@ const RewardTrends: React.FC<RewardTrendsProps> = ({
     if (!data?.timeSeriesData) return [];
     return data.timeSeriesData.map(item => ({
       name: item.date,
-      earned: item.pointsEarned,
-      redeemed: item.pointsRedeemed,
-      net: item.netPoints
+      earned: item.earned,
+      redeemed: item.redeemed,
+      net: item.earned - item.redeemed
     }));
   }, [data]);
 

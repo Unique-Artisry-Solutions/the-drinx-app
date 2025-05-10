@@ -32,7 +32,7 @@ const RewardMetrics: React.FC<RewardMetricsProps> = ({ establishmentId }) => {
   // Since activeMembers isn't available directly, we'll use unique users who earned points
   const activeMembers = data?.timeSeriesData?.reduce((set, item) => {
     // This is just a placeholder calculation, replace with actual logic if needed
-    return item.pointsEarned > 0 ? set + 1 : set;
+    return item.earned > 0 ? set + 1 : set;
   }, 0) || 0;
 
   const metrics = [

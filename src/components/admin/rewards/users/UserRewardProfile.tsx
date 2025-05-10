@@ -114,6 +114,34 @@ export const UserRewardProfile = ({ userId, onUpdate }: UserRewardProfileProps) 
     }
   };
 
+  const formattedDate = (dateString?: string) => {
+    if (!dateString) return '';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  const TransactionRow = ({ transaction }: { transaction: RewardTransaction }) => {
+    // Normalize type for case-insensitive comparison
+    const transactionType = transaction.type.toUpperCase();
+    const isEarn = transactionType === "EARN";
+    
+    return (
+      <tr className="border-b border-gray-100">
+        <td className="py-2 px-4">{formattedDate(transaction.timestamp)}</td>
+        <td className="py-2 px-4">
+          <div className={`inline-flex items-center ${isEarn ? "text-green-600" : "text-amber-600"}`}>
+            {isEarn ? "+" : "-"}
+            {transaction.pointsAmount || transaction.points}
+          </div>
+        </td>
+        <td className="py-2 px-4">{transaction.description || transaction.source || "-"}</td>
+      </tr>
+    );
+  };
+
   if (isLoading) {
     return (
       <Card>
@@ -261,21 +289,7 @@ export const UserRewardProfile = ({ userId, onUpdate }: UserRewardProfileProps) 
                       </TableRow>
                     ) : (
                       transactions.map(tx => (
-                        <TableRow key={tx.id}>
-                          <TableCell>
-                            {new Date(tx.date).toLocaleDateString()}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={tx.type === 'earn' ? 'default' : 'destructive'}>
-                              {tx.type === 'earn' ? 'EARNED' : 'SPENT'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className={tx.type === 'earn' ? 'text-green-600' : 'text-red-600'}>
-                            {tx.type === 'earn' ? '+' : '-'}{tx.points}
-                          </TableCell>
-                          <TableCell>{tx.source}</TableCell>
-                          <TableCell>{tx.description || '-'}</TableCell>
-                        </TableRow>
+                        <TransactionRow key={tx.id} transaction={tx} />
                       ))
                     )}
                   </TableBody>
