@@ -1,9 +1,10 @@
+
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 
-// Simple placeholder for now - will be replaced with actual implementation
-const RewardOfferingsTab: React.FC = () => {
+// Changed from default export to named export to match how it's imported in RewardsAdminPage.tsx
+export const RewardOfferingsTab: React.FC = () => {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
@@ -18,5 +19,3 @@ const RewardOfferingsTab: React.FC = () => {
     </div>
   );
 };
-
-export default RewardOfferingsTab;
