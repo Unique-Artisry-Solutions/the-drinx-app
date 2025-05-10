@@ -26,3 +26,30 @@ export const isPreviewEnvironment = (): boolean => {
   
   return false;
 };
+
+/**
+ * Format date safely for consistent display in preview and production environments
+ * If the date is invalid, returns a placeholder
+ */
+export const safeFormatDate = (dateStr: string | Date): string => {
+  if (!dateStr) return 'N/A';
+  
+  try {
+    const date = typeof dateStr === 'string' ? new Date(dateStr) : dateStr;
+    
+    // Check if date is valid
+    if (isNaN(date.getTime())) {
+      return 'Invalid Date';
+    }
+    
+    return new Intl.DateTimeFormat('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    }).format(date);
+  } catch (e) {
+    console.error('Error formatting date:', e);
+    return 'Error';
+  }
+};
+
