@@ -1,11 +1,10 @@
-
 import React, { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { NavigationType } from '../navigation/NavigationTypes';
 import MobileNavigation from '../navigation/MobileNavigation';
 import UserNavbar from '../navigation/user/UserNavbar';
 import Breadcrumbs from '../navigation/Breadcrumbs';
-import { useAuth } from '@/contexts/auth';
+import { useAuth } from '@/contexts/auth/AuthProvider';
 import { useTheme } from '@/contexts/ThemeContext';
 import GuestTopNavigation from '../navigation/GuestTopNavigation';
 import AdminTopNavigation from '../navigation/AdminTopNavigation';
@@ -61,8 +60,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
       }
       
       // Define public paths that always use guest navigation
-      // Removed '/explore' from this list
-      const publicPaths = ['/', '/landing', '/login', '/signup', '/mission'];
+      const publicPaths = ['/', '/landing', '/login', '/signup', '/mission', '/pricing'];
       const isPublicPath = publicPaths.includes(location.pathname) || forceGuestNavigation;
       
       // Determine navigation type based on auth state and path
@@ -133,8 +131,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
     if (!user) return true;
     
     // For authenticated users, use guest navigation only on explicit public paths
-    // Removed '/explore' from this list
-    const publicPaths = ['/', '/landing', '/login', '/signup', '/mission'];
+    const publicPaths = ['/', '/landing', '/login', '/signup', '/mission', '/pricing'];
     return publicPaths.includes(location.pathname);
   };
 

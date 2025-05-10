@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { NavigationType } from '../navigation/NavigationTypes';
@@ -8,7 +7,7 @@ import GuestTopNavigation from '../navigation/GuestTopNavigation';
 import Breadcrumbs from '../navigation/Breadcrumbs';
 import AppFooter from '../AppFooter';
 import AdminFooter from '../admin/AdminFooter';
-import { useAuth } from '@/contexts/auth';
+import { useAuth } from '@/contexts/auth/AuthProvider';
 import { useTheme } from '@/contexts/ThemeContext';
 
 interface TabOption {
@@ -54,8 +53,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
       }
       
       // Define public paths that always use guest navigation
-      // Removed '/explore' from this list
-      const publicPaths = ['/', '/landing', '/login', '/signup', '/mission'];
+      const publicPaths = ['/', '/landing', '/login', '/signup', '/mission', '/pricing'];
       const isPublicPath = publicPaths.includes(location.pathname) || forceGuestNavigation;
       
       // Determine navigation type based on auth state and path
@@ -93,8 +91,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     if (!user) return true;
     
     // For authenticated users, use guest navigation only on explicit public paths
-    // Removed '/explore' from this list
-    const publicPaths = ['/', '/landing', '/login', '/signup', '/mission'];
+    const publicPaths = ['/', '/landing', '/login', '/signup', '/mission', '/pricing'];
     return publicPaths.includes(location.pathname);
   };
 

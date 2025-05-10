@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useAuth } from '@/contexts/auth';
+import { useAuth } from '@/contexts/auth/AuthProvider';
 import { useNavigate } from 'react-router-dom';
 import PricingTierCard from '@/components/pricing/PricingTierCard';
 import FeatureTierComparison from '@/components/pricing/FeatureTierComparison';
@@ -146,7 +146,7 @@ const PricingPage = () => {
   };
 
   return (
-    <Layout>
+    <Layout forceGuestNavigation={true}>
       <div className="container py-12 px-4 md:px-6">
         <div className="mb-8">
           <BackButton fallbackPath="/" label="Back to Home" variant="outline" />

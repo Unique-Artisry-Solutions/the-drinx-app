@@ -1,8 +1,7 @@
-
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
-import { useAuth } from '@/contexts/auth';
+import { useAuth } from '@/contexts/auth/AuthProvider';
 import { checkAdminBypassStatus } from '@/utils/adminBypass';
 import { getSessionDebug } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';

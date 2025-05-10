@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '@/contexts/auth';
+import { useAuth } from '@/contexts/auth/AuthProvider';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAppNavigation } from '@/hooks/useAppNavigation';
 import { supabase } from '@/lib/supabase';
