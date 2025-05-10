@@ -1,63 +1,90 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Activity, AlertTriangle } from "lucide-react";
-import type { SystemHealthMetric } from '@/lib/rewards/types';
+import { AlertCircle, ArrowDownIcon, ArrowUpIcon, CheckCircle, Clock } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
+
+// Define the expected structure of health metrics
+interface SystemHealthMetric {
+  status: string;
+  response_time_ms: number;
+  transaction_count: number;
+  error_count: number;
+  timestamp: string;
+}
 
 interface SystemHealthCardProps {
   healthMetrics: SystemHealthMetric | null;
   isLoading: boolean;
 }
 
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case 'healthy':
-      return 'text-green-500';
-    case 'degraded':
-      return 'text-yellow-500';
-    case 'error':
-      return 'text-red-500';
-    default:
-      return 'text-gray-500';
-  }
-};
+export const SystemHealthCard: React.FC<SystemHealthCardProps> = ({ 
+  healthMetrics, 
+  isLoading 
+}) => {
+  const getStatusColor = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'healthy': return 'text-green-500';
+      case 'degraded': return 'text-amber-500';
+      case 'critical': return 'text-red-500';
+      default: return 'text-gray-500';
+    }
+  };
 
-export const SystemHealthCard: React.FC<SystemHealthCardProps> = ({ healthMetrics, isLoading }) => {
+  const getStatusIcon = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'healthy': return <CheckCircle className="h-5 w-5 text-green-500" />;
+      case 'degraded': return <Clock className="h-5 w-5 text-amber-500" />;
+      case 'critical': return <AlertCircle className="h-5 w-5 text-red-500" />;
+      default: return <Clock className="h-5 w-5 text-gray-500" />;
+    }
+  };
+
   return (
     <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <Activity className="h-5 w-5" />
-          System Status
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <p>Loading...</p>
-        ) : healthMetrics ? (
-          <div>
-            <h3 className={`text-2xl font-bold ${getStatusColor(healthMetrics.status)}`}>
-              {healthMetrics.status.toUpperCase()}
-            </h3>
-            <p className="text-sm text-gray-500 mt-2">
-              Response Time: {healthMetrics.response_time_ms}ms
-            </p>
-            <p className="text-sm text-gray-500">
-              Transactions: {healthMetrics.transaction_count}
-            </p>
-            <p className="text-sm text-gray-500">
-              Errors: {healthMetrics.error_count}
-            </p>
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardTitle className="text-md font-medium">System Health</CardTitle>
+        {!isLoading && healthMetrics && (
+          <div className="flex items-center space-x-1">
+            {getStatusIcon(healthMetrics.status)}
+            <span className={cn("text-sm font-medium", getStatusColor(healthMetrics.status))}>
+              {healthMetrics.status}
+            </span>
           </div>
+        )}
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {isLoading ? (
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
+          </div>
+        ) : healthMetrics ? (
+          <>
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium text-muted-foreground">Response Time</p>
+              <p className="text-sm font-medium">{healthMetrics.response_time_ms}ms</p>
+            </div>
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium text-muted-foreground">Transactions</p>
+              <p className="text-sm font-medium">{healthMetrics.transaction_count}</p>
+            </div>
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium text-muted-foreground">Errors</p>
+              <div className="flex items-center space-x-1">
+                <span className={`text-sm font-medium ${healthMetrics.error_count > 0 ? 'text-red-500' : 'text-green-500'}`}>
+                  {healthMetrics.error_count}
+                </span>
+                {healthMetrics.error_count === 0 && (
+                  <CheckCircle className="h-3 w-3 text-green-500" />
+                )}
+              </div>
+            </div>
+          </>
         ) : (
-          <Alert variant="destructive">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>Error</AlertTitle>
-            <AlertDescription>
-              Unable to fetch system health metrics
-            </AlertDescription>
-          </Alert>
+          <p className="text-sm text-muted-foreground">No health data available</p>
         )}
       </CardContent>
     </Card>

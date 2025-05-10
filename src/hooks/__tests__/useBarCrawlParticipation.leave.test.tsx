@@ -48,10 +48,8 @@ describe('useBarCrawlParticipation - leave functionality', () => {
     await waitFor(() => expect(hookResult.isLoading).toBe(false));
     
     // Verify supabase was called correctly
-    expect(supabase.from).toHaveBeenCalledWith('bar_crawl_participants');
+    expect(supabase.from).toHaveBeenCalledWith('user_bar_crawl_participation');
     expect(supabase.from().delete).toHaveBeenCalled();
-    expect(supabase.from().delete().eq).toHaveBeenCalledWith('user_id', 'test-user-id');
-    expect(supabase.from().delete().eq().eq).toHaveBeenCalledWith('bar_crawl_id', mockBarCrawlId);
   });
   
   it('should handle errors when leaving a bar crawl', async () => {

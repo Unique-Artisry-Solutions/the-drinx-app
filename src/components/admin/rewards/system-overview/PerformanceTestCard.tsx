@@ -1,112 +1,111 @@
 
 import React from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowDownUp, RefreshCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { FileDown, RefreshCw } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { PerformanceTestResult } from '@/lib/rewards/types';
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { TriangleAlert } from 'lucide-react';
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 
-interface PerformanceTestCardProps {
-  performanceTest: PerformanceTestResult | null;
+interface PerformanceTestResult {
+  name: string;
+  duration_ms: number;
+  status: string;
+  timestamp: string;
+}
+
+interface PerformanceTestCard {
+  performanceTest: PerformanceTestResult[] | null;
   isLoading: boolean;
   error: Error | null;
   onRefresh: () => void;
-  onExport?: () => void;  // Added this prop to fix the TS2322 error
+  onExport: () => void;
 }
 
-export function PerformanceTestCard({ 
-  performanceTest, 
-  isLoading, 
+export const PerformanceTestCard: React.FC<PerformanceTestCard> = ({
+  performanceTest,
+  isLoading,
   error,
   onRefresh,
   onExport
-}: PerformanceTestCardProps) {
-  if (error) {
-    return (
-      <Card className="col-span-2">
-        <CardHeader>
-          <CardTitle className="text-lg">Performance Tests</CardTitle>
-          <CardDescription>System performance metrics</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Alert variant="destructive">
-            <TriangleAlert className="h-4 w-4" />
-            <AlertTitle>Error Loading Performance Tests</AlertTitle>
-            <AlertDescription>{error.message}</AlertDescription>
-          </Alert>
-          <div className="text-right mt-4">
-            <Button onClick={onRefresh}>Try Again</Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+}) => {
+  // Function to determine badge color based on test status
+  const getStatusBadge = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'success':
+        return <Badge className="bg-green-500">Success</Badge>;
+      case 'failed':
+        return <Badge className="bg-red-500">Failed</Badge>;
+      case 'warning':
+        return <Badge className="bg-yellow-500">Warning</Badge>;
+      default:
+        return <Badge className="bg-gray-500">{status}</Badge>;
+    }
+  };
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="text-lg flex items-center justify-between">
-          <div className="flex items-center">
-            <ArrowDownUp className="h-4 w-4 mr-2" />
-            Performance Tests
-          </div>
-          {!isLoading && (
-            <Button size="sm" variant="outline" onClick={onRefresh}>
-              <RefreshCcw className="h-3 w-3 mr-1" />
-              Refresh
-            </Button>
-          )}
-        </CardTitle>
-        <CardDescription>Current system response times (in ms)</CardDescription>
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardTitle className="text-md font-medium">Performance Tests</CardTitle>
+        <div className="flex space-x-2">
+          <Button variant="outline" size="sm" onClick={onRefresh} disabled={isLoading}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
+          <Button variant="outline" size="sm" onClick={onExport} disabled={isLoading || !performanceTest}>
+            <FileDown className="h-4 w-4 mr-2" />
+            Export
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          {isLoading ? (
-            [...Array(5)].map((_, i) => (
-              <div key={i} className="grid grid-cols-3 gap-4 items-center">
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-full" />
-              </div>
-            ))
-          ) : performanceTest ? (
-            Object.entries(performanceTest).map(([testName, result]) => (
-              <div key={testName} className="grid grid-cols-3 gap-4 items-center">
-                <div className="font-medium">{testName}</div>
-                <div 
-                  className={
-                    result.status === 'error' ? 'text-red-500' :
-                    result.status === 'slow' ? 'text-yellow-500' :
-                    result.status === 'fast' ? 'text-green-500' : 'text-blue-500'
-                  }
-                >
-                  {result.status === 'error' ? 'Error' : `${result.duration_ms}ms`}
-                </div>
-                <div className="text-muted-foreground text-sm">
-                  {result.rows_processed} rows
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="text-center py-4 text-muted-foreground">
-              No performance data available
-            </div>
-          )}
-        </div>
+        {error && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertDescription>
+              {error.message || "Failed to load performance tests"}
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        {isLoading ? (
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-full" />
+            <Skeleton className="h-8 w-full" />
+            <Skeleton className="h-8 w-full" />
+          </div>
+        ) : performanceTest && performanceTest.length > 0 ? (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Test Name</TableHead>
+                <TableHead className="text-right">Duration (ms)</TableHead>
+                <TableHead className="text-right">Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {performanceTest.map((test, index) => (
+                <TableRow key={index}>
+                  <TableCell className="font-medium">{test.name}</TableCell>
+                  <TableCell className="text-right">{test.duration_ms}</TableCell>
+                  <TableCell className="text-right">{getStatusBadge(test.status)}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        ) : (
+          <div className="py-8 text-center">
+            <p className="text-muted-foreground">No performance test results available</p>
+          </div>
+        )}
       </CardContent>
-      {onExport && performanceTest && (
-        <CardFooter className="justify-end">
-          <Button 
-            size="sm"
-            variant="outline"
-            onClick={onExport}
-          >
-            Export Metrics
-          </Button>
-        </CardFooter>
-      )}
     </Card>
   );
-}
+};

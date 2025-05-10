@@ -29,7 +29,7 @@ export const useBarCrawlParticipation = ({ barCrawlId }: UseBarCrawlParticipatio
         }
 
         const { data, error: fetchError } = await supabase
-          .from('bar_crawl_participants')
+          .from('user_bar_crawl_participation')
           .select('*')
           .eq('user_id', session.user.id)
           .eq('bar_crawl_id', barCrawlId)
@@ -57,7 +57,7 @@ export const useBarCrawlParticipation = ({ barCrawlId }: UseBarCrawlParticipatio
         throw new Error('Please sign in to join this circuit');
       }
 
-      const { error: joinError } = await supabase.from('bar_crawl_participants').insert({
+      const { error: joinError } = await supabase.from('user_bar_crawl_participation').insert({
         user_id: session.user.id,
         bar_crawl_id: barCrawlId,
         joined_at: new Date().toISOString(),
@@ -83,7 +83,7 @@ export const useBarCrawlParticipation = ({ barCrawlId }: UseBarCrawlParticipatio
       }
 
       const { error: leaveError } = await supabase
-        .from('bar_crawl_participants')
+        .from('user_bar_crawl_participation')
         .delete()
         .eq('user_id', session.user.id)
         .eq('bar_crawl_id', barCrawlId);
