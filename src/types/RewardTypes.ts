@@ -6,6 +6,7 @@ export interface Achievement {
   name: string;
   description: string;
   icon: string;
+  category: string;
   threshold: number;
   pointsReward: number;
   isCompleted: boolean;
@@ -29,6 +30,9 @@ export interface RewardOffering {
   points_required: number;
   category?: string;
   image_url?: string;
+  expiration_days?: number;
+  quantity_available?: number;
+  is_active?: boolean;
 }
 
 export interface UserRewardProfile {

@@ -22,7 +22,7 @@ interface PerformanceTestResult {
   timestamp: string;
 }
 
-interface PerformanceTestCard {
+interface PerformanceTestCardProps {
   performanceTest: PerformanceTestResult[] | null;
   isLoading: boolean;
   error: Error | null;
@@ -30,7 +30,7 @@ interface PerformanceTestCard {
   onExport: () => void;
 }
 
-export const PerformanceTestCard: React.FC<PerformanceTestCard> = ({
+export const PerformanceTestCard: React.FC<PerformanceTestCardProps> = ({
   performanceTest,
   isLoading,
   error,

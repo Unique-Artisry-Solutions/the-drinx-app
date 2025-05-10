@@ -28,6 +28,7 @@ export interface RewardOffering {
   is_active?: boolean;
   image_url?: string;
   establishment_id?: string;
+  category?: string; // Add missing category field
 }
 
 export interface RewardTransaction {
@@ -53,6 +54,10 @@ export interface Achievement {
   isCompleted?: boolean;
   progress?: number;
   maxProgress?: number;
+  // Add missing properties to align with components
+  pointsReward: number;
+  threshold: number;
+  icon: string;
 }
 
 export interface RewardTrackingEvents {
@@ -64,6 +69,7 @@ export interface RewardTrackingEvents {
 }
 
 export interface UserRewardProfile {
+  id?: string; // Make id optional for compatibility
   points: number;
   lifetimePoints: number;
   currentTier: RewardTier | null;
@@ -95,6 +101,8 @@ export interface RewardAnalytics {
   activeUsers?: number;
   averagePointsPerUser?: number;
   tierDistribution?: Record<string, number>;
+  // Add additional properties for analytics
+  transactionCount?: number;
 }
 
 // New interfaces needed for campaigns
@@ -141,6 +149,9 @@ export interface PerformanceTestResult {
   status: 'success' | 'warning' | 'error';
   timestamp: string;
   details?: Record<string, any>;
+  // Add fields to match system component
+  name?: string;
+  duration_ms?: number;
 }
 
 export interface SystemHealthMetric {
@@ -149,6 +160,10 @@ export interface SystemHealthMetric {
   value: number;
   status: 'healthy' | 'degraded' | 'error';
   timestamp: string;
+  // Add fields to match system component
+  response_time_ms: number;
+  transaction_count: number;
+  error_count: number;
 }
 
 export interface RewardOperationResponse {
@@ -196,3 +211,7 @@ export const transformRewardTier = (tier: any): RewardTier => {
     is_active: tier.is_active
   };
 };
+
+// Add missing types for TimeSeriesDataPoint and RewardTransactionRow
+export type TimeSeriesDataPoint = TimeSeriesData;
+export type RewardTransactionRow = RewardTransaction;

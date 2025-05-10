@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Award, Gift, Star, Trophy } from 'lucide-react';
 import { TierStatusIndicator } from './TierStatusIndicator';
-import { RewardHistory } from './RewardHistory';
+import RewardHistory from './RewardHistory';
 import { AchievementsList } from './AchievementsList';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useRewards } from '@/hooks/rewards/useRewards';

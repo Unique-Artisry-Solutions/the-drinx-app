@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { RewardCampaign } from '@/lib/rewards/types';
 import { useToast } from '@/hooks/use-toast';

@@ -1,5 +1,6 @@
-
 import { vi } from 'vitest';
+import { useAuth } from '@/contexts/auth/AuthProvider';
+import { useToast } from '@/hooks/use-toast';
 
 // Create a proper mockUser that satisfies the User type from Supabase
 export const mockUser = {
@@ -86,7 +87,7 @@ vi.mock('@/lib/supabaseClient', () => ({
 }));
 
 // Mock auth context
-vi.mock('@/contexts/auth', () => ({
+vi.mock('@/contexts/auth/AuthProvider', () => ({
   useAuth: vi.fn()
 }));
 

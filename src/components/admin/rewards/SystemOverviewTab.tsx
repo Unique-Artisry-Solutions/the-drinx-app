@@ -19,7 +19,7 @@ const SystemOverviewTab = () => {
   });
 
   const { 
-    data: performanceTest, 
+    data: performanceTests, 
     isLoading: testLoading, 
     error: testError, 
     refetch: refetchTests 
@@ -37,7 +37,7 @@ const SystemOverviewTab = () => {
     if (healthMetrics) {
       exportAnalytics({
         healthMetrics,
-        performanceTests: performanceTest,
+        performanceTests,
         timestamp: new Date().toISOString(),
       }, 'system_health_metrics');
     } else {
@@ -71,7 +71,7 @@ const SystemOverviewTab = () => {
       </div>
 
       <PerformanceTestCard
-        performanceTest={performanceTest}
+        performanceTest={performanceTests}
         isLoading={testLoading}
         error={testError}
         onRefresh={handleRefreshTests}
