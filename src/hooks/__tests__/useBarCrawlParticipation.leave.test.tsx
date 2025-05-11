@@ -41,9 +41,8 @@ describe('useBarCrawlParticipation - leave functionality', () => {
   });
   
   it('should successfully leave a bar crawl', async () => {
-    // Call leave function (handle both function signatures)
-    // The implementation below assumes the function accepts one parameter
-    hookResult.handleLeave();
+    // Call leave function with the barCrawlId parameter
+    hookResult.handleLeave(mockBarCrawlId);
     
     // Wait for operation to complete
     await waitFor(() => expect(hookResult.isLoading).toBe(false));
@@ -60,8 +59,8 @@ describe('useBarCrawlParticipation - leave functionality', () => {
       error: { message: 'Failed to leave bar crawl' },
     } as any);
     
-    // Call leave function
-    hookResult.handleLeave();
+    // Call leave function with the barCrawlId parameter
+    hookResult.handleLeave(mockBarCrawlId);
     
     // Wait for operation to complete
     await waitFor(() => expect(hookResult.isLoading).toBe(false));
@@ -77,8 +76,8 @@ describe('useBarCrawlParticipation - leave functionality', () => {
       error: { message: 'Not authenticated' },
     } as any);
     
-    // Call leave function
-    hookResult.handleLeave();
+    // Call leave function with the barCrawlId parameter
+    hookResult.handleLeave(mockBarCrawlId);
     
     // Wait for operation to complete
     await waitFor(() => expect(hookResult.isLoading).toBe(false));

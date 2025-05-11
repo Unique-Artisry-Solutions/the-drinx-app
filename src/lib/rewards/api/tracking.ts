@@ -27,3 +27,30 @@ export async function trackRewardEvent(
     return false;
   }
 }
+
+// Add functions needed by useRewardTracking.ts
+export async function trackFunnelProgression(
+  userId: string,
+  funnelStage: string,
+  metadata: Record<string, any> = {}
+): Promise<boolean> {
+  return await trackRewardEvent(`funnel_${funnelStage}`, userId, {
+    funnel_stage: funnelStage,
+    ...metadata
+  });
+}
+
+export async function trackCohortMetric(
+  userId: string,
+  cohortType: string,
+  cohortValue: string,
+  activity: string,
+  value: any
+): Promise<boolean> {
+  return await trackRewardEvent('cohort_activity', userId, {
+    cohort_type: cohortType,
+    cohort_value: cohortValue,
+    activity,
+    value
+  });
+}

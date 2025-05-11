@@ -32,13 +32,13 @@ export const isPreviewEnvironment = (): boolean => {
  * If the date is invalid, returns a placeholder
  * 
  * @param dateStr - Date string or Date object to format
- * @param formatOptions - Optional formatting options
+ * @param formatOptions - Optional formatting options or format string from date-fns
  * @param fallback - Optional fallback string if date is invalid
  * @returns Formatted date string
  */
 export const safeFormatDate = (
   dateStr: string | Date | undefined | null, 
-  formatOptions?: Intl.DateTimeFormatOptions,
+  formatOptions?: Intl.DateTimeFormatOptions | string,
   fallback: string = 'N/A'
 ): string => {
   if (!dateStr) return fallback;
@@ -51,6 +51,13 @@ export const safeFormatDate = (
       return fallback || 'Invalid Date';
     }
     
+    // Handle string format (for date-fns compatibility)
+    if (typeof formatOptions === 'string') {
+      // Return ISO string format, client code should use date-fns to format it
+      return date.toISOString();
+    }
+    
+    // Use Intl.DateTimeFormat for object format options
     return new Intl.DateTimeFormat('en-US', formatOptions || {
       year: 'numeric',
       month: 'short',

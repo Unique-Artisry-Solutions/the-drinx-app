@@ -37,7 +37,7 @@ export function UserRewardDashboard() {
       transaction_type: transaction.type || transaction.transaction_type || 'EARN',
       points: transaction.points || transaction.pointsAmount || 0,
       description: transaction.description || '',
-      created_at: transaction.timestamp || transaction.date || transaction.created_at || new Date().toISOString(),
+      created_at: transaction.timestamp || transaction.date || new Date().toISOString(),
       source: transaction.source || ''
     };
   });
@@ -151,7 +151,7 @@ export function UserRewardDashboard() {
 
         <TabsContent value="history" className="mt-6 p-4">
           {/* Reward History */}
-          <RewardHistory transactions={formattedTransactions} />
+          <RewardHistory transactions={formattedTransactions} isLoading={isLoading} />
         </TabsContent>
       </Tabs>
     </div>

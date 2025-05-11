@@ -38,22 +38,22 @@ export const useAchievements = () => {
     activityType: 'visit' | 'mocktail' | 'review' | 'share' | 'recipe' | 'circuit',
     metadata?: Record<string, any>
   ) => {
-    if (!user?.id) return;
+    if (!user?.id) return [];
     
     try {
       const result = await rewardsApi.recordActivity(user.id, activityType, metadata);
       
       // Show notifications for completed achievements
-      result.completedAchievements.forEach(achievement => {
-        toast({
-          title: '🏆 Achievement Unlocked!',
-          description: `${achievement.name}: ${achievement.description}. +${achievement.pointsReward} points!`,
-          duration: 5000,
+      if (result.success && result.completedAchievements.length > 0) {
+        result.completedAchievements.forEach(achievement => {
+          toast({
+            title: '🏆 Achievement Unlocked!',
+            description: `${achievement.name}: ${achievement.description}. +${achievement.pointsReward} points!`,
+            duration: 5000,
+          });
         });
-      });
-      
-      // Refresh achievements if any were completed
-      if (result.completedAchievements.length > 0) {
+        
+        // Refresh achievements if any were completed
         const updatedAchievements = await rewardsApi.getUserAchievements(user.id);
         setAchievements(updatedAchievements);
         setAchievementsByCategory(getAchievementsByCategory(updatedAchievements));

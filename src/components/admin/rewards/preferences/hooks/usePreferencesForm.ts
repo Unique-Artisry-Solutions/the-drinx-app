@@ -39,8 +39,8 @@ export const usePreferencesForm = (userId: string) => {
   const updateMutation = useMutation({
     mutationFn: async (data: PreferencesFormData) => {
       const updatePromises = [
-        rewardsApi.saveUserPreference(userId, 'notification_settings', data.notification_settings),
-        rewardsApi.saveUserPreference(userId, 'display_settings', data.display_settings)
+        rewardsApi.setUserPreference(userId, 'notification_settings', data.notification_settings),
+        rewardsApi.setUserPreference(userId, 'display_settings', data.display_settings)
       ];
       await Promise.all(updatePromises);
     },
