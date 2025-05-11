@@ -23,7 +23,7 @@ describe('Reward Analytics', () => {
         { 
           id: '1', 
           user_id: 'user1', 
-          transaction_type: 'earn', 
+          transaction_type: 'EARN', 
           points: 100,
           source: 'purchase',
           metadata: {},
@@ -34,7 +34,7 @@ describe('Reward Analytics', () => {
         { 
           id: '2', 
           user_id: 'user1', 
-          transaction_type: 'earn', 
+          transaction_type: 'EARN', 
           points: 50,
           source: 'referral',
           metadata: {},
@@ -45,7 +45,7 @@ describe('Reward Analytics', () => {
         { 
           id: '3', 
           user_id: 'user1', 
-          transaction_type: 'redeem', 
+          transaction_type: 'REDEEM', 
           points: 75,
           source: 'reward',
           metadata: {},
@@ -79,7 +79,7 @@ describe('Reward Analytics', () => {
         { 
           id: '1', 
           user_id: 'user1', 
-          transaction_type: 'earn', 
+          transaction_type: 'EARN', 
           points: 100,
           source: 'purchase',
           metadata: {},
@@ -90,7 +90,7 @@ describe('Reward Analytics', () => {
         {
           id: '2',
           user_id: 'user1',
-          transaction_type: 'earn',
+          transaction_type: 'EARN',
           points: 50,
           source: 'referral',
           metadata: {},
@@ -101,7 +101,7 @@ describe('Reward Analytics', () => {
         {
           id: '3',
           user_id: 'user1',
-          transaction_type: 'redeem',
+          transaction_type: 'REDEEM',
           points: 75,
           source: 'reward',
           metadata: {},

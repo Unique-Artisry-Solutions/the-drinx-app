@@ -1,6 +1,10 @@
+
 import { supabase } from '@/lib/supabase';
-import { UserRewardProfile, RewardTransaction, transformRewardTier, transformTransaction, RewardOperationResponse } from '../types';
+import { UserRewardProfile, RewardTransaction, transformRewardTier, transformTransaction } from '../types';
 import { RewardsCache } from '../system/RewardsCache';
+
+// Import type from types.ts without redefining it locally
+import type { RewardOperationResponse } from '../types';
 
 export async function getUserRewardProfile(userId: string): Promise<UserRewardProfile | null> {
   const cacheStatus = await RewardsCache.getCacheStatus(`reward_profile_${userId}`);
@@ -57,22 +61,25 @@ export async function getUserRewardProfile(userId: string): Promise<UserRewardPr
     }
 
     // Transform reward offerings to match the expected format
-    const transformedRewards = (availableRewards || []).map(offering => ({
-      id: offering.id,
-      name: offering.name,
-      description: offering.description,
-      pointCost: offering.points_required,
-      pointValue: offering.points_required,
-      pointsRequired: offering.points_required,
-      availableQuantity: offering.quantity_available,
-      quantity_available: offering.quantity_available,
-      expiration_days: offering.expiration_days,
-      is_active: offering.is_active,
-      image_url: offering.image_url,
-      establishment_id: offering.establishment_id,
-      created_at: offering.created_at,
-      updated_at: offering.updated_at,
-    }));
+    const transformedRewards = (availableRewards || []).map(offering => {
+      // Safely access properties with optional chaining
+      return {
+        id: offering.id,
+        name: offering.name,
+        description: offering.description,
+        pointCost: offering.points_required,
+        pointValue: offering.points_required,
+        pointsRequired: offering.points_required,
+        availableQuantity: offering?.quantity_available,
+        quantity_available: offering?.quantity_available,
+        expiration_days: offering?.expiration_days || null,
+        is_active: offering.is_active,
+        image_url: offering?.image_url,
+        establishment_id: offering?.establishment_id,
+        created_at: offering.created_at,
+        updated_at: offering.updated_at,
+      };
+    });
 
     // Create the profile with the correct format
     const profile: UserRewardProfile = {

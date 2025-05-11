@@ -3,7 +3,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { supabase } from '@/lib/supabase';
 import { rewardsApi } from '@/lib/rewards/api';
 import { createMockQueryBuilder } from '../utils/supabaseTestUtils';
-import { Achievement, BatchRewardOperationResponse, RewardOperationResponse } from '@/lib/rewards/types';
+import { Achievement, BatchRewardOperationResponse, RewardOperationResponse, UserRewardPreference } from '@/lib/rewards/types';
 
 // Create mocked version of rewardsApi for testing
 vi.mock('@/lib/rewards/api', () => ({
@@ -45,12 +45,18 @@ describe('Reward System End-to-End Tests', () => {
     });
 
     it('should fetch a user reward profile', async () => {
-      // Setup mock response
+      // Setup mock response with benefits array for tier
       const mockProfile = {
         id: 'test-user-id',
         points: 500,
         lifetimePoints: 1000,
-        currentTier: { id: 'tier-1', name: 'Silver' },
+        currentTier: { 
+          id: 'tier-1', 
+          name: 'Silver',
+          benefits: ['Benefit 1', 'Benefit 2'],
+          color: '#C0C0C0',
+          icon: 'medal'
+        },
         availableRewards: [],
         transactionHistory: [],
         redemptionHistory: []
@@ -143,7 +149,15 @@ describe('Reward System End-to-End Tests', () => {
     it('should save and retrieve user preferences', async () => {
       // Setup mock responses
       vi.mocked(rewardsApi.setUserPreference).mockResolvedValue(true);
-      vi.mocked(rewardsApi.getUserPreference).mockResolvedValue('weekly');
+      
+      // Mock the preference object that will be returned
+      const mockPreference: UserRewardPreference = {
+        user_id: 'test-user-id',
+        preference_key: 'notification_frequency',
+        preference_value: 'weekly'
+      };
+      
+      vi.mocked(rewardsApi.getUserPreference).mockResolvedValue(mockPreference);
 
       // Set preference
       const result = await rewardsApi.setUserPreference('test-user-id', 'notification_frequency', 'weekly');
@@ -151,14 +165,20 @@ describe('Reward System End-to-End Tests', () => {
       
       // Get preference
       const preference = await rewardsApi.getUserPreference('test-user-id', 'notification_frequency');
-      expect(preference).toBe('weekly');
+      expect(preference).toEqual(mockPreference);
     });
   });
 
   describe('Activity Tracking', () => {
     it('should record user activity and award points', async () => {
       // Setup mock responses
-      vi.mocked(rewardsApi.recordActivity).mockResolvedValue(true);
+      const mockCompletedAchievements: Achievement[] = [];
+      
+      vi.mocked(rewardsApi.recordActivity).mockResolvedValue({
+        success: true,
+        completedAchievements: mockCompletedAchievements
+      });
+      
       vi.mocked(rewardsApi.addPoints).mockResolvedValue({ success: true });
       vi.mocked(rewardsApi.getUserRewardProfile).mockResolvedValue({
         points: 550,
@@ -167,7 +187,7 @@ describe('Reward System End-to-End Tests', () => {
 
       // Record activity
       const activityResult = await rewardsApi.recordActivity('test-user-id', 'check_in', { location: 'Bar A' });
-      expect(activityResult).toBe(true);
+      expect(activityResult.success).toBe(true);
       
       // Verify points were awarded
       const profile = await rewardsApi.getUserRewardProfile('test-user-id');

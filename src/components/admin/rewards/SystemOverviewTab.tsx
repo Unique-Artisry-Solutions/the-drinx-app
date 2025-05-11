@@ -9,6 +9,9 @@ import { SystemHealthCard } from './system-overview/SystemHealthCard';
 import { PerformanceTestCard } from './system-overview/PerformanceTestCard';
 import { useAnalyticsExport } from '@/hooks/useAnalyticsExport';
 
+// Import SystemHealthMetric type directly from the system file to avoid conflicts
+import type { SystemHealthMetric } from '@/lib/rewards/system/RewardsSystemMonitor';
+
 const SystemOverviewTab = () => {
   const { exportAnalytics } = useAnalyticsExport();
   

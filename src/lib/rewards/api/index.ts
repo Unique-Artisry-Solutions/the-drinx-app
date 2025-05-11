@@ -4,8 +4,7 @@ import { getRewardAnalytics, processRewardAnalytics } from './analytics';
 import { getUserRewardProfile, redeemReward } from './profile';
 import { addPoints, batchUpdatePoints } from './operations';
 import { getUserPreference, setUserPreference } from './preferences';
-import { trackRewardEvent, trackFunnelProgression, trackCohortMetric } from './tracking';
-import { RewardOperationResponse, BatchRewardOperationResponse } from '../types';
+import { trackRewardEvent, trackFunnelProgression, trackCohortMetric, REWARD_EVENT_TYPES, FUNNEL_STAGES } from './tracking';
 
 // Export all the API functions as a single object
 export const rewardsApi = {
@@ -61,6 +60,9 @@ export {
   trackRewardEvent,
   trackFunnelProgression,
   trackCohortMetric,
-  RewardOperationResponse,
-  BatchRewardOperationResponse
+  REWARD_EVENT_TYPES,
+  FUNNEL_STAGES
 };
+
+// Export types using 'export type' to fix isolatedModules issue
+export type { RewardOperationResponse, BatchRewardOperationResponse } from '../types';

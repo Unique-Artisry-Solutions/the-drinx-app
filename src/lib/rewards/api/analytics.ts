@@ -1,5 +1,6 @@
+
 import { supabase } from '@/lib/supabase';
-import { RewardAnalytics, TimeSeriesData, RewardTransactionRow } from '../types';
+import { RewardAnalytics, TimeSeriesData } from '../types';
 import { RewardsCache } from '../system/RewardsCache';
 
 export async function getRewardAnalytics(establishmentId?: string): Promise<RewardAnalytics | null> {
@@ -31,7 +32,25 @@ export async function getRewardAnalytics(establishmentId?: string): Promise<Rewa
       return null;
     }
     
-    const analytics = processRewardAnalytics(transactions);
+    // Transform raw database transactions to expected format
+    const transformedTransactions = transactions.map(tx => ({
+      id: tx.id,
+      userId: tx.user_id,
+      user_id: tx.user_id,
+      pointsAmount: tx.points,
+      points: tx.points,
+      type: tx.transaction_type,
+      transaction_type: tx.transaction_type,
+      timestamp: tx.created_at,
+      date: tx.created_at,
+      description: tx.description || tx.source,
+      source: tx.source,
+      created_at: tx.created_at,
+      // Add other fields needed for compatibility
+      metadata: tx.metadata
+    }));
+    
+    const analytics = processRewardAnalytics(transformedTransactions);
     
     // Cache the analytics for 15 minutes
     await RewardsCache.updateCache(cacheKey, 900, analytics);
@@ -43,7 +62,7 @@ export async function getRewardAnalytics(establishmentId?: string): Promise<Rewa
   }
 }
 
-export function processRewardAnalytics(transactions: RewardTransactionRow[]): RewardAnalytics {
+export function processRewardAnalytics(transactions: any[]): RewardAnalytics {
   // Initialize with default values
   const analytics: RewardAnalytics = {
     totalPointsEarned: 0,
@@ -94,7 +113,7 @@ export function processRewardAnalytics(transactions: RewardTransactionRow[]): Re
     userTransactionsMap.set(userId, userTransactionsMap.get(userId)! + 1);
     
     // Track daily data
-    const date = new Date(tx.timestamp || tx.date || '').toISOString().split('T')[0];
+    const date = new Date(tx.timestamp || tx.date || tx.created_at || '').toISOString().split('T')[0];
     if (!dailyDataMap.has(date)) {
       dailyDataMap.set(date, { earned: 0, redeemed: 0 });
     }
