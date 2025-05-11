@@ -5,6 +5,11 @@ import { supabase } from '@/lib/supabase';
 import { createMockQueryBuilder } from '../utils/supabaseTestUtils';
 import { RewardTransactionRow } from '@/lib/rewards/types';
 
+// Create an extended type for test purposes
+interface TestRewardTransaction extends RewardTransactionRow {
+  metadata?: Record<string, any>;
+}
+
 vi.mock('@/lib/supabase', () => ({
   supabase: {
     from: vi.fn(() => createMockQueryBuilder()),
@@ -19,7 +24,7 @@ describe('Reward Analytics', () => {
   describe('Data Processing', () => {
     it('should calculate metrics correctly', () => {
       // Create properly typed mock transactions
-      const mockTransactions: RewardTransactionRow[] = [
+      const mockTransactions: TestRewardTransaction[] = [
         { 
           id: '1', 
           user_id: 'user1', 
@@ -55,7 +60,8 @@ describe('Reward Analytics', () => {
         }
       ];
 
-      const analytics = rewardsApi.processRewardAnalytics(mockTransactions);
+      // Type assertion to allow the test to pass
+      const analytics = rewardsApi.processRewardAnalytics(mockTransactions as RewardTransactionRow[]);
       
       expect(analytics.totalPointsEarned).toBe(150);
       expect(analytics.totalPointsRedeemed).toBe(75);
@@ -75,7 +81,7 @@ describe('Reward Analytics', () => {
   describe('Time Series Data', () => {
     it('should group transactions by date correctly', () => {
       // Create properly typed mock transactions
-      const mockTransactions: RewardTransactionRow[] = [
+      const mockTransactions: TestRewardTransaction[] = [
         { 
           id: '1', 
           user_id: 'user1', 
@@ -111,8 +117,8 @@ describe('Reward Analytics', () => {
         }
       ];
 
-      // Modify the test to pass the data array directly
-      const timeSeriesData = rewardsApi.processRewardAnalytics(mockTransactions);
+      // Type assertion to allow the test to pass
+      const timeSeriesData = rewardsApi.processRewardAnalytics(mockTransactions as RewardTransactionRow[]);
       
       expect(timeSeriesData.totalPointsEarned).toBe(150);
       expect(timeSeriesData.totalPointsRedeemed).toBe(75);

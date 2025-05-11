@@ -1,16 +1,13 @@
 
 import React from 'react';
 import { TrendingUp, CircleCheck } from "lucide-react";
-import { RewardsSystemMonitor } from '@/lib/rewards/system/RewardsSystemMonitor';
+import { RewardsSystemMonitor, SystemHealthMetric } from '@/lib/rewards/system/RewardsSystemMonitor';
 import { useQuery } from '@tanstack/react-query';
 import AnalyticsMetricCard from '@/components/charts/AnalyticsMetricCard';
 import { toast } from 'sonner';
 import { SystemHealthCard } from './system-overview/SystemHealthCard';
 import { PerformanceTestCard } from './system-overview/PerformanceTestCard';
 import { useAnalyticsExport } from '@/hooks/useAnalyticsExport';
-
-// Import SystemHealthMetric type directly from the system file to avoid conflicts
-import type { SystemHealthMetric } from '@/lib/rewards/system/RewardsSystemMonitor';
 
 const SystemOverviewTab = () => {
   const { exportAnalytics } = useAnalyticsExport();

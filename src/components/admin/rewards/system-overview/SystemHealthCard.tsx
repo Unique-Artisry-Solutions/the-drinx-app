@@ -4,15 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertCircle, CheckCircle, Clock } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-
-// Define the expected structure of health metrics
-interface SystemHealthMetric {
-  status: string;
-  response_time_ms: number;
-  transaction_count: number;
-  error_count: number;
-  timestamp: string;
-}
+import { SystemHealthMetric } from "@/lib/rewards/system/RewardsSystemMonitor";
 
 interface SystemHealthCardProps {
   healthMetrics: SystemHealthMetric | null;

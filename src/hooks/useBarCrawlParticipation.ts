@@ -73,7 +73,10 @@ export const useBarCrawlParticipation = ({ barCrawlId }: UseBarCrawlParticipatio
     }
   };
 
-  const handleLeave = async () => {
+  const handleLeave = async (crawlIdParam?: string) => {
+    // Use the provided parameter or fall back to the prop
+    const crawlId = crawlIdParam || barCrawlId;
+    
     setIsLoading(true);
     setError(null);
     try {
@@ -86,7 +89,7 @@ export const useBarCrawlParticipation = ({ barCrawlId }: UseBarCrawlParticipatio
         .from('user_bar_crawl_participation')
         .delete()
         .eq('user_id', session.user.id)
-        .eq('bar_crawl_id', barCrawlId);
+        .eq('bar_crawl_id', crawlId);
 
       if (leaveError) throw leaveError;
       setStatus('NOT_JOINED');

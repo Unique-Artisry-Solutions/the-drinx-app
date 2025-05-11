@@ -1,12 +1,19 @@
-
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { supabase } from '@/lib/supabase';
+
+// Define a minimal subscription type for testing
+interface TestSubscription {
+  unsubscribe: () => void;
+}
 
 // Mock supabase
 vi.mock('@/lib/supabase', () => ({
   supabase: {
     auth: {
-      onAuthStateChange: vi.fn(),
+      onAuthStateChange: vi.fn((callback) => {
+        // This returns a correctly typed subscription object
+        return { data: { subscription: { unsubscribe: vi.fn(), id: 'test-id' } } };
+      }),
       getUser: vi.fn(),
       signOut: vi.fn()
     },
@@ -41,12 +48,13 @@ describe('Feature flag system - E2E tests', () => {
   });
   
   it('should handle auth state changes', async () => {
-    // Setup auth state change listener
+    // Setup auth state change listener with proper callback type
     let authChangeCallback: ((event: string, session: any) => void) | undefined;
     
+    // Correctly type the mock implementation
     vi.mocked(supabase.auth.onAuthStateChange).mockImplementation((callback) => {
       authChangeCallback = callback;
-      return { data: { subscription: { unsubscribe: vi.fn() } } };
+      return { data: { subscription: { unsubscribe: vi.fn(), id: 'test-id', callback: vi.fn() } } };
     });
     
     // Simulate auth state change with optional chaining to prevent the error

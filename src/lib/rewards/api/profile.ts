@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { UserRewardProfile, RewardTransaction, transformRewardTier, transformTransaction } from '../types';
 import { RewardsCache } from '../system/RewardsCache';
 
-// Import type from types.ts without redefining it locally
+// Use type from types.ts without redefining it
 import type { RewardOperationResponse } from '../types';
 
 export async function getUserRewardProfile(userId: string): Promise<UserRewardProfile | null> {
@@ -108,7 +108,7 @@ export async function redeemReward(userId: string, rewardId: string): Promise<Re
     // Check if reward exists and get its point cost
     const { data: reward, error: rewardError } = await supabase
       .from('reward_offerings')
-      .select('points_required, quantity_available')
+      .select('points_required, quantity_available, expiration_days')
       .eq('id', rewardId)
       .single();
     
@@ -210,11 +210,4 @@ export async function redeemReward(userId: string, rewardId: string): Promise<Re
     console.error('Unexpected error in redeemReward:', error);
     return { success: false, error: 'An unexpected error occurred' };
   }
-}
-
-// RewardOperationResponse type for TypeScript
-export interface RewardOperationResponse {
-  success: boolean;
-  message?: string;
-  error?: string;
 }

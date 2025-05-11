@@ -2,13 +2,13 @@
 import { supabase } from '@/lib/supabase';
 
 // Define missing or inconsistent types
-interface SystemHealthMetric {
+export interface SystemHealthMetric {
   id?: string;
   status: 'healthy' | 'degraded' | 'error';
   response_time_ms: number;
   transaction_count: number;
   error_count: number;
-  timestamp?: string;
+  timestamp: string;
   details?: Record<string, any>;
 }
 
@@ -123,6 +123,7 @@ export class RewardsSystemMonitor {
         response_time_ms: data.response_time_ms,
         transaction_count: data.transaction_count,
         error_count: data.error_count,
+        timestamp: data.timestamp,
         details: sanitizeDetails(data.details)
       };
     } catch (error) {
