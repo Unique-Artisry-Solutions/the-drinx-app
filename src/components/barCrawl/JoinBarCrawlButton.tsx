@@ -36,10 +36,18 @@ const JoinBarCrawlButton: React.FC<JoinBarCrawlButtonProps> = ({ barCrawlId, cla
     ? 'Checking...' 
     : (isJoined ? 'Leaving...' : 'Joining...');
 
+  const onButtonClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (isJoined) {
+      handleLeave(barCrawlId);
+    } else {
+      handleJoin();
+    }
+  };
+
   return (
     <div className="w-full">
       <Button 
-        onClick={isJoined ? handleLeave : handleJoin} 
+        onClick={onButtonClick} 
         disabled={isLoading || isCheckingStatus}
         variant={showErrorState ? "destructive" : (isJoined ? "outline" : "default")}
         className={className}

@@ -1,9 +1,12 @@
+
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { supabase } from '@/lib/supabase';
 
 // Define a minimal subscription type for testing
 interface TestSubscription {
   unsubscribe: () => void;
+  id: string;
+  callback?: () => void;
 }
 
 // Mock supabase
@@ -12,7 +15,7 @@ vi.mock('@/lib/supabase', () => ({
     auth: {
       onAuthStateChange: vi.fn((callback) => {
         // This returns a correctly typed subscription object
-        return { data: { subscription: { unsubscribe: vi.fn(), id: 'test-id' } } };
+        return { data: { subscription: { unsubscribe: vi.fn(), id: 'test-id', callback: vi.fn() } } };
       }),
       getUser: vi.fn(),
       signOut: vi.fn()

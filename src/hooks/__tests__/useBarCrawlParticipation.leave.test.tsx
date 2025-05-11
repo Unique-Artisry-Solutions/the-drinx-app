@@ -56,7 +56,7 @@ describe('useBarCrawlParticipation - leave functionality', () => {
     // Mock an error response
     vi.mocked(supabase.from().delete().eq().eq).mockResolvedValueOnce({
       data: null,
-      error: { message: 'Failed to leave bar crawl' },
+      error: { message: 'Failed to leave bar crawl' }
     } as any);
     
     // Call leave function with the required parameter
@@ -73,7 +73,7 @@ describe('useBarCrawlParticipation - leave functionality', () => {
     // Mock auth error
     vi.mocked(supabase.auth.getUser).mockResolvedValueOnce({
       data: { user: null },
-      error: { message: 'Not authenticated' },
+      error: { message: 'Not authenticated' }
     } as any);
     
     // Call leave function with the required parameter

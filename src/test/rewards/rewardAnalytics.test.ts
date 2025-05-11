@@ -8,6 +8,7 @@ import { RewardTransactionRow } from '@/lib/rewards/types';
 // Create an extended type for test purposes
 interface TestRewardTransaction extends RewardTransactionRow {
   metadata?: Record<string, any>;
+  version?: number;
 }
 
 vi.mock('@/lib/supabase', () => ({
