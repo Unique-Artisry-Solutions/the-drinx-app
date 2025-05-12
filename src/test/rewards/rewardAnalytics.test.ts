@@ -5,15 +5,22 @@ import { supabase } from '@/lib/supabase';
 import { createMockQueryBuilder } from '../utils/supabaseTestUtils';
 import { RewardTransactionRow } from '@/lib/rewards/types';
 
-// Create an extended type for test purposes
-interface TestRewardTransaction extends RewardTransactionRow {
-  metadata?: Record<string, any>;
-  version?: number;
-  userId?: string;
-  pointsAmount?: number;
-  type?: 'EARN' | 'REDEEM';
-  timestamp?: string;
-  date?: string;
+// Create an extended type for test purposes that includes all required fields
+interface TestRewardTransaction {
+  id: string;
+  user_id: string;
+  userId: string;
+  transaction_type: 'EARN' | 'REDEEM';
+  type: 'EARN' | 'REDEEM';
+  points: number;
+  pointsAmount: number;
+  source: string;
+  metadata: Record<string, any>;
+  version: number;
+  created_at: string;
+  timestamp: string;
+  date: string;
+  description: string;
 }
 
 vi.mock('@/lib/supabase', () => ({
