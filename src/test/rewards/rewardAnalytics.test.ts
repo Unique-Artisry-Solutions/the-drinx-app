@@ -9,6 +9,11 @@ import { RewardTransactionRow } from '@/lib/rewards/types';
 interface TestRewardTransaction extends RewardTransactionRow {
   metadata?: Record<string, any>;
   version?: number;
+  userId?: string;
+  pointsAmount?: number;
+  type?: 'EARN' | 'REDEEM';
+  timestamp?: string;
+  date?: string;
 }
 
 vi.mock('@/lib/supabase', () => ({
@@ -29,34 +34,49 @@ describe('Reward Analytics', () => {
         { 
           id: '1', 
           user_id: 'user1', 
-          transaction_type: 'EARN', 
+          userId: 'user1',
+          transaction_type: 'EARN',
+          type: 'EARN',
           points: 100,
+          pointsAmount: 100,
           source: 'purchase',
           metadata: {},
           version: 1,
           created_at: '2025-01-01T12:00:00Z',
+          timestamp: '2025-01-01T12:00:00Z',
+          date: '2025-01-01T12:00:00Z',
           description: 'Test transaction'
         },
         { 
           id: '2', 
-          user_id: 'user1', 
-          transaction_type: 'EARN', 
+          user_id: 'user1',
+          userId: 'user1',
+          transaction_type: 'EARN',
+          type: 'EARN',
           points: 50,
+          pointsAmount: 50,
           source: 'referral',
           metadata: {},
           version: 1,
           created_at: '2025-01-01T13:00:00Z',
+          timestamp: '2025-01-01T13:00:00Z',
+          date: '2025-01-01T13:00:00Z',
           description: 'Test transaction'
         },
         { 
           id: '3', 
-          user_id: 'user1', 
-          transaction_type: 'REDEEM', 
+          user_id: 'user1',
+          userId: 'user1',
+          transaction_type: 'REDEEM',
+          type: 'REDEEM',
           points: 75,
+          pointsAmount: 75,
           source: 'reward',
           metadata: {},
           version: 1,
           created_at: '2025-01-01T14:00:00Z',
+          timestamp: '2025-01-01T14:00:00Z',
+          date: '2025-01-01T14:00:00Z',
           description: 'Test transaction'
         }
       ];
@@ -85,35 +105,50 @@ describe('Reward Analytics', () => {
       const mockTransactions: TestRewardTransaction[] = [
         { 
           id: '1', 
-          user_id: 'user1', 
-          transaction_type: 'EARN', 
+          user_id: 'user1',
+          userId: 'user1',
+          transaction_type: 'EARN',
+          type: 'EARN',
           points: 100,
+          pointsAmount: 100,
           source: 'purchase',
           metadata: {},
           version: 1,
           created_at: '2025-01-01T12:00:00Z',
+          timestamp: '2025-01-01T12:00:00Z',
+          date: '2025-01-01T12:00:00Z',
           description: 'Purchase points'
         },
         {
           id: '2',
           user_id: 'user1',
+          userId: 'user1',
           transaction_type: 'EARN',
+          type: 'EARN',
           points: 50,
+          pointsAmount: 50,
           source: 'referral',
           metadata: {},
           version: 1,
           created_at: '2025-01-01T14:00:00Z',
+          timestamp: '2025-01-01T14:00:00Z',
+          date: '2025-01-01T14:00:00Z',
           description: 'Referral bonus'
         },
         {
           id: '3',
           user_id: 'user1',
+          userId: 'user1', 
           transaction_type: 'REDEEM',
+          type: 'REDEEM',
           points: 75,
+          pointsAmount: 75,
           source: 'reward',
           metadata: {},
           version: 1,
           created_at: '2025-01-02T12:00:00Z',
+          timestamp: '2025-01-02T12:00:00Z',
+          date: '2025-01-02T12:00:00Z',
           description: 'Redemption'
         }
       ];
