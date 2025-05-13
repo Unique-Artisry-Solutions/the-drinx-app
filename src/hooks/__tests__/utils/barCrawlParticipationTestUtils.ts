@@ -1,3 +1,4 @@
+
 import { vi } from 'vitest';
 import { useAuth } from '@/contexts/auth/AuthProvider';
 import { useToast } from '@/hooks/use-toast';
@@ -76,13 +77,19 @@ vi.mock('@/lib/supabaseClient', () => ({
           }))
         }))
       })),
-      insert: vi.fn(),
+      insert: vi.fn().mockResolvedValue({ data: null, error: null }),
       delete: vi.fn(() => ({
         eq: vi.fn(() => ({
-          eq: vi.fn()
+          eq: vi.fn().mockResolvedValue({ data: null, error: null })
         }))
       }))
-    }))
+    })),
+    auth: {
+      getUser: vi.fn().mockResolvedValue({ 
+        data: { user: mockUser },
+        error: null
+      })
+    }
   }
 }));
 

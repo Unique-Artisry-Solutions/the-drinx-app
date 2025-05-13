@@ -4,3 +4,4 @@
 import { useBarCrawlParticipation as useBarCrawlParticipationHook } from './barCrawl/useBarCrawlParticipation';
 
 export const useBarCrawlParticipation = useBarCrawlParticipationHook;
+export default useBarCrawlParticipationHook;

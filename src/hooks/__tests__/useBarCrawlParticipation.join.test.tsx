@@ -41,13 +41,14 @@ vi.mock('@/hooks/use-toast', () => ({
 }));
 
 describe('useBarCrawlParticipation - join functionality', () => {
+  const mockBarCrawlId = 'test-crawl-id';
   let hookResult: ReturnType<typeof useBarCrawlParticipation>;
   
   const renderHook = () => {
     let result: any;
     
     function TestComponent() {
-      result = useBarCrawlParticipation({ barCrawlId: 'test-crawl-id' });
+      result = useBarCrawlParticipation({ barCrawlId: mockBarCrawlId });
       return null;
     }
     
