@@ -2,12 +2,12 @@
 import { vi, describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
 import { waitFor, renderHook } from '@/test/testing-library-extensions';
-import { useBarCrawlParticipation } from '../useBarCrawlParticipation';
+import { useBarCrawlParticipation } from '@/hooks/barCrawl/useBarCrawlParticipation';
 
 describe('useBarCrawlParticipation - Status', () => {
   it('should return the correct initial status', () => {
     const { result } = renderHook(() => useBarCrawlParticipation({ barCrawlId: 'test-crawl' }));
-    expect(result.current.status).toBe('NOT_JOINED');
+    expect(result.current.isJoined).toBe(false);
   });
 
   it('should update status to "JOINING" when join is called', async () => {
@@ -18,7 +18,7 @@ describe('useBarCrawlParticipation - Status', () => {
 
   it('should update status to "LEAVING" when leave is called', async () => {
     const { result } = renderHook(() => useBarCrawlParticipation({ barCrawlId: 'test-crawl' }));
-    result.current.handleLeave();
+    result.current.handleLeave('test-crawl');
     expect(result.current.isLoading).toBe(true);
   });
 });

@@ -2,7 +2,7 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { render } from '@testing-library/react';
 import { waitFor } from '@/test/testing-library-extensions';
-import { useBarCrawlParticipation } from '../useBarCrawlParticipation';
+import { useBarCrawlParticipation } from '@/hooks/barCrawl/useBarCrawlParticipation';
 import { supabase } from '@/lib/supabase';
 
 // Mock the supabase client

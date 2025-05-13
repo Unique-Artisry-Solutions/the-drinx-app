@@ -1,7 +1,6 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { useBarCrawlParticipation } from '@/hooks/useBarCrawlParticipation';
+import { useBarCrawlParticipation } from '@/hooks/barCrawl/useBarCrawlParticipation';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
