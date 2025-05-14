@@ -1,6 +1,6 @@
+
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import AdminHeader from '@/components/admin/AdminHeader';
 import SystemOverviewTab from '@/components/admin/rewards/SystemOverviewTab';
 import PerformanceMetricsTab from '@/components/admin/rewards/PerformanceMetricsTab';
 import CacheManagementTab from '@/components/admin/rewards/CacheManagementTab';
@@ -11,8 +11,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const RewardSystemMonitorPage = () => {
   return (
-    <div className="flex flex-col min-h-screen">
-      <AdminHeader onLogout={() => {}} />
+    <div className="flex flex-col">
       <div className="container mx-auto p-6 max-w-7xl">
         <h1 className="text-3xl font-bold mb-4">Reward System Monitor</h1>
         

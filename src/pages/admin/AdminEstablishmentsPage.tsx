@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import AdminLayout from '@/components/admin/layout/AdminLayout';
 import { 
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
 } from '@/components/ui/table';
@@ -63,8 +62,7 @@ const AdminEstablishmentsPage = () => {
     return new Date(dateString).toLocaleDateString();
   };
 
-  // The content to be displayed inside AdminLayout
-  const pageContent = (
+  return (
     <div className="min-h-full">
       <SearchToolbar 
         searchTerm={searchTerm} 
@@ -172,9 +170,6 @@ const AdminEstablishmentsPage = () => {
       </div>
     </div>
   );
-
-  // Wrap the page content with AdminLayout
-  return <AdminLayout>{pageContent}</AdminLayout>;
 };
 
 export default AdminEstablishmentsPage;

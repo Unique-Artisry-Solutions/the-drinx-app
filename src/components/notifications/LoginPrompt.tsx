@@ -4,16 +4,15 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { User } from "lucide-react";
 import { useAuth } from '@/contexts/auth';
+import { useNavigate } from 'react-router-dom';
 
 export const LoginPrompt = () => {
-  const { signIn } = useAuth();
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
 
-  // Handle sign in click with proper parameters
+  // Handle sign in click - navigate to login page
   const handleSignIn = () => {
-    // The signIn function from useAuth requires parameters,
-    // but we're calling it as a simplified action here
-    // Pass empty string as email (will show login form) and undefined as callback
-    signIn('', undefined);
+    navigate('/auth');
   };
 
   return (

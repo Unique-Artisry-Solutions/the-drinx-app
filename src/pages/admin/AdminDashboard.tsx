@@ -8,7 +8,6 @@ import { useToast } from '@/hooks/use-toast';
 import { sampleEstablishments, sampleCocktails } from '@/data/sampleData';
 
 // Imported components
-import AdminHeader from '@/components/admin/AdminHeader';
 import SearchToolbar from '@/components/admin/SearchToolbar';
 import EstablishmentsTable from '@/components/admin/EstablishmentsTable';
 import CocktailsTable from '@/components/admin/CocktailsTable';
@@ -28,15 +27,6 @@ const AdminDashboard: React.FC = () => {
       navigate('/admin');
     }
   }, [navigate]);
-
-  const handleLogout = () => {
-    localStorage.removeItem('admin_authenticated');
-    toast({
-      title: 'Successfully logged out',
-      description: 'You have been logged out of the admin dashboard',
-    });
-    navigate('/admin');
-  };
 
   const handleDeleteEstablishment = (id: string) => {
     setEstablishments(establishments.filter(est => est.id !== id));
@@ -64,8 +54,6 @@ const AdminDashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <AdminHeader onLogout={handleLogout} />
-
       <main className="container max-w-5xl mx-auto p-4 pt-6">
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
           <h1 className="text-2xl font-semibold mb-2 text-gray-800">Dashboard</h1>

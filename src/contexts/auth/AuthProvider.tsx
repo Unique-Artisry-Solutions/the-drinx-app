@@ -18,7 +18,7 @@ const initialState = {
 const AuthContext = createContext<AuthContextType>({
   ...initialState,
   signInWithPassword: async () => {},
-  signUp: async () => {},
+  signUp: async () => { return null; },
   signOut: async () => {},
   refreshSession: async () => {},
   recoverAuthState: async () => {},

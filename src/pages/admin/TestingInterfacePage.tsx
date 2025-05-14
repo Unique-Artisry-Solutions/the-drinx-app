@@ -1,6 +1,5 @@
 
 import React from 'react';
-import AdminHeader from '@/components/admin/AdminHeader';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Download, PlayCircle, RefreshCcw } from 'lucide-react';
@@ -66,8 +65,7 @@ const TestingInterfacePage = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <AdminHeader onLogout={() => {}} />
+    <div className="flex flex-col">
       <div className="container mx-auto p-6 max-w-7xl">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold">Testing Interface</h1>

@@ -26,7 +26,7 @@ export interface AuthState {
 
 export interface AuthActions {
   signInWithPassword: (email: string, password: string) => Promise<void>;
-  signUp: (formData: any) => Promise<void>;
+  signUp: (formData: any) => Promise<any>;
   signOut: () => Promise<void>;
   refreshSession: () => Promise<void>;
   recoverAuthState: () => Promise<void>;
