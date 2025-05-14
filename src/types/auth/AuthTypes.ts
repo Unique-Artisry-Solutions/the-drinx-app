@@ -1,26 +1,40 @@
 
-/**
- * Authentication related types
- */
-
-export type AuthMode = 'login' | 'signup' | 'verify' | 'reset';
-
-export type AuthFormValues = {
-  email: string;
-  password: string;
-  confirmPassword?: string;
-  user_type?: UserType;
-  name?: string;
-};
-
-export type UserType = 'individual' | 'establishment' | 'promoter' | 'admin';
+export type UserType = 'individual' | 'establishment' | 'admin' | 'promoter';
 
 export type ValidDays = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday';
-export type UserSegmentType = 'all' | 'new' | 'returning';
 
-export type ValidHours = {
-  start: string;
-  end: string;
-};
+export type UserSegmentType = 'new' | 'returning' | 'all';
 
-export type AuthState = 'idle' | 'loading' | 'success' | 'error';
+export interface UserProfile {
+  id: string;
+  username: string;
+  display_name?: string;
+  user_type: UserType;
+  avatar_url?: string;
+  bio?: string;
+  phone?: string;
+  email_notifications?: boolean;
+  push_notifications?: boolean;
+}
+
+export interface SocialAuthProvider {
+  id: string;
+  name: string;
+  icon: string;
+}
+
+export interface AuthFormData {
+  email: string;
+  password: string;
+}
+
+export interface SignupFormData extends AuthFormData {
+  username: string;
+  userType: UserType;
+}
+
+export interface AuthError {
+  message: string;
+  status?: number;
+  code?: string;
+}

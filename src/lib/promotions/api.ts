@@ -1,5 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { ValidDays, UserSegmentType } from '@/types/auth/AuthTypes';
 
 export type PromotionCodeType = 'percentage' | 'fixed';
 
@@ -17,7 +18,7 @@ export interface PromotionCode {
   usage_count?: number | null;
   valid_days?: string[] | null;
   valid_hours?: { start: string; end: string } | null;
-  user_segment?: string | null;
+  user_segment?: UserSegmentType | null;
   combinable: boolean;
   min_purchase_amount?: number | null;
   created_at: string;
@@ -36,7 +37,7 @@ export interface CreatePromotionCodeParams {
   usage_limit?: number | null;
   valid_days?: string[] | null;
   valid_hours?: { start: string; end: string } | null;
-  user_segment?: string | null;
+  user_segment?: UserSegmentType | null;
   combinable?: boolean;
   min_purchase_amount?: number | null;
 }
@@ -53,7 +54,7 @@ export interface BatchCreateParams {
   usage_limit?: number | null;
   valid_days?: string[] | null;
   valid_hours?: { start: string; end: string } | null;
-  user_segment?: string | null;
+  user_segment?: UserSegmentType | null;
   combinable?: boolean;
   min_purchase_amount?: number | null;
 }
@@ -81,7 +82,29 @@ export async function createPromotionCode(params: CreatePromotionCodeParams): Pr
     throw error;
   }
   
-  return data;
+  // Convert the response to our PromotionCode type
+  const promotionCode: PromotionCode = {
+    id: data.id,
+    code: data.code,
+    description: data.description,
+    discount_type: data.discount_type,
+    discount_value: data.discount_value,
+    establishment_id: data.establishment_id,
+    start_date: data.start_date,
+    end_date: data.end_date,
+    is_active: data.is_active,
+    usage_limit: data.usage_limit,
+    usage_count: data.usage_count,
+    valid_days: data.valid_days,
+    valid_hours: data.valid_hours as { start: string; end: string } | undefined,
+    user_segment: data.user_segment as UserSegmentType | undefined,
+    combinable: data.combinable,
+    min_purchase_amount: data.min_purchase_amount,
+    created_at: data.created_at,
+    updated_at: data.updated_at
+  };
+  
+  return promotionCode;
 }
 
 /**
@@ -89,12 +112,26 @@ export async function createPromotionCode(params: CreatePromotionCodeParams): Pr
  */
 export async function batchCreatePromotionCodes(params: BatchCreateParams): Promise<PromotionCode[]> {
   // Generate codes with the prefix and random suffixes
-  const codes = Array.from({ length: params.count }, (_, i) => {
+  const codes = Array.from({ length: params.count }, () => {
     // Generate a random 6-character alphanumeric suffix
     const randomSuffix = Math.random().toString(36).substring(2, 8).toUpperCase();
+    
+    // Create the code object with the required properties
     return {
-      ...params,
       code: `${params.prefix}${randomSuffix}`,
+      description: params.description,
+      discount_type: params.discount_type,
+      discount_value: params.discount_value,
+      establishment_id: params.establishment_id,
+      start_date: params.start_date,
+      end_date: params.end_date,
+      is_active: params.is_active !== undefined ? params.is_active : true,
+      usage_limit: params.usage_limit,
+      valid_days: params.valid_days,
+      valid_hours: params.valid_hours,
+      user_segment: params.user_segment,
+      combinable: params.combinable !== undefined ? params.combinable : true,
+      min_purchase_amount: params.min_purchase_amount
     };
   });
   
@@ -108,7 +145,29 @@ export async function batchCreatePromotionCodes(params: BatchCreateParams): Prom
     throw error;
   }
   
-  return data || [];
+  // Convert the response to our PromotionCode type
+  const promotionCodes: PromotionCode[] = data.map((item: any): PromotionCode => ({
+    id: item.id,
+    code: item.code,
+    description: item.description,
+    discount_type: item.discount_type,
+    discount_value: item.discount_value,
+    establishment_id: item.establishment_id,
+    start_date: item.start_date,
+    end_date: item.end_date,
+    is_active: item.is_active,
+    usage_limit: item.usage_limit,
+    usage_count: item.usage_count,
+    valid_days: item.valid_days,
+    valid_hours: item.valid_hours as { start: string; end: string } | undefined,
+    user_segment: item.user_segment as UserSegmentType | undefined,
+    combinable: item.combinable,
+    min_purchase_amount: item.min_purchase_amount,
+    created_at: item.created_at,
+    updated_at: item.updated_at
+  }));
+  
+  return promotionCodes;
 }
 
 /**
@@ -126,7 +185,29 @@ export async function getPromotionCodes(establishmentId: string): Promise<Promot
     throw error;
   }
   
-  return data || [];
+  // Convert the response to our PromotionCode type
+  const promotionCodes: PromotionCode[] = (data || []).map((item: any): PromotionCode => ({
+    id: item.id,
+    code: item.code,
+    description: item.description,
+    discount_type: item.discount_type,
+    discount_value: item.discount_value,
+    establishment_id: item.establishment_id,
+    start_date: item.start_date,
+    end_date: item.end_date,
+    is_active: item.is_active,
+    usage_limit: item.usage_limit,
+    usage_count: item.usage_count,
+    valid_days: item.valid_days,
+    valid_hours: item.valid_hours as { start: string; end: string } | undefined,
+    user_segment: item.user_segment as UserSegmentType | undefined,
+    combinable: item.combinable,
+    min_purchase_amount: item.min_purchase_amount,
+    created_at: item.created_at,
+    updated_at: item.updated_at
+  }));
+  
+  return promotionCodes;
 }
 
 /**
@@ -145,7 +226,29 @@ export async function updatePromotionCode(id: string, params: Partial<CreateProm
     throw error;
   }
   
-  return data;
+  // Convert the response to our PromotionCode type
+  const promotionCode: PromotionCode = {
+    id: data.id,
+    code: data.code,
+    description: data.description,
+    discount_type: data.discount_type,
+    discount_value: data.discount_value,
+    establishment_id: data.establishment_id,
+    start_date: data.start_date,
+    end_date: data.end_date,
+    is_active: data.is_active,
+    usage_limit: data.usage_limit,
+    usage_count: data.usage_count,
+    valid_days: data.valid_days,
+    valid_hours: data.valid_hours as { start: string; end: string } | undefined,
+    user_segment: data.user_segment as UserSegmentType | undefined,
+    combinable: data.combinable,
+    min_purchase_amount: data.min_purchase_amount,
+    created_at: data.created_at,
+    updated_at: data.updated_at
+  };
+  
+  return promotionCode;
 }
 
 /**
@@ -263,9 +366,9 @@ export function parseCSVForImport(csvData: string, establishmentId: string): Cre
       end_date: columns[5] || null,
       is_active: columns[6].toLowerCase() === 'yes',
       usage_limit: columns[7] ? Number(columns[7]) : null,
-      valid_days: validDays,
+      valid_days: validDays as string[] | null,
       valid_hours: validHours,
-      user_segment: columns[11] || null,
+      user_segment: columns[11] as UserSegmentType || null,
       combinable: columns[12].toLowerCase() === 'yes',
       min_purchase_amount: columns[13] ? Number(columns[13]) : null
     };

@@ -68,10 +68,6 @@ const TabContent: React.FC<TabContentProps> = ({
         <TabsContent value="promotions">
           <PromotionsTab 
             promotions={promotionsState.promotions} 
-            newPromoCode={promotionsState.newPromoCode} 
-            newPromoDescription={promotionsState.newPromoDescription} 
-            setNewPromoCode={promotionsState.setNewPromoCode} 
-            setNewPromoDescription={promotionsState.setNewPromoDescription} 
             handleAddPromotion={promotionsState.handleAddPromotion} 
             handleDeletePromotion={promotionsState.handleDeletePromotion} 
           />

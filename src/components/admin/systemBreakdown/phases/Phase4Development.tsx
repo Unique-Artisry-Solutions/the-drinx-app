@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import TestProgressSection from "../shared/TestProgressSection";
+import { TestProgressSection } from "../shared/TestProgressSection";
 
 const Phase4Development = () => {
   return (
@@ -106,7 +106,15 @@ const Phase4Development = () => {
                 </Card>
               </div>
               
-              <TestProgressSection />
+              <TestProgressSection 
+                title="Testing Progress" 
+                categories={[
+                  { category: "User Authentication", completed: 14, total: 15, status: "in_progress" },
+                  { category: "Establishment Features", completed: 12, total: 12, status: "completed" },
+                  { category: "Discount Management", completed: 18, total: 20, status: "in_progress" },
+                  { category: "Analytics Integration", completed: 8, total: 15, status: "in_progress" }
+                ]}
+              />
             </div>
           </div>
           
