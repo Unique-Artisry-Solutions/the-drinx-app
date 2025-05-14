@@ -1,96 +1,81 @@
 
 import React from 'react';
-import { NavLink } from 'react-router-dom';
-import { Home, Settings, Users, LayoutDashboard, Calendar, Mailbox, ShoppingBag, Gift, BadgeCheck, ListChecks, PieChart, MessageSquare } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { LogOut, Menu, ChevronDown } from 'lucide-react';
+import { adminNavItems } from '@/components/navigation/admin/AdminNavItems';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator
+} from '@/components/ui/dropdown-menu';
 
-interface NavItemProps {
-  to: string;
-  icon: React.ReactNode;
-  label: string;
+interface AdminNavigationProps {
+  onLogout: () => void;
 }
 
-const NavItem: React.FC<NavItemProps> = ({ to, icon, label }) => {
-  return (
-    <li>
-      <NavLink
-        to={to}
-        className={({ isActive }) =>
-          `flex items-center gap-2 rounded-md p-2 text-sm font-medium hover:bg-secondary ${
-            isActive ? 'bg-secondary' : 'text-muted-foreground'
-          }`
-        }
-      >
-        {icon}
-        {label}
-      </NavLink>
-    </li>
-  );
-};
-
-export const AdminNavigation = () => {
-  // Remove useAuth and useUser hooks as they aren't available
+const AdminNavigation: React.FC<AdminNavigationProps> = ({
+  onLogout
+}) => {
+  const location = useLocation();
+  
+  const isActive = (path: string) => {
+    return location.pathname === path || location.pathname.startsWith(path);
+  };
+  
+  // Find the active navigation item (if any)
+  const activeNavItem = adminNavItems.find(item => 
+    isActive(item.path) || location.pathname.startsWith(item.path)
+  ) || adminNavItems[0];
   
   return (
-    <nav className="space-y-1">
-      <NavItem 
-        to="/admin" 
-        icon={<LayoutDashboard className="h-5 w-5" />} 
-        label="Dashboard" 
-      />
-      
-      <NavItem 
-        to="/admin/events" 
-        icon={<Calendar className="h-5 w-5" />} 
-        label="Events" 
-      />
-      
-      <NavItem 
-        to="/admin/establishments" 
-        icon={<Home className="h-5 w-5" />} 
-        label="Establishments" 
-      />
-      
-      <NavItem 
-        to="/admin/promoters" 
-        icon={<Users className="h-5 w-5" />} 
-        label="Promoters" 
-      />
-      
-      <NavItem 
-        to="/admin/communications" 
-        icon={<MessageSquare className="h-5 w-5" />} 
-        label="Communications" 
-      />
-      
-      <NavItem 
-        to="/admin/rewards" 
-        icon={<Gift className="h-5 w-5" />} 
-        label="Rewards" 
-      />
-      
-      <NavItem 
-        to="/admin/moderation" 
-        icon={<ListChecks className="h-5 w-5" />} 
-        label="Moderation" 
-      />
-      
-      <NavItem 
-        to="/admin/system" 
-        icon={<Settings className="h-5 w-5" />} 
-        label="System Settings" 
-      />
-      
-      <NavItem 
-        to="/admin/analytics" 
-        icon={<PieChart className="h-5 w-5" />} 
-        label="Analytics" 
-      />
-      
-      <NavItem 
-        to="/admin/audience" 
-        icon={<Users className="h-5 w-5" />} 
-        label="Audience Management" 
-      />
+    <nav className="flex-1">
+      <div className="flex space-x-2 items-center">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="border-white text-white hover:text-white hover:bg-white/10 flex items-center gap-2"
+            >
+              {activeNavItem && (
+                <>
+                  <activeNavItem.icon size={16} className="mr-1" />
+                  <span className="text-sm">{activeNavItem.label}</span>
+                </>
+              )}
+              <ChevronDown size={14} className="ml-1" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-56 bg-white z-50">
+            {adminNavItems.filter(item => item.showInNav).map((item) => (
+              <DropdownMenuItem key={item.path} asChild>
+                <Link
+                  to={item.path}
+                  className={`flex items-center px-2 py-1 w-full ${
+                    isActive(item.path) ? 'bg-gray-100' : ''
+                  }`}
+                >
+                  <item.icon className="mr-2 h-4 w-4" />
+                  <span className="text-sm font-medium">{item.label}</span>
+                </Link>
+              </DropdownMenuItem>
+            ))}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem 
+              className="flex items-center text-red-600 cursor-pointer" 
+              onClick={onLogout}
+            >
+              <LogOut size={16} className="mr-2" />
+              <span className="text-sm">Logout</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
     </nav>
   );
 };
+
+export default AdminNavigation;
