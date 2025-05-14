@@ -1,11 +1,23 @@
 
 import React, { useState, useEffect } from 'react';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import * as z from 'zod';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { PlusCircle, FileDown, FileUp, BarChart3, RefreshCw } from 'lucide-react';
+import { usePromotionCodes } from '@/hooks/usePromotionCodes';
+import { useAuth } from '@/contexts/auth';
+import { format } from 'date-fns';
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { CreatePromotionCodeParams } from '@/lib/promotions/api';
 import {
   Form,
   FormControl,
@@ -14,486 +26,1042 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from '@/components/ui/table';
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
-import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { FileUpload, FileScan, FileCheck, FileCog, Database, RefreshCw, Tags, Trash2 } from 'lucide-react';
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip as RechartsTooltip, 
-  Legend, 
-  ResponsiveContainer,
-  Cell
-} from 'recharts';
+} from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { useToast } from '@/hooks/use-toast';
-import { usePromotionCodes } from '@/hooks/usePromotionCodes';
-import { formatDistanceToNow, format } from 'date-fns';
+import { UserSegmentType, ValidDays } from '@/types/auth/AuthTypes';
+import { 
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { CalendarIcon, HelpCircle, Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useAnalyticsExport } from '@/hooks/useAnalyticsExport';
+import { PromotionAnalytics } from '@/lib/promotions/api';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
-// Mock venue ID - in a real application, this would come from auth context or props
-const VENUE_ID = "3f8cedd9-79fa-4e14-9dee-22a69250d999";
-
-// Form schema for single code creation
-const singleCodeSchema = z.object({
-  code: z.string().min(3, 'Promotion code must be at least 3 characters'),
-  description: z.string().min(5, 'Description must be at least 5 characters'),
-  discount_type: z.enum(['percentage', 'fixed']),
-  discount_value: z.coerce.number().min(0),
+const formSchema = z.object({
+  code: z.string().min(2, "Code must be at least 2 characters"),
+  description: z.string().min(2, "Description is required"),
+  discount_type: z.enum(["percentage", "fixed", "free_item"]),
+  discount_value: z.coerce.number().min(0, "Value must be positive"),
   start_date: z.date(),
   end_date: z.date().nullable().optional(),
-  is_active: z.boolean().default(true),
   usage_limit: z.coerce.number().nullable().optional(),
-  valid_days: z.array(z.string()).optional(),
-  valid_hours_start: z.string().optional(),
-  valid_hours_end: z.string().optional(),
-  user_segment: z.enum(['new', 'returning', 'all']).optional(),
+  valid_days: z.array(z.string()).nullable().optional(),
+  valid_hours: z.object({
+    start: z.string(),
+    end: z.string(),
+  }).nullable().optional(),
+  user_segment: z.enum(["all", "new", "returning"]).nullable().optional(),
+  combinable: z.boolean().default(true),
   min_purchase_amount: z.coerce.number().nullable().optional(),
-  combinable: z.boolean().default(true)
 });
 
-// Form schema for batch code creation
-const batchCodeSchema = z.object({
-  prefix: z.string().min(2, 'Prefix must be at least 2 characters'),
-  count: z.coerce.number().int().min(1).max(100),
-  description: z.string().min(5, 'Description must be at least 5 characters'),
-  discount_type: z.enum(['percentage', 'fixed']),
-  discount_value: z.coerce.number().min(0),
+const batchFormSchema = z.object({
+  prefix: z.string().min(1, "Prefix is required"),
+  count: z.coerce.number().min(1, "Must generate at least 1 code").max(100, "Maximum 100 codes at once"),
+  discount_type: z.enum(["percentage", "fixed", "free_item"]),
+  discount_value: z.coerce.number().min(0, "Value must be positive"),
   start_date: z.date(),
   end_date: z.date().nullable().optional(),
-  is_active: z.boolean().default(true),
   usage_limit: z.coerce.number().nullable().optional(),
-  valid_days: z.array(z.string()).optional(),
-  valid_hours_start: z.string().optional(),
-  valid_hours_end: z.string().optional(),
-  user_segment: z.enum(['new', 'returning', 'all']).optional(),
-  min_purchase_amount: z.coerce.number().nullable().optional(),
-  combinable: z.boolean().default(true)
+  description: z.string().min(2, "Description is required"),
 });
 
-// Days of the week for valid_days selection
-const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const daysOfWeek: ValidDays[] = [
+  "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
+];
 
 const PromoCodeGenerator: React.FC = () => {
+  const { user } = useAuth();
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState('create');
-  const [csvData, setCsvData] = useState<string | null>(null);
+  const { exportAnalytics } = useAnalyticsExport();
+  const [activeTab, setActiveTab] = useState("create");
+  const [fileImporting, setFileImporting] = useState(false);
+  const [isCreatingCode, setIsCreatingCode] = useState(false);
+  const [isBatchCreating, setIsBatchCreating] = useState(false);
+  const [timeRestricted, setTimeRestricted] = useState(false);
+  const [dayRestricted, setDayRestricted] = useState(false);
+  const [selectedDays, setSelectedDays] = useState<string[]>([]);
+  const [csvFile, setCsvFile] = useState<File | null>(null);
+  const [openForm, setOpenForm] = useState(false);
 
-  // Get all the hook functionality
+  // Get establishment ID from the logged-in user
+  const establishmentId = user?.id || 'test-establishment-id';
+
   const {
     promotionCodes,
     analyticsData,
     isLoadingCodes,
     isLoadingAnalytics,
-    isErrorCodes,
-    isErrorAnalytics,
-    codesError,
-    analyticsError,
     createCode,
-    updateCode,
-    deleteCode,
     batchCreateCodes,
     exportCodes,
     importCodes,
-    isCreating,
-    isUpdating,
-    isBatchCreating,
-    isDeleting,
-    importing,
-    refetchCodes,
-    refetchAnalytics
-  } = usePromotionCodes(VENUE_ID);
+  } = usePromotionCodes(establishmentId);
 
-  // Form for creating a single promotion code
-  const singleCodeForm = useForm<z.infer<typeof singleCodeSchema>>({
-    resolver: zodResolver(singleCodeSchema),
+  // Form for creating single promotion
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
-      code: '',
-      description: '',
-      discount_type: 'percentage',
+      code: "",
+      description: "",
+      discount_type: "percentage",
       discount_value: 10,
       start_date: new Date(),
-      is_active: true,
+      end_date: null,
+      usage_limit: null,
+      valid_days: null,
+      valid_hours: null,
+      user_segment: "all",
       combinable: true,
-      user_segment: 'all'
+      min_purchase_amount: null,
     },
   });
 
-  // Form for batch creating promotion codes
-  const batchCodeForm = useForm<z.infer<typeof batchCodeSchema>>({
-    resolver: zodResolver(batchCodeSchema),
+  // Form for batch creation
+  const batchForm = useForm<z.infer<typeof batchFormSchema>>({
+    resolver: zodResolver(batchFormSchema),
     defaultValues: {
-      prefix: '',
-      count: 10,
-      description: '',
-      discount_type: 'percentage',
+      prefix: "PROMO",
+      count: 5,
+      discount_type: "percentage",
       discount_value: 10,
       start_date: new Date(),
-      is_active: true,
-      combinable: true,
-      user_segment: 'all'
+      end_date: null,
+      usage_limit: 1,
+      description: "Special promotion",
     },
   });
 
-  // Create a single promotion code
-  const handleCreateSingleCode = (values: z.infer<typeof singleCodeSchema>) => {
-    const formattedValues: any = {
-      establishment_id: VENUE_ID,
-      code: values.code,
-      description: values.description,
-      discount_type: values.discount_type,
-      discount_value: values.discount_value,
-      start_date: values.start_date.toISOString(),
-      end_date: values.end_date ? values.end_date.toISOString() : null,
-      is_active: values.is_active,
-      usage_limit: values.usage_limit || null,
-      min_purchase_amount: values.min_purchase_amount || null,
-      combinable: values.combinable,
-      user_segment: values.user_segment || null,
-    };
-
-    // Add valid_days if specified
-    if (values.valid_days && values.valid_days.length > 0) {
-      formattedValues.valid_days = values.valid_days;
-    }
-
-    // Add valid_hours if both start and end are specified
-    if (values.valid_hours_start && values.valid_hours_end) {
-      formattedValues.valid_hours = {
-        start: values.valid_hours_start,
-        end: values.valid_hours_end
+  // Handle single code creation
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    setIsCreatingCode(true);
+    
+    try {
+      const promotionData: CreatePromotionCodeParams = {
+        ...values,
+        establishment_id: establishmentId,
+        // Convert dates to ISO strings for the API
+        start_date: values.start_date.toISOString(),
+        end_date: values.end_date ? values.end_date.toISOString() : null,
+        // Only include valid_days if day restrictions are enabled
+        valid_days: dayRestricted ? selectedDays : null,
+        // Only include valid_hours if time restrictions are enabled
+        valid_hours: timeRestricted && values.valid_hours ? values.valid_hours : null,
       };
-    }
 
-    createCode(formattedValues);
-    singleCodeForm.reset();
+      await createCode(promotionData);
+      toast({
+        title: "Success",
+        description: "Promotion code has been created successfully!",
+      });
+      form.reset();
+      setActiveTab("list");
+      setOpenForm(false);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: `Failed to create promotion code: ${(error as Error).message}`,
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreatingCode(false);
+    }
   };
 
-  // Create batch promotion codes
-  const handleCreateBatchCodes = (values: z.infer<typeof batchCodeSchema>) => {
-    const formattedValues: any = {
-      establishment_id: VENUE_ID,
-      prefix: values.prefix,
-      count: values.count,
-      description: values.description,
-      discount_type: values.discount_type,
-      discount_value: values.discount_value,
-      start_date: values.start_date.toISOString(),
-      end_date: values.end_date ? values.end_date.toISOString() : null,
-      is_active: values.is_active,
-      usage_limit: values.usage_limit || null,
-      min_purchase_amount: values.min_purchase_amount || null,
-      combinable: values.combinable,
-      user_segment: values.user_segment || null,
-    };
+  // Handle batch creation of codes
+  const onBatchSubmit = async (values: z.infer<typeof batchFormSchema>) => {
+    setIsBatchCreating(true);
+    
+    try {
+      const codes: Omit<CreatePromotionCodeParams, 'establishment_id'>[] = [];
+      
+      for (let i = 0; i < values.count; i++) {
+        const suffix = Math.random().toString(36).substring(2, 7).toUpperCase();
+        codes.push({
+          code: `${values.prefix}-${suffix}`,
+          description: values.description,
+          discount_type: values.discount_type,
+          discount_value: values.discount_value,
+          start_date: values.start_date.toISOString(),
+          end_date: values.end_date ? values.end_date.toISOString() : null,
+          usage_limit: values.usage_limit,
+        });
+      }
+      
+      await batchCreateCodes({
+        establishment_id: establishmentId,
+        codes,
+      });
+      
+      toast({
+        title: "Success",
+        description: `Successfully created ${values.count} promotion codes!`,
+      });
+      batchForm.reset();
+      setActiveTab("list");
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: `Failed to create promotion codes: ${(error as Error).message}`,
+        variant: "destructive",
+      });
+    } finally {
+      setIsBatchCreating(false);
+    }
+  };
 
-    // Add valid_days if specified
-    if (values.valid_days && values.valid_days.length > 0) {
-      formattedValues.valid_days = values.valid_days;
+  // Handle CSV file import
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files.length > 0) {
+      setCsvFile(event.target.files[0]);
+    }
+  };
+
+  const handleImport = async () => {
+    if (!csvFile) {
+      toast({
+        title: "Error",
+        description: "Please select a CSV file to import",
+        variant: "destructive",
+      });
+      return;
     }
 
-    // Add valid_hours if both start and end are specified
-    if (values.valid_hours_start && values.valid_hours_end) {
-      formattedValues.valid_hours = {
-        start: values.valid_hours_start,
-        end: values.valid_hours_end
+    setFileImporting(true);
+    
+    try {
+      const reader = new FileReader();
+      
+      reader.onload = async (e) => {
+        const csvData = e.target?.result as string;
+        if (csvData) {
+          await importCodes(csvData);
+          setCsvFile(null);
+        }
       };
+      
+      reader.readAsText(csvFile);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: `Failed to import CSV data: ${(error as Error).message}`,
+        variant: "destructive",
+      });
+    } finally {
+      setFileImporting(false);
     }
-
-    batchCreateCodes(formattedValues);
-    batchCodeForm.reset();
   };
 
-  // Handle file input for CSV import
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      setCsvData(event.target?.result as string);
-    };
-    reader.readAsText(file);
-  };
-
-  // Handle CSV import
-  const handleImport = () => {
-    if (!csvData) return;
-    importCodes(csvData);
-    setCsvData(null);
-  };
-
-  // Get chart data from analytics
-  const getChartData = () => {
-    if (!analyticsData || analyticsData.length === 0) return [];
-    return analyticsData.map(code => ({
-      code: code.code,
-      redemptions: code.redemptions || 0,
-      value: code.total_discount_amount || 0,
-      averageOrder: code.average_order_value || 0
-    }));
+  // Handle export of analytics data
+  const handleExportAnalytics = async () => {
+    try {
+      await exportAnalytics(
+        analyticsData, 
+        `promotion-analytics-${format(new Date(), 'yyyy-MM-dd')}`
+      );
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: `Failed to export analytics data: ${(error as Error).message}`,
+        variant: "destructive",
+      });
+    }
   };
 
   return (
-    <Card className="mb-6">
-      <CardHeader>
-        <CardTitle>Promotion Code Manager</CardTitle>
-        <CardDescription>Create and manage discount codes for your events</CardDescription>
-      </CardHeader>
+    <div className="space-y-6">
+      <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid grid-cols-4 mb-4">
+          <TabsTrigger value="list">Promotion Codes</TabsTrigger>
+          <TabsTrigger value="create">Create Code</TabsTrigger>
+          <TabsTrigger value="batch">Batch Create</TabsTrigger>
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
+        </TabsList>
 
-      <CardContent>
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="create">Create Codes</TabsTrigger>
-            <TabsTrigger value="manage">Manage Codes</TabsTrigger>
-            <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="create" className="space-y-4">
-            <Tabs defaultValue="single" className="w-full">
-              <TabsList className="grid grid-cols-2">
-                <TabsTrigger value="single">Single Code</TabsTrigger>
-                <TabsTrigger value="batch">Batch Codes</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="single" className="space-y-4 mt-4">
-                <Form {...singleCodeForm}>
-                  <form onSubmit={singleCodeForm.handleSubmit(handleCreateSingleCode)} className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        control={singleCodeForm.control}
-                        name="code"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Promotion Code</FormLabel>
-                            <FormControl>
-                              <Input placeholder="SUMMER25" {...field} />
-                            </FormControl>
-                            <FormDescription>
-                              Enter a unique code for this promotion
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
+        {/* List View */}
+        <TabsContent value="list" className="space-y-4">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold">Your Promotion Codes</h2>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={exportCodes} className="flex items-center gap-1">
+                <FileDown className="h-4 w-4" /> Export
+              </Button>
+              
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="flex items-center gap-1">
+                    <FileUp className="h-4 w-4" /> Import
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Import Promotion Codes</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="csv-file">Upload CSV File</Label>
+                      <Input 
+                        id="csv-file" 
+                        type="file" 
+                        accept=".csv" 
+                        onChange={handleFileChange} 
                       />
-
-                      <FormField
-                        control={singleCodeForm.control}
-                        name="discount_type"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Discount Type</FormLabel>
-                            <Select
-                              onValueChange={field.onChange}
-                              defaultValue={field.value}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select a discount type" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="percentage">Percentage (%)</SelectItem>
-                                <SelectItem value="fixed">Fixed Amount ($)</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormDescription>
-                              Choose how the discount will be applied
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                      <p className="text-sm text-muted-foreground mt-1">
+                        CSV should include: code, description, discount_type, discount_value, etc.
+                      </p>
                     </div>
+                    <Button 
+                      onClick={handleImport} 
+                      disabled={!csvFile || fileImporting}
+                      className="w-full"
+                    >
+                      {fileImporting ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Importing...
+                        </>
+                      ) : (
+                        'Import Codes'
+                      )}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+              
+              <Dialog open={openForm} onOpenChange={setOpenForm}>
+                <DialogTrigger asChild>
+                  <Button className="flex items-center gap-1">
+                    <PlusCircle className="h-4 w-4" /> Create Code
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-auto">
+                  <DialogHeader>
+                    <DialogTitle>Create New Promotion Code</DialogTitle>
+                  </DialogHeader>
+                  <ScrollArea className="h-full pr-4">
+                    <Form {...form}>
+                      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                        <div className="grid grid-cols-2 gap-4">
+                          <FormField
+                            control={form.control}
+                            name="code"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Code</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="SUMMER2023" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="discount_type"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Discount Type</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select discount type" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="percentage">Percentage</SelectItem>
+                                    <SelectItem value="fixed">Fixed Amount</SelectItem>
+                                    <SelectItem value="free_item">Free Item</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
 
+                        <FormField
+                          control={form.control}
+                          name="description"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Description</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Summer promotion" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <FormField
+                            control={form.control}
+                            name="discount_value"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>
+                                  {form.watch('discount_type') === 'percentage' ? 'Percentage' : 
+                                   form.watch('discount_type') === 'fixed' ? 'Amount ($)' : 'Value'}
+                                </FormLabel>
+                                <FormControl>
+                                  <Input type="number" min="0" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="usage_limit"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Usage Limit (optional)</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    type="number" 
+                                    min="0" 
+                                    placeholder="Unlimited" 
+                                    value={field.value || ''} 
+                                    onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)} 
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <FormField
+                            control={form.control}
+                            name="start_date"
+                            render={({ field }) => (
+                              <FormItem className="flex flex-col">
+                                <FormLabel>Start Date</FormLabel>
+                                <Popover>
+                                  <PopoverTrigger asChild>
+                                    <FormControl>
+                                      <Button
+                                        variant={"outline"}
+                                        className={cn(
+                                          "w-full pl-3 text-left font-normal",
+                                          !field.value && "text-muted-foreground"
+                                        )}
+                                      >
+                                        {field.value ? (
+                                          format(field.value, "PPP")
+                                        ) : (
+                                          <span>Pick a date</span>
+                                        )}
+                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                      </Button>
+                                    </FormControl>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-auto p-0" align="start">
+                                    <Calendar
+                                      mode="single"
+                                      selected={field.value}
+                                      onSelect={field.onChange}
+                                      initialFocus
+                                    />
+                                  </PopoverContent>
+                                </Popover>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="end_date"
+                            render={({ field }) => (
+                              <FormItem className="flex flex-col">
+                                <FormLabel>End Date (optional)</FormLabel>
+                                <Popover>
+                                  <PopoverTrigger asChild>
+                                    <FormControl>
+                                      <Button
+                                        variant={"outline"}
+                                        className={cn(
+                                          "w-full pl-3 text-left font-normal",
+                                          !field.value && "text-muted-foreground"
+                                        )}
+                                      >
+                                        {field.value ? (
+                                          format(field.value, "PPP")
+                                        ) : (
+                                          <span>No end date</span>
+                                        )}
+                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                      </Button>
+                                    </FormControl>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-auto p-0" align="start">
+                                    <Calendar
+                                      mode="single"
+                                      selected={field.value || undefined}
+                                      onSelect={field.onChange}
+                                      initialFocus
+                                      fromDate={form.watch('start_date')}
+                                    />
+                                  </PopoverContent>
+                                </Popover>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <Separator />
+
+                        <div className="space-y-4">
+                          <h3 className="font-medium text-sm">Advanced Options</h3>
+                          
+                          <div className="flex items-center justify-between">
+                            <div className="space-y-0.5">
+                              <Label htmlFor="day-restrictions">Day Restrictions</Label>
+                              <div className="text-sm text-muted-foreground">Limit usage to specific days of the week</div>
+                            </div>
+                            <Switch
+                              id="day-restrictions"
+                              checked={dayRestricted}
+                              onCheckedChange={setDayRestricted}
+                            />
+                          </div>
+
+                          {dayRestricted && (
+                            <div className="border rounded-md p-3 space-y-2">
+                              <Label>Valid Days</Label>
+                              <div className="flex flex-wrap gap-2">
+                                {daysOfWeek.map((day) => (
+                                  <div key={day} className="flex items-center space-x-2">
+                                    <Checkbox
+                                      id={day}
+                                      checked={selectedDays.includes(day)}
+                                      onCheckedChange={(checked) => {
+                                        if (checked) {
+                                          setSelectedDays([...selectedDays, day]);
+                                        } else {
+                                          setSelectedDays(selectedDays.filter((d) => d !== day));
+                                        }
+                                      }}
+                                    />
+                                    <label
+                                      htmlFor={day}
+                                      className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                    >
+                                      {day}
+                                    </label>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="flex items-center justify-between">
+                            <div className="space-y-0.5">
+                              <Label htmlFor="time-restrictions">Time Restrictions</Label>
+                              <div className="text-sm text-muted-foreground">Limit usage to specific hours</div>
+                            </div>
+                            <Switch
+                              id="time-restrictions"
+                              checked={timeRestricted}
+                              onCheckedChange={setTimeRestricted}
+                            />
+                          </div>
+
+                          {timeRestricted && (
+                            <div className="border rounded-md p-3 space-y-4">
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                  <Label htmlFor="start-time">Start Time</Label>
+                                  <Input
+                                    id="start-time"
+                                    type="time"
+                                    onChange={(e) => {
+                                      form.setValue('valid_hours', {
+                                        start: e.target.value,
+                                        end: form.watch('valid_hours')?.end || '23:59'
+                                      });
+                                    }}
+                                    value={form.watch('valid_hours')?.start || ''}
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label htmlFor="end-time">End Time</Label>
+                                  <Input
+                                    id="end-time"
+                                    type="time"
+                                    onChange={(e) => {
+                                      form.setValue('valid_hours', {
+                                        start: form.watch('valid_hours')?.start || '00:00',
+                                        end: e.target.value
+                                      });
+                                    }}
+                                    value={form.watch('valid_hours')?.end || ''}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          <FormField
+                            control={form.control}
+                            name="user_segment"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>User Segment</FormLabel>
+                                <Select
+                                  onValueChange={(value) => field.onChange(value as UserSegmentType)}
+                                  defaultValue={field.value || 'all'}
+                                >
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Target audience" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="all">All Users</SelectItem>
+                                    <SelectItem value="new">New Users Only</SelectItem>
+                                    <SelectItem value="returning">Returning Users Only</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormDescription>
+                                  Target specific user types with this promotion
+                                </FormDescription>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="min_purchase_amount"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Minimum Purchase Amount ($)</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    type="number" 
+                                    min="0" 
+                                    step="0.01"
+                                    placeholder="No minimum" 
+                                    value={field.value || ''} 
+                                    onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)} 
+                                  />
+                                </FormControl>
+                                <FormDescription>
+                                  Minimum purchase amount required to use this promotion
+                                </FormDescription>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="combinable"
+                            render={({ field }) => (
+                              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                                <FormControl>
+                                  <Checkbox
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
+                                  />
+                                </FormControl>
+                                <div className="space-y-1 leading-none">
+                                  <FormLabel>
+                                    Allow combining with other promotions
+                                  </FormLabel>
+                                  <FormDescription>
+                                    If checked, this promotion can be used together with other promotions
+                                  </FormDescription>
+                                </div>
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <Button type="submit" className="w-full" disabled={isCreatingCode}>
+                          {isCreatingCode ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Creating...
+                            </>
+                          ) : (
+                            'Create Promotion Code'
+                          )}
+                        </Button>
+                      </form>
+                    </Form>
+                  </ScrollArea>
+                </DialogContent>
+              </Dialog>
+            </div>
+          </div>
+
+          {isLoadingCodes ? (
+            <div className="flex justify-center items-center h-48">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : promotionCodes.length > 0 ? (
+            <div className="border rounded-md overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Code</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead>Discount</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Usage</TableHead>
+                    <TableHead>Valid Period</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {promotionCodes.map((code) => (
+                    <TableRow key={code.id}>
+                      <TableCell className="font-mono font-semibold">{code.code}</TableCell>
+                      <TableCell>{code.description}</TableCell>
+                      <TableCell>
+                        {code.discount_type === 'percentage' ? `${code.discount_value}%` :
+                         code.discount_type === 'fixed' ? `$${code.discount_value.toFixed(2)}` :
+                         'Free Item'}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={code.is_active ? "success" : "secondary"}>
+                          {code.is_active ? 'Active' : 'Inactive'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {code.usage_count || 0} 
+                        {code.usage_limit ? ` / ${code.usage_limit}` : ''}
+                      </TableCell>
+                      <TableCell>
+                        {format(new Date(code.start_date), 'MM/dd/yyyy')}
+                        {code.end_date ? ` - ${format(new Date(code.end_date), 'MM/dd/yyyy')}` : ' - No end date'}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center h-48 space-y-4">
+                <div className="text-center">
+                  <p className="text-muted-foreground">No promotion codes found</p>
+                  <p className="text-sm text-muted-foreground">Create your first promotion code to get started.</p>
+                </div>
+                <Button onClick={() => setActiveTab("create")}>Create Promotion Code</Button>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* Create Single Code */}
+        <TabsContent value="create">
+          <Card>
+            <CardHeader>
+              <CardTitle>Create a Promotion Code</CardTitle>
+              <CardDescription>
+                Set up a new promotion code with detailed configurations
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Alert className="mb-4">
+                <HelpCircle className="h-4 w-4" />
+                <AlertTitle>Tip</AlertTitle>
+                <AlertDescription>
+                  Promotion codes work best when clearly communicated to your target audience.
+                  Consider sharing them through your social media channels or email campaigns.
+                </AlertDescription>
+              </Alert>
+              
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                  <div className="grid grid-cols-2 gap-4">
                     <FormField
-                      control={singleCodeForm.control}
+                      control={form.control}
+                      name="code"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Code</FormLabel>
+                          <FormControl>
+                            <Input placeholder="SUMMER2023" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="discount_type"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Discount Type</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select discount type" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="percentage">Percentage</SelectItem>
+                              <SelectItem value="fixed">Fixed Amount</SelectItem>
+                              <SelectItem value="free_item">Free Item</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Description</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Summer promotion" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
                       name="discount_value"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>
-                            Discount Value ({singleCodeForm.watch('discount_type') === 'percentage' ? '%' : '$'})
+                            {form.watch('discount_type') === 'percentage' ? 'Percentage' : 
+                             form.watch('discount_type') === 'fixed' ? 'Amount ($)' : 'Value'}
                           </FormLabel>
                           <FormControl>
-                            <Input
-                              type="number"
-                              min={0}
-                              max={singleCodeForm.watch('discount_type') === 'percentage' ? 100 : undefined}
-                              placeholder={singleCodeForm.watch('discount_type') === 'percentage' ? '25' : '10.00'}
-                              {...field}
-                            />
+                            <Input type="number" min="0" {...field} />
                           </FormControl>
-                          <FormDescription>
-                            {singleCodeForm.watch('discount_type') === 'percentage'
-                              ? 'Enter percentage discount (0-100)'
-                              : 'Enter fixed amount discount'}
-                          </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-
                     <FormField
-                      control={singleCodeForm.control}
-                      name="description"
+                      control={form.control}
+                      name="usage_limit"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Description</FormLabel>
+                          <FormLabel>Usage Limit (optional)</FormLabel>
                           <FormControl>
-                            <Textarea
-                              placeholder="25% off your first event ticket"
-                              {...field}
+                            <Input 
+                              type="number" 
+                              min="0" 
+                              placeholder="Unlimited" 
+                              value={field.value || ''} 
+                              onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)} 
                             />
                           </FormControl>
-                          <FormDescription>
-                            Clearly describe what this promotion offers
-                          </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
+                  </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        control={singleCodeForm.control}
-                        name="start_date"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Start Date</FormLabel>
-                            <FormControl>
-                              <Input 
-                                type="date" 
-                                {...field} 
-                                value={field.value ? format(field.value, 'yyyy-MM-dd') : ''} 
-                                onChange={e => field.onChange(new Date(e.target.value))}
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="start_date"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel>Start Date</FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant={"outline"}
+                                  className={cn(
+                                    "w-full pl-3 text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                  )}
+                                >
+                                  {field.value ? (
+                                    format(field.value, "PPP")
+                                  ) : (
+                                    <span>Pick a date</span>
+                                  )}
+                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                initialFocus
                               />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                            </PopoverContent>
+                          </Popover>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="end_date"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel>End Date (optional)</FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant={"outline"}
+                                  className={cn(
+                                    "w-full pl-3 text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                  )}
+                                >
+                                  {field.value ? (
+                                    format(field.value, "PPP")
+                                  ) : (
+                                    <span>No end date</span>
+                                  )}
+                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={field.value || undefined}
+                                onSelect={field.onChange}
+                                initialFocus
+                                fromDate={form.watch('start_date')}
+                              />
+                            </PopoverContent>
+                          </Popover>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
 
-                      <FormField
-                        control={singleCodeForm.control}
-                        name="end_date"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>End Date (Optional)</FormLabel>
-                            <FormControl>
-                              <Input 
-                                type="date" 
-                                {...field} 
-                                value={field.value ? format(field.value, 'yyyy-MM-dd') : ''} 
-                                onChange={e => e.target.value ? field.onChange(new Date(e.target.value)) : field.onChange(null)}
-                                min={format(singleCodeForm.watch('start_date'), 'yyyy-MM-dd')}
-                              />
-                            </FormControl>
-                            <FormDescription>
-                              Leave blank for no expiration
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
+                  <Separator />
+
+                  <div className="space-y-4">
+                    <h3 className="font-medium text-sm">Advanced Options</h3>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="day-restrictions">Day Restrictions</Label>
+                        <div className="text-sm text-muted-foreground">Limit usage to specific days of the week</div>
+                      </div>
+                      <Switch
+                        id="day-restrictions"
+                        checked={dayRestricted}
+                        onCheckedChange={setDayRestricted}
                       />
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        control={singleCodeForm.control}
-                        name="usage_limit"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Usage Limit (Optional)</FormLabel>
-                            <FormControl>
-                              <Input 
-                                type="number" 
-                                min="0"
-                                placeholder="100"
-                                {...field}
-                                value={field.value ?? ''}
-                                onChange={e => field.onChange(e.target.value ? Number(e.target.value) : null)}
+                    {dayRestricted && (
+                      <div className="border rounded-md p-3 space-y-2">
+                        <Label>Valid Days</Label>
+                        <div className="flex flex-wrap gap-2">
+                          {daysOfWeek.map((day) => (
+                            <div key={day} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={day}
+                                checked={selectedDays.includes(day)}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    setSelectedDays([...selectedDays, day]);
+                                  } else {
+                                    setSelectedDays(selectedDays.filter((d) => d !== day));
+                                  }
+                                }}
                               />
-                            </FormControl>
-                            <FormDescription>
-                              Maximum number of redemptions
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                              <label
+                                htmlFor={day}
+                                className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                              >
+                                {day}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
-                      <FormField
-                        control={singleCodeForm.control}
-                        name="min_purchase_amount"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Minimum Purchase Amount (Optional)</FormLabel>
-                            <FormControl>
-                              <Input 
-                                type="number" 
-                                min="0" 
-                                step="0.01"
-                                placeholder="25.00"
-                                {...field}
-                                value={field.value ?? ''}
-                                onChange={e => field.onChange(e.target.value ? Number(e.target.value) : null)}
-                              />
-                            </FormControl>
-                            <FormDescription>
-                              Minimum amount required to use this promotion
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="time-restrictions">Time Restrictions</Label>
+                        <div className="text-sm text-muted-foreground">Limit usage to specific hours</div>
+                      </div>
+                      <Switch
+                        id="time-restrictions"
+                        checked={timeRestricted}
+                        onCheckedChange={setTimeRestricted}
                       />
                     </div>
+
+                    {timeRestricted && (
+                      <div className="border rounded-md p-3 space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="start-time">Start Time</Label>
+                            <Input
+                              id="start-time"
+                              type="time"
+                              onChange={(e) => {
+                                form.setValue('valid_hours', {
+                                  start: e.target.value,
+                                  end: form.watch('valid_hours')?.end || '23:59'
+                                });
+                              }}
+                              value={form.watch('valid_hours')?.start || ''}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="end-time">End Time</Label>
+                            <Input
+                              id="end-time"
+                              type="time"
+                              onChange={(e) => {
+                                form.setValue('valid_hours', {
+                                  start: form.watch('valid_hours')?.start || '00:00',
+                                  end: e.target.value
+                                });
+                              }}
+                              value={form.watch('valid_hours')?.end || ''}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
                     <FormField
-                      control={singleCodeForm.control}
+                      control={form.control}
                       name="user_segment"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Target User Segment</FormLabel>
+                          <FormLabel>User Segment</FormLabel>
                           <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
+                            onValueChange={(value) => field.onChange(value as UserSegmentType)}
+                            defaultValue={field.value || 'all'}
                           >
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue placeholder="Select target users" />
+                                <SelectValue placeholder="Target audience" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
@@ -503,425 +1071,459 @@ const PromoCodeGenerator: React.FC = () => {
                             </SelectContent>
                           </Select>
                           <FormDescription>
-                            Which users can use this promotion
+                            Target specific user types with this promotion
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
 
-                    <div className="space-y-4">
-                      <FormLabel>Valid Days (Optional)</FormLabel>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                        {DAYS_OF_WEEK.map((day) => (
-                          <FormField
-                            key={day}
-                            control={singleCodeForm.control}
-                            name="valid_days"
-                            render={({ field }) => (
-                              <FormItem
-                                key={day}
-                                className="flex flex-row items-center space-x-2 space-y-0"
-                              >
-                                <FormControl>
-                                  <Checkbox
-                                    checked={field.value?.includes(day)}
-                                    onCheckedChange={(checked) => {
-                                      const currentValues = field.value || [];
-                                      if (checked) {
-                                        field.onChange([...currentValues, day]);
-                                      } else {
-                                        field.onChange(
-                                          currentValues.filter((value) => value !== day)
-                                        );
-                                      }
-                                    }}
-                                  />
-                                </FormControl>
-                                <FormLabel className="font-normal">{day}</FormLabel>
-                              </FormItem>
-                            )}
+                    <FormField
+                      control={form.control}
+                      name="min_purchase_amount"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Minimum Purchase Amount ($)</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="number" 
+                              min="0" 
+                              step="0.01"
+                              placeholder="No minimum" 
+                              value={field.value || ''} 
+                              onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)} 
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            Minimum purchase amount required to use this promotion
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="combinable"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>
+                              Allow combining with other promotions
+                            </FormLabel>
+                            <FormDescription>
+                              If checked, this promotion can be used together with other promotions
+                            </FormDescription>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <CardFooter className="px-0">
+                    <Button type="submit" className="ml-auto" disabled={isCreatingCode}>
+                      {isCreatingCode ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Creating...
+                        </>
+                      ) : (
+                        'Create Promotion Code'
+                      )}
+                    </Button>
+                  </CardFooter>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Batch Create */}
+        <TabsContent value="batch">
+          <Card>
+            <CardHeader>
+              <CardTitle>Batch Create Promotion Codes</CardTitle>
+              <CardDescription>
+                Generate multiple codes at once for campaigns or events
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Alert className="mb-4">
+                <HelpCircle className="h-4 w-4" />
+                <AlertTitle>Tip</AlertTitle>
+                <AlertDescription>
+                  Batch created codes work well for distributing unique single-use codes to subscribers or event attendees.
+                </AlertDescription>
+              </Alert>
+              
+              <Form {...batchForm}>
+                <form onSubmit={batchForm.handleSubmit(onBatchSubmit)} className="space-y-6">
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={batchForm.control}
+                      name="prefix"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Code Prefix</FormLabel>
+                          <FormControl>
+                            <Input placeholder="SUMMER" {...field} />
+                          </FormControl>
+                          <FormDescription>
+                            A prefix for all generated codes (e.g. SUMMER-ABCDE)
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={batchForm.control}
+                      name="count"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Number of Codes</FormLabel>
+                          <FormControl>
+                            <Input type="number" min="1" max="100" {...field} />
+                          </FormControl>
+                          <FormDescription>
+                            How many unique codes to generate (max 100)
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <FormField
+                    control={batchForm.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Description</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Summer campaign codes" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={batchForm.control}
+                      name="discount_type"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Discount Type</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select discount type" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="percentage">Percentage</SelectItem>
+                              <SelectItem value="fixed">Fixed Amount</SelectItem>
+                              <SelectItem value="free_item">Free Item</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={batchForm.control}
+                      name="discount_value"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            {batchForm.watch('discount_type') === 'percentage' ? 'Percentage' : 
+                             batchForm.watch('discount_type') === 'fixed' ? 'Amount ($)' : 'Value'}
+                          </FormLabel>
+                          <FormControl>
+                            <Input type="number" min="0" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={batchForm.control}
+                      name="start_date"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel>Start Date</FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant={"outline"}
+                                  className={cn(
+                                    "w-full pl-3 text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                  )}
+                                >
+                                  {field.value ? (
+                                    format(field.value, "PPP")
+                                  ) : (
+                                    <span>Pick a date</span>
+                                  )}
+                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                initialFocus
+                              />
+                            </PopoverContent>
+                          </Popover>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={batchForm.control}
+                      name="end_date"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel>End Date (optional)</FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant={"outline"}
+                                  className={cn(
+                                    "w-full pl-3 text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                  )}
+                                >
+                                  {field.value ? (
+                                    format(field.value, "PPP")
+                                  ) : (
+                                    <span>No end date</span>
+                                  )}
+                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={field.value || undefined}
+                                onSelect={field.onChange}
+                                initialFocus
+                                fromDate={batchForm.watch('start_date')}
+                              />
+                            </PopoverContent>
+                          </Popover>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <FormField
+                    control={batchForm.control}
+                    name="usage_limit"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Usage Limit Per Code</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            min="0" 
+                            placeholder="1" 
+                            value={field.value || ''} 
+                            onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)} 
                           />
-                        ))}
-                      </div>
-                    </div>
+                        </FormControl>
+                        <FormDescription>
+                          How many times each code can be used (default: 1)
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        control={singleCodeForm.control}
-                        name="valid_hours_start"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Valid From (Optional)</FormLabel>
-                            <FormControl>
-                              <Input type="time" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={singleCodeForm.control}
-                        name="valid_hours_end"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Valid Until (Optional)</FormLabel>
-                            <FormControl>
-                              <Input type="time" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        control={singleCodeForm.control}
-                        name="combinable"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-center justify-between space-y-0 p-4 border rounded-md">
-                            <div className="space-y-0.5">
-                              <FormLabel>Combinable with Other Discounts</FormLabel>
-                              <FormDescription>
-                                Allow this promotion to be used with others
-                              </FormDescription>
-                            </div>
-                            <FormControl>
-                              <Switch
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={singleCodeForm.control}
-                        name="is_active"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-center justify-between space-y-0 p-4 border rounded-md">
-                            <div className="space-y-0.5">
-                              <FormLabel>Active Status</FormLabel>
-                              <FormDescription>
-                                Enable or disable this promotion
-                              </FormDescription>
-                            </div>
-                            <FormControl>
-                              <Switch
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <Button type="submit" className="w-full" disabled={isCreating}>
-                      {isCreating ? 'Creating...' : 'Create Promotion Code'}
+                  <CardFooter className="px-0">
+                    <Button type="submit" className="ml-auto" disabled={isBatchCreating}>
+                      {isBatchCreating ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Generating...
+                        </>
+                      ) : (
+                        'Generate Batch'
+                      )}
                     </Button>
-                  </form>
-                </Form>
-              </TabsContent>
+                  </CardFooter>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-              <TabsContent value="batch" className="space-y-4 mt-4">
-                <Form {...batchCodeForm}>
-                  <form onSubmit={batchCodeForm.handleSubmit(handleCreateBatchCodes)} className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        control={batchCodeForm.control}
-                        name="prefix"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Code Prefix</FormLabel>
-                            <FormControl>
-                              <Input placeholder="SUMMER" {...field} />
-                            </FormControl>
-                            <FormDescription>
-                              Common prefix for all generated codes
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={batchCodeForm.control}
-                        name="count"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Number of Codes</FormLabel>
-                            <FormControl>
-                              <Input 
-                                type="number" 
-                                min={1} 
-                                max={100}
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormDescription>
-                              How many codes to generate (max 100)
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    
-                    {/* The rest of the batch form is similar to the single code form */}
-                    {/* ... similar fields for discount_type, discount_value, description, etc. */}
-                    
-                    <Button type="submit" className="w-full" disabled={isBatchCreating}>
-                      {isBatchCreating ? 'Creating...' : `Generate ${batchCodeForm.watch('count')} Codes`}
-                    </Button>
-                  </form>
-                </Form>
-              </TabsContent>
-            </Tabs>
-          </TabsContent>
-
-          <TabsContent value="manage" className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-semibold">Promotion Codes</h3>
+        {/* Analytics */}
+        <TabsContent value="analytics">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Promotion Analytics</CardTitle>
+                <CardDescription>
+                  View performance metrics for your promotion codes
+                </CardDescription>
+              </div>
               <div className="flex gap-2">
-                <Button onClick={exportCodes} size="sm" variant="outline" className="gap-1">
-                  <FileUpload className="h-4 w-4" />
-                  Export CSV
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="flex items-center gap-1"
+                  onClick={handleExportAnalytics}
+                >
+                  <FileDown className="h-4 w-4" /> Export Data
                 </Button>
-                
-                <Sheet>
-                  <SheetTrigger asChild>
-                    <Button size="sm" variant="outline" className="gap-1">
-                      <FileCheck className="h-4 w-4" />
-                      Import CSV
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent>
-                    <SheetHeader>
-                      <SheetTitle>Import Promotion Codes</SheetTitle>
-                      <SheetDescription>
-                        Upload a CSV file with your promotion codes
-                      </SheetDescription>
-                    </SheetHeader>
-                    <div className="mt-6 space-y-6">
-                      <div className="border-2 border-dashed border-muted rounded-md p-6 text-center">
-                        <Input
-                          id="file-upload"
-                          type="file"
-                          accept=".csv"
-                          onChange={handleFileChange}
-                          className="hidden"
-                        />
-                        <label
-                          htmlFor="file-upload"
-                          className="cursor-pointer flex flex-col items-center"
-                        >
-                          <FileScan className="h-12 w-12 text-muted-foreground mb-2" />
-                          <span className="font-medium">Click to select a CSV file</span>
-                          <span className="text-sm text-muted-foreground mt-1">
-                            or drag and drop your file here
-                          </span>
-                        </label>
-                        {csvData && <p className="mt-2 text-sm text-green-600">File loaded successfully!</p>}
-                      </div>
-                      <Button 
-                        onClick={handleImport} 
-                        disabled={!csvData || importing}
-                        className="w-full"
-                      >
-                        {importing ? 'Importing...' : 'Import Codes'}
-                      </Button>
-                    </div>
-                  </SheetContent>
-                </Sheet>
-                
-                <Button onClick={() => refetchCodes()} size="sm" variant="outline">
-                  <RefreshCw className="h-4 w-4" />
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex items-center gap-1"
+                >
+                  <RefreshCw className="h-4 w-4" /> Refresh
                 </Button>
               </div>
-            </div>
-            
-            {isLoadingCodes ? (
-              <div className="text-center py-8">Loading promotion codes...</div>
-            ) : isErrorCodes ? (
-              <div className="text-center py-8 text-destructive">Error loading codes</div>
-            ) : (
-              <ScrollArea className="h-[400px]">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Code</TableHead>
-                      <TableHead>Discount</TableHead>
-                      <TableHead>Description</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Usage</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {promotionCodes.length > 0 ? (
-                      promotionCodes.map((code) => (
-                        <TableRow key={code.id}>
-                          <TableCell className="font-mono font-medium">{code.code}</TableCell>
-                          <TableCell>
-                            {code.discount_type === 'percentage'
-                              ? `${code.discount_value}%`
-                              : `$${code.discount_value.toFixed(2)}`}
-                          </TableCell>
-                          <TableCell>{code.description}</TableCell>
-                          <TableCell>
-                            <Badge
-                              variant={code.is_active ? "success" : "secondary"}
-                            >
-                              {code.is_active ? "Active" : "Inactive"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            {code.usage_count ?? 0}
-                            {code.usage_limit ? ` / ${code.usage_limit}` : ''}
-                          </TableCell>
-                          <TableCell>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="sm" className="text-destructive">
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    This will permanently delete the promotion code "{code.code}".
-                                    This action cannot be undone.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction 
-                                    onClick={() => deleteCode(code.id)}
-                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                  >
-                                    Delete
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                          No promotion codes found. Create one to get started.
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </ScrollArea>
-            )}
-          </TabsContent>
-
-          <TabsContent value="analytics" className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-semibold">Performance Analytics</h3>
-              <Button onClick={() => refetchAnalytics()} size="sm" variant="outline">
-                <RefreshCw className="h-4 w-4" />
-              </Button>
-            </div>
-            
-            {isLoadingAnalytics ? (
-              <div className="text-center py-8">Loading analytics data...</div>
-            ) : isErrorAnalytics ? (
-              <div className="text-center py-8 text-destructive">Error loading analytics</div>
-            ) : analyticsData && analyticsData.length > 0 ? (
-              <>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm text-muted-foreground">Total Redemptions</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">
-                        {analyticsData.reduce((sum, item) => sum + (item.redemptions || 0), 0)}
-                      </div>
-                    </CardContent>
-                  </Card>
-                  
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm text-muted-foreground">Total Discount Value</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">
-                        ${analyticsData.reduce((sum, item) => sum + (item.total_discount_amount || 0), 0).toFixed(2)}
-                      </div>
-                    </CardContent>
-                  </Card>
-                  
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm text-muted-foreground">Avg. Order Value</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">
-                        ${(analyticsData.reduce((sum, item) => sum + (item.average_order_value || 0), 0) / analyticsData.length).toFixed(2)}
-                      </div>
-                    </CardContent>
-                  </Card>
+            </CardHeader>
+            <CardContent>
+              {isLoadingAnalytics ? (
+                <div className="flex justify-center items-center h-48">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                 </div>
-                
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Promotion Code Performance</CardTitle>
-                  </CardHeader>
-                  <CardContent>
+              ) : analyticsData && analyticsData.length > 0 ? (
+                <div className="space-y-8">
+                  <div>
+                    <h3 className="text-lg font-medium mb-4">Performance Overview</h3>
+                    <div className="grid grid-cols-4 gap-4">
+                      <Card>
+                        <CardContent className="pt-6">
+                          <div className="text-2xl font-bold">
+                            {analyticsData.reduce((sum, item) => sum + item.total_usage, 0)}
+                          </div>
+                          <p className="text-muted-foreground">Total Redemptions</p>
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardContent className="pt-6">
+                          <div className="text-2xl font-bold">
+                            ${analyticsData.reduce((sum, item) => sum + item.total_revenue, 0).toFixed(2)}
+                          </div>
+                          <p className="text-muted-foreground">Revenue Generated</p>
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardContent className="pt-6">
+                          <div className="text-2xl font-bold">
+                            {(analyticsData.reduce((sum, item) => sum + item.conversion_rate, 0) / analyticsData.length).toFixed(1)}%
+                          </div>
+                          <p className="text-muted-foreground">Avg. Conversion Rate</p>
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardContent className="pt-6">
+                          <div className="text-2xl font-bold">
+                            ${(analyticsData.reduce((sum, item) => sum + item.average_order_value, 0) / analyticsData.length).toFixed(2)}
+                          </div>
+                          <p className="text-muted-foreground">Avg. Order Value</p>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h3 className="text-lg font-medium mb-4">Promotion Code Performance</h3>
                     <div className="h-80">
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart
-                          data={getChartData()}
-                          margin={{
-                            top: 20,
-                            right: 30,
-                            left: 20,
-                            bottom: 60,
-                          }}
+                          data={analyticsData.map(item => {
+                            const code = promotionCodes.find(c => c.id === item.promotion_id);
+                            return {
+                              code: code ? code.code : `Code ${item.promotion_id.substring(0, 4)}`,
+                              usage: item.total_usage,
+                              revenue: item.total_revenue,
+                            };
+                          }).sort((a, b) => b.usage - a.usage).slice(0, 10)}
+                          margin={{ top: 10, right: 30, left: 0, bottom: 30 }}
                         >
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis 
-                            dataKey="code" 
-                            angle={-45}
-                            textAnchor="end"
-                            height={80}
-                          />
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                          <XAxis dataKey="code" angle={-45} textAnchor="end" />
                           <YAxis yAxisId="left" orientation="left" stroke="#8884d8" />
                           <YAxis yAxisId="right" orientation="right" stroke="#82ca9d" />
-                          <RechartsTooltip />
+                          <Tooltip />
                           <Legend />
-                          <Bar yAxisId="left" dataKey="redemptions" name="Redemptions" fill="#8884d8" />
-                          <Bar yAxisId="right" dataKey="value" name="Discount Value ($)" fill="#82ca9d" />
+                          <Bar yAxisId="left" dataKey="usage" name="Redemptions" fill="#8884d8" radius={[4, 4, 0, 0]} barSize={30} />
+                          <Bar yAxisId="right" dataKey="revenue" name="Revenue ($)" fill="#82ca9d" radius={[4, 4, 0, 0]} barSize={30} />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
-                  </CardContent>
-                </Card>
-              </>
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                No analytics data available. Create and distribute promotion codes to see performance metrics.
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-      
-      <CardFooter className="border-t pt-4 text-sm text-muted-foreground">
-        Promotion codes manager v1.0 — {new Date().toLocaleDateString()}
-      </CardFooter>
-    </Card>
+                  </div>
+                  
+                  <div>
+                    <h3 className="text-lg font-medium mb-4">Detailed Analytics</h3>
+                    <div className="border rounded-md">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Promotion Code</TableHead>
+                            <TableHead>Total Usage</TableHead>
+                            <TableHead>Revenue</TableHead>
+                            <TableHead>Conversion Rate</TableHead>
+                            <TableHead>Avg. Order Value</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {analyticsData.map((item) => {
+                            const code = promotionCodes.find(c => c.id === item.promotion_id);
+                            return (
+                              <TableRow key={item.id}>
+                                <TableCell className="font-mono">
+                                  {code ? code.code : `Code ${item.promotion_id.substring(0, 8)}`}
+                                </TableCell>
+                                <TableCell>{item.total_usage}</TableCell>
+                                <TableCell>${item.total_revenue.toFixed(2)}</TableCell>
+                                <TableCell>{item.conversion_rate.toFixed(1)}%</TableCell>
+                                <TableCell>${item.average_order_value.toFixed(2)}</TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-48 space-y-4">
+                  <BarChart3 className="h-12 w-12 text-muted-foreground/50" />
+                  <div className="text-center">
+                    <h3 className="text-lg font-medium">No Analytics Data Yet</h3>
+                    <p className="text-muted-foreground mt-1">
+                      Analytics will appear here once your promotion codes are being used.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 };
 
