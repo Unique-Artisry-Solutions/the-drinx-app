@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useAuthCheck } from './useAuthCheck';
 import { useFeatureStatus } from './useFeatureStatus';
@@ -6,11 +7,10 @@ import { useAnalysisProcess } from './useAnalysisProcess';
 import { useReleaseFeatures } from './useReleaseFeatures';
 import { useExportFunctions } from './useExportFunctions';
 import { useToast } from '@/hooks/use-toast';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 
 export const useSystemBreakdown = () => {
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get('tab') || 'overview';
   const { toast } = useToast();
   
@@ -58,7 +58,7 @@ export const useSystemBreakdown = () => {
     establishmentFeatures, 
     individualFeatures,
     promoterFeatures,
-    (tab: string) => navigate(`/admin/system-breakdown?tab=${tab}`, { replace: true })
+    (tab: string) => setSearchParams({ tab })
   );
 
   const { handleExportCSV } = useExportFunctions();
@@ -80,14 +80,9 @@ export const useSystemBreakdown = () => {
     });
   };
 
-  const setActiveTab = (tab: string) => {
-    // Use navigate with replace: true to avoid browser history stacking
-    navigate(`/admin/system-breakdown?tab=${tab}`, { replace: true });
-  };
-
   return {
     activeTab,
-    setActiveTab,
+    setActiveTab: (tab: string) => setSearchParams({ tab }),
     adminFeatures,
     establishmentFeatures,
     individualFeatures,

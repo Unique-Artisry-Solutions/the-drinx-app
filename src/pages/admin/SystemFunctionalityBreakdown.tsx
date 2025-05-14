@@ -19,28 +19,17 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
 import { Settings } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { validateSessionState } from '@/utils/session/validation';
-import { improvementsData } from '@/components/admin/systemBreakdown/improvementsData';
+
+// Import improvements data
+import { proposedImprovements as improvementsData } from '@/components/admin/systemBreakdown/improvementsData';
 
 const SystemFunctionalityBreakdown: React.FC = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get('tab') || 'overview';
   
-  // Validate session on component mount and tab changes
   useEffect(() => {
-    const checkSessionValidity = async () => {
-      try {
-        const result = await validateSessionState();
-        console.log('Session validation on tab change:', result);
-        
-        // Just log for now, we'll enhance this in the session utility
-      } catch (error) {
-        console.error('Session validation error:', error);
-      }
-    };
-    
-    checkSessionValidity();
+    console.log('Current active tab from URL:', activeTab);
   }, [activeTab]);
   
   const {
@@ -58,16 +47,16 @@ const SystemFunctionalityBreakdown: React.FC = () => {
     handleCreateReleaseFromFeatures,
     monthlyProgressData,
     currentSnapshot,
-    dataValidation,
-    setActiveTab
+    dataValidation
   } = useSystemBreakdown();
   
   const handleTabChange = (value: string) => {
-    setActiveTab(value);
+    console.log('Tab changed to:', value);
+    setSearchParams({ tab: value });
   };
   
   const handleConfigureFeatures = () => {
-    navigate('/admin/system-configuration?tab=features', { replace: true });
+    navigate('/admin/system-configuration?tab=features');
   };
   
   const isMobile = useIsMobile();

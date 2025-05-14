@@ -1,10 +1,11 @@
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { CardContent, CardFooter } from '@/components/ui/card';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import LoginFormFields from './login/LoginFormFields';
 import LoginFormActions from './login/LoginFormActions';
+import { supabase, getSessionDebug } from '@/lib/supabase';
 import { enableAdminBypass, redirectAfterLogin } from '@/utils/adminBypass';
 import { useAuth } from '@/contexts/auth';
 
@@ -26,39 +27,26 @@ const LoginForm: React.FC<LoginFormProps> = ({
   const [isResendingEmail, setIsResendingEmail] = useState(false);
   const [showResendVerification, setShowResendVerification] = useState(false);
   const [isAdminLogin, setIsAdminLogin] = useState(false);
+  const [loginSuccess, setLoginSuccess] = useState(false);
   
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
-  const { signIn, sendVerificationEmail } = useAuth();
+  const { signIn, authStable } = useAuth();
 
-  const toggleAdminLogin = () => {
-    setIsAdminLogin(!isAdminLogin);
-    setFormError('');
-  };
-
-  const handleResendVerification = async () => {
-    if (!identifier) {
-      setFormError('Please enter your email address');
-      return;
+  // Check for redirects in location state
+  useEffect(() => {
+    const state = location.state as { from?: string };
+    if (state?.from) {
+      console.log("Login page - Setting redirect from location state:", state.from);
+      localStorage.setItem('auth_redirect', state.from);
     }
-    
-    setIsResendingEmail(true);
-    try {
-      await sendVerificationEmail(identifier);
-      
-      toast({
-        title: 'Verification email sent',
-        description: 'Please check your email for the verification link',
-      });
-    } catch (error: any) {
-      console.error("Email verification error:", error);
-      setFormError(error.message || 'Failed to resend verification email');
-    } finally {
-      setIsResendingEmail(false);
-    }
-  };
+  }, [location]);
 
+  // Prepare redirect after successful login
   const performRedirect = useCallback(() => {
+    if (!loginSuccess) return;
+    
     console.log("Preparing to redirect after login success");
     
     // Check for saved redirect path
@@ -85,7 +73,55 @@ const LoginForm: React.FC<LoginFormProps> = ({
         navigate('/explore', { replace: true });
       }
     }
-  }, [navigate, onSuccess]);
+  }, [loginSuccess, navigate, onSuccess]);
+
+  // Handle redirect after login and when auth is stable
+  useEffect(() => {
+    if (loginSuccess && authStable) {
+      const timer = setTimeout(() => {
+        performRedirect();
+      }, 300); // Small delay to ensure auth state is fully processed
+      
+      return () => clearTimeout(timer);
+    }
+  }, [loginSuccess, authStable, performRedirect]);
+
+  const toggleAdminLogin = () => {
+    setIsAdminLogin(!isAdminLogin);
+    setFormError('');
+  };
+
+  const handleResendVerification = async () => {
+    if (!identifier) {
+      setFormError('Please enter your email address');
+      return;
+    }
+    
+    setIsResendingEmail(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: identifier,
+        options: {
+          emailRedirectTo: `${window.location.origin}/?email_confirmed=true`,
+        }
+      });
+      
+      if (error) {
+        throw error;
+      }
+      
+      toast({
+        title: 'Verification email sent',
+        description: 'Please check your email for the verification link',
+      });
+    } catch (error: any) {
+      console.error("Email verification error:", error);
+      setFormError(error.message || 'Failed to resend verification email');
+    } finally {
+      setIsResendingEmail(false);
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -107,8 +143,10 @@ const LoginForm: React.FC<LoginFormProps> = ({
             description: 'Welcome to the admin dashboard',
           });
           
-          // Redirect to admin dashboard
-          navigate('/admin/system-breakdown', { replace: true });
+          // Ensure we finish setting local storage before navigation
+          setTimeout(() => {
+            navigate('/admin/system-breakdown', { replace: true });
+          }, 100);
           return;
         } else {
           throw new Error('Invalid admin credentials');
@@ -117,19 +155,15 @@ const LoginForm: React.FC<LoginFormProps> = ({
         console.log(`Attempting regular login with identifier: ${identifier}`);
         
         // Use the signIn method from useAuth
-        const { error } = await signIn(identifier, password);
+        const result = await signIn(identifier, password);
+        console.log("Login successful, result:", result);
         
-        if (error) {
-          throw error;
-        }
+        // Verify session immediately
+        const sessionCheck = await getSessionDebug();
+        console.log("Session check after login:", sessionCheck);
         
-        toast({
-          title: 'Login successful',
-          description: 'Welcome back!'
-        });
-        
-        // Successful login - redirect happens via the AuthProvider effect
-        performRedirect();
+        // Mark login as successful to trigger redirect
+        setLoginSuccess(true);
       }
     } catch (error: any) {
       console.error('Login error:', error);
