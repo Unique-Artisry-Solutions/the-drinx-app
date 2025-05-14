@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useAuthCheck } from './useAuthCheck';
 import { useFeatureStatus } from './useFeatureStatus';
@@ -82,6 +81,7 @@ export const useSystemBreakdown = () => {
   };
 
   const setActiveTab = (tab: string) => {
+    // Use navigate with replace: true to avoid browser history stacking
     navigate(`/admin/system-breakdown?tab=${tab}`, { replace: true });
   };
 

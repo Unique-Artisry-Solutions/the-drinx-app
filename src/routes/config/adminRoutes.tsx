@@ -1,4 +1,3 @@
-
 import { lazy } from 'react';
 import { RouteObject } from 'react-router-dom';
 import AdminLogin from '@/pages/admin/AdminLogin';
@@ -9,6 +8,7 @@ import ComponentCatalogPage from '@/pages/admin/ComponentCatalogPage';
 import AdminDocumentationPage from '@/pages/admin/AdminDocumentationPage';
 import SystemConfigurationPage from '@/pages/admin/SystemConfigurationPage';
 import AdminLayout from '@/components/admin/layout/AdminLayout';
+import SessionGuard from '@/components/admin/systemBreakdown/SessionGuard';
 
 const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
 const RewardSystemMonitorPage = lazy(() => import('@/pages/admin/RewardSystemMonitorPage'));
@@ -50,7 +50,7 @@ export const adminRoutes: RouteObject[] = [
   },
   { 
     path: '/admin/system-breakdown', 
-    element: <AdminLayout><SystemFunctionalityBreakdown /></AdminLayout> 
+    element: <AdminLayout><SessionGuard><SystemFunctionalityBreakdown /></SessionGuard></AdminLayout> 
   },
   { 
     path: '/admin/component-catalog', 

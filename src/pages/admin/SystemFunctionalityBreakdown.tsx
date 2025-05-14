@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { useSystemBreakdown } from '@/components/admin/systemBreakdown/hooks/useSystemBreakdown';
@@ -19,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Settings } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { validateSessionState } from '@/utils/session/validation';
+import { improvementsData } from '@/components/admin/systemBreakdown/improvementsData';
 
 const SystemFunctionalityBreakdown: React.FC = () => {
   const navigate = useNavigate();
@@ -28,10 +30,14 @@ const SystemFunctionalityBreakdown: React.FC = () => {
   // Validate session on component mount and tab changes
   useEffect(() => {
     const checkSessionValidity = async () => {
-      const result = await validateSessionState();
-      console.log('Session validation on tab change:', result);
-      
-      // Just log for now, we'll enhance this in the session utility
+      try {
+        const result = await validateSessionState();
+        console.log('Session validation on tab change:', result);
+        
+        // Just log for now, we'll enhance this in the session utility
+      } catch (error) {
+        console.error('Session validation error:', error);
+      }
     };
     
     checkSessionValidity();
