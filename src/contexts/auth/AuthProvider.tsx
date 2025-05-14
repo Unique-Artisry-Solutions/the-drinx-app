@@ -3,6 +3,11 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { AuthUser, AuthContextType } from './types';
 import { supabase } from '@/lib/supabase';
+import { useAuthState } from './useAuthState';
+import { useAuthSetup } from './useAuthSetup';
+import { useSessionRefresh } from './useSessionRefresh';
+import { validateSessionState, syncSessionState } from '@/utils/sessionRecovery';
+import { useToast } from '@/hooks/use-toast';
 
 const initialState = {
   session: null,
@@ -28,88 +33,105 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [state, setState] = useState({
-    ...initialState
+  const {
+    user,
+    setUser,
+    session,
+    setSession,
+    isLoading,
+    setIsLoading,
+    isEmailVerified,
+    setIsEmailVerified,
+    checkAdminBypass,
+    updateLocalStorage,
+    checkAdminSession,
+    toast
+  } = useAuthState();
+
+  // Set up initial auth state and listeners
+  useAuthSetup({
+    setSession,
+    setUser,
+    setIsEmailVerified,
+    setIsLoading,
+    updateLocalStorage,
+    checkAdminBypass,
+    checkAdminSession,
+    refreshSession: async () => ({ isEmailVerified: false }),
+    toast
   });
 
-  // Initialize auth state
-  useEffect(() => {
-    const initAuth = async () => {
+  // Authentication state
+  const [authError, setAuthError] = useState<Error | null>(null);
+  const [authStable, setAuthStable] = useState(false);
+  const [isVerificationEmailSent, setIsVerificationEmailSent] = useState(false);
+
+  // Set up session refresh functionality
+  const { refreshSession } = useSessionRefresh({
+    refreshSessionAction: async () => {
       try {
-        // Get session from Supabase Auth
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: sessionData, error: sessionError } = await supabase.auth.refreshSession();
         
-        if (session) {
-          setState(current => ({
-            ...current,
-            session,
-            user: session.user as AuthUser,
-            isAuthenticated: true,
-            isLoading: false,
-            isEmailVerified: !!session.user.email_confirmed_at,
-            authStable: true
-          }));
-        } else {
-          setState(current => ({
-            ...current,
-            isLoading: false,
-            authStable: true
-          }));
-        }
+        if (sessionError) throw sessionError;
+        
+        return {
+          session: sessionData.session,
+          user: sessionData.session?.user || null,
+          isEmailVerified: sessionData.session?.user ? !!sessionData.session.user.email_confirmed_at : false
+        };
       } catch (error) {
-        console.error('Error initializing auth:', error);
-        setState(current => ({
-          ...current,
-          isLoading: false,
-          authError: error as Error,
-          authStable: true
-        }));
+        console.error("Session refresh error:", error);
+        return { session: null, user: null, isEmailVerified: false };
       }
-    };
+    },
+    setSession,
+    setUser,
+    setIsEmailVerified,
+    updateLocalStorage
+  });
 
-    initAuth();
-
-    // Set up auth state change listener
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.email);
-        
-        if (event === 'SIGNED_IN' && session) {
-          setState(current => ({
-            ...current,
-            session,
-            user: session.user as AuthUser,
-            isAuthenticated: true,
-            isLoading: false,
-            isEmailVerified: !!session.user.email_confirmed_at,
-            authStable: true
-          }));
-        } else if (event === 'SIGNED_OUT') {
-          setState(current => ({
-            ...initialState,
-            isLoading: false,
-            authStable: true
-          }));
-        } else if (event === 'USER_UPDATED' && session) {
-          setState(current => ({
-            ...current,
-            session,
-            user: session.user as AuthUser,
-            isAuthenticated: true,
-            isEmailVerified: !!session.user.email_confirmed_at,
-            authStable: true
-          }));
+  // Mark auth as stable once initial loading is complete
+  useEffect(() => {
+    if (!isLoading) {
+      console.log('Auth is now stable');
+      setAuthStable(true);
+      
+      // Perform session validation once auth is stable
+      validateSessionState().then(result => {
+        if (result.hasMismatch) {
+          console.log('Session mismatch detected during initial validation:', result);
+          syncSessionState().then(success => {
+            console.log('Session sync result:', success);
+          });
         }
-      }
-    );
+      });
+    }
+  }, [isLoading]);
 
-    return () => {
-      authListener.subscription.unsubscribe();
+  // Listen for session error toast requests
+  useEffect(() => {
+    const handleSessionErrorToast = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const { title, description, action } = customEvent.detail;
+      
+      toast({
+        title,
+        description,
+        action: action ? {
+          label: action.label,
+          onClick: action.onClick
+        } : undefined,
+        variant: 'destructive'
+      });
     };
-  }, []);
+    
+    window.addEventListener('showSessionErrorToast', handleSessionErrorToast);
+    return () => window.removeEventListener('showSessionErrorToast', handleSessionErrorToast);
+  }, [toast]);
 
   const signIn = async (email: string, password: string) => {
-    setState(current => ({ ...current, isLoading: true, authError: null }));
+    setAuthError(null);
+    setIsLoading(true);
     try {
       const { error, data } = await supabase.auth.signInWithPassword({
         email,
@@ -120,17 +142,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       return { error: null, data };
     } catch (error: any) {
-      setState(current => ({
-        ...current,
-        isLoading: false,
-        authError: error
-      }));
+      setAuthError(error);
       return { error, data: null };
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const signUp = async (formData: any) => {
-    setState(current => ({ ...current, isLoading: true, authError: null }));
+    setAuthError(null);
+    setIsLoading(true);
     try {
       const { data, error } = await supabase.auth.signUp({
         email: formData.email,
@@ -147,84 +168,71 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (error) throw error;
       
-      setState(current => ({
-        ...current,
-        isLoading: false,
-        isVerificationEmailSent: true
-      }));
-      
+      setIsVerificationEmailSent(true);
       return data;
     } catch (error: any) {
-      setState(current => ({
-        ...current,
-        isLoading: false,
-        authError: error
-      }));
+      setAuthError(error);
       throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const signOut = async () => {
     try {
+      setIsLoading(true);
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       
-      setState({
-        ...initialState,
-        isLoading: false,
-        authStable: true
-      });
+      // Clear all localStorage auth data
+      updateLocalStorage(null);
+      
+      // Reset state
+      setSession(null);
+      setUser(null);
+      setIsEmailVerified(false);
+      setAuthError(null);
     } catch (error: any) {
       console.error('Error signing out:', error);
-      setState(current => ({
-        ...current,
-        authError: error
-      }));
+      setAuthError(error);
       throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const refreshSession = async () => {
-    setState(current => ({ ...current, isLoading: true }));
+  const recoverAuthState = async (): Promise<boolean> => {
+    console.log('Attempting to recover auth state...');
+    setIsLoading(true);
+    
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const validationResult = await validateSessionState();
+      console.log('Auth state validation result:', validationResult);
       
-      if (session) {
-        setState(current => ({
-          ...current,
-          session,
-          user: session.user as AuthUser,
-          isAuthenticated: true,
-          isLoading: false,
-          isEmailVerified: !!session.user.email_confirmed_at,
-          authStable: true
-        }));
-
-        return { isEmailVerified: !!session.user.email_confirmed_at };
+      if (validationResult.hasMismatch) {
+        console.log('Session mismatch detected, attempting to sync...');
+        const syncSuccess = await syncSessionState();
+        
+        if (syncSuccess) {
+          console.log('Session sync successful, refreshing session...');
+          await refreshSession();
+          return true;
+        } else {
+          console.log('Session sync failed, forcing sign out...');
+          await signOut();
+          return false;
+        }
       } else {
-        setState(current => ({
-          ...initialState,
-          isLoading: false,
-          authStable: true
-        }));
-
-        return { isEmailVerified: false };
+        console.log('No session mismatch detected, refreshing session...');
+        await refreshSession();
+        return true;
       }
-    } catch (error: any) {
-      console.error('Error refreshing session:', error);
-      setState(current => ({
-        ...current,
-        isLoading: false,
-        authError: error,
-        authStable: true
-      }));
-      return { isEmailVerified: false };
+    } catch (error) {
+      console.error('Auth state recovery failed:', error);
+      return false;
+    } finally {
+      setIsLoading(false);
     }
-  };
-
-  const recoverAuthState = async () => {
-    await refreshSession();
-    return true;
   };
 
   const sendVerificationEmail = async (email: string) => {
@@ -236,15 +244,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (error) throw error;
       
-      setState(current => ({
-        ...current,
-        isVerificationEmailSent: true
-      }));
+      setIsVerificationEmailSent(true);
     } catch (error: any) {
-      setState(current => ({
-        ...current,
-        authError: error
-      }));
+      setAuthError(error);
       throw error;
     }
   };
@@ -257,23 +259,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (error) throw error;
       
-      if (state.user) {
-        setState(current => ({
-          ...current,
-          user: {
-            ...current.user!,
-            user_metadata: {
-              ...current.user!.user_metadata,
-              ...data
-            }
+      if (user) {
+        setUser({
+          ...user,
+          user_metadata: {
+            ...user.user_metadata,
+            ...data
           }
-        }));
+        });
       }
     } catch (error: any) {
-      setState(current => ({
-        ...current,
-        authError: error
-      }));
+      setAuthError(error);
       throw error;
     }
   };
@@ -286,17 +282,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (error) throw error;
     } catch (error: any) {
-      setState(current => ({
-        ...current,
-        authError: error
-      }));
+      setAuthError(error);
       throw error;
     }
   };
 
   // Fixed: Create the value object with all required methods
   const value: AuthContextType = {
-    ...state,
+    session,
+    user,
+    isAuthenticated: !!user && !!session,
+    isLoading,
+    isEmailVerified,
+    isVerificationEmailSent,
+    authError,
+    authStable,
     signIn,
     signUp,
     signOut,

@@ -1,15 +1,42 @@
-import React, { useEffect } from 'react';
+
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
-import { useAuth } from '@/contexts/auth/AuthProvider';
+import { useAuth } from '@/contexts/auth';
 import { checkAdminBypassStatus } from '@/utils/adminBypass';
 import { getSessionDebug } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
+import { validateSessionState, syncSessionState } from '@/utils/sessionRecovery';
+import { handlePotentialStuckState } from '@/utils/session/recovery';
 
 const Index = () => {
   const { user, isLoading, session, authStable, authError, recoverAuthState } = useAuth();
   const navigate = useNavigate();
+  const [hasMismatch, setHasMismatch] = useState(false);
+  
+  // Set up stuck state detection
+  useEffect(() => {
+    const stuckHandler = handlePotentialStuckState(8000, false);
+    return () => stuckHandler.cancel();
+  }, []);
+  
+  // Check for session mismatches
+  useEffect(() => {
+    const checkSession = async () => {
+      if (!isLoading && authStable) {
+        const validationResult = await validateSessionState();
+        if (validationResult.hasMismatch) {
+          console.log('Session mismatch detected:', validationResult);
+          setHasMismatch(true);
+        } else {
+          setHasMismatch(false);
+        }
+      }
+    };
+    
+    checkSession();
+  }, [isLoading, authStable]);
   
   // Log information for debugging
   useEffect(() => {
@@ -26,18 +53,6 @@ const Index = () => {
     // Check for admin bypass
     const { isEnabled: isAdminBypass, userType } = checkAdminBypassStatus();
     console.log("Admin bypass status:", { isAdminBypass, userType });
-    
-    // Log all localStorage keys and values for debugging
-    const localStorageKeys = Object.keys(localStorage);
-    const localStorageData: Record<string, string | null> = {};
-    
-    localStorageKeys.forEach(key => {
-      if (!key.includes('supabase.auth.token')) { // Skip sensitive auth tokens
-        localStorageData[key] = localStorage.getItem(key);
-      }
-    });
-    
-    console.log("LocalStorage data:", localStorageData);
     
     // Always log the current session state
     getSessionDebug();
@@ -98,15 +113,6 @@ const Index = () => {
       return;
     }
     
-    // Check localStorage as a fallback
-    const isAuthenticated = localStorage.getItem('user_authenticated') === 'true';
-    if (isAuthenticated && !user) {
-      console.log("Index page - User marked as authenticated in localStorage but session missing. Refreshing...");
-      // This is an edge case - don't redirect yet, but refresh the session first
-      getSessionDebug();
-      return;
-    }
-    
     // If user is not authenticated, redirect to landing
     if ((!user || !session) && !isLoading && authStable) {
       console.log("Index page - No authenticated user/session, redirecting to landing");
@@ -115,8 +121,20 @@ const Index = () => {
     }
   }, [user, session, isLoading, navigate, authStable, authError]);
 
-  const handleRecoveryClick = () => {
-    recoverAuthState();
+  const handleRecoveryClick = async () => {
+    // First try to sync, if that fails then do full recovery
+    const result = await validateSessionState();
+    
+    if (result.hasMismatch) {
+      const syncSuccess = await syncSessionState();
+      if (!syncSuccess) {
+        await recoverAuthState();
+      } else {
+        window.location.reload();
+      }
+    } else {
+      await recoverAuthState();
+    }
   };
 
   // Show improved loading state
@@ -124,6 +142,20 @@ const Index = () => {
     <Layout>
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
+          {hasMismatch && (
+            <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-md">
+              <p className="text-amber-700 mb-2">Session mismatch detected</p>
+              <p className="text-sm text-amber-600 mb-3">Your session state is out of sync. This can happen after long periods of inactivity.</p>
+              <Button 
+                onClick={handleRecoveryClick} 
+                variant="outline" 
+                className="bg-white hover:bg-gray-50"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" /> Fix Session
+              </Button>
+            </div>
+          )}
+          
           <p className="text-lg mb-2">Loading application...</p>
           <div className="w-12 h-12 border-4 border-spiritless-pink border-t-transparent rounded-full animate-spin mx-auto"></div>
           <p className="text-sm text-gray-500 mt-2">Please wait while we prepare your experience</p>
