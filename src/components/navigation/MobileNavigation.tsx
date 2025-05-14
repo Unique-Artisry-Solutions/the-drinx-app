@@ -1,83 +1,98 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { useAuth } from '@/contexts/auth';
-import { useAppNavigation } from '@/hooks/useAppNavigation';
-import { MobileNavigationProps } from './mobile/types';
-import ProfileMenu from './mobile/ProfileMenu';
-import NavigationBar from './mobile/NavigationBar';
-import { useMobileNavigation } from './hooks/useMobileNavigation';
+import { useAuth } from '@/contexts/auth/AuthProvider';
+import { NavigationType, UnifiedNavItem } from '@/types/navigation/NavigationTypes';
 import { getNavItems } from './utils/navigationItems';
-import { useNavigation } from '@/contexts/NavigationContext';
 
-interface ExtendedMobileNavigationProps extends MobileNavigationProps {
+interface MobileNavigationProps {
+  type: NavigationType;
+  userType: 'individual' | 'establishment' | 'promoter';
   forceGuestNavigation?: boolean;
 }
 
-const MobileNavigation: React.FC<ExtendedMobileNavigationProps> = ({ 
+const MobileNavigation: React.FC<MobileNavigationProps> = ({ 
   type, 
-  userType = 'individual',
+  userType,
   forceGuestNavigation = false
 }) => {
   const location = useLocation();
   const { user } = useAuth();
-  const { goToHomePage } = useAppNavigation();
-  const {
-    currentUserType,
-    expanded,
-    toggleExpand,
-    getProfilePath,
-  } = useMobileNavigation(type, userType, forceGuestNavigation);
-
-  // Create a handleHomeClick that uses the navigation hook and prevents default
-  const handleHomeClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    goToHomePage(currentUserType);
-  };
-
-  const handleProfileClick = (item: any, e: React.MouseEvent) => {
-    if (item.path === getProfilePath() && shouldShowProfileItems) {
-      e.preventDefault();
-      toggleExpand();
+  const [navItems, setNavItems] = React.useState<UnifiedNavItem[]>([]);
+  
+  const getProfilePath = () => {
+    switch (userType) {
+      case 'establishment':
+        return '/establishment/profile';
+      case 'promoter':
+        return '/promoter/profile';
+      default:
+        return '/profile';
     }
   };
+  
+  useEffect(() => {
+    // Get navigation items based on type and user type
+    const items = getNavItems(
+      type, 
+      userType, 
+      forceGuestNavigation,
+      user,
+      location,
+      getProfilePath
+    );
+    setNavItems(items);
+  }, [type, userType, location, user, forceGuestNavigation]);
+  
+  // Debug navigation items
+  useEffect(() => {
+    console.log('MobileNavigation items:', { 
+      type, 
+      userType, 
+      forceGuestNavigation,
+      itemCount: navItems.length,
+      itemLabels: navItems.map(i => i.label)
+    });
+  }, [type, userType, navItems, forceGuestNavigation]);
 
-  const navItems = getNavItems(
-    type,
-    currentUserType,
-    forceGuestNavigation,
-    user,
-    location,
-    getProfilePath
-  );
-
-  const shouldShowProfileItems = 
-    type === 'user' && 
-    ((location.pathname === '/profile' || location.pathname.startsWith('/profile/')) ||
-     (currentUserType === 'establishment' && 
-      (location.pathname === '/establishment' || location.pathname.startsWith('/establishment/'))));
-
-  const hiddenNavPaths = ['/admin/login'];
-
-  if (hiddenNavPaths.includes(location.pathname)) {
+  // If no navigation items, don't render
+  if (!navItems || navItems.length === 0) {
     return null;
   }
-
+  
   return (
-    <>
-      <ProfileMenu 
-        expanded={shouldShowProfileItems && expanded} 
-        userType={currentUserType} 
-      />
-      <NavigationBar
-        navItems={navItems}
-        type={type}
-        handleHomeClick={handleHomeClick}
-        handleProfileClick={handleProfileClick}
-        getProfilePath={getProfilePath}
-        currentUserType={currentUserType}
-      />
-    </>
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t">
+      <div className="flex items-center justify-around px-2">
+        {navItems.map((item, index) => {
+          if (!item.icon) return null;
+          
+          const Icon = item.icon;
+          const isActive = location.pathname === item.path || 
+            (item.path !== '/' && location.pathname.startsWith(item.path));
+          
+          return (
+            <a 
+              key={`mobile-nav-${index}`}
+              href={item.path}
+              className={`flex flex-col items-center py-2 px-3 ${
+                isActive 
+                  ? 'text-primary' 
+                  : 'text-muted-foreground'
+              }`}
+              onClick={(e) => {
+                if (item.onClick) {
+                  e.preventDefault();
+                  item.onClick(e);
+                }
+              }}
+            >
+              <Icon className="h-5 w-5" />
+              <span className="text-xs mt-1">{item.label}</span>
+            </a>
+          );
+        })}
+      </div>
+    </nav>
   );
 };
 
