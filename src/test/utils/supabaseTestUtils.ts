@@ -1,9 +1,8 @@
 
-import { type PostgrestFilterBuilder } from '@supabase/postgrest-js';
 import { vi } from 'vitest';
 
 // Mock query builder for Supabase testing
-export function createMockQueryBuilder<T>(mockData: T[] = []): PostgrestFilterBuilder<any, any, T[]> {
+export function createMockQueryBuilder<T>(mockData: T[] = []): any {
   return {
     eq: () => createMockQueryBuilder(mockData),
     neq: () => createMockQueryBuilder(mockData),
@@ -38,7 +37,7 @@ export function createMockQueryBuilder<T>(mockData: T[] = []): PostgrestFilterBu
     returns: () => createMockQueryBuilder(mockData),
     csv: () => Promise.resolve({ data: null, error: null }),
     abortSignal: () => createMockQueryBuilder(mockData),
-  } as unknown as PostgrestFilterBuilder<any, any, T[]>;
+  };
 }
 
 // Creates a mock Supabase client for testing
