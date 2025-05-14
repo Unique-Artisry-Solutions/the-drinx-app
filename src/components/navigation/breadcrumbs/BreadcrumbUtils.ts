@@ -58,7 +58,7 @@ export function getSegmentLabel(segment: string): string {
 /**
  * Builds breadcrumb items from a URL path
  */
-export function buildBreadcrumbs(pathname: string): { label: string, path: string }[] {
+export function buildBreadcrumbs(pathname: string): BreadcrumbItem[] {
   // Don't build breadcrumbs for the home page
   if (pathname === '/') {
     return [];

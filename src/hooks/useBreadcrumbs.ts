@@ -14,10 +14,7 @@ export function useBreadcrumbs(): {
   const pathname = location.pathname;
   
   // Generate breadcrumb items based on the current route
-  const items = buildBreadcrumbs(pathname).map(crumb => ({
-    label: crumb.label,
-    href: crumb.path
-  }));
+  const items = buildBreadcrumbs(pathname);
   
   // Determine if breadcrumbs should be shown
   const shouldShow = shouldShowBreadcrumbs(pathname);
