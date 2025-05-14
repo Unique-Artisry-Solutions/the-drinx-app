@@ -7,10 +7,11 @@ import { useAnalysisProcess } from './useAnalysisProcess';
 import { useReleaseFeatures } from './useReleaseFeatures';
 import { useExportFunctions } from './useExportFunctions';
 import { useToast } from '@/hooks/use-toast';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 
 export const useSystemBreakdown = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const activeTab = searchParams.get('tab') || 'overview';
   const { toast } = useToast();
   
@@ -58,7 +59,7 @@ export const useSystemBreakdown = () => {
     establishmentFeatures, 
     individualFeatures,
     promoterFeatures,
-    (tab: string) => setSearchParams({ tab })
+    (tab: string) => navigate(`/admin/system-breakdown?tab=${tab}`, { replace: true })
   );
 
   const { handleExportCSV } = useExportFunctions();
@@ -80,9 +81,13 @@ export const useSystemBreakdown = () => {
     });
   };
 
+  const setActiveTab = (tab: string) => {
+    navigate(`/admin/system-breakdown?tab=${tab}`, { replace: true });
+  };
+
   return {
     activeTab,
-    setActiveTab: (tab: string) => setSearchParams({ tab }),
+    setActiveTab,
     adminFeatures,
     establishmentFeatures,
     individualFeatures,
