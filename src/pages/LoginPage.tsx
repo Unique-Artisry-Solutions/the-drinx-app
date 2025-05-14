@@ -1,25 +1,30 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import UserAuth from '@/components/UserAuth';
 import { ArrowLeft } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
-import { useAuth } from '@/contexts/auth/AuthProvider';
+import { useAuth } from '@/contexts/auth/AuthContext';
 import { Button } from '@/components/ui/button';
 import TestCredentials from '@/components/auth/TestCredentials';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 
 const LoginPage = () => {
   const [requiredUserType, setRequiredUserType] = useState<'individual' | 'establishment' | 'promoter'>('individual');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isRecovering, setIsRecovering] = useState(false);
   const { theme, setTheme } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, isAuthenticated, authStable } = useAuth();
   
-  // Check for userType in the location state
+  // Check for userType and message in the location state
   useEffect(() => {
     const state = location.state as { 
       userType?: 'individual' | 'establishment' | 'promoter', 
-      message?: string 
+      message?: string,
+      from?: string
     };
 
     console.log("LoginPage - Location state:", state);
@@ -33,11 +38,28 @@ const LoginPage = () => {
     if (state?.message) {
       setErrorMessage(state.message);
     }
+    
+    // Save the 'from' path for post-login redirect
+    if (state?.from) {
+      localStorage.setItem('auth_redirect', state.from);
+    }
   }, [location]);
+  
+  // Handle session recovery if needed
+  const handleSessionRecovery = async () => {
+    setIsRecovering(true);
+    const { recoverAuthState } = useAuth();
+    const recovered = await recoverAuthState();
+    setIsRecovering(false);
+    
+    if (recovered) {
+      setErrorMessage(null);
+    }
+  };
   
   // Redirect if already logged in
   useEffect(() => {
-    if (!isLoading && user) {
+    if (authStable && isAuthenticated && user) {
       console.log("LoginPage - User already authenticated, redirecting");
       
       // Check if there's a saved redirect
@@ -45,7 +67,7 @@ const LoginPage = () => {
       
       if (savedRedirect) {
         console.log("LoginPage - Found saved redirect path:", savedRedirect);
-        navigate(savedRedirect);
+        navigate(savedRedirect, { replace: true });
         localStorage.removeItem('auth_redirect');
       } else {
         // Default redirect based on user type
@@ -53,15 +75,15 @@ const LoginPage = () => {
         console.log("LoginPage - No saved redirect, using user type for redirect:", userType);
         
         if (userType === 'establishment') {
-          navigate('/establishment/dashboard');
+          navigate('/establishment/dashboard', { replace: true });
         } else if (userType === 'promoter') {
-          navigate('/promoter/dashboard');
+          navigate('/promoter/dashboard', { replace: true });
         } else {
-          navigate('/explore');
+          navigate('/explore', { replace: true });
         }
       }
     }
-  }, [user, isLoading, navigate]);
+  }, [user, isLoading, navigate, isAuthenticated, authStable]);
   
   // Always force light theme for login page
   useEffect(() => {
@@ -70,10 +92,10 @@ const LoginPage = () => {
     }
   }, [theme, setTheme]);
   
-  // Clear error message after 5 seconds
+  // Clear error message after 10 seconds
   useEffect(() => {
     if (errorMessage) {
-      const timer = setTimeout(() => setErrorMessage(null), 5000);
+      const timer = setTimeout(() => setErrorMessage(null), 10000);
       return () => clearTimeout(timer);
     }
   }, [errorMessage]);
@@ -98,38 +120,61 @@ const LoginPage = () => {
               </p>
               
               {errorMessage && (
-                <div className="mt-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md">
-                  {errorMessage}
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="ml-2 text-red-500" 
-                    onClick={() => setErrorMessage(null)}
-                  >
-                    Dismiss
-                  </Button>
-                </div>
+                <Alert variant="destructive" className="mt-4">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Authentication Issue</AlertTitle>
+                  <AlertDescription>
+                    {errorMessage}
+                    <div className="mt-2 flex justify-end space-x-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => setErrorMessage(null)}
+                      >
+                        Dismiss
+                      </Button>
+                      <Button 
+                        variant="destructive" 
+                        size="sm"
+                        onClick={handleSessionRecovery}
+                        disabled={isRecovering}
+                      >
+                        {isRecovering ? 'Recovering...' : 'Recover Session'}
+                      </Button>
+                    </div>
+                  </AlertDescription>
+                </Alert>
               )}
             </div>
             
-            <UserAuth 
-              defaultTab="login" 
-              userType={requiredUserType}
-            />
-            
-            <div className="text-center mt-6">
-              <p className="text-gray-600">
-                Don't have an account?{' '}
-                <Link to="/signup" className="text-material-primary hover:underline">
-                  Sign Up
-                </Link>
-              </p>
-            </div>
-            
-            {/* Display test credentials */}
-            <div className="mt-8">
-              <TestCredentials />
-            </div>
+            {/* Show loading indicator while recovering */}
+            {isRecovering ? (
+              <div className="text-center p-8">
+                <div className="w-12 h-12 border-4 border-spiritless-pink border-t-transparent rounded-full animate-spin mx-auto"></div>
+                <p className="mt-4 text-gray-600">Recovering your session...</p>
+              </div>
+            ) : (
+              <>
+                <UserAuth 
+                  defaultTab="login" 
+                  userType={requiredUserType}
+                />
+                
+                <div className="text-center mt-6">
+                  <p className="text-gray-600">
+                    Don't have an account?{' '}
+                    <Link to="/signup" className="text-material-primary hover:underline">
+                      Sign Up
+                    </Link>
+                  </p>
+                </div>
+                
+                {/* Display test credentials */}
+                <div className="mt-8">
+                  <TestCredentials />
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
