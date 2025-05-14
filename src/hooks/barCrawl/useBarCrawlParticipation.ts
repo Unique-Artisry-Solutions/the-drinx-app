@@ -5,10 +5,18 @@ import { useBarCrawlStatus } from './useBarCrawlStatus';
 import { useBarCrawlJoin } from './useBarCrawlJoin';
 import { useBarCrawlLeave } from './useBarCrawlLeave';
 import { UseBarCrawlParticipationProps } from './types';
+import { BarCrawlRepositoryFactory } from '@/repositories/RepositoryFactory';
+
+/**
+ * Initialize the repository type when the app starts
+ */
+// Auto-detect the best repository type
+BarCrawlRepositoryFactory.autoDetectRepositoryType();
 
 /**
  * Hook for managing user participation in a bar crawl (Swig Circuit).
  * Combines status checking, joining, and leaving functionality.
+ * Uses repository pattern for database abstraction.
  * 
  * @param props - The hook properties
  * @returns Object containing participation state and functions

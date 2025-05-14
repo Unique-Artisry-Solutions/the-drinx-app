@@ -1,36 +1,15 @@
 
-import { vi, describe, it, expect, beforeEach } from 'vitest';
+import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { render } from '@testing-library/react';
 import { waitFor } from '@/test/testing-library-extensions';
 import { useBarCrawlParticipation } from '@/hooks/barCrawl/useBarCrawlParticipation';
-import { supabase } from '@/lib/supabase';
+import { setupMockBarCrawlRepositories, cleanupMockBarCrawlRepositories } from '@/test/utils/barCrawlRepositoryTestUtils';
 
-// Mock the supabase client
-vi.mock('@/lib/supabase', () => ({
-  supabase: {
-    from: vi.fn().mockReturnValue({
-      insert: vi.fn().mockResolvedValue({
-        data: [{ id: 'test-participation-id' }],
-        error: null
-      }),
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            maybeSingle: vi.fn().mockResolvedValue({
-              data: null,
-              error: null
-            })
-          })
-        })
-      })
-    }),
-    auth: {
-      getUser: vi.fn().mockResolvedValue({
-        data: { user: { id: 'test-user-id' } },
-        error: null
-      })
-    }
-  }
+// Mock the auth context
+vi.mock('@/contexts/auth', () => ({
+  useAuth: () => ({
+    user: { id: 'test-user-id' }
+  })
 }));
 
 // Mock the toast hook
@@ -40,10 +19,30 @@ vi.mock('@/hooks/use-toast', () => ({
   })
 }));
 
-describe('useBarCrawlParticipation - join functionality', () => {
+describe('useBarCrawlParticipation - Join Functionality', () => {
   const mockBarCrawlId = 'test-crawl-id';
   let hookResult: ReturnType<typeof useBarCrawlParticipation>;
+  let mockRepo: ReturnType<typeof setupMockBarCrawlRepositories>['mockBarCrawlParticipationRepo'];
   
+  beforeEach(() => {
+    const mocks = setupMockBarCrawlRepositories();
+    mockRepo = mocks.mockBarCrawlParticipationRepo;
+    
+    // Setup default mock behavior
+    mockRepo.isUserParticipating = vi.fn().mockResolvedValue(false);
+    mockRepo.joinBarCrawl = vi.fn().mockResolvedValue({
+      id: 'test-participation-id',
+      user_id: 'test-user-id',
+      bar_crawl_id: mockBarCrawlId,
+      joined_at: new Date().toISOString()
+    });
+  });
+  
+  afterEach(() => {
+    cleanupMockBarCrawlRepositories();
+    vi.clearAllMocks();
+  });
+
   const renderHook = () => {
     let result: any;
     
@@ -56,22 +55,46 @@ describe('useBarCrawlParticipation - join functionality', () => {
     return result;
   };
   
-  beforeEach(() => {
-    vi.clearAllMocks();
-    hookResult = renderHook();
-  });
-  
   it('should join a bar crawl successfully', async () => {
-    // Call the join function
+    // Render the hook
+    hookResult = renderHook();
+    
+    // Wait for status check to complete
+    await waitFor(() => expect(hookResult.isCheckingStatus).toBe(false));
+    
+    // Call join
     hookResult.handleJoin();
     
     // Verify loading state is set
     expect(hookResult.isLoading).toBe(true);
     
-    // Wait for the operation to complete
+    // Wait for operation to complete
     await waitFor(() => expect(hookResult.isLoading).toBe(false));
     
-    // Verify Supabase was called correctly
-    expect(supabase.from).toHaveBeenCalledWith('user_bar_crawl_participation');
+    // Verify join was called correctly
+    expect(mockRepo.joinBarCrawl).toHaveBeenCalledWith('test-user-id', mockBarCrawlId);
+  });
+  
+  it('should handle errors when joining fails', async () => {
+    // Setup the mock to throw an error
+    mockRepo.joinBarCrawl = vi.fn().mockRejectedValue(new Error('Failed to join bar crawl'));
+    
+    // Render the hook
+    hookResult = renderHook();
+    
+    // Wait for status check to complete
+    await waitFor(() => expect(hookResult.isCheckingStatus).toBe(false));
+    
+    // Call join
+    hookResult.handleJoin();
+    
+    // Verify loading state is set
+    expect(hookResult.isLoading).toBe(true);
+    
+    // Wait for operation to complete
+    await waitFor(() => expect(hookResult.isLoading).toBe(false));
+    
+    // Verify error state is set
+    expect(hookResult.error).toBeTruthy();
   });
 });

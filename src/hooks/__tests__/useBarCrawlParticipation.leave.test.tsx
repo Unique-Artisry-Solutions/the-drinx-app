@@ -1,88 +1,95 @@
 
-import { vi, describe, it, expect, beforeEach } from 'vitest';
+import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { render } from '@testing-library/react';
 import { waitFor } from '@/test/testing-library-extensions';
 import { useBarCrawlParticipation } from '@/hooks/barCrawl/useBarCrawlParticipation';
-import { supabase } from '@/lib/supabase';
+import { setupMockBarCrawlRepositories, cleanupMockBarCrawlRepositories } from '@/test/utils/barCrawlRepositoryTestUtils';
 
-// Mock the supabase client
-vi.mock('@/lib/supabase', () => ({
-  supabase: {
-    from: vi.fn().mockReturnValue({
-      delete: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          eq: vi.fn().mockResolvedValue({ data: null, error: null }),
-        }),
-      }),
-    }),
-    auth: {
-      getUser: vi.fn().mockResolvedValue({
-        data: { user: { id: 'test-user-id' } },
-        error: null,
-      }),
-    },
-  },
+// Mock the auth context
+vi.mock('@/contexts/auth', () => ({
+  useAuth: () => ({
+    user: { id: 'test-user-id' }
+  })
 }));
 
-describe('useBarCrawlParticipation - leave functionality', () => {
+// Mock the toast hook
+vi.mock('@/hooks/use-toast', () => ({
+  useToast: () => ({
+    toast: vi.fn()
+  })
+}));
+
+describe('useBarCrawlParticipation - Leave Functionality', () => {
   const mockBarCrawlId = 'test-crawl-id';
   let hookResult: ReturnType<typeof useBarCrawlParticipation>;
+  let mockRepo: ReturnType<typeof setupMockBarCrawlRepositories>['mockBarCrawlParticipationRepo'];
   
   beforeEach(() => {
-    // Reset mocks
-    vi.clearAllMocks();
+    const mocks = setupMockBarCrawlRepositories();
+    mockRepo = mocks.mockBarCrawlParticipationRepo;
     
-    // Setup the hook
+    // Setup default mock behavior
+    mockRepo.isUserParticipating = vi.fn().mockResolvedValue(true);
+    mockRepo.leaveBarCrawl = vi.fn().mockResolvedValue(true);
+  });
+  
+  afterEach(() => {
+    cleanupMockBarCrawlRepositories();
+    vi.clearAllMocks();
+  });
+
+  const renderHook = () => {
+    let result: any;
+    
     function TestComponent() {
-      hookResult = useBarCrawlParticipation({ barCrawlId: mockBarCrawlId });
+      result = useBarCrawlParticipation({ barCrawlId: mockBarCrawlId });
       return null;
     }
+    
     render(<TestComponent />);
-  });
+    return result;
+  };
   
-  it('should successfully leave a bar crawl', async () => {
-    // Call leave function with the required barCrawlId parameter
+  it('should leave a bar crawl successfully', async () => {
+    // Render the hook
+    hookResult = renderHook();
+    
+    // Wait for status check to complete
+    await waitFor(() => expect(hookResult.isCheckingStatus).toBe(false));
+    
+    // Call leave with the required barCrawlId parameter
     hookResult.handleLeave(mockBarCrawlId);
+    
+    // Verify loading state is set
+    expect(hookResult.isLoading).toBe(true);
     
     // Wait for operation to complete
     await waitFor(() => expect(hookResult.isLoading).toBe(false));
     
-    // Verify supabase was called correctly
-    expect(supabase.from).toHaveBeenCalledWith('user_bar_crawl_participation');
-    expect(supabase.from().delete).toHaveBeenCalled();
+    // Verify leave was called correctly
+    expect(mockRepo.leaveBarCrawl).toHaveBeenCalledWith('test-user-id', mockBarCrawlId);
   });
   
-  it('should handle errors when leaving a bar crawl', async () => {
-    // Mock an error response
-    vi.mocked(supabase.from().delete().eq().eq).mockResolvedValueOnce({
-      data: null,
-      error: { message: 'Failed to leave bar crawl' }
-    } as any);
+  it('should handle errors when leaving fails', async () => {
+    // Setup the mock to throw an error
+    mockRepo.leaveBarCrawl = vi.fn().mockRejectedValue(new Error('Failed to leave bar crawl'));
     
-    // Call leave function with the required parameter
+    // Render the hook
+    hookResult = renderHook();
+    
+    // Wait for status check to complete
+    await waitFor(() => expect(hookResult.isCheckingStatus).toBe(false));
+    
+    // Call leave
     hookResult.handleLeave(mockBarCrawlId);
+    
+    // Verify loading state is set
+    expect(hookResult.isLoading).toBe(true);
     
     // Wait for operation to complete
     await waitFor(() => expect(hookResult.isLoading).toBe(false));
     
-    // Verify error is handled
-    expect(hookResult.error).toBeTruthy();
-  });
-  
-  it('should handle authentication errors', async () => {
-    // Mock auth error
-    vi.mocked(supabase.auth.getUser).mockResolvedValueOnce({
-      data: { user: null },
-      error: { message: 'Not authenticated' }
-    } as any);
-    
-    // Call leave function with the required parameter
-    hookResult.handleLeave(mockBarCrawlId);
-    
-    // Wait for operation to complete
-    await waitFor(() => expect(hookResult.isLoading).toBe(false));
-    
-    // Verify error is handled
+    // Verify error state is set
     expect(hookResult.error).toBeTruthy();
   });
 });

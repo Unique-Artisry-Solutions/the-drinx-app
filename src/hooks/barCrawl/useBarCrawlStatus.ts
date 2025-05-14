@@ -1,8 +1,7 @@
 
 import { useState, useEffect } from 'react';
-import { supabaseClient } from '@/lib/supabaseClient';
-import { isValidUUID, isSampleBarCrawlId } from '@/utils/barCrawlUtils';
 import { User } from '@supabase/supabase-js';
+import { BarCrawlRepositoryFactory } from '@/repositories/RepositoryFactory';
 
 interface UseBarCrawlStatusProps {
   barCrawlId: string;
@@ -11,6 +10,7 @@ interface UseBarCrawlStatusProps {
 
 /**
  * Hook to check if a user is participating in a bar crawl.
+ * Uses the repository pattern for data access.
  */
 export const useBarCrawlStatus = ({ barCrawlId, user }: UseBarCrawlStatusProps) => {
   const [isCheckingStatus, setIsCheckingStatus] = useState(true);
@@ -28,47 +28,12 @@ export const useBarCrawlStatus = ({ barCrawlId, user }: UseBarCrawlStatusProps) 
       setError(null);
       
       try {
-        // Check if sample data is being used
-        if (isSampleBarCrawlId(barCrawlId)) {
-          // For sample data, check localStorage
-          const existingParticipations = JSON.parse(localStorage.getItem('user_bar_crawl_participations') || '[]');
-          const isAlreadyJoined = existingParticipations.some(
-            (p: any) => p.bar_crawl_id === barCrawlId && p.user_id === (user.id || 'sample-user')
-          );
-          setIsJoined(isAlreadyJoined);
-        } else if (!isValidUUID(barCrawlId)) {
-          // Check if ID is a numeric ID (used in some routes)
-          const isAdminBypass = localStorage.getItem('admin_bypass') === 'true';
-          
-          if (isAdminBypass) {
-            // For bypass accounts, check localStorage even with numeric IDs
-            const existingParticipations = JSON.parse(localStorage.getItem('user_bar_crawl_participations') || '[]');
-            const isAlreadyJoined = existingParticipations.some(
-              (p: any) => p.bar_crawl_id === barCrawlId && p.user_id === (user.id || 'sample-user')
-            );
-            setIsJoined(isAlreadyJoined);
-          } else {
-            // For regular users with invalid UUIDs, set error but don't throw to prevent UI disruption
-            console.error('Invalid bar crawl ID format:', barCrawlId);
-            setError('Invalid bar crawl ID format');
-          }
-        } else {
-          // For real data, check Supabase
-          const { data, error } = await supabaseClient
-            .from('user_bar_crawl_participation')
-            .select('id')
-            .eq('bar_crawl_id', barCrawlId)
-            .eq('user_id', user.id)
-            .maybeSingle();
-          
-          if (error) {
-            console.error('Error checking participation:', error);
-            setError(`Failed to check participation: ${error.message}`);
-            return;
-          }
-          
-          setIsJoined(!!data);
-        }
+        // Get the repository
+        const repository = BarCrawlRepositoryFactory.getBarCrawlParticipationRepository();
+        
+        // Check if the user is participating
+        const participating = await repository.isUserParticipating(user.id, barCrawlId);
+        setIsJoined(participating);
       } catch (err: any) {
         console.error('Failed to check participation:', err);
         setError(`Failed to check participation: ${err.message}`);
