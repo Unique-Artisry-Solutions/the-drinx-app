@@ -1,12 +1,8 @@
 
+import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { FeatureItem } from '../types';
-import { mapFeaturesToReleaseFeatures } from '../utils';
-import { getDateMonthsFromNow } from '../utils';
 
-/**
- * Hook to handle feature-to-release conversion
- */
 export const useReleaseFeatures = (
   adminFeatures: FeatureItem[],
   establishmentFeatures: FeatureItem[],
@@ -14,39 +10,37 @@ export const useReleaseFeatures = (
   promoterFeatures: FeatureItem[],
   setActiveTab: (tab: string) => void
 ) => {
+  const [isCreatingRelease, setIsCreatingRelease] = useState(false);
   const { toast } = useToast();
-
-  const handleCreateReleaseFromFeatures = () => {
-    // Create a simulated release from ready features
-    const releaseDate = getDateMonthsFromNow(1);
-    
-    // Get all ready features (implemented >= 80%)
-    const readyFeatures = [
-      ...adminFeatures,
-      ...establishmentFeatures,
-      ...individualFeatures,
-      ...promoterFeatures
-    ].filter(
-      feature => (feature.implementationProgress || 0) >= 80 && 
-      (feature.status === 'in_progress' || feature.status === 'implemented')
-    );
-    
-    // Map features to release features format
-    const releaseFeatures = mapFeaturesToReleaseFeatures(readyFeatures, releaseDate);
-    
-    // In a real implementation, this would save to Supabase
-    console.log('Creating release with features:', releaseFeatures);
-    
-    toast({
-      title: "Release Created",
-      description: `Created a new release with ${readyFeatures.length} features`,
-    });
-    
-    // Navigate to releases tab
-    setActiveTab('releases');
+  
+  const handleCreateReleaseFromFeatures = async () => {
+    try {
+      setIsCreatingRelease(true);
+      
+      // Simulate API call with a timeout
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Navigate to the releases tab
+      setActiveTab('releases');
+      
+      toast({
+        title: "Release Created",
+        description: "New release has been created from current feature set.",
+      });
+    } catch (error) {
+      console.error('Failed to create release:', error);
+      toast({
+        title: "Failed to create release",
+        description: "An error occurred while creating the release.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsCreatingRelease(false);
+    }
   };
-
+  
   return {
+    isCreatingRelease,
     handleCreateReleaseFromFeatures
   };
 };

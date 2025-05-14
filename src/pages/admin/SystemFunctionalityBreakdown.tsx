@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { useSystemBreakdown } from '@/components/admin/systemBreakdown/hooks/useSystemBreakdown';
 import { useSearchParams } from 'react-router-dom';
@@ -26,7 +26,11 @@ import { proposedImprovements as improvementsData } from '@/components/admin/sys
 const SystemFunctionalityBreakdown: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const initialTab = searchParams.get('tab') || 'overview';
+  const activeTab = searchParams.get('tab') || 'overview';
+  
+  useEffect(() => {
+    console.log('Current active tab from URL:', activeTab);
+  }, [activeTab]);
   
   const {
     adminFeatures,
@@ -46,10 +50,8 @@ const SystemFunctionalityBreakdown: React.FC = () => {
     dataValidation
   } = useSystemBreakdown();
   
-  const [activeTab, setActiveTab] = React.useState(initialTab);
-
   const handleTabChange = (value: string) => {
-    setActiveTab(value);
+    console.log('Tab changed to:', value);
     setSearchParams({ tab: value });
   };
   

@@ -7,9 +7,11 @@ import { useAnalysisProcess } from './useAnalysisProcess';
 import { useReleaseFeatures } from './useReleaseFeatures';
 import { useExportFunctions } from './useExportFunctions';
 import { useToast } from '@/hooks/use-toast';
+import { useSearchParams } from 'react-router-dom';
 
 export const useSystemBreakdown = () => {
-  const [activeTab, setActiveTab] = useState<string>('overview');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') || 'overview';
   const { toast } = useToast();
   
   // Use our new modular hooks
@@ -56,7 +58,7 @@ export const useSystemBreakdown = () => {
     establishmentFeatures, 
     individualFeatures,
     promoterFeatures,
-    setActiveTab
+    (tab: string) => setSearchParams({ tab })
   );
 
   const { handleExportCSV } = useExportFunctions();
@@ -80,7 +82,7 @@ export const useSystemBreakdown = () => {
 
   return {
     activeTab,
-    setActiveTab,
+    setActiveTab: (tab: string) => setSearchParams({ tab }),
     adminFeatures,
     establishmentFeatures,
     individualFeatures,

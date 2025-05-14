@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 
 interface SystemBreakdownNavigationProps {
@@ -14,64 +14,18 @@ const SystemBreakdownNavigation: React.FC<SystemBreakdownNavigationProps> = ({
 }) => {
   return (
     <div className="sticky top-4 z-10 bg-card rounded-lg p-1 shadow-sm mb-6 overflow-x-auto">
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="w-full justify-start gap-1 bg-transparent p-1">
+      <TabsList className="w-full justify-start gap-1 bg-transparent p-1">
+        {['overview', 'admin', 'establishment', 'individual', 'promoter', 'promoter-requirements', 'improvements', 'releases', 'showcase'].map((tab) => (
           <TabsTrigger 
-            value="overview" 
-            className={cn("flex-shrink-0", activeTab === 'overview' ? "bg-primary text-primary-foreground" : "")}
+            key={tab}
+            value={tab} 
+            onClick={() => setActiveTab(tab)}
+            className={cn("flex-shrink-0", activeTab === tab ? "bg-primary text-primary-foreground" : "")}
           >
-            Overview
+            {tab.charAt(0).toUpperCase() + tab.slice(1).replace('-', ' ')}
           </TabsTrigger>
-          <TabsTrigger 
-            value="admin" 
-            className={cn("flex-shrink-0", activeTab === 'admin' ? "bg-primary text-primary-foreground" : "")}
-          >
-            Admin
-          </TabsTrigger>
-          <TabsTrigger 
-            value="establishment" 
-            className={cn("flex-shrink-0", activeTab === 'establishment' ? "bg-primary text-primary-foreground" : "")}
-          >
-            Establishments
-          </TabsTrigger>
-          <TabsTrigger 
-            value="individual" 
-            className={cn("flex-shrink-0", activeTab === 'individual' ? "bg-primary text-primary-foreground" : "")}
-          >
-            Users
-          </TabsTrigger>
-          <TabsTrigger 
-            value="promoter" 
-            className={cn("flex-shrink-0", activeTab === 'promoter' ? "bg-primary text-primary-foreground" : "")}
-          >
-            Promoters
-          </TabsTrigger>
-          <TabsTrigger 
-            value="promoter-requirements" 
-            className={cn("flex-shrink-0", activeTab === 'promoter-requirements' ? "bg-primary text-primary-foreground" : "")}
-          >
-            Requirements
-          </TabsTrigger>
-          <TabsTrigger 
-            value="improvements" 
-            className={cn("flex-shrink-0", activeTab === 'improvements' ? "bg-primary text-primary-foreground" : "")}
-          >
-            Improvements
-          </TabsTrigger>
-          <TabsTrigger 
-            value="releases" 
-            className={cn("flex-shrink-0", activeTab === 'releases' ? "bg-primary text-primary-foreground" : "")}
-          >
-            Releases
-          </TabsTrigger>
-          <TabsTrigger 
-            value="showcase" 
-            className={cn("flex-shrink-0", activeTab === 'showcase' ? "bg-primary text-primary-foreground" : "")}
-          >
-            Showcase
-          </TabsTrigger>
-        </TabsList>
-      </Tabs>
+        ))}
+      </TabsList>
     </div>
   );
 };
