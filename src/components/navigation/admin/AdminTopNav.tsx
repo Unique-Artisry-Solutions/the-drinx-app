@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Bell, ChevronDown, ChevronRight } from 'lucide-react';
+import { Menu, X, Bell, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth';
@@ -81,26 +81,10 @@ const AdminTopNav: React.FC = () => {
       (path !== '/admin/dashboard' && location.pathname.startsWith(path));
   };
 
-  // Find the active item from flat list
-  const activeNavItem = flatAdminNavItems.find(item => 
-    isActive(item.path) && item.showInNav && !item.children
+  // Find the active category
+  const activeCategory = adminNavItems.find(category => 
+    category.children?.some(child => isActive(child.path)) || isActive(category.path)
   );
-
-  // Find the active category (parent item)
-  const activeCategory = adminNavItems.find(category =>
-    category.children?.some(child => isActive(child.path))
-  );
-
-  // Display name would be the active item's label, or if it's a child, show "Category > Child"
-  const displayName = activeNavItem ? 
-    (activeCategory && activeNavItem.path !== activeCategory.path ? 
-      `${activeCategory.label} > ${activeNavItem.label}` : 
-      activeNavItem.label) : 
-    'Dashboard';
-
-  const displayIcon = activeNavItem ? 
-    activeNavItem.icon : 
-    (activeCategory ? activeCategory.icon : adminNavItems[0].icon);
 
   return (
     <AnalyticsService pageView="admin_navigation">
@@ -112,64 +96,45 @@ const AdminTopNav: React.FC = () => {
                 Spirit<span className="text-white">less</span>
               </Link>
               
-              <div className="admin-nav-links hidden md:flex">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button 
-                      variant="outline" 
-                      className="border-white text-white hover:bg-white/20 flex items-center gap-2 min-w-44"
-                    >
-                      <displayIcon className="h-4 w-4" />
-                      <span className="text-sm font-medium truncate">{displayName}</span>
-                      <ChevronDown className="h-4 w-4 ml-auto" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="bg-white text-gray-800 w-64">
-                    {adminNavItems.map((category) => (
-                      <React.Fragment key={category.path}>
-                        {category.children ? (
-                          <DropdownMenuGroup>
-                            <DropdownMenuLabel className="font-medium text-sm">
-                              <div className="flex items-center">
-                                <category.icon className="mr-2 h-4 w-4 text-gray-600" />
-                                <span>{category.label}</span>
-                              </div>
-                            </DropdownMenuLabel>
-                            {category.children.map((item) => (
-                              <DropdownMenuItem key={item.path} asChild>
-                                <Link
-                                  to={item.path}
-                                  className={`flex items-center px-3 py-2 rounded-md w-full ml-4 ${
-                                    isActive(item.path) ? 'bg-gray-100' : 'hover:bg-gray-50'
-                                  }`}
-                                >
-                                  <item.icon className="mr-2 h-4 w-4" />
-                                  <span className="text-sm font-medium">{item.label}</span>
-                                </Link>
-                              </DropdownMenuItem>
-                            ))}
-                          </DropdownMenuGroup>
-                        ) : (
-                          <DropdownMenuItem key={category.path} asChild>
-                            <Link
-                              to={category.path}
-                              className={`flex items-center px-3 py-2 rounded-md w-full ${
-                                isActive(category.path) ? 'bg-gray-100' : 'hover:bg-gray-50'
-                              }`}
-                            >
-                              <category.icon className="mr-2 h-4 w-4" />
-                              <span className="text-sm font-medium">{category.label}</span>
-                            </Link>
-                          </DropdownMenuItem>
-                        )}
-                        {/* Add separator after each category except the last one */}
-                        {adminNavItems.indexOf(category) < adminNavItems.length - 1 && (
-                          <DropdownMenuSeparator />
-                        )}
-                      </React.Fragment>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+              <div className="admin-nav-links hidden md:flex items-center space-x-2">
+                {adminNavItems.map((category) => (
+                  <DropdownMenu key={category.path}>
+                    <DropdownMenuTrigger asChild>
+                      <Button 
+                        variant="outline" 
+                        className={`border-white text-white hover:bg-white/20 flex items-center gap-2 ${
+                          category === activeCategory ? 'bg-black/30' : 'bg-black/20'
+                        }`}
+                      >
+                        {React.createElement(category.icon, { className: "h-4 w-4" })}
+                        <span className="text-sm font-medium">{category.label}</span>
+                        <ChevronDown className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="bg-white text-gray-800 w-60">
+                      <DropdownMenuLabel className="font-medium text-sm border-b">
+                        <div className="flex items-center pb-1">
+                          {React.createElement(category.icon, { className: "mr-2 h-4 w-4 text-gray-600" })}
+                          <span>{category.label}</span>
+                        </div>
+                      </DropdownMenuLabel>
+
+                      {category.children?.map((item) => (
+                        <DropdownMenuItem key={item.path} asChild>
+                          <Link
+                            to={item.path}
+                            className={`flex items-center px-3 py-2 rounded-md w-full ${
+                              isActive(item.path) ? 'bg-gray-100' : 'hover:bg-gray-50'
+                            }`}
+                          >
+                            {React.createElement(item.icon, { className: "mr-2 h-4 w-4" })}
+                            <span className="text-sm font-medium">{item.label}</span>
+                          </Link>
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ))}
               </div>
             </div>
             
@@ -216,4 +181,3 @@ const AdminTopNav: React.FC = () => {
 };
 
 export default AdminTopNav;
-
