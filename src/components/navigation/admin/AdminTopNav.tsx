@@ -1,11 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Bell, ChevronDown } from 'lucide-react';
+import { Menu, X, Bell, ChevronDown, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth';
-import { adminNavItems } from './AdminNavItems';
+import { adminNavItems, flatAdminNavItems } from './AdminNavItems';
 import AdminProfileDropdown from './AdminProfileDropdown';
 import AdminMobileMenu from './AdminMobileMenu';
 import AnalyticsService from '@/components/admin/analytics/AnalyticsService';
@@ -13,7 +13,10 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuGroup,
+  DropdownMenuLabel
 } from '@/components/ui/dropdown-menu';
 
 const AdminTopNav: React.FC = () => {
@@ -73,14 +76,31 @@ const AdminTopNav: React.FC = () => {
   };
 
   const isActive = (path: string) => {
+    // Return true if the exact path matches or if it's a parent path of the current location
     return location.pathname === path || 
-      (path === '/admin/dashboard' && location.pathname.startsWith('/admin'));
+      (path !== '/admin/dashboard' && location.pathname.startsWith(path));
   };
 
-  // Find the active nav item
-  const activeNavItem = adminNavItems.find(item => 
-    isActive(item.path) || location.pathname.startsWith(item.path)
-  ) || adminNavItems[0];
+  // Find the active item from flat list
+  const activeNavItem = flatAdminNavItems.find(item => 
+    isActive(item.path) && item.showInNav && !item.children
+  );
+
+  // Find the active category (parent item)
+  const activeCategory = adminNavItems.find(category =>
+    category.children?.some(child => isActive(child.path))
+  );
+
+  // Display name would be the active item's label, or if it's a child, show "Category > Child"
+  const displayName = activeNavItem ? 
+    (activeCategory && activeNavItem.path !== activeCategory.path ? 
+      `${activeCategory.label} > ${activeNavItem.label}` : 
+      activeNavItem.label) : 
+    'Dashboard';
+
+  const displayIcon = activeNavItem ? 
+    activeNavItem.icon : 
+    (activeCategory ? activeCategory.icon : adminNavItems[0].icon);
 
   return (
     <AnalyticsService pageView="admin_navigation">
@@ -97,30 +117,56 @@ const AdminTopNav: React.FC = () => {
                   <DropdownMenuTrigger asChild>
                     <Button 
                       variant="outline" 
-                      className="border-white text-white hover:bg-white/20 flex items-center gap-2"
+                      className="border-white text-white hover:bg-white/20 flex items-center gap-2 min-w-44"
                     >
-                      {activeNavItem && (
-                        <>
-                          <activeNavItem.icon className="h-4 w-4" />
-                          <span className="text-sm font-medium">{activeNavItem.label}</span>
-                        </>
-                      )}
-                      <ChevronDown className="h-4 w-4" />
+                      <displayIcon className="h-4 w-4" />
+                      <span className="text-sm font-medium truncate">{displayName}</span>
+                      <ChevronDown className="h-4 w-4 ml-auto" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="bg-white text-gray-800 w-56">
-                    {adminNavItems.filter(item => item.showInNav !== false).map((item) => (
-                      <DropdownMenuItem key={item.path} asChild>
-                        <Link
-                          to={item.path}
-                          className={`flex items-center px-3 py-2 rounded-md w-full ${
-                            isActive(item.path) ? 'bg-gray-100' : 'hover:bg-gray-50'
-                          }`}
-                        >
-                          <item.icon className="mr-2 h-4 w-4" />
-                          <span className="text-sm font-medium">{item.label}</span>
-                        </Link>
-                      </DropdownMenuItem>
+                  <DropdownMenuContent className="bg-white text-gray-800 w-64">
+                    {adminNavItems.map((category) => (
+                      <React.Fragment key={category.path}>
+                        {category.children ? (
+                          <DropdownMenuGroup>
+                            <DropdownMenuLabel className="font-medium text-sm">
+                              <div className="flex items-center">
+                                <category.icon className="mr-2 h-4 w-4 text-gray-600" />
+                                <span>{category.label}</span>
+                              </div>
+                            </DropdownMenuLabel>
+                            {category.children.map((item) => (
+                              <DropdownMenuItem key={item.path} asChild>
+                                <Link
+                                  to={item.path}
+                                  className={`flex items-center px-3 py-2 rounded-md w-full ml-4 ${
+                                    isActive(item.path) ? 'bg-gray-100' : 'hover:bg-gray-50'
+                                  }`}
+                                >
+                                  <item.icon className="mr-2 h-4 w-4" />
+                                  <span className="text-sm font-medium">{item.label}</span>
+                                </Link>
+                              </DropdownMenuItem>
+                            ))}
+                          </DropdownMenuGroup>
+                        ) : (
+                          <DropdownMenuItem key={category.path} asChild>
+                            <Link
+                              to={category.path}
+                              className={`flex items-center px-3 py-2 rounded-md w-full ${
+                                isActive(category.path) ? 'bg-gray-100' : 'hover:bg-gray-50'
+                              }`}
+                            >
+                              <category.icon className="mr-2 h-4 w-4" />
+                              <span className="text-sm font-medium">{category.label}</span>
+                            </Link>
+                          </DropdownMenuItem>
+                        )}
+                        {/* Add separator after each category except the last one */}
+                        {adminNavItems.indexOf(category) < adminNavItems.length - 1 && (
+                          <DropdownMenuSeparator />
+                        )}
+                      </React.Fragment>
                     ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -170,3 +216,4 @@ const AdminTopNav: React.FC = () => {
 };
 
 export default AdminTopNav;
+
