@@ -12,4 +12,5 @@ export interface BreadcrumbItem {
  */
 export interface BreadcrumbsProps {
   items: BreadcrumbItem[];
+  className?: string;
 }
