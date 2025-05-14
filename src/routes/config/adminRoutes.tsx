@@ -8,6 +8,7 @@ import SystemFunctionalityBreakdown from '@/pages/admin/SystemFunctionalityBreak
 import ComponentCatalogPage from '@/pages/admin/ComponentCatalogPage';
 import AdminDocumentationPage from '@/pages/admin/AdminDocumentationPage';
 import SystemConfigurationPage from '@/pages/admin/SystemConfigurationPage';
+import AdminLayout from '@/components/admin/layout/AdminLayout';
 
 const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
 const RewardSystemMonitorPage = lazy(() => import('@/pages/admin/RewardSystemMonitorPage'));
@@ -22,25 +23,82 @@ const ContentModerationPage = lazy(() => import('@/pages/admin/ContentModeration
 const ThemeCustomizationPage = lazy(() => import('@/pages/admin/ThemeCustomizationPage'));
 const TestingInterfacePage = lazy(() => import('@/pages/admin/TestingInterfacePage'));
 
+// Import the wrapper for the admin layout
+// The AdminLogin page will not use the layout
 export const adminRoutes: RouteObject[] = [
   { path: '/admin', element: <AdminLogin /> },
   { path: '/admin/login', element: <AdminLogin /> },
-  { path: '/admin/dashboard', element: <AdminDashboard /> },
-  { path: '/admin/users', element: <AdminUsersPage /> },
-  { path: '/admin/users/:id', element: <AdminUserProfile /> },
-  { path: '/admin/establishments', element: <AdminEstablishmentsPage /> },
-  { path: '/admin/establishments/:id', element: <AdminEstablishmentProfile /> },
-  { path: '/admin/system-breakdown', element: <SystemFunctionalityBreakdown /> },
-  { path: '/admin/component-catalog', element: <ComponentCatalogPage /> },
-  { path: '/admin/analytics', element: <SystemAnalyticsPage /> },
-  { path: '/admin/photo-moderation', element: <PhotoModerationPage /> },
-  { path: '/admin/content-moderation', element: <ContentModerationPage /> },
-  { path: '/admin/theme-customization', element: <ThemeCustomizationPage /> },
-  { path: '/admin/documentation', element: <AdminDocumentationPage /> },
-  { path: '/admin/system-configuration', element: <SystemConfigurationPage /> },
-  { path: '/admin/notifications', element: <AdminNotificationsPage /> },
-  { path: '/admin/notification-testing', element: <NotificationTestingPage /> },
-  { path: '/admin/reward-system-monitor', element: <RewardSystemMonitorPage /> },
-  { path: '/admin/rewards', element: <RewardsAdminPage /> },
-  { path: '/admin/testing', element: <TestingInterfacePage /> },
+  // All other admin routes use the AdminLayout
+  { 
+    path: '/admin/dashboard', 
+    element: <AdminLayout><AdminDashboard /></AdminLayout> 
+  },
+  { 
+    path: '/admin/users', 
+    element: <AdminLayout><AdminUsersPage /></AdminLayout> 
+  },
+  { 
+    path: '/admin/users/:id', 
+    element: <AdminLayout><AdminUserProfile /></AdminLayout> 
+  },
+  { 
+    path: '/admin/establishments', 
+    element: <AdminLayout><AdminEstablishmentsPage /></AdminLayout> 
+  },
+  { 
+    path: '/admin/establishments/:id', 
+    element: <AdminLayout><AdminEstablishmentProfile /></AdminLayout> 
+  },
+  { 
+    path: '/admin/system-breakdown', 
+    element: <AdminLayout><SystemFunctionalityBreakdown /></AdminLayout> 
+  },
+  { 
+    path: '/admin/component-catalog', 
+    element: <AdminLayout><ComponentCatalogPage /></AdminLayout> 
+  },
+  { 
+    path: '/admin/analytics', 
+    element: <AdminLayout><SystemAnalyticsPage /></AdminLayout> 
+  },
+  { 
+    path: '/admin/photo-moderation', 
+    element: <AdminLayout><PhotoModerationPage /></AdminLayout> 
+  },
+  { 
+    path: '/admin/content-moderation', 
+    element: <AdminLayout><ContentModerationPage /></AdminLayout> 
+  },
+  { 
+    path: '/admin/theme-customization', 
+    element: <AdminLayout><ThemeCustomizationPage /></AdminLayout> 
+  },
+  { 
+    path: '/admin/documentation', 
+    element: <AdminLayout><AdminDocumentationPage /></AdminLayout> 
+  },
+  { 
+    path: '/admin/system-configuration', 
+    element: <AdminLayout><SystemConfigurationPage /></AdminLayout> 
+  },
+  { 
+    path: '/admin/notifications', 
+    element: <AdminLayout><AdminNotificationsPage /></AdminLayout> 
+  },
+  { 
+    path: '/admin/notification-testing', 
+    element: <AdminLayout><NotificationTestingPage /></AdminLayout> 
+  },
+  { 
+    path: '/admin/reward-system-monitor', 
+    element: <AdminLayout><RewardSystemMonitorPage /></AdminLayout> 
+  },
+  { 
+    path: '/admin/rewards', 
+    element: <AdminLayout><RewardsAdminPage /></AdminLayout> 
+  },
+  { 
+    path: '/admin/testing', 
+    element: <AdminLayout><TestingInterfacePage /></AdminLayout> 
+  },
 ];

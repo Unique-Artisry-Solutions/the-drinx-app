@@ -1,0 +1,31 @@
+
+import React from 'react';
+import { Outlet } from 'react-router-dom';
+import AdminTopNav from '@/components/navigation/admin/AdminTopNav';
+import AdminSidebar from './AdminSidebar';
+
+interface AdminLayoutProps {
+  children?: React.ReactNode;
+}
+
+const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
+  return (
+    <div className="h-screen flex flex-col bg-gray-100">
+      {/* Top Navigation */}
+      <AdminTopNav />
+      
+      {/* Main Content Area with Sidebar */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Sidebar Navigation */}
+        <AdminSidebar />
+        
+        {/* Main Content */}
+        <main className="flex-1 overflow-auto p-6">
+          {children || <Outlet />}
+        </main>
+      </div>
+    </div>
+  );
+};
+
+export default AdminLayout;
