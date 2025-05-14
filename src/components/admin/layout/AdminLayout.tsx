@@ -9,6 +9,11 @@ interface AdminLayoutProps {
 }
 
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
+  // Log to confirm layout is rendering
+  React.useEffect(() => {
+    console.log('AdminLayout rendering with children:', !!children);
+  }, [children]);
+
   return (
     <div className="h-screen flex flex-col bg-gray-100">
       {/* Top Navigation */}
@@ -16,7 +21,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       
       {/* Main Content Area with Sidebar */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar Navigation */}
+        {/* Sidebar Navigation - Make sure it's visible */}
         <AdminSidebar />
         
         {/* Main Content */}

@@ -1,26 +1,26 @@
 
-import { User, Session } from '@supabase/supabase-js';
+/**
+ * Authentication context and provider types
+ */
+import { User } from '@supabase/supabase-js';
 
-export type AuthChangeEvent = 
-  | 'INITIAL_SESSION'
-  | 'SIGNED_IN'
-  | 'SIGNED_OUT'
-  | 'TOKEN_REFRESHED'
-  | 'USER_UPDATED'
-  | 'PASSWORD_RECOVERY';
-
-export interface AuthContextType {
+export interface AuthState {
+  session: any | null;
   user: User | null;
-  session: Session | null;
   isLoading: boolean;
   isEmailVerified: boolean;
-  authStable: boolean;
-  authError: Error | null;
+  isVerificationEmailSent: boolean;
+  isEmailError: boolean;
+  error: Error | null;
+  userRole: 'admin' | 'user' | 'guest' | null;
+}
+
+export interface AuthContextType extends AuthState {
   signIn: (email: string, password: string) => Promise<any>;
-  signUp: (email: string, password: string, metadata?: any) => Promise<any>;
-  signOut: () => Promise<any>;
-  updateProfile: (data: any) => Promise<any>;
-  refreshSession: () => Promise<any>;
-  resetPassword: (email: string) => Promise<any>;
-  recoverAuthState: () => Promise<boolean>;
+  signUp: (email: string, password: string, redirectTo?: string) => Promise<any>;
+  signOut: () => Promise<void>;
+  sendVerificationEmail: (email: string) => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
+  updatePassword: (password: string) => Promise<void>;
+  updateUserProfile: (data: Record<string, any>) => Promise<void>;
 }

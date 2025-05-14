@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { adminNavItems } from '@/components/navigation/admin/AdminNavItems';
@@ -8,6 +8,11 @@ import { cn } from '@/lib/utils';
 const AdminSidebar: React.FC = () => {
   const location = useLocation();
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
+  
+  // Log to confirm sidebar is rendering
+  useEffect(() => {
+    console.log('AdminSidebar rendering at path:', location.pathname);
+  }, [location.pathname]);
   
   const toggleCategory = (categoryPath: string) => {
     setExpandedCategories(prev => 

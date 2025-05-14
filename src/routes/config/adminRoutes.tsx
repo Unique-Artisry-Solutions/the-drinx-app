@@ -23,7 +23,6 @@ const ContentModerationPage = lazy(() => import('@/pages/admin/ContentModeration
 const ThemeCustomizationPage = lazy(() => import('@/pages/admin/ThemeCustomizationPage'));
 const TestingInterfacePage = lazy(() => import('@/pages/admin/TestingInterfacePage'));
 
-// Import the wrapper for the admin layout
 // The AdminLogin page will not use the layout
 export const adminRoutes: RouteObject[] = [
   { path: '/admin', element: <AdminLogin /> },
