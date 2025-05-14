@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { AuthUser, AuthContextType } from './types';
@@ -293,6 +294,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Fixed: Create the value object with all required methods
   const value: AuthContextType = {
     ...state,
     signIn,
@@ -300,9 +302,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signOut,
     refreshSession,
     recoverAuthState,
-    sendVerificationEmail: state.sendVerificationEmail || (async () => {}),
-    updateUserProfile: state.updateUserProfile || (async () => {}),
-    updatePassword: state.updatePassword || (async () => {})
+    sendVerificationEmail,
+    updateUserProfile,
+    updatePassword
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
