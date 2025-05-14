@@ -147,6 +147,12 @@ export interface Promotion {
   created_at: string;
   updated_at: string;
   usage_count?: number;
+  // New fields for advanced discount rules
+  valid_days?: string[] | null;
+  valid_hours?: { start: string; end: string } | null;
+  user_segment?: string | null;
+  combinable: boolean;
+  min_purchase_amount?: number | null;
 }
 
 export interface PromotionRedemption {

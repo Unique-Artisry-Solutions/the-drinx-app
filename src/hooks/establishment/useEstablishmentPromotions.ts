@@ -1,8 +1,8 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Promotion, PromotionAnalytics } from '@/types/SupabaseTables';
+import { UserSegmentType, ValidDays, ValidHours } from '@/types/auth/AuthTypes';
 
 export interface PromotionFormData {
   code: string;
@@ -14,6 +14,12 @@ export interface PromotionFormData {
   min_purchase?: number;
   max_discount?: number;
   usage_limit?: number;
+  // New fields for advanced discount rules
+  valid_days?: ValidDays[];
+  valid_hours?: ValidHours;
+  user_segment?: UserSegmentType;
+  combinable?: boolean;
+  min_purchase_amount?: number;
 }
 
 export const useEstablishmentPromotions = (establishmentId: string) => {
@@ -40,7 +46,8 @@ export const useEstablishmentPromotions = (establishmentId: string) => {
       const processedData = data.map(promo => ({
         ...promo,
         discount_type: promo.discount_type as 'percentage' | 'fixed' | 'free_item',
-        usage_count: promo.promotion_redemptions?.[0]?.count || 0
+        usage_count: promo.promotion_redemptions?.[0]?.count || 0,
+        combinable: promo.combinable !== false // Ensure default true if not set
       })) as Promotion[];
       
       setPromotions(processedData);
@@ -68,7 +75,13 @@ export const useEstablishmentPromotions = (establishmentId: string) => {
         ...formData,
         establishment_id: establishmentId,
         is_active: true,
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
+        // Make sure to include all the new fields
+        valid_days: formData.valid_days || null,
+        valid_hours: formData.valid_hours || null,
+        user_segment: formData.user_segment || null,
+        combinable: formData.combinable !== false,
+        min_purchase_amount: formData.min_purchase_amount || null
       };
       
       const { data, error } = await supabase
@@ -239,6 +252,32 @@ export const useEstablishmentPromotions = (establishmentId: string) => {
     }
   };
 
+  // Validate promotion based on advanced rules
+  const validatePromotion = async (
+    promotionId: string, 
+    userId?: string, 
+    purchaseAmount?: number
+  ): Promise<{ valid: boolean; message?: string; promotion?: Partial<Promotion> }> => {
+    try {
+      const { data, error } = await supabase
+        .rpc('validate_promotion', { 
+          p_promotion_id: promotionId,
+          p_user_id: userId || null,
+          p_purchase_amount: purchaseAmount || null
+        });
+        
+      if (error) throw new Error(error.message);
+      
+      return data;
+    } catch (err) {
+      console.error('Error validating promotion:', err);
+      return { 
+        valid: false, 
+        message: err instanceof Error ? err.message : 'Failed to validate promotion'
+      };
+    }
+  };
+
   // Load promotions on component mount
   useEffect(() => {
     if (establishmentId) {
@@ -277,6 +316,7 @@ export const useEstablishmentPromotions = (establishmentId: string) => {
     deletePromotion,
     togglePromotionStatus,
     getPromotionAnalytics,
+    validatePromotion, // New function to validate promotions against rules
     refreshPromotions: fetchPromotions
   };
 };

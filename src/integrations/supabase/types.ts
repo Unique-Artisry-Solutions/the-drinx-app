@@ -826,6 +826,7 @@ export type Database = {
       establishment_promotions: {
         Row: {
           code: string
+          combinable: boolean
           created_at: string
           description: string
           discount_type: string
@@ -836,12 +837,17 @@ export type Database = {
           is_active: boolean
           max_discount: number | null
           min_purchase: number | null
+          min_purchase_amount: number | null
           start_date: string
           updated_at: string
           usage_limit: number | null
+          user_segment: string | null
+          valid_days: string[] | null
+          valid_hours: Json | null
         }
         Insert: {
           code: string
+          combinable?: boolean
           created_at?: string
           description: string
           discount_type: string
@@ -852,12 +858,17 @@ export type Database = {
           is_active?: boolean
           max_discount?: number | null
           min_purchase?: number | null
+          min_purchase_amount?: number | null
           start_date?: string
           updated_at?: string
           usage_limit?: number | null
+          user_segment?: string | null
+          valid_days?: string[] | null
+          valid_hours?: Json | null
         }
         Update: {
           code?: string
+          combinable?: boolean
           created_at?: string
           description?: string
           discount_type?: string
@@ -868,9 +879,13 @@ export type Database = {
           is_active?: boolean
           max_discount?: number | null
           min_purchase?: number | null
+          min_purchase_amount?: number | null
           start_date?: string
           updated_at?: string
           usage_limit?: number | null
+          user_segment?: string | null
+          valid_days?: string[] | null
+          valid_hours?: Json | null
         }
         Relationships: [
           {
@@ -4364,6 +4379,15 @@ export type Database = {
       update_user_points: {
         Args: { p_user_id: string; p_points: number }
         Returns: undefined
+      }
+      validate_promotion: {
+        Args: {
+          p_promotion_id: string
+          p_user_id: string
+          p_purchase_amount?: number
+          p_current_time?: string
+        }
+        Returns: Json
       }
       verify_event_access_token: {
         Args: { p_event_id: string; p_token: string }
