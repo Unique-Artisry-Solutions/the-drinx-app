@@ -10,6 +10,7 @@ import GuestTopNavigation from '../navigation/GuestTopNavigation';
 import AdminTopNavigation from '../navigation/AdminTopNavigation';
 import AppFooter from '../AppFooter';
 import AdminFooter from '../admin/AdminFooter';
+import { useBreadcrumbs } from '@/hooks/useBreadcrumbs';
 
 interface TabOption {
   value: string;
@@ -76,6 +77,9 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
     checkAuth();
   }, [user, isEmailVerified, location.pathname, forceGuestNavigation]);
 
+  // Get breadcrumb items
+  const { items: breadcrumbItems, shouldShow: shouldShowBreadcrumbs } = useBreadcrumbs();
+
   // Determine page types for specialized navigation
   const isLandingPage = location.pathname === '/' || location.pathname === '/landing' || forceGuestNavigation;
   const isAuthPage = location.pathname === '/login' || location.pathname === '/signup';
@@ -90,32 +94,6 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
     } else {
       return 'pt-16 pb-20';
     }
-  };
-
-  // Refined shouldShowBreadcrumbs logic
-  const shouldShowBreadcrumbs = () => {
-    // List of paths where breadcrumbs should not be shown
-    const excludedPaths = [
-      '/', 
-      '/landing', 
-      '/login', 
-      '/signup', 
-      '/mission', 
-      '/map', 
-      '/explore'
-    ];
-    
-    // Don't show breadcrumbs on excluded paths
-    if (excludedPaths.includes(location.pathname)) {
-      return false;
-    }
-    
-    // Don't show on landing page or admin login page
-    if (isLandingPage || location.pathname === '/admin/login') {
-      return false;
-    }
-    
-    return true;
   };
 
   // Determine if mobile navigation bar should be shown
@@ -167,9 +145,9 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
       {renderNavigation()}
       
       <main className={`flex-1 w-full max-w-full overflow-x-hidden ${getContentPadding()}`}>
-        {shouldShowBreadcrumbs() && (
+        {shouldShowBreadcrumbs && (
           <div className="w-full px-3">
-            <Breadcrumbs />
+            <Breadcrumbs items={breadcrumbItems} />
           </div>
         )}
         {children}

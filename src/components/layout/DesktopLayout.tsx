@@ -9,6 +9,7 @@ import AppFooter from '../AppFooter';
 import AdminFooter from '../admin/AdminFooter';
 import { useAuth } from '@/contexts/auth/AuthProvider';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useBreadcrumbs } from '@/hooks/useBreadcrumbs';
 
 interface TabOption {
   value: string;
@@ -36,6 +37,9 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   const [navigationType, setNavigationType] = React.useState<NavigationType>(NavigationType.GUEST);
   const [userType, setUserType] = React.useState<'individual' | 'establishment' | 'promoter'>('individual');
   const [isAdmin, setIsAdmin] = React.useState(false);
+
+  // Get breadcrumb items
+  const { items: breadcrumbItems, shouldShow: shouldShowBreadcrumbs } = useBreadcrumbs();
 
   useEffect(() => {
     const checkAuth = () => {
@@ -112,32 +116,6 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     }
   };
 
-  // Refined shouldShowBreadcrumbs logic
-  const shouldShowBreadcrumbs = () => {
-    // List of paths where breadcrumbs should not be shown
-    const excludedPaths = [
-      '/', 
-      '/landing', 
-      '/login', 
-      '/signup', 
-      '/mission', 
-      '/map', 
-      '/explore'
-    ];
-    
-    // Don't show breadcrumbs on excluded paths
-    if (excludedPaths.includes(location.pathname)) {
-      return false;
-    }
-    
-    // Don't show on landing page or admin login page
-    if (isLandingPage || location.pathname === '/admin/login') {
-      return false;
-    }
-    
-    return true;
-  };
-
   // Render the appropriate footer based on the page type
   const renderFooter = () => {
     if (isAdminPage || isAdmin) {
@@ -163,9 +141,9 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
       {renderNavigation()}
       
       <main className={`flex-1 w-full max-w-full overflow-x-hidden ${getContentPadding()}`}>
-        {shouldShowBreadcrumbs() && (
+        {shouldShowBreadcrumbs && (
           <div className="container max-w-6xl mx-auto px-4 pt-2">
-            <Breadcrumbs />
+            <Breadcrumbs items={breadcrumbItems} />
           </div>
         )}
         {children}
