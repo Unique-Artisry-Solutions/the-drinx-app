@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useAuthCheck } from './useAuthCheck';
 import { useFeatureStatus } from './useFeatureStatus';
 import { useProgressTracking } from './useProgressTracking';
@@ -7,14 +7,13 @@ import { useAnalysisProcess } from './useAnalysisProcess';
 import { useReleaseFeatures } from './useReleaseFeatures';
 import { useExportFunctions } from './useExportFunctions';
 import { useToast } from '@/hooks/use-toast';
-import { useSearchParams } from 'react-router-dom';
 
 export const useSystemBreakdown = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = searchParams.get('tab') || 'overview';
+  // Store active tab in component state instead of URL params
+  const [activeTab, setActiveTab] = useState('overview');
   const { toast } = useToast();
   
-  // Use our new modular hooks
+  // Use our existing modular hooks
   const { handleLogout } = useAuthCheck();
   
   const { 
@@ -58,14 +57,14 @@ export const useSystemBreakdown = () => {
     establishmentFeatures, 
     individualFeatures,
     promoterFeatures,
-    (tab: string) => setSearchParams({ tab })
+    (tab: string) => setActiveTab(tab)
   );
 
   const { handleExportCSV } = useExportFunctions();
   
   // Wrap the analysis function to also update progress tracking
-  const handleAnalyzeAndUpdateProgress = () => {
-    handleAnalyzeFeatures((totalUpdated) => {
+  const handleAnalyzeAndUpdateProgress = useCallback(() => {
+    handleAnalyzeFeatures(() => {
       // Update progress tracking with new feature states
       const result = updateProgressTracking();
       
@@ -78,11 +77,11 @@ export const useSystemBreakdown = () => {
         });
       }
     });
-  };
+  }, [handleAnalyzeFeatures, updateProgressTracking, toast]);
 
   return {
     activeTab,
-    setActiveTab: (tab: string) => setSearchParams({ tab }),
+    setActiveTab,
     adminFeatures,
     establishmentFeatures,
     individualFeatures,

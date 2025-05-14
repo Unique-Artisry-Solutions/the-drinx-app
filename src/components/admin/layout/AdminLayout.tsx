@@ -1,26 +1,32 @@
 
 import React from 'react';
-import { Outlet } from 'react-router-dom';
-import AdminTopNav from '@/components/navigation/admin/AdminTopNav';
+import { Outlet, useNavigate } from 'react-router-dom';
+import AdminHeader from './AdminHeader';
 import AdminSidebar from './AdminSidebar';
+import { isAdminAuthenticated } from '@/utils/adminAuth';
 
 interface AdminLayoutProps {
   children?: React.ReactNode;
 }
 
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
-  // Log to confirm layout is rendering
+  const navigate = useNavigate();
+  
+  // Check authentication first
   React.useEffect(() => {
-    console.log('AdminLayout rendering with children:', !!children);
-  }, [children]);
+    if (!isAdminAuthenticated()) {
+      console.log('Not authenticated as admin, redirecting');
+      navigate('/admin');
+    }
+  }, [navigate]);
 
   return (
     <div className="h-screen flex flex-col bg-gray-100">
       {/* Top Navigation */}
-      <AdminTopNav />
+      <AdminHeader />
       
       {/* Main Content Area with Sidebar */}
-      <div className="flex flex-1 overflow-hidden" style={{ display: 'flex' }}>
+      <div className="flex flex-1 overflow-hidden">
         {/* Sidebar Navigation */}
         <AdminSidebar />
         

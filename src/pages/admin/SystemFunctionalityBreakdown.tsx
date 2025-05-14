@@ -2,7 +2,6 @@
 import React, { useEffect } from 'react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { useSystemBreakdown } from '@/components/admin/systemBreakdown/hooks/useSystemBreakdown';
-import { useSearchParams } from 'react-router-dom';
 import StatusUpdateNotification from '@/components/admin/systemBreakdown/StatusUpdateNotification';
 import SystemHeader from '@/components/admin/systemBreakdown/SystemHeader';
 import OverviewTab from '@/components/admin/systemBreakdown/OverviewTab';
@@ -25,14 +24,10 @@ import { proposedImprovements as improvementsData } from '@/components/admin/sys
 
 const SystemFunctionalityBreakdown: React.FC = () => {
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = searchParams.get('tab') || 'overview';
-  
-  useEffect(() => {
-    console.log('Current active tab from URL:', activeTab);
-  }, [activeTab]);
   
   const {
+    activeTab,
+    setActiveTab,
     adminFeatures,
     establishmentFeatures,
     individualFeatures,
@@ -50,10 +45,9 @@ const SystemFunctionalityBreakdown: React.FC = () => {
     dataValidation
   } = useSystemBreakdown();
   
-  const handleTabChange = (value: string) => {
-    console.log('Tab changed to:', value);
-    setSearchParams({ tab: value });
-  };
+  useEffect(() => {
+    console.log('SystemFunctionalityBreakdown rendered with active tab:', activeTab);
+  }, [activeTab]);
   
   const handleConfigureFeatures = () => {
     navigate('/admin/system-configuration?tab=features');
@@ -93,9 +87,9 @@ const SystemFunctionalityBreakdown: React.FC = () => {
       )}
 
       {isMobile ? (
-        <MobileSystemBreakdownNavigation activeTab={activeTab} setActiveTab={handleTabChange} />
+        <MobileSystemBreakdownNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
       ) : (
-        <SystemBreakdownNavigation activeTab={activeTab} setActiveTab={handleTabChange} />
+        <SystemBreakdownNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
       )}
 
       <Tabs value={activeTab} className="space-y-4">
