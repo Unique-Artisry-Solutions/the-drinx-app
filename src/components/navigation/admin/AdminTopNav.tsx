@@ -19,6 +19,7 @@ const AdminTopNav: React.FC = () => {
   useEffect(() => {
     const storedUsername = localStorage.getItem('admin_username') || 'Admin';
     setAdminUsername(storedUsername);
+    console.log('AdminTopNav rendered');
   }, []);
   
   const handleLogout = async () => {

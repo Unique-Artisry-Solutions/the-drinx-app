@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import AdminHeader from '@/components/admin/AdminHeader';
+import AdminLayout from '@/components/admin/layout/AdminLayout';
 import { 
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
 } from '@/components/ui/table';
@@ -30,12 +30,8 @@ const AdminEstablishmentsPage = () => {
     if (!isAdmin) {
       navigate('/admin');
     }
+    console.log("AdminEstablishmentsPage rendered inside AdminLayout");
   }, [navigate]);
-
-  const handleLogout = () => {
-    localStorage.removeItem('admin_authenticated');
-    navigate('/admin');
-  };
 
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
@@ -67,118 +63,118 @@ const AdminEstablishmentsPage = () => {
     return new Date(dateString).toLocaleDateString();
   };
 
-  return (
-    <div className="min-h-screen bg-material-background">
-      <AdminHeader onLogout={handleLogout} />
+  // The content to be displayed inside AdminLayout
+  const pageContent = (
+    <div className="min-h-full">
+      <SearchToolbar 
+        searchTerm={searchTerm} 
+        onSearchChange={handleSearchChange} 
+        title="Establishment Management"
+        addButtonLink="/admin/add-establishment"
+        addButtonText="Add Establishment"
+      />
 
-      <main className="container max-w-5xl mx-auto p-4">
-        <SearchToolbar 
-          searchTerm={searchTerm} 
-          onSearchChange={handleSearchChange} 
-          title="Establishment Management"
-          addButtonLink="/admin/add-establishment"
-          addButtonText="Add Establishment"
-        />
+      <div className="flex items-center justify-between mb-6">
+        <Button 
+          variant="outline" 
+          onClick={() => navigate('/admin/dashboard')}
+          className="flex items-center gap-1"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          Back to Dashboard
+        </Button>
+      </div>
 
-        <div className="flex items-center justify-between mb-6">
-          <Button 
-            variant="outline" 
-            onClick={() => navigate('/admin/dashboard')}
-            className="flex items-center gap-1"
-          >
-            <ChevronLeft className="h-4 w-4" />
-            Back to Dashboard
-          </Button>
-        </div>
-
-        <div className="bg-white rounded-md shadow-sm overflow-hidden">
-          <Table>
-            <TableHeader>
+      <div className="bg-white rounded-md shadow-sm overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Address</TableHead>
+              <TableHead>Mocktails</TableHead>
+              <TableHead>Added On</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isLoading ? (
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Address</TableHead>
-                <TableHead>Mocktails</TableHead>
-                <TableHead>Added On</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableCell colSpan={5} className="text-center py-4">
+                  Loading establishments...
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-4">
-                    Loading establishments...
+            ) : currentItems.length > 0 ? (
+              currentItems.map((est) => (
+                <TableRow key={est.id}>
+                  <TableCell className="font-medium">{est.name}</TableCell>
+                  <TableCell>{est.address}</TableCell>
+                  <TableCell>{est.cocktailCount}</TableCell>
+                  <TableCell>{formatDate(est.created_at)}</TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end space-x-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        onClick={() => viewOnMap(est.id, est.latitude, est.longitude)}
+                      >
+                        <MapPin className="h-4 w-4" />
+                        <span className="sr-only">View on map</span>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        onClick={() => viewEstablishmentDetails(est.id)}
+                      >
+                        <Eye className="h-4 w-4" />
+                        <span className="sr-only">View details</span>
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
-              ) : currentItems.length > 0 ? (
-                currentItems.map((est) => (
-                  <TableRow key={est.id}>
-                    <TableCell className="font-medium">{est.name}</TableCell>
-                    <TableCell>{est.address}</TableCell>
-                    <TableCell>{est.cocktailCount}</TableCell>
-                    <TableCell>{formatDate(est.created_at)}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0"
-                          onClick={() => viewOnMap(est.id, est.latitude, est.longitude)}
-                        >
-                          <MapPin className="h-4 w-4" />
-                          <span className="sr-only">View on map</span>
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0"
-                          onClick={() => viewEstablishmentDetails(est.id)}
-                        >
-                          <Eye className="h-4 w-4" />
-                          <span className="sr-only">View details</span>
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-4 text-muted-foreground">
-                    No establishments found
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-          
-          {totalPages > 1 && (
-            <div className="flex items-center justify-end p-4 border-t">
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                  disabled={currentPage === 1}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <span className="text-sm">
-                  Page {currentPage} of {totalPages}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                  disabled={currentPage === totalPages}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-4 text-muted-foreground">
+                  No establishments found
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+        
+        {totalPages > 1 && (
+          <div className="flex items-center justify-end p-4 border-t">
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="text-sm">
+                Page {currentPage} of {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
             </div>
-          )}
-        </div>
-      </main>
+          </div>
+        )}
+      </div>
     </div>
   );
+
+  // Wrap the page content with AdminLayout
+  return <AdminLayout>{pageContent}</AdminLayout>;
 };
 
 export default AdminEstablishmentsPage;

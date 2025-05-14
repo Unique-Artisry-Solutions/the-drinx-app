@@ -1,201 +1,309 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User } from '@supabase/supabase-js';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { Session } from '@supabase/supabase-js';
+import { AuthUser, AuthContextType } from './types';
 import { supabase } from '@/lib/supabase';
-import { AuthContextType, AuthState } from './types';
 
-const initialState: AuthState = {
+const initialState = {
   session: null,
   user: null,
+  isAuthenticated: false,
   isLoading: true,
   isEmailVerified: false,
   isVerificationEmailSent: false,
-  isEmailError: false,
-  error: null,
-  userRole: null
+  authError: null,
+  authStable: false
 };
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType>({
+  ...initialState,
+  signInWithPassword: async () => {},
+  signUp: async () => {},
+  signOut: async () => {},
+  refreshSession: async () => {},
+  recoverAuthState: async () => {},
+  sendVerificationEmail: async () => {},
+  updateUserProfile: async () => {},
+  updatePassword: async () => {}
+});
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [state, setState] = useState<AuthState>(initialState);
-  
-  // Detect and log admin bypass for debugging
+  const [state, setState] = useState({
+    ...initialState
+  });
+
+  // Initialize auth state
   useEffect(() => {
-    const isAdminBypass = localStorage.getItem('admin_bypass') === 'true';
-    console.log('Admin bypass detected:', isAdminBypass);
-  }, []);
-  
-  // Initialize authentication state from Supabase
-  useEffect(() => {
-    const initialize = async () => {
+    const initAuth = async () => {
       try {
-        // Get current session
-        const { data: { session }, error } = await supabase.auth.getSession();
+        // Get session from Supabase Auth
+        const { data: { session } } = await supabase.auth.getSession();
         
-        if (error) {
-          console.error('Error fetching session:', error);
-          setState(prev => ({ ...prev, error, isLoading: false }));
-          return;
+        if (session) {
+          setState(current => ({
+            ...current,
+            session,
+            user: session.user as AuthUser,
+            isAuthenticated: true,
+            isLoading: false,
+            isEmailVerified: !!session.user.email_confirmed_at,
+            authStable: true
+          }));
+        } else {
+          setState(current => ({
+            ...current,
+            isLoading: false,
+            authStable: true
+          }));
         }
-        
-        // Check if admin bypass is enabled
-        const isAdminBypass = localStorage.getItem('admin_bypass') === 'true';
-        let userRole = 'guest';
-        
-        if (isAdminBypass) {
-          userRole = 'admin';
-        } else if (session?.user) {
-          userRole = 'user';
-          // Check if user has admin role in database - simplified for now
-        }
-        
-        setState(prev => ({ 
-          ...prev, 
-          session, 
-          user: session?.user || null,
-          isLoading: false,
-          userRole: userRole as any
-        }));
-        
-        // Set up auth subscription
-        const { data: { subscription } } = await supabase.auth.onAuthStateChange(
-          (event, session) => {
-            console.log('Auth state changed:', event);
-            setState(prev => ({ 
-              ...prev, 
-              session, 
-              user: session?.user || null,
-              isLoading: false
-            }));
-          }
-        );
-        
-        return () => {
-          subscription.unsubscribe();
-        };
       } catch (error) {
-        console.error('Error during auth initialization:', error);
-        setState(prev => ({ ...prev, error: error as Error, isLoading: false }));
+        console.error('Error initializing auth:', error);
+        setState(current => ({
+          ...current,
+          isLoading: false,
+          authError: error as Error,
+          authStable: true
+        }));
       }
     };
-    
-    initialize();
+
+    initAuth();
+
+    // Set up auth state change listener
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.email);
+        
+        if (event === 'SIGNED_IN' && session) {
+          setState(current => ({
+            ...current,
+            session,
+            user: session.user as AuthUser,
+            isAuthenticated: true,
+            isLoading: false,
+            isEmailVerified: !!session.user.email_confirmed_at,
+            authStable: true
+          }));
+        } else if (event === 'SIGNED_OUT') {
+          setState(current => ({
+            ...initialState,
+            isLoading: false,
+            authStable: true
+          }));
+        } else if (event === 'USER_UPDATED' && session) {
+          setState(current => ({
+            ...current,
+            session,
+            user: session.user as AuthUser,
+            isAuthenticated: true,
+            isEmailVerified: !!session.user.email_confirmed_at,
+            authStable: true
+          }));
+        }
+      }
+    );
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
   }, []);
-  
-  // Authentication functions
-  const signIn = async (email: string, password: string) => {
+
+  const signInWithPassword = async (email: string, password: string) => {
+    setState(current => ({ ...current, isLoading: true, authError: null }));
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email,
         password
       });
       
       if (error) throw error;
-      
-      return data;
-    } catch (error) {
-      console.error('Error signing in:', error);
+    } catch (error: any) {
+      setState(current => ({
+        ...current,
+        isLoading: false,
+        authError: error
+      }));
       throw error;
     }
   };
-  
-  const signUp = async (email: string, password: string, redirectTo?: string) => {
+
+  const signUp = async (formData: any) => {
+    setState(current => ({ ...current, isLoading: true, authError: null }));
     try {
       const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
+        email: formData.email,
+        password: formData.password,
         options: {
-          emailRedirectTo: redirectTo
+          data: {
+            name: formData.data?.name,
+            username: formData.data?.username,
+            user_type: formData.data?.user_type || 'individual'
+          },
+          emailRedirectTo: formData.emailRedirectTo || `${window.location.origin}/auth/callback`
         }
       });
       
       if (error) throw error;
       
+      setState(current => ({
+        ...current,
+        isLoading: false,
+        isVerificationEmailSent: true
+      }));
+      
       return data;
-    } catch (error) {
-      console.error('Error signing up:', error);
+    } catch (error: any) {
+      setState(current => ({
+        ...current,
+        isLoading: false,
+        authError: error
+      }));
       throw error;
     }
   };
-  
+
   const signOut = async () => {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       
-      // Clear any auth related localStorage items
-      localStorage.removeItem('user_type');
-      localStorage.removeItem('admin_authenticated');
-      localStorage.removeItem('admin_bypass');
-      
-      // Force redirect to landing page
-      window.location.href = '/landing';
-    } catch (error) {
+      setState({
+        ...initialState,
+        isLoading: false,
+        authStable: true
+      });
+    } catch (error: any) {
       console.error('Error signing out:', error);
+      setState(current => ({
+        ...current,
+        authError: error
+      }));
       throw error;
     }
   };
-  
+
+  const refreshSession = async () => {
+    setState(current => ({ ...current, isLoading: true }));
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session) {
+        setState(current => ({
+          ...current,
+          session,
+          user: session.user as AuthUser,
+          isAuthenticated: true,
+          isLoading: false,
+          isEmailVerified: !!session.user.email_confirmed_at,
+          authStable: true
+        }));
+      } else {
+        setState(current => ({
+          ...initialState,
+          isLoading: false,
+          authStable: true
+        }));
+      }
+    } catch (error: any) {
+      console.error('Error refreshing session:', error);
+      setState(current => ({
+        ...current,
+        isLoading: false,
+        authError: error,
+        authStable: true
+      }));
+    }
+  };
+
+  const recoverAuthState = async () => {
+    await refreshSession();
+  };
+
   const sendVerificationEmail = async (email: string) => {
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email);
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email
+      });
+      
       if (error) throw error;
-      setState(prev => ({ ...prev, isVerificationEmailSent: true }));
-    } catch (error) {
-      console.error('Error sending verification email:', error);
-      setState(prev => ({ ...prev, isEmailError: true }));
+      
+      setState(current => ({
+        ...current,
+        isVerificationEmailSent: true
+      }));
+    } catch (error: any) {
+      setState(current => ({
+        ...current,
+        authError: error
+      }));
       throw error;
     }
   };
-  
-  const resetPassword = async (email: string) => {
+
+  const updateUserProfile = async (data: any) => {
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email);
+      const { error } = await supabase.auth.updateUser({
+        data
+      });
+      
       if (error) throw error;
-    } catch (error) {
-      console.error('Error resetting password:', error);
+      
+      if (state.user) {
+        setState(current => ({
+          ...current,
+          user: {
+            ...current.user!,
+            user_metadata: {
+              ...current.user!.user_metadata,
+              ...data
+            }
+          }
+        }));
+      }
+    } catch (error: any) {
+      setState(current => ({
+        ...current,
+        authError: error
+      }));
       throw error;
     }
   };
-  
-  const updatePassword = async (password: string) => {
+
+  const updatePassword = async (newPassword: string) => {
     try {
-      const { error } = await supabase.auth.updateUser({ password });
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+      
       if (error) throw error;
-    } catch (error) {
-      console.error('Error updating password:', error);
+    } catch (error: any) {
+      setState(current => ({
+        ...current,
+        authError: error
+      }));
       throw error;
     }
   };
-  
-  const updateUserProfile = async (data: Record<string, any>) => {
-    try {
-      const { error } = await supabase.auth.updateUser(data);
-      if (error) throw error;
-    } catch (error) {
-      console.error('Error updating user profile:', error);
-      throw error;
-    }
-  };
-  
+
   const value = {
     ...state,
-    signIn,
+    signInWithPassword,
     signUp,
     signOut,
+    refreshSession,
+    recoverAuthState,
     sendVerificationEmail,
-    resetPassword,
-    updatePassword,
-    updateUserProfile
+    updateUserProfile,
+    updatePassword
   };
-  
+
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-export const useAuth = (): AuthContextType => {
+export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;

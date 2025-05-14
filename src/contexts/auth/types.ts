@@ -1,26 +1,38 @@
 
-/**
- * Authentication context and provider types
- */
-import { User } from '@supabase/supabase-js';
+import { Session, User } from '@supabase/supabase-js';
+
+export interface AuthUser extends User {
+  app_metadata: {
+    provider?: string;
+    [key: string]: any;
+  };
+  user_metadata: {
+    name?: string;
+    avatar_url?: string;
+    [key: string]: any;
+  };
+}
 
 export interface AuthState {
-  session: any | null;
-  user: User | null;
+  session: Session | null;
+  user: AuthUser | null;
+  isAuthenticated: boolean;
   isLoading: boolean;
   isEmailVerified: boolean;
   isVerificationEmailSent: boolean;
-  isEmailError: boolean;
-  error: Error | null;
-  userRole: 'admin' | 'user' | 'guest' | null;
+  authError: Error | null;
+  authStable: boolean;
 }
 
-export interface AuthContextType extends AuthState {
-  signIn: (email: string, password: string) => Promise<any>;
-  signUp: (email: string, password: string, redirectTo?: string) => Promise<any>;
+export interface AuthActions {
+  signInWithPassword: (email: string, password: string) => Promise<void>;
+  signUp: (formData: any) => Promise<void>;
   signOut: () => Promise<void>;
+  refreshSession: () => Promise<void>;
+  recoverAuthState: () => Promise<void>;
   sendVerificationEmail: (email: string) => Promise<void>;
-  resetPassword: (email: string) => Promise<void>;
-  updatePassword: (password: string) => Promise<void>;
-  updateUserProfile: (data: Record<string, any>) => Promise<void>;
+  updateUserProfile: (data: any) => Promise<void>;
+  updatePassword: (newPassword: string) => Promise<void>;
 }
+
+export interface AuthContextType extends AuthState, AuthActions {}
