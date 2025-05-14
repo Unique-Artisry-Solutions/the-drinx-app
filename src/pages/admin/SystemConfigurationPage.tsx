@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSystemConfiguration } from '@/hooks/admin/useSystemConfiguration';
-import Layout from '@/components/Layout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs } from '@/components/ui/tabs';
 import { Spinner } from '@/components/ui/spinner';
@@ -152,44 +151,42 @@ const SystemConfigurationPage = () => {
   );
 
   return (
-    <Layout>
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8 flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">System Configuration</h1>
-            <p className="text-muted-foreground">
-              Manage system-wide settings and configurations
-            </p>
-          </div>
-          {hasSettings && (
-            <Button 
-              variant="outline" 
-              onClick={handleRefresh} 
-              disabled={isLoading}
-              className="flex items-center gap-2"
-            >
-              <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} />
-              Refresh
-            </Button>
-          )}
+    <div className="container mx-auto px-4 py-8">
+      <div className="mb-8 flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">System Configuration</h1>
+          <p className="text-muted-foreground">
+            Manage system-wide settings and configurations
+          </p>
         </div>
-
-        <PageSuspense>
-          <Tabs value={category} className="w-full" onValueChange={setCategory}>
-            <ComponentSuspense>
-              <ConfigurationTabs
-                category={category}
-                setCategory={setCategory}
-                {...settingsTabProps}
-              />
-            </ComponentSuspense>
-
-            {error && renderErrorState()}
-            {isLoading && !hasSettings && renderLoadingState()}
-          </Tabs>
-        </PageSuspense>
+        {hasSettings && (
+          <Button 
+            variant="outline" 
+            onClick={handleRefresh} 
+            disabled={isLoading}
+            className="flex items-center gap-2"
+          >
+            <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} />
+            Refresh
+          </Button>
+        )}
       </div>
-    </Layout>
+
+      <PageSuspense>
+        <Tabs value={category} className="w-full" onValueChange={setCategory}>
+          <ComponentSuspense>
+            <ConfigurationTabs
+              category={category}
+              setCategory={setCategory}
+              {...settingsTabProps}
+            />
+          </ComponentSuspense>
+
+          {error && renderErrorState()}
+          {isLoading && !hasSettings && renderLoadingState()}
+        </Tabs>
+      </PageSuspense>
+    </div>
   );
 };
 
