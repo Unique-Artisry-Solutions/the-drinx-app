@@ -1,4 +1,3 @@
-
 /**
  * Utility for admin bypass functionality
  */
@@ -75,4 +74,35 @@ export const createBypassUser = () => {
       username: 'bypassuser'
     }
   } as any;
+};
+
+/**
+ * Redirect after login based on user type
+ * This is used specifically after bypass login to ensure consistent redirect behavior
+ */
+export const redirectAfterLogin = (): void => {
+  // Check for saved redirect path first
+  const savedRedirect = localStorage.getItem('auth_redirect');
+  
+  if (savedRedirect) {
+    console.log("Redirecting to saved path:", savedRedirect);
+    window.location.href = savedRedirect;
+    localStorage.removeItem('auth_redirect');
+    return;
+  }
+  
+  // Otherwise redirect based on user type
+  const userType = localStorage.getItem('bypass_user_type') || 'individual';
+  
+  console.log("Using default redirect based on user type:", userType);
+  
+  if (userType === 'establishment') {
+    window.location.href = '/establishment/dashboard';
+  } else if (userType === 'promoter') {
+    window.location.href = '/promoter/dashboard';
+  } else if (userType === 'admin') {
+    window.location.href = '/admin/system-breakdown';
+  } else {
+    window.location.href = '/explore';
+  }
 };
