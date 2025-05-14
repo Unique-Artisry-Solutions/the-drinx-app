@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 
 interface SystemBreakdownNavigationProps {
@@ -14,18 +14,19 @@ const SystemBreakdownNavigation: React.FC<SystemBreakdownNavigationProps> = ({
 }) => {
   return (
     <div className="sticky top-4 z-10 bg-card rounded-lg p-1 shadow-sm mb-6 overflow-x-auto">
-      <TabsList className="w-full justify-start gap-1 bg-transparent p-1">
-        {['overview', 'admin', 'establishment', 'individual', 'promoter', 'promoter-requirements', 'improvements', 'releases', 'showcase'].map((tab) => (
-          <TabsTrigger 
-            key={tab}
-            value={tab} 
-            onClick={() => setActiveTab(tab)}
-            className={cn("flex-shrink-0", activeTab === tab ? "bg-primary text-primary-foreground" : "")}
-          >
-            {tab.charAt(0).toUpperCase() + tab.slice(1).replace('-', ' ')}
-          </TabsTrigger>
-        ))}
-      </TabsList>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="w-full justify-start gap-1 bg-transparent p-1">
+          {['overview', 'admin', 'establishment', 'individual', 'promoter', 'promoter-requirements', 'improvements', 'releases', 'showcase'].map((tab) => (
+            <TabsTrigger 
+              key={tab}
+              value={tab}
+              className={cn("flex-shrink-0", activeTab === tab ? "bg-primary text-primary-foreground" : "")}
+            >
+              {tab.charAt(0).toUpperCase() + tab.slice(1).replace('-', ' ')}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
     </div>
   );
 };
