@@ -28,7 +28,8 @@ const AdminSidebar: React.FC = () => {
   };
   
   return (
-    <div className="bg-material-primary text-white w-64 flex-shrink-0 overflow-y-auto shadow-lg">
+    <div className="bg-material-primary text-white w-64 min-w-64 flex-shrink-0 overflow-y-auto shadow-lg h-full block" 
+         style={{ display: 'block', minWidth: '16rem', width: '16rem', height: '100%' }}>
       <div className="px-4 py-3 border-b border-white/10">
         <h2 className="text-lg font-semibold">Admin Panel</h2>
       </div>

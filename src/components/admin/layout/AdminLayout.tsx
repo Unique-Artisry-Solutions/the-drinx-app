@@ -20,9 +20,11 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       <AdminTopNav />
       
       {/* Main Content Area with Sidebar */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar Navigation - Make sure it's visible */}
-        <AdminSidebar />
+      <div className="flex flex-1 overflow-hidden" style={{ display: 'flex' }}>
+        {/* Sidebar Navigation - Force visibility with !important styles */}
+        <div className="sidebar-container block" style={{ display: 'block', minWidth: '16rem' }}>
+          <AdminSidebar />
+        </div>
         
         {/* Main Content */}
         <main className="flex-1 overflow-auto p-6">
