@@ -1,3 +1,4 @@
+
 import { FeatureItem } from "../types";
 import { ticketManagement } from "./promoterFeatures/ticketManagement";
 import { promotionalTools } from "./promoterFeatures/promotionalTools";
@@ -185,15 +186,15 @@ export const promoterFeatures: FeatureItem[] = [
     id: "promoter-11",
     name: "Discount Code Management",
     description: "Create and manage discount codes for events with advanced validation rules",
-    status: "in_progress",
+    status: "implemented",
     adminAccess: "moderate",
     establishmentAccess: "none",
     promoterAccess: "full",
     individualAccess: "none",
-    databaseStatus: "in_progress",
+    databaseStatus: "implemented",
     userImpact: "medium",
     complexity: "medium",
-    implementationProgress: 50,
+    implementationProgress: 100,
     integrations: [
       "Ticketing system",
       "Analytics service"
@@ -201,8 +202,11 @@ export const promoterFeatures: FeatureItem[] = [
     testSteps: [
       "Create various discount code types (percentage, fixed amount)",
       "Test code validation with expiration dates",
-      "Verify usage limits per code",
-      "Test combining discount codes with early bird pricing"
+      "Test time-based restrictions (days, hours)",
+      "Test user segment targeting",
+      "Verify minimum purchase requirements",
+      "Test batch creation of codes",
+      "Verify analytics and export/import functionality"
     ],
     tags: ["tickets", "discounts", "events"]
   },
