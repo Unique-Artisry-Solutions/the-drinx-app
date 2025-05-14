@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { CreditCard } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
@@ -12,13 +11,18 @@ import { useAuth } from '@/contexts/auth';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import BackButton from '@/components/navigation/BackButton';
 import { processPayment } from '@/services/paymentService';
+import { AppliedDiscount } from '@/utils/discountCodeUtils';
 
-// Import the new component files
+// Import the components
 import EmptyCartView from '@/components/checkout/EmptyCartView';
 import CheckoutContactForm from '@/components/checkout/CheckoutContactForm';
 import CheckoutPaymentForm from '@/components/checkout/CheckoutPaymentForm';
 import CheckoutVerification from '@/components/checkout/CheckoutVerification';
 import CheckoutSummary from '@/components/checkout/CheckoutSummary';
+import DiscountCodeSection from '@/components/checkout/DiscountCodeSection';
+import DiscountSavingsIndicator from '@/components/checkout/DiscountSavingsIndicator';
+import SavedPromotionCodes from '@/components/promotions/SavedPromotionCodes';
+import { SavedCodesProvider } from '@/contexts/SavedCodesContext';
 
 interface ContactInfo {
   firstName: string;
@@ -38,6 +42,7 @@ const CheckoutPage: React.FC = () => {
     lastName: '',
     email: ''
   });
+  const [appliedDiscount, setAppliedDiscount] = useState<AppliedDiscount | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
@@ -69,6 +74,19 @@ const CheckoutPage: React.FC = () => {
     checkFormValidity();
   };
 
+  const handleDiscount = (discount: AppliedDiscount | null) => {
+    setAppliedDiscount(discount);
+  };
+
+  // Calculate total with discount
+  const totalWithDiscount = totalPrice - (appliedDiscount?.discountAmount || 0);
+  
+  // Recalculate service fee based on discounted total
+  const serviceFeeWithDiscount = parseFloat((totalWithDiscount * (serviceFeePercentage / 100)).toFixed(2));
+  
+  // Calculate total with discount and fees
+  const finalTotal = totalWithDiscount + serviceFeeWithDiscount;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -88,7 +106,7 @@ const CheckoutPage: React.FC = () => {
       // Process payment through Stripe
       const paymentResult = await processPayment({
         paymentMethodId: paymentMethod.id,
-        amount: Math.round(totalWithFees * 100), // Convert to cents
+        amount: Math.round(finalTotal * 100), // Convert to cents
         currency: 'usd',
         description: `Purchase of ${items.length} items`,
         metadata: {
@@ -101,8 +119,11 @@ const CheckoutPage: React.FC = () => {
           }))),
           customerName: `${contactInfo.firstName} ${contactInfo.lastName}`,
           customerEmail: contactInfo.email,
-          serviceFee,
-          serviceFeePercentage
+          serviceFee: serviceFeeWithDiscount,
+          serviceFeePercentage,
+          discountCode: appliedDiscount?.code,
+          discountAmount: appliedDiscount?.discountAmount,
+          originalTotal: totalPrice
         }
       });
       
@@ -158,6 +179,17 @@ const CheckoutPage: React.FC = () => {
         }
       }
       
+      // Track discount code usage if a code was applied
+      if (appliedDiscount) {
+        await supabase.from('promotion_redemptions').insert({
+          promotion_id: appliedDiscount.codeId,
+          user_id: user?.id || null,
+          order_amount: totalPrice,
+          discount_amount: appliedDiscount.discountAmount,
+          order_id: paymentResult.transactionId
+        });
+      }
+      
       // Track service fee collection 
       await trackServiceFee(serviceFee, serviceFeePercentage, totalWithFees);
       
@@ -172,14 +204,19 @@ const CheckoutPage: React.FC = () => {
       navigate('/purchase-confirmation', { 
         state: { 
           items, 
-          serviceFee,
+          serviceFee: serviceFeeWithDiscount,
           serviceFeePercentage,
-          totalWithFees,
+          totalWithFees: finalTotal,
           transactionId: paymentResult.transactionId,
           contactInfo: {
             name: `${contactInfo.firstName} ${contactInfo.lastName}`,
             email: contactInfo.email
-          }
+          },
+          discount: appliedDiscount ? {
+            code: appliedDiscount.code,
+            amount: appliedDiscount.discountAmount,
+            type: appliedDiscount.discountType
+          } : null
         } 
       });
     } catch (error) {
@@ -210,70 +247,106 @@ const CheckoutPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-white to-purple-50">
-      <TopNavigation />
-      <div className="container max-w-6xl mx-auto px-4 py-8 flex-1">
-        <div className="mb-6 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <BackButton 
-              fallbackPath="/pricing" 
-              variant="ghost" 
-              size="sm"
-              label="Back" 
-              showLabel={true}
-            />
-            <h1 className="text-2xl font-semibold">Checkout</h1>
-          </div>
-        </div>
-
-        <div className="grid md:grid-cols-3 gap-8">
-          <div className="md:col-span-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Complete Your Purchase</CardTitle>
-              </CardHeader>
-              <form onSubmit={handleSubmit}>
-                <CardContent className="space-y-4">
-                  <CheckoutContactForm 
-                    contactInfo={contactInfo} 
-                    onInputChange={handleInputChange} 
-                  />
-
-                  <CheckoutPaymentForm 
-                    onPaymentMethodChange={handlePaymentMethodChange}
-                    error={paymentError}
-                  />
-                  
-                  <CheckoutVerification 
-                    captchaValue={captchaValue}
-                    handleCaptchaChange={handleCaptchaChange}
-                  />
-                </CardContent>
-                <CardFooter>
-                  <Button 
-                    type="submit" 
-                    className="w-full"
-                    disabled={isProcessing || !formValid}
-                  >
-                    {isProcessing ? 'Processing...' : 'Complete Payment'}
-                  </Button>
-                </CardFooter>
-              </form>
-            </Card>
+    <SavedCodesProvider>
+      <div className="min-h-screen flex flex-col bg-gradient-to-b from-white to-purple-50">
+        <TopNavigation />
+        <div className="container max-w-6xl mx-auto px-4 py-8 flex-1">
+          <div className="mb-6 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <BackButton 
+                fallbackPath="/pricing" 
+                variant="ghost" 
+                size="sm"
+                label="Back" 
+                showLabel={true}
+              />
+              <h1 className="text-2xl font-semibold">Checkout</h1>
+            </div>
           </div>
 
-          <div>
-            <CheckoutSummary 
-              groupedItems={groupedItems}
-              totalPrice={totalPrice}
-              serviceFee={serviceFee}
-              serviceFeePercentage={serviceFeePercentage}
-              totalWithFees={totalWithFees}
-            />
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="md:col-span-2 space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Complete Your Purchase</CardTitle>
+                </CardHeader>
+                <form onSubmit={handleSubmit}>
+                  <CardContent className="space-y-4">
+                    <CheckoutContactForm 
+                      contactInfo={contactInfo} 
+                      onInputChange={handleInputChange} 
+                    />
+
+                    <CheckoutPaymentForm 
+                      onPaymentMethodChange={handlePaymentMethodChange}
+                      error={paymentError}
+                    />
+                    
+                    <DiscountCodeSection
+                      items={items}
+                      onApplyDiscount={handleDiscount}
+                      currentDiscount={appliedDiscount}
+                    />
+                    
+                    <CheckoutVerification 
+                      captchaValue={captchaValue}
+                      handleCaptchaChange={handleCaptchaChange}
+                    />
+                  </CardContent>
+                  <CardFooter>
+                    <Button 
+                      type="submit" 
+                      className="w-full"
+                      disabled={isProcessing || !formValid}
+                    >
+                      {isProcessing ? 'Processing...' : 'Complete Payment'}
+                    </Button>
+                  </CardFooter>
+                </form>
+              </Card>
+              
+              {/* Show saved codes if user is logged in */}
+              {user && (
+                <div className="hidden md:block">
+                  <SavedPromotionCodes />
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-6">
+              <CheckoutSummary 
+                groupedItems={groupedItems}
+                totalPrice={totalPrice}
+                serviceFee={serviceFeeWithDiscount}
+                serviceFeePercentage={serviceFeePercentage}
+                totalWithFees={finalTotal}
+              />
+              
+              {/* Show discount savings indicator if a discount is applied */}
+              {appliedDiscount && (
+                <Card>
+                  <CardContent className="pt-4">
+                    <DiscountSavingsIndicator 
+                      originalPrice={totalPrice + serviceFee}
+                      discountedPrice={finalTotal}
+                      discountCode={appliedDiscount.code}
+                      discountType={appliedDiscount.discountType}
+                    />
+                  </CardContent>
+                </Card>
+              )}
+              
+              {/* Show saved codes on mobile if user is logged in */}
+              {user && (
+                <div className="block md:hidden">
+                  <SavedPromotionCodes />
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </SavedCodesProvider>
   );
 };
 
