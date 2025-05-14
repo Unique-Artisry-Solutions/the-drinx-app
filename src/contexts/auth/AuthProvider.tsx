@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { AuthUser, AuthContextType } from './types';
@@ -17,11 +16,11 @@ const initialState = {
 
 const AuthContext = createContext<AuthContextType>({
   ...initialState,
-  signInWithPassword: async () => {},
+  signIn: async () => ({ error: null, data: null }),
   signUp: async () => { return null; },
   signOut: async () => {},
-  refreshSession: async () => {},
-  recoverAuthState: async () => {},
+  refreshSession: async () => ({ isEmailVerified: false }),
+  recoverAuthState: async () => false,
   sendVerificationEmail: async () => {},
   updateUserProfile: async () => {},
   updatePassword: async () => {}
@@ -108,22 +107,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  const signInWithPassword = async (email: string, password: string) => {
+  const signIn = async (email: string, password: string) => {
     setState(current => ({ ...current, isLoading: true, authError: null }));
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error, data } = await supabase.auth.signInWithPassword({
         email,
         password
       });
       
       if (error) throw error;
+
+      return { error: null, data };
     } catch (error: any) {
       setState(current => ({
         ...current,
         isLoading: false,
         authError: error
       }));
-      throw error;
+      return { error, data: null };
     }
   };
 
@@ -197,12 +198,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           isEmailVerified: !!session.user.email_confirmed_at,
           authStable: true
         }));
+
+        return { isEmailVerified: !!session.user.email_confirmed_at };
       } else {
         setState(current => ({
           ...initialState,
           isLoading: false,
           authStable: true
         }));
+
+        return { isEmailVerified: false };
       }
     } catch (error: any) {
       console.error('Error refreshing session:', error);
@@ -212,11 +217,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         authError: error,
         authStable: true
       }));
+      return { isEmailVerified: false };
     }
   };
 
   const recoverAuthState = async () => {
     await refreshSession();
+    return true;
   };
 
   const sendVerificationEmail = async (email: string) => {
@@ -286,16 +293,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const value = {
+  const value: AuthContextType = {
     ...state,
-    signInWithPassword,
+    signIn,
     signUp,
     signOut,
     refreshSession,
     recoverAuthState,
-    sendVerificationEmail,
-    updateUserProfile,
-    updatePassword
+    sendVerificationEmail: state.sendVerificationEmail || (async () => {}),
+    updateUserProfile: state.updateUserProfile || (async () => {}),
+    updatePassword: state.updatePassword || (async () => {})
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

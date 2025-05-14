@@ -25,11 +25,11 @@ export interface AuthState {
 }
 
 export interface AuthActions {
-  signInWithPassword: (email: string, password: string) => Promise<void>;
+  signIn: (email: string, password: string) => Promise<{ error: Error | null; data: any }>;
   signUp: (formData: any) => Promise<any>;
   signOut: () => Promise<void>;
-  refreshSession: () => Promise<void>;
-  recoverAuthState: () => Promise<void>;
+  refreshSession: () => Promise<{ isEmailVerified: boolean }>;
+  recoverAuthState: () => Promise<boolean>;
   sendVerificationEmail: (email: string) => Promise<void>;
   updateUserProfile: (data: any) => Promise<void>;
   updatePassword: (newPassword: string) => Promise<void>;

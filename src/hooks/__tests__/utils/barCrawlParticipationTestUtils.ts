@@ -1,4 +1,3 @@
-
 import { vi } from 'vitest';
 import { useAuth } from '@/contexts/auth/AuthProvider';
 import { useToast } from '@/hooks/use-toast';
@@ -46,17 +45,20 @@ export function setupMocks(authUser = mockUser) {
       provider_refresh_token: null,
       token_type: 'bearer'
     } : null,
+    isAuthenticated: !!authUser,
     isLoading: false,
     isEmailVerified: true,
     authStable: true,
     authError: null,
-    signIn: vi.fn().mockResolvedValue({}),
+    isVerificationEmailSent: false,
+    signIn: vi.fn().mockResolvedValue({ error: null, data: {} }),
     signUp: vi.fn().mockResolvedValue({}),
     signOut: vi.fn().mockResolvedValue({}),
-    updateProfile: vi.fn().mockResolvedValue({}),
+    updateUserProfile: vi.fn().mockResolvedValue({}),
     refreshSession: vi.fn().mockResolvedValue({ isEmailVerified: true }),
-    resetPassword: vi.fn().mockResolvedValue({}),
+    updatePassword: vi.fn().mockResolvedValue({}),
     recoverAuthState: vi.fn().mockResolvedValue(true),
+    sendVerificationEmail: vi.fn().mockResolvedValue({})
   };
   
   // Setup auth mock with the complete context

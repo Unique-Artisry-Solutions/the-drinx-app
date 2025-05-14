@@ -34,6 +34,16 @@ export interface AuthState {
    * Any authentication error that occurred
    */
   authError: Error | null;
+
+  /**
+   * Indicates if the user is authenticated
+   */
+  isAuthenticated: boolean;
+
+  /**
+   * Indicates if verification email has been sent
+   */
+  isVerificationEmailSent: boolean;
 }
 
 /**
@@ -48,7 +58,7 @@ export interface AuthActions {
   /**
    * Register a new user
    */
-  signUp: (email: string, password: string, metadata?: Record<string, any>) => Promise<{ error: Error | null; data: any }>;
+  signUp: (formData: any) => Promise<any>;
   
   /**
    * Sign out the current user
@@ -64,6 +74,21 @@ export interface AuthActions {
    * Attempt to recover from a stuck authentication state
    */
   recoverAuthState: () => Promise<boolean>;
+
+  /**
+   * Send verification email to the user
+   */
+  sendVerificationEmail: (email: string) => Promise<void>;
+  
+  /**
+   * Update user profile data
+   */
+  updateUserProfile: (data: any) => Promise<void>;
+  
+  /**
+   * Update user password
+   */
+  updatePassword: (newPassword: string) => Promise<void>;
 }
 
 /**

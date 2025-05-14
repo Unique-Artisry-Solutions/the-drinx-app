@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { CardContent, CardFooter } from '@/components/ui/card';
@@ -57,7 +56,9 @@ const SignupForm: React.FC<SignupFormProps> = ({
       
       const redirectTo = `${window.location.origin}/?email_confirmed=true`;
       
-      await signUp(email, password, {
+      await signUp({
+        email,
+        password,
         data: metadata,
         emailRedirectTo: redirectTo
       });
