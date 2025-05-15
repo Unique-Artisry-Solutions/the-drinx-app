@@ -44,3 +44,6 @@ export const ticketManagement: FeatureItem = {
     "Process refunds when necessary"
   ]
 };
+
+// Also export as ticketManagementFeature for backward compatibility
+export const ticketManagementFeature = ticketManagement;

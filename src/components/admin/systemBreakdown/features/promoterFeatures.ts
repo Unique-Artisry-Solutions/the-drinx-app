@@ -1,11 +1,11 @@
 
 import { SystemFeature } from '../types';
-import { ticketManagementFeature } from './promoterFeatures/ticketManagement';
+import { ticketManagement } from './promoterFeatures/ticketManagement';
 import { promotionalToolsFeature } from './promoterFeatures/promotionalTools';
 
 export const promoterFeatures: SystemFeature[] = [
   promotionalToolsFeature,
-  ticketManagementFeature,
+  ticketManagement,
   {
     id: 'follower-management',
     name: 'Follower Management',

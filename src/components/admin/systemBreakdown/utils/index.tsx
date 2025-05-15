@@ -50,7 +50,15 @@ import {
   isAudienceRelationshipFeature,
   isAudienceInfluencerFeature,
   isCrossSegmentEngagementFeature,
-  isAudienceVisualizationFeature
+  isAudienceVisualizationFeature,
+  isTicketManagementFeature,
+  isPromoterCommunicationFeature,
+  isBrandConnectionFeature,
+  isPromoterAnalyticsFeature,
+  isEventManagementFeature,
+  isPromoterDashboardFeature,
+  isCustomPromotionFeature,
+  isPromoterNotificationFeature
 } from './featureDetection';
 import { isTaskCompleted, parseTasks } from './taskDetection';
 import { 
@@ -130,6 +138,14 @@ export {
   isAudienceInfluencerFeature,
   isCrossSegmentEngagementFeature,
   isAudienceVisualizationFeature,
+  isTicketManagementFeature,
+  isPromoterCommunicationFeature,
+  isBrandConnectionFeature,
+  isPromoterAnalyticsFeature,
+  isEventManagementFeature,
+  isPromoterDashboardFeature,
+  isCustomPromotionFeature,
+  isPromoterNotificationFeature,
   isTaskCompleted,
   parseTasks,
   mapFeaturesToReleaseFeatures,
@@ -152,4 +168,3 @@ export { determineShowcaseCategory } from './featureShowcase/categoryDetection';
 export { generateMarketingPoints } from './featureShowcase/marketingUtils';
 export { determineFeatureIcon } from './featureShowcase/iconSelection';
 export { generateMockImplementationStats } from './featureShowcase/mockStats';
-
