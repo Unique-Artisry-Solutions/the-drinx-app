@@ -1,9 +1,13 @@
 
+/**
+ * System Breakdown Feature Types
+ */
+
 export interface SystemBreakdownProps {
   activeTab: string;
 }
 
-export type FeatureStatus = 'planned' | 'in-development' | 'completed' | 'implemented' | 'in-progress' | 'testing' | 'on-hold';
+export type FeatureStatus = 'planned' | 'in-development' | 'completed' | 'implemented' | 'in-progress' | 'testing' | 'on-hold' | 'blocked' | 'partial';
 export type FeaturePriority = 'low' | 'medium' | 'high' | 'critical';
 export type FeatureCategory = 'core' | 'audience' | 'advertisement' | 'stats' | 'ui' | 'promoter' | 'application' | 'user' | 'venue';
 
@@ -79,15 +83,129 @@ export interface CategoryProgress {
 }
 
 export interface ProgressSnapshot {
+  timestamp: string;
   date: string;
+  totalFeatures: number;
+  implementedFeatures: number;
+  inProgressFeatures: number;
+  plannedFeatures: number;
+  blockedFeatures: number;
+  averageImplementationProgress: number;
+  frontendProgress: number;
+  backendProgress: number;
+  adminFeatureCount: number;
+  establishmentFeatureCount: number;
+  individualFeatureCount: number;
+  promoterFeatureCount: number;
+  adminImplementationRate: number;
+  establishmentImplementationRate: number;
+  individualImplementationRate: number;
+  promoterImplementationRate: number;
   overallProgress: number;
-  categoryProgress: {
-    [key: string]: number;
-  };
+  dbComplete: number;
+  confidenceScore: number;
 }
 
-export interface SystemProgress {
-  currentProgress: ProgressStatistics;
-  categoryProgress: CategoryProgress[];
-  timeline: ProgressSnapshot[];
+export interface MonthlyProgressData {
+  month: string;
+  frontend: number;
+  backend: number;
 }
+
+export interface FeatureBusinessValueType {
+  value: string;
+  label: string;
+}
+
+export interface FeatureBusinessValueObject {
+  value: string;
+  label: string;
+  name: string;
+  description: string;
+  color: string;
+  features: FeatureItem[];
+  implementationRate: number;
+  featureCount: number;
+}
+
+export interface FeatureItem {
+  id: string;
+  name: string;
+  description: string;
+  status: string;
+  category?: string;
+  implementationProgress?: number;
+  frontendStatus?: string;
+  backendStatus?: string;
+  databaseStatus?: string;
+  dbStatus?: string;
+  priority?: string;
+  complexity?: string;
+  tags?: string[];
+  uiTasks?: string[];
+  dbTasks?: string[];
+  testingTasks?: string[];
+  dependencies?: string[];
+  scheduledFor?: string;
+  statusUpdated?: boolean;
+  icon?: React.ReactNode;
+}
+
+export type FeatureShowcaseCategoryType = 
+  | 'User Experience'
+  | 'Analytics'
+  | 'Content Management'
+  | 'Social Features'
+  | 'Promotional Tools'
+  | 'Security'
+  | 'Administration'
+  | 'Core Features'
+  | 'Venue Management'
+  | 'Ticketing'
+  | 'Reward System';
+
+export interface FeatureShowcaseData {
+  id: string;
+  originalFeature: FeatureItem;
+  name: string;
+  description: string;
+  showcaseCategory: FeatureShowcaseCategoryType;
+  implementationStatus: string;
+  implementationPercentage: number;
+  businessValue: string;
+  marketingPoints: string[];
+  isSignature: boolean;
+  icon?: string;
+  complexity?: string;
+  userImpact?: string;
+}
+
+export interface AnalysisStep {
+  id: string;
+  name: string;
+  description: string;
+  isComplete: boolean;
+  progress: number;
+  tasks?: string[];
+}
+
+export interface ImprovementItem {
+  id: string;
+  title: string;
+  description: string;
+  priority: 'low' | 'medium' | 'high' | 'critical';
+  difficulty: 'easy' | 'medium' | 'hard' | 'complex';
+  effort: number; // 1-5 scale
+  impact: number; // 1-5 scale
+  category: string;
+  status: 'proposed' | 'planned' | 'in-progress' | 'implemented' | 'rejected';
+  assignedTo?: string;
+  targetDate?: string;
+  createdAt: string;
+  updatedAt?: string;
+  tags: string[];
+  relatedFeatures?: string[];
+}
+
+export type SortField = 'priority' | 'difficulty' | 'effort' | 'impact' | 'title' | 'status' | 'category';
+export type SortOrder = 'asc' | 'desc';
