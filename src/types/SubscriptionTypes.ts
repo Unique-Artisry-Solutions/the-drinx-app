@@ -1,3 +1,4 @@
+
 export interface Subscription {
   id: string;
   subscriber_id: string;
@@ -11,6 +12,7 @@ export interface Subscription {
   promoter_name?: string;
   tier_name?: string;
   subscription_settings?: SubscriptionSettings;
+  notification_preferences?: NotificationPreferences;
 }
 
 export interface SubscriptionTier {
@@ -32,6 +34,13 @@ export interface SubscriptionSettings {
   notification_radius: number;
   created_at?: string;
   updated_at?: string;
+}
+
+export interface NotificationPreferences {
+  receive_event_updates: boolean;
+  receive_discount_codes: boolean;
+  receive_flyers: boolean;
+  receive_direct_messages: boolean;
 }
 
 export interface EventNotificationSchedule {
