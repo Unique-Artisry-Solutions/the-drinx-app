@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth';
-import { DiscountCode } from '@/utils/discountCodeUtils';
+import { DiscountCode, DiscountCodeType } from '@/utils/discountCodeUtils';
 
 interface SavedCodesContextType {
   savedCodes: DiscountCode[];
@@ -65,7 +65,8 @@ export const SavedCodesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           const formattedCodes = data
             .filter(item => item.establishment_promotions) // Filter out any null references
             .map(item => ({
-              ...item.establishment_promotions
+              ...item.establishment_promotions,
+              discount_type: mapDiscountType(item.establishment_promotions.discount_type) 
             }));
           
           setSavedCodes(formattedCodes);
@@ -91,6 +92,14 @@ export const SavedCodesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
     loadSavedCodes();
   }, [user, toast]);
+
+  // Helper function to map string discount types to our enum
+  const mapDiscountType = (type: string): DiscountCodeType => {
+    if (type === 'percentage' || type === 'fixed' || type === 'free_item') {
+      return type;
+    }
+    return 'fixed'; // Default fallback
+  };
 
   // Save a promotion code
   const saveCode = async (code: DiscountCode): Promise<boolean> => {
@@ -223,11 +232,12 @@ export const SavedCodesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           throw error;
         }
         
-        // Transform the data structure
+        // Transform the data structure with proper types
         const formattedCodes = data
           .filter(item => item.establishment_promotions) // Filter out any null references
           .map(item => ({
-            ...item.establishment_promotions
+            ...item.establishment_promotions,
+            discount_type: mapDiscountType(item.establishment_promotions.discount_type)
           }));
         
         setSavedCodes(formattedCodes);

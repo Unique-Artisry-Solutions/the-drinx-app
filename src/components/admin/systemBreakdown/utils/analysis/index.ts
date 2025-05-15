@@ -12,8 +12,8 @@ export { updateFeaturesDbStatus } from './databaseStatusUpdater';
 // Re-export the analyzeSwigCircuitSystem function
 export { analyzeSwigCircuitFeatures as analyzeSwigCircuitSystem } from './swigCircuitAnalyzer';
 // Re-export the analyzePromoterSystem function
-export { analyzePromoterSystem } from './featureAnalyzer';
+export { analyzePromoterSystem } from './promoterSystemAnalyzer';
 // Re-export the analyzeRewardSystem function
-export { analyzeRewardSystem } from './featureAnalyzer';
+export { analyzeRewardSystem } from './rewardSystemAnalyzer';
 // Re-export the analyzeAudienceRelationshipSystem function
 export { analyzeAudienceRelationshipSystem } from './audienceRelationshipAnalyzer';

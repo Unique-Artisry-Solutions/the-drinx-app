@@ -18,7 +18,8 @@ const EstablishmentDashboard: React.FC<EstablishmentDashboardProps> = ({ establi
     isLoading,
     error,
     handleAddPromotion,
-    handleDeletePromotion
+    handleDeletePromotion,
+    handleUpdatePromotion
   } = useEstablishmentPromotions(establishmentId);
 
   if (isLoading) {
@@ -45,6 +46,7 @@ const EstablishmentDashboard: React.FC<EstablishmentDashboardProps> = ({ establi
             promotions={promotions}
             handleAddPromotion={handleAddPromotion}
             handleDeletePromotion={handleDeletePromotion}
+            handleUpdatePromotion={handleUpdatePromotion}
           />
         </TabsContent>
         

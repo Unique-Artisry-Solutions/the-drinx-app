@@ -7,11 +7,12 @@ export interface SystemBreakdownProps {
   activeTab: string;
 }
 
-export type FeatureStatus = 'planned' | 'in-development' | 'completed' | 'implemented' | 'in_progress' | 'testing' | 'on-hold' | 'blocked' | 'partial';
+export type FeatureStatus = 'planned' | 'in_progress' | 'testing' | 'on-hold' | 'blocked' | 'partial' | 'implemented' | 'completed';
 export type FeaturePriority = 'low' | 'medium' | 'high' | 'critical';
 export type FeatureCategory = 'core' | 'audience' | 'advertisement' | 'stats' | 'ui' | 'promoter' | 'application' | 'user' | 'venue' | 'system';
 export type FeatureComplexity = 'low' | 'medium' | 'high';
-export type DatabaseStatus = 'not_started' | 'in_progress' | 'complete' | 'blocked' | 'partial';
+export type DatabaseStatus = 'not_started' | 'in_progress' | 'complete' | 'blocked' | 'partial' | 'implemented';
+export type AccessLevel = 'none' | 'read' | 'write' | 'full';
 
 export interface FeatureComponent {
   name: string;
@@ -140,7 +141,7 @@ export interface FeatureItem {
   databaseStatus?: DatabaseStatus;
   dbStatus?: DatabaseStatus;
   priority?: string;
-  complexity?: string;
+  complexity?: FeatureComplexity;
   tags?: string[];
   uiTasks?: string[];
   dbTasks?: string[];
@@ -154,17 +155,16 @@ export interface FeatureItem {
   dbRequirementsText?: string;
   databaseAnalysis?: string;
   originalStatus?: string;
-  adminAccess?: string;
-  establishmentAccess?: string;
-  individualAccess?: string;
-  promoterAccess?: string;
+  adminAccess?: AccessLevel;
+  establishmentAccess?: AccessLevel;
+  individualAccess?: AccessLevel;
+  promoterAccess?: AccessLevel;
   userImpact?: FeatureBusinessValueType;
-  // Additional properties needed for compatibility
+  dbCompleted?: boolean;  // Adding this to fix error, using boolean type
   implementation?: number;
   components?: FeatureComponent[];
   tasks?: Task[];
   integrations?: any;
-  dbCompleted?: boolean;
 }
 
 export type FeatureShowcaseCategoryType = 
@@ -180,12 +180,14 @@ export type FeatureShowcaseCategoryType =
   | 'Ticketing'
   | 'Reward System'
   | 'Management Tools'
-  | 'AI & Recommendations'  // Add additional categories used
+  | 'AI & Recommendations'
   | 'Social Experience'
   | 'Business Analytics'
   | 'User Engagement'
   | 'Customization'
-  | 'Loyalty & Rewards';
+  | 'Loyalty & Rewards'
+  | 'Location Services'
+  | 'General Features';
 
 export interface FeatureShowcaseData {
   id: string;
@@ -201,9 +203,9 @@ export interface FeatureShowcaseData {
   complexity?: string;
   userImpact?: string;
   originalFeature?: FeatureItem;
-  // Add these fields that were missing
   implementations?: number;
   avgRating?: number;
+  categories?: string[];
 }
 
 export interface AnalysisStep {
@@ -248,3 +250,7 @@ export interface ImprovementItem {
 
 export type SortField = 'priority' | 'difficulty' | 'effort' | 'impact' | 'title' | 'status' | 'category' | 'votes' | 'submittedDate' | 'type' | 'lovableCompatible' | 'name';
 export type SortOrder = 'asc' | 'desc';
+
+export interface DiscountCodeType {
+  discountType: 'fixed' | 'percentage' | 'free_item';
+}

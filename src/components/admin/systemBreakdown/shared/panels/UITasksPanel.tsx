@@ -18,7 +18,7 @@ const isFeatureInProgress = (status: string): boolean => {
 };
 
 const isFeatureComplete = (status: string): boolean => {
-  return status === 'implemented';
+  return status === 'implemented' || status === 'completed';
 };
 
 export const UITasksPanel: React.FC<UITasksPanelProps> = ({ feature }) => {

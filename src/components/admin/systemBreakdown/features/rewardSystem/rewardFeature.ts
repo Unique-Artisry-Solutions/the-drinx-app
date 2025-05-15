@@ -1,43 +1,41 @@
 
-// File: src/components/admin/systemBreakdown/features/rewardSystem/rewardFeature.ts
 import { FeatureItem } from '../../types';
 
-export const rewardSystemFeature: FeatureItem = {
-  id: 'reward-system',
-  name: 'Reward System',
-  description: 'A comprehensive reward and loyalty program for users and establishments',
-  status: 'implemented',
-  category: 'core',
-  complexity: 'high',
-  priority: 'high',
+export const rewardFeature: FeatureItem = {
+  id: "reward-program",
+  name: "Reward Program",
+  description: "A comprehensive reward system that allows users to earn and redeem points for various activities",
+  status: "implemented",
+  adminAccess: "full",
+  establishmentAccess: "read",
+  individualAccess: "read",
+  databaseStatus: "complete",
+  userImpact: "high",
+  complexity: "high",
   implementationProgress: 100,
-  adminAccess: 'full',
-  establishmentAccess: 'full',
-  individualAccess: 'full',
-  databaseStatus: 'complete',
-  userImpact: 'high',
+  dbCompleted: true, // Using boolean as the type requires
+  tags: ["reward", "loyalty", "user-engagement"],
   databaseAnalysis: `
-  # Reward System Database Schema Analysis
-
-  ## Core Tables
-  [x] reward_tiers - Defines levels in the loyalty program
-  [x] reward_offerings - Individual rewards that can be redeemed
-  [x] user_reward_profiles - Stores user's points, tier status
-  [x] reward_transactions - Tracks point earnings and redemptions
-  
-  ## Supporting Tables
-  [x] reward_settings - Configuration options for reward program
-  [x] reward_campaigns - For special/seasonal promotions
-  [x] reward_achievements - Milestone-based rewards
+    Database Implementation:
+    - [x] User rewards table implemented
+    - [x] Reward transactions table implemented
+    - [x] Reward tiers table implemented
+    - [x] Reward offerings table implemented
+    - [x] Reward redemptions table implemented
+    - [x] Reward rules table implemented
+    - [x] Achievement tracking system implemented
+    - [x] Streak tracking system implemented
   `,
-  dbRequirementsText: `Required tables:
-  - reward_tiers
-  - reward_offerings
-  - user_reward_profiles
-  - reward_transactions
-  - reward_settings (optional)
-  - reward_campaigns (for promotions)
-  - reward_achievements (for milestones)`,
-  tags: ['core-feature', 'signature', 'high-impact'],
-  dbCompleted: true
+  testSteps: [
+    "Create test user with no rewards",
+    "Perform action that should earn rewards",
+    "Verify points are added to user's account",
+    "Test redemption of reward points for a discount",
+    "Test achievement unlocking mechanism",
+    "Test streak maintenance and rewards",
+    "Test milestone notifications"
+  ]
 };
+
+// Also export as rewardProgramFeature for backward compatibility
+export const rewardProgramFeature = rewardFeature;

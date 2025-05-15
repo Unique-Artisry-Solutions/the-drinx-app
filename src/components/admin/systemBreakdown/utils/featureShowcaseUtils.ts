@@ -1,164 +1,101 @@
 
 import { FeatureItem, FeatureShowcaseData, FeatureShowcaseCategoryType } from '../types';
-import { 
-  isAIFeature,
-  isAnalyticsFeature,
-  isMapFeature,
-  isExplorationFeature,
-  isIngredientPairingFeature,
-  isMocktailSuggestionFeature,
-  isMocktailTrendsFeature,
-  isNotificationFeature,
-  isPromotionFeature,
-  isRewardProgramFeature,
-  isSignatureFeature,
-  isSocialFeature,
-  isSystemBreakdownFeature,
-  isThemeFeature,
-  isDashboardFeature,
-  isVisitTrackingFeature,
-  isBarCrawlFeature,
-  isEstablishmentManagementFeature
-} from './featureDetection';
 
-/**
- * Transforms a FeatureItem into FeatureShowcaseData format
- */
-export const transformFeatureToShowcase = (feature: FeatureItem): FeatureShowcaseData => {
+export const mapFeatureToShowcaseData = (feature: FeatureItem): FeatureShowcaseData => {
+  // Determine the showcase category based on feature tags or name
+  let showcaseCategory: FeatureShowcaseCategoryType = 'Core Features';
+  
+  if ((feature.tags || []).includes('social') || (feature.tags || []).includes('community')) {
+    showcaseCategory = 'Social Features';
+  } else if ((feature.tags || []).includes('analytics') || (feature.tags || []).includes('reporting')) {
+    showcaseCategory = 'Analytics';
+  } else if ((feature.tags || []).includes('reward') || (feature.tags || []).includes('loyalty')) {
+    showcaseCategory = 'Reward System';
+  } else if ((feature.tags || []).includes('venue') || (feature.tags || []).includes('establishment')) {
+    showcaseCategory = 'Venue Management';
+  } else if ((feature.tags || []).includes('ticketing') || (feature.tags || []).includes('event tickets')) {
+    showcaseCategory = 'Ticketing';
+  } else if ((feature.tags || []).includes('promotion') || (feature.tags || []).includes('marketing')) {
+    showcaseCategory = 'Promotional Tools';
+  } else if ((feature.tags || []).includes('ai') || (feature.tags || []).includes('recommendation')) {
+    showcaseCategory = 'AI & Recommendations';
+  } else if ((feature.tags || []).includes('management') || (feature.tags || []).includes('admin')) {
+    showcaseCategory = 'Management Tools';
+  } else if ((feature.tags || []).includes('content') || (feature.tags || []).includes('media')) {
+    showcaseCategory = 'Content Management';
+  } else if ((feature.tags || []).includes('security') || (feature.tags || []).includes('authentication')) {
+    showcaseCategory = 'Security';
+  } else if ((feature.tags || []).includes('user') || (feature.tags || []).includes('profile')) {
+    showcaseCategory = 'User Experience';
+  } else if ((feature.tags || []).includes('map') || (feature.tags || []).includes('location')) {
+    showcaseCategory = 'Location Services';
+  } else if ((feature.tags || []).includes('engagement') || (feature.tags || []).includes('notification')) {
+    showcaseCategory = 'User Engagement';
+  } else {
+    showcaseCategory = 'General Features';
+  }
+
+  // Generate some marketing points based on description and name
+  const marketingPoints: string[] = [];
+  
+  if (feature.description.length > 0) {
+    // Basic marketing point from description
+    marketingPoints.push(`Provides ${feature.name.toLowerCase()} functionality`);
+    
+    // Add additional marketing points based on tags if available
+    if (feature.tags && feature.tags.length > 0) {
+      if (feature.tags.includes('user-engagement')) {
+        marketingPoints.push('Increases user engagement and retention');
+      }
+      if (feature.tags.includes('analytics')) {
+        marketingPoints.push('Provides valuable insights through comprehensive analytics');
+      }
+      if (feature.tags.includes('social')) {
+        marketingPoints.push('Enhances social interaction between users');
+      }
+      if (feature.tags.includes('reward')) {
+        marketingPoints.push('Drives repeat visits through incentives');
+      }
+    }
+  }
+
+  // Determine if it's a signature feature based on user impact or complexity
+  const isSignature = feature.userImpact === 'high' && 
+    (feature.complexity === 'high' || feature.complexity === 'medium');
+
   return {
     id: feature.id,
     name: feature.name,
     description: feature.description,
-    businessValue: feature.userImpact || 'medium',
-    complexity: feature.complexity || 'medium',
+    showcaseCategory,
     implementationStatus: feature.status,
-    showcaseCategory: determineCategory(feature),
-    isSignature: isSignatureFeature(feature),
-    icon: determineIcon(feature),
-    marketingPoints: generateMarketingPoints(feature),
-    implementations: 0,
-    avgRating: 0,
-    categories: feature.tags || [],
-    businessValues: [feature.userImpact || 'medium']
+    implementationPercentage: feature.implementationProgress || 0,
+    businessValue: feature.userImpact || 'medium',
+    marketingPoints,
+    isSignature,
+    icon: determineBestIcon(feature),
+    complexity: feature.complexity,
+    userImpact: feature.userImpact,
+    originalFeature: feature,
+    implementations: 0,  // Default value for implementations
+    avgRating: 4.5      // Default value for avgRating
   };
 };
 
 /**
- * Determines the appropriate category for a feature
+ * Determine the best icon to represent a feature based on its properties
  */
-const determineCategory = (feature: FeatureItem): FeatureShowcaseCategoryType => {
-  if (isAIFeature(feature) || isMocktailSuggestionFeature(feature) || isMocktailTrendsFeature(feature)) {
-    return 'AI & Recommendations';
-  } else if (isSocialFeature(feature) || isBarCrawlFeature(feature)) {
-    return 'Social Experience';
-  } else if (isAnalyticsFeature(feature) || isDashboardFeature(feature)) {
-    return 'Business Analytics';
-  } else if (isVisitTrackingFeature(feature) || isExplorationFeature(feature)) {
-    return 'User Engagement';
-  } else if (isSystemBreakdownFeature(feature) || isEstablishmentManagementFeature(feature)) {
-    return 'Management Tools';
-  } else if (isThemeFeature(feature)) {
-    return 'Customization';
-  } else if (isRewardProgramFeature(feature) || isPromotionFeature(feature)) {
-    return 'Loyalty & Rewards';
-  } else if (isMapFeature(feature)) {
-    return 'Location Services';
-  }
+function determineBestIcon(feature: FeatureItem): string {
+  const tags = feature.tags || [];
   
-  // Default category
-  return 'General Features';
-};
-
-/**
- * Determines an appropriate icon name for a feature
- */
-const determineIcon = (feature: FeatureItem): string => {
-  if (isAIFeature(feature)) return 'brain';
-  if (isBarCrawlFeature(feature)) return 'route';
-  if (isMocktailSuggestionFeature(feature)) return 'glass-water';
-  if (isVisitTrackingFeature(feature)) return 'map-pin';
-  if (isRewardProgramFeature(feature)) return 'award';
-  if (isThemeFeature(feature)) return 'palette';
-  if (isPromotionFeature(feature)) return 'ticket';
-  if (isAnalyticsFeature(feature)) return 'bar-chart';
-  if (isMapFeature(feature)) return 'map';
-  if (isSocialFeature(feature)) return 'users';
-  if (isDashboardFeature(feature)) return 'layout';
-  if (isSystemBreakdownFeature(feature)) return 'settings';
+  if (tags.includes('reward') || tags.includes('loyalty')) return 'Award';
+  if (tags.includes('analytics') || tags.includes('reporting')) return 'BarChart2';
+  if (tags.includes('social') || tags.includes('community')) return 'Users';
+  if (tags.includes('ticketing') || tags.includes('event')) return 'Ticket';
+  if (tags.includes('map') || tags.includes('location')) return 'MapPin';
+  if (tags.includes('security') || tags.includes('authentication')) return 'Shield';
+  if (tags.includes('ai') || tags.includes('recommendation')) return 'Brain';
   
   // Default icon
-  return 'star';
-};
-
-/**
- * Generates marketing points based on feature characteristics
- */
-const generateMarketingPoints = (feature: FeatureItem): string[] => {
-  const points: string[] = [];
-  
-  if (feature.description) {
-    points.push(feature.description);
-  }
-  
-  if (feature.userImpact === 'high') {
-    points.push('High business impact feature');
-  }
-  
-  if (isSignatureFeature(feature)) {
-    points.push('Signature platform capability');
-  }
-  
-  return points;
-};
-
-/**
- * Main export function that prepares feature showcase data
- */
-export const prepareFeatureShowcaseData = (features: FeatureItem[]): FeatureShowcaseData[] => {
-  return features.map(transformFeatureToShowcase);
-};
-
-/**
- * Generates a markdown report for features
- */
-export const generateFeatureReport = (features: FeatureShowcaseData[], includeDevelopmentDetails: boolean = false): string => {
-  const signatureFeatures = features.filter(f => f.isSignature);
-  const categories = Array.from(new Set(features.map(f => f.showcaseCategory)));
-  
-  let report = `# Feature Report\n\n`;
-  report += `## Executive Summary\n\n`;
-  report += `The platform offers ${features.length} features across ${categories.length} functional categories, `;
-  report += `with ${signatureFeatures.length} signature capabilities.\n\n`;
-  
-  report += `## Signature Features\n\n`;
-  signatureFeatures.forEach(feature => {
-    report += `### ${feature.name}\n`;
-    report += `${feature.description}\n\n`;
-    if (feature.marketingPoints && feature.marketingPoints.length > 0) {
-      report += `**Value Proposition:**\n`;
-      feature.marketingPoints.forEach(point => {
-        report += `- ${point}\n`;
-      });
-      report += '\n';
-    }
-  });
-  
-  report += `## Feature Categories\n\n`;
-  categories.forEach(category => {
-    const categoryFeatures = features.filter(f => f.showcaseCategory === category);
-    report += `### ${category} (${categoryFeatures.length} features)\n`;
-    
-    categoryFeatures.forEach(feature => {
-      report += `- **${feature.name}**: ${feature.description}\n`;
-      
-      if (includeDevelopmentDetails) {
-        report += `  - Implementation Status: ${feature.implementationStatus}\n`;
-        report += `  - Business Value: ${feature.businessValue}\n`;
-        report += `  - Complexity: ${feature.complexity}\n`;
-      }
-    });
-    report += '\n';
-  });
-  
-  return report;
-};
+  return 'Star';
+}

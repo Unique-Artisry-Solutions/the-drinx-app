@@ -1,23 +1,36 @@
 
-import { User, Session } from '@supabase/supabase-js';
+// Auth Types
+export type UserType = 'individual' | 'establishment' | 'promoter' | 'admin';
 
-/**
- * Central definition for authentication-related types
- */
+export type ValidDays = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
 
-export interface AuthContextState {
-  user: User | null;
-  session: Session | null;
-  isLoading: boolean;
-  isEmailVerified: boolean;
-  authStable: boolean;
-  authError: Error | null;
+export type UserSegmentType = 'all' | 'new' | 'loyal' | 'inactive' | 'vip' | 'birthday';
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  userType?: UserType;
+  username?: string;
+  firstName?: string;
+  lastName?: string;
+  displayName?: string;
+  bio?: string;
+  avatar?: string;
+  phone?: string;
+  verified?: boolean;
+  preferences?: Record<string, any>;
 }
 
-export interface AuthContextValue extends AuthContextState {
-  signIn: (email: string, password: string) => Promise<{ error: Error | null; data: any }>;
-  signUp: (email: string, password: string, metadata?: Record<string, any>) => Promise<{ error: Error | null; data: any }>;
-  signOut: () => Promise<void>;
-  refreshSession: () => Promise<{ isEmailVerified: boolean }>;
-  recoverAuthState: () => Promise<boolean>;
+export interface SignInCredentials {
+  email: string;
+  password: string;
+}
+
+export interface SignUpCredentials extends SignInCredentials {
+  userType: UserType;
+  username?: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  acceptTerms: boolean;
 }
