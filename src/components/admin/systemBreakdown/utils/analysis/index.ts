@@ -6,13 +6,14 @@ export * from './promoterSystemAnalyzer';
 export * from './rewardSystemAnalyzer';
 export * from './audienceRelationshipAnalyzer';
 
-// Re-export the analyzeDatabaseStatus function from databaseStatusUpdater
-export { updateFeaturesDbStatus as analyzeDatabaseStatus } from './databaseStatusUpdater';
+// Re-export the analyzeDatabaseStatus function
+export { analyzeDatabaseStatus } from './databaseStatusUpdater';
+export { updateFeaturesDbStatus } from './databaseStatusUpdater';
 // Re-export the analyzeSwigCircuitSystem function
 export { analyzeSwigCircuitFeatures as analyzeSwigCircuitSystem } from './swigCircuitAnalyzer';
 // Re-export the analyzePromoterSystem function
-export { analyzePromoterSystem } from './promoterSystemAnalyzer';
+export { analyzePromoterSystem } from './featureAnalyzer';
 // Re-export the analyzeRewardSystem function
-export { analyzeRewardSystem } from './rewardSystemAnalyzer';
+export { analyzeRewardSystem } from './featureAnalyzer';
 // Re-export the analyzeAudienceRelationshipSystem function
 export { analyzeAudienceRelationshipSystem } from './audienceRelationshipAnalyzer';

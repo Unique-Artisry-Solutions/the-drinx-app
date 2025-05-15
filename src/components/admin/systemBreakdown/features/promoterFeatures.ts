@@ -1,17 +1,17 @@
 
-import { SystemFeature } from '../types';
+import { SystemFeature, FeatureItem } from '../types';
 import { ticketManagement } from './promoterFeatures/ticketManagement';
 import { promotionalToolsFeature } from './promoterFeatures/promotionalTools';
 
-export const promoterFeatures: SystemFeature[] = [
-  promotionalToolsFeature,
-  ticketManagement,
+export const promoterFeatures: FeatureItem[] = [
+  promotionalToolsFeature as FeatureItem,
+  ticketManagement as FeatureItem,
   {
     id: 'follower-management',
     name: 'Follower Management',
     description: 'Tools for promoters to manage followers, build an audience, and engage with their community.',
     category: 'promoter',
-    status: 'in-progress',
+    status: 'in_progress',
     implementation: 0.7,
     priority: 'high',
     components: [
@@ -22,12 +22,12 @@ export const promoterFeatures: SystemFeature[] = [
       },
       {
         name: 'Communication Tools',
-        status: 'in-progress',
+        status: 'in_progress',
         implementation: 0.6
       },
       {
         name: 'Analytics',
-        status: 'in-progress',
+        status: 'in_progress',
         implementation: 0.6
       },
       {
@@ -50,7 +50,7 @@ export const promoterFeatures: SystemFeature[] = [
     name: 'Venue Relationship Management',
     description: 'Interface for promoters to connect with venues, manage relationships, and coordinate events.',
     category: 'promoter',
-    status: 'in-progress',
+    status: 'in_progress',
     implementation: 0.5,
     priority: 'medium',
     components: [
@@ -61,7 +61,7 @@ export const promoterFeatures: SystemFeature[] = [
       },
       {
         name: 'Communication Channel',
-        status: 'in-progress',
+        status: 'in_progress',
         implementation: 0.6
       },
       {

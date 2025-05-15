@@ -6,18 +6,18 @@ export const promotionalToolsFeature: SystemFeature = {
   name: 'Promotional Tools',
   description: 'Tools for promoters to create and manage marketing materials, campaigns, and promotions.',
   category: 'promoter',
-  status: 'in-progress',
+  status: 'in_progress',
   implementation: 0.65,
   priority: 'high',
   components: [
     {
       name: 'Campaign Creation',
-      status: 'in-progress',
+      status: 'in_progress',
       implementation: 0.7
     },
     {
       name: 'Marketing Materials Manager',
-      status: 'in-progress',
+      status: 'in_progress',
       implementation: 0.6
     },
     {

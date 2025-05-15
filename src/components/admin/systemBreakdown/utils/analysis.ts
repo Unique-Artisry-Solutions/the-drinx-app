@@ -1,5 +1,5 @@
 
-import { AnalysisStep, FeatureItem, DatabaseStatus } from '../types';
+import { AnalysisStep, FeatureItem } from '../types';
 import { 
   analyzeDatabaseStatus, 
   analyzeSwigCircuitSystem, 

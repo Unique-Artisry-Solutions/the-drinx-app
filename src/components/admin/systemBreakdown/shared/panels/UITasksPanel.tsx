@@ -13,21 +13,21 @@ interface UITasksPanelProps {
   feature: FeatureItem;
 }
 
-const isFeatureInProgress = (status: FeatureStatus): boolean => {
-  return ['in_progress', 'partial', 'implemented'].includes(status);
+const isFeatureInProgress = (status: string): boolean => {
+  return ['in_progress', 'partial', 'implemented'].includes(status as FeatureStatus);
 };
 
-const isFeatureComplete = (status: FeatureStatus): boolean => {
+const isFeatureComplete = (status: string): boolean => {
   return status === 'implemented';
 };
 
 export const UITasksPanel: React.FC<UITasksPanelProps> = ({ feature }) => {
   const tasks = [
-    { text: 'Component design', isCompleted: isFeatureInProgress(feature.status as FeatureStatus) },
-    { text: 'State management', isCompleted: isFeatureInProgress(feature.status as FeatureStatus) },
-    { text: 'API integration', isCompleted: (feature.status === 'implemented' || feature.status === 'partial') as boolean },
-    { text: 'Responsive design', isCompleted: isFeatureComplete(feature.status as FeatureStatus) },
-    { text: 'Accessibility compliance', isCompleted: isFeatureComplete(feature.status as FeatureStatus) }
+    { text: 'Component design', isCompleted: isFeatureInProgress(feature.status) },
+    { text: 'State management', isCompleted: isFeatureInProgress(feature.status) },
+    { text: 'API integration', isCompleted: (feature.status === 'implemented' || feature.status === 'partial') },
+    { text: 'Responsive design', isCompleted: isFeatureComplete(feature.status) },
+    { text: 'Accessibility compliance', isCompleted: isFeatureComplete(feature.status) }
   ];
 
   return (

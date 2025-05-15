@@ -46,7 +46,7 @@ export const determineComplexity = (feature: FeatureItem): FeatureComplexity => 
   if (
     isAIFeature(feature) ||
     isAnalyticsFeature(feature) ||
-    isPromotionFeature(feature) && (feature.dbStatus === 'complete')
+    (isPromotionFeature(feature) && (feature.databaseStatus === 'complete'))
   ) {
     return 'high';
   } else if (
@@ -59,4 +59,3 @@ export const determineComplexity = (feature: FeatureItem): FeatureComplexity => 
   
   return 'low';
 };
-

@@ -77,9 +77,9 @@ export function analyzeSwigCircuitSystem(features: FeatureItem[]): FeatureItem[]
       // Ensure Swig Circuit features have appropriate database status
       return {
         ...feature,
-        databaseStatus: feature.status === 'implemented' ? 'complete' : 
-                        feature.status === 'in_progress' ? 'in_progress' : 
-                        feature.databaseStatus || 'not_started'
+        databaseStatus: feature.status === 'implemented' ? 'complete' as const : 
+                        feature.status === 'in_progress' ? 'in_progress' as const : 
+                        feature.databaseStatus || 'not_started' as const
       };
     }
     return feature;
@@ -96,33 +96,12 @@ export function analyzeRewardSystem(features: FeatureItem[]): FeatureItem[] {
       return {
         ...feature,
         // If it's a reward feature, ensure database status is consistent with feature status
-        databaseStatus: feature.status === 'implemented' ? 'complete' : 
-                        feature.status === 'partial' ? 'partial' : 
-                        feature.status === 'in_progress' ? 'in_progress' : 
-                        feature.databaseStatus || 'not_started'
+        databaseStatus: feature.status === 'implemented' ? 'complete' as const : 
+                        feature.status === 'partial' ? 'partial' as const : 
+                        feature.status === 'in_progress' ? 'in_progress' as const : 
+                        feature.databaseStatus || 'not_started' as const
       };
     }
-    return feature;
-  });
-}
-
-/**
- * Updates the database status of features
- */
-export function updateFeaturesDbStatus(features: FeatureItem[]): FeatureItem[] {
-  return features.map(feature => {
-    // If there's database analysis, update status based on that
-    if (feature.databaseAnalysis) {
-      const dbAnalysisText = feature.databaseAnalysis.toLowerCase();
-      if (dbAnalysisText.includes('[x]') && !dbAnalysisText.includes('[ ]')) {
-        // All checkboxes marked - complete
-        return { ...feature, databaseStatus: 'complete' };
-      } else if (dbAnalysisText.includes('[x]')) {
-        // Some checkboxes marked - partial
-        return { ...feature, databaseStatus: 'partial' };
-      }
-    }
-    
     return feature;
   });
 }

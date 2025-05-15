@@ -112,7 +112,7 @@ function mapFeatureItemToShowcaseData(feature: FeatureItem): FeatureShowcaseData
     complexity: feature.complexity || 'medium',
     implementationStatus: feature.status,
     implementationPercentage: feature.implementationProgress || 0,
-    showcaseCategory: 'Management Tools' as FeatureShowcaseCategoryType,
+    showcaseCategory: 'Management Tools',
     isSignature: feature.tags?.includes('signature') || false,
     icon: 'Star',
     implementations: 0,

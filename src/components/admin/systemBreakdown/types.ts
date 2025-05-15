@@ -9,12 +9,15 @@ export interface SystemBreakdownProps {
 
 export type FeatureStatus = 'planned' | 'in-development' | 'completed' | 'implemented' | 'in_progress' | 'testing' | 'on-hold' | 'blocked' | 'partial';
 export type FeaturePriority = 'low' | 'medium' | 'high' | 'critical';
-export type FeatureCategory = 'core' | 'audience' | 'advertisement' | 'stats' | 'ui' | 'promoter' | 'application' | 'user' | 'venue';
+export type FeatureCategory = 'core' | 'audience' | 'advertisement' | 'stats' | 'ui' | 'promoter' | 'application' | 'user' | 'venue' | 'system';
+export type FeatureComplexity = 'low' | 'medium' | 'high';
+export type DatabaseStatus = 'not_started' | 'in_progress' | 'complete' | 'blocked' | 'partial';
 
 export interface FeatureComponent {
   name: string;
   status: FeatureStatus;
   implementation: number; // 0-1
+  type?: string; // Add this to support the admin features index
 }
 
 export interface Task {
@@ -112,10 +115,7 @@ export interface MonthlyProgressData {
   backend: number;
 }
 
-export interface FeatureBusinessValueType {
-  value: string;
-  label: string;
-}
+export type FeatureBusinessValueType = 'low' | 'medium' | 'high';
 
 export interface FeatureBusinessValueObject {
   value: string;
@@ -137,8 +137,8 @@ export interface FeatureItem {
   implementationProgress?: number;
   frontendStatus?: string;
   backendStatus?: string;
-  databaseStatus?: string;
-  dbStatus?: string;
+  databaseStatus?: DatabaseStatus;
+  dbStatus?: DatabaseStatus;
   priority?: string;
   complexity?: string;
   tags?: string[];
@@ -158,7 +158,7 @@ export interface FeatureItem {
   establishmentAccess?: string;
   individualAccess?: string;
   promoterAccess?: string;
-  userImpact?: string;
+  userImpact?: FeatureBusinessValueType;
   // Additional properties needed for compatibility
   implementation?: number;
   components?: FeatureComponent[];
@@ -179,7 +179,13 @@ export type FeatureShowcaseCategoryType =
   | 'Venue Management'
   | 'Ticketing'
   | 'Reward System'
-  | 'Management Tools';
+  | 'Management Tools'
+  | 'AI & Recommendations'  // Add additional categories used
+  | 'Social Experience'
+  | 'Business Analytics'
+  | 'User Engagement'
+  | 'Customization'
+  | 'Loyalty & Rewards';
 
 export interface FeatureShowcaseData {
   id: string;
@@ -188,13 +194,14 @@ export interface FeatureShowcaseData {
   showcaseCategory: FeatureShowcaseCategoryType;
   implementationStatus: string;
   implementationPercentage: number;
-  businessValue: string;
+  businessValue: FeatureBusinessValueType;
   marketingPoints: string[];
   isSignature: boolean;
   icon?: string;
   complexity?: string;
   userImpact?: string;
   originalFeature?: FeatureItem;
+  // Add these fields that were missing
   implementations?: number;
   avgRating?: number;
 }
@@ -241,6 +248,3 @@ export interface ImprovementItem {
 
 export type SortField = 'priority' | 'difficulty' | 'effort' | 'impact' | 'title' | 'status' | 'category' | 'votes' | 'submittedDate' | 'type' | 'lovableCompatible' | 'name';
 export type SortOrder = 'asc' | 'desc';
-
-// Define DatabaseStatus for use in utility functions
-export type DatabaseStatus = 'not_started' | 'in_progress' | 'complete' | 'blocked' | 'partial';

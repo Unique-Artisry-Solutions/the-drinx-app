@@ -31,52 +31,50 @@ export const adminFeatures: FeatureItem[] = [
     description: 'A system to manage feature access based on subscription tiers and user segments',
     status: 'implemented',
     statusUpdated: true,
-    category: 'system', // Now this is valid with the updated interface
+    category: 'system', 
     complexity: 'medium',
     adminAccess: 'full',
     establishmentAccess: 'partial',
     individualAccess: 'partial',
-    databaseStatus: 'implemented',
+    databaseStatus: 'complete',
     userImpact: 'medium',
     components: [
       {
         name: 'Feature Flags Database',
-        type: 'database',
-        status: 'completed',
+        status: 'implemented',
+        implementation: 1.0
       },
       {
         name: 'Feature Registry',
-        type: 'library',
-        status: 'completed',
+        status: 'implemented',
+        implementation: 1.0
       },
       {
         name: 'Feature Context',
-        type: 'context',
-        status: 'completed',
+        status: 'implemented',
+        implementation: 1.0
       },
       {
         name: 'FeatureGate Component',
-        type: 'component',
-        status: 'completed',
+        status: 'implemented',
+        implementation: 1.0
       },
       {
         name: 'API Client',
-        type: 'api',
-        status: 'completed',
+        status: 'implemented',
+        implementation: 1.0
       },
       {
         name: 'Feature Usage Analytics',
-        type: 'dashboard',
-        status: 'completed',
+        status: 'implemented',
+        implementation: 1.0
       },
       {
         name: 'Feature Monitoring',
-        type: 'dashboard',
-        status: 'completed',
-      },
+        status: 'implemented',
+        implementation: 1.0
+      }
     ],
-    lastUpdated: new Date().toISOString(),
-    assignedTo: 'dev-team',
     dependencies: ['auth-system', 'subscription-system'],
   },
 ];

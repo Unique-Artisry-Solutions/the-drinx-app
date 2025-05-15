@@ -1,4 +1,4 @@
-import { FeatureItem } from '../../types';
+import { FeatureItem, DatabaseStatus } from '../../types';
 
 /**
  * Updates database status of features based on analysis
@@ -11,7 +11,7 @@ export function analyzeDatabaseStatus(features: FeatureItem[]): FeatureItem[] {
     }
     
     // Otherwise, determine status based on feature status and other properties
-    let dbStatus: string = 'not_started'; // Default
+    let dbStatus: DatabaseStatus = 'not_started'; // Default
     
     if (feature.status === 'implemented') {
       dbStatus = 'complete';
@@ -30,5 +30,26 @@ export function analyzeDatabaseStatus(features: FeatureItem[]): FeatureItem[] {
       ...feature,
       databaseStatus: dbStatus
     };
+  });
+}
+
+/**
+ * Updates database status based on deeper feature analysis
+ */
+export function updateFeaturesDbStatus(features: FeatureItem[]): FeatureItem[] {
+  return features.map(feature => {
+    // If there's database analysis, update status based on that
+    if (feature.databaseAnalysis) {
+      const dbAnalysisText = feature.databaseAnalysis.toLowerCase();
+      if (dbAnalysisText.includes('[x]') && !dbAnalysisText.includes('[ ]')) {
+        // All checkboxes marked - complete
+        return { ...feature, databaseStatus: 'complete' as DatabaseStatus };
+      } else if (dbAnalysisText.includes('[x]')) {
+        // Some checkboxes marked - partial
+        return { ...feature, databaseStatus: 'partial' as DatabaseStatus };
+      }
+    }
+    
+    return feature;
   });
 }
