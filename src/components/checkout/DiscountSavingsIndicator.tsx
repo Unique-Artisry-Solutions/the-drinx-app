@@ -1,71 +1,86 @@
 
 import React from 'react';
-import { Badge } from '@/components/ui/badge';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { CircleDollarSign, Tag, Info } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Check, Tag } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { usePrevious } from '@/hooks/usePrevious';
 
 interface DiscountSavingsIndicatorProps {
-  originalPrice: number;
-  discountedPrice: number;
-  discountCode?: string;
-  discountType?: string;
+  discountAmount: number;
+  total: number;
+  animateSavings?: boolean;
+  className?: string;
 }
 
-const DiscountSavingsIndicator: React.FC<DiscountSavingsIndicatorProps> = ({
-  originalPrice,
-  discountedPrice,
-  discountCode,
-  discountType
-}) => {
-  // Calculate the savings amount and percentage
-  const savingsAmount = originalPrice - discountedPrice;
-  const savingsPercentage = (savingsAmount / originalPrice) * 100;
+export default function DiscountSavingsIndicator({ 
+  discountAmount, 
+  total,
+  animateSavings = true,
+  className
+}: DiscountSavingsIndicatorProps) {
+  const [isAnimating, setIsAnimating] = useState(false);
+  const prevDiscountAmount = usePrevious(discountAmount);
   
-  // No discount applied
-  if (savingsAmount <= 0) {
-    return null;
-  }
-  
-  // Determine badge color based on savings percentage
-  const getBadgeVariant = () => {
-    if (savingsPercentage >= 25) return 'success';
-    if (savingsPercentage >= 10) return 'default';
-    return 'outline';
-  };
-  
+  // Calculate savings percentage
+  const originalTotal = total + discountAmount;
+  const savingsPercentage = originalTotal > 0 
+    ? Math.round((discountAmount / originalTotal) * 100) 
+    : 0;
+    
+  useEffect(() => {
+    // Animate when discount changes and increases
+    if (animateSavings && 
+        prevDiscountAmount !== undefined && 
+        discountAmount > prevDiscountAmount) {
+      setIsAnimating(true);
+      
+      const timer = setTimeout(() => {
+        setIsAnimating(false);
+      }, 3000); // Animation duration
+      
+      return () => clearTimeout(timer);
+    }
+  }, [discountAmount, prevDiscountAmount, animateSavings]);
+
+  // Don't render if no discount
+  if (discountAmount <= 0) return null;
+
   return (
-    <div className="flex items-center justify-between py-2">
-      <div className="flex items-center space-x-2">
-        <Tag className="h-4 w-4 text-material-primary" />
-        <span className="text-sm font-medium">
-          {discountCode ? (
-            <>Code: <span className="font-semibold">{discountCode}</span></>
+    <div 
+      className={cn(
+        "flex items-center justify-between rounded-md border p-2",
+        isAnimating ? "bg-green-50 border-green-200 animate-pulse" : "bg-muted/50",
+        className
+      )}
+    >
+      <div className="flex items-center">
+        <div className={cn(
+          "flex items-center justify-center w-6 h-6 rounded-full mr-2",
+          isAnimating ? "bg-green-500 text-white" : "bg-muted text-foreground"
+        )}>
+          {isAnimating ? (
+            <Check className="h-4 w-4" />
           ) : (
-            'Discount applied'
+            <Tag className="h-4 w-4" />
           )}
+        </div>
+        <div>
+          <span className="font-medium">
+            {isAnimating ? "Savings Applied!" : "Discount Applied"}
+          </span>
+        </div>
+      </div>
+      <div className="flex items-center space-x-2">
+        <span className={cn(
+          "font-semibold",
+          isAnimating ? "text-green-600" : "text-foreground"
+        )}>
+          -${discountAmount.toFixed(2)}
+        </span>
+        <span className="text-xs text-muted-foreground bg-muted rounded-md px-1.5 py-0.5">
+          {savingsPercentage}% off
         </span>
       </div>
-      
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Badge variant={getBadgeVariant()} className="flex items-center space-x-1">
-              <CircleDollarSign className="h-3 w-3" />
-              <span>Save ${savingsAmount.toFixed(2)}</span>
-            </Badge>
-          </TooltipTrigger>
-          <TooltipContent>
-            <div className="text-xs">
-              <p className="font-semibold">You're saving ${savingsAmount.toFixed(2)} ({savingsPercentage.toFixed(1)}%)</p>
-              {discountType && (
-                <p className="text-gray-400">{discountType === 'percentage' ? 'Percentage discount' : 'Fixed amount discount'}</p>
-              )}
-            </div>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
     </div>
   );
-};
-
-export default DiscountSavingsIndicator;
+}

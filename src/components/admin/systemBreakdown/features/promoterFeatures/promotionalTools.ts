@@ -1,37 +1,71 @@
 
-import { FeatureItem } from '../../types';
+import { Feature } from '../../types';
 
-export const promotionalTools: FeatureItem = {
-  id: "promoter-7",
-  name: "Promotional Tools",
-  description: "Marketing and promotional tools for swig circuit and event promotion",
-  status: "implemented",
-  adminAccess: "full",
-  establishmentAccess: "partial",
-  individualAccess: "none",
-  promoterAccess: "full",
-  databaseStatus: "implemented",
-  userImpact: "high",
-  complexity: "medium",
-  implementationProgress: 100,
-  tags: ["promoter", "marketing", "discounts"],
-  databaseAnalysis: `
-    Database Implementation:
-    - [x] Promotion codes table implemented
-    - [x] Promotion redemptions tracking table implemented
-    - [x] Discount analytics tracking implemented
-    - [x] User saved codes functionality added
-    - [x] Promotion sharing mechanism implemented
-    - [x] Automatic code application logic implemented
-    - [x] Visual indicators for savings implemented
+export const promoCodeManagement: Feature = {
+  id: 'promo-code-management',
+  name: 'Promotion Code Management',
+  category: 'marketing',
+  description: 'Enables promoters to create, manage and track promotional codes for events',
+  implementation_status: 'completed',
+  tasks: [
+    {
+      name: 'Create promo code generator UI',
+      status: 'completed',
+      description: 'Implement the user interface for creating and managing promo codes'
+    },
+    {
+      name: 'Add batch creation capability',
+      status: 'completed',
+      description: 'Allow promoters to create multiple promotion codes at once'
+    },
+    {
+      name: 'Implement export/import functionality',
+      status: 'completed',
+      description: 'Enable export/import of promotion codes via CSV'
+    },
+    {
+      name: 'Add promo code analytics',
+      status: 'completed',
+      description: 'Show usage statistics and effectiveness metrics for promo codes'
+    },
+    {
+      name: 'Implement optimized code validation',
+      status: 'completed',
+      description: 'Performance-optimized validation logic for promotion codes with caching'
+    },
+    {
+      name: 'Add comprehensive audit logging',
+      status: 'completed',
+      description: 'Detailed activity tracking for all promotion code operations'
+    },
+    {
+      name: 'Implement enhanced error handling',
+      status: 'completed',
+      description: 'Improved error handling and user feedback for promotion code operations'
+    },
+  ],
+  dependencies: [
+    'database-schema',
+    'auth-system'
+  ],
+  ui_components: [
+    'PromoCodeGenerator',
+    'PromotionAuditLogs',
+  ],
+  api_endpoints: [
+    '/api/promotions',
+    '/api/promotions/{id}',
+    '/api/promotions/batch'
+  ],
+  technical_details: `
+    - Implemented optimized code validation with multi-level caching
+    - Added comprehensive audit logging for all promotion code operations
+    - Improved error handling with detailed feedback
+    - Enhanced performance for frequently used codes
   `,
-  testSteps: [
-    "Create a new promotion code for an establishment or event",
-    "Apply a promotion code during checkout",
-    "View the visual savings indicator during purchase",
-    "Save favorite promotion codes to user account",
-    "Share a promotion code via social media or email",
-    "Export and import promotion codes in batch",
-    "Analyze promotion code effectiveness in the admin dashboard"
+  business_value: [
+    'Allows promoters to create special offers to drive event attendance',
+    'Provides visibility into promotion effectiveness',
+    'Enables data-driven decisions about promotional strategies'
   ]
 };
