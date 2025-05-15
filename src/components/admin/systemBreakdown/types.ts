@@ -149,6 +149,17 @@ export interface FeatureItem {
   scheduledFor?: string;
   statusUpdated?: boolean;
   icon?: React.ReactNode;
+  // Additional properties needed to fix type issues
+  testSteps?: string[];
+  dbRequirementsText?: string;
+  databaseAnalysis?: string;
+  originalStatus?: string;
+  adminAccess?: string;
+  establishmentAccess?: string;
+  individualAccess?: string;
+  promoterAccess?: string;
+  dependsOn?: string[];
+  userImpact?: string;
 }
 
 export type FeatureShowcaseCategoryType = 
@@ -205,7 +216,19 @@ export interface ImprovementItem {
   updatedAt?: string;
   tags: string[];
   relatedFeatures?: string[];
+  // Additional properties needed to fix type issues
+  votes?: number;
+  submittedBy?: string;
+  submittedDate?: string;
+  type?: string;
+  lovableCompatible?: boolean;
+  technicalRequirements?: string;
+  implementationSteps?: string[];
+  estimatedEffort?: string;
+  businessImpact?: string;
+  currentStatus?: string;
+  affectedAreas?: string[];
 }
 
-export type SortField = 'priority' | 'difficulty' | 'effort' | 'impact' | 'title' | 'status' | 'category';
+export type SortField = 'priority' | 'difficulty' | 'effort' | 'impact' | 'title' | 'status' | 'category' | 'votes' | 'submittedDate' | 'type' | 'lovableCompatible' | 'name';
 export type SortOrder = 'asc' | 'desc';
