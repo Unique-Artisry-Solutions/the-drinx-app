@@ -1,113 +1,132 @@
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import { FeatureItem, AnalysisStep } from '../types';
+import { analyzeAllFeatures } from '../utils/analysis';
 import { useToast } from '@/hooks/use-toast';
-import { AnalysisStep, FeatureItem } from '../types';
-import { analyzeAllFeatures } from '../utils';
 
 /**
- * Hook to manage feature analysis process
+ * Hook to handle the feature analysis process
  */
 export const useAnalysisProcess = (
   adminFeatures: FeatureItem[],
   establishmentFeatures: FeatureItem[],
   individualFeatures: FeatureItem[],
   promoterFeatures: FeatureItem[],
-  setAdminFeatures: (features: FeatureItem[]) => void,
-  setEstablishmentFeatures: (features: FeatureItem[]) => void,
-  setIndividualFeatures: (features: FeatureItem[]) => void,
-  setPromoterFeatures: (features: FeatureItem[]) => void
+  setAdminFeatures: React.Dispatch<React.SetStateAction<FeatureItem[]>>,
+  setEstablishmentFeatures: React.Dispatch<React.SetStateAction<FeatureItem[]>>,
+  setIndividualFeatures: React.Dispatch<React.SetStateAction<FeatureItem[]>>,
+  setPromoterFeatures: React.Dispatch<React.SetStateAction<FeatureItem[]>>
 ) => {
   const { toast } = useToast();
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState(0);
-  const [analysisSteps, setAnalysisSteps] = useState<AnalysisStep[]>([]);
+  
+  // Default analysis steps
+  const [analysisSteps, setAnalysisSteps] = useState<AnalysisStep[]>([
+    { id: '1', name: 'Parse feature configuration', description: 'Loading and parsing feature definitions', isComplete: false, progress: 0 },
+    { id: '2', name: 'Analyze database requirements', description: 'Evaluating database schema needs', isComplete: false, progress: 0 },
+    { id: '3', name: 'Calculate implementation rates', description: 'Computing implementation percentages', isComplete: false, progress: 0 },
+    { id: '4', name: 'Update feature statuses', description: 'Updating feature implementation status', isComplete: false, progress: 0 },
+    { id: '5', name: 'Analyze reward system integration', description: 'Checking reward system dependencies', isComplete: false, progress: 0 },
+    { id: '6', name: 'Analyze promoter features', description: 'Evaluating promoter-specific features', isComplete: false, progress: 0 },
+    { id: '7', name: 'Analyze dependency relationships', description: 'Mapping feature interdependencies', isComplete: false, progress: 0 },
+    { id: '8', name: 'Generate database status report', description: 'Creating report of database implementations', isComplete: false, progress: 0 },
+    { id: '9', name: 'Execute performance analysis', description: 'Analyzing system performance metrics', isComplete: false, progress: 0 },
+    { id: '10', name: 'Check API compatibility', description: 'Validating API endpoint compatibility', isComplete: false, progress: 0 },
+    { id: '11', name: 'Verify test coverage of features', description: 'Checking test coverage for implemented features', isComplete: false, progress: 0 },
+    { id: '12', name: 'Analyze UI implementation', description: 'Evaluating UI component implementations', isComplete: false, progress: 0 },
+    { id: '13', name: 'Generate final report', description: 'Compiling analysis results', isComplete: false, progress: 0 }
+  ]);
 
-  const handleAnalyzeFeatures = (onAnalysisComplete?: (totalUpdated: number) => void) => {
-    setAnalyzing(true);
-    setAnalysisProgress(0);
-    
-    // Create initial database tasks array with reward system and promoter tasks
-    const initialDatabaseTasks: AnalysisStep[] = [
-      { name: 'Database schema verification', completed: false },
-      { name: 'API endpoints validation', completed: false },
-      { name: 'Authentication flow check', completed: false },
-      { name: 'User permissions validation', completed: false },
-      { name: 'Content moderation implementation', completed: false },
-      { name: 'Storage bucket configuration', completed: false },
-      { name: 'Database trigger functions verification', completed: false },
-      { name: 'Frontend component implementation check', completed: false },
-      { name: 'Reward system implementation analysis', completed: false },
-      { name: 'Reward program data validation', completed: false },
-      { name: 'Promoter notification triggers verification', completed: false },
-      { name: 'Event management system validation', completed: false },
-      { name: 'Notification delivery system check', completed: false }
-    ];
-    setAnalysisSteps(initialDatabaseTasks);
-    
-    // Simulate progress updates for each task
-    let currentStep = 0;
-    const totalSteps = initialDatabaseTasks.length;
-    
-    const progressInterval = setInterval(() => {
-      if (currentStep < totalSteps) {
-        const updatedSteps = [...initialDatabaseTasks];
-        
-        // Mark the current task as completed
-        updatedSteps[currentStep].completed = true;
-        setAnalysisSteps(updatedSteps);
-        
-        currentStep++;
-        setAnalysisProgress((currentStep / totalSteps) * 100);
-        
-        // If we've completed all steps, complete the analysis
-        if (currentStep >= totalSteps) {
-          clearInterval(progressInterval);
-          
-          // Slight delay before completing the analysis to show 100% progress
-          setTimeout(completeAnalysis, 500);
-        }
-      }
-    }, 600); // Update every 600ms
-    
-    const completeAnalysis = () => {
-      // Apply the actual analysis to the features
-      const analyzedFeatures = analyzeAllFeatures(
-        adminFeatures,
-        establishmentFeatures,
-        individualFeatures,
-        promoterFeatures
-      );
-      
-      // Important: Update the state with the analyzed features
-      setAdminFeatures([...analyzedFeatures.adminFeatures]);
-      setEstablishmentFeatures([...analyzedFeatures.establishmentFeatures]);
-      setIndividualFeatures([...analyzedFeatures.individualFeatures]);
-      setPromoterFeatures([...analyzedFeatures.promoterFeatures]);
-      setAnalysisSteps(analyzedFeatures.completedSteps);
-      
-      const totalUpdated = [
-        ...analyzedFeatures.adminFeatures,
-        ...analyzedFeatures.establishmentFeatures,
-        ...analyzedFeatures.individualFeatures,
-        ...analyzedFeatures.promoterFeatures
-      ].filter(feature => feature.statusUpdated).length;
-      
-      // Show a toast notification about the analysis results
-      toast({
-        title: "Analysis Complete",
-        description: `${totalUpdated} feature status${totalUpdated !== 1 ? 'es' : ''} updated based on database implementation.`,
-        duration: 5000,
-      });
-      
-      // Set analyzing to false to remove the progress bar
-      setAnalyzing(false);
-      
-      // Call the callback if provided
-      if (onAnalysisComplete) {
-        onAnalysisComplete(totalUpdated);
-      }
-    };
+  /**
+   * Updates a particular analysis step's progress and completion status
+   */
+  const updateAnalysisStep = (stepId: string, progress: number, isComplete: boolean) => {
+    setAnalysisSteps(prev => prev.map(step => 
+      step.id === stepId ? { ...step, progress, isComplete } : step
+    ));
   };
+
+  /**
+   * Function to analyze the features and update the status
+   */
+  const handleAnalyzeFeatures = useCallback((onComplete?: () => void) => {
+    setAnalyzing(true);
+    setAnalysisProgress(5);
+
+    // Simulate the analysis process with a timer
+    const timer = setTimeout(() => {
+      try {
+        // Update the steps as we go
+        updateAnalysisStep('1', 100, true);
+        setAnalysisProgress(15);
+        
+        setTimeout(() => {
+          updateAnalysisStep('2', 100, true);
+          setAnalysisProgress(30);
+          
+          setTimeout(() => {
+            updateAnalysisStep('3', 100, true);
+            setAnalysisProgress(45);
+            
+            setTimeout(() => {
+              updateAnalysisStep('4', 100, true);
+              setAnalysisProgress(60);
+              
+              // Run the actual feature analysis
+              const result = analyzeAllFeatures(
+                adminFeatures,
+                establishmentFeatures,
+                individualFeatures,
+                promoterFeatures
+              );
+              
+              // Update the remaining steps
+              updateAnalysisStep('5', 100, true);
+              updateAnalysisStep('6', 100, true);
+              updateAnalysisStep('7', 100, true);
+              updateAnalysisStep('8', 100, true);
+              updateAnalysisStep('9', 100, true);
+              updateAnalysisStep('10', 100, true);
+              updateAnalysisStep('11', 100, true);
+              updateAnalysisStep('12', 100, true);
+              updateAnalysisStep('13', 100, true);
+              
+              // Set the feature state with updated data
+              setAdminFeatures(result.adminFeatures);
+              setEstablishmentFeatures(result.establishmentFeatures);
+              setIndividualFeatures(result.individualFeatures);
+              setPromoterFeatures(result.promoterFeatures);
+              
+              // Complete the analysis
+              setAnalysisProgress(100);
+              setAnalyzing(false);
+              
+              // Notify user
+              toast({
+                title: "Analysis Complete",
+                description: "Feature analysis has been completed successfully.",
+              });
+              
+              // Call the onComplete callback if provided
+              if (onComplete) onComplete();
+            }, 500);
+          }, 500);
+        }, 500);
+      } catch (error) {
+        console.error('Error during feature analysis:', error);
+        setAnalyzing(false);
+        
+        toast({
+          title: "Analysis Error",
+          description: "An error occurred during feature analysis.",
+          variant: "destructive"
+        });
+      }
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [adminFeatures, establishmentFeatures, individualFeatures, promoterFeatures, setAdminFeatures, setEstablishmentFeatures, setIndividualFeatures, setPromoterFeatures, toast]);
 
   return {
     analyzing,

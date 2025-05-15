@@ -7,7 +7,7 @@ export interface SystemBreakdownProps {
   activeTab: string;
 }
 
-export type FeatureStatus = 'planned' | 'in-development' | 'completed' | 'implemented' | 'in-progress' | 'testing' | 'on-hold' | 'blocked' | 'partial';
+export type FeatureStatus = 'planned' | 'in-development' | 'completed' | 'implemented' | 'in_progress' | 'testing' | 'on-hold' | 'blocked' | 'partial';
 export type FeaturePriority = 'low' | 'medium' | 'high' | 'critical';
 export type FeatureCategory = 'core' | 'audience' | 'advertisement' | 'stats' | 'ui' | 'promoter' | 'application' | 'user' | 'venue';
 
@@ -132,7 +132,7 @@ export interface FeatureItem {
   id: string;
   name: string;
   description: string;
-  status: string;
+  status: FeatureStatus;
   category?: string;
   implementationProgress?: number;
   frontendStatus?: string;
@@ -146,10 +146,10 @@ export interface FeatureItem {
   dbTasks?: string[];
   testingTasks?: string[];
   dependencies?: string[];
+  dependsOn?: string[];
   scheduledFor?: string;
   statusUpdated?: boolean;
   icon?: React.ReactNode;
-  // Additional properties needed to fix type issues
   testSteps?: string[];
   dbRequirementsText?: string;
   databaseAnalysis?: string;
@@ -158,8 +158,13 @@ export interface FeatureItem {
   establishmentAccess?: string;
   individualAccess?: string;
   promoterAccess?: string;
-  dependsOn?: string[];
   userImpact?: string;
+  // Additional properties needed for compatibility
+  implementation?: number;
+  components?: FeatureComponent[];
+  tasks?: Task[];
+  integrations?: any;
+  dbCompleted?: boolean;
 }
 
 export type FeatureShowcaseCategoryType = 
@@ -173,11 +178,11 @@ export type FeatureShowcaseCategoryType =
   | 'Core Features'
   | 'Venue Management'
   | 'Ticketing'
-  | 'Reward System';
+  | 'Reward System'
+  | 'Management Tools';
 
 export interface FeatureShowcaseData {
   id: string;
-  originalFeature: FeatureItem;
   name: string;
   description: string;
   showcaseCategory: FeatureShowcaseCategoryType;
@@ -189,6 +194,9 @@ export interface FeatureShowcaseData {
   icon?: string;
   complexity?: string;
   userImpact?: string;
+  originalFeature?: FeatureItem;
+  implementations?: number;
+  avgRating?: number;
 }
 
 export interface AnalysisStep {
@@ -198,6 +206,7 @@ export interface AnalysisStep {
   isComplete: boolean;
   progress: number;
   tasks?: string[];
+  details?: string;
 }
 
 export interface ImprovementItem {
@@ -220,15 +229,18 @@ export interface ImprovementItem {
   votes?: number;
   submittedBy?: string;
   submittedDate?: string;
-  type?: string;
+  type?: 'new-feature' | 'enhancement';
   lovableCompatible?: boolean;
   technicalRequirements?: string;
   implementationSteps?: string[];
   estimatedEffort?: string;
   businessImpact?: string;
   currentStatus?: string;
-  affectedAreas?: string[];
+  affectedAreas?: ('admin' | 'individual' | 'establishment')[];
 }
 
 export type SortField = 'priority' | 'difficulty' | 'effort' | 'impact' | 'title' | 'status' | 'category' | 'votes' | 'submittedDate' | 'type' | 'lovableCompatible' | 'name';
 export type SortOrder = 'asc' | 'desc';
+
+// Define DatabaseStatus for use in utility functions
+export type DatabaseStatus = 'not_started' | 'in_progress' | 'complete' | 'blocked' | 'partial';

@@ -71,9 +71,11 @@ export function analyzeAllFeatures(
   const rewardSystemResult = analyzeRewardSystem(updatedIndividualFeatures);
   updatedIndividualFeatures = rewardSystemResult;
   completedSteps.push({
+    id: 'reward-system', 
     name: 'Analyzed reward system implementation',
-    completed: true,
-    details: 'Updated reward program implementation status and database requirements'
+    description: 'Updated reward program implementation status and database requirements',
+    isComplete: true, 
+    progress: 100
   });
   
   // Step 5: Analyze promoter system
@@ -96,9 +98,11 @@ export function analyzeAllFeatures(
   // Analyze promoter feature categories and requirements
   const promoterCategories = groupFeaturesByCategory(updatedPromoterFeatures);
   completedSteps.push({
+    id: 'promoter-categories', 
     name: 'Categorized promoter features',
-    completed: true,
-    details: `Found ${Object.keys(promoterCategories).length} feature categories`
+    description: 'Found ' + Object.keys(promoterCategories).length + ' feature categories',
+    isComplete: true, 
+    progress: 100
   });
   
   return {

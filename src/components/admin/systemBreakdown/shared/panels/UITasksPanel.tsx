@@ -23,11 +23,11 @@ const isFeatureComplete = (status: FeatureStatus): boolean => {
 
 export const UITasksPanel: React.FC<UITasksPanelProps> = ({ feature }) => {
   const tasks = [
-    { text: 'Component design', isCompleted: isFeatureInProgress(feature.status) },
-    { text: 'State management', isCompleted: isFeatureInProgress(feature.status) },
-    { text: 'API integration', isCompleted: feature.status === 'implemented' || feature.status === 'partial' },
-    { text: 'Responsive design', isCompleted: isFeatureComplete(feature.status) },
-    { text: 'Accessibility compliance', isCompleted: isFeatureComplete(feature.status) }
+    { text: 'Component design', isCompleted: isFeatureInProgress(feature.status as FeatureStatus) },
+    { text: 'State management', isCompleted: isFeatureInProgress(feature.status as FeatureStatus) },
+    { text: 'API integration', isCompleted: (feature.status === 'implemented' || feature.status === 'partial') as boolean },
+    { text: 'Responsive design', isCompleted: isFeatureComplete(feature.status as FeatureStatus) },
+    { text: 'Accessibility compliance', isCompleted: isFeatureComplete(feature.status as FeatureStatus) }
   ];
 
   return (

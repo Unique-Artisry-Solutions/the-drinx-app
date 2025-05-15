@@ -164,14 +164,14 @@ const FeatureTable: React.FC<FeatureTableProps> = ({ features }) => {
                 
                 <div>
                   <div className="text-sm font-medium">Implementations</div>
-                  <div>{selectedFeature.implementations ?? 'N/A'}</div>
+                  <div>{selectedFeature.implementations !== undefined ? selectedFeature.implementations : 'N/A'}</div>
                 </div>
                 
                 <div>
                   <div className="text-sm font-medium">Average Rating</div>
                   <div className="flex items-center gap-1">
                     <Icons.Star className="h-4 w-4 text-yellow-500" />
-                    {selectedFeature.avgRating?.toFixed(1) ?? 'N/A'}
+                    {selectedFeature.avgRating !== undefined ? selectedFeature.avgRating.toFixed(1) : 'N/A'}
                   </div>
                 </div>
               </div>

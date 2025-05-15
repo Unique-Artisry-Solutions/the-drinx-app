@@ -87,11 +87,11 @@ const SignatureFeatureSpotlight: React.FC<Props> = (props) => {
               </CardContent>
               <CardFooter className="flex justify-between border-t pt-4 text-sm text-gray-500">
                 <div>
-                  {feature.implementations ?? 0} Implementations
+                  {feature.implementations !== undefined ? feature.implementations : 0} Implementations
                 </div>
                 <div className="flex items-center">
                   <Star className="h-4 w-4 text-yellow-500 mr-1" /> 
-                  {feature.avgRating?.toFixed(1) ?? "N/A"}
+                  {feature.avgRating !== undefined ? feature.avgRating.toFixed(1) : "N/A"}
                 </div>
               </CardFooter>
             </Card>
@@ -108,17 +108,17 @@ function mapFeatureItemToShowcaseData(feature: FeatureItem): FeatureShowcaseData
     id: feature.id,
     name: feature.name,
     description: feature.description,
-    businessValue: (feature.userImpact as FeatureBusinessValueType) || 'medium',
+    businessValue: feature.userImpact || 'medium',
     complexity: feature.complexity || 'medium',
     implementationStatus: feature.status,
-    showcaseCategory: 'Management Tools', // Default category
+    implementationPercentage: feature.implementationProgress || 0,
+    showcaseCategory: 'Management Tools' as FeatureShowcaseCategoryType,
     isSignature: feature.tags?.includes('signature') || false,
     icon: 'Star',
     implementations: 0,
     avgRating: 0,
     marketingPoints: [],
-    categories: [],
-    businessValues: []
+    originalFeature: feature
   };
 }
 
