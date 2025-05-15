@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { CartItem } from '@/contexts/CartContext';
 import { autoApplyBestDiscount, AppliedDiscount } from '@/utils/discountCodeUtils';
 import { useAuth } from '@/contexts/auth';
+import { supabase } from '@/lib/supabase';
 
 interface DiscountCodeSectionProps {
   items: CartItem[];

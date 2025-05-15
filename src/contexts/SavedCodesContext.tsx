@@ -29,7 +29,7 @@ export const SavedCodesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       
       try {
         if (user) {
-          // User is logged in, fetch from database
+          // User is logged in, fetch from database using the fromTable helper
           const { data, error } = await supabase
             .from('user_saved_codes')
             .select(`
@@ -37,7 +37,7 @@ export const SavedCodesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
               user_id,
               code_id,
               saved_at,
-              establishment_promotions (
+              establishment_promotions:code_id (
                 id,
                 code,
                 description,
@@ -48,7 +48,6 @@ export const SavedCodesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
                 is_active,
                 establishment_id,
                 usage_limit,
-                usage_count,
                 valid_days,
                 valid_hours,
                 user_segment,
@@ -63,9 +62,11 @@ export const SavedCodesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           }
           
           // Transform the data structure
-          const formattedCodes = data.map(item => ({
-            ...item.establishment_promotions
-          }));
+          const formattedCodes = data
+            .filter(item => item.establishment_promotions) // Filter out any null references
+            .map(item => ({
+              ...item.establishment_promotions
+            }));
           
           setSavedCodes(formattedCodes);
         } else {
@@ -198,7 +199,7 @@ export const SavedCodesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             user_id,
             code_id,
             saved_at,
-            establishment_promotions (
+            establishment_promotions:code_id (
               id,
               code,
               description,
@@ -209,7 +210,6 @@ export const SavedCodesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
               is_active,
               establishment_id,
               usage_limit,
-              usage_count,
               valid_days,
               valid_hours,
               user_segment,
@@ -224,9 +224,11 @@ export const SavedCodesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         }
         
         // Transform the data structure
-        const formattedCodes = data.map(item => ({
-          ...item.establishment_promotions
-        }));
+        const formattedCodes = data
+          .filter(item => item.establishment_promotions) // Filter out any null references
+          .map(item => ({
+            ...item.establishment_promotions
+          }));
         
         setSavedCodes(formattedCodes);
       }

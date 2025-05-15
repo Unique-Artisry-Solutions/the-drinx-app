@@ -1,32 +1,14 @@
 
-/**
- * Types for the session management system
- */
-
-/**
- * Interface for session validation result
- */
-export interface SessionValidationResult {
-  isValid: boolean;
-  hasMismatch: boolean;
-  hasLocalStorage: boolean;
-  hasSupabaseSession: boolean;
-  errorDetails?: string;
+export interface Session {
+  access_token: string;
+  refresh_token: string;
+  user: {
+    id: string;
+    email: string;
+  };
 }
 
-/**
- * Interface for session recovery options
- */
-export interface SessionRecoveryOptions {
-  timeoutMs?: number;
-  autoRecovery?: boolean;
-  silent?: boolean;
-  redirectPath?: string;
-}
-
-/**
- * Interface for stuck state handler
- */
-export interface StuckStateHandler {
-  cancel: () => void;
+export interface SessionContextProps {
+  session: Session | null;
+  isLoading: boolean;
 }

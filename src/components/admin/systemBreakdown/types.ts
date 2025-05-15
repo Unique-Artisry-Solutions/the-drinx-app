@@ -1,154 +1,93 @@
 
-export type FeatureStatus = 'implemented' | 'in_progress' | 'planned' | 'blocked' | 'partial';
-export type DatabaseStatus = 'complete' | 'in_progress' | 'not_started' | 'implemented' | 'partial';
-export type AccessLevel = 'full' | 'partial' | 'read' | 'none' | 'write' | 'moderate';
-export type FeatureComplexity = 'high' | 'medium' | 'low';
-export type FeatureCategory = string;
-
-export interface FeatureItem {
-  id: string;
-  name: string;
-  description: string;
-  status: FeatureStatus;
-  adminAccess: AccessLevel;
-  establishmentAccess: AccessLevel;
-  individualAccess: AccessLevel;
-  promoterAccess?: AccessLevel; // Added promoterAccess property
-  databaseStatus: DatabaseStatus;
-  dbStatus?: DatabaseStatus;
-  userImpact: 'high' | 'medium' | 'low';
-  complexity: FeatureComplexity;
-  databaseAnalysis?: string;
-  statusUpdated?: boolean;
-  implementationProgress?: number;
-  dbCompleted?: number;
-  testSteps?: string[];
-  subFeatures?: SubFeature[];
-  originalStatus?: string;
-  tags?: string[];
-  dbRequirementsText?: string;
-  dependsOn?: string[];
-  scheduledFor?: string;
-  integrations?: string[]; // Added integrations property
-  category?: FeatureCategory; // Added category property
-  components?: Component[]; // Added components property
-  lastUpdated?: string; // Added lastUpdated property
-  assignedTo?: string; // Added assignedTo property
-  dependencies?: string[]; // Added dependencies property
+export interface SystemBreakdownProps {
+  activeTab: string;
 }
 
-// Add Component interface for the components property
-export interface Component {
-  name: string;
-  type: string;
-  status: string;
-}
+export type FeatureStatus = 'planned' | 'in-development' | 'completed' | 'implemented' | 'in-progress' | 'testing' | 'on-hold';
+export type FeaturePriority = 'low' | 'medium' | 'high' | 'critical';
+export type FeatureCategory = 'core' | 'audience' | 'advertisement' | 'stats' | 'ui' | 'promoter' | 'application' | 'user' | 'venue';
 
-export interface Phase {
+export interface FeatureComponent {
   name: string;
   status: FeatureStatus;
-  tasks: string[];
+  implementation: number; // 0-1
 }
 
-export interface SubFeature {
-  name: string;
-  status: FeatureStatus;
-  description: string;
-  progress: number;
-  phases?: Phase[];
-}
-
-export type FeatureShowcaseCategoryType = string;
-export type FeatureBusinessValueType = 'high' | 'medium' | 'low';
-
-export interface FeatureBusinessValueObject {
-  value: FeatureBusinessValueType;
-  label: string;
-  description: string;
-  color: string;
-  name: string;
-  features: FeatureItem[];
-  implementationRate: number;
-  featureCount?: number;
-}
-
-export interface FeatureShowcaseData {
-  id: string;
-  name: string;
-  description: string;
-  businessValue: FeatureBusinessValueType;
-  complexity: FeatureComplexity;
-  implementationStatus: FeatureStatus;
-  showcaseCategory: string;
-  isSignature: boolean;
-  icon: string;
-  implementations?: number;
-  avgRating?: number;
-  marketingPoints?: string[];
-  categories: string[];
-  businessValues: string[];
-}
-
-export interface ImprovementItem {
+export interface Task {
   id: string;
   title: string;
-  description: string;
-  impact: 'high' | 'medium' | 'low';
-  effort: 'high' | 'medium' | 'low';
-  priority: number;
-  category: string;
-  status: 'proposed' | 'approved' | 'in_progress' | 'completed' | 'rejected';
-  targetDate?: string;
+  status: 'planned' | 'in-progress' | 'completed';
   assignedTo?: string;
-  relatedFeatures?: string[];
-  type: 'enhancement' | 'new-feature';
-  votes: number;
-  submittedDate: string;
-  submittedBy: string;
-  lovableCompatible?: boolean;
-  technicalRequirements?: string;
-  implementationSteps: string[];
-  estimatedEffort: string;
-  businessImpact: string;
-  currentStatus?: string;
-  affectedAreas: ('admin' | 'establishment' | 'individual')[];
+  dueDate?: string;
 }
 
-export type SortField = 'priority' | 'impact' | 'effort' | 'title' | 'name' | 'status' | 'type' | 'lovableCompatible' | 'submittedDate' | 'votes';
-export type SortOrder = 'asc' | 'desc';
+export interface SystemFeature {
+  id: string;
+  name: string;
+  description: string;
+  category: FeatureCategory;
+  status: FeatureStatus;
+  implementation: number; // 0-1
+  priority: FeaturePriority;
+  components: FeatureComponent[];
+  dependencies: string[];
+  tasks: Task[];
+  businessCase?: BusinessCase;
+  mainFeature?: boolean;
+  comingSoon?: boolean;
+  beta?: boolean;
+  icon?: string;
+}
 
-export interface ProgressSnapshot {
-  timestamp: string;
-  date: string;
+export interface BusinessCase {
+  title: string;
+  value: string[];
+  impact: string;
+}
+
+export interface CategoryData {
+  name: string;
+  description: string;
+  features: SystemFeature[];
+  implementation: number; // 0-1
+  status: FeatureStatus;
+  icon?: string;
+}
+
+export interface ReleaseVersion {
+  version: string;
+  name: string;
+  description: string;
+  features: string[];
+  releaseDate: string;
+  status: 'planned' | 'in-development' | 'released';
+}
+
+export interface ProgressStatistics {
   totalFeatures: number;
-  implementedFeatures: number;
+  completedFeatures: number;
   inProgressFeatures: number;
   plannedFeatures: number;
-  blockedFeatures: number;
-  averageImplementationProgress: number;
-  frontendProgress: number;
-  backendProgress: number;
-  adminFeatureCount: number;
-  establishmentFeatureCount: number;
-  individualFeatureCount: number;
-  promoterFeatureCount: number;
-  adminImplementationRate: number;
-  establishmentImplementationRate: number;
-  individualImplementationRate: number;
-  promoterImplementationRate: number;
   overallProgress: number;
-  dbComplete: number;
-  confidenceScore: number;
 }
 
-export interface MonthlyProgressData {
-  month: string;
-  frontend: number;
-  backend: number;
+export interface CategoryProgress {
+  category: string;
+  progress: number;
+  features: number;
+  completedFeatures: number;
 }
 
-export interface AnalysisStep {
-  name: string;
-  completed: boolean;
-  details?: string;
+export interface ProgressSnapshot {
+  date: string;
+  overallProgress: number;
+  categoryProgress: {
+    [key: string]: number;
+  };
+}
+
+export interface SystemProgress {
+  currentProgress: ProgressStatistics;
+  categoryProgress: CategoryProgress[];
+  timeline: ProgressSnapshot[];
 }

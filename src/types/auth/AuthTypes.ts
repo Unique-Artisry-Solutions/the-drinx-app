@@ -1,13 +1,25 @@
 
-/**
- * Barrel export file for Authentication related types
- */
+export interface AuthUser {
+  id: string;
+  email?: string;
+  username?: string;
+  display_name?: string;
+  avatar_url?: string;
+  user_type?: string;
+}
 
-export * from './AuthTypes';
-export * from './SessionTypes';
+export interface AuthState {
+  user: AuthUser | null;
+  isLoading: boolean;
+  error: string | null;
+}
 
-// Valid days for promotions
-export type ValidDays = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday';
-
-// User segments for targeted promotions
-export type UserSegmentType = 'all' | 'new' | 'returning';
+export interface AuthContextProps {
+  user: AuthUser | null;
+  isLoading: boolean;
+  error: string | null;
+  signUp: (email: string, password: string, options?: any) => Promise<void>;
+  signIn: (email: string, password: string) => Promise<void>;
+  signOut: () => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
+}

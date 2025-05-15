@@ -1,241 +1,81 @@
 
-import { FeatureItem } from "../types";
-import { ticketManagement } from "./promoterFeatures/ticketManagement";
-import { promotionalTools } from "./promoterFeatures/promotionalTools";
+import { SystemFeature } from '../types';
+import { ticketManagementFeature } from './promoterFeatures/ticketManagement';
+import { promotionalToolsFeature } from './promoterFeatures/promotionalTools';
 
-export const promoterFeatures: FeatureItem[] = [
+export const promoterFeatures: SystemFeature[] = [
+  promotionalToolsFeature,
+  ticketManagementFeature,
   {
-    id: "promoter-1",
-    name: "Promoter Dashboard",
-    description: "Central dashboard for promoters to manage events, venues, and campaigns",
-    status: "implemented",
-    adminAccess: "moderate",
-    establishmentAccess: "none",
-    promoterAccess: "full",
-    individualAccess: "none",
-    databaseStatus: "implemented",
-    userImpact: "high",
-    complexity: "medium",
-    integrations: [
-      "Analytics services",
-      "Event management system",
-      "Venue database"
+    id: 'follower-management',
+    name: 'Follower Management',
+    description: 'Tools for promoters to manage followers, build an audience, and engage with their community.',
+    category: 'promoter',
+    status: 'in-progress',
+    implementation: 0.7,
+    priority: 'high',
+    components: [
+      {
+        name: 'Follower Database',
+        status: 'implemented',
+        implementation: 0.9
+      },
+      {
+        name: 'Communication Tools',
+        status: 'in-progress',
+        implementation: 0.6
+      },
+      {
+        name: 'Analytics',
+        status: 'in-progress',
+        implementation: 0.6
+      },
+      {
+        name: 'Engagement Features',
+        status: 'planned',
+        implementation: 0.3
+      }
     ],
-    implementationProgress: 80,
-    testSteps: [
-      "Log in as promoter",
-      "Verify dashboard loads with user-specific data",
-      "Check navigation to all promoter sections",
-      "Test data visualizations and summary widgets"
+    dependencies: ['core-authentication', 'notification-system'],
+    tasks: [
+      { id: 'fm-1', title: 'Build follower database structure', status: 'completed' },
+      { id: 'fm-2', title: 'Create follower management interface', status: 'completed' },
+      { id: 'fm-3', title: 'Implement follower insights', status: 'in-progress' },
+      { id: 'fm-4', title: 'Add communication features', status: 'in-progress' },
+      { id: 'fm-5', title: 'Develop engagement tracking', status: 'planned' }
     ]
   },
   {
-    id: "promoter-2",
-    name: "Event Creation & Management",
-    description: "Tools for promoters to create, schedule, and manage events across venues",
-    status: "implemented",
-    adminAccess: "moderate",
-    establishmentAccess: "read",
-    promoterAccess: "full",
-    individualAccess: "none",
-    databaseStatus: "complete",
-    userImpact: "high",
-    complexity: "high",
-    integrations: [
-      "Calendar systems",
-      "Venue database",
-      "Notification system", 
-      "Ticketing service"
+    id: 'venue-relationship-management',
+    name: 'Venue Relationship Management',
+    description: 'Interface for promoters to connect with venues, manage relationships, and coordinate events.',
+    category: 'promoter',
+    status: 'in-progress',
+    implementation: 0.5,
+    priority: 'medium',
+    components: [
+      {
+        name: 'Venue Directory',
+        status: 'implemented',
+        implementation: 0.95
+      },
+      {
+        name: 'Communication Channel',
+        status: 'in-progress',
+        implementation: 0.6
+      },
+      {
+        name: 'Booking Management',
+        status: 'planned',
+        implementation: 0.1
+      }
+    ],
+    dependencies: ['core-authentication', 'venue-management'],
+    tasks: [
+      { id: 'vrm-1', title: 'Create venue discovery interface', status: 'completed' },
+      { id: 'vrm-2', title: 'Build promoter-venue messaging system', status: 'in-progress' },
+      { id: 'vrm-3', title: 'Implement relationship tracking', status: 'in-progress' },
+      { id: 'vrm-4', title: 'Develop booking and availability system', status: 'planned' }
     ]
-  },
-  {
-    id: "promoter-3",
-    name: "Venue Communication System",
-    description: "Direct messaging system between promoters and venue managers",
-    status: "implemented",
-    adminAccess: "moderate",
-    establishmentAccess: "full",
-    promoterAccess: "full", 
-    individualAccess: "none",
-    databaseStatus: "complete",
-    userImpact: "high",
-    complexity: "medium"
-  },
-  {
-    id: "promoter-4",
-    name: "Marketing Campaign Management",
-    description: "Create and manage marketing campaigns for events with email and social media integration",
-    status: "implemented",
-    adminAccess: "read",
-    establishmentAccess: "none",
-    promoterAccess: "full",
-    individualAccess: "none",
-    databaseStatus: "complete",
-    userImpact: "high",
-    complexity: "high",
-    integrations: [
-      "Email service providers",
-      "Social media platforms",
-      "Analytics tracking",
-      "URL shorteners"
-    ],
-    implementationProgress: 95,
-    testSteps: [
-      "Create email marketing campaign",
-      "Test email sending functionality",
-      "Test social media sharing",
-      "Verify tracking and analytics"
-    ]
-  },
-  {
-    id: "promoter-5",
-    name: "Analytics Dashboard",
-    description: "Comprehensive analytics on event performance, audience demographics, and campaign effectiveness",
-    status: "implemented",
-    adminAccess: "read",
-    establishmentAccess: "none",
-    promoterAccess: "full",
-    individualAccess: "none",
-    databaseStatus: "complete",
-    userImpact: "high",
-    complexity: "high",
-    implementationProgress: 70
-  },
-  {
-    id: "promoter-6",
-    name: "Audience Management",
-    description: "Tools to manage and segment audience for targeted marketing",
-    status: "partial",
-    adminAccess: "read",
-    establishmentAccess: "none",
-    promoterAccess: "full",
-    individualAccess: "none",
-    databaseStatus: "in_progress",
-    userImpact: "medium",
-    complexity: "medium",
-    implementationProgress: 50
-  },
-  {
-    id: "promoter-7", 
-    name: "Subscription Management",
-    description: "Tools for managing promoter subscription levels and payments",
-    status: "planned",
-    adminAccess: "full",
-    establishmentAccess: "none",
-    promoterAccess: "read",
-    individualAccess: "none",
-    databaseStatus: "in_progress",
-    userImpact: "medium",
-    complexity: "medium"
-  },
-  {
-    id: "promoter-8",
-    name: "Bar Crawl Organization",
-    description: "Tools to create and manage bar crawl events across multiple venues",
-    status: "implemented",
-    adminAccess: "moderate",
-    establishmentAccess: "read", 
-    promoterAccess: "full",
-    individualAccess: "read",
-    databaseStatus: "complete",
-    userImpact: "high",
-    complexity: "high"
-  },
-  {
-    id: "promoter-9",
-    name: "Promotional Material Management",
-    description: "Upload and manage promotional materials for events and venues",
-    status: "implemented",
-    adminAccess: "moderate",
-    establishmentAccess: "read",
-    promoterAccess: "full",
-    individualAccess: "none",
-    databaseStatus: "complete",
-    userImpact: "medium",
-    complexity: "medium"
-  },
-  {
-    id: "promoter-10",
-    name: "Ticket Management System",
-    description: "Advanced ticketing system with payment processing, inventory management, and pricing options",
-    status: "in_progress",
-    adminAccess: "moderate",
-    establishmentAccess: "read",
-    promoterAccess: "full",
-    individualAccess: "none",
-    databaseStatus: "in_progress",
-    userImpact: "high",
-    complexity: "high",
-    integrations: [
-      "Payment gateways",
-      "Ticketing service",
-      "Email notification system",
-      "QR code generation"
-    ],
-    implementationProgress: 65,
-    testSteps: [
-      "Test payment processing with multiple gateways",
-      "Verify ticket inventory updates in real-time",
-      "Test discount code application and validation",
-      "Verify early bird and tiered pricing options"
-    ],
-    tags: ["tickets", "payments", "events"]
-  },
-  
-  {
-    id: "promoter-11",
-    name: "Discount Code Management",
-    description: "Create and manage discount codes for events with advanced validation rules",
-    status: "implemented",
-    adminAccess: "moderate",
-    establishmentAccess: "none",
-    promoterAccess: "full",
-    individualAccess: "none",
-    databaseStatus: "implemented",
-    userImpact: "medium",
-    complexity: "medium",
-    implementationProgress: 100,
-    integrations: [
-      "Ticketing system",
-      "Analytics service"
-    ],
-    testSteps: [
-      "Create various discount code types (percentage, fixed amount)",
-      "Test code validation with expiration dates",
-      "Test time-based restrictions (days, hours)",
-      "Test user segment targeting",
-      "Verify minimum purchase requirements",
-      "Test batch creation of codes",
-      "Verify analytics and export/import functionality"
-    ],
-    tags: ["tickets", "discounts", "events"]
-  },
-  
-  {
-    id: "promoter-12",
-    name: "Advanced Ticket Pricing",
-    description: "Configure tiered pricing, early bird rates, and VIP packages for events",
-    status: "in_progress",
-    adminAccess: "moderate",
-    establishmentAccess: "read",
-    promoterAccess: "full",
-    individualAccess: "none",
-    databaseStatus: "in_progress",
-    userImpact: "high",
-    complexity: "medium",
-    implementationProgress: 40,
-    integrations: [
-      "Ticketing system",
-      "Payment processor"
-    ],
-    testSteps: [
-      "Configure early bird pricing with automatic cutoff dates",
-      "Test tiered pricing levels based on ticket quantities",
-      "Verify VIP package creation and customization",
-      "Test pricing changes for dynamic pricing models"
-    ],
-    tags: ["tickets", "pricing", "events"]
   }
 ];
-
-export default promoterFeatures;
