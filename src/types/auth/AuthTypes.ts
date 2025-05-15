@@ -1,25 +1,23 @@
 
-export interface AuthUser {
-  id: string;
-  email?: string;
-  username?: string;
-  display_name?: string;
-  avatar_url?: string;
-  user_type?: string;
+import { User, Session } from '@supabase/supabase-js';
+
+/**
+ * Central definition for authentication-related types
+ */
+
+export interface AuthContextState {
+  user: User | null;
+  session: Session | null;
+  isLoading: boolean;
+  isEmailVerified: boolean;
+  authStable: boolean;
+  authError: Error | null;
 }
 
-export interface AuthState {
-  user: AuthUser | null;
-  isLoading: boolean;
-  error: string | null;
-}
-
-export interface AuthContextProps {
-  user: AuthUser | null;
-  isLoading: boolean;
-  error: string | null;
-  signUp: (email: string, password: string, options?: any) => Promise<void>;
-  signIn: (email: string, password: string) => Promise<void>;
+export interface AuthContextValue extends AuthContextState {
+  signIn: (email: string, password: string) => Promise<{ error: Error | null; data: any }>;
+  signUp: (email: string, password: string, metadata?: Record<string, any>) => Promise<{ error: Error | null; data: any }>;
   signOut: () => Promise<void>;
-  resetPassword: (email: string) => Promise<void>;
+  refreshSession: () => Promise<{ isEmailVerified: boolean }>;
+  recoverAuthState: () => Promise<boolean>;
 }

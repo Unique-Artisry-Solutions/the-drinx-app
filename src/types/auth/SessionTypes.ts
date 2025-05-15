@@ -1,14 +1,19 @@
 
-export interface Session {
-  access_token: string;
-  refresh_token: string;
-  user: {
-    id: string;
-    email: string;
-  };
+import { Session } from '@supabase/supabase-js';
+
+export interface SessionValidationResult {
+  isValid: boolean;
+  hasMismatch: boolean;
+  hasLocalStorage: boolean;
+  hasSupabaseSession: boolean;
+  errorDetails?: string;
 }
 
-export interface SessionContextProps {
-  session: Session | null;
-  isLoading: boolean;
+export interface SessionRecoveryOptions {
+  silent?: boolean;
+  redirectPath?: string;
+}
+
+export interface StuckStateHandler {
+  cancel: () => void;
 }
