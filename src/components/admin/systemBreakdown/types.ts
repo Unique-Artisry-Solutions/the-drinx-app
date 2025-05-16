@@ -1,4 +1,3 @@
-
 /**
  * System Breakdown Feature Types
  */
@@ -12,7 +11,7 @@ export type FeaturePriority = 'low' | 'medium' | 'high' | 'critical';
 export type FeatureCategory = 'core' | 'audience' | 'advertisement' | 'stats' | 'ui' | 'promoter' | 'application' | 'user' | 'venue' | 'system';
 export type FeatureComplexity = 'low' | 'medium' | 'high';
 export type DatabaseStatus = 'not_started' | 'in_progress' | 'complete' | 'blocked' | 'partial' | 'implemented';
-export type AccessLevel = 'none' | 'read' | 'write' | 'full';
+export type AccessLevel = 'none' | 'read' | 'write' | 'full' | 'partial';
 
 export interface FeatureComponent {
   name: string;
@@ -116,7 +115,7 @@ export interface MonthlyProgressData {
   backend: number;
 }
 
-export type FeatureBusinessValueType = 'low' | 'medium' | 'high';
+export type FeatureBusinessValueType = 'low' | 'medium' | 'high' | 'critical';
 
 export interface FeatureBusinessValueObject {
   value: string;
@@ -142,6 +141,7 @@ export interface FeatureItem {
   dbStatus?: DatabaseStatus;
   priority?: string;
   complexity?: FeatureComplexity;
+  effort?: FeatureComplexity; // Add the missing effort property
   tags?: string[];
   uiTasks?: string[];
   dbTasks?: string[];
@@ -160,11 +160,14 @@ export interface FeatureItem {
   individualAccess?: AccessLevel;
   promoterAccess?: AccessLevel;
   userImpact?: FeatureBusinessValueType;
-  dbCompleted?: boolean;  // Adding this to fix error, using boolean type
+  dbCompleted?: boolean;
   implementation?: number;
   components?: FeatureComponent[];
   tasks?: Task[];
   integrations?: any;
+  responsible?: string;
+  completionCriteria?: string[];
+  notes?: string;
 }
 
 export type FeatureShowcaseCategoryType = 

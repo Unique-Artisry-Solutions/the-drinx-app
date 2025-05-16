@@ -37,7 +37,7 @@ const FeatureShowcaseTab: React.FC<FeatureShowcaseTabProps> = ({
       return prepareFeatureShowcaseData(allFeatures);
     } catch (error) {
       console.error('Error preparing showcase data:', error);
-      return [];
+      return [] as FeatureShowcaseData[];
     }
   }, [adminFeatures, establishmentFeatures, individualFeatures, promoterFeatures]);
 
@@ -52,7 +52,7 @@ const FeatureShowcaseTab: React.FC<FeatureShowcaseTabProps> = ({
     const valueMap: Record<string, FeatureBusinessValueObject> = {};
     
     showcaseData.forEach(feature => {
-      const value = feature.businessValue;
+      const value = feature.businessValue as string;
       
       if (!valueMap[value]) {
         valueMap[value] = {
@@ -125,8 +125,14 @@ const FeatureShowcaseTab: React.FC<FeatureShowcaseTabProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {categoryData.map((category) => (
                 <CategoryCard 
-                  key={category.name}
-                  category={category}
+                  key={category.name.toString()}
+                  category={{
+                    name: category.name.toString(),
+                    description: category.description,
+                    featureCount: category.featureCount,
+                    implementationRate: category.implementationRate,
+                    features: category.features
+                  }}
                 />
               ))}
             </div>

@@ -1,8 +1,8 @@
 
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, Clock, AlertCircle, HelpCircle, AlertTriangle } from 'lucide-react';
-import { FeatureStatus, DatabaseStatus, FeatureItem } from '../types';
+import { CheckCircle, Clock, AlertCircle, HelpCircle, AlertTriangle, Shield, User, Lock } from 'lucide-react';
+import { FeatureStatus, DatabaseStatus, FeatureItem, AccessLevel } from '../types';
 
 export const renderStatusIcon = (status: FeatureStatus): React.ReactNode => {
   switch (status) {
@@ -100,7 +100,6 @@ export const renderDatabaseStatusBadge = (status?: DatabaseStatus | string): Rea
       textColor = 'text-gray-800';
   }
 
-  // Safe string comparison using the right approach
   const label = status === 'complete' || status === 'implemented' ? 'Complete' : 
                status === 'in_progress' ? 'In Progress' : 
                status === 'partial' ? 'Partial' : 
@@ -111,4 +110,51 @@ export const renderDatabaseStatusBadge = (status?: DatabaseStatus | string): Rea
       DB: {label}
     </Badge>
   );
+};
+
+// Add the missing renderAccessIcon function
+export const renderAccessIcon = (access?: AccessLevel): React.ReactNode => {
+  if (!access || access === 'none') {
+    return <Lock className="h-4 w-4 text-gray-400" title="No Access" />;
+  }
+  
+  switch (access) {
+    case 'read':
+      return <User className="h-4 w-4 text-blue-500" title="Read Access" />;
+    case 'write':
+      return <User className="h-4 w-4 text-green-500" title="Write Access" />;
+    case 'full':
+      return <Shield className="h-4 w-4 text-purple-500" title="Full Access" />;
+    default:
+      return <Lock className="h-4 w-4 text-gray-400" title="No Access" />;
+  }
+};
+
+// Additional utility functions for status handling
+export const getStatusPriority = (status: FeatureStatus): number => {
+  switch (status) {
+    case 'blocked': return 0;
+    case 'on-hold': return 1;
+    case 'in_progress': return 2;
+    case 'testing': return 3;
+    case 'partial': return 4;
+    case 'planned': return 5;
+    case 'implemented': return 6;
+    case 'completed': return 7;
+    default: return 8;
+  }
+};
+
+export const getAttentionLabel = (status: FeatureStatus): string => {
+  switch (status) {
+    case 'blocked': return 'Needs immediate attention';
+    case 'on-hold': return 'Waiting for decision';
+    case 'in_progress': return 'Currently being developed';
+    case 'testing': return 'In testing phase';
+    case 'partial': return 'Partially implemented';
+    case 'planned': return 'Scheduled for development';
+    case 'implemented': return 'Fully implemented';
+    case 'completed': return 'Completed and verified';
+    default: return 'Status unknown';
+  }
 };

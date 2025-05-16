@@ -4,6 +4,9 @@ export * from './analysis';
 export * from './featureShowcase';
 export * from './statusRenderers';
 export * from './detection';
+export * from './progressValidation';
+export * from './progressSnapshot';
+export * from './exportUtils';
 
 // Re-export the detection functions
 import { 
@@ -18,8 +21,17 @@ import {
   isIngredientPairingFeature,
   isThemeFeature,
   isEventManagementFeature,
-  isTicketManagementFeature
-} from './featureDetection';
+  isTicketManagementFeature,
+  isDashboardFeature,
+  isBarCrawlFeature,
+  isExplorationFeature,
+  isUserManagementFeature,
+  isEstablishmentManagementFeature,
+  isSystemBreakdownFeature,
+  isMocktailTrendsFeature,
+  isRecipeFeature,
+  isNotificationFeature
+} from './detection';
 
 export {
   isRewardProgramFeature,
@@ -33,5 +45,14 @@ export {
   isIngredientPairingFeature,
   isThemeFeature,
   isEventManagementFeature,
-  isTicketManagementFeature
+  isTicketManagementFeature,
+  isDashboardFeature,
+  isBarCrawlFeature,
+  isExplorationFeature,
+  isUserManagementFeature,
+  isEstablishmentManagementFeature,
+  isSystemBreakdownFeature,
+  isMocktailTrendsFeature,
+  isRecipeFeature,
+  isNotificationFeature
 };
