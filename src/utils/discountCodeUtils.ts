@@ -23,6 +23,9 @@ export interface DiscountCode {
   description?: string;
   expiryDate?: string | null;
   isActive: boolean;
+  // Add fields that might be needed elsewhere in the app
+  startDate?: string;
+  endDate?: string;
 }
 
 // Helper function to validate a discount code

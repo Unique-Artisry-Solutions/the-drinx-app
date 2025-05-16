@@ -38,4 +38,4 @@ export interface SignUpCredentials extends SignInCredentials {
 }
 
 // Add the missing AccessLevel type
-export type AccessLevel = 'public' | 'authenticated' | 'admin';
+export type AccessLevel = 'none' | 'read' | 'write' | 'full' | 'public' | 'authenticated' | 'admin';

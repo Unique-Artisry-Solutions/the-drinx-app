@@ -10,7 +10,7 @@ export type FeatureStatus = 'planned' | 'in_progress' | 'testing' | 'on-hold' | 
 export type FeaturePriority = 'low' | 'medium' | 'high' | 'critical';
 export type FeatureCategory = 'core' | 'audience' | 'advertisement' | 'stats' | 'ui' | 'promoter' | 'application' | 'user' | 'venue' | 'system';
 export type FeatureComplexity = 'low' | 'medium' | 'high';
-export type DatabaseStatus = 'not_started' | 'in_progress' | 'complete' | 'blocked' | 'partial' | 'implemented';
+export type DatabaseStatus = 'complete' | 'in_progress' | 'partial' | 'blocked' | 'not_started';
 export type AccessLevel = 'none' | 'read' | 'write' | 'full' | 'partial';
 
 export interface FeatureComponent {
@@ -137,7 +137,7 @@ export interface FeatureItem {
   implementationProgress?: number;
   frontendStatus?: string;
   backendStatus?: string;
-  databaseStatus?: DatabaseStatus;
+  databaseStatus?: DatabaseStatus | string;  // Include both DatabaseStatus type and string for flexibility
   dbStatus?: DatabaseStatus;
   priority?: string;
   complexity?: FeatureComplexity;
