@@ -4,6 +4,27 @@ export const formatDiscountCode = (code: string) => {
   return code.toUpperCase();
 };
 
+// Define types
+export type DiscountCodeType = 'fixed' | 'percentage' | 'free_item';
+
+export interface AppliedDiscount {
+  code: string;
+  codeId: string;
+  discountAmount: number;
+  discountType: DiscountCodeType;
+  description?: string;
+}
+
+export interface DiscountCode {
+  id: string;
+  code: string;
+  discountType: DiscountCodeType;
+  discountValue: number;
+  description?: string;
+  expiryDate?: string | null;
+  isActive: boolean;
+}
+
 // Helper function to validate a discount code
 export const validateDiscountCode = (code: string) => {
   if (!code || code.length < 4) {
@@ -56,4 +77,20 @@ export const formatDiscountValue = (type: string, value: number) => {
     return 'Free Item';
   }
   return `${value}`;
+};
+
+// Auto-apply the best available discount code for items
+export const autoApplyBestDiscount = async (
+  items: any[],
+  userId?: string
+): Promise<AppliedDiscount | null> => {
+  try {
+    // This would typically involve a database call to get eligible codes
+    // For now, we'll return null as a placeholder
+    console.log('Checking for automatic discounts for items:', items, 'userId:', userId);
+    return null;
+  } catch (error) {
+    console.error('Error auto-applying discount:', error);
+    return null;
+  }
 };

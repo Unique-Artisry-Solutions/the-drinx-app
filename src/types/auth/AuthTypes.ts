@@ -2,7 +2,9 @@
 // Auth Types
 export type UserType = 'individual' | 'establishment' | 'promoter' | 'admin';
 
-export type ValidDays = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
+// Update ValidDays type to include both lowercase and uppercase variants for compatibility
+export type ValidDays = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday' |
+                        'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday';
 
 export type UserSegmentType = 'all' | 'new' | 'loyal' | 'inactive' | 'vip' | 'birthday';
 

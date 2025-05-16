@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, Clock, AlertCircle, HelpCircle, AlertTriangle, Shield, User, Lock } from 'lucide-react';
@@ -112,21 +111,21 @@ export const renderDatabaseStatusBadge = (status?: DatabaseStatus | string): Rea
   );
 };
 
-// Add the missing renderAccessIcon function
+// Update the renderAccessIcon function to use aria-label instead of title
 export const renderAccessIcon = (access?: AccessLevel): React.ReactNode => {
   if (!access || access === 'none') {
-    return <Lock className="h-4 w-4 text-gray-400" title="No Access" />;
+    return <Lock className="h-4 w-4 text-gray-400" aria-label="No Access" />;
   }
   
   switch (access) {
     case 'read':
-      return <User className="h-4 w-4 text-blue-500" title="Read Access" />;
+      return <User className="h-4 w-4 text-blue-500" aria-label="Read Access" />;
     case 'write':
-      return <User className="h-4 w-4 text-green-500" title="Write Access" />;
+      return <User className="h-4 w-4 text-green-500" aria-label="Write Access" />;
     case 'full':
-      return <Shield className="h-4 w-4 text-purple-500" title="Full Access" />;
+      return <Shield className="h-4 w-4 text-purple-500" aria-label="Full Access" />;
     default:
-      return <Lock className="h-4 w-4 text-gray-400" title="No Access" />;
+      return <Lock className="h-4 w-4 text-gray-400" aria-label="No Access" />;
   }
 };
 

@@ -1,4 +1,3 @@
-
 import { FeatureItem } from '../types';
 
 // Detection functions for different feature types
@@ -125,4 +124,61 @@ export const isNotificationFeature = (feature: FeatureItem): boolean => {
   return feature.category === 'Notifications' || 
          feature.tags?.includes('notification') ||
          /notification|alert|message/i.test(feature.name);
+};
+
+// Add missing promoter-specific detection functions
+export const isPromoterCommunicationFeature = (feature: FeatureItem): boolean => {
+  return feature.category === 'Promoter Communication' || 
+         feature.tags?.includes('promoter-communication') ||
+         /promoter communication|promoter message|venue communication/i.test(feature.name);
+};
+
+export const isPromoterDashboardFeature = (feature: FeatureItem): boolean => {
+  return feature.category === 'Promoter Dashboard' || 
+         feature.tags?.includes('promoter-dashboard') ||
+         /promoter dashboard|promoter overview|promoter analytics/i.test(feature.name);
+};
+
+export const isPromoterAnalyticsFeature = (feature: FeatureItem): boolean => {
+  return feature.category === 'Promoter Analytics' || 
+         feature.tags?.includes('promoter-analytics') ||
+         /promoter analytics|promoter metrics|promoter reporting/i.test(feature.name);
+};
+
+export const isCustomPromotionFeature = (feature: FeatureItem): boolean => {
+  return feature.category === 'Custom Promotions' || 
+         feature.tags?.includes('custom-promotions') ||
+         /custom promotion|special offer|promo/i.test(feature.name);
+};
+
+export const isBrandConnectionFeature = (feature: FeatureItem): boolean => {
+  return feature.category === 'Brand Connections' || 
+         feature.tags?.includes('brand-connections') ||
+         /brand connection|sponsor|partnership/i.test(feature.name);
+};
+
+export const isSignatureFeature = (feature: FeatureItem): boolean => {
+  return feature.tags?.includes('signature') ||
+         feature.userImpact === 'high' ||
+         /signature|flagship|key/i.test(feature.name);
+};
+
+// Add getNormalizedDbStatus function
+export const getNormalizedDbStatus = (status?: DatabaseStatus | string): DatabaseStatus => {
+  if (!status) return 'not_started';
+  
+  switch(status) {
+    case 'complete':
+    case 'implemented':
+      return 'complete';
+    case 'in_progress':
+      return 'in_progress';
+    case 'partial':
+      return 'partial';
+    case 'blocked':
+      return 'blocked';
+    case 'not_started':
+    default:
+      return 'not_started';
+  }
 };

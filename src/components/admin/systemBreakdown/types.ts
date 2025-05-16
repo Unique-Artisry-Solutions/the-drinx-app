@@ -141,7 +141,8 @@ export interface FeatureItem {
   dbStatus?: DatabaseStatus;
   priority?: string;
   complexity?: FeatureComplexity;
-  effort?: FeatureComplexity; // Add the missing effort property
+  effort?: FeatureComplexity;
+  impact?: FeatureBusinessValueType;
   tags?: string[];
   uiTasks?: string[];
   dbTasks?: string[];

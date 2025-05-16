@@ -34,6 +34,11 @@ export const useExportFunctions = () => {
     }
   };
   
+  // Add the missing handleExportCSV function
+  const handleExportCSV = (features: FeatureItem[]) => {
+    return exportCSV(features, `spiritless-features-${new Date().toISOString().slice(0, 10)}.csv`);
+  };
+  
   const exportJSON = (features: FeatureItem[], filename = 'features-export.json') => {
     setIsExporting(true);
     
@@ -94,6 +99,7 @@ export const useExportFunctions = () => {
     isExporting,
     exportCSV,
     exportJSON,
-    exportMarkdown
+    exportMarkdown,
+    handleExportCSV
   };
 };
