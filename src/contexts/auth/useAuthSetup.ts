@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { ToastActionElement } from '@/components/ui/toast';
 import { isPreviewEnvironment } from '@/utils/environment';
@@ -154,5 +154,16 @@ export const useAuthSetup = ({
       }
       window.clearTimeout(maxAuthTimeoutId);
     };
-  }, []);
+  }, [
+    setSession, 
+    setUser, 
+    setIsEmailVerified, 
+    setIsLoading, 
+    updateLocalStorage, 
+    checkAdminBypass, 
+    checkAdminSession, 
+    refreshSession, 
+    setAuthStable,
+    toast
+  ]);
 };

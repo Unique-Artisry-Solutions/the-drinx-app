@@ -41,21 +41,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     toast
   });
   
-  // Then set up auth state and listeners, passing the refreshSession function
-  useAuthSetup({
-    setSession,
-    setUser,
-    setIsEmailVerified,
-    setIsLoading,
-    updateLocalStorage,
-    checkAdminBypass,
-    checkAdminSession,
-    refreshSession,
-    setAuthStable,
-    toast
-  });
-
-  // Auth action handlers
+  // Auth action handlers - initialize before passing as dependencies to useAuthSetup
   const {
     signIn,
     signUp,
@@ -72,6 +58,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsVerificationEmailSent,
     setAuthError,
     updateLocalStorage,
+    toast
+  });
+  
+  // Then set up auth state and listeners, passing the refreshSession function
+  useAuthSetup({
+    setSession,
+    setUser,
+    setIsEmailVerified,
+    setIsLoading,
+    updateLocalStorage,
+    checkAdminBypass,
+    checkAdminSession,
+    refreshSession,
+    setAuthStable,
     toast
   });
   
