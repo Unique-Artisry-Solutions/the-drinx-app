@@ -15,12 +15,26 @@ export const isPreviewEnvironment = (): boolean => {
   
   // Check for preview hostnames
   const hostname = window.location.hostname;
+  
+  // Specific checks for Lovable preview environments
   if (
+    hostname.includes('lovableproject.com') ||
     hostname.includes('preview') ||
     hostname.includes('staging') ||
     hostname.includes('test') ||
     hostname.includes('localhost')
   ) {
+    return true;
+  }
+  
+  // Check URL parameters that might indicate preview mode
+  if (window.location.search.includes('preview=true') || 
+      window.location.search.includes('mode=preview')) {
+    return true;
+  }
+  
+  // Check local storage for preview flag that might have been set
+  if (localStorage.getItem('preview_mode') === 'true') {
     return true;
   }
   
