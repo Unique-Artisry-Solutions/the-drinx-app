@@ -13,19 +13,19 @@ interface UITasksPanelProps {
   feature: FeatureItem;
 }
 
-const isFeatureInProgress = (status: string): boolean => {
-  return ['in_progress', 'partial', 'implemented'].includes(status as FeatureStatus);
+const isFeatureInProgress = (status: FeatureStatus): boolean => {
+  return ['in_progress', 'partial', 'implemented'].includes(status);
 };
 
-const isFeatureComplete = (status: string): boolean => {
-  return status === 'implemented' || status === 'completed';
+const isFeatureComplete = (status: FeatureStatus): boolean => {
+  return status === 'implemented';
 };
 
 export const UITasksPanel: React.FC<UITasksPanelProps> = ({ feature }) => {
   const tasks = [
     { text: 'Component design', isCompleted: isFeatureInProgress(feature.status) },
     { text: 'State management', isCompleted: isFeatureInProgress(feature.status) },
-    { text: 'API integration', isCompleted: (feature.status === 'implemented' || feature.status === 'partial') },
+    { text: 'API integration', isCompleted: feature.status === 'implemented' || feature.status === 'partial' },
     { text: 'Responsive design', isCompleted: isFeatureComplete(feature.status) },
     { text: 'Accessibility compliance', isCompleted: isFeatureComplete(feature.status) }
   ];

@@ -1,7 +1,6 @@
 
 import { useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { ToastActionElement } from '@/components/ui/toast';
 import { isPreviewEnvironment } from '@/utils/environment';
 
 interface UseAuthSetupProps {
@@ -10,18 +9,10 @@ interface UseAuthSetupProps {
   setIsEmailVerified: (isVerified: boolean) => void;
   setIsLoading: (isLoading: boolean) => void;
   updateLocalStorage: (user: any) => void;
-  checkAdminBypass: () => { isEnabled: boolean; userType: string | null };
+  checkAdminBypass: () => { isAdminBypass: boolean; bypassUser?: any };
   checkAdminSession: () => boolean;
-  refreshSession: () => Promise<{ isEmailVerified: boolean }>;
-  setAuthStable: (isStable: boolean) => void;
-  toast: {
-    toast: (props: { 
-      title?: string; 
-      description?: string; 
-      action?: ToastActionElement;
-      variant?: 'default' | 'destructive';
-    }) => void;
-  };
+  refreshSession: () => Promise<{ isEmailVerified?: boolean }>;
+  toast: any;
 }
 
 export const useAuthSetup = ({
@@ -33,137 +24,145 @@ export const useAuthSetup = ({
   checkAdminBypass,
   checkAdminSession,
   refreshSession,
-  setAuthStable,
   toast
 }: UseAuthSetupProps) => {
-  // Initialize auth state and setup listeners
   useEffect(() => {
     console.log('Starting AuthProvider setup...');
     
-    // In preview environment, use simplified auth with timeout
-    const inPreviewMode = isPreviewEnvironment();
-    let authTimeoutId: number | null = null;
+    // Set loading state initially
+    setIsLoading(true);
     
-    if (inPreviewMode) {
-      console.log('Preview environment detected: using simplified auth setup with timeout');
+    // Skip full auth setup in preview environment
+    if (isPreviewEnvironment()) {
+      console.log('Preview environment detected: using simplified auth setup');
       
-      // For preview environments, set a timeout to ensure we don't get stuck loading
-      authTimeoutId = window.setTimeout(() => {
-        console.log('Auth setup timeout reached in preview environment, forcing stable state');
-        setIsLoading(false);
-        setAuthStable(true);
-      }, 5000); // 5 second timeout for preview environments
+      // In preview, we can either:
+      // 1. Use a mock user (uncomment below)
+      // const mockUser = {
+      //   id: 'preview-user-id',
+      //   email: 'preview@example.com',
+      //   user_metadata: { full_name: 'Preview User' }
+      // };
+      // setUser(mockUser);
+      // setIsEmailVerified(true);
+      // setSession({ user: mockUser });
+      
+      // 2. Or just set null user (logged out state)
+      setUser(null);
+      setSession(null);
+      setIsEmailVerified(false);
+      
+      setIsLoading(false);
+      return;
     }
     
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    // First check for admin bypass
+    const { isAdminBypass, bypassUser } = checkAdminBypass();
+    
+    if (isAdminBypass && bypassUser) {
+      console.log('Admin bypass active, using bypass user:', bypassUser.id);
+      setUser(bypassUser);
+      setIsEmailVerified(true);
+      setIsLoading(false);
+      updateLocalStorage(bypassUser);
+      return;
+    }
+    
+    // Check if admin session has expired
+    if (checkAdminSession()) {
+      console.log('Admin session expired');
+      setIsLoading(false);
+      return;
+    }
+    
+    console.log('Setting up auth state listener...');
+    // Set up auth state listener FIRST
+    const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log(`Auth event: ${event}`, !!session);
+        console.log('Auth state changed:', event, !!session);
         
-        if (session) {
-          setSession(session);
-          setUser(session.user);
-          setIsEmailVerified(!!session.user.email_confirmed_at);
-          updateLocalStorage(session.user);
-        } else {
-          setSession(null);
-          setUser(null);
-          setIsEmailVerified(false);
-          updateLocalStorage(null);
+        // Log detailed info for debugging
+        if (session?.user) {
+          console.log('User ID:', session.user.id);
+          console.log('User email:', session.user.email);
+          console.log('User metadata:', session.user.user_metadata);
           
-          if (event === 'SIGNED_OUT') {
-            toast.toast({
-              title: "Signed out",
-              description: "You have been signed out successfully."
-            });
+          // Check for user_type in metadata
+          const userType = session.user.user_metadata?.user_type;
+          console.log('User type from metadata:', userType);
+          
+          // Check if we have an active role that might override metadata
+          try {
+            const { data: roles } = await supabase
+              .from('user_roles')
+              .select('role, is_active')
+              .eq('user_id', session.user.id);
+              
+            console.log('User roles from database:', roles);
+            
+            if (roles && roles.length > 0) {
+              const activeRole = roles.find(r => r.is_active);
+              if (activeRole) {
+                console.log('Active role from database:', activeRole.role);
+              }
+            }
+          } catch (error) {
+            console.warn('Error fetching user roles:', error);
           }
         }
+        
+        // We need some delay to avoid race conditions
+        setTimeout(() => {
+          setSession(session);
+          setUser(session?.user ?? null);
+          
+          if (session?.user) {
+            // We assume email is verified if we get here
+            setIsEmailVerified(true);
+            updateLocalStorage(session.user);
+          } else if (event === 'SIGNED_OUT') {
+            setIsEmailVerified(false);
+            updateLocalStorage(null);
+          }
+        }, 0);
       }
     );
     
-    // Check for existing session
-    const checkExistingSession = async () => {
-      try {
-        // Check if admin bypass is enabled
-        const { isEnabled, userType } = checkAdminBypass();
-        if (isEnabled) {
-          console.log('Admin bypass active, bypassing auth check');
-          setIsLoading(false);
-          setAuthStable(true);
-          return;
-        }
+    console.log('Checking for existing session...');
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Initial session check result:', !!session);
+      
+      if (session) {
+        console.log('User ID from session:', session.user.id);
+        console.log('User email from session:', session.user.email);
         
-        // Check if admin session is active
-        if (checkAdminSession()) {
-          console.log('Admin session active');
-          setIsLoading(false);
-          setAuthStable(true);
-          return;
-        }
-        
-        // Check for Supabase session
-        const { data, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error('Error getting auth session:', error);
-          throw error;
-        }
-        
-        if (data.session) {
-          console.log('Found existing session:', !!data.session);
-          setSession(data.session);
-          setUser(data.session.user);
-          setIsEmailVerified(!!data.session.user.email_confirmed_at);
-          updateLocalStorage(data.session.user);
-          
-          // Refresh session to ensure it's valid
-          await refreshSession();
-        }
-      } catch (error) {
-        console.error('Auth setup error:', error);
-        toast.toast({
-          title: "Authentication Error",
-          description: "There was a problem setting up authentication.",
+        setSession(session);
+        setUser(session.user);
+        setIsEmailVerified(true);  
+        updateLocalStorage(session.user);
+      }
+      
+      setIsLoading(false);
+    });
+    
+    // Show a notification if the session was recovered from storage
+    const hasStoredSession = localStorage.getItem('spiritless-auth-storage') ? true : false;
+    
+    if (hasStoredSession) {
+      console.log('Restoring session from storage, refreshing...');
+      refreshSession().catch(e => {
+        console.error('Error refreshing session:', e);
+        toast({
+          title: "Session Expired",
+          description: "Please sign in again",
           variant: "destructive"
         });
-      } finally {
-        // Clear timeout if it's still running
-        if (authTimeoutId !== null) {
-          window.clearTimeout(authTimeoutId);
-        }
-        
-        setIsLoading(false);
-        setAuthStable(true);
-      }
-    };
+      });
+    }
     
-    // Set a maximum timeout for the entire auth process
-    const maxAuthTimeoutId = window.setTimeout(() => {
-      console.log('Maximum auth timeout reached, forcing stable state');
-      setIsLoading(false);
-      setAuthStable(true);
-    }, 10000); // 10 second absolute maximum timeout
-    
-    checkExistingSession();
-    
-    // Cleanup on component unmount
     return () => {
-      subscription.unsubscribe();
-      if (authTimeoutId !== null) {
-        window.clearTimeout(authTimeoutId);
-      }
-      window.clearTimeout(maxAuthTimeoutId);
+      authListener.subscription.unsubscribe();
     };
-  }, [
-    setSession, 
-    setUser, 
-    setIsEmailVerified, 
-    setIsLoading, 
-    updateLocalStorage, 
-    checkAdminBypass, 
-    checkAdminSession, 
-    refreshSession, 
-    setAuthStable,
-    toast
-  ]);
+  }, []);
 };

@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth';
-import { DiscountCode, DiscountCodeType } from '@/utils/discountCodeUtils';
+import { DiscountCode } from '@/utils/discountCodeUtils';
 
 interface SavedCodesContextType {
   savedCodes: DiscountCode[];
@@ -29,7 +29,7 @@ export const SavedCodesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       
       try {
         if (user) {
-          // User is logged in, fetch from database using the fromTable helper
+          // User is logged in, fetch from database
           const { data, error } = await supabase
             .from('user_saved_codes')
             .select(`
@@ -37,7 +37,7 @@ export const SavedCodesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
               user_id,
               code_id,
               saved_at,
-              establishment_promotions:code_id (
+              establishment_promotions (
                 id,
                 code,
                 description,
@@ -48,6 +48,7 @@ export const SavedCodesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
                 is_active,
                 establishment_id,
                 usage_limit,
+                usage_count,
                 valid_days,
                 valid_hours,
                 user_segment,
@@ -62,12 +63,9 @@ export const SavedCodesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           }
           
           // Transform the data structure
-          const formattedCodes = data
-            .filter(item => item.establishment_promotions) // Filter out any null references
-            .map(item => ({
-              ...item.establishment_promotions,
-              discount_type: mapDiscountType(item.establishment_promotions.discount_type) 
-            }));
+          const formattedCodes = data.map(item => ({
+            ...item.establishment_promotions
+          }));
           
           setSavedCodes(formattedCodes);
         } else {
@@ -92,14 +90,6 @@ export const SavedCodesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
     loadSavedCodes();
   }, [user, toast]);
-
-  // Helper function to map string discount types to our enum
-  const mapDiscountType = (type: string): DiscountCodeType => {
-    if (type === 'percentage' || type === 'fixed' || type === 'free_item') {
-      return type;
-    }
-    return 'fixed'; // Default fallback
-  };
 
   // Save a promotion code
   const saveCode = async (code: DiscountCode): Promise<boolean> => {
@@ -208,7 +198,7 @@ export const SavedCodesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             user_id,
             code_id,
             saved_at,
-            establishment_promotions:code_id (
+            establishment_promotions (
               id,
               code,
               description,
@@ -219,6 +209,7 @@ export const SavedCodesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
               is_active,
               establishment_id,
               usage_limit,
+              usage_count,
               valid_days,
               valid_hours,
               user_segment,
@@ -232,13 +223,10 @@ export const SavedCodesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           throw error;
         }
         
-        // Transform the data structure with proper types
-        const formattedCodes = data
-          .filter(item => item.establishment_promotions) // Filter out any null references
-          .map(item => ({
-            ...item.establishment_promotions,
-            discount_type: mapDiscountType(item.establishment_promotions.discount_type)
-          }));
+        // Transform the data structure
+        const formattedCodes = data.map(item => ({
+          ...item.establishment_promotions
+        }));
         
         setSavedCodes(formattedCodes);
       }

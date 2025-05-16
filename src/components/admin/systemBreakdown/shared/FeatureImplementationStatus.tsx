@@ -25,7 +25,6 @@ export const FeatureImplementationStatus: React.FC<FeatureImplementationStatusPr
   const dbProgress = 
     dbStatus === 'complete' || dbStatus === 'implemented' ? 100 :
     dbStatus === 'in_progress' ? 50 :
-    dbStatus === 'partial' ? 65 : 
     dbStatus === 'not_started' ? 0 : 25;
 
   const getStatusLabel = (status: string): string => {
@@ -108,7 +107,7 @@ export const FeatureImplementationStatus: React.FC<FeatureImplementationStatusPr
             </TooltipTrigger>
             <TooltipContent>
               <p>Database Implementation: {dbProgress}% complete</p>
-              {dbStatus === 'not_started' && uiStatus === 'in_progress' && (
+              {dbStatus === 'not_started' && feature.status === 'in_progress' && (
                 <p className="text-xs text-amber-600 mt-1">
                   UI development started before database implementation
                 </p>

@@ -1,89 +1,121 @@
-/**
- * System Breakdown Feature Types
- */
 
-export interface SystemBreakdownProps {
-  activeTab: string;
-}
+export type FeatureStatus = 'implemented' | 'in_progress' | 'planned' | 'blocked' | 'partial';
+export type DatabaseStatus = 'complete' | 'in_progress' | 'not_started' | 'implemented' | 'partial';
+export type AccessLevel = 'full' | 'partial' | 'read' | 'none' | 'write' | 'moderate';
+export type FeatureComplexity = 'high' | 'medium' | 'low';
+export type FeatureCategory = string;
 
-export type FeatureStatus = 'planned' | 'in_progress' | 'testing' | 'on-hold' | 'blocked' | 'partial' | 'implemented' | 'completed';
-export type FeaturePriority = 'low' | 'medium' | 'high' | 'critical';
-export type FeatureCategory = 'core' | 'audience' | 'advertisement' | 'stats' | 'ui' | 'promoter' | 'application' | 'user' | 'venue' | 'system';
-export type FeatureComplexity = 'low' | 'medium' | 'high';
-export type DatabaseStatus = 'complete' | 'in_progress' | 'partial' | 'blocked' | 'not_started';
-export type AccessLevel = 'none' | 'read' | 'write' | 'full' | 'partial';
-
-export interface FeatureComponent {
-  name: string;
-  status: FeatureStatus;
-  implementation: number; // 0-1
-  type?: string; // Add this to support the admin features index
-}
-
-export interface Task {
-  id: string;
-  title: string;
-  status: 'planned' | 'in-progress' | 'completed';
-  assignedTo?: string;
-  dueDate?: string;
-}
-
-export interface SystemFeature {
+export interface FeatureItem {
   id: string;
   name: string;
   description: string;
-  category: FeatureCategory;
   status: FeatureStatus;
-  implementation: number; // 0-1
-  priority: FeaturePriority;
-  components: FeatureComponent[];
-  dependencies: string[];
-  tasks: Task[];
-  businessCase?: BusinessCase;
-  mainFeature?: boolean;
-  comingSoon?: boolean;
-  beta?: boolean;
-  icon?: string;
+  adminAccess: AccessLevel;
+  establishmentAccess: AccessLevel;
+  individualAccess: AccessLevel;
+  promoterAccess?: AccessLevel; // Added promoterAccess property
+  databaseStatus: DatabaseStatus;
+  dbStatus?: DatabaseStatus;
+  userImpact: 'high' | 'medium' | 'low';
+  complexity: FeatureComplexity;
+  databaseAnalysis?: string;
+  statusUpdated?: boolean;
+  implementationProgress?: number;
+  dbCompleted?: number;
+  testSteps?: string[];
+  subFeatures?: SubFeature[];
+  originalStatus?: string;
+  tags?: string[];
+  dbRequirementsText?: string;
+  dependsOn?: string[];
+  scheduledFor?: string;
+  integrations?: string[]; // Added integrations property
+  category?: FeatureCategory; // Added category property
+  components?: Component[]; // Added components property
+  lastUpdated?: string; // Added lastUpdated property
+  assignedTo?: string; // Added assignedTo property
+  dependencies?: string[]; // Added dependencies property
 }
 
-export interface BusinessCase {
-  title: string;
-  value: string[];
-  impact: string;
-}
-
-export interface CategoryData {
+// Add Component interface for the components property
+export interface Component {
   name: string;
-  description: string;
-  features: SystemFeature[];
-  implementation: number; // 0-1
+  type: string;
+  status: string;
+}
+
+export interface Phase {
+  name: string;
   status: FeatureStatus;
-  icon?: string;
+  tasks: string[];
 }
 
-export interface ReleaseVersion {
-  version: string;
+export interface SubFeature {
   name: string;
+  status: FeatureStatus;
   description: string;
-  features: string[];
-  releaseDate: string;
-  status: 'planned' | 'in-development' | 'released';
-}
-
-export interface ProgressStatistics {
-  totalFeatures: number;
-  completedFeatures: number;
-  inProgressFeatures: number;
-  plannedFeatures: number;
-  overallProgress: number;
-}
-
-export interface CategoryProgress {
-  category: string;
   progress: number;
-  features: number;
-  completedFeatures: number;
+  phases?: Phase[];
 }
+
+export type FeatureShowcaseCategoryType = string;
+export type FeatureBusinessValueType = 'high' | 'medium' | 'low';
+
+export interface FeatureBusinessValueObject {
+  value: FeatureBusinessValueType;
+  label: string;
+  description: string;
+  color: string;
+  name: string;
+  features: FeatureItem[];
+  implementationRate: number;
+  featureCount?: number;
+}
+
+export interface FeatureShowcaseData {
+  id: string;
+  name: string;
+  description: string;
+  businessValue: FeatureBusinessValueType;
+  complexity: FeatureComplexity;
+  implementationStatus: FeatureStatus;
+  showcaseCategory: string;
+  isSignature: boolean;
+  icon: string;
+  implementations?: number;
+  avgRating?: number;
+  marketingPoints?: string[];
+  categories: string[];
+  businessValues: string[];
+}
+
+export interface ImprovementItem {
+  id: string;
+  title: string;
+  description: string;
+  impact: 'high' | 'medium' | 'low';
+  effort: 'high' | 'medium' | 'low';
+  priority: number;
+  category: string;
+  status: 'proposed' | 'approved' | 'in_progress' | 'completed' | 'rejected';
+  targetDate?: string;
+  assignedTo?: string;
+  relatedFeatures?: string[];
+  type: 'enhancement' | 'new-feature';
+  votes: number;
+  submittedDate: string;
+  submittedBy: string;
+  lovableCompatible?: boolean;
+  technicalRequirements?: string;
+  implementationSteps: string[];
+  estimatedEffort: string;
+  businessImpact: string;
+  currentStatus?: string;
+  affectedAreas: ('admin' | 'establishment' | 'individual')[];
+}
+
+export type SortField = 'priority' | 'impact' | 'effort' | 'title' | 'name' | 'status' | 'type' | 'lovableCompatible' | 'submittedDate' | 'votes';
+export type SortOrder = 'asc' | 'desc';
 
 export interface ProgressSnapshot {
   timestamp: string;
@@ -115,146 +147,8 @@ export interface MonthlyProgressData {
   backend: number;
 }
 
-export type FeatureBusinessValueType = 'low' | 'medium' | 'high' | 'critical';
-
-export interface FeatureBusinessValueObject {
-  value: string;
-  label: string;
-  name: string;
-  description: string;
-  color: string;
-  features: FeatureItem[];
-  implementationRate: number;
-  featureCount: number;
-}
-
-export interface FeatureItem {
-  id: string;
-  name: string;
-  description: string;
-  status: FeatureStatus;
-  category?: string;
-  implementationProgress?: number;
-  frontendStatus?: string;
-  backendStatus?: string;
-  databaseStatus?: DatabaseStatus | string;  // Include both DatabaseStatus type and string for flexibility
-  dbStatus?: DatabaseStatus;
-  priority?: string;
-  complexity?: FeatureComplexity;
-  effort?: FeatureComplexity;
-  impact?: FeatureBusinessValueType;
-  tags?: string[];
-  uiTasks?: string[];
-  dbTasks?: string[];
-  testingTasks?: string[];
-  dependencies?: string[];
-  dependsOn?: string[];
-  scheduledFor?: string;
-  statusUpdated?: boolean;
-  icon?: React.ReactNode;
-  testSteps?: string[];
-  dbRequirementsText?: string;
-  databaseAnalysis?: string;
-  originalStatus?: string;
-  adminAccess?: AccessLevel;
-  establishmentAccess?: AccessLevel;
-  individualAccess?: AccessLevel;
-  promoterAccess?: AccessLevel;
-  userImpact?: FeatureBusinessValueType;
-  dbCompleted?: boolean;
-  implementation?: number;
-  components?: FeatureComponent[];
-  tasks?: Task[];
-  integrations?: any;
-  responsible?: string;
-  completionCriteria?: string[];
-  notes?: string;
-}
-
-export type FeatureShowcaseCategoryType = 
-  | 'User Experience'
-  | 'Analytics'
-  | 'Content Management'
-  | 'Social Features'
-  | 'Promotional Tools'
-  | 'Security'
-  | 'Administration'
-  | 'Core Features'
-  | 'Venue Management'
-  | 'Ticketing'
-  | 'Reward System'
-  | 'Management Tools'
-  | 'AI & Recommendations'
-  | 'Social Experience'
-  | 'Business Analytics'
-  | 'User Engagement'
-  | 'Customization'
-  | 'Loyalty & Rewards'
-  | 'Location Services'
-  | 'General Features';
-
-export interface FeatureShowcaseData {
-  id: string;
-  name: string;
-  description: string;
-  showcaseCategory: FeatureShowcaseCategoryType;
-  implementationStatus: string;
-  implementationPercentage: number;
-  businessValue: FeatureBusinessValueType;
-  marketingPoints: string[];
-  isSignature: boolean;
-  icon?: string;
-  complexity?: string;
-  userImpact?: string;
-  originalFeature?: FeatureItem;
-  implementations?: number;
-  avgRating?: number;
-  categories?: string[];
-}
-
 export interface AnalysisStep {
-  id: string;
   name: string;
-  description: string;
-  isComplete: boolean;
-  progress: number;
-  tasks?: string[];
+  completed: boolean;
   details?: string;
-}
-
-export interface ImprovementItem {
-  id: string;
-  title: string;
-  description: string;
-  priority: 'low' | 'medium' | 'high' | 'critical';
-  difficulty: 'easy' | 'medium' | 'hard' | 'complex';
-  effort: number; // 1-5 scale
-  impact: number; // 1-5 scale
-  category: string;
-  status: 'proposed' | 'planned' | 'in-progress' | 'implemented' | 'rejected';
-  assignedTo?: string;
-  targetDate?: string;
-  createdAt: string;
-  updatedAt?: string;
-  tags: string[];
-  relatedFeatures?: string[];
-  // Additional properties needed to fix type issues
-  votes?: number;
-  submittedBy?: string;
-  submittedDate?: string;
-  type?: 'new-feature' | 'enhancement';
-  lovableCompatible?: boolean;
-  technicalRequirements?: string;
-  implementationSteps?: string[];
-  estimatedEffort?: string;
-  businessImpact?: string;
-  currentStatus?: string;
-  affectedAreas?: ('admin' | 'individual' | 'establishment')[];
-}
-
-export type SortField = 'priority' | 'difficulty' | 'effort' | 'impact' | 'title' | 'status' | 'category' | 'votes' | 'submittedDate' | 'type' | 'lovableCompatible' | 'name';
-export type SortOrder = 'asc' | 'desc';
-
-export interface DiscountCodeType {
-  discountType: 'fixed' | 'percentage' | 'free_item';
 }

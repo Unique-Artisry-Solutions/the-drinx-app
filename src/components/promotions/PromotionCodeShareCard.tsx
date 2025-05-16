@@ -42,9 +42,7 @@ const PromotionCodeShareCard: React.FC<PromotionCodeShareCardProps> = ({
   };
 
   const handleShare = (platform: 'facebook' | 'twitter' | 'email') => {
-    // Fix: Pass only two arguments - code and message
-    const message = `Check out this ${formatDiscountValue()} promotion: ${description || 'Exclusive offer'}`;
-    sharePromotionCode(code, message);
+    sharePromotionCode(code, platform, description);
     setIsShareOpen(false);
   };
 

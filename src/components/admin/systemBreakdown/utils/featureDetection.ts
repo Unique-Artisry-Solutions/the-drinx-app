@@ -1,73 +1,161 @@
 
 import { FeatureItem } from '../types';
+import { 
+  isIngredientPairingFeature,
+  isMocktailSuggestionFeature,
+  isMocktailTrendsFeature,
+  isRecipeFeature,
+} from './detection/mocktailDetection';
 
-// Detection functions for different feature types
-export const isRewardProgramFeature = (feature: FeatureItem): boolean => {
-  return feature.category === 'Rewards' || 
-         feature.tags?.includes('rewards') ||
-         /reward|loyalty|point/i.test(feature.name);
+import {
+  isPromotionFeature,
+  isPromotionAnalyticsFeature,
+  isPromotionSecurityFeature,
+  isPromotionNotificationFeature, 
+  isPromotionCreationFeature,
+  isPromotionManagementFeature,
+  isPromotionRedemptionFeature,
+  isPromotionReportingFeature,
+  isPromotionValidationFeature,
+  isPromotionSchedulingFeature,
+  isPromotionIntegrationFeature,
+  isPromotionAIFeature,
+} from './detection/promotionDetection';
+
+import {
+  isUserManagementFeature,
+  isAuthFeature,
+  isProfileFeature,
+  isContentFeature,
+  isContentModerationFeature,
+  isPhotoFeature,
+  isPhotoModerationFeature,
+} from './detection/userContentDetection';
+
+import {
+  isSystemConfigurationFeature,
+} from './detection/uxDetection';
+
+import {
+  isAnalyticsFeature,
+  isDashboardFeature,
+  isSystemBreakdownFeature,
+} from './detection/analyticsDetection';
+
+import {
+  isMapFeature,
+} from './detection/mapDetection';
+
+import {
+  isAIFeature,
+} from './detection/aiDetection';
+
+import {
+  isExplorationFeature,
+  isNotificationFeature,
+  isSocialFeature,
+  isRewardProgramFeature,
+} from './detection/engagementDetection';
+
+import {
+  isThemeFeature,
+} from './detection/themeDetection';
+
+import {
+  isSwigCircuitFeature,
+  isBarCrawlFeature,
+} from './detection/circuitDetection';
+
+import {
+  isSignatureFeature,
+} from './detection/signatureFeatureDetection';
+
+import {
+  isEstablishmentManagementFeature,
+  isVisitTrackingFeature,
+} from './detection/establishmentDetection';
+
+import {
+  isPromoterCommunicationFeature,
+  isBrandConnectionFeature,
+  isPromoterAnalyticsFeature,
+  isEventManagementFeature,
+  isPromoterDashboardFeature,
+  isCustomPromotionFeature,
+  isPromoterNotificationFeature,
+} from './detection/promoterDetection';
+
+import {
+  isFeatureFlagRelated,
+} from './detection/coreDetection';
+
+import {
+  isAudienceRelationshipFeature as importedAudienceRelationshipFeature,
+  isAudienceInfluencerFeature,
+  isCrossSegmentEngagementFeature,
+  isAudienceVisualizationFeature,
+} from './detection/audienceRelationshipDetection';
+
+/**
+ * Detects if a feature is related to audience relationship mapping
+ * @deprecated Use imported function from audienceRelationshipDetection.ts instead
+ */
+export function isAudienceRelationshipFeature(feature: any): boolean {
+  // Call the imported function to maintain consistent behavior
+  return importedAudienceRelationshipFeature(feature);
+}
+
+// Export all detection functions
+export {
+  isFeatureFlagRelated,
+  isIngredientPairingFeature,
+  isMocktailSuggestionFeature,
+  isMocktailTrendsFeature,
+  isRecipeFeature,
+  isPromotionFeature,
+  isPromotionAnalyticsFeature,
+  isPromotionSecurityFeature,
+  isPromotionNotificationFeature,
+  isPromotionCreationFeature,
+  isPromotionManagementFeature,
+  isPromotionRedemptionFeature,
+  isPromotionReportingFeature,
+  isPromotionValidationFeature,
+  isPromotionSchedulingFeature,
+  isPromotionIntegrationFeature,
+  isPromotionAIFeature,
+  isUserManagementFeature,
+  isAuthFeature,
+  isProfileFeature,
+  isContentFeature,
+  isContentModerationFeature,
+  isPhotoFeature,
+  isPhotoModerationFeature,
+  isSystemConfigurationFeature,
+  isAnalyticsFeature,
+  isDashboardFeature,
+  isSystemBreakdownFeature,
+  isMapFeature,
+  isAIFeature,
+  isExplorationFeature,
+  isNotificationFeature,
+  isSocialFeature,
+  isRewardProgramFeature,
+  isThemeFeature,
+  isSwigCircuitFeature,
+  isBarCrawlFeature,
+  isSignatureFeature,
+  isEstablishmentManagementFeature,
+  isVisitTrackingFeature,
+  isPromoterCommunicationFeature,
+  isBrandConnectionFeature,
+  isPromoterAnalyticsFeature,
+  isEventManagementFeature,
+  isPromoterDashboardFeature,
+  isCustomPromotionFeature,
+  isPromoterNotificationFeature,
+  isAudienceInfluencerFeature,
+  isCrossSegmentEngagementFeature,
+  isAudienceVisualizationFeature
 };
 
-export const isPromotionFeature = (feature: FeatureItem): boolean => {
-  return feature.category === 'Promotions' || 
-         feature.tags?.includes('promotions') ||
-         /promotion|offer|discount/i.test(feature.name);
-};
-
-export const isAIFeature = (feature: FeatureItem): boolean => {
-  return feature.category === 'AI' || 
-         feature.tags?.includes('ai') ||
-         /ai|ml|machine learning|artificial intelligence/i.test(feature.name);
-};
-
-export const isAnalyticsFeature = (feature: FeatureItem): boolean => {
-  return feature.category === 'Analytics' || 
-         feature.tags?.includes('analytics') ||
-         /analytics|statistics|metrics|report/i.test(feature.name);
-};
-
-export const isVisitTrackingFeature = (feature: FeatureItem): boolean => {
-  return feature.category === 'Tracking' || 
-         feature.tags?.includes('tracking') ||
-         /visit|track|check-in/i.test(feature.name);
-};
-
-export const isMapFeature = (feature: FeatureItem): boolean => {
-  return feature.category === 'Maps' || 
-         feature.tags?.includes('maps') ||
-         /map|location|gps|navigation/i.test(feature.name);
-};
-
-export const isSocialFeature = (feature: FeatureItem): boolean => {
-  return feature.category === 'Social' || 
-         feature.tags?.includes('social') ||
-         /social|share|friend|connect/i.test(feature.name);
-};
-
-export const isMocktailSuggestionFeature = (feature: FeatureItem): boolean => {
-  return feature.tags?.includes('mocktail-suggestion') ||
-         /mocktail suggestion|drink recommendation/i.test(feature.name);
-};
-
-export const isIngredientPairingFeature = (feature: FeatureItem): boolean => {
-  return feature.tags?.includes('ingredient-pairing') ||
-         /ingredient pairing|flavor match/i.test(feature.name);
-};
-
-export const isThemeFeature = (feature: FeatureItem): boolean => {
-  return feature.category === 'Theme' || 
-         feature.tags?.includes('theme') ||
-         /theme|appearance|dark mode|light mode/i.test(feature.name);
-};
-
-export const isEventManagementFeature = (feature: FeatureItem): boolean => {
-  return feature.category === 'Events' || 
-         feature.tags?.includes('events') ||
-         /event management|event planning|event creation/i.test(feature.name);
-};
-
-export const isTicketManagementFeature = (feature: FeatureItem): boolean => {
-  return feature.category === 'Tickets' || 
-         feature.tags?.includes('tickets') ||
-         /ticket management|ticket sales|ticket scanning/i.test(feature.name);
-};

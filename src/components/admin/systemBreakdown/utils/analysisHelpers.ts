@@ -2,53 +2,80 @@
 import { FeatureItem } from '../types';
 
 /**
- * Parse task statuses from analysis text
- * @param text The database analysis text
+ * Parses database requirements or analysis text to identify tasks and their completion status
  */
-export const parseTaskStatuses = (text: string) => {
-  const lines = text.split('\n').filter(line => line.trim() !== '');
-  const tasks = lines.map(line => {
-    const isCompleted = line.includes('[x]') || line.includes('✓') || line.includes('completed');
-    const cleanedText = line
-      .replace(/\[\s*x\s*\]/gi, '')
-      .replace(/\[\s*\]/gi, '')
-      .replace(/✓/g, '')
-      .trim();
-      
-    return {
-      text: cleanedText,
-      isCompleted
-    };
-  });
+export function parseTaskStatuses(analysisText?: string): { text: string; isCompleted: boolean }[] {
+  if (!analysisText) return [];
+  
+  const tasks: { text: string; isCompleted: boolean }[] = [];
+  const lines = analysisText.split('\n');
+  
+  for (const line of lines) {
+    // Match markdown-style checkboxes: - [x] task or - [ ] task
+    if (line.includes('- [x]')) {
+      tasks.push({
+        text: line.replace('- [x]', '').trim(),
+        isCompleted: true
+      });
+    } else if (line.includes('- [ ]')) {
+      tasks.push({
+        text: line.replace('- [ ]', '').trim(),
+        isCompleted: false
+      });
+    } else if (line.match(/^\d+\.\s+/)) {
+      // For numbered lists: 1. Create table
+      tasks.push({
+        text: line.trim(),
+        isCompleted: false
+      });
+    } else if (line.includes('✓')) {
+      // Also match checkmarks: ✓ task
+      tasks.push({
+        text: line.replace('✓', '').trim(),
+        isCompleted: true
+      });
+    }
+  }
   
   return tasks;
-};
+}
 
 /**
- * Analyze database requirements for a feature
- * @param feature The feature to analyze
+ * Analyzes database requirements for a feature and returns a structured analysis
  */
-export const analyzeDbRequirements = (feature: FeatureItem) => {
-  const requirements: { table: string; fields: string[]; relationships: string[] }[] = [];
+export function analyzeDbRequirements(feature: FeatureItem): {
+  completedTasks: number;
+  totalTasks: number;
+  tasks: { text: string; isCompleted: boolean }[];
+  completionPercentage: number;
+} {
+  const tasks = parseTaskStatuses(feature.databaseAnalysis);
   
-  if (!feature.dbRequirementsText) {
-    return requirements;
+  // If no tasks were found in the analysis, generate default ones based on status
+  if (tasks.length === 0) {
+    const dbStatus = feature.dbStatus || feature.databaseStatus || 'not_started';
+    const isComplete = dbStatus === 'complete' || dbStatus === 'implemented';
+    const isInProgress = dbStatus === 'in_progress';
+    
+    const defaultTasks = [
+      { text: 'Create database schema', isCompleted: isComplete || isInProgress },
+      { text: 'Define table relationships', isCompleted: isComplete || isInProgress },
+      { text: 'Implement API endpoints', isCompleted: isComplete },
+      { text: 'Create database triggers', isCompleted: isComplete },
+      { text: 'Optimize query performance', isCompleted: isComplete }
+    ];
+    
+    tasks.push(...defaultTasks);
   }
   
-  const text = feature.dbRequirementsText;
+  const completedTasks = tasks.filter(task => task.isCompleted).length;
+  const totalTasks = tasks.length;
+  const completionPercentage = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
   
-  // Basic parsing of table requirements from the text
-  const tableMatches = text.match(/table[s]?\s+for\s+([^,\.]+)/gi);
-  if (tableMatches) {
-    tableMatches.forEach(match => {
-      const tableName = match.replace(/table[s]?\s+for\s+/i, '').trim();
-      requirements.push({
-        table: tableName,
-        fields: [],
-        relationships: []
-      });
-    });
-  }
-  
-  return requirements;
-};
+  return {
+    completedTasks,
+    totalTasks,
+    tasks,
+    completionPercentage
+  };
+}

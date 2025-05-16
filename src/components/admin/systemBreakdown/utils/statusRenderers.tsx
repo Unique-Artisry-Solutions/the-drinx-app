@@ -1,190 +1,160 @@
+
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, Clock, AlertCircle, HelpCircle, AlertTriangle, Shield, User, Lock } from 'lucide-react';
-import { FeatureStatus, DatabaseStatus, FeatureItem, AccessLevel } from '../types';
-
-export const renderStatusIcon = (status: FeatureStatus): React.ReactNode => {
-  switch (status) {
-    case 'implemented':
-    case 'completed':
-      return <CheckCircle className="h-4 w-4 text-green-500" />;
-    case 'in_progress':
-    case 'partial':
-      return <Clock className="h-4 w-4 text-blue-500" />;
-    case 'blocked':
-    case 'on-hold':
-      return <AlertCircle className="h-4 w-4 text-red-500" />;
-    case 'planned':
-      return <HelpCircle className="h-4 w-4 text-gray-500" />;
-    case 'testing':
-      return <AlertTriangle className="h-4 w-4 text-amber-500" />;
-    default:
-      return <HelpCircle className="h-4 w-4 text-gray-500" />;
-  }
-};
-
-export const renderStatusBadge = (status: FeatureStatus | string): React.ReactNode => {
-  let bgColor = '';
-  let textColor = '';
-
-  switch (status) {
-    case 'implemented':
-    case 'completed':
-      bgColor = 'bg-green-100';
-      textColor = 'text-green-800';
-      break;
-    case 'in_progress':
-      bgColor = 'bg-blue-100';
-      textColor = 'text-blue-800';
-      break;
-    case 'partial':
-      bgColor = 'bg-amber-100';
-      textColor = 'text-amber-800';
-      break;
-    case 'blocked':
-    case 'on-hold':
-      bgColor = 'bg-red-100';
-      textColor = 'text-red-800';
-      break;
-    case 'planned':
-      bgColor = 'bg-gray-100';
-      textColor = 'text-gray-800';
-      break;
-    case 'testing':
-      bgColor = 'bg-purple-100';
-      textColor = 'text-purple-800';
-      break;
-    default:
-      bgColor = 'bg-gray-100';
-      textColor = 'text-gray-800';
-  }
-
-  return (
-    <Badge className={`${bgColor} ${textColor}`}>
-      {status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ')}
-    </Badge>
-  );
-};
-
-export const renderDatabaseStatusBadge = (status?: DatabaseStatus | string): React.ReactNode => {
-  if (!status) return null;
-
-  let bgColor = '';
-  let textColor = '';
-
-  switch (status) {
-    case 'complete':
-    case 'implemented':
-      bgColor = 'bg-green-100';
-      textColor = 'text-green-800';
-      break;
-    case 'in_progress':
-      bgColor = 'bg-blue-100';
-      textColor = 'text-blue-800';
-      break;
-    case 'partial':
-      bgColor = 'bg-amber-100';
-      textColor = 'text-amber-800';
-      break;
-    case 'blocked':
-      bgColor = 'bg-red-100';
-      textColor = 'text-red-800';
-      break;
-    case 'not_started':
-      bgColor = 'bg-gray-100';
-      textColor = 'text-gray-800';
-      break;
-    default:
-      bgColor = 'bg-gray-100';
-      textColor = 'text-gray-800';
-  }
-
-  const label = status === 'complete' || status === 'implemented' ? 'Complete' : 
-               status === 'in_progress' ? 'In Progress' : 
-               status === 'partial' ? 'Partial' : 
-               status === 'blocked' ? 'Blocked' : 'Not Started';
-
-  return (
-    <Badge className={`${bgColor} ${textColor} ml-2`}>
-      DB: {label}
-    </Badge>
-  );
-};
-
-// Update the renderAccessIcon function to use aria-label instead of title
-export const renderAccessIcon = (access?: AccessLevel): React.ReactNode => {
-  if (!access || access === 'none') {
-    return <Lock className="h-4 w-4 text-gray-400" aria-label="No Access" />;
-  }
-  
-  switch (access) {
-    case 'read':
-      return <User className="h-4 w-4 text-blue-500" aria-label="Read Access" />;
-    case 'write':
-      return <User className="h-4 w-4 text-green-500" aria-label="Write Access" />;
-    case 'full':
-      return <Shield className="h-4 w-4 text-purple-500" aria-label="Full Access" />;
-    default:
-      return <Lock className="h-4 w-4 text-gray-400" aria-label="No Access" />;
-  }
-};
-
-// Additional utility functions for status handling
-export const getStatusPriority = (status: FeatureStatus): number => {
-  switch (status) {
-    case 'blocked': return 0;
-    case 'on-hold': return 1;
-    case 'in_progress': return 2;
-    case 'testing': return 3;
-    case 'partial': return 4;
-    case 'planned': return 5;
-    case 'implemented': return 6;
-    case 'completed': return 7;
-    default: return 8;
-  }
-};
-
-export const getAttentionLabel = (status: FeatureStatus): string => {
-  switch (status) {
-    case 'blocked': return 'Needs immediate attention';
-    case 'on-hold': return 'Waiting for decision';
-    case 'in_progress': return 'Currently being developed';
-    case 'testing': return 'In testing phase';
-    case 'partial': return 'Partially implemented';
-    case 'planned': return 'Scheduled for development';
-    case 'implemented': return 'Fully implemented';
-    case 'completed': return 'Completed and verified';
-    default: return 'Status unknown';
-  }
-};
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
+import { FeatureStatus, DatabaseStatus, AccessLevel } from '../types';
+import { AlertCircle, Clock, CheckCircle, TimerIcon, AlertTriangle } from 'lucide-react';
 
 /**
- * Normalizes database status to a standard set of values
- * This ensures consistent handling of database status across components
+ * Render a status badge with appropriate color
  */
-export const getNormalizedDbStatus = (feature: FeatureItem): DatabaseStatus => {
-  // If no database status is provided, return not_started
-  if (!feature.databaseStatus) return 'not_started';
-  
-  // Normalize variations of complete/implemented status
-  if (feature.databaseStatus === 'implemented' || 
-      feature.databaseStatus === 'complete' || 
-      feature.databaseStatus === 'completed') {
-    return 'complete';
+export function renderStatusBadge(status: FeatureStatus) {
+  switch(status) {
+    case 'implemented':
+      return <Badge className="bg-green-500 hover:bg-green-600">Implemented</Badge>;
+    case 'in_progress':
+      return <Badge className="bg-blue-500 hover:bg-blue-600">In Progress</Badge>;
+    case 'planned':
+      return <Badge className="bg-gray-500 hover:bg-gray-600">Planned</Badge>;
+    case 'blocked':
+      return <Badge className="bg-red-500 hover:bg-red-600">Blocked</Badge>;
+    case 'partial':
+      return <Badge className="bg-amber-500 hover:bg-amber-600">Partial</Badge>;
+    default:
+      return <Badge className="bg-gray-400 hover:bg-gray-500">Unknown</Badge>;
   }
-  
-  // Normalize variations of in_progress status
-  if (feature.databaseStatus === 'in_progress' || 
-      feature.databaseStatus === 'in-progress' || 
-      feature.databaseStatus === 'implementing') {
-    return 'in_progress';
+}
+
+/**
+ * Render a status badge with icon for better visualization
+ */
+export function renderStatusBadgeWithIcon(status: FeatureStatus) {
+  switch(status) {
+    case 'implemented':
+      return (
+        <Badge className="bg-green-500 hover:bg-green-600 flex items-center gap-1">
+          <CheckCircle size={14} />
+          <span>Implemented</span>
+        </Badge>
+      );
+    case 'in_progress':
+      return (
+        <Badge className="bg-blue-500 hover:bg-blue-600 flex items-center gap-1">
+          <Clock size={14} />
+          <span>In Progress</span>
+        </Badge>
+      );
+    case 'planned':
+      return (
+        <Badge className="bg-gray-500 hover:bg-gray-600 flex items-center gap-1">
+          <TimerIcon size={14} />
+          <span>Planned</span>
+        </Badge>
+      );
+    case 'blocked':
+      return (
+        <Badge className="bg-red-500 hover:bg-red-600 flex items-center gap-1">
+          <AlertCircle size={14} />
+          <span>Blocked</span>
+        </Badge>
+      );
+    case 'partial':
+      return (
+        <Badge className="bg-amber-500 hover:bg-amber-600 flex items-center gap-1">
+          <AlertTriangle size={14} />
+          <span>Partial</span>
+        </Badge>
+      );
+    default:
+      return <Badge className="bg-gray-400 hover:bg-gray-500">Unknown</Badge>;
   }
-  
-  // Return the original status if it already matches one of our standard types
-  if (['partial', 'blocked', 'not_started'].includes(feature.databaseStatus as string)) {
-    return feature.databaseStatus as DatabaseStatus;
+}
+
+/**
+ * Helper to normalize database status values
+ */
+export function getNormalizedDbStatus(feature: { databaseStatus?: DatabaseStatus; dbStatus?: DatabaseStatus }): DatabaseStatus {
+  return feature.dbStatus || feature.databaseStatus || 'not_started';
+}
+
+/**
+ * Render a database status badge with appropriate color
+ */
+export function renderDatabaseStatusBadge(status: DatabaseStatus | undefined) {
+  switch(status) {
+    case 'complete':
+      return <Badge variant="outline" className="border-green-500 text-green-700">Complete</Badge>;
+    case 'implemented':
+      return <Badge variant="outline" className="border-green-500 text-green-700">Complete</Badge>;
+    case 'in_progress':
+      return <Badge variant="outline" className="border-blue-500 text-blue-700">In Progress</Badge>;
+    case 'not_started':
+    default:
+      return <Badge variant="outline" className="border-gray-300 text-gray-500">Not Started</Badge>;
   }
+}
+
+/**
+ * Get a label for attention status
+ */
+export function getAttentionLabel(status: FeatureStatus): string | null {
+  switch(status) {
+    case 'partial':
+      return 'Needs Completion';
+    case 'planned':
+      return 'Not Started';
+    case 'blocked':
+      return 'Blocked - Urgent';
+    case 'in_progress':
+      return 'In Development';
+    default:
+      return null;
+  }
+}
+
+/**
+ * Get a status priority number (higher = needs more attention)
+ */
+export function getStatusPriority(status: FeatureStatus): number {
+  switch(status) {
+    case 'blocked': return 5;
+    case 'planned': return 4;
+    case 'partial': return 3;
+    case 'in_progress': return 2;
+    case 'implemented': return 1;
+    default: return 0;
+  }
+}
+
+/**
+ * Render an icon for access level with tooltip
+ */
+export function renderAccessIcon(access: AccessLevel | undefined) {
+  if (!access || access === 'none') return null;
   
-  // Default fallback - if we can't normalize, treat as not_started
-  return 'not_started';
-};
+  const getColorClass = () => {
+    switch(access) {
+      case 'read': return 'text-blue-500';
+      case 'partial': return 'text-purple-500';
+      case 'full': return 'text-green-500';
+      case 'write': return 'text-purple-500';
+      default: return 'text-gray-400';
+    }
+  };
+  
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger>
+          <div className={`${getColorClass()}`}>
+            {/* Icon here */}
+            <span className="text-xs">{access.charAt(0).toUpperCase()}</span>
+          </div>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>{access} access</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}

@@ -10,8 +10,7 @@ export const ticketManagement: FeatureItem = {
   establishmentAccess: "none",
   individualAccess: "none",
   promoterAccess: "full",
-  databaseStatus: "complete", // Changed from "implemented" to "complete"
-  dbStatus: "complete", // Added for consistency
+  databaseStatus: "implemented",
   userImpact: "high",
   complexity: "high",
   implementationProgress: 100, // Updated to fully implemented
@@ -45,6 +44,3 @@ export const ticketManagement: FeatureItem = {
     "Process refunds when necessary"
   ]
 };
-
-// Also export as ticketManagementFeature for backward compatibility
-export const ticketManagementFeature = ticketManagement;

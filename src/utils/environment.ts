@@ -15,13 +15,7 @@ export const isPreviewEnvironment = (): boolean => {
   
   // Check for preview hostnames
   const hostname = window.location.hostname;
-  
-  // More comprehensive check for Lovable preview environments
   if (
-    hostname.includes('lovableproject.com') ||
-    hostname.includes('lovable.app') ||
-    hostname.includes('lovable.dev') ||
-    hostname.includes('gptengineer.app') ||
     hostname.includes('preview') ||
     hostname.includes('staging') ||
     hostname.includes('test') ||
@@ -30,31 +24,7 @@ export const isPreviewEnvironment = (): boolean => {
     return true;
   }
   
-  // Check URL parameters that might indicate preview mode
-  if (window.location.search.includes('preview=true') || 
-      window.location.search.includes('mode=preview')) {
-    return true;
-  }
-  
-  // Check local storage for preview flag that might have been set
-  if (localStorage.getItem('preview_mode') === 'true' ||
-      localStorage.getItem('demo_mode') === 'true') {
-    return true;
-  }
-  
   return false;
-};
-
-/**
- * Bypasses authentication in preview environments
- * Use this to allow users to see protected content in preview/demo mode
- */
-export const enablePreviewBypass = (): void => {
-  localStorage.setItem('preview_mode', 'true');
-  localStorage.setItem('demo_mode', 'true');
-  
-  // Force reload to apply the preview mode
-  window.location.reload();
 };
 
 /**

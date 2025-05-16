@@ -88,13 +88,13 @@ export const useSubscriptions = (promoterId?: string) => {
       queryClient.invalidateQueries({ queryKey: ['subscriptions'] });
       queryClient.invalidateQueries({ queryKey: ['subscribed-promoters'] });
       toast({
-        title: 'Following successful',
-        description: 'You are now following this promoter',
+        title: 'Subscribed successfully',
+        description: 'You are now subscribed to this promoter',
       });
     },
     onError: (error: any) => {
       toast({
-        title: 'Follow action failed',
+        title: 'Subscription failed',
         description: error.message,
         variant: 'destructive',
       });
@@ -114,13 +114,13 @@ export const useSubscriptions = (promoterId?: string) => {
       queryClient.invalidateQueries({ queryKey: ['subscriptions'] });
       queryClient.invalidateQueries({ queryKey: ['subscribed-promoters'] });
       toast({
-        title: 'Unfollowed successfully',
-        description: 'You have unfollowed this promoter',
+        title: 'Unsubscribed successfully',
+        description: 'You have unsubscribed from this promoter',
       });
     },
     onError: (error: any) => {
       toast({
-        title: 'Unfollow failed',
+        title: 'Unsubscribe failed',
         description: error.message,
         variant: 'destructive',
       });

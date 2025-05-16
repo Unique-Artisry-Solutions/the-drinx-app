@@ -6,9 +6,8 @@ import { Tag, Loader2, X, Check } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { CartItem } from '@/contexts/CartContext';
-import { autoApplyBestDiscount, AppliedDiscount, DiscountCodeType } from '@/utils/discountCodeUtils';
+import { autoApplyBestDiscount, AppliedDiscount } from '@/utils/discountCodeUtils';
 import { useAuth } from '@/contexts/auth';
-import { supabase } from '@/lib/supabase';
 
 interface DiscountCodeSectionProps {
   items: CartItem[];
@@ -99,7 +98,7 @@ const DiscountCodeSection: React.FC<DiscountCodeSectionProps> = ({
           code: eventData.code,
           codeId: eventData.id,
           discountAmount,
-          discountType: eventData.discount_type as DiscountCodeType,
+          discountType: eventData.discount_type,
           description: eventData.description
         });
         
@@ -117,7 +116,7 @@ const DiscountCodeSection: React.FC<DiscountCodeSectionProps> = ({
           code: data.code,
           codeId: data.id,
           discountAmount,
-          discountType: data.discount_type as DiscountCodeType,
+          discountType: data.discount_type,
           description: data.description
         });
         

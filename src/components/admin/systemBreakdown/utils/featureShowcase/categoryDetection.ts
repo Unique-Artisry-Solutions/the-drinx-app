@@ -22,18 +22,19 @@ export const determineShowcaseCategory = (feature: FeatureItem): FeatureShowcase
   if (isAIFeature(feature) || isMocktailSuggestionFeature(feature) || isMocktailTrendsFeature(feature)) {
     return 'AI & Recommendations';
   } else if (isSocialFeature(feature) || isBarCrawlFeature(feature)) {
-    return 'Social Features';
+    return 'Social Experience';
   } else if (isAnalyticsFeature(feature) || isDashboardFeature(feature)) {
-    return 'Analytics';
+    return 'Business Analytics';
   } else if (isVisitTrackingFeature(feature) || isExplorationFeature(feature)) {
-    return 'User Experience';
+    return 'User Engagement';
   } else if (isUserManagementFeature(feature) || isEstablishmentManagementFeature(feature) || isSystemBreakdownFeature(feature)) {
     return 'Management Tools';
   } else if (isThemeFeature(feature)) {
     return 'Customization';
   } else if (isRewardProgramFeature(feature) || isPromotionFeature(feature)) {
-    return 'Reward System';
+    return 'Loyalty & Rewards';
   }
   
   return 'Management Tools';
 };
+

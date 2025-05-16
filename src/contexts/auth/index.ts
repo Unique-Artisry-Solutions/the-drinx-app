@@ -1,11 +1,7 @@
 
-/**
- * Primary authentication exports
- * This file serves as the main export point for authentication functionality
- */
-
-// Export all types
-export type { AuthUser, AuthContextType } from './types';
-
-// Export the provider and hook from the consolidated implementation
-export { AuthProvider, useAuth } from './AuthProvider';
+// Re-export all auth related components and hooks
+export * from './AuthProvider';
+export * from './types';
+export * from './useSessionRefresh';
+export * from './useAuthState';
+export * from './useAuthSetup';

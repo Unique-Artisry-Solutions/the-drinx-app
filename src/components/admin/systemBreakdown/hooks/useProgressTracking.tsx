@@ -1,8 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { ProgressSnapshot, MonthlyProgressData, FeatureItem } from '../types';
-import { createProgressSnapshot } from '../utils/progressSnapshot';
-import { validateProgressData } from '../utils/progressValidation';
+import { createProgressSnapshot, validateProgressData } from '../utils';
 import { generateHistoricalProgressData } from '../utils/historicalData';
 
 export const useProgressTracking = (

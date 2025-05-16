@@ -1,88 +1,146 @@
 
-import { FeatureItem, FeatureShowcaseData } from '../types';
-import { isSignatureFeature } from './detection';
-import { determineBusinessValue } from './featureShowcase/featureTransformation';
-import { determineShowcaseCategory } from './featureShowcase/categoryDetection';
-import { generateMarketingPoints } from './featureShowcase/marketingUtils';
-import { determineFeatureIcon } from './featureShowcase/iconSelection';
-import { generateMockImplementationStats } from './featureShowcase/mockStats';
+import { FeatureItem, FeatureShowcaseData, FeatureShowcaseCategoryType } from '../types';
+import { 
+  isAIFeature,
+  isAnalyticsFeature,
+  isMapFeature,
+  isExplorationFeature,
+  isIngredientPairingFeature,
+  isMocktailSuggestionFeature,
+  isMocktailTrendsFeature,
+  isNotificationFeature,
+  isPromotionFeature,
+  isRewardProgramFeature,
+  isSignatureFeature,
+  isSocialFeature,
+  isSystemBreakdownFeature,
+  isThemeFeature,
+  isDashboardFeature,
+  isVisitTrackingFeature,
+  isBarCrawlFeature,
+  isEstablishmentManagementFeature
+} from './featureDetection';
 
 /**
- * Transform feature data for the feature showcase tab
+ * Transforms a FeatureItem into FeatureShowcaseData format
  */
-export const prepareFeatureShowcaseData = (features: FeatureItem[]): FeatureShowcaseData[] => {
-  return features.map(feature => {
-    const stats = generateMockImplementationStats(feature);
-    
-    return {
-      id: feature.id,
-      name: feature.name,
-      description: feature.description,
-      showcaseCategory: determineShowcaseCategory(feature),
-      implementationStatus: feature.status,
-      implementationPercentage: feature.implementationProgress || 0,
-      businessValue: determineBusinessValue(feature),
-      marketingPoints: generateMarketingPoints(feature),
-      isSignature: isSignatureFeature(feature),
-      icon: determineFeatureIcon(feature),
-      complexity: feature.complexity,
-      userImpact: feature.userImpact,
-      implementations: stats.implementations,
-      avgRating: stats.avgRating,
-      categories: feature.tags || []
-    };
-  });
-};
-
-/**
- * Map a feature to showcase data format
- */
-export const mapFeatureToShowcaseData = (feature: FeatureItem): FeatureShowcaseData => {
-  const stats = generateMockImplementationStats(feature);
-  
+export const transformFeatureToShowcase = (feature: FeatureItem): FeatureShowcaseData => {
   return {
     id: feature.id,
     name: feature.name,
     description: feature.description,
-    showcaseCategory: determineShowcaseCategory(feature),
+    businessValue: feature.userImpact || 'medium',
+    complexity: feature.complexity || 'medium',
     implementationStatus: feature.status,
-    implementationPercentage: feature.implementationProgress || 0,
-    businessValue: determineBusinessValue(feature),
-    marketingPoints: generateMarketingPoints(feature),
+    showcaseCategory: determineCategory(feature),
     isSignature: isSignatureFeature(feature),
-    icon: determineFeatureIcon(feature),
-    complexity: feature.complexity,
-    userImpact: feature.userImpact,
-    implementations: stats.implementations,
-    avgRating: stats.avgRating,
-    categories: feature.tags || []
+    icon: determineIcon(feature),
+    marketingPoints: generateMarketingPoints(feature),
+    implementations: 0,
+    avgRating: 0,
+    categories: feature.tags || [],
+    businessValues: [feature.userImpact || 'medium']
   };
 };
 
 /**
- * Generate client-ready feature report
+ * Determines the appropriate category for a feature
  */
-export const generateFeatureReport = (
-  features: FeatureShowcaseData[],
-  includeDevelopmentDetails: boolean = false
-): string => {
+const determineCategory = (feature: FeatureItem): FeatureShowcaseCategoryType => {
+  if (isAIFeature(feature) || isMocktailSuggestionFeature(feature) || isMocktailTrendsFeature(feature)) {
+    return 'AI & Recommendations';
+  } else if (isSocialFeature(feature) || isBarCrawlFeature(feature)) {
+    return 'Social Experience';
+  } else if (isAnalyticsFeature(feature) || isDashboardFeature(feature)) {
+    return 'Business Analytics';
+  } else if (isVisitTrackingFeature(feature) || isExplorationFeature(feature)) {
+    return 'User Engagement';
+  } else if (isSystemBreakdownFeature(feature) || isEstablishmentManagementFeature(feature)) {
+    return 'Management Tools';
+  } else if (isThemeFeature(feature)) {
+    return 'Customization';
+  } else if (isRewardProgramFeature(feature) || isPromotionFeature(feature)) {
+    return 'Loyalty & Rewards';
+  } else if (isMapFeature(feature)) {
+    return 'Location Services';
+  }
+  
+  // Default category
+  return 'General Features';
+};
+
+/**
+ * Determines an appropriate icon name for a feature
+ */
+const determineIcon = (feature: FeatureItem): string => {
+  if (isAIFeature(feature)) return 'brain';
+  if (isBarCrawlFeature(feature)) return 'route';
+  if (isMocktailSuggestionFeature(feature)) return 'glass-water';
+  if (isVisitTrackingFeature(feature)) return 'map-pin';
+  if (isRewardProgramFeature(feature)) return 'award';
+  if (isThemeFeature(feature)) return 'palette';
+  if (isPromotionFeature(feature)) return 'ticket';
+  if (isAnalyticsFeature(feature)) return 'bar-chart';
+  if (isMapFeature(feature)) return 'map';
+  if (isSocialFeature(feature)) return 'users';
+  if (isDashboardFeature(feature)) return 'layout';
+  if (isSystemBreakdownFeature(feature)) return 'settings';
+  
+  // Default icon
+  return 'star';
+};
+
+/**
+ * Generates marketing points based on feature characteristics
+ */
+const generateMarketingPoints = (feature: FeatureItem): string[] => {
+  const points: string[] = [];
+  
+  if (feature.description) {
+    points.push(feature.description);
+  }
+  
+  if (feature.userImpact === 'high') {
+    points.push('High business impact feature');
+  }
+  
+  if (isSignatureFeature(feature)) {
+    points.push('Signature platform capability');
+  }
+  
+  return points;
+};
+
+/**
+ * Main export function that prepares feature showcase data
+ */
+export const prepareFeatureShowcaseData = (features: FeatureItem[]): FeatureShowcaseData[] => {
+  return features.map(transformFeatureToShowcase);
+};
+
+/**
+ * Generates a markdown report for features
+ */
+export const generateFeatureReport = (features: FeatureShowcaseData[], includeDevelopmentDetails: boolean = false): string => {
   const signatureFeatures = features.filter(f => f.isSignature);
   const categories = Array.from(new Set(features.map(f => f.showcaseCategory)));
   
-  let report = `# Spiritless Platform Feature Report\n\n`;
+  let report = `# Feature Report\n\n`;
   report += `## Executive Summary\n\n`;
-  report += `The Spiritless platform offers ${features.length} robust features across ${categories.length} functional categories, `;
-  report += `with ${signatureFeatures.length} signature capabilities that set it apart from competitors.\n\n`;
+  report += `The platform offers ${features.length} features across ${categories.length} functional categories, `;
+  report += `with ${signatureFeatures.length} signature capabilities.\n\n`;
   
   report += `## Signature Features\n\n`;
   signatureFeatures.forEach(feature => {
     report += `### ${feature.name}\n`;
     report += `${feature.description}\n\n`;
-    report += `**Value Proposition:**\n`;
-    feature.marketingPoints?.forEach(point => {
-      report += `- ${point}\n`;
-    });
-    report += '\n';
+    if (feature.marketingPoints && feature.marketingPoints.length > 0) {
+      report += `**Value Proposition:**\n`;
+      feature.marketingPoints.forEach(point => {
+        report += `- ${point}\n`;
+      });
+      report += '\n';
+    }
   });
   
   report += `## Feature Categories\n\n`;

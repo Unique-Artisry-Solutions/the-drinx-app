@@ -1,108 +1,33 @@
-
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { ToastActionElement } from '@/components/ui/toast';
+import { useToast } from '@/hooks/use-toast';
+import { Session, User } from '@supabase/supabase-js';
 import { clearAllSessions } from '@/utils/sessionCleaner';
 
-interface UseAuthActionsProps {
-  setSession: (session: any) => void;
-  setUser: (user: any) => void;
-  setIsLoading: (isLoading: boolean) => void;
-  setIsEmailVerified: (isVerified: boolean) => void;
-  setIsVerificationEmailSent: (isSent: boolean) => void;
-  setAuthError: (error: Error | null) => void;
-  updateLocalStorage: (user: any) => void;
-  toast: {
-    toast: (props: { 
-      title?: string; 
-      description?: string; 
-      action?: ToastActionElement;
-      variant?: 'default' | 'destructive';
-    }) => void;
-  };
-}
+export function useAuthActions() {
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
-export const useAuthActions = ({
-  setSession,
-  setUser,
-  setIsLoading,
-  setIsEmailVerified,
-  setIsVerificationEmailSent,
-  setAuthError,
-  updateLocalStorage,
-  toast
-}: UseAuthActionsProps) => {
-  
-  // Function to refresh the current session
   const refreshSession = async () => {
     try {
+      console.log('Refreshing session in useAuthActions...');
       const { data, error } = await supabase.auth.refreshSession();
-      
       if (error) {
         console.error('Error refreshing session:', error);
-        setAuthError(error);
-        throw error;
+        return { session: null, user: null, isEmailVerified: false };
       }
       
-      if (data.session) {
-        setSession(data.session);
-        setUser(data.session.user);
-        updateLocalStorage(data.session.user);
-      }
+      const isVerified = data.session?.user ? (data.session.user.email_confirmed_at !== null) : false;
+      console.log('Session refreshed, email verified:', isVerified);
       
-      // Update email verification status if we have a session
-      const isEmailVerified = !!data?.session?.user?.email_confirmed_at;
-      setIsEmailVerified(isEmailVerified);
-      
-      return { isEmailVerified };
+      return { 
+        session: data.session, 
+        user: data.session?.user || null,
+        isEmailVerified: isVerified
+      };
     } catch (error) {
-      console.error('Session refresh error:', error);
-      if (error instanceof Error) {
-        setAuthError(error);
-      } else {
-        setAuthError(new Error('Unknown error refreshing session'));
-      }
-      
-      toast.toast({
-        title: "Session Error",
-        description: "There was an error refreshing your session.",
-        variant: "destructive"
-      });
-      
-      return { isEmailVerified: false };
-    }
-  };
-  
-  // Function to recover auth state after errors
-  const recoverAuthState = async () => {
-    setIsLoading(true);
-    try {
-      console.log('Attempting to recover auth state...');
-      
-      // Try to refresh the session first
-      const { data, error } = await supabase.auth.getSession();
-      
-      if (error) {
-        console.error('Error getting session during recovery:', error);
-        throw error;
-      }
-      
-      if (data.session) {
-        console.log('Found existing session during recovery');
-        setSession(data.session);
-        setUser(data.session.user);
-        setIsEmailVerified(!!data.session.user.email_confirmed_at);
-        updateLocalStorage(data.session.user);
-        return true;
-      } else {
-        console.log('No active session found during recovery');
-        return false;
-      }
-    } catch (error) {
-      console.error('Auth recovery error:', error);
-      return false;
-    } finally {
-      setIsLoading(false);
+      console.error('Error in refreshSession:', error);
+      return { session: null, user: null, isEmailVerified: false };
     }
   };
 
@@ -120,7 +45,7 @@ export const useAuthActions = ({
       console.log('Sign in successful:', data);
       
       if (data.user && !data.user.email_confirmed_at) {
-        toast.toast({
+        toast({
           title: 'Email not verified',
           description: 'Please check your email and verify your account before logging in.',
           variant: 'destructive',
@@ -129,20 +54,20 @@ export const useAuthActions = ({
         await supabase.auth.signOut();
         throw new Error('Email not verified');
       } else {
-        toast.toast({
+        toast({
           title: 'Login successful',
           description: 'Welcome back!',
         });
         
-        setSession(data.session);
-        setUser(data.user);
-        setIsEmailVerified(!!data.user?.email_confirmed_at);
-        updateLocalStorage(data.user);
-        
-        return { error: null, data };
+        localStorage.setItem('user_authenticated', 'true');
+        localStorage.setItem('user_email', data.user?.email || '');
+        localStorage.setItem('user_type', data.user?.user_metadata.user_type || 'individual');
+        if (data.user?.user_metadata.username) {
+          localStorage.setItem('user_username', data.user.user_metadata.username);
+        }
       }
     } catch (error: any) {
-      toast.toast({
+      toast({
         title: 'Login failed',
         description: error.message || 'An error occurred during login',
         variant: 'destructive',
@@ -153,24 +78,23 @@ export const useAuthActions = ({
     }
   };
 
-  const signUp = async (formData: any) => {
+  const signUp = async (email: string, password: string, options?: { 
+    data?: { [key: string]: any },
+    emailRedirectTo?: string 
+  }) => {
     try {
       setIsLoading(true);
-      console.log('Starting sign up process for:', formData.email);
+      console.log('Starting sign up process for:', email);
       
       const baseUrl = window.location.origin;
-      const finalRedirectTo = formData.emailRedirectTo || `${baseUrl}/?email_confirmed=true`;
+      const finalRedirectTo = options?.emailRedirectTo || `${baseUrl}/?email_confirmed=true`;
       console.log('Using redirect URL:', finalRedirectTo);
       
       const { data, error } = await supabase.auth.signUp({ 
-        email: formData.email, 
-        password: formData.password,
+        email, 
+        password,
         options: {
-          data: {
-            username: formData.username,
-            user_type: formData.userType || 'individual',
-            name: formData.name
-          },
+          data: options?.data,
           emailRedirectTo: finalRedirectTo,
         }
       });
@@ -184,22 +108,19 @@ export const useAuthActions = ({
       
       if (data.user && !data.user.email_confirmed_at) {
         console.log('User created, email verification needed');
-        setIsVerificationEmailSent(true);
-        toast.toast({
+        toast({
           title: 'Verification email sent',
-          description: `Please check ${formData.email} inbox and click the verification link`,
+          description: `Please check ${email} inbox and click the verification link`,
         });
       }
-      
-      return { data, error: null };
     } catch (error: any) {
       console.error('Error in signUp function:', error);
-      toast.toast({
+      toast({
         title: 'Registration failed',
         description: error.message || 'An error occurred during registration',
         variant: 'destructive',
       });
-      return { data: null, error };
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -221,12 +142,7 @@ export const useAuthActions = ({
         throw error;
       }
       
-      setUser(null);
-      setSession(null);
-      setIsEmailVerified(false);
-      updateLocalStorage(null);
-      
-      toast.toast({
+      toast({
         title: 'Logged out',
         description: 'You have been successfully logged out of all devices',
       });
@@ -238,7 +154,7 @@ export const useAuthActions = ({
       window.location.href = '/landing';
     } catch (error: any) {
       console.error('Sign out error:', error);
-      toast.toast({
+      toast({
         title: 'Logout failed',
         description: error.message || 'An error occurred during logout',
         variant: 'destructive',
@@ -251,42 +167,7 @@ export const useAuthActions = ({
     }
   };
 
-  const sendVerificationEmail = async (email: string) => {
-    try {
-      setIsLoading(true);
-      setIsVerificationEmailSent(false);
-      
-      const { error } = await supabase.auth.resend({
-        type: 'signup',
-        email,
-        options: {
-          emailRedirectTo: `${window.location.origin}/?email_confirmed=true`,
-        }
-      });
-      
-      if (error) {
-        throw error;
-      }
-      
-      setIsVerificationEmailSent(true);
-      toast.toast({
-        title: 'Verification email sent',
-        description: 'Please check your email for the verification link',
-      });
-    } catch (error: any) {
-      console.error("Email verification error:", error);
-      toast.toast({
-        title: 'Failed to send verification email',
-        description: error.message || 'An error occurred. Please try again later.',
-        variant: 'destructive',
-      });
-      setAuthError(error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const updateUserProfile = async (data: any) => {
+  const updateProfile = async (data: { [key: string]: any }) => {
     try {
       setIsLoading(true);
       console.log('Updating user profile:', data);
@@ -300,7 +181,7 @@ export const useAuthActions = ({
         throw error;
       }
       
-      toast.toast({
+      toast({
         title: 'Profile updated',
         description: 'Your profile has been successfully updated',
       });
@@ -312,54 +193,55 @@ export const useAuthActions = ({
         localStorage.setItem('user_username', data.username);
       }
     } catch (error: any) {
-      toast.toast({
+      toast({
         title: 'Update failed',
         description: error.message || 'An error occurred while updating profile',
         variant: 'destructive',
       });
-      setAuthError(error);
+      throw error;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const updatePassword = async (newPassword: string) => {
+  const resetPassword = async (email: string) => {
     try {
       setIsLoading(true);
+      console.log('Sending password reset email to:', email);
       
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
       });
       
       if (error) {
+        console.error('Password reset error:', error);
         throw error;
       }
       
-      toast.toast({
-        title: 'Password Updated',
-        description: 'Your password has been successfully updated',
+      toast({
+        title: 'Password Reset Email Sent',
+        description: 'Check your email for password reset instructions',
       });
+      
     } catch (error: any) {
-      console.error('Password update error:', error);
-      toast.toast({
-        title: 'Password update failed',
-        description: error.message || 'Failed to update password',
+      toast({
+        title: 'Password Reset Failed',
+        description: error.message || 'Failed to send password reset email',
         variant: 'destructive',
       });
-      setAuthError(error);
+      throw error;
     } finally {
       setIsLoading(false);
     }
   };
 
   return {
+    isLoading,
+    refreshSession,
     signIn,
     signUp,
     signOut,
-    refreshSession,
-    recoverAuthState,
-    sendVerificationEmail,
-    updateUserProfile,
-    updatePassword
+    updateProfile,
+    resetPassword
   };
-};
+}

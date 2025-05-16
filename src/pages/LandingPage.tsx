@@ -20,17 +20,10 @@ const LandingPage = () => {
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
   const [hasSessionMismatch, setHasSessionMismatch] = useState(false);
-  const inPreviewMode = isPreviewEnvironment();
   
   // Check for session mismatches on mount
   useEffect(() => {
     const checkSessionState = async () => {
-      // Skip full validation in preview environments
-      if (inPreviewMode) {
-        console.log("Preview environment detected, skipping detailed session validation");
-        return;
-      }
-      
       const validationResult = await validateSessionState();
       if (validationResult.hasMismatch) {
         console.log("Session mismatch detected on landing page:", validationResult);
@@ -39,7 +32,7 @@ const LandingPage = () => {
     };
     
     checkSessionState();
-  }, [inPreviewMode]);
+  }, []);
   
   // Always force light theme for landing page
   useEffect(() => {
@@ -52,7 +45,7 @@ const LandingPage = () => {
   useEffect(() => {
     // Only redirect if we're not in a loading state and have a valid user
     // Wait until authStable to prevent redirection during logout process
-    if (!isLoading && user && authStable && !inPreviewMode) {
+    if (!isLoading && user && authStable) {
       console.log('User is authenticated, redirecting from landing page');
       const userType = localStorage.getItem('user_type');
       const isAdmin = localStorage.getItem('admin_authenticated') === 'true';
@@ -67,12 +60,12 @@ const LandingPage = () => {
         navigate('/explore', { replace: true });
       }
     }
-  }, [user, isLoading, navigate, authStable, inPreviewMode]);
+  }, [user, isLoading, navigate, authStable]);
 
   // Clear sessions when landing page loads, but not in preview environment
   useEffect(() => {
     // Skip in preview environment
-    if (inPreviewMode) {
+    if (isPreviewEnvironment()) {
       console.log('Preview environment detected: skipping session cleanup');
       return;
     }
@@ -84,7 +77,7 @@ const LandingPage = () => {
     } else {
       console.log('User is authenticated, skipping session cleanup on landing page');
     }
-  }, [user, inPreviewMode]);
+  }, [user]);
   
   // Handle session recovery button click
   const handleRecoveryClick = async () => {

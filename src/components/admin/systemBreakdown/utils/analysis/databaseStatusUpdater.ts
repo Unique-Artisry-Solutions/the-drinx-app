@@ -1,55 +1,112 @@
+
 import { FeatureItem, DatabaseStatus } from '../../types';
 
 /**
- * Updates database status of features based on analysis
+ * Updates feature database status based on analysis
+ * @param features List of features to update
+ * @returns Updated features with database status
  */
-export function analyzeDatabaseStatus(features: FeatureItem[]): FeatureItem[] {
+export const updateFeaturesDbStatus = (features: FeatureItem[]): FeatureItem[] => {
   return features.map(feature => {
-    // If the feature already has a database status, keep it
-    if (feature.dbStatus || feature.databaseStatus) {
-      return feature;
-    }
+    // Detect the database status based on feature characteristics
+    const detectedDbStatus = detectDatabaseStatus(feature);
     
-    // Otherwise, determine status based on feature status and other properties
-    let dbStatus: DatabaseStatus = 'not_started'; // Default
+    // Use the newer dbStatus field if available, otherwise use databaseStatus for backwards compatibility
+    const currentDbStatus = feature.dbStatus || feature.databaseStatus;
     
-    if (feature.status === 'implemented') {
-      dbStatus = 'complete';
-    } else if (feature.status === 'partial' || feature.status === 'in_progress') {
-      dbStatus = 'in_progress';
-    } else if (feature.status === 'blocked') {
-      dbStatus = 'blocked';
-    }
-    
-    // If there's database analysis text, it's at least in progress
-    if (feature.databaseAnalysis && dbStatus === 'not_started') {
-      dbStatus = 'in_progress';
-    }
-    
-    return {
-      ...feature,
-      databaseStatus: dbStatus
-    };
-  });
-}
-
-/**
- * Updates database status based on deeper feature analysis
- */
-export function updateFeaturesDbStatus(features: FeatureItem[]): FeatureItem[] {
-  return features.map(feature => {
-    // If there's database analysis, update status based on that
-    if (feature.databaseAnalysis) {
-      const dbAnalysisText = feature.databaseAnalysis.toLowerCase();
-      if (dbAnalysisText.includes('[x]') && !dbAnalysisText.includes('[ ]')) {
-        // All checkboxes marked - complete
-        return { ...feature, databaseStatus: 'complete' as DatabaseStatus };
-      } else if (dbAnalysisText.includes('[x]')) {
-        // Some checkboxes marked - partial
-        return { ...feature, databaseStatus: 'partial' as DatabaseStatus };
-      }
+    // Only update status if it's different from current status
+    if (detectedDbStatus !== currentDbStatus) {
+      return {
+        ...feature,
+        dbStatus: detectedDbStatus,
+        databaseStatus: detectedDbStatus, // For backward compatibility
+        databaseAnalysis: feature.databaseAnalysis || generateDatabaseAnalysis(feature, detectedDbStatus),
+        statusUpdated: true
+      };
     }
     
     return feature;
   });
+};
+
+/**
+ * Detects appropriate database status based on feature attributes
+ */
+function detectDatabaseStatus(feature: FeatureItem): DatabaseStatus {
+  const name = feature.name.toLowerCase();
+  const tags = feature.tags || [];
+  const description = feature.description.toLowerCase();
+  
+  // For features that are implemented, database should be complete
+  if (feature.status === 'implemented') {
+    return 'complete';
+  }
+  
+  // For features in progress, database should be in progress or complete
+  if (feature.status === 'in_progress') {
+    // Check for database-related keywords in name or description
+    if (name.includes('database') || description.includes('database') || tags.includes('database')) {
+      return 'in_progress';
+    }
+    
+    // We assume database work is at least started for in-progress features
+    return 'in_progress';
+  }
+  
+  // For planned features, database might be not started or in progress
+  if (feature.status === 'planned') {
+    // Check for signs of database preparation
+    if (tags.includes('database-ready') || description.includes('database schema prepared')) {
+      return 'in_progress';
+    }
+    
+    return 'not_started';
+  }
+  
+  // For blocked features, database might be in any state
+  if (feature.status === 'blocked') {
+    if (description.includes('database issues') || tags.includes('db-blocked')) {
+      return 'in_progress';
+    }
+    
+    if (tags.includes('db-complete')) {
+      return 'complete';
+    }
+    
+    return 'not_started';
+  }
+  
+  // For partial features (custom status)
+  if (feature.status === 'partial') {
+    return 'in_progress';
+  }
+  
+  // Default
+  return 'not_started';
+}
+
+/**
+ * Generates a detailed analysis text about the database requirements
+ */
+function generateDatabaseAnalysis(feature: FeatureItem, status: DatabaseStatus): string {
+  // Base analysis text on the feature and detected status
+  const name = feature.name;
+  
+  if (status === 'complete') {
+    return `Database implementation for "${name}" is complete. All necessary tables, relationships, and indices have been created and optimized.`;
+  }
+  
+  if (status === 'in_progress') {
+    return `Database implementation for "${name}" is in progress. Basic tables have been created, but additional work is needed for optimization and full functionality.`;
+  }
+  
+  if (status === 'not_started') {
+    return `Database implementation for "${name}" has not been started. Based on the feature description, the following database work will be needed: table creation, relationship mapping, and API integration.`;
+  }
+  
+  if (status === 'implemented') {
+    return `Database implementation for "${name}" has been implemented. All required database components are in place and functioning.`;
+  }
+  
+  return `Database status for "${name}" requires further analysis.`;
 }

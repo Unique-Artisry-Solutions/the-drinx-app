@@ -1,5 +1,5 @@
 
-import { AnalysisStep, FeatureItem } from '../types';
+import { AnalysisStep, FeatureItem, DatabaseStatus } from '../types';
 import { 
   analyzeDatabaseStatus, 
   analyzeSwigCircuitSystem, 
@@ -71,11 +71,9 @@ export function analyzeAllFeatures(
   const rewardSystemResult = analyzeRewardSystem(updatedIndividualFeatures);
   updatedIndividualFeatures = rewardSystemResult;
   completedSteps.push({
-    id: 'reward-system', 
     name: 'Analyzed reward system implementation',
-    description: 'Updated reward program implementation status and database requirements',
-    isComplete: true, 
-    progress: 100
+    completed: true,
+    details: 'Updated reward program implementation status and database requirements'
   });
   
   // Step 5: Analyze promoter system
@@ -98,11 +96,9 @@ export function analyzeAllFeatures(
   // Analyze promoter feature categories and requirements
   const promoterCategories = groupFeaturesByCategory(updatedPromoterFeatures);
   completedSteps.push({
-    id: 'promoter-categories', 
     name: 'Categorized promoter features',
-    description: 'Found ' + Object.keys(promoterCategories).length + ' feature categories',
-    isComplete: true, 
-    progress: 100
+    completed: true,
+    details: `Found ${Object.keys(promoterCategories).length} feature categories`
   });
   
   return {

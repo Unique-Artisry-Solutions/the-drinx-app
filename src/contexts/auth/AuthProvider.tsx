@@ -1,24 +1,38 @@
 
-import React, { useState, useEffect, createContext, useContext } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { Session } from '@supabase/supabase-js';
+import { AuthUser, AuthContextType } from './types';
 import { supabase } from '@/lib/supabase';
-import { useToast } from '@/components/ui/use-toast';
-import { AuthContextType } from './types';
 import { useAuthState } from './useAuthState';
 import { useAuthSetup } from './useAuthSetup';
-import { useAuthActions } from './useAuthActions';
 import { useSessionRefresh } from './useSessionRefresh';
+import { validateSessionState, syncSessionState } from '@/utils/sessionRecovery';
+import { useToast } from '@/hooks/use-toast';
 
-// Create the context with a default value
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const initialState = {
+  session: null,
+  user: null,
+  isAuthenticated: false,
+  isLoading: true,
+  isEmailVerified: false,
+  isVerificationEmailSent: false,
+  authError: null,
+  authStable: false
+};
 
-// Provider component
+const AuthContext = createContext<AuthContextType>({
+  ...initialState,
+  signIn: async () => ({ error: null, data: null }),
+  signUp: async () => { return null; },
+  signOut: async () => {},
+  refreshSession: async () => ({ isEmailVerified: false }),
+  recoverAuthState: async () => false,
+  sendVerificationEmail: async () => {},
+  updateUserProfile: async () => {},
+  updatePassword: async () => {}
+});
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Initialize all state first, before any logic that might use the state
-  const [authStable, setAuthStable] = useState(false);
-  const [isVerificationEmailSent, setIsVerificationEmailSent] = useState(false);
-  const [authError, setAuthError] = useState<Error | null>(null);
-  
-  // Get auth state from custom hook
   const {
     user,
     setUser,
@@ -33,35 +47,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     checkAdminSession,
     toast
   } = useAuthState();
-  
-  // Initialize session refresh functionality first
-  const { refreshSession } = useSessionRefresh({
-    setIsEmailVerified,
-    setAuthError,
-    toast
-  });
-  
-  // Auth action handlers - initialize before passing as dependencies to useAuthSetup
-  const {
-    signIn,
-    signUp,
-    signOut,
-    sendVerificationEmail,
-    updateUserProfile,
-    updatePassword,
-    recoverAuthState
-  } = useAuthActions({
-    setSession,
-    setUser,
-    setIsLoading,
-    setIsEmailVerified,
-    setIsVerificationEmailSent,
-    setAuthError,
-    updateLocalStorage,
-    toast
-  });
-  
-  // Then set up auth state and listeners, passing the refreshSession function
+
+  // Set up initial auth state and listeners
   useAuthSetup({
     setSession,
     setUser,
@@ -70,30 +57,241 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     updateLocalStorage,
     checkAdminBypass,
     checkAdminSession,
-    refreshSession,
-    setAuthStable,
+    refreshSession: async () => ({ isEmailVerified: false }),
     toast
   });
-  
-  // Allow bypassing auth in preview environments
-  const continueAsGuest = () => {
-    // Mark as authenticated guest for preview purposes
-    localStorage.setItem('preview_mode', 'true');
-    localStorage.setItem('demo_mode', 'true');
-    localStorage.setItem('guest_authenticated', 'true');
+
+  // Authentication state
+  const [authError, setAuthError] = useState<Error | null>(null);
+  const [authStable, setAuthStable] = useState(false);
+  const [isVerificationEmailSent, setIsVerificationEmailSent] = useState(false);
+
+  // Set up session refresh functionality
+  const { refreshSession } = useSessionRefresh({
+    refreshSessionAction: async () => {
+      try {
+        const { data: sessionData, error: sessionError } = await supabase.auth.refreshSession();
+        
+        if (sessionError) throw sessionError;
+        
+        return {
+          session: sessionData.session,
+          user: sessionData.session?.user || null,
+          isEmailVerified: sessionData.session?.user ? !!sessionData.session.user.email_confirmed_at : false
+        };
+      } catch (error) {
+        console.error("Session refresh error:", error);
+        return { session: null, user: null, isEmailVerified: false };
+      }
+    },
+    setSession,
+    setUser,
+    setIsEmailVerified,
+    updateLocalStorage
+  });
+
+  // Mark auth as stable once initial loading is complete
+  useEffect(() => {
+    if (!isLoading) {
+      console.log('Auth is now stable');
+      setAuthStable(true);
+      
+      // Perform session validation once auth is stable
+      validateSessionState().then(result => {
+        if (result.hasMismatch) {
+          console.log('Session mismatch detected during initial validation:', result);
+          syncSessionState().then(success => {
+            console.log('Session sync result:', success);
+          });
+        }
+      });
+    }
+  }, [isLoading]);
+
+  // Listen for session error toast requests
+  useEffect(() => {
+    const handleSessionErrorToast = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const { title, description, action } = customEvent.detail;
+      
+      toast({
+        title,
+        description,
+        action: action ? {
+          label: action.label,
+          onClick: action.onClick
+        } : undefined,
+        variant: 'destructive'
+      });
+    };
     
-    // Force auth stable state
-    setAuthStable(true);
-    setIsLoading(false);
-    
-    // Redirect happens in components that use this function
+    window.addEventListener('showSessionErrorToast', handleSessionErrorToast);
+    return () => window.removeEventListener('showSessionErrorToast', handleSessionErrorToast);
+  }, [toast]);
+
+  const signIn = async (email: string, password: string) => {
+    setAuthError(null);
+    setIsLoading(true);
+    try {
+      const { error, data } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      
+      if (error) throw error;
+
+      return { error: null, data };
+    } catch (error: any) {
+      setAuthError(error);
+      return { error, data: null };
+    } finally {
+      setIsLoading(false);
+    }
   };
-  
-  // Expose auth context values
-  const contextValue: AuthContextType = {
+
+  const signUp = async (formData: any) => {
+    setAuthError(null);
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          data: {
+            name: formData.data?.name,
+            username: formData.data?.username,
+            user_type: formData.data?.user_type || 'individual'
+          },
+          emailRedirectTo: formData.emailRedirectTo || `${window.location.origin}/auth/callback`
+        }
+      });
+      
+      if (error) throw error;
+      
+      setIsVerificationEmailSent(true);
+      return data;
+    } catch (error: any) {
+      setAuthError(error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const signOut = async () => {
+    try {
+      setIsLoading(true);
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
+      // Clear all localStorage auth data
+      updateLocalStorage(null);
+      
+      // Reset state
+      setSession(null);
+      setUser(null);
+      setIsEmailVerified(false);
+      setAuthError(null);
+    } catch (error: any) {
+      console.error('Error signing out:', error);
+      setAuthError(error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const recoverAuthState = async (): Promise<boolean> => {
+    console.log('Attempting to recover auth state...');
+    setIsLoading(true);
+    
+    try {
+      const validationResult = await validateSessionState();
+      console.log('Auth state validation result:', validationResult);
+      
+      if (validationResult.hasMismatch) {
+        console.log('Session mismatch detected, attempting to sync...');
+        const syncSuccess = await syncSessionState();
+        
+        if (syncSuccess) {
+          console.log('Session sync successful, refreshing session...');
+          await refreshSession();
+          return true;
+        } else {
+          console.log('Session sync failed, forcing sign out...');
+          await signOut();
+          return false;
+        }
+      } else {
+        console.log('No session mismatch detected, refreshing session...');
+        await refreshSession();
+        return true;
+      }
+    } catch (error) {
+      console.error('Auth state recovery failed:', error);
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const sendVerificationEmail = async (email: string) => {
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email
+      });
+      
+      if (error) throw error;
+      
+      setIsVerificationEmailSent(true);
+    } catch (error: any) {
+      setAuthError(error);
+      throw error;
+    }
+  };
+
+  const updateUserProfile = async (data: any) => {
+    try {
+      const { error } = await supabase.auth.updateUser({
+        data
+      });
+      
+      if (error) throw error;
+      
+      if (user) {
+        setUser({
+          ...user,
+          user_metadata: {
+            ...user.user_metadata,
+            ...data
+          }
+        });
+      }
+    } catch (error: any) {
+      setAuthError(error);
+      throw error;
+    }
+  };
+
+  const updatePassword = async (newPassword: string) => {
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+      
+      if (error) throw error;
+    } catch (error: any) {
+      setAuthError(error);
+      throw error;
+    }
+  };
+
+  // Fixed: Create the value object with all required methods
+  const value: AuthContextType = {
     session,
     user,
-    isAuthenticated: !!user,
+    isAuthenticated: !!user && !!session,
     isLoading,
     isEmailVerified,
     isVerificationEmailSent,
@@ -106,21 +304,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     recoverAuthState,
     sendVerificationEmail,
     updateUserProfile,
-    updatePassword,
-    continueAsGuest
+    updatePassword
   };
 
-  return (
-    <AuthContext.Provider value={contextValue}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-// Custom hook to use the auth context
-export const useAuth = (): AuthContextType => {
+export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;

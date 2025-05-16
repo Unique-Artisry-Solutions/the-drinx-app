@@ -1,93 +1,180 @@
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { PlusCircle } from '@/components/icons/PlusCircle';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Promotion, PromotionFormData } from '@/hooks/establishment/useEstablishmentPromotions';
 
-interface PromotionsTabProps {
+import React, { useState } from 'react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import {
+  Table,
+  TableHeader,
+  TableRow,
+  TableHead,
+  TableBody,
+  TableCell
+} from '@/components/ui/table';
+import { PlusCircle, X, Clock, FileText, Tag } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import PromotionForm from './PromotionForm';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { formatDistanceToNow } from 'date-fns';
+import { UserSegmentType } from '@/types/auth/AuthTypes';
+
+export interface Promotion {
+  id: string;
+  code: string;
+  description: string;
+  discount_type: string;
+  discount_value: number;
+  start_date: string;
+  end_date?: string | null;
+  is_active: boolean;
+  usage_limit?: number | null;
+  usage_count?: number | null;
+  valid_days?: string[] | null;
+  valid_hours?: { start: string; end: string } | null;
+  user_segment?: UserSegmentType | null;
+  combinable: boolean;
+  min_purchase_amount?: number | null;
+}
+
+export interface PromotionsTabProps {
   promotions: Promotion[];
-  handleAddPromotion: (data: PromotionFormData) => Promise<void>;
-  handleUpdatePromotion: (id: string, data: PromotionFormData) => Promise<void>;
-  handleDeletePromotion: (id: string) => Promise<void>;
+  handleAddPromotion: (promotion: Partial<Promotion>) => void;
+  handleDeletePromotion: (id: string) => void;
 }
 
 const PromotionsTab: React.FC<PromotionsTabProps> = ({
   promotions,
   handleAddPromotion,
-  handleUpdatePromotion,
   handleDeletePromotion
 }) => {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+
+  const handleCreatePromotion = (promotion: Partial<Promotion>) => {
+    handleAddPromotion(promotion);
+    setIsFormOpen(false);
+  };
+
+  const getStatusText = (promo: Promotion) => {
+    if (!promo.is_active) return "Inactive";
+    if (promo.end_date && new Date(promo.end_date) < new Date()) return "Expired";
+    return "Active";
+  };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-bold">Promotions</h2>
-        <Button onClick={() => setIsDialogOpen(true)}>
-          <PlusCircle className="h-4 w-4 mr-2" />
-          Add Promotion
-        </Button>
+        <h3 className="text-xl font-semibold">Promotional Offers</h3>
+        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+          <DialogTrigger asChild>
+            <Button className="flex items-center gap-2">
+              <PlusCircle size={16} />
+              New Promotion
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl overflow-hidden">
+            <DialogHeader>
+              <DialogTitle>Create New Promotion</DialogTitle>
+            </DialogHeader>
+            <ScrollArea className="max-h-[80vh]">
+              <div className="p-1">
+                <PromotionForm onSubmit={handleCreatePromotion} />
+              </div>
+            </ScrollArea>
+          </DialogContent>
+        </Dialog>
       </div>
-      
-      {promotions.length === 0 ? (
-        <Card>
-          <CardContent className="py-6 text-center">
-            <p>No promotions found. Create your first promotion to attract customers!</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {promotions.map((promotion) => (
-            <Card key={promotion.id} className={!promotion.is_active ? "opacity-60" : undefined}>
-              <CardHeader className="pb-2">
-                <div className="flex justify-between items-start">
-                  <CardTitle className="text-lg font-bold">{promotion.code}</CardTitle>
-                  <div>
-                    <span className={`px-2 py-1 rounded-full text-xs ${promotion.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
-                      {promotion.is_active ? 'Active' : 'Inactive'}
-                    </span>
-                  </div>
-                </div>
-                <p className="text-sm text-gray-500">
-                  {promotion.discount_type === 'percentage' 
-                    ? `${promotion.discount_value}% off` 
-                    : promotion.discount_type === 'fixed' 
-                      ? `$${promotion.discount_value} off`
-                      : 'Free item'}
-                </p>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm">{promotion.description}</p>
-                <div className="mt-3 flex justify-between items-center text-xs text-gray-500">
-                  <span>
-                    {promotion.end_date 
-                      ? `Expires: ${new Date(promotion.end_date).toLocaleDateString()}`
-                      : 'No expiration'}
-                  </span>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => handleDeletePromotion(promotion.id)}
-                  >
-                    Delete
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add New Promotion</DialogTitle>
-          </DialogHeader>
-          <p>Promotion form would go here (not implemented in this fix)</p>
-          <Button onClick={() => setIsDialogOpen(false)}>Close</Button>
-        </DialogContent>
-      </Dialog>
+      <Card>
+        <CardHeader>
+          <CardTitle>Current Promotions</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {promotions.length > 0 ? (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Code</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Value</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Restrictions</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {promotions.map(promo => (
+                    <TableRow key={promo.id}>
+                      <TableCell className="font-mono font-medium">{promo.code}</TableCell>
+                      <TableCell>{promo.description}</TableCell>
+                      <TableCell>
+                        {promo.discount_type === 'percentage' ? 'Percentage' : 
+                         promo.discount_type === 'fixed' ? 'Fixed Amount' : 'Free Item'}
+                      </TableCell>
+                      <TableCell>
+                        {promo.discount_type === 'percentage' ? `${promo.discount_value}%` : 
+                         promo.discount_type === 'fixed' ? `$${promo.discount_value.toFixed(2)}` : 'N/A'}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={promo.is_active ? "success" : "secondary"}>
+                          {getStatusText(promo)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          {promo.valid_days && promo.valid_days.length > 0 && (
+                            <Badge variant="outline" className="flex items-center gap-1">
+                              <Clock size={12} />
+                              Days: {promo.valid_days.length === 7 ? 'All' : promo.valid_days.map(d => d.substring(0, 3)).join(', ')}
+                            </Badge>
+                          )}
+                          {promo.valid_hours && (
+                            <Badge variant="outline" className="flex items-center gap-1">
+                              <Clock size={12} />
+                              {promo.valid_hours.start}-{promo.valid_hours.end}
+                            </Badge>
+                          )}
+                          {promo.user_segment && (
+                            <Badge variant="outline" className="flex items-center gap-1">
+                              <Tag size={12} />
+                              {promo.user_segment === 'new' ? 'New users' : 
+                               promo.user_segment === 'returning' ? 'Return users' : 'All users'}
+                            </Badge>
+                          )}
+                          {promo.min_purchase_amount && (
+                            <Badge variant={promo.min_purchase_amount > 0 ? "warning" : "default"} className="flex items-center gap-1">
+                              <FileText size={12} />
+                              Min: ${promo.min_purchase_amount.toFixed(2)}
+                            </Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => handleDeletePromotion(promo.id)}
+                          >
+                            <X size={16} />
+                            <span className="sr-only">Delete</span>
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              No promotions have been created yet.
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };

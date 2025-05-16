@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import PromotionsTab from './PromotionsTab';
-import { useEstablishmentPromotions } from '@/hooks/establishment/useEstablishmentPromotions';
+import { useEstablishmentPromotions, PromotionFormData } from '@/hooks/establishment/useEstablishmentPromotions';
 import { useToast } from '@/hooks/use-toast';
 
 interface EstablishmentDashboardProps {
@@ -17,10 +17,62 @@ const EstablishmentDashboard: React.FC<EstablishmentDashboardProps> = ({ establi
     promotions,
     isLoading,
     error,
-    handleAddPromotion,
-    handleDeletePromotion,
-    handleUpdatePromotion
+    addPromotion,
+    updatePromotion,
+    deletePromotion,
+    togglePromotionStatus
   } = useEstablishmentPromotions(establishmentId);
+
+  const handleAddPromotion = async (data: PromotionFormData) => {
+    try {
+      await addPromotion(data);
+      toast({
+        title: 'Success',
+        description: 'Promotion created successfully',
+      });
+    } catch (error) {
+      console.error('Error adding promotion:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to create promotion',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleUpdatePromotion = async (id: string, data: PromotionFormData) => {
+    try {
+      await updatePromotion(id, data);
+      toast({
+        title: 'Success',
+        description: 'Promotion updated successfully',
+      });
+    } catch (error) {
+      console.error('Error updating promotion:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update promotion',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleDeletePromotion = async (id: string) => {
+    try {
+      await deletePromotion(id);
+      toast({
+        title: 'Success',
+        description: 'Promotion deleted successfully',
+      });
+    } catch (error) {
+      console.error('Error deleting promotion:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete promotion',
+        variant: 'destructive',
+      });
+    }
+  };
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -45,8 +97,8 @@ const EstablishmentDashboard: React.FC<EstablishmentDashboardProps> = ({ establi
           <PromotionsTab 
             promotions={promotions}
             handleAddPromotion={handleAddPromotion}
-            handleDeletePromotion={handleDeletePromotion}
             handleUpdatePromotion={handleUpdatePromotion}
+            handleDeletePromotion={handleDeletePromotion}
           />
         </TabsContent>
         

@@ -33,7 +33,6 @@ export interface SessionValidationResult {
 export interface SessionRecoveryOptions {
   silent?: boolean;
   redirectPath?: string;
-  autoRecovery?: boolean;
 }
 
 export interface StuckStateHandler {

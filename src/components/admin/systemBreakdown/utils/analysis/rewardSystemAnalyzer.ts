@@ -12,7 +12,7 @@ export function analyzeRewardSystem(features: FeatureItem[]): FeatureItem[] {
       return {
         ...feature,
         implementationProgress: 100, // Mark as 100% complete
-        dbCompleted: true, // Mark database as 100% complete (changed to boolean)
+        dbCompleted: 100, // Mark database as 100% complete
         status: "implemented", // Mark as fully implemented
         dbStatus: "complete", // Mark database as complete
         dbRequirementsText: `Enhanced reward system implementation complete:

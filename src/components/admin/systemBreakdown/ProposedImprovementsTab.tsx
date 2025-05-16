@@ -1,324 +1,297 @@
 
 import React, { useState, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
-import { Search, ArrowUpDown, CheckCircle, AlertTriangle, Clock } from 'lucide-react';
-
-import { ImprovementItem, SortField, SortOrder, FeatureBusinessValueType } from './types';
+import { Button } from '@/components/ui/button';
+import { ChevronDown, ChevronUp, PlusCircle, Rocket, Star, ArrowUpDown, Check, AlertTriangle } from 'lucide-react';
+import { ImprovementItem, SortField, SortOrder } from './types';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { improvementsData } from './improvementsData';
 
 interface ProposedImprovementsTabProps {
-  improvements: ImprovementItem[];
+  improvements?: ImprovementItem[];
 }
 
-const ProposedImprovementsTab: React.FC<ProposedImprovementsTabProps> = ({ improvements }) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortField, setSortField] = useState<SortField>('priority');
+const ProposedImprovementsTab: React.FC<ProposedImprovementsTabProps> = ({ improvements = improvementsData }) => {
+  const [expandedRows, setExpandedRows] = useState<Record<number, boolean>>({});
+  const [sortField, setSortField] = useState<SortField>('votes');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
-  const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [activeTab, setActiveTab] = useState<string>('all');
-  const [showLovableCompatible, setShowLovableCompatible] = useState<boolean>(false);
 
-  // Filter and sort improvements based on current state
-  const filteredImprovements = useMemo(() => {
-    return improvements
-      .filter(item => {
-        // Text search
-        const matchesSearch = 
-          item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (item.category && item.category.toLowerCase().includes(searchTerm.toLowerCase()));
-        
-        // Status filter
-        const matchesStatus = filterStatus === 'all' || item.status === filterStatus;
-        
-        // Tab filter
-        const matchesTab = 
-          activeTab === 'all' || 
-          (activeTab === 'critical' && item.priority === 'critical') ||
-          (activeTab === 'high' && item.priority === 'high') ||
-          (activeTab === 'lovable' && item.lovableCompatible);
-        
-        // Lovable compatibility filter  
-        const matchesLovable = !showLovableCompatible || item.lovableCompatible;
-        
-        return matchesSearch && matchesStatus && matchesTab && matchesLovable;
-      })
-      .sort((a, b) => {
-        // If sortField is not available, default to title
-        const fieldA = a[sortField] !== undefined ? a[sortField] : a.title;
-        const fieldB = b[sortField] !== undefined ? b[sortField] : b.title;
-        
-        // Handle string comparison
-        if (typeof fieldA === 'string' && typeof fieldB === 'string') {
-          return sortOrder === 'asc' 
-            ? fieldA.localeCompare(fieldB) 
-            : fieldB.localeCompare(fieldA);
-        }
-        
-        // Handle number or boolean comparison
-        return sortOrder === 'asc' 
-          ? (fieldA as number) - (fieldB as number) 
-          : (fieldB as number) - (fieldA as number);
-      });
-  }, [improvements, searchTerm, filterStatus, activeTab, showLovableCompatible, sortField, sortOrder]);
-
-  const renderStatusBadge = (status: string) => {
-    let bgColor = '';
-    let textColor = '';
-    let icon = null;
-
-    switch (status) {
-      case 'implemented':
-        bgColor = 'bg-green-100';
-        textColor = 'text-green-800';
-        icon = <CheckCircle className="h-3 w-3 mr-1" />;
-        break;
-      case 'in-progress':
-        bgColor = 'bg-blue-100';
-        textColor = 'text-blue-800';
-        icon = <Clock className="h-3 w-3 mr-1" />;
-        break;
-      case 'planned':
-        bgColor = 'bg-purple-100';
-        textColor = 'text-purple-800';
-        icon = <Clock className="h-3 w-3 mr-1" />;
-        break;
-      case 'proposed':
-        bgColor = 'bg-gray-100';
-        textColor = 'text-gray-800';
-        break;
-      case 'rejected':
-        bgColor = 'bg-red-100';
-        textColor = 'text-red-800';
-        icon = <AlertTriangle className="h-3 w-3 mr-1" />;
-        break;
-      default:
-        bgColor = 'bg-gray-100';
-        textColor = 'text-gray-800';
-    }
-
-    return (
-      <Badge className={`${bgColor} ${textColor} flex items-center gap-1`}>
-        {icon}
-        {status.charAt(0).toUpperCase() + status.slice(1)}
-      </Badge>
-    );
+  const toggleRow = (index: number) => {
+    setExpandedRows(prev => ({
+      ...prev,
+      [index]: !prev[index]
+    }));
   };
 
-  const renderPriorityBadge = (priority: FeatureBusinessValueType) => {
-    let bgColor = '';
-    let textColor = '';
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  };
 
-    switch (priority) {
-      case 'critical':
-        bgColor = 'bg-red-100';
-        textColor = 'text-red-800';
-        break;
+  const sortedImprovements = useMemo(() => {
+    return [...improvements].sort((a, b) => {
+      let comparison = 0;
+      
+      switch (sortField) {
+        case 'title':
+          comparison = a.title.localeCompare(b.title);
+          break;
+        case 'impact':
+          const impactOrder = { high: 3, medium: 2, low: 1 };
+          comparison = impactOrder[a.impact] - impactOrder[b.impact];
+          break;
+        case 'effort':
+          const effortOrder = { high: 3, medium: 2, low: 1 };
+          comparison = effortOrder[a.effort] - effortOrder[b.effort];
+          break;
+        case 'status':
+          comparison = a.status.localeCompare(b.status);
+          break;
+        case 'votes':
+          comparison = a.votes - b.votes;
+          break;
+        case 'submittedDate':
+          comparison = new Date(a.submittedDate).getTime() - new Date(b.submittedDate).getTime();
+          break;
+        case 'type':
+          comparison = a.type.localeCompare(b.type);
+          break;
+        case 'lovableCompatible':
+          const aCompatible = a.lovableCompatible ?? false;
+          const bCompatible = b.lovableCompatible ?? false;
+          comparison = Number(aCompatible) - Number(bCompatible);
+          break;
+        // Add support for the renamed fields
+        case 'name':
+          comparison = a.title.localeCompare(b.title); // Use title since name is an alias
+          break;
+        case 'priority':
+          const priorityOrder = { high: 3, medium: 2, low: 1 };
+          comparison = priorityOrder[a.impact] - priorityOrder[b.impact]; // Use impact since priority is an alias
+          break;
+      }
+      
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+  }, [improvements, sortField, sortOrder]);
+
+  const renderImpactBadge = (impact: 'high' | 'medium' | 'low') => {
+    switch (impact) {
       case 'high':
-        bgColor = 'bg-orange-100';
-        textColor = 'text-orange-800';
-        break;
+        return <Badge className="bg-red-500 hover:bg-red-600">High</Badge>;
       case 'medium':
-        bgColor = 'bg-blue-100';
-        textColor = 'text-blue-800';
-        break;
+        return <Badge className="bg-amber-500 hover:bg-amber-600">Medium</Badge>;
       case 'low':
-        bgColor = 'bg-gray-100';
-        textColor = 'text-gray-800';
-        break;
-      default:
-        bgColor = 'bg-gray-100';
-        textColor = 'text-gray-800';
+        return <Badge className="bg-blue-500 hover:bg-blue-600">Low</Badge>;
     }
+  };
 
+  const renderTypeBadge = (type: 'enhancement' | 'new-feature') => {
+    switch (type) {
+      case 'enhancement':
+        return <Badge variant="outline" className="border-purple-500 text-purple-500">Enhancement</Badge>;
+      case 'new-feature':
+        return <Badge variant="outline" className="border-green-500 text-green-500">New Feature</Badge>;
+    }
+  };
+
+  const renderAffectedAreas = (areas: ('admin' | 'establishment' | 'individual')[]) => {
     return (
-      <Badge className={`${bgColor} ${textColor}`}>
-        {priority.charAt(0).toUpperCase() + priority.slice(1)}
-      </Badge>
+      <div className="flex gap-1 flex-wrap">
+        {areas.includes('admin') && (
+          <Badge variant="secondary" className="bg-gray-200 text-gray-700">Admin</Badge>
+        )}
+        {areas.includes('establishment') && (
+          <Badge variant="secondary" className="bg-gray-200 text-gray-700">Establishment</Badge>
+        )}
+        {areas.includes('individual') && (
+          <Badge variant="secondary" className="bg-gray-200 text-gray-700">Individual</Badge>
+        )}
+      </div>
     );
   };
 
-  const renderImprovementCard = (item: ImprovementItem) => {
-    // Helper function to convert numeric values to text ratings for UI
-    const getEffortText = (effort: number) => {
-      if (effort >= 5) return 'Very High';
-      if (effort >= 4) return 'High';
-      if (effort >= 3) return 'Medium';
-      if (effort >= 2) return 'Low';
-      return 'Very Low';
-    };
+  const renderLovableCompatibility = (item: ImprovementItem) => {
+    // Fixed line with proper parentheses
+    const isCompatible = item.lovableCompatible ?? (
+      !item.technicalRequirements?.toLowerCase().includes('expertise') && 
+      !item.technicalRequirements?.toLowerCase().includes('ar ')
+    );
     
     return (
-      <Card key={item.id} className="mb-4">
-        <CardHeader className="pb-2">
-          <div className="flex justify-between items-start">
-            <CardTitle className="text-lg">{item.title}</CardTitle>
-            <div className="flex flex-wrap gap-2">
-              {renderStatusBadge(item.status)}
-              {renderPriorityBadge(item.priority as FeatureBusinessValueType)}
-              {item.type && (
-                <Badge variant="outline">
-                  {item.type === 'new-feature' ? 'New Feature' : 'Enhancement'}
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="flex items-center">
+              {isCompatible ? (
+                <Badge className="bg-green-500 flex items-center gap-1">
+                  <Check className="h-3.5 w-3.5" />
+                  <span>Lovable Compatible</span>
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="border-amber-500 text-amber-500 flex items-center gap-1">
+                  <AlertTriangle className="h-3.5 w-3.5" />
+                  <span>Requires External</span>
                 </Badge>
               )}
-              {item.lovableCompatible && (
-                <Badge className="bg-blue-100 text-blue-800">Lovable Compatible</Badge>
-              )}
             </div>
-          </div>
-          <CardDescription>
-            {item.category && <span className="mr-2">{item.category}</span>}
-            {item.createdAt && <span className="text-xs">Added on {new Date(item.createdAt).toLocaleDateString()}</span>}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-gray-600 mb-4">{item.description}</p>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-            <div className="flex items-center gap-2">
-              <div className="text-sm font-medium">Effort:</div>
-              <div className="text-sm">{getEffortText(item.effort)}</div>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="text-sm font-medium">Impact:</div>
-              <div className="text-sm">{getEffortText(item.impact)}</div>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="text-sm font-medium">Difficulty:</div>
-              <div className="text-sm">{item.difficulty.charAt(0).toUpperCase() + item.difficulty.slice(1)}</div>
-            </div>
-            {item.targetDate && (
-              <div className="flex items-center gap-2">
-                <div className="text-sm font-medium">Target Date:</div>
-                <div className="text-sm">{new Date(item.targetDate).toLocaleDateString()}</div>
-              </div>
-            )}
-          </div>
-          
-          {item.tags && item.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-4">
-              {item.tags.map(tag => (
-                <Badge key={tag} variant="secondary" className="text-xs">
-                  {tag}
-                </Badge>
-              ))}
-            </div>
-          )}
-          
-          {item.assignedTo && (
-            <div className="flex items-center mt-4">
-              <div className="text-sm font-medium mr-2">Assigned to:</div>
-              <Avatar className="h-6 w-6">
-                <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${item.assignedTo}`} />
-                <AvatarFallback>{item.assignedTo.charAt(0)}</AvatarFallback>
-              </Avatar>
-              <span className="ml-2 text-sm">{item.assignedTo}</span>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+          </TooltipTrigger>
+          <TooltipContent>
+            {isCompatible 
+              ? "Can be implemented entirely with Lovable platform capabilities" 
+              : "Requires external resources or expertise beyond Lovable's capabilities"
+            }
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     );
   };
+
+  const SortButton = ({ field, label }: { field: SortField, label: string }) => (
+    <Button 
+      variant="ghost" 
+      size="sm" 
+      className="h-8 px-2 flex items-center"
+      onClick={() => handleSort(field)}
+    >
+      {label}
+      {sortField === field ? (
+        sortOrder === 'asc' ? (
+          <ChevronUp className="ml-1 h-4 w-4" />
+        ) : (
+          <ChevronDown className="ml-1 h-4 w-4" />
+        )
+      ) : (
+        <ArrowUpDown className="ml-1 h-4 w-4 opacity-50" />
+      )}
+    </Button>
+  );
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Proposed Improvements</CardTitle>
+        <CardTitle className="flex items-center">
+          <Rocket className="h-5 w-5 mr-2 text-blue-500" />
+          Proposed Improvements
+        </CardTitle>
         <CardDescription>
-          Review and track proposed improvements and feature requests for the system
+          Ideas for enhancing existing features and new features to implement
         </CardDescription>
-        
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
-          <TabsList>
-            <TabsTrigger value="all">All Improvements</TabsTrigger>
-            <TabsTrigger value="critical">Critical</TabsTrigger>
-            <TabsTrigger value="high">High Priority</TabsTrigger>
-            <TabsTrigger value="lovable">Lovable Compatible</TabsTrigger>
-          </TabsList>
-        </Tabs>
-
-        <div className="mt-4 space-y-4">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search improvements..."
-                className="pl-8"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            
-            <div className="flex gap-2">
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="w-[160px]">
-                  <SelectValue placeholder="Filter by Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="proposed">Proposed</SelectItem>
-                  <SelectItem value="planned">Planned</SelectItem>
-                  <SelectItem value="in-progress">In Progress</SelectItem>
-                  <SelectItem value="implemented">Implemented</SelectItem>
-                  <SelectItem value="rejected">Rejected</SelectItem>
-                </SelectContent>
-              </Select>
-              
-              <Button 
-                variant="outline" 
-                className="gap-1"
-                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-              >
-                <ArrowUpDown className="h-4 w-4" />
-                Sort
-              </Button>
-            </div>
-          </div>
-          
-          <div className="flex flex-wrap gap-4">
-            <Select value={sortField} onValueChange={(value) => setSortField(value as SortField)}>
-              <SelectTrigger className="w-[160px]">
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="priority">Priority</SelectItem>
-                <SelectItem value="effort">Effort</SelectItem>
-                <SelectItem value="impact">Impact</SelectItem>
-                <SelectItem value="title">Title</SelectItem>
-                <SelectItem value="status">Status</SelectItem>
-                <SelectItem value="votes">Votes</SelectItem>
-                <SelectItem value="submittedDate">Submitted Date</SelectItem>
-              </SelectContent>
-            </Select>
-            
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="lovable" 
-                checked={showLovableCompatible}
-                onCheckedChange={(checked) => setShowLovableCompatible(checked as boolean)}
-              />
-              <Label htmlFor="lovable">Lovable Compatible Only</Label>
-            </div>
-          </div>
-        </div>
       </CardHeader>
       <CardContent>
-        {filteredImprovements.length > 0 ? (
-          <div>
-            {filteredImprovements.map(item => renderImprovementCard(item))}
-          </div>
-        ) : (
-          <div className="text-center py-8 text-gray-500">
-            <p>No improvements match your search criteria</p>
-          </div>
-        )}
+        <div className="flex justify-end mb-4">
+          <Button variant="outline" className="flex items-center gap-2">
+            <PlusCircle className="h-4 w-4" />
+            Add New Proposal
+          </Button>
+        </div>
+
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[40px]"></TableHead>
+              <TableHead className="w-1/5">
+                <SortButton field="title" label="Improvement" />
+              </TableHead>
+              <TableHead className="w-1/3">Description</TableHead>
+              <TableHead>
+                <SortButton field="impact" label="Impact" />
+              </TableHead>
+              <TableHead>
+                <SortButton field="type" label="Type" />
+              </TableHead>
+              <TableHead>Affects</TableHead>
+              <TableHead>
+                <SortButton field="lovableCompatible" label="Compatibility" />
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {sortedImprovements.map((improvement, index) => (
+              <React.Fragment key={index}>
+                <TableRow>
+                  <TableCell>
+                    <button 
+                      onClick={() => toggleRow(index)}
+                      className="p-1 rounded-full hover:bg-gray-100"
+                    >
+                      {expandedRows[index] ? 
+                        <ChevronUp className="h-4 w-4" /> : 
+                        <ChevronDown className="h-4 w-4" />
+                      }
+                    </button>
+                  </TableCell>
+                  <TableCell className="font-medium">
+                    <div className="flex items-center gap-1">
+                      {improvement.type === 'new-feature' ? 
+                        <Star className="h-4 w-4 text-amber-400 mr-1" /> : 
+                        <span></span>
+                      }
+                      {improvement.title}
+                    </div>
+                  </TableCell>
+                  <TableCell>{improvement.description}</TableCell>
+                  <TableCell>{renderImpactBadge(improvement.impact)}</TableCell>
+                  <TableCell>{renderTypeBadge(improvement.type)}</TableCell>
+                  <TableCell>{renderAffectedAreas(improvement.affectedAreas)}</TableCell>
+                  <TableCell>{renderLovableCompatibility(improvement)}</TableCell>
+                </TableRow>
+                {expandedRows[index] && (
+                  <TableRow className="bg-gray-50">
+                    <TableCell colSpan={1}></TableCell>
+                    <TableCell colSpan={6} className="p-4">
+                      <div className="space-y-4">
+                        <div>
+                          <div className="mb-2 font-medium">Implementation Steps:</div>
+                          <ol className="list-decimal pl-5 space-y-1">
+                            {improvement.implementationSteps.map((step, stepIndex) => (
+                              <li key={stepIndex}>{step}</li>
+                            ))}
+                          </ol>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <div className="mb-1 font-medium text-sm">Estimated Effort</div>
+                            <div className="text-sm">{improvement.estimatedEffort}</div>
+                          </div>
+                          <div>
+                            <div className="mb-1 font-medium text-sm">Business Impact</div>
+                            <div className="text-sm">{improvement.businessImpact}</div>
+                          </div>
+                        </div>
+
+                        {improvement.technicalRequirements && (
+                          <div>
+                            <div className="mb-1 font-medium text-sm">Technical Requirements</div>
+                            <div className="text-sm bg-gray-100 p-2 rounded border">
+                              {improvement.technicalRequirements}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {improvement.currentStatus && (
+                          <div>
+                            <div className="mb-1 font-medium text-sm">Current Status</div>
+                            <div className="text-sm bg-blue-50 p-2 rounded border border-blue-100">
+                              {improvement.currentStatus}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </React.Fragment>
+            ))}
+          </TableBody>
+        </Table>
       </CardContent>
     </Card>
   );

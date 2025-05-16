@@ -1,42 +1,23 @@
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/auth';
 import { checkAdminBypassStatus } from '@/utils/adminBypass';
 import { getSessionDebug } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, AlertCircle } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { validateSessionState, syncSessionState } from '@/utils/sessionRecovery';
 import { handlePotentialStuckState } from '@/utils/session/recovery';
-import { isPreviewEnvironment } from '@/utils/environment';
-
-// Constants for timeouts
-const STUCK_DETECTION_TIMEOUT = 8000; // 8 seconds
-const RECOVERY_BUTTON_TIMEOUT = 5000; // 5 seconds
-const FORCE_REDIRECT_TIMEOUT = 10000; // 10 seconds
 
 const Index = () => {
   const { user, isLoading, session, authStable, authError, recoverAuthState } = useAuth();
   const navigate = useNavigate();
   const [hasMismatch, setHasMismatch] = useState(false);
-  const [showRecoveryButton, setShowRecoveryButton] = useState(false);
-  const [redirectCountdown, setRedirectCountdown] = useState<number | null>(null);
-  const [isPreviewEnv, setIsPreviewEnv] = useState(false);
-  
-  // Check if we're in a preview environment
-  useEffect(() => {
-    const previewEnv = isPreviewEnvironment();
-    setIsPreviewEnv(previewEnv);
-    
-    if (previewEnv) {
-      console.log('Preview environment detected - enabling additional recovery options');
-    }
-  }, []);
   
   // Set up stuck state detection
   useEffect(() => {
-    const stuckHandler = handlePotentialStuckState(STUCK_DETECTION_TIMEOUT, false);
+    const stuckHandler = handlePotentialStuckState(8000, false);
     return () => stuckHandler.cancel();
   }, []);
   
@@ -57,54 +38,6 @@ const Index = () => {
     checkSession();
   }, [isLoading, authStable]);
   
-  // Show recovery button after a delay
-  useEffect(() => {
-    if (isLoading) {
-      const timer = setTimeout(() => {
-        setShowRecoveryButton(true);
-      }, RECOVERY_BUTTON_TIMEOUT);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [isLoading]);
-  
-  // Force redirect after extended timeout (especially useful in preview environments)
-  useEffect(() => {
-    // Only set up force redirect in loading state and especially in preview environments
-    if ((isLoading || !authStable) && isPreviewEnv) {
-      console.log('Setting up force redirect timeout');
-      
-      // Set initial countdown
-      setRedirectCountdown(5);
-      
-      // Start countdown
-      const countdownInterval = setInterval(() => {
-        setRedirectCountdown(prev => {
-          if (prev === null) return null;
-          return prev > 1 ? prev - 1 : 0;
-        });
-      }, 1000);
-      
-      // Set force redirect timer
-      const redirectTimer = setTimeout(() => {
-        console.log('Force redirect timeout triggered');
-        clearInterval(countdownInterval);
-        setRedirectCountdown(null);
-        
-        // Force redirect to landing
-        navigate('/landing', { replace: true });
-      }, FORCE_REDIRECT_TIMEOUT);
-      
-      return () => {
-        clearTimeout(redirectTimer);
-        clearInterval(countdownInterval);
-      };
-    } else {
-      // Clear countdown when not in loading state
-      setRedirectCountdown(null);
-    }
-  }, [isLoading, authStable, navigate, isPreviewEnv]);
-  
   // Log information for debugging
   useEffect(() => {
     console.log("Index page loaded");
@@ -114,8 +47,7 @@ const Index = () => {
       session: !!session, 
       isLoading,
       authStable,
-      authError: authError?.message,
-      isPreviewEnv
+      authError: authError?.message
     });
     
     // Check for admin bypass
@@ -124,7 +56,7 @@ const Index = () => {
     
     // Always log the current session state
     getSessionDebug();
-  }, [user, session, isLoading, authStable, authError, isPreviewEnv]);
+  }, [user, session, isLoading, authStable, authError]);
   
   // Use useEffect to handle navigation properly
   useEffect(() => {
@@ -189,7 +121,7 @@ const Index = () => {
     }
   }, [user, session, isLoading, navigate, authStable, authError]);
 
-  const handleRecoveryClick = useCallback(async () => {
+  const handleRecoveryClick = async () => {
     // First try to sync, if that fails then do full recovery
     const result = await validateSessionState();
     
@@ -203,7 +135,7 @@ const Index = () => {
     } else {
       await recoverAuthState();
     }
-  }, [recoverAuthState]);
+  };
 
   // Show improved loading state
   return (
@@ -246,45 +178,17 @@ const Index = () => {
             </div>
           )}
           
-          {/* Show recovery button after timeout */}
-          {showRecoveryButton && isLoading && (
+          {/* Show recovery button if loading takes too long */}
+          {isLoading && (
             <div className="mt-6">
-              <p className="text-sm text-amber-600 mb-2">Loading is taking longer than expected</p>
+              <p className="text-sm text-gray-500 mb-2">Taking longer than expected?</p>
               <Button 
                 onClick={handleRecoveryClick} 
-                variant="default" 
-                className="mb-2"
+                variant="outline" 
+                className="text-xs"
               >
-                <RefreshCw className="h-4 w-4 mr-1 animate-spin" /> Reset Session
+                <RefreshCw className="h-3 w-3 mr-1" /> Reset Session
               </Button>
-              
-              {/* Add direct navigation buttons for convenience */}
-              <div className="mt-3 flex justify-center gap-2">
-                <Button 
-                  onClick={() => navigate('/landing', { replace: true })}
-                  variant="outline" 
-                  size="sm"
-                >
-                  Go to Landing
-                </Button>
-                <Button 
-                  onClick={() => navigate('/login', { replace: true })}
-                  variant="outline" 
-                  size="sm"
-                >
-                  Go to Login
-                </Button>
-              </div>
-            </div>
-          )}
-          
-          {/* Force redirect countdown for preview environments */}
-          {isPreviewEnv && redirectCountdown !== null && (
-            <div className="mt-4 p-3 bg-orange-100 border border-orange-300 rounded text-sm">
-              <AlertCircle className="h-4 w-4 inline-block mr-1 text-orange-700" />
-              <span className="text-orange-800">
-                Preview environment: Redirecting to landing page in {redirectCountdown} seconds
-              </span>
             </div>
           )}
         </div>

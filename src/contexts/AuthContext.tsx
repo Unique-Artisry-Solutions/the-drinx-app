@@ -1,8 +1,4 @@
 
-/**
- * Re-export from the consolidated auth implementation
- * This file exists for backward compatibility with existing imports
- */
-
+// Re-export the AuthProvider and useAuth hook from the new location
 import { AuthProvider, useAuth } from './auth';
 export { AuthProvider, useAuth };

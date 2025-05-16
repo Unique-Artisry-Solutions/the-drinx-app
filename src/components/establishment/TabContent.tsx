@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import ProfileTab from '@/components/establishment/ProfileTab';
@@ -68,7 +69,6 @@ const TabContent: React.FC<TabContentProps> = ({
           <PromotionsTab 
             promotions={promotionsState.promotions} 
             handleAddPromotion={promotionsState.handleAddPromotion} 
-            handleUpdatePromotion={promotionsState.handleUpdatePromotion} 
             handleDeletePromotion={promotionsState.handleDeletePromotion} 
           />
         </TabsContent>

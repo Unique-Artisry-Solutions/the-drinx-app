@@ -1,41 +1,13 @@
 
-// Auth Types
-export type UserType = 'individual' | 'establishment' | 'promoter' | 'admin';
+/**
+ * Barrel export file for Authentication related types
+ */
 
-// Update ValidDays type to include both lowercase and uppercase variants for compatibility
-export type ValidDays = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday' |
-                        'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday';
+export * from './AuthTypes';
+export * from './SessionTypes';
 
-export type UserSegmentType = 'all' | 'new' | 'loyal' | 'inactive' | 'vip' | 'birthday';
+// Valid days for promotions
+export type ValidDays = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday';
 
-export interface AuthUser {
-  id: string;
-  email: string;
-  userType?: UserType;
-  username?: string;
-  firstName?: string;
-  lastName?: string;
-  displayName?: string;
-  bio?: string;
-  avatar?: string;
-  phone?: string;
-  verified?: boolean;
-  preferences?: Record<string, any>;
-}
-
-export interface SignInCredentials {
-  email: string;
-  password: string;
-}
-
-export interface SignUpCredentials extends SignInCredentials {
-  userType: UserType;
-  username?: string;
-  firstName?: string;
-  lastName?: string;
-  phone?: string;
-  acceptTerms: boolean;
-}
-
-// Add the missing AccessLevel type
-export type AccessLevel = 'none' | 'read' | 'write' | 'full' | 'public' | 'authenticated' | 'admin';
+// User segments for targeted promotions
+export type UserSegmentType = 'all' | 'new' | 'returning';
