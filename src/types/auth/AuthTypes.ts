@@ -34,3 +34,6 @@ export interface SignUpCredentials extends SignInCredentials {
   phone?: string;
   acceptTerms: boolean;
 }
+
+// Add the missing AccessLevel type
+export type AccessLevel = 'public' | 'authenticated' | 'admin';
