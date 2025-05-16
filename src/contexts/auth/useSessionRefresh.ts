@@ -1,44 +1,58 @@
 
-import { useCallback } from 'react';
+import { supabase } from '@/lib/supabase';
+import { ToastActionElement } from '@/components/ui/toast';
 
 interface UseSessionRefreshProps {
-  refreshSessionAction: () => Promise<{ 
-    session: any; 
-    user: any; 
-    isEmailVerified: boolean;
-  }>;
-  setSession: (session: any) => void;
-  setUser: (user: any) => void;
   setIsEmailVerified: (isVerified: boolean) => void;
-  updateLocalStorage: (user: any) => void;
+  setAuthError: (error: Error | null) => void;
+  toast: {
+    toast: (props: { 
+      title?: string; 
+      description?: string; 
+      action?: ToastActionElement;
+      variant?: 'default' | 'destructive';
+    }) => void;
+  };
 }
 
 export const useSessionRefresh = ({
-  refreshSessionAction,
-  setSession,
-  setUser,
   setIsEmailVerified,
-  updateLocalStorage
+  setAuthError,
+  toast
 }: UseSessionRefreshProps) => {
-  // Refresh session and update state
-  const refreshSession = useCallback(async () => {
+  // Function to refresh the current session
+  const refreshSession = async () => {
     try {
-      const { session, user, isEmailVerified } = await refreshSessionAction();
+      const { data, error } = await supabase.auth.refreshSession();
       
-      setSession(session);
-      setUser(user);
-      setIsEmailVerified(isEmailVerified);
-      
-      if (user) {
-        updateLocalStorage(user);
+      if (error) {
+        console.error('Error refreshing session:', error);
+        setAuthError(error);
+        throw error;
       }
+      
+      // Update email verification status if we have a session
+      const isEmailVerified = !!data?.session?.user?.email_confirmed_at;
+      setIsEmailVerified(isEmailVerified);
       
       return { isEmailVerified };
     } catch (error) {
       console.error('Session refresh error:', error);
+      if (error instanceof Error) {
+        setAuthError(error);
+      } else {
+        setAuthError(new Error('Unknown error refreshing session'));
+      }
+      
+      toast.toast({
+        title: "Session Error",
+        description: "There was an error refreshing your session.",
+        variant: "destructive"
+      });
+      
       return { isEmailVerified: false };
     }
-  }, [refreshSessionAction, setSession, setUser, setIsEmailVerified, updateLocalStorage]);
-  
+  };
+
   return { refreshSession };
 };
