@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { AuthUser, AuthContextType } from './types';
@@ -8,6 +7,7 @@ import { useAuthSetup } from './useAuthSetup';
 import { useSessionRefresh } from './useSessionRefresh';
 import { validateSessionState, syncSessionState } from '@/utils/sessionRecovery';
 import { useToast } from '@/hooks/use-toast';
+import { isPreviewEnvironment } from '@/utils/environment';
 
 const initialState = {
   session: null,
@@ -29,7 +29,8 @@ const AuthContext = createContext<AuthContextType>({
   recoverAuthState: async () => false,
   sendVerificationEmail: async () => {},
   updateUserProfile: async () => {},
-  updatePassword: async () => {}
+  updatePassword: async () => {},
+  continueAsGuest: () => {}
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -48,7 +49,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     toast
   } = useAuthState();
 
-  // Set up initial auth state and listeners
+  // Set up initial auth state and listeners - now with setAuthStable
   useAuthSetup({
     setSession,
     setUser,
@@ -58,6 +59,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     checkAdminBypass,
     checkAdminSession,
     refreshSession: async () => ({ isEmailVerified: false }),
+    setAuthStable,
     toast
   });
 
@@ -96,15 +98,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('Auth is now stable');
       setAuthStable(true);
       
-      // Perform session validation once auth is stable
-      validateSessionState().then(result => {
-        if (result.hasMismatch) {
-          console.log('Session mismatch detected during initial validation:', result);
-          syncSessionState().then(success => {
-            console.log('Session sync result:', success);
-          });
-        }
-      });
+      // Only perform session validation in non-preview environments
+      if (!isPreviewEnvironment()) {
+        // Perform session validation once auth is stable
+        validateSessionState().then(result => {
+          if (result.hasMismatch) {
+            console.log('Session mismatch detected during initial validation:', result);
+            syncSessionState().then(success => {
+              console.log('Session sync result:', success);
+            });
+          }
+        });
+      }
     }
   }, [isLoading]);
 
@@ -129,6 +134,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => window.removeEventListener('showSessionErrorToast', handleSessionErrorToast);
   }, [toast]);
 
+  // Continue as guest function for preview/demo environments
+  const continueAsGuest = () => {
+    console.log('Continuing as guest user');
+    localStorage.setItem('preview_mode', 'true');
+    localStorage.setItem('demo_mode', 'true');
+    setIsLoading(false);
+    setAuthStable(true);
+  };
+
+  // Keep the existing signIn, signUp, signOut functions as they are
   const signIn = async (email: string, password: string) => {
     setAuthError(null);
     setIsLoading(true);
@@ -287,7 +302,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Fixed: Create the value object with all required methods
+  // Fixed: Create the value object with all required methods including continueAsGuest
   const value: AuthContextType = {
     session,
     user,
@@ -304,7 +319,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     recoverAuthState,
     sendVerificationEmail,
     updateUserProfile,
-    updatePassword
+    updatePassword,
+    continueAsGuest
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

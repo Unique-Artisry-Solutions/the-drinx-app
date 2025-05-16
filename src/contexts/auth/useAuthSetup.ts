@@ -1,7 +1,8 @@
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { ToastActionElement } from '@/components/ui/toast';
+import { isPreviewEnvironment } from '@/utils/environment';
 
 interface UseAuthSetupProps {
   setSession: (session: any) => void;
@@ -12,6 +13,7 @@ interface UseAuthSetupProps {
   checkAdminBypass: () => { isEnabled: boolean; userType: string | null };
   checkAdminSession: () => boolean;
   refreshSession: () => Promise<{ isEmailVerified: boolean }>;
+  setAuthStable: (isStable: boolean) => void;
   toast: {
     toast: (props: { 
       title?: string; 
@@ -31,17 +33,26 @@ export const useAuthSetup = ({
   checkAdminBypass,
   checkAdminSession,
   refreshSession,
+  setAuthStable,
   toast
 }: UseAuthSetupProps) => {
   // Initialize auth state and setup listeners
   useEffect(() => {
     console.log('Starting AuthProvider setup...');
     
-    // In preview environment, use simplified auth
-    if (window.location.hostname.includes('lovable.app')) {
-      console.log('Preview environment detected: using simplified auth setup');
-      setIsLoading(false);
-      return;
+    // In preview environment, use simplified auth with timeout
+    const inPreviewMode = isPreviewEnvironment();
+    let authTimeoutId: number | null = null;
+    
+    if (inPreviewMode) {
+      console.log('Preview environment detected: using simplified auth setup with timeout');
+      
+      // For preview environments, set a timeout to ensure we don't get stuck loading
+      authTimeoutId = window.setTimeout(() => {
+        console.log('Auth setup timeout reached in preview environment, forcing stable state');
+        setIsLoading(false);
+        setAuthStable(true);
+      }, 5000); // 5 second timeout for preview environments
     }
     
     // Set up auth state listener
@@ -78,6 +89,7 @@ export const useAuthSetup = ({
         if (isEnabled) {
           console.log('Admin bypass active, bypassing auth check');
           setIsLoading(false);
+          setAuthStable(true);
           return;
         }
         
@@ -85,6 +97,7 @@ export const useAuthSetup = ({
         if (checkAdminSession()) {
           console.log('Admin session active');
           setIsLoading(false);
+          setAuthStable(true);
           return;
         }
         
@@ -114,15 +127,32 @@ export const useAuthSetup = ({
           variant: "destructive"
         });
       } finally {
+        // Clear timeout if it's still running
+        if (authTimeoutId !== null) {
+          window.clearTimeout(authTimeoutId);
+        }
+        
         setIsLoading(false);
+        setAuthStable(true);
       }
     };
+    
+    // Set a maximum timeout for the entire auth process
+    const maxAuthTimeoutId = window.setTimeout(() => {
+      console.log('Maximum auth timeout reached, forcing stable state');
+      setIsLoading(false);
+      setAuthStable(true);
+    }, 10000); // 10 second absolute maximum timeout
     
     checkExistingSession();
     
     // Cleanup on component unmount
     return () => {
       subscription.unsubscribe();
+      if (authTimeoutId !== null) {
+        window.clearTimeout(authTimeoutId);
+      }
+      window.clearTimeout(maxAuthTimeoutId);
     };
   }, []);
 };
