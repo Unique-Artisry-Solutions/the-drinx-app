@@ -157,3 +157,34 @@ export const getAttentionLabel = (status: FeatureStatus): string => {
     default: return 'Status unknown';
   }
 };
+
+/**
+ * Normalizes database status to a standard set of values
+ * This ensures consistent handling of database status across components
+ */
+export const getNormalizedDbStatus = (feature: FeatureItem): DatabaseStatus => {
+  // If no database status is provided, return not_started
+  if (!feature.databaseStatus) return 'not_started';
+  
+  // Normalize variations of complete/implemented status
+  if (feature.databaseStatus === 'implemented' || 
+      feature.databaseStatus === 'complete' || 
+      feature.databaseStatus === 'completed') {
+    return 'complete';
+  }
+  
+  // Normalize variations of in_progress status
+  if (feature.databaseStatus === 'in_progress' || 
+      feature.databaseStatus === 'in-progress' || 
+      feature.databaseStatus === 'implementing') {
+    return 'in_progress';
+  }
+  
+  // Return the original status if it already matches one of our standard types
+  if (['partial', 'blocked', 'not_started'].includes(feature.databaseStatus as string)) {
+    return feature.databaseStatus as DatabaseStatus;
+  }
+  
+  // Default fallback - if we can't normalize, treat as not_started
+  return 'not_started';
+};
