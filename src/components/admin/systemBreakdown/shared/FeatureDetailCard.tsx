@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { FeatureImplementationStatus } from './FeatureImplementationStatus';
-import { FeaturePhasesDisplay } from './FeaturePhasesDisplay';
+import FeaturePhasesDisplay from './FeaturePhasesDisplay';
 import { ImplementationDetailsPanel } from './ImplementationDetailsPanel';
 import { FeatureItem } from '../types';
 

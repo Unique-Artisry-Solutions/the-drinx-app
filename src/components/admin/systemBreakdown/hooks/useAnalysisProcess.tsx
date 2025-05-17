@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { AnalysisStep, FeatureItem } from '../types';
@@ -129,7 +130,7 @@ export const useAnalysisProcess = (
       if (currentStep < totalSteps) {
         const updatedSteps = [...initialDatabaseTasks].map((step, index) => {
           if (index < currentStep) {
-            return { ...step, status: 'complete' as const, progressPercentage: 100 };
+            return { ...step, status: 'completed' as const, progressPercentage: 100 };
           } else if (index === currentStep) {
             return { ...step, status: 'running' as const, progressPercentage: 50 };
           }
@@ -156,7 +157,7 @@ export const useAnalysisProcess = (
       setAnalysisSteps(prevSteps => 
         prevSteps.map(step => ({
           ...step,
-          status: 'completed', // Changed from 'complete' to 'completed'
+          status: 'completed', // Using 'completed' instead of 'complete'
           progressPercentage: 100,
         }))
       );

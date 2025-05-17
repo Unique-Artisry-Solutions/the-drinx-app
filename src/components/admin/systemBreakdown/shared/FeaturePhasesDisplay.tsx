@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { FeatureItem } from '../types';
@@ -33,7 +34,7 @@ const getPhaseStatus = (phase: string, feature: FeatureItem) => {
   }
 };
 
-const FeaturePhasesDisplay: React.FC<FeaturePhasesDisplayProps> = ({ feature }) => {
+const FeaturePhasesDisplay = ({ feature }: FeaturePhasesDisplayProps) => {
   const phases = ['ui', 'api', 'database', 'testing'];
 
   return (

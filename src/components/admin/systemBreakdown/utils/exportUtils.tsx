@@ -1,5 +1,8 @@
 
-import { FeatureItem, FeatureCategory } from '../types';
+import { FeatureItem } from '../types';
+
+// Define a simple category type to use in this file
+type FeatureCategory = 'Admin' | 'Establishment' | 'Individual' | 'Promoter';
 
 export function generateCSV(
   adminFeatures: FeatureItem[],

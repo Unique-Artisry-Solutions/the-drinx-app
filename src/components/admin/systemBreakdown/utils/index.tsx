@@ -8,7 +8,8 @@ import {
 import { generateCSV } from './exportUtils';
 import { 
   analyzeAllFeatures,
-  analyzeDbRequirements 
+  determineSystemHealth,
+  updateFeatureDatabaseStatus as analyzeDatabaseStatus
 } from './analysis';
 import { 
   isFeatureFlagRelated,
@@ -52,7 +53,8 @@ import {
   isAudienceRelationshipFeature,
   isAudienceInfluencerFeature,
   isCrossSegmentEngagementFeature,
-  isAudienceVisualizationFeature
+  isAudienceVisualizationFeature,
+  isPromoterCommunicationFeature
 } from './featureDetection';
 import { isTaskCompleted, parseTasks } from './taskDetection';
 import { 
@@ -80,6 +82,7 @@ export function getDateMonthsFromNow(months: number): string {
   return date.toISOString().split('T')[0]; // YYYY-MM-DD format
 }
 
+// Re-export all utility functions
 export {
   renderStatusBadge,
   renderDatabaseStatusBadge,
@@ -89,7 +92,8 @@ export {
   groupFeaturesByCategory,
   generateCSV,
   analyzeAllFeatures,
-  analyzeDbRequirements,
+  determineSystemHealth,
+  analyzeDatabaseStatus,
   isFeatureFlagRelated,
   isMocktailSuggestionFeature,
   isMocktailTrendsFeature, 
@@ -132,6 +136,7 @@ export {
   isAudienceInfluencerFeature,
   isCrossSegmentEngagementFeature,
   isAudienceVisualizationFeature,
+  isPromoterCommunicationFeature,
   isTaskCompleted,
   parseTasks,
   mapFeaturesToReleaseFeatures,
