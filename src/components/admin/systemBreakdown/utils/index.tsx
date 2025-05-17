@@ -1,11 +1,10 @@
-
 import { renderStatusBadge, renderDatabaseStatusBadge, renderAccessIcon } from './statusRenderers';
 import { 
   createProgressSnapshot,
   validateProgressData,
   generateHistoricalProgressData
 } from './statisticsUtils';
-import { generateCSV } from './exportUtils';
+import { generateCSV, exportFeaturesAsCSV } from './exportUtils';
 import { 
   analyzeAllFeatures,
   determineSystemHealth,
@@ -91,6 +90,7 @@ export {
   calculateCategoryProgress,
   groupFeaturesByCategory,
   generateCSV,
+  exportFeaturesAsCSV, // Explicitly export both function names
   analyzeAllFeatures,
   determineSystemHealth,
   analyzeDatabaseStatus,

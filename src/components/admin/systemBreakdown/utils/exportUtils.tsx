@@ -4,16 +4,18 @@ import { FeatureItem } from '../types';
 // Define a simple category type to use in this file
 type FeatureCategory = 'Admin' | 'Establishment' | 'Individual' | 'Promoter';
 
-// Renamed to match the function call in useSystemBreakdown.tsx
+// Main CSV generation function
 export function generateCSV(
   adminFeatures: FeatureItem[],
   establishmentFeatures: FeatureItem[],
-  individualFeatures: FeatureItem[]
+  individualFeatures: FeatureItem[],
+  promoterFeatures: FeatureItem[] = []
 ) {
   const allFeatures = [
     ...adminFeatures.map(f => ({ ...f, category: 'Admin' as FeatureCategory })),
     ...establishmentFeatures.map(f => ({ ...f, category: 'Establishment' as FeatureCategory })),
-    ...individualFeatures.map(f => ({ ...f, category: 'Individual' as FeatureCategory }))
+    ...individualFeatures.map(f => ({ ...f, category: 'Individual' as FeatureCategory })),
+    ...promoterFeatures.map(f => ({ ...f, category: 'Promoter' as FeatureCategory }))
   ];
   
   const headers = [
@@ -24,7 +26,8 @@ export function generateCSV(
     'Database Status',
     'Admin Access',
     'Establishment Access',
-    'Individual Access'
+    'Individual Access',
+    'Promoter Access'
   ];
   
   const rows = allFeatures.map(feature => [
@@ -35,12 +38,13 @@ export function generateCSV(
     feature.databaseStatus,
     feature.adminAccess,
     feature.establishmentAccess,
-    feature.individualAccess
+    feature.individualAccess,
+    feature.promoterAccess
   ]);
   
   const csvContent = [
     headers.join(','),
-    ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+    ...rows.map(row => row.map(cell => `"${String(cell || '').replace(/"/g, '""')}"`).join(','))
   ].join('\n');
   
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -53,5 +57,5 @@ export function generateCSV(
   document.body.removeChild(link);
 }
 
-// Add this for backward compatibility
+// Export both function names for backward compatibility
 export const exportFeaturesAsCSV = generateCSV;

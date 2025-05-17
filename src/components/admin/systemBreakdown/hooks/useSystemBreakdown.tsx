@@ -3,9 +3,8 @@ import { useState, useCallback, useEffect } from 'react';
 import { useFeatureStatus } from './useFeatureStatus';
 import { useAnalysisProcess } from './useAnalysisProcess';
 import { useProgressTracking } from './useProgressTracking';
-import { analyzeAllFeatures } from '../utils/analysis/featureAnalyzer';
 import { AnalysisStep, FeatureItem, ProgressSnapshot, MonthlyProgressData } from '../types';
-import { generateCSV } from '../utils/exportUtils';
+import { generateCSV, exportFeaturesAsCSV } from '../utils/exportUtils';
 import { useReleaseManagement } from './useReleaseManagement';
 
 export const useSystemBreakdown = () => {
@@ -44,8 +43,7 @@ export const useSystemBreakdown = () => {
     analyzing,
     analysisProgress,
     analysisSteps,
-    handleAnalyzeFeatures,
-    updateAnalysisStep
+    handleAnalyzeFeatures
   } = useAnalysisProcess(
     adminFeatures,
     establishmentFeatures,
@@ -62,14 +60,7 @@ export const useSystemBreakdown = () => {
   
   // Export all data as CSV
   const handleExportCSV = useCallback(() => {
-    const allFeatures = [
-      ...adminFeatures,
-      ...establishmentFeatures,
-      ...individualFeatures,
-      ...promoterFeatures
-    ];
-    
-    generateCSV(adminFeatures, establishmentFeatures, individualFeatures);
+    exportFeaturesAsCSV(adminFeatures, establishmentFeatures, individualFeatures, promoterFeatures);
   }, [adminFeatures, establishmentFeatures, individualFeatures, promoterFeatures]);
   
   // Mock logout function
@@ -91,7 +82,6 @@ export const useSystemBreakdown = () => {
     handleLogout,
     handleExportCSV,
     handleAnalyzeFeatures,
-    // Ensure we're not returning functions that don't exist
     handleCreateReleaseFromFeatures: createReleaseFromFeatures,
     monthlyProgressData,
     currentSnapshot,
