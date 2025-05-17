@@ -19,6 +19,7 @@ export interface ReleaseFeature {
 }
 
 export interface ReleaseNote {
+  id: string;
   type: 'feature' | 'improvement' | 'bugfix' | 'security' | 'other';
   title: string;
   description: string;

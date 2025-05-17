@@ -1,6 +1,6 @@
 
 import { FeatureItem, FeatureStatus } from '../types';
-import { ReleaseFeature, ReleaseStatus } from '../types/releaseTypes';
+import { ReleaseFeature, ReleaseStatus, ReleaseFeatureStatus } from '../types/releaseTypes';
 
 /**
  * Maps feature status to release status
@@ -21,6 +21,26 @@ export function mapFeatureStatusToReleaseStatus(status: FeatureStatus): ReleaseS
 }
 
 /**
+ * Maps feature status to release feature status
+ */
+export function mapFeatureStatusToReleaseFeatureStatus(status: FeatureStatus): ReleaseFeatureStatus {
+  switch (status) {
+    case 'implemented':
+      return 'completed';
+    case 'in_progress':
+      return 'in_progress';
+    case 'partial':
+      return 'in_progress';
+    case 'planned':
+      return 'pending';
+    case 'blocked':
+      return 'deferred';
+    default:
+      return 'pending';
+  }
+}
+
+/**
  * Converts a list of feature items to release features
  */
 export function mapFeaturesToReleaseFeatures(
@@ -28,18 +48,31 @@ export function mapFeaturesToReleaseFeatures(
   releaseDate: string
 ): ReleaseFeature[] {
   return features.map(feature => {
+    // Calculate completion date based on the feature status
     const completeDate = new Date(releaseDate);
-    completeDate.setDate(completeDate.getDate() + 14); // Two weeks after release date
+    
+    if (feature.status === 'implemented') {
+      // Already complete, set to current date
+      completeDate.setDate(completeDate.getDate());
+    } else {
+      // Set to future date based on complexity
+      const daysToAdd = feature.complexity === 'high' ? 21 : 
+                        feature.complexity === 'medium' ? 14 : 7;
+      completeDate.setDate(completeDate.getDate() + daysToAdd);
+    }
+    
+    // Create a unique ID for the release feature
+    const featureId = feature.id || `feature-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
     
     return {
-      id: feature.id,
+      id: featureId,
       name: feature.name,
       description: feature.description,
-      status: feature.status === 'implemented' ? 'completed' : 'in_progress',
+      status: mapFeatureStatusToReleaseFeatureStatus(feature.status),
       notes: feature.databaseAnalysis,
       startDate: new Date().toISOString().split('T')[0],
       completionDate: completeDate.toISOString().split('T')[0],
-      percentComplete: feature.implementationProgress || 0
+      percentComplete: feature.implementationProgress || (feature.status === 'implemented' ? 100 : 0)
     };
   });
 }
@@ -72,3 +105,14 @@ export function groupFeaturesByStatus(features: FeatureItem[]): Record<string, F
   
   return result;
 }
+
+/**
+ * Calculate completion percentage for a release
+ */
+export function calculateReleaseCompletion(features: ReleaseFeature[]): number {
+  if (features.length === 0) return 0;
+  
+  const completed = features.filter(f => f.status === 'completed').length;
+  return Math.round((completed / features.length) * 100);
+}
+
