@@ -1,10 +1,31 @@
+
 import React from 'react';
 import Layout from '@/components/Layout';
 import { useEstablishmentProfile } from '@/hooks/establishment/useEstablishmentProfile';
 import PromotionsTab from '@/components/establishment/PromotionsTab';
+import { Promotion } from '@/types/PromotionTypes';
 
 const PromotionsPage: React.FC = () => {
   const { promotionsState } = useEstablishmentProfile();
+
+  // Ensure promotions are correctly mapped to match the Promotion type
+  const mappedPromotions: Promotion[] = promotionsState.promotions.map(p => ({
+    id: p.id,
+    code: p.code,
+    description: p.description,
+    discount_type: p.discount_type as 'percentage' | 'fixed' | 'free_item',
+    discount_value: p.discount_value,
+    start_date: p.start_date,
+    end_date: p.end_date || undefined,
+    is_active: p.is_active,
+    usage_limit: p.usage_limit || null,
+    usage_count: p.usage_count || 0,
+    valid_days: p.valid_days || null,
+    valid_hours: p.valid_hours || null,
+    user_segment: p.user_segment || null,
+    combinable: p.combinable,
+    min_purchase_amount: p.min_purchase_amount || null
+  }));
 
   return (
     <Layout>
@@ -15,11 +36,7 @@ const PromotionsPage: React.FC = () => {
         </div>
         
         <PromotionsTab 
-          promotions={promotionsState.promotions} 
-          newPromoCode={promotionsState.newPromoCode} 
-          newPromoDescription={promotionsState.newPromoDescription} 
-          setNewPromoCode={promotionsState.setNewPromoCode} 
-          setNewPromoDescription={promotionsState.setNewPromoDescription} 
+          promotions={mappedPromotions}
           handleAddPromotion={promotionsState.handleAddPromotion} 
           handleDeletePromotion={promotionsState.handleDeletePromotion} 
         />

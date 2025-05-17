@@ -18,25 +18,7 @@ import {
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Edit, Trash2, PlusCircle } from 'lucide-react';
-import { PromotionFormData } from '@/hooks/establishment/useEstablishmentPromotions';
-
-export interface Promotion {
-  id: string;
-  code: string;
-  description: string;
-  discount_type: string;
-  discount_value: number;
-  start_date?: string;
-  end_date?: string;
-  is_active: boolean;
-  usage_limit: number | null;
-  usage_count: number;
-  valid_days: string[] | null;
-  valid_hours: { start: string; end: string } | null;
-  user_segment: string | null;
-  combinable: boolean;
-  min_purchase_amount: number | null;
-}
+import { PromotionFormData, Promotion } from '@/types/PromotionTypes';
 
 export interface PromotionsTabProps {
   promotions: Promotion[];

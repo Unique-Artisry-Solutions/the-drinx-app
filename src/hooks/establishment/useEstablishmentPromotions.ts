@@ -8,18 +8,9 @@ import {
   updatePromotionCode, 
   PromotionCode
 } from '@/lib/promotions/api';
+import { PromotionFormData } from '@/types/PromotionTypes';
 
-export interface PromotionFormData {
-  code: string;
-  description: string;
-  discountType: 'percentage' | 'fixed' | 'free_item';
-  discountValue: number;
-  startDate: Date;
-  endDate: Date | null;
-  validDays?: string[];
-  usageLimit?: number | null;
-  isActive: boolean;
-}
+export { PromotionFormData } from '@/types/PromotionTypes';
 
 export const useEstablishmentPromotions = (establishmentId: string) => {
   const [promotions, setPromotions] = useState<PromotionCode[]>([]);
@@ -68,7 +59,8 @@ export const useEstablishmentPromotions = (establishmentId: string) => {
         establishment_id: establishmentId,
         usage_limit: data.usageLimit || null,
         valid_days: data.validDays || null,
-        combinable: true
+        min_purchase_amount: data.minPurchaseAmount || null,
+        combinable: data.combinable ?? true
       });
       
       toast({
@@ -139,6 +131,7 @@ export const useEstablishmentPromotions = (establishmentId: string) => {
       if (data.validDays) updateData.valid_days = data.validDays;
       if (data.usageLimit !== undefined) updateData.usage_limit = data.usageLimit;
       if (data.isActive !== undefined) updateData.is_active = data.isActive;
+      if (data.minPurchaseAmount !== undefined) updateData.min_purchase_amount = data.minPurchaseAmount;
       
       await updatePromotionCode(id, updateData);
       

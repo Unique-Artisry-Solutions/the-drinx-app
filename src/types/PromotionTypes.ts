@@ -58,3 +58,22 @@ export const discountTypeOptions: DiscountTypeOption[] = [
     description: 'Free item with purchase' 
   }
 ];
+
+// Update the Promotion interface to match what's used in PromotionsTab
+export interface Promotion {
+  id: string;
+  code: string;
+  description: string;
+  discount_type: 'percentage' | 'fixed' | 'free_item';
+  discount_value: number;
+  start_date?: string;
+  end_date?: string;
+  is_active: boolean;
+  usage_limit: number | null;
+  usage_count: number;
+  valid_days: string[] | null;
+  valid_hours: { start: string; end: string } | null;
+  user_segment: string | null;
+  combinable: boolean;
+  min_purchase_amount: number | null;
+}

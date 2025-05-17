@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import PromotionsTab from './PromotionsTab';
 import { useEstablishmentPromotions, PromotionFormData } from '@/hooks/establishment/useEstablishmentPromotions';
 import { useToast } from '@/hooks/use-toast';
-import { Promotion } from './PromotionsTab';
+import { Promotion } from '@/types/PromotionTypes';
 
 interface EstablishmentDashboardProps {
   establishmentName: string;
@@ -40,7 +40,8 @@ const EstablishmentDashboard: React.FC<EstablishmentDashboardProps> = ({ establi
     valid_days: p.valid_days || null,
     valid_hours: p.valid_hours || null,
     user_segment: p.user_segment || null,
-    combinable: p.combinable
+    combinable: p.combinable,
+    min_purchase_amount: p.min_purchase_amount || null
   }));
 
   if (isLoading) {

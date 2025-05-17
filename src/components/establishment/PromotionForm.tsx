@@ -1,19 +1,17 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { promotionFormSchema, PromotionFormValues } from '@/lib/validations/promotionSchema';
-import { PromotionFormProps, dayOptions, discountTypeOptions } from '@/types/PromotionTypes';
-import { DatePickerWithRange } from '@/components/ui/date-range-picker';
-import { DateRange } from 'react-day-picker';
-import { format } from 'date-fns';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+import { DatePicker } from '@/components/ui/date-picker';
+import { Switch } from '@/components/ui/switch';
+import { promotionFormSchema } from '@/lib/validations/promotionSchema';
+import { PromotionFormProps, PromotionFormData, dayOptions, discountTypeOptions } from '@/types/PromotionTypes';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const PromotionForm: React.FC<PromotionFormProps> = ({ 
   onSubmit, 
@@ -21,245 +19,277 @@ const PromotionForm: React.FC<PromotionFormProps> = ({
   initialData,
   isEditing = false 
 }) => {
-  const [dateRange, setDateRange] = useState<DateRange | undefined>({
-    from: initialData?.startDate || new Date(),
-    to: initialData?.endDate || undefined
-  });
+  const defaultValues: Partial<PromotionFormData> = {
+    code: '',
+    description: '',
+    discountType: 'percentage',
+    discountValue: 0,
+    startDate: new Date(),
+    endDate: null,
+    validDays: [],
+    usageLimit: null,
+    isActive: true,
+    minPurchaseAmount: null,
+    combinable: true,
+    ...initialData
+  };
 
-  const form = useForm<PromotionFormValues>({
+  const { 
+    register, 
+    handleSubmit, 
+    control, 
+    formState: { errors, isSubmitting },
+    watch
+  } = useForm<PromotionFormData>({
     resolver: zodResolver(promotionFormSchema),
-    defaultValues: {
-      code: initialData?.code || '',
-      description: initialData?.description || '',
-      discountType: initialData?.discountType || 'percentage',
-      discountValue: initialData?.discountValue || 10,
-      startDate: initialData?.startDate || new Date(),
-      endDate: initialData?.endDate || null,
-      validDays: initialData?.validDays || [],
-      usageLimit: initialData?.usageLimit || null,
-      isActive: initialData?.isActive ?? true,
-      minPurchaseAmount: initialData?.minPurchaseAmount || null,
-      combinable: initialData?.combinable ?? true
-    }
+    defaultValues
   });
 
-  const handleFormSubmit = (data: PromotionFormValues) => {
-    const formData = {
-      ...data,
-      startDate: dateRange?.from || new Date(),
-      endDate: dateRange?.to || null,
-    };
-    
-    onSubmit(formData);
-  };
+  const discountType = watch('discountType');
 
-  const handleDateRangeChange = (range: DateRange | undefined) => {
-    setDateRange(range);
-    if (range?.from) {
-      form.setValue('startDate', range.from);
-      form.setValue('endDate', range.to || null);
+  const handleFormSubmit = async (data: PromotionFormData) => {
+    try {
+      await onSubmit(data);
+    } catch (error) {
+      console.error('Form submission error:', error);
     }
   };
-
-  const discountType = form.watch('discountType');
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle>{isEditing ? 'Edit Promotion' : 'Create Promotion'}</CardTitle>
-        <p className="text-muted-foreground text-sm">
-          {isEditing ? 'Update promotion details' : 'Set up a new promotion for your establishment'}
-        </p>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="code"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Promotion Code</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="SUMMER25" 
-                        {...field} 
-                        disabled={isEditing}
-                        className="uppercase"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+      {/* Code & Active Status */}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="code">Promotion Code</Label>
+          <Input
+            id="code"
+            placeholder="SUMMER2025"
+            {...register('code')}
+          />
+          {errors.code && (
+            <p className="text-sm text-red-500">{errors.code.message}</p>
+          )}
+        </div>
+        <div className="flex items-center space-x-2 mt-8">
+          <Switch id="isActive" {...register('isActive')} />
+          <Label htmlFor="isActive">Active</Label>
+        </div>
+      </div>
+
+      {/* Description */}
+      <div className="space-y-2">
+        <Label htmlFor="description">Description</Label>
+        <Textarea
+          id="description"
+          placeholder="Summer special discount"
+          {...register('description')}
+        />
+        {errors.description && (
+          <p className="text-sm text-red-500">{errors.description.message}</p>
+        )}
+      </div>
+
+      {/* Discount Type */}
+      <div className="space-y-2">
+        <Label>Discount Type</Label>
+        <Controller
+          control={control}
+          name="discountType"
+          render={({ field }) => (
+            <RadioGroup
+              onValueChange={field.onChange}
+              defaultValue={field.value}
+              value={field.value}
+              className="flex flex-col space-y-3"
+            >
+              {discountTypeOptions.map((option) => (
+                <div key={option.value} className="flex items-center space-x-3">
+                  <RadioGroupItem value={option.value} id={option.value} />
+                  <Label htmlFor={option.value} className="font-normal">
+                    {option.label} - {option.description}
+                  </Label>
+                </div>
+              ))}
+            </RadioGroup>
+          )}
+        />
+        {errors.discountType && (
+          <p className="text-sm text-red-500">{errors.discountType.message}</p>
+        )}
+      </div>
+
+      {/* Discount Value */}
+      <div className="space-y-2">
+        <Label htmlFor="discountValue">
+          {discountType === 'percentage' 
+            ? 'Discount Percentage (%)' 
+            : discountType === 'fixed'
+              ? 'Discount Amount ($)'
+              : 'Item Value ($)'}
+        </Label>
+        <Input
+          id="discountValue"
+          type="number"
+          min={0}
+          max={discountType === 'percentage' ? 100 : undefined}
+          step="0.01"
+          {...register('discountValue', { valueAsNumber: true })}
+        />
+        {errors.discountValue && (
+          <p className="text-sm text-red-500">{errors.discountValue.message}</p>
+        )}
+      </div>
+
+      {/* Date Range */}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label>Start Date</Label>
+          <Controller
+            control={control}
+            name="startDate"
+            render={({ field }) => (
+              <DatePicker
+                selected={field.value}
+                onSelect={field.onChange}
+                disabled={isSubmitting}
               />
-
-              <FormField
-                control={form.control}
-                name="isActive"
-                render={({ field }) => (
-                  <FormItem className="flex items-end space-x-2">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel>Active</FormLabel>
-                      <p className="text-sm text-muted-foreground">
-                        Enable this promotion immediately
-                      </p>
-                    </div>
-                  </FormItem>
-                )}
+            )}
+          />
+          {errors.startDate && (
+            <p className="text-sm text-red-500">{errors.startDate.message}</p>
+          )}
+        </div>
+        <div className="space-y-2">
+          <Label>End Date</Label>
+          <Controller
+            control={control}
+            name="endDate"
+            render={({ field }) => (
+              <DatePicker
+                selected={field.value || undefined}
+                onSelect={field.onChange}
+                disabled={isSubmitting}
               />
-            </div>
+            )}
+          />
+          {errors.endDate && (
+            <p className="text-sm text-red-500">{errors.endDate.message}</p>
+          )}
+        </div>
+      </div>
 
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="Summer season promotion with 25% off all mocktails" 
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="discountType"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Discount Type</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select type" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {discountTypeOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label} - {option.description}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="discountValue"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Discount Value</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Input
-                          type="number"
-                          min={0}
-                          max={discountType === 'percentage' ? 100 : undefined}
-                          placeholder={discountType === 'percentage' ? '25' : '10'}
-                          {...field}
-                          onChange={e => field.onChange(Number(e.target.value))}
-                        />
-                        <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                          {discountType === 'percentage' ? '%' : '$'}
-                        </div>
-                      </div>
-                    </FormControl>
-                    <p className="text-sm text-muted-foreground">
-                      {discountType === 'percentage'
-                        ? 'Enter percentage discount (0-100)'
-                        : discountType === 'fixed'
-                        ? 'Enter fixed amount discount'
-                        : 'Enter minimum purchase for free item'}
-                    </p>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2">Promotion Period</label>
-              <DatePickerWithRange dateRange={dateRange} onDateRangeChange={handleDateRangeChange} />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="usageLimit"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Usage Limit</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      placeholder="100"
-                      {...field}
-                      value={field.value === null ? '' : field.value}
-                      onChange={(e) => {
-                        const value = e.target.value === '' ? null : parseInt(e.target.value, 10);
-                        field.onChange(value);
+      {/* Valid Days */}
+      <div className="space-y-4">
+        <div>
+          <Label>Valid Days (Optional)</Label>
+          <p className="text-sm text-muted-foreground">
+            If none selected, the promotion is valid every day
+          </p>
+        </div>
+        <Controller
+          control={control}
+          name="validDays"
+          render={({ field }) => (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {dayOptions.map((day) => {
+                const isSelected = field.value?.includes(day.value) || false;
+                return (
+                  <div 
+                    key={day.value}
+                    className="flex items-center space-x-2"
+                  >
+                    <Checkbox 
+                      id={`day-${day.value}`} 
+                      checked={isSelected}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          field.onChange([...(field.value || []), day.value]);
+                        } else {
+                          field.onChange(field.value?.filter(v => v !== day.value));
+                        }
                       }}
                     />
-                  </FormControl>
-                  <p className="text-sm text-muted-foreground">
-                    Leave blank for unlimited use
-                  </p>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="combinable"
-              render={({ field }) => (
-                <FormItem className="flex items-start space-x-2">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel>Combinable with other promotions</FormLabel>
-                    <p className="text-sm text-muted-foreground">
-                      Allow this promotion to be used alongside others
-                    </p>
+                    <Label htmlFor={`day-${day.value}`} className="font-normal">
+                      {day.label}
+                    </Label>
                   </div>
-                </FormItem>
-              )}
-            />
-
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={onCancel}>
-                Cancel
-              </Button>
-              <Button type="submit">
-                {isEditing ? 'Update Promotion' : 'Create Promotion'}
-              </Button>
+                );
+              })}
             </div>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+          )}
+        />
+      </div>
+
+      {/* Usage Limit */}
+      <div className="space-y-2">
+        <Label htmlFor="usageLimit">Usage Limit (Optional)</Label>
+        <Input
+          id="usageLimit"
+          type="number"
+          min={1}
+          placeholder="Unlimited"
+          {...register('usageLimit', { 
+            valueAsNumber: true,
+            setValueAs: v => v === '' ? null : parseInt(v, 10)
+          })}
+        />
+        {errors.usageLimit && (
+          <p className="text-sm text-red-500">{errors.usageLimit.message}</p>
+        )}
+      </div>
+
+      {/* Min Purchase Amount */}
+      <div className="space-y-2">
+        <Label htmlFor="minPurchaseAmount">Minimum Purchase Amount (Optional)</Label>
+        <Input
+          id="minPurchaseAmount"
+          type="number"
+          min={0}
+          step="0.01"
+          placeholder="No minimum"
+          {...register('minPurchaseAmount', { 
+            valueAsNumber: true,
+            setValueAs: v => v === '' ? null : parseFloat(v)
+          })}
+        />
+        {errors.minPurchaseAmount && (
+          <p className="text-sm text-red-500">{errors.minPurchaseAmount.message}</p>
+        )}
+      </div>
+
+      {/* Combinable with Other Promotions */}
+      <div className="flex items-center space-x-2">
+        <Controller
+          control={control}
+          name="combinable"
+          render={({ field }) => (
+            <Switch
+              id="combinable"
+              checked={field.value === true}
+              onCheckedChange={field.onChange}
+            />
+          )}
+        />
+        <Label htmlFor="combinable">
+          Can be combined with other promotions
+        </Label>
+      </div>
+
+      {/* Form Actions */}
+      <div className="flex justify-end space-x-2">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onCancel}
+          disabled={isSubmitting}
+        >
+          Cancel
+        </Button>
+        <Button type="submit" disabled={isSubmitting}>
+          {isEditing ? 'Update' : 'Create'} Promotion
+        </Button>
+      </div>
+    </form>
   );
 };
 
