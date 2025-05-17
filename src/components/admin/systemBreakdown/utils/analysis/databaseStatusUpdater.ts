@@ -2,111 +2,74 @@
 import { FeatureItem, DatabaseStatus } from '../../types';
 
 /**
- * Updates feature database status based on analysis
- * @param features List of features to update
- * @returns Updated features with database status
+ * Updates the database status based on analysis of the feature
  */
-export const updateFeaturesDbStatus = (features: FeatureItem[]): FeatureItem[] => {
-  return features.map(feature => {
-    // Detect the database status based on feature characteristics
-    const detectedDbStatus = detectDatabaseStatus(feature);
-    
-    // Use the newer dbStatus field if available, otherwise use databaseStatus for backwards compatibility
-    const currentDbStatus = feature.dbStatus || feature.databaseStatus;
-    
-    // Only update status if it's different from current status
-    if (detectedDbStatus !== currentDbStatus) {
-      return {
-        ...feature,
-        dbStatus: detectedDbStatus,
-        databaseStatus: detectedDbStatus, // For backward compatibility
-        databaseAnalysis: feature.databaseAnalysis || generateDatabaseAnalysis(feature, detectedDbStatus),
-        statusUpdated: true
-      };
-    }
-    
-    return feature;
-  });
+export const updateDatabaseStatus = (feature: FeatureItem): DatabaseStatus => {
+  // Extract database analysis if it exists
+  const analysis = feature.databaseAnalysis || '';
+  
+  // If the database analysis doesn't exist, return not_started
+  if (!analysis) {
+    return 'not_started';
+  }
+  
+  // Count checkboxes in markdown 
+  const completedTasks = (analysis.match(/- \[x\]/g) || []).length;
+  const totalTasks = (analysis.match(/- \[\S\]/g) || []).length;
+  
+  // Check for completed tables in text
+  const hasTables = analysis.includes('table implemented') || analysis.includes('tables implemented');
+  const hasSchemas = analysis.includes('schema implemented') || analysis.includes('schema created');
+  const hasAPI = analysis.includes('API endpoints') || analysis.includes('api endpoints');
+  
+  // If no tasks defined but mentions tables or schemas, consider it in_progress
+  if (totalTasks === 0 && (hasTables || hasSchemas)) {
+    return 'in_progress';
+  }
+  
+  // Calculate completion percentage
+  const completionPercentage = totalTasks > 0 
+    ? (completedTasks / totalTasks) * 100 
+    : 0;
+  
+  // Determine status based on completion percentage
+  if (completionPercentage === 0) {
+    return 'not_started';
+  } else if (completionPercentage < 50) {
+    return 'in_progress';
+  } else if (completionPercentage < 100) {
+    return 'partial';
+  } else {
+    return 'completed';
+  }
 };
 
 /**
- * Detects appropriate database status based on feature attributes
+ * Updates a feature's database status based on its implementation_status and databaseAnalysis
  */
-function detectDatabaseStatus(feature: FeatureItem): DatabaseStatus {
-  const name = feature.name.toLowerCase();
-  const tags = feature.tags || [];
-  const description = feature.description.toLowerCase();
-  
-  // For features that are implemented, database should be complete
-  if (feature.status === 'implemented') {
-    return 'complete';
+export const updateFeatureDatabaseStatus = (feature: FeatureItem): FeatureItem => {
+  // For features without database requirements, set to completed if implemented
+  if (!feature.databaseAnalysis && !feature.dbRequirementsText && feature.status === 'implemented') {
+    return {
+      ...feature,
+      databaseStatus: 'completed'
+    };
   }
   
-  // For features in progress, database should be in progress or complete
-  if (feature.status === 'in_progress') {
-    // Check for database-related keywords in name or description
-    if (name.includes('database') || description.includes('database') || tags.includes('database')) {
-      return 'in_progress';
-    }
-    
-    // We assume database work is at least started for in-progress features
-    return 'in_progress';
+  // Calculate database status from analysis text
+  const calculatedStatus = updateDatabaseStatus(feature);
+  
+  // If feature is fully implemented, ensure database status is at least completed
+  if (feature.status === 'implemented' && calculatedStatus !== 'completed') {
+    return {
+      ...feature,
+      databaseStatus: 'completed'
+    };
   }
   
-  // For planned features, database might be not started or in progress
-  if (feature.status === 'planned') {
-    // Check for signs of database preparation
-    if (tags.includes('database-ready') || description.includes('database schema prepared')) {
-      return 'in_progress';
-    }
-    
-    return 'not_started';
-  }
-  
-  // For blocked features, database might be in any state
-  if (feature.status === 'blocked') {
-    if (description.includes('database issues') || tags.includes('db-blocked')) {
-      return 'in_progress';
-    }
-    
-    if (tags.includes('db-complete')) {
-      return 'complete';
-    }
-    
-    return 'not_started';
-  }
-  
-  // For partial features (custom status)
-  if (feature.status === 'partial') {
-    return 'in_progress';
-  }
-  
-  // Default
-  return 'not_started';
-}
-
-/**
- * Generates a detailed analysis text about the database requirements
- */
-function generateDatabaseAnalysis(feature: FeatureItem, status: DatabaseStatus): string {
-  // Base analysis text on the feature and detected status
-  const name = feature.name;
-  
-  if (status === 'complete') {
-    return `Database implementation for "${name}" is complete. All necessary tables, relationships, and indices have been created and optimized.`;
-  }
-  
-  if (status === 'in_progress') {
-    return `Database implementation for "${name}" is in progress. Basic tables have been created, but additional work is needed for optimization and full functionality.`;
-  }
-  
-  if (status === 'not_started') {
-    return `Database implementation for "${name}" has not been started. Based on the feature description, the following database work will be needed: table creation, relationship mapping, and API integration.`;
-  }
-  
-  if (status === 'implemented') {
-    return `Database implementation for "${name}" has been implemented. All required database components are in place and functioning.`;
-  }
-  
-  return `Database status for "${name}" requires further analysis.`;
-}
+  // Return with calculated status
+  return {
+    ...feature,
+    databaseStatus: calculatedStatus
+  };
+};

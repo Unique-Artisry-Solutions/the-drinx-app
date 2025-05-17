@@ -1,14 +1,24 @@
 
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { BarChart, PieChart, LineChart } from 'lucide-react';
-import { FeatureItem } from './types';
-import SystemHealthCheck from './components/SystemHealthCheck';
-import { calculateFeatureStatistics } from './utils';
+import { FeatureItem, MonthlyProgressData } from './types';
 import StatusPieChart from './components/charts/StatusPieChart';
 import ProgressLineChart from './components/charts/ProgressLineChart';
-import { MonthlyProgressData } from './types';
+import { calculateFeatureStatistics } from './utils';
+import {
+  ResponsiveContainer,
+  BarChart as RechartsBarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Cell,
+  LabelList,
+  AreaChart,
+  Area
+} from 'recharts';
 
 interface ImplementationOverviewProps {
   adminFeatures: FeatureItem[];

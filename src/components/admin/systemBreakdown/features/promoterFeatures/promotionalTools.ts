@@ -1,12 +1,13 @@
 
-import { Feature } from '../../types';
+import { FeatureItem } from '../../types';
 
-export const promoCodeManagement: Feature = {
+export const promoCodeManagement: FeatureItem = {
   id: 'promo-code-management',
   name: 'Promotion Code Management',
   category: 'marketing',
   description: 'Enables promoters to create, manage and track promotional codes for events',
-  implementation_status: 'completed',
+  status: 'implemented',
+  implementationProgress: 100,
   tasks: [
     {
       name: 'Create promo code generator UI',
@@ -48,24 +49,16 @@ export const promoCodeManagement: Feature = {
     'database-schema',
     'auth-system'
   ],
-  ui_components: [
-    'PromoCodeGenerator',
-    'PromotionAuditLogs',
-  ],
-  api_endpoints: [
-    '/api/promotions',
-    '/api/promotions/{id}',
-    '/api/promotions/batch'
-  ],
-  technical_details: `
+  databaseAnalysis: `
     - Implemented optimized code validation with multi-level caching
     - Added comprehensive audit logging for all promotion code operations
     - Improved error handling with detailed feedback
     - Enhanced performance for frequently used codes
   `,
-  business_value: [
-    'Allows promoters to create special offers to drive event attendance',
-    'Provides visibility into promotion effectiveness',
-    'Enables data-driven decisions about promotional strategies'
+  testSteps: [
+    'Create promotion code',
+    'Test code validation',
+    'Verify audit logging',
+    'Test error handling'
   ]
 };
