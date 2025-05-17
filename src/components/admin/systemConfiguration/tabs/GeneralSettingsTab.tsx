@@ -12,7 +12,13 @@ const GeneralSettingsTab: React.FC<SettingsTabProps> = ({
   onCancel,
   onEditValueChange,
   isSubmitting,
-  error
+  error,
+  onEditClick,
+  onSaveClick,
+  onCancelClick,
+  setEditValue,
+  changeReason,
+  setChangeReason
 }) => {
   // Filter for general settings only
   const generalSettings = settings.filter(s => s.category === 'general');

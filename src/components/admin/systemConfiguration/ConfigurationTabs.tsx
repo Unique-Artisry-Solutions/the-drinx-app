@@ -57,7 +57,10 @@ const ConfigurationTabs: React.FC<ConfigurationTabsProps> = ({
     editValue,
     changeReason,
     onEdit: (id: string, value: any) => onEditClick(id, value),
-    onSave: async (id: string, isProtected: boolean) => onSaveClick(id, isProtected),
+    onSave: async (id: string, isProtected: boolean) => {
+      onSaveClick(id, isProtected);
+      return Promise.resolve();
+    },
     onCancel: onCancelClick,
     onEditValueChange: setEditValue,
     setChangeReason,

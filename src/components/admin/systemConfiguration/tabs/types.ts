@@ -1,6 +1,8 @@
 
 import { SystemSetting } from '@/types/SupabaseTables';
 
+export { SystemSetting };
+
 export interface SettingsTabProps {
   settings: SystemSetting[];
   isLoading: boolean;
@@ -15,7 +17,7 @@ export interface SettingsTabProps {
   isSubmitting: boolean;
   error: Error | null;
   onEditClick: (id: string, currentValue: any) => void;
-  onSaveClick: (id: string) => void;
+  onSaveClick: (id: string, isProtected: boolean) => void;
   onCancelClick: () => void;
   setEditValue: (value: any) => void;
 }
