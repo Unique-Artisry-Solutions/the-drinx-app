@@ -3,7 +3,7 @@ import React from 'react';
 import Layout from '@/components/Layout';
 import { useEstablishmentProfile } from '@/hooks/establishment/useEstablishmentProfile';
 import PromotionsTab from '@/components/establishment/PromotionsTab';
-import { PromotionFormData } from '@/types/PromotionTypes';
+import { PromotionFormData, Promotion } from '@/types/PromotionTypes';
 
 const PromotionsPage: React.FC = () => {
   const { promotionsState } = useEstablishmentProfile();
@@ -24,8 +24,12 @@ const PromotionsPage: React.FC = () => {
 
   // Added for updating promotions
   const handleUpdatePromotion = async (id: string, data: PromotionFormData): Promise<void> => {
-    if (promotionsState.handleUpdatePromotion) {
+    // Check if the function exists in promotionsState before calling it
+    if (typeof promotionsState.handleUpdatePromotion === 'function') {
       promotionsState.handleUpdatePromotion(id, data);
+    } else {
+      console.warn('handleUpdatePromotion function not available in promotionsState');
+      // Fallback implementation if needed
     }
     return Promise.resolve();
   };
@@ -39,7 +43,7 @@ const PromotionsPage: React.FC = () => {
         </div>
         
         <PromotionsTab 
-          promotions={promotions}
+          promotions={promotions as Promotion[]}
           handleAddPromotion={handleAddPromotion}
           handleDeletePromotion={handleDeletePromotion}
           handleUpdatePromotion={handleUpdatePromotion}

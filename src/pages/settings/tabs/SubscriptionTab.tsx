@@ -1,140 +1,119 @@
 
-import React from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
+import React, { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { CalendarIcon, CheckCircle, User } from 'lucide-react';
+import FollowersList from '@/components/subscription/FollowersList';
+import SubscriptionList from '@/components/subscription/SubscriptionList';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
+// Define proper interfaces for our data
 interface Follower {
   id: string;
-  subscriber_id: string;
-  promoter_id: string;
-  subscription_start: string;
-  subscription_end: string | null;
   created_at: string;
-  updated_at: string;
-  notification_preferences: Record<string, boolean>;
   follow_status: string;
-  subscriber?: {
+  promoter_id: string;
+  subscriber_id: string;
+  notification_preferences: any;
+  subscription_start: string;
+  subscription_end: string;
+  updated_at: string;
+  subscriber: {
     id: string;
     display_name: string;
-    avatar_url: string | null;
+    avatar_url: string;
   };
 }
 
-const SubscriptionTab = () => {
+interface Subscription {
+  id: string;
+  created_at: string;
+  follow_status: string;
+  promoter_id: string;
+  subscriber_id: string;
+  notification_preferences: any;
+  subscription_start: string;
+  subscription_end: string;
+  updated_at: string;
+  promoter: {
+    id: string;
+    display_name: string;
+    avatar_url: string;
+  };
+}
+
+const SubscriptionTab: React.FC = () => {
+  const [followers, setFollowers] = useState<Follower[]>([]);
+  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
-  
-  const { data: followers = [], isLoading } = useQuery({
-    queryKey: ['promoterFollowers'],
-    queryFn: async () => {
-      if (!user?.id) throw new Error('User not authenticated');
+
+  useEffect(() => {
+    if (!user) return;
+    
+    const fetchSubscriptionData = async () => {
+      setIsLoading(true);
       
-      // Modified query to use proper join syntax for Supabase
-      const { data, error } = await supabase
-        .from('promoter_followers')
-        .select(`
-          *,
-          subscriber:subscriber_id (
-            id,
-            display_name,
-            avatar_url
-          )
-        `)
-        .eq('promoter_id', user.id)
-        .eq('follow_status', 'active');
-        
-      if (error) {
-        console.error('Error fetching followers:', error);
-        throw error;
+      // Fetch followers
+      const { data: followersData, error: followersError } = await supabase
+        .from('promoter_subscribers')
+        .select('*, subscriber:profiles!subscriber_id(*)')
+        .eq('promoter_id', user.id);
+      
+      if (followersError) {
+        console.error('Error fetching followers:', followersError);
+      } else {
+        // Type cast the followers data
+        setFollowers((followersData as unknown) as Follower[]);
       }
       
-      // Type assertion to ensure proper typing of the result
-      return (data || []) as Follower[];
-    },
-    enabled: !!user,
-  });
-  
-  if (isLoading) {
-    return <div className="p-8">Loading subscription data...</div>;
-  }
-  
+      // Fetch subscriptions
+      const { data: subscriptionsData, error: subscriptionsError } = await supabase
+        .from('promoter_subscribers')
+        .select('*, promoter:profiles!promoter_id(*)')
+        .eq('subscriber_id', user.id);
+      
+      if (subscriptionsError) {
+        console.error('Error fetching subscriptions:', subscriptionsError);
+      } else {
+        // Type cast the subscriptions data
+        setSubscriptions((subscriptionsData as unknown) as Subscription[]);
+      }
+      
+      setIsLoading(false);
+    };
+    
+    fetchSubscriptionData();
+  }, [user]);
+
   return (
     <div className="space-y-6">
-      <section>
-        <h2 className="text-xl font-semibold mb-4">Your Subscribers</h2>
-        
-        <div className="grid gap-4">
-          {followers.length > 0 ? (
-            followers.map((follower) => (
-              <Card key={follower.id}>
-                <CardContent className="p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    {follower.subscriber?.avatar_url ? (
-                      <img 
-                        src={follower.subscriber.avatar_url} 
-                        alt={follower.subscriber.display_name || 'User'} 
-                        className="w-10 h-10 rounded-full" 
-                      />
-                    ) : (
-                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                        <User size={20} />
-                      </div>
-                    )}
-                    <div>
-                      <h3 className="font-medium">
-                        {follower.subscriber?.display_name || 'Anonymous User'}
-                      </h3>
-                      <div className="flex items-center text-xs text-muted-foreground">
-                        <CalendarIcon className="mr-1 h-3 w-3" />
-                        <span>
-                          Subscribed since {new Date(follower.subscription_start).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center">
-                    <span className="text-sm text-success flex items-center gap-1">
-                      <CheckCircle className="h-4 w-4" /> Active
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          ) : (
-            <Card>
-              <CardHeader>
-                <CardTitle>No Subscribers Yet</CardTitle>
-                <CardDescription>
-                  You don't have any subscribers yet. Share your profile to gain followers.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button variant="outline">Share Profile</Button>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </section>
+      <div>
+        <h3 className="text-lg font-medium">Subscriptions & Followers</h3>
+        <p className="text-sm text-muted-foreground">
+          Manage your subscriptions to promoters and view your followers
+        </p>
+      </div>
       
-      <section>
-        <h2 className="text-xl font-semibold mb-4">Subscription Settings</h2>
-        <Card>
-          <CardHeader>
-            <CardTitle>Notification Preferences</CardTitle>
-            <CardDescription>
-              Configure what your subscribers will be notified about.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {/* Notification preferences would go here */}
-            <p className="text-muted-foreground">Coming soon!</p>
-          </CardContent>
-        </Card>
-      </section>
+      <Tabs defaultValue="subscriptions">
+        <TabsList>
+          <TabsTrigger value="subscriptions">My Subscriptions</TabsTrigger>
+          <TabsTrigger value="followers">My Followers</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="subscriptions">
+          <SubscriptionList 
+            subscriptions={subscriptions} 
+            isLoading={isLoading} 
+          />
+        </TabsContent>
+        
+        <TabsContent value="followers">
+          <FollowersList 
+            followers={followers}
+            isLoading={isLoading}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

@@ -5,7 +5,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
-import PageSuspense from './components/loading/PageSuspense';
+import { PageSuspense } from './components/loading/PageSuspense';
 import { AuthProvider } from './contexts/auth';
 import HomePage from './pages/HomePage';
 import { CartProvider } from './contexts/CartContext';
@@ -24,7 +24,7 @@ function App() {
         <SavedCodesProvider>
           <FeatureProvider>
             <Router>
-              <Suspense fallback={<PageSuspense />}>
+              <Suspense fallback={<PageSuspense fallback={<div>Loading...</div>}>{null}</PageSuspense>}>
                 <Routes>
                   <Route path="/" element={<LandingPage />} />
                   <Route path="/login" element={<LoginPage />} />

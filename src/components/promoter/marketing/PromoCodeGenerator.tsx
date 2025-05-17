@@ -1,258 +1,163 @@
 
-import React from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { PromoCodeGeneratorProps } from '@/types/PromoterTypes';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import { Slider } from '@/components/ui/slider';
+import { DatePicker } from '@/components/ui/date-picker';
+import { useToast } from '@/hooks/use-toast';
 
-const formSchema = z.object({
-  prefix: z.string()
-    .min(2, "Prefix must be at least 2 characters")
-    .max(5, "Prefix cannot exceed 5 characters")
-    .regex(/^[A-Z]+$/, "Prefix must contain only uppercase letters"),
-  count: z.number()
-    .int()
-    .min(1, "Must generate at least 1 code")
-    .max(100, "Cannot generate more than 100 codes at once"),
-  length: z.number()
-    .int()
-    .min(5, "Code length must be at least 5 characters")
-    .max(12, "Code length cannot exceed 12 characters"),
-  includeLetters: z.boolean(),
-  includeNumbers: z.boolean(),
-  discountType: z.enum(['percentage', 'fixed', 'free_item']),
-  discountValue: z.number()
-    .min(0, "Discount value must be positive")
-    .refine(val => val <= 100, {
-      message: "Percentage discount cannot exceed 100%",
-      path: ["discountValue"]
-    }),
-  expiryDate: z.date().nullable(),
-});
+// Define props interface consistently
+export interface PromoCodeGeneratorProps {
+  onCodesGenerated: (codes: any[]) => void;
+  onCancel: () => void;
+}
 
-const PromoCodeGenerator: React.FC<PromoCodeGeneratorProps> = ({ onCodesGenerated, onCancel }) => {
-  const form = useForm({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      prefix: 'PROMO',
-      count: 10,
-      length: 8,
-      includeLetters: true,
-      includeNumbers: true,
-      discountType: 'percentage' as const,
-      discountValue: 15,
-      expiryDate: null,
-    },
-  });
+const PromoCodeGenerator: React.FC<PromoCodeGeneratorProps> = ({ 
+  onCodesGenerated,
+  onCancel 
+}) => {
+  const [prefix, setPrefix] = useState('SWIG');
+  const [quantity, setQuantity] = useState(10);
+  const [discountType, setDiscountType] = useState<'percentage' | 'fixed' | 'free_item'>('percentage');
+  const [discountValue, setDiscountValue] = useState(10);
+  const [expiryDate, setExpiryDate] = useState<Date | undefined>(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)); // 30 days from now
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
 
-  const watchDiscountType = form.watch('discountType');
-  
-  const handleSubmit = (data: z.infer<typeof formSchema>) => {
-    const generatedCodes = generateCodes(
-      data.prefix,
-      data.count,
-      data.length,
-      data.includeLetters,
-      data.includeNumbers
-    );
-    
-    onCodesGenerated(generatedCodes);
+  const generateRandomString = (length: number) => {
+    const characters = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Removed confusing chars like I, O, 1, 0
+    let result = '';
+    for (let i = 0; i < length; i++) {
+      result += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+    return result;
   };
 
-  const generateCodes = (
-    prefix: string,
-    count: number,
-    length: number,
-    includeLetters: boolean,
-    includeNumbers: boolean
-  ): string[] => {
-    const codes: string[] = [];
-    const chars = [
-      ...(includeLetters ? 'ABCDEFGHJKLMNPQRSTUVWXYZ' : ''),
-      ...(includeNumbers ? '23456789' : '')
-    ].join('');
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
 
-    // Return empty array if no valid characters to choose from
-    if (chars.length === 0) return [];
+    try {
+      // Generate codes
+      const generatedCodes = Array(quantity).fill(0).map(() => ({
+        code: `${prefix}${generateRandomString(6)}`,
+        discount_type: discountType,
+        discount_value: discountValue,
+        expiry_date: expiryDate?.toISOString(),
+        created_at: new Date().toISOString()
+      }));
 
-    for (let i = 0; i < count; i++) {
-      let code = prefix + '-';
+      // Call the onCodesGenerated callback
+      onCodesGenerated(generatedCodes);
       
-      for (let j = 0; j < length; j++) {
-        const randomIndex = Math.floor(Math.random() * chars.length);
-        code += chars[randomIndex];
-      }
-      
-      codes.push(code);
+      toast({
+        title: 'Promo codes generated',
+        description: `${quantity} promo codes have been successfully created.`,
+      });
+    } catch (error) {
+      console.error('Error generating promo codes:', error);
+      toast({
+        title: 'Failed to generate codes',
+        description: 'There was an error generating the promo codes.',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
     }
-
-    return codes;
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Generate Promotion Codes</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="prefix"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Code Prefix</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="PROMO"
-                        {...field}
-                        className="uppercase"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="count"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Number of Codes</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value))}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="length"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Code Length</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      {...field}
-                      onChange={(e) => field.onChange(parseInt(e.target.value))}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <label className="block text-sm font-medium">Code Prefix</label>
+          <Input
+            value={prefix}
+            onChange={(e) => setPrefix(e.target.value.toUpperCase())}
+            placeholder="SWIG"
+            maxLength={10}
+            className="uppercase"
+          />
+          <p className="text-xs text-muted-foreground">
+            Your codes will look like: {prefix}{generateRandomString(6)}
+          </p>
+        </div>
+        
+        <div className="space-y-2">
+          <label className="block text-sm font-medium">Number of Codes</label>
+          <div className="flex items-center space-x-2">
+            <Slider 
+              value={[quantity]} 
+              min={1} 
+              max={100} 
+              step={1} 
+              onValueChange={(value) => setQuantity(value[0])} 
+              className="flex-grow" 
             />
+            <span className="w-12 text-center">{quantity}</span>
+          </div>
+        </div>
+      </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="includeLetters"
-                render={({ field }) => (
-                  <FormItem className="flex items-center justify-between space-x-2 space-y-0">
-                    <FormLabel>Include Letters</FormLabel>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="includeNumbers"
-                render={({ field }) => (
-                  <FormItem className="flex items-center justify-between space-x-2 space-y-0">
-                    <FormLabel>Include Numbers</FormLabel>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="discountType"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Discount Type</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select type" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="percentage">Percentage</SelectItem>
-                        <SelectItem value="fixed">Fixed Amount</SelectItem>
-                        <SelectItem value="free_item">Free Item</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="discountValue"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Discount Value</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        {...field}
-                        onChange={(e) => field.onChange(parseFloat(e.target.value))}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="flex justify-end gap-2 mt-6">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={onCancel}
-              >
-                Cancel
-              </Button>
-              <Button type="submit">Generate Codes</Button>
-            </div>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <label className="block text-sm font-medium">Discount Type</label>
+          <Select 
+            value={discountType} 
+            onValueChange={(value: 'percentage' | 'fixed' | 'free_item') => setDiscountType(value)}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="percentage">Percentage (%)</SelectItem>
+              <SelectItem value="fixed">Fixed Amount ($)</SelectItem>
+              <SelectItem value="free_item">Free Item</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        
+        <div className="space-y-2">
+          <label className="block text-sm font-medium">
+            {discountType === 'percentage' ? 'Discount Percentage' : 
+             discountType === 'fixed' ? 'Discount Amount' : 'Item Value'}
+          </label>
+          <div className="flex items-center space-x-2">
+            <Slider 
+              value={[discountValue]} 
+              min={1} 
+              max={discountType === 'percentage' ? 100 : 50} 
+              step={1} 
+              onValueChange={(value) => setDiscountValue(value[0])} 
+              className="flex-grow" 
+            />
+            <span className="w-16 text-center">
+              {discountType === 'percentage' ? `${discountValue}%` : `$${discountValue}`}
+            </span>
+          </div>
+        </div>
+      </div>
+      
+      <div className="space-y-2">
+        <label className="block text-sm font-medium">Expiry Date</label>
+        <DatePicker 
+          selected={expiryDate} 
+          onSelect={setExpiryDate} 
+          className="w-full"
+          minDate={new Date()}
+        />
+      </div>
+      
+      <div className="flex justify-end space-x-3 pt-4">
+        <Button type="button" variant="outline" onClick={onCancel} disabled={loading}>
+          Cancel
+        </Button>
+        <Button type="submit" disabled={loading}>
+          {loading ? 'Generating...' : 'Generate Codes'}
+        </Button>
+      </div>
+    </form>
   );
 };
 
