@@ -20,9 +20,6 @@ export const useReleaseFeatures = (
       // Simulate API call with a timeout
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      // Removed navigation to releases tab since it no longer exists
-      // Instead, show a toast notification
-      
       toast({
         title: "Release Management Unavailable",
         description: "The Release Management module has been temporarily disabled. Feature information has been logged to the console.",

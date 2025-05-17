@@ -1,6 +1,6 @@
 
 import { FeatureItem, FeatureStatus } from '../types';
-import { ReleaseFeature, ReleaseStatus, ReleaseFeatureStatus } from '../types/releaseTypes';
+import { ReleaseFeatureStatus, ReleaseStatus } from '../types/releaseTypes';
 
 /**
  * Maps feature status to release status
@@ -41,43 +41,6 @@ export function mapFeatureStatusToReleaseFeatureStatus(status: FeatureStatus): R
 }
 
 /**
- * Converts a list of feature items to release features
- */
-export function mapFeaturesToReleaseFeatures(
-  features: FeatureItem[],
-  releaseDate: string
-): ReleaseFeature[] {
-  return features.map(feature => {
-    // Calculate completion date based on the feature status
-    const completeDate = new Date(releaseDate);
-    
-    if (feature.status === 'implemented') {
-      // Already complete, set to current date
-      completeDate.setDate(completeDate.getDate());
-    } else {
-      // Set to future date based on complexity
-      const daysToAdd = feature.complexity === 'high' ? 21 : 
-                        feature.complexity === 'medium' ? 14 : 7;
-      completeDate.setDate(completeDate.getDate() + daysToAdd);
-    }
-    
-    // Create a unique ID for the release feature
-    const featureId = feature.id || `feature-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-    
-    return {
-      id: featureId,
-      name: feature.name,
-      description: feature.description,
-      status: mapFeatureStatusToReleaseFeatureStatus(feature.status),
-      notes: feature.databaseAnalysis,
-      startDate: new Date().toISOString().split('T')[0],
-      completionDate: completeDate.toISOString().split('T')[0],
-      percentComplete: feature.implementationProgress || (feature.status === 'implemented' ? 100 : 0)
-    };
-  });
-}
-
-/**
  * Groups features by their implementation status
  */
 export function groupFeaturesByStatus(features: FeatureItem[]): Record<string, FeatureItem[]> {
@@ -107,9 +70,9 @@ export function groupFeaturesByStatus(features: FeatureItem[]): Record<string, F
 }
 
 /**
- * Calculate completion percentage for a release
+ * Calculate completion percentage
  */
-export function calculateReleaseCompletion(features: ReleaseFeature[]): number {
+export function calculateReleaseCompletion(features: any[]): number {
   if (features.length === 0) return 0;
   
   const completed = features.filter(f => f.status === 'completed').length;

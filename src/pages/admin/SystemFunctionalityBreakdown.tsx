@@ -157,8 +157,6 @@ const SystemFunctionalityBreakdown: React.FC = () => {
           <ProposedImprovementsTab improvements={improvementsData} />
         </TabsContent>
 
-        {/* Removed the ReleaseManagementTab section */}
-
         <TabsContent value="showcase" className="space-y-4">
           <FeatureShowcaseTab
             adminFeatures={adminFeatures}

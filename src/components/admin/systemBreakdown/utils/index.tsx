@@ -58,8 +58,9 @@ import {
 } from './featureDetection';
 import { isTaskCompleted, parseTasks } from './taskDetection';
 import { 
-  mapFeaturesToReleaseFeatures, 
-  mapFeatureStatusToReleaseStatus 
+  mapFeatureStatusToReleaseStatus, 
+  groupFeaturesByStatus,
+  calculateReleaseCompletion
 } from './releaseUtils';
 import { 
   prepareFeatureShowcaseData,
@@ -91,7 +92,7 @@ export {
   calculateCategoryProgress,
   groupFeaturesByCategory,
   generateCSV,
-  exportFeaturesAsCSV, // Explicitly export both function names
+  exportFeaturesAsCSV, 
   analyzeAllFeatures,
   determineSystemHealth,
   analyzeDatabaseStatus,
@@ -140,8 +141,9 @@ export {
   isPromoterCommunicationFeature,
   isTaskCompleted,
   parseTasks,
-  mapFeaturesToReleaseFeatures,
   mapFeatureStatusToReleaseStatus,
+  groupFeaturesByStatus,
+  calculateReleaseCompletion,
   createProgressSnapshot,
   validateProgressData,
   generateHistoricalProgressData,
