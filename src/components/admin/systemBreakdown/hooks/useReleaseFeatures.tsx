@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 import { FeatureItem } from '../types';
 
 export const useReleaseFeatures = (
@@ -20,12 +20,13 @@ export const useReleaseFeatures = (
       // Simulate API call with a timeout
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      // Navigate to the releases tab
-      setActiveTab('releases');
+      // Removed navigation to releases tab since it no longer exists
+      // Instead, show a toast notification
       
       toast({
-        title: "Release Created",
-        description: "New release has been created from current feature set.",
+        title: "Release Management Unavailable",
+        description: "The Release Management module has been temporarily disabled. Feature information has been logged to the console.",
+        duration: 5000,
       });
     } catch (error) {
       console.error('Failed to create release:', error);

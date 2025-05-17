@@ -1,12 +1,11 @@
+
 export type ReleaseType = 'major' | 'minor' | 'patch' | 'hotfix';
 export type ReleaseStatus = 'planned' | 'in_development' | 'ready_for_qa' | 'in_qa' | 'ready_for_release' | 'released';
 export type ReleaseSortField = 'name' | 'version' | 'status' | 'plannedReleaseDate' | 'createdAt';
 export type ReleaseSortOrder = 'asc' | 'desc';
 
-// Simplified to string to avoid complex object type issues
+// Simplify to a basic string type to avoid complex object issues
 export type ReleaseNote = string;
-
-// Keep the type definition but simplify to avoid conflicts
 export type ReleaseFeatureStatus = 'pending' | 'in_progress' | 'completed' | 'blocked' | 'deferred';
 
 export interface ReleaseFeature {
@@ -22,6 +21,7 @@ export interface ReleaseFeature {
   improvementId?: string;
 }
 
+// Basic release structure for compatibility
 export interface Release {
   id: string;
   version: string;
@@ -30,7 +30,7 @@ export interface Release {
   status: ReleaseStatus;
   description: string;
   features: ReleaseFeature[];
-  releaseNotes: ReleaseNote[];
+  releaseNotes: string[];
   createdAt: string;
   updatedAt: string;
   plannedReleaseDate: string;
@@ -43,16 +43,11 @@ export interface Release {
   nextVersion?: string;
 }
 
+// Simplified progress tracking
 export interface ReleaseProgress {
   releaseId: string;
   completion: number;
   featuresCompleted: number;
   totalFeatures: number;
-}
-
-export interface AnalysisStep {
-  id: string;
-  name: string;
-  description: string;
-  completed: boolean;
+  percentComplete: number;
 }

@@ -1,5 +1,5 @@
 
-import { Release, ReleaseFeature, ReleaseNote } from '../types/releaseTypes';
+import { Release, ReleaseFeature } from '../types/releaseTypes';
 import { subDays, addDays, format } from 'date-fns';
 
 // Generate dates relative to current date for more realistic sample data
@@ -85,69 +85,19 @@ const sampleFeatures: ReleaseFeature[] = [
   }
 ];
 
-// Sample release notes
-const sampleReleaseNotes: { [key: string]: ReleaseNote[] } = {
+// Sample release notes - now simplified to strings
+const sampleReleaseNotes: { [key: string]: string[] } = {
   '1.2.0': [
-    {
-      id: 'note-1-2-0-1',
-      type: 'feature',
-      title: 'AI-powered mocktail recommendations',
-      description: 'Personalized mocktail suggestions based on your preferences and taste profile',
-      userFacing: true,
-      author: 'Alex Johnson',
-      createdAt: oneMonthAgo
-    },
-    {
-      id: 'note-1-2-0-2',
-      type: 'improvement',
-      title: 'Enhanced establishment profiles',
-      description: 'Added more details and customization options for establishment profiles',
-      userFacing: true,
-      author: 'Sarah Kim',
-      createdAt: oneMonthAgo
-    },
-    {
-      id: 'note-1-2-0-3',
-      type: 'bugfix',
-      title: 'Fixed user authentication issues',
-      description: 'Resolved issues with login and session management',
-      technicalDetails: 'Updated token refresh mechanism and fixed JWT validation',
-      userFacing: false,
-      author: 'Michael Chen',
-      createdAt: oneMonthAgo
-    }
+    "Feature: AI-powered mocktail recommendations - Personalized suggestions based on preferences",
+    "Improvement: Enhanced establishment profiles - More details and customization options",
+    "Bugfix: Fixed user authentication issues - Resolved login and session management problems"
   ],
   '1.1.0': [
-    {
-      id: 'note-1-1-0-1',
-      type: 'feature',
-      title: 'Bar crawl management',
-      description: 'Create, edit, and share bar crawl routes with friends',
-      userFacing: true,
-      author: 'Emily Johnson',
-      createdAt: twoMonthsAgo
-    },
-    {
-      id: 'note-1-1-0-2',
-      type: 'security',
-      title: 'Enhanced data protection',
-      description: 'Improved security for user data and preferences',
-      technicalDetails: 'Implemented row-level security in database and encrypted sensitive data',
-      userFacing: false,
-      author: 'Michael Chen',
-      createdAt: twoMonthsAgo
-    }
+    "Feature: Bar crawl management - Create, edit, and share bar crawl routes with friends",
+    "Security: Enhanced data protection - Improved security for user data and preferences"
   ],
   '1.0.0': [
-    {
-      id: 'note-1-0-0-1',
-      type: 'feature',
-      title: 'Initial release',
-      description: 'First public release of Spiritless platform',
-      userFacing: true,
-      author: 'Development Team',
-      createdAt: subDays(today, 90).toISOString()
-    }
+    "Feature: Initial release - First public release of Spiritless platform"
   ]
 };
 
