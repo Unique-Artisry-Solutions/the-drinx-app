@@ -1,4 +1,3 @@
-
 export interface PromoCodeGeneratorProps {
   onCodesGenerated: (codes: string[]) => void;
   onCancel: () => void;
@@ -39,4 +38,18 @@ export interface SubscriptionTier {
   price: number;
   features: string[];
   is_default: boolean;
+}
+
+export interface FollowerData {
+  id: string;
+  subscriber_id: string;
+  promoter_id: string;
+  subscription_start: string;
+  subscription_end: string | null;
+  status: string;
+  notification_preferences: {
+    events: boolean;
+    promotions: boolean;
+    announcements: boolean;
+  };
 }

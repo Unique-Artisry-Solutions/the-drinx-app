@@ -26,7 +26,7 @@ const SubscriptionList: React.FC<SubscriptionListProps> = ({ promoterId }) => {
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-4">
       {tiers.map((tier) => {
         const currentSubscription = subscriptions.find(
-          (sub) => sub.tier_id === tier.id && sub.promoter_id === promoterId
+          (sub) => sub.subscription_type === tier.tier && (sub.status === 'active' || sub.status === 'pending')
         );
         
         return (
