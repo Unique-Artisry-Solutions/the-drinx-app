@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { useFollowers } from '@/hooks/useFollowers';
+import { useFollowing } from '@/hooks/useFollowing';
 import FollowCard from './FollowCard';
 
 interface NotificationPreferences {
@@ -15,7 +15,7 @@ interface FollowersListProps {
 }
 
 const FollowersList: React.FC<FollowersListProps> = ({ promoterId, promoterName }) => {
-  const { followers, followedPromoters, isLoading } = useFollowers(promoterId);
+  const { followers, followedPromoters, isLoading } = useFollowing(promoterId);
 
   if (isLoading) {
     return <div className="flex justify-center p-8">Loading followers...</div>;
