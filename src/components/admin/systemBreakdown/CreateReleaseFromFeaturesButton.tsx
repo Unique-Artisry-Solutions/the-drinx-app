@@ -10,12 +10,27 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { useToast } from '@/components/ui/use-toast';
 
 interface CreateReleaseFromFeaturesButtonProps {
   onClick: () => void;
 }
 
 const CreateReleaseFromFeaturesButton: React.FC<CreateReleaseFromFeaturesButtonProps> = ({ onClick }) => {
+  const { toast } = useToast();
+  
+  const handleClick = () => {
+    // Call the original onClick handler (which will use the stub function)
+    onClick();
+    
+    // Show a toast notification instead of actually creating a release
+    toast({
+      title: "Release Management Unavailable",
+      description: "The Release Management module has been temporarily disabled. Feature information has been logged to the console.",
+      duration: 5000,
+    });
+  };
+  
   return (
     <Card>
       <CardHeader>
@@ -35,7 +50,7 @@ const CreateReleaseFromFeaturesButton: React.FC<CreateReleaseFromFeaturesButtonP
         </p>
       </CardContent>
       <CardFooter className="flex justify-end">
-        <Button onClick={onClick} className="flex items-center gap-2">
+        <Button onClick={handleClick} className="flex items-center gap-2">
           <Calendar className="h-4 w-4" />
           <span>Create Release from Features</span>
           <ArrowRight className="h-4 w-4 ml-1" />

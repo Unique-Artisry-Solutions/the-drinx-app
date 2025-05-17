@@ -8,7 +8,7 @@ import { generateCSV, exportFeaturesAsCSV } from '../utils/exportUtils';
 import { useReleaseManagement } from './useReleaseManagement';
 
 export const useSystemBreakdown = () => {
-  // Tab navigation state
+  // Tab navigation state - Remove 'releases' from default tabs
   const [activeTab, setActiveTab] = useState<string>('overview');
   
   // Get features from feature status hook
@@ -38,7 +38,7 @@ export const useSystemBreakdown = () => {
     promoterFeatures
   );
   
-  // Analysis process state - matching the actual return values from useAnalysisProcess
+  // Analysis process state
   const {
     analyzing,
     analysisProgress,
@@ -55,7 +55,7 @@ export const useSystemBreakdown = () => {
     setPromoterFeatures
   );
   
-  // Release management - adjust to use the correct properties
+  // Using our stub implementation
   const { createReleaseFromFeatures } = useReleaseManagement();
   
   // Export all data as CSV

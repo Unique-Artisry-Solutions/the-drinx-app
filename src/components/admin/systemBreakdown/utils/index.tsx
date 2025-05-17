@@ -1,3 +1,4 @@
+
 import { renderStatusBadge, renderDatabaseStatusBadge, renderAccessIcon } from './statusRenderers';
 import { 
   createProgressSnapshot,
@@ -149,7 +150,7 @@ export {
 };
 
 // Export types from types.ts
-export type { AnalysisStep, ReleaseProgress, MonthlyProgressData, ProgressData, ProgressSnapshot } from '../types';
+export type { AnalysisStep, MonthlyProgressData, ProgressData, ProgressSnapshot } from '../types';
 export type { FeatureShowcaseData, FeatureShowcaseCategoryType, FeatureBusinessValueType, FeatureBusinessValueObject } from '../types';
 export type { ImprovementItem, SortField, SortOrder } from '../types';
 

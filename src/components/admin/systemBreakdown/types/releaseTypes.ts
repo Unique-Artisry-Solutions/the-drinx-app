@@ -1,16 +1,25 @@
-
 export type ReleaseType = 'major' | 'minor' | 'patch' | 'hotfix';
 export type ReleaseStatus = 'planned' | 'in_development' | 'ready_for_qa' | 'in_qa' | 'ready_for_release' | 'released';
 export type ReleaseSortField = 'name' | 'version' | 'status' | 'plannedReleaseDate' | 'createdAt';
 export type ReleaseSortOrder = 'asc' | 'desc';
 
+// Simplified to string to avoid complex object type issues
 export type ReleaseNote = string;
+
+// Keep the type definition but simplify to avoid conflicts
+export type ReleaseFeatureStatus = 'pending' | 'in_progress' | 'completed' | 'blocked' | 'deferred';
 
 export interface ReleaseFeature {
   id: string;
   name: string;
-  status: 'pending' | 'in_progress' | 'completed' | 'blocked';
+  status: ReleaseFeatureStatus;
   description?: string;
+  percentComplete?: number;
+  startDate?: string;
+  completionDate?: string;
+  notes?: string;
+  assignedTo?: string;
+  improvementId?: string;
 }
 
 export interface Release {
@@ -29,6 +38,9 @@ export interface Release {
   team: string[];
   tags: string[];
   releaseBranch: string;
+  createdBy?: string;
+  previousVersion?: string;
+  nextVersion?: string;
 }
 
 export interface ReleaseProgress {

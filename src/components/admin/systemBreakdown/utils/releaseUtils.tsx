@@ -34,7 +34,7 @@ export function mapFeatureStatusToReleaseFeatureStatus(status: FeatureStatus): R
     case 'planned':
       return 'pending';
     case 'blocked':
-      return 'deferred';
+      return 'blocked';
     default:
       return 'pending';
   }
@@ -115,4 +115,3 @@ export function calculateReleaseCompletion(features: ReleaseFeature[]): number {
   const completed = features.filter(f => f.status === 'completed').length;
   return Math.round((completed / features.length) * 100);
 }
-

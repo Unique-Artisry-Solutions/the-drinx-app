@@ -16,7 +16,7 @@ const SystemBreakdownNavigation: React.FC<SystemBreakdownNavigationProps> = ({
     <div className="sticky top-4 z-10 bg-card rounded-lg p-1 shadow-sm mb-6 overflow-x-auto">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="w-full justify-start gap-1 bg-transparent p-1">
-          {['overview', 'admin', 'establishment', 'individual', 'promoter', 'promoter-requirements', 'improvements', 'releases', 'showcase'].map((tab) => (
+          {['overview', 'admin', 'establishment', 'individual', 'promoter', 'promoter-requirements', 'improvements', 'showcase'].map((tab) => (
             <TabsTrigger 
               key={tab}
               value={tab}
@@ -39,7 +39,7 @@ const MobileSystemBreakdownNavigation: React.FC<SystemBreakdownNavigationProps> 
   return (
     <div className="mb-6 overflow-x-auto pb-2">
       <div className="flex space-x-2 min-w-max">
-        {['overview', 'admin', 'establishment', 'individual', 'promoter', 'promoter-requirements', 'improvements', 'releases', 'showcase'].map((tab) => (
+        {['overview', 'admin', 'establishment', 'individual', 'promoter', 'promoter-requirements', 'improvements', 'showcase'].map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}

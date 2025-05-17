@@ -8,7 +8,6 @@ import OverviewTab from '@/components/admin/systemBreakdown/OverviewTab';
 import { EnhancedFeatureTab } from '@/components/admin/systemBreakdown/EnhancedFeatureTab';
 import ProposedImprovementsTab from '@/components/admin/systemBreakdown/ProposedImprovementsTab';
 import AnalysisProgress from '@/components/admin/systemBreakdown/AnalysisProgress';
-import ReleaseManagementTab from '@/components/admin/systemBreakdown/ReleaseManagementTab';
 import CreateReleaseFromFeaturesButton from '@/components/admin/systemBreakdown/CreateReleaseFromFeaturesButton';
 import FeatureShowcaseTab from '@/components/admin/systemBreakdown/FeatureShowcaseTab';
 import PromoterRequirementsTab from '@/components/admin/systemBreakdown/PromoterRequirementsTab';
@@ -157,10 +156,8 @@ const SystemFunctionalityBreakdown: React.FC = () => {
         <TabsContent value="improvements" className="space-y-4">
           <ProposedImprovementsTab improvements={improvementsData} />
         </TabsContent>
-        
-        <TabsContent value="releases" className="space-y-4">
-          <ReleaseManagementTab />
-        </TabsContent>
+
+        {/* Removed the ReleaseManagementTab section */}
 
         <TabsContent value="showcase" className="space-y-4">
           <FeatureShowcaseTab
