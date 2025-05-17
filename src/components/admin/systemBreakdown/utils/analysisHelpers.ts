@@ -1,4 +1,3 @@
-
 import { FeatureItem } from '../types';
 
 /**
@@ -93,4 +92,68 @@ export function detectDatabaseInconsistencies(features: FeatureItem[]): FeatureI
   });
   
   return updatedFeatures;
+}
+
+/**
+ * Parse task statuses from analysis text
+ */
+export function parseTaskStatuses(analysisText: string): { text: string; isCompleted: boolean }[] {
+  if (!analysisText) return [];
+
+  // Split text into lines and analyze each one
+  const lines = analysisText.split('\n').filter(line => line.trim().length > 0);
+  
+  return lines.map(line => {
+    // Check for common completion indicators in the text
+    const lowerLine = line.toLowerCase();
+    const isCompleted = 
+      lowerLine.includes('✓') || 
+      lowerLine.includes('completed') || 
+      lowerLine.includes('done') || 
+      lowerLine.includes('implemented') ||
+      lowerLine.includes('verified');
+      
+    return {
+      text: line,
+      isCompleted
+    };
+  });
+}
+
+/**
+ * Analyze database requirements from feature data
+ */
+export function analyzeDbRequirements(feature: FeatureItem): string {
+  if (!feature) return '';
+  
+  let requirementsText = feature.dbRequirementsText || '';
+  
+  // If no explicit requirements text, generate from description
+  if (!requirementsText && feature.description) {
+    if (feature.description.toLowerCase().includes('database') || 
+        feature.description.toLowerCase().includes('db') || 
+        feature.description.toLowerCase().includes('data')) {
+      
+      // Extract DB requirements based on feature description
+      requirementsText = `Database requirements identified for ${feature.name}:\n`;
+      
+      if (feature.databaseStatus === 'completed') {
+        requirementsText += '✓ Schema design completed\n';
+        requirementsText += '✓ Database models implemented\n';
+        requirementsText += '✓ API endpoints implemented\n';
+      } else if (feature.databaseStatus === 'in_progress') {
+        requirementsText += '✓ Schema design completed\n';
+        requirementsText += '✓ Database models partially implemented\n';
+        requirementsText += '⏳ API endpoints in progress\n';
+      } else {
+        requirementsText += '⏳ Schema design pending\n';
+        requirementsText += '⏳ Database models to be implemented\n';
+        requirementsText += '⏳ API endpoints to be created\n';
+      }
+    } else {
+      requirementsText = 'No database requirements identified for this feature.';
+    }
+  }
+  
+  return requirementsText;
 }

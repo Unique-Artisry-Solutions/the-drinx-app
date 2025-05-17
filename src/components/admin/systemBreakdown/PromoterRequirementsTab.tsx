@@ -1,250 +1,191 @@
 
 import React, { useMemo } from 'react';
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
-import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
-} from "@/components/ui/tabs";
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { Check, AlertCircle, Clock } from 'lucide-react';
+import { calculateFeatureStatistics } from './utils/featureStatistics';
+import { FeatureItem } from './types';
 import { 
   BarChart, 
-  ChartContainer, 
-  ChartBars 
-} from "@tremor/react";
+  CartesianGrid, 
+  XAxis, 
+  YAxis, 
+  Tooltip, 
+  Legend, 
+  Bar, 
+  ResponsiveContainer 
+} from 'recharts';
 
-import { FeatureItem } from './types';
-import { calculateFeatureStatistics } from './utils';
-import { renderStatusBadge } from './utils/statusRenderers';
-
-interface PromoterRequirementsProps {
+interface PromoterRequirementsTabProps {
   features: FeatureItem[];
 }
 
-const PromoterRequirementsTab: React.FC<PromoterRequirementsProps> = ({ 
-  features 
-}) => {
-  // Group features by category for better organization
-  const featuresByCategory = useMemo(() => {
-    const categories: Record<string, FeatureItem[]> = {};
+const PromoterRequirementsTab: React.FC<PromoterRequirementsTabProps> = ({ features }) => {
+  // Calculate various statistics
+  const stats = useMemo(() => calculateFeatureStatistics(features), [features]);
+
+  // Group features by tag
+  const featuresByTag = useMemo(() => {
+    const tagMap: Record<string, FeatureItem[]> = {};
     
     features.forEach(feature => {
       if (feature.tags && feature.tags.length > 0) {
-        // Find categories in tags (excluding "promoter" which is too general)
-        const categoryTags = feature.tags.filter(tag => tag !== 'promoter');
-        
-        if (categoryTags.length > 0) {
-          const category = categoryTags[0]; // Use first category tag
-          if (!categories[category]) categories[category] = [];
-          categories[category].push(feature);
-        } else {
-          if (!categories['general']) categories['general'] = [];
-          categories['general'].push(feature);
-        }
-      } else {
-        if (!categories['uncategorized']) categories['uncategorized'] = [];
-        categories['uncategorized'].push(feature);
+        feature.tags.forEach(tag => {
+          if (tag !== 'promoter') { // Skip the generic promoter tag
+            if (!tagMap[tag]) {
+              tagMap[tag] = [];
+            }
+            tagMap[tag].push(feature);
+          }
+        });
       }
     });
     
-    return categories;
+    return tagMap;
   }, [features]);
-  
-  // Statistics for chart visualization
-  const categoryStats = useMemo(() => {
-    return Object.entries(featuresByCategory).map(([category, items]) => {
-      const stats = calculateFeatureStatistics(items);
-      return {
-        category: formatCategoryName(category),
-        count: items.length,
-        implemented: stats.implementedFeatures,
-        inProgress: stats.inProgressFeatures,
-        planned: stats.plannedFeatures,
-        blocked: stats.blockedFeatures || 0,
-        implementationRate: stats.implementationRate,
-      };
-    }).sort((a, b) => b.count - a.count);
-  }, [featuresByCategory]);
-  
-  // Format category names for better display
-  function formatCategoryName(category: string): string {
-    return category
-      .split('-')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
-  }
-  
-  // Calculate statistics for summary view
-  const stats = calculateFeatureStatistics(features);
-  const totalFeatures = features.length;
-  
-  // Data for the implementation chart
-  const chartData = [
-    { name: 'Implemented', value: stats.implementedFeatures },
-    { name: 'In Progress', value: stats.inProgressFeatures },
-    { name: 'Planned', value: stats.plannedFeatures },
-    { name: 'Blocked', value: stats.blockedFeatures || 0 },
-  ];
 
-  // Data for the database implementation chart
-  const dbStats = useMemo(() => {
-    const completed = features.filter(f => f.databaseStatus === 'completed' || f.databaseStatus === 'implemented').length;
-    const inProgress = features.filter(f => f.databaseStatus === 'in_progress').length;
-    const partial = features.filter(f => f.databaseStatus === 'partial').length;
-    const notStarted = features.filter(f => !f.databaseStatus || f.databaseStatus === 'not_started').length;
-    
-    return [
-      { name: 'Completed', value: completed },
-      { name: 'In Progress', value: inProgress },
-      { name: 'Partial', value: partial },
-      { name: 'Not Started', value: notStarted },
-    ];
-  }, [features]);
-  
+  // Format data for chart
+  const categoryChartData = useMemo(() => {
+    return Object.keys(featuresByTag).map(tag => ({
+      name: tag,
+      total: featuresByTag[tag].length,
+      implemented: featuresByTag[tag].filter(f => f.status === 'implemented').length,
+      inProgress: featuresByTag[tag].filter(f => f.status === 'in_progress').length,
+    }));
+  }, [featuresByTag]);
+
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div>
+        <h1 className="text-2xl font-bold mb-2">Promoter Requirements</h1>
+        <p className="text-gray-500 mb-6">
+          Implementation status of promoter-specific features and functionalities
+        </p>
+      </div>
+      
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
-          <CardHeader>
-            <CardTitle>Implementation Status</CardTitle>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xl">Features</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold mb-2">
-              {Math.round(stats.implementationRate)}%
-              <span className="text-sm ml-2 font-normal text-gray-500">implemented</span>
-            </div>
-            <div className="text-sm text-gray-500 mb-4">
-              {stats.implementedFeatures} of {totalFeatures} promoter features
-            </div>
-            <div className="h-64">
-              <BarChart 
-                data={chartData}
-                index="name"
-                categories={["value"]}
-                colors={["blue"]}
-                valueFormatter={(value) => `${value} features`}
-                yAxisWidth={30}
-              />
-            </div>
+            <div className="text-3xl font-bold">{stats.totalFeatures}</div>
+            <p className="text-gray-500 mt-2">Total promoter features</p>
           </CardContent>
         </Card>
         
         <Card>
-          <CardHeader>
-            <CardTitle>Database Implementation</CardTitle>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xl">Implementation</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold mb-2">
-              {Math.round((stats.dbComplete || 0) / totalFeatures * 100)}%
-              <span className="text-sm ml-2 font-normal text-gray-500">completed</span>
+            <div className="text-3xl font-bold">
+              {stats.implementationRate}%
             </div>
-            <div className="text-sm text-gray-500 mb-4">
-              {stats.dbComplete} of {totalFeatures} database schemas
+            <div className="mt-2">
+              <Progress value={stats.implementationRate} className="h-2" />
             </div>
-            <div className="h-64">
-              <BarChart 
-                data={dbStats}
-                index="name"
-                categories={["value"]}
-                colors={["green"]}
-                valueFormatter={(value) => `${value} features`}
-                yAxisWidth={30}
-              />
-            </div>
+            <p className="text-gray-500 mt-2">
+              {stats.implementedFeatures} of {stats.totalFeatures} features implemented
+            </p>
           </CardContent>
         </Card>
         
         <Card>
-          <CardHeader>
-            <CardTitle>Feature Categories</CardTitle>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xl">Database</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold mb-2">
-              {Object.keys(featuresByCategory).length}
-              <span className="text-sm ml-2 font-normal text-gray-500">categories</span>
+            <div className="text-3xl font-bold">
+              {stats.databaseCompletionRate}%
             </div>
-            <div className="text-sm text-gray-500 mb-4">
-              {categoryStats.slice(0, 3).map(cat => cat.category).join(', ')} and more
+            <div className="mt-2">
+              <Progress value={stats.databaseCompletionRate} className="h-2" />
             </div>
-            <div className="h-64">
-              <BarChart 
-                data={categoryStats.slice(0, 7)} // Show top 7 categories
-                index="category"
-                categories={["count"]}
-                colors={["purple"]}
-                valueFormatter={(value) => `${value} features`}
-                yAxisWidth={30}
-              />
-            </div>
+            <p className="text-gray-500 mt-2">
+              {stats.dbCompleted} of {stats.totalFeatures} DB schemas completed
+            </p>
           </CardContent>
         </Card>
       </div>
       
-      <Tabs defaultValue="all">
-        <TabsList className="mb-4">
-          <TabsTrigger value="all">All Features</TabsTrigger>
-          {categoryStats.slice(0, 5).map(cat => (
-            <TabsTrigger key={cat.category} value={cat.category.toLowerCase()}>
-              {cat.category}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+      {/* Category Chart */}
+      <Card className="mt-8">
+        <CardHeader>
+          <CardTitle>Feature Categories</CardTitle>
+          <CardDescription>Features grouped by functionality</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                width={500}
+                height={300}
+                data={categoryChartData}
+                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="implemented" name="Implemented" fill="#10b981" stackId="a" />
+                <Bar dataKey="inProgress" name="In Progress" fill="#3b82f6" stackId="a" />
+                <Bar dataKey="total" name="Planned" fill="#d1d5db" stackId="a" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+      
+      {/* Feature Categories */}
+      <div className="space-y-6 mt-8">
+        <h2 className="text-xl font-bold">Feature Categories</h2>
         
-        <TabsContent value="all">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {features.map(feature => (
-              <Card key={feature.id} className="overflow-hidden">
-                <CardHeader className="pb-2">
-                  <div className="flex justify-between items-start">
-                    <CardTitle className="text-sm font-medium">{feature.name}</CardTitle>
-                    {renderStatusBadge(feature.status)}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {Object.entries(featuresByTag).map(([tag, tagFeatures]) => {
+            const implementedCount = tagFeatures.filter(f => f.status === 'implemented').length;
+            const implementationRate = Math.round((implementedCount / tagFeatures.length) * 100);
+            
+            return (
+              <Card key={tag} className="overflow-hidden">
+                <CardHeader className="bg-gray-50 pb-3">
+                  <div className="flex justify-between items-center">
+                    <CardTitle className="text-lg capitalize">{tag}</CardTitle>
+                    <Badge variant={implementationRate >= 80 ? "default" : implementationRate >= 50 ? "secondary" : "outline"}>
+                      {implementationRate}% Complete
+                    </Badge>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-gray-600 mb-2 line-clamp-2">{feature.description}</p>
-                  <div className="flex mt-2 text-xs space-x-2">
-                    {feature.tags && feature.tags.map((tag, i) => (
-                      <span key={i} className="bg-gray-100 px-2 py-0.5 rounded-full">{tag}</span>
+                  <Progress value={implementationRate} className="h-2 mt-2 mb-4" />
+                  <div className="space-y-3">
+                    {tagFeatures.map(feature => (
+                      <div key={feature.id} className="flex items-start">
+                        {feature.status === 'implemented' ? (
+                          <Check className="h-5 w-5 text-green-500 mt-0.5 mr-2 flex-shrink-0" />
+                        ) : feature.status === 'in_progress' ? (
+                          <Clock className="h-5 w-5 text-blue-500 mt-0.5 mr-2 flex-shrink-0" />
+                        ) : (
+                          <AlertCircle className="h-5 w-5 text-gray-300 mt-0.5 mr-2 flex-shrink-0" />
+                        )}
+                        <div>
+                          <div className="font-medium">{feature.name}</div>
+                          <div className="text-sm text-gray-500 truncate max-w-xs">
+                            {feature.description}
+                          </div>
+                        </div>
+                      </div>
                     ))}
                   </div>
                 </CardContent>
               </Card>
-            ))}
-          </div>
-        </TabsContent>
-        
-        {categoryStats.slice(0, 5).map(cat => (
-          <TabsContent key={cat.category} value={cat.category.toLowerCase()}>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {Object.entries(featuresByCategory)
-                .find(([category]) => formatCategoryName(category).toLowerCase() === cat.category.toLowerCase())?.[1]
-                .map(feature => (
-                  <Card key={feature.id} className="overflow-hidden">
-                    <CardHeader className="pb-2">
-                      <div className="flex justify-between items-start">
-                        <CardTitle className="text-sm font-medium">{feature.name}</CardTitle>
-                        {renderStatusBadge(feature.status)}
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-sm text-gray-600 mb-2 line-clamp-2">{feature.description}</p>
-                      <div className="flex mt-2 text-xs space-x-2">
-                        {feature.tags && feature.tags.map((tag, i) => (
-                          <span key={i} className="bg-gray-100 px-2 py-0.5 rounded-full">{tag}</span>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-            </div>
-          </TabsContent>
-        ))}
-      </Tabs>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 };

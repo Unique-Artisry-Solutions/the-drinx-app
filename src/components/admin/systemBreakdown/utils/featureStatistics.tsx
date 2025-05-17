@@ -1,3 +1,4 @@
+
 import { FeatureItem } from '../types';
 import { getNormalizedDbStatus } from './statusRenderers';
 
@@ -30,7 +31,7 @@ export const calculateFeatureStatistics = (
   const blockedFeatures = features.filter(f => f.status === 'blocked').length;
   
   // Use getNormalizedDbStatus to ensure consistent database status
-  const dbCompleted = features.filter(f => getNormalizedDbStatus(f) === 'complete').length;
+  const dbCompleted = features.filter(f => getNormalizedDbStatus(f) === 'completed').length;
   const dbInProgress = features.filter(f => getNormalizedDbStatus(f) === 'in_progress').length;
   const dbNotStarted = features.filter(f => getNormalizedDbStatus(f) === 'not_started').length;
   
@@ -136,6 +137,9 @@ export const calculateFeatureStatistics = (
     plannedFeatures,
     inProgressFeatures,
     blockedFeatures,
+    dbCompleted,
+    dbInProgress,
+    dbNotStarted,
     implementationRate,
     databaseCompletionRate,
     frontendImplementationRate,
@@ -167,7 +171,7 @@ export function calculateCategoryProgress(features: FeatureItem[]) {
   const frontendProgress = Math.round(totalImplementationProgress / totalFeatures);
   
   // Backend progress - use getNormalizedDbStatus for consistent database status
-  const dbCompleted = features.filter(f => getNormalizedDbStatus(f) === 'complete').length;
+  const dbCompleted = features.filter(f => getNormalizedDbStatus(f) === 'completed').length;
   const dbInProgress = features.filter(f => getNormalizedDbStatus(f) === 'in_progress').length;
   const backendProgress = Math.round((dbCompleted + (dbInProgress * 0.5)) / totalFeatures * 100);
   

@@ -148,12 +148,12 @@ export {
   generateFeatureReport
 };
 
-// Use 'export type' for type exports when isolatedModules is enabled
-export type { AnalysisStep } from './types';
-export type { ReleaseProgress } from './types/releaseTypes';
-export type { MonthlyProgressData, ProgressData } from './types';
-export type { FeatureShowcaseData, FeatureShowcaseCategoryType, FeatureBusinessValueType, FeatureBusinessValueObject } from './types';
-export type { ImprovementItem, SortField, SortOrder } from './types';
+// Export types directly from their respective files
+export type { AnalysisStep } from '../types';
+export type { ReleaseProgress } from '../types';
+export type { MonthlyProgressData, ProgressData, ProgressSnapshot } from '../types';
+export type { FeatureShowcaseData, FeatureShowcaseCategoryType, FeatureBusinessValueType, FeatureBusinessValueObject } from '../types';
+export type { ImprovementItem, SortField, SortOrder } from '../types';
 
 export { determineBusinessValue, determineComplexity } from './featureShowcase/featureTransformation';
 export { determineShowcaseCategory } from './featureShowcase/categoryDetection';

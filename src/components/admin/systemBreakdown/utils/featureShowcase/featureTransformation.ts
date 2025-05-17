@@ -1,141 +1,135 @@
 
-import { 
-  FeatureItem, 
-  FeatureBusinessValueType,
-  FeatureComplexity,
-  FeatureShowcaseData
-} from '../../types';
-import { determineShowcaseCategory } from './categoryDetection';
-import { generateMarketingPoints } from './marketingUtils';
-import { determineFeatureIcon } from './iconSelection';
-import { generateMockImplementationStats } from './mockStats';
+import { FeatureItem, FeatureBusinessValueType, FeatureComplexity } from '../../types';
 
-// Determine the business value of a feature
-export function determineBusinessValue(feature: FeatureItem): FeatureBusinessValueType {
-  // Check for explicit tags
-  if (feature.tags) {
-    if (feature.tags.includes('high-value') || 
-        feature.tags.includes('signature') ||
-        feature.tags.includes('core')) {
+/**
+ * Determines the business value of a feature based on its name, description, and status
+ */
+export const determineBusinessValue = (feature: FeatureItem): FeatureBusinessValueType => {
+  // Example: Check for keywords that might indicate high business value
+  const highValueKeywords = ['revenue', 'monetization', 'conversion', 'retention', 'acquisition', 'critical'];
+  const mediumValueKeywords = ['engagement', 'improvement', 'enhance', 'streamline'];
+
+  const text = `${feature.name} ${feature.description}`.toLowerCase();
+
+  // Check if any high-value keywords are present
+  for (const keyword of highValueKeywords) {
+    if (text.includes(keyword)) {
       return 'high';
     }
-    
-    if (feature.tags.includes('medium-value')) {
+  }
+
+  // Check if any medium-value keywords are present
+  for (const keyword of mediumValueKeywords) {
+    if (text.includes(keyword)) {
       return 'medium';
     }
-    
-    if (feature.tags.includes('low-value')) {
-      return 'low';
-    }
   }
-  
-  // Check impact
-  if (feature.userImpact === 'high') {
-    return 'high';
-  } else if (feature.userImpact === 'medium') {
-    return 'medium';
-  } else if (feature.userImpact === 'low') {
-    return 'low';
-  }
-  
-  // Check description for keywords
-  const desc = feature.description.toLowerCase();
-  if (desc.includes('critical') || 
-      desc.includes('essential') || 
-      desc.includes('key') || 
-      desc.includes('core')) {
-    return 'high';
-  }
-  
-  // Check database status as a signal
-  if (feature.databaseStatus === 'completed' || feature.databaseStatus === 'implemented') {
-    return 'medium';
-  }
-  
-  // Default value
-  return 'medium';
-}
 
-// Determine complexity level of a feature
-export function determineComplexity(feature: FeatureItem): FeatureComplexity {
-  // Use existing complexity if available
+  // Default to 'low'
+  return 'low';
+};
+
+/**
+ * Determines the complexity level of a feature based on its description and other attributes
+ */
+export const determineComplexity = (feature: FeatureItem): FeatureComplexity => {
+  // If the feature already has a complexity property, use that
   if (feature.complexity) {
     return feature.complexity;
   }
-  
-  // Check for explicit tags
-  if (feature.tags) {
-    if (feature.tags.includes('complex') || feature.tags.includes('high-complexity')) {
+
+  // Example: Check for keywords that might indicate high complexity
+  const highComplexityKeywords = ['integration', 'algorithm', 'machine learning', 'ai', 'realtime', 'real-time'];
+  const lowComplexityKeywords = ['simple', 'basic', 'straightforward'];
+
+  const text = `${feature.name} ${feature.description}`.toLowerCase();
+
+  // Count dependencies as a complexity factor
+  const dependenciesCount = feature.dependencies ? feature.dependencies.length : 0;
+
+  // Check if any high-complexity keywords are present
+  for (const keyword of highComplexityKeywords) {
+    if (text.includes(keyword)) {
       return 'high';
     }
-    
-    if (feature.tags.includes('medium-complexity')) {
-      return 'medium';
-    }
-    
-    if (feature.tags.includes('simple') || feature.tags.includes('low-complexity')) {
+  }
+
+  // Check if any low-complexity keywords are present
+  for (const keyword of lowComplexityKeywords) {
+    if (text.includes(keyword)) {
       return 'low';
     }
   }
-  
-  // Infer from description length
-  if (feature.description.length > 300) {
-    return 'high';
-  } else if (feature.description.length > 150) {
-    return 'medium';
-  }
-  
-  // Infer from dependencies
-  if (feature.dependencies && feature.dependencies.length > 3) {
-    return 'high';
-  } else if (feature.dependencies && feature.dependencies.length > 0) {
-    return 'medium';
-  }
-  
-  // Default complexity
-  return 'low';
-}
 
-// Transform a feature item into showcase data
-export function transformFeatureToShowcase(feature: FeatureItem): FeatureShowcaseData {
-  const businessValue = determineBusinessValue(feature);
-  const complexityLevel = determineComplexity(feature);
-  const showcaseCategory = determineShowcaseCategory(feature);
-  const marketingPoints = generateMarketingPoints(feature);
-  const iconName = determineFeatureIcon(feature);
-  const mockStats = generateMockImplementationStats(feature);
-  
-  // Determine if this is a signature feature
-  const isSignature = 
-    feature.tags?.includes('signature') || 
-    businessValue === 'high' ||
-    (feature.userImpact === 'high' && feature.status === 'implemented');
-  
-  // Determine user type
-  let userType: 'admin' | 'establishment' | 'individual' | 'promoter' = 'individual';
-  
-  if (feature.adminAccess === 'full' || feature.adminAccess === 'partial') {
-    userType = 'admin';
-  } else if (feature.establishmentAccess === 'full' || feature.establishmentAccess === 'partial') {
-    userType = 'establishment';
-  } else if (feature.promoterAccess === 'full' || feature.promoterAccess === 'partial') {
-    userType = 'promoter';
+  // Consider dependencies
+  if (dependenciesCount > 2) {
+    return 'high';
+  } else if (dependenciesCount > 0) {
+    return 'medium';
   }
-  
-  // Transform to showcase data
+
+  // Default to 'medium'
+  return 'medium';
+};
+
+/**
+ * Determines if a feature should be marked as a signature feature
+ */
+export const isSignatureFeature = (feature: FeatureItem): boolean => {
+  // Example: Signature features might be indicated by special tags
+  if (feature.tags && (feature.tags.includes('signature') || feature.tags.includes('flagship'))) {
+    return true;
+  }
+
+  // Check for keywords that might indicate a signature feature
+  const signatureKeywords = ['unique', 'differentiate', 'standout', 'exclusive', 'signature'];
+  const text = `${feature.name} ${feature.description}`.toLowerCase();
+
+  for (const keyword of signatureKeywords) {
+    if (text.includes(keyword)) {
+      return true;
+    }
+  }
+
+  // Default to false
+  return false;
+};
+
+/**
+ * Creates mock implementation statistics for the feature showcase
+ */
+export const createMockImplementationStats = (feature: FeatureItem) => {
+  // Base the mock stats on feature complexity
+  const complexity = determineComplexity(feature);
+  let timeToImplement: string;
+  let componentsCount: number;
+  let apiEndpoints: number;
+  let testCoverage: number;
+
+  switch (complexity) {
+    case 'high':
+      timeToImplement = '3-4 weeks';
+      componentsCount = Math.floor(Math.random() * 6) + 10; // 10-15
+      apiEndpoints = Math.floor(Math.random() * 6) + 5; // 5-10
+      testCoverage = Math.floor(Math.random() * 16) + 75; // 75-90%
+      break;
+    case 'medium':
+      timeToImplement = '1-2 weeks';
+      componentsCount = Math.floor(Math.random() * 6) + 5; // 5-10
+      apiEndpoints = Math.floor(Math.random() * 3) + 3; // 3-5
+      testCoverage = Math.floor(Math.random() * 11) + 80; // 80-90%
+      break;
+    default: // 'low'
+      timeToImplement = '3-5 days';
+      componentsCount = Math.floor(Math.random() * 3) + 2; // 2-4
+      apiEndpoints = Math.floor(Math.random() * 2) + 1; // 1-2
+      testCoverage = Math.floor(Math.random() * 11) + 85; // 85-95%
+  }
+
   return {
-    id: feature.id,
-    name: feature.name,
-    description: feature.description,
-    showcaseCategory,
-    complexityLevel,
-    businessValue,
-    implementationStatus: feature.status,
-    marketingPoints,
-    iconName,
-    isSignature,
-    userType,
-    implementationPercentage: feature.implementationProgress,
-    mockImplementationStats: mockStats
+    timeToImplement,
+    componentsCount,
+    apiEndpoints,
+    testCoverage
   };
-}
+};

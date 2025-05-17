@@ -1,14 +1,11 @@
 
-import React, { useState, useMemo } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { FeatureItem, FeatureBusinessValueObject, FeatureShowcaseData } from './types';
+import React, { useMemo } from 'react';
 import { prepareFeatureShowcaseData } from './utils';
-import CategoryCard from './components/CategoryCard';
-import BusinessValueSection from './components/BusinessValueSection';
+import { FeatureShowcaseCategoryType, FeatureItem } from './types';
+import FeatureShowcaseFilter from './components/showcase/FeatureShowcaseFilter';
 import SignatureFeatureSpotlight from './components/SignatureFeatureSpotlight';
-import { AlertTriangle } from 'lucide-react';
-import ErrorBoundary from './components/ErrorBoundary';
+import CategoryShowcase from './components/showcase/CategoryShowcase';
+import { determineBusinessValue, determineComplexity } from './utils/featureShowcase/featureTransformation';
 
 interface FeatureShowcaseTabProps {
   adminFeatures: FeatureItem[];
@@ -17,130 +14,96 @@ interface FeatureShowcaseTabProps {
   promoterFeatures: FeatureItem[];
 }
 
+/**
+ * Component for displaying features in an attractive showcase format
+ */
 const FeatureShowcaseTab: React.FC<FeatureShowcaseTabProps> = ({
   adminFeatures,
   establishmentFeatures,
   individualFeatures,
   promoterFeatures
 }) => {
-  const [activeTab, setActiveTab] = useState('categories');
-  
+  // Prepare the feature showcase data
   const showcaseData = useMemo(() => {
-    try {
-      const allFeatures = [
-        ...adminFeatures,
-        ...establishmentFeatures,
-        ...individualFeatures,
-        ...promoterFeatures
-      ];
-      
-      return prepareFeatureShowcaseData(allFeatures);
-    } catch (error) {
-      console.error('Error preparing showcase data:', error);
-      return [];
-    }
+    return prepareFeatureShowcaseData(
+      adminFeatures,
+      establishmentFeatures,
+      individualFeatures,
+      promoterFeatures
+    );
   }, [adminFeatures, establishmentFeatures, individualFeatures, promoterFeatures]);
 
+  // Find signature features
   const signatureFeatures = useMemo(() => {
     return showcaseData.filter(feature => feature.isSignature);
   }, [showcaseData]);
-  
-  // Group features by business value for the business value section
-  const businessValueGroups = useMemo(() => {
-    if (!showcaseData.length) return [];
-    
-    const valueMap: Record<string, FeatureBusinessValueObject> = {};
-    
+
+  // Group features by category
+  const categories = useMemo(() => {
+    const categoryMap = new Map<string, FeatureShowcaseCategoryType>();
+
     showcaseData.forEach(feature => {
-      const value = feature.businessValue;
+      const category = feature.showcaseCategory;
       
-      if (!valueMap[value]) {
-        valueMap[value] = {
-          value: value,
-          label: `${value.charAt(0).toUpperCase() + value.slice(1)} Value`,
-          name: `${value.charAt(0).toUpperCase() + value.slice(1)} Value Features`,
-          description: `Features that provide ${value} business value`,
-          color: value === 'high' ? 'purple' : value === 'medium' ? 'blue' : 'gray',
+      if (!categoryMap.has(category)) {
+        categoryMap.set(category, {
+          name: category,
+          description: `Features related to ${category.toLowerCase()}`,
           features: [],
           implementationRate: 0,
           featureCount: 0
-        };
+        });
       }
       
-      // Add the original feature item
-      const originalFeature = [...adminFeatures, ...establishmentFeatures, ...individualFeatures, ...promoterFeatures]
-        .find(f => f.id === feature.id);
+      const categoryData = categoryMap.get(category)!;
+      categoryData.features.push(feature);
+      categoryData.featureCount = categoryData.features.length;
       
-      if (originalFeature) {
-        valueMap[value].features.push(originalFeature);
-      }
-    });
-    
-    // Calculate implementation rates
-    Object.values(valueMap).forEach(group => {
-      group.featureCount = group.features.length;
-      group.implementationRate = Math.round(
-        (group.features.filter(f => f.status === 'implemented').length / group.features.length) * 100
+      // Update implementation rate
+      const implementedCount = categoryData.features.filter(f => 
+        f.implementationStatus === 'implemented'
+      ).length;
+      
+      categoryData.implementationRate = Math.round(
+        (implementedCount / categoryData.featureCount) * 100
       );
     });
-    
-    return Object.values(valueMap);
-  }, [showcaseData, adminFeatures, establishmentFeatures, individualFeatures, promoterFeatures]);
 
-  if (!showcaseData.length) {
-    return (
-      <Card className="p-6">
-        <CardContent className="text-center space-y-4">
-          <AlertTriangle className="mx-auto h-12 w-12 text-yellow-500" />
-          <h3 className="text-lg font-medium">No Feature Data Available</h3>
-          <p className="text-gray-500">There was an error loading the feature showcase data.</p>
-        </CardContent>
-      </Card>
-    );
-  }
+    return Array.from(categoryMap.values());
+  }, [showcaseData]);
 
-  const categories = Array.from(new Set(showcaseData.map(f => f.showcaseCategory)));
-  const categoryData = categories.map(cat => ({
-    name: cat,
-    features: showcaseData.filter(f => f.showcaseCategory === cat),
-    description: `${cat} related features and capabilities`,
-    implementationRate: Math.round(
-      (showcaseData.filter(f => f.showcaseCategory === cat && f.implementationStatus === 'implemented').length /
-        showcaseData.filter(f => f.showcaseCategory === cat).length) * 100
-    ),
-    featureCount: showcaseData.filter(f => f.showcaseCategory === cat).length
-  }));
+  // Sort categories by implementation rate
+  const sortedCategories = [...categories].sort((a, b) => 
+    b.implementationRate - a.implementationRate
+  );
 
   return (
-    <div className="space-y-6">
-      <ErrorBoundary>
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList>
-            <TabsTrigger value="categories">Categories</TabsTrigger>
-            <TabsTrigger value="business">Business Value</TabsTrigger>
-            <TabsTrigger value="signature">Signature Features</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="categories" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {categoryData.map((category) => (
-                <CategoryCard 
-                  key={category.name}
-                  category={category}
-                />
-              ))}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="business">
-            <BusinessValueSection values={businessValueGroups} />
-          </TabsContent>
-
-          <TabsContent value="signature">
-            <SignatureFeatureSpotlight features={signatureFeatures} />
-          </TabsContent>
-        </Tabs>
-      </ErrorBoundary>
+    <div className="space-y-8">
+      <h2 className="text-2xl font-bold">Feature Showcase</h2>
+      <p className="text-gray-500">
+        Explore the features of the Swig platform organized by category.
+      </p>
+      
+      {signatureFeatures.length > 0 && (
+        <div className="mb-8">
+          <h3 className="text-xl font-semibold mb-4">Signature Features</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {signatureFeatures.slice(0, 3).map(feature => (
+              <SignatureFeatureSpotlight 
+                key={feature.id} 
+                feature={feature} 
+                businessValue={feature.businessValue} 
+              />
+            ))}
+          </div>
+        </div>
+      )}
+      
+      <FeatureShowcaseFilter categories={categories} />
+      
+      {sortedCategories.map(category => (
+        <CategoryShowcase key={category.name} category={category} />
+      ))}
     </div>
   );
 };
