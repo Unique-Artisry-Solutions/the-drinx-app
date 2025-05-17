@@ -82,7 +82,8 @@ const ReleaseManagementTab: React.FC = () => {
     setSelectedRelease(release);
     setActiveTab('edit');
     if (selectRelease) {
-      selectRelease(release);
+      // Fix: Pass release.id instead of the whole release object
+      selectRelease(release.id);
     }
   };
   

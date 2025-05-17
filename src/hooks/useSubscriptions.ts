@@ -1,14 +1,25 @@
 
 import { useEffect, useState } from 'react';
-import { useSupabaseClient, useUser } from '@supabase/auth-helpers-react';
+// Fix: Remove non-existent import
+// import { useSupabaseClient, useUser } from '@supabase/auth-helpers-react';
 import { useToast } from '@/hooks/use-toast';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { AppSubscription, SubscriptionTier } from '@/types/SubscriptionTypes';
+import { supabase } from '@/integrations/supabase/client'; // Use direct supabase import
 
 export const useSubscriptions = (promoterId?: string) => {
-  const supabaseClient = useSupabaseClient();
   const { toast } = useToast();
-  const user = useUser();
+  // Fix: Get auth from supabase directly
+  const [user, setUser] = useState<any>(null);
+
+  // Get the current user
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { data } = await supabase.auth.getUser();
+      setUser(data.user);
+    };
+    fetchUser();
+  }, []);
 
   // Fetch subscription tiers
   const { 
@@ -19,7 +30,7 @@ export const useSubscriptions = (promoterId?: string) => {
     queryFn: async () => {
       if (!promoterId) return [];
       
-      const { data, error } = await supabaseClient
+      const { data, error } = await supabase
         .from('promoter_subscription_tiers')
         .select('*')
         .eq('promoter_id', promoterId)
@@ -42,7 +53,7 @@ export const useSubscriptions = (promoterId?: string) => {
     queryFn: async () => {
       if (!user) return [];
       
-      const { data, error } = await supabaseClient
+      const { data, error } = await supabase
         .from('app_subscriptions')
         .select('*')
         .eq('user_id', user.id);
@@ -59,7 +70,7 @@ export const useSubscriptions = (promoterId?: string) => {
     mutationFn: async ({ promoterId, tierId }: { promoterId: string, tierId: string }) => {
       if (!user) throw new Error('User not authenticated');
       
-      const { data, error } = await supabaseClient
+      const { data, error } = await supabase
         .from('app_subscriptions')
         .insert({
           user_id: user.id,
@@ -92,7 +103,7 @@ export const useSubscriptions = (promoterId?: string) => {
   // Unsubscribe from a tier
   const unsubscribe = useMutation({
     mutationFn: async (subscriptionId: string) => {
-      const { data, error } = await supabaseClient
+      const { data, error } = await supabase
         .from('app_subscriptions')
         .update({ 
           status: 'cancelled',

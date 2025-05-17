@@ -1,5 +1,5 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { 
   createPromotionCode, 
@@ -10,7 +10,8 @@ import {
 } from '@/lib/promotions/api';
 import { PromotionFormData } from '@/types/PromotionTypes';
 
-export { PromotionFormData } from '@/types/PromotionTypes';
+// Fix: Use 'export type' for re-exporting types
+export type { Promotion };
 
 export const useEstablishmentPromotions = (establishmentId: string) => {
   const [promotions, setPromotions] = useState<PromotionCode[]>([]);
@@ -161,9 +162,9 @@ export const useEstablishmentPromotions = (establishmentId: string) => {
   };
 
   // Initialize promotions on mount
-  useState(() => {
+  useEffect(() => {
     loadPromotions();
-  });
+  }, []);
 
   return {
     promotions,

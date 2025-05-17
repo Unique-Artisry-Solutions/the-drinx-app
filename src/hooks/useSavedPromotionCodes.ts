@@ -54,8 +54,17 @@ export const useSavedPromotionCodes = (userId: string) => {
         is_active: p.is_active,
         usage_limit: p.usage_limit || null,
         usage_count: 0, // This might need to be fetched separately
+        // Fix: Properly transform valid_hours to match the required type
         valid_days: p.valid_days || null,
-        valid_hours: p.valid_hours || null,
+        valid_hours: p.valid_hours ? 
+          { 
+            start: typeof p.valid_hours === 'object' ? 
+              (p.valid_hours as any).start || '00:00' : 
+              '00:00',
+            end: typeof p.valid_hours === 'object' ? 
+              (p.valid_hours as any).end || '23:59' : 
+              '23:59'
+          } : null,
         user_segment: p.user_segment || null,
         combinable: p.combinable,
         min_purchase_amount: p.min_purchase_amount || null
