@@ -10,7 +10,7 @@ export interface QRCodeProps {
   level?: 'L' | 'M' | 'Q' | 'H';
   className?: string;
   style?: React.CSSProperties;
-  title?: string;
+  title?: string; // We'll handle this prop separately
 }
 
 export const QRCode: React.FC<QRCodeProps> = ({
@@ -21,17 +21,16 @@ export const QRCode: React.FC<QRCodeProps> = ({
   level = 'L',
   className,
   style,
-  title,
+  title, // Destructure title but don't pass it to ReactQRCode
 }) => {
   return (
-    <div className={className} style={style}>
+    <div className={className} style={style} title={title}>
       <ReactQRCode
         value={value}
         size={size}
         bgColor={bgColor}
         fgColor={fgColor}
         level={level}
-        title={title}
       />
     </div>
   );
