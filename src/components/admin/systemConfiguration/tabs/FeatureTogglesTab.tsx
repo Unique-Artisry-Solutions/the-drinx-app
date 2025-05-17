@@ -12,8 +12,9 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { Spinner } from '@/components/ui/spinner';
 import { FeatureFlag } from '@/components/admin/systemBreakdown/types/releaseTypes';
+import { SettingsTabProps } from '../types';
 
-const FeatureTogglesTab: React.FC = () => {
+const FeatureTogglesTab: React.FC<SettingsTabProps> = () => {
   const { featureToggles, isLoading, error, fetchFeatureToggles, updateFeatureToggle, createFeatureToggle, deleteFeatureToggle } = useFeatureToggles();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newToggle, setNewToggle] = useState<Partial<FeatureFlag>>({ name: '', description: '', status: false });
