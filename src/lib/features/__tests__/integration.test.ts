@@ -1,6 +1,6 @@
+
 import { describe, it, expect, vi } from 'vitest';
-import { getFeatureStatus } from '../api';
-// Fix: Remove the non-existent import and provide mock implementations as needed
+import { getFeatureStatus, associateFeatureWithTier } from '../api';
 
 // Mock implementations
 const mockFeature = {
@@ -12,6 +12,7 @@ const mockFeature = {
 // Mock the API calls
 vi.mock('../api', () => ({
   getFeatureStatus: vi.fn().mockResolvedValue({ enabled: true }),
+  associateFeatureWithTier: vi.fn().mockResolvedValue(true),
 }));
 
 describe('Feature integration tests', () => {
@@ -20,5 +21,8 @@ describe('Feature integration tests', () => {
     expect(result.enabled).toBe(true);
   });
   
-  // Other tests as needed
+  it('should associate feature with tier', async () => {
+    const result = await associateFeatureWithTier('feature-1', 'tier-1');
+    expect(result).toBe(true);
+  });
 });

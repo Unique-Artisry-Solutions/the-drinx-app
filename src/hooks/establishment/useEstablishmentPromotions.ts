@@ -10,8 +10,8 @@ import {
 } from '@/lib/promotions/api';
 import { PromotionFormData } from '@/types/PromotionTypes';
 
-// Fix: Use 'export type' for re-exporting types
-export type { Promotion };
+// Re-export the type correctly
+export type { PromotionFormData } from '@/types/PromotionTypes';
 
 export const useEstablishmentPromotions = (establishmentId: string) => {
   const [promotions, setPromotions] = useState<PromotionCode[]>([]);

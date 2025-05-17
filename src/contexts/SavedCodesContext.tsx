@@ -1,7 +1,5 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-// Fix: Remove non-existent import
-// import { useUser } from '@supabase/auth-helpers-react';
 import { useSavedPromotionCodes } from '@/hooks/useSavedPromotionCodes';
 import { Promotion } from '@/types/PromotionTypes';
 import { supabase } from '@/integrations/supabase/client'; // Direct supabase import

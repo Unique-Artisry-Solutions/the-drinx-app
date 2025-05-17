@@ -57,10 +57,38 @@ export function useReleaseManagement() {
     setReleaseProgress(prev => prev.filter(progress => progress.releaseId !== releaseId));
   };
 
-  // Fixed: selectRelease now explicitly takes a string ID
-  const selectRelease = (releaseId: string) => {
-    console.log(`Release selected: ${releaseId}`);
+  // Changed to accept a Release object instead of just an ID
+  const selectRelease = (release: Release) => {
+    console.log(`Release selected: ${release.id}`);
     // You could do more with this function, like triggering analytics
+  };
+
+  // Add createReleaseFromFeatures function to resolve error in SystemBreakdownPage
+  const createReleaseFromFeatures = (features: any[]) => {
+    const newRelease: Release = {
+      id: uuidv4(),
+      version: `1.0.${releases.length}`,
+      name: `Release from Features (${new Date().toLocaleDateString()})`,
+      type: 'minor',
+      status: 'planned',
+      description: `Automatically created release from ${features.length} selected features`,
+      features: features.map(f => ({
+        id: f.id || uuidv4(),
+        name: f.name,
+        status: 'pending',
+        description: f.description || ''
+      })),
+      releaseNotes: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      plannedReleaseDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
+      team: [],
+      tags: ['auto-generated'],
+      releaseBranch: 'develop'
+    };
+    
+    createRelease(newRelease);
+    return newRelease.id;
   };
   
   return {
@@ -69,6 +97,7 @@ export function useReleaseManagement() {
     createRelease,
     updateRelease,
     deleteRelease,
-    selectRelease
+    selectRelease,
+    createReleaseFromFeatures
   };
 }

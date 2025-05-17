@@ -11,6 +11,7 @@ import ApiSettingsTab from '@/components/admin/systemConfiguration/tabs/ApiSetti
 import FeatureTierMappingTab from '@/components/admin/systemConfiguration/tabs/FeatureTierMappingTab';
 import FeatureTogglesTab from '@/components/admin/systemConfiguration/tabs/FeatureTogglesTab';
 import { Card } from '@/components/ui/card';
+import { SystemSetting } from '@/components/admin/systemConfiguration/tabs/types';
 
 const SystemConfigurationPage: React.FC = () => {
   const location = useLocation();
@@ -23,6 +24,12 @@ const SystemConfigurationPage: React.FC = () => {
   };
   
   const [activeTab, setActiveTab] = useState(getTabFromQueryParams());
+  const [settings, setSettings] = useState<SystemSetting[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [editingSettingId, setEditingSettingId] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
   
   // Update URL when tab changes
   const handleTabChange = (value: string) => {
@@ -34,6 +41,90 @@ const SystemConfigurationPage: React.FC = () => {
   useEffect(() => {
     setActiveTab(getTabFromQueryParams());
   }, [location.search]);
+
+  // Mock fetch settings
+  useEffect(() => {
+    const fetchSettings = async () => {
+      setIsLoading(true);
+      try {
+        // Simulate API call
+        await new Promise(resolve => setTimeout(resolve, 500));
+        setSettings([
+          {
+            id: '1',
+            key: 'site.name',
+            value: 'Spiritless',
+            description: 'The name of the site',
+            type: 'string',
+            is_protected: false,
+            category: 'general',
+            updated_at: new Date().toISOString(),
+          },
+          {
+            id: '2',
+            key: 'site.description',
+            value: 'Alcohol-free experience platform',
+            description: 'Site description',
+            type: 'string',
+            is_protected: false,
+            category: 'general',
+            updated_at: new Date().toISOString(),
+          }
+        ] as SystemSetting[]);
+      } catch (err) {
+        setError(err instanceof Error ? err : new Error('Failed to fetch settings'));
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchSettings();
+  }, []);
+
+  const handleEdit = (setting: SystemSetting) => {
+    setEditingSettingId(setting.id);
+    setEditValue(setting.value);
+  };
+
+  const handleSave = async (id: string, value: string) => {
+    setIsSubmitting(true);
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 500));
+      setSettings(prev => 
+        prev.map(setting => 
+          setting.id === id ? { ...setting, value } : setting
+        )
+      );
+      setEditingSettingId(null);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to update setting'));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleCancel = () => {
+    setEditingSettingId(null);
+  };
+  
+  const handleEditValueChange = (value: string) => {
+    setEditValue(value);
+  };
+
+  // Common props for all settings tabs
+  const tabProps = {
+    settings,
+    isLoading,
+    editingSettingId,
+    editValue,
+    onEdit: handleEdit,
+    onSave: handleSave,
+    onCancel: handleCancel,
+    onEditValueChange: handleEditValueChange,
+    isSubmitting,
+    error,
+  };
 
   return (
     <div className="container mx-auto py-6 max-w-7xl">
@@ -54,35 +145,35 @@ const SystemConfigurationPage: React.FC = () => {
           </TabsList>
           
           <TabsContent value="general">
-            <GeneralSettingsTab />
+            <GeneralSettingsTab {...tabProps} />
           </TabsContent>
           
           <TabsContent value="features">
-            <FeatureTierMappingTab />
+            <FeatureTierMappingTab {...tabProps} />
           </TabsContent>
           
           <TabsContent value="toggles">
-            <FeatureTogglesTab />
+            <FeatureTogglesTab {...tabProps} />
           </TabsContent>
           
           <TabsContent value="analytics">
-            <FeatureAnalyticsTab />
+            <FeatureAnalyticsTab {...tabProps} />
           </TabsContent>
           
           <TabsContent value="security">
-            <SecuritySettingsTab />
+            <SecuritySettingsTab {...tabProps} />
           </TabsContent>
           
           <TabsContent value="email">
-            <EmailSettingsTab />
+            <EmailSettingsTab {...tabProps} />
           </TabsContent>
           
           <TabsContent value="payment">
-            <PaymentSettingsTab />
+            <PaymentSettingsTab {...tabProps} />
           </TabsContent>
           
           <TabsContent value="api">
-            <ApiSettingsTab />
+            <ApiSettingsTab {...tabProps} />
           </TabsContent>
         </Tabs>
       </Card>
