@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -94,6 +93,14 @@ export default function PromotionDetail() {
     });
   };
   
+  const usageText = promotion.usage_limit 
+    ? `${promotion.used_count || 0} / ${promotion.usage_limit}`
+    : 'Unlimited';
+  
+  const validHours = promotion.valid_hours && typeof promotion.valid_hours === 'object' && 'start' in promotion.valid_hours && 'end' in promotion.valid_hours
+    ? `${promotion.valid_hours.start} - ${promotion.valid_hours.end}`
+    : 'All Hours';
+  
   return (
     <div className="container mx-auto py-6 space-y-8">
       <div className="flex items-center justify-between">
@@ -159,9 +166,7 @@ export default function PromotionDetail() {
                     <Users className="mr-2 h-4 w-4 text-primary" />
                     <span className="font-medium">Usage</span>
                   </div>
-                  <span>
-                    {promotion.usage_count || 0} / {promotion.usage_limit}
-                  </span>
+                  <span>{usageText}</span>
                 </div>
               )}
               
@@ -206,7 +211,7 @@ export default function PromotionDetail() {
                     <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
                     Valid Hours
                   </div>
-                  <span>{promotion.valid_hours.start} - {promotion.valid_hours.end}</span>
+                  <span>{validHours}</span>
                 </div>
               )}
               

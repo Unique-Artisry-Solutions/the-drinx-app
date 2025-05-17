@@ -1,20 +1,11 @@
 
-export interface SystemSetting {
-  id: string;
-  key: string;
-  value: any;
-  description?: string;
-  category: string;
-  is_protected: boolean;
-  updated_at: string;
-  created_at: string; // Changed from optional to required to match SupabaseTables.ts
-}
+import { SystemSetting } from '@/types/SupabaseTables';
 
 export interface SettingsTabProps {
   settings: SystemSetting[];
   isLoading: boolean;
   editingSettingId: string | null;
-  editValue: string;
+  editValue: any;
   changeReason: string;
   onEdit: (id: string, value: any) => void;
   onSave: (id: string, isProtected: boolean) => Promise<void>;
@@ -23,8 +14,8 @@ export interface SettingsTabProps {
   setChangeReason: (reason: string) => void;
   isSubmitting: boolean;
   error: Error | null;
-  onEditClick: (id: string) => void;
+  onEditClick: (id: string, currentValue: any) => void;
   onSaveClick: (id: string) => void;
   onCancelClick: () => void;
-  setEditValue: (value: string) => void;
+  setEditValue: (value: any) => void;
 }

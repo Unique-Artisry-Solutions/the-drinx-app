@@ -19,7 +19,7 @@ const PromotionsPage: React.FC = () => {
     end_date: p.end_date || undefined,
     is_active: p.is_active,
     usage_limit: p.usage_limit || null,
-    used_count: p.used_count || 0, // Changed from usage_count to used_count to match the type
+    used_count: p.used_count || 0,
     valid_days: p.valid_days || null,
     valid_hours: p.valid_hours || null,
     user_segment: p.user_segment || null,
