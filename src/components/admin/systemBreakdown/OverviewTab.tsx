@@ -54,7 +54,6 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
         establishmentFeatures={establishmentFeatures}
         individualFeatures={individualFeatures}
         promoterFeatures={promoterFeatures}
-        monthlyProgressData={monthlyProgressData}
       />
       
       <DevelopmentProgressDashboard 

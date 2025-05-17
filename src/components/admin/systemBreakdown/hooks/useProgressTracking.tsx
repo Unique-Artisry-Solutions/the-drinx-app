@@ -61,19 +61,7 @@ export const useProgressTracking = (
   ) => {
     generateHistoricalProgressData(snapshot, history)
       .then(data => {
-        // Ensure the data is complete with required fields
-        const completeData = data.map(item => ({
-          month: item.month,
-          frontend: item.frontend || 0,
-          backend: item.backend || 0,
-          totalImplemented: item.totalImplemented || Math.round((item.frontend + (item.backend || 0)) / 2),
-          adminImplemented: item.adminImplemented || 0,
-          establishmentImplemented: item.establishmentImplemented || 0,
-          individualImplemented: item.individualImplemented || 0,
-          promoterImplemented: item.promoterImplemented || 0
-        }));
-        
-        setMonthlyProgressData(completeData);
+        setMonthlyProgressData(data);
       })
       .catch(error => {
         console.error("Error generating historical progress data:", error);
@@ -81,17 +69,12 @@ export const useProgressTracking = (
         const currentMonth = new Date().getMonth();
         const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         
-        const fallbackData: MonthlyProgressData[] = Array.from({ length: currentMonth + 1 }, (_, i) => {
+        const fallbackData = Array.from({ length: currentMonth + 1 }, (_, i) => {
           const progressRatio = (i + 1) / (currentMonth + 1);
           return {
             month: monthNames[i],
             frontend: Math.round(snapshot.frontendProgress * progressRatio),
-            backend: Math.round(snapshot.backendProgress * progressRatio * 0.85),
-            totalImplemented: Math.round((snapshot.frontendProgress + snapshot.backendProgress) * progressRatio / 2),
-            adminImplemented: Math.round(snapshot.adminProgress.overall * progressRatio),
-            establishmentImplemented: Math.round(snapshot.establishmentProgress.overall * progressRatio),
-            individualImplemented: Math.round(snapshot.individualProgress.overall * progressRatio),
-            promoterImplemented: Math.round(snapshot.promoterProgress.overall * progressRatio)
+            backend: Math.round(snapshot.backendProgress * progressRatio * 0.85)
           };
         });
         

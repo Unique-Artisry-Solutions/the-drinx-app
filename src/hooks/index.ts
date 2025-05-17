@@ -1,6 +1,6 @@
 
 // Re-export hooks for easier imports
-export * from './useFollowing';
+export * from './useFollowers';
 export * from './useAppSubscription';
 export * from './useCheckIn';
 export * from './useCheckInCooldown';

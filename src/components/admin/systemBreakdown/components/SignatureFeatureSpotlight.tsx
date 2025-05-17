@@ -109,6 +109,7 @@ function mapFeatureItemToShowcaseData(feature: FeatureItem): FeatureShowcaseData
     name: feature.name,
     description: feature.description,
     businessValue: (feature.userImpact as FeatureBusinessValueType) || 'medium',
+    complexity: feature.complexity || 'medium',
     implementationStatus: feature.status,
     showcaseCategory: 'Management Tools', // Default category
     isSignature: feature.tags?.includes('signature') || false,

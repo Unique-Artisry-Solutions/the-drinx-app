@@ -1,232 +1,187 @@
-import React from 'react';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { CheckCircle2, Clock, AlertTriangle, XCircle } from 'lucide-react';
-import { FeatureItem, MonthlyProgressData } from './types';
 
-export interface ImplementationOverviewProps {
+import React, { useState, useMemo } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { BarChart, PieChart, LineChart } from 'lucide-react';
+import { FeatureItem } from './types';
+import SystemHealthCheck from './components/SystemHealthCheck';
+import { calculateFeatureStatistics } from './utils';
+import StatusPieChart from './components/charts/StatusPieChart';
+import ProgressLineChart from './components/charts/ProgressLineChart';
+import { MonthlyProgressData } from './types';
+
+interface ImplementationOverviewProps {
   adminFeatures: FeatureItem[];
   establishmentFeatures: FeatureItem[];
   individualFeatures: FeatureItem[];
   promoterFeatures: FeatureItem[];
-  monthlyProgressData?: MonthlyProgressData[]; // Make this optional
+  monthlyProgressData?: MonthlyProgressData[];
 }
 
-const ImplementationOverview: React.FC<ImplementationOverviewProps> = ({ 
-  adminFeatures, 
-  establishmentFeatures, 
-  individualFeatures, 
+const ImplementationOverview: React.FC<ImplementationOverviewProps> = ({
+  adminFeatures,
+  establishmentFeatures,
+  individualFeatures,
   promoterFeatures,
-  monthlyProgressData = [] // Provide default empty array
+  monthlyProgressData = []
 }) => {
-  // Calculate implementation progress
-  const totalFeatures = adminFeatures.length + establishmentFeatures.length + individualFeatures.length + promoterFeatures.length;
+  const [chartType, setChartType] = useState<'bar' | 'pie' | 'line'>('bar');
   
-  const implementedFeatures = [
-    ...adminFeatures,
-    ...establishmentFeatures,
-    ...individualFeatures,
-    ...promoterFeatures,
-  ].filter((feature) => feature.status === 'implemented').length;
+  // Calculate feature statistics
+  const allFeatures = [...adminFeatures, ...establishmentFeatures, ...individualFeatures, ...promoterFeatures];
+  const overallStats = calculateFeatureStatistics(allFeatures);
   
-  const implementationPercentage = Math.round((implementedFeatures / totalFeatures) * 100);
+  // Calculate statistics for each user type separately
+  const adminStats = calculateFeatureStatistics(adminFeatures);
+  const establishmentStats = calculateFeatureStatistics(establishmentFeatures);
+  const individualStats = calculateFeatureStatistics(individualFeatures);
+  const promoterStats = calculateFeatureStatistics(promoterFeatures);
   
-  // Calculate implementation by user type
-  const adminImplemented = adminFeatures.filter((f) => f.status === 'implemented').length;
-  const establishmentImplemented = establishmentFeatures.filter((f) => f.status === 'implemented').length;
-  const individualImplemented = individualFeatures.filter((f) => f.status === 'implemented').length;
-  const promoterImplemented = promoterFeatures.filter((f) => f.status === 'implemented').length;
-  
-  const adminPercentage = Math.round((adminImplemented / adminFeatures.length) * 100);
-  const establishmentPercentage = Math.round((establishmentImplemented / establishmentFeatures.length) * 100);
-  const individualPercentage = Math.round((individualImplemented / individualFeatures.length) * 100);
-  const promoterPercentage = Math.round((promoterImplemented / promoterFeatures.length) * 100);
-  
-  const implementationByUserType = [
-    { name: 'Admin', value: adminPercentage, color: '#8b5cf6' },
-    { name: 'Establishment', value: establishmentPercentage, color: '#ec4899' },
-    { name: 'Individual', value: individualPercentage, color: '#06b6d4' },
-    { name: 'Promoter', value: promoterPercentage, color: '#f59e0b' },
-  ];
-  
-  // Calculate implementation by priority
-  const highPriorityFeatures = [
-    ...adminFeatures,
-    ...establishmentFeatures,
-    ...individualFeatures,
-    ...promoterFeatures,
-  ].filter((f) => f.userImpact === 'high');
-  
-  const mediumPriorityFeatures = [
-    ...adminFeatures,
-    ...establishmentFeatures,
-    ...individualFeatures,
-    ...promoterFeatures,
-  ].filter((f) => f.userImpact === 'medium');
-  
-  const lowPriorityFeatures = [
-    ...adminFeatures,
-    ...establishmentFeatures,
-    ...individualFeatures,
-    ...promoterFeatures,
-  ].filter((f) => f.userImpact === 'low');
-  
-  const highPriorityImplemented = highPriorityFeatures.filter((f) => f.status === 'implemented').length;
-  const mediumPriorityImplemented = mediumPriorityFeatures.filter((f) => f.status === 'implemented').length;
-  const lowPriorityImplemented = lowPriorityFeatures.filter((f) => f.status === 'implemented').length;
-  
-  const highPriorityPercentage = Math.round((highPriorityImplemented / (highPriorityFeatures.length || 1)) * 100);
-  const mediumPriorityPercentage = Math.round((mediumPriorityImplemented / (mediumPriorityFeatures.length || 1)) * 100);
-  const lowPriorityPercentage = Math.round((lowPriorityImplemented / (lowPriorityFeatures.length || 1)) * 100);
-  
-  const implementationByPriority = [
-    { name: 'High', value: highPriorityPercentage, color: '#ef4444' },
-    { name: 'Medium', value: mediumPriorityPercentage, color: '#f59e0b' },
-    { name: 'Low', value: lowPriorityPercentage, color: '#3b82f6' },
-  ];
-  
-  // Enhancement: Calculate implementation by status
-  const featuresByStatus = [
-    { name: 'Implemented', value: implementedFeatures, color: '#10b981' },
-    { name: 'In Progress', value: [
-      ...adminFeatures,
-      ...establishmentFeatures,
-      ...individualFeatures,
-      ...promoterFeatures,
-    ].filter((f) => f.status === 'in_progress').length, color: '#3b82f6' },
-    { name: 'Planned', value: [
-      ...adminFeatures,
-      ...establishmentFeatures,
-      ...individualFeatures,
-      ...promoterFeatures,
-    ].filter((f) => f.status === 'planned').length, color: '#f59e0b' },
-    { name: 'Blocked', value: [
-      ...adminFeatures,
-      ...establishmentFeatures,
-      ...individualFeatures,
-      ...promoterFeatures,
-    ].filter((f) => f.status === 'blocked').length, color: '#ef4444' },
-  ];
+  // Prepare data for pie chart
+  const pieChartData = useMemo(() => [
+    { name: 'Implemented', value: overallStats.implementedFeatures, color: '#22c55e' },
+    { name: 'In Progress', value: overallStats.inProgressFeatures, color: '#eab308' },
+    { name: 'Planned', value: overallStats.plannedFeatures, color: '#94a3b8' },
+    { name: 'Blocked', value: overallStats.blockedFeatures, color: '#ef4444' },
+  ], [overallStats]);
 
-  // Convert MonthlyProgressData to ProgressData for the chart
-  const progressDataForChart: ProgressData[] = monthlyProgressData.map(item => ({
-    ...item,
-    frontend: 0, // Add default values for frontend and backend
-    backend: 0
-  }));
-  
-  return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle>Implementation Progress</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-6">
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <span className="text-sm font-medium">Overall Progress</span>
-              <span className="text-sm font-medium">{implementationPercentage}%</span>
-            </div>
-            <Progress value={implementationPercentage} className="h-2" />
-            <div className="text-xs text-muted-foreground">
-              {implementedFeatures} of {totalFeatures} features implemented
-            </div>
+  // Render bar chart with basic CSS
+  const renderBarChart = () => (
+    <div className="mt-6">
+      <div className="space-y-3">
+        <div>
+          <div className="flex justify-between text-sm mb-1">
+            <span>Implemented ({overallStats.implementedFeatures})</span>
+            <span>{Math.round((overallStats.implementedFeatures / allFeatures.length) * 100)}%</span>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <h3 className="text-sm font-medium mb-3">Implementation by User Type</h3>
-              <div className="h-[180px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={implementationByUserType}
-                    layout="vertical"
-                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                  >
-                    <XAxis type="number" domain={[0, 100]} />
-                    <YAxis dataKey="name" type="category" width={100} />
-                    <Tooltip formatter={(value) => [`${value}%`, 'Implemented']} />
-                    <Bar dataKey="value" radius={[4, 4, 4, 4]}>
-                      {implementationByUserType.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                      <LabelList dataKey="value" position="right" formatter={(value: number) => `${value}%`} />
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-            
-            <div>
-              <h3 className="text-sm font-medium mb-3">Implementation by Priority</h3>
-              <div className="h-[180px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={implementationByPriority}
-                    layout="vertical"
-                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                  >
-                    <XAxis type="number" domain={[0, 100]} />
-                    <YAxis dataKey="name" type="category" width={100} />
-                    <Tooltip formatter={(value) => [`${value}%`, 'Implemented']} />
-                    <Bar dataKey="value" radius={[4, 4, 4, 4]}>
-                      {implementationByPriority.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                      <LabelList dataKey="value" position="right" formatter={(value: number) => `${value}%`} />
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          </div>
-          
-          <div>
-            <h3 className="text-sm font-medium mb-3">Progress Over Time</h3>
-            <Tabs defaultValue="overall">
-              <TabsList className="mb-2">
-                <TabsTrigger value="overall">Overall</TabsTrigger>
-                <TabsTrigger value="byUserType">By User Type</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="overall">
-                <div className="h-[250px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart
-                      data={progressDataForChart}
-                      margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
-                    >
-                      <XAxis dataKey="month" />
-                      <YAxis />
-                      <Tooltip />
-                      <Area type="monotone" dataKey="totalImplemented" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.2} />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="byUserType">
-                <div className="h-[250px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart
-                      data={progressDataForChart}
-                      margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
-                    >
-                      <XAxis dataKey="month" />
-                      <YAxis />
-                      <Tooltip />
-                      <Area type="monotone" dataKey="adminImplemented" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.2} name="Admin" />
-                      <Area type="monotone" dataKey="establishmentImplemented" stroke="#ec4899" fill="#ec4899" fillOpacity={0.2} name="Establishment" />
-                      <Area type="monotone" dataKey="individualImplemented" stroke="#06b6d4" fill="#06b6d4" fillOpacity={0.2} name="Individual" />
-                      <Area type="monotone" dataKey="promoterImplemented" stroke="#f59e0b" fill="#f59e0b" fillOpacity={0.2} name="Promoter" />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              </TabsContent>
-            </Tabs>
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div
+              className="bg-green-500 h-2 rounded-full"
+              style={{ width: `${Math.round((overallStats.implementedFeatures / allFeatures.length) * 100)}%` }}
+            ></div>
           </div>
         </div>
+        
+        <div>
+          <div className="flex justify-between text-sm mb-1">
+            <span>In Progress ({overallStats.inProgressFeatures})</span>
+            <span>{Math.round((overallStats.inProgressFeatures / allFeatures.length) * 100)}%</span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div
+              className="bg-yellow-500 h-2 rounded-full"
+              style={{ width: `${Math.round((overallStats.inProgressFeatures / allFeatures.length) * 100)}%` }}
+            ></div>
+          </div>
+        </div>
+        
+        <div>
+          <div className="flex justify-between text-sm mb-1">
+            <span>Planned ({overallStats.plannedFeatures})</span>
+            <span>{Math.round((overallStats.plannedFeatures / allFeatures.length) * 100)}%</span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div
+              className="bg-purple-500 h-2 rounded-full"
+              style={{ width: `${Math.round((overallStats.plannedFeatures / allFeatures.length) * 100)}%` }}
+            ></div>
+          </div>
+        </div>
+        
+        {overallStats.blockedFeatures > 0 && (
+          <div>
+            <div className="flex justify-between text-sm mb-1">
+              <span>Blocked ({overallStats.blockedFeatures})</span>
+              <span>{Math.round((overallStats.blockedFeatures / allFeatures.length) * 100)}%</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div
+                className="bg-red-500 h-2 rounded-full"
+                style={{ width: `${Math.round((overallStats.blockedFeatures / allFeatures.length) * 100)}%` }}
+              ></div>
+            </div>
+          </div>
+        )}
+      </div>
+      
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+        <div className="bg-gray-100 p-4 rounded-lg">
+          <div className="text-lg font-medium">{adminFeatures.length}</div>
+          <div className="text-sm text-gray-600">Admin Features</div>
+          <div className="text-xs mt-2">
+            {Math.round(adminStats.averageImplementation)}% implemented
+          </div>
+        </div>
+        
+        <div className="bg-gray-100 p-4 rounded-lg">
+          <div className="text-lg font-medium">{establishmentFeatures.length}</div>
+          <div className="text-sm text-gray-600">Establishment Features</div>
+          <div className="text-xs mt-2">
+            {Math.round(establishmentStats.averageImplementation)}% implemented
+          </div>
+        </div>
+        
+        <div className="bg-gray-100 p-4 rounded-lg">
+          <div className="text-lg font-medium">{individualFeatures.length}</div>
+          <div className="text-sm text-gray-600">Individual Features</div>
+          <div className="text-xs mt-2">
+            {Math.round(individualStats.averageImplementation)}% implemented
+          </div>
+        </div>
+        
+        <div className="bg-gray-100 p-4 rounded-lg">
+          <div className="text-lg font-medium">{promoterFeatures.length}</div>
+          <div className="text-sm text-gray-600">Promoter Features</div>
+          <div className="text-xs mt-2">
+            {Math.round(promoterStats.averageImplementation)}% implemented
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <Card>
+      <CardHeader className="pb-2 flex flex-row items-center justify-between">
+        <CardTitle>Feature Implementation Overview</CardTitle>
+        <Tabs
+          defaultValue="bar"
+          value={chartType}
+          onValueChange={(value) => setChartType(value as 'bar' | 'pie' | 'line')}
+          className="w-fit"
+        >
+          <TabsList className="grid grid-cols-3 h-8 w-fit">
+            <TabsTrigger value="bar" className="px-3">
+              <BarChart className="h-4 w-4" />
+            </TabsTrigger>
+            <TabsTrigger value="pie" className="px-3">
+              <PieChart className="h-4 w-4" />
+            </TabsTrigger>
+            <TabsTrigger value="line" className="px-3">
+              <LineChart className="h-4 w-4" />
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </CardHeader>
+      <CardContent>
+        <div className="text-3xl font-bold">
+          {Math.round(overallStats.averageImplementation)}%
+          <span className="text-sm ml-2 font-normal text-gray-500">implemented</span>
+        </div>
+        <div className="text-sm text-gray-500 mb-6">
+          {overallStats.implementedFeatures} of {allFeatures.length} features completed
+          {overallStats.partialFeatures > 0 && `, ${overallStats.partialFeatures} partial`}
+          {overallStats.inProgressFeatures > 0 && `, ${overallStats.inProgressFeatures} in progress`}
+        </div>
+        
+        {chartType === 'bar' && renderBarChart()}
+        {chartType === 'pie' && <StatusPieChart data={pieChartData} title="Feature Status Distribution" />}
+        {chartType === 'line' && monthlyProgressData && (
+          <ProgressLineChart 
+            data={monthlyProgressData} 
+            title="Implementation Progress Over Time" 
+          />
+        )}
       </CardContent>
     </Card>
   );

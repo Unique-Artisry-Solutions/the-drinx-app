@@ -32,8 +32,8 @@ const SystemHealthCheck: React.FC<SystemHealthCheckProps> = ({
     },
     {
       name: 'Database Status Tracking',
-      status: hasSnapshot && (currentSnapshot?.dbComplete || 0) > 0 ? 'healthy' : 'warning',
-      details: hasSnapshot ? `${currentSnapshot?.dbComplete || 0} database implementations tracked` : 'Database tracking incomplete'
+      status: hasSnapshot && currentSnapshot?.dbComplete > 0 ? 'healthy' : 'warning',
+      details: hasSnapshot ? `${currentSnapshot?.dbComplete} database implementations tracked` : 'Database tracking incomplete'
     },
     {
       name: 'Feature Implementation',

@@ -3,7 +3,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { useAuth } from '@/contexts/auth';
-import { useFollowing } from '@/hooks/useFollowing';
+import { useFollowers } from '@/hooks/useFollowers';
 import { CheckIcon, Bell, BellOff } from 'lucide-react';
 import { Toggle } from "@/components/ui/toggle";
 
@@ -27,13 +27,13 @@ export const FollowCard: React.FC<FollowCardProps> = ({
   notificationPreferences = { events: true, promotions: true, announcements: true }
 }) => {
   const { user } = useAuth();
-  const { followPromoter, unfollowPromoter, updateNotificationPreferences } = useFollowing(promoterId);
+  const { follow, unfollow, updateNotificationPreferences } = useFollowers(promoterId);
 
   const handleFollowAction = async () => {
     if (isFollowing && currentFollowerId) {
-      await unfollowPromoter.mutateAsync(currentFollowerId);
+      await unfollow.mutateAsync(currentFollowerId);
     } else {
-      await followPromoter.mutateAsync({ promoterId });
+      await follow.mutateAsync({ promoterId });
     }
   };
 
@@ -49,7 +49,7 @@ export const FollowCard: React.FC<FollowCardProps> = ({
     });
   };
 
-  const isLoading = followPromoter.isPending || unfollowPromoter.isPending;
+  const isLoading = follow.isPending || unfollow.isPending;
   
   return (
     <Card className="w-full">
