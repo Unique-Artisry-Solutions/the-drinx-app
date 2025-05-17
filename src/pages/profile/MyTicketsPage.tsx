@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -44,7 +45,7 @@ const MyTicketsPage = () => {
         throw error;
       }
 
-      return data || [];
+      return (data || []) as EventTicket[];
     },
     enabled: !!user,
   });
@@ -96,7 +97,7 @@ const MyTicketsPage = () => {
       }
 
       // Process the raw data to ensure it matches our expected SwigCircuitTicket interface
-      const processedData: SwigCircuitTicket[] = (data || []).map(item => ({
+      const processedData: SwigCircuitTicket[] = (data || []).map((item: any) => ({
         id: item.id,
         swig_circuit_id: item.swig_circuit_id,
         user_id: item.user_id,

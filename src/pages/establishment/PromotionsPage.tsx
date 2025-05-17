@@ -22,6 +22,14 @@ const PromotionsPage: React.FC = () => {
     return Promise.resolve();
   };
 
+  // Added for updating promotions
+  const handleUpdatePromotion = async (id: string, data: PromotionFormData): Promise<void> => {
+    if (promotionsState.handleUpdatePromotion) {
+      promotionsState.handleUpdatePromotion(id, data);
+    }
+    return Promise.resolve();
+  };
+
   return (
     <Layout>
       <div className="container mx-auto px-4 py-6 max-w-7xl">
@@ -33,7 +41,8 @@ const PromotionsPage: React.FC = () => {
         <PromotionsTab 
           promotions={promotions}
           handleAddPromotion={handleAddPromotion}
-          handleDeletePromotion={handleDeletePromotion} 
+          handleDeletePromotion={handleDeletePromotion}
+          handleUpdatePromotion={handleUpdatePromotion}
         />
       </div>
     </Layout>

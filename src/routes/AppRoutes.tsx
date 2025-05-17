@@ -1,93 +1,105 @@
 
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Route, Routes } from 'react-router-dom';
+import LandingPage from '@/pages/LandingPage';
+import HomePage from '@/pages/HomePage';
+import ExplorePage from '@/pages/ExplorePage';
+import LoginPage from '@/pages/LoginPage';
+import SignupPage from '@/pages/SignupPage';
+import { PageSuspense } from '@/components/loading/PageSuspense';
+import Loading from '@/components/ui/loading';
+import { profileRoutes } from './config/profileRoutes';
 import { adminRoutes } from './config/adminRoutes';
 import { establishmentRoutes } from './config/establishmentRoutes';
 import { promoterRoutes } from './config/promoterRoutes';
-import { profileRoutes } from './config/profileRoutes';
-import { publicRoutes } from './config/publicRoutes';
-import PageSuspense from '@/components/loading/PageSuspense';
-import { useNavigationTracking } from '@/utils/lazyRouteLoader';
-import { Skeleton } from '@/components/ui/skeleton';
-import { AnimatePresence } from 'framer-motion';
-import { useLocation } from 'react-router-dom';
+import NotFound from '@/pages/NotFound';
+import CocktailDetail from '@/pages/CocktailDetail';
+import EstablishmentDetail from '@/pages/EstablishmentDetail';
+import SwigCircuitsPage from '@/pages/SwigCircuitsPage';
+import EventsPage from '@/pages/EventsPage';
 
-// Import the EventScannerPage component
-const EventScannerPage = React.lazy(() => import('@/pages/events/EventScannerPage'));
-// Import the EventDetailPage component 
-const EventDetailPage = React.lazy(() => import('@/pages/EventDetailPage'));
-// Import the BarCrawlDetail component
-const BarCrawlDetail = React.lazy(() => import('@/pages/BarCrawlDetail'));
+// Create a simple loading component for use with PageSuspense
+const PageLoader = () => <Loading className="h-screen" />;
 
-const AppRoutes = () => {
-  // Track navigation for prefetching optimization
-  useNavigationTracking();
-  const location = useLocation();
-
+const AppRoutes: React.FC = () => {
   return (
-    <PageSuspense>
-      <AnimatePresence mode="wait">
-        <Routes location={location} key={location.pathname}>
-          {/* Public Routes */}
-          {publicRoutes.map((route) => (
-            <Route key={route.path} path={route.path} element={route.element} />
-          ))}
-
-          {/* Ensure we have a direct route for event details */}
-          <Route 
-            path="/event/:id" 
-            element={
-              <PageSuspense fallback={<Skeleton className="h-screen w-full" />}>
-                <EventDetailPage />
-              </PageSuspense>
-            } 
-          />
-          
-          {/* Add direct route for bar crawl details */}
-          <Route 
-            path="/bar-crawl/:id" 
-            element={
-              <PageSuspense fallback={<Skeleton className="h-screen w-full" />}>
-                <BarCrawlDetail />
-              </PageSuspense>
-            }
-          />
-
-          {/* Special public route for event scanner that requires token */}
-          <Route 
-            path="/events/scan/:eventId/:token" 
-            element={
-              <PageSuspense fallback={<Skeleton className="h-screen w-full" />}>
-                <EventScannerPage />
-              </PageSuspense>
-            }
-          />
-
-          {/* Admin Routes */}
-          {adminRoutes.map((route) => (
-            <Route key={route.path} path={route.path} element={route.element} />
-          ))}
-
-          {/* Establishment Routes */}
-          {establishmentRoutes.map((route) => (
-            <Route key={route.path} path={route.path} element={route.element} />
-          ))}
-
-          {/* Promoter Routes */}
-          {promoterRoutes.map((route) => (
-            <Route key={route.path} path={route.path} element={route.element} />
-          ))}
-
-          {/* Profile Routes */}
-          {profileRoutes.map((route) => (
-            <Route key={route.path} path={route.path} element={route.element} />
-          ))}
-
-          {/* Fallback for unmatched routes */}
-          <Route path="*" element={<Navigate to="/404" replace />} />
-        </Routes>
-      </AnimatePresence>
-    </PageSuspense>
+    <Routes>
+      {/* Public routes */}
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/signup" element={<SignupPage />} />
+      
+      {/* Main app routes */}
+      <Route 
+        path="/home" 
+        element={
+          <PageSuspense fallback={<PageLoader />}>
+            <HomePage />
+          </PageSuspense>
+        } 
+      />
+      
+      <Route 
+        path="/explore" 
+        element={
+          <PageSuspense fallback={<PageLoader />}>
+            <ExplorePage />
+          </PageSuspense>
+        } 
+      />
+      
+      <Route 
+        path="/cocktail/:id" 
+        element={
+          <PageSuspense fallback={<PageLoader />}>
+            <CocktailDetail />
+          </PageSuspense>
+        } 
+      />
+      
+      <Route path="/establishment/:id" element={<EstablishmentDetail />} />
+      <Route path="/swig-circuits" element={<SwigCircuitsPage />} />
+      <Route path="/events" element={<EventsPage />} />
+      
+      {/* User profile routes */}
+      {profileRoutes.map((route) => (
+        <Route
+          key={route.path}
+          path={route.path}
+          element={route.element}
+        />
+      ))}
+      
+      {/* Admin routes */}
+      {adminRoutes.map((route) => (
+        <Route 
+          key={route.path}
+          path={route.path}
+          element={route.element} 
+        />
+      ))}
+      
+      {/* Establishment routes */}
+      {establishmentRoutes.map((route) => (
+        <Route 
+          key={route.path}
+          path={route.path}
+          element={route.element} 
+        />
+      ))}
+      
+      {/* Promoter routes */}
+      {promoterRoutes.map((route) => (
+        <Route 
+          key={route.path}
+          path={route.path}
+          element={route.element} 
+        />
+      ))}
+      
+      {/* 404 Not Found */}
+      <Route path="*" element={<NotFound />} />
+    </Routes>
   );
 };
 

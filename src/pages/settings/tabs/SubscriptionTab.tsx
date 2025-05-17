@@ -1,112 +1,141 @@
 
 import React from 'react';
-import { TabsContent } from '@/components/ui/tabs';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/contexts/auth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import { useAppSubscription } from '@/hooks/useAppSubscription';
-import { useFollowers } from '@/hooks/useFollowers';
+import { CalendarIcon, CheckCircle, User } from 'lucide-react';
 
-interface SubscriptionTabProps {
-  isLightTheme: boolean;
+interface Follower {
+  id: string;
+  subscriber_id: string;
+  promoter_id: string;
+  subscription_start: string;
+  subscription_end: string | null;
+  created_at: string;
+  updated_at: string;
+  notification_preferences: Record<string, boolean>;
+  follow_status: string;
+  subscriber?: {
+    id: string;
+    display_name: string;
+    avatar_url: string | null;
+  };
 }
 
-const SubscriptionTab: React.FC<SubscriptionTabProps> = ({ isLightTheme }) => {
-  const { subscription, isLoading: isLoadingSubscription, cancelSubscription } = useAppSubscription();
-  const { followedPromoters, isLoading: isLoadingFollowing } = useFollowers();
+const SubscriptionTab = () => {
+  const { user } = useAuth();
   
-  const isLoading = isLoadingSubscription || isLoadingFollowing;
+  const { data: followers = [], isLoading } = useQuery({
+    queryKey: ['promoterFollowers'],
+    queryFn: async () => {
+      if (!user?.id) throw new Error('User not authenticated');
+      
+      // Modified query to use proper join syntax for Supabase
+      const { data, error } = await supabase
+        .from('promoter_followers')
+        .select(`
+          *,
+          subscriber:subscriber_id (
+            id,
+            display_name,
+            avatar_url
+          )
+        `)
+        .eq('promoter_id', user.id)
+        .eq('follow_status', 'active');
+        
+      if (error) {
+        console.error('Error fetching followers:', error);
+        throw error;
+      }
+      
+      // Type assertion to ensure proper typing of the result
+      return (data || []) as Follower[];
+    },
+    enabled: !!user,
+  });
   
-  const handleCancelSubscription = async () => {
-    if (window.confirm("Are you sure you want to cancel your subscription?")) {
-      await cancelSubscription.mutateAsync();
-    }
-  };
+  if (isLoading) {
+    return <div className="p-8">Loading subscription data...</div>;
+  }
   
   return (
-    <TabsContent value="subscriptions">
-      <Card className={isLightTheme ? "bg-[#f5f3ed] border-gray-200" : ""}>
-        <CardHeader>
-          <CardTitle className={isLightTheme ? "text-gray-800" : ""}>
-            App Subscription
-          </CardTitle>
-          <CardDescription className={isLightTheme ? "text-gray-600" : ""}>
-            Manage your app subscription settings and preferences
-          </CardDescription>
-        </CardHeader>
+    <div className="space-y-6">
+      <section>
+        <h2 className="text-xl font-semibold mb-4">Your Subscribers</h2>
         
-        <CardContent className="space-y-6">
-          <div className="grid gap-6">
-            <div className={cn(
-              "rounded-lg border p-4",
-              isLightTheme ? "border-gray-200 bg-white" : "border-gray-700 bg-gray-800"
-            )}>
-              <h3 className={cn(
-                "text-lg font-medium mb-2", 
-                isLightTheme ? "text-gray-800" : ""
-              )}>
-                Current Plan: {isLoading ? "Loading..." : (subscription?.subscription_type ? subscription.subscription_type.charAt(0).toUpperCase() + subscription.subscription_type.slice(1) : "Free")}
-              </h3>
-              <p className={cn(
-                "text-sm mb-4",
-                isLightTheme ? "text-gray-600" : ""
-              )}>
-                {!isLoading && !subscription?.subscription_type && "You're currently on the free plan with limited features."}
-                {!isLoading && subscription?.subscription_type && `You're on the ${subscription.subscription_type} plan.`}
-              </p>
-              {!isLoading && !subscription?.subscription_type && (
-                <Button variant="outline" className={isLightTheme ? "border-gray-300" : ""}>
-                  Upgrade to Premium
-                </Button>
-              )}
-              {!isLoading && subscription && subscription.subscription_type !== 'free' && (
-                <Button 
-                  variant="outline" 
-                  className={isLightTheme ? "border-gray-300 text-red-600 hover:bg-red-50" : "text-red-400 hover:bg-red-900/20"}
-                  onClick={handleCancelSubscription}
-                  disabled={cancelSubscription.isPending}
-                >
-                  {cancelSubscription.isPending ? 'Processing...' : 'Cancel Subscription'}
-                </Button>
-              )}
-            </div>
-            
-            <div className={cn(
-              "rounded-lg border p-4",
-              isLightTheme ? "border-gray-200 bg-white" : "border-gray-700 bg-gray-800"
-            )}>
-              <h3 className={cn(
-                "text-lg font-medium mb-2", 
-                isLightTheme ? "text-gray-800" : ""
-              )}>
-                Promoters You Follow
-              </h3>
-              {isLoadingFollowing ? (
-                <p>Loading your followed promoters...</p>
-              ) : followedPromoters.length === 0 ? (
-                <p className="text-sm text-muted-foreground">You're not following any promoters yet.</p>
-              ) : (
-                <div className="space-y-2">
-                  {followedPromoters.map((follower) => (
-                    <div key={follower.id} className="flex justify-between items-center p-2 border-b">
-                      <span>{follower.promoter?.display_name || 'Unknown Promoter'}</span>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => {/* Navigate to promoter page */}}
-                        className="text-xs"
-                      >
-                        View
-                      </Button>
+        <div className="grid gap-4">
+          {followers.length > 0 ? (
+            followers.map((follower) => (
+              <Card key={follower.id}>
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    {follower.subscriber?.avatar_url ? (
+                      <img 
+                        src={follower.subscriber.avatar_url} 
+                        alt={follower.subscriber.display_name || 'User'} 
+                        className="w-10 h-10 rounded-full" 
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                        <User size={20} />
+                      </div>
+                    )}
+                    <div>
+                      <h3 className="font-medium">
+                        {follower.subscriber?.display_name || 'Anonymous User'}
+                      </h3>
+                      <div className="flex items-center text-xs text-muted-foreground">
+                        <CalendarIcon className="mr-1 h-3 w-3" />
+                        <span>
+                          Subscribed since {new Date(follower.subscription_start).toLocaleDateString()}
+                        </span>
+                      </div>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </TabsContent>
+                  </div>
+                  
+                  <div className="flex items-center">
+                    <span className="text-sm text-success flex items-center gap-1">
+                      <CheckCircle className="h-4 w-4" /> Active
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle>No Subscribers Yet</CardTitle>
+                <CardDescription>
+                  You don't have any subscribers yet. Share your profile to gain followers.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button variant="outline">Share Profile</Button>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </section>
+      
+      <section>
+        <h2 className="text-xl font-semibold mb-4">Subscription Settings</h2>
+        <Card>
+          <CardHeader>
+            <CardTitle>Notification Preferences</CardTitle>
+            <CardDescription>
+              Configure what your subscribers will be notified about.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {/* Notification preferences would go here */}
+            <p className="text-muted-foreground">Coming soon!</p>
+          </CardContent>
+        </Card>
+      </section>
+    </div>
   );
 };
 
