@@ -12,7 +12,7 @@ import QRCode from '@/components/ui/qrcode';
 import { Button } from '@/components/ui/button';
 import { Calendar, MapPin } from 'lucide-react';
 import { format } from 'date-fns';
-import { SwigCircuitTicket } from '@/types/SubscriptionTypes';
+import { SwigCircuitTicket } from '@/types/TicketTypes';
 
 export interface SwigCircuitTicketCardProps {
   ticket: SwigCircuitTicket;
@@ -25,10 +25,13 @@ const SwigCircuitTicketCard: React.FC<SwigCircuitTicketCardProps> = ({
 }) => {
   const handleShowQR = () => {
     if (onShowQR && ticket.ticket_code) {
-      const ticketDetails = `Ticket Type: ${ticket.ticket_type || 'Standard'}`;
+      const ticketDetails = `Ticket Type: ${ticket.ticket_tier?.name || 'Standard'}`;
       onShowQR(ticket.ticket_code, `Swig Circuit Ticket`, ticketDetails);
     }
   };
+
+  // Determine venue name from ticket data
+  const venueName = ticket.venue_name || 'Multiple Venues';
 
   return (
     <Card className="mb-4 hover:shadow-md transition-shadow">
@@ -40,7 +43,7 @@ const SwigCircuitTicketCard: React.FC<SwigCircuitTicketCardProps> = ({
       </CardHeader>
       <CardContent>
         <div className="flex flex-col gap-2">
-          <p className="text-sm font-medium">Location: {ticket.venue_name || 'Multiple Venues'}</p>
+          <p className="text-sm font-medium">Location: {venueName}</p>
           <div className="mt-4">
             {ticket.ticket_code ? (
               <div className="flex justify-center">

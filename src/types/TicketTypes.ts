@@ -1,4 +1,3 @@
-
 export interface EventTicket {
   id: string;
   event: {
@@ -47,6 +46,7 @@ export interface SwigCircuitTicket {
     name: string;
     price: number;
   };
+  venue_name?: string;
 }
 
 // Discount types

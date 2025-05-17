@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -9,7 +8,7 @@ import QRCodeLightbox from '@/components/qrcode/QRCodeLightbox';
 import Layout from '@/components/Layout';
 import TicketsTabContent from '@/components/tickets/TicketsTabContent';
 import NoTicketsView from '@/components/tickets/NoTicketsView';
-import { EventTicket, SwigCircuitAttendeeRaw, SwigCircuitTicket } from '@/types/TicketTypes';
+import { EventTicket, SwigCircuitTicket } from '@/types/TicketTypes';
 
 const MyTicketsPage = () => {
   const { user } = useAuth();
@@ -50,7 +49,7 @@ const MyTicketsPage = () => {
     enabled: !!user,
   });
 
-  // Fetch swig circuit tickets using string literal to avoid TypeScript issues
+  // Fetch swig circuit tickets with added venue name information
   const { data: swigTickets = [], isLoading: loadingSwigTickets } = useQuery({
     queryKey: ['mySwigTickets'],
     queryFn: async () => {
@@ -64,14 +63,19 @@ const MyTicketsPage = () => {
           swig_circuit_id,
           user_id,
           ticket_type_id,
+          quantity,
           purchase_date,
           status,
           ticket_code,
+          checked_in_at,
+          first_check_in,
+          created_at,
+          updated_at,
+          purchaser_info,
           swig_circuit:swig_circuit_id (
             id,
             name,
-            date,
-            time
+            date
           ),
           ticket_tier:ticket_type_id (
             id,
@@ -91,17 +95,23 @@ const MyTicketsPage = () => {
         throw error;
       }
 
-      // Process the raw data to ensure it matches our expected interface
-      const processedData: SwigCircuitTicket[] = (data as unknown as SwigCircuitAttendeeRaw[]).map(item => ({
+      // Process the raw data to ensure it matches our expected SwigCircuitTicket interface
+      const processedData: SwigCircuitTicket[] = (data || []).map(item => ({
         id: item.id,
         swig_circuit_id: item.swig_circuit_id,
         user_id: item.user_id,
         ticket_type_id: item.ticket_type_id,
+        quantity: item.quantity || 1,
         purchase_date: item.purchase_date,
+        checked_in_at: item.checked_in_at,
+        first_check_in: item.first_check_in,
         status: item.status,
         ticket_code: item.ticket_code,
-        swig_circuit: item.swig_circuit || undefined,
-        ticket_tier: item.ticket_tier || undefined
+        created_at: item.created_at,
+        updated_at: item.updated_at,
+        purchaser_info: item.purchaser_info || { name: '', email: '' },
+        ticket_tier: item.ticket_tier,
+        venue_name: item.swig_circuit?.name || 'Unknown Venue',
       }));
 
       return processedData;
