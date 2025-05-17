@@ -57,6 +57,8 @@ export interface ReleaseProgress {
   pendingFeatures: number;
   deferredFeatures: number;
   percentComplete: number;
+  id: string;
+  version: string;
 }
 
 export type ReleaseSortField = 'version' | 'name' | 'status' | 'plannedReleaseDate';

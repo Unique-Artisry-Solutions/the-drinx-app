@@ -89,6 +89,7 @@ const sampleFeatures: ReleaseFeature[] = [
 const sampleReleaseNotes: { [key: string]: ReleaseNote[] } = {
   '1.2.0': [
     {
+      id: 'note-1-2-0-1',
       type: 'feature',
       title: 'AI-powered mocktail recommendations',
       description: 'Personalized mocktail suggestions based on your preferences and taste profile',
@@ -97,6 +98,7 @@ const sampleReleaseNotes: { [key: string]: ReleaseNote[] } = {
       createdAt: oneMonthAgo
     },
     {
+      id: 'note-1-2-0-2',
       type: 'improvement',
       title: 'Enhanced establishment profiles',
       description: 'Added more details and customization options for establishment profiles',
@@ -105,6 +107,7 @@ const sampleReleaseNotes: { [key: string]: ReleaseNote[] } = {
       createdAt: oneMonthAgo
     },
     {
+      id: 'note-1-2-0-3',
       type: 'bugfix',
       title: 'Fixed user authentication issues',
       description: 'Resolved issues with login and session management',
@@ -116,6 +119,7 @@ const sampleReleaseNotes: { [key: string]: ReleaseNote[] } = {
   ],
   '1.1.0': [
     {
+      id: 'note-1-1-0-1',
       type: 'feature',
       title: 'Bar crawl management',
       description: 'Create, edit, and share bar crawl routes with friends',
@@ -124,6 +128,7 @@ const sampleReleaseNotes: { [key: string]: ReleaseNote[] } = {
       createdAt: twoMonthsAgo
     },
     {
+      id: 'note-1-1-0-2',
       type: 'security',
       title: 'Enhanced data protection',
       description: 'Improved security for user data and preferences',
@@ -135,6 +140,7 @@ const sampleReleaseNotes: { [key: string]: ReleaseNote[] } = {
   ],
   '1.0.0': [
     {
+      id: 'note-1-0-0-1',
       type: 'feature',
       title: 'Initial release',
       description: 'First public release of Spiritless platform',

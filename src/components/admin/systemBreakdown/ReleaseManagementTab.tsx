@@ -1,185 +1,248 @@
 
-import React, { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import React, { useState, useEffect } from 'react';
+import { 
+  Card, 
+  CardContent, 
+  CardHeader, 
+  CardTitle, 
+  CardDescription 
+} from '@/components/ui/card';
+import { 
+  Tabs, 
+  TabsContent, 
+  TabsList, 
+  TabsTrigger 
+} from '@/components/ui/tabs';
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from '@/components/ui/table';
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
-  Package, 
-  FileText, 
+  ArrowUpDown, 
   Calendar, 
-  GitBranch,
-  BarChart,
-  Settings
+  CheckCircle2, 
+  Clock, 
+  Edit, 
+  Filter, 
+  Plus, 
+  Tag 
 } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-
+import { Progress } from '@/components/ui/progress';
+import { format } from 'date-fns';
+import { 
+  Release, 
+  ReleaseProgress, 
+  ReleaseSortField, 
+  ReleaseSortOrder, 
+  ReleaseFeature 
+} from './types/releaseTypes';
+import { calculateReleaseCompletion } from './utils/releaseUtils';
 import ReleasesList from './releases/ReleasesList';
 import ReleaseEditor from './releases/ReleaseEditor';
 import ReleaseTimeline from './releases/ReleaseTimeline';
+import { v4 as uuidv4 } from 'uuid';
 import { useReleaseManagement } from './hooks/useReleaseManagement';
 
+interface ReleaseItemProps {
+  release: Release;
+  onSelect: (release: Release) => void;
+  isSelected: boolean;
+}
+
 const ReleaseManagementTab: React.FC = () => {
-  const releaseManagement = useReleaseManagement();
-  const [activeTab, setActiveTab] = useState('releases');
+  const [activeTab, setActiveTab] = useState<string>("list");
+  const [selectedRelease, setSelectedRelease] = useState<Release | null>(null);
+  const [sortField, setSortField] = useState<ReleaseSortField>('plannedReleaseDate');
+  const [sortOrder, setSortOrder] = useState<ReleaseSortOrder>('desc');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
   
-  // Calculate total releases by status
-  const releasesByStatus = releaseManagement.releases.reduce((acc, release) => {
-    acc[release.status] = (acc[release.status] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
+  const { 
+    releases, 
+    addNewRelease, 
+    updateRelease, 
+    deleteRelease,
+    releaseProgress 
+  } = useReleaseManagement();
   
-  const totalReleases = releaseManagement.releases.length;
-  const releasedCount = releasesByStatus['released'] || 0;
-  const plannedCount = releasesByStatus['planned'] || 0;
-  const inDevelopmentCount = releasesByStatus['in_development'] || 0;
+  const handleSelectRelease = (release: Release) => {
+    setSelectedRelease(release);
+    setActiveTab('edit');
+  };
   
+  const handleCreateNewRelease = () => {
+    const newReleaseTemplate = {
+      id: uuidv4(),
+      version: '',
+      name: '',
+      type: 'minor',
+      status: 'planned',
+      description: '',
+      features: [],
+      releaseNotes: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      team: [],
+      tags: [],
+      releaseBranch: 'develop'
+    } as Release;
+    
+    setSelectedRelease(newReleaseTemplate);
+    setActiveTab('edit');
+  };
+  
+  const handleSaveRelease = (updatedRelease: Release) => {
+    if (releases.some(r => r.id === updatedRelease.id)) {
+      updateRelease(updatedRelease);
+    } else {
+      addNewRelease(updatedRelease);
+    }
+    setActiveTab('list');
+    setSelectedRelease(null);
+  };
+  
+  const handleDeleteRelease = (releaseId: string) => {
+    deleteRelease(releaseId);
+    setActiveTab('list');
+    setSelectedRelease(null);
+  };
+  
+  // Create a properly formatted release progress array for display
+  const formattedReleaseProgress: ReleaseProgress[] = releases.map(release => {
+    const totalFeatures = release.features.length;
+    const completedFeatures = release.features.filter(f => f.status === 'completed').length;
+    const inProgressFeatures = release.features.filter(f => f.status === 'in_progress').length;
+    const pendingFeatures = release.features.filter(f => f.status === 'pending').length;
+    const deferredFeatures = release.features.filter(f => f.status === 'deferred').length;
+    const percentComplete = totalFeatures > 0 ? Math.round((completedFeatures / totalFeatures) * 100) : 0;
+    
+    return {
+      totalFeatures,
+      completedFeatures,
+      inProgressFeatures,
+      pendingFeatures,
+      deferredFeatures,
+      percentComplete,
+      id: release.id,
+      version: release.version
+    };
+  });
+  
+  const handleAddFeature = (feature: Omit<ReleaseFeature, "id">) => {
+    if (!selectedRelease) return;
+    
+    const newFeature: ReleaseFeature = {
+      ...feature,
+      id: `feature-${uuidv4()}`
+    };
+    
+    const updatedRelease = {
+      ...selectedRelease,
+      features: [...selectedRelease.features, newFeature],
+      updatedAt: new Date().toISOString()
+    };
+    
+    setSelectedRelease(updatedRelease);
+  };
+
   return (
-    <Card>
+    <Card className="w-full">
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center">
-              <Package className="h-5 w-5 mr-2 text-blue-500" />
-              Release Management
-            </CardTitle>
-            <CardDescription>
-              Plan, track, and publish software releases with detailed version control and release notes
-            </CardDescription>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            <div className="flex gap-2">
-              <Badge variant="outline" className="border-green-500 text-green-500">
-                {releasedCount} Released
-              </Badge>
-              <Badge variant="outline" className="border-blue-500 text-blue-500">
-                {inDevelopmentCount} In Development
-              </Badge>
-              <Badge variant="outline" className="border-gray-500 text-gray-500">
-                {plannedCount} Planned
-              </Badge>
-            </div>
-            
-            <Select value={releaseManagement.dateFormat} onValueChange={releaseManagement.setDateFormat}>
-              <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="Date Format" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="yyyy-MM-dd">ISO (yyyy-MM-dd)</SelectItem>
-                <SelectItem value="MM/dd/yyyy">US (MM/dd/yyyy)</SelectItem>
-                <SelectItem value="dd/MM/yyyy">EU (dd/MM/yyyy)</SelectItem>
-                <SelectItem value="MMM d, yyyy">Long (Jan 1, 2025)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="releases" className="flex items-center gap-1">
-              <GitBranch className="h-4 w-4" />
-              <span>Releases</span>
-            </TabsTrigger>
-            <TabsTrigger value="editor" className="flex items-center gap-1" disabled={!releaseManagement.selectedRelease}>
-              <FileText className="h-4 w-4" />
-              <span>Release Editor</span>
-            </TabsTrigger>
-            <TabsTrigger value="timeline" className="flex items-center gap-1">
-              <Calendar className="h-4 w-4" />
-              <span>Timeline</span>
-            </TabsTrigger>
-            <TabsTrigger value="analytics" className="flex items-center gap-1" disabled>
-              <BarChart className="h-4 w-4" />
-              <span>Analytics</span>
-            </TabsTrigger>
-            <TabsTrigger value="settings" className="flex items-center gap-1" disabled>
-              <Settings className="h-4 w-4" />
-              <span>Settings</span>
+        <CardTitle>Release Management</CardTitle>
+        <CardDescription>
+          Plan, track, and manage software releases and features
+        </CardDescription>
+        
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
+          <TabsList className="grid grid-cols-3 mb-4">
+            <TabsTrigger value="list">Releases</TabsTrigger>
+            <TabsTrigger value="timeline">Timeline</TabsTrigger>
+            <TabsTrigger 
+              value="edit"
+              disabled={!selectedRelease && activeTab !== "edit"}
+            >
+              {selectedRelease ? 'Edit Release' : 'New Release'}
             </TabsTrigger>
           </TabsList>
           
-          <TabsContent value="releases" className="mt-0 border-none p-0">
+          <TabsContent value="list" className="space-y-4">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <Select value={filterStatus} onValueChange={setFilterStatus}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Filter by status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    <SelectItem value="planned">Planned</SelectItem>
+                    <SelectItem value="in_development">In Development</SelectItem>
+                    <SelectItem value="ready_for_qa">Ready for QA</SelectItem>
+                    <SelectItem value="in_qa">In QA</SelectItem>
+                    <SelectItem value="ready_for_release">Ready for Release</SelectItem>
+                    <SelectItem value="released">Released</SelectItem>
+                  </SelectContent>
+                </Select>
+                
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => {
+                    setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                  }}
+                >
+                  <ArrowUpDown className="h-4 w-4 mr-2" />
+                  {sortOrder === 'asc' ? 'Ascending' : 'Descending'}
+                </Button>
+              </div>
+              
+              <Button onClick={handleCreateNewRelease}>
+                <Plus className="h-4 w-4 mr-2" />
+                New Release
+              </Button>
+            </div>
+            
             <ReleasesList 
-              releases={releaseManagement.sortedAndFilteredReleases}
-              selectedReleaseId={releaseManagement.selectedReleaseId}
-              sortField={releaseManagement.sortField}
-              sortOrder={releaseManagement.sortOrder}
-              filterStatus={releaseManagement.filterStatus}
-              onSelectRelease={releaseManagement.setSelectedReleaseId}
-              onSortChange={(field) => {
-                if (releaseManagement.sortField === field) {
-                  releaseManagement.setSortOrder(releaseManagement.sortOrder === 'asc' ? 'desc' : 'asc');
-                } else {
-                  releaseManagement.setSortField(field);
-                  releaseManagement.setSortOrder('asc');
-                }
-              }}
-              onFilterChange={releaseManagement.setFilterStatus}
-              onCreateRelease={(releaseData) => {
-                const newId = releaseManagement.createRelease(releaseData);
-                releaseManagement.setSelectedReleaseId(newId);
-                setActiveTab('editor');
-              }}
-              onDeleteRelease={releaseManagement.deleteRelease}
-              getNextVersionNumber={releaseManagement.getNextVersionNumber}
-              formatDate={releaseManagement.formatDate}
+              releases={releases}
+              sortField={sortField}
+              sortOrder={sortOrder}
+              filterStatus={filterStatus}
+              onSelectRelease={handleSelectRelease}
+              releaseProgress={formattedReleaseProgress}
             />
           </TabsContent>
           
-          <TabsContent value="editor" className="mt-0 border-none p-0">
-            {releaseManagement.selectedRelease ? (
-              <ReleaseEditor
-                release={releaseManagement.selectedRelease}
-                releaseProgress={releaseManagement.releaseProgress}
-                onUpdateRelease={(data) => releaseManagement.updateRelease(releaseManagement.selectedRelease!.id, data)}
-                onUpdateStatus={releaseManagement.updateReleaseStatus}
-                onAddFeature={(feature) => releaseManagement.addFeatureToRelease(releaseManagement.selectedRelease!.id, feature)}
-                onUpdateFeature={releaseManagement.updateFeatureInRelease}
-                onRemoveFeature={(featureId) => releaseManagement.removeFeatureFromRelease(releaseManagement.selectedRelease!.id, featureId)}
-                onAddReleaseNote={(note) => releaseManagement.addReleaseNote(releaseManagement.selectedRelease!.id, note)}
-                onUpdateReleaseNote={(index, note) => releaseManagement.updateReleaseNote(releaseManagement.selectedRelease!.id, index, note)}
-                onRemoveReleaseNote={(index) => releaseManagement.removeReleaseNote(releaseManagement.selectedRelease!.id, index)}
-                onGenerateNotes={() => releaseManagement.generateReleaseNotesFromFeatures(releaseManagement.selectedRelease!.id)}
-                onExportNotes={() => releaseManagement.exportReleaseNotesAsMarkdown(releaseManagement.selectedRelease!.id)}
-                formatDate={releaseManagement.formatDate}
+          <TabsContent value="timeline">
+            <ReleaseTimeline releases={releases} />
+          </TabsContent>
+          
+          <TabsContent value="edit">
+            {selectedRelease && (
+              <ReleaseEditor 
+                release={selectedRelease} 
+                onSave={handleSaveRelease}
+                onDelete={handleDeleteRelease}
+                onCancel={() => {
+                  setActiveTab('list');
+                  setSelectedRelease(null);
+                }}
+                onAddFeature={handleAddFeature}
               />
-            ) : (
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <Package className="h-16 w-16 text-gray-300 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-1">No Release Selected</h3>
-                <p className="text-gray-500">Select a release from the Releases tab to edit</p>
-              </div>
             )}
           </TabsContent>
-          
-          <TabsContent value="timeline" className="mt-0 border-none p-0">
-            <ReleaseTimeline 
-              releases={releaseManagement.sortedAndFilteredReleases} 
-              onSelectRelease={(id) => {
-                releaseManagement.setSelectedReleaseId(id);
-                setActiveTab('editor');
-              }}
-            />
-          </TabsContent>
-          
-          <TabsContent value="analytics" className="mt-0 border-none p-0">
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <BarChart className="h-16 w-16 text-gray-300 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-1">Release Analytics</h3>
-              <p className="text-gray-500">This feature is coming soon</p>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="settings" className="mt-0 border-none p-0">
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <Settings className="h-16 w-16 text-gray-300 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-1">Release Management Settings</h3>
-              <p className="text-gray-500">This feature is coming soon</p>
-            </div>
-          </TabsContent>
         </Tabs>
-      </CardContent>
+      </CardHeader>
     </Card>
   );
 };

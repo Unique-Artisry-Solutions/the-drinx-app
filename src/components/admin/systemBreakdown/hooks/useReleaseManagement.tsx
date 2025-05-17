@@ -1,15 +1,16 @@
-
-import { useState, useCallback } from 'react';
-import { FeatureItem } from '../types';
-import { Release, ReleaseSortField, ReleaseSortOrder, ReleaseFeature, ReleaseStatus, ReleaseNote } from '../types/releaseTypes';
-import { releasesData } from '../data/releasesData';
-import { mapFeaturesToReleaseFeatures } from '../utils/releaseUtils';
-import { useToast } from '@/components/ui/use-toast';
-import { format, addMonths } from 'date-fns';
+import { useState, useMemo } from 'react';
+import { 
+  Release, 
+  ReleaseFeature, 
+  ReleaseNote, 
+  ReleaseProgress, 
+  ReleaseFeatureStatus 
+} from '../types/releaseTypes';
+import { sampleReleases, getReleaseById } from '../data/releasesData';
+import { v4 as uuidv4 } from 'uuid';
 
 export const useReleaseManagement = () => {
-  const { toast } = useToast();
-  const [releases, setReleases] = useState<Release[]>(releasesData);
+  const [releases, setReleases] = useState<Release[]>(sampleReleases);
   const [selectedReleaseId, setSelectedReleaseId] = useState<string>(
     releases.length > 0 ? releases[0].id : ''
   );
