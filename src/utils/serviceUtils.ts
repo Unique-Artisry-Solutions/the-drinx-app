@@ -5,6 +5,14 @@
 
 import { supabase } from '@/integrations/supabase/client';
 
+// Define a type that includes both possible field names for consistency handling
+interface PromotionRecord {
+  id: string;
+  used_count?: number;
+  usage_count?: number;
+  [key: string]: any; // Allow other properties
+}
+
 /**
  * Increments the usage count for a promotion code
  * 
@@ -25,9 +33,12 @@ export const incrementCodeUsage = async (codeId: string): Promise<boolean> => {
       return false;
     }
     
+    // Cast the data to our extended type that includes both field names
+    const promotion = data as PromotionRecord;
+    
     // Check which fields exist in the data
-    const hasUsedCount = data && Object.prototype.hasOwnProperty.call(data, 'used_count');
-    const hasUsageCount = data && Object.prototype.hasOwnProperty.call(data, 'usage_count');
+    const hasUsedCount = promotion && Object.prototype.hasOwnProperty.call(promotion, 'used_count');
+    const hasUsageCount = promotion && Object.prototype.hasOwnProperty.call(promotion, 'usage_count');
     
     if (!hasUsedCount && !hasUsageCount) {
       console.error("Neither used_count nor usage_count field exists in the record");
@@ -44,8 +55,8 @@ export const incrementCodeUsage = async (codeId: string): Promise<boolean> => {
     const updateField = hasUsedCount ? 'used_count' : 'usage_count';
     
     // Determine the current count
-    const currentCount = hasUsedCount ? (data.used_count || 0) : 
-                         hasUsageCount ? (data.usage_count || 0) : 0;
+    const currentCount = hasUsedCount ? (promotion.used_count || 0) : 
+                         hasUsageCount ? (promotion.usage_count || 0) : 0;
     
     // Increment the count
     const { error: updateError } = await supabase

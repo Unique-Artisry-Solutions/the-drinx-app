@@ -99,6 +99,7 @@ export interface SwigCircuitTicket {
   purchaser_info?: {
     name: string;
     email: string;
+    phone?: string; // Added phone field to fix the error
   };
   ticket_tier?: {
     id: string;
