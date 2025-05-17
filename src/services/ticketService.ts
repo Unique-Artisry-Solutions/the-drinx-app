@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Ticket } from '@/types/TicketTypes';
 import { incrementCodeUsage } from '@/utils/serviceUtils';

@@ -16,7 +16,7 @@ export const incrementCodeUsage = async (codeId: string): Promise<boolean> => {
     // First get the current usage count
     const { data, error: fetchError } = await supabase
       .from('establishment_promotions')
-      .select('used_count, usage_count')
+      .select('*')
       .eq('id', codeId)
       .single();
       
@@ -25,12 +25,27 @@ export const incrementCodeUsage = async (codeId: string): Promise<boolean> => {
       return false;
     }
     
-    // Determine which field to update based on what's available
-    const currentCount = data.used_count !== undefined ? data.used_count : 
-                        (data.usage_count !== undefined ? data.usage_count : 0);
+    // Check which fields exist in the data
+    const hasUsedCount = data && Object.prototype.hasOwnProperty.call(data, 'used_count');
+    const hasUsageCount = data && Object.prototype.hasOwnProperty.call(data, 'usage_count');
     
-    // Determine which field name to use for the update
-    const updateField = data.hasOwnProperty('used_count') ? 'used_count' : 'usage_count';
+    if (!hasUsedCount && !hasUsageCount) {
+      console.error("Neither used_count nor usage_count field exists in the record");
+      // Create a used_count field if neither exists
+      const { error: updateError } = await supabase
+        .from('establishment_promotions')
+        .update({ used_count: 1 })
+        .eq('id', codeId);
+        
+      return !updateError;
+    }
+    
+    // Determine which field to update based on what's available
+    const updateField = hasUsedCount ? 'used_count' : 'usage_count';
+    
+    // Determine the current count
+    const currentCount = hasUsedCount ? (data.used_count || 0) : 
+                         hasUsageCount ? (data.usage_count || 0) : 0;
     
     // Increment the count
     const { error: updateError } = await supabase

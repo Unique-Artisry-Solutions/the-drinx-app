@@ -1,181 +1,152 @@
 
-import React, { useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/auth';
-import FollowersList from '@/components/subscription/FollowersList';
-import SubscriptionList from '@/components/subscription/SubscriptionList';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { CalendarIcon, Users } from "lucide-react";
+import { format } from 'date-fns';
+import { useAuth } from '@/hooks/useAuth';
 
-// Define proper interfaces for our data
-interface Follower {
-  id: string;
-  created_at: string;
-  follow_status: string;
-  promoter_id: string;
-  subscriber_id: string;
-  notification_preferences: any;
-  subscription_start: string;
-  subscription_end: string | null;
-  updated_at: string;
-  subscriber: {
-    id: string;
-    display_name: string;
-    avatar_url: string;
-  } | null;
-}
-
-interface Subscription {
-  id: string;
-  created_at: string;
-  follow_status: string;
-  promoter_id: string;
-  subscriber_id: string;
-  notification_preferences: any;
-  subscription_start: string;
-  subscription_end: string | null;
-  updated_at: string;
-  promoter: {
-    id: string;
-    display_name: string;
-    avatar_url: string;
-  } | null;
-}
+// Placeholder hook implementation
+const useSubscriptions = () => {
+  // In a real implementation, this would fetch data from an API
+  return {
+    followers: [
+      {
+        id: '1',
+        subscriber: {
+          id: '123',
+          display_name: 'John Doe',
+          avatar_url: '/images/avatar1.jpg',
+        },
+        subscription_start: new Date().toISOString(),
+      },
+      {
+        id: '2',
+        subscriber: {
+          id: '456',
+          display_name: 'Jane Smith',
+          avatar_url: '/images/avatar2.jpg',
+        },
+        subscription_start: new Date().toISOString(),
+      }
+    ],
+    subscriptions: [
+      {
+        id: '1',
+        promoter: {
+          id: '789',
+          display_name: 'Club XYZ',
+          avatar_url: '/images/club1.jpg',
+        },
+        subscription_start: new Date().toISOString(),
+        tier: { name: 'Premium' },
+      }
+    ],
+    isLoading: false,
+    error: null,
+  };
+};
 
 const SubscriptionTab: React.FC = () => {
-  const [followers, setFollowers] = useState<Follower[]>([]);
-  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
+  const { followers, subscriptions, isLoading } = useSubscriptions();
 
-  useEffect(() => {
-    if (!user) return;
-    
-    const fetchSubscriptionData = async () => {
-      setIsLoading(true);
-      
-      try {
-        // Fetch followers
-        const { data: followersData, error: followersError } = await supabase
-          .from('promoter_followers')
-          .select('*, subscriber:profiles!subscriber_id(*)')
-          .eq('promoter_id', user.id);
-        
-        if (followersError) {
-          console.error('Error fetching followers:', followersError);
-        } else if (followersData) {
-          // Make sure we have all the necessary properties
-          const processedFollowers = followersData.map(follower => {
-            // Ensure subscriber has all required fields
-            const subscriber = follower.subscriber && typeof follower.subscriber === 'object' 
-              ? {
-                  id: follower.subscriber.id || '',
-                  display_name: follower.subscriber.display_name || 'Anonymous User',
-                  avatar_url: follower.subscriber.avatar_url || ''
-                }
-              : {
-                  id: '',
-                  display_name: 'Anonymous User',
-                  avatar_url: ''
-                };
-            
-            return {
-              ...follower,
-              subscriber
-            };
-          });
-          
-          setFollowers(processedFollowers as Follower[]);
-        }
-        
-        // Fetch subscriptions
-        const { data: subscriptionsData, error: subscriptionsError } = await supabase
-          .from('promoter_followers')
-          .select('*, promoter:profiles!promoter_id(*)')
-          .eq('subscriber_id', user.id);
-        
-        if (subscriptionsError) {
-          console.error('Error fetching subscriptions:', subscriptionsError);
-        } else if (subscriptionsData) {
-          // Make sure we have all the necessary properties
-          const processedSubscriptions = subscriptionsData.map(subscription => {
-            // Ensure promoter has all required fields
-            const promoter = subscription.promoter && typeof subscription.promoter === 'object'
-              ? {
-                  id: subscription.promoter.id || '',
-                  display_name: subscription.promoter.display_name || 'Unknown Promoter',
-                  avatar_url: subscription.promoter.avatar_url || ''
-                }
-              : {
-                  id: '',
-                  display_name: 'Unknown Promoter',
-                  avatar_url: ''
-                };
-            
-            return {
-              ...subscription,
-              promoter
-            };
-          });
-          
-          setSubscriptions(processedSubscriptions as Subscription[]);
-        }
-      } catch (error) {
-        console.error('Exception in fetchSubscriptionData:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    fetchSubscriptionData();
-  }, [user]);
+  if (isLoading) {
+    return <div>Loading subscriptions...</div>;
+  }
 
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium">Subscriptions & Followers</h3>
-        <p className="text-sm text-muted-foreground">
-          Manage your subscriptions to promoters and view your followers
-        </p>
+        <h2 className="text-xl font-semibold mb-4">Your Followers</h2>
+        
+        {followers && followers.length > 0 ? (
+          <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
+            {followers.map(follower => (
+              <Card key={follower.id}>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-full bg-gray-200 overflow-hidden">
+                      {follower.subscriber?.avatar_url && (
+                        <img 
+                          src={follower.subscriber.avatar_url} 
+                          alt={follower.subscriber?.display_name || 'Subscriber'} 
+                          className="w-full h-full object-cover"
+                        />
+                      )}
+                    </div>
+                    <div>
+                      <h3 className="font-medium">{follower.subscriber?.display_name || 'Unknown User'}</h3>
+                      <div className="flex items-center text-sm text-muted-foreground">
+                        <CalendarIcon className="w-4 h-4 mr-1" />
+                        <span>
+                          Following since {follower.subscription_start ? 
+                            format(new Date(follower.subscription_start), 'MMM d, yyyy') : 
+                            'Unknown date'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <Card>
+            <CardContent className="p-6 text-center">
+              <Users className="w-12 h-12 mx-auto text-muted-foreground mb-2" />
+              <h3 className="font-medium text-lg mb-1">No Followers Yet</h3>
+              <p className="text-muted-foreground mb-4">
+                When people follow you, they will appear here.
+              </p>
+            </CardContent>
+          </Card>
+        )}
       </div>
-      
-      <Tabs defaultValue="subscriptions">
-        <TabsList>
-          <TabsTrigger value="subscriptions">My Subscriptions</TabsTrigger>
-          <TabsTrigger value="followers">My Followers</TabsTrigger>
-        </TabsList>
+
+      <div>
+        <h2 className="text-xl font-semibold mb-4">Your Subscriptions</h2>
         
-        <TabsContent value="subscriptions">
-          <SubscriptionList 
-            subscriptions={subscriptions.map(subscription => ({
-              id: subscription.id,
-              promoter: {
-                id: subscription.promoter?.id || '',
-                display_name: subscription.promoter?.display_name || 'Unknown Promoter',
-                avatar_url: subscription.promoter?.avatar_url || ''
-              },
-              subscription_start: subscription.subscription_start,
-              follow_status: subscription.follow_status
-            }))}
-            isLoading={isLoading}
-          />
-        </TabsContent>
-        
-        <TabsContent value="followers">
-          <FollowersList 
-            followers={followers.map(follower => ({
-              id: follower.id,
-              subscriber: {
-                id: follower.subscriber?.id || '',
-                display_name: follower.subscriber?.display_name || 'Anonymous User',
-                avatar_url: follower.subscriber?.avatar_url || ''
-              },
-              subscription_start: follower.subscription_start,
-              follow_status: follower.follow_status
-            }))}
-            isLoading={isLoading}
-          />
-        </TabsContent>
-      </Tabs>
+        {subscriptions && subscriptions.length > 0 ? (
+          <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
+            {subscriptions.map(subscription => (
+              <Card key={subscription.id}>
+                <CardHeader className="pb-2">
+                  <div className="flex justify-between items-center">
+                    <CardTitle className="text-lg">{subscription.promoter?.display_name || 'Unknown Promoter'}</CardTitle>
+                    {subscription.tier && (
+                      <Badge>{subscription.tier.name}</Badge>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center text-sm text-muted-foreground mb-4">
+                    <CalendarIcon className="w-4 h-4 mr-1" />
+                    <span>
+                      Subscribed since {subscription.subscription_start ? 
+                        format(new Date(subscription.subscription_start), 'MMM d, yyyy') : 
+                        'Unknown date'}
+                    </span>
+                  </div>
+                  <Button variant="outline" size="sm">Manage Subscription</Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <Card>
+            <CardContent className="p-6 text-center">
+              <Users className="w-12 h-12 mx-auto text-muted-foreground mb-2" />
+              <h3 className="font-medium text-lg mb-1">No Active Subscriptions</h3>
+              <p className="text-muted-foreground mb-4">
+                You haven't subscribed to any promoters yet.
+              </p>
+              <Button>Browse Promoters</Button>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   );
 };
