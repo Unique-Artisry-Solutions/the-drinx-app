@@ -1,3 +1,4 @@
+
 import { FeatureItem } from '../types';
 
 export const establishmentFeatures: FeatureItem[] = [
@@ -9,7 +10,7 @@ export const establishmentFeatures: FeatureItem[] = [
     adminAccess: "full",
     establishmentAccess: "full",
     individualAccess: "none",
-    databaseStatus: "complete",
+    databaseStatus: "completed",
     userImpact: "high",
     complexity: "medium",
     testSteps: [
@@ -28,7 +29,7 @@ export const establishmentFeatures: FeatureItem[] = [
     adminAccess: "full",
     establishmentAccess: "full",
     individualAccess: "none",
-    databaseStatus: "complete",
+    databaseStatus: "completed",
     userImpact: "medium",
     complexity: "low",
     testSteps: [
@@ -47,7 +48,7 @@ export const establishmentFeatures: FeatureItem[] = [
     adminAccess: "full",
     establishmentAccess: "full",
     individualAccess: "none",
-    databaseStatus: "complete",
+    databaseStatus: "completed",
     userImpact: "medium",
     complexity: "low",
     testSteps: [
@@ -66,7 +67,7 @@ export const establishmentFeatures: FeatureItem[] = [
     adminAccess: "full",
     establishmentAccess: "full",
     individualAccess: "none",
-    databaseStatus: "complete",
+    databaseStatus: "completed",
     userImpact: "medium",
     complexity: "low",
     testSteps: [
@@ -85,7 +86,7 @@ export const establishmentFeatures: FeatureItem[] = [
     adminAccess: "full",
     establishmentAccess: "full",
     individualAccess: "none",
-    databaseStatus: "complete",
+    databaseStatus: "completed",
     userImpact: "medium",
     complexity: "low",
     testSteps: [
@@ -104,7 +105,7 @@ export const establishmentFeatures: FeatureItem[] = [
     adminAccess: "full",
     establishmentAccess: "full",
     individualAccess: "none",
-    databaseStatus: "complete",
+    databaseStatus: "completed",
     userImpact: "medium",
     complexity: "low",
     testSteps: [
@@ -123,7 +124,7 @@ export const establishmentFeatures: FeatureItem[] = [
     adminAccess: "full",
     establishmentAccess: "full",
     individualAccess: "none",
-    databaseStatus: "complete",
+    databaseStatus: "completed",
     userImpact: "medium",
     complexity: "low",
     testSteps: [
@@ -142,7 +143,7 @@ export const establishmentFeatures: FeatureItem[] = [
     adminAccess: "full",
     establishmentAccess: "full",
     individualAccess: "none",
-    databaseStatus: "complete",
+    databaseStatus: "completed",
     userImpact: "medium",
     complexity: "low",
     testSteps: [

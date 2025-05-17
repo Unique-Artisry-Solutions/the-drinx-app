@@ -9,7 +9,7 @@ export const pushNotificationSystem: FeatureItem = {
   adminAccess: "full",
   establishmentAccess: "partial",
   individualAccess: "partial",
-  databaseStatus: "complete",
+  databaseStatus: "completed",
   userImpact: "high",
   complexity: "high",
   databaseAnalysis: `

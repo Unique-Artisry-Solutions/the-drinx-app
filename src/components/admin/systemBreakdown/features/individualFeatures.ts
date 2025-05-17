@@ -1,3 +1,4 @@
+
 import { FeatureItem } from '../types';
 import { rewardProgramFeature } from './rewardSystem/rewardFeature';
 
@@ -10,8 +11,8 @@ export const individualFeatures: FeatureItem[] = [
     adminAccess: "full",
     establishmentAccess: "full",
     individualAccess: "full",
-    databaseStatus: "complete",
-    dbStatus: "complete",
+    databaseStatus: "completed",
+    dbStatus: "completed",
     userImpact: "high",
     complexity: "medium",
     testSteps: [
@@ -30,8 +31,8 @@ export const individualFeatures: FeatureItem[] = [
     adminAccess: "full",
     establishmentAccess: "full",
     individualAccess: "full",
-    databaseStatus: "complete",
-    dbStatus: "complete",
+    databaseStatus: "completed",
+    dbStatus: "completed",
     userImpact: "high",
     complexity: "medium",
     testSteps: [
@@ -50,8 +51,8 @@ export const individualFeatures: FeatureItem[] = [
     adminAccess: "full",
     establishmentAccess: "full",
     individualAccess: "full",
-    databaseStatus: "complete",
-    dbStatus: "complete",
+    databaseStatus: "completed",
+    dbStatus: "completed",
     userImpact: "medium",
     complexity: "low",
     testSteps: [
@@ -70,8 +71,8 @@ export const individualFeatures: FeatureItem[] = [
     adminAccess: "full",
     establishmentAccess: "none",
     individualAccess: "full",
-    databaseStatus: "complete",
-    dbStatus: "complete",
+    databaseStatus: "completed",
+    dbStatus: "completed",
     userImpact: "medium",
     complexity: "low",
     testSteps: [
@@ -90,8 +91,8 @@ export const individualFeatures: FeatureItem[] = [
     adminAccess: "full",
     establishmentAccess: "none",
     individualAccess: "full",
-    databaseStatus: "complete",
-    dbStatus: "complete",
+    databaseStatus: "completed",
+    dbStatus: "completed",
     userImpact: "high",
     complexity: "medium",
     testSteps: [
@@ -110,8 +111,8 @@ export const individualFeatures: FeatureItem[] = [
     adminAccess: "full",
     establishmentAccess: "none",
     individualAccess: "full",
-    databaseStatus: "complete",
-    dbStatus: "complete",
+    databaseStatus: "completed",
+    dbStatus: "completed",
     userImpact: "high",
     complexity: "high",
     testSteps: [
@@ -130,8 +131,8 @@ export const individualFeatures: FeatureItem[] = [
     adminAccess: "full",
     establishmentAccess: "none",
     individualAccess: "full",
-    databaseStatus: "complete",
-    dbStatus: "complete",
+    databaseStatus: "completed",
+    dbStatus: "completed",
     userImpact: "medium",
     complexity: "medium",
     testSteps: [
@@ -152,8 +153,8 @@ export const individualFeatures: FeatureItem[] = [
     adminAccess: "full",
     establishmentAccess: "full",
     individualAccess: "full",
-    databaseStatus: "complete",
-    dbStatus: "complete",
+    databaseStatus: "completed",
+    dbStatus: "completed",
     userImpact: "medium",
     complexity: "low",
     testSteps: [
@@ -172,8 +173,8 @@ export const individualFeatures: FeatureItem[] = [
     adminAccess: "full",
     establishmentAccess: "none",
     individualAccess: "full",
-    databaseStatus: "complete",
-    dbStatus: "complete",
+    databaseStatus: "completed",
+    dbStatus: "completed",
     userImpact: "medium",
     complexity: "medium",
     testSteps: [

@@ -9,7 +9,7 @@ export const analyticsDashboard: FeatureItem = {
   adminAccess: "full",
   establishmentAccess: "none",
   individualAccess: "none",
-  databaseStatus: "complete",
+  databaseStatus: "completed",
   userImpact: "high",
   complexity: "medium",
   databaseAnalysis: `
