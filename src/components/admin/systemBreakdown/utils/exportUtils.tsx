@@ -4,6 +4,7 @@ import { FeatureItem } from '../types';
 // Define a simple category type to use in this file
 type FeatureCategory = 'Admin' | 'Establishment' | 'Individual' | 'Promoter';
 
+// Renamed to match the function call in useSystemBreakdown.tsx
 export function generateCSV(
   adminFeatures: FeatureItem[],
   establishmentFeatures: FeatureItem[],
@@ -51,3 +52,6 @@ export function generateCSV(
   link.click();
   document.body.removeChild(link);
 }
+
+// Add this for backward compatibility
+export const exportFeaturesAsCSV = generateCSV;
