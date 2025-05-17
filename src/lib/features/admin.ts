@@ -1,27 +1,7 @@
 
 import { FeatureId } from './registry';
 import { supabase } from '@/lib/supabase';
-
-// Define interfaces for feature flags
-interface FeatureFlag {
-  id: string;
-  name: string;
-  description?: string;
-  status: boolean;
-  segment_id?: string;
-  percentage_rollout?: number;
-  created_at: string;
-  updated_at: string;
-}
-
-interface FeatureSegment {
-  id: string;
-  name: string;
-  description?: string;
-  criteria: Record<string, any>;
-  created_at: string;
-  updated_at: string;
-}
+import { FeatureFlag, FeatureSegment } from '@/components/admin/systemBreakdown/types/releaseTypes';
 
 // Get all feature flags
 export async function getAllFeatureFlags(): Promise<FeatureFlag[]> {

@@ -2,21 +2,21 @@
 import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { FeatureToggle } from '@/types/SupabaseTables';
+import { FeatureFlag } from '@/components/admin/systemBreakdown/types/releaseTypes';
 import { useRetry } from '@/hooks/useRetry';
 
 interface UseFeatureTogglesResult {
-  featureToggles: FeatureToggle[];
+  featureToggles: FeatureFlag[];
   isLoading: boolean;
   error: string | null;
   fetchFeatureToggles: () => Promise<void>;
-  updateFeatureToggle: (id: string, updates: Partial<FeatureToggle>) => Promise<FeatureToggle | null>;
-  createFeatureToggle: (toggle: Partial<FeatureToggle>) => Promise<FeatureToggle | null>;
+  updateFeatureToggle: (id: string, updates: Partial<FeatureFlag>) => Promise<FeatureFlag | null>;
+  createFeatureToggle: (toggle: Partial<FeatureFlag>) => Promise<FeatureFlag | null>;
   deleteFeatureToggle: (id: string) => Promise<boolean>;
 }
 
 export const useFeatureToggles = (): UseFeatureTogglesResult => {
-  const [featureToggles, setFeatureToggles] = useState<FeatureToggle[]>([]);
+  const [featureToggles, setFeatureToggles] = useState<FeatureFlag[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
@@ -36,7 +36,7 @@ export const useFeatureToggles = (): UseFeatureTogglesResult => {
           .order('name');
           
         if (error) throw new Error(error.message);
-        return data as FeatureToggle[] || [];
+        return data as FeatureFlag[] || [];
       };
       
       const data = await executeWithRetry(fetchData);
@@ -54,7 +54,7 @@ export const useFeatureToggles = (): UseFeatureTogglesResult => {
     }
   }, [toast, executeWithRetry, isLoading]);
 
-  const updateFeatureToggle = async (id: string, updates: Partial<FeatureToggle>) => {
+  const updateFeatureToggle = async (id: string, updates: Partial<FeatureFlag>) => {
     try {
       const { data, error } = await supabase
         .from('feature_flags')
@@ -70,7 +70,7 @@ export const useFeatureToggles = (): UseFeatureTogglesResult => {
       
       // Update local state
       setFeatureToggles(prev => 
-        prev.map(toggle => toggle.id === id ? data as FeatureToggle : toggle)
+        prev.map(toggle => toggle.id === id ? data as FeatureFlag : toggle)
       );
       
       toast({
@@ -91,7 +91,7 @@ export const useFeatureToggles = (): UseFeatureTogglesResult => {
           }
         });
       
-      return data as FeatureToggle;
+      return data as FeatureFlag;
     } catch (err) {
       console.error('Error updating feature toggle:', err);
       toast({
@@ -103,7 +103,7 @@ export const useFeatureToggles = (): UseFeatureTogglesResult => {
     }
   };
 
-  const createFeatureToggle = async (toggle: Partial<FeatureToggle>) => {
+  const createFeatureToggle = async (toggle: Partial<FeatureFlag>) => {
     try {
       // Make sure name is provided
       if (!toggle.name) {
@@ -123,14 +123,14 @@ export const useFeatureToggles = (): UseFeatureTogglesResult => {
       if (error) throw new Error(error.message);
       
       // Update local state
-      setFeatureToggles(prev => [...prev, data as FeatureToggle]);
+      setFeatureToggles(prev => [...prev, data as FeatureFlag]);
       
       toast({
         title: 'Success',
         description: 'Feature toggle created successfully.',
       });
       
-      return data as FeatureToggle;
+      return data as FeatureFlag;
     } catch (err) {
       console.error('Error creating feature toggle:', err);
       toast({

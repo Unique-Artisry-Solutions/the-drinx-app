@@ -61,3 +61,24 @@ export interface ReleaseProgress {
 
 export type ReleaseSortField = 'version' | 'name' | 'status' | 'plannedReleaseDate';
 export type ReleaseSortOrder = 'asc' | 'desc';
+
+// Standardized Feature Flag Type
+export interface FeatureFlag {
+  id: string;
+  name: string;
+  description?: string;
+  status: boolean;
+  segment_id?: string;
+  percentage_rollout?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FeatureSegment {
+  id: string;
+  name: string;
+  description?: string;
+  criteria: Record<string, any>;
+  created_at: string;
+  updated_at: string;
+}
