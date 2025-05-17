@@ -24,7 +24,6 @@ const PromotionsPage: React.FC = () => {
 
   // Added for updating promotions
   const handleUpdatePromotion = async (id: string, data: PromotionFormData): Promise<void> => {
-    // Check if the function exists in promotionsState before calling it
     if (typeof promotionsState.handleUpdatePromotion === 'function') {
       promotionsState.handleUpdatePromotion(id, data);
     } else {

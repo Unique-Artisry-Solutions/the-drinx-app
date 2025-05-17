@@ -21,7 +21,7 @@ interface Follower {
     id: string;
     display_name: string;
     avatar_url: string;
-  };
+  } | null;
 }
 
 interface Subscription {
@@ -38,7 +38,7 @@ interface Subscription {
     id: string;
     display_name: string;
     avatar_url: string;
-  };
+  } | null;
 }
 
 const SubscriptionTab: React.FC = () => {
@@ -146,14 +146,32 @@ const SubscriptionTab: React.FC = () => {
         
         <TabsContent value="subscriptions">
           <SubscriptionList 
-            subscriptions={subscriptions}
+            subscriptions={subscriptions.map(subscription => ({
+              id: subscription.id,
+              promoter: {
+                id: subscription.promoter?.id || '',
+                display_name: subscription.promoter?.display_name || 'Unknown Promoter',
+                avatar_url: subscription.promoter?.avatar_url || ''
+              },
+              subscription_start: subscription.subscription_start,
+              follow_status: subscription.follow_status
+            }))}
             isLoading={isLoading}
           />
         </TabsContent>
         
         <TabsContent value="followers">
           <FollowersList 
-            followers={followers}
+            followers={followers.map(follower => ({
+              id: follower.id,
+              subscriber: {
+                id: follower.subscriber?.id || '',
+                display_name: follower.subscriber?.display_name || 'Anonymous User',
+                avatar_url: follower.subscriber?.avatar_url || ''
+              },
+              subscription_start: follower.subscription_start,
+              follow_status: follower.follow_status
+            }))}
             isLoading={isLoading}
           />
         </TabsContent>

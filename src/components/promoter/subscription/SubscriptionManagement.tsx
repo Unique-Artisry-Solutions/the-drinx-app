@@ -3,8 +3,9 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useSubscriptions } from '@/hooks/useSubscriptions';
-import SubscriptionList, { SubscriptionListProps } from '@/components/subscription/SubscriptionList';
+import SubscriptionList from '@/components/subscription/SubscriptionList';
 import SubscriptionDetailCard from './SubscriptionDetailCard';
+import { AppSubscription } from '@/types/SubscriptionTypes';
 
 interface SubscriptionManagementProps {
   promoterId: string;
@@ -75,7 +76,7 @@ const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ promote
               ))}
           </div>
         ) : (
-          // Using custom props that match what the component expects
+          // Create an empty list for SubscriptionList component
           <SubscriptionList
             subscriptions={[]}
             isLoading={false}

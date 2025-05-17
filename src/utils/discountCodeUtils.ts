@@ -42,11 +42,12 @@ export async function getDiscountCode(code: string): Promise<DiscountCode | null
       return null;
     }
     
-    // Safely type cast the data
+    // Safely type cast the data with default values for potentially missing fields
     return {
       ...data,
       valid_hours: data.valid_hours as { start: string; end: string; } | null,
-      used_count: data.used_count || 0
+      used_count: data.used_count || 0,
+      usage_limit: data.usage_limit || null
     } as DiscountCode;
   } catch (error) {
     console.error('Exception in getDiscountCode:', error);
@@ -67,7 +68,7 @@ export async function incrementCodeUsage(codeId: string, tableName: string = 'es
     // First, get the current usage count and limit
     const { data, error } = await supabase
       .from(tableName as 'establishment_promotions')
-      .select('used_count, usage_limit')
+      .select('*')
       .eq('id', codeId)
       .single();
     
@@ -77,12 +78,13 @@ export async function incrementCodeUsage(codeId: string, tableName: string = 'es
     }
     
     // Create an update object with used_count incremented by 1
+    const currentUsedCount = data?.used_count || 0;
     const updates: Record<string, any> = { 
-      used_count: ((data?.used_count || 0) + 1),
+      used_count: currentUsedCount + 1,
     };
     
     // If usage limit is reached, mark as inactive
-    if (data?.usage_limit && updates.used_count >= data.usage_limit) {
+    if (data?.usage_limit && (currentUsedCount + 1) >= data.usage_limit) {
       updates.is_active = false;
     }
     
@@ -238,7 +240,8 @@ export async function autoApplyBestDiscount(userId: string, orderAmount: number,
       const discountCode = {
         ...code,
         valid_hours: code.valid_hours as { start: string; end: string; } | null,
-        used_count: code.used_count || 0
+        used_count: code.used_count || 0,
+        usage_limit: code.usage_limit || null
       } as DiscountCode;
       
       if (isDiscountCodeValid(discountCode)) {
