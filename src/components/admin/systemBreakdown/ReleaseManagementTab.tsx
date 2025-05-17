@@ -81,6 +81,9 @@ const ReleaseManagementTab: React.FC = () => {
   const handleSelectRelease = (release: Release) => {
     setSelectedRelease(release);
     setActiveTab('edit');
+    if (selectRelease) {
+      selectRelease(release);
+    }
   };
   
   const handleCreateNewRelease = () => {
