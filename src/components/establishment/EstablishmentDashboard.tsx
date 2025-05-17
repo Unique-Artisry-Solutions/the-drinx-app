@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import PromotionsTab from './PromotionsTab';
 import { useEstablishmentPromotions, PromotionFormData } from '@/hooks/establishment/useEstablishmentPromotions';
 import { useToast } from '@/hooks/use-toast';
+import { Promotion } from './PromotionsTab';
 
 interface EstablishmentDashboardProps {
   establishmentName: string;
@@ -23,6 +24,24 @@ const EstablishmentDashboard: React.FC<EstablishmentDashboardProps> = ({ establi
     updatePromotion: handleUpdatePromotion,
     togglePromotionStatus
   } = useEstablishmentPromotions(establishmentId);
+
+  // Convert API promotions to component Promotion type
+  const mappedPromotions: Promotion[] = promotions.map(p => ({
+    id: p.id,
+    code: p.code,
+    description: p.description,
+    discount_type: p.discount_type,
+    discount_value: p.discount_value,
+    start_date: p.start_date,
+    end_date: p.end_date || undefined,
+    is_active: p.is_active,
+    usage_limit: p.usage_limit || null,
+    usage_count: p.usage_count || 0,
+    valid_days: p.valid_days || null,
+    valid_hours: p.valid_hours || null,
+    user_segment: p.user_segment || null,
+    combinable: p.combinable
+  }));
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -45,7 +64,7 @@ const EstablishmentDashboard: React.FC<EstablishmentDashboardProps> = ({ establi
         
         <TabsContent value="promotions" className="mt-4">
           <PromotionsTab 
-            promotions={promotions}
+            promotions={mappedPromotions}
             handleAddPromotion={handleAddPromotion}
             handleDeletePromotion={handleDeletePromotion}
           />
