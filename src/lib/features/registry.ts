@@ -3,11 +3,43 @@
 
 export type FeatureTier = 'free' | 'basic' | 'premium' | 'vip';
 
+export type FeatureId = 
+  | 'recipe_access'
+  | 'venue_discovery'
+  | 'profile_creation'
+  | 'bar_crawl_participation'
+  | 'save_favorites'
+  | 'custom_mocktail_lists'
+  | 'priority_registration'
+  | 'establishment_profile'
+  | 'menu_management'
+  | 'create_events'
+  | 'follower_management'
+  | 'promotional_tools';
+
+// Define Features object with constants for each feature ID
+export const FEATURES: Record<string, FeatureId> = {
+  RECIPE_ACCESS: 'recipe_access',
+  VENUE_DISCOVERY: 'venue_discovery',
+  PROFILE_CREATION: 'profile_creation',
+  BAR_CRAWL_PARTICIPATION: 'bar_crawl_participation',
+  SAVE_FAVORITES: 'save_favorites',
+  CUSTOM_MOCKTAIL_LISTS: 'custom_mocktail_lists',
+  PRIORITY_REGISTRATION: 'priority_registration',
+  ESTABLISHMENT_PROFILE: 'establishment_profile',
+  MENU_MANAGEMENT: 'menu_management',
+  CREATE_EVENTS: 'create_events',
+  FOLLOWER_MANAGEMENT: 'follower_management',
+  PROMOTIONAL_TOOLS: 'promotional_tools'
+};
+
 export interface Feature {
   id: string;
   name: string;
   description: string;
   userTypes: ('individual' | 'establishment' | 'promoter')[];
+  defaultEnabled?: boolean;
+  category?: string;
 }
 
 // Define all features
@@ -108,3 +140,21 @@ export const getFeature = (featureId: string): Feature | undefined => {
 export const isFeatureInTier = (featureId: string, tier: FeatureTier): boolean => {
   return featuresByTier[tier].includes(featureId);
 };
+
+// Helper functions for feature management
+export const getFeaturesForTier = (tier: FeatureTier): Feature[] => {
+  const tierFeatureIds = featuresByTier[tier] || [];
+  return tierFeatureIds
+    .map(id => getFeature(id))
+    .filter((feature): feature is Feature => feature !== undefined);
+};
+
+export const getFeaturesForCategory = (category: string): Feature[] => {
+  return ALL_FEATURES.filter(feature => feature.category === category);
+};
+
+// Export feature registry for easier access
+export const featureRegistry: Record<string, Feature> = ALL_FEATURES.reduce((acc, feature) => {
+  acc[feature.id] = feature;
+  return acc;
+}, {} as Record<string, Feature>);

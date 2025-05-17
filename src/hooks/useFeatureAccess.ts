@@ -1,8 +1,7 @@
-
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/auth';
-import { FeatureId, getFeature } from '@/lib/features/registry';
+import { FeatureId, FEATURES, getFeature } from '@/lib/features/registry';
 import { checkFeatureAccess, trackFeatureEvent, batchCheckFeatureAccess } from '@/lib/features/api';
 import { clearFeatureAccessCache } from '@/lib/features/cache';
 
@@ -88,7 +87,7 @@ export function useFeatureAccess() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Preemptively load feature access flags when user logs in
+  // Load common features in batches to reduce API calls
   useEffect(() => {
     // Don't do anything if no user is logged in
     if (!user) {

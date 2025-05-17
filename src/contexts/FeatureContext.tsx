@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { useAuth } from './auth';
 import { FeatureId, FEATURES, getFeature } from '@/lib/features/registry';
