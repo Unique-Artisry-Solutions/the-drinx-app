@@ -1852,6 +1852,57 @@ export type Database = {
           },
         ]
       }
+      mocktail_suggestion_notifications: {
+        Row: {
+          content: string
+          created_at: string | null
+          establishment_id: string | null
+          id: string
+          notification_type: string
+          read_at: string | null
+          suggestion_id: string | null
+          title: string
+          user_id: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          establishment_id?: string | null
+          id?: string
+          notification_type: string
+          read_at?: string | null
+          suggestion_id?: string | null
+          title: string
+          user_id?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          establishment_id?: string | null
+          id?: string
+          notification_type?: string
+          read_at?: string | null
+          suggestion_id?: string | null
+          title?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mocktail_suggestion_notifications_establishment_id_fkey"
+            columns: ["establishment_id"]
+            isOneToOne: false
+            referencedRelation: "establishments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mocktail_suggestion_notifications_suggestion_id_fkey"
+            columns: ["suggestion_id"]
+            isOneToOne: false
+            referencedRelation: "mocktail_suggestions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mocktail_suggestions: {
         Row: {
           created_at: string
@@ -3429,6 +3480,121 @@ export type Database = {
             columns: ["suggestion_id"]
             isOneToOne: false
             referencedRelation: "mocktail_suggestions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      swig_circuit_attendees: {
+        Row: {
+          checked_in_at: string | null
+          created_at: string
+          first_check_in: string | null
+          id: string
+          purchase_date: string
+          purchaser_info: Json | null
+          quantity: number
+          status: string
+          swig_circuit_id: string | null
+          ticket_code: string | null
+          ticket_type_id: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          checked_in_at?: string | null
+          created_at?: string
+          first_check_in?: string | null
+          id?: string
+          purchase_date?: string
+          purchaser_info?: Json | null
+          quantity?: number
+          status?: string
+          swig_circuit_id?: string | null
+          ticket_code?: string | null
+          ticket_type_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          checked_in_at?: string | null
+          created_at?: string
+          first_check_in?: string | null
+          id?: string
+          purchase_date?: string
+          purchaser_info?: Json | null
+          quantity?: number
+          status?: string
+          swig_circuit_id?: string | null
+          ticket_code?: string | null
+          ticket_type_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "swig_circuit_attendees_swig_circuit_id_fkey"
+            columns: ["swig_circuit_id"]
+            isOneToOne: false
+            referencedRelation: "swig_circuits"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "swig_circuit_attendees_ticket_type_id_fkey"
+            columns: ["ticket_type_id"]
+            isOneToOne: false
+            referencedRelation: "swig_circuit_ticket_tiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      swig_circuit_check_ins: {
+        Row: {
+          attendee_id: string | null
+          checked_in_at: string
+          checked_in_by: string | null
+          created_at: string
+          establishment_id: string | null
+          id: string
+          swig_circuit_id: string | null
+        }
+        Insert: {
+          attendee_id?: string | null
+          checked_in_at?: string
+          checked_in_by?: string | null
+          created_at?: string
+          establishment_id?: string | null
+          id?: string
+          swig_circuit_id?: string | null
+        }
+        Update: {
+          attendee_id?: string | null
+          checked_in_at?: string
+          checked_in_by?: string | null
+          created_at?: string
+          establishment_id?: string | null
+          id?: string
+          swig_circuit_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "swig_circuit_check_ins_attendee_id_fkey"
+            columns: ["attendee_id"]
+            isOneToOne: false
+            referencedRelation: "swig_circuit_attendees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "swig_circuit_check_ins_establishment_id_fkey"
+            columns: ["establishment_id"]
+            isOneToOne: false
+            referencedRelation: "establishments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "swig_circuit_check_ins_swig_circuit_id_fkey"
+            columns: ["swig_circuit_id"]
+            isOneToOne: false
+            referencedRelation: "swig_circuits"
             referencedColumns: ["id"]
           },
         ]

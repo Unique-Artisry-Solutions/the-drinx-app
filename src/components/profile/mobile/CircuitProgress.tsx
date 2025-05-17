@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 
 interface CircuitProgressProps {
@@ -16,33 +15,34 @@ const CircuitProgress: React.FC<CircuitProgressProps> = ({
   currentStopIndex,
   totalStops
 }) => {
-  const progress = (currentStopIndex / totalStops) * 100;
-  
+  // Calculate progress percentage
+  const progressPercentage = totalStops > 0 
+    ? Math.min(100, Math.round((currentStopIndex / (totalStops - 1)) * 100))
+    : 0;
+
   return (
-    <>
-      <div className="flex justify-between items-start mb-2">
-        <h3 className="font-medium text-sm">{name || 'Untitled Swig Circuit'}</h3>
-      </div>
-      
-      <div className="flex flex-wrap gap-1 mb-3">
-        {theme && (
-          <Badge className="bg-purple-100 text-purple-800 border-purple-300 text-xs">
-            {theme}
-          </Badge>
-        )}
-        <Badge className="bg-amber-100 text-amber-800 border-amber-300 text-xs">
-          {totalStops} Stops
-        </Badge>
-      </div>
-      
-      <div className="mb-3">
-        <div className="flex justify-between text-xs mb-1">
-          <span>Progress</span>
-          <span className="font-medium">{currentStopIndex}/{totalStops} stops</span>
+    <div className="mb-4">
+      <div className="flex justify-between items-center mb-1">
+        <div>
+          <h4 className="font-medium">{name}</h4>
+          {theme && (
+            <div className="text-xs text-muted-foreground">{theme}</div>
+          )}
         </div>
-        <Progress value={progress} className="h-2" />
+        <div className="text-sm font-medium">
+          {progressPercentage}%
+        </div>
       </div>
-    </>
+      
+      <Progress
+        value={progressPercentage}
+        className="h-2"
+      />
+      
+      <div className="mt-2 text-xs text-muted-foreground text-center">
+        {currentStopIndex} of {totalStops - 1} stops completed
+      </div>
+    </div>
   );
 };
 
