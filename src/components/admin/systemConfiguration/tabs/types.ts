@@ -1,7 +1,8 @@
 
 import { SystemSetting } from '@/types/SupabaseTables';
 
-export { SystemSetting };
+// Use 'export type' for re-exporting types when using isolatedModules
+export type { SystemSetting };
 
 export interface SettingsTabProps {
   settings: SystemSetting[];

@@ -1,6 +1,9 @@
 import { supabase } from '@/integrations/supabase/client';
-import { PromotionCode, BatchCreateParams, PromotionAnalytics } from '@/types/PromotionTypes';
+import { PromotionCode, BatchCreateParams, PromotionAnalytics, CreatePromotionCodeParams } from '@/types/PromotionTypes';
 import promoterService from '@/services/promoterService';
+
+// Export these types so they can be imported elsewhere
+export type { PromotionCode, BatchCreateParams, PromotionAnalytics, CreatePromotionCodeParams };
 
 export const getPromotionCodes = async (establishmentId: string): Promise<PromotionCode[]> => {
   try {
@@ -132,7 +135,84 @@ export const deletePromotionCode = async (id: string): Promise<void> => {
   }
 };
 
-// Update the mapping functions to use used_count instead of usage_count
+// Add missing function declarations that are used in usePromotionCodes
+
+export const getPromotionAnalytics = async (establishmentId: string): Promise<PromotionAnalytics[]> => {
+  // Mock implementation for now
+  return [{
+    id: "mock-analytics-id",
+    promotion_id: "mock-promo-id",
+    code: "MOCK",
+    description: "Mock promotion analytics",
+    discount_type: "percentage",
+    discount_value: 10,
+    start_date: new Date().toISOString(),
+    establishment_id: establishmentId,
+    redemption_count: 5,
+    unique_users: 3,
+    avg_purchase_amount: 45.50,
+    total_discount_amount: 22.75,
+    successful_validations: 12,
+    failed_validations: 2,
+    auto_applied_count: 0,
+    total_usage: 17,
+    total_revenue: 300,
+    conversion_rate: 12.5
+  }];
+};
+
+export const exportPromotionCodesToCSV = (promotions: PromotionCode[]): string => {
+  // Basic CSV export implementation
+  const headers = ['code', 'description', 'discount_type', 'discount_value', 'start_date', 'end_date', 'is_active'];
+  
+  const csvRows = [
+    headers.join(','),
+    ...promotions.map(p => {
+      return [
+        p.code,
+        `"${p.description.replace(/"/g, '""')}"`,
+        p.discount_type,
+        p.discount_value,
+        p.start_date,
+        p.end_date || '',
+        p.is_active ? 'true' : 'false'
+      ].join(',');
+    })
+  ];
+  
+  return csvRows.join('\n');
+};
+
+export const parseCSVForImport = (csvData: string, establishmentId: string): CreatePromotionCodeParams[] => {
+  // Basic CSV import implementation
+  const rows = csvData.split('\n').filter(row => row.trim() !== '');
+  const headers = rows[0].split(',').map(h => h.trim().toLowerCase());
+  
+  return rows.slice(1).map(row => {
+    const values = row.split(',');
+    const rowData: Record<string, any> = {};
+    
+    headers.forEach((header, index) => {
+      rowData[header] = values[index] ? values[index].trim() : '';
+    });
+    
+    return {
+      code: rowData.code,
+      description: rowData.description,
+      discount_type: rowData.discount_type as 'percentage' | 'fixed' | 'free_item',
+      discount_value: parseFloat(rowData.discount_value),
+      start_date: rowData.start_date,
+      end_date: rowData.end_date || null,
+      establishment_id: establishmentId,
+      usage_limit: rowData.usage_limit ? parseInt(rowData.usage_limit, 10) : null,
+      valid_days: rowData.valid_days ? JSON.parse(rowData.valid_days) : null,
+      min_purchase_amount: rowData.min_purchase_amount ? parseFloat(rowData.min_purchase_amount) : null,
+      combinable: rowData.combinable === 'true'
+    };
+  });
+};
+
+// Keep the mapping function as is
 const mapPromotionFromDb = (data: any): PromotionCode => ({
   id: data.id,
   code: data.code,
