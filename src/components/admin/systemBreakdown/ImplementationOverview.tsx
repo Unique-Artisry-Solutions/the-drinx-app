@@ -1,37 +1,24 @@
-
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { BarChart, Bar, LabelList, Cell } from 'recharts';
+import { CheckCircle2, Clock, AlertTriangle, XCircle } from 'lucide-react';
 import { FeatureItem, MonthlyProgressData } from './types';
 
-interface ImplementationOverviewProps {
+export interface ImplementationOverviewProps {
   adminFeatures: FeatureItem[];
   establishmentFeatures: FeatureItem[];
   individualFeatures: FeatureItem[];
   promoterFeatures: FeatureItem[];
-  monthlyProgressData: MonthlyProgressData[];
+  monthlyProgressData?: MonthlyProgressData[]; // Make this optional
 }
 
-type ProgressData = {
-  month: string;
-  totalImplemented: number;
-  adminImplemented: number;
-  establishmentImplemented: number;
-  individualImplemented: number;
-  promoterImplemented: number;
-  frontend: number;
-  backend: number;
-};
-
-const ImplementationOverview: React.FC<ImplementationOverviewProps> = ({
-  adminFeatures,
-  establishmentFeatures,
-  individualFeatures,
+const ImplementationOverview: React.FC<ImplementationOverviewProps> = ({ 
+  adminFeatures, 
+  establishmentFeatures, 
+  individualFeatures, 
   promoterFeatures,
-  monthlyProgressData,
+  monthlyProgressData = [] // Provide default empty array
 }) => {
   // Calculate implementation progress
   const totalFeatures = adminFeatures.length + establishmentFeatures.length + individualFeatures.length + promoterFeatures.length;

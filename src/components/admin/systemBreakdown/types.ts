@@ -67,6 +67,10 @@ export interface FeatureItem {
   dbCompleted?: number;
 }
 
+export type FeatureStatus = 'implemented' | 'in_progress' | 'planned' | 'partial' | 'blocked';
+
+export type DatabaseStatus = 'completed' | 'in_progress' | 'not_started' | 'planned' | 'blocked';
+
 // Progress tracking types
 export interface MonthlyProgressData {
   month: string;
@@ -75,19 +79,13 @@ export interface MonthlyProgressData {
   establishmentImplemented: number;
   individualImplemented: number;
   promoterImplemented: number;
+  // Add frontend and backend for TimelineTab
+  frontend: number;
+  backend: number;
 }
 
 // Adding alias for compatibility with ProgressData
-export type ProgressData = {
-  month: string;
-  totalImplemented: number;
-  adminImplemented: number;
-  establishmentImplemented: number;
-  individualImplemented: number;
-  promoterImplemented: number;
-  frontend: number;
-  backend: number;
-};
+export type ProgressData = MonthlyProgressData;
 
 export interface ProgressSnapshot {
   date: string;
@@ -116,18 +114,21 @@ export interface ProgressSnapshot {
   };
   implementedFeatures: number;
   totalFeatures: number;
-  // Adding missing properties
+  // Adding missing property
   dbComplete?: number;
 }
 
 // Analysis process types
 export interface AnalysisStep {
-  id: string;
+  id?: string;
   name: string;
   description: string;
   progressPercentage: number;
   status: 'pending' | 'in_progress' | 'completed' | 'error';
   message?: string;
+  // Adding missing property
+  completed?: boolean;
+  details?: string;
 }
 
 // Improvement tracking types
@@ -157,13 +158,14 @@ export interface ImprovementItem {
   // Adding properties referenced in errors
   lovableCompatible?: boolean;
   technicalRequirements?: string;
-  type?: string;
+  type?: 'new-feature' | 'enhancement';
   submittedDate?: string;
-  affectedAreas?: string[];
+  affectedAreas?: ('admin' | 'individual' | 'establishment')[];
   implementationSteps?: string[];
   estimatedEffort?: string;
   businessImpact?: string;
   currentStatus?: string;
+  submittedBy?: string;
 }
 
 export type SortField = 

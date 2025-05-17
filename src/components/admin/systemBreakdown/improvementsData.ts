@@ -6,9 +6,9 @@ export const improvementsData: ImprovementItem[] = [
     id: 'imp-001',
     title: 'Advanced AI Recommendations',
     description: 'Implement an AI-based recommendation engine for mocktails based on user preferences and past selections.',
-    impact: 'high',
-    effort: 'high',
-    priority: 1,
+    impact: 4,
+    effort: 5,
+    priority: 'high',
     status: 'proposed',
     category: 'AI',
     votes: 42,
@@ -27,21 +27,22 @@ export const improvementsData: ImprovementItem[] = [
     estimatedEffort: '3 sprints',
     businessImpact: 'Increases user engagement by 35% in test markets',
     currentStatus: 'Awaiting technical review',
-    affectedAreas: ['admin', 'individual']
+    affectedAreas: ['admin', 'individual'],
+    createdAt: '2023-04-15'
   },
   {
     id: 'imp-002',
     title: 'Social Sharing Integration',
     description: 'Add capability for users to share their favorite mocktails, bar crawls, and custom routes on social media platforms.',
-    impact: 'medium',
-    effort: 'low',
+    impact: 3,
+    effort: 2,
     status: 'in_progress',
     category: 'Social',
     votes: 38,
     submittedBy: 'Morgan Taylor',
     submittedDate: '2023-04-18',
     type: 'enhancement',
-    priority: 2,
+    priority: 'medium',
     lovableCompatible: true,
     technicalRequirements: 'Social API integration, image generation services',
     implementationSteps: [
@@ -53,21 +54,22 @@ export const improvementsData: ImprovementItem[] = [
     estimatedEffort: '1 sprint',
     businessImpact: 'Expected to increase user acquisition by 12%',
     currentStatus: 'Sprint 3 implementation',
-    affectedAreas: ['individual']
+    affectedAreas: ['individual'],
+    createdAt: '2023-04-18'
   },
   {
     id: 'imp-003',
     title: 'Establishment Analytics Dashboard',
     description: 'Create a comprehensive analytics dashboard for establishment owners to track popularity of their offerings, customer demographics, and busy periods.',
-    impact: 'high',
-    effort: 'medium',
+    impact: 5,
+    effort: 3,
     status: 'approved',
     category: 'Analytics',
     votes: 35,
     submittedBy: 'Jamie Williams',
     submittedDate: '2023-04-22',
     type: 'new-feature',
-    priority: 3,
+    priority: 'high',
     lovableCompatible: true,
     technicalRequirements: 'Data visualization library, event tracking system',
     implementationSteps: [
@@ -80,21 +82,22 @@ export const improvementsData: ImprovementItem[] = [
     estimatedEffort: '2 sprints',
     businessImpact: 'Enables establishments to optimize menu and staffing',
     currentStatus: 'Scheduled for next sprint',
-    affectedAreas: ['establishment', 'admin']
+    affectedAreas: ['establishment', 'admin'],
+    createdAt: '2023-04-22'
   },
   {
     id: 'imp-004',
     title: 'Ingredient Inventory Management',
     description: 'Add inventory management features for establishments to track mocktail ingredient levels and receive alerts for restocking.',
-    impact: 'medium',
-    effort: 'medium',
+    impact: 3,
+    effort: 3,
     status: 'proposed',
     category: 'Management',
     votes: 29,
     submittedBy: 'Riley Smith',
     submittedDate: '2023-04-25',
     type: 'new-feature',
-    priority: 4,
+    priority: 'medium',
     lovableCompatible: false,
     technicalRequirements: 'Inventory database schema, alert system',
     implementationSteps: [
@@ -106,21 +109,22 @@ export const improvementsData: ImprovementItem[] = [
     estimatedEffort: '2 sprints',
     businessImpact: 'Reduces waste and improves establishment efficiency',
     currentStatus: 'Pending technical evaluation',
-    affectedAreas: ['establishment']
+    affectedAreas: ['establishment'],
+    createdAt: '2023-04-25'
   },
   {
     id: 'imp-005',
     title: 'Personalized Bar Crawl Planner',
     description: 'Enhance the bar crawl feature to generate personalized routes based on user preferences, time constraints, and preferred establishments.',
-    impact: 'high',
-    effort: 'high',
+    impact: 4,
+    effort: 5,
     status: 'proposed',
     category: 'Personalization',
     votes: 27,
     submittedBy: 'Jordan Lee',
     submittedDate: '2023-04-30',
     type: 'enhancement',
-    priority: 5,
+    priority: 'high',
     lovableCompatible: true,
     technicalRequirements: 'Route optimization algorithm, user preference system',
     implementationSteps: [
@@ -132,7 +136,8 @@ export const improvementsData: ImprovementItem[] = [
     estimatedEffort: '3 sprints',
     businessImpact: 'Increases multi-establishment visits by 45% in test markets',
     currentStatus: 'Scheduled for roadmap review',
-    affectedAreas: ['individual']
+    affectedAreas: ['individual'],
+    createdAt: '2023-04-30'
   }
 ];
 
