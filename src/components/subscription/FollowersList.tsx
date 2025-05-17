@@ -3,6 +3,12 @@ import React from 'react';
 import { useFollowers } from '@/hooks/useFollowers';
 import FollowCard from './FollowCard';
 
+interface NotificationPreferences {
+  events: boolean;
+  promotions: boolean;
+  announcements: boolean;
+}
+
 interface FollowersListProps {
   promoterId: string;
   promoterName: string;
@@ -21,6 +27,36 @@ const FollowersList: React.FC<FollowersListProps> = ({ promoterId, promoterName 
   
   const isFollowing = !!currentFollower;
   
+  // Process notification preferences to ensure they match the expected format
+  let notificationPreferences: NotificationPreferences | undefined;
+  
+  if (currentFollower?.notification_preferences) {
+    try {
+      // If it's a string (JSON), try to parse it
+      if (typeof currentFollower.notification_preferences === 'string') {
+        notificationPreferences = JSON.parse(
+          currentFollower.notification_preferences as string
+        ) as NotificationPreferences;
+      } 
+      // If it's already an object, use it directly
+      else if (typeof currentFollower.notification_preferences === 'object') {
+        notificationPreferences = {
+          events: Boolean(currentFollower.notification_preferences?.events ?? true),
+          promotions: Boolean(currentFollower.notification_preferences?.promotions ?? true),
+          announcements: Boolean(currentFollower.notification_preferences?.announcements ?? true)
+        };
+      }
+    } catch (e) {
+      // If parsing fails, use default values
+      console.error('Failed to parse notification preferences', e);
+      notificationPreferences = {
+        events: true,
+        promotions: true,
+        announcements: true
+      };
+    }
+  }
+  
   return (
     <div className="grid grid-cols-1 gap-6 p-4">
       <FollowCard
@@ -28,7 +64,7 @@ const FollowersList: React.FC<FollowersListProps> = ({ promoterId, promoterName 
         promoterName={promoterName}
         isFollowing={isFollowing}
         currentFollowerId={currentFollower?.id}
-        notificationPreferences={currentFollower?.notification_preferences}
+        notificationPreferences={notificationPreferences}
       />
       
       {isFollowing && (

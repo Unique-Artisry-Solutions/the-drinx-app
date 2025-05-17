@@ -11,6 +11,22 @@ interface PromotionValidationResponse {
   promotion?: Partial<Promotion>;
 }
 
+export interface PromotionFormData {
+  code: string;
+  description: string;
+  discount_type: string;
+  discount_value?: number;
+  start_date?: string;
+  end_date?: string;
+  is_active?: boolean;
+  usage_limit?: number;
+  valid_days?: string[] | null;
+  valid_hours?: { start: string; end: string } | null;
+  user_segment?: UserSegmentType | null;
+  combinable?: boolean;
+  min_purchase_amount?: number;
+}
+
 export const useEstablishmentPromotions = (establishmentId: string) => {
   const { toast } = useToast();
   const [promotions, setPromotions] = useState<Promotion[]>([]);
@@ -74,14 +90,31 @@ export const useEstablishmentPromotions = (establishmentId: string) => {
     }
   };
   
-  const handleAddPromotion = async (promotion: Partial<Promotion>) => {
+  const handleAddPromotion = async (promotion: Partial<PromotionFormData>) => {
     try {
+      // Ensure required fields exist
+      if (!promotion.code || !promotion.description || !promotion.discount_type) {
+        throw new Error("Missing required fields");
+      }
+      
       const { data, error } = await supabase
         .from('establishment_promotions')
-        .insert([{ 
-          ...promotion,
-          establishment_id: establishmentId 
-        }])
+        .insert({
+          establishment_id: establishmentId,
+          code: promotion.code,
+          description: promotion.description,
+          discount_type: promotion.discount_type,
+          discount_value: promotion.discount_value,
+          start_date: promotion.start_date,
+          end_date: promotion.end_date,
+          is_active: promotion.is_active !== undefined ? promotion.is_active : true,
+          usage_limit: promotion.usage_limit,
+          valid_days: promotion.valid_days,
+          valid_hours: promotion.valid_hours,
+          user_segment: promotion.user_segment,
+          combinable: promotion.combinable !== undefined ? promotion.combinable : true,
+          min_purchase_amount: promotion.min_purchase_amount
+        })
         .select()
         .single();
         
@@ -94,12 +127,56 @@ export const useEstablishmentPromotions = (establishmentId: string) => {
       
       // Refetch promotions to get the updated list
       fetchPromotions();
+      
+      return data;
     } catch (err: any) {
       toast({
         title: "Error",
         description: `Could not add promotion: ${err.message}`,
         variant: "destructive"
       });
+      throw err;
+    }
+  };
+  
+  const handleUpdatePromotion = async (id: string, promotion: Partial<PromotionFormData>) => {
+    try {
+      const { error } = await supabase
+        .from('establishment_promotions')
+        .update({
+          code: promotion.code,
+          description: promotion.description,
+          discount_type: promotion.discount_type,
+          discount_value: promotion.discount_value,
+          start_date: promotion.start_date,
+          end_date: promotion.end_date,
+          is_active: promotion.is_active,
+          usage_limit: promotion.usage_limit,
+          valid_days: promotion.valid_days,
+          valid_hours: promotion.valid_hours,
+          user_segment: promotion.user_segment,
+          combinable: promotion.combinable,
+          min_purchase_amount: promotion.min_purchase_amount
+        })
+        .eq('id', id)
+        .eq('establishment_id', establishmentId);
+        
+      if (error) throw error;
+      
+      toast({
+        title: "Success",
+        description: "Promotion code has been updated",
+      });
+      
+      // Refetch promotions
+      fetchPromotions();
+    } catch (err: any) {
+      toast({
+        title: "Error",
+        description: `Could not update promotion: ${err.message}`,
+        variant: "destructive"
+      });
+      throw err;
     }
   };
   
@@ -108,7 +185,8 @@ export const useEstablishmentPromotions = (establishmentId: string) => {
       const { error } = await supabase
         .from('establishment_promotions')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .eq('establishment_id', establishmentId);
         
       if (error) throw error;
       
@@ -125,6 +203,38 @@ export const useEstablishmentPromotions = (establishmentId: string) => {
         description: `Could not delete promotion: ${err.message}`,
         variant: "destructive"
       });
+      throw err;
+    }
+  };
+  
+  const togglePromotionStatus = async (id: string, isActive: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('establishment_promotions')
+        .update({ is_active: isActive })
+        .eq('id', id)
+        .eq('establishment_id', establishmentId);
+        
+      if (error) throw error;
+      
+      toast({
+        title: "Success",
+        description: `Promotion code has been ${isActive ? 'activated' : 'deactivated'}`,
+      });
+      
+      // Update local state
+      setPromotions(current => 
+        current.map(promo => 
+          promo.id === id ? { ...promo, is_active: isActive } : promo
+        )
+      );
+    } catch (err: any) {
+      toast({
+        title: "Error",
+        description: `Could not update promotion status: ${err.message}`,
+        variant: "destructive"
+      });
+      throw err;
     }
   };
   
@@ -187,9 +297,13 @@ export const useEstablishmentPromotions = (establishmentId: string) => {
     promotions,
     isLoading,
     error,
-    handleAddPromotion,
-    handleDeletePromotion,
+    addPromotion: handleAddPromotion,
+    updatePromotion: handleUpdatePromotion,
+    deletePromotion: handleDeletePromotion,
+    togglePromotionStatus,
     validatePromotionCode,
-    refreshPromotions: fetchPromotions
+    refreshPromotions: fetchPromotions,
+    handleAddPromotion,
+    handleDeletePromotion
   };
 };

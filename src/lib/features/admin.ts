@@ -2,6 +2,97 @@
 import { FeatureId } from './registry';
 import { supabase } from '@/lib/supabase';
 
+// Define interfaces for feature flags
+interface FeatureFlag {
+  id: string;
+  name: string;
+  description?: string;
+  status: boolean;
+  segment_id?: string;
+  percentage_rollout?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+interface FeatureSegment {
+  id: string;
+  name: string;
+  description?: string;
+  criteria: Record<string, any>;
+  created_at: string;
+  updated_at: string;
+}
+
+// Get all feature flags
+export async function getAllFeatureFlags(): Promise<FeatureFlag[]> {
+  try {
+    const { data, error } = await supabase
+      .from('feature_flags')
+      .select('*');
+      
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching feature flags:', error);
+    throw error;
+  }
+}
+
+// Update a feature flag
+export async function updateFeatureFlag(
+  id: string,
+  updates: Partial<FeatureFlag>
+): Promise<FeatureFlag> {
+  try {
+    const { data, error } = await supabase
+      .from('feature_flags')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+      
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error updating feature flag:', error);
+    throw error;
+  }
+}
+
+// Create a new feature flag
+export async function createFeatureFlag(
+  flagData: Omit<FeatureFlag, 'id' | 'created_at' | 'updated_at'>
+): Promise<FeatureFlag> {
+  try {
+    const { data, error } = await supabase
+      .from('feature_flags')
+      .insert(flagData)
+      .select()
+      .single();
+      
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error creating feature flag:', error);
+    throw error;
+  }
+}
+
+// Delete a feature flag
+export async function deleteFeatureFlag(id: string): Promise<void> {
+  try {
+    const { error } = await supabase
+      .from('feature_flags')
+      .delete()
+      .eq('id', id);
+      
+    if (error) throw error;
+  } catch (error) {
+    console.error('Error deleting feature flag:', error);
+    throw error;
+  }
+}
+
 // Associate a feature with a subscription tier
 export async function associateFeatureWithTier(
   featureId: FeatureId,

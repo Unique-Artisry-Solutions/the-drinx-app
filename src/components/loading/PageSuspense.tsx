@@ -1,20 +1,20 @@
 
-import React, { Suspense } from 'react';
-import PageSkeleton from './skeletons/PageSkeleton';
+import React from 'react';
 
-interface PageSuspenseProps {
-  children: React.ReactNode;
-  fallback?: React.ReactNode;
+export interface PageSuspenseProps {
+  children?: React.ReactNode;
 }
 
-/**
- * Page-level suspense boundary with standardized fallback UI
- */
-const PageSuspense: React.FC<PageSuspenseProps> = ({ children, fallback }) => {
+const PageSuspense: React.FC<PageSuspenseProps> = ({ children }) => {
   return (
-    <Suspense fallback={fallback || <PageSkeleton />}>
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="animate-pulse space-y-4">
+        <div className="h-12 w-48 bg-gray-200 rounded"></div>
+        <div className="h-4 w-64 bg-gray-200 rounded"></div>
+        <div className="h-4 w-56 bg-gray-200 rounded"></div>
+      </div>
       {children}
-    </Suspense>
+    </div>
   );
 };
 

@@ -17,62 +17,11 @@ const EstablishmentDashboard: React.FC<EstablishmentDashboardProps> = ({ establi
     promotions,
     isLoading,
     error,
-    addPromotion,
-    updatePromotion,
-    deletePromotion,
+    handleAddPromotion,
+    handleDeletePromotion,
+    updatePromotion: handleUpdatePromotion,
     togglePromotionStatus
   } = useEstablishmentPromotions(establishmentId);
-
-  const handleAddPromotion = async (data: PromotionFormData) => {
-    try {
-      await addPromotion(data);
-      toast({
-        title: 'Success',
-        description: 'Promotion created successfully',
-      });
-    } catch (error) {
-      console.error('Error adding promotion:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to create promotion',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const handleUpdatePromotion = async (id: string, data: PromotionFormData) => {
-    try {
-      await updatePromotion(id, data);
-      toast({
-        title: 'Success',
-        description: 'Promotion updated successfully',
-      });
-    } catch (error) {
-      console.error('Error updating promotion:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to update promotion',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const handleDeletePromotion = async (id: string) => {
-    try {
-      await deletePromotion(id);
-      toast({
-        title: 'Success',
-        description: 'Promotion deleted successfully',
-      });
-    } catch (error) {
-      console.error('Error deleting promotion:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to delete promotion',
-        variant: 'destructive',
-      });
-    }
-  };
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -97,7 +46,6 @@ const EstablishmentDashboard: React.FC<EstablishmentDashboardProps> = ({ establi
           <PromotionsTab 
             promotions={promotions}
             handleAddPromotion={handleAddPromotion}
-            handleUpdatePromotion={handleUpdatePromotion}
             handleDeletePromotion={handleDeletePromotion}
           />
         </TabsContent>

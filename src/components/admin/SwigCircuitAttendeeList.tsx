@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { 
@@ -54,7 +53,33 @@ const SwigCircuitAttendeeList: React.FC<SwigCircuitAttendeeListProps> = ({ swigC
           
         if (error) throw error;
         
-        setAttendees(data as SwigCircuitTicket[]);
+        // Transform the data to match the SwigCircuitTicket type
+        const formattedAttendees = data.map((item: any): SwigCircuitTicket => {
+          // Ensure purchaser_info is properly formatted
+          const purchaserInfo = typeof item.purchaser_info === 'object' ? item.purchaser_info : {
+            name: 'Unknown',
+            email: 'unknown@example.com'
+          };
+          
+          return {
+            id: item.id,
+            swig_circuit_id: item.swig_circuit_id,
+            user_id: item.user_id,
+            ticket_type_id: item.ticket_type_id,
+            quantity: item.quantity || 1,
+            purchase_date: item.purchase_date,
+            checked_in_at: item.checked_in_at,
+            first_check_in: item.first_check_in,
+            status: item.status,
+            ticket_code: item.ticket_code,
+            created_at: item.created_at,
+            updated_at: item.updated_at,
+            purchaser_info: purchaserInfo,
+            ticket_tier: item.ticket_tier
+          };
+        });
+        
+        setAttendees(formattedAttendees);
       } catch (err) {
         console.error('Error fetching attendees:', err);
         setError(err instanceof Error ? err.message : 'Failed to load attendees');

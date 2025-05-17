@@ -1,229 +1,179 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Tag, Loader2, X, Check } from 'lucide-react';
-import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Trash2, Check, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { CartItem } from '@/contexts/CartContext';
-import { autoApplyBestDiscount, AppliedDiscount, incrementCodeUsage } from '@/utils/discountCodeUtils';
-import { useAuth } from '@/contexts/auth';
-import { supabase } from '@/integrations/supabase/client';
+import { AppliedDiscount } from '@/types/TicketTypes';
 
 interface DiscountCodeSectionProps {
-  items: CartItem[];
-  onApplyDiscount: (discount: AppliedDiscount | null) => void;
-  currentDiscount: AppliedDiscount | null;
+  onApplyDiscount: (discount: AppliedDiscount) => void;
+  onRemoveDiscount: (codeId: string) => void;
+  appliedDiscounts: AppliedDiscount[];
+  isApplying?: boolean;
+  hasError?: boolean;
+  errorMessage?: string;
 }
 
 const DiscountCodeSection: React.FC<DiscountCodeSectionProps> = ({
-  items,
   onApplyDiscount,
-  currentDiscount
+  onRemoveDiscount,
+  appliedDiscounts,
+  isApplying = false,
+  hasError = false,
+  errorMessage = ''
 }) => {
-  const [manualCode, setManualCode] = useState<string>("");
-  const [isApplying, setIsApplying] = useState<boolean>(false);
-  const [isCheckingAuto, setIsCheckingAuto] = useState<boolean>(false);
+  const [discountCode, setDiscountCode] = useState('');
   const { toast } = useToast();
-  const { user } = useAuth();
   
-  // Auto-apply the best discount when items change
-  useEffect(() => {
-    const checkForAutomaticDiscounts = async () => {
-      // Only if we don't already have a discount applied
-      if (!currentDiscount && items.length > 0) {
-        setIsCheckingAuto(true);
-        try {
-          const autoDiscount = await autoApplyBestDiscount(items, user?.id);
-          
-          if (autoDiscount) {
-            onApplyDiscount(autoDiscount);
-            toast({
-              title: "Discount automatically applied",
-              description: `"${autoDiscount.code}" has been applied to your order.`,
-              variant: "default",
-            });
-
-            // Increment usage count for auto-applied codes
-            if (autoDiscount.codeId) {
-              try {
-                // Determine the table based on the code pattern or metadata
-                const tableName = autoDiscount.codeId.startsWith('evt_') 
-                  ? 'event_discount_codes' 
-                  : 'establishment_promotions';
-
-                await incrementCodeUsage(autoDiscount.codeId, tableName);
-              } catch (error) {
-                console.error("Error incrementing auto discount usage:", error);
-              }
-            }
-          }
-        } catch (error) {
-          console.error("Error auto-applying discount:", error);
-        } finally {
-          setIsCheckingAuto(false);
-        }
-      }
-    };
-    
-    checkForAutomaticDiscounts();
-  }, [items, user, currentDiscount, onApplyDiscount, toast]);
-  
-  // Handle manual code application
-  const handleApplyCode = async () => {
-    if (!manualCode.trim()) {
-      toast({
-        title: "No code entered",
-        description: "Please enter a promotion code.",
-        variant: "destructive",
-      });
+  const handleApply = async () => {
+    if (!discountCode.trim()) {
       return;
     }
     
-    setIsApplying(true);
-    
+    // Call API to validate discount code and get details
     try {
-      // This is a simplified version - in a real app, you'd validate the code with the server
-      const { data, error } = await supabase
-        .from('establishment_promotions')
-        .select('*')
-        .eq('code', manualCode.trim().toUpperCase())
-        .eq('is_active', true)
-        .single();
+      // This would be replaced with your actual API call
+      const response = await validateDiscountCode(discountCode);
       
-      if (error || !data) {
-        // Check event discount codes if establishment code not found
-        const { data: eventData, error: eventError } = await supabase
-          .from('event_discount_codes')
-          .select('*')
-          .eq('code', manualCode.trim().toUpperCase())
-          .eq('is_active', true)
-          .single();
-        
-        if (eventError || !eventData) {
-          throw new Error("Invalid or expired promotion code");
-        }
-        
-        // Process event discount
-        const discountAmount = eventData.discount_type === 'percentage' 
-          ? items.reduce((total, item) => total + item.price, 0) * (eventData.discount_amount / 100)
-          : eventData.discount_amount;
-          
-        // Apply the discount
-        const discountToApply = {
-          code: eventData.code,
-          codeId: eventData.id,
-          discountAmount,
-          discountType: eventData.discount_type,
-          description: eventData.description || 'Event discount'
+      if (response.valid) {
+        // Create the discount object based on API response
+        const discount: AppliedDiscount = {
+          code: discountCode,
+          codeId: response.id,
+          discountAmount: response.amount,
+          discountType: response.type as "fixed" | "percentage" | "free_item",
+          description: response.description
         };
         
-        onApplyDiscount(discountToApply);
+        // Apply the discount
+        onApplyDiscount(discount);
         
-        // Increment usage count using our new function
-        await incrementCodeUsage(eventData.id, 'event_discount_codes');
+        // Clear input
+        setDiscountCode('');
         
         toast({
-          title: "Code applied",
-          description: `"${eventData.code}" has been applied to your order.`,
+          title: "Discount applied",
+          description: `${response.description} has been applied to your order.`,
+          variant: "default"
         });
       } else {
-        // Process establishment promotion
-        const discountAmount = data.discount_type === 'percentage' 
-          ? items.reduce((total, item) => total + item.price, 0) * (data.discount_value / 100)
-          : data.discount_value;
-          
-        // Apply the discount
-        const discountToApply = {
-          code: data.code,
-          codeId: data.id,
-          discountAmount,
-          discountType: data.discount_type,
-          description: data.description
-        };
-        
-        onApplyDiscount(discountToApply);
-        
-        // Increment usage count using our new function
-        await incrementCodeUsage(data.id, 'establishment_promotions');
-        
         toast({
-          title: "Code applied",
-          description: `"${data.code}" has been applied to your order.`,
+          title: "Invalid code",
+          description: response.message || "The discount code you entered is not valid.",
+          variant: "destructive"
         });
       }
-      
-      setManualCode("");
     } catch (error) {
       toast({
-        title: "Invalid code",
-        description: error instanceof Error ? error.message : "The promotion code is invalid or expired.",
-        variant: "destructive",
+        title: "Error",
+        description: "There was an error validating your discount code. Please try again.",
+        variant: "destructive"
       });
-    } finally {
-      setIsApplying(false);
     }
   };
   
-  const handleRemoveDiscount = () => {
-    onApplyDiscount(null);
+  const handleRemove = (discountId: string) => {
+    onRemoveDiscount(discountId);
+  };
+  
+  // Mock function to validate discount code (would be replaced with actual API call)
+  const validateDiscountCode = async (code: string) => {
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // Demo validation logic
+    if (code.toLowerCase() === 'welcome10') {
+      return {
+        valid: true,
+        id: 'disc_welcome10',
+        amount: 10,
+        type: 'percentage' as const,
+        description: '10% off your order'
+      };
+    } else if (code.toLowerCase() === 'save5') {
+      return {
+        valid: true,
+        id: 'disc_save5',
+        amount: 5,
+        type: 'fixed' as const,
+        description: '$5 off your order'
+      };
+    } else if (code.toLowerCase() === 'freecoffee') {
+      return {
+        valid: true,
+        id: 'disc_freecoffee',
+        amount: 0,
+        type: 'free_item' as const,
+        description: 'Free coffee with your order'
+      };
+    }
+    
+    return {
+      valid: false,
+      message: 'Invalid discount code'
+    };
   };
   
   return (
-    <div className="space-y-3">
-      <Label htmlFor="discount-code">Discount Code</Label>
+    <div className="space-y-4">
+      {/* Input for discount code */}
+      <div className="flex gap-2">
+        <Input
+          placeholder="Enter discount code"
+          value={discountCode}
+          onChange={(e) => setDiscountCode(e.target.value)}
+          disabled={isApplying}
+          className="flex-1"
+        />
+        <Button 
+          onClick={handleApply} 
+          disabled={isApplying || !discountCode.trim()}
+        >
+          {isApplying ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" /> 
+              Applying
+            </>
+          ) : (
+            'Apply'
+          )}
+        </Button>
+      </div>
       
-      {currentDiscount ? (
-        <div className="flex items-center justify-between p-2 bg-primary/5 rounded-md">
-          <div className="flex items-center gap-2">
-            <Tag className="h-4 w-4 text-primary" />
-            <span className="font-medium">{currentDiscount.code}</span>
-            <span className="text-xs bg-primary/10 px-2 py-0.5 rounded-full">
-              {currentDiscount.discountType === 'percentage' 
-                ? `${currentDiscount.discountAmount.toFixed(1)}% off` 
-                : `$${currentDiscount.discountAmount.toFixed(2)} off`}
-            </span>
-          </div>
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={handleRemoveDiscount}
-          >
-            <X className="h-4 w-4 mr-1" />
-            Remove
-          </Button>
-        </div>
-      ) : (
-        <div className="flex items-center gap-2">
-          <Input
-            id="discount-code"
-            placeholder="Enter promotion code"
-            value={manualCode}
-            onChange={(e) => setManualCode(e.target.value)}
-            disabled={isApplying || isCheckingAuto}
-            className="flex-1"
-          />
-          <Button
-            onClick={handleApplyCode}
-            disabled={isApplying || isCheckingAuto || !manualCode.trim()}
-            className="whitespace-nowrap"
-          >
-            {isApplying ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Applying...
-              </>
-            ) : (
-              'Apply Code'
-            )}
-          </Button>
-        </div>
+      {/* Error message */}
+      {hasError && errorMessage && (
+        <p className="text-sm text-destructive">{errorMessage}</p>
       )}
       
-      {isCheckingAuto && (
-        <div className="flex items-center justify-center text-xs text-gray-500">
-          <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-          Checking for automatic discounts...
+      {/* Display applied discounts */}
+      {appliedDiscounts.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-sm font-medium">Applied Discounts:</p>
+          <div className="space-y-1">
+            {appliedDiscounts.map((discount) => (
+              <div 
+                key={discount.codeId}
+                className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded-md"
+              >
+                <div className="flex items-center">
+                  <Check className="h-4 w-4 text-green-500 mr-2" />
+                  <div>
+                    <Badge variant="outline" className="font-mono mb-1">{discount.code}</Badge>
+                    <p className="text-sm text-muted-foreground">{discount.description}</p>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleRemove(discount.codeId)}
+                >
+                  <Trash2 className="h-4 w-4 text-destructive" />
+                </Button>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>
