@@ -13,7 +13,7 @@ export interface Promotion {
   establishment_id: string;
   user_segment?: string | null;
   usage_limit?: number | null;
-  used_count?: number | null;  // Consistent naming with used_count
+  used_count?: number | null;  // Standardized to used_count across the app
   min_purchase_amount?: number | null;
   combinable: boolean;
   valid_days?: string[] | null;
@@ -47,7 +47,7 @@ export interface PromotionCode {
   } | null | Json;
   created_at: string;
   updated_at: string;
-  used_count?: number | null;  // Consistent naming with used_count
+  used_count?: number | null;  // Standardized to used_count across the app
 }
 
 export interface PromotionAnalytics {

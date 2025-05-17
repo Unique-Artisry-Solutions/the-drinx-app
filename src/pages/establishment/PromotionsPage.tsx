@@ -3,7 +3,7 @@ import React from 'react';
 import Layout from '@/components/Layout';
 import { useEstablishmentProfile } from '@/hooks/establishment/useEstablishmentProfile';
 import PromotionsTab from '@/components/establishment/PromotionsTab';
-import { Promotion } from '@/types/PromotionTypes';
+import { Promotion, PromotionFormData } from '@/types/PromotionTypes';
 
 const PromotionsPage: React.FC = () => {
   const { promotionsState } = useEstablishmentProfile();
@@ -19,7 +19,7 @@ const PromotionsPage: React.FC = () => {
     end_date: p.end_date || undefined,
     is_active: p.is_active,
     usage_limit: p.usage_limit || null,
-    usage_count: p.usage_count || 0,
+    used_count: p.used_count || 0, // Changed from usage_count to used_count to match the type
     valid_days: p.valid_days || null,
     valid_hours: p.valid_hours || null,
     user_segment: p.user_segment || null,
@@ -29,6 +29,15 @@ const PromotionsPage: React.FC = () => {
     created_at: p.created_at,
     updated_at: p.updated_at
   }));
+
+  // Wrap the handlers to ensure they return promises
+  const handleAddPromotion = async (data: PromotionFormData): Promise<void> => {
+    return Promise.resolve(promotionsState.handleAddPromotion(data));
+  };
+
+  const handleDeletePromotion = async (id: string): Promise<void> => {
+    return Promise.resolve(promotionsState.handleDeletePromotion(id));
+  };
 
   return (
     <Layout>
@@ -40,8 +49,8 @@ const PromotionsPage: React.FC = () => {
         
         <PromotionsTab 
           promotions={mappedPromotions}
-          handleAddPromotion={promotionsState.handleAddPromotion} 
-          handleDeletePromotion={promotionsState.handleDeletePromotion} 
+          handleAddPromotion={handleAddPromotion}
+          handleDeletePromotion={handleDeletePromotion} 
         />
       </div>
     </Layout>
