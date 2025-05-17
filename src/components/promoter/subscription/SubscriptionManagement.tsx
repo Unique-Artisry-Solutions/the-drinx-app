@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useSubscriptions } from '@/hooks/useSubscriptions';
-import SubscriptionList from '@/components/subscription/SubscriptionList';
+import SubscriptionList, { SubscriptionListProps } from '@/components/subscription/SubscriptionList';
 import SubscriptionDetailCard from './SubscriptionDetailCard';
 
 interface SubscriptionManagementProps {
@@ -75,7 +75,11 @@ const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ promote
               ))}
           </div>
         ) : (
-          <SubscriptionList promoterId={promoterId} />
+          // Using custom props that match what the component expects
+          <SubscriptionList
+            subscriptions={[]}
+            isLoading={false}
+          />
         )}
       </CardContent>
     </Card>

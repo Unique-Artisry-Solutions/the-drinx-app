@@ -53,31 +53,77 @@ const SubscriptionTab: React.FC = () => {
     const fetchSubscriptionData = async () => {
       setIsLoading(true);
       
-      // Fetch followers
-      const { data: followersData, error: followersError } = await supabase
-        .from('promoter_followers')
-        .select('*, subscriber:profiles!subscriber_id(*)')
-        .eq('promoter_id', user.id);
-      
-      if (followersError) {
-        console.error('Error fetching followers:', followersError);
-      } else {
-        setFollowers(followersData as Follower[]);
+      try {
+        // Fetch followers
+        const { data: followersData, error: followersError } = await supabase
+          .from('promoter_followers')
+          .select('*, subscriber:profiles!subscriber_id(*)')
+          .eq('promoter_id', user.id);
+        
+        if (followersError) {
+          console.error('Error fetching followers:', followersError);
+        } else if (followersData) {
+          // Make sure we have all the necessary properties
+          const processedFollowers = followersData.map(follower => {
+            // Ensure subscriber has all required fields
+            const subscriber = follower.subscriber && typeof follower.subscriber === 'object' 
+              ? {
+                  id: follower.subscriber.id || '',
+                  display_name: follower.subscriber.display_name || 'Anonymous User',
+                  avatar_url: follower.subscriber.avatar_url || ''
+                }
+              : {
+                  id: '',
+                  display_name: 'Anonymous User',
+                  avatar_url: ''
+                };
+            
+            return {
+              ...follower,
+              subscriber
+            };
+          });
+          
+          setFollowers(processedFollowers as Follower[]);
+        }
+        
+        // Fetch subscriptions
+        const { data: subscriptionsData, error: subscriptionsError } = await supabase
+          .from('promoter_followers')
+          .select('*, promoter:profiles!promoter_id(*)')
+          .eq('subscriber_id', user.id);
+        
+        if (subscriptionsError) {
+          console.error('Error fetching subscriptions:', subscriptionsError);
+        } else if (subscriptionsData) {
+          // Make sure we have all the necessary properties
+          const processedSubscriptions = subscriptionsData.map(subscription => {
+            // Ensure promoter has all required fields
+            const promoter = subscription.promoter && typeof subscription.promoter === 'object'
+              ? {
+                  id: subscription.promoter.id || '',
+                  display_name: subscription.promoter.display_name || 'Unknown Promoter',
+                  avatar_url: subscription.promoter.avatar_url || ''
+                }
+              : {
+                  id: '',
+                  display_name: 'Unknown Promoter',
+                  avatar_url: ''
+                };
+            
+            return {
+              ...subscription,
+              promoter
+            };
+          });
+          
+          setSubscriptions(processedSubscriptions as Subscription[]);
+        }
+      } catch (error) {
+        console.error('Exception in fetchSubscriptionData:', error);
+      } finally {
+        setIsLoading(false);
       }
-      
-      // Fetch subscriptions
-      const { data: subscriptionsData, error: subscriptionsError } = await supabase
-        .from('promoter_followers')
-        .select('*, promoter:profiles!promoter_id(*)')
-        .eq('subscriber_id', user.id);
-      
-      if (subscriptionsError) {
-        console.error('Error fetching subscriptions:', subscriptionsError);
-      } else {
-        setSubscriptions(subscriptionsData as Subscription[]);
-      }
-      
-      setIsLoading(false);
     };
     
     fetchSubscriptionData();

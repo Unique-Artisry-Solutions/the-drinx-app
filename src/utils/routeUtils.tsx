@@ -13,7 +13,8 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   element, 
   requiredRoles = [] 
 }) => {
-  const { user, userRole, isLoading } = useAuth();
+  const { user, isLoading } = useAuth();
+  const userRole = localStorage.getItem('user_type');
   
   if (isLoading) {
     return <PageSuspense fallback={<div>Loading authentication...</div>}>{null}</PageSuspense>;
@@ -23,7 +24,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to="/login" />;
   }
   
-  if (requiredRoles.length > 0 && !requiredRoles.includes(userRole)) {
+  if (requiredRoles.length > 0 && !requiredRoles.includes(userRole || '')) {
     return <Navigate to="/unauthorized" />;
   }
   
