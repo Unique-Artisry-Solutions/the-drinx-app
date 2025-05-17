@@ -2,58 +2,95 @@
 import { ProgressSnapshot, MonthlyProgressData } from '../types';
 
 /**
- * Generate synthetic historical data for timeline view when it doesn't exist
- * Returns a Promise that resolves to MonthlyProgressData[]
+ * Generate historical progress data for charting
+ * This implementation creates simulated historical data based on the current snapshot
  */
-export function generateHistoricalProgressData(
-  currentSnapshot: ProgressSnapshot,
-  existingHistory: ProgressSnapshot[] = []
-): Promise<MonthlyProgressData[]> {
-  return new Promise((resolve) => {
-    // Get the current month
-    const currentMonth = new Date().getMonth();
-    const monthNames = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-    ];
-    
-    // Create an array with data for months up to the current one
-    let historicalData: MonthlyProgressData[] = [];
-    
-    // If we have some history, use that as a base
-    if (existingHistory.length > 0) {
-      // Map existing history to monthly data
-      historicalData = existingHistory.map(snapshot => {
-        const snapshotDate = new Date(snapshot.date);
+export const generateHistoricalProgressData = async (
+  snapshot: ProgressSnapshot,
+  history: ProgressSnapshot[] = []
+): Promise<MonthlyProgressData[]> => {
+  // Use actual history if available
+  if (history && history.length > 5) {
+    return history
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      .slice(-10) // Last 10 data points
+      .map((item, index) => {
+        // Convert to MonthlyProgressData format
+        const date = new Date(item.date);
+        const month = date.toLocaleString('default', { month: 'short' });
+
         return {
-          month: monthNames[snapshotDate.getMonth()],
-          frontend: snapshot.frontendProgress,
-          backend: snapshot.backendProgress
+          month,
+          totalImplemented: item.implementedFeatures || 0,
+          adminImplemented: Math.floor((item.adminProgress || 0) * (item.adminFeatureCount || 0) / 100) || 0,
+          establishmentImplemented: Math.floor((item.establishmentProgress || 0) * (item.establishmentFeatureCount || 0) / 100) || 0,
+          individualImplemented: Math.floor((item.individualProgress || 0) * (item.individualFeatureCount || 0) / 100) || 0,
+          promoterImplemented: Math.floor((item.promoterProgress || 0) * (item.promoterFeatureCount || 0) / 100) || 0,
+          frontend: item.frontendProgress || 0,
+          backend: item.backendProgress || 0
         };
       });
-    } 
+  }
+
+  // Generate mock historical data if no history is available
+  const currentDate = new Date();
+  const monthNames = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+  ];
+
+  const data: MonthlyProgressData[] = [];
+  const currentMonth = currentDate.getMonth();
+  const monthsToShow = Math.min(6, currentMonth + 1);
+
+  for (let i = 0; i < monthsToShow; i++) {
+    const month = monthNames[(currentMonth - monthsToShow + i + 1 + 12) % 12];
+    const progressPercentage = (i + 1) / monthsToShow;
     
-    // If we don't have enough historical data, generate synthetic data
-    if (historicalData.length === 0) {
-      // Generate synthetic data with a logical progression
-      for (let i = 0; i <= currentMonth; i++) {
-        const progressRatio = (i + 1) / (currentMonth + 1);
-        historicalData.push({
-          month: monthNames[i],
-          frontend: Math.round(currentSnapshot.frontendProgress * progressRatio),
-          backend: Math.round(currentSnapshot.backendProgress * progressRatio * 0.85) // Backend slightly lags frontend
-        });
-      }
-    }
+    // Current progress is actual data, past is simulated
+    const isCurrentMonth = i === monthsToShow - 1;
+    const frontendValue = isCurrentMonth 
+      ? snapshot.frontendProgress || 0 
+      : Math.round((snapshot.frontendProgress || 50) * progressPercentage);
     
-    // Always ensure the last entry matches our current snapshot
-    if (historicalData.length > 0) {
-      historicalData[historicalData.length - 1] = {
-        month: monthNames[currentMonth],
-        frontend: currentSnapshot.frontendProgress,
-        backend: currentSnapshot.backendProgress
-      };
-    }
+    const backendValue = isCurrentMonth 
+      ? snapshot.backendProgress || 0 
+      : Math.round((snapshot.backendProgress || 40) * progressPercentage);
     
-    resolve(historicalData);
-  });
-}
+    const adminProgress = isCurrentMonth 
+      ? snapshot.adminProgress || 0 
+      : Math.round((snapshot.adminProgress || 0) * progressPercentage);
+    
+    const establishmentProgress = isCurrentMonth 
+      ? snapshot.establishmentProgress || 0 
+      : Math.round((snapshot.establishmentProgress || 0) * progressPercentage);
+    
+    const individualProgress = isCurrentMonth 
+      ? snapshot.individualProgress || 0 
+      : Math.round((snapshot.individualProgress || 0) * progressPercentage);
+    
+    const promoterProgress = isCurrentMonth 
+      ? snapshot.promoterProgress || 0 
+      : Math.round((snapshot.promoterProgress || 0) * progressPercentage);
+
+    const adminFeatureCount = snapshot.adminFeatureCount || 0;
+    const establishmentFeatureCount = snapshot.establishmentFeatureCount || 0;
+    const individualFeatureCount = snapshot.individualFeatureCount || 0;
+    const promoterFeatureCount = snapshot.promoterFeatureCount || 0;
+
+    data.push({
+      month,
+      totalImplemented: isCurrentMonth 
+        ? snapshot.implementedFeatures 
+        : Math.round(snapshot.implementedFeatures * progressPercentage),
+      adminImplemented: Math.floor((adminProgress * adminFeatureCount) / 100),
+      establishmentImplemented: Math.floor((establishmentProgress * establishmentFeatureCount) / 100),
+      individualImplemented: Math.floor((individualProgress * individualFeatureCount) / 100),
+      promoterImplemented: Math.floor((promoterProgress * promoterFeatureCount) / 100),
+      frontend: frontendValue,
+      backend: backendValue
+    });
+  }
+
+  return data;
+};

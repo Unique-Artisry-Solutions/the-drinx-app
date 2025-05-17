@@ -2,80 +2,95 @@
 import { FeatureItem } from '../types';
 
 /**
- * Parses database requirements or analysis text to identify tasks and their completion status
+ * Helper function to identify dependencies between features
  */
-export function parseTaskStatuses(analysisText?: string): { text: string; isCompleted: boolean }[] {
-  if (!analysisText) return [];
+export function identifyDependencies(features: FeatureItem[]): FeatureItem[] {
+  const updatedFeatures: FeatureItem[] = [...features];
+  const featureMap: Record<string, FeatureItem> = {};
   
-  const tasks: { text: string; isCompleted: boolean }[] = [];
-  const lines = analysisText.split('\n');
+  // First pass: create a map of features by name (lowercase for case-insensitive matching)
+  features.forEach(feature => {
+    featureMap[feature.name.toLowerCase()] = feature;
+  });
   
-  for (const line of lines) {
-    // Match markdown-style checkboxes: - [x] task or - [ ] task
-    if (line.includes('- [x]')) {
-      tasks.push({
-        text: line.replace('- [x]', '').trim(),
-        isCompleted: true
-      });
-    } else if (line.includes('- [ ]')) {
-      tasks.push({
-        text: line.replace('- [ ]', '').trim(),
-        isCompleted: false
-      });
-    } else if (line.match(/^\d+\.\s+/)) {
-      // For numbered lists: 1. Create table
-      tasks.push({
-        text: line.trim(),
-        isCompleted: false
-      });
-    } else if (line.includes('✓')) {
-      // Also match checkmarks: ✓ task
-      tasks.push({
-        text: line.replace('✓', '').trim(),
-        isCompleted: true
+  // Second pass: identify dependencies by looking for feature names in descriptions
+  updatedFeatures.forEach((feature, index) => {
+    const dependencies: string[] = [];
+    
+    // Check the description for mentions of other features
+    if (feature.description) {
+      Object.keys(featureMap).forEach(featureName => {
+        // Avoid matching itself
+        if (featureName !== feature.name.toLowerCase() && 
+            feature.description!.toLowerCase().includes(featureName)) {
+          dependencies.push(featureMap[featureName].id);
+        }
       });
     }
-  }
+    
+    // Add discovered dependencies
+    if (dependencies.length > 0) {
+      updatedFeatures[index] = {
+        ...feature,
+        dependencies: [...(feature.dependencies || []), ...dependencies]
+      };
+    }
+  });
   
-  return tasks;
+  return updatedFeatures;
 }
 
 /**
- * Analyzes database requirements for a feature and returns a structured analysis
+ * Analyzes feature implementation dependencies to ensure proper ordering
  */
-export function analyzeDbRequirements(feature: FeatureItem): {
-  completedTasks: number;
-  totalTasks: number;
-  tasks: { text: string; isCompleted: boolean }[];
-  completionPercentage: number;
-} {
-  const tasks = parseTaskStatuses(feature.databaseAnalysis);
+export function analyzeDependencyOrder(features: FeatureItem[]): FeatureItem[] {
+  const updatedFeatures = [...features];
+  const implementedFeatures = new Set<string>();
   
-  // If no tasks were found in the analysis, generate default ones based on status
-  if (tasks.length === 0) {
-    const dbStatus = feature.dbStatus || feature.databaseStatus || 'not_started';
-    const isComplete = dbStatus === 'complete' || dbStatus === 'implemented';
-    const isInProgress = dbStatus === 'in_progress';
-    
-    const defaultTasks = [
-      { text: 'Create database schema', isCompleted: isComplete || isInProgress },
-      { text: 'Define table relationships', isCompleted: isComplete || isInProgress },
-      { text: 'Implement API endpoints', isCompleted: isComplete },
-      { text: 'Create database triggers', isCompleted: isComplete },
-      { text: 'Optimize query performance', isCompleted: isComplete }
-    ];
-    
-    tasks.push(...defaultTasks);
-  }
+  // First, collect all implemented features
+  features.forEach(feature => {
+    if (feature.status === 'implemented') {
+      implementedFeatures.add(feature.id);
+    }
+  });
   
-  const completedTasks = tasks.filter(task => task.isCompleted).length;
-  const totalTasks = tasks.length;
-  const completionPercentage = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+  // Then check if any in-progress features depend on non-implemented features
+  features.forEach((feature, index) => {
+    if (feature.status === 'in_progress' && feature.dependencies) {
+      const hasUnimplementedDependency = feature.dependencies.some(depId => 
+        !implementedFeatures.has(depId)
+      );
+      
+      if (hasUnimplementedDependency) {
+        updatedFeatures[index] = {
+          ...feature,
+          statusUpdated: true,
+          databaseAnalysis: "Warning: Depends on unimplemented features"
+        };
+      }
+    }
+  });
   
-  return {
-    completedTasks,
-    totalTasks,
-    tasks,
-    completionPercentage
-  };
+  return updatedFeatures;
+}
+
+/**
+ * Helper function to detect database consistency issues
+ */
+export function detectDatabaseInconsistencies(features: FeatureItem[]): FeatureItem[] {
+  const updatedFeatures = [...features];
+  
+  features.forEach((feature, index) => {
+    if (feature.status === 'implemented' && 
+        (!feature.databaseStatus || feature.databaseStatus === 'not_started')) {
+      
+      updatedFeatures[index] = {
+        ...feature,
+        statusUpdated: true,
+        databaseAnalysis: "Warning: Implemented feature without database implementation"
+      };
+    }
+  });
+  
+  return updatedFeatures;
 }

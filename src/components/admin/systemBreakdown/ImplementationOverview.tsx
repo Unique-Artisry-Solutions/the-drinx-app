@@ -55,6 +55,19 @@ const ImplementationOverview: React.FC<ImplementationOverviewProps> = ({
     { name: 'Blocked', value: overallStats.blockedFeatures, color: '#ef4444' },
   ], [overallStats]);
 
+  // Convert MonthlyProgressData to ProgressData for ProgressLineChart
+  const progressData = useMemo(() => {
+    if (!monthlyProgressData || monthlyProgressData.length === 0) {
+      return [];
+    }
+    
+    return monthlyProgressData.map(item => ({
+      month: item.month,
+      frontend: item.frontend || 0, // Ensure frontend is always provided
+      backend: item.backend || 0 // Ensure backend is always provided
+    }));
+  }, [monthlyProgressData]);
+
   // Render bar chart with basic CSS
   const renderBarChart = () => (
     <div className="mt-6">
@@ -186,9 +199,9 @@ const ImplementationOverview: React.FC<ImplementationOverviewProps> = ({
         
         {chartType === 'bar' && renderBarChart()}
         {chartType === 'pie' && <StatusPieChart data={pieChartData} title="Feature Status Distribution" />}
-        {chartType === 'line' && monthlyProgressData && (
+        {chartType === 'line' && progressData.length > 0 && (
           <ProgressLineChart 
-            data={monthlyProgressData} 
+            data={progressData} 
             title="Implementation Progress Over Time" 
           />
         )}

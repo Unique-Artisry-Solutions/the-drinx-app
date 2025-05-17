@@ -30,6 +30,9 @@ export type DatabaseStatus = 'not_started' | 'in_progress' | 'partial' | 'comple
 // Define access levels
 export type AccessLevel = 'none' | 'partial' | 'full';
 
+// Define FeatureComplexity type
+export type FeatureComplexity = 'low' | 'medium' | 'high';
+
 // Extended feature item interface for the enhanced system breakdown
 export interface FeatureItem {
   id: string;
@@ -39,7 +42,7 @@ export interface FeatureItem {
   statusUpdated?: boolean;
   originalStatus?: FeatureStatus;
   category?: string;
-  complexity?: 'low' | 'medium' | 'high';
+  complexity?: FeatureComplexity;
   adminAccess?: AccessLevel;
   establishmentAccess?: AccessLevel;
   individualAccess?: AccessLevel;
@@ -82,16 +85,9 @@ export interface MonthlyProgressData {
   individualImplemented: number;
   promoterImplemented: number;
   // For backward compatibility with existing components
-  frontend?: number;
-  backend?: number;
-}
-
-// For backward compatibility with ProgressLineChart component
-export type ProgressData = {
-  month: string;
   frontend: number;
   backend: number;
-};
+}
 
 // Progress snapshot for system state
 export interface ProgressSnapshot {
@@ -130,7 +126,7 @@ export interface FeatureShowcaseData {
   name: string;
   description: string;
   showcaseCategory: string;
-  complexityLevel: 'low' | 'medium' | 'high';
+  complexityLevel: FeatureComplexity;
   businessValue: FeatureBusinessValueType;
   implementationStatus: FeatureStatus;
   marketingPoints: string[];
@@ -191,5 +187,16 @@ export interface ImprovementItem {
 }
 
 // Sorting options for improvements
-export type SortField = 'title' | 'impact' | 'effort' | 'priority' | 'votes' | 'submittedDate';
+export type SortField = 
+  | 'title' 
+  | 'impact' 
+  | 'effort' 
+  | 'priority' 
+  | 'votes' 
+  | 'submittedDate' 
+  | 'status'  // Added additional sort fields
+  | 'type'
+  | 'lovableCompatible'
+  | 'name';
+
 export type SortOrder = 'asc' | 'desc';
