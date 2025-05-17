@@ -6,10 +6,11 @@ import { useEstablishmentPromotions, PromotionFormData } from '@/hooks/establish
 import { useToast } from '@/hooks/use-toast';
 
 interface EstablishmentDashboardProps {
+  establishmentName: string;
   establishmentId: string;
 }
 
-const EstablishmentDashboard: React.FC<EstablishmentDashboardProps> = ({ establishmentId }) => {
+const EstablishmentDashboard: React.FC<EstablishmentDashboardProps> = ({ establishmentName, establishmentId }) => {
   const [activeTab, setActiveTab] = useState('promotions');
   const { toast } = useToast();
   

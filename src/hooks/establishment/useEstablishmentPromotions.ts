@@ -1,309 +1,184 @@
 
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { Promotion } from '@/components/establishment/PromotionsTab';
+import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { ValidDays, UserSegmentType } from '@/types/auth/AuthTypes';
-
-interface PromotionValidationResponse {
-  valid: boolean;
-  message?: string;
-  promotion?: Partial<Promotion>;
-}
+import { 
+  createPromotionCode, 
+  deletePromotionCode, 
+  getPromotionCodes,
+  updatePromotionCode, 
+  PromotionCode
+} from '@/lib/promotions/api';
 
 export interface PromotionFormData {
   code: string;
   description: string;
-  discount_type: string;
-  discount_value?: number;
-  start_date?: string;
-  end_date?: string;
-  is_active?: boolean;
-  usage_limit?: number;
-  valid_days?: string[] | null;
-  valid_hours?: { start: string; end: string } | null;
-  user_segment?: UserSegmentType | null;
-  combinable?: boolean;
-  min_purchase_amount?: number;
+  discountType: 'percentage' | 'fixed' | 'free_item';
+  discountValue: number;
+  startDate: Date;
+  endDate: Date | null;
+  validDays?: string[];
+  usageLimit?: number | null;
+  isActive: boolean;
 }
 
 export const useEstablishmentPromotions = (establishmentId: string) => {
-  const { toast } = useToast();
-  const [promotions, setPromotions] = useState<Promotion[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [promotions, setPromotions] = useState<PromotionCode[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
-  // Fetch promotions
-  useEffect(() => {
-    fetchPromotions();
-  }, [establishmentId]);
-  
-  const fetchPromotions = async () => {
+  const { toast } = useToast();
+
+  // Load promotions
+  const loadPromotions = async () => {
+    if (!establishmentId) return;
+    
     setIsLoading(true);
     setError(null);
     
     try {
-      const { data, error } = await supabase
-        .from('establishment_promotions')
-        .select(`
-          *,
-          promotion_redemptions:promotion_redemptions(id)
-        `)
-        .eq('establishment_id', establishmentId)
-        .order('created_at', { ascending: false });
-        
-      if (error) throw error;
-      
-      // Convert supabase data to our Promotion type
-      const formattedPromotions = data.map((item: any): Promotion => {
-        return {
-          id: item.id,
-          code: item.code,
-          description: item.description,
-          discount_type: item.discount_type,
-          discount_value: item.discount_value || 0,
-          start_date: item.start_date,
-          end_date: item.end_date,
-          is_active: item.is_active,
-          usage_limit: item.usage_limit || null,
-          usage_count: item.promotion_redemptions?.length || 0,
-          valid_days: item.valid_days as string[] | null,
-          valid_hours: typeof item.valid_hours === 'object' 
-            ? item.valid_hours as { start: string; end: string } 
-            : null,
-          user_segment: item.user_segment as UserSegmentType | null,
-          combinable: item.combinable,
-          min_purchase_amount: item.min_purchase_amount || null,
-        };
-      });
-      
-      setPromotions(formattedPromotions);
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch promotions');
+      const data = await getPromotionCodes(establishmentId);
+      setPromotions(data);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load promotions';
+      setError(errorMessage);
       toast({
-        title: "Error",
-        description: `Could not load promotions: ${err.message}`,
-        variant: "destructive"
+        title: 'Error',
+        description: errorMessage,
+        variant: 'destructive'
       });
     } finally {
       setIsLoading(false);
     }
   };
-  
-  const handleAddPromotion = async (promotion: Partial<PromotionFormData>) => {
+
+  // Add a new promotion
+  const handleAddPromotion = async (data: PromotionFormData): Promise<void> => {
+    if (!establishmentId) return;
+    
+    setIsLoading(true);
+    setError(null);
+    
     try {
-      // Ensure required fields exist
-      if (!promotion.code || !promotion.description || !promotion.discount_type) {
-        throw new Error("Missing required fields");
-      }
-      
-      const { data, error } = await supabase
-        .from('establishment_promotions')
-        .insert({
-          establishment_id: establishmentId,
-          code: promotion.code,
-          description: promotion.description,
-          discount_type: promotion.discount_type,
-          discount_value: promotion.discount_value,
-          start_date: promotion.start_date,
-          end_date: promotion.end_date,
-          is_active: promotion.is_active !== undefined ? promotion.is_active : true,
-          usage_limit: promotion.usage_limit,
-          valid_days: promotion.valid_days,
-          valid_hours: promotion.valid_hours,
-          user_segment: promotion.user_segment,
-          combinable: promotion.combinable !== undefined ? promotion.combinable : true,
-          min_purchase_amount: promotion.min_purchase_amount
-        })
-        .select()
-        .single();
-        
-      if (error) throw error;
-      
-      toast({
-        title: "Success",
-        description: "Promotion code has been added",
+      await createPromotionCode({
+        code: data.code,
+        description: data.description,
+        discount_type: data.discountType,
+        discount_value: data.discountValue,
+        start_date: data.startDate.toISOString(),
+        end_date: data.endDate ? data.endDate.toISOString() : null,
+        establishment_id: establishmentId,
+        usage_limit: data.usageLimit || null,
+        valid_days: data.validDays || null,
+        combinable: true
       });
       
-      // Refetch promotions to get the updated list
-      fetchPromotions();
-      
-      return data;
-    } catch (err: any) {
       toast({
-        title: "Error",
-        description: `Could not add promotion: ${err.message}`,
-        variant: "destructive"
+        title: 'Success',
+        description: 'Promotion code created successfully',
       });
-      throw err;
+      
+      // Reload promotions list
+      await loadPromotions();
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to create promotion';
+      setError(errorMessage);
+      toast({
+        title: 'Error',
+        description: errorMessage,
+        variant: 'destructive'
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
-  
-  const handleUpdatePromotion = async (id: string, promotion: Partial<PromotionFormData>) => {
+
+  // Delete a promotion
+  const handleDeletePromotion = async (id: string): Promise<void> => {
+    setIsLoading(true);
+    setError(null);
+    
     try {
-      const { error } = await supabase
-        .from('establishment_promotions')
-        .update({
-          code: promotion.code,
-          description: promotion.description,
-          discount_type: promotion.discount_type,
-          discount_value: promotion.discount_value,
-          start_date: promotion.start_date,
-          end_date: promotion.end_date,
-          is_active: promotion.is_active,
-          usage_limit: promotion.usage_limit,
-          valid_days: promotion.valid_days,
-          valid_hours: promotion.valid_hours,
-          user_segment: promotion.user_segment,
-          combinable: promotion.combinable,
-          min_purchase_amount: promotion.min_purchase_amount
-        })
-        .eq('id', id)
-        .eq('establishment_id', establishmentId);
-        
-      if (error) throw error;
+      await deletePromotionCode(id);
       
       toast({
-        title: "Success",
-        description: "Promotion code has been updated",
-      });
-      
-      // Refetch promotions
-      fetchPromotions();
-    } catch (err: any) {
-      toast({
-        title: "Error",
-        description: `Could not update promotion: ${err.message}`,
-        variant: "destructive"
-      });
-      throw err;
-    }
-  };
-  
-  const handleDeletePromotion = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from('establishment_promotions')
-        .delete()
-        .eq('id', id)
-        .eq('establishment_id', establishmentId);
-        
-      if (error) throw error;
-      
-      toast({
-        title: "Success",
-        description: "Promotion code has been deleted",
+        title: 'Success',
+        description: 'Promotion code deleted successfully',
       });
       
       // Update local state
-      setPromotions((current) => current.filter(promo => promo.id !== id));
-    } catch (err: any) {
+      setPromotions(promotions.filter(promo => promo.id !== id));
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to delete promotion';
+      setError(errorMessage);
       toast({
-        title: "Error",
-        description: `Could not delete promotion: ${err.message}`,
-        variant: "destructive"
+        title: 'Error',
+        description: errorMessage,
+        variant: 'destructive'
       });
-      throw err;
+    } finally {
+      setIsLoading(false);
     }
   };
-  
-  const togglePromotionStatus = async (id: string, isActive: boolean) => {
+
+  // Update a promotion
+  const updatePromotion = async (id: string, data: Partial<PromotionFormData>): Promise<void> => {
+    if (!establishmentId) return;
+    
+    setIsLoading(true);
+    setError(null);
+    
     try {
-      const { error } = await supabase
-        .from('establishment_promotions')
-        .update({ is_active: isActive })
-        .eq('id', id)
-        .eq('establishment_id', establishmentId);
-        
-      if (error) throw error;
+      // Transform the form data to match the API requirements
+      const updateData: any = {};
+      
+      if (data.code) updateData.code = data.code;
+      if (data.description) updateData.description = data.description;
+      if (data.discountType) updateData.discount_type = data.discountType;
+      if (data.discountValue !== undefined) updateData.discount_value = data.discountValue;
+      if (data.startDate) updateData.start_date = data.startDate.toISOString();
+      if (data.endDate) updateData.end_date = data.endDate.toISOString();
+      if (data.validDays) updateData.valid_days = data.validDays;
+      if (data.usageLimit !== undefined) updateData.usage_limit = data.usageLimit;
+      if (data.isActive !== undefined) updateData.is_active = data.isActive;
+      
+      await updatePromotionCode(id, updateData);
       
       toast({
-        title: "Success",
-        description: `Promotion code has been ${isActive ? 'activated' : 'deactivated'}`,
+        title: 'Success',
+        description: 'Promotion code updated successfully',
       });
       
-      // Update local state
-      setPromotions(current => 
-        current.map(promo => 
-          promo.id === id ? { ...promo, is_active: isActive } : promo
-        )
-      );
-    } catch (err: any) {
+      // Reload promotions list
+      await loadPromotions();
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update promotion';
+      setError(errorMessage);
       toast({
-        title: "Error",
-        description: `Could not update promotion status: ${err.message}`,
-        variant: "destructive"
+        title: 'Error',
+        description: errorMessage,
+        variant: 'destructive'
       });
-      throw err;
+    } finally {
+      setIsLoading(false);
     }
   };
-  
-  const validatePromotionCode = async (
-    code: string, 
-    userId?: string, 
-    purchaseAmount?: number
-  ): Promise<PromotionValidationResponse> => {
-    try {
-      const { data: promotionData, error: fetchError } = await supabase
-        .from('establishment_promotions')
-        .select()
-        .eq('code', code)
-        .eq('establishment_id', establishmentId)
-        .single();
-      
-      if (fetchError) {
-        return { 
-          valid: false, 
-          message: 'Invalid promotion code'
-        };
-      }
-      
-      // If no active promotion found
-      if (!promotionData || !promotionData.is_active) {
-        return { 
-          valid: false, 
-          message: 'This promotion code is not active'
-        };
-      }
-      
-      // Call the validate_promotion function
-      const { data, error } = await supabase
-        .rpc('validate_promotion', {
-          p_promotion_id: promotionData.id,
-          p_user_id: userId,
-          p_purchase_amount: purchaseAmount
-        });
-      
-      if (error) {
-        return { 
-          valid: false, 
-          message: error.message
-        };
-      }
-      
-      // Convert the JSON response to our type
-      const response = data as PromotionValidationResponse;
-      
-      return response;
-    } catch (err: any) {
-      return {
-        valid: false,
-        message: err.message || 'Error validating promotion code'
-      };
-    }
+
+  // Toggle promotion status
+  const togglePromotionStatus = async (id: string, currentStatus: boolean): Promise<void> => {
+    return updatePromotion(id, { isActive: !currentStatus });
   };
-  
+
+  // Initialize promotions on mount
+  useState(() => {
+    loadPromotions();
+  });
+
   return {
     promotions,
     isLoading,
     error,
-    addPromotion: handleAddPromotion,
-    updatePromotion: handleUpdatePromotion,
-    deletePromotion: handleDeletePromotion,
-    togglePromotionStatus,
-    validatePromotionCode,
-    refreshPromotions: fetchPromotions,
     handleAddPromotion,
-    handleDeletePromotion
+    handleDeletePromotion,
+    updatePromotion,
+    togglePromotionStatus
   };
 };
