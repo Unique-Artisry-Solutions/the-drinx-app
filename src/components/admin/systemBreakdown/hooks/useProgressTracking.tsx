@@ -60,7 +60,7 @@ export const useProgressTracking = (
     history: ProgressSnapshot[] = []
   ) => {
     generateHistoricalProgressData(snapshot, history)
-      .then(data => {
+      .then((data: MonthlyProgressData[]) => {
         setMonthlyProgressData(data);
       })
       .catch(error => {
@@ -69,12 +69,19 @@ export const useProgressTracking = (
         const currentMonth = new Date().getMonth();
         const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         
-        const fallbackData = Array.from({ length: currentMonth + 1 }, (_, i) => {
+        const fallbackData: MonthlyProgressData[] = Array.from({ length: currentMonth + 1 }, (_, i) => {
           const progressRatio = (i + 1) / (currentMonth + 1);
+          const implementedRatio = progressRatio * 0.8; // 80% of progress
+          
           return {
             month: monthNames[i],
-            frontend: Math.round(snapshot.frontendProgress * progressRatio),
-            backend: Math.round(snapshot.backendProgress * progressRatio * 0.85)
+            totalImplemented: Math.round(snapshot.implementedFeatures * implementedRatio),
+            adminImplemented: Math.round((snapshot.adminFeatureCount || 0) * implementedRatio * 0.7),
+            establishmentImplemented: Math.round((snapshot.establishmentFeatureCount || 0) * implementedRatio * 0.6),
+            individualImplemented: Math.round((snapshot.individualFeatureCount || 0) * implementedRatio * 0.8),
+            promoterImplemented: Math.round((snapshot.promoterFeatureCount || 0) * implementedRatio * 0.5),
+            frontend: Math.round((snapshot.frontendProgress || 0) * progressRatio),
+            backend: Math.round((snapshot.backendProgress || 0) * progressRatio * 0.85)
           };
         });
         

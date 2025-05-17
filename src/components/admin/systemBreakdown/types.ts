@@ -37,6 +37,7 @@ export interface FeatureItem {
   description: string;
   status: FeatureStatus;
   statusUpdated?: boolean;
+  originalStatus?: FeatureStatus;
   category?: string;
   complexity?: 'low' | 'medium' | 'high';
   adminAccess?: AccessLevel;
@@ -68,7 +69,7 @@ export interface AnalysisStep {
   name: string;
   description: string;
   progressPercentage: number;
-  status: 'pending' | 'running' | 'complete' | 'error';
+  status: 'pending' | 'running' | 'completed' | 'error';
   details?: string;
 }
 
@@ -85,16 +86,110 @@ export interface MonthlyProgressData {
   backend?: number;
 }
 
+// For backward compatibility with ProgressLineChart component
+export type ProgressData = {
+  month: string;
+  frontend: number;
+  backend: number;
+};
+
 // Progress snapshot for system state
 export interface ProgressSnapshot {
   date: string;
+  timestamp?: string;
   totalFeatures: number;
   implementedFeatures: number;
   inProgressFeatures: number;
   plannedFeatures: number;
-  implementationPercentage: number;
+  blockedFeatures?: number;
+  implementationPercentage?: number;
   adminProgress: number;
   establishmentProgress: number;
   individualProgress: number;
   promoterProgress: number;
+  // For backward compatibility
+  frontendProgress?: number;
+  backendProgress?: number;
+  averageImplementationProgress?: number;
+  overallProgress?: number;
+  adminFeatureCount?: number;
+  establishmentFeatureCount?: number;
+  individualFeatureCount?: number;
+  promoterFeatureCount?: number;
+  adminImplementationRate?: number;
+  establishmentImplementationRate?: number;
+  individualImplementationRate?: number;
+  promoterImplementationRate?: number;
+  dbComplete?: number;
+  confidenceScore?: number;
 }
+
+// Feature showcase data types
+export interface FeatureShowcaseData {
+  id: string;
+  name: string;
+  description: string;
+  showcaseCategory: string;
+  complexityLevel: 'low' | 'medium' | 'high';
+  businessValue: FeatureBusinessValueType;
+  implementationStatus: FeatureStatus;
+  marketingPoints: string[];
+  iconName: string;
+  isSignature: boolean;
+  userType: 'admin' | 'establishment' | 'individual' | 'promoter';
+  implementationPercentage?: number;
+  mockImplementationStats?: {
+    timeToImplement: string;
+    componentsCount: number;
+    apiEndpoints: number;
+    testCoverage: number;
+  };
+}
+
+export type FeatureBusinessValueType = 'high' | 'medium' | 'low';
+
+export interface FeatureShowcaseCategoryType {
+  name: string;
+  description: string;
+  features: FeatureShowcaseData[];
+  implementationRate: number;
+  featureCount: number;
+}
+
+export interface FeatureBusinessValueObject {
+  value: FeatureBusinessValueType;
+  label: string;
+  name: string;
+  description: string;
+  color: string;
+  features: FeatureItem[];
+  implementationRate: number;
+  featureCount: number;
+}
+
+// Improvement item types
+export interface ImprovementItem {
+  id: string;
+  title: string;
+  description: string;
+  impact: 'high' | 'medium' | 'low';
+  effort: 'high' | 'medium' | 'low';
+  priority: number;
+  status: 'proposed' | 'approved' | 'in_progress' | 'completed' | 'rejected';
+  category: string;
+  votes: number;
+  submittedBy: string;
+  submittedDate: string;
+  type: 'new-feature' | 'enhancement' | 'bug-fix' | 'refactor';
+  lovableCompatible: boolean;
+  technicalRequirements: string;
+  implementationSteps: string[];
+  estimatedEffort: string;
+  businessImpact: string;
+  currentStatus: string;
+  affectedAreas: string[];
+}
+
+// Sorting options for improvements
+export type SortField = 'title' | 'impact' | 'effort' | 'priority' | 'votes' | 'submittedDate';
+export type SortOrder = 'asc' | 'desc';

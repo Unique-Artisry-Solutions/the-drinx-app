@@ -6,8 +6,10 @@ import {
   generateHistoricalProgressData
 } from './statisticsUtils';
 import { generateCSV } from './exportUtils';
-import { analyzeAllFeatures } from './analysis';
-import { analyzeDbRequirements } from './analysisHelpers';
+import { 
+  analyzeAllFeatures,
+  analyzeDbRequirements 
+} from './analysis';
 import { 
   isFeatureFlagRelated,
   isMocktailSuggestionFeature,
@@ -142,10 +144,11 @@ export {
 };
 
 // Use 'export type' for type exports when isolatedModules is enabled
-export type { AnalysisStep } from '../types';
-export type { ReleaseProgress } from '../types/releaseTypes';
-export type { MonthlyProgressData } from '../types';
-export type { FeatureShowcaseData, FeatureShowcaseCategoryType, FeatureBusinessValueType } from '../types';
+export type { AnalysisStep } from './types';
+export type { ReleaseProgress } from './types/releaseTypes';
+export type { MonthlyProgressData, ProgressData } from './types';
+export type { FeatureShowcaseData, FeatureShowcaseCategoryType, FeatureBusinessValueType, FeatureBusinessValueObject } from './types';
+export type { ImprovementItem, SortField, SortOrder } from './types';
 
 export { determineBusinessValue, determineComplexity } from './featureShowcase/featureTransformation';
 export { determineShowcaseCategory } from './featureShowcase/categoryDetection';

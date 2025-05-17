@@ -47,6 +47,11 @@ export function createProgressSnapshot(
     promoterImplementationRate: promoterProgressObj.overall,
     overallProgress: stats.implementationRate,
     dbComplete: stats.dbCompleted,
-    confidenceScore: stats.confidenceScore
+    confidenceScore: stats.confidenceScore,
+    implementationPercentage: stats.implementationRate,
+    adminProgress: adminProgressObj.overall,
+    establishmentProgress: establishmentProgressObj.overall,
+    individualProgress: individualProgressObj.overall,
+    promoterProgress: promoterProgressObj.overall
   };
 }

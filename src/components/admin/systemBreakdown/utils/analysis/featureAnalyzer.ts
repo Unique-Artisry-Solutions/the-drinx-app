@@ -1,6 +1,6 @@
 
-import { FeatureItem, AnalysisStep, DatabaseStatus } from '../../types';
-import { updateFeaturesDbStatus } from './databaseStatusUpdater';
+import { FeatureItem, AnalysisStep } from '../../types';
+import { updateFeatureDatabaseStatus } from './databaseStatusUpdater';
 import { analyzeSwigCircuitFeatures } from './swigCircuitAnalyzer';
 import { analyzePromoterSystem } from './promoterSystemAnalyzer';
 import { analyzeRewardSystem } from './rewardSystemAnalyzer';
@@ -28,34 +28,34 @@ export function analyzeAllFeatures(
   const completedSteps: AnalysisStep[] = [];
   
   // Step 1: Update database status for all features
-  const adminWithDbStatus = adminFeatures.map(updateFeaturesDbStatus);
+  const adminWithDbStatus = adminFeatures.map(updateFeatureDatabaseStatus);
   completedSteps.push({
     name: "Database schema verification",
     description: "Analyzed database requirements for all features",
-    status: "complete",
+    status: "completed",
     progressPercentage: 100,
     details: `Updated database status for ${adminWithDbStatus.filter(f => f.statusUpdated).length} admin features`
   });
   
-  const establishmentWithDbStatus = establishmentFeatures.map(updateFeaturesDbStatus);
+  const establishmentWithDbStatus = establishmentFeatures.map(updateFeatureDatabaseStatus);
   completedSteps.push({
     name: "API endpoints validation",
     description: "Validated API implementation for features",
-    status: "complete",
+    status: "completed",
     progressPercentage: 100,
     details: `Updated API status for ${establishmentWithDbStatus.filter(f => f.statusUpdated).length} establishment features`
   });
   
-  const individualWithDbStatus = individualFeatures.map(updateFeaturesDbStatus);
+  const individualWithDbStatus = individualFeatures.map(updateFeatureDatabaseStatus);
   completedSteps.push({
     name: "User permissions validation",
     description: "Checked user access levels across features",
-    status: "complete",
+    status: "completed",
     progressPercentage: 100,
     details: `Validated permissions for ${individualWithDbStatus.filter(f => f.statusUpdated).length} individual features`
   });
   
-  const promoterWithDbStatus = promoterFeatures.map(updateFeaturesDbStatus);
+  const promoterWithDbStatus = promoterFeatures.map(updateFeatureDatabaseStatus);
   
   // Step 2: Analyze domain-specific systems
   const swigCircuitAnalyzed = analyzeSwigCircuitFeatures([
@@ -68,7 +68,7 @@ export function analyzeAllFeatures(
   completedSteps.push({
     name: "Swig Circuit analysis",
     description: "Analyzed Swig Circuit implementation",
-    status: "complete",
+    status: "completed",
     progressPercentage: 100,
     details: "Completed Swig Circuit analysis across all user types"
   });
@@ -77,7 +77,7 @@ export function analyzeAllFeatures(
   completedSteps.push({
     name: "Promoter system analysis",
     description: "Analyzed Promoter system implementation",
-    status: "complete",
+    status: "completed",
     progressPercentage: 100,
     details: `Analyzed ${promoterAnalyzed.filter(f => f.statusUpdated).length} promoter features`
   });
@@ -92,7 +92,7 @@ export function analyzeAllFeatures(
   completedSteps.push({
     name: "Reward system analysis",
     description: "Analyzed Reward system implementation",
-    status: "complete",
+    status: "completed",
     progressPercentage: 100,
     details: "Completed Reward system analysis across all user types"
   });
@@ -107,7 +107,7 @@ export function analyzeAllFeatures(
   completedSteps.push({
     name: "Audience relationship analysis",
     description: "Analyzed audience relationship features",
-    status: "complete",
+    status: "completed",
     progressPercentage: 100,
     details: "Completed audience relationship analysis across all user types"
   });
