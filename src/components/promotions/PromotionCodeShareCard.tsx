@@ -1,72 +1,72 @@
 
 import React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Mail, Clipboard, Share2 } from 'lucide-react';
-import { sharePromotionCode } from '@/utils/discountCodeUtils';
+import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
+import { Share2 } from 'lucide-react';
+import { sharePromotionCode } from '@/utils/serviceUtils';
+import { useToast } from '@/hooks/use-toast';
 
 interface PromotionCodeShareCardProps {
   code: string;
-  description?: string;
-  onCopy?: () => void;
+  description: string;
+  promotionId: string;
+  userId: string;
 }
 
 const PromotionCodeShareCard: React.FC<PromotionCodeShareCardProps> = ({
   code,
   description,
-  onCopy,
+  promotionId,
+  userId
 }) => {
-  const handleCopy = () => {
-    navigator.clipboard.writeText(code);
-    if (onCopy) onCopy();
-  };
+  const { toast } = useToast();
 
-  const handleShare = async (method: 'email' | 'clipboard' | 'social') => {
-    await sharePromotionCode(code, method);
-    if (method === 'clipboard' && onCopy) onCopy();
+  const handleShare = async () => {
+    try {
+      const success = await sharePromotionCode(promotionId, userId);
+      
+      if (success) {
+        toast({
+          title: "Promotion Shared",
+          description: "The promotion code has been shared successfully.",
+        });
+      } else {
+        toast({
+          title: "Share Failed",
+          description: "There was a problem sharing the promotion code.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error("Error sharing promotion:", error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred while sharing.",
+        variant: "destructive"
+      });
+    }
   };
 
   return (
-    <Card>
-      <CardContent className="p-4 space-y-4">
-        <div className="bg-primary/10 rounded-md p-3 text-center">
-          <p className="text-xs text-muted-foreground mb-1">Promo Code</p>
-          <p className="text-lg font-mono font-bold">{code}</p>
-          {description && (
-            <p className="text-xs text-muted-foreground mt-1">{description}</p>
-          )}
-        </div>
-        
-        <div className="flex flex-wrap gap-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="flex-1"
-            onClick={() => handleShare('email')}
-          >
-            <Mail className="h-4 w-4 mr-2" />
-            Email
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="flex-1"
-            onClick={handleCopy}
-          >
-            <Clipboard className="h-4 w-4 mr-2" />
-            Copy
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="flex-1"
-            onClick={() => handleShare('social')}
-          >
-            <Share2 className="h-4 w-4 mr-2" />
-            Share
-          </Button>
+    <Card className="w-full">
+      <CardHeader>
+        <h3 className="text-lg font-semibold">Share Promotion</h3>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-2">
+          <p className="text-sm text-muted-foreground">
+            Share the "{description}" promotion with your friends and family.
+          </p>
+          <div className="bg-muted p-3 rounded font-mono text-center">
+            {code}
+          </div>
         </div>
       </CardContent>
+      <CardFooter>
+        <Button onClick={handleShare} className="w-full" variant="outline">
+          <Share2 className="mr-2 h-4 w-4" /> Share Promotion
+        </Button>
+      </CardFooter>
     </Card>
   );
 };

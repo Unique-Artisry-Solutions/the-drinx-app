@@ -17,11 +17,17 @@ export const getPromotionCodes = async (establishmentId: string): Promise<Promot
 
     // Map the database response to the PromotionCode type and handle used_count field
     // Some responses might have usage_count instead of used_count
-    return data.map(item => ({
-      ...item,
-      // Ensure used_count is available (it might be called usage_count in some responses)
-      used_count: item.used_count ?? item.usage_count ?? 0
-    })) as PromotionCode[];
+    return data.map(item => {
+      // Determine which field to use for the count
+      const usedCount = item.used_count !== undefined ? item.used_count : 
+                        (item.usage_count !== undefined ? item.usage_count : 0);
+      
+      return {
+        ...item,
+        // Ensure used_count is available
+        used_count: usedCount
+      };
+    }) as PromotionCode[];
   } catch (err) {
     console.error("Error in getPromotionCodes:", err);
     throw err;
@@ -59,9 +65,12 @@ export const validatePromotionCode = async (
       return null;
     }
     
+    // Determine which field to use for usage count and limit
+    const usedCount = promotion.used_count !== undefined ? promotion.used_count : 
+                      (promotion.usage_count !== undefined ? promotion.usage_count : 0);
+    
     // Check if usage limit is reached
-    if (promotion.usage_limit !== null && 
-        (promotion.used_count ?? 0) >= (promotion.usage_limit ?? 0)) {
+    if (promotion.usage_limit !== null && usedCount >= (promotion.usage_limit ?? 0)) {
       return null;
     }
     
@@ -75,7 +84,7 @@ export const validatePromotionCode = async (
     return {
       ...promotion,
       // Ensure used_count is available
-      used_count: promotion.used_count ?? 0
+      used_count: usedCount
     };
   } catch (err) {
     console.error("Error in validatePromotionCode:", err);
@@ -121,7 +130,10 @@ export const recordPromotionRedemption = async (
     }
     
     // Determine which field to update based on what's available in the data
-    const currentCount = (promotion.used_count ?? promotion.usage_count ?? 0) + 1;
+    const currentCount = (
+      promotion.used_count !== undefined ? promotion.used_count : 
+      (promotion.usage_count !== undefined ? promotion.usage_count : 0)
+    ) + 1;
     
     // Update either used_count or usage_count depending on what the database expects
     const updateField = promotion.hasOwnProperty('used_count') ? 'used_count' : 'usage_count';
@@ -166,10 +178,11 @@ export const getPromotionAnalytics = async (establishmentId: string): Promise<an
 
 // Function to create a batch of promotion codes
 export const batchCreatePromotionCodes = async (
-  codes: Array<Partial<PromotionCode>>,
+  codes: Array<Partial<PromotionCode> & { code: string; description: string; discount_type: string; establishment_id: string }>,
   establishmentId: string
 ): Promise<PromotionCode[]> => {
   try {
+    // Make sure each code has the required fields
     const codesToInsert = codes.map(code => ({
       ...code,
       establishment_id: establishmentId
@@ -187,10 +200,15 @@ export const batchCreatePromotionCodes = async (
     
     // Map the database response to the PromotionCode type 
     // and ensure used_count is available in the response
-    return data.map(item => ({
-      ...item,
-      used_count: item.used_count ?? item.usage_count ?? 0
-    })) as PromotionCode[];
+    return data.map(item => {
+      const usedCount = item.used_count !== undefined ? item.used_count : 
+                      (item.usage_count !== undefined ? item.usage_count : 0);
+      
+      return {
+        ...item,
+        used_count: usedCount
+      };
+    }) as PromotionCode[];
   } catch (err) {
     console.error("Error in batchCreatePromotionCodes:", err);
     throw err;
@@ -227,9 +245,12 @@ export const autoApplyBestDiscount = async (
         return false;
       }
       
+      // Determine which field to use for usage count and limit
+      const usedCount = promo.used_count !== undefined ? promo.used_count : 
+                      (promo.usage_count !== undefined ? promo.usage_count : 0);
+      
       // Check usage limit
-      if (promo.usage_limit !== null && 
-          (promo.used_count ?? promo.usage_count ?? 0) >= promo.usage_limit) {
+      if (promo.usage_limit !== null && usedCount >= promo.usage_limit) {
         return false;
       }
       
@@ -262,11 +283,14 @@ export const autoApplyBestDiscount = async (
     // Sort by calculated value in descending order
     promotionsWithValue.sort((a: any, b: any) => b.calculatedValue - a.calculatedValue);
     
-    // Return the best promotion
+    // Return the best promotion with used_count properly set
     const bestPromotion = promotionsWithValue[0];
+    const usedCount = bestPromotion.used_count !== undefined ? bestPromotion.used_count : 
+                    (bestPromotion.usage_count !== undefined ? bestPromotion.usage_count : 0);
+    
     return {
       ...bestPromotion,
-      used_count: bestPromotion.used_count ?? bestPromotion.usage_count ?? 0
+      used_count: usedCount
     } as PromotionCode;
   } catch (err) {
     console.error("Error in autoApplyBestDiscount:", err);

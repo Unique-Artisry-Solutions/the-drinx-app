@@ -13,8 +13,8 @@ const PromotionsPage: React.FC = () => {
 
   // Wrap the handlers to ensure they return promises
   const handleAddPromotion = async (data: PromotionFormData): Promise<void> => {
-    // The implementation in useEstablishmentProfile doesn't take any parameters,
-    // so we need to adapt this function to match the expected interface
+    // Call the implementation in useEstablishmentProfile without parameters
+    // since that's what its signature expects
     promotionsState.handleAddPromotion();
     return Promise.resolve();
   };
@@ -26,8 +26,8 @@ const PromotionsPage: React.FC = () => {
 
   // Added for updating promotions with proper checking
   const handleUpdatePromotion = async (id: string, data: PromotionFormData): Promise<void> => {
-    // Check if the function exists using optional chaining
-    if (promotionsState.handleUpdatePromotion) {
+    // Check if the function exists before calling it
+    if (typeof promotionsState.handleUpdatePromotion === 'function') {
       promotionsState.handleUpdatePromotion(id, data);
     } else {
       console.warn('updatePromotion function not available in promotionsState');
