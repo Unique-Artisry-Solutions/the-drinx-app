@@ -186,6 +186,45 @@ export type Database = {
         }
         Relationships: []
       }
+      app_subscriptions: {
+        Row: {
+          created_at: string
+          id: string
+          payment_id: string | null
+          payment_provider: string | null
+          status: string
+          subscription_end: string | null
+          subscription_start: string
+          subscription_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          payment_id?: string | null
+          payment_provider?: string | null
+          status?: string
+          subscription_end?: string | null
+          subscription_start?: string
+          subscription_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          payment_id?: string | null
+          payment_provider?: string | null
+          status?: string
+          subscription_end?: string | null
+          subscription_start?: string
+          subscription_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       audience_segment_analytics: {
         Row: {
           campaign_id: string | null
@@ -2523,6 +2562,42 @@ export type Database = {
           },
         ]
       }
+      promoter_followers: {
+        Row: {
+          created_at: string
+          follow_status: string
+          id: string
+          notification_preferences: Json
+          promoter_id: string
+          subscriber_id: string
+          subscription_end: string | null
+          subscription_start: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          follow_status?: string
+          id?: string
+          notification_preferences?: Json
+          promoter_id: string
+          subscriber_id: string
+          subscription_end?: string | null
+          subscription_start?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          follow_status?: string
+          id?: string
+          notification_preferences?: Json
+          promoter_id?: string
+          subscriber_id?: string
+          subscription_end?: string | null
+          subscription_start?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       promoter_notification_preferences: {
         Row: {
           channels: Database["public"]["Enums"]["notification_channel"][]
@@ -2623,50 +2698,6 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
-      }
-      promoter_subscriptions: {
-        Row: {
-          created_at: string
-          id: string
-          promoter_id: string
-          status: string
-          subscriber_id: string
-          subscription_end: string | null
-          subscription_start: string
-          tier_id: string | null
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          promoter_id: string
-          status?: string
-          subscriber_id: string
-          subscription_end?: string | null
-          subscription_start?: string
-          tier_id?: string | null
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          promoter_id?: string
-          status?: string
-          subscriber_id?: string
-          subscription_end?: string | null
-          subscription_start?: string
-          tier_id?: string | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "promoter_subscriptions_tier_id_fkey"
-            columns: ["tier_id"]
-            isOneToOne: false
-            referencedRelation: "promoter_subscription_tiers"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       promoter_venue_messages: {
         Row: {

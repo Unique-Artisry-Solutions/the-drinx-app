@@ -3,7 +3,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { useAuth } from '@/contexts/auth';
-import { useSubscriptions } from '@/hooks/useSubscriptions';
+import { useFollowers } from '@/hooks/useFollowers';
 import { SubscriptionTier } from '@/types/SubscriptionTypes';
 import { featuresByTier, getFeature } from '@/lib/features/registry';
 import { CheckIcon } from 'lucide-react';
@@ -22,17 +22,17 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
   currentSubscriptionId,
 }) => {
   const { user } = useAuth();
-  const { subscribe, unsubscribe } = useSubscriptions(promoterId);
+  const { follow, unfollow } = useFollowers(promoterId);
 
   const handleSubscriptionAction = async () => {
     if (isSubscribed && currentSubscriptionId) {
-      await unsubscribe.mutateAsync(currentSubscriptionId);
+      await unfollow.mutateAsync(currentSubscriptionId);
     } else {
-      await subscribe.mutateAsync({ promoterId, tierId: tier.id });
+      await follow.mutateAsync({ promoterId });
     }
   };
 
-  const isLoading = subscribe.isPending || unsubscribe.isPending;
+  const isLoading = follow.isPending || unfollow.isPending;
   
   // Get the features for this tier
   const tierFeatures = featuresByTier[tier.tier || 'basic'] || [];
@@ -84,8 +84,8 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
           {isLoading
             ? 'Processing...'
             : isSubscribed
-            ? 'Unsubscribe'
-            : `Subscribe ${tier.price > 0 ? `- $${tier.price}/month` : 'Free'}`}
+            ? 'Unfollow'
+            : 'Follow'}
         </Button>
       </CardFooter>
     </Card>

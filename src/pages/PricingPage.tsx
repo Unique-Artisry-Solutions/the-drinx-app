@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -9,11 +8,13 @@ import FeatureTierComparison from '@/components/pricing/FeatureTierComparison';
 import { useToast } from '@/hooks/use-toast';
 import Layout from '@/components/Layout';
 import BackButton from '@/components/navigation/BackButton';
+import { useAppSubscription } from '@/hooks/useAppSubscription';
 
 const PricingPage = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { subscription, createCheckoutSession } = useAppSubscription();
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
   const [userType, setUserType] = useState<'individual' | 'establishment' | 'promoter'>('individual');
   
@@ -29,7 +30,7 @@ const PricingPage = () => {
     }
   }, []);
   
-  // Define pricing tiers for each user type
+  // Define pricing tiers for each user type - these would be fetched from a backend in a real app
   const pricingTiersByType = {
     individual: [
       {
@@ -38,6 +39,7 @@ const PricingPage = () => {
         price: 0,
         description: 'Basic features for casual users',
         isPopular: false,
+        priceId: '', // No price ID for free tier
       },
       {
         name: 'Basic',
@@ -45,6 +47,7 @@ const PricingPage = () => {
         price: billingPeriod === 'monthly' ? 9.99 : 99.99,
         description: 'Enhanced experience for regulars',
         isPopular: false,
+        priceId: billingPeriod === 'monthly' ? 'price_individual_basic_monthly' : 'price_individual_basic_yearly',
       },
       {
         name: 'Premium',
@@ -52,6 +55,7 @@ const PricingPage = () => {
         price: billingPeriod === 'monthly' ? 19.99 : 199.99,
         description: 'Complete access for enthusiasts',
         isPopular: true,
+        priceId: billingPeriod === 'monthly' ? 'price_individual_premium_monthly' : 'price_individual_premium_yearly',
       },
       {
         name: 'VIP',
@@ -59,6 +63,7 @@ const PricingPage = () => {
         price: billingPeriod === 'monthly' ? 49.99 : 499.99,
         description: 'Ultimate experience with priority access',
         isPopular: false,
+        priceId: billingPeriod === 'monthly' ? 'price_individual_vip_monthly' : 'price_individual_vip_yearly',
       }
     ],
     establishment: [
@@ -126,7 +131,7 @@ const PricingPage = () => {
   // Get current tiers based on selected user type
   const currentPricingTiers = pricingTiersByType[userType];
 
-  const handleSubscribe = (tier: string) => {
+  const handleSubscribe = (tier: string, priceId: string) => {
     if (!user) {
       toast({
         title: "Login Required",
@@ -137,12 +142,24 @@ const PricingPage = () => {
       return;
     }
     
-    // Handle subscription logic here
-    toast({
-      title: "Subscription Request",
-      description: `You've selected the ${tier} plan for ${userType} account. This feature is coming soon!`,
-      variant: "default",
-    });
+    if (tier === 'free') {
+      // Handle free subscription
+      toast({
+        title: "Free Plan Selected",
+        description: "You're now on the free plan.",
+        variant: "default",
+      });
+    } else {
+      // Handle paid subscription through Stripe
+      createCheckoutSession.mutate({
+        priceId,
+        subscriptionType: tier
+      });
+    }
+  };
+
+  const getCurrentSubscriptionTier = () => {
+    return subscription?.subscription_type || 'free';
   };
 
   return (
@@ -190,6 +207,12 @@ const PricingPage = () => {
               </TabsList>
             </Tabs>
           </div>
+
+          {subscription && (
+            <div className="mt-6 p-4 bg-blue-50 rounded-lg inline-block">
+              <p className="font-medium">Current plan: <span className="text-blue-600 capitalize">{subscription.subscription_type}</span></p>
+            </div>
+          )}
         </div>
 
         {/* Pricing cards */}
@@ -202,9 +225,10 @@ const PricingPage = () => {
               price={tier.price}
               description={tier.description}
               isPopular={tier.isPopular}
-              onSubscribe={() => handleSubscribe(tier.tier)}
+              onSubscribe={() => handleSubscribe(tier.tier, tier.priceId)}
               userType={userType}
               billingPeriod={billingPeriod}
+              isCurrentPlan={getCurrentSubscriptionTier() === tier.tier}
             />
           ))}
         </div>

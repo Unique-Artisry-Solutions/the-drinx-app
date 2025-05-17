@@ -1,220 +1,110 @@
 
-/**
- * Feature Registry
- * 
- * This registry defines all features in the application and their access requirements.
- * Each feature has a unique ID and description for use throughout the app.
- */
+// Feature registry - defines all available features by tier
 
-/**
- * Feature definition type
- */
+export type FeatureTier = 'free' | 'basic' | 'premium' | 'vip';
+
 export interface Feature {
   id: string;
   name: string;
   description: string;
-  defaultEnabled: boolean;
-  requiresSubscription?: boolean;
-  minimumTier?: 'basic' | 'premium' | 'vip';
-  category?: 'core' | 'analytics' | 'communications' | 'marketing' | 'admin' | 'integrations';
-  isExperimental?: boolean;
+  userTypes: ('individual' | 'establishment' | 'promoter')[];
 }
 
-/**
- * Application features
- */
-export const FEATURES = {
-  ADVANCED_ANALYTICS: 'FEATURE_ADVANCED_ANALYTICS',
-  BULK_MESSAGING: 'FEATURE_BULK_MESSAGING',
-  CUSTOM_BRANDING: 'FEATURE_CUSTOM_BRANDING',
-  PRIORITY_SUPPORT: 'FEATURE_PRIORITY_SUPPORT',
-  EVENT_INSIGHTS: 'FEATURE_EVENT_INSIGHTS',
+// Define all features
+const ALL_FEATURES: Feature[] = [
+  // Individual features
+  {
+    id: 'recipe_access',
+    name: 'Access Mocktail Recipes',
+    description: 'Browse and search mocktail recipes',
+    userTypes: ['individual'],
+  },
+  {
+    id: 'venue_discovery',
+    name: 'Venue Discovery',
+    description: 'Find and explore non-alcoholic venues',
+    userTypes: ['individual'],
+  },
+  {
+    id: 'profile_creation',
+    name: 'Profile Creation',
+    description: 'Create and customize your profile',
+    userTypes: ['individual', 'establishment', 'promoter'],
+  },
+  {
+    id: 'bar_crawl_participation',
+    name: 'Bar Crawl Participation',
+    description: 'Join and participate in bar crawls',
+    userTypes: ['individual'],
+  },
+  {
+    id: 'save_favorites',
+    name: 'Save Favorites',
+    description: 'Save your favorite venues and recipes',
+    userTypes: ['individual'],
+  },
+  {
+    id: 'custom_mocktail_lists',
+    name: 'Custom Mocktail Lists',
+    description: 'Create and share custom mocktail lists',
+    userTypes: ['individual'],
+  },
+  {
+    id: 'priority_registration',
+    name: 'Priority Registration',
+    description: 'Get priority access to bar crawl registration',
+    userTypes: ['individual'],
+  },
   
-  // Add more features as needed
-  AUDIENCE_SEGMENTATION: 'FEATURE_AUDIENCE_SEGMENTATION',
-  SOCIAL_SHARING: 'FEATURE_SOCIAL_SHARING',
-  DOCUMENT_GENERATION: 'FEATURE_DOCUMENT_GENERATION',
-  INTEGRATIONS: 'FEATURE_INTEGRATIONS',
-  CAMPAIGN_MANAGER: 'FEATURE_CAMPAIGN_MANAGER',
-  API_ACCESS: 'FEATURE_API_ACCESS',
-} as const;
+  // Establishment features
+  {
+    id: 'establishment_profile',
+    name: 'Establishment Profile',
+    description: 'Create and manage your establishment profile',
+    userTypes: ['establishment'],
+  },
+  {
+    id: 'menu_management',
+    name: 'Menu Management',
+    description: 'Manage your mocktail menu',
+    userTypes: ['establishment'],
+  },
+  
+  // Promoter features
+  {
+    id: 'create_events',
+    name: 'Create Events',
+    description: 'Create and manage events',
+    userTypes: ['promoter'],
+  },
+  {
+    id: 'follower_management',
+    name: 'Follower Management',
+    description: 'See who follows you and manage followers',
+    userTypes: ['promoter'],
+  },
+  {
+    id: 'promotional_tools',
+    name: 'Promotional Tools',
+    description: 'Access tools to promote your events',
+    userTypes: ['promoter'],
+  },
+];
 
-export type FeatureKey = keyof typeof FEATURES;
-export type FeatureId = typeof FEATURES[FeatureKey];
-
-/**
- * Feature registry with details about each feature
- */
-export const featureRegistry: Record<FeatureId, Feature> = {
-  [FEATURES.ADVANCED_ANALYTICS]: {
-    id: FEATURES.ADVANCED_ANALYTICS,
-    name: 'Advanced Analytics',
-    description: 'Access to advanced analytics dashboard with insights and reporting',
-    defaultEnabled: false,
-    requiresSubscription: true,
-    minimumTier: 'premium',
-    category: 'analytics'
-  },
-  [FEATURES.BULK_MESSAGING]: {
-    id: FEATURES.BULK_MESSAGING,
-    name: 'Bulk Messaging',
-    description: 'Send messages to multiple venues at once',
-    defaultEnabled: false,
-    requiresSubscription: true,
-    minimumTier: 'premium',
-    category: 'communications'
-  },
-  [FEATURES.CUSTOM_BRANDING]: {
-    id: FEATURES.CUSTOM_BRANDING,
-    name: 'Custom Branding',
-    description: 'Customize branding on event pages and promotional materials',
-    defaultEnabled: false,
-    requiresSubscription: true,
-    minimumTier: 'vip',
-    category: 'marketing'
-  },
-  [FEATURES.PRIORITY_SUPPORT]: {
-    id: FEATURES.PRIORITY_SUPPORT,
-    name: 'Priority Support',
-    description: 'Get priority customer support with faster response times',
-    defaultEnabled: false,
-    requiresSubscription: true,
-    minimumTier: 'basic',
-    category: 'core'
-  },
-  [FEATURES.EVENT_INSIGHTS]: {
-    id: FEATURES.EVENT_INSIGHTS,
-    name: 'Event Insights',
-    description: 'Detailed insights about event performance and attendee engagement',
-    defaultEnabled: false,
-    requiresSubscription: true,
-    minimumTier: 'premium',
-    category: 'analytics'
-  },
-  [FEATURES.AUDIENCE_SEGMENTATION]: {
-    id: FEATURES.AUDIENCE_SEGMENTATION,
-    name: 'Audience Segmentation',
-    description: 'Create and target specific audience segments',
-    defaultEnabled: false,
-    requiresSubscription: true,
-    minimumTier: 'premium',
-    category: 'marketing'
-  },
-  [FEATURES.SOCIAL_SHARING]: {
-    id: FEATURES.SOCIAL_SHARING,
-    name: 'Social Sharing',
-    description: 'Advanced social media sharing capabilities',
-    defaultEnabled: true,
-    requiresSubscription: false,
-    category: 'marketing'
-  },
-  [FEATURES.DOCUMENT_GENERATION]: {
-    id: FEATURES.DOCUMENT_GENERATION,
-    name: 'Document Generation',
-    description: 'Generate PDFs and other documents',
-    defaultEnabled: false,
-    requiresSubscription: true,
-    minimumTier: 'vip',
-    category: 'core'
-  },
-  [FEATURES.INTEGRATIONS]: {
-    id: FEATURES.INTEGRATIONS,
-    name: 'Third-party Integrations',
-    description: 'Connect with popular third-party services',
-    defaultEnabled: false,
-    requiresSubscription: true,
-    minimumTier: 'premium',
-    category: 'integrations'
-  },
-  [FEATURES.CAMPAIGN_MANAGER]: {
-    id: FEATURES.CAMPAIGN_MANAGER,
-    name: 'Campaign Manager',
-    description: 'Create and manage multi-channel marketing campaigns',
-    defaultEnabled: false,
-    requiresSubscription: true,
-    minimumTier: 'vip',
-    category: 'marketing'
-  },
-  [FEATURES.API_ACCESS]: {
-    id: FEATURES.API_ACCESS,
-    name: 'API Access',
-    description: 'Access to the platform API for custom integrations',
-    defaultEnabled: false,
-    requiresSubscription: true,
-    minimumTier: 'vip',
-    category: 'integrations',
-    isExperimental: true
-  },
+// Map features to tiers
+export const featuresByTier: Record<FeatureTier, string[]> = {
+  free: ['recipe_access', 'venue_discovery', 'profile_creation'],
+  basic: ['recipe_access', 'venue_discovery', 'profile_creation', 'bar_crawl_participation', 'save_favorites', 'establishment_profile', 'create_events'],
+  premium: ['recipe_access', 'venue_discovery', 'profile_creation', 'bar_crawl_participation', 'save_favorites', 'custom_mocktail_lists', 'establishment_profile', 'menu_management', 'create_events', 'follower_management'],
+  vip: ['recipe_access', 'venue_discovery', 'profile_creation', 'bar_crawl_participation', 'save_favorites', 'custom_mocktail_lists', 'priority_registration', 'establishment_profile', 'menu_management', 'create_events', 'follower_management', 'promotional_tools'],
 };
 
-/**
- * Group features by subscription tier
- */
-export const featuresByTier: Record<string, FeatureId[]> = {
-  free: [
-    FEATURES.SOCIAL_SHARING,
-  ],
-  basic: [
-    FEATURES.PRIORITY_SUPPORT,
-    FEATURES.SOCIAL_SHARING,
-  ],
-  premium: [
-    FEATURES.PRIORITY_SUPPORT,
-    FEATURES.ADVANCED_ANALYTICS,
-    FEATURES.BULK_MESSAGING,
-    FEATURES.EVENT_INSIGHTS,
-    FEATURES.AUDIENCE_SEGMENTATION,
-    FEATURES.SOCIAL_SHARING,
-    FEATURES.INTEGRATIONS,
-  ],
-  vip: [
-    FEATURES.PRIORITY_SUPPORT,
-    FEATURES.ADVANCED_ANALYTICS,
-    FEATURES.BULK_MESSAGING,
-    FEATURES.EVENT_INSIGHTS,
-    FEATURES.AUDIENCE_SEGMENTATION,
-    FEATURES.CUSTOM_BRANDING,
-    FEATURES.SOCIAL_SHARING,
-    FEATURES.DOCUMENT_GENERATION,
-    FEATURES.INTEGRATIONS,
-    FEATURES.CAMPAIGN_MANAGER,
-    FEATURES.API_ACCESS,
-  ],
+// Helper function to get feature details by ID
+export const getFeature = (featureId: string): Feature | undefined => {
+  return ALL_FEATURES.find(feature => feature.id === featureId);
 };
 
-/**
- * Group features by category
- */
-export const featuresByCategory: Record<string, FeatureId[]> = Object.values(featureRegistry)
-  .reduce((acc, feature) => {
-    if (feature.category) {
-      if (!acc[feature.category]) {
-        acc[feature.category] = [];
-      }
-      acc[feature.category].push(feature.id as FeatureId);
-    }
-    return acc;
-  }, {} as Record<string, FeatureId[]>);
-
-/**
- * Helper function to get feature by ID
- */
-export function getFeature(featureId: FeatureId): Feature | undefined {
-  return featureRegistry[featureId];
-}
-
-/**
- * Helper function to get all features for a specific tier
- */
-export function getFeaturesForTier(tier: string): Feature[] {
-  const featureIds = featuresByTier[tier] || [];
-  return featureIds.map(id => featureRegistry[id]).filter(Boolean);
-}
-
-/**
- * Helper function to get all features for a specific category
- */
-export function getFeaturesForCategory(category: string): Feature[] {
-  const featureIds = featuresByCategory[category] || [];
-  return featureIds.map(id => featureRegistry[id]).filter(Boolean);
-}
+// Helper function to check if a feature is included in a specific tier
+export const isFeatureInTier = (featureId: string, tier: FeatureTier): boolean => {
+  return featuresByTier[tier].includes(featureId);
+};
