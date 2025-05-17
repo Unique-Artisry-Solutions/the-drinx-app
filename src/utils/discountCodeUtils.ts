@@ -1,268 +1,281 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { PromotionCode } from '@/types/PromotionTypes';
 
-export interface DiscountCode {
-  id: string;
-  code: string;
-  description: string;
-  discount_type: string;
-  discount_value: number;
-  start_date: string;
-  end_date?: string | null;
-  is_active: boolean;
-  establishment_id: string;
-  user_segment?: string | null;
-  usage_limit?: number | null;
-  used_count?: number | null;
-  min_purchase_amount?: number | null;
-  combinable: boolean;
-  valid_days?: string[] | null;
-  valid_hours?: {
-    start: string;
-    end: string;
-  } | null;
-  created_at: string;
-  updated_at: string;
-}
+// Function to get all available promotion codes for an establishment
+export const getPromotionCodes = async (establishmentId: string): Promise<PromotionCode[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('establishment_promotions')
+      .select('*')
+      .eq('establishment_id', establishmentId);
 
-/**
- * Fetch discount code details
- */
-export async function getDiscountCode(code: string): Promise<DiscountCode | null> {
+    if (error) {
+      console.error("Error fetching promotion codes:", error);
+      throw new Error(`Failed to fetch promotion codes: ${error.message}`);
+    }
+
+    // Map the database response to the PromotionCode type and handle used_count field
+    // Some responses might have usage_count instead of used_count
+    return data.map(item => ({
+      ...item,
+      // Ensure used_count is available (it might be called usage_count in some responses)
+      used_count: item.used_count ?? item.usage_count ?? 0
+    })) as PromotionCode[];
+  } catch (err) {
+    console.error("Error in getPromotionCodes:", err);
+    throw err;
+  }
+};
+
+// Function to validate a promotion code
+export const validatePromotionCode = async (
+  code: string,
+  establishmentId: string,
+  orderAmount?: number
+): Promise<PromotionCode | null> => {
   try {
     const { data, error } = await supabase
       .from('establishment_promotions')
       .select('*')
       .eq('code', code)
+      .eq('establishment_id', establishmentId)
       .eq('is_active', true)
       .single();
+
+    if (error) {
+      console.error("Error validating promotion code:", error);
+      return null;
+    }
+
+    if (!data) {
+      return null;
+    }
+
+    const promotion = data as unknown as PromotionCode;
     
-    if (error || !data) {
-      console.error('Error fetching discount code:', error);
+    // Check if code is expired
+    if (promotion.end_date && new Date(promotion.end_date) < new Date()) {
       return null;
     }
     
-    // Safely type cast the data with default values for potentially missing fields
+    // Check if usage limit is reached
+    if (promotion.usage_limit !== null && 
+        (promotion.used_count ?? 0) >= (promotion.usage_limit ?? 0)) {
+      return null;
+    }
+    
+    // Check if minimum purchase amount is satisfied
+    if (orderAmount !== undefined && 
+        promotion.min_purchase_amount !== null && 
+        orderAmount < promotion.min_purchase_amount) {
+      return null;
+    }
+    
     return {
-      ...data,
-      valid_hours: data.valid_hours as { start: string; end: string; } | null,
-      used_count: data.used_count || 0,
-      usage_limit: data.usage_limit || null
-    } as DiscountCode;
-  } catch (error) {
-    console.error('Exception in getDiscountCode:', error);
+      ...promotion,
+      // Ensure used_count is available
+      used_count: promotion.used_count ?? 0
+    };
+  } catch (err) {
+    console.error("Error in validatePromotionCode:", err);
     return null;
   }
-}
+};
 
-/**
- * Increment the usage count for a discount code
- */
-export async function incrementCodeUsage(codeId: string, tableName: string = 'establishment_promotions'): Promise<boolean> {
+// Function to record a promotion redemption
+export const recordPromotionRedemption = async (
+  promotionId: string,
+  userId: string,
+  orderAmount: number,
+  discountAmount: number,
+  orderId?: string
+): Promise<boolean> => {
   try {
-    if (tableName !== 'establishment_promotions') {
-      console.warn(`Table ${tableName} may not exist, defaulting to establishment_promotions`);
-      tableName = 'establishment_promotions';
-    }
-    
-    // First, get the current usage count and limit
-    const { data, error } = await supabase
-      .from(tableName as 'establishment_promotions')
-      .select('*')
-      .eq('id', codeId)
-      .single();
-    
-    if (error) {
-      console.error('Error fetching code usage data:', error);
-      return false;
-    }
-    
-    // Create an update object with used_count incremented by 1
-    const currentUsedCount = data?.used_count || 0;
-    const updates: Record<string, any> = { 
-      used_count: currentUsedCount + 1,
-    };
-    
-    // If usage limit is reached, mark as inactive
-    if (data?.usage_limit && (currentUsedCount + 1) >= data.usage_limit) {
-      updates.is_active = false;
-    }
-    
-    // Update the record
-    const { error: updateError } = await supabase
-      .from(tableName as 'establishment_promotions')
-      .update(updates)
-      .eq('id', codeId);
-      
-    if (updateError) {
-      console.error('Error updating code usage:', updateError);
-      return false;
-    }
-    
-    return true;
-  } catch (error) {
-    console.error('Exception in incrementCodeUsage:', error);
-    return false;
-  }
-}
-
-/**
- * Check if a discount code is valid for the current date and time
- */
-export function isDiscountCodeValid(code: DiscountCode): boolean {
-  if (!code.is_active) return false;
-  
-  const now = new Date();
-  const startDate = new Date(code.start_date);
-  
-  // Check if code has started
-  if (now < startDate) return false;
-  
-  // Check if code has expired
-  if (code.end_date && now > new Date(code.end_date)) return false;
-  
-  // Check for usage limit
-  if (code.usage_limit !== null && code.used_count !== null && code.used_count >= code.usage_limit) {
-    return false;
-  }
-  
-  // Check for day restrictions
-  if (code.valid_days && code.valid_days.length > 0) {
-    const currentDay = now.toLocaleDateString('en-US', { weekday: 'long' });
-    if (!code.valid_days.includes(currentDay)) return false;
-  }
-  
-  // Check for time restrictions
-  if (code.valid_hours) {
-    const currentTime = now.toTimeString().substring(0, 5); // HH:MM
-    if (currentTime < code.valid_hours.start || currentTime > code.valid_hours.end) {
-      return false;
-    }
-  }
-  
-  return true;
-}
-
-/**
- * Save a promotion code for a user
- */
-export async function savePromotionCode(userId: string, codeId: string): Promise<boolean> {
-  try {
-    const { error } = await supabase
-      .from('user_saved_codes')
+    // Insert redemption record
+    const { error: redemptionError } = await supabase
+      .from('promotion_redemptions')
       .insert({
+        promotion_id: promotionId,
         user_id: userId,
-        code_id: codeId
+        order_amount: orderAmount,
+        discount_amount: discountAmount,
+        order_id: orderId
       });
       
-    if (error) {
-      console.error('Error saving promotion code:', error);
+    if (redemptionError) {
+      console.error("Error recording promotion redemption:", redemptionError);
+      return false;
+    }
+    
+    // Update the used_count on the promotion
+    const { data: promotion, error: getError } = await supabase
+      .from('establishment_promotions')
+      .select('used_count, usage_count')
+      .eq('id', promotionId)
+      .single();
+      
+    if (getError) {
+      console.error("Error fetching promotion for update:", getError);
+      return false;
+    }
+    
+    // Determine which field to update based on what's available in the data
+    const currentCount = (promotion.used_count ?? promotion.usage_count ?? 0) + 1;
+    
+    // Update either used_count or usage_count depending on what the database expects
+    const updateField = promotion.hasOwnProperty('used_count') ? 'used_count' : 'usage_count';
+    const updateData = { [updateField]: currentCount };
+    
+    const { error: updateError } = await supabase
+      .from('establishment_promotions')
+      .update(updateData)
+      .eq('id', promotionId);
+      
+    if (updateError) {
+      console.error("Error updating promotion used count:", updateError);
       return false;
     }
     
     return true;
-  } catch (error) {
-    console.error('Exception in savePromotionCode:', error);
+  } catch (err) {
+    console.error("Error in recordPromotionRedemption:", err);
     return false;
   }
-}
+};
 
-/**
- * Share a promotion code
- */
-export async function sharePromotionCode(code: string, method: 'email' | 'sms' | 'clipboard' | 'social'): Promise<boolean> {
+// Function to get redemption analytics for promotions
+export const getPromotionAnalytics = async (establishmentId: string): Promise<any[]> => {
   try {
-    // Log promotional code sharing to analytics instead of database that doesn't exist
-    console.log('Promotion sharing event:', {
-      code,
-      method,
-      timestamp: new Date().toISOString()
-    });
+    const { data, error } = await supabase
+      .from('promotion_analytics')
+      .select('*')
+      .eq('establishment_id', establishmentId);
       
-    // Handle the different sharing methods
-    switch (method) {
-      case 'email':
-        // Open email client with prefilled message
-        window.location.href = `mailto:?subject=Check out this promotion&body=Use code ${code} for a discount!`;
-        break;
-      case 'sms':
-        // Open SMS with prefilled message (mobile only)
-        window.location.href = `sms:?body=Use code ${code} for a discount!`;
-        break;
-      case 'clipboard':
-        // Copy to clipboard handled separately
-        break;
-      case 'social':
-        // Open a share dialog (implementation depends on platform)
-        if (navigator.share) {
-          await navigator.share({
-            title: 'Promotion Code',
-            text: `Use code ${code} for a discount!`,
-            url: window.location.href
-          });
-        } else {
-          console.log('Web Share API not supported');
-          return false;
-        }
-        break;
+    if (error) {
+      console.error("Error fetching promotion analytics:", error);
+      throw new Error(`Failed to fetch promotion analytics: ${error.message}`);
     }
     
-    return true;
-  } catch (error) {
-    console.error('Error sharing promotion code:', error);
-    return false;
+    return data || [];
+  } catch (err) {
+    console.error("Error in getPromotionAnalytics:", err);
+    throw err;
   }
-}
+};
 
-/**
- * Auto-apply best discount to an order
- */
-export async function autoApplyBestDiscount(userId: string, orderAmount: number, establishmentId: string): Promise<DiscountCode | null> {
+// Function to create a batch of promotion codes
+export const batchCreatePromotionCodes = async (
+  codes: Array<Partial<PromotionCode>>,
+  establishmentId: string
+): Promise<PromotionCode[]> => {
   try {
-    // Fetch all active codes for this establishment
+    const codesToInsert = codes.map(code => ({
+      ...code,
+      establishment_id: establishmentId
+    }));
+    
+    const { data, error } = await supabase
+      .from('establishment_promotions')
+      .insert(codesToInsert)
+      .select();
+      
+    if (error) {
+      console.error("Error creating batch promotion codes:", error);
+      throw new Error(`Failed to create batch promotion codes: ${error.message}`);
+    }
+    
+    // Map the database response to the PromotionCode type 
+    // and ensure used_count is available in the response
+    return data.map(item => ({
+      ...item,
+      used_count: item.used_count ?? item.usage_count ?? 0
+    })) as PromotionCode[];
+  } catch (err) {
+    console.error("Error in batchCreatePromotionCodes:", err);
+    throw err;
+  }
+};
+
+// Function to auto-apply the best discount for an order
+export const autoApplyBestDiscount = async (
+  establishmentId: string,
+  orderAmount: number,
+  userId: string
+): Promise<PromotionCode | null> => {
+  try {
     const { data, error } = await supabase
       .from('establishment_promotions')
       .select('*')
-      .eq('is_active', true)
       .eq('establishment_id', establishmentId)
-      .lt('min_purchase_amount', orderAmount)
-      .order('discount_value', { ascending: false });
+      .eq('is_active', true);
       
-    if (error || !data || data.length === 0) {
+    if (error) {
+      console.error("Error fetching promotions for auto-apply:", error);
       return null;
     }
     
-    // Find the best discount
-    let bestDiscount: DiscountCode | null = null;
-    let highestValue = 0;
-    
-    for (const code of data) {
-      const discountCode = {
-        ...code,
-        valid_hours: code.valid_hours as { start: string; end: string; } | null,
-        used_count: code.used_count || 0,
-        usage_limit: code.usage_limit || null
-      } as DiscountCode;
-      
-      if (isDiscountCodeValid(discountCode)) {
-        let value = 0;
-        
-        if (discountCode.discount_type === 'percentage') {
-          value = (discountCode.discount_value / 100) * orderAmount;
-        } else {
-          value = discountCode.discount_value;
-        }
-        
-        if (value > highestValue) {
-          highestValue = value;
-          bestDiscount = discountCode;
-        }
-      }
+    if (!data || data.length === 0) {
+      return null;
     }
     
-    return bestDiscount;
-  } catch (error) {
-    console.error('Error in autoApplyBestDiscount:', error);
+    // Filter valid promotions
+    const now = new Date();
+    const validPromotions = data.filter((promo: any) => {
+      // Check expiration date
+      if (promo.end_date && new Date(promo.end_date) < now) {
+        return false;
+      }
+      
+      // Check usage limit
+      if (promo.usage_limit !== null && 
+          (promo.used_count ?? promo.usage_count ?? 0) >= promo.usage_limit) {
+        return false;
+      }
+      
+      // Check minimum purchase amount
+      if (promo.min_purchase_amount !== null && orderAmount < promo.min_purchase_amount) {
+        return false;
+      }
+      
+      return true;
+    });
+    
+    if (validPromotions.length === 0) {
+      return null;
+    }
+    
+    // Calculate discount values for comparison
+    const promotionsWithValue = validPromotions.map((promo: any) => {
+      let discountValue = 0;
+      
+      if (promo.discount_type === 'percentage') {
+        discountValue = orderAmount * (promo.discount_value / 100);
+      } else if (promo.discount_type === 'fixed') {
+        discountValue = promo.discount_value;
+      }
+      // Free item promotions are not compared by value
+      
+      return { ...promo, calculatedValue: discountValue };
+    });
+    
+    // Sort by calculated value in descending order
+    promotionsWithValue.sort((a: any, b: any) => b.calculatedValue - a.calculatedValue);
+    
+    // Return the best promotion
+    const bestPromotion = promotionsWithValue[0];
+    return {
+      ...bestPromotion,
+      used_count: bestPromotion.used_count ?? bestPromotion.usage_count ?? 0
+    } as PromotionCode;
+  } catch (err) {
+    console.error("Error in autoApplyBestDiscount:", err);
     return null;
   }
-}
+};
+
+// Export additional functions for further development
+export { 
+  recordPromotionRedemption as recordRedemption,
+  autoApplyBestDiscount as findBestDiscount
+};
