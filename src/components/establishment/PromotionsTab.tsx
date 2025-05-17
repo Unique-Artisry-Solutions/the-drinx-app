@@ -80,7 +80,7 @@ const PromotionsTab: React.FC<PromotionsTabProps> = ({
                   </div>
                   {promotion.usage_limit && (
                     <div>
-                      <span className="font-medium">Usage:</span> {promotion.usage_count} / {promotion.usage_limit}
+                      <span className="font-medium">Usage:</span> {promotion.usage_count || 0} / {promotion.usage_limit}
                     </div>
                   )}
                   {promotion.end_date && (

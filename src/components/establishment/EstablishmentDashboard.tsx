@@ -41,7 +41,10 @@ const EstablishmentDashboard: React.FC<EstablishmentDashboardProps> = ({ establi
     valid_hours: p.valid_hours || null,
     user_segment: p.user_segment || null,
     combinable: p.combinable,
-    min_purchase_amount: p.min_purchase_amount || null
+    min_purchase_amount: p.min_purchase_amount || null,
+    establishment_id: p.establishment_id,
+    created_at: p.created_at || new Date().toISOString(),
+    updated_at: p.updated_at || new Date().toISOString()
   }));
 
   if (isLoading) {

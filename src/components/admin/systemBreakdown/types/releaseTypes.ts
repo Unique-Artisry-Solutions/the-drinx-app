@@ -16,3 +16,38 @@ export interface ReleaseProgress {
   totalFeatures: number;
   percentComplete: number;
 }
+
+// Add the missing Release type
+export interface Release {
+  id: string;
+  name: string;
+  version: string;
+  status: ReleaseStatus;
+  plannedReleaseDate?: string;
+  releaseDate?: string;
+  notes?: ReleaseNote[];
+  features?: ReleaseFeature[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Add the missing ReleaseFeature type
+export interface ReleaseFeature {
+  id: string;
+  releaseId: string;
+  featureId: string;
+  status: ReleaseFeatureStatus;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Add the missing FeatureFlag type
+export interface FeatureFlag {
+  id: string;
+  name: string;
+  description?: string;
+  status: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}

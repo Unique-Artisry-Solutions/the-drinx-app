@@ -18,14 +18,14 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onSubmit, onCancel, initi
   const [formData, setFormData] = useState<PromotionFormData>({
     code: '',
     description: '',
-    discountType: 'percentage',
-    discountValue: 10,
-    startDate: new Date(),
-    endDate: null,
-    validDays: [],
-    usageLimit: null,
-    isActive: true,
-    minPurchaseAmount: null,
+    discount_type: 'percentage',
+    discount_value: 10,
+    start_date: new Date(),
+    end_date: null,
+    valid_days: [],
+    usage_limit: null,
+    is_active: true,
+    min_purchase_amount: null,
     combinable: true
   });
 
@@ -65,10 +65,10 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onSubmit, onCancel, initi
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="discountType" className="block text-sm font-medium">Discount Type</label>
+          <label htmlFor="discount_type" className="block text-sm font-medium">Discount Type</label>
           <Select 
-            value={formData.discountType} 
-            onValueChange={(value: 'percentage' | 'fixed' | 'free_item') => handleChange('discountType', value)}
+            value={formData.discount_type} 
+            onValueChange={(value: 'percentage' | 'fixed' | 'free_item') => handleChange('discount_type', value)}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select discount type" />
@@ -82,39 +82,39 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onSubmit, onCancel, initi
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="discountValue" className="block text-sm font-medium">Discount Value</label>
+          <label htmlFor="discount_value" className="block text-sm font-medium">Discount Value</label>
           <Input
-            id="discountValue"
+            id="discount_value"
             type="number"
             min={0}
-            value={formData.discountValue || ''}
-            onChange={(e) => handleChange('discountValue', parseFloat(e.target.value))}
-            placeholder={formData.discountType === 'percentage' ? 'Enter percentage' : 'Enter amount'}
+            value={formData.discount_value || ''}
+            onChange={(e) => handleChange('discount_value', parseFloat(e.target.value))}
+            placeholder={formData.discount_type === 'percentage' ? 'Enter percentage' : 'Enter amount'}
             required
           />
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="usageLimit" className="block text-sm font-medium">Usage Limit</label>
+          <label htmlFor="usage_limit" className="block text-sm font-medium">Usage Limit</label>
           <Input
-            id="usageLimit"
+            id="usage_limit"
             type="number"
             min={0}
-            value={formData.usageLimit || ''}
-            onChange={(e) => handleChange('usageLimit', e.target.value ? parseInt(e.target.value) : null)}
+            value={formData.usage_limit || ''}
+            onChange={(e) => handleChange('usage_limit', e.target.value ? parseInt(e.target.value) : null)}
             placeholder="Leave empty for unlimited"
           />
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="minPurchaseAmount" className="block text-sm font-medium">Min Purchase Amount</label>
+          <label htmlFor="min_purchase_amount" className="block text-sm font-medium">Min Purchase Amount</label>
           <Input
-            id="minPurchaseAmount"
+            id="min_purchase_amount"
             type="number"
             min={0}
             step={0.01}
-            value={formData.minPurchaseAmount || ''}
-            onChange={(e) => handleChange('minPurchaseAmount', e.target.value ? parseFloat(e.target.value) : null)}
+            value={formData.min_purchase_amount || ''}
+            onChange={(e) => handleChange('min_purchase_amount', e.target.value ? parseFloat(e.target.value) : null)}
             placeholder="Leave empty for no minimum"
           />
         </div>
@@ -123,26 +123,26 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onSubmit, onCancel, initi
           <label className="block text-sm font-medium">Active Status</label>
           <div className="flex items-center space-x-2">
             <Switch 
-              checked={formData.isActive} 
-              onCheckedChange={(checked) => handleChange('isActive', checked)} 
+              checked={formData.is_active} 
+              onCheckedChange={(checked) => handleChange('is_active', checked)} 
             />
-            <span>{formData.isActive ? 'Active' : 'Inactive'}</span>
+            <span>{formData.is_active ? 'Active' : 'Inactive'}</span>
           </div>
         </div>
 
         <div className="space-y-2">
           <label className="block text-sm font-medium">Start Date</label>
           <DatePicker 
-            date={formData.startDate ? new Date(formData.startDate) : undefined} 
-            setDate={(date) => handleChange('startDate', date)}
+            date={formData.start_date ? new Date(formData.start_date) : undefined} 
+            setDate={(date) => handleChange('start_date', date)}
           />
         </div>
 
         <div className="space-y-2">
           <label className="block text-sm font-medium">End Date</label>
           <DatePicker 
-            date={formData.endDate ? new Date(formData.endDate) : undefined} 
-            setDate={(date) => handleChange('endDate', date)}
+            date={formData.end_date ? new Date(formData.end_date) : undefined} 
+            setDate={(date) => handleChange('end_date', date)}
           />
         </div>
 

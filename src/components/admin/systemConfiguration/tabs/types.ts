@@ -1,25 +1,17 @@
 
-export interface SystemSetting {
-  id: string;
-  key: string;
-  value: string;
-  description?: string;
-  type: 'string' | 'boolean' | 'number' | 'json';
-  is_protected: boolean;
-  category: string;
-  updated_at: string;
-  updated_by?: string;
-}
+import { SystemSetting } from '@/components/admin/systemConfiguration/tabs/types';
 
 export interface SettingsTabProps {
-  settings: SystemSetting[];
-  isLoading: boolean;
-  editingSettingId: string | null;
-  editValue: string;
-  onEdit: (setting: SystemSetting) => void;
-  onSave: (id: string, value: string) => Promise<void>;
-  onCancel: () => void;
-  onEditValueChange: (value: string) => void;
-  isSubmitting: boolean;
-  error: Error | null;
+  settings?: SystemSetting[];
+  isLoading?: boolean;
+  editingSettingId?: string | null;
+  editValue?: any;
+  changeReason?: string;
+  onEdit?: (id: string, currentValue: any) => void;
+  onSave?: (id: string, isProtected: boolean) => void;
+  onCancel?: () => void;
+  onEditValueChange?: (value: any) => void;
+  setChangeReason?: (reason: string) => void;
+  error?: Error | null;
+  isSubmitting?: boolean;
 }

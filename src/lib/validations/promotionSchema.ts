@@ -12,20 +12,20 @@ export const promotionFormSchema = z.object({
     .string()
     .min(5, "Description must be at least 5 characters")
     .max(200, "Description cannot exceed 200 characters"),
-  discountType: z.enum(['percentage', 'fixed', 'free_item']),
-  discountValue: z
+  discount_type: z.enum(['percentage', 'fixed', 'free_item']),
+  discount_value: z
     .number()
     .min(0, "Discount value must be a positive number")
     .refine(
       (val) => val <= 100 || val.toString() === '',
       { message: "Percentage discount cannot exceed 100%" }
     ),
-  startDate: z.date(),
-  endDate: z.date().nullable().optional(),
-  validDays: z.array(z.string()).optional(),
-  usageLimit: z.number().int().min(1).nullable().optional(),
-  isActive: z.boolean().default(true),
-  minPurchaseAmount: z.number().min(0).nullable().optional(),
+  start_date: z.date(),
+  end_date: z.date().nullable().optional(),
+  valid_days: z.array(z.string()).optional(),
+  usage_limit: z.number().int().min(1).nullable().optional(),
+  is_active: z.boolean().default(true),
+  min_purchase_amount: z.number().min(0).nullable().optional(),
   combinable: z.boolean().default(true),
 });
 

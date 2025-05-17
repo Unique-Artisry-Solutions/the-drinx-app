@@ -13,8 +13,9 @@ export interface Promotion {
   is_active: boolean;
   establishment_id: string;
   user_segment?: string;
-  usage_limit?: number;
-  min_purchase_amount?: number;
+  usage_limit?: number | null;
+  usage_count?: number;
+  min_purchase_amount?: number | null;
   combinable: boolean;
   valid_days?: string[];
   valid_hours?: {
@@ -36,8 +37,8 @@ export interface PromotionCode {
   is_active: boolean;
   establishment_id: string;
   user_segment?: string;
-  usage_limit?: number;
-  min_purchase_amount?: number;
+  usage_limit?: number | null;
+  min_purchase_amount?: number | null;
   combinable: boolean;
   valid_days?: string[];
   valid_hours?: Json;
@@ -102,10 +103,10 @@ export interface PromotionFormData {
   description: string;
   discount_type: 'percentage' | 'fixed' | 'free_item';
   discount_value: number;
-  start_date: string;
-  end_date?: string;
+  start_date: string | Date;
+  end_date?: string | Date | null;
   is_active: boolean;
-  establishment_id: string;
+  establishment_id?: string;
   user_segment?: string;
   usage_limit?: number | null;
   min_purchase_amount?: number | null;
