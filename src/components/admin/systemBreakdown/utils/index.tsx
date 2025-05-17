@@ -57,11 +57,7 @@ import {
   isPromoterCommunicationFeature
 } from './featureDetection';
 import { isTaskCompleted, parseTasks } from './taskDetection';
-import { 
-  mapFeatureStatusToReleaseStatus, 
-  groupFeaturesByStatus,
-  calculateReleaseCompletion
-} from './releaseUtils';
+import { groupFeaturesByStatus, calculateReleaseCompletion } from './releaseUtils';
 import { 
   prepareFeatureShowcaseData,
   generateFeatureReport
@@ -83,7 +79,7 @@ export function getDateMonthsFromNow(months: number): string {
   return date.toISOString().split('T')[0]; // YYYY-MM-DD format
 }
 
-// Re-export all utility functions
+// Re-export all utility functions (minus the release-specific ones)
 export {
   renderStatusBadge,
   renderDatabaseStatusBadge,
@@ -141,7 +137,6 @@ export {
   isPromoterCommunicationFeature,
   isTaskCompleted,
   parseTasks,
-  mapFeatureStatusToReleaseStatus,
   groupFeaturesByStatus,
   calculateReleaseCompletion,
   createProgressSnapshot,

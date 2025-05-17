@@ -1,48 +1,25 @@
 
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
-// Simplified stub implementation with no parameters to avoid type errors
+// Simplified stub implementation with no release management functionality
 export function useReleaseManagement() {
   const { toast } = useToast();
   
-  // Create stub functions with no parameters
-  const createRelease = () => {
-    console.log('Stub: createRelease called');
+  // Create stub functions with no actual functionality
+  const showFeatureUnavailableToast = () => {
     toast({
-      title: "Release Management Unavailable",
-      description: "This functionality has been temporarily disabled.",
-    });
-  };
-  
-  const updateRelease = () => {
-    console.log('Stub: updateRelease called');
-  };
-  
-  const deleteRelease = () => {
-    console.log('Stub: deleteRelease called');
-  };
-  
-  const selectRelease = () => {
-    console.log('Stub: selectRelease called');
-  };
-  
-  // Basic stub function that logs the features but doesn't create a real release
-  const createReleaseFromFeatures = () => {
-    console.log('Stub: Would create release with features');
-    toast({
-      title: "Release Management Unavailable",
-      description: "The Release Management module has been temporarily disabled. Feature information has been logged to the console.",
-      duration: 5000,
+      title: "Feature Unavailable",
+      description: "The Release Management module has been removed from the system.",
     });
   };
   
   return {
     releases: [],
     releaseProgress: [],
-    createRelease,
-    updateRelease,
-    deleteRelease,
-    selectRelease,
-    createReleaseFromFeatures
+    createRelease: showFeatureUnavailableToast,
+    updateRelease: showFeatureUnavailableToast,
+    deleteRelease: showFeatureUnavailableToast,
+    selectRelease: showFeatureUnavailableToast,
+    createReleaseFromFeatures: showFeatureUnavailableToast
   };
 }

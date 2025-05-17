@@ -1,5 +1,15 @@
 
-import { SystemSetting } from '@/components/admin/systemConfiguration/tabs/types';
+// Define SystemSetting interface directly
+export interface SystemSetting {
+  id: string;
+  key: string;
+  value: any;
+  description?: string;
+  category: string;
+  is_protected: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
 
 export interface SettingsTabProps {
   settings?: SystemSetting[];

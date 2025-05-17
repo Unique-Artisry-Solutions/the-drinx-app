@@ -1,7 +1,7 @@
 
 import * as z from 'zod';
 
-// Schema for promotions form validation
+// Schema for promotions form validation using snake_case consistently
 export const promotionFormSchema = z.object({
   code: z
     .string()
