@@ -1,116 +1,42 @@
 
-import React, { useState, useEffect } from 'react';
-import { CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import { Label } from '@/components/ui/label';
-import { FormMessage } from '@/components/ui/form';
+import React from 'react';
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { useStripe as useStripeContext } from '@/contexts/StripeContext';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 interface CheckoutPaymentFormProps {
-  onPaymentMethodChange: (paymentMethod: any) => void;
-  error?: string;
+  onNext: () => void;
+  onBack: () => void;
 }
 
-const CheckoutPaymentForm: React.FC<CheckoutPaymentFormProps> = ({ 
-  onPaymentMethodChange,
-  error 
-}) => {
-  // Ensure Stripe is enabled
-  const { enableStripe, isStripeLoading } = useStripeContext();
-  
-  // Make sure Stripe is enabled on component mount
-  useEffect(() => {
-    enableStripe();
-  }, [enableStripe]);
-  
-  const stripe = useStripe();
-  const elements = useElements();
-  const [cardError, setCardError] = useState<string | undefined>();
-  const [isCardComplete, setIsCardComplete] = useState(false);
-  
-  const cardElementOptions = {
-    style: {
-      base: {
-        fontSize: '16px',
-        color: '#424770',
-        '::placeholder': {
-          color: '#aab7c4',
-        },
-      },
-      invalid: {
-        color: '#9e2146',
-      },
-    },
-    hidePostalCode: true,
-  };
-
-  const handleCardChange = async (event: any) => {
-    setIsCardComplete(event.complete);
-    setCardError(event.error ? event.error.message : undefined);
-    
-    if (event.complete && stripe && elements) {
-      try {
-        const cardElement = elements.getElement(CardElement);
-        if (cardElement) {
-          const result = await stripe.createPaymentMethod({
-            type: 'card',
-            card: cardElement,
-          });
-          
-          if (result.error) {
-            setCardError(result.error.message);
-          } else if (result.paymentMethod) {
-            onPaymentMethodChange(result.paymentMethod);
-          }
-        }
-      } catch (err) {
-        console.error("Error creating payment method:", err);
-        setCardError('An unexpected error occurred while processing your payment method.');
-      }
-    }
-  };
-
-  // Show loading state when Stripe is loading
-  if (isStripeLoading) {
-    return (
+const CheckoutPaymentForm = ({ onNext, onBack }: CheckoutPaymentFormProps) => {
+  return (
+    <div className="space-y-6">
       <div className="space-y-2">
-        <h3 className="font-medium">Payment Details</h3>
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label>Card Details</Label>
-            <Skeleton className="h-[42px] w-full" />
-          </div>
-          <div className="text-sm text-gray-500">
-            <p>Loading payment processor...</p>
-          </div>
+        <Label htmlFor="cardNumber">Card Number</Label>
+        <Input id="cardNumber" placeholder="1234 5678 9012 3456" />
+      </div>
+      
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="expiryDate">Expiry Date</Label>
+          <Input id="expiryDate" placeholder="MM/YY" />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="cvv">CVV</Label>
+          <Input id="cvv" placeholder="123" type="password" />
         </div>
       </div>
-    );
-  }
-
-  return (
-    <div className="space-y-2">
-      <h3 className="font-medium">Payment Details</h3>
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="card-element">Card Details</Label>
-          <div className="p-3 border rounded-md bg-white">
-            <CardElement 
-              id="card-element" 
-              options={cardElementOptions}
-              onChange={handleCardChange}
-            />
-          </div>
-        </div>
-        
-        {(cardError || error) && (
-          <FormMessage>{cardError || error}</FormMessage>
-        )}
-        
-        <div className="text-sm text-gray-500">
-          <p>Your card information is processed securely by Stripe.</p>
-        </div>
+      
+      <div className="space-y-2">
+        <Label htmlFor="nameOnCard">Name on Card</Label>
+        <Input id="nameOnCard" placeholder="Full name as shown on card" />
+      </div>
+      
+      <div className="flex justify-between pt-4">
+        <Button variant="outline" onClick={onBack}>Back</Button>
+        <Button onClick={onNext}>Next</Button>
       </div>
     </div>
   );

@@ -19,14 +19,14 @@ export interface AppliedDiscount {
 }
 
 export interface CheckoutSummaryProps {
-  items: CartItem[];
+  cartItems: CartItem[];
   subtotal: number;
   discount: AppliedDiscount | null;
   total: number;
 }
 
 const CheckoutSummary: React.FC<CheckoutSummaryProps> = ({
-  items,
+  cartItems,
   subtotal,
   discount,
   total
@@ -38,7 +38,7 @@ const CheckoutSummary: React.FC<CheckoutSummaryProps> = ({
         
         <div className="space-y-4">
           <div className="space-y-2">
-            {items.map(item => (
+            {cartItems.map(item => (
               <div key={item.id} className="flex justify-between text-sm">
                 <span className="flex-1">
                   {item.name} {item.quantity > 1 && <span className="text-muted-foreground">x{item.quantity}</span>}
@@ -67,14 +67,7 @@ const CheckoutSummary: React.FC<CheckoutSummaryProps> = ({
             </div>
           </div>
           
-          {discount && (
-            <DiscountSavingsIndicator
-              subtotal={subtotal}
-              discount={discount.amount}
-              discountCode={discount.code}
-              discountType={discount.discountType}
-            />
-          )}
+          {/* We display the discount indicator outside of the summary now */}
         </div>
       </CardContent>
     </Card>

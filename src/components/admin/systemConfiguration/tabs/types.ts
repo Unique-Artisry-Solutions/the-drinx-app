@@ -7,6 +7,7 @@ export interface SystemSetting {
   category: string;
   is_protected: boolean;
   updated_at: string;
+  created_at?: string; // Added to avoid SystemSetting type mismatch
 }
 
 export interface SettingsTabProps {
@@ -22,8 +23,8 @@ export interface SettingsTabProps {
   setChangeReason: (reason: string) => void;
   isSubmitting: boolean;
   error: Error | null;
-  onEditClick?: (id: string) => void;
-  onSaveClick?: (id: string) => void;
-  onCancelClick?: () => void;
+  onEditClick: (id: string) => void;
+  onSaveClick: (id: string) => void;
+  onCancelClick: () => void;
   setEditValue: (value: string) => void;
 }

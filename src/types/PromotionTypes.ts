@@ -1,4 +1,3 @@
-
 // Define the type for JSON values (similar to Supabase's Json type)
 export type Json = string | number | boolean | null | { [key: string]: Json } | Json[]
 
@@ -14,14 +13,14 @@ export interface Promotion {
   establishment_id: string;
   user_segment?: string | null;
   usage_limit?: number | null;
-  used_count?: number | null;
+  used_count?: number | null;  // Changed from usage_count to used_count for consistency
   min_purchase_amount?: number | null;
   combinable: boolean;
   valid_days?: string[] | null;
   valid_hours?: {
     start: string;
     end: string;
-  } | null;
+  } | null | Json;  // Added Json as an alternative type
   created_at: string;
   updated_at: string;
 }
@@ -45,10 +44,10 @@ export interface PromotionCode {
   valid_hours?: {
     start: string;
     end: string;
-  } | null;
+  } | null | Json;  // Added Json as an alternative type
   created_at: string;
   updated_at: string;
-  used_count?: number | null;
+  used_count?: number | null;  // Changed from usage_count to used_count for consistency
 }
 
 export interface PromotionAnalytics {

@@ -2,7 +2,7 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-interface StepsProps {
+export interface StepsProps {
   activeStep: number;
   steps: string[];
   className?: string;

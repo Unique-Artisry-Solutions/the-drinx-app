@@ -34,9 +34,9 @@ export const SavedCodesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const { savedCodes, loading, error, fetchSavedCodes, removeSavedCode: removeCode, copyToClipboard } = 
     useSavedPromotionCodes(userId);
 
-  // Wrap removeSavedCode to return a Promise
+  // Wrap removeSavedCode to ensure it returns a Promise
   const removeSavedCode = async (codeId: string): Promise<void> => {
-    await removeCode(codeId);
+    return removeCode(codeId);
   };
 
   const refreshSavedCodes = async () => {

@@ -61,6 +61,7 @@ const SystemConfigurationPage: React.FC = () => {
             category: 'general',
             is_protected: false,
             updated_at: new Date().toISOString(),
+            created_at: new Date().toISOString(),
           },
           {
             id: '2',
@@ -70,6 +71,7 @@ const SystemConfigurationPage: React.FC = () => {
             category: 'general',
             is_protected: false,
             updated_at: new Date().toISOString(),
+            created_at: new Date().toISOString(),
           }
         ];
         
@@ -134,7 +136,7 @@ const SystemConfigurationPage: React.FC = () => {
     setEditValue(value);
   };
 
-  // Common props for all settings tabs
+  // Common props for all settings tabs that match the SettingsTabProps interface
   const tabProps = {
     settings,
     isLoading,

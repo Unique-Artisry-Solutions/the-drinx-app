@@ -3,13 +3,13 @@ import React, { useState } from 'react';
 import Layout from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Steps } from '@/components/ui/steps';
+import { Steps, StepsProps } from '@/components/ui/steps';
 import CheckoutContactForm from '@/components/checkout/CheckoutContactForm';
-import { CheckoutPaymentForm } from '@/components/checkout/CheckoutPaymentForm';
-import CheckoutSummary from '@/components/checkout/CheckoutSummary';
-import { EmptyCartView } from '@/components/checkout/EmptyCartView';
-import { CheckoutVerification } from '@/components/checkout/CheckoutVerification';
-import { DiscountCodeSection, AppliedDiscount } from '@/components/checkout/DiscountCodeSection';
+import CheckoutPaymentForm from '@/components/checkout/CheckoutPaymentForm';
+import CheckoutSummary, { AppliedDiscount } from '@/components/checkout/CheckoutSummary';
+import EmptyCartView from '@/components/checkout/EmptyCartView';
+import CheckoutVerification from '@/components/checkout/CheckoutVerification';
+import { DiscountCodeSection } from '@/components/checkout/DiscountCodeSection';
 import { DiscountSavingsIndicator } from '@/components/checkout/DiscountSavingsIndicator';
 import { SavedPromotionCodes } from '@/components/checkout/SavedPromotionCodes';
 
@@ -43,7 +43,7 @@ const CheckoutPage: React.FC = () => {
   const calculateTotal = () => {
     if (!appliedDiscount) return subtotal;
     
-    if (appliedDiscount.type === 'percentage') {
+    if (appliedDiscount.discountType === 'percentage') {
       return subtotal - (subtotal * appliedDiscount.value / 100);
     }
     
@@ -53,7 +53,7 @@ const CheckoutPage: React.FC = () => {
   if (isCartEmpty) {
     return (
       <Layout>
-        <EmptyCartView />
+        <EmptyCartView isLoggedIn={!!user} />
       </Layout>
     );
   }
@@ -66,7 +66,7 @@ const CheckoutPage: React.FC = () => {
         <div className="mb-8">
           <Steps 
             steps={['Contact Information', 'Payment', 'Verification']} 
-            currentStep={currentStep}
+            activeStep={currentStep - 1}
           />
         </div>
         
@@ -83,8 +83,8 @@ const CheckoutPage: React.FC = () => {
               <CardContent>
                 {currentStep === 1 && (
                   <CheckoutContactForm 
-                    onNext={() => setCurrentStep(2)}
                     defaultValues={user}
+                    onNext={() => setCurrentStep(2)}
                   />
                 )}
                 
@@ -109,40 +109,30 @@ const CheckoutPage: React.FC = () => {
           </div>
           
           <div>
-            <Card>
-              <CardHeader>
-                <CardTitle>Order Summary</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CheckoutSummary 
-                  items={cart.items}
-                  subtotal={subtotal}
-                  discount={appliedDiscount}
-                  total={calculateTotal()}
-                />
-                
+            <CheckoutSummary 
+              cartItems={cart.items}
+              subtotal={subtotal}
+              discount={appliedDiscount}
+              total={calculateTotal()}
+            />
+            
+            <Card className="mt-4">
+              <CardContent className="pt-6">
                 <DiscountCodeSection 
                   onApplyDiscount={handleApplyDiscount}
                   currentDiscount={appliedDiscount}
                 />
                 
-                {appliedDiscount && appliedDiscount.code && (
+                {appliedDiscount && (
                   <DiscountSavingsIndicator
                     subtotal={subtotal}
                     discount={appliedDiscount.value}
                     discountCode={appliedDiscount.code}
-                    discountType={appliedDiscount.type}
+                    discountType={appliedDiscount.discountType}
                   />
                 )}
                 
-                {user && user.id && currentStep === 2 && (
-                  <SavedPromotionCodes 
-                    userId={user.id} 
-                    onApplyCode={handleApplyDiscount}
-                  />
-                )}
-                
-                {user && user.id && currentStep === 3 && (
+                {user && user.id && currentStep > 1 && (
                   <SavedPromotionCodes 
                     userId={user.id} 
                     onApplyCode={handleApplyDiscount}
