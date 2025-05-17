@@ -1,107 +1,55 @@
 
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import {
-  getPromotionAuditLogs,
-  getEstablishmentPromotionAuditLogs,
-  getPromotionUsageAnalytics,
-  type PromotionAuditLog,
-  type PromotionUsageAnalytics
+import { useState, useEffect } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { 
+  getPromotionAuditLogs, 
+  getPromotionUsageAnalytics, 
+  PromotionAuditLog,
+  PromotionUsageAnalytics
 } from '@/lib/promotions/auditApi';
 
-export interface UsePromotionAuditOptions {
-  limit?: number;
-  actionTypes?: string[];
-  enabled?: boolean;
-}
-
-export function usePromotionAudit(promotionId?: string, options: UsePromotionAuditOptions = {}) {
-  const {
-    data: auditLogs = [],
-    isLoading: isLoadingLogs,
-    isError: isErrorLogs,
-    error: logsError,
-    refetch: refetchLogs
-  } = useQuery({
-    queryKey: ['promotionAuditLogs', promotionId, options],
-    queryFn: () => getPromotionAuditLogs(
-      promotionId!, 
-      { 
-        limit: options.limit || 100,
-        actionTypes: options.actionTypes
+export const usePromotionAudit = (promotionId: string) => {
+  const [auditLogs, setAuditLogs] = useState<PromotionAuditLog[]>([]);
+  const [analytics, setAnalytics] = useState<PromotionUsageAnalytics | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const { toast } = useToast();
+  
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        
+        // Fetch both audit logs and analytics in parallel
+        const [logsData, analyticsData] = await Promise.all([
+          getPromotionAuditLogs(promotionId),
+          getPromotionUsageAnalytics(promotionId)
+        ]);
+        
+        setAuditLogs(logsData);
+        setAnalytics(analyticsData);
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : 'Failed to load promotion audit data';
+        setError(new Error(errorMsg));
+        toast({
+          title: 'Error',
+          description: errorMsg,
+          variant: 'destructive'
+        });
+      } finally {
+        setIsLoading(false);
       }
-    ),
-    enabled: !!promotionId && (options.enabled !== false),
-  });
-
-  const {
-    data: analytics,
-    isLoading: isLoadingAnalytics,
-    isError: isErrorAnalytics,
-    error: analyticsError,
-    refetch: refetchAnalytics
-  } = useQuery({
-    queryKey: ['promotionAnalytics', promotionId],
-    queryFn: () => getPromotionUsageAnalytics(promotionId!),
-    enabled: !!promotionId && (options.enabled !== false),
-  });
-
+    };
+    
+    if (promotionId) {
+      fetchData();
+    }
+  }, [promotionId, toast]);
+  
   return {
     auditLogs,
     analytics,
-    isLoadingLogs,
-    isErrorLogs,
-    logsError,
-    isLoadingAnalytics,
-    isErrorAnalytics,
-    analyticsError,
-    refetchLogs,
-    refetchAnalytics
-  };
-}
-
-export interface UseEstablishmentAuditOptions {
-  limit?: number;
-  actionTypes?: string[];
-  startDate?: string;
-  endDate?: string;
-  enabled?: boolean;
-}
-
-export function useEstablishmentPromotionAudit(establishmentId?: string, options: UseEstablishmentAuditOptions = {}) {
-  const [filters, setFilters] = useState(options);
-
-  const {
-    data: auditLogs = [],
     isLoading,
-    isError,
-    error,
-    refetch
-  } = useQuery({
-    queryKey: ['establishmentPromotionAudit', establishmentId, filters],
-    queryFn: () => getEstablishmentPromotionAuditLogs(
-      establishmentId!,
-      { 
-        limit: filters.limit || 100,
-        actionTypes: filters.actionTypes,
-        startDate: filters.startDate,
-        endDate: filters.endDate
-      }
-    ),
-    enabled: !!establishmentId && (options.enabled !== false),
-  });
-
-  const updateFilters = (newFilters: Partial<UseEstablishmentAuditOptions>) => {
-    setFilters(prev => ({ ...prev, ...newFilters }));
+    error
   };
-
-  return {
-    auditLogs,
-    isLoading,
-    isError,
-    error,
-    refetch,
-    filters,
-    updateFilters
-  };
-}
+};

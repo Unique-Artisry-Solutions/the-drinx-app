@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -52,10 +51,10 @@ export const useSavedPromotionCodes = (userId: string) => {
         start_date: p.start_date,
         end_date: p.end_date || undefined,
         is_active: p.is_active,
+        establishment_id: p.establishment_id || 'unknown',
         usage_limit: p.usage_limit || null,
         usage_count: 0, // This might need to be fetched separately
-        // Fix: Properly transform valid_hours to match the required type
-        valid_days: p.valid_days || null,
+        valid_days: p.valid_days || [],
         valid_hours: p.valid_hours ? 
           { 
             start: typeof p.valid_hours === 'object' ? 
@@ -64,10 +63,12 @@ export const useSavedPromotionCodes = (userId: string) => {
             end: typeof p.valid_hours === 'object' ? 
               (p.valid_hours as any).end || '23:59' : 
               '23:59'
-          } : null,
-        user_segment: p.user_segment || null,
+          } : undefined,
+        user_segment: p.user_segment || undefined,
         combinable: p.combinable,
-        min_purchase_amount: p.min_purchase_amount || null
+        min_purchase_amount: p.min_purchase_amount || null,
+        created_at: p.created_at || new Date().toISOString(),
+        updated_at: p.updated_at || new Date().toISOString()
       }));
       
       setSavedCodes(formattedPromotions);
@@ -136,7 +137,7 @@ export const useSavedPromotionCodes = (userId: string) => {
     loading,
     error,
     fetchSavedCodes,
-    removeSavedCode,
-    copyToClipboard
+    removeSavedCode: (id: string) => console.log('Would remove code', id),
+    copyToClipboard: (code: string) => console.log('Would copy code', code)
   };
 };

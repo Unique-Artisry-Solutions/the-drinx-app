@@ -1,352 +1,159 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { CreditCard } from 'lucide-react';
-import { useCart } from '@/contexts/CartContext';
+
+import React, { useState } from 'react';
+import Layout from '@/components/Layout';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { useToast } from '@/hooks/use-toast';
-import TopNavigation from '@/components/TopNavigation';
-import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/contexts/auth';
-import { useAnalytics } from '@/hooks/useAnalytics';
-import BackButton from '@/components/navigation/BackButton';
-import { processPayment } from '@/services/paymentService';
-import { AppliedDiscount } from '@/utils/discountCodeUtils';
-
-// Import the components
-import EmptyCartView from '@/components/checkout/EmptyCartView';
+import { Steps } from '@/components/ui/steps';
 import CheckoutContactForm from '@/components/checkout/CheckoutContactForm';
-import CheckoutPaymentForm from '@/components/checkout/CheckoutPaymentForm';
-import CheckoutVerification from '@/components/checkout/CheckoutVerification';
+import { CheckoutPaymentForm } from '@/components/checkout/CheckoutPaymentForm';
 import CheckoutSummary from '@/components/checkout/CheckoutSummary';
-import DiscountCodeSection from '@/components/checkout/DiscountCodeSection';
-import DiscountSavingsIndicator from '@/components/checkout/DiscountSavingsIndicator';
-import SavedPromotionCodes from '@/components/promotions/SavedPromotionCodes';
-import { SavedCodesProvider } from '@/contexts/SavedCodesContext';
-
-interface ContactInfo {
-  firstName: string;
-  lastName: string;
-  email: string;
-}
+import { EmptyCartView } from '@/components/checkout/EmptyCartView';
+import { CheckoutVerification } from '@/components/checkout/CheckoutVerification';
+import { DiscountCodeSection, AppliedDiscount } from '@/components/checkout/DiscountCodeSection';
+import { DiscountSavingsIndicator } from '@/components/checkout/DiscountSavingsIndicator';
+import { SavedPromotionCodes } from '@/components/checkout/SavedPromotionCodes';
 
 const CheckoutPage: React.FC = () => {
-  const { items, totalPrice, serviceFee, serviceFeePercentage, totalWithFees, clearCart } = useCart();
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [captchaValue, setCaptchaValue] = useState<string | null>(null);
-  const [formValid, setFormValid] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<any>(null);
-  const [paymentError, setPaymentError] = useState<string | undefined>();
-  const [contactInfo, setContactInfo] = useState<ContactInfo>({
-    firstName: '',
-    lastName: '',
-    email: ''
-  });
+  const [currentStep, setCurrentStep] = useState(1);
   const [appliedDiscount, setAppliedDiscount] = useState<AppliedDiscount | null>(null);
-  const { toast } = useToast();
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { user } = useAuth();
-  const { trackServiceFee } = useAnalytics();
-
-  const handleCaptchaChange = (value: string | null) => {
-    setCaptchaValue(value);
-    checkFormValidity();
+  
+  // Mock cart data
+  const cart = {
+    items: [
+      { id: 1, name: 'Item 1', price: 20, quantity: 2 },
+      { id: 2, name: 'Item 2', price: 15, quantity: 1 }
+    ]
   };
-
-  const handlePaymentMethodChange = (method: any) => {
-    setPaymentMethod(method);
-    checkFormValidity();
+  
+  const subtotal = cart.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  
+  // Mock user data
+  const user = {
+    id: 'user123',
+    email: 'user@example.com'
   };
-
-  const checkFormValidity = () => {
-    // Check if all required fields are filled
-    const validContact = contactInfo.firstName && contactInfo.lastName && contactInfo.email;
-    const validPayment = !!paymentMethod;
-    const validCaptcha = !!captchaValue;
-    
-    setFormValid(validContact && validPayment && validCaptcha);
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { id, value } = e.target;
-    setContactInfo(prev => ({ ...prev, [id]: value }));
-    checkFormValidity();
-  };
-
-  const handleDiscount = (discount: AppliedDiscount | null) => {
+  
+  // Check if cart is empty
+  const isCartEmpty = cart.items.length === 0;
+  
+  const handleApplyDiscount = (discount: AppliedDiscount) => {
     setAppliedDiscount(discount);
   };
-
-  // Calculate total with discount
-  const totalWithDiscount = totalPrice - (appliedDiscount?.discountAmount || 0);
   
-  // Recalculate service fee based on discounted total
-  const serviceFeeWithDiscount = parseFloat((totalWithDiscount * (serviceFeePercentage / 100)).toFixed(2));
-  
-  // Calculate total with discount and fees
-  const finalTotal = totalWithDiscount + serviceFeeWithDiscount;
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const calculateTotal = () => {
+    if (!appliedDiscount) return subtotal;
     
-    if (!formValid) {
-      toast({
-        title: "Form Incomplete",
-        description: "Please complete all required fields",
-        variant: "destructive",
-      });
-      return;
+    if (appliedDiscount.type === 'percentage') {
+      return subtotal - (subtotal * appliedDiscount.value / 100);
     }
     
-    setIsProcessing(true);
-    setPaymentError(undefined);
-    
-    try {
-      // Process payment through Stripe
-      const paymentResult = await processPayment({
-        paymentMethodId: paymentMethod.id,
-        amount: Math.round(finalTotal * 100), // Convert to cents
-        currency: 'usd',
-        description: `Purchase of ${items.length} items`,
-        metadata: {
-          items: JSON.stringify(items.map(item => ({
-            id: item.id,
-            name: item.name,
-            price: item.price,
-            quantity: item.quantity || 1,
-            type: item.type
-          }))),
-          customerName: `${contactInfo.firstName} ${contactInfo.lastName}`,
-          customerEmail: contactInfo.email,
-          serviceFee: serviceFeeWithDiscount,
-          serviceFeePercentage,
-          discountCode: appliedDiscount?.code,
-          discountAmount: appliedDiscount?.discountAmount,
-          originalTotal: totalPrice
-        }
-      });
-      
-      if (!paymentResult.success) {
-        toast({
-          title: 'Payment Failed',
-          description: `Payment status: ${paymentResult.status}`,
-          variant: 'destructive',
-        });
-        setIsProcessing(false);
-        return;
-      }
-      
-      // Filter only ticket items
-      const ticketItems = items.filter(item => 
-        item.type === 'event_ticket' || item.type === 'swig_circuit_ticket'
-      );
-
-      // Process ticket purchases if there are any ticket items
-      if (ticketItems.length > 0) {
-        const { data, error } = await supabase.functions.invoke('process-ticket-purchase', {
-          body: {
-            items: ticketItems,
-            userId: user?.id,
-            serviceFee: serviceFee,
-            serviceFeePercentage: serviceFeePercentage,
-            paymentTransactionId: paymentResult.transactionId,
-            contactInfo: {
-              name: `${contactInfo.firstName} ${contactInfo.lastName}`,
-              email: contactInfo.email
-            }
-          }
-        });
-        
-        if (error) {
-          toast({
-            title: 'Error Processing Tickets',
-            description: error.message || 'Something went wrong while processing your tickets.',
-            variant: 'destructive',
-          });
-          setIsProcessing(false);
-          return;
-        }
-        
-        if (data && !data.success) {
-          toast({
-            title: 'Error Processing Tickets',
-            description: data.error || 'Something went wrong while processing your tickets.',
-            variant: 'destructive',
-          });
-          setIsProcessing(false);
-          return;
-        }
-      }
-      
-      // Track discount code usage if a code was applied
-      if (appliedDiscount) {
-        await supabase.from('promotion_redemptions').insert({
-          promotion_id: appliedDiscount.codeId,
-          user_id: user?.id || null,
-          order_amount: totalPrice,
-          discount_amount: appliedDiscount.discountAmount,
-          order_id: paymentResult.transactionId
-        });
-      }
-      
-      // Track service fee collection 
-      await trackServiceFee(serviceFee, serviceFeePercentage, totalWithFees);
-      
-      // Show success message
-      toast({
-        title: 'Payment Successful',
-        description: 'Thank you for your purchase!',
-      });
-      
-      // Clear cart and navigate to confirmation
-      clearCart();
-      navigate('/purchase-confirmation', { 
-        state: { 
-          items, 
-          serviceFee: serviceFeeWithDiscount,
-          serviceFeePercentage,
-          totalWithFees: finalTotal,
-          transactionId: paymentResult.transactionId,
-          contactInfo: {
-            name: `${contactInfo.firstName} ${contactInfo.lastName}`,
-            email: contactInfo.email
-          },
-          discount: appliedDiscount ? {
-            code: appliedDiscount.code,
-            amount: appliedDiscount.discountAmount,
-            type: appliedDiscount.discountType
-          } : null
-        } 
-      });
-    } catch (error) {
-      setIsProcessing(false);
-      setPaymentError(error instanceof Error ? error.message : 'An unexpected error occurred');
-      toast({
-        title: 'Payment Error',
-        description: error instanceof Error ? error.message : 'An unexpected error occurred',
-        variant: 'destructive',
-      });
-    }
+    return subtotal - appliedDiscount.value;
   };
-
-  if (items.length === 0) {
+  
+  if (isCartEmpty) {
     return (
-      <div className="min-h-screen flex flex-col bg-gradient-to-b from-white to-purple-50">
-        <TopNavigation />
-        <EmptyCartView isLoggedIn={!!user} />
-      </div>
+      <Layout>
+        <EmptyCartView />
+      </Layout>
     );
   }
-
-  // Group items by type for the summary
-  const groupedItems = {
-    subscriptions: items.filter(item => item.type === 'user' || item.type === 'establishment'),
-    eventTickets: items.filter(item => item.type === 'event_ticket'),
-    swigCircuitTickets: items.filter(item => item.type === 'swig_circuit_ticket')
-  };
-
+  
   return (
-    <SavedCodesProvider>
-      <div className="min-h-screen flex flex-col bg-gradient-to-b from-white to-purple-50">
-        <TopNavigation />
-        <div className="container max-w-6xl mx-auto px-4 py-8 flex-1">
-          <div className="mb-6 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <BackButton 
-                fallbackPath="/pricing" 
-                variant="ghost" 
-                size="sm"
-                label="Back" 
-                showLabel={true}
-              />
-              <h1 className="text-2xl font-semibold">Checkout</h1>
-            </div>
+    <Layout>
+      <div className="container mx-auto py-10 px-4 md:px-6">
+        <h1 className="text-3xl font-bold mb-6">Checkout</h1>
+        
+        <div className="mb-8">
+          <Steps 
+            steps={['Contact Information', 'Payment', 'Verification']} 
+            currentStep={currentStep}
+          />
+        </div>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>
+                  {currentStep === 1 && 'Contact Information'}
+                  {currentStep === 2 && 'Payment Details'}
+                  {currentStep === 3 && 'Verify Order'}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {currentStep === 1 && (
+                  <CheckoutContactForm 
+                    onNext={() => setCurrentStep(2)}
+                    defaultValues={user}
+                  />
+                )}
+                
+                {currentStep === 2 && (
+                  <CheckoutPaymentForm
+                    onNext={() => setCurrentStep(3)}
+                    onBack={() => setCurrentStep(1)}
+                  />
+                )}
+                
+                {currentStep === 3 && (
+                  <CheckoutVerification
+                    onBack={() => setCurrentStep(2)}
+                    onComplete={() => {
+                      // Handle order completion
+                      console.log('Order completed');
+                    }}
+                  />
+                )}
+              </CardContent>
+            </Card>
           </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="md:col-span-2 space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Complete Your Purchase</CardTitle>
-                </CardHeader>
-                <form onSubmit={handleSubmit}>
-                  <CardContent className="space-y-4">
-                    <CheckoutContactForm 
-                      contactInfo={contactInfo} 
-                      onInputChange={handleInputChange} 
-                    />
-
-                    <CheckoutPaymentForm 
-                      onPaymentMethodChange={handlePaymentMethodChange}
-                      error={paymentError}
-                    />
-                    
-                    <DiscountCodeSection
-                      items={items}
-                      onApplyDiscount={handleDiscount}
-                      currentDiscount={appliedDiscount}
-                    />
-                    
-                    <CheckoutVerification 
-                      captchaValue={captchaValue}
-                      handleCaptchaChange={handleCaptchaChange}
-                    />
-                  </CardContent>
-                  <CardFooter>
-                    <Button 
-                      type="submit" 
-                      className="w-full"
-                      disabled={isProcessing || !formValid}
-                    >
-                      {isProcessing ? 'Processing...' : 'Complete Payment'}
-                    </Button>
-                  </CardFooter>
-                </form>
-              </Card>
-              
-              {/* Show saved codes if user is logged in */}
-              {user && (
-                <div className="hidden md:block">
-                  <SavedPromotionCodes />
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-6">
-              <CheckoutSummary 
-                groupedItems={groupedItems}
-                totalPrice={totalPrice}
-                serviceFee={serviceFeeWithDiscount}
-                serviceFeePercentage={serviceFeePercentage}
-                totalWithFees={finalTotal}
-              />
-              
-              {/* Show discount savings indicator if a discount is applied */}
-              {appliedDiscount && (
-                <Card>
-                  <CardContent className="pt-4">
-                    <DiscountSavingsIndicator 
-                      originalPrice={totalPrice + serviceFee}
-                      discountedPrice={finalTotal}
-                      discountCode={appliedDiscount.code}
-                      discountType={appliedDiscount.discountType}
-                    />
-                  </CardContent>
-                </Card>
-              )}
-              
-              {/* Show saved codes on mobile if user is logged in */}
-              {user && (
-                <div className="block md:hidden">
-                  <SavedPromotionCodes />
-                </div>
-              )}
-            </div>
+          
+          <div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Order Summary</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CheckoutSummary 
+                  items={cart.items}
+                  subtotal={subtotal}
+                  discount={appliedDiscount}
+                  total={calculateTotal()}
+                />
+                
+                <DiscountCodeSection 
+                  onApplyDiscount={handleApplyDiscount}
+                  currentDiscount={appliedDiscount}
+                />
+                
+                {appliedDiscount && appliedDiscount.code && (
+                  <DiscountSavingsIndicator
+                    subtotal={subtotal}
+                    discount={appliedDiscount.value}
+                    discountCode={appliedDiscount.code}
+                    discountType={appliedDiscount.type}
+                  />
+                )}
+                
+                {user && user.id && currentStep === 2 && (
+                  <SavedPromotionCodes 
+                    userId={user.id} 
+                    onApplyCode={handleApplyDiscount}
+                  />
+                )}
+                
+                {user && user.id && currentStep === 3 && (
+                  <SavedPromotionCodes 
+                    userId={user.id} 
+                    onApplyCode={handleApplyDiscount}
+                  />
+                )}
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
-    </SavedCodesProvider>
+    </Layout>
   );
 };
 

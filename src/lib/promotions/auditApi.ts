@@ -1,6 +1,34 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { PromotionAuditLog, PromotionUsageAnalytics } from '@/types/PromotionTypes';
+
+// Export type definitions here so they can be imported 
+export interface PromotionAuditLog {
+  id: string;
+  promotion_id: string;
+  action_type: 'create' | 'update' | 'delete' | 'redeem' | 'validate' | 'expire';
+  status: 'success' | 'failure' | 'pending';
+  created_at: string;
+  metadata?: Record<string, any>;
+  user_id?: string;
+  details?: string;
+}
+
+export interface PromotionUsageAnalytics {
+  id: string;
+  code: string;
+  description: string;
+  discount_type: 'percentage' | 'fixed' | 'free_item';
+  discount_value: number;
+  start_date: string;
+  establishment_id: string;
+  redemption_count: number;
+  unique_users: number;
+  avg_purchase_amount: number;
+  total_discount_amount: number;
+  successful_validations: number;
+  failed_validations: number;
+  auto_applied_count: number;
+}
 
 /**
  * Logs a promotion code action to the audit log

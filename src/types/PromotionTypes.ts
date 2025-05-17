@@ -9,23 +9,24 @@ export interface Promotion {
   discount_type: 'percentage' | 'fixed' | 'free_item';
   discount_value: number;
   start_date: string;
-  end_date?: string;
+  end_date?: string | null;
   is_active: boolean;
   establishment_id: string;
-  user_segment?: string;
+  user_segment?: string | null;
   usage_limit?: number | null;
-  usage_count?: number;
+  usage_count?: number | null;
   min_purchase_amount?: number | null;
   combinable: boolean;
-  valid_days?: string[];
+  valid_days?: string[] | null;
   valid_hours?: {
     start: string;
     end: string;
-  };
+  } | null;
   created_at: string;
   updated_at: string;
 }
 
+// Ensure PromotionCode matches the structure of database responses
 export interface PromotionCode {
   id: string;
   code: string;
@@ -33,18 +34,18 @@ export interface PromotionCode {
   discount_type: 'percentage' | 'fixed' | 'free_item';
   discount_value: number;
   start_date: string;
-  end_date?: string;
+  end_date?: string | null;
   is_active: boolean;
   establishment_id: string;
-  user_segment?: string;
+  user_segment?: string | null;
   usage_limit?: number | null;
   min_purchase_amount?: number | null;
   combinable: boolean;
-  valid_days?: string[];
-  valid_hours?: Json;
+  valid_days?: string[] | null;
+  valid_hours?: Json | null;
   created_at: string;
   updated_at: string;
-  used_count?: number;
+  used_count?: number | null;
 }
 
 export interface PromotionAnalytics {
@@ -55,7 +56,7 @@ export interface PromotionAnalytics {
   discount_type: 'percentage' | 'fixed' | 'free_item';
   discount_value: number;
   start_date: string;
-  end_date?: string;
+  end_date?: string | null;
   establishment_id: string;
   redemption_count: number;
   unique_users: number;

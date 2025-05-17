@@ -30,6 +30,7 @@ const SystemConfigurationPage: React.FC = () => {
   const [editValue, setEditValue] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const [changeReason, setChangeReason] = useState('');
   
   // Update URL when tab changes
   const handleTabChange = (value: string) => {
@@ -49,15 +50,16 @@ const SystemConfigurationPage: React.FC = () => {
       try {
         // Simulate API call
         await new Promise(resolve => setTimeout(resolve, 500));
-        setSettings([
+        
+        // Create mock settings with correct SystemSetting type
+        const mockSettings: SystemSetting[] = [
           {
             id: '1',
             key: 'site.name',
             value: 'Spiritless',
             description: 'The name of the site',
-            type: 'string',
-            is_protected: false,
             category: 'general',
+            is_protected: false,
             updated_at: new Date().toISOString(),
           },
           {
@@ -65,12 +67,13 @@ const SystemConfigurationPage: React.FC = () => {
             key: 'site.description',
             value: 'Alcohol-free experience platform',
             description: 'Site description',
-            type: 'string',
-            is_protected: false,
             category: 'general',
+            is_protected: false,
             updated_at: new Date().toISOString(),
           }
-        ] as SystemSetting[]);
+        ];
+        
+        setSettings(mockSettings);
       } catch (err) {
         setError(err instanceof Error ? err : new Error('Failed to fetch settings'));
       } finally {
@@ -81,19 +84,19 @@ const SystemConfigurationPage: React.FC = () => {
     fetchSettings();
   }, []);
 
-  const handleEdit = (setting: SystemSetting) => {
-    setEditingSettingId(setting.id);
-    setEditValue(setting.value);
+  const handleEdit = (id: string, value: any) => {
+    setEditingSettingId(id);
+    setEditValue(value);
   };
 
-  const handleSave = async (id: string, value: string) => {
+  const handleSave = async (id: string, isProtected: boolean) => {
     setIsSubmitting(true);
     try {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 500));
       setSettings(prev => 
         prev.map(setting => 
-          setting.id === id ? { ...setting, value } : setting
+          setting.id === id ? { ...setting, value: editValue } : setting
         )
       );
       setEditingSettingId(null);
@@ -108,7 +111,7 @@ const SystemConfigurationPage: React.FC = () => {
     setEditingSettingId(null);
   };
   
-  const handleEditValueChange = (value: string) => {
+  const handleEditValueChange = (value: any) => {
     setEditValue(value);
   };
 
@@ -118,10 +121,12 @@ const SystemConfigurationPage: React.FC = () => {
     isLoading,
     editingSettingId,
     editValue,
+    changeReason,
     onEdit: handleEdit,
     onSave: handleSave,
     onCancel: handleCancel,
     onEditValueChange: handleEditValueChange,
+    setChangeReason,
     isSubmitting,
     error,
   };

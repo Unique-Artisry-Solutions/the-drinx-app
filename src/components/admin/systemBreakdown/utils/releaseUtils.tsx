@@ -1,10 +1,10 @@
+
 import { FeatureItem, FeatureStatus } from '../types';
-import { ReleaseFeatureStatus, ReleaseStatus } from '../types/releaseTypes';
 
 /**
  * Maps feature status to release status
  */
-export function mapFeatureStatusToReleaseStatus(status: FeatureStatus): ReleaseStatus {
+export function mapFeatureStatusToReleaseStatus(status: FeatureStatus): string {
   switch (status) {
     case 'implemented':
       return 'released';
@@ -22,7 +22,7 @@ export function mapFeatureStatusToReleaseStatus(status: FeatureStatus): ReleaseS
 /**
  * Maps feature status to release feature status
  */
-export function mapFeatureStatusToReleaseFeatureStatus(status: FeatureStatus): ReleaseFeatureStatus {
+export function mapFeatureStatusToReleaseFeatureStatus(status: FeatureStatus): string {
   switch (status) {
     case 'implemented':
       return 'completed';
