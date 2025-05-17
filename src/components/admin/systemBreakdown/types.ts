@@ -120,6 +120,33 @@ export interface ProgressSnapshot {
   confidenceScore?: number;
 }
 
+// Progress data for historical tracking
+export interface ProgressData {
+  date: string;
+  implementationRate: number;
+  features: {
+    implemented: number;
+    inProgress: number;
+    planned: number;
+    blocked: number;
+    total: number;
+  };
+}
+
+// Release progress tracking
+export interface ReleaseProgress {
+  id: string;
+  version: string;
+  implementationRate: number;
+  features: {
+    completed: number;
+    inProgress: number;
+    planned: number;
+    blocked: number;
+    total: number;
+  };
+}
+
 // Feature showcase data types
 export interface FeatureShowcaseData {
   id: string;

@@ -148,10 +148,8 @@ export {
   generateFeatureReport
 };
 
-// Export types directly from their respective files
-export type { AnalysisStep } from '../types';
-export type { ReleaseProgress } from '../types';
-export type { MonthlyProgressData, ProgressData, ProgressSnapshot } from '../types';
+// Export types from types.ts
+export type { AnalysisStep, ReleaseProgress, MonthlyProgressData, ProgressData, ProgressSnapshot } from '../types';
 export type { FeatureShowcaseData, FeatureShowcaseCategoryType, FeatureBusinessValueType, FeatureBusinessValueObject } from '../types';
 export type { ImprovementItem, SortField, SortOrder } from '../types';
 
