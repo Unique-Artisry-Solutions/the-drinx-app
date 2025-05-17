@@ -1,44 +1,69 @@
 
 import React from 'react';
-import { useSubscriptions } from '@/hooks/useSubscriptions';
-import SubscriptionCard from './SubscriptionCard';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 
-interface SubscriptionListProps {
-  promoterId: string;
+interface Subscription {
+  id: string;
+  promoter: {
+    id: string;
+    display_name: string;
+    avatar_url: string;
+  };
+  subscription_start: string;
+  follow_status: string;
 }
 
-const SubscriptionList: React.FC<SubscriptionListProps> = ({ promoterId }) => {
-  const { tiers, subscriptions, isLoading } = useSubscriptions(promoterId);
+export interface SubscriptionListProps {
+  subscriptions: Subscription[];
+  isLoading: boolean;
+}
 
+const SubscriptionList: React.FC<SubscriptionListProps> = ({ subscriptions, isLoading }) => {
   if (isLoading) {
-    return <div className="flex justify-center p-8">Loading subscription options...</div>;
+    return <div className="text-center py-8">Loading your subscriptions...</div>;
   }
 
-  if (!tiers.length) {
+  if (subscriptions.length === 0) {
     return (
-      <div className="text-center p-8">
-        <p>No subscription tiers available for this promoter.</p>
+      <div className="text-center py-8">
+        <p className="text-gray-500 mb-4">You aren't following any promoters yet.</p>
+        <Button>Find Promoters</Button>
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-4">
-      {tiers.map((tier) => {
-        const currentSubscription = subscriptions.find(
-          (sub) => sub.subscription_type === tier.tier && (sub.status === 'active' || sub.status === 'pending')
-        );
-        
-        return (
-          <SubscriptionCard
-            key={tier.id}
-            tier={tier}
-            promoterId={promoterId}
-            isSubscribed={!!currentSubscription}
-            currentSubscriptionId={currentSubscription?.id}
-          />
-        );
-      })}
+    <div className="space-y-4">
+      {subscriptions.map((subscription) => (
+        <Card key={subscription.id}>
+          <CardHeader className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <Avatar>
+                  <AvatarImage src={subscription.promoter.avatar_url} />
+                  <AvatarFallback>{subscription.promoter.display_name.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <div>
+                  <CardTitle className="text-base">{subscription.promoter.display_name}</CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Following since {new Date(subscription.subscription_start).toLocaleDateString()}
+                  </p>
+                </div>
+              </div>
+              <Button variant="outline" size="sm">Unfollow</Button>
+            </div>
+          </CardHeader>
+          <CardContent className="p-4 pt-0">
+            <div className="text-sm">
+              <span className="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">
+                {subscription.follow_status === 'active' ? 'Active' : subscription.follow_status}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 };

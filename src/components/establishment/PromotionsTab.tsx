@@ -24,12 +24,14 @@ export interface PromotionsTabProps {
   promotions: Promotion[];
   handleAddPromotion: (data: PromotionFormData) => Promise<void>;
   handleDeletePromotion: (id: string) => Promise<void>;
+  handleUpdatePromotion?: (id: string, data: PromotionFormData) => Promise<void>;
 }
 
 const PromotionsTab: React.FC<PromotionsTabProps> = ({ 
   promotions, 
   handleAddPromotion, 
-  handleDeletePromotion 
+  handleDeletePromotion,
+  handleUpdatePromotion
 }) => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   
@@ -91,9 +93,11 @@ const PromotionsTab: React.FC<PromotionsTabProps> = ({
                 </div>
               </CardContent>
               <CardFooter className="flex justify-end gap-2">
-                <Button variant="outline" size="sm">
-                  <Edit className="h-4 w-4 mr-1" /> Edit
-                </Button>
+                {handleUpdatePromotion && (
+                  <Button variant="outline" size="sm">
+                    <Edit className="h-4 w-4 mr-1" /> Edit
+                  </Button>
+                )}
                 <Button 
                   variant="destructive" 
                   size="sm"

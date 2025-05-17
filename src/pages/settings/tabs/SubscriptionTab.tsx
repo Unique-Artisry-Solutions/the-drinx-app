@@ -15,7 +15,7 @@ interface Follower {
   subscriber_id: string;
   notification_preferences: any;
   subscription_start: string;
-  subscription_end: string;
+  subscription_end: string | null;
   updated_at: string;
   subscriber: {
     id: string;
@@ -32,7 +32,7 @@ interface Subscription {
   subscriber_id: string;
   notification_preferences: any;
   subscription_start: string;
-  subscription_end: string;
+  subscription_end: string | null;
   updated_at: string;
   promoter: {
     id: string;
@@ -55,28 +55,26 @@ const SubscriptionTab: React.FC = () => {
       
       // Fetch followers
       const { data: followersData, error: followersError } = await supabase
-        .from('promoter_subscribers')
+        .from('promoter_followers')
         .select('*, subscriber:profiles!subscriber_id(*)')
         .eq('promoter_id', user.id);
       
       if (followersError) {
         console.error('Error fetching followers:', followersError);
       } else {
-        // Type cast the followers data
-        setFollowers((followersData as unknown) as Follower[]);
+        setFollowers(followersData as Follower[]);
       }
       
       // Fetch subscriptions
       const { data: subscriptionsData, error: subscriptionsError } = await supabase
-        .from('promoter_subscribers')
+        .from('promoter_followers')
         .select('*, promoter:profiles!promoter_id(*)')
         .eq('subscriber_id', user.id);
       
       if (subscriptionsError) {
         console.error('Error fetching subscriptions:', subscriptionsError);
       } else {
-        // Type cast the subscriptions data
-        setSubscriptions((subscriptionsData as unknown) as Subscription[]);
+        setSubscriptions(subscriptionsData as Subscription[]);
       }
       
       setIsLoading(false);
@@ -102,8 +100,8 @@ const SubscriptionTab: React.FC = () => {
         
         <TabsContent value="subscriptions">
           <SubscriptionList 
-            subscriptions={subscriptions} 
-            isLoading={isLoading} 
+            subscriptions={subscriptions}
+            isLoading={isLoading}
           />
         </TabsContent>
         
