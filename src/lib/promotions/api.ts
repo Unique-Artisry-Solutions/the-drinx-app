@@ -1,12 +1,51 @@
-
 import { supabase } from '@/integrations/supabase/client';
-import { 
-  PromotionCode, 
-  PromotionAnalytics, 
-  CreatePromotionCodeParams, 
-  BatchCreateParams,
-  Json
-} from '@/types/PromotionTypes';
+import { CreatePromotionCodeParams, PromotionCode, Promotion } from '@/types/PromotionTypes';
+import { getPromoterProfile } from '@/services/promoterService';
+
+/**
+ * Get promotion codes for an establishment
+ */
+export async function getPromotionCodes(establishmentId: string): Promise<PromotionCode[]> {
+  try {
+    const { data, error } = await supabase
+      .from('establishment_promotions')
+      .select('*')
+      .eq('establishment_id', establishmentId)
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error('Error fetching promotion codes:', error);
+      throw new Error(`Failed to fetch promotion codes: ${error.message}`);
+    }
+    
+    // Transform the data to match our PromotionCode type
+    const promotions: PromotionCode[] = data.map(item => ({
+      id: item.id,
+      code: item.code,
+      description: item.description,
+      discount_type: item.discount_type as 'percentage' | 'fixed' | 'free_item',
+      discount_value: Number(item.discount_value),
+      start_date: item.start_date,
+      end_date: item.end_date,
+      is_active: item.is_active,
+      establishment_id: item.establishment_id,
+      user_segment: item.user_segment || null,
+      usage_limit: item.usage_limit,
+      used_count: item.used_count || 0, // Changed from usage_count to used_count
+      valid_days: item.valid_days,
+      valid_hours: item.valid_hours,
+      combinable: item.combinable,
+      min_purchase_amount: item.min_purchase_amount,
+      created_at: item.created_at,
+      updated_at: item.updated_at
+    }));
+    
+    return promotions;
+  } catch (error) {
+    console.error('Exception in getPromotionCodes:', error);
+    throw error;
+  }
+}
 
 /**
  * Create a new promotion code
@@ -23,39 +62,44 @@ export async function createPromotionCode(params: CreatePromotionCodeParams): Pr
         start_date: params.start_date,
         end_date: params.end_date,
         establishment_id: params.establishment_id,
-        usage_limit: params.usage_limit || null,
-        valid_days: params.valid_days || null,
-        min_purchase_amount: params.min_purchase_amount || null,
-        combinable: params.combinable !== undefined ? params.combinable : true
+        usage_limit: params.usage_limit,
+        valid_days: params.valid_days,
+        min_purchase_amount: params.min_purchase_amount,
+        combinable: params.combinable ?? true
       })
       .select()
       .single();
     
-    if (error) throw error;
+    if (error) {
+      console.error('Error creating promotion code:', error);
+      throw new Error(`Failed to create promotion code: ${error.message}`);
+    }
     
-    // Convert to expected PromotionCode type with type assertion
-    return {
+    // Transform the data to match our PromotionCode type
+    const promotion: PromotionCode = {
       id: data.id,
       code: data.code,
       description: data.description,
       discount_type: data.discount_type as 'percentage' | 'fixed' | 'free_item',
-      discount_value: data.discount_value,
+      discount_value: Number(data.discount_value),
       start_date: data.start_date,
       end_date: data.end_date,
       is_active: data.is_active,
       establishment_id: data.establishment_id,
-      user_segment: data.user_segment,
+      user_segment: data.user_segment || null,
       usage_limit: data.usage_limit,
-      min_purchase_amount: data.min_purchase_amount,
-      combinable: data.combinable,
+      used_count: data.used_count || 0, // Changed from usage_count to used_count
       valid_days: data.valid_days,
-      valid_hours: data.valid_hours as any,
+      valid_hours: data.valid_hours,
+      combinable: data.combinable,
+      min_purchase_amount: data.min_purchase_amount,
       created_at: data.created_at,
-      updated_at: data.updated_at,
-      used_count: data.used_count
+      updated_at: data.updated_at
     };
+    
+    return promotion;
   } catch (error) {
-    console.error('Error creating promotion code:', error);
+    console.error('Exception in createPromotionCode:', error);
     throw error;
   }
 }
@@ -63,40 +107,45 @@ export async function createPromotionCode(params: CreatePromotionCodeParams): Pr
 /**
  * Update an existing promotion code
  */
-export async function updatePromotionCode(id: string, params: Partial<CreatePromotionCodeParams>): Promise<PromotionCode> {
+export async function updatePromotionCode(id: string, updates: Partial<PromotionCode>): Promise<PromotionCode> {
   try {
     const { data, error } = await supabase
       .from('establishment_promotions')
-      .update(params)
+      .update(updates)
       .eq('id', id)
       .select()
       .single();
     
-    if (error) throw error;
+    if (error) {
+      console.error('Error updating promotion code:', error);
+      throw new Error(`Failed to update promotion code: ${error.message}`);
+    }
     
-    // Convert to expected PromotionCode type with type assertion
-    return {
+    // Transform the data to match our PromotionCode type
+    const promotion: PromotionCode = {
       id: data.id,
       code: data.code,
       description: data.description,
       discount_type: data.discount_type as 'percentage' | 'fixed' | 'free_item',
-      discount_value: data.discount_value,
+      discount_value: Number(data.discount_value),
       start_date: data.start_date,
       end_date: data.end_date,
       is_active: data.is_active,
       establishment_id: data.establishment_id,
-      user_segment: data.user_segment,
+      user_segment: data.user_segment || null,
       usage_limit: data.usage_limit,
-      min_purchase_amount: data.min_purchase_amount,
-      combinable: data.combinable,
+      used_count: data.used_count || 0, // Changed from usage_count to used_count
       valid_days: data.valid_days,
-      valid_hours: data.valid_hours as any,
+      valid_hours: data.valid_hours,
+      combinable: data.combinable,
+      min_purchase_amount: data.min_purchase_amount,
       created_at: data.created_at,
-      updated_at: data.updated_at,
-      used_count: data.used_count
+      updated_at: data.updated_at
     };
+    
+    return promotion;
   } catch (error) {
-    console.error('Error updating promotion code:', error);
+    console.error('Exception in updatePromotionCode:', error);
     throw error;
   }
 }
@@ -111,92 +160,95 @@ export async function deletePromotionCode(id: string): Promise<void> {
       .delete()
       .eq('id', id);
     
-    if (error) throw error;
+    if (error) {
+      console.error('Error deleting promotion code:', error);
+      throw new Error(`Failed to delete promotion code: ${error.message}`);
+    }
   } catch (error) {
-    console.error('Error deleting promotion code:', error);
+    console.error('Exception in deletePromotionCode:', error);
     throw error;
   }
 }
 
 /**
- * Get all promotion codes for an establishment
+ * Get analytics for promotions
  */
-export async function getPromotionCodes(establishmentId: string): Promise<PromotionCode[]> {
+export async function getPromotionAnalytics(establishmentId: string): Promise<any[]> {
   try {
+    const { data, error } = await supabase
+      .from('promotion_analytics')
+      .select('*')
+      .eq('establishment_id', establishmentId)
+      .order('total_redemptions', { ascending: false });
+    
+    if (error) {
+      console.error('Error fetching promotion analytics:', error);
+      throw new Error(`Failed to fetch promotion analytics: ${error.message}`);
+    }
+    
+    // Transform to consistent promotion analytics format
+    const analytics = data.map(item => ({
+      ...item,
+      usage_limit: item.usage_limit,
+      used_count: item.total_redemptions || 0, // Map total_redemptions to used_count for consistency
+      usage_percentage: item.usage_percentage || 0,
+      discount_value: Number(item.discount_value)
+    }));
+    
+    return analytics;
+  } catch (error) {
+    console.error('Exception in getPromotionAnalytics:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get promotions for a promoter
+ */
+export async function getPromoterPromotions(): Promise<PromotionCode[]> {
+  try {
+    const promoterProfile = await getPromoterProfile();
+    
+    if (!promoterProfile?.id) {
+      throw new Error('No promoter profile found');
+    }
+    
     const { data, error } = await supabase
       .from('establishment_promotions')
       .select('*')
-      .eq('establishment_id', establishmentId)
+      .eq('establishment_id', promoterProfile.id)
       .order('created_at', { ascending: false });
     
-    if (error) throw error;
+    if (error) {
+      console.error('Error fetching promoter promotions:', error);
+      throw new Error(`Failed to fetch promoter promotions: ${error.message}`);
+    }
     
-    // Convert each item to match the PromotionCode interface
-    return data.map(item => ({
+    // Transform the data to match our PromotionCode type
+    const promotions: PromotionCode[] = data.map(item => ({
       id: item.id,
       code: item.code,
       description: item.description,
       discount_type: item.discount_type as 'percentage' | 'fixed' | 'free_item',
-      discount_value: item.discount_value,
+      discount_value: Number(item.discount_value),
       start_date: item.start_date,
       end_date: item.end_date,
       is_active: item.is_active,
       establishment_id: item.establishment_id,
-      user_segment: item.user_segment,
+      user_segment: item.user_segment || null,
       usage_limit: item.usage_limit,
-      min_purchase_amount: item.min_purchase_amount,
-      combinable: item.combinable,
+      used_count: item.used_count || 0, // Changed from usage_count to used_count
       valid_days: item.valid_days,
-      valid_hours: item.valid_hours as any,
+      valid_hours: item.valid_hours,
+      combinable: item.combinable,
+      min_purchase_amount: item.min_purchase_amount,
       created_at: item.created_at,
-      updated_at: item.updated_at,
-      used_count: item.used_count
-    }));
-  } catch (error) {
-    console.error('Error fetching promotion codes:', error);
-    throw error;
-  }
-}
-
-/**
- * Get promotion analytics for an establishment
- */
-export async function getPromotionAnalytics(establishmentId: string): Promise<PromotionAnalytics[]> {
-  try {
-    // Use a view that exists rather than a nonexistent table
-    const { data, error } = await supabase
-      .from('promotion_analytics')
-      .select('*')
-      .eq('establishment_id', establishmentId);
-    
-    if (error) throw error;
-    
-    // Map and transform the response to match the PromotionAnalytics interface
-    const analytics = data.map(item => ({
-      id: item.id,
-      promotion_id: item.id, 
-      code: item.code,
-      description: item.description,
-      discount_type: item.discount_type as 'percentage' | 'fixed' | 'free_item',
-      discount_value: item.discount_value,
-      start_date: item.start_date,
-      end_date: item.end_date,
-      establishment_id: item.establishment_id,
-      redemption_count: item.total_redemptions || 0,
-      unique_users: Math.floor(Math.random() * 50),
-      avg_purchase_amount: item.average_order_value || 30.0,
-      total_discount_amount: item.total_discount_amount || (30 * (item.used_count || 0) * 0.1),
-      successful_validations: (item.used_count || 0) + Math.floor(Math.random() * 20),
-      failed_validations: Math.floor(Math.random() * 10),
-      auto_applied_count: Math.floor(Math.random() * 15),
-      total_usage: item.used_count || 0,
-      total_revenue: item.total_order_value || (30 * (item.used_count || 0)),
-      conversion_rate: Math.random() * 0.5
+      updated_at: item.updated_at
     }));
     
-    return analytics as PromotionAnalytics[];
+    return promotions;
   } catch (error) {
-    console.error('Error fetching promotion analytics:', error);
+    console.error('Exception in getPromoterPromotions:', error);
     throw error;
   }
 }

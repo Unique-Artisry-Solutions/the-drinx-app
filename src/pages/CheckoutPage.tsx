@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import Layout from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Steps, StepsProps } from '@/components/ui/steps';
+import { Steps } from '@/components/ui/steps';
 import CheckoutContactForm from '@/components/checkout/CheckoutContactForm';
 import CheckoutPaymentForm from '@/components/checkout/CheckoutPaymentForm';
 import CheckoutSummary, { AppliedDiscount } from '@/components/checkout/CheckoutSummary';
@@ -43,7 +43,7 @@ const CheckoutPage: React.FC = () => {
   const calculateTotal = () => {
     if (!appliedDiscount) return subtotal;
     
-    if (appliedDiscount.discountType === 'percentage') {
+    if (appliedDiscount.type === 'percentage') {
       return subtotal - (subtotal * appliedDiscount.value / 100);
     }
     
@@ -119,8 +119,23 @@ const CheckoutPage: React.FC = () => {
             <Card className="mt-4">
               <CardContent className="pt-6">
                 <DiscountCodeSection 
-                  onApplyDiscount={handleApplyDiscount}
-                  currentDiscount={appliedDiscount}
+                  onApplyDiscount={(discount) => {
+                    // Convert DiscountCodeSection AppliedDiscount type to CheckoutSummary AppliedDiscount
+                    setAppliedDiscount({
+                      code: discount.code,
+                      type: discount.type,
+                      value: discount.value,
+                      amount: discount.type === 'percentage' 
+                        ? (subtotal * discount.value / 100) 
+                        : discount.value,
+                      discountType: discount.type
+                    });
+                  }}
+                  currentDiscount={appliedDiscount ? {
+                    code: appliedDiscount.code,
+                    type: appliedDiscount.type,
+                    value: appliedDiscount.value
+                  } : null}
                 />
                 
                 {appliedDiscount && (
@@ -135,7 +150,18 @@ const CheckoutPage: React.FC = () => {
                 {user && user.id && currentStep > 1 && (
                   <SavedPromotionCodes 
                     userId={user.id} 
-                    onApplyCode={handleApplyDiscount}
+                    onApplyCode={(discount) => {
+                      // Convert DiscountCodeSection AppliedDiscount type to CheckoutSummary AppliedDiscount
+                      setAppliedDiscount({
+                        code: discount.code,
+                        type: discount.type,
+                        value: discount.value,
+                        amount: discount.type === 'percentage' 
+                          ? (subtotal * discount.value / 100) 
+                          : discount.value,
+                        discountType: discount.type
+                      });
+                    }}
                   />
                 )}
               </CardContent>

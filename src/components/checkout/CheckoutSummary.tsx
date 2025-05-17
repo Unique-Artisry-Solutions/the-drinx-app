@@ -13,9 +13,10 @@ export interface CartItem {
 
 export interface AppliedDiscount {
   code: string;
-  amount: number;
-  discountType: 'percentage' | 'fixed' | 'free_item';
+  type: 'percentage' | 'fixed' | 'free_item'; // Changed to match DiscountCodeSection type
   value: number;
+  amount: number; // Added to match DiscountCodeSection
+  discountType: 'percentage' | 'fixed' | 'free_item'; // Added to match expected prop in DiscountSavingsIndicator
 }
 
 export interface CheckoutSummaryProps {

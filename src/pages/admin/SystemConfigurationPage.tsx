@@ -136,7 +136,7 @@ const SystemConfigurationPage: React.FC = () => {
     setEditValue(value);
   };
 
-  // Common props for all settings tabs that match the SettingsTabProps interface
+  // Common props for all settings tabs
   const tabProps = {
     settings,
     isLoading,

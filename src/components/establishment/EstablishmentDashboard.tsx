@@ -36,7 +36,7 @@ const EstablishmentDashboard: React.FC<EstablishmentDashboardProps> = ({ establi
     end_date: p.end_date || undefined,
     is_active: p.is_active,
     usage_limit: p.usage_limit || null,
-    usage_count: p.usage_count || 0,
+    used_count: p.used_count || 0, // Changed from usage_count to used_count
     valid_days: p.valid_days || null,
     valid_hours: p.valid_hours || null,
     user_segment: p.user_segment || null,

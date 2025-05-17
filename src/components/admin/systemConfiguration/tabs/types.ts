@@ -7,7 +7,7 @@ export interface SystemSetting {
   category: string;
   is_protected: boolean;
   updated_at: string;
-  created_at?: string; // Added to avoid SystemSetting type mismatch
+  created_at: string; // Changed from optional to required to match SupabaseTables.ts
 }
 
 export interface SettingsTabProps {
