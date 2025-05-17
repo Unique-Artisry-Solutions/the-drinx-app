@@ -152,4 +152,3 @@ export { determineShowcaseCategory } from './featureShowcase/categoryDetection';
 export { generateMarketingPoints } from './featureShowcase/marketingUtils';
 export { determineFeatureIcon } from './featureShowcase/iconSelection';
 export { generateMockImplementationStats } from './featureShowcase/mockStats';
-

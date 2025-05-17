@@ -16,3 +16,6 @@ export { analyzePromoterSystem } from './promoterSystemAnalyzer';
 export { analyzeRewardSystem } from './rewardSystemAnalyzer';
 // Re-export the analyzeAudienceRelationshipSystem function
 export { analyzeAudienceRelationshipSystem } from './audienceRelationshipAnalyzer';
+
+// Add explicit export for analyzeAllFeatures
+export { analyzeAllFeatures } from './featureAnalyzer';

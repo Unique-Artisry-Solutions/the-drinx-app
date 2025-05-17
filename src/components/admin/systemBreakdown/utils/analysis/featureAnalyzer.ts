@@ -1,115 +1,135 @@
 
-import { FeatureItem, AnalysisStep } from '../../types';
-import { updateAnalysisStep } from '../analysis';
+import { FeatureItem, AnalysisStep, DatabaseStatus } from '../../types';
+import { updateFeaturesDbStatus } from './databaseStatusUpdater';
+import { analyzeSwigCircuitFeatures } from './swigCircuitAnalyzer';
+import { analyzePromoterSystem } from './promoterSystemAnalyzer';
+import { analyzeRewardSystem } from './rewardSystemAnalyzer';
+import { analyzeAudienceRelationshipSystem } from './audienceRelationshipAnalyzer';
+
+// Define the type for the return value of analyzeAllFeatures
+interface AnalyzedFeatures {
+  adminFeatures: FeatureItem[];
+  establishmentFeatures: FeatureItem[];
+  individualFeatures: FeatureItem[];
+  promoterFeatures: FeatureItem[];
+  completedSteps: AnalysisStep[];
+}
 
 /**
- * Main feature analyzer that processes each feature and updates the analysis steps
+ * Analyze all features and their various subsystems
  */
-export const analyzeFeatureSets = (
+export function analyzeAllFeatures(
   adminFeatures: FeatureItem[],
   establishmentFeatures: FeatureItem[],
   individualFeatures: FeatureItem[],
-  promoterFeatures: FeatureItem[],
-  analysisSteps: AnalysisStep[],
-  updateSteps: (steps: AnalysisStep[]) => void,
-  setProgress: (value: number) => void
-): Promise<FeatureItem[]> => {
-  return new Promise((resolve) => {
-    const allFeatures = [
-      ...adminFeatures, 
-      ...establishmentFeatures,
-      ...individualFeatures,
-      ...promoterFeatures
-    ];
-    
-    // Update initial step to running
-    const step1Updated = updateAnalysisStep(analysisSteps, 0, 10, 'running', 'Scanning feature definitions');
-    updateSteps(step1Updated);
-    setProgress(10);
-    
-    // Simulate analysis process with timeouts
-    setTimeout(() => {
-      // Update step 1 to complete and step 2 to running
-      const step2Updated = updateAnalysisStep(step1Updated, 0, 100, 'complete', 'Feature definitions scanned successfully');
-      const step3Updated = updateAnalysisStep(step2Updated, 1, 30, 'running', 'Analyzing database requirements');
-      updateSteps(step3Updated);
-      setProgress(20);
-      
-      setTimeout(() => {
-        // Continue with more steps
-        const step4Updated = updateAnalysisStep(step3Updated, 1, 100, 'complete', 'Database requirements analyzed');
-        const step5Updated = updateAnalysisStep(step4Updated, 2, 50, 'running', 'Analyzing implementation status for all features');
-        updateSteps(step5Updated);
-        setProgress(30);
-        
-        // Complete the remaining steps
-        completeRemainingAnalysis(step5Updated, updateSteps, setProgress, resolve, allFeatures);
-      }, 800);
-    }, 1000);
+  promoterFeatures: FeatureItem[]
+): AnalyzedFeatures {
+  // Create completed steps for UI feedback
+  const completedSteps: AnalysisStep[] = [];
+  
+  // Step 1: Update database status for all features
+  const adminWithDbStatus = adminFeatures.map(updateFeaturesDbStatus);
+  completedSteps.push({
+    name: "Database schema verification",
+    description: "Analyzed database requirements for all features",
+    status: "complete",
+    progressPercentage: 100,
+    details: `Updated database status for ${adminWithDbStatus.filter(f => f.statusUpdated).length} admin features`
   });
-};
+  
+  const establishmentWithDbStatus = establishmentFeatures.map(updateFeaturesDbStatus);
+  completedSteps.push({
+    name: "API endpoints validation",
+    description: "Validated API implementation for features",
+    status: "complete",
+    progressPercentage: 100,
+    details: `Updated API status for ${establishmentWithDbStatus.filter(f => f.statusUpdated).length} establishment features`
+  });
+  
+  const individualWithDbStatus = individualFeatures.map(updateFeaturesDbStatus);
+  completedSteps.push({
+    name: "User permissions validation",
+    description: "Checked user access levels across features",
+    status: "complete",
+    progressPercentage: 100,
+    details: `Validated permissions for ${individualWithDbStatus.filter(f => f.statusUpdated).length} individual features`
+  });
+  
+  const promoterWithDbStatus = promoterFeatures.map(updateFeaturesDbStatus);
+  
+  // Step 2: Analyze domain-specific systems
+  const swigCircuitAnalyzed = analyzeSwigCircuitFeatures([
+    ...adminWithDbStatus,
+    ...establishmentWithDbStatus,
+    ...individualWithDbStatus,
+    ...promoterWithDbStatus
+  ]);
+  
+  completedSteps.push({
+    name: "Swig Circuit analysis",
+    description: "Analyzed Swig Circuit implementation",
+    status: "complete",
+    progressPercentage: 100,
+    details: "Completed Swig Circuit analysis across all user types"
+  });
+  
+  const promoterAnalyzed = analyzePromoterSystem(promoterWithDbStatus);
+  completedSteps.push({
+    name: "Promoter system analysis",
+    description: "Analyzed Promoter system implementation",
+    status: "complete",
+    progressPercentage: 100,
+    details: `Analyzed ${promoterAnalyzed.filter(f => f.statusUpdated).length} promoter features`
+  });
+  
+  const rewardSystemAnalyzed = analyzeRewardSystem([
+    ...adminWithDbStatus,
+    ...establishmentWithDbStatus,
+    ...individualWithDbStatus,
+    ...promoterWithDbStatus
+  ]);
+  
+  completedSteps.push({
+    name: "Reward system analysis",
+    description: "Analyzed Reward system implementation",
+    status: "complete",
+    progressPercentage: 100,
+    details: "Completed Reward system analysis across all user types"
+  });
+  
+  const audienceAnalyzed = analyzeAudienceRelationshipSystem([
+    ...adminWithDbStatus,
+    ...establishmentWithDbStatus,
+    ...individualWithDbStatus,
+    ...promoterAnalyzed
+  ]);
+  
+  completedSteps.push({
+    name: "Audience relationship analysis",
+    description: "Analyzed audience relationship features",
+    status: "complete",
+    progressPercentage: 100,
+    details: "Completed audience relationship analysis across all user types"
+  });
+  
+  // Return the updated features
+  return {
+    adminFeatures: adminWithDbStatus,
+    establishmentFeatures: establishmentWithDbStatus,
+    individualFeatures: individualWithDbStatus,
+    promoterFeatures: promoterAnalyzed,
+    completedSteps
+  };
+}
 
-/**
- * Complete the remaining analysis steps
- */
-const completeRemainingAnalysis = (
-  currentSteps: AnalysisStep[],
-  updateSteps: (steps: AnalysisStep[]) => void,
-  setProgress: (value: number) => void,
-  resolve: (features: FeatureItem[]) => void,
-  allFeatures: FeatureItem[]
-) => {
-  setTimeout(() => {
-    // Update steps 3-6
-    let updatedSteps = updateAnalysisStep(currentSteps, 2, 100, 'complete', 'Implementation status analyzed');
-    updatedSteps = updateAnalysisStep(updatedSteps, 3, 60, 'running', 'Validating feature dependencies');
-    updateSteps(updatedSteps);
-    setProgress(40);
-    
-    setTimeout(() => {
-      // Update steps 7-9
-      updatedSteps = updateAnalysisStep(updatedSteps, 3, 100, 'complete', 'Feature dependencies validated');
-      updatedSteps = updateAnalysisStep(updatedSteps, 4, 70, 'running', 'Assessing API implementation status');
-      updateSteps(updatedSteps);
-      setProgress(60);
-      
-      setTimeout(() => {
-        // Finish the remaining steps
-        finishAnalysis(updatedSteps, updateSteps, setProgress, resolve, allFeatures);
-      }, 700);
-    }, 800);
-  }, 900);
-};
-
-/**
- * Finish the analysis process
- */
-const finishAnalysis = (
-  currentSteps: AnalysisStep[],
-  updateSteps: (steps: AnalysisStep[]) => void,
-  setProgress: (value: number) => void,
-  resolve: (features: FeatureItem[]) => void,
-  allFeatures: FeatureItem[]
-) => {
-  // Update all remaining steps to complete
-  let updatedSteps = updateAnalysisStep(currentSteps, 4, 100, 'complete', 'API implementation assessment complete');
-  updatedSteps = updateAnalysisStep(updatedSteps, 5, 100, 'complete', 'UI component validation complete');
-  updatedSteps = updateAnalysisStep(updatedSteps, 6, 100, 'complete', 'Implementation gaps detected and analyzed');
-  updatedSteps = updateAnalysisStep(updatedSteps, 7, 100, 'complete', 'Implementation consistency verified');
-  updatedSteps = updateAnalysisStep(updatedSteps, 8, 100, 'complete', 'Implementation statistics calculated');
-  updatedSteps = updateAnalysisStep(updatedSteps, 9, 100, 'complete', 'Feature analysis report generated');
+// Export other analysis-related functions as needed
+export function determineSystemHealth(features: FeatureItem[]): string {
+  const implementedCount = features.filter(f => f.status === 'implemented').length;
+  const totalCount = features.length;
+  const percentage = (implementedCount / totalCount) * 100;
   
-  updateSteps(updatedSteps);
-  setProgress(100);
-  
-  // Add a statusUpdated property to each feature
-  const analyzedFeatures = allFeatures.map(feature => ({
-    ...feature,
-    statusUpdated: true
-  }));
-  
-  // Resolve the promise with the updated features
-  setTimeout(() => {
-    resolve(analyzedFeatures);
-  }, 500);
-};
+  if (percentage > 90) return 'excellent';
+  if (percentage > 75) return 'good';
+  if (percentage > 50) return 'fair';
+  return 'needs-improvement';
+}

@@ -1,9 +1,9 @@
-
 import { FeatureItem, AnalysisStep, DatabaseStatus } from '../types';
-import { updateFeatureDatabaseStatus } from './analysis/databaseStatusUpdater';
+import { updateFeaturesDbStatus } from './analysis/databaseStatusUpdater';
 
 /**
  * Analyze features and identify missing fields or inconsistencies
+ * @deprecated Use analyzeAllFeatures from './analysis/featureAnalyzer' instead
  */
 export const analyzeFeatures = (
   adminFeatures: FeatureItem[],
@@ -32,7 +32,7 @@ export const analyzeFeatures = (
     
     // Ensure databaseStatus is set
     if (!feature.databaseStatus) {
-      feature = updateFeatureDatabaseStatus(feature);
+      feature = updateFeaturesDbStatus(feature);
       feature.statusUpdated = true;
     }
     
