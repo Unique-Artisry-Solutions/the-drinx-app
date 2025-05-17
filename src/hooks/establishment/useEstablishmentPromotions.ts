@@ -6,10 +6,9 @@ import {
   createPromotionCode, 
   deletePromotionCode, 
   getPromotionCodes,
-  updatePromotionCode, 
-  PromotionCode
+  updatePromotionCode 
 } from '@/lib/promotions/api';
-import { PromotionFormData } from '@/types/PromotionTypes';
+import { PromotionFormData, PromotionCode } from '@/types/PromotionTypes';
 
 // Re-export the type correctly
 export type { PromotionFormData } from '@/types/PromotionTypes';
@@ -165,7 +164,7 @@ export const useEstablishmentPromotions = (establishmentId: string) => {
   // Initialize promotions on mount
   useEffect(() => {
     loadPromotions();
-  }, []);
+  }, [establishmentId]);
 
   return {
     promotions,

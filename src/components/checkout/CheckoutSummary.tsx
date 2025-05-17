@@ -1,111 +1,80 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { HelpCircle } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
-import { CartItem } from '@/contexts/CartContext';
-import { default as CartItemComponent } from '@/components/cart/CartItem';
+import { formatCurrency } from '@/utils/formatters';
+import { Card, CardContent, CardTitle } from '@/components/ui/card';
+import { DiscountSavingsIndicator } from './DiscountSavingsIndicator';
 
-interface GroupedItems {
-  subscriptions: CartItem[];
-  eventTickets: CartItem[];
-  swigCircuitTickets: CartItem[];
+export interface CartItem {
+  id: number;
+  name: string;
+  price: number;
+  quantity: number;
 }
 
-interface CheckoutSummaryProps {
-  groupedItems: GroupedItems;
-  totalPrice: number;
-  serviceFee: number;
-  serviceFeePercentage: number;
-  totalWithFees: number;
+export interface AppliedDiscount {
+  code: string;
+  amount: number;
+  discountType: 'percentage' | 'fixed' | 'free_item';
+  value: number;
+}
+
+export interface CheckoutSummaryProps {
+  items: CartItem[];
+  subtotal: number;
+  discount: AppliedDiscount | null;
+  total: number;
 }
 
 const CheckoutSummary: React.FC<CheckoutSummaryProps> = ({
-  groupedItems,
-  totalPrice,
-  serviceFee,
-  serviceFeePercentage,
-  totalWithFees
+  items,
+  subtotal,
+  discount,
+  total
 }) => {
-  const renderSection = (title: string, items: CartItem[]) => {
-    if (items.length === 0) return null;
-    
-    return (
-      <div>
-        <h4 className="text-sm font-medium text-gray-500 mb-2">
-          {title}
-        </h4>
-        <div className="divide-y">
-          {items.map(item => (
-            <div key={item.id} className="py-3">
-              <CartItemComponent item={item} />
-              {(item.type === 'event_ticket' && item.eventId) && (
-                <div className="mt-2 text-right">
-                  <Link 
-                    to={`/event/${item.eventId}`} 
-                    className="text-xs text-material-primary hover:underline"
-                  >
-                    View Event Details
-                  </Link>
-                </div>
-              )}
-              {(item.type === 'swig_circuit_ticket' && item.swigCircuitId) && (
-                <div className="mt-2 text-right">
-                  <Link 
-                    to={`/swig-circuit/${item.swigCircuitId}`} 
-                    className="text-xs text-material-primary hover:underline"
-                  >
-                    View Circuit Details
-                  </Link>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  };
-
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Order Summary</CardTitle>
-      </CardHeader>
-      <CardContent>
+    <Card className="w-full">
+      <CardContent className="pt-6">
+        <CardTitle className="text-lg mb-4">Order Summary</CardTitle>
+        
         <div className="space-y-4">
-          {renderSection('Subscriptions', groupedItems.subscriptions)}
-          {renderSection('Event Tickets', groupedItems.eventTickets)}
-          {renderSection('Swig Circuit Tickets', groupedItems.swigCircuitTickets)}
+          <div className="space-y-2">
+            {items.map(item => (
+              <div key={item.id} className="flex justify-between text-sm">
+                <span className="flex-1">
+                  {item.name} {item.quantity > 1 && <span className="text-muted-foreground">x{item.quantity}</span>}
+                </span>
+                <span className="font-medium">{formatCurrency(item.price * item.quantity)}</span>
+              </div>
+            ))}
+          </div>
           
-          <div className="border-t pt-4 mt-4 space-y-2">
-            <div className="flex justify-between">
-              <span className="text-gray-600">Subtotal:</span>
-              <span>${totalPrice.toFixed(2)}</span>
+          <div className="border-t pt-2">
+            <div className="flex justify-between mb-1">
+              <span className="text-muted-foreground">Subtotal</span>
+              <span>{formatCurrency(subtotal)}</span>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600 flex items-center">
-                Service Fee ({serviceFeePercentage}%):
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="ml-1 inline-flex">
-                        <HelpCircle size={14} className="text-gray-400" />
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-xs">
-                      <p>This service fee helps support platform maintenance and payment processing.</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </span>
-              <span>${serviceFee.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between font-bold pt-2 text-lg">
-              <span>Total:</span>
-              <span>${totalWithFees.toFixed(2)}</span>
+            
+            {discount && (
+              <div className="flex justify-between text-green-600 mb-1">
+                <span>Discount ({discount.code})</span>
+                <span>-{formatCurrency(discount.amount)}</span>
+              </div>
+            )}
+            
+            <div className="flex justify-between font-medium text-lg mt-2 border-t pt-2">
+              <span>Total</span>
+              <span>{formatCurrency(total)}</span>
             </div>
           </div>
+          
+          {discount && (
+            <DiscountSavingsIndicator
+              subtotal={subtotal}
+              discount={discount.amount}
+              discountCode={discount.code}
+              discountType={discount.discountType}
+            />
+          )}
         </div>
       </CardContent>
     </Card>

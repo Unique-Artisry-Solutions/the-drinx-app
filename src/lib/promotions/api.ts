@@ -1,25 +1,16 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { PromotionCode, PromotionAnalytics } from '@/types/PromotionTypes';
-
-export interface PromotionCreateParams {
-  code: string;
-  description: string;
-  discount_type: 'percentage' | 'fixed' | 'free_item';
-  discount_value: number;
-  start_date: string;
-  end_date?: string | null;
-  establishment_id: string;
-  usage_limit?: number | null;
-  valid_days?: string[] | null;
-  min_purchase_amount?: number | null;
-  combinable?: boolean;
-}
+import { 
+  PromotionCode, 
+  PromotionAnalytics, 
+  CreatePromotionCodeParams, 
+  BatchCreateParams 
+} from '@/types/PromotionTypes';
 
 /**
  * Create a new promotion code
  */
-export async function createPromotionCode(params: PromotionCreateParams): Promise<PromotionCode> {
+export async function createPromotionCode(params: CreatePromotionCodeParams): Promise<PromotionCode> {
   try {
     const { data, error } = await supabase
       .from('establishment_promotions')
@@ -42,10 +33,7 @@ export async function createPromotionCode(params: PromotionCreateParams): Promis
     if (error) throw error;
     
     // Explicitly cast to ensure correct typing
-    return {
-      ...data,
-      discount_type: data.discount_type as 'percentage' | 'fixed' | 'free_item',
-    } as PromotionCode;
+    return data as PromotionCode;
   } catch (error) {
     console.error('Error creating promotion code:', error);
     throw error;
@@ -55,7 +43,7 @@ export async function createPromotionCode(params: PromotionCreateParams): Promis
 /**
  * Update an existing promotion code
  */
-export async function updatePromotionCode(id: string, params: Partial<PromotionCreateParams>): Promise<PromotionCode> {
+export async function updatePromotionCode(id: string, params: Partial<CreatePromotionCodeParams>): Promise<PromotionCode> {
   try {
     const { data, error } = await supabase
       .from('establishment_promotions')
@@ -67,10 +55,7 @@ export async function updatePromotionCode(id: string, params: Partial<PromotionC
     if (error) throw error;
     
     // Explicitly cast to ensure correct typing
-    return {
-      ...data,
-      discount_type: data.discount_type as 'percentage' | 'fixed' | 'free_item',
-    } as PromotionCode;
+    return data as PromotionCode;
   } catch (error) {
     console.error('Error updating promotion code:', error);
     throw error;
@@ -108,10 +93,7 @@ export async function getPromotionCodes(establishmentId: string): Promise<Promot
     if (error) throw error;
     
     // Explicitly cast to ensure correct typing
-    return data.map(item => ({
-      ...item,
-      discount_type: item.discount_type as 'percentage' | 'fixed' | 'free_item',
-    })) as PromotionCode[];
+    return data as PromotionCode[];
   } catch (error) {
     console.error('Error fetching promotion codes:', error);
     throw error;
@@ -125,7 +107,7 @@ export async function getPromotionAnalytics(establishmentId: string): Promise<Pr
   try {
     // This is a mock implementation since we don't have the real table
     const { data, error } = await supabase
-      .from('establishment_promotion_analytics')
+      .from('establishment_promotions')
       .select('*')
       .eq('establishment_id', establishmentId);
     
@@ -142,15 +124,15 @@ export async function getPromotionAnalytics(establishmentId: string): Promise<Pr
       start_date: item.start_date,
       end_date: item.end_date,
       establishment_id: item.establishment_id,
-      redemption_count: item.usage_count || 0,
+      redemption_count: item.used_count || 0,
       unique_users: Math.floor(Math.random() * 50),
-      avg_purchase_amount: item.average_order_value || 0,
-      total_discount_amount: (item.average_order_value || 0) * (item.usage_count || 0) * 0.1,
-      successful_validations: (item.usage_count || 0) + Math.floor(Math.random() * 20),
+      avg_purchase_amount: 30.0, // Mock value
+      total_discount_amount: (30 * (item.used_count || 0) * 0.1),
+      successful_validations: (item.used_count || 0) + Math.floor(Math.random() * 20),
       failed_validations: Math.floor(Math.random() * 10),
       auto_applied_count: Math.floor(Math.random() * 15),
-      total_usage: item.usage_count || 0,
-      total_revenue: (item.average_order_value || 0) * (item.usage_count || 0),
+      total_usage: item.used_count || 0,
+      total_revenue: (30 * (item.used_count || 0)),
       conversion_rate: Math.random() * 0.5
     }));
     
@@ -201,3 +183,80 @@ export async function removeSavedPromotionCode(promotionId: string, userId: stri
     return false;
   }
 }
+
+/**
+ * Batch create multiple promotion codes
+ */
+export async function batchCreatePromotionCodes(params: BatchCreateParams): Promise<PromotionCode[]> {
+  try {
+    const { data, error } = await supabase
+      .from('establishment_promotions')
+      .insert(params.codes.map(code => ({
+        ...code,
+        establishment_id: params.establishment_id
+      })))
+      .select();
+    
+    if (error) throw error;
+    
+    return data as PromotionCode[];
+  } catch (error) {
+    console.error('Error batch creating promotion codes:', error);
+    throw error;
+  }
+}
+
+/**
+ * Export promotion codes to CSV format
+ */
+export function exportPromotionCodesToCSV(codes: PromotionCode[]): string {
+  const headers = [
+    'Code', 'Description', 'Discount Type', 'Discount Value', 
+    'Start Date', 'End Date', 'Is Active', 'Usage Limit', 'Used Count'
+  ];
+  
+  const csvContent = [
+    headers.join(','),
+    ...codes.map(code => [
+      code.code,
+      `"${code.description.replace(/"/g, '""')}"`,
+      code.discount_type,
+      code.discount_value,
+      code.start_date,
+      code.end_date || '',
+      code.is_active ? 'Yes' : 'No',
+      code.usage_limit || '',
+      code.used_count || '0'
+    ].join(','))
+  ].join('\n');
+  
+  return csvContent;
+}
+
+/**
+ * Parse CSV data for import
+ */
+export function parseCSVForImport(csvData: string, establishmentId: string): CreatePromotionCodeParams[] {
+  const lines = csvData.split('\n');
+  const headers = lines[0].split(',');
+  
+  return lines.slice(1)
+    .filter(line => line.trim() !== '')
+    .map(line => {
+      const values = line.split(',');
+      return {
+        code: values[0],
+        description: values[1].replace(/^"|"$/g, '').replace(/""/g, '"'),
+        discount_type: values[2] as 'percentage' | 'fixed' | 'free_item',
+        discount_value: parseFloat(values[3]),
+        start_date: values[4],
+        end_date: values[5] ? values[5] : null,
+        establishment_id: establishmentId,
+        usage_limit: values[7] ? parseInt(values[7]) : null,
+        combinable: true
+      };
+    });
+}
+
+// Export types directly
+export type { PromotionCode, PromotionAnalytics, CreatePromotionCodeParams, BatchCreateParams };

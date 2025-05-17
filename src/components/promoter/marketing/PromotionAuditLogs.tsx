@@ -48,8 +48,8 @@ export default function PromotionAuditLogs({ promotionId, limit = 50 }: Promotio
   const { 
     auditLogs,
     analytics, 
-    isLoadingLogs,
-    isErrorLogs,
+    isLoading,
+    error,
     refetchLogs
   } = usePromotionAudit(promotionId, { 
     limit,
@@ -79,7 +79,7 @@ export default function PromotionAuditLogs({ promotionId, limit = 50 }: Promotio
     refetchLogs();
   };
 
-  if (isLoadingLogs) {
+  if (isLoading) {
     return (
       <Card className="w-full">
         <CardHeader>
@@ -94,7 +94,7 @@ export default function PromotionAuditLogs({ promotionId, limit = 50 }: Promotio
     );
   }
 
-  if (isErrorLogs) {
+  if (error) {
     return (
       <Card className="w-full bg-red-50">
         <CardHeader>

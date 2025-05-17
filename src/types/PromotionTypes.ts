@@ -14,7 +14,7 @@ export interface Promotion {
   establishment_id: string;
   user_segment?: string | null;
   usage_limit?: number | null;
-  usage_count?: number | null;
+  used_count?: number | null;
   min_purchase_amount?: number | null;
   combinable: boolean;
   valid_days?: string[] | null;
@@ -42,7 +42,10 @@ export interface PromotionCode {
   min_purchase_amount?: number | null;
   combinable: boolean;
   valid_days?: string[] | null;
-  valid_hours?: Json | null;
+  valid_hours?: {
+    start: string;
+    end: string;
+  } | null;
   created_at: string;
   updated_at: string;
   used_count?: number | null;
@@ -117,4 +120,24 @@ export interface PromotionFormData {
     start: string;
     end: string;
   };
+}
+
+// Type for API parameters
+export interface CreatePromotionCodeParams {
+  code: string;
+  description: string;
+  discount_type: 'percentage' | 'fixed' | 'free_item';
+  discount_value: number;
+  start_date: string;
+  end_date?: string | null;
+  establishment_id: string;
+  usage_limit?: number | null;
+  valid_days?: string[] | null;
+  min_purchase_amount?: number | null;
+  combinable?: boolean;
+}
+
+export interface BatchCreateParams {
+  codes: CreatePromotionCodeParams[];
+  establishment_id: string;
 }

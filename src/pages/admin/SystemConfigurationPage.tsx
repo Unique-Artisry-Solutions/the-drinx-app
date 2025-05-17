@@ -84,6 +84,25 @@ const SystemConfigurationPage: React.FC = () => {
     fetchSettings();
   }, []);
 
+  const handleEditClick = (id: string) => {
+    const setting = settings.find(s => s.id === id);
+    if (setting) {
+      setEditingSettingId(id);
+      setEditValue(String(setting.value));
+    }
+  };
+
+  const handleSaveClick = async (id: string) => {
+    const setting = settings.find(s => s.id === id);
+    if (setting) {
+      await handleSave(id, setting.is_protected);
+    }
+  };
+
+  const handleCancelClick = () => {
+    setEditingSettingId(null);
+  };
+
   const handleEdit = (id: string, value: any) => {
     setEditingSettingId(id);
     setEditValue(value);
@@ -129,6 +148,10 @@ const SystemConfigurationPage: React.FC = () => {
     setChangeReason,
     isSubmitting,
     error,
+    onEditClick: handleEditClick,
+    onSaveClick: handleSaveClick,
+    onCancelClick: handleCancelClick,
+    setEditValue
   };
 
   return (
