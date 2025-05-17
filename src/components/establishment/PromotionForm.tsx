@@ -134,7 +134,7 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onSubmit, onCancel, initi
           <label className="block text-sm font-medium">Start Date</label>
           <DatePicker 
             date={formData.startDate ? new Date(formData.startDate) : undefined} 
-            onSelect={(date) => handleChange('startDate', date)} 
+            setDate={(date) => handleChange('startDate', date)}
           />
         </div>
 
@@ -142,7 +142,7 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onSubmit, onCancel, initi
           <label className="block text-sm font-medium">End Date</label>
           <DatePicker 
             date={formData.endDate ? new Date(formData.endDate) : undefined} 
-            onSelect={(date) => handleChange('endDate', date)} 
+            setDate={(date) => handleChange('endDate', date)}
           />
         </div>
 
