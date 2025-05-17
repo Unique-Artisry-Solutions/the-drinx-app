@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { AnalysisStep, FeatureItem } from '../types';
@@ -153,6 +152,15 @@ export const useAnalysisProcess = (
     }, 600); // Update every 600ms
     
     const completeAnalysis = () => {
+      // Update all steps to completed
+      setAnalysisSteps(prevSteps => 
+        prevSteps.map(step => ({
+          ...step,
+          status: 'completed', // Changed from 'complete' to 'completed'
+          progressPercentage: 100,
+        }))
+      );
+      
       // Apply the actual analysis to the features
       const analyzedFeatures = analyzeAllFeatures(
         adminFeatures,
@@ -192,10 +200,21 @@ export const useAnalysisProcess = (
     };
   };
 
+  const updateAnalysisStep = (step: string, progress: number) => {
+    setAnalysisSteps(prev => 
+      prev.map(s => 
+        s.name === step 
+          ? { ...s, progressPercentage: progress, status: progress >= 100 ? 'completed' : 'running' } 
+          : s
+      )
+    );
+  };
+
   return {
     analyzing,
     analysisProgress,
     analysisSteps,
-    handleAnalyzeFeatures
+    handleAnalyzeFeatures,
+    updateAnalysisStep
   };
 };

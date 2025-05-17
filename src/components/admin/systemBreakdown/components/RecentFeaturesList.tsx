@@ -21,7 +21,7 @@ const RecentFeaturesList: React.FC<RecentFeaturesListProps> = ({ title, features
                 {feature.status}
               </Badge>
               <span className="text-xs text-gray-500">
-                DB: {(feature.databaseStatus || feature.dbStatus || 'not_started').replace('_', ' ')}
+                DB: {(feature.databaseStatus || 'not_started').replace('_', ' ')}
               </span>
             </div>
           </li>
