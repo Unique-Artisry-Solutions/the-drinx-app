@@ -1,6 +1,5 @@
-
 import { CartItem } from '@/contexts/CartContext';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { logPromotionAction } from '@/lib/promotions/auditApi';
 
 export interface DiscountCode {
@@ -27,7 +26,7 @@ export interface AppliedDiscount {
   codeId: string;
   discountAmount: number;
   discountType: 'percentage' | 'fixed' | 'free_item';
-  description?: string;
+  description: string;
 }
 
 export interface ValidationError {
@@ -224,7 +223,7 @@ export function calculateDiscountAmount(code: DiscountCode, cartItems: CartItem[
  */
 export async function autoApplyBestDiscount(
   cartItems: CartItem[],
-  userId?: string
+  userId?: string | null
 ): Promise<AppliedDiscount | null> {
   try {
     const applicableCodes = await fetchApplicableDiscountCodes(cartItems, userId);
@@ -353,7 +352,10 @@ export async function validatePromotionCode(
       const errorResult = {
         valid: false,
         message: 'This discount code has expired',
-        errors: [{ message: 'Code expired', code: 'CODE_EXPIRED' }]
+        errors: [{ 
+          message: 'Code expired', 
+          code: 'CODE_EXPIRED'
+        }]
       };
       
       await logPromotionAction(
@@ -364,7 +366,6 @@ export async function validatePromotionCode(
           status: 'failure',
           metadata: {
             code,
-            error: 'Code expired',
             end_date: promotion.end_date
           }
         }
@@ -621,5 +622,50 @@ export function sharePromotionCode(
   } catch (error) {
     console.error('Error sharing code:', error);
     return false;
+  }
+}
+
+/**
+ * Increments the usage count for a discount code
+ * @param codeId UUID of the discount code
+ * @param tableName Table where the code is stored ('event_discount_codes' or 'establishment_promotions')
+ * @returns {Promise<number>} The new count after incrementing
+ */
+export async function incrementCodeUsage(
+  codeId: string, 
+  tableName: 'event_discount_codes' | 'establishment_promotions' | 'promotion_redemptions'
+): Promise<number> {
+  try {
+    const column = tableName === 'promotion_redemptions' ? 'redemption_count' : 'usage_count';
+    
+    // Call the increment_count RPC function
+    const { data, error } = await supabase.rpc('increment_count', {
+      row_id: codeId,
+      table_name: tableName,
+      column_name: column
+    });
+
+    if (error) {
+      console.error('Error incrementing count:', error);
+      throw new Error(`Failed to increment usage count: ${error.message}`);
+    }
+
+    return data as number;
+  } catch (error) {
+    console.error('Exception in incrementCodeUsage:', error);
+    // Fallback to direct update if RPC call fails
+    const { data, error: updateError } = await supabase
+      .from(tableName)
+      .update({ usage_count: supabase.sql`usage_count + 1` })
+      .eq('id', codeId)
+      .select('usage_count')
+      .single();
+    
+    if (updateError) {
+      console.error('Fallback update failed:', updateError);
+      throw new Error(`Failed to update usage count: ${updateError.message}`);
+    }
+    
+    return data?.usage_count || 1;
   }
 }

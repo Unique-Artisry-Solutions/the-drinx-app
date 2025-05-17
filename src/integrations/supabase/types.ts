@@ -3968,6 +3968,42 @@ export type Database = {
         }
         Relationships: []
       }
+      user_saved_codes: {
+        Row: {
+          code_id: string
+          id: string
+          saved_at: string
+          user_id: string
+        }
+        Insert: {
+          code_id: string
+          id?: string
+          saved_at?: string
+          user_id: string
+        }
+        Update: {
+          code_id?: string
+          id?: string
+          saved_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_saved_codes_code_id_fkey"
+            columns: ["code_id"]
+            isOneToOne: false
+            referencedRelation: "establishment_promotions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_saved_codes_code_id_fkey"
+            columns: ["code_id"]
+            isOneToOne: false
+            referencedRelation: "promotion_analytics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       visitor_sessions: {
         Row: {
           created_at: string

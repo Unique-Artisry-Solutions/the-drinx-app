@@ -6,8 +6,9 @@ import { Tag, Loader2, X, Check } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { CartItem } from '@/contexts/CartContext';
-import { autoApplyBestDiscount, AppliedDiscount } from '@/utils/discountCodeUtils';
+import { autoApplyBestDiscount, AppliedDiscount, incrementCodeUsage } from '@/utils/discountCodeUtils';
 import { useAuth } from '@/contexts/auth';
+import { supabase } from '@/integrations/supabase/client';
 
 interface DiscountCodeSectionProps {
   items: CartItem[];
@@ -42,6 +43,20 @@ const DiscountCodeSection: React.FC<DiscountCodeSectionProps> = ({
               description: `"${autoDiscount.code}" has been applied to your order.`,
               variant: "default",
             });
+
+            // Increment usage count for auto-applied codes
+            if (autoDiscount.codeId) {
+              try {
+                // Determine the table based on the code pattern or metadata
+                const tableName = autoDiscount.codeId.startsWith('evt_') 
+                  ? 'event_discount_codes' 
+                  : 'establishment_promotions';
+
+                await incrementCodeUsage(autoDiscount.codeId, tableName);
+              } catch (error) {
+                console.error("Error incrementing auto discount usage:", error);
+              }
+            }
           }
         } catch (error) {
           console.error("Error auto-applying discount:", error);
@@ -94,13 +109,19 @@ const DiscountCodeSection: React.FC<DiscountCodeSectionProps> = ({
           ? items.reduce((total, item) => total + item.price, 0) * (eventData.discount_amount / 100)
           : eventData.discount_amount;
           
-        onApplyDiscount({
+        // Apply the discount
+        const discountToApply = {
           code: eventData.code,
           codeId: eventData.id,
           discountAmount,
           discountType: eventData.discount_type,
-          description: eventData.description
-        });
+          description: eventData.description || 'Event discount'
+        };
+        
+        onApplyDiscount(discountToApply);
+        
+        // Increment usage count using our new function
+        await incrementCodeUsage(eventData.id, 'event_discount_codes');
         
         toast({
           title: "Code applied",
@@ -112,13 +133,19 @@ const DiscountCodeSection: React.FC<DiscountCodeSectionProps> = ({
           ? items.reduce((total, item) => total + item.price, 0) * (data.discount_value / 100)
           : data.discount_value;
           
-        onApplyDiscount({
+        // Apply the discount
+        const discountToApply = {
           code: data.code,
           codeId: data.id,
           discountAmount,
           discountType: data.discount_type,
           description: data.description
-        });
+        };
+        
+        onApplyDiscount(discountToApply);
+        
+        // Increment usage count using our new function
+        await incrementCodeUsage(data.id, 'establishment_promotions');
         
         toast({
           title: "Code applied",
