@@ -61,6 +61,10 @@ export interface FeatureItem {
     percentage?: number;
   }[];
   integrations?: string[];
+  // Adding missing properties from errors
+  dbRequirementsText?: string;
+  dependsOn?: string[];
+  dbCompleted?: number;
 }
 
 // Progress tracking types
@@ -72,6 +76,18 @@ export interface MonthlyProgressData {
   individualImplemented: number;
   promoterImplemented: number;
 }
+
+// Adding alias for compatibility with ProgressData
+export type ProgressData = {
+  month: string;
+  totalImplemented: number;
+  adminImplemented: number;
+  establishmentImplemented: number;
+  individualImplemented: number;
+  promoterImplemented: number;
+  frontend: number;
+  backend: number;
+};
 
 export interface ProgressSnapshot {
   date: string;
@@ -100,6 +116,8 @@ export interface ProgressSnapshot {
   };
   implementedFeatures: number;
   totalFeatures: number;
+  // Adding missing properties
+  dbComplete?: number;
 }
 
 // Analysis process types
@@ -136,6 +154,16 @@ export interface ImprovementItem {
   estimatedDevelopmentTime?: string;
   estimatedCompletionDate?: string;
   tags?: string[];
+  // Adding properties referenced in errors
+  lovableCompatible?: boolean;
+  technicalRequirements?: string;
+  type?: string;
+  submittedDate?: string;
+  affectedAreas?: string[];
+  implementationSteps?: string[];
+  estimatedEffort?: string;
+  businessImpact?: string;
+  currentStatus?: string;
 }
 
 export type SortField = 
@@ -146,7 +174,12 @@ export type SortField =
   | 'status'
   | 'priority'
   | 'votes'
-  | 'createdAt';
+  | 'createdAt'
+  // Adding additional sort fields referenced in errors
+  | 'name'
+  | 'type'
+  | 'submittedDate'
+  | 'lovableCompatible';
 
 export type SortOrder = 'asc' | 'desc';
 
@@ -161,6 +194,14 @@ export interface FeatureShowcaseData {
   isSignature: boolean;
   keyBenefits?: string[];
   technicalDetails?: string;
+  // Adding missing properties from errors
+  icon?: string;
+  marketingPoints?: string[];
+  implementations?: number;
+  avgRating?: number;
+  complexity?: string;
+  categories?: string[];
+  businessValues?: string[];
 }
 
 export type FeatureShowcaseCategoryType = 
@@ -184,3 +225,66 @@ export interface FeatureBusinessValueObject {
   implementationRate: number;
   featureCount: number;
 }
+
+// Adding release types directly to avoid circular references
+export type ReleaseStatus = 'planned' | 'in_development' | 'ready_for_qa' | 'in_qa' | 'ready_for_release' | 'released';
+
+export type ReleaseType = 'major' | 'minor' | 'patch';
+
+export type ReleaseFeatureStatus = 'pending' | 'in_progress' | 'completed' | 'deferred';
+
+export interface ReleaseFeature {
+  id: string;
+  name: string;
+  description: string;
+  status: ReleaseFeatureStatus;
+  improvementId?: string;
+  assignedTo?: string;
+  notes?: string;
+  startDate?: string;
+  completionDate?: string;
+  percentComplete?: number;
+}
+
+export interface ReleaseNote {
+  type: 'feature' | 'improvement' | 'bugfix' | 'security' | 'other';
+  title: string;
+  description: string;
+  technicalDetails?: string;
+  userFacing: boolean;
+  author?: string;
+  createdAt?: string;
+}
+
+export interface Release {
+  id: string;
+  version: string;
+  name: string;
+  type: ReleaseType;
+  status: ReleaseStatus;
+  plannedReleaseDate?: string;
+  actualReleaseDate?: string;
+  description: string;
+  features: ReleaseFeature[];
+  releaseNotes: ReleaseNote[];
+  createdAt: string;
+  updatedAt: string;
+  createdBy?: string;
+  team?: string[];
+  tags?: string[];
+  previousVersion?: string;
+  nextVersion?: string;
+  releaseBranch?: string;
+}
+
+export interface ReleaseProgress {
+  totalFeatures: number;
+  completedFeatures: number;
+  inProgressFeatures: number;
+  pendingFeatures: number;
+  deferredFeatures: number;
+  percentComplete: number;
+}
+
+export type ReleaseSortField = 'version' | 'name' | 'status' | 'plannedReleaseDate';
+export type ReleaseSortOrder = 'asc' | 'desc';

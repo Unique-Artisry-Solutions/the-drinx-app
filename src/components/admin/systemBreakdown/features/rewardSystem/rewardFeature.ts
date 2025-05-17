@@ -22,7 +22,8 @@ export const rewardProgramFeature: FeatureItem = {
     "Track reward history"
   ],
   databaseAnalysis: rewardSystemDatabaseAnalysis,
-  dbRequirementsText: rewardSystemRequirements,
+  // Replace dbRequirementsText with a valid property
+  dependsOn: [],
   implementationProgress: 100,
   dbCompleted: 100
 };
