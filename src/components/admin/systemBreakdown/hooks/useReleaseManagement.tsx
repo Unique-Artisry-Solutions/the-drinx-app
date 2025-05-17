@@ -1,356 +1,304 @@
-import { useState, useMemo } from 'react';
-import { 
-  Release, 
-  ReleaseFeature, 
-  ReleaseNote, 
-  ReleaseProgress, 
-  ReleaseFeatureStatus 
-} from '../types/releaseTypes';
-import { sampleReleases, getReleaseById } from '../data/releasesData';
+
+import { useState, useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
+import { useToast } from '@/hooks/use-toast';
+import { format, addMonths } from 'date-fns';
+import {
+  Release,
+  ReleaseFeature,
+  ReleaseProgress,
+  ReleaseSortField,
+  ReleaseSortOrder,
+  ReleaseStatus,
+  ReleaseType
+} from '../types/releaseTypes';
+import { FeatureItem } from '../types';
+import { mapFeaturesToReleaseFeatures } from '../utils/releaseUtils';
 
 export const useReleaseManagement = () => {
-  const [releases, setReleases] = useState<Release[]>(sampleReleases);
-  const [selectedReleaseId, setSelectedReleaseId] = useState<string>(
-    releases.length > 0 ? releases[0].id : ''
-  );
-  const [sortField, setSortField] = useState<ReleaseSortField>('version');
+  const { toast } = useToast();
+  const [releases, setReleases] = useState<Release[]>([]);
+  const [selectedReleaseId, setSelectedReleaseId] = useState<string>("");
+  const [sortField, setSortField] = useState<ReleaseSortField>('plannedReleaseDate');
   const [sortOrder, setSortOrder] = useState<ReleaseSortOrder>('desc');
-  const [filter, setFilter] = useState<string>('');
-  const [filterStatus, setFilterStatus] = useState<ReleaseStatus | 'all'>('all');
-  const [dateFormat, setDateFormat] = useState<string>('yyyy-MM-dd');
-
-  // Get the selected release
-  const selectedRelease = releases.find(release => release.id === selectedReleaseId) || releases[0];
-
-  // Calculate release progress
-  const calculateReleaseProgress = (release: Release) => {
-    const totalFeatures = release.features.length;
-    if (totalFeatures === 0) return { percentComplete: 0, completedFeatures: 0, totalFeatures: 0 };
-    
-    const completedFeatures = release.features.filter(f => f.status === 'completed').length;
-    return {
-      percentComplete: Math.round((completedFeatures / totalFeatures) * 100),
-      completedFeatures,
-      totalFeatures
-    };
-  };
-
-  // Filter and sort releases
-  const sortedAndFilteredReleases = [...releases]
-    .filter(release => {
-      // Filter by search text
-      const textMatch = !filter || 
-        release.name.toLowerCase().includes(filter.toLowerCase()) ||
-        release.description.toLowerCase().includes(filter.toLowerCase());
-      
-      // Filter by status
-      const statusMatch = filterStatus === 'all' || release.status === filterStatus;
-      
-      return textMatch && statusMatch;
-    })
-    .sort((a, b) => {
-      // Handle sorting by date fields
-      if (sortField === 'plannedReleaseDate') {
-        const dateA = a.plannedReleaseDate ? new Date(a.plannedReleaseDate) : new Date(0);
-        const dateB = b.plannedReleaseDate ? new Date(b.plannedReleaseDate) : new Date(0);
-        return sortOrder === 'asc' ? dateA.getTime() - dateB.getTime() : dateB.getTime() - dateA.getTime();
-      }
-      
-      // Handle other sort fields
-      const valueA = a[sortField];
-      const valueB = b[sortField];
-      
-      if (typeof valueA === 'string' && typeof valueB === 'string') {
-        return sortOrder === 'asc' ? valueA.localeCompare(valueB) : valueB.localeCompare(valueA);
-      }
-      
-      return 0;
-    });
-
-  // Format date helper
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return 'Not set';
-    return format(new Date(dateString), dateFormat);
-  };
+  const [filter, setFilter] = useState<string>("");
+  const [filterStatus, setFilterStatus] = useState<ReleaseStatus | "all">("all");
   
-  // Get next version number
-  const getNextVersionNumber = () => {
-    const versions = releases.map(r => r.version);
-    const majorVersions = versions
-      .map(v => parseInt(v.split('.')[0], 10))
-      .filter(v => !isNaN(v));
-    
-    const nextMajor = majorVersions.length > 0 ? Math.max(...majorVersions) + 1 : 1;
-    return `${nextMajor}.0.0`;
+  // Get a single release by ID
+  const getRelease = (id: string): Release | undefined => {
+    return releases.find(release => release.id === id);
   };
+
+  // Get the currently selected release
+  const selectedRelease = getRelease(selectedReleaseId);
+  
+  // Sort and filter releases
+  const sortedAndFilteredReleases = (() => {
+    // First filter
+    let filtered = [...releases];
+    
+    if (filterStatus !== 'all') {
+      filtered = filtered.filter(r => r.status === filterStatus);
+    }
+    
+    if (filter) {
+      const lowerFilter = filter.toLowerCase();
+      filtered = filtered.filter(r => 
+        r.name.toLowerCase().includes(lowerFilter) || 
+        r.version.toLowerCase().includes(lowerFilter)
+      );
+    }
+    
+    // Then sort
+    filtered.sort((a, b) => {
+      let comparison = 0;
+      
+      switch (sortField) {
+        case 'version':
+          comparison = a.version.localeCompare(b.version);
+          break;
+        case 'name':
+          comparison = a.name.localeCompare(b.name);
+          break;
+        case 'status':
+          comparison = a.status.localeCompare(b.status);
+          break;
+        case 'plannedReleaseDate':
+          // Handle potentially undefined dates
+          const dateA = a.plannedReleaseDate ? new Date(a.plannedReleaseDate).getTime() : 0;
+          const dateB = b.plannedReleaseDate ? new Date(b.plannedReleaseDate).getTime() : 0;
+          comparison = dateA - dateB;
+          break;
+        default:
+          comparison = 0;
+      }
+      
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+    
+    return filtered;
+  })();
 
   // Create a new release
-  const createRelease = useCallback((releaseData: Partial<Release>) => {
-    const newRelease: Release = {
-      id: `release-${Date.now()}`,
-      name: releaseData.name || 'New Release',
-      version: releaseData.version || getNextVersionNumber(),
-      type: releaseData.type || 'minor',
-      status: releaseData.status || 'planned',
-      plannedReleaseDate: releaseData.plannedReleaseDate || addMonths(new Date(), 1).toISOString(),
-      description: releaseData.description || '',
-      features: releaseData.features || [],
-      releaseNotes: releaseData.releaseNotes || [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      tags: releaseData.tags || []
-    };
-    
-    setReleases(prev => [...prev, newRelease]);
-    setSelectedReleaseId(newRelease.id);
-    
-    return newRelease;
+  const createRelease = useCallback((release: Release) => {
+    setReleases(prev => [...prev, release]);
   }, []);
-  
+
   // Create a release from features
-  const createReleaseFromFeatures = useCallback((features: FeatureItem[]) => {
-    // Filter only implemented features
-    const implementedFeatures = features.filter(f => f.status === 'implemented');
-    
-    if (implementedFeatures.length === 0) {
+  const createReleaseFromFeatures = useCallback((features: FeatureItem[], name: string, version: string, type: ReleaseType = 'minor') => {
+    try {
+      // Generate planned release date - 1 month from now
+      const releaseDate = format(addMonths(new Date(), 1), 'yyyy-MM-dd');
+
+      // Map features to release features
+      const releaseFeatures = mapFeaturesToReleaseFeatures(features, releaseDate);
+      
+      // Create the new release object
+      const newRelease: Release = {
+        id: uuidv4(),
+        version: version,
+        name: name,
+        type: type,
+        status: 'planned',
+        plannedReleaseDate: releaseDate,
+        description: `Release ${version} containing ${features.length} features`,
+        features: releaseFeatures,
+        releaseNotes: [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        team: [],
+        tags: []
+      };
+      
+      // Add the new release
+      setReleases(prev => [...prev, newRelease]);
+      
       toast({
-        title: "No implemented features",
-        description: "There are no implemented features to create a release from.",
+        title: "Release created",
+        description: `Release ${version} has been created with ${features.length} features`,
+      });
+      
+      return newRelease;
+    } catch (error) {
+      toast({
+        title: "Error creating release",
+        description: "Failed to create release from features",
         variant: "destructive"
       });
-      return;
+      return null;
     }
-    
-    // Create a release name based on the current date
-    const today = new Date();
-    const releaseName = `Release ${format(today, 'yyyy-MM-dd')}`;
-    const releaseDate = addMonths(today, 1).toISOString();
-    
-    // Map features to release features
-    const releaseFeatures = mapFeaturesToReleaseFeatures(implementedFeatures, releaseDate);
-    
-    // Generate release notes from features
-    const releaseNotes = implementedFeatures.map(feature => ({
-      id: `note-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      type: 'feature' as const,
-      title: feature.name,
-      description: feature.description,
-      userFacing: true,
-      author: 'System',
-      createdAt: new Date().toISOString()
-    }));
-    
-    // Create the new release
-    const newRelease = createRelease({
-      name: releaseName,
-      version: getNextVersionNumber(),
-      type: 'minor',
-      plannedReleaseDate: releaseDate,
-      description: `Automated release containing ${implementedFeatures.length} implemented features`,
-      status: 'planned',
-      features: releaseFeatures,
-      releaseNotes: releaseNotes,
-      tags: ['auto-generated']
-    });
-    
-    toast({
-      title: "Release Created",
-      description: `Created release ${newRelease.name} with ${implementedFeatures.length} features`,
-    });
-    
-    // Return to caller
-    return newRelease;
-  }, [createRelease, toast]);
+  }, [toast]);
 
-  // Update a release
-  const updateRelease = useCallback((id: string, releaseData: Partial<Release>) => {
-    setReleases(prev => prev.map(release => {
-      if (release.id === id) {
-        return { 
-          ...release, 
-          ...releaseData,
-          updatedAt: new Date().toISOString()
-        };
-      }
-      return release;
-    }));
+  // Update an existing release
+  const updateRelease = useCallback((updatedRelease: Release) => {
+    setReleases(prev => 
+      prev.map(release => 
+        release.id === updatedRelease.id ? updatedRelease : release
+      )
+    );
   }, []);
-  
-  // Update release status
-  const updateReleaseStatus = useCallback((id: string, status: ReleaseStatus) => {
-    updateRelease(id, { status });
-    
-    toast({
-      title: "Release Status Updated",
-      description: `Release status changed to ${status}`,
-    });
-  }, [updateRelease, toast]);
 
-  // Add feature to release
-  const addFeatureToRelease = useCallback((releaseId: string, feature: ReleaseFeature) => {
-    setReleases(prev => prev.map(release => {
-      if (release.id === releaseId) {
-        return {
-          ...release,
-          features: [...release.features, feature],
-          updatedAt: new Date().toISOString()
-        };
-      }
-      return release;
-    }));
-  }, []);
-  
-  // Update feature in release
-  const updateFeatureInRelease = useCallback((releaseId: string, featureId: string, updatedFeature: Partial<ReleaseFeature>) => {
-    setReleases(prev => prev.map(release => {
-      if (release.id === releaseId) {
-        return {
-          ...release,
-          features: release.features.map(feature => 
-            feature.id === featureId ? { ...feature, ...updatedFeature } : feature
-          ),
-          updatedAt: new Date().toISOString()
-        };
-      }
-      return release;
-    }));
-  }, []);
-  
-  // Remove feature from release
-  const removeFeatureFromRelease = useCallback((releaseId: string, featureId: string) => {
-    setReleases(prev => prev.map(release => {
-      if (release.id === releaseId) {
-        return {
-          ...release,
-          features: release.features.filter(feature => feature.id !== featureId),
-          updatedAt: new Date().toISOString()
-        };
-      }
-      return release;
-    }));
-  }, []);
-  
-  // Add release note
-  const addReleaseNote = useCallback((releaseId: string, note: ReleaseNote) => {
-    setReleases(prev => prev.map(release => {
-      if (release.id === releaseId) {
-        return {
-          ...release,
-          releaseNotes: [...release.releaseNotes, note],
-          updatedAt: new Date().toISOString()
-        };
-      }
-      return release;
-    }));
-  }, []);
-  
-  // Update release note
-  const updateReleaseNote = useCallback((releaseId: string, noteId: string, updatedNote: Partial<ReleaseNote>) => {
-    setReleases(prev => prev.map(release => {
-      if (release.id === releaseId) {
-        return {
-          ...release,
-          releaseNotes: release.releaseNotes.map(note => 
-            note.id === noteId ? { ...note, ...updatedNote } : note
-          ),
-          updatedAt: new Date().toISOString()
-        };
-      }
-      return release;
-    }));
-  }, []);
-  
-  // Remove release note
-  const removeReleaseNote = useCallback((releaseId: string, noteId: string) => {
-    setReleases(prev => prev.map(release => {
-      if (release.id === releaseId) {
-        return {
-          ...release,
-          releaseNotes: release.releaseNotes.filter(note => note.id !== noteId),
-          updatedAt: new Date().toISOString()
-        };
-      }
-      return release;
-    }));
-  }, []);
+  // Update a release status
+  const updateReleaseStatus = useCallback((releaseId: string, newStatus: ReleaseStatus) => {
+    try {
+      setReleases(prev => 
+        prev.map(release => {
+          if (release.id === releaseId) {
+            return {
+              ...release,
+              status: newStatus,
+              updatedAt: new Date().toISOString()
+            };
+          }
+          return release;
+        })
+      );
+      
+      toast({
+        title: "Status updated",
+        description: `Release status updated to ${newStatus}`
+      });
+    } catch (error) {
+      toast({
+        title: "Error updating status",
+        description: "Failed to update release status",
+        variant: "destructive"
+      });
+    }
+  }, [toast]);
 
   // Delete a release
-  const deleteRelease = useCallback((id: string) => {
-    setReleases(prev => prev.filter(release => release.id !== id));
+  const deleteRelease = useCallback((releaseId: string) => {
+    setReleases(prev => prev.filter(release => release.id !== releaseId));
     
-    // If the deleted release was selected, select the first release
-    if (id === selectedReleaseId) {
-      setSelectedReleaseId(releases[0]?.id || '');
+    // If we deleted the selected release, clear the selection
+    if (selectedReleaseId === releaseId) {
+      setSelectedReleaseId("");
     }
-  }, [releases, selectedReleaseId]);
+  }, [selectedReleaseId]);
+
+  // Select a release
+  const selectRelease = useCallback((releaseId: string) => {
+    setSelectedReleaseId(releaseId);
+  }, []);
+
+  // Clear the selected release
+  const clearSelectedRelease = useCallback(() => {
+    setSelectedReleaseId("");
+  }, []);
+
+  // Update release sorting configuration
+  const updateSort = useCallback((field: ReleaseSortField, order: ReleaseSortOrder) => {
+    setSortField(field);
+    setSortOrder(order);
+  }, []);
+
+  // Update release filter
+  const updateFilter = useCallback((filterText: string) => {
+    setFilter(filterText);
+  }, []);
   
-  // Generate release notes from features
-  const generateReleaseNotesFromFeatures = useCallback((releaseId: string) => {
-    const release = releases.find(r => r.id === releaseId);
-    if (!release) return;
-    
-    // Generate notes based on features
-    const newNotes = release.features.map(feature => ({
-      id: `note-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      type: 'feature' as const,
-      title: feature.name,
-      description: feature.description || 'New feature added',
-      userFacing: true,
-      author: 'System',
-      createdAt: new Date().toISOString()
-    }));
-    
-    // Update release with new notes
-    updateRelease(releaseId, {
-      releaseNotes: [...release.releaseNotes, ...newNotes]
-    });
-    
-    toast({
-      title: "Release Notes Generated",
-      description: `Added ${newNotes.length} notes based on features`,
-    });
-  }, [releases, updateRelease, toast]);
-  
-  // Export release notes as markdown
-  const exportReleaseNotesAsMarkdown = useCallback((releaseId: string) => {
-    const release = releases.find(r => r.id === releaseId);
-    if (!release) return;
-    
-    const featuresList = release.features.map(f => `- ${f.name}: ${f.description || 'No description'}`).join('\n');
-    const notesList = release.releaseNotes.map(n => `- ${n.title}: ${n.description || 'No description'}`).join('\n');
-    
-    const markdown = `# ${release.name} (${release.version})
-Released: ${release.actualReleaseDate ? formatDate(release.actualReleaseDate) : 'Planned: ' + formatDate(release.plannedReleaseDate)}
-Status: ${release.status}
+  // Update release status filter
+  const updateStatusFilter = useCallback((status: ReleaseStatus | "all") => {
+    setFilterStatus(status);
+  }, []);
 
-${release.description}
+  // Generate a new version number based on existing releases
+  const getNextVersionNumber = useCallback(() => {
+    if (releases.length === 0) {
+      return "1.0.0";
+    }
+    
+    // Try to find the highest version number
+    try {
+      const versionNumbers = releases
+        .map(r => r.version)
+        .map(v => {
+          // Remove any 'v' prefix
+          if (v.toLowerCase().startsWith('v')) {
+            v = v.substring(1);
+          }
+          
+          // Split version into components
+          const parts = v.split('.').map(p => parseInt(p, 10));
+          return {
+            major: parts[0] || 0,
+            minor: parts[1] || 0,
+            patch: parts[2] || 0
+          };
+        });
+      
+      // Find the latest version
+      const latest = versionNumbers.reduce((latest, current) => {
+        if (current.major > latest.major) return current;
+        if (current.major === latest.major && current.minor > latest.minor) return current;
+        if (current.major === latest.major && current.minor === latest.minor && current.patch > latest.patch) return current;
+        return latest;
+      }, { major: 0, minor: 0, patch: 0 });
+      
+      // Increment the minor version
+      return `${latest.major}.${latest.minor + 1}.0`;
+    } catch (error) {
+      toast({
+        title: "Error generating version",
+        description: "Using default version 1.0.0",
+        variant: "destructive"
+      });
+      return "1.0.0";
+    }
+  }, [releases, toast]);
 
-## Features
-${featuresList}
+  // Add a feature to a release
+  const addFeatureToRelease = useCallback((releaseId: string, feature: ReleaseFeature) => {
+    try {
+      setReleases(prev => 
+        prev.map(release => {
+          if (release.id === releaseId) {
+            return {
+              ...release,
+              features: [...release.features, feature],
+              updatedAt: new Date().toISOString()
+            };
+          }
+          return release;
+        })
+      );
+      
+      toast({
+        title: "Feature added",
+        description: `Feature "${feature.name}" added to release`
+      });
+      return true;
+    } catch (error) {
+      toast({
+        title: "Error adding feature",
+        description: "Failed to add feature to release",
+        variant: "destructive"
+      });
+      return false;
+    }
+  }, [toast]);
 
-## Release Notes
-${notesList}
-`;
-
-    // Create a blob and download
-    const blob = new Blob([markdown], { type: 'text/markdown' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${release.name}-release-notes.md`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }, [releases, formatDate]);
-
-  // Compute release progress for each release
-  const releaseProgress = releases.map(release => ({
-    id: release.id,
-    version: release.version,
-    ...calculateReleaseProgress(release)
-  }));
+  // Create release progress data for display
+  const releaseProgress: ReleaseProgress[] = releases.map(release => {
+    const totalFeatures = release.features.length;
+    const completedFeatures = release.features.filter(f => f.status === 'completed').length;
+    const inProgressFeatures = release.features.filter(f => f.status === 'in_progress').length;
+    const pendingFeatures = release.features.filter(f => f.status === 'pending').length;
+    const deferredFeatures = release.features.filter(f => f.status === 'deferred').length;
+    const percentComplete = totalFeatures > 0 ? Math.round((completedFeatures / totalFeatures) * 100) : 0;
+    
+    return {
+      id: release.id,
+      version: release.version,
+      totalFeatures,
+      completedFeatures,
+      inProgressFeatures,
+      pendingFeatures,
+      deferredFeatures,
+      percentComplete
+    };
+  });
 
   return {
     releases,
@@ -361,28 +309,19 @@ ${notesList}
     sortOrder,
     filter,
     filterStatus,
-    dateFormat,
     releaseProgress,
-    setSelectedReleaseId,
-    setSortField,
-    setSortOrder,
-    setFilter,
-    setFilterStatus,
-    setDateFormat,
+    getRelease,
     createRelease,
+    createReleaseFromFeatures,
     updateRelease,
     updateReleaseStatus,
     deleteRelease,
-    createReleaseFromFeatures,
-    addFeatureToRelease,
-    updateFeatureInRelease,
-    removeFeatureFromRelease,
-    addReleaseNote,
-    updateReleaseNote,
-    removeReleaseNote,
-    generateReleaseNotesFromFeatures,
-    exportReleaseNotesAsMarkdown,
-    formatDate,
-    getNextVersionNumber
+    selectRelease,
+    clearSelectedRelease,
+    updateSort,
+    updateFilter,
+    updateStatusFilter,
+    getNextVersionNumber,
+    addFeatureToRelease
   };
 };

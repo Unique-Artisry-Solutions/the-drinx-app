@@ -71,10 +71,11 @@ const ReleaseManagementTab: React.FC = () => {
   
   const { 
     releases, 
-    addNewRelease, 
+    createRelease, 
     updateRelease, 
     deleteRelease,
-    releaseProgress 
+    releaseProgress,
+    selectRelease
   } = useReleaseManagement();
   
   const handleSelectRelease = (release: Release) => {
@@ -107,7 +108,7 @@ const ReleaseManagementTab: React.FC = () => {
     if (releases.some(r => r.id === updatedRelease.id)) {
       updateRelease(updatedRelease);
     } else {
-      addNewRelease(updatedRelease);
+      createRelease(updatedRelease);
     }
     setActiveTab('list');
     setSelectedRelease(null);
@@ -120,25 +121,7 @@ const ReleaseManagementTab: React.FC = () => {
   };
   
   // Create a properly formatted release progress array for display
-  const formattedReleaseProgress: ReleaseProgress[] = releases.map(release => {
-    const totalFeatures = release.features.length;
-    const completedFeatures = release.features.filter(f => f.status === 'completed').length;
-    const inProgressFeatures = release.features.filter(f => f.status === 'in_progress').length;
-    const pendingFeatures = release.features.filter(f => f.status === 'pending').length;
-    const deferredFeatures = release.features.filter(f => f.status === 'deferred').length;
-    const percentComplete = totalFeatures > 0 ? Math.round((completedFeatures / totalFeatures) * 100) : 0;
-    
-    return {
-      totalFeatures,
-      completedFeatures,
-      inProgressFeatures,
-      pendingFeatures,
-      deferredFeatures,
-      percentComplete,
-      id: release.id,
-      version: release.version
-    };
-  });
+  const formattedReleaseProgress: ReleaseProgress[] = releaseProgress;
   
   const handleAddFeature = (feature: Omit<ReleaseFeature, "id">) => {
     if (!selectedRelease) return;
@@ -224,7 +207,10 @@ const ReleaseManagementTab: React.FC = () => {
           </TabsContent>
           
           <TabsContent value="timeline">
-            <ReleaseTimeline releases={releases} />
+            <ReleaseTimeline 
+              releases={releases}
+              onSelectRelease={handleSelectRelease}
+            />
           </TabsContent>
           
           <TabsContent value="edit">
