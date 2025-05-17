@@ -1,84 +1,137 @@
 
-import { useState, useCallback } from 'react';
-import { useAuthCheck } from './useAuthCheck';
+import { useState, useCallback, useEffect } from 'react';
 import { useFeatureStatus } from './useFeatureStatus';
-import { useProgressTracking } from './useProgressTracking';
 import { useAnalysisProcess } from './useAnalysisProcess';
-import { useReleaseFeatures } from './useReleaseFeatures';
-import { useExportFunctions } from './useExportFunctions';
-import { useToast } from '@/hooks/use-toast';
+import { useProgressTracking } from './useProgressTracking';
+import { analyzeAllFeatures } from '../utils/analysis/featureAnalyzer';
+import { AnalysisStep, FeatureItem, ProgressSnapshot, MonthlyProgressData } from '../types';
+import { exportFeaturesAsCSV } from '../utils/exportUtils';
+import { useReleaseManagement } from './useReleaseManagement';
 
 export const useSystemBreakdown = () => {
-  // Store active tab in component state instead of URL params
-  const [activeTab, setActiveTab] = useState('overview');
-  const { toast } = useToast();
+  // Tab navigation state
+  const [activeTab, setActiveTab] = useState<string>('overview');
   
-  // Use our existing modular hooks
-  const { handleLogout } = useAuthCheck();
-  
-  const { 
-    adminFeatures, 
-    establishmentFeatures, 
+  // Get features from feature status hook
+  const {
+    adminFeatures,
+    establishmentFeatures,
     individualFeatures,
     promoterFeatures,
     setAdminFeatures,
     setEstablishmentFeatures,
     setIndividualFeatures,
     setPromoterFeatures,
-    updatedFeaturesCount 
+    updatedFeaturesCount
   } = useFeatureStatus();
   
+  // Get progress tracking data
   const {
-    progressHistory,
-    monthlyProgressData,
     currentSnapshot,
+    monthlyProgressData,
     dataValidation,
-    updateProgressTracking
-  } = useProgressTracking(adminFeatures, establishmentFeatures, individualFeatures, promoterFeatures);
+    createSnapshot,
+    generateHistoricalData
+  } = useProgressTracking(
+    adminFeatures,
+    establishmentFeatures,
+    individualFeatures,
+    promoterFeatures
+  );
   
+  // Analysis process state
   const {
     analyzing,
     analysisProgress,
     analysisSteps,
-    handleAnalyzeFeatures
-  } = useAnalysisProcess(
-    adminFeatures, 
-    establishmentFeatures, 
-    individualFeatures,
-    promoterFeatures,
-    setAdminFeatures,
-    setEstablishmentFeatures,
-    setIndividualFeatures,
-    setPromoterFeatures
-  );
+    startAnalysis,
+    completeAnalysisStep,
+    updateAnalysisProgress,
+    setAnalysisSteps
+  } = useAnalysisProcess();
   
-  const { handleCreateReleaseFromFeatures } = useReleaseFeatures(
-    adminFeatures, 
-    establishmentFeatures, 
-    individualFeatures,
-    promoterFeatures,
-    (tab: string) => setActiveTab(tab)
-  );
-
-  const { handleExportCSV } = useExportFunctions();
+  // Release management
+  const { createReleaseFromFeatures } = useReleaseManagement();
   
-  // Wrap the analysis function to also update progress tracking
-  const handleAnalyzeAndUpdateProgress = useCallback(() => {
-    handleAnalyzeFeatures(() => {
-      // Update progress tracking with new feature states
-      const result = updateProgressTracking();
-      
-      // Show validation warning if needed
-      if (!result.validation.isValid) {
-        toast({
-          title: "Data Validation Warning",
-          description: "Some data inconsistencies were detected in the progress tracking.",
-          variant: "destructive"
+  // Handle feature analysis
+  const handleAnalyzeFeatures = useCallback(async () => {
+    if (analyzing) return;
+    
+    startAnalysis();
+    
+    // This would typically be an asynchronous process
+    // For now, we'll simulate it with a setTimeout
+    setTimeout(() => {
+      try {
+        const result = analyzeAllFeatures(
+          adminFeatures, 
+          establishmentFeatures, 
+          individualFeatures, 
+          promoterFeatures
+        );
+        
+        // Update features with analyzed versions
+        setAdminFeatures(result.adminFeatures);
+        setEstablishmentFeatures(result.establishmentFeatures);
+        setIndividualFeatures(result.individualFeatures);
+        setPromoterFeatures(result.promoterFeatures);
+        
+        // Set completed analysis steps
+        setAnalysisSteps(result.completedSteps);
+        
+        // Create a new progress snapshot
+        createSnapshot();
+        
+        // Generate historical data
+        generateHistoricalData();
+      } catch (error) {
+        console.error('Error analyzing features:', error);
+        // Add error step
+        completeAnalysisStep({
+          name: "Analysis Error",
+          description: `Error: ${error}`,
+          status: "error",
+          progressPercentage: 0,
+          details: "An error occurred during analysis"
         });
       }
-    });
-  }, [handleAnalyzeFeatures, updateProgressTracking, toast]);
-
+    }, 1000);
+  }, [
+    analyzing, startAnalysis, adminFeatures, establishmentFeatures,
+    individualFeatures, promoterFeatures, setAdminFeatures,
+    setEstablishmentFeatures, setIndividualFeatures, setPromoterFeatures,
+    completeAnalysisStep, setAnalysisSteps, createSnapshot, generateHistoricalData
+  ]);
+  
+  // Export all data as CSV
+  const handleExportCSV = useCallback(() => {
+    const allFeatures = [
+      ...adminFeatures,
+      ...establishmentFeatures,
+      ...individualFeatures,
+      ...promoterFeatures
+    ];
+    
+    exportFeaturesAsCSV(allFeatures);
+  }, [adminFeatures, establishmentFeatures, individualFeatures, promoterFeatures]);
+  
+  // Handle create release from features
+  const handleCreateReleaseFromFeatures = useCallback(() => {
+    const allFeatures = [
+      ...adminFeatures,
+      ...establishmentFeatures,
+      ...individualFeatures,
+      ...promoterFeatures
+    ];
+    
+    createReleaseFromFeatures(allFeatures);
+  }, [adminFeatures, establishmentFeatures, individualFeatures, promoterFeatures, createReleaseFromFeatures]);
+  
+  // Mock logout function
+  const handleLogout = () => {
+    console.log("Logout");
+  };
+  
   return {
     activeTab,
     setActiveTab,
@@ -92,10 +145,8 @@ export const useSystemBreakdown = () => {
     updatedFeaturesCount,
     handleLogout,
     handleExportCSV,
-    handleAnalyzeFeatures: handleAnalyzeAndUpdateProgress,
+    handleAnalyzeFeatures,
     handleCreateReleaseFromFeatures,
-    // Expose additional state for Dashboard
-    progressHistory,
     monthlyProgressData,
     currentSnapshot,
     dataValidation

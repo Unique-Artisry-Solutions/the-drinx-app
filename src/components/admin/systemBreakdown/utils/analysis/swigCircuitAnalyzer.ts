@@ -15,7 +15,6 @@ export const analyzeSwigCircuitFeatures = (features: FeatureItem[]): FeatureItem
       return {
         ...feature,
         // Create a new object with the Swig Circuit type and priority
-        dbStatus: undefined, // Remove dbStatus
         databaseStatus: feature.databaseStatus || 'not_started',
         statusUpdated: feature.statusUpdated || false,
         databaseAnalysis: feature.databaseAnalysis || 'Swig Circuit functionality requires proper database schema',
@@ -30,8 +29,7 @@ export const analyzeSwigCircuitFeatures = (features: FeatureItem[]): FeatureItem
     if (isVipFeature(feature)) {
       return {
         ...feature,
-        dbStatus: undefined, // Remove dbStatus
-        databaseStatus: feature.databaseStatus || 'completed', // Changed from 'complete' to 'completed'
+        databaseStatus: feature.databaseStatus || 'completed',
         statusUpdated: feature.statusUpdated || true,
         databaseAnalysis: feature.databaseAnalysis || 'VIP package wizard requires enhancements to the ticket_tiers table',
         implementationProgress: Math.max(feature.implementationProgress || 0, 95),
@@ -51,8 +49,7 @@ export const analyzeSwigCircuitFeatures = (features: FeatureItem[]): FeatureItem
     if (isThemeConfigurationFeature(feature)) {
       return {
         ...feature,
-        dbStatus: undefined, // Remove dbStatus
-        databaseStatus: feature.databaseStatus || 'completed', // Changed from 'complete' to 'completed'
+        databaseStatus: feature.databaseStatus || 'completed',
         statusUpdated: feature.statusUpdated || true,
         databaseAnalysis: feature.databaseAnalysis || 'Theme customization uses localStorage for persistence',
         testSteps: [
@@ -69,7 +66,6 @@ export const analyzeSwigCircuitFeatures = (features: FeatureItem[]): FeatureItem
       return {
         ...feature,
         status: 'implemented',
-        dbStatus: undefined, // Remove dbStatus
         databaseStatus: feature.databaseStatus || 'in_progress',
         statusUpdated: true,
         implementationProgress: Math.max(feature.implementationProgress || 0, 85),
@@ -91,7 +87,6 @@ export const analyzeSwigCircuitFeatures = (features: FeatureItem[]): FeatureItem
       return {
         ...feature,
         status: 'in_progress',
-        dbStatus: undefined, // Remove dbStatus
         databaseStatus: feature.databaseStatus || 'in_progress',
         statusUpdated: true,
         implementationProgress: Math.max(feature.implementationProgress || 0, 60),
