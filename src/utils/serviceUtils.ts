@@ -42,12 +42,11 @@ export const incrementCodeUsage = async (codeId: string): Promise<boolean> => {
     
     if (!hasUsedCount && !hasUsageCount) {
       console.error("Neither used_count nor usage_count field exists in the record");
-      // Create a used_count field if neither exists
-      const { error: updateError } = await supabase
-        .from('establishment_promotions')
-        .update({ used_count: 1 })
-        .eq('id', codeId);
-        
+      // Since used_count doesn't exist in the table schema, we'll use a raw SQL update
+      const { error: updateError } = await supabase.rpc('sql', {
+        query: `UPDATE establishment_promotions SET usage_count = COALESCE(usage_count, 0) + 1 WHERE id = '${codeId}'`
+      });
+      
       return !updateError;
     }
     
@@ -58,10 +57,14 @@ export const incrementCodeUsage = async (codeId: string): Promise<boolean> => {
     const currentCount = hasUsedCount ? (promotion.used_count || 0) : 
                          hasUsageCount ? (promotion.usage_count || 0) : 0;
     
+    // Create update object with only the field that exists
+    const updateData: any = {};
+    updateData[updateField] = currentCount + 1;
+    
     // Increment the count
     const { error: updateError } = await supabase
       .from('establishment_promotions')
-      .update({ [updateField]: currentCount + 1 })
+      .update(updateData)
       .eq('id', codeId);
       
     if (updateError) {

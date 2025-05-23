@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useEstablishmentProfileData } from './useEstablishmentProfileData';
@@ -37,21 +36,23 @@ export const useEstablishmentProfile = (establishmentId?: string) => {
   const [newPromoCode, setNewPromoCode] = useState('');
   const [newPromoDescription, setNewPromoDescription] = useState('');
   
-  // Mock data for drinks
+  // Mock data for drinks - ensure all drinks have ingredients array
   const [drinks, setDrinks] = useState([
     {
       id: '1',
       name: 'Virgin Mojito',
       description: 'Fresh mint, lime, soda water',
       price: '$8.99',
-      image: '/mocktail1.jpg'
+      image: '/mocktail1.jpg',
+      ingredients: ['Fresh mint', 'Lime juice', 'Soda water', 'Sugar']
     },
     {
       id: '2',
       name: 'Shirley Temple',
       description: 'Ginger ale, grenadine, maraschino cherry',
       price: '$6.99',
-      image: '/mocktail2.jpg'
+      image: '/mocktail2.jpg',
+      ingredients: ['Ginger ale', 'Grenadine', 'Maraschino cherry']
     }
   ]);
   
@@ -152,6 +153,17 @@ export const useEstablishmentProfile = (establishmentId?: string) => {
       description: `${drink.name} has been added to your menu`,
     });
   };
+
+  const handleUpdateDrink = (updatedDrink: any) => {
+    setDrinks(drinks.map(drink => 
+      drink.id === updatedDrink.id ? updatedDrink : drink
+    ));
+    
+    toast({
+      title: 'Drink updated',
+      description: `${updatedDrink.name} has been updated`,
+    });
+  };
   
   const handleDeleteDrink = (id: string) => {
     setDrinks(drinks.filter(drink => drink.id !== id));
@@ -228,6 +240,7 @@ export const useEstablishmentProfile = (establishmentId?: string) => {
     drinksState: {
       drinks,
       handleAddDrink,
+      handleUpdateDrink,
       handleDeleteDrink
     },
     
