@@ -3,9 +3,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth';
 import { NavigationType, UnifiedNavItem } from '@/types/navigation/NavigationTypes';
-
-// Create the navigation structure by user type
-import { adminNavItems } from '@/components/navigation/admin/AdminNavItems';
+import { Home, Map, User, Bell, Ticket } from 'lucide-react';
 
 interface NavigationContextType {
   navigationType: NavigationType;
@@ -61,24 +59,49 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   // Effect to set navigation items based on navigation type and user type
   useEffect(() => {
     const determineNavigationItems = () => {
-      // Example: Return admin navigation items if in admin mode
+      // Handle admin navigation
       if (navigationType === NavigationType.ADMIN || userType === 'admin') {
-        // Convert admin nav items to unified format
-        const unifiedAdminItems: UnifiedNavItem[] = adminNavItems
-          .filter(item => item.showInNav)
-          .map(item => ({
-            label: item.label,
-            path: item.path,
-            icon: item.icon,
-            showInNav: item.showInNav
-          }));
-        
+        const unifiedAdminItems: UnifiedNavItem[] = [
+          { label: 'Dashboard', path: '/admin/system-breakdown', icon: Home, showInNav: true },
+          { label: 'Users', path: '/admin/users', icon: User, showInNav: true },
+          { label: 'Analytics', path: '/admin/analytics', icon: Map, showInNav: true },
+        ];
         setNavigationItems(unifiedAdminItems);
         return;
       }
       
-      // Handle other navigation types here
-      // This would be expanded with real navigation data from your existing implementation
+      // Handle user navigation based on user type
+      if (navigationType === NavigationType.USER) {
+        let userNavItems: UnifiedNavItem[] = [];
+        
+        if (userType === 'establishment') {
+          userNavItems = [
+            { label: 'Home', path: '/establishment/dashboard', icon: Home, showInNav: true },
+            { label: 'Notifications', path: '/establishment/notifications', icon: Bell, showInNav: true },
+            { label: 'Profile', path: '/establishment/profile', icon: User, showInNav: true }
+          ];
+        } else if (userType === 'promoter') {
+          userNavItems = [
+            { label: 'Home', path: '/promoter/dashboard', icon: Home, showInNav: true },
+            { label: 'Notifications', path: '/promoter/notifications', icon: Bell, showInNav: true },
+            { label: 'Profile', path: '/promoter/profile', icon: User, showInNav: true }
+          ];
+        } else {
+          // Individual user navigation
+          userNavItems = [
+            { label: 'Explore', path: '/explore', icon: Home, showInNav: true },
+            { label: 'Map', path: '/map', icon: Map, showInNav: true },
+            { label: 'My Tickets', path: '/profile/my-tickets', icon: Ticket, showInNav: true },
+            { label: 'Notifications', path: '/notifications', icon: Bell, showInNav: true },
+            { label: 'Profile', path: '/profile', icon: User, showInNav: true }
+          ];
+        }
+        
+        setNavigationItems(userNavItems);
+        return;
+      }
+      
+      // Guest navigation
       setNavigationItems([]);
     };
     
