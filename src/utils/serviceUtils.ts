@@ -1,4 +1,3 @@
-
 /**
  * This utility file provides shared functions for service modules
  */
@@ -40,17 +39,7 @@ export const incrementCodeUsage = async (codeId: string): Promise<boolean> => {
     const hasUsedCount = promotion && Object.prototype.hasOwnProperty.call(promotion, 'used_count');
     const hasUsageCount = promotion && Object.prototype.hasOwnProperty.call(promotion, 'usage_count');
     
-    if (!hasUsedCount && !hasUsageCount) {
-      console.error("Neither used_count nor usage_count field exists in the record");
-      // Since used_count doesn't exist in the table schema, we'll use a raw SQL update
-      const { error: updateError } = await supabase.rpc('sql', {
-        query: `UPDATE establishment_promotions SET usage_count = COALESCE(usage_count, 0) + 1 WHERE id = '${codeId}'`
-      });
-      
-      return !updateError;
-    }
-    
-    // Determine which field to update based on what's available
+    // Default to usage_count if neither field is explicitly present
     const updateField = hasUsedCount ? 'used_count' : 'usage_count';
     
     // Determine the current count
