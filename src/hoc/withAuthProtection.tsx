@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '@/factories/AuthProviderFactory';
+import { useAuth } from '@/contexts/auth/AuthProvider';
 import { checkAdminBypassStatus } from '@/utils/adminBypass';
 import { UserType } from '@/types/navigation';
 
