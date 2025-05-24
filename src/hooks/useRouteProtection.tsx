@@ -3,6 +3,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthProvider';
 import { useDebouncedToast } from '@/hooks/useDebouncedToast';
+import { checkAdminBypassStatus } from '@/utils/adminBypass';
 
 interface RouteProtectionOptions {
   requireAuth?: boolean;
@@ -20,7 +21,7 @@ export const useRouteProtection = ({
   redirectTo = '/login',
   showToast = true
 }: RouteProtectionOptions = {}) => {
-  const { user, isLoading, authStable } = useAuth();
+  const { user, session, isLoading, authStable, userType } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
@@ -43,7 +44,7 @@ export const useRouteProtection = ({
     // Prevent overlapping protection checks for the same state
     const currentPath = location.pathname + location.search;
     const currentUserId = user?.id || null;
-    const currentAuthState = !!user;
+    const currentAuthState = !!(user && session);
     
     if (
       protectionInProgress.current || 
@@ -67,8 +68,23 @@ export const useRouteProtection = ({
       clearTimeout(cleanupTimeoutRef.current);
     }
     
+    // Check for admin bypass first
+    const { isEnabled: isAdminBypass, userType: bypassType } = checkAdminBypassStatus();
+    const isAdmin = localStorage.getItem('admin_authenticated') === 'true';
+    
+    if (isAdminBypass || isAdmin) {
+      console.log('Route protection: Admin bypass/auth detected, allowing access');
+      setIsAuthorized(true);
+      
+      // Reset protection flag with cleanup
+      cleanupTimeoutRef.current = setTimeout(() => {
+        protectionInProgress.current = false;
+      }, 100);
+      return;
+    }
+    
     // Check if auth is required and user is not logged in
-    if (requireAuth && !user) {
+    if (requireAuth && (!user || !session)) {
       setIsAuthorized(false);
       
       if (showToast) {
@@ -95,9 +111,9 @@ export const useRouteProtection = ({
     }
     
     // Check for user type restrictions
-    if (user && allowedUserTypes.length > 0) {
-      const userType = localStorage.getItem('user_type');
-      const isAllowedType = !userType || allowedUserTypes.includes(userType);
+    if ((user && session) && allowedUserTypes.length > 0) {
+      const currentUserType = userType || localStorage.getItem('user_type') || 'individual';
+      const isAllowedType = allowedUserTypes.includes(currentUserType);
       
       setIsAuthorized(isAllowedType);
       
@@ -110,11 +126,11 @@ export const useRouteProtection = ({
         }
         
         // Redirect to appropriate page based on user type
-        if (userType === 'establishment') {
+        if (currentUserType === 'establishment') {
           navigate('/establishment/dashboard', { replace: true });
-        } else if (userType === 'promoter') {
+        } else if (currentUserType === 'promoter') {
           navigate('/promoter/dashboard', { replace: true });
-        } else if (userType === 'admin') {
+        } else if (currentUserType === 'admin') {
           navigate('/admin/system-breakdown', { replace: true });
         } else {
           navigate('/explore', { replace: true });
@@ -135,7 +151,7 @@ export const useRouteProtection = ({
     cleanupTimeoutRef.current = setTimeout(() => {
       protectionInProgress.current = false;
     }, 100);
-  }, [user, isLoading, authStable, requireAuth, allowedUserTypes, navigate, redirectTo, location.pathname, location.search, showToast, showError]);
+  }, [user, session, isLoading, authStable, userType, requireAuth, allowedUserTypes, navigate, redirectTo, location.pathname, location.search, showToast, showError]);
   
   // Use effect with stable dependencies and cleanup
   useEffect(() => {

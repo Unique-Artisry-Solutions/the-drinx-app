@@ -31,9 +31,10 @@ export function withAuthProtection<P extends object>(
   } = options;
 
   const ProtectedComponent: React.FC<P> = (props) => {
-    const { user, isLoading, session, authStable } = useAuth();
+    const { user, session, isLoading, authStable, userType } = useAuth();
     const location = useLocation();
     const { isEnabled: isAdminBypass, userType: bypassUserType } = checkAdminBypassStatus();
+    const isAdminAuthenticated = localStorage.getItem('admin_authenticated') === 'true';
     const [shouldRedirect, setShouldRedirect] = useState(false);
     
     useEffect(() => {
@@ -41,8 +42,10 @@ export function withAuthProtection<P extends object>(
       if (isLoading || !authStable) return;
       
       // Handle admin bypass case
-      if (isAdminBypass) {
-        if (userTypes.length > 0 && !userTypes.includes(bypassUserType as UserType)) {
+      if (isAdminBypass || isAdminAuthenticated) {
+        const effectiveUserType = isAdminAuthenticated ? 'admin' : bypassUserType;
+        
+        if (userTypes.length > 0 && !userTypes.includes(effectiveUserType as UserType)) {
           setShouldRedirect(true);
         } else {
           setShouldRedirect(false);
@@ -59,11 +62,11 @@ export function withAuthProtection<P extends object>(
       }
       
       // Check user type requirement
-      if (userTypes.length > 0 && user) {
-        const storedUserType = localStorage.getItem('user_type') as UserType | null;
+      if (userTypes.length > 0 && (user && session)) {
+        const currentUserType = userType || localStorage.getItem('user_type') as UserType | null;
         
-        if (!storedUserType || !userTypes.includes(storedUserType)) {
-          console.log("User type mismatch", { storedUserType, requiredTypes: userTypes });
+        if (!currentUserType || !userTypes.includes(currentUserType)) {
+          console.log("User type mismatch", { currentUserType, requiredTypes: userTypes });
           localStorage.setItem('auth_redirect', location.pathname);
           setShouldRedirect(true);
           return;
@@ -72,7 +75,7 @@ export function withAuthProtection<P extends object>(
       
       // All checks passed
       setShouldRedirect(false);
-    }, [user, isLoading, session, authStable, isAdminBypass, bypassUserType, location.pathname]);
+    }, [user, session, isLoading, authStable, userType, isAdminBypass, bypassUserType, isAdminAuthenticated, location.pathname]);
     
     // Show loading state while checking auth
     if ((isLoading || !authStable) && showLoadingState) {
@@ -117,7 +120,7 @@ export function withAdminProtection<P extends object>(
   Component: React.ComponentType<P>
 ) {
   const AdminProtectedComponent: React.FC<P> = (props) => {
-    const { user, isLoading, authStable } = useAuth();
+    const { user, session, isLoading, authStable } = useAuth();
     const location = useLocation();
     const { isEnabled: isAdminBypass, userType: bypassUserType } = checkAdminBypassStatus();
     const isAdminAuthenticated = localStorage.getItem('admin_authenticated') === 'true';
@@ -128,7 +131,8 @@ export function withAdminProtection<P extends object>(
       
       // Allow access if admin authenticated or admin bypass 
       const isAuthorized = isAdminAuthenticated || 
-                           (isAdminBypass && bypassUserType === 'admin');
+                           (isAdminBypass && bypassUserType === 'admin') ||
+                           ((user && session) && localStorage.getItem('user_type') === 'admin');
       
       if (!isAuthorized) {
         console.log("Admin authorization failed");
@@ -138,7 +142,7 @@ export function withAdminProtection<P extends object>(
       }
       
       setShouldRedirect(false);
-    }, [isLoading, authStable, isAdminBypass, bypassUserType, isAdminAuthenticated, location.pathname]);
+    }, [user, session, isLoading, authStable, isAdminBypass, bypassUserType, isAdminAuthenticated, location.pathname]);
     
     if (isLoading || !authStable) {
       return (
@@ -152,7 +156,7 @@ export function withAdminProtection<P extends object>(
     }
     
     if (shouldRedirect) {
-      return <Navigate to="/admin" state={{ from: location.pathname }} replace />;
+      return <Navigate to="/admin/login" state={{ from: location.pathname }} replace />;
     }
     
     return <Component {...props} />;

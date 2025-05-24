@@ -10,6 +10,7 @@ import {
   adminNavItems,
   guestNavItems 
 } from '@/config/navigation';
+import { checkAdminBypassStatus } from '@/utils/adminBypass';
 
 interface NavigationContextType {
   navigationItems: UnifiedNavItem[];
@@ -21,7 +22,7 @@ interface NavigationContextType {
 const NavigationContext = createContext<NavigationContextType | undefined>(undefined);
 
 export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, authStable } = useAuth();
+  const { user, session, authStable, userType: authUserType } = useAuth();
   const location = useLocation();
   const [userType, setUserType] = useState<'individual' | 'establishment' | 'promoter' | 'admin' | 'guest'>('guest');
   const [navigationItems, setNavigationItems] = useState<UnifiedNavItem[]>(guestNavItems);
@@ -62,17 +63,26 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const determineUserType = useCallback((): 'individual' | 'establishment' | 'promoter' | 'admin' | 'guest' => {
     if (!authStable) return 'guest';
     
+    // Check admin bypass first
+    const { isEnabled: isAdminBypass, userType: bypassType } = checkAdminBypassStatus();
     const isAdminAuth = localStorage.getItem('admin_authenticated') === 'true';
-    const isAdminBypass = localStorage.getItem('admin_bypass') === 'true';
     
-    if (isAdminAuth || isAdminBypass) {
+    if (isAdminBypass && bypassType === 'admin') {
       return 'admin';
     }
     
-    if (user) {
-      const userTypeFromStorage = localStorage.getItem('user_type') || 'individual';
+    if (isAdminAuth) {
+      return 'admin';
+    }
+    
+    // Check for authenticated user
+    if (user && session) {
+      // Use userType from auth context first, then localStorage
+      const userTypeFromAuth = authUserType;
+      const userTypeFromStorage = localStorage.getItem('user_type');
+      const finalUserType = userTypeFromAuth || userTypeFromStorage || 'individual';
       
-      switch (userTypeFromStorage) {
+      switch (finalUserType) {
         case 'establishment':
           return 'establishment';
         case 'promoter':
@@ -84,8 +94,22 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       }
     }
     
+    // Check bypass for non-admin types
+    if (isAdminBypass && bypassType) {
+      switch (bypassType) {
+        case 'establishment':
+          return 'establishment';
+        case 'promoter':
+          return 'promoter';
+        case 'individual':
+          return 'individual';
+        default:
+          return 'guest';
+      }
+    }
+    
     return 'guest';
-  }, [user, authStable]);
+  }, [user, session, authStable, authUserType]);
 
   // Debounced navigation update function with proper cleanup
   const updateNavigation = useCallback(() => {
@@ -146,7 +170,7 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         updateTimeoutRef.current = null;
       }
     }, 150); // Increased debounce to 150ms for better stability
-  }, [user, authStable, determineUserType, getNavigationItems]);
+  }, [user, session, authStable, authUserType, determineUserType, getNavigationItems]);
 
   // Manual refresh function
   const refreshNavigation = useCallback(() => {
@@ -160,7 +184,7 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     if (authStable) {
       updateNavigation();
     }
-  }, [user, authStable, updateNavigation]);
+  }, [user, session, authStable, authUserType, updateNavigation]);
 
   // Cleanup effect
   useEffect(() => {

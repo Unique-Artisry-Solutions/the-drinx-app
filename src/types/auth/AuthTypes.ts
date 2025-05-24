@@ -44,6 +44,11 @@ export interface AuthState {
    * Indicates if verification email has been sent
    */
   isVerificationEmailSent: boolean;
+
+  /**
+   * The current user type
+   */
+  userType: string;
 }
 
 /**
