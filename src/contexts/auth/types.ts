@@ -23,6 +23,7 @@ export interface AuthState {
   authError: Error | null;
   authStable: boolean;
   userType: 'individual' | 'establishment' | 'promoter' | 'admin' | null;
+  navigationReady: boolean; // New state for controlling navigation timing
 }
 
 export interface AuthActions {
