@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -10,7 +10,13 @@ export function useAuthState() {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [authStable, setAuthStable] = useState(false);
   const { toast } = useToast();
+
+  // Add refs to track previous state and prevent unnecessary updates
+  const previousUserRef = useRef<User | null>(null);
+  const previousSessionRef = useRef<Session | null>(null);
+  const authCheckInProgressRef = useRef(false);
 
   // Check for admin bypass
   const checkAdminBypass = () => {
@@ -46,6 +52,7 @@ export function useAuthState() {
       setUser(bypassUser);
       setIsEmailVerified(true);
       setIsLoading(false);
+      setAuthStable(true);
       
       return { 
         isAdminBypass: true,
@@ -56,9 +63,16 @@ export function useAuthState() {
     return { isAdminBypass: false };
   };
 
-  // Update localStorage based on session data
+  // Update localStorage based on session data with stability checks
   const updateLocalStorage = (sessionUser: User | null) => {
+    // Prevent unnecessary updates if user hasn't actually changed
+    if (previousUserRef.current === sessionUser) {
+      return;
+    }
+    
     console.log("Updating localStorage from session user:", sessionUser);
+    previousUserRef.current = sessionUser;
+    
     if (sessionUser) {
       localStorage.setItem('user_authenticated', 'true');
       if (sessionUser.email) {
@@ -97,8 +111,36 @@ export function useAuthState() {
     }
   };
 
+  // Stable setters that only update when values actually change
+  const setUserStable = (newUser: User | null) => {
+    if (previousUserRef.current !== newUser) {
+      console.log('Auth state: User changed from', !!previousUserRef.current, 'to', !!newUser);
+      previousUserRef.current = newUser;
+      setUser(newUser);
+      
+      // Mark auth as stable after user state is set
+      if (!authStable) {
+        setAuthStable(true);
+      }
+    }
+  };
+
+  const setSessionStable = (newSession: Session | null) => {
+    if (previousSessionRef.current !== newSession) {
+      console.log('Auth state: Session changed from', !!previousSessionRef.current, 'to', !!newSession);
+      previousSessionRef.current = newSession;
+      setSession(newSession);
+    }
+  };
+
   // Check if admin session is expired
   const checkAdminSession = () => {
+    if (authCheckInProgressRef.current) {
+      return false;
+    }
+    
+    authCheckInProgressRef.current = true;
+    
     const adminSessionCreated = localStorage.getItem('admin_session_created');
     const SESSION_EXPIRY_TIME = 24 * 60 * 60 * 1000; // 24 hours
     
@@ -119,21 +161,26 @@ export function useAuthState() {
           variant: "destructive"
         });
         
+        authCheckInProgressRef.current = false;
         return true;
       }
     }
+    
+    authCheckInProgressRef.current = false;
     return false;
   };
 
   return {
     user,
-    setUser,
+    setUser: setUserStable,
     session,
-    setSession,
+    setSession: setSessionStable,
     isLoading,
     setIsLoading,
     isEmailVerified,
     setIsEmailVerified,
+    authStable,
+    setAuthStable,
     checkAdminBypass,
     updateLocalStorage,
     checkAdminSession,

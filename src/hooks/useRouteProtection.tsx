@@ -1,5 +1,5 @@
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth';
 import { useDebouncedToast } from '@/hooks/useDebouncedToast';
@@ -20,7 +20,7 @@ export const useRouteProtection = ({
   redirectTo = '/login',
   showToast = true
 }: RouteProtectionOptions = {}) => {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, authStable } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
@@ -29,21 +29,36 @@ export const useRouteProtection = ({
   // Add protection state to prevent overlapping checks
   const protectionInProgress = useRef(false);
   const lastCheckedPath = useRef<string>('');
+  const lastCheckedUser = useRef<string | null>(null);
+  const lastCheckedAuthState = useRef<boolean>(false);
   
-  useEffect(() => {
-    // Wait until auth is loaded
-    if (isLoading) {
+  // Memoize the protection check to prevent unnecessary re-runs
+  const checkProtection = useCallback(() => {
+    // Wait until auth is loaded and stable
+    if (isLoading || !authStable) {
       return;
     }
     
-    // Prevent overlapping protection checks for the same path
+    // Prevent overlapping protection checks for the same state
     const currentPath = location.pathname + location.search;
-    if (protectionInProgress.current || lastCheckedPath.current === currentPath) {
+    const currentUserId = user?.id || null;
+    const currentAuthState = !!user;
+    
+    if (
+      protectionInProgress.current || 
+      (lastCheckedPath.current === currentPath && 
+       lastCheckedUser.current === currentUserId &&
+       lastCheckedAuthState.current === currentAuthState)
+    ) {
       return;
     }
     
     protectionInProgress.current = true;
     lastCheckedPath.current = currentPath;
+    lastCheckedUser.current = currentUserId;
+    lastCheckedAuthState.current = currentAuthState;
+    
+    console.log('Route protection: Checking access for', currentPath, 'user:', !!user, 'authStable:', authStable);
     
     // Check if auth is required and user is not logged in
     if (requireAuth && !user) {
@@ -101,9 +116,17 @@ export const useRouteProtection = ({
     // If we reach here, user is authorized
     setIsAuthorized(true);
     protectionInProgress.current = false;
-  }, [user, isLoading, requireAuth, allowedUserTypes, navigate, redirectTo, location.pathname, location.search, showToast, showError]);
+  }, [user, isLoading, authStable, requireAuth, allowedUserTypes, navigate, redirectTo, location.pathname, location.search, showToast, showError]);
   
-  return { isAuthorized, isLoading: isLoading || isAuthorized === null };
+  // Use effect with stable dependencies
+  useEffect(() => {
+    checkProtection();
+  }, [checkProtection]);
+  
+  return { 
+    isAuthorized, 
+    isLoading: isLoading || !authStable || isAuthorized === null 
+  };
 };
 
 export default useRouteProtection;

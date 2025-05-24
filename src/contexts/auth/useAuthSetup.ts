@@ -1,5 +1,5 @@
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { isPreviewEnvironment } from '@/utils/environment';
 
@@ -8,6 +8,7 @@ interface UseAuthSetupProps {
   setUser: (user: any) => void;
   setIsEmailVerified: (isVerified: boolean) => void;
   setIsLoading: (isLoading: boolean) => void;
+  setAuthStable: (stable: boolean) => void;
   updateLocalStorage: (user: any) => void;
   checkAdminBypass: () => { isAdminBypass: boolean; bypassUser?: any };
   checkAdminSession: () => boolean;
@@ -20,39 +21,40 @@ export const useAuthSetup = ({
   setUser,
   setIsEmailVerified,
   setIsLoading,
+  setAuthStable,
   updateLocalStorage,
   checkAdminBypass,
   checkAdminSession,
   refreshSession,
   toast
 }: UseAuthSetupProps) => {
+  // Add refs to prevent duplicate setup and track initialization
+  const setupCompleteRef = useRef(false);
+  const authListenerRef = useRef<any>(null);
+  
   useEffect(() => {
+    // Prevent duplicate setup
+    if (setupCompleteRef.current) {
+      console.log('Auth setup already completed, skipping...');
+      return;
+    }
+    
     console.log('Starting AuthProvider setup...');
+    setupCompleteRef.current = true;
     
     // Set loading state initially
     setIsLoading(true);
+    setAuthStable(false);
     
     // Skip full auth setup in preview environment
     if (isPreviewEnvironment()) {
       console.log('Preview environment detected: using simplified auth setup');
       
-      // In preview, we can either:
-      // 1. Use a mock user (uncomment below)
-      // const mockUser = {
-      //   id: 'preview-user-id',
-      //   email: 'preview@example.com',
-      //   user_metadata: { full_name: 'Preview User' }
-      // };
-      // setUser(mockUser);
-      // setIsEmailVerified(true);
-      // setSession({ user: mockUser });
-      
-      // 2. Or just set null user (logged out state)
       setUser(null);
       setSession(null);
       setIsEmailVerified(false);
-      
       setIsLoading(false);
+      setAuthStable(true);
       return;
     }
     
@@ -64,6 +66,7 @@ export const useAuthSetup = ({
       setUser(bypassUser);
       setIsEmailVerified(true);
       setIsLoading(false);
+      setAuthStable(true);
       updateLocalStorage(bypassUser);
       return;
     }
@@ -72,11 +75,16 @@ export const useAuthSetup = ({
     if (checkAdminSession()) {
       console.log('Admin session expired');
       setIsLoading(false);
+      setAuthStable(true);
       return;
     }
     
     console.log('Setting up auth state listener...');
     // Set up auth state listener FIRST
+    if (authListenerRef.current) {
+      authListenerRef.current.subscription.unsubscribe();
+    }
+    
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('Auth state changed:', event, !!session);
@@ -111,7 +119,7 @@ export const useAuthSetup = ({
           }
         }
         
-        // We need some delay to avoid race conditions
+        // Update auth state with debouncing
         setTimeout(() => {
           setSession(session);
           setUser(session?.user ?? null);
@@ -124,9 +132,14 @@ export const useAuthSetup = ({
             setIsEmailVerified(false);
             updateLocalStorage(null);
           }
+          
+          // Mark auth as stable after processing
+          setAuthStable(true);
         }, 0);
       }
     );
+    
+    authListenerRef.current = authListener;
     
     console.log('Checking for existing session...');
     // THEN check for existing session
@@ -144,6 +157,7 @@ export const useAuthSetup = ({
       }
       
       setIsLoading(false);
+      setAuthStable(true);
     });
     
     // Show a notification if the session was recovered from storage
@@ -162,7 +176,11 @@ export const useAuthSetup = ({
     }
     
     return () => {
-      authListener.subscription.unsubscribe();
+      if (authListenerRef.current) {
+        authListenerRef.current.subscription.unsubscribe();
+        authListenerRef.current = null;
+      }
+      setupCompleteRef.current = false;
     };
-  }, []);
+  }, []); // Empty dependency array - only run once
 };
