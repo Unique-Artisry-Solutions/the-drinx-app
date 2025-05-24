@@ -53,7 +53,7 @@ const AdminSidebar: React.FC = () => {
         </Button>
       </div>
       
-      <nav className={cn("p-2", collapsed && "flex flex-col items-center")}>
+      <nav className={cn("px-2 py-2", collapsed && "flex flex-col items-center")}>
         {adminNavItems.map(category => {
           const isExpanded = expandedCategories.includes(category.path);
           const hasActiveChild = category.children?.some(child => isActive(child.path));

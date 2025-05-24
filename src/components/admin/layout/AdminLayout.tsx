@@ -66,7 +66,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   // Render admin interface
   return (
     <>
-      <div className="h-screen flex flex-col bg-gray-100 w-full">
+      <div className="fixed inset-0 flex flex-col bg-gray-100">
         <AdminTopNav />
         <div className="flex flex-1 overflow-hidden">
           <AdminSidebar />
