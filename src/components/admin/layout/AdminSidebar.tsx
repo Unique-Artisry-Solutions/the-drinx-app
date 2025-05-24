@@ -11,10 +11,53 @@ const AdminSidebar: React.FC = () => {
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
   const [collapsed, setCollapsed] = useState<boolean>(false);
   
-  // Log to confirm sidebar is rendering
+  // Initialize expanded categories based on current path and defaults
   useEffect(() => {
     console.log('AdminSidebar rendering at path:', location.pathname);
+    
+    // Get expanded state from localStorage or set defaults
+    const savedExpanded = localStorage.getItem('admin_sidebar_expanded');
+    let initialExpanded: string[] = [];
+    
+    if (savedExpanded) {
+      try {
+        initialExpanded = JSON.parse(savedExpanded);
+      } catch (error) {
+        console.error('Error parsing saved expanded state:', error);
+      }
+    }
+    
+    // Auto-expand categories that contain the current active page
+    const activeCategories: string[] = [];
+    adminNavItems.forEach(category => {
+      if (category.children) {
+        const hasActiveChild = category.children.some(child => isActive(child.path));
+        if (hasActiveChild) {
+          activeCategories.push(category.path);
+        }
+      }
+    });
+    
+    // Default expanded categories for better UX
+    const defaultExpanded = [
+      '/admin/dashboard', // Dashboard & Analytics
+      '/admin/system-tools', // System Tools
+    ];
+    
+    // Combine all expanded categories (active + saved + defaults)
+    const combinedExpanded = Array.from(new Set([
+      ...activeCategories,
+      ...initialExpanded,
+      ...defaultExpanded
+    ]));
+    
+    setExpandedCategories(combinedExpanded);
   }, [location.pathname]);
+  
+  // Save expanded state to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('admin_sidebar_expanded', JSON.stringify(expandedCategories));
+  }, [expandedCategories]);
   
   const toggleCategory = (categoryPath: string) => {
     setExpandedCategories(prev => 
@@ -31,6 +74,10 @@ const AdminSidebar: React.FC = () => {
   const isActive = (path: string) => {
     return location.pathname === path || 
       (path !== '/admin/dashboard' && location.pathname.startsWith(path));
+  };
+  
+  const hasActiveChild = (category: any) => {
+    return category.children?.some((child: any) => isActive(child.path)) || false;
   };
   
   return (
@@ -56,7 +103,7 @@ const AdminSidebar: React.FC = () => {
       <nav className={cn("px-2 py-2", collapsed && "flex flex-col items-center")}>
         {adminNavItems.map(category => {
           const isExpanded = expandedCategories.includes(category.path);
-          const hasActiveChild = category.children?.some(child => isActive(child.path));
+          const categoryHasActiveChild = hasActiveChild(category);
           
           return (
             <div key={category.path} className={cn("mb-1", collapsed && "w-full flex justify-center")}>
@@ -64,9 +111,9 @@ const AdminSidebar: React.FC = () => {
               <button
                 className={cn(
                   "flex items-center w-full px-3 py-2 text-sm font-medium rounded-md transition-colors",
-                  (hasActiveChild || isExpanded) 
-                    ? "bg-white/10" 
-                    : "hover:bg-white/5",
+                  (categoryHasActiveChild || isExpanded) 
+                    ? "bg-white/15 text-white" 
+                    : "hover:bg-white/5 text-white/90",
                   collapsed && "justify-center p-2"
                 )}
                 onClick={() => collapsed ? toggleCollapse() : toggleCategory(category.path)}
@@ -99,7 +146,7 @@ const AdminSidebar: React.FC = () => {
                       className={cn(
                         "flex items-center px-3 py-2 text-sm rounded-md transition-colors",
                         isActive(item.path)
-                          ? "bg-white/20 text-white font-medium"
+                          ? "bg-white/25 text-white font-medium border-l-2 border-white"
                           : "text-white/70 hover:text-white hover:bg-white/10"
                       )}
                       title={collapsed ? item.label : undefined}

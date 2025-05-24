@@ -2,12 +2,13 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Home, ArrowLeft, Settings, Users, BarChart3 } from 'lucide-react';
+import { Home, ArrowLeft, Settings, Users, BarChart3, FileBarChart2 } from 'lucide-react';
 import AdminLayout from '@/components/admin/layout/AdminLayout';
 
 const AdminNotFound: React.FC = () => {
-  const adminRoutes = [
+  const popularAdminRoutes = [
     { path: '/admin/dashboard', label: 'Dashboard', icon: Home },
+    { path: '/admin/system-breakdown', label: 'System Breakdown', icon: FileBarChart2 },
     { path: '/admin/users', label: 'User Management', icon: Users },
     { path: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
     { path: '/admin/system-configuration', label: 'System Settings', icon: Settings },
@@ -23,11 +24,12 @@ const AdminNotFound: React.FC = () => {
           </h2>
           <p className="text-gray-600 mb-8">
             The admin page you're looking for doesn't exist or may have been moved.
+            Try one of these popular admin pages:
           </p>
           
           <div className="space-y-4">
             <div className="grid grid-cols-1 gap-2">
-              {adminRoutes.map((route) => (
+              {popularAdminRoutes.map((route) => (
                 <Button
                   key={route.path}
                   asChild
