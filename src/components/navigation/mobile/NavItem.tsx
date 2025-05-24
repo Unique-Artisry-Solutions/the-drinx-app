@@ -9,14 +9,14 @@ interface NavItemProps {
   item: UnifiedNavItem;
   isActive: boolean;
   onClick?: (e: React.MouseEvent) => void;
-  isPromoter?: boolean;
+  userType?: 'individual' | 'establishment' | 'promoter';
 }
 
 const NavItem: React.FC<NavItemProps> = ({ 
   item, 
   isActive, 
   onClick,
-  isPromoter = false
+  userType = 'individual'
 }) => {
   const navigate = useNavigate();
   
@@ -37,7 +37,7 @@ const NavItem: React.FC<NavItemProps> = ({
       isActive={isActive}
       onClick={handleClick}
       variant="mobile"
-      userType={isPromoter ? 'promoter' : 'individual'}
+      userType={userType}
       dropdown={item.dropdown}
     />
   );
