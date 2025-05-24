@@ -108,6 +108,20 @@ export const useTestUserCreation = () => {
         await createProfileManually(authData.user);
       }
 
+      // Create user role entry
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .insert({
+          user_id: authData.user.id,
+          role: credentials.userType,
+          is_active: true
+        });
+
+      if (roleError) {
+        console.error('Error creating user role:', roleError);
+        // Don't fail the whole creation for role error
+      }
+
       // Sign out the test user immediately after creation
       await supabase.auth.signOut();
 

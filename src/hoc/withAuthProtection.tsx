@@ -116,7 +116,7 @@ export function withAdminProtection<P extends object>(
       const isAuthorized = (user && session) && userType === 'admin';
       
       if (!isAuthorized) {
-        console.log("Admin authorization failed");
+        console.log("Admin authorization failed", { user: !!user, session: !!session, userType });
         localStorage.setItem('auth_redirect', location.pathname);
         setShouldRedirect(true);
         return;
@@ -137,7 +137,7 @@ export function withAdminProtection<P extends object>(
     }
     
     if (shouldRedirect) {
-      return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+      return <Navigate to="/admin/login" state={{ from: location.pathname }} replace />;
     }
     
     return <Component {...props} />;

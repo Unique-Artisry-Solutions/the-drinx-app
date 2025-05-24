@@ -34,11 +34,13 @@ const AdminLogin: React.FC = () => {
         throw error;
       }
       
-      // The auth context will handle the redirect through userType
+      // Note: userType will be set automatically by the auth context after role check
       toast({
-        title: 'Admin login successful',
-        description: 'Welcome to the admin dashboard',
+        title: 'Login successful',
+        description: 'Checking admin permissions...',
       });
+      
+      // The auth context will handle the redirect through userType
       
     } catch (error: any) {
       console.error('Admin login error:', error);
@@ -95,9 +97,7 @@ const AdminLogin: React.FC = () => {
                 />
               </div>
               <div className="text-sm text-gray-500">
-                <p>Use the admin test credentials:</p>
-                <p>Email: admin@spiritless.com</p>
-                <p>Password: admin123</p>
+                <p>Admin accounts must have the admin role assigned in the database.</p>
               </div>
             </CardContent>
             <CardFooter className="flex flex-col gap-3">

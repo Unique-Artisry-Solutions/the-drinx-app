@@ -20,6 +20,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const initializationComplete = useRef(false);
   const isInitializing = useRef(false);
   
+  // Function to check user roles from database
+  const checkUserRoles = useCallback(async (userId: string) => {
+    try {
+      const { data: roles, error } = await supabase
+        .from('user_roles')
+        .select('role, is_active')
+        .eq('user_id', userId)
+        .eq('is_active', true);
+      
+      if (error) {
+        console.error('Error fetching user roles:', error);
+        return 'individual'; // Default fallback
+      }
+      
+      // Check for admin role first
+      const adminRole = roles?.find(role => role.role === 'admin');
+      if (adminRole) {
+        return 'admin';
+      }
+      
+      // Check for other roles
+      const promoterRole = roles?.find(role => role.role === 'promoter');
+      if (promoterRole) {
+        return 'promoter';
+      }
+      
+      const establishmentRole = roles?.find(role => role.role === 'establishment');
+      if (establishmentRole) {
+        return 'establishment';
+      }
+      
+      // Default to individual
+      return 'individual';
+    } catch (error) {
+      console.error('Error in checkUserRoles:', error);
+      return 'individual';
+    }
+  }, []);
+  
   // Initialize auth state
   const initializeAuth = useCallback(async () => {
     if (initializationComplete.current || isInitializing.current) {
@@ -58,10 +97,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (currentUser) {
           // Update localStorage with session data
           authService.updateLocalStorage(currentUser);
-          const storedUserType = currentUser.user_metadata?.user_type || localStorage.getItem('user_type') || 'individual';
-          setUserType(storedUserType);
+          
+          // Check user roles from database
+          const dbUserType = await checkUserRoles(currentUser.id);
+          setUserType(dbUserType);
+          localStorage.setItem('user_type', dbUserType);
         } else {
           setUserType('');
+          localStorage.removeItem('user_type');
         }
         
         setAuthError(null);
@@ -79,14 +122,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       initializationComplete.current = true;
       isInitializing.current = false;
     }
-  }, []);
+  }, [checkUserRoles]);
 
   // Set up auth state listener
   useEffect(() => {
     console.log("AuthProvider: Setting up auth state listener");
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         console.log("AuthProvider: Auth state changed", { event, hasSession: !!session });
         
         const currentUser = session?.user || null;
@@ -96,14 +139,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsEmailVerified(currentUser?.email_confirmed_at ? true : false);
         
         if (currentUser) {
-          // Update localStorage and user type
+          // Update localStorage and check user roles
           authService.updateLocalStorage(currentUser);
-          const storedUserType = currentUser.user_metadata?.user_type || localStorage.getItem('user_type') || 'individual';
-          setUserType(storedUserType);
+          
+          // Check user roles from database
+          const dbUserType = await checkUserRoles(currentUser.id);
+          setUserType(dbUserType);
+          localStorage.setItem('user_type', dbUserType);
         } else {
           // Clear auth data when no user
           authService.updateLocalStorage(null);
           setUserType('');
+          localStorage.removeItem('user_type');
         }
         
         // Mark as stable after auth state change
@@ -121,7 +168,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => {
       subscription.unsubscribe();
     };
-  }, [initializeAuth, authStable]);
+  }, [initializeAuth, checkUserRoles, authStable]);
 
   // Auth methods
   const signIn = useCallback(async (email: string, password: string) => {
@@ -134,13 +181,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { error: result.error, data: null };
       }
       
+      // Check user roles after successful sign in
+      if (result.user) {
+        const dbUserType = await checkUserRoles(result.user.id);
+        setUserType(dbUserType);
+        localStorage.setItem('user_type', dbUserType);
+      }
+      
       return { error: null, data: { user: result.user, session: result.session } };
     } catch (error) {
       const authError = error as Error;
       setAuthError(authError);
       return { error: authError, data: null };
     }
-  }, []);
+  }, [checkUserRoles]);
 
   const signUp = useCallback(async (formData: any) => {
     try {
@@ -192,8 +246,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsEmailVerified(result.isEmailVerified);
         
         if (result.user) {
-          const storedUserType = result.user.user_metadata?.user_type || localStorage.getItem('user_type') || 'individual';
-          setUserType(storedUserType);
+          const dbUserType = await checkUserRoles(result.user.id);
+          setUserType(dbUserType);
+          localStorage.setItem('user_type', dbUserType);
         }
       }
       
@@ -203,7 +258,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setAuthError(authError);
       return { isEmailVerified: false };
     }
-  }, []);
+  }, [checkUserRoles]);
 
   const recoverAuthState = useCallback(async () => {
     try {

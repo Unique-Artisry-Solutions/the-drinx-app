@@ -8,15 +8,6 @@ export const useAppNavigation = () => {
   const goToHomePage = useCallback((userType?: string) => {
     console.log("useAppNavigation - goToHomePage called with userType:", userType);
     
-    // Check if admin is logged in through regular auth system
-    const isAdmin = localStorage.getItem('admin_authenticated') === 'true';
-    
-    if (isAdmin) {
-      console.log("useAppNavigation - Redirecting to admin dashboard");
-      navigate('/admin/system-breakdown');
-      return;
-    }
-    
     // Get user type from parameter or localStorage
     const finalUserType = userType || localStorage.getItem('user_type') || 'individual';
     console.log("useAppNavigation - Final user type determined:", finalUserType);
