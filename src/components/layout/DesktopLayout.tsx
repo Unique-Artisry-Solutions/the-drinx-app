@@ -10,6 +10,7 @@ import AppFooter from '../AppFooter';
 import AdminFooter from '../admin/AdminFooter';
 import { useDevAuthBypass } from '@/hooks/useDevAuthBypass';
 import { useTheme } from '@/contexts/ThemeContext';
+import { resolveNavigationState } from '@/utils/navigationResolver';
 
 interface TabOption {
   value: string;
@@ -41,34 +42,33 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     isUsingDevBypass 
   } = useDevAuthBypass();
   
-  const [navigationType, setNavigationType] = React.useState<NavigationType>(NavigationType.GUEST);
+  const [effectiveNavState, setEffectiveNavState] = React.useState(() => 
+    resolveNavigationState(
+      null, false, null, false, false, location.pathname, forceGuestNavigation
+    )
+  );
 
   useEffect(() => {
-    const checkAuth = () => {
-      console.log('DesktopLayout - Auth state check:', {
-        isAuthenticated,
-        userType,
-        isUsingDevBypass,
-        location: location.pathname,
-        forceGuestNavigation
-      });
-      
-      // Define public paths that always use guest navigation
-      const publicPaths = ['/', '/landing', '/login', '/signup', '/mission', '/pricing'];
-      const isPublicPath = publicPaths.includes(location.pathname) || forceGuestNavigation;
-      
-      // Determine navigation type based on effective auth state and path
-      if (userType === 'admin' && isAuthenticated) {
-        setNavigationType(NavigationType.ADMIN);
-      } else if (isAuthenticated && !isPublicPath) {
-        setNavigationType(NavigationType.USER);
-      } else {
-        setNavigationType(NavigationType.GUEST);
-      }
-    };
+    console.log('DesktopLayout - Resolving navigation state:', {
+      userType,
+      isAuthenticated,
+      isUsingDevBypass,
+      location: location.pathname,
+      forceGuestNavigation
+    });
     
-    checkAuth();
-  }, [isAuthenticated, userType, location.pathname, forceGuestNavigation, isUsingDevBypass]);
+    const navState = resolveNavigationState(
+      userType,
+      isAuthenticated,
+      userType, // In dev bypass, userType is already the effective type
+      isAuthenticated,
+      isUsingDevBypass,
+      location.pathname,
+      forceGuestNavigation
+    );
+    
+    setEffectiveNavState(navState);
+  }, [userType, isAuthenticated, isUsingDevBypass, location.pathname, forceGuestNavigation]);
 
   const isLandingPage = location.pathname === '/' || location.pathname === '/landing' || forceGuestNavigation;
   const isAdminPage = location.pathname.startsWith('/admin');
@@ -81,32 +81,15 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     }
   };
 
-  // Determine whether to show guest navigation
-  const useGuestNavigation = () => {
-    if (forceGuestNavigation) return true;
-    
-    // Always use guest navigation for non-authenticated users
-    if (!isAuthenticated) return true;
-    
-    // For authenticated users, use guest navigation only on explicit public paths
-    const publicPaths = ['/', '/landing', '/login', '/signup', '/mission', '/pricing'];
-    return publicPaths.includes(location.pathname);
-  };
-
   const renderNavigation = () => {
-    // Always show admin navigation for admin pages or admin users
-    if (isAdminPage || userType === 'admin') {
-      return <AdminTopNavigation />;
-    } 
-    
-    // For authenticated users on non-public pages, show appropriate navigation
-    else if (isAuthenticated && !useGuestNavigation()) {
-      return <UserTopNavigation activeTab={activeTab} handleTabChange={handleTabChange} tabOptions={tabOptions} />;
-    } 
-    
-    // Default to guest navigation for public pages or when not authenticated
-    else {
-      return <GuestTopNavigation />;
+    switch (effectiveNavState.navigationType) {
+      case NavigationType.ADMIN:
+        return <AdminTopNavigation />;
+      case NavigationType.USER:
+        return <UserTopNavigation activeTab={activeTab} handleTabChange={handleTabChange} tabOptions={tabOptions} />;
+      case NavigationType.GUEST:
+      default:
+        return <GuestTopNavigation />;
     }
   };
 
@@ -138,7 +121,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
 
   // Render the appropriate footer based on the page type
   const renderFooter = () => {
-    if (isAdminPage || userType === 'admin') {
+    if (isAdminPage || effectiveNavState.userType === 'admin') {
       return <AdminFooter />;
     }
     return <AppFooter />;
@@ -146,15 +129,12 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
 
   // Debug navigation state - remove in production
   useEffect(() => {
-    console.log('DesktopLayout - Navigation state:', {
+    console.log('DesktopLayout - Current navigation state:', {
       path: location.pathname,
-      userType,
-      isAuthenticated, 
-      navigationType,
-      useGuestNav: useGuestNavigation(),
+      effectiveNavState,
       isUsingDevBypass
     });
-  }, [location.pathname, userType, isAuthenticated, navigationType, isUsingDevBypass]);
+  }, [location.pathname, effectiveNavState, isUsingDevBypass]);
 
   return (
     <div className={`flex flex-col min-h-screen w-full max-w-full bg-background transition-colors duration-300`}>

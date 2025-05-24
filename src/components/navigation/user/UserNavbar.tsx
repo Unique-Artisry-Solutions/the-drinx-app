@@ -45,6 +45,9 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
   } = useDevAuthBypass();
   const isMobile = useIsMobile();
   
+  // Convert userType to non-admin type for components that don't handle admin
+  const nonAdminUserType = userType === 'admin' ? 'individual' : (userType || 'individual');
+  
   useEffect(() => {
     const fetchUsername = async () => {
       if (user) {
@@ -131,7 +134,7 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
               {isUsingDevBypass && !isMobile && <span className="ml-1 text-xs px-1.5 py-0.5 bg-orange-100 text-orange-700 rounded-md">Dev Mode</span>}
             </Link>
             
-            <UserNavLinks userType={userType || 'individual'} />
+            <UserNavLinks userType={nonAdminUserType} />
           </div>
           
           <div className="user-nav-right flex items-center space-x-4">
@@ -154,7 +157,7 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
             
             <UserProfileDropdown 
               username={username} 
-              userType={userType || 'individual'} 
+              userType={nonAdminUserType} 
               handleLogout={handleLogout} 
               activeTab={location.pathname === '/establishment/profile' ? activeTab : undefined} 
               handleTabChange={location.pathname === '/establishment/profile' ? handleTabChange : undefined} 
@@ -166,7 +169,7 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
         <UserMobileMenu 
           isOpen={isMobileMenuOpen} 
           username={username} 
-          userType={userType || 'individual'} 
+          userType={nonAdminUserType} 
           onClose={() => setIsMobileMenuOpen(false)} 
           handleLogout={handleLogout} 
           activeTab={location.pathname === '/establishment/profile' ? activeTab : undefined} 

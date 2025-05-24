@@ -11,6 +11,7 @@ import GuestTopNavigation from '../navigation/GuestTopNavigation';
 import AdminTopNavigation from '../navigation/AdminTopNavigation';
 import AppFooter from '../AppFooter';
 import AdminFooter from '../admin/AdminFooter';
+import { resolveNavigationState, toNonAdminUserType } from '@/utils/navigationResolver';
 
 interface TabOption {
   value: string;
@@ -43,7 +44,11 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
     isUsingDevBypass 
   } = useDevAuthBypass();
   
-  const [navigationType, setNavigationType] = React.useState<NavigationType>(NavigationType.GUEST);
+  const [effectiveNavState, setEffectiveNavState] = React.useState(() => 
+    resolveNavigationState(
+      null, false, null, false, false, location.pathname, forceGuestNavigation
+    )
+  );
 
   // Scroll to top when route changes
   useEffect(() => {
@@ -51,31 +56,26 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
   }, [location.pathname]);
 
   useEffect(() => {
-    const checkAuth = () => {
-      console.log('MobileLayout - Auth state check:', {
-        isAuthenticated,
-        userType,
-        isUsingDevBypass,
-        location: location.pathname,
-        forceGuestNavigation
-      });
-      
-      // Define public paths that always use guest navigation
-      const publicPaths = ['/', '/landing', '/login', '/signup', '/mission', '/pricing'];
-      const isPublicPath = publicPaths.includes(location.pathname) || forceGuestNavigation;
-      
-      // Determine navigation type based on effective auth state and path
-      if (userType === 'admin' && isAuthenticated) {
-        setNavigationType(NavigationType.ADMIN);
-      } else if (isAuthenticated && !isPublicPath) {
-        setNavigationType(NavigationType.USER);
-      } else {
-        setNavigationType(NavigationType.GUEST);
-      }
-    };
+    console.log('MobileLayout - Resolving navigation state:', {
+      userType,
+      isAuthenticated,
+      isUsingDevBypass,
+      location: location.pathname,
+      forceGuestNavigation
+    });
     
-    checkAuth();
-  }, [isAuthenticated, userType, location.pathname, forceGuestNavigation, isUsingDevBypass]);
+    const navState = resolveNavigationState(
+      userType,
+      isAuthenticated,
+      userType, // In dev bypass, userType is already the effective type
+      isAuthenticated,
+      isUsingDevBypass,
+      location.pathname,
+      forceGuestNavigation
+    );
+    
+    setEffectiveNavState(navState);
+  }, [userType, isAuthenticated, isUsingDevBypass, location.pathname, forceGuestNavigation]);
 
   // Determine page types for specialized navigation
   const isLandingPage = location.pathname === '/' || location.pathname === '/landing' || forceGuestNavigation;
@@ -121,40 +121,23 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
   const shouldShowMobileNav = () => {
     return !isAdminPage;
   };
-  
-  // Determine whether to show guest navigation
-  const useGuestNavigation = () => {
-    if (forceGuestNavigation) return true;
-    
-    // Always show guest navigation for non-authenticated users
-    if (!isAuthenticated) return true;
-    
-    // For authenticated users, use guest navigation only on explicit public paths
-    const publicPaths = ['/', '/landing', '/login', '/signup', '/mission', '/pricing'];
-    return publicPaths.includes(location.pathname);
-  };
 
   // Render the appropriate navigation
   const renderNavigation = () => {
-    // Always show admin navigation for admin pages or admin users
-    if (isAdminPage || userType === 'admin') {
-      return <AdminTopNavigation />;
-    } 
-    
-    // For authenticated users on non-public pages, show appropriate navigation
-    else if (isAuthenticated && !useGuestNavigation()) {
-      return <UserNavbar activeTab={activeTab} handleTabChange={handleTabChange} tabOptions={tabOptions} />;
-    } 
-    
-    // Default to guest navigation
-    else {
-      return <GuestTopNavigation />;
+    switch (effectiveNavState.navigationType) {
+      case NavigationType.ADMIN:
+        return <AdminTopNavigation />;
+      case NavigationType.USER:
+        return <UserNavbar activeTab={activeTab} handleTabChange={handleTabChange} tabOptions={tabOptions} />;
+      case NavigationType.GUEST:
+      default:
+        return <GuestTopNavigation />;
     }
   };
   
   // Render the appropriate footer
   const renderFooter = () => {
-    if (isAdminPage || userType === 'admin') {
+    if (isAdminPage || effectiveNavState.userType === 'admin') {
       return <AdminFooter />;
     }
     // Only return AppFooter if not showing mobile nav
@@ -162,7 +145,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
   };
 
   // Convert userType to the format expected by MobileNavigation
-  const mobileUserType = userType === 'admin' ? 'individual' : (userType || 'individual');
+  const mobileUserType = toNonAdminUserType(effectiveNavState.userType);
 
   return (
     <div className={`flex flex-col min-h-screen w-full max-w-full bg-background transition-colors duration-300`}>
@@ -181,7 +164,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
       
       {shouldShowMobileNav() && (
         <MobileNavigation 
-          type={navigationType} 
+          type={effectiveNavState.navigationType} 
           userType={mobileUserType} 
           forceGuestNavigation={forceGuestNavigation} 
         />
