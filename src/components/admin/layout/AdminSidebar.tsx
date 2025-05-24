@@ -1,19 +1,20 @@
 
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { ChevronDown, ChevronRight, ChevronLeft, ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { ChevronDown, ChevronRight, ChevronLeft } from 'lucide-react';
 import { adminNavItems } from '@/components/navigation/admin/AdminNavItems';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
 const AdminSidebar: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
   const [collapsed, setCollapsed] = useState<boolean>(false);
   
   // Initialize expanded categories based on current path and defaults
   useEffect(() => {
-    console.log('AdminSidebar rendering at path:', location.pathname);
+    console.log('AdminSidebar: Rendering at path:', location.pathname);
     
     // Get expanded state from localStorage or set defaults
     const savedExpanded = localStorage.getItem('admin_sidebar_expanded');
@@ -34,6 +35,7 @@ const AdminSidebar: React.FC = () => {
         const hasActiveChild = category.children.some(child => isActive(child.path));
         if (hasActiveChild) {
           activeCategories.push(category.path);
+          console.log('AdminSidebar: Auto-expanding category:', category.label, 'for path:', location.pathname);
         }
       }
     });
@@ -41,6 +43,7 @@ const AdminSidebar: React.FC = () => {
     // Default expanded categories for better UX
     const defaultExpanded = [
       '/admin/dashboard', // Dashboard & Analytics
+      '/admin/content', // Content Management
       '/admin/system-tools', // System Tools
     ];
     
@@ -51,6 +54,7 @@ const AdminSidebar: React.FC = () => {
       ...defaultExpanded
     ]));
     
+    console.log('AdminSidebar: Setting expanded categories:', combinedExpanded);
     setExpandedCategories(combinedExpanded);
   }, [location.pathname]);
   
@@ -60,6 +64,7 @@ const AdminSidebar: React.FC = () => {
   }, [expandedCategories]);
   
   const toggleCategory = (categoryPath: string) => {
+    console.log('AdminSidebar: Toggling category:', categoryPath);
     setExpandedCategories(prev => 
       prev.includes(categoryPath) 
         ? prev.filter(path => path !== categoryPath) 
@@ -72,12 +77,22 @@ const AdminSidebar: React.FC = () => {
   };
   
   const isActive = (path: string) => {
-    return location.pathname === path || 
+    const active = location.pathname === path || 
       (path !== '/admin/dashboard' && location.pathname.startsWith(path));
+    if (active) {
+      console.log('AdminSidebar: Active path detected:', path, 'for current:', location.pathname);
+    }
+    return active;
   };
   
   const hasActiveChild = (category: any) => {
     return category.children?.some((child: any) => isActive(child.path)) || false;
+  };
+
+  const handleNavigation = (path: string, label: string) => {
+    console.log('AdminSidebar: Navigating to:', path, 'Label:', label);
+    console.log('AdminSidebar: Current location before navigation:', location.pathname);
+    navigate(path);
   };
   
   return (
@@ -140,11 +155,11 @@ const AdminSidebar: React.FC = () => {
               {!collapsed && isExpanded && category.children && (
                 <div className="mt-1 ml-4 space-y-1 border-l border-white/10 pl-2">
                   {category.children.map(item => (
-                    <Link
+                    <button
                       key={item.path}
-                      to={item.path}
+                      onClick={() => handleNavigation(item.path, item.label)}
                       className={cn(
-                        "flex items-center px-3 py-2 text-sm rounded-md transition-colors",
+                        "flex items-center w-full px-3 py-2 text-sm rounded-md transition-colors text-left",
                         isActive(item.path)
                           ? "bg-white/25 text-white font-medium border-l-2 border-white"
                           : "text-white/70 hover:text-white hover:bg-white/10"
@@ -155,7 +170,7 @@ const AdminSidebar: React.FC = () => {
                         className: "h-4 w-4 mr-2" 
                       })}
                       <span className="truncate">{item.label}</span>
-                    </Link>
+                    </button>
                   ))}
                 </div>
               )}

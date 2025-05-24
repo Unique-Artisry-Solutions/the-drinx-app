@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { 
@@ -23,8 +23,8 @@ const AdminEstablishmentsPage = () => {
   } = useEstablishments({ searchTerm });
 
   // Add debugging
-  console.log('AdminEstablishmentsPage: Component rendered at path');
-  console.log('AdminEstablishmentsPage: Current URL:', window.location.pathname);
+  console.log('AdminEstablishmentsPage: Component rendered for path:', window.location.pathname);
+  console.log('AdminEstablishmentsPage: Successfully rendered inside AdminLayout');
 
   // Check if user is authenticated as admin
   React.useEffect(() => {

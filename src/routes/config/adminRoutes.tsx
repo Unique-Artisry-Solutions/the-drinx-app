@@ -1,7 +1,6 @@
 
 import { lazy } from 'react';
 import { RouteObject } from 'react-router-dom';
-import { Navigate } from 'react-router-dom';
 import AdminLogin from '@/pages/admin/AdminLogin';
 import AdminNotificationsPage from '@/pages/admin/notifications/AdminNotificationsPage';
 import NotificationTestingPage from '@/pages/admin/notifications/NotificationTestingPage';
@@ -30,7 +29,10 @@ console.log('adminRoutes: Module loaded, registering routes');
 
 export const adminRoutes: RouteObject[] = [
   // Admin login - separate from protected routes
-  { path: '/admin/login', element: <AdminLogin /> },
+  { 
+    path: '/admin/login', 
+    element: <AdminLogin /> 
+  },
   
   // All admin routes use the AdminLayout wrapper
   {
@@ -40,30 +42,45 @@ export const adminRoutes: RouteObject[] = [
       // Index route - use dashboard as the default for /admin
       { 
         index: true, 
-        element: <AdminDashboard /> 
+        element: (() => {
+          console.log('adminRoutes: Dashboard index route matched');
+          return <AdminDashboard />;
+        })()
       },
       { 
         path: 'dashboard', 
-        element: <AdminDashboard /> 
+        element: (() => {
+          console.log('adminRoutes: Dashboard route matched');
+          return <AdminDashboard />;
+        })()
       },
       { 
         path: 'users', 
-        element: <AdminUsersPage /> 
+        element: (() => {
+          console.log('adminRoutes: Users route matched');
+          return <AdminUsersPage />;
+        })()
       },
       { 
         path: 'users/:id', 
-        element: <AdminUserProfile /> 
+        element: (() => {
+          console.log('adminRoutes: User profile route matched');
+          return <AdminUserProfile />;
+        })()
       },
       { 
         path: 'establishments', 
         element: (() => {
-          console.log('adminRoutes: Establishments route matched');
+          console.log('adminRoutes: Establishments route matched - rendering AdminEstablishmentsPage');
           return <AdminEstablishmentsPage />;
         })()
       },
       { 
         path: 'establishments/:id', 
-        element: <AdminEstablishmentProfile /> 
+        element: (() => {
+          console.log('adminRoutes: Establishment profile route matched');
+          return <AdminEstablishmentProfile />;
+        })()
       },
       { 
         path: 'system-breakdown', 
@@ -74,62 +91,99 @@ export const adminRoutes: RouteObject[] = [
       },
       { 
         path: 'component-catalog', 
-        element: <ComponentCatalogPage /> 
+        element: (() => {
+          console.log('adminRoutes: Component catalog route matched');
+          return <ComponentCatalogPage />;
+        })()
       },
       { 
         path: 'analytics', 
-        element: <SystemAnalyticsPage /> 
+        element: (() => {
+          console.log('adminRoutes: Analytics route matched');
+          return <SystemAnalyticsPage />;
+        })()
       },
       { 
         path: 'photo-moderation', 
         element: (() => {
-          console.log('adminRoutes: Photo moderation route matched');
+          console.log('adminRoutes: Photo moderation route matched - rendering PhotoModerationPage');
           return <PhotoModerationPage />;
         })()
       },
       { 
         path: 'content-moderation', 
-        element: <ContentModerationPage /> 
+        element: (() => {
+          console.log('adminRoutes: Content moderation route matched');
+          return <ContentModerationPage />;
+        })()
       },
       { 
         path: 'theme-customization', 
-        element: <ThemeCustomizationPage /> 
+        element: (() => {
+          console.log('adminRoutes: Theme customization route matched');
+          return <ThemeCustomizationPage />;
+        })()
       },
       { 
         path: 'documentation', 
-        element: <AdminDocumentationPage /> 
+        element: (() => {
+          console.log('adminRoutes: Documentation route matched');
+          return <AdminDocumentationPage />;
+        })()
       },
       { 
         path: 'system-configuration', 
-        element: <SystemConfigurationPage /> 
+        element: (() => {
+          console.log('adminRoutes: System configuration route matched');
+          return <SystemConfigurationPage />;
+        })()
       },
       { 
         path: 'notifications', 
-        element: <AdminNotificationsPage /> 
+        element: (() => {
+          console.log('adminRoutes: Notifications route matched');
+          return <AdminNotificationsPage />;
+        })()
       },
       { 
         path: 'notification-testing', 
-        element: <NotificationTestingPage /> 
+        element: (() => {
+          console.log('adminRoutes: Notification testing route matched');
+          return <NotificationTestingPage />;
+        })()
       },
       { 
         path: 'reward-system-monitor', 
-        element: <RewardSystemMonitorPage /> 
+        element: (() => {
+          console.log('adminRoutes: Reward system monitor route matched');
+          return <RewardSystemMonitorPage />;
+        })()
       },
       { 
         path: 'rewards', 
-        element: <RewardsAdminPage /> 
+        element: (() => {
+          console.log('adminRoutes: Rewards route matched');
+          return <RewardsAdminPage />;
+        })()
       },
       { 
         path: 'testing', 
-        element: <TestingInterfacePage /> 
+        element: (() => {
+          console.log('adminRoutes: Testing interface route matched');
+          return <TestingInterfacePage />;
+        })()
       },
     ]
   },
   // Admin-specific 404 handler for any /admin/* routes not matched above
   { 
     path: '/admin/*', 
-    element: <AdminNotFound /> 
+    element: (() => {
+      console.log('adminRoutes: 404 route matched for admin path');
+      return <AdminNotFound />;
+    })()
   },
 ];
 
 console.log('adminRoutes: Routes configured', adminRoutes.length, 'total routes');
+console.log('adminRoutes: Child routes count:', adminRoutes[1]?.children?.length || 0);
