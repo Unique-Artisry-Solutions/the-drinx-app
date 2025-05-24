@@ -17,7 +17,12 @@ export const useSubscriptions = (promoterId?: string) => {
         .eq('promoter_id', promoterId);
 
       if (error) throw error;
-      return data as Subscription[];
+      
+      // Map the data to match the Subscription type
+      return data.map(item => ({
+        ...item,
+        status: item.follow_status || 'active'
+      })) as Subscription[];
     },
     enabled: !!promoterId,
   });

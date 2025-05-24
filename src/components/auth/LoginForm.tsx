@@ -28,6 +28,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
   const [showResendVerification, setShowResendVerification] = useState(false);
   const [isAdminLogin, setIsAdminLogin] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
+  const [hasShownSuccessToast, setHasShownSuccessToast] = useState(false);
   
   const navigate = useNavigate();
   const location = useLocation();
@@ -77,14 +78,14 @@ const LoginForm: React.FC<LoginFormProps> = ({
 
   // Handle redirect after login and when auth is stable
   useEffect(() => {
-    if (loginSuccess && authStable) {
+    if (loginSuccess && authStable && !hasShownSuccessToast) {
       const timer = setTimeout(() => {
         performRedirect();
       }, 300); // Small delay to ensure auth state is fully processed
       
       return () => clearTimeout(timer);
     }
-  }, [loginSuccess, authStable, performRedirect]);
+  }, [loginSuccess, authStable, performRedirect, hasShownSuccessToast]);
 
   const toggleAdminLogin = () => {
     setIsAdminLogin(!isAdminLogin);
@@ -138,10 +139,13 @@ const LoginForm: React.FC<LoginFormProps> = ({
           localStorage.setItem('admin_username', 'Admin');
           localStorage.setItem('admin_session_created', new Date().toISOString());
           
-          toast({
-            title: 'Admin login successful',
-            description: 'Welcome to the admin dashboard',
-          });
+          if (!hasShownSuccessToast) {
+            toast({
+              title: 'Admin login successful',
+              description: 'Welcome to the admin dashboard',
+            });
+            setHasShownSuccessToast(true);
+          }
           
           // Ensure we finish setting local storage before navigation
           setTimeout(() => {
@@ -161,6 +165,11 @@ const LoginForm: React.FC<LoginFormProps> = ({
         // Verify session immediately
         const sessionCheck = await getSessionDebug();
         console.log("Session check after login:", sessionCheck);
+        
+        // Show success toast only once
+        if (!hasShownSuccessToast) {
+          setHasShownSuccessToast(true);
+        }
         
         // Mark login as successful to trigger redirect
         setLoginSuccess(true);
@@ -184,13 +193,16 @@ const LoginForm: React.FC<LoginFormProps> = ({
       // Enable the bypass with the specified user type
       enableAdminBypass(type);
       
-      toast({
-        title: 'Bypass Login Activated',
-        description: `You are now logged in as ${type === 'admin' ? 'an administrator' : 
-          type === 'individual' ? 'a user' : 
-          type === 'promoter' ? 'a promoter' :
-          'a business'} for testing purposes.`,
-      });
+      if (!hasShownSuccessToast) {
+        toast({
+          title: 'Bypass Login Activated',
+          description: `You are now logged in as ${type === 'admin' ? 'an administrator' : 
+            type === 'individual' ? 'a user' : 
+            type === 'promoter' ? 'a promoter' :
+            'a business'} for testing purposes.`,
+        });
+        setHasShownSuccessToast(true);
+      }
       
       // Add artificial delay to reduce flickering
       await new Promise(resolve => setTimeout(resolve, 100));
@@ -204,11 +216,13 @@ const LoginForm: React.FC<LoginFormProps> = ({
       }
     } catch (error) {
       console.error("Error during bypass login:", error);
-      toast({
-        title: 'Login Error',
-        description: 'An error occurred during bypass login. Please try again.',
-        variant: 'destructive',
-      });
+      if (!hasShownSuccessToast) {
+        toast({
+          title: 'Login Error',
+          description: 'An error occurred during bypass login. Please try again.',
+          variant: 'destructive',
+        });
+      }
     }
   };
 
