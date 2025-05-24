@@ -40,7 +40,7 @@ export const ProtectedRouteWithChildren: React.FC<{
   children: React.ReactElement;
   userType: UserType;
 }> = ({ children, userType }) => {
-  const { isDevModeActive, devMode, isDevelopment, isInitialized } = useDevelopmentMode();
+  const { isDevModeActive, devMode, isDevelopment, isInitialized, isStateStable } = useDevelopmentMode();
   
   const debugInfo = {
     userType,
@@ -48,14 +48,15 @@ export const ProtectedRouteWithChildren: React.FC<{
     devMode,
     isDevelopment,
     isInitialized,
-    shouldBypass: isDevelopment && isDevModeActive
+    isStateStable,
+    shouldBypass: isDevelopment && isDevModeActive && isStateStable
   };
   
   console.log('ProtectedRouteWithChildren rendering:', debugInfo);
   
-  // Wait for initialization
-  if (!isInitialized) {
-    console.log('ProtectedRouteWithChildren: Waiting for initialization');
+  // Wait for both initialization AND state stabilization
+  if (!isInitialized || !isStateStable) {
+    console.log('ProtectedRouteWithChildren: Waiting for development mode to stabilize');
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -66,9 +67,9 @@ export const ProtectedRouteWithChildren: React.FC<{
     );
   }
   
-  // EARLY RETURN: In development mode, bypass protection completely for any user type
-  if (isDevelopment && isDevModeActive) {
-    console.log(`ProtectedRouteWithChildren: Development mode active - BYPASSING protection for ${userType}`, {
+  // EARLY RETURN: In development mode with stable state, bypass protection completely
+  if (isDevelopment && isDevModeActive && isStateStable) {
+    console.log(`ProtectedRouteWithChildren: Development mode active and stable - BYPASSING protection for ${userType}`, {
       devMode,
       requestedUserType: userType,
       immediate: true

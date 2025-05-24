@@ -15,6 +15,7 @@ export const useDevelopmentMode = () => {
   const isDevelopmentRef = useRef<boolean>(false);
   const devModeRef = useRef<DevUserType>(null);
   const initializationRef = useRef<boolean>(false);
+  const stateStableRef = useRef<boolean>(false);
 
   // Initialize development mode detection immediately and persistently
   useEffect(() => {
@@ -57,6 +58,9 @@ export const useDevelopmentMode = () => {
       devModeRef.current = null;
       setDevMode(null);
     }
+    
+    // Mark state as stable after initialization
+    stateStableRef.current = true;
   }, []);
 
   // Check for URL parameters on route changes (only after initialization)
@@ -103,6 +107,20 @@ export const useDevelopmentMode = () => {
     }
   };
 
+  const validateStateBeforeNavigation = (userType: DevUserType): boolean => {
+    if (!isDevelopmentRef.current) {
+      console.log('useDevelopmentMode - State validation failed: not in development mode');
+      return false;
+    }
+    
+    if (!stateStableRef.current) {
+      console.log('useDevelopmentMode - State validation failed: state not stable yet');
+      return false;
+    }
+    
+    return true;
+  };
+
   const switchToUserType = (userType: DevUserType) => {
     if (!isDevelopmentRef.current) {
       console.log('useDevelopmentMode - Not in development mode, ignoring user type switch');
@@ -111,21 +129,29 @@ export const useDevelopmentMode = () => {
     
     console.log('useDevelopmentMode - Switching to user type:', userType);
     
-    // Update both state and ref synchronously for immediate availability
+    // SYNCHRONOUS state updates for immediate availability
     devModeRef.current = userType;
     setDevMode(userType);
     
     if (userType) {
       localStorage.setItem('dev_user_type', userType);
-      // Add small delay to ensure state is propagated before navigation
-      setTimeout(() => {
-        navigateToUserTypeDashboard(userType);
-      }, 10);
+      
+      // Validate state before navigation
+      if (!validateStateBeforeNavigation(userType)) {
+        console.log('useDevelopmentMode - State validation failed, retrying in 50ms');
+        setTimeout(() => {
+          if (validateStateBeforeNavigation(userType)) {
+            navigateToUserTypeDashboard(userType);
+          }
+        }, 50);
+        return;
+      }
+      
+      // Navigate immediately if state is valid
+      navigateToUserTypeDashboard(userType);
     } else {
       localStorage.removeItem('dev_user_type');
-      setTimeout(() => {
-        navigate('/landing');
-      }, 10);
+      navigate('/landing');
     }
   };
 
@@ -139,12 +165,14 @@ export const useDevelopmentMode = () => {
 
   // Use refs for immediate state access, preventing race conditions
   const isDevModeActive = isDevelopmentRef.current && devModeRef.current !== null;
+  const isStateStable = stateStableRef.current;
   
   console.log('useDevelopmentMode - Current state:', {
     isDevelopment: isDevelopmentRef.current,
     devMode: devModeRef.current,
     isDevModeActive,
     isInitialized,
+    isStateStable,
     location: location.pathname
   });
 
@@ -154,6 +182,7 @@ export const useDevelopmentMode = () => {
     switchToUserType,
     exitDevMode,
     isDevModeActive,
-    isInitialized
+    isInitialized,
+    isStateStable
   };
 };
