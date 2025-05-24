@@ -32,21 +32,30 @@ export function withAuthProtection<P extends object>(
 
   const ProtectedComponent: React.FC<P> = (props) => {
     const { user, session, isLoading, authStable, userType } = useAuth();
-    const { isDevModeActive, devMode } = useDevelopmentMode();
+    const { isDevModeActive, devMode, isDevelopment, isInitialized } = useDevelopmentMode();
     const location = useLocation();
     const [shouldRedirect, setShouldRedirect] = useState(false);
     
     useEffect(() => {
-      console.log('withAuthProtection - Development mode check:', { 
+      console.log('withAuthProtection - Auth check:', { 
         isDevModeActive, 
         devMode, 
+        isDevelopment,
+        isInitialized,
         path: location.pathname,
         userTypes,
-        requireAuth 
+        requireAuth,
+        user: !!user,
+        session: !!session,
+        authStable,
+        isLoading
       });
       
+      // Wait for development mode initialization
+      if (!isInitialized) return;
+      
       // In development mode, bypass authentication checks completely
-      if (isDevModeActive) {
+      if (isDevelopment && isDevModeActive) {
         console.log('withAuthProtection: Development mode active, bypassing all auth protection');
         setShouldRedirect(false);
         return;
@@ -77,10 +86,21 @@ export function withAuthProtection<P extends object>(
       
       // All checks passed
       setShouldRedirect(false);
-    }, [user, session, isLoading, authStable, userType, location.pathname, isDevModeActive, devMode]);
+    }, [user, session, isLoading, authStable, userType, location.pathname, isDevModeActive, devMode, isDevelopment, isInitialized]);
     
     // Show loading state while checking auth (but not in dev mode)
-    if ((isLoading || !authStable) && showLoadingState && !isDevModeActive) {
+    if (!isInitialized) {
+      return showLoadingState ? (
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="w-12 h-12 border-4 border-spiritless-pink border-t-transparent rounded-full animate-spin mx-auto"></div>
+            <p className="mt-4 text-gray-600">Initializing...</p>
+          </div>
+        </div>
+      ) : null;
+    }
+    
+    if ((isLoading || !authStable) && showLoadingState && !(isDevelopment && isDevModeActive)) {
       return (
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
@@ -97,7 +117,7 @@ export function withAuthProtection<P extends object>(
     }
     
     // Redirect if checks failed (but not in dev mode)
-    if (shouldRedirect && !isDevModeActive) {
+    if (shouldRedirect && !(isDevelopment && isDevModeActive)) {
       const redirectPath = userTypes.length > 0 
         ? { 
             pathname: redirectTo, 
@@ -123,19 +143,29 @@ export function withAdminProtection<P extends object>(
 ) {
   const AdminProtectedComponent: React.FC<P> = (props) => {
     const { user, session, isLoading, authStable, userType } = useAuth();
-    const { isDevModeActive, devMode } = useDevelopmentMode();
+    const { isDevModeActive, devMode, isDevelopment, isInitialized } = useDevelopmentMode();
     const location = useLocation();
     const [shouldRedirect, setShouldRedirect] = useState(false);
     
     useEffect(() => {
-      console.log('withAdminProtection - Development mode check:', { 
+      console.log('withAdminProtection - Admin auth check:', { 
         isDevModeActive, 
         devMode, 
-        path: location.pathname 
+        isDevelopment,
+        isInitialized,
+        path: location.pathname,
+        user: !!user,
+        session: !!session,
+        userType,
+        authStable,
+        isLoading
       });
       
+      // Wait for development mode initialization
+      if (!isInitialized) return;
+      
       // In development mode with admin role, bypass admin authentication checks
-      if (isDevModeActive && devMode === 'admin') {
+      if (isDevelopment && isDevModeActive && devMode === 'admin') {
         console.log('withAdminProtection: Development mode active with admin role, bypassing auth protection');
         setShouldRedirect(false);
         return;
@@ -154,9 +184,20 @@ export function withAdminProtection<P extends object>(
       }
       
       setShouldRedirect(false);
-    }, [user, session, isLoading, authStable, userType, location.pathname, isDevModeActive, devMode]);
+    }, [user, session, isLoading, authStable, userType, location.pathname, isDevModeActive, devMode, isDevelopment, isInitialized]);
     
-    if ((isLoading || !authStable) && !isDevModeActive) {
+    if (!isInitialized) {
+      return (
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="w-12 h-12 border-4 border-spiritless-pink border-t-transparent rounded-full animate-spin mx-auto"></div>
+            <p className="mt-4 text-gray-600">Initializing...</p>
+          </div>
+        </div>
+      );
+    }
+    
+    if ((isLoading || !authStable) && !(isDevelopment && isDevModeActive && devMode === 'admin')) {
       return (
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
@@ -167,7 +208,7 @@ export function withAdminProtection<P extends object>(
       );
     }
     
-    if (shouldRedirect && !isDevModeActive) {
+    if (shouldRedirect && !(isDevelopment && isDevModeActive && devMode === 'admin')) {
       return <Navigate to="/admin/login" state={{ from: location.pathname }} replace />;
     }
     

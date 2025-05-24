@@ -11,26 +11,40 @@ interface AdminLayoutProps {
 }
 
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
-  const { isDevModeActive, devMode } = useDevelopmentMode();
+  const { isDevModeActive, devMode, isDevelopment, isInitialized } = useDevelopmentMode();
   const { user, session, isLoading, authStable, userType } = useAuth();
   
   // Log to confirm layout is rendering
   React.useEffect(() => {
-    console.log('AdminLayout rendering:', {
+    console.log('AdminLayout rendering with state:', {
       children: !!children,
       isDevModeActive,
       devMode,
+      isDevelopment,
+      isInitialized,
       user: !!user,
       session: !!session,
       userType,
       isLoading,
       authStable
     });
-  }, [children, isDevModeActive, devMode, user, session, userType, isLoading, authStable]);
+  }, [children, isDevModeActive, devMode, isDevelopment, isInitialized, user, session, userType, isLoading, authStable]);
+
+  // Wait for development mode to initialize
+  if (!isInitialized) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-spiritless-pink border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="mt-4 text-gray-600">Initializing...</p>
+        </div>
+      </div>
+    );
+  }
 
   // In development mode with admin role, bypass all auth checks
-  if (isDevModeActive) {
-    console.log('AdminLayout: Development mode active, rendering admin interface');
+  if (isDevelopment && isDevModeActive && devMode === 'admin') {
+    console.log('AdminLayout: Development mode active with admin role, bypassing all auth checks');
     return (
       <div className="h-screen flex flex-col bg-gray-100">
         {/* Top Navigation */}
@@ -50,7 +64,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     );
   }
 
-  // Show loading state while auth is being checked
+  // Show loading state while auth is being checked (only if not in dev mode)
   if (isLoading || !authStable) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -62,8 +76,17 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     );
   }
 
-  // Check if user is properly authenticated as admin
+  // Check if user is properly authenticated as admin (only if not in dev mode)
   if (!user || !session || userType !== 'admin') {
+    console.log('AdminLayout: Access denied - not authenticated as admin:', {
+      hasUser: !!user,
+      hasSession: !!session,
+      userType,
+      isDevelopment,
+      isDevModeActive,
+      devMode
+    });
+    
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">

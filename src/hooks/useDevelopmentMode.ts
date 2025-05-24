@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 export type DevUserType = 'individual' | 'establishment' | 'promoter' | 'admin' | null;
@@ -9,23 +9,61 @@ export const useDevelopmentMode = () => {
   const navigate = useNavigate();
   const [devMode, setDevMode] = useState<DevUserType>(null);
   const [isDevelopment, setIsDevelopment] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
+  
+  // Use refs to prevent render fluctuations
+  const isDevelopmentRef = useRef<boolean>(false);
+  const initializationRef = useRef<boolean>(false);
 
-  // Check if we're in development mode
+  // Initialize development mode detection immediately and persistently
   useEffect(() => {
-    const isLocalhost = window.location.hostname === 'localhost' || 
-                       window.location.hostname === '127.0.0.1' ||
-                       window.location.hostname.includes('preview--') ||
-                       window.location.hostname.includes('lovable');
-    setIsDevelopment(isLocalhost);
-    console.log('useDevelopmentMode - Development mode detected:', isLocalhost);
+    if (initializationRef.current) return;
+    initializationRef.current = true;
+
+    const detectDevelopmentMode = () => {
+      const hostname = window.location.hostname;
+      const isLocalhost = hostname === 'localhost' || 
+                         hostname === '127.0.0.1' ||
+                         hostname.includes('preview--') ||
+                         hostname.includes('lovable');
+      
+      console.log('useDevelopmentMode - Development mode detection:', {
+        hostname,
+        isLocalhost,
+        href: window.location.href
+      });
+      
+      isDevelopmentRef.current = isLocalhost;
+      setIsDevelopment(isLocalhost);
+      setIsInitialized(true);
+      
+      return isLocalhost;
+    };
+
+    const isDevMode = detectDevelopmentMode();
+    
+    // Load saved dev mode from localStorage if in development
+    if (isDevMode) {
+      const savedDevType = localStorage.getItem('dev_user_type') as DevUserType;
+      if (savedDevType) {
+        console.log('useDevelopmentMode - Restored dev mode from storage:', savedDevType);
+        setDevMode(savedDevType);
+      }
+    } else {
+      // Clear dev mode if not in development
+      localStorage.removeItem('dev_user_type');
+      setDevMode(null);
+    }
   }, []);
 
-  // Check for URL parameters on route changes
+  // Check for URL parameters on route changes (only after initialization)
   useEffect(() => {
+    if (!isInitialized || !isDevelopmentRef.current) return;
+    
     const searchParams = new URLSearchParams(location.search);
     const devModeParam = searchParams.get('dev_mode');
     
-    if (isDevelopment && devModeParam) {
+    if (devModeParam) {
       const validTypes: DevUserType[] = ['individual', 'establishment', 'promoter', 'admin'];
       if (validTypes.includes(devModeParam as DevUserType)) {
         const userType = devModeParam as DevUserType;
@@ -33,18 +71,7 @@ export const useDevelopmentMode = () => {
         switchToUserType(userType);
       }
     }
-  }, [location.search, isDevelopment]);
-
-  // Load saved dev mode from localStorage
-  useEffect(() => {
-    if (isDevelopment) {
-      const savedDevType = localStorage.getItem('dev_user_type') as DevUserType;
-      if (savedDevType) {
-        setDevMode(savedDevType);
-        console.log('useDevelopmentMode - Loaded dev mode from storage:', savedDevType);
-      }
-    }
-  }, [isDevelopment]);
+  }, [location.search, isInitialized]);
 
   const navigateToUserTypeDashboard = (userType: DevUserType) => {
     // Clean up URL parameters first
@@ -74,7 +101,7 @@ export const useDevelopmentMode = () => {
   };
 
   const switchToUserType = (userType: DevUserType) => {
-    if (!isDevelopment) {
+    if (!isDevelopmentRef.current) {
       console.log('useDevelopmentMode - Not in development mode, ignoring user type switch');
       return;
     }
@@ -98,20 +125,22 @@ export const useDevelopmentMode = () => {
     navigate('/landing');
   };
 
-  const isDevModeActive = isDevelopment && devMode !== null;
+  const isDevModeActive = isDevelopmentRef.current && devMode !== null;
   
   console.log('useDevelopmentMode - Current state:', {
-    isDevelopment,
+    isDevelopment: isDevelopmentRef.current,
     devMode,
     isDevModeActive,
+    isInitialized,
     location: location.pathname
   });
 
   return {
-    isDevelopment,
+    isDevelopment: isDevelopmentRef.current,
     devMode,
     switchToUserType,
     exitDevMode,
-    isDevModeActive
+    isDevModeActive,
+    isInitialized
   };
 };

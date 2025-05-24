@@ -22,7 +22,7 @@ export const useRouteProtection = ({
   showToast = true
 }: RouteProtectionOptions = {}) => {
   const { user, session, isLoading, authStable, userType } = useAuth();
-  const { isDevModeActive, devMode } = useDevelopmentMode();
+  const { isDevModeActive, devMode, isDevelopment, isInitialized } = useDevelopmentMode();
   const navigate = useNavigate();
   const location = useLocation();
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
@@ -40,13 +40,20 @@ export const useRouteProtection = ({
     console.log('useRouteProtection - checkProtection called:', {
       isDevModeActive,
       devMode,
+      isDevelopment,
+      isInitialized,
       path: location.pathname,
       requireAuth,
       allowedUserTypes
     });
     
+    // Wait for development mode initialization
+    if (!isInitialized) {
+      return;
+    }
+    
     // In development mode, bypass all protection checks
-    if (isDevModeActive) {
+    if (isDevelopment && isDevModeActive) {
       console.log('useRouteProtection: Development mode active, bypassing all checks');
       setIsAuthorized(true);
       return;
@@ -152,7 +159,7 @@ export const useRouteProtection = ({
     cleanupTimeoutRef.current = setTimeout(() => {
       protectionInProgress.current = false;
     }, 100);
-  }, [user, session, isLoading, authStable, userType, requireAuth, allowedUserTypes, navigate, redirectTo, location.pathname, location.search, showToast, showError, isDevModeActive, devMode]);
+  }, [user, session, isLoading, authStable, userType, requireAuth, allowedUserTypes, navigate, redirectTo, location.pathname, location.search, showToast, showError, isDevModeActive, devMode, isDevelopment, isInitialized]);
   
   // Use effect with stable dependencies and cleanup
   useEffect(() => {
@@ -178,7 +185,7 @@ export const useRouteProtection = ({
   
   return { 
     isAuthorized, 
-    isLoading: isLoading || !authStable || isAuthorized === null 
+    isLoading: isLoading || !authStable || isAuthorized === null || !isInitialized
   };
 };
 
