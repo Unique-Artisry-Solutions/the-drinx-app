@@ -6,40 +6,15 @@ import { debouncedToast } from '@/utils/debouncedToast';
 
 export const useAppNavigation = () => {
   const navigate = useNavigate();
-  const { userType, navigationReady, isLoading, authStable } = useAuth();
+  const { userType } = useAuth();
 
   /**
-   * Navigation guard to prevent redirects during auth loading states
-   */
-  const canNavigate = useCallback(() => {
-    if (isLoading || !authStable || !navigationReady) {
-      console.log("useAppNavigation - Navigation blocked:", { 
-        isLoading, 
-        authStable, 
-        navigationReady 
-      });
-      return false;
-    }
-    return true;
-  }, [isLoading, authStable, navigationReady]);
-
-  /**
-   * Navigate to the appropriate home page based on confirmed userType
-   * Waits for userType to be determined before redirecting
+   * Navigate to the appropriate home page based on userType
    */
   const goToHomePage = useCallback((fallbackUserType?: string) => {
-    console.log("useAppNavigation - goToHomePage called with fallback:", fallbackUserType);
-    
-    if (!canNavigate()) {
-      console.log("useAppNavigation - Navigation not ready, deferring redirect");
-      return;
-    }
-    
-    // Use confirmed userType from auth context, not localStorage
     const confirmedUserType = userType || fallbackUserType;
     console.log("useAppNavigation - Using confirmed user type:", confirmedUserType);
     
-    // Fallback handling for undefined userType scenarios
     if (!confirmedUserType) {
       console.log("useAppNavigation - No user type available, redirecting to landing");
       navigate('/landing');
@@ -65,17 +40,12 @@ export const useAppNavigation = () => {
         navigate('/explore');
         break;
     }
-  }, [navigate, userType, canNavigate]);
+  }, [navigate, userType]);
 
   /**
-   * Navigate to the profile page based on confirmed userType
+   * Navigate to the profile page based on userType
    */
   const goToProfilePage = useCallback((fallbackUserType?: string) => {
-    if (!canNavigate()) {
-      console.log("useAppNavigation - Profile navigation blocked");
-      return;
-    }
-
     const confirmedUserType = userType || fallbackUserType || 'individual';
     console.log("useAppNavigation - Profile navigation for user type:", confirmedUserType);
     
@@ -91,7 +61,7 @@ export const useAppNavigation = () => {
         navigate('/profile');
         break;
     }
-  }, [navigate, userType, canNavigate]);
+  }, [navigate, userType]);
 
   /**
    * Navigate after successful login with proper auth state coordination
@@ -100,15 +70,8 @@ export const useAppNavigation = () => {
     console.log("useAppNavigation - Post-login navigation:", { 
       fallbackUserType, 
       savedRedirect,
-      navigationReady,
       userType 
     });
-    
-    if (!canNavigate()) {
-      console.log("useAppNavigation - Post-login navigation deferred");
-      // Don't show error toast - this is expected during auth loading
-      return;
-    }
     
     // Priority: saved redirect > user type based navigation
     if (savedRedirect && savedRedirect !== '/') {
@@ -119,7 +82,7 @@ export const useAppNavigation = () => {
     }
     
     goToHomePage(fallbackUserType);
-  }, [navigate, goToHomePage, canNavigate]);
+  }, [navigate, goToHomePage]);
 
   const goToLoginPage = useCallback(() => {
     console.log("useAppNavigation - Redirecting to login page");
@@ -132,41 +95,23 @@ export const useAppNavigation = () => {
   }, [navigate]);
 
   const goToAdminDashboard = useCallback(() => {
-    if (!canNavigate()) {
-      debouncedToast.error(
-        'Navigation Error', 
-        'Please wait for authentication to complete.',
-        { duration: 3000 }
-      );
-      return;
-    }
-    
     console.log("useAppNavigation - Redirecting to admin dashboard");
     navigate('/admin/system-breakdown');
-  }, [navigate, canNavigate]);
+  }, [navigate]);
 
   /**
-   * Navigate to edit page with navigation guards
+   * Navigate to edit page
    */
   const goToEditPage = useCallback((entityType: string, id: string, preventRefresh = true) => {
-    if (!canNavigate()) {
-      debouncedToast.error(
-        'Navigation Error', 
-        'Please wait for the page to load completely.',
-        { duration: 3000 }
-      );
-      return;
-    }
-    
     const path = `/${entityType}/edit/${id}`;
     if (preventRefresh) {
       navigate(path);
     }
     return path;
-  }, [navigate, canNavigate]);
+  }, [navigate]);
 
   /**
-   * Navigate to a specific route with enhanced error handling
+   * Navigate to a specific route
    */
   const goToRoute = useCallback((path: string, options?: { 
     replace?: boolean; 
@@ -175,21 +120,7 @@ export const useAppNavigation = () => {
     toastMessage?: string;
     toastTitle?: string;
     toastType?: 'success' | 'error' | 'info';
-    bypassGuards?: boolean;
   }) => {
-    // Allow bypassing guards for critical navigation (like logout)
-    if (!options?.bypassGuards && !canNavigate()) {
-      console.log("useAppNavigation - Route navigation blocked for path:", path);
-      if (options?.showToast) {
-        debouncedToast.error(
-          'Navigation Error', 
-          'Please wait for authentication to complete.',
-          { duration: 3000 }
-        );
-      }
-      return;
-    }
-    
     navigate(path, { replace: options?.replace, state: options?.state });
     
     if (options?.showToast && options.toastMessage) {
@@ -205,7 +136,7 @@ export const useAppNavigation = () => {
         debouncedToast.info(toastTitle, options.toastMessage, { duration: 3000 });
       }
     }
-  }, [navigate, canNavigate]);
+  }, [navigate]);
 
   // Memoize the return object to prevent recreating it on every render
   return useMemo(() => ({
@@ -218,9 +149,6 @@ export const useAppNavigation = () => {
     goToEditPage,
     goToRoute,
     navigate,
-    // Expose navigation state for components that need it
-    canNavigate: canNavigate(),
-    navigationReady,
     userType
   }), [
     goToHomePage, 
@@ -232,8 +160,6 @@ export const useAppNavigation = () => {
     goToEditPage,
     goToRoute,
     navigate,
-    canNavigate,
-    navigationReady,
     userType
   ]);
 };

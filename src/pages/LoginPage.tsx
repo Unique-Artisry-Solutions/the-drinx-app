@@ -5,6 +5,7 @@ import UserAuth from '@/components/UserAuth';
 import { ArrowLeft } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/auth/AuthProvider';
+import { useAppNavigation } from '@/hooks/useAppNavigation';
 import { Button } from '@/components/ui/button';
 import TestCredentials from '@/components/auth/TestCredentials';
 
@@ -13,12 +14,14 @@ const LoginPage = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { theme, setTheme } = useTheme();
   const location = useLocation();
-  const { user, isLoading, isAuthenticated, navigationReady } = useAuth();
+  const { user, isLoading, isAuthenticated } = useAuth();
+  const { goToAfterLogin } = useAppNavigation();
   
   // Refs to prevent duplicate processing
   const processedStateRef = useRef<string>('');
+  const navigationHandledRef = useRef(false);
   
-  // Check for userType in the location state - debounced to prevent repeated processing
+  // Check for userType in the location state
   useEffect(() => {
     const state = location.state as { 
       userType?: 'individual' | 'establishment' | 'promoter', 
@@ -47,12 +50,19 @@ const LoginPage = () => {
     }
   }, [location.state, errorMessage]);
   
-  // Remove manual redirect logic - AuthProvider handles all navigation
+  // Handle post-authentication navigation
   useEffect(() => {
-    if (isAuthenticated && user && navigationReady) {
-      console.log("LoginPage - User already authenticated, AuthProvider will handle redirect");
+    if (isAuthenticated && user && !navigationHandledRef.current) {
+      navigationHandledRef.current = true;
+      console.log("LoginPage - User authenticated, handling navigation");
+      
+      // Get saved redirect path
+      const savedRedirect = localStorage.getItem('auth_redirect');
+      
+      // Navigate to appropriate page
+      goToAfterLogin(user.user_metadata?.user_type, savedRedirect);
     }
-  }, [user, isAuthenticated, navigationReady]);
+  }, [isAuthenticated, user, goToAfterLogin]);
   
   // Always force light theme for login page
   useEffect(() => {

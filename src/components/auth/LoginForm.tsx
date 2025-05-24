@@ -5,7 +5,6 @@ import { CardContent, CardFooter } from '@/components/ui/card';
 import { debouncedToast } from '@/utils/debouncedToast';
 import AuthButton from './AuthButton';
 import { useAuth } from '@/contexts/auth/AuthProvider';
-import { useAuthLoadingStates } from '@/hooks/useAuthLoadingStates';
 
 interface LoginFormProps {
   onSuccess?: () => void;
@@ -21,18 +20,13 @@ const LoginForm: React.FC<LoginFormProps> = ({
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [formError, setFormError] = useState('');
-  const { signIn, isLoading, navigationReady } = useAuth();
-  const { 
-    setSigningIn, 
-    shouldPreventInteraction, 
-    getLoadingMessage,
-    loadingStates 
-  } = useAuthLoadingStates();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { signIn, isLoading } = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError('');
-    setSigningIn(true);
+    setIsSubmitting(true);
     
     console.log('Login attempt:', { email, userType });
     
@@ -54,7 +48,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
         onSuccess();
       }
       
-      // AuthProvider will handle all navigation automatically
+      // AuthProvider and LoginPage will handle navigation automatically
       
     } catch (error: any) {
       const errorMessage = error.message || 'Failed to sign in';
@@ -66,13 +60,11 @@ const LoginForm: React.FC<LoginFormProps> = ({
         { duration: 5000 }
       );
     } finally {
-      setSigningIn(false);
+      setIsSubmitting(false);
     }
   };
 
-  // Enhanced interaction prevention
-  const canSubmit = navigationReady && !isLoading && !shouldPreventInteraction();
-  const currentLoadingMessage = getLoadingMessage();
+  const isDisabled = isSubmitting || isLoading;
 
   return (
     <form onSubmit={handleLogin}>
@@ -88,7 +80,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            disabled={shouldPreventInteraction()}
+            disabled={isDisabled}
             className="border-spiritless-pink/20 focus-visible:ring-spiritless-pink"
           />
         </div>
@@ -104,7 +96,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            disabled={shouldPreventInteraction()}
+            disabled={isDisabled}
             className="border-spiritless-pink/20 focus-visible:ring-spiritless-pink"
           />
         </div>
@@ -113,10 +105,10 @@ const LoginForm: React.FC<LoginFormProps> = ({
           <div className="text-red-500 text-sm mt-2">{formError}</div>
         )}
         
-        {currentLoadingMessage && (
+        {isSubmitting && (
           <div className="text-blue-600 text-sm mt-2 flex items-center">
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
-            {currentLoadingMessage}
+            Signing in...
           </div>
         )}
       </CardContent>
@@ -124,11 +116,11 @@ const LoginForm: React.FC<LoginFormProps> = ({
       <CardFooter className="flex flex-col gap-4">
         <AuthButton
           type="submit"
-          isLoading={!canSubmit}
-          disabled={!canSubmit}
+          isLoading={isDisabled}
+          disabled={isDisabled}
           className={`w-full ${userType === 'individual' ? 'bg-spiritless-pink hover:bg-spiritless-pink/90' : userType === 'promoter' ? 'bg-purple-600 hover:bg-purple-700' : 'bg-spiritless-green hover:bg-spiritless-green/90'} text-white`}
         >
-          {!canSubmit ? (currentLoadingMessage || 'Signing in...') : `Sign In${userType !== 'individual' ? ` as ${userType === 'establishment' ? 'Business' : 'Promoter'}` : ''}`}
+          {isDisabled ? 'Signing in...' : `Sign In${userType !== 'individual' ? ` as ${userType === 'establishment' ? 'Business' : 'Promoter'}` : ''}`}
         </AuthButton>
         
         {onClose && (
@@ -137,7 +129,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
             variant="outline"
             onClick={onClose}
             isLoading={false}
-            disabled={shouldPreventInteraction()}
+            disabled={isDisabled}
             className="w-full border-spiritless-orange text-spiritless-orange hover:bg-spiritless-orange/10"
           >
             Cancel

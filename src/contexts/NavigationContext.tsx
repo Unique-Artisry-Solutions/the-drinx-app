@@ -26,12 +26,6 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [userType, setUserType] = useState<'individual' | 'establishment' | 'promoter' | 'admin' | 'guest'>('guest');
   const [navigationItems, setNavigationItems] = useState<UnifiedNavItem[]>(guestNavItems);
   
-  // Refs to prevent unnecessary updates and manage cleanup
-  const previousUserTypeRef = useRef<string>('guest');
-  const previousUserIdRef = useRef<string | null>(null);
-  const previousAuthStableRef = useRef<boolean>(false);
-  const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const isUpdatingRef = useRef(false);
   const mountedRef = useRef(true);
 
   // Memoized helper function to check if a path is active
@@ -58,13 +52,11 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   }, []);
 
-  // Simplified function to determine user type from auth context only
+  // Simplified function to determine user type
   const determineUserType = useCallback((): 'individual' | 'establishment' | 'promoter' | 'admin' | 'guest' => {
     if (!authStable) return 'guest';
     
-    // Check for authenticated user
     if (user && session) {
-      // Use userType from auth context first, then localStorage as fallback
       const userTypeFromAuth = authUserType;
       const userTypeFromStorage = localStorage.getItem('user_type');
       const finalUserType = userTypeFromAuth || userTypeFromStorage || 'individual';
@@ -84,66 +76,18 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     return 'guest';
   }, [user, session, authStable, authUserType]);
 
-  // Debounced navigation update function with proper cleanup
+  // Update navigation when auth state changes
   const updateNavigation = useCallback(() => {
-    // Prevent updates if component is unmounted
-    if (!mountedRef.current) return;
+    if (!mountedRef.current || !authStable) return;
     
-    // Prevent overlapping updates
-    if (isUpdatingRef.current) return;
+    const newUserType = determineUserType();
+    const newNavigationItems = getNavigationItems(newUserType);
     
-    // Clear any pending updates
-    if (updateTimeoutRef.current) {
-      clearTimeout(updateTimeoutRef.current);
-      updateTimeoutRef.current = null;
-    }
+    setUserType(newUserType);
+    setNavigationItems(newNavigationItems);
     
-    // Debounce the update to prevent rapid-fire changes
-    updateTimeoutRef.current = setTimeout(() => {
-      // Double-check if component is still mounted
-      if (!mountedRef.current) return;
-      
-      isUpdatingRef.current = true;
-      
-      try {
-        const newUserType = determineUserType();
-        const currentUserId = user?.id || null;
-        
-        // Only update if something actually changed
-        const userTypeChanged = previousUserTypeRef.current !== newUserType;
-        const userIdChanged = previousUserIdRef.current !== currentUserId;
-        const authStableChanged = previousAuthStableRef.current !== authStable;
-        
-        if (userTypeChanged || userIdChanged || authStableChanged) {
-          console.log('Navigation: Updating due to changes', {
-            userTypeChanged,
-            userIdChanged,
-            authStableChanged,
-            from: previousUserTypeRef.current,
-            to: newUserType
-          });
-          
-          const newNavigationItems = getNavigationItems(newUserType);
-          
-          // Update refs before setting state
-          previousUserTypeRef.current = newUserType;
-          previousUserIdRef.current = currentUserId;
-          previousAuthStableRef.current = authStable;
-          
-          // Update state only if component is still mounted
-          if (mountedRef.current) {
-            setUserType(newUserType);
-            setNavigationItems(newNavigationItems);
-          }
-        }
-      } catch (error) {
-        console.error('Navigation update error:', error);
-      } finally {
-        isUpdatingRef.current = false;
-        updateTimeoutRef.current = null;
-      }
-    }, 150); // Increased debounce to 150ms for better stability
-  }, [user, session, authStable, authUserType, determineUserType, getNavigationItems]);
+    console.log('Navigation updated:', newUserType);
+  }, [authStable, determineUserType, getNavigationItems]);
 
   // Manual refresh function
   const refreshNavigation = useCallback(() => {
@@ -152,12 +96,12 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   }, [updateNavigation]);
 
-  // Update navigation when dependencies change, but only if auth is stable
+  // Update navigation when auth becomes stable
   useEffect(() => {
     if (authStable) {
       updateNavigation();
     }
-  }, [user, session, authStable, authUserType, updateNavigation]);
+  }, [authStable, updateNavigation]);
 
   // Cleanup effect
   useEffect(() => {
@@ -165,11 +109,6 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     
     return () => {
       mountedRef.current = false;
-      if (updateTimeoutRef.current) {
-        clearTimeout(updateTimeoutRef.current);
-        updateTimeoutRef.current = null;
-      }
-      isUpdatingRef.current = false;
     };
   }, []);
 

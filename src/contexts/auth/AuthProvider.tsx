@@ -5,7 +5,6 @@ import { supabase } from '@/lib/supabase';
 import { AuthState, AuthActions, AuthContextType } from './types';
 import { sessionPersistenceService } from '@/services/SessionPersistenceService';
 import { authCache } from './authCache';
-import { useAppNavigation } from '@/hooks/useAppNavigation';
 import { debouncedToast } from '@/utils/debouncedToast';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -29,7 +28,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [userType, setUserType] = useState<'individual' | 'establishment' | 'promoter' | 'admin'>('individual');
   const [navigationReady, setNavigationReady] = useState(false);
   
-  const { goToAfterLogin, goToLandingPage } = useAppNavigation();
   const initializationRef = useRef(false);
 
   // Initialize auth state
@@ -82,19 +80,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         sessionPersistenceService.clearSession();
       }
 
-      // Set stable and ready flags immediately after successful initialization
-      setAuthStable(true);
-      setNavigationReady(true);
-      
     } catch (error: any) {
       console.error('AuthProvider - Initialization failed:', error);
       setAuthError(new Error(`Initialization failed: ${error.message}`));
-      
-      // Even on error, set stable and ready flags so app doesn't hang
+    } finally {
+      // ALWAYS set these flags to true after initialization attempt
+      setIsLoading(false);
       setAuthStable(true);
       setNavigationReady(true);
-    } finally {
-      setIsLoading(false);
+      console.log('AuthProvider - Initialization complete, auth stable and navigation ready');
     }
   }, []);
 
@@ -102,7 +96,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     console.log('AuthProvider - Setting up auth state listener');
     
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
       console.log('AuthProvider - Auth state changed:', event, !!newSession);
       
       if (event === 'SIGNED_IN' && newSession?.user) {
@@ -118,10 +112,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         sessionPersistenceService.updateSession(newSession, newSession.user);
         
-        // Set stable and ready immediately
-        setAuthStable(true);
-        setNavigationReady(true);
-        
       } else if (event === 'SIGNED_OUT') {
         setSession(null);
         setUser(null);
@@ -130,10 +120,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setAuthError(null);
         
         sessionPersistenceService.clearSession();
-        
-        // Set stable and ready immediately
-        setAuthStable(true);
-        setNavigationReady(true);
       }
     });
 
