@@ -1,6 +1,5 @@
 
 import { Session, User } from '@supabase/supabase-js';
-import { UserType } from '@/utils/userTypeGuards';
 
 export interface AuthUser extends User {
   app_metadata: {
@@ -10,7 +9,7 @@ export interface AuthUser extends User {
   user_metadata: {
     name?: string;
     avatar_url?: string;
-    user_type?: UserType;
+    user_type?: 'individual' | 'establishment' | 'promoter' | 'admin';
     [key: string]: any;
   };
 }
@@ -22,9 +21,9 @@ export interface AuthState {
   isLoading: boolean;
   isEmailVerified: boolean;
   isVerificationEmailSent: boolean;
-  authError: Error | null;
+  authError: any | null;
   authStable: boolean;
-  userType: UserType;
+  userType: 'individual' | 'establishment' | 'promoter' | 'admin';
   navigationReady: boolean;
 }
 
