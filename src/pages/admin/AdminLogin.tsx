@@ -5,13 +5,26 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { debouncedToast } from '@/utils/debouncedToast';
 import { useAuth } from '@/contexts/auth/AuthProvider';
+import { useDevelopmentMode } from '@/hooks/useDevelopmentMode';
 import GuestTopNavigation from '@/components/navigation/GuestTopNavigation';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Info, Zap } from 'lucide-react';
 
 const AdminLogin: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { signIn, user, userType, isAuthenticated, isLoading, navigationReady } = useAuth();
+  const { isDevelopment, isDevModeActive, devMode, switchToUserType } = useDevelopmentMode();
+
+  // Pre-fill credentials in development mode
+  useEffect(() => {
+    if (isDevelopment && !email && !password) {
+      setEmail('admin@spiritless.com');
+      setPassword('admin123');
+      console.log('AdminLogin: Pre-filled admin credentials for development');
+    }
+  }, [isDevelopment, email, password]);
 
   useEffect(() => {
     // Check if user is already logged in as admin
@@ -19,6 +32,11 @@ const AdminLogin: React.FC = () => {
       console.log('AdminLogin - User already authenticated as admin, AuthProvider will handle redirect');
     }
   }, [isAuthenticated, user, userType]);
+
+  const handleDevModeBypass = () => {
+    console.log('AdminLogin: Activating dev mode admin bypass');
+    switchToUserType('admin');
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,9 +62,25 @@ const AdminLogin: React.FC = () => {
     } catch (error: any) {
       console.error('Admin login error:', error);
       
+      let errorMessage = 'Invalid credentials or insufficient permissions';
+      
+      // Provide more specific error messages
+      if (error.message?.includes('Invalid login credentials')) {
+        errorMessage = 'Invalid email or password. Please check your credentials.';
+      } else if (error.message?.includes('Email not confirmed')) {
+        errorMessage = 'Please confirm your email address before logging in.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      // In development, provide additional help
+      if (isDevelopment) {
+        errorMessage += ' Try using the dev mode bypass or check if admin user was created properly.';
+      }
+      
       debouncedToast.error(
         'Login failed',
-        error.message || 'Invalid credentials or insufficient permissions',
+        errorMessage,
         5000
       );
     } finally {
@@ -68,6 +102,30 @@ const AdminLogin: React.FC = () => {
               Enter your admin credentials to access the admin dashboard
             </CardDescription>
           </CardHeader>
+          
+          {/* Development Mode Alert */}
+          {isDevelopment && (
+            <div className="px-6 pb-4">
+              <Alert className="bg-orange-50 border-orange-200">
+                <Info className="h-4 w-4 text-orange-500" />
+                <AlertDescription className="text-orange-700">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Development mode detected</span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleDevModeBypass}
+                      className="text-orange-600 border-orange-300 hover:bg-orange-100"
+                    >
+                      <Zap className="h-3 w-3 mr-1" />
+                      Dev Bypass
+                    </Button>
+                  </div>
+                </AlertDescription>
+              </Alert>
+            </div>
+          )}
+
           <form onSubmit={handleLogin}>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -100,6 +158,11 @@ const AdminLogin: React.FC = () => {
               </div>
               <div className="text-sm text-gray-500">
                 <p>Admin accounts must have the admin role assigned in the database.</p>
+                {isDevelopment && (
+                  <p className="text-orange-600 mt-1">
+                    Development: Default credentials are admin@spiritless.com / admin123
+                  </p>
+                )}
               </div>
             </CardContent>
             <CardFooter className="flex flex-col gap-3">

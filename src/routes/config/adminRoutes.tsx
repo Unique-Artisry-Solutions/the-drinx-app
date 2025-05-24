@@ -9,6 +9,7 @@ import ComponentCatalogPage from '@/pages/admin/ComponentCatalogPage';
 import AdminDocumentationPage from '@/pages/admin/AdminDocumentationPage';
 import SystemConfigurationPage from '@/pages/admin/SystemConfigurationPage';
 import AdminLayout from '@/components/admin/layout/AdminLayout';
+import AdminRouteHandler from '@/components/admin/AdminRouteHandler';
 
 const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
 const RewardSystemMonitorPage = lazy(() => import('@/pages/admin/RewardSystemMonitorPage'));
@@ -23,9 +24,9 @@ const ContentModerationPage = lazy(() => import('@/pages/admin/ContentModeration
 const ThemeCustomizationPage = lazy(() => import('@/pages/admin/ThemeCustomizationPage'));
 const TestingInterfacePage = lazy(() => import('@/pages/admin/TestingInterfacePage'));
 
-// The AdminLogin page will not use the layout
+// Use AdminRouteHandler for the main /admin route to handle dev mode bypass
 export const adminRoutes: RouteObject[] = [
-  { path: '/admin', element: <AdminLogin /> },
+  { path: '/admin', element: <AdminRouteHandler /> },
   { path: '/admin/login', element: <AdminLogin /> },
   // All other admin routes use the AdminLayout
   { 
