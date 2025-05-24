@@ -7,7 +7,6 @@ import { MobileNavigationProps } from './mobile/types';
 import ProfileMenu from './mobile/ProfileMenu';
 import NavigationBar from './mobile/NavigationBar';
 import { useMobileNavigation } from './hooks/useMobileNavigation';
-import { getNavItems } from './utils/navigationItems';
 import { useNavigation } from '@/contexts/NavigationContext';
 
 interface ExtendedMobileNavigationProps extends MobileNavigationProps {
@@ -22,8 +21,8 @@ const MobileNavigation: React.FC<ExtendedMobileNavigationProps> = ({
   const location = useLocation();
   const { user } = useAuth();
   const { goToHomePage } = useAppNavigation();
+  const { navigationItems, userType: currentUserType } = useNavigation();
   const {
-    currentUserType,
     expanded,
     toggleExpand,
     getProfilePath,
@@ -41,15 +40,6 @@ const MobileNavigation: React.FC<ExtendedMobileNavigationProps> = ({
       toggleExpand();
     }
   };
-
-  const navItems = getNavItems(
-    type,
-    currentUserType,
-    forceGuestNavigation,
-    user,
-    location,
-    getProfilePath
-  );
 
   const shouldShowProfileItems = 
     type === 'user' && 
@@ -70,7 +60,7 @@ const MobileNavigation: React.FC<ExtendedMobileNavigationProps> = ({
         userType={currentUserType} 
       />
       <NavigationBar
-        navItems={navItems}
+        navItems={navigationItems}
         type={type}
         handleHomeClick={handleHomeClick}
         handleProfileClick={handleProfileClick}

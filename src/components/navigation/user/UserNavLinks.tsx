@@ -39,13 +39,21 @@ const NavLink: React.FC<NavLinkProps> = ({
 };
 
 const UserNavLinks: React.FC<UserNavLinksProps> = ({ userType = 'individual' }) => {
+  const { navigationItems } = useNavigation();
+  
+  // Filter out items that shouldn't show in desktop nav (like Profile)
+  const desktopNavItems = navigationItems.filter(item => 
+    !['Profile', 'Notifications'].includes(item.label) && 
+    item.path !== '#'
+  );
+
   return (
     <nav className="hidden md:flex items-center gap-1">
-      <NavLink href="/explore">Explore</NavLink>
-      <NavLink href="/map">Map</NavLink>
-      <NavLink href="/swig-circuits">Swig Circuits</NavLink>
-      <NavLink href="/events">Events</NavLink>
-      <NavLink href="/pricing">Pricing</NavLink>
+      {desktopNavItems.map((item) => (
+        <NavLink key={item.path} href={item.path}>
+          {item.label}
+        </NavLink>
+      ))}
     </nav>
   );
 };

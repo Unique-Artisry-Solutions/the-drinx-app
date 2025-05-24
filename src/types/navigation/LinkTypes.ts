@@ -1,12 +1,9 @@
 
-import { ReactNode } from 'react';
-
+/**
+ * Interface for link components used in navigation
+ */
 export interface LinkProps {
   href: string;
-  children: ReactNode;
-  className?: string;
+  children: React.ReactNode;
   activeClassName?: string;
-  onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
-  preventScrollReset?: boolean;
-  replace?: boolean;
 }
