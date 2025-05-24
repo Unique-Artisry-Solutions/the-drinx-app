@@ -3,28 +3,52 @@ import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { Session, User } from '@supabase/supabase-js';
 import { clearAllSessions } from '@/utils/sessionCleaner';
+import { authCache } from './authCache';
+import { sessionPersistenceService } from '@/services/SessionPersistenceService';
+import { useRetry } from '@/hooks/useRetry';
 
 export function useAuthActions() {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  
+  const { executeWithRetry } = useRetry({
+    maxAttempts: 3,
+    baseDelay: 1000,
+    onRetry: (attempt, error) => {
+      console.log(`Auth action retry ${attempt}:`, error.message);
+    }
+  });
 
   const refreshSession = async () => {
     try {
       console.log('Refreshing session in useAuthActions...');
-      const { data, error } = await supabase.auth.refreshSession();
-      if (error) {
-        console.error('Error refreshing session:', error);
-        return { session: null, user: null, isEmailVerified: false };
+      
+      const { data, error } = await executeWithRetry(async () => {
+        const result = await supabase.auth.refreshSession();
+        if (result.error) throw result.error;
+        return result;
+      });
+      
+      if (data.session?.user) {
+        // Update persistence
+        sessionPersistenceService.updateSession(data.session, data.session.user);
+        
+        // Cache user type if available
+        if (data.session.user.user_metadata?.user_type) {
+          authCache.setUserType(data.session.user.id, data.session.user.user_metadata.user_type);
+        }
+        
+        const isVerified = !!data.session.user.email_confirmed_at;
+        console.log('Session refreshed, email verified:', isVerified);
+        
+        return { 
+          session: data.session, 
+          user: data.session.user,
+          isEmailVerified: isVerified
+        };
       }
       
-      const isVerified = data.session?.user ? (data.session.user.email_confirmed_at !== null) : false;
-      console.log('Session refreshed, email verified:', isVerified);
-      
-      return { 
-        session: data.session, 
-        user: data.session?.user || null,
-        isEmailVerified: isVerified
-      };
+      return { session: null, user: null, isEmailVerified: false };
     } catch (error) {
       console.error('Error in refreshSession:', error);
       return { session: null, user: null, isEmailVerified: false };
@@ -35,12 +59,12 @@ export function useAuthActions() {
     try {
       setIsLoading(true);
       console.log('Signing in user:', email);
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       
-      if (error) {
-        console.error('Sign in error:', error);
-        throw error;
-      }
+      const { data, error } = await executeWithRetry(async () => {
+        const result = await supabase.auth.signInWithPassword({ email, password });
+        if (result.error) throw result.error;
+        return result;
+      });
       
       console.log('Sign in successful:', data);
       
@@ -53,16 +77,25 @@ export function useAuthActions() {
         
         await supabase.auth.signOut();
         throw new Error('Email not verified');
-      } else {
+      } else if (data.user && data.session) {
         toast({
           title: 'Login successful',
           description: 'Welcome back!',
         });
         
+        // Update persistence and cache
+        sessionPersistenceService.updateSession(data.session, data.user);
+        
+        // Cache user data
+        if (data.user.user_metadata?.user_type) {
+          authCache.setUserType(data.user.id, data.user.user_metadata.user_type);
+        }
+        
+        // Update localStorage for backward compatibility
         localStorage.setItem('user_authenticated', 'true');
-        localStorage.setItem('user_email', data.user?.email || '');
-        localStorage.setItem('user_type', data.user?.user_metadata.user_type || 'individual');
-        if (data.user?.user_metadata.username) {
+        localStorage.setItem('user_email', data.user.email || '');
+        localStorage.setItem('user_type', data.user.user_metadata.user_type || 'individual');
+        if (data.user.user_metadata.username) {
           localStorage.setItem('user_username', data.user.user_metadata.username);
         }
       }
@@ -131,16 +164,18 @@ export function useAuthActions() {
       setIsLoading(true);
       console.log('Signing out user and ending all sessions...');
       
-      // First clear all auth-related localStorage items using our utility
+      // Clear cache and persistence first
+      authCache.clear();
+      sessionPersistenceService.clearSession();
+      
+      // Clear localStorage
       clearAllSessions();
       
-      // Use scope: 'global' to terminate all sessions across all devices
-      const { error } = await supabase.auth.signOut({ scope: 'global' });
-      
-      if (error) {
-        console.error('Sign out error:', error);
-        throw error;
-      }
+      // Sign out with retry logic
+      await executeWithRetry(async () => {
+        const { error } = await supabase.auth.signOut({ scope: 'global' });
+        if (error) throw error;
+      });
       
       toast({
         title: 'Logged out',
@@ -149,8 +184,7 @@ export function useAuthActions() {
       
       console.log('User successfully signed out from all sessions');
       
-      // Explicitly redirect to landing page on logout using window.location
-      // This ensures a full page reload and clears any React Router state
+      // Redirect to landing page
       window.location.href = '/landing';
     } catch (error: any) {
       console.error('Sign out error:', error);
@@ -160,7 +194,7 @@ export function useAuthActions() {
         variant: 'destructive',
       });
       
-      // Attempt to redirect to landing page even if there's an error
+      // Attempt to redirect even if there's an error
       window.location.href = '/landing';
     } finally {
       setIsLoading(false);
@@ -172,21 +206,22 @@ export function useAuthActions() {
       setIsLoading(true);
       console.log('Updating user profile:', data);
       
-      const { error } = await supabase.auth.updateUser({
-        data
+      await executeWithRetry(async () => {
+        const { error } = await supabase.auth.updateUser({ data });
+        if (error) throw error;
       });
-      
-      if (error) {
-        console.error('Profile update error:', error);
-        throw error;
-      }
       
       toast({
         title: 'Profile updated',
         description: 'Your profile has been successfully updated',
       });
       
+      // Update cache and localStorage
       if (data.user_type) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          authCache.setUserType(user.id, data.user_type);
+        }
         localStorage.setItem('user_type', data.user_type);
       }
       if (data.username) {
