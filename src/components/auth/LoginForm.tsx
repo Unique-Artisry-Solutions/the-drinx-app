@@ -82,17 +82,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
 
   const getButtonText = () => {
     if (isDisabled) return 'Signing in...';
-    
-    switch (userType) {
-      case 'admin':
-        return 'Sign In as Admin';
-      case 'promoter':
-        return 'Sign In as Promoter';
-      case 'establishment':
-        return 'Sign In as Business';
-      default:
-        return 'Sign In';
-    }
+    return 'Sign In (Any Account Type)';
   };
 
   return (
