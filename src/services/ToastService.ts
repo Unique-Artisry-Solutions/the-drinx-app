@@ -1,4 +1,3 @@
-
 import { toast } from '@/hooks/use-toast';
 import { 
   Notification, 
@@ -6,10 +5,11 @@ import {
 } from '@/types/notification';
 import { mapNotificationTypeToToastVariant } from '@/types/notification/ToastTypes';
 import { ActionConfig } from '@/hooks/use-toast';
+import { toastDeduplication } from '@/utils/toastDeduplication';
 
 /**
  * A singleton service that provides a unified interface for displaying toasts
- * Wraps the shadcn/ui toast system
+ * Wraps the shadcn/ui toast system with deduplication
  */
 class ToastService {
   private static instance: ToastService;
@@ -27,7 +27,7 @@ class ToastService {
   }
 
   /**
-   * Show a toast with the specified options
+   * Show a toast with the specified options and deduplication
    */
   public show(options: {
     title: string;
@@ -42,6 +42,18 @@ class ToastService {
     };
   }): { id: string; dismiss: () => void } {
     const { title, message, type = 'info', duration = 5000, priority = 'medium', action } = options;
+    
+    // Check deduplication before showing toast
+    const toastKey = {
+      title,
+      description: message,
+      type
+    };
+    
+    if (!toastDeduplication.shouldShowToast(toastKey)) {
+      // Return a dummy object for deduplicated toasts
+      return { id: '', dismiss: () => {} };
+    }
     
     // Map notification types to valid toast variants
     const variant = mapNotificationTypeToToastVariant(type);
@@ -211,13 +223,14 @@ class ToastService {
   }
 
   /**
-   * Clear all pending toasts
+   * Clear all pending toasts and deduplication cache
    */
   public clearAll(): void {
     Object.keys(this.toastTimeouts).forEach(key => {
       clearTimeout(this.toastTimeouts[key]);
       delete this.toastTimeouts[key];
     });
+    toastDeduplication.clear();
   }
 }
 

@@ -1,8 +1,8 @@
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth';
-import { toastService } from '@/services/ToastService';
+import { useDebouncedToast } from '@/hooks/useDebouncedToast';
 
 interface RouteProtectionOptions {
   requireAuth?: boolean;
@@ -24,6 +24,11 @@ export const useRouteProtection = ({
   const navigate = useNavigate();
   const location = useLocation();
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+  const { showError } = useDebouncedToast();
+  
+  // Add protection state to prevent overlapping checks
+  const protectionInProgress = useRef(false);
+  const lastCheckedPath = useRef<string>('');
   
   useEffect(() => {
     // Wait until auth is loaded
@@ -31,12 +36,21 @@ export const useRouteProtection = ({
       return;
     }
     
+    // Prevent overlapping protection checks for the same path
+    const currentPath = location.pathname + location.search;
+    if (protectionInProgress.current || lastCheckedPath.current === currentPath) {
+      return;
+    }
+    
+    protectionInProgress.current = true;
+    lastCheckedPath.current = currentPath;
+    
     // Check if auth is required and user is not logged in
     if (requireAuth && !user) {
       setIsAuthorized(false);
       
       if (showToast) {
-        toastService.error(
+        showError(
           "Authentication required", 
           "Please log in to access this page"
         );
@@ -44,9 +58,13 @@ export const useRouteProtection = ({
       
       // Save the current path for redirect after login
       const returnPath = location.pathname + location.search;
-      localStorage.setItem('auth_redirect', returnPath);
+      const currentSaved = localStorage.getItem('auth_redirect');
+      if (currentSaved !== returnPath) {
+        localStorage.setItem('auth_redirect', returnPath);
+      }
       
       navigate(redirectTo, { replace: true });
+      protectionInProgress.current = false;
       return;
     }
     
@@ -59,7 +77,7 @@ export const useRouteProtection = ({
       
       if (!isAllowedType) {
         if (showToast) {
-          toastService.error(
+          showError(
             "Access denied", 
             "You don't have permission to access this page"
           );
@@ -75,13 +93,15 @@ export const useRouteProtection = ({
         } else {
           navigate('/explore', { replace: true });
         }
+        protectionInProgress.current = false;
         return;
       }
     }
     
     // If we reach here, user is authorized
     setIsAuthorized(true);
-  }, [user, isLoading, requireAuth, allowedUserTypes, navigate, redirectTo, location, showToast]);
+    protectionInProgress.current = false;
+  }, [user, isLoading, requireAuth, allowedUserTypes, navigate, redirectTo, location.pathname, location.search, showToast, showError]);
   
   return { isAuthorized, isLoading: isLoading || isAuthorized === null };
 };
