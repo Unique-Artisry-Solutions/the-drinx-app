@@ -45,25 +45,16 @@ const Index = () => {
     const isAdmin = localStorage.getItem('admin_authenticated') === 'true';
     
     if (isAdminBypass || isAdmin) {
-      console.log("Index page - Admin bypass or auth active, redirecting");
-      
-      if (isAdmin) {
-        navigate('/admin/system-breakdown', { replace: true });
-      } else if (bypassType === 'establishment') {
-        navigate('/establishment/dashboard', { replace: true });
-      } else if (bypassType === 'promoter') {
-        navigate('/promoter/dashboard', { replace: true });
-      } else {
-        navigate('/explore', { replace: true });
-      }
+      console.log("Index page - Admin bypass or auth active, redirecting to admin");
+      navigate('/admin/system-breakdown', { replace: true });
       return;
     }
     
     // For normal authenticated users - explicitly check both user and session
     if (user && session) {
-      console.log("Index page - User authenticated with valid session, redirecting");
+      console.log("Index page - User authenticated with valid session, determining redirect");
       
-      // Check if there's a saved redirect
+      // Check if there's a saved redirect first
       const savedRedirect = localStorage.getItem('auth_redirect');
       
       if (savedRedirect) {
@@ -73,16 +64,28 @@ const Index = () => {
         return;
       }
       
-      // Default redirect based on user type
-      const userType = localStorage.getItem('user_type');
+      // Get user type and redirect to appropriate dashboard
+      const userType = localStorage.getItem('user_type') || 'individual';
       console.log("Index page - Using user type for redirect:", userType);
       
-      if (userType === 'establishment') {
-        navigate('/establishment/dashboard', { replace: true });
-      } else if (userType === 'promoter') {
-        navigate('/promoter/dashboard', { replace: true });
-      } else {
-        navigate('/explore', { replace: true });
+      switch (userType) {
+        case 'establishment':
+          console.log("Index page - Redirecting to establishment dashboard");
+          navigate('/establishment/dashboard', { replace: true });
+          break;
+        case 'promoter':
+          console.log("Index page - Redirecting to promoter dashboard");
+          navigate('/promoter/dashboard', { replace: true });
+          break;
+        case 'admin':
+          console.log("Index page - Redirecting to admin dashboard");
+          navigate('/admin/system-breakdown', { replace: true });
+          break;
+        case 'individual':
+        default:
+          console.log("Index page - Redirecting to explore (individual user)");
+          navigate('/explore', { replace: true });
+          break;
       }
       return;
     }
