@@ -1,3 +1,4 @@
+
 import { vi } from 'vitest';
 import { useAuth } from '@/contexts/auth/AuthProvider';
 import { useToast } from '@/hooks/use-toast';
@@ -51,6 +52,7 @@ export function setupMocks(authUser = mockUser) {
     authStable: true,
     authError: null,
     isVerificationEmailSent: false,
+    userType: 'individual', // Add the missing userType property
     signIn: vi.fn().mockResolvedValue({ error: null, data: {} }),
     signUp: vi.fn().mockResolvedValue({}),
     signOut: vi.fn().mockResolvedValue({}),
