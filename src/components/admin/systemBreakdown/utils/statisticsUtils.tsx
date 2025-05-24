@@ -1,153 +1,75 @@
-import { FeatureItem, ProgressSnapshot, FeatureStatus, MonthlyProgressData } from '../types';
+
+import { FeatureItem, ProgressSnapshot, MonthlyProgressData } from '../types';
 
 /**
- * Calculates statistics for a set of features
- */
-export function calculateFeatureStatistics(features: FeatureItem[]) {
-  const totalFeatures = features.length;
-  const plannedFeatures = features.filter(f => f.status === 'planned').length;
-  const inProgressFeatures = features.filter(f => f.status === 'in_progress').length;
-  const implementedFeatures = features.filter(f => f.status === 'implemented').length;
-  const partialFeatures = features.filter(f => f.status === 'partial').length;
-  const blockedFeatures = features.filter(f => f.status === 'blocked').length;
-  
-  // Calculate average implementation progress using both implementationProgress and status
-  let totalImplementationProgress = 0;
-  features.forEach(feature => {
-    // Use the implementationProgress value if available, or infer from status
-    const progress = feature.implementationProgress ?? (
-      feature.status === 'implemented' ? 100 :
-      feature.status === 'partial' ? 65 :
-      feature.status === 'in_progress' ? 45 :
-      feature.status === 'blocked' ? 30 : 10
-    );
-    totalImplementationProgress += progress;
-  });
-  
-  const averageImplementation = totalFeatures > 0 
-    ? totalImplementationProgress / totalFeatures 
-    : 0;
-  
-  return {
-    totalFeatures,
-    plannedFeatures,
-    inProgressFeatures,
-    implementedFeatures,
-    partialFeatures,
-    blockedFeatures,
-    averageImplementation: isNaN(averageImplementation) ? 0 : averageImplementation
-  };
-}
-
-/**
- * Creates a progress snapshot for current implementation status
+ * Creates a progress snapshot for historical tracking
  */
 export function createProgressSnapshot(
   adminFeatures: FeatureItem[],
   establishmentFeatures: FeatureItem[],
   individualFeatures: FeatureItem[],
-  promoterFeatures: FeatureItem[] = []
+  promoterFeatures: FeatureItem[]
 ): ProgressSnapshot {
   const allFeatures = [...adminFeatures, ...establishmentFeatures, ...individualFeatures, ...promoterFeatures];
   
-  // Calculate statistics
-  const overallStats = calculateFeatureStatistics(allFeatures);
-  const adminStats = calculateFeatureStatistics(adminFeatures);
-  const establishmentStats = calculateFeatureStatistics(establishmentFeatures);
-  const individualStats = calculateFeatureStatistics(individualFeatures);
-  const promoterStats = calculateFeatureStatistics(promoterFeatures);
+  const implemented = allFeatures.filter(f => f.status === 'implemented').length;
+  const inProgress = allFeatures.filter(f => f.status === 'in_progress').length;
+  const planned = allFeatures.filter(f => f.status === 'planned').length;
   
-  const frontendProgress = overallStats.averageImplementation;
-  const backendProgress = calculateBackendProgress(allFeatures);
-  const confidenceScore = calculateConfidenceScore(allFeatures);
-  
-  const snapshot: ProgressSnapshot = {
+  return {
+    id: `snapshot-${Date.now()}`,
     timestamp: new Date().toISOString(),
-    date: new Date().toISOString().split('T')[0],
     totalFeatures: allFeatures.length,
-    implementedFeatures: overallStats.implementedFeatures,
-    inProgressFeatures: overallStats.inProgressFeatures,
-    plannedFeatures: overallStats.plannedFeatures,
-    blockedFeatures: overallStats.blockedFeatures,
-    averageImplementationProgress: overallStats.averageImplementation,
-    frontendProgress,
-    backendProgress,
-    adminFeatureCount: adminFeatures.length,
-    establishmentFeatureCount: establishmentFeatures.length,
-    individualFeatureCount: individualFeatures.length,
-    promoterFeatureCount: promoterFeatures.length,
-    adminImplementationRate: adminStats.averageImplementation,
-    establishmentImplementationRate: establishmentStats.averageImplementation,
-    individualImplementationRate: individualStats.averageImplementation,
-    promoterImplementationRate: promoterStats.averageImplementation,
-    overallProgress: Math.round((frontendProgress + backendProgress) / 2),
-    dbComplete: calculateDbCompleteCount(allFeatures),
-    confidenceScore
+    implemented,
+    inProgress,
+    planned,
+    overallProgress: (implemented / allFeatures.length) * 100,
+    categories: {
+      admin: {
+        total: adminFeatures.length,
+        implemented: adminFeatures.filter(f => f.status === 'implemented').length,
+        progress: (adminFeatures.filter(f => f.status === 'implemented').length / adminFeatures.length) * 100
+      },
+      establishment: {
+        total: establishmentFeatures.length,
+        implemented: establishmentFeatures.filter(f => f.status === 'implemented').length,
+        progress: (establishmentFeatures.filter(f => f.status === 'implemented').length / establishmentFeatures.length) * 100
+      },
+      individual: {
+        total: individualFeatures.length,
+        implemented: individualFeatures.filter(f => f.status === 'implemented').length,
+        progress: (individualFeatures.filter(f => f.status === 'implemented').length / individualFeatures.length) * 100
+      },
+      promoter: {
+        total: promoterFeatures.length,
+        implemented: promoterFeatures.filter(f => f.status === 'implemented').length,
+        progress: (promoterFeatures.filter(f => f.status === 'implemented').length / promoterFeatures.length) * 100
+      }
+    }
   };
-  
-  return snapshot;
-}
-
-function calculateDbCompleteCount(features: FeatureItem[]): number {
-  return features.filter(f => f.databaseStatus === 'complete').length;
-}
-
-function calculateBackendProgress(features: FeatureItem[]): number {
-  const complete = features.filter(f => f.databaseStatus === 'complete').length;
-  const inProgress = features.filter(f => f.databaseStatus === 'in_progress').length;
-  return features.length > 0 ? Math.round(((complete + (inProgress * 0.5)) / features.length) * 100) : 0;
-}
-
-function calculateConfidenceScore(features: FeatureItem[]): number {
-  const implementedCount = features.filter(f => f.status === 'implemented').length;
-  const dbCompleteCount = features.filter(f => f.databaseStatus === 'complete').length;
-  
-  if (implementedCount === 0) return 100;
-  
-  const ratio = dbCompleteCount / implementedCount;
-  return Math.round(Math.min(ratio * 100, 100));
 }
 
 /**
  * Validates progress data for consistency
  */
-export function validateProgressData(snapshot: ProgressSnapshot) {
+export function validateProgressData(progressHistory: ProgressSnapshot[]): { isValid: boolean; issues: string[] } {
   const issues: string[] = [];
   
-  if (!snapshot) {
-    return { isValid: false, issues: ['No snapshot data available'] };
+  if (progressHistory.length === 0) {
+    issues.push("No progress data available");
+    return { isValid: false, issues };
   }
   
-  // Check if total feature count makes sense
-  if (snapshot.totalFeatures < 1) {
-    issues.push(`Invalid total feature count: ${snapshot.totalFeatures}`);
-  }
-  
-  // Check if feature counts by user type match total
-  const userTypeTotal = 
-    snapshot.adminFeatureCount + 
-    snapshot.establishmentFeatureCount + 
-    snapshot.individualFeatureCount +
-    snapshot.promoterFeatureCount;
-  
-  if (userTypeTotal !== snapshot.totalFeatures) {
-    issues.push(`User type feature counts (${userTypeTotal}) don't match total feature count (${snapshot.totalFeatures})`);
-  }
-  
-  // Check implementation rates for consistency
-  if (snapshot.implementedFeatures > snapshot.totalFeatures) {
-    issues.push(`Implemented features (${snapshot.implementedFeatures}) exceeds total features (${snapshot.totalFeatures})`);
-  }
-  
-  // Check for unrealistic implementation rates
-  if (snapshot.averageImplementationProgress > 100) {
-    issues.push(`Average implementation progress (${snapshot.averageImplementationProgress}) exceeds 100%`);
-  }
-  
-  // Check for very low progress on implemented features
-  if (snapshot.implementedFeatures > 0 && snapshot.averageImplementationProgress < 10) {
-    issues.push(`Unusually low average implementation progress (${snapshot.averageImplementationProgress}) despite having implemented features`);
-  }
+  // Check for data consistency
+  progressHistory.forEach((snapshot, index) => {
+    if (snapshot.overallProgress < 0 || snapshot.overallProgress > 100) {
+      issues.push(`Invalid progress percentage in snapshot ${index + 1}`);
+    }
+    
+    if (snapshot.totalFeatures !== snapshot.implemented + snapshot.inProgress + snapshot.planned) {
+      issues.push(`Feature count mismatch in snapshot ${index + 1}`);
+    }
+  });
   
   return {
     isValid: issues.length === 0,
@@ -156,91 +78,16 @@ export function validateProgressData(snapshot: ProgressSnapshot) {
 }
 
 /**
- * Generate historical data for visualization
+ * Generates historical progress data for demonstration
  */
-export async function generateHistoricalProgressData(
-  currentSnapshot: ProgressSnapshot,
-  history: ProgressSnapshot[] = []
-): Promise<MonthlyProgressData[]> {
-  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+export function generateHistoricalProgressData(): MonthlyProgressData[] {
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
   
-  if (history.length > 0) {
-    const monthlyData: Record<string, { month: string; frontend: number; backend: number; count: number }> = {};
-    
-    history.forEach(snapshot => {
-      const date = new Date(snapshot.timestamp);
-      const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
-      
-      if (!monthlyData[monthKey]) {
-        monthlyData[monthKey] = {
-          month: monthNames[date.getMonth()],
-          frontend: 0,
-          backend: 0,
-          count: 0
-        };
-      }
-      
-      monthlyData[monthKey].frontend += snapshot.frontendProgress;
-      monthlyData[monthKey].backend += snapshot.backendProgress;
-      monthlyData[monthKey].count += 1;
-    });
-    
-    return Object.values(monthlyData)
-      .map(data => ({
-        month: data.month,
-        frontend: Math.round(data.frontend / data.count),
-        backend: Math.round(data.backend / data.count)
-      }))
-      .sort((a, b) => monthNames.indexOf(a.month) - monthNames.indexOf(b.month));
-  }
-  
-  const currentMonth = new Date().getMonth();
-  return Array.from({ length: currentMonth + 1 }, (_, i) => {
-    const progressRatio = 1 / (1 + Math.exp(-0.5 * (i - currentMonth / 2))) * 0.9;
-    return {
-      month: monthNames[i],
-      frontend: Math.round(currentSnapshot.frontendProgress * progressRatio),
-      backend: Math.round(currentSnapshot.backendProgress * progressRatio * 0.85)
-    };
-  });
+  return months.map((month, index) => ({
+    month,
+    implemented: Math.floor(20 + (index * 8) + Math.random() * 5),
+    inProgress: Math.floor(15 + Math.random() * 5),
+    planned: Math.floor(30 - (index * 3) + Math.random() * 5),
+    total: 60 + Math.floor(Math.random() * 10)
+  }));
 }
-
-/**
- * Group features by category based on their tags
- */
-export function groupFeaturesByCategory(features: FeatureItem[]): Record<string, FeatureItem[]> {
-  const categories: Record<string, FeatureItem[]> = {};
-  
-  features.forEach(feature => {
-    if (feature.tags && feature.tags.length > 0) {
-      // Find the most specific category tag (excluding 'promoter' which is too general)
-      const categoryTags = feature.tags.filter(tag => tag !== 'promoter');
-      
-      if (categoryTags.length > 0) {
-        // Use the first category tag found
-        const primaryCategory = categoryTags[0];
-        
-        if (!categories[primaryCategory]) {
-          categories[primaryCategory] = [];
-        }
-        
-        categories[primaryCategory].push(feature);
-      } else {
-        // If no specific category found, put in 'other'
-        if (!categories['other']) {
-          categories['other'] = [];
-        }
-        categories['other'].push(feature);
-      }
-    } else {
-      // If no tags, put in 'uncategorized'
-      if (!categories['uncategorized']) {
-        categories['uncategorized'] = [];
-      }
-      categories['uncategorized'].push(feature);
-    }
-  });
-  
-  return categories;
-}
-
