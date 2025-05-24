@@ -43,9 +43,9 @@ export function withAuthProtection<P extends object>(
       
       // Handle admin bypass case
       if (isAdminBypass || isAdminAuthenticated) {
-        const effectiveUserType = isAdminAuthenticated ? 'admin' : bypassUserType;
+        const effectiveUserType: UserType | null = isAdminAuthenticated ? 'admin' : bypassUserType as UserType;
         
-        if (userTypes.length > 0 && effectiveUserType && !userTypes.includes(effectiveUserType as UserType)) {
+        if (userTypes.length > 0 && effectiveUserType && !userTypes.includes(effectiveUserType)) {
           setShouldRedirect(true);
         } else {
           setShouldRedirect(false);
