@@ -1,12 +1,9 @@
 
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { AnalysisStep, FeatureItem } from '../types';
-import { analyzeAllFeatures } from '../utils';
+import { FeatureItem, AnalysisStep } from '../types';
+import { analyzeAllFeatures } from '../utils/analysis';
 
-/**
- * Hook to manage feature analysis process
- */
 export const useAnalysisProcess = (
   adminFeatures: FeatureItem[],
   establishmentFeatures: FeatureItem[],
@@ -17,96 +14,66 @@ export const useAnalysisProcess = (
   setIndividualFeatures: (features: FeatureItem[]) => void,
   setPromoterFeatures: (features: FeatureItem[]) => void
 ) => {
-  const { toast } = useToast();
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [analysisSteps, setAnalysisSteps] = useState<AnalysisStep[]>([]);
+  const { toast } = useToast();
 
-  const handleAnalyzeFeatures = (onAnalysisComplete?: (totalUpdated: number) => void) => {
+  const handleAnalyzeFeatures = (onComplete?: (updatedCount: number) => void) => {
     setAnalyzing(true);
     setAnalysisProgress(0);
-    
-    // Create initial database tasks array with reward system and promoter tasks
-    const initialDatabaseTasks: AnalysisStep[] = [
-      { name: 'Database schema verification', completed: false },
-      { name: 'API endpoints validation', completed: false },
-      { name: 'Authentication flow check', completed: false },
-      { name: 'User permissions validation', completed: false },
-      { name: 'Content moderation implementation', completed: false },
-      { name: 'Storage bucket configuration', completed: false },
-      { name: 'Database trigger functions verification', completed: false },
-      { name: 'Frontend component implementation check', completed: false },
-      { name: 'Reward system implementation analysis', completed: false },
-      { name: 'Reward program data validation', completed: false },
-      { name: 'Promoter notification triggers verification', completed: false },
-      { name: 'Event management system validation', completed: false },
-      { name: 'Notification delivery system check', completed: false }
+    setAnalysisSteps([]);
+
+    // Simulate analysis progress
+    const steps: AnalysisStep[] = [
+      { name: 'Analyzing database requirements', completed: false },
+      { name: 'Checking implementation status', completed: false },
+      { name: 'Updating feature progress', completed: false },
+      { name: 'Calculating statistics', completed: false }
     ];
-    setAnalysisSteps(initialDatabaseTasks);
-    
-    // Simulate progress updates for each task
+
     let currentStep = 0;
-    const totalSteps = initialDatabaseTasks.length;
-    
-    const progressInterval = setInterval(() => {
-      if (currentStep < totalSteps) {
-        const updatedSteps = [...initialDatabaseTasks];
-        
-        // Mark the current task as completed
-        updatedSteps[currentStep].completed = true;
-        setAnalysisSteps(updatedSteps);
-        
+    const interval = setInterval(() => {
+      if (currentStep < steps.length) {
+        steps[currentStep].completed = true;
+        setAnalysisSteps([...steps]);
+        setAnalysisProgress(((currentStep + 1) / steps.length) * 100);
         currentStep++;
-        setAnalysisProgress((currentStep / totalSteps) * 100);
+      } else {
+        clearInterval(interval);
         
-        // If we've completed all steps, complete the analysis
-        if (currentStep >= totalSteps) {
-          clearInterval(progressInterval);
-          
-          // Slight delay before completing the analysis to show 100% progress
-          setTimeout(completeAnalysis, 500);
+        // Perform actual analysis
+        const result = analyzeAllFeatures(
+          adminFeatures,
+          establishmentFeatures,
+          individualFeatures,
+          promoterFeatures
+        );
+
+        // Update features with analysis results
+        setAdminFeatures(result.adminFeatures);
+        setEstablishmentFeatures(result.establishmentFeatures);
+        setIndividualFeatures(result.individualFeatures);
+        setPromoterFeatures(result.promoterFeatures);
+
+        // Calculate updated features count
+        const updatedCount = result.adminFeatures.filter(f => f.statusUpdated).length +
+                           result.establishmentFeatures.filter(f => f.statusUpdated).length +
+                           result.individualFeatures.filter(f => f.statusUpdated).length +
+                           result.promoterFeatures.filter(f => f.statusUpdated).length;
+
+        setAnalyzing(false);
+        
+        toast({
+          title: "Analysis Complete",
+          description: `Updated ${updatedCount} features based on implementation analysis`,
+        });
+
+        if (onComplete) {
+          onComplete(updatedCount);
         }
       }
-    }, 600); // Update every 600ms
-    
-    const completeAnalysis = () => {
-      // Apply the actual analysis to the features
-      const analyzedFeatures = analyzeAllFeatures(
-        adminFeatures,
-        establishmentFeatures,
-        individualFeatures,
-        promoterFeatures
-      );
-      
-      // Important: Update the state with the analyzed features
-      setAdminFeatures([...analyzedFeatures.adminFeatures]);
-      setEstablishmentFeatures([...analyzedFeatures.establishmentFeatures]);
-      setIndividualFeatures([...analyzedFeatures.individualFeatures]);
-      setPromoterFeatures([...analyzedFeatures.promoterFeatures]);
-      setAnalysisSteps(analyzedFeatures.completedSteps);
-      
-      const totalUpdated = [
-        ...analyzedFeatures.adminFeatures,
-        ...analyzedFeatures.establishmentFeatures,
-        ...analyzedFeatures.individualFeatures,
-        ...analyzedFeatures.promoterFeatures
-      ].filter(feature => feature.statusUpdated).length;
-      
-      // Show a toast notification about the analysis results
-      toast({
-        title: "Analysis Complete",
-        description: `${totalUpdated} feature status${totalUpdated !== 1 ? 'es' : ''} updated based on database implementation.`,
-        duration: 5000,
-      });
-      
-      // Set analyzing to false to remove the progress bar
-      setAnalyzing(false);
-      
-      // Call the callback if provided
-      if (onAnalysisComplete) {
-        onAnalysisComplete(totalUpdated);
-      }
-    };
+    }, 800);
   };
 
   return {

@@ -71,7 +71,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
 
       {/* Status Update Notification */}
       {updatedFeaturesCount > 0 && (
-        <StatusUpdateNotification updatedCount={updatedFeaturesCount} />
+        <StatusUpdateNotification updatedFeaturesCount={updatedFeaturesCount} />
       )}
 
       {/* Data Validation Warning */}
@@ -170,6 +170,10 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
       {/* Development Progress Dashboard */}
       {currentSnapshot && (
         <DevelopmentProgressDashboard
+          adminFeatures={adminFeatures}
+          establishmentFeatures={establishmentFeatures}
+          individualFeatures={individualFeatures}
+          promoterFeatures={promoterFeatures}
           currentSnapshot={currentSnapshot}
           monthlyProgressData={monthlyProgressData}
         />

@@ -1,25 +1,18 @@
 
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/auth/AuthProvider';
 
-/**
- * Hook to check if user is authenticated as admin
- */
 export const useAuthCheck = () => {
-  const navigate = useNavigate();
+  const { signOut } = useAuth();
 
-  // Check if user is authenticated as admin
-  useEffect(() => {
-    const isAdmin = localStorage.getItem('admin_authenticated') === 'true';
-    if (!isAdmin) {
-      navigate('/admin');
+  const handleLogout = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Error signing out:', error);
     }
-  }, [navigate]);
-
-  const handleLogout = () => {
-    localStorage.removeItem('admin_authenticated');
-    navigate('/admin');
   };
 
-  return { handleLogout };
+  return {
+    handleLogout
+  };
 };
