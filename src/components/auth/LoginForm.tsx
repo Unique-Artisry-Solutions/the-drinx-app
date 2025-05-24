@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { CardContent, CardFooter } from '@/components/ui/card';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -30,19 +30,53 @@ const LoginForm: React.FC<LoginFormProps> = ({
   const [loginSuccess, setLoginSuccess] = useState(false);
   const [hasShownSuccessToast, setHasShownSuccessToast] = useState(false);
   
+  // Add flags to prevent repeated processing
+  const [hasProcessedLocationState, setHasProcessedLocationState] = useState(false);
+  const redirectTimeoutRef = useRef<NodeJS.Timeout>();
+  const locationProcessedRef = useRef<string>('');
+  
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
   const { signIn, authStable } = useAuth();
 
-  // Check for redirects in location state
+  // Debounced redirect path setter
+  const setRedirectPath = useCallback((path: string) => {
+    if (redirectTimeoutRef.current) {
+      clearTimeout(redirectTimeoutRef.current);
+    }
+    
+    redirectTimeoutRef.current = setTimeout(() => {
+      const currentSaved = localStorage.getItem('auth_redirect');
+      if (currentSaved !== path) {
+        console.log("Setting redirect path:", path);
+        localStorage.setItem('auth_redirect', path);
+      }
+    }, 100); // Debounce by 100ms
+  }, []);
+
+  // Process location state only once per unique state
   useEffect(() => {
     const state = location.state as { from?: string };
-    if (state?.from) {
-      console.log("Login page - Setting redirect from location state:", state.from);
-      localStorage.setItem('auth_redirect', state.from);
+    const stateKey = state?.from || 'no-state';
+    
+    // Only process if we haven't processed this exact state before
+    if (state?.from && !hasProcessedLocationState && locationProcessedRef.current !== stateKey) {
+      console.log("Processing location state redirect:", state.from);
+      locationProcessedRef.current = stateKey;
+      setHasProcessedLocationState(true);
+      setRedirectPath(state.from);
     }
-  }, [location]);
+  }, [location.state, hasProcessedLocationState, setRedirectPath]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (redirectTimeoutRef.current) {
+        clearTimeout(redirectTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Prepare redirect after successful login
   const performRedirect = useCallback(() => {
@@ -76,7 +110,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
     }
   }, [loginSuccess, navigate, onSuccess]);
 
-  // Handle redirect after login and when auth is stable
+  // Handle redirect after login and when auth is stable - only run once per login success
   useEffect(() => {
     if (loginSuccess && authStable && !hasShownSuccessToast) {
       const timer = setTimeout(() => {
