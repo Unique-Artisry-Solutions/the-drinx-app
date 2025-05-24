@@ -4,5 +4,7 @@
  */
 
 export * from './NavigationTypes';
-export * from './BreadcrumbTypes';
 export * from './LinkTypes';
+// BreadcrumbTypes exports BreadcrumbItem which conflicts with NavigationTypes
+// Re-export explicitly to resolve the ambiguity
+export type { BreadcrumbItem as BreadcrumbItemType } from './BreadcrumbTypes';

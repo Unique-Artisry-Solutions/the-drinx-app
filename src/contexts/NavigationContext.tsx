@@ -14,7 +14,9 @@ import {
   generateNavigationItems, 
   generateBreadcrumbs, 
   getActiveTab,
-  shouldShowFeature
+  shouldShowFeature,
+  resolveEffectiveUserType,
+  EffectiveUserState
 } from '@/components/navigation/utils/navigationItems';
 
 interface NavigationContextType {
@@ -25,6 +27,7 @@ interface NavigationContextType {
   shouldShowFeature: (featureKey: string) => boolean;
   isPathActive: (path: string) => boolean;
   isAuthenticated: boolean;
+  effectiveState: EffectiveUserState;
 }
 
 const NavigationContext = createContext<NavigationContextType | undefined>(undefined);
@@ -42,15 +45,12 @@ export const NavigationProvider: React.FC<NavigationProviderProps> = ({ children
   const [navigationItems, setNavigationItems] = useState<NavigationItem[]>([]);
   const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbItem[]>([]);
   const [activeTab, setActiveTab] = useState<string | null>(null);
-  
-  // Determine effective user type and authentication state
-  const effectiveUserType: UserType | null = isDevelopment && isDevModeActive && isStateStable 
-    ? devMode 
-    : authUserType;
-  
-  const effectiveIsAuthenticated = isDevelopment && isDevModeActive && isStateStable 
-    ? Boolean(devMode) 
-    : authIsAuthenticated;
+  const [effectiveState, setEffectiveState] = useState<EffectiveUserState>({
+    userType: null,
+    isAuthenticated: false,
+    isDevelopment: false,
+    isDevModeActive: false
+  });
   
   // Function to check if a path is active
   const isPathActive = (path: string): boolean => {
@@ -61,8 +61,8 @@ export const NavigationProvider: React.FC<NavigationProviderProps> = ({ children
   useEffect(() => {
     console.log('NavigationProvider - Recalculating navigation items', {
       pathname: location.pathname,
-      effectiveIsAuthenticated,
-      effectiveUserType,
+      authIsAuthenticated,
+      authUserType,
       isLoading,
       authStable,
       isDevelopment,
@@ -78,9 +78,19 @@ export const NavigationProvider: React.FC<NavigationProviderProps> = ({ children
       return;
     }
     
+    // Resolve the effective user state
+    const newEffectiveState = resolveEffectiveUserType(
+      authUserType,
+      authIsAuthenticated,
+      devMode,
+      isDevelopment,
+      isDevModeActive && isStateStable
+    );
+    
+    setEffectiveState(newEffectiveState);
+    
     const newNavigationItems = generateNavigationItems(
-      effectiveUserType,
-      effectiveIsAuthenticated,
+      newEffectiveState,
       navigationConfig
     );
     setNavigationItems(newNavigationItems);
@@ -92,8 +102,8 @@ export const NavigationProvider: React.FC<NavigationProviderProps> = ({ children
     setActiveTab(newActiveTab);
   }, [
     location.pathname, 
-    effectiveIsAuthenticated, 
-    effectiveUserType, 
+    authIsAuthenticated, 
+    authUserType, 
     isLoading, 
     authStable, 
     isDevelopment, 
@@ -109,10 +119,11 @@ export const NavigationProvider: React.FC<NavigationProviderProps> = ({ children
     navigationItems,
     breadcrumbs,
     activeTab,
-    userType: effectiveUserType,
-    shouldShowFeature: (featureKey: string) => shouldShowFeature(featureKey, effectiveUserType),
+    userType: effectiveState.userType,
+    shouldShowFeature: (featureKey: string) => shouldShowFeature(featureKey, effectiveState),
     isPathActive,
-    isAuthenticated: effectiveIsAuthenticated
+    isAuthenticated: effectiveState.isAuthenticated,
+    effectiveState
   };
   
   return (

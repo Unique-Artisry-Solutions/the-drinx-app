@@ -1,4 +1,3 @@
-
 import { UserType, NavigationItem, NavigationConfig, BreadcrumbItem } from '@/types/navigation';
 import { 
   guestNavItems, 
@@ -8,25 +7,65 @@ import {
   adminNavItems 
 } from '@/config/navigation';
 
+export interface EffectiveUserState {
+  userType: UserType | null;
+  isAuthenticated: boolean;
+  isDevelopment: boolean;
+  isDevModeActive: boolean;
+}
+
+export const resolveEffectiveUserType = (
+  authUserType: UserType | null,
+  authIsAuthenticated: boolean,
+  devUserType: UserType | null,
+  isDevelopment: boolean,
+  isDevModeActive: boolean
+): EffectiveUserState => {
+  console.log('resolveEffectiveUserType called with:', {
+    authUserType,
+    authIsAuthenticated,
+    devUserType,
+    isDevelopment,
+    isDevModeActive
+  });
+
+  // In development mode with dev mode active, use dev settings
+  if (isDevelopment && isDevModeActive && devUserType) {
+    return {
+      userType: devUserType,
+      isAuthenticated: true, // Dev mode implies authenticated state
+      isDevelopment,
+      isDevModeActive
+    };
+  }
+
+  // Otherwise use auth state
+  return {
+    userType: authUserType,
+    isAuthenticated: authIsAuthenticated,
+    isDevelopment,
+    isDevModeActive
+  };
+};
+
 export const generateNavigationItems = (
-  userType: UserType | null,
-  isAuthenticated: boolean,
+  effectiveState: EffectiveUserState,
   config?: NavigationConfig
 ): NavigationItem[] => {
-  console.log('generateNavigationItems called with:', { userType, isAuthenticated });
+  console.log('generateNavigationItems called with:', effectiveState);
   
   // If custom nav items are provided in config, use them
   if (config?.customNavItems) {
     return config.customNavItems;
   }
   
-  // If not authenticated, show guest navigation
-  if (!isAuthenticated || !userType) {
+  // If not authenticated and not in dev mode, show guest navigation
+  if (!effectiveState.isAuthenticated) {
     return guestNavItems;
   }
   
-  // Return navigation based on user type
-  switch (userType) {
+  // Return navigation based on effective user type
+  switch (effectiveState.userType) {
     case 'establishment':
       return establishmentNavItems;
     case 'promoter':
@@ -103,14 +142,14 @@ export const getActiveTab = (
 
 export const shouldShowFeature = (
   featureKey: string,
-  userType: UserType | null
+  effectiveState: EffectiveUserState
 ): boolean => {
   // Basic feature access logic - can be expanded based on requirements
-  if (!userType) {
+  if (!effectiveState.isAuthenticated) {
     return ['explore', 'home', 'landing'].includes(featureKey);
   }
   
-  switch (userType) {
+  switch (effectiveState.userType) {
     case 'admin':
       return true; // Admin can access all features
     case 'establishment':
