@@ -19,6 +19,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   
   // Add debugging for route resolution
   console.log('AdminLayout: Rendering for path', location.pathname);
+  console.log('AdminLayout: Route search params', location.search);
+  console.log('AdminLayout: Route state', location.state);
   
   // Get effective auth state (dev bypass or real auth)
   const effectiveAuth = DevAuthService.getEffectiveAuthState(
@@ -66,6 +68,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       </div>
     );
   }
+
+  console.log('AdminLayout: Successfully authenticated, rendering admin interface');
 
   // Render admin interface
   return (

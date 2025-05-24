@@ -34,10 +34,10 @@ export const adminRoutes: RouteObject[] = [
     path: '/admin',
     element: <AdminLayout />,
     children: [
-      // Index route - redirects /admin to /admin/dashboard
+      // Index route - use dashboard as the default for /admin
       { 
         index: true, 
-        element: <Navigate to="/admin/dashboard" replace /> 
+        element: <AdminDashboard /> 
       },
       { 
         path: 'dashboard', 

@@ -25,6 +25,10 @@ const AppRoutes = () => {
   useNavigationTracking();
   const location = useLocation();
 
+  // Add debugging for route resolution
+  console.log('AppRoutes: Current location', location.pathname);
+  console.log('AppRoutes: Admin routes count', adminRoutes.length);
+  
   return (
     <PageSuspense>
       <AnimatePresence mode="wait">
@@ -70,9 +74,19 @@ const AppRoutes = () => {
           />
 
           {/* Admin Routes - must come before the catch-all to ensure admin/* routes are matched properly */}
-          {adminRoutes.map((route) => (
-            <Route key={route.path} path={route.path} element={route.element} />
-          ))}
+          {adminRoutes.map((route, index) => {
+            console.log(`AppRoutes: Registering admin route ${index}:`, route.path);
+            return <Route key={route.path} path={route.path} element={route.element}>
+              {route.children && route.children.map((childRoute, childIndex) => (
+                <Route 
+                  key={childRoute.path || 'index'} 
+                  path={childRoute.path} 
+                  index={childRoute.index}
+                  element={childRoute.element} 
+                />
+              ))}
+            </Route>
+          })}
 
           {/* Establishment Routes */}
           {establishmentRoutes.map((route) => (
