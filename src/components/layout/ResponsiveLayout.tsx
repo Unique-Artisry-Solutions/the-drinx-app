@@ -1,11 +1,10 @@
-
 import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useIsMobile } from '@/hooks/use-mobile';
 import DesktopLayout from './DesktopLayout';
 import MobileLayout from './MobileLayout';
 import DevRoleSwitcher from '@/components/development/DevRoleSwitcher';
-import { useDevelopmentMode } from '@/hooks/useDevelopmentMode';
+import { useDevelopmentMode } from '@/contexts/DevelopmentModeContext';
 
 interface TabOption {
   value: string;

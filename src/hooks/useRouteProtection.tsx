@@ -1,9 +1,8 @@
-
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthProvider';
 import { useDebouncedToast } from '@/hooks/useDebouncedToast';
-import { useDevelopmentMode } from '@/hooks/useDevelopmentMode';
+import { useDevelopmentMode } from '@/contexts/DevelopmentModeContext';
 
 interface RouteProtectionOptions {
   requireAuth?: boolean;

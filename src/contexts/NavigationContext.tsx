@@ -1,131 +1,84 @@
-import React, { createContext, useContext, useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
-import { useAuth } from '@/contexts/auth/AuthProvider';
-import { UnifiedNavItem } from '@/types/navigation/NavigationTypes';
+import { useAuth } from './auth/AuthProvider';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { 
-  individualNavItems, 
-  establishmentNavItems, 
-  promoterNavItems,
-  adminNavItems,
-  guestNavItems 
-} from '@/config/navigation';
-import { useDevelopmentMode } from '@/hooks/useDevelopmentMode';
+  UserType, 
+  NavigationItem, 
+  NavigationConfig,
+  BreadcrumbItem
+} from '@/types/navigation';
+import { useDevelopmentMode } from '@/contexts/DevelopmentModeContext';
+import { 
+  generateNavigationItems, 
+  generateBreadcrumbs, 
+  getActiveTab,
+  shouldShowFeature
+} from '@/components/navigation/utils/navigationItems';
 
 interface NavigationContextType {
-  navigationItems: UnifiedNavItem[];
-  userType: 'individual' | 'establishment' | 'promoter' | 'admin' | 'guest';
-  refreshNavigation: () => void;
-  isPathActive: (path: string) => boolean;
+  navigationItems: NavigationItem[];
+  breadcrumbs: BreadcrumbItem[];
+  activeTab: string | null;
+  shouldShowFeature: (featureKey: string) => boolean;
 }
 
 const NavigationContext = createContext<NavigationContextType | undefined>(undefined);
 
-export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, session, authStable, userType: authUserType } = useAuth();
-  const { devMode, isDevModeActive } = useDevelopmentMode();
+interface NavigationProviderProps {
+  children: ReactNode;
+  navigationConfig?: NavigationConfig;
+}
+
+export const NavigationProvider: React.FC<NavigationProviderProps> = ({ children, navigationConfig }) => {
   const location = useLocation();
-  const [userType, setUserType] = useState<'individual' | 'establishment' | 'promoter' | 'admin' | 'guest'>('guest');
-  const [navigationItems, setNavigationItems] = useState<UnifiedNavItem[]>(guestNavItems);
+  const { user, userType, isAuthenticated, isLoading, authStable } = useAuth();
+  const isMobile = useIsMobile();
+  const { isDevelopment, isDevModeActive, devMode } = useDevelopmentMode();
+  const [navigationItems, setNavigationItems] = useState<NavigationItem[]>([]);
+  const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbItem[]>([]);
+  const [activeTab, setActiveTab] = useState<string | null>(null);
   
-  const mountedRef = useRef(true);
-
-  // Memoized helper function to check if a path is active
-  const isPathActive = useCallback((path: string): boolean => {
-    if (path === '/') {
-      return location.pathname === '/';
-    }
-    return location.pathname.startsWith(path);
-  }, [location.pathname]);
-
-  // Memoized function to get navigation items based on user type
-  const getNavigationItems = useCallback((userType: string): UnifiedNavItem[] => {
-    switch (userType) {
-      case 'establishment':
-        return establishmentNavItems;
-      case 'promoter':
-        return promoterNavItems;
-      case 'admin':
-        return adminNavItems;
-      case 'individual':
-        return individualNavItems;
-      default:
-        return guestNavItems;
-    }
-  }, []);
-
-  // Simplified function to determine user type
-  const determineUserType = useCallback((): 'individual' | 'establishment' | 'promoter' | 'admin' | 'guest' => {
-    // In development mode, use the dev user type if active
-    if (isDevModeActive && devMode) {
-      return devMode;
+  // Rebuild navigation items and breadcrumbs on route changes or auth state changes
+  useEffect(() => {
+    console.log('NavigationProvider - Recalculating navigation items and breadcrumbs', {
+      pathname: location.pathname,
+      isAuthenticated,
+      userType,
+      isLoading,
+      authStable,
+      isDevelopment,
+      isDevModeActive,
+      devMode,
+      isMobile
+    });
+    
+    if (isLoading || !authStable) {
+      console.log('NavigationProvider - Waiting for auth to stabilize');
+      return;
     }
     
-    if (!authStable) return 'guest';
-    
-    if (user && session) {
-      const userTypeFromAuth = authUserType;
-      const userTypeFromStorage = localStorage.getItem('user_type');
-      const finalUserType = userTypeFromAuth || userTypeFromStorage || 'individual';
-      
-      switch (finalUserType) {
-        case 'establishment':
-          return 'establishment';
-        case 'promoter':
-          return 'promoter';
-        case 'admin':
-          return 'admin';
-        default:
-          return 'individual';
-      }
-    }
-    
-    return 'guest';
-  }, [user, session, authStable, authUserType, devMode, isDevModeActive]);
-
-  // Update navigation when auth state changes
-  const updateNavigation = useCallback(() => {
-    if (!mountedRef.current || !authStable) return;
-    
-    const newUserType = determineUserType();
-    const newNavigationItems = getNavigationItems(newUserType);
-    
-    setUserType(newUserType);
+    const newNavigationItems = generateNavigationItems(
+      userType,
+      isAuthenticated,
+      navigationConfig
+    );
     setNavigationItems(newNavigationItems);
     
-    console.log('Navigation updated:', newUserType);
-  }, [authStable, determineUserType, getNavigationItems]);
-
-  // Manual refresh function
-  const refreshNavigation = useCallback(() => {
-    if (mountedRef.current) {
-      updateNavigation();
-    }
-  }, [updateNavigation]);
-
-  // Update navigation when auth becomes stable
-  useEffect(() => {
-    if (authStable) {
-      updateNavigation();
-    }
-  }, [authStable, updateNavigation]);
-
-  // Cleanup effect
-  useEffect(() => {
-    mountedRef.current = true;
+    const newBreadcrumbs = generateBreadcrumbs(location.pathname, newNavigationItems);
+    setBreadcrumbs(newBreadcrumbs);
     
-    return () => {
-      mountedRef.current = false;
-    };
-  }, []);
-
-  // Memoize the context value to prevent unnecessary re-renders
-  const contextValue = useMemo(() => ({
+    const newActiveTab = getActiveTab(location.pathname, newNavigationItems);
+    setActiveTab(newActiveTab);
+  }, [location.pathname, isAuthenticated, userType, isLoading, authStable, isDevelopment, isDevModeActive, devMode, isMobile, navigationConfig]);
+  
+  const contextValue: NavigationContextType = {
     navigationItems,
-    userType,
-    refreshNavigation,
-    isPathActive
-  }), [navigationItems, userType, refreshNavigation, isPathActive]);
-
+    breadcrumbs,
+    activeTab,
+    shouldShowFeature: (featureKey: string) => shouldShowFeature(featureKey, userType)
+  };
+  
   return (
     <NavigationContext.Provider value={contextValue}>
       {children}
@@ -135,7 +88,7 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
 export const useNavigation = () => {
   const context = useContext(NavigationContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useNavigation must be used within a NavigationProvider');
   }
   return context;

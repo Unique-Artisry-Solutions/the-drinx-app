@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import AdminTopNav from '@/components/navigation/admin/AdminTopNav';
 import AdminSidebar from './AdminSidebar';
-import { useDevelopmentMode } from '@/hooks/useDevelopmentMode';
+import { useDevelopmentMode } from '@/contexts/DevelopmentModeContext';
 import { useAuth } from '@/contexts/auth/AuthProvider';
 
 interface AdminLayoutProps {

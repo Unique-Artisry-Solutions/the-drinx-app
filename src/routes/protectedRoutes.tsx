@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { withAuthProtection, withAdminProtection, withUserTypeProtection } from '@/hoc/withAuthProtection';
-import { useDevelopmentMode } from '@/hooks/useDevelopmentMode';
+import { useDevelopmentMode } from '@/contexts/DevelopmentModeContext';
 import { UserType } from '@/types/navigation';
 
 /**

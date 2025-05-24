@@ -1,9 +1,8 @@
-
 import React, { useEffect, useState, useRef } from 'react';
 import { useTestUserCreation } from './hooks/useTestUserCreation';
 import { TEST_CREDENTIALS } from './constants/testUsers';
 import { debouncedToast } from '@/utils/debouncedToast';
-import { useDevelopmentMode } from '@/hooks/useDevelopmentMode';
+import { useDevelopmentMode } from '@/contexts/DevelopmentModeContext';
 
 const AutoCreateAdminUser: React.FC = () => {
   const { createTestUser } = useTestUserCreation();
