@@ -134,7 +134,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { error: result.error, data: null };
       }
       
-      return { error: null, data: result.data };
+      return { error: null, data: { user: result.user, session: result.session } };
     } catch (error) {
       const authError = error as Error;
       setAuthError(authError);

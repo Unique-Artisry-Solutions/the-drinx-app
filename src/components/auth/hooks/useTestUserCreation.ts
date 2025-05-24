@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
@@ -43,12 +44,16 @@ export const useTestUserCreation = () => {
 
   const createTestUser = async (credentials: TestUserCredential) => {
     try {
+      // First check if user already exists by trying to sign in
       const { data: existingUser, error: signInError } = await supabase.auth.signInWithPassword({
         email: credentials.email,
         password: credentials.password
       });
 
       if (existingUser.user) {
+        // Sign out immediately after checking
+        await supabase.auth.signOut();
+        
         toast({
           title: `${credentials.userType === 'individual' ? 'User' : credentials.userType === 'establishment' ? 'Business' : 'Promoter'} already exists`,
           description: `You can log in with ${credentials.email} / ${credentials.password}`,
@@ -58,6 +63,7 @@ export const useTestUserCreation = () => {
 
       console.log(`Creating test ${credentials.userType} with email ${credentials.email}`);
       
+      // Create the user with proper user_metadata
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: credentials.email,
         password: credentials.password,
@@ -90,6 +96,7 @@ export const useTestUserCreation = () => {
 
       console.log('Auth data after signup:', authData);
 
+      // Check if profile was created automatically
       const { data: existingProfile } = await supabase
         .from('profiles')
         .select('*')
@@ -101,8 +108,11 @@ export const useTestUserCreation = () => {
         await createProfileManually(authData.user);
       }
 
+      // Sign out the test user immediately after creation
+      await supabase.auth.signOut();
+
       toast({
-        title: `Test ${credentials.userType} created`,
+        title: `Test ${credentials.userType} created successfully`,
         description: `Email: ${credentials.email} | Password: ${credentials.password}`,
         duration: 10000,
       });
@@ -136,15 +146,19 @@ export const useTestUserCreation = () => {
       const establishmentUser = await createTestUser(testCredentials.establishment);
       const promoterUser = await createTestUser(testCredentials.promoter);
       
+      // Create admin user with proper role assignment
+      const adminUser = await createTestUser(testCredentials.admin);
+      
       console.log('Test user creation results:', {
         individual: individualUser ? 'created' : 'failed',
         establishment: establishmentUser ? 'created' : 'failed',
-        promoter: promoterUser ? 'created' : 'failed'
+        promoter: promoterUser ? 'created' : 'failed',
+        admin: adminUser ? 'created' : 'failed'
       });
       
       toast({
         title: 'Test credentials processed',
-        description: 'Test users have been set up or already exist',
+        description: 'Test users have been set up or already exist. You can now log in with any of the test accounts.',
       });
     } catch (error: any) {
       console.error('Error creating all test users:', error);
