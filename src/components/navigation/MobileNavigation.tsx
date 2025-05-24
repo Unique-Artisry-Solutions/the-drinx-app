@@ -23,10 +23,12 @@ const MobileNavigation: React.FC<ExtendedMobileNavigationProps> = React.memo(({
   const { goToHomePage } = useAppNavigation();
   const { navigationItems, userType: currentUserType } = useNavigation();
   
-  // Memoize the mobile user type conversion
+  // Memoize the mobile user type conversion - handle null/undefined userType
   const mobileUserType = useMemo(() => {
-    return currentUserType === 'guest' ? 'individual' : 
-      (currentUserType === 'admin' ? 'individual' : currentUserType);
+    if (!currentUserType || currentUserType === 'admin') {
+      return 'individual';
+    }
+    return currentUserType;
   }, [currentUserType]);
   
   // Memoize the profile user type for mobile navigation hook
@@ -46,7 +48,8 @@ const MobileNavigation: React.FC<ExtendedMobileNavigationProps> = React.memo(({
   // Memoize the home click handler
   const handleHomeClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
-    goToHomePage(currentUserType === 'guest' ? 'individual' : currentUserType);
+    const targetUserType = !currentUserType ? 'individual' : currentUserType;
+    goToHomePage(targetUserType);
   }, [goToHomePage, currentUserType]);
 
   // Memoize the profile click handler

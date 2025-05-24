@@ -33,22 +33,9 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     console.log('AdminLayout rendering with state:', debugInfo);
   }, [children, isDevModeActive, devMode, isDevelopment, isInitialized, isStateStable, user, session, userType, isLoading, authStable]);
 
-  // Wait for development mode to initialize and stabilize
-  if (!isInitialized || !isStateStable) {
-    console.log('AdminLayout: Waiting for development mode initialization and stabilization');
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-spiritless-pink border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="mt-4 text-gray-600">Initializing...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // EARLY RETURN: In development mode with admin role, bypass all auth checks
-  if (isDevelopment && isDevModeActive && devMode === 'admin') {
-    console.log('AdminLayout: Development mode active with admin role - BYPASSING ALL AUTH CHECKS');
+  // EARLY RETURN FOR DEV MODE: If in development mode with admin role, render immediately without any auth checks
+  if (isDevelopment && isDevModeActive && devMode === 'admin' && isInitialized && isStateStable) {
+    console.log('AdminLayout: Development mode active with admin role - RENDERING DIRECTLY');
     return (
       <div className="h-screen flex flex-col bg-gray-100">
         {/* Top Navigation */}
@@ -68,8 +55,21 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     );
   }
 
+  // Wait for development mode to initialize and stabilize (only for non-dev mode)
+  if (!isDevelopment && (!isInitialized || !isStateStable)) {
+    console.log('AdminLayout: Waiting for development mode initialization and stabilization');
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-spiritless-pink border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="mt-4 text-gray-600">Initializing...</p>
+        </div>
+      </div>
+    );
+  }
+
   // Show loading state while auth is being checked (only if not in dev mode)
-  if (isLoading || !authStable) {
+  if (!isDevelopment && (isLoading || !authStable)) {
     console.log('AdminLayout: Waiting for auth to stabilize');
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -82,7 +82,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   }
 
   // Check if user is properly authenticated as admin (only if not in dev mode)
-  if (!user || !session || userType !== 'admin') {
+  if (!isDevelopment && (!user || !session || userType !== 'admin')) {
     console.log('AdminLayout: Access denied - not authenticated as admin:', {
       hasUser: !!user,
       hasSession: !!session,
