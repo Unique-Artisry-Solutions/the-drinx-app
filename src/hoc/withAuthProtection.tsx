@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthProvider';
-import { checkAdminBypassStatus } from '@/utils/adminBypass';
 import { UserType } from '@/types/navigation';
 
 export interface AuthProtectionOptions {
@@ -33,7 +32,6 @@ export function withAuthProtection<P extends object>(
   const ProtectedComponent: React.FC<P> = (props) => {
     const { user, session, isLoading, authStable, userType } = useAuth();
     const location = useLocation();
-    const { isEnabled: isAdminBypass, userType: bypassUserType } = checkAdminBypassStatus();
     const isAdminAuthenticated = localStorage.getItem('admin_authenticated') === 'true';
     const [shouldRedirect, setShouldRedirect] = useState(false);
     
@@ -41,11 +39,11 @@ export function withAuthProtection<P extends object>(
       // Wait for auth to stabilize
       if (isLoading || !authStable) return;
       
-      // Handle admin bypass case
-      if (isAdminBypass || isAdminAuthenticated) {
-        const effectiveUserType: UserType | null = isAdminAuthenticated ? 'admin' : bypassUserType as UserType;
+      // Handle admin authentication case
+      if (isAdminAuthenticated) {
+        const effectiveUserType: UserType = 'admin';
         
-        if (userTypes.length > 0 && effectiveUserType && !userTypes.includes(effectiveUserType)) {
+        if (userTypes.length > 0 && !userTypes.includes(effectiveUserType)) {
           setShouldRedirect(true);
         } else {
           setShouldRedirect(false);
@@ -75,7 +73,7 @@ export function withAuthProtection<P extends object>(
       
       // All checks passed
       setShouldRedirect(false);
-    }, [user, session, isLoading, authStable, userType, isAdminBypass, bypassUserType, isAdminAuthenticated, location.pathname]);
+    }, [user, session, isLoading, authStable, userType, isAdminAuthenticated, location.pathname]);
     
     // Show loading state while checking auth
     if ((isLoading || !authStable) && showLoadingState) {
@@ -122,16 +120,14 @@ export function withAdminProtection<P extends object>(
   const AdminProtectedComponent: React.FC<P> = (props) => {
     const { user, session, isLoading, authStable } = useAuth();
     const location = useLocation();
-    const { isEnabled: isAdminBypass, userType: bypassUserType } = checkAdminBypassStatus();
     const isAdminAuthenticated = localStorage.getItem('admin_authenticated') === 'true';
     const [shouldRedirect, setShouldRedirect] = useState(false);
     
     useEffect(() => {
       if (isLoading || !authStable) return;
       
-      // Allow access if admin authenticated or admin bypass 
+      // Allow access if admin authenticated or regular user with admin role
       const isAuthorized = isAdminAuthenticated || 
-                           (isAdminBypass && bypassUserType === 'admin') ||
                            ((user && session) && localStorage.getItem('user_type') === 'admin');
       
       if (!isAuthorized) {
@@ -142,7 +138,7 @@ export function withAdminProtection<P extends object>(
       }
       
       setShouldRedirect(false);
-    }, [user, session, isLoading, authStable, isAdminBypass, bypassUserType, isAdminAuthenticated, location.pathname]);
+    }, [user, session, isLoading, authStable, isAdminAuthenticated, location.pathname]);
     
     if (isLoading || !authStable) {
       return (

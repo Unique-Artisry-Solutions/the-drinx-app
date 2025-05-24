@@ -19,12 +19,8 @@ export const clearAllSessions = () => {
   localStorage.removeItem('establishment_name');
   localStorage.removeItem('promoter_name');
   
-  // Don't clear admin items - they have their own logout flow
-  // localStorage.removeItem('admin_authenticated');
-  // localStorage.removeItem('admin_username');
-  // localStorage.removeItem('admin_session_created');
-  
-  // Don't clear admin bypass - it has its own control flow
-  // localStorage.removeItem('admin_bypass');
-  // localStorage.removeItem('bypass_user_id');
+  // Admin items - they have their own logout flow
+  localStorage.removeItem('admin_authenticated');
+  localStorage.removeItem('admin_username');
+  localStorage.removeItem('admin_session_created');
 };

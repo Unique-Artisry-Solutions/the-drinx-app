@@ -3,7 +3,6 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthProvider';
 import { useDebouncedToast } from '@/hooks/useDebouncedToast';
-import { checkAdminBypassStatus } from '@/utils/adminBypass';
 
 interface RouteProtectionOptions {
   requireAuth?: boolean;
@@ -68,12 +67,11 @@ export const useRouteProtection = ({
       clearTimeout(cleanupTimeoutRef.current);
     }
     
-    // Check for admin bypass first
-    const { isEnabled: isAdminBypass, userType: bypassType } = checkAdminBypassStatus();
+    // Check for admin authentication
     const isAdmin = localStorage.getItem('admin_authenticated') === 'true';
     
-    if (isAdminBypass || isAdmin) {
-      console.log('Route protection: Admin bypass/auth detected, allowing access');
+    if (isAdmin) {
+      console.log('Route protection: Admin auth detected, allowing access');
       setIsAuthorized(true);
       
       // Reset protection flag with cleanup
