@@ -24,6 +24,7 @@ interface NavigationContextType {
   userType: UserType | null;
   shouldShowFeature: (featureKey: string) => boolean;
   isPathActive: (path: string) => boolean;
+  isAuthenticated: boolean;
 }
 
 const NavigationContext = createContext<NavigationContextType | undefined>(undefined);
@@ -35,40 +36,51 @@ interface NavigationProviderProps {
 
 export const NavigationProvider: React.FC<NavigationProviderProps> = ({ children, navigationConfig }) => {
   const location = useLocation();
-  const { user, userType, isAuthenticated, isLoading, authStable } = useAuth();
+  const { user, userType: authUserType, isAuthenticated: authIsAuthenticated, isLoading, authStable } = useAuth();
   const isMobile = useIsMobile();
-  const { isDevelopment, isDevModeActive, devMode } = useDevelopmentMode();
+  const { isDevelopment, isDevModeActive, devMode, isInitialized, isStateStable } = useDevelopmentMode();
   const [navigationItems, setNavigationItems] = useState<NavigationItem[]>([]);
   const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbItem[]>([]);
   const [activeTab, setActiveTab] = useState<string | null>(null);
+  
+  // Determine effective user type and authentication state
+  const effectiveUserType: UserType | null = isDevelopment && isDevModeActive && isStateStable 
+    ? devMode 
+    : authUserType;
+  
+  const effectiveIsAuthenticated = isDevelopment && isDevModeActive && isStateStable 
+    ? Boolean(devMode) 
+    : authIsAuthenticated;
   
   // Function to check if a path is active
   const isPathActive = (path: string): boolean => {
     return location.pathname === path || location.pathname.startsWith(path + '/');
   };
   
-  // Rebuild navigation items and breadcrumbs on route changes or auth state changes
+  // Rebuild navigation items and breadcrumbs on route changes or state changes
   useEffect(() => {
-    console.log('NavigationProvider - Recalculating navigation items and breadcrumbs', {
+    console.log('NavigationProvider - Recalculating navigation items', {
       pathname: location.pathname,
-      isAuthenticated,
-      userType,
+      effectiveIsAuthenticated,
+      effectiveUserType,
       isLoading,
       authStable,
       isDevelopment,
       isDevModeActive,
       devMode,
-      isMobile
+      isInitialized,
+      isStateStable
     });
     
-    if (isLoading || !authStable) {
-      console.log('NavigationProvider - Waiting for auth to stabilize');
+    // Wait for auth to stabilize AND for dev mode to initialize
+    if (isLoading || !authStable || !isInitialized) {
+      console.log('NavigationProvider - Waiting for systems to stabilize');
       return;
     }
     
     const newNavigationItems = generateNavigationItems(
-      userType,
-      isAuthenticated,
+      effectiveUserType,
+      effectiveIsAuthenticated,
       navigationConfig
     );
     setNavigationItems(newNavigationItems);
@@ -78,15 +90,29 @@ export const NavigationProvider: React.FC<NavigationProviderProps> = ({ children
     
     const newActiveTab = getActiveTab(location.pathname, newNavigationItems);
     setActiveTab(newActiveTab);
-  }, [location.pathname, isAuthenticated, userType, isLoading, authStable, isDevelopment, isDevModeActive, devMode, isMobile, navigationConfig]);
+  }, [
+    location.pathname, 
+    effectiveIsAuthenticated, 
+    effectiveUserType, 
+    isLoading, 
+    authStable, 
+    isDevelopment, 
+    isDevModeActive, 
+    devMode,
+    isInitialized,
+    isStateStable,
+    isMobile, 
+    navigationConfig
+  ]);
   
   const contextValue: NavigationContextType = {
     navigationItems,
     breadcrumbs,
     activeTab,
-    userType,
-    shouldShowFeature: (featureKey: string) => shouldShowFeature(featureKey, userType),
-    isPathActive
+    userType: effectiveUserType,
+    shouldShowFeature: (featureKey: string) => shouldShowFeature(featureKey, effectiveUserType),
+    isPathActive,
+    isAuthenticated: effectiveIsAuthenticated
   };
   
   return (

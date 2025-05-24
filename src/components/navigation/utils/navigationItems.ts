@@ -1,6 +1,5 @@
 
-import { NavigationType } from '@/types/navigation/NavigationTypes';
-import { UnifiedNavItem, NavigationItem, NavigationConfig, BreadcrumbItem, UserType } from '@/types/navigation';
+import { UserType, NavigationItem, NavigationConfig, BreadcrumbItem } from '@/types/navigation';
 import { 
   guestNavItems, 
   individualNavItems, 
@@ -9,123 +8,117 @@ import {
   adminNavItems 
 } from '@/config/navigation';
 
-// This utility is now simplified since NavigationContext handles the logic
-export const getNavItems = (
-  type: NavigationType,
-  currentUserType: 'individual' | 'establishment' | 'promoter',
-  forceGuestNavigation: boolean,
-  user: any,
-  location: { pathname: string },
-  getProfilePath: () => string
-): UnifiedNavItem[] => {
-  // This function is kept for backward compatibility
-  // The actual navigation logic is now in NavigationContext
-  // Mobile components should use NavigationContext directly
-  return [];
-};
-
-/**
- * Generate navigation items based on user type and authentication status
- */
 export const generateNavigationItems = (
-  userType: UserType | null | undefined,
+  userType: UserType | null,
   isAuthenticated: boolean,
-  navigationConfig?: NavigationConfig
+  config?: NavigationConfig
 ): NavigationItem[] => {
-  // Return custom nav items if provided
-  if (navigationConfig?.customNavItems) {
-    return navigationConfig.customNavItems;
+  console.log('generateNavigationItems called with:', { userType, isAuthenticated });
+  
+  // If custom nav items are provided in config, use them
+  if (config?.customNavItems) {
+    return config.customNavItems;
   }
-
-  // If not authenticated or no user type, return guest navigation
+  
+  // If not authenticated, show guest navigation
   if (!isAuthenticated || !userType) {
     return guestNavItems;
   }
-
-  // Return navigation items based on user type
+  
+  // Return navigation based on user type
   switch (userType) {
-    case 'individual':
-      return individualNavItems;
     case 'establishment':
       return establishmentNavItems;
     case 'promoter':
       return promoterNavItems;
     case 'admin':
       return adminNavItems;
+    case 'individual':
     default:
-      return guestNavItems;
+      return individualNavItems;
   }
 };
 
-/**
- * Generate breadcrumbs from current path and navigation items
- */
 export const generateBreadcrumbs = (
   pathname: string,
   navigationItems: NavigationItem[]
 ): BreadcrumbItem[] => {
   const breadcrumbs: BreadcrumbItem[] = [];
   
-  // Always start with Home
-  breadcrumbs.push({ label: 'Home', href: '/' });
+  // Always include home if not on home page
+  if (pathname !== '/' && pathname !== '/landing') {
+    breadcrumbs.push({
+      label: 'Home',
+      href: '/'
+    });
+  }
   
   // Find matching navigation item
-  const currentItem = navigationItems.find(item => 
+  const matchingItem = navigationItems.find(item => 
     pathname === item.path || pathname.startsWith(item.path + '/')
   );
   
-  if (currentItem && currentItem.path !== '/') {
-    breadcrumbs.push({ label: currentItem.label, href: currentItem.path });
-    
-    // Handle sub-paths
-    if (pathname !== currentItem.path) {
-      const remainingPath = pathname.replace(currentItem.path, '');
-      const pathSegments = remainingPath.split('/').filter(Boolean);
+  if (matchingItem && matchingItem.path !== '/') {
+    breadcrumbs.push({
+      label: matchingItem.label,
+      href: matchingItem.path
+    });
+  }
+  
+  // Handle nested paths
+  const pathSegments = pathname.split('/').filter(Boolean);
+  if (pathSegments.length > 1) {
+    let currentPath = '';
+    pathSegments.forEach((segment, index) => {
+      currentPath += `/${segment}`;
       
-      let currentPath = currentItem.path;
-      pathSegments.forEach(segment => {
-        currentPath += '/' + segment;
-        const formattedLabel = segment.charAt(0).toUpperCase() + segment.slice(1);
-        breadcrumbs.push({ label: formattedLabel, href: currentPath });
-      });
-    }
+      // Skip if we already added this breadcrumb
+      if (breadcrumbs.some(b => b.href === currentPath)) {
+        return;
+      }
+      
+      // Add segment as breadcrumb if it's not the last one
+      if (index < pathSegments.length - 1) {
+        breadcrumbs.push({
+          label: segment.charAt(0).toUpperCase() + segment.slice(1),
+          href: currentPath
+        });
+      }
+    });
   }
   
   return breadcrumbs;
 };
 
-/**
- * Get the active tab based on current path and navigation items
- */
 export const getActiveTab = (
   pathname: string,
   navigationItems: NavigationItem[]
 ): string | null => {
-  const activeItem = navigationItems.find(item => 
+  const activeItem = navigationItems.find(item =>
     pathname === item.path || pathname.startsWith(item.path + '/')
   );
   
-  return activeItem ? activeItem.path : null;
+  return activeItem?.path || null;
 };
 
-/**
- * Check if a feature should be shown based on user type
- */
 export const shouldShowFeature = (
   featureKey: string,
-  userType: UserType | null | undefined
+  userType: UserType | null
 ): boolean => {
-  // Define feature visibility rules
-  const featureRules: Record<string, UserType[]> = {
-    'admin-only': ['admin'],
-    'promoter-only': ['promoter'],
-    'establishment-only': ['establishment'],
-    'authenticated': ['individual', 'establishment', 'promoter', 'admin'],
-    'public': ['individual', 'establishment', 'promoter', 'admin']
-  };
+  // Basic feature access logic - can be expanded based on requirements
+  if (!userType) {
+    return ['explore', 'home', 'landing'].includes(featureKey);
+  }
   
-  if (!userType) return false;
-  
-  const allowedUserTypes = featureRules[featureKey];
-  return allowedUserTypes ? allowedUserTypes.includes(userType) : true;
+  switch (userType) {
+    case 'admin':
+      return true; // Admin can access all features
+    case 'establishment':
+      return ['dashboard', 'events', 'profile', 'analytics'].includes(featureKey);
+    case 'promoter':
+      return ['dashboard', 'events', 'profile', 'analytics', 'promotion'].includes(featureKey);
+    case 'individual':
+    default:
+      return ['explore', 'profile', 'notifications', 'favorites'].includes(featureKey);
+  }
 };

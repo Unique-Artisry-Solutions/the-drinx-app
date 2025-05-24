@@ -7,15 +7,19 @@ import { useDevelopmentMode } from '@/contexts/DevelopmentModeContext';
 
 export const useAppNavigation = () => {
   const navigate = useNavigate();
-  const { userType } = useAuth();
-  const { devMode, isDevModeActive } = useDevelopmentMode();
+  const { userType: authUserType } = useAuth();
+  const { devMode, isDevModeActive, isDevelopment, isStateStable } = useDevelopmentMode();
+
+  // Determine effective user type
+  const effectiveUserType = useMemo(() => {
+    return isDevelopment && isDevModeActive && isStateStable ? devMode : authUserType;
+  }, [isDevelopment, isDevModeActive, isStateStable, devMode, authUserType]);
 
   /**
    * Navigate to the appropriate home page based on userType
    */
   const goToHomePage = useCallback((fallbackUserType?: string) => {
-    // In dev mode, use the dev user type for navigation
-    const confirmedUserType = isDevModeActive ? devMode : (userType || fallbackUserType);
+    const confirmedUserType = effectiveUserType || fallbackUserType;
     console.log("useAppNavigation - Using confirmed user type:", confirmedUserType);
     
     if (!confirmedUserType) {
@@ -43,13 +47,13 @@ export const useAppNavigation = () => {
         navigate('/explore');
         break;
     }
-  }, [navigate, userType, devMode, isDevModeActive]);
+  }, [navigate, effectiveUserType]);
 
   /**
    * Navigate to the profile page based on userType
    */
   const goToProfilePage = useCallback((fallbackUserType?: string) => {
-    const confirmedUserType = isDevModeActive ? devMode : (userType || fallbackUserType || 'individual');
+    const confirmedUserType = effectiveUserType || fallbackUserType || 'individual';
     console.log("useAppNavigation - Profile navigation for user type:", confirmedUserType);
     
     switch (confirmedUserType) {
@@ -67,7 +71,7 @@ export const useAppNavigation = () => {
         navigate('/profile');
         break;
     }
-  }, [navigate, userType, devMode, isDevModeActive]);
+  }, [navigate, effectiveUserType]);
 
   /**
    * Navigate after successful login with proper auth state coordination
@@ -76,8 +80,8 @@ export const useAppNavigation = () => {
     console.log("useAppNavigation - Post-login navigation:", { 
       fallbackUserType, 
       savedRedirect,
-      userType,
-      devMode,
+      effectiveUserType,
+      isDevelopment,
       isDevModeActive
     });
     
@@ -90,7 +94,7 @@ export const useAppNavigation = () => {
     }
     
     goToHomePage(fallbackUserType);
-  }, [navigate, goToHomePage]);
+  }, [navigate, goToHomePage, effectiveUserType, isDevelopment, isDevModeActive]);
 
   const goToLoginPage = useCallback(() => {
     console.log("useAppNavigation - Redirecting to login page");
@@ -157,7 +161,7 @@ export const useAppNavigation = () => {
     goToEditPage,
     goToRoute,
     navigate,
-    userType: isDevModeActive ? devMode : userType
+    userType: effectiveUserType
   }), [
     goToHomePage, 
     goToProfilePage, 
@@ -168,9 +172,7 @@ export const useAppNavigation = () => {
     goToEditPage,
     goToRoute,
     navigate,
-    userType,
-    devMode,
-    isDevModeActive
+    effectiveUserType
   ]);
 };
 

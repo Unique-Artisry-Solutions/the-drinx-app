@@ -21,23 +21,26 @@ const MobileNavigation: React.FC<ExtendedMobileNavigationProps> = React.memo(({
   const location = useLocation();
   const { user } = useAuth();
   const { goToHomePage } = useAppNavigation();
-  const { navigationItems, userType: currentUserType } = useNavigation();
+  const { navigationItems, userType: navigationUserType, isAuthenticated } = useNavigation();
+  
+  // Use the navigation context's effective user type
+  const effectiveUserType = navigationUserType || 'individual';
   
   // Memoize the mobile user type conversion - handle null/undefined userType
   const mobileUserType = useMemo(() => {
-    if (!currentUserType || currentUserType === 'admin') {
+    if (!effectiveUserType || effectiveUserType === 'admin') {
       return 'individual';
     }
-    return currentUserType;
-  }, [currentUserType]);
+    return effectiveUserType;
+  }, [effectiveUserType]);
   
   // Memoize the profile user type for mobile navigation hook
   const profileUserType = useMemo((): 'individual' | 'establishment' | 'promoter' | 'admin' => {
-    if (currentUserType === 'admin') return 'admin';
-    if (currentUserType === 'establishment') return 'establishment';
-    if (currentUserType === 'promoter') return 'promoter';
+    if (effectiveUserType === 'admin') return 'admin';
+    if (effectiveUserType === 'establishment') return 'establishment';
+    if (effectiveUserType === 'promoter') return 'promoter';
     return 'individual';
-  }, [currentUserType]);
+  }, [effectiveUserType]);
   
   const {
     expanded,
@@ -48,9 +51,9 @@ const MobileNavigation: React.FC<ExtendedMobileNavigationProps> = React.memo(({
   // Memoize the home click handler
   const handleHomeClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
-    const targetUserType = !currentUserType ? 'individual' : currentUserType;
+    const targetUserType = !effectiveUserType ? 'individual' : effectiveUserType;
     goToHomePage(targetUserType);
-  }, [goToHomePage, currentUserType]);
+  }, [goToHomePage, effectiveUserType]);
 
   // Memoize the profile click handler
   const handleProfileClick = useCallback((item: any, e: React.MouseEvent) => {
@@ -64,9 +67,9 @@ const MobileNavigation: React.FC<ExtendedMobileNavigationProps> = React.memo(({
   const shouldShowProfileItems = useMemo(() => {
     return type === 'user' && 
       ((location.pathname === '/profile' || location.pathname.startsWith('/profile/')) ||
-       (currentUserType === 'establishment' && 
+       (effectiveUserType === 'establishment' && 
         (location.pathname === '/establishment' || location.pathname.startsWith('/establishment/'))));
-  }, [type, location.pathname, currentUserType]);
+  }, [type, location.pathname, effectiveUserType]);
 
   // Memoize hidden nav paths
   const hiddenNavPaths = useMemo(() => ['/admin/login'], []);

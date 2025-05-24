@@ -60,6 +60,14 @@ export type UserType = 'individual' | 'establishment' | 'promoter' | 'admin';
 export type DatabaseRole = 'individual' | 'establishment' | 'promoter';
 
 /**
+ * Breadcrumb item interface for navigation trails
+ */
+export interface BreadcrumbItem {
+  label: string;
+  href?: string;
+}
+
+/**
  * Configuration interface for navigation
  */
 export interface NavigationConfig {
