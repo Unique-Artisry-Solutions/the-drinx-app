@@ -26,7 +26,7 @@ const MobileNavigation: React.FC<ExtendedMobileNavigationProps> = ({
     expanded,
     toggleExpand,
     getProfilePath,
-  } = useMobileNavigation(type, userType, forceGuestNavigation);
+  } = useMobileNavigation(type, userType === 'admin' ? 'individual' : userType, forceGuestNavigation);
 
   // Create a handleHomeClick that uses the navigation hook and prevents default
   const handleHomeClick = (e: React.MouseEvent) => {
@@ -57,7 +57,7 @@ const MobileNavigation: React.FC<ExtendedMobileNavigationProps> = ({
     <>
       <ProfileMenu 
         expanded={shouldShowProfileItems && expanded} 
-        userType={currentUserType} 
+        userType={currentUserType === 'admin' ? 'individual' : currentUserType} 
       />
       <NavigationBar
         navItems={navigationItems}

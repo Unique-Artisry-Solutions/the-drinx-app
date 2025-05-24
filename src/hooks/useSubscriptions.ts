@@ -12,7 +12,7 @@ export const useSubscriptions = (promoterId?: string) => {
     queryKey: ['subscriptions', promoterId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('promoter_subscriptions')
+        .from('promoter_followers')
         .select('*')
         .eq('promoter_id', promoterId);
 
@@ -29,15 +29,14 @@ export const useSubscriptions = (promoterId?: string) => {
       if (!user) return [];
       
       const { data, error } = await supabase
-        .from('promoter_subscriptions')
+        .from('promoter_followers')
         .select(`
           id,
           promoter_id,
           subscriber_id,
-          tier_id,
           subscription_start,
           subscription_end,
-          status,
+          follow_status,
           promoter:promoter_id (
             id,
             display_name,
@@ -72,11 +71,10 @@ export const useSubscriptions = (promoterId?: string) => {
       if (!user) throw new Error('User not authenticated');
 
       const { data, error } = await supabase
-        .from('promoter_subscriptions')
+        .from('promoter_followers')
         .insert({
           subscriber_id: user.id,
-          promoter_id: promoterId,
-          tier_id: tierId
+          promoter_id: promoterId
         })
         .select()
         .single();
@@ -104,7 +102,7 @@ export const useSubscriptions = (promoterId?: string) => {
   const unsubscribe = useMutation({
     mutationFn: async (subscriptionId: string) => {
       const { error } = await supabase
-        .from('promoter_subscriptions')
+        .from('promoter_followers')
         .delete()
         .eq('id', subscriptionId);
 
