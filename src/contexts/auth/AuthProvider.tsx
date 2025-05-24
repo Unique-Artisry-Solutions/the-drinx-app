@@ -1,27 +1,14 @@
+
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
-import { User, Session } from '@supabase/supabase-js';
+import { Session, User, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
-import { useToast } from '@/hooks/use-toast';
-import { useAppNavigation } from '@/hooks/useAppNavigation';
-import { authService } from '@/services/AuthService';
-import { AuthContextType, AuthState, AuthActions } from './types';
+import { AuthState, AuthActions, AuthContextType } from './types';
 import { debouncedToast } from '@/utils/debouncedToast';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
-
-interface AuthProviderProps {
-  children: React.ReactNode;
-}
-
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // Core auth state
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -29,315 +16,197 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [authStable, setAuthStable] = useState(false);
   const [authError, setAuthError] = useState<Error | null>(null);
   const [isVerificationEmailSent, setIsVerificationEmailSent] = useState(false);
+  
+  // New stabilization states
   const [userType, setUserType] = useState<'individual' | 'establishment' | 'promoter' | 'admin' | null>(null);
+  const [userTypeLoading, setUserTypeLoading] = useState(false);
   const [navigationReady, setNavigationReady] = useState(false);
   
-  const { toast } = useToast();
-  const { goToHomePage } = useAppNavigation();
-  
-  // Refs for cleanup and debouncing
+  // Refs for debouncing and cleanup
   const authStateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const userTypeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const navigationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastAuthEventRef = useRef<string>('');
-  const userTypeLoadingRef = useRef(false);
-
+  
   // Debounced auth state handler
-  const debouncedAuthStateChange = useCallback((event: string, newSession: Session | null) => {
-    // Clear any existing timeout
+  const handleAuthStateChange = useCallback((event: string, newSession: Session | null) => {
+    console.log("AuthProvider - Auth state change:", event, !!newSession);
+    
+    // Clear previous timeout
     if (authStateTimeoutRef.current) {
       clearTimeout(authStateTimeoutRef.current);
     }
-
+    
     // Debounce rapid auth state changes
     authStateTimeoutRef.current = setTimeout(() => {
-      // Skip duplicate events
+      // Prevent duplicate processing of same event
       const eventKey = `${event}-${newSession?.user?.id || 'null'}`;
       if (lastAuthEventRef.current === eventKey) {
+        console.log("AuthProvider - Duplicate auth event ignored:", eventKey);
         return;
       }
       lastAuthEventRef.current = eventKey;
-
-      console.log("AuthProvider - Debounced auth state change:", event, { 
-        userId: newSession?.user?.id,
-        hasSession: !!newSession 
-      });
-
-      setSession(newSession);
-      setUser(newSession?.user || null);
-      setIsEmailVerified(newSession?.user ? (newSession.user.email_confirmed_at !== null) : false);
-      setAuthError(null);
       
-      // Reset navigation readiness
-      setNavigationReady(false);
+      setSession(newSession);
+      setUser(newSession?.user ?? null);
+      setIsEmailVerified(newSession?.user?.email_confirmed_at ? true : false);
       
       if (newSession?.user) {
-        // User logged in - determine user type with debouncing
-        handleUserTypeLoad(newSession.user);
+        // User logged in - determine user type
+        setUserTypeLoading(true);
+        setNavigationReady(false);
+        determineUserType(newSession.user.id);
       } else {
-        // User logged out - clear states
+        // User logged out
         setUserType(null);
+        setUserTypeLoading(false);
         setNavigationReady(true);
         localStorage.removeItem('user_type');
-        localStorage.removeItem('user_authenticated');
-        localStorage.removeItem('user_email');
-        localStorage.removeItem('user_username');
       }
+      
+      setAuthError(null);
     }, 300); // 300ms debounce
   }, []);
-
-  // Handle user type loading with proper state management
-  const handleUserTypeLoad = useCallback(async (user: User) => {
-    if (userTypeLoadingRef.current) {
-      console.log("AuthProvider - User type loading already in progress, skipping");
-      return;
+  
+  // User type determination with proper error handling
+  const determineUserType = useCallback(async (userId: string) => {
+    if (userTypeTimeoutRef.current) {
+      clearTimeout(userTypeTimeoutRef.current);
     }
-
-    userTypeLoadingRef.current = true;
     
     try {
-      console.log("AuthProvider - Loading user type for user:", user.id);
+      console.log("AuthProvider - Determining user type for:", userId);
       
-      // Clear any existing timeout
-      if (userTypeTimeoutRef.current) {
-        clearTimeout(userTypeTimeoutRef.current);
-      }
-
-      // Check metadata first for faster response
-      const metadataUserType = user.user_metadata?.user_type;
-      if (metadataUserType && ['individual', 'establishment', 'promoter', 'admin'].includes(metadataUserType)) {
-        console.log("AuthProvider - Using user type from metadata:", metadataUserType);
-        setUserType(metadataUserType);
-        localStorage.setItem('user_type', metadataUserType);
-        
-        // Set navigation ready after a short delay to ensure state is stable
-        setTimeout(() => {
-          setNavigationReady(true);
-        }, 100);
-        
-        userTypeLoadingRef.current = false;
+      // Check if user is admin (special handling since not in enum)
+      const adminEmails = ['admin@spiritless.app', 'admin@example.com'];
+      const { data: userData } = await supabase.auth.getUser();
+      
+      if (userData.user?.email && adminEmails.includes(userData.user.email)) {
+        console.log("AuthProvider - User identified as admin");
+        setUserType('admin');
+        setUserTypeLoading(false);
+        setNavigationReady(true);
+        localStorage.setItem('user_type', 'admin');
         return;
       }
-
-      // Fallback to database lookup with timeout
-      userTypeTimeoutRef.current = setTimeout(async () => {
-        try {
-          const { data: userRoles, error } = await supabase
-            .from('user_roles')
-            .select('role')
-            .eq('user_id', user.id)
-            .eq('is_active', true)
-            .maybeSingle();
-
-          if (error) {
-            console.error("AuthProvider - Error fetching user role:", error);
-            // Default to individual on error
-            setUserType('individual');
-            localStorage.setItem('user_type', 'individual');
-          } else {
-            const roleType = userRoles?.role || 'individual';
-            console.log("AuthProvider - User type from database:", roleType);
-            setUserType(roleType);
-            localStorage.setItem('user_type', roleType);
-          }
-        } catch (error) {
-          console.error("AuthProvider - Unexpected error fetching user role:", error);
-          setUserType('individual');
-          localStorage.setItem('user_type', 'individual');
-        } finally {
-          // Set navigation ready after user type is determined
-          setTimeout(() => {
-            setNavigationReady(true);
-          }, 100);
-          userTypeLoadingRef.current = false;
-        }
-      }, 200); // Small delay to allow for batch operations
       
-    } catch (error) {
-      console.error("AuthProvider - Error in handleUserTypeLoad:", error);
+      // Query user roles for regular users
+      const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .eq('is_active', true)
+        .maybeSingle();
+        
+      if (roleError) {
+        console.error("AuthProvider - Error fetching user role:", roleError);
+        throw roleError;
+      }
+      
+      const determinedUserType = roleData?.role || 'individual';
+      console.log("AuthProvider - User type determined:", determinedUserType);
+      
+      setUserType(determinedUserType);
+      localStorage.setItem('user_type', determinedUserType);
+      
+      // Delay to ensure state is stable before allowing navigation
+      userTypeTimeoutRef.current = setTimeout(() => {
+        setUserTypeLoading(false);
+        setNavigationReady(true);
+        console.log("AuthProvider - Navigation ready, userType:", determinedUserType);
+      }, 100);
+      
+    } catch (error: any) {
+      console.error("AuthProvider - Failed to determine user type:", error);
+      
+      // Fallback to individual user type
       setUserType('individual');
       localStorage.setItem('user_type', 'individual');
-      setTimeout(() => {
-        setNavigationReady(true);
-      }, 100);
-      userTypeLoadingRef.current = false;
+      setUserTypeLoading(false);
+      setNavigationReady(true);
+      
+      debouncedToast.error(
+        'User Type Error', 
+        'Could not determine account type. Defaulting to individual user.',
+        5000
+      );
     }
   }, []);
-
-  // Handle navigation when ready
-  useEffect(() => {
-    if (navigationReady && authStable && !isLoading) {
-      // Clear any existing navigation timeout
-      if (navigationTimeoutRef.current) {
-        clearTimeout(navigationTimeoutRef.current);
-      }
-
-      // Only navigate if we have a user and are not already on the correct page
-      if (user && userType) {
-        const savedRedirect = localStorage.getItem('auth_redirect');
-        
-        if (savedRedirect) {
-          console.log("AuthProvider - Navigating to saved redirect:", savedRedirect);
-          localStorage.removeItem('auth_redirect');
-          // Don't use goToHomePage for saved redirects - let the app handle it naturally
-          return;
-        }
-
-        // Small delay to ensure all state updates are complete
-        navigationTimeoutRef.current = setTimeout(() => {
-          console.log("AuthProvider - Navigation ready, redirecting user type:", userType);
-          goToHomePage(userType);
-        }, 150);
-      }
-    }
-  }, [navigationReady, authStable, isLoading, user, userType, goToHomePage]);
 
   // Initialize auth state
   useEffect(() => {
-    let isMounted = true;
+    console.log("AuthProvider - Initializing...");
     
-    console.log("AuthProvider - Initializing auth state");
+    // Set up auth listener first
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthStateChange);
     
-    // Set up auth state listener first
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (!isMounted) return;
-      debouncedAuthStateChange(event, session);
-    });
-
-    // Then check for existing session
+    // Get initial session
     const initializeAuth = async () => {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
+        const { data: { session: initialSession }, error } = await supabase.auth.getSession();
         
         if (error) {
-          console.error("AuthProvider - Error getting session:", error);
+          console.error("AuthProvider - Error getting initial session:", error);
           setAuthError(error);
-        } else if (isMounted) {
-          console.log("AuthProvider - Initial session check:", { 
-            hasSession: !!session, 
-            userId: session?.user?.id 
-          });
+        } else {
+          console.log("AuthProvider - Initial session:", !!initialSession);
           
-          if (session) {
-            debouncedAuthStateChange('INITIAL_SESSION', session);
+          if (initialSession) {
+            handleAuthStateChange('INITIAL_SESSION', initialSession);
           } else {
-            // No session - set states directly
-            setSession(null);
-            setUser(null);
-            setUserType(null);
             setNavigationReady(true);
           }
         }
       } catch (error: any) {
-        console.error("AuthProvider - Unexpected error during initialization:", error);
-        if (isMounted) {
-          setAuthError(error);
-        }
+        console.error("AuthProvider - Auth initialization error:", error);
+        setAuthError(error);
+        setNavigationReady(true);
       } finally {
-        if (isMounted) {
-          setIsLoading(false);
-          setAuthStable(true);
-        }
+        setIsLoading(false);
+        setAuthStable(true);
       }
     };
-
+    
     initializeAuth();
-
+    
     // Cleanup function
     return () => {
-      isMounted = false;
       subscription.unsubscribe();
-      
-      // Clear all timeouts
       if (authStateTimeoutRef.current) {
         clearTimeout(authStateTimeoutRef.current);
       }
       if (userTypeTimeoutRef.current) {
         clearTimeout(userTypeTimeoutRef.current);
       }
-      if (navigationTimeoutRef.current) {
-        clearTimeout(navigationTimeoutRef.current);
-      }
-      
-      // Reset refs
-      userTypeLoadingRef.current = false;
-      lastAuthEventRef.current = '';
     };
-  }, [debouncedAuthStateChange]);
+  }, [handleAuthStateChange]);
 
-  const signIn = async (email: string, password: string) => {
-    setIsLoading(true);
-    setAuthError(null);
-    setNavigationReady(false);
-
+  // Auth actions
+  const signIn = useCallback(async (email: string, password: string) => {
     try {
-      console.log("AuthProvider - Attempting sign in for:", email);
-      
-      const { error, user: signedInUser, session: signedInSession } = await authService.signIn(email, password);
-      
+      setAuthError(null);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
       if (error) {
-        console.error("AuthProvider - Sign in error:", error);
         setAuthError(error);
-        
-        debouncedToast.error(
-          'Sign in failed',
-          error.message || 'Please check your credentials and try again.',
-          { debounceMs: 5000 }
-        );
-        
+        debouncedToast.error('Login Failed', error.message, 5000);
         return { error, data: null };
       }
 
-      if (!signedInUser || !signedInSession) {
-        const noUserError = new Error('No user returned from sign in');
-        setAuthError(noUserError);
-        
-        debouncedToast.error(
-          'Sign in failed',
-          'No user data received. Please try again.',
-          { debounceMs: 5000 }
-        );
-        
-        return { error: noUserError, data: null };
-      }
-
-      console.log("AuthProvider - Sign in successful for user:", signedInUser.id);
-      
-      // Update localStorage immediately
-      authService.updateLocalStorage(signedInUser);
-      
-      debouncedToast.success(
-        'Welcome back!',
-        'You have been signed in successfully.',
-        { debounceMs: 3000 }
-      );
-
-      return { error: null, data: { user: signedInUser, session: signedInSession } };
-      
+      debouncedToast.success('Welcome Back', 'Successfully logged in!', 3000);
+      return { error: null, data };
     } catch (error: any) {
-      console.error("AuthProvider - Unexpected sign in error:", error);
       setAuthError(error);
-      
-      debouncedToast.error(
-        'Sign in failed',
-        'An unexpected error occurred. Please try again.',
-        { debounceMs: 5000 }
-      );
-      
+      debouncedToast.error('Login Error', error.message, 5000);
       return { error, data: null };
-    } finally {
-      setIsLoading(false);
     }
-  };
+  }, []);
 
-  const signUp = async (formData: any) => {
-    setIsLoading(true);
-    setAuthError(null);
-    setIsVerificationEmailSent(false);
-
+  const signUp = useCallback(async (formData: any) => {
     try {
-      console.log("AuthProvider - Attempting sign up for:", formData.email);
-      
+      setAuthError(null);
       const { data, error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -345,305 +214,178 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           data: {
             name: formData.name,
             username: formData.username,
-            user_type: formData.userType,
+            user_type: formData.userType || 'individual',
             phone: formData.phone
           }
         }
       });
 
       if (error) {
-        console.error("AuthProvider - Sign up error:", error);
         setAuthError(error);
-        
-        debouncedToast.error(
-          'Sign up failed',
-          error.message || 'Please try again.',
-          { debounceMs: 5000 }
-        );
-        
+        debouncedToast.error('Signup Failed', error.message, 5000);
         return { error, data: null };
       }
 
-      if (data.user && !data.session) {
-        console.log("AuthProvider - Sign up successful, verification email sent");
-        setIsVerificationEmailSent(true);
-        
-        debouncedToast.info(
-          'Check your email',
-          'Please verify your email address to complete registration.',
-          { debounceMs: 3000 }
-        );
-      } else if (data.session) {
-        console.log("AuthProvider - Sign up successful with immediate session");
-        
-        debouncedToast.success(
-          'Welcome!',
-          'Your account has been created successfully.',
-          { debounceMs: 3000 }
-        );
-      }
-
+      debouncedToast.success('Account Created', 'Please check your email to verify your account.', 5000);
       return { error: null, data };
-      
     } catch (error: any) {
-      console.error("AuthProvider - Unexpected sign up error:", error);
       setAuthError(error);
-      
-      debouncedToast.error(
-        'Sign up failed',
-        'An unexpected error occurred. Please try again.',
-        { debounceMs: 5000 }
-      );
-      
+      debouncedToast.error('Signup Error', error.message, 5000);
       return { error, data: null };
-    } finally {
-      setIsLoading(false);
     }
-  };
+  }, []);
 
-  const signOut = async () => {
-    setIsLoading(true);
-    setAuthError(null);
-    setNavigationReady(false);
-
+  const signOut = useCallback(async () => {
     try {
-      console.log("AuthProvider - Attempting sign out");
-      
-      const { error } = await authService.signOut();
-      
-      if (error) {
-        console.error("AuthProvider - Sign out error:", error);
-        setAuthError(error);
-        
-        debouncedToast.error(
-          'Sign out failed',
-          error.message || 'Please try again.',
-          { debounceMs: 5000 }
-        );
-        
-        return;
-      }
-
-      console.log("AuthProvider - Sign out successful");
-      
-      // Clear all auth-related state
-      setSession(null);
-      setUser(null);
-      setUserType(null);
-      setIsEmailVerified(false);
-      setIsVerificationEmailSent(false);
-      setNavigationReady(true);
-      
-      debouncedToast.success(
-        'Signed out',
-        'You have been signed out successfully.',
-        { debounceMs: 3000 }
-      );
-      
-    } catch (error: any) {
-      console.error("AuthProvider - Unexpected sign out error:", error);
-      setAuthError(error);
-      
-      debouncedToast.error(
-        'Sign out failed',
-        'An unexpected error occurred during sign out.',
-        { debounceMs: 5000 }
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const refreshSession = async () => {
-    try {
-      console.log("AuthProvider - Refreshing session");
-      
-      const result = await authService.refreshSession();
-      
-      if (result.error) {
-        console.error("AuthProvider - Session refresh error:", result.error);
-        setAuthError(result.error);
-        return { isEmailVerified: false };
-      }
-
-      if (result.session && result.user) {
-        console.log("AuthProvider - Session refresh successful");
-        // Don't update state here - let onAuthStateChange handle it
-        return { isEmailVerified: result.isEmailVerified };
-      }
-
-      return { isEmailVerified: false };
-      
-    } catch (error: any) {
-      console.error("AuthProvider - Unexpected session refresh error:", error);
-      setAuthError(error);
-      return { isEmailVerified: false };
-    }
-  };
-
-  const recoverAuthState = async () => {
-    try {
-      console.log("AuthProvider - Attempting auth state recovery");
-      setIsLoading(true);
       setAuthError(null);
       
-      const success = await authService.recoverFromStuckState({ 
-        silent: false,
-        autoRecovery: false 
-      });
+      // Clear local state immediately
+      setUserType(null);
+      setNavigationReady(false);
+      localStorage.removeItem('user_type');
+      localStorage.removeItem('auth_redirect');
       
-      if (success) {
-        debouncedToast.success(
-          'Session recovered',
-          'Your authentication state has been reset.',
-          { debounceMs: 3000 }
-        );
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        setAuthError(error);
+        debouncedToast.error('Logout Error', error.message, 5000);
+      } else {
+        debouncedToast.info('Logged Out', 'You have been successfully logged out.', 3000);
+      }
+    } catch (error: any) {
+      setAuthError(error);
+      debouncedToast.error('Logout Error', error.message, 5000);
+    }
+  }, []);
+
+  const refreshSession = useCallback(async () => {
+    try {
+      setAuthError(null);
+      const { data, error } = await supabase.auth.refreshSession();
+      
+      if (error) {
+        setAuthError(error);
+        throw error;
       }
       
-      return success;
+      const isEmailVerified = data.session?.user?.email_confirmed_at ? true : false;
+      setIsEmailVerified(isEmailVerified);
       
+      return { isEmailVerified };
     } catch (error: any) {
-      console.error("AuthProvider - Auth recovery error:", error);
       setAuthError(error);
+      debouncedToast.error('Session Error', 'Failed to refresh session.', 5000);
+      return { isEmailVerified: false };
+    }
+  }, []);
+
+  const recoverAuthState = useCallback(async () => {
+    try {
+      setAuthError(null);
+      setIsLoading(true);
       
-      debouncedToast.error(
-        'Recovery failed',
-        'Unable to recover authentication state.',
-        { debounceMs: 5000 }
-      );
+      // Clear any existing timeouts
+      if (authStateTimeoutRef.current) {
+        clearTimeout(authStateTimeoutRef.current);
+      }
+      if (userTypeTimeoutRef.current) {
+        clearTimeout(userTypeTimeoutRef.current);
+      }
       
+      // Force refresh session
+      const { data, error } = await supabase.auth.refreshSession();
+      
+      if (error) {
+        console.error("AuthProvider - Recovery failed:", error);
+        debouncedToast.error('Recovery Failed', 'Could not recover session. Please log in again.', 5000);
+        return false;
+      }
+      
+      debouncedToast.success('Session Recovered', 'Authentication session has been restored.', 3000);
+      return true;
+    } catch (error: any) {
+      console.error("AuthProvider - Recovery error:", error);
+      setAuthError(error);
+      debouncedToast.error('Recovery Error', error.message, 5000);
       return false;
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   const sendVerificationEmail = useCallback(async (email: string) => {
     try {
-      console.log("Attempting to send verification email to:", email);
-      
+      setAuthError(null);
       const { error } = await supabase.auth.resend({
         type: 'signup',
         email: email
       });
 
       if (error) {
-        console.error("Error sending verification email:", error);
-        throw error;
+        setAuthError(error);
+        debouncedToast.error('Verification Error', error.message, 5000);
+      } else {
+        setIsVerificationEmailSent(true);
+        debouncedToast.success('Email Sent', 'Verification email has been sent.', 3000);
       }
-
-      console.log("Verification email sent successfully");
-      setIsVerificationEmailSent(true);
-      
-      toast({
-        title: "Verification email sent",
-        description: "Please check your email and click the verification link.",
-      });
     } catch (error: any) {
-      console.error("Failed to send verification email:", error);
-      toast({
-        title: "Failed to send verification email",
-        description: error.message || "Please try again later.",
-        variant: "destructive",
-      });
-      throw error;
+      setAuthError(error);
+      debouncedToast.error('Verification Error', error.message, 5000);
     }
   }, []);
 
-  const updateUserProfile = async (data: any) => {
-    setIsLoading(true);
-    setAuthError(null);
-
+  const updateUserProfile = useCallback(async (data: any) => {
     try {
-      console.log("AuthProvider - Updating user profile");
-      
+      setAuthError(null);
       const { error } = await supabase.auth.updateUser({
         data: data
       });
 
       if (error) {
-        console.error("AuthProvider - Update profile error:", error);
         setAuthError(error);
-        toast({
-          title: 'Failed to update profile',
-          description: error.message,
-          variant: 'destructive',
-        });
-        return;
+        debouncedToast.error('Update Failed', error.message, 5000);
+      } else {
+        debouncedToast.success('Profile Updated', 'Your profile has been updated successfully.', 3000);
       }
-
-      console.log("AuthProvider - Profile updated successfully");
-      toast({
-        title: 'Profile updated',
-        description: 'Your profile has been updated successfully.',
-      });
-      
     } catch (error: any) {
-      console.error("AuthProvider - Unexpected update profile error:", error);
       setAuthError(error);
-      toast({
-        title: 'Failed to update profile',
-        description: error.message || 'An unexpected error occurred',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
+      debouncedToast.error('Update Error', error.message, 5000);
     }
-  };
+  }, []);
 
-  const updatePassword = async (newPassword: string) => {
-    setIsLoading(true);
-    setAuthError(null);
-
+  const updatePassword = useCallback(async (newPassword: string) => {
     try {
-      console.log("AuthProvider - Updating password");
-      
+      setAuthError(null);
       const { error } = await supabase.auth.updateUser({
         password: newPassword
       });
 
       if (error) {
-        console.error("AuthProvider - Update password error:", error);
         setAuthError(error);
-        toast({
-          title: 'Failed to update password',
-          description: error.message,
-          variant: 'destructive',
-        });
-        return;
+        debouncedToast.error('Password Update Failed', error.message, 5000);
+      } else {
+        debouncedToast.success('Password Updated', 'Your password has been updated successfully.', 3000);
       }
-
-      console.log("AuthProvider - Password updated successfully");
-      toast({
-        title: 'Password updated',
-        description: 'Your password has been updated successfully.',
-      });
-      
     } catch (error: any) {
-      console.error("AuthProvider - Unexpected update password error:", error);
       setAuthError(error);
-      toast({
-        title: 'Failed to update password',
-        description: error.message || 'An unexpected error occurred',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
+      debouncedToast.error('Password Error', error.message, 5000);
     }
-  };
+  }, []);
 
-  const contextValue: AuthContextType = {
+  // Context value
+  const value: AuthContextType = {
     // State
     user,
     session,
-    isAuthenticated: !!user && !!session,
     isLoading,
     isEmailVerified,
-    isVerificationEmailSent,
-    authError,
     authStable,
+    authError,
+    isVerificationEmailSent,
+    isAuthenticated: !!user && !!session,
     userType,
-    navigationReady, // New state for navigation control
+    navigationReady,
     
     // Actions
     signIn,
@@ -657,7 +399,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={contextValue}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
@@ -665,7 +407,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
