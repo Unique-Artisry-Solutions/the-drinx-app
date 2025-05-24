@@ -35,9 +35,10 @@ const AdminRouteHandler: React.FC = () => {
     );
   }
   
-  // DEVELOPMENT MODE BYPASS: If dev mode is active with admin role, redirect to dashboard
+  // DEVELOPMENT MODE BYPASS: If dev mode is active with admin role, redirect ONLY ONCE
   if (isDevelopment && isDevModeActive && devMode === 'admin') {
     console.log('AdminRouteHandler: Development mode bypass active - redirecting to admin dashboard');
+    // Use replace to prevent back button issues
     return <Navigate to="/admin/system-breakdown" replace />;
   }
   

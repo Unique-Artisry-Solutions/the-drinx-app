@@ -30,6 +30,7 @@ export const DevelopmentModeProvider: React.FC<{ children: React.ReactNode }> = 
   const devModeRef = useRef<DevUserType>(null);
   const isInitializedRef = useRef<boolean>(false);
   const stateStableRef = useRef<boolean>(false);
+  const lastProcessedUrl = useRef<string>('');
 
   // Initialize development mode detection ONCE at app startup
   useEffect(() => {
@@ -86,9 +87,18 @@ export const DevelopmentModeProvider: React.FC<{ children: React.ReactNode }> = 
     
   }, []); // Empty dependency array - run only once
 
-  // Handle URL parameters on route changes (only after initialization)
+  // Handle URL parameters on route changes (only after initialization) - DEBOUNCED
   useEffect(() => {
     if (!isInitializedRef.current || !isDevelopmentRef.current) return;
+    
+    const currentUrl = location.pathname + location.search;
+    
+    // Prevent processing the same URL multiple times
+    if (lastProcessedUrl.current === currentUrl) {
+      return;
+    }
+    
+    lastProcessedUrl.current = currentUrl;
     
     const searchParams = new URLSearchParams(location.search);
     const devModeParam = searchParams.get('dev_mode');
@@ -98,10 +108,14 @@ export const DevelopmentModeProvider: React.FC<{ children: React.ReactNode }> = 
       if (validTypes.includes(devModeParam as DevUserType)) {
         const userType = devModeParam as DevUserType;
         console.log('DevelopmentModeProvider - Setting dev mode from URL parameter:', userType);
-        switchToUserType(userType);
+        
+        // Only switch if different from current mode
+        if (devModeRef.current !== userType) {
+          switchToUserType(userType);
+        }
       }
     }
-  }, [location.search]);
+  }, [location.search]); // Only depend on search params
 
   const navigateToUserTypeDashboard = useCallback((userType: DevUserType) => {
     // Clean up URL parameters first
@@ -111,28 +125,42 @@ export const DevelopmentModeProvider: React.FC<{ children: React.ReactNode }> = 
 
     console.log('DevelopmentModeProvider - Navigating to dashboard for:', userType);
 
-    // Navigate to appropriate dashboard
+    // Navigate to appropriate dashboard ONLY if not already there
+    const currentPath = location.pathname;
+    let targetPath = '';
+    
     switch (userType) {
       case 'establishment':
-        navigate('/establishment/dashboard');
+        targetPath = '/establishment/dashboard';
         break;
       case 'promoter':
-        navigate('/promoter/dashboard');
+        targetPath = '/promoter/dashboard';
         break;
       case 'admin':
-        navigate('/admin/system-breakdown');
+        targetPath = '/admin/system-breakdown';
         break;
       case 'individual':
-        navigate('/explore');
+        targetPath = '/explore';
         break;
       default:
-        navigate('/landing');
+        targetPath = '/landing';
     }
-  }, [navigate]);
+    
+    // Only navigate if we're not already at the target
+    if (currentPath !== targetPath) {
+      navigate(targetPath, { replace: true });
+    }
+  }, [navigate, location.pathname]);
 
   const switchToUserType = useCallback((userType: DevUserType) => {
     if (!isDevelopmentRef.current) {
       console.log('DevelopmentModeProvider - Not in development mode, ignoring user type switch');
+      return;
+    }
+    
+    // Prevent switching to the same user type
+    if (devModeRef.current === userType) {
+      console.log('DevelopmentModeProvider - Already in mode:', userType, 'skipping switch');
       return;
     }
     
@@ -147,17 +175,21 @@ export const DevelopmentModeProvider: React.FC<{ children: React.ReactNode }> = 
       navigateToUserTypeDashboard(userType);
     } else {
       localStorage.removeItem('dev_user_type');
-      navigate('/landing');
+      if (location.pathname !== '/landing') {
+        navigate('/landing', { replace: true });
+      }
     }
-  }, [navigateToUserTypeDashboard, navigate]);
+  }, [navigateToUserTypeDashboard, navigate, location.pathname]);
 
   const exitDevMode = useCallback(() => {
     console.log('DevelopmentModeProvider - Exiting dev mode');
     devModeRef.current = null;
     setDevMode(null);
     localStorage.removeItem('dev_user_type');
-    navigate('/landing');
-  }, [navigate]);
+    if (location.pathname !== '/landing') {
+      navigate('/landing', { replace: true });
+    }
+  }, [navigate, location.pathname]);
 
   const value: DevelopmentModeContextType = {
     isDevelopment: isDevelopmentRef.current,

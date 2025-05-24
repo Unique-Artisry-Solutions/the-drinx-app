@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import AdminTopNav from '@/components/navigation/admin/AdminTopNav';
@@ -10,7 +11,7 @@ interface AdminLayoutProps {
 }
 
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
-  const { isDevModeActive, devMode, isDevelopment, isInitialized } = useDevelopmentMode();
+  const { isDevModeActive, devMode, isDevelopment, isInitialized, isStateStable } = useDevelopmentMode();
   const { user, session, isLoading, authStable, userType } = useAuth();
   
   const debugInfo = {
@@ -19,6 +20,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     devMode,
     isDevelopment,
     isInitialized,
+    isStateStable,
     user: !!user,
     session: !!session,
     userType,
@@ -29,11 +31,11 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   // Log to confirm layout is rendering
   React.useEffect(() => {
     console.log('AdminLayout rendering with state:', debugInfo);
-  }, [children, isDevModeActive, devMode, isDevelopment, isInitialized, user, session, userType, isLoading, authStable]);
+  }, [children, isDevModeActive, devMode, isDevelopment, isInitialized, isStateStable, user, session, userType, isLoading, authStable]);
 
-  // Wait for development mode to initialize
-  if (!isInitialized) {
-    console.log('AdminLayout: Waiting for development mode initialization');
+  // Wait for development mode to initialize and stabilize
+  if (!isInitialized || !isStateStable) {
+    console.log('AdminLayout: Waiting for development mode initialization and stabilization');
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
