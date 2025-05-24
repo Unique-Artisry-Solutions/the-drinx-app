@@ -4,7 +4,7 @@ import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Spinner } from '@/components/ui/spinner';
-import { SystemSetting } from '@/components/admin/systemConfiguration/tabs/types';
+import { SystemSetting } from '@/types/SupabaseTables';
 import TabNavigation from './TabNavigation';
 import GeneralSettingsTab from './tabs/GeneralSettingsTab';
 import EmailSettingsTab from './tabs/EmailSettingsTab';
@@ -29,8 +29,6 @@ interface ConfigurationTabsProps {
   onCancelClick: () => void;
   setEditValue: (value: any) => void;
   setChangeReason: (reason: string) => void;
-  error?: Error | null;
-  isSubmitting?: boolean;
 }
 
 const ConfigurationTabs: React.FC<ConfigurationTabsProps> = ({
@@ -46,8 +44,6 @@ const ConfigurationTabs: React.FC<ConfigurationTabsProps> = ({
   onCancelClick,
   setEditValue,
   setChangeReason,
-  error = null,
-  isSubmitting = false,
 }) => {
   // Create props object to pass to the tabs
   const settingsTabProps = {
@@ -56,20 +52,11 @@ const ConfigurationTabs: React.FC<ConfigurationTabsProps> = ({
     editingSettingId,
     editValue,
     changeReason,
-    onEdit: (id: string, value: any) => onEditClick(id, value),
-    onSave: async (id: string, isProtected: boolean) => {
-      onSaveClick(id, isProtected);
-      return Promise.resolve();
-    },
-    onCancel: onCancelClick,
-    onEditValueChange: setEditValue,
-    setChangeReason,
-    isSubmitting,
-    error,
     onEditClick,
     onSaveClick,
     onCancelClick,
-    setEditValue
+    setEditValue,
+    setChangeReason,
   };
 
   // Check if we have settings for the current category

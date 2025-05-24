@@ -1,8 +1,8 @@
+
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Drink } from '@/components/establishment/DrinkProfileModal';
 import { BusinessHour } from '@/components/establishment/BusinessHoursEditor';
-import { PromotionFormData } from '@/types/PromotionTypes';
 
 interface Promotion {
   id: string;
@@ -206,19 +206,6 @@ export const useEstablishmentProfile = () => {
     });
   };
 
-  const handleUpdatePromotion = (id: string, data: PromotionFormData) => {
-    const updatedPromotions = promotions.map(promo => 
-      promo.id === id ? { ...promo, code: data.code, description: data.description } : promo
-    );
-    
-    setPromotions(updatedPromotions);
-    
-    toast({
-      title: 'Promotion updated',
-      description: `The promotion has been updated successfully`,
-    });
-  };
-
   // Drink handlers
   const handleAddDrink = (drink: Drink) => {
     setDrinks([...drinks, drink]);
@@ -291,8 +278,7 @@ export const useEstablishmentProfile = () => {
       setNewPromoCode,
       setNewPromoDescription,
       handleAddPromotion,
-      handleDeletePromotion,
-      handleUpdatePromotion
+      handleDeletePromotion
     },
     
     // Drinks state and handlers

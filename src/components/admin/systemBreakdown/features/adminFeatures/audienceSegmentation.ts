@@ -9,7 +9,7 @@ export const audienceSegmentation: FeatureItem = {
   adminAccess: "full",
   establishmentAccess: "none",
   individualAccess: "none",
-  databaseStatus: "completed",
+  databaseStatus: "complete",
   userImpact: "high",
   complexity: "high",
   tags: ["audience", "analytics", "relationship", "marketing"],

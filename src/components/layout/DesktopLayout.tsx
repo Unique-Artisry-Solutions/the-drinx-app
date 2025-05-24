@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { NavigationType } from '../navigation/NavigationTypes';
@@ -8,9 +7,8 @@ import GuestTopNavigation from '../navigation/GuestTopNavigation';
 import Breadcrumbs from '../navigation/Breadcrumbs';
 import AppFooter from '../AppFooter';
 import AdminFooter from '../admin/AdminFooter';
-import { useAuth } from '@/contexts/auth';
+import { useAuth } from '@/contexts/auth/AuthProvider';
 import { useTheme } from '@/contexts/ThemeContext';
-import { useBreadcrumbs } from '@/hooks/useBreadcrumbs';
 
 interface TabOption {
   value: string;
@@ -39,17 +37,8 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   const [userType, setUserType] = React.useState<'individual' | 'establishment' | 'promoter'>('individual');
   const [isAdmin, setIsAdmin] = React.useState(false);
 
-  // Get breadcrumb items
-  const { items: breadcrumbItems, shouldShow: shouldShowBreadcrumbs } = useBreadcrumbs();
-
   useEffect(() => {
     const checkAuth = () => {
-      // If we're forcing guest navigation, always use guest type regardless of other flags
-      if (forceGuestNavigation) {
-        setNavigationType(NavigationType.GUEST);
-        return;
-      }
-      
       const isAdminAuth = localStorage.getItem('admin_authenticated') === 'true';
       const userTypeStored = localStorage.getItem('user_type');
       
@@ -65,10 +54,10 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
       
       // Define public paths that always use guest navigation
       const publicPaths = ['/', '/landing', '/login', '/signup', '/mission', '/pricing'];
-      const isPublicPath = publicPaths.includes(location.pathname);
+      const isPublicPath = publicPaths.includes(location.pathname) || forceGuestNavigation;
       
       // Determine navigation type based on auth state and path
-      if (isAdminAuth && !forceGuestNavigation) {
+      if (isAdminAuth) {
         setNavigationType(NavigationType.ADMIN);
       } else if (user && isEmailVerified && !isPublicPath) {
         setNavigationType(NavigationType.USER);
@@ -96,7 +85,6 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
 
   // Determine whether to show guest navigation
   const useGuestNavigation = () => {
-    // Always use guest navigation when forceGuestNavigation is true
     if (forceGuestNavigation) return true;
     
     // Always use guest navigation for non-authenticated users
@@ -108,13 +96,8 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   };
 
   const renderNavigation = () => {
-    // If forceGuestNavigation is true, always show guest navigation regardless of other conditions
-    if (forceGuestNavigation) {
-      return <GuestTopNavigation />;
-    }
-    
-    // For admin pages or admin users (when not forcing guest nav)
-    else if (isAdminPage || isAdmin) {
+    // Always show admin navigation for admin pages or admin users
+    if (isAdminPage || isAdmin) {
       return <AdminTopNavigation />;
     } 
     
@@ -123,15 +106,41 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
       return <UserTopNavigation activeTab={activeTab} handleTabChange={handleTabChange} tabOptions={tabOptions} />;
     } 
     
-    // Default to guest navigation
+    // Default to guest navigation for public pages or when not authenticated
     else {
       return <GuestTopNavigation />;
     }
   };
 
+  // Refined shouldShowBreadcrumbs logic
+  const shouldShowBreadcrumbs = () => {
+    // List of paths where breadcrumbs should not be shown
+    const excludedPaths = [
+      '/', 
+      '/landing', 
+      '/login', 
+      '/signup', 
+      '/mission', 
+      '/map', 
+      '/explore'
+    ];
+    
+    // Don't show breadcrumbs on excluded paths
+    if (excludedPaths.includes(location.pathname)) {
+      return false;
+    }
+    
+    // Don't show on landing page or admin login page
+    if (isLandingPage || location.pathname === '/admin/login') {
+      return false;
+    }
+    
+    return true;
+  };
+
   // Render the appropriate footer based on the page type
   const renderFooter = () => {
-    if (isAdminPage || (isAdmin && !forceGuestNavigation)) {
+    if (isAdminPage || isAdmin) {
       return <AdminFooter />;
     }
     return <AppFooter />;
@@ -139,26 +148,24 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
 
   // Debug navigation state - remove in production
   useEffect(() => {
-    console.log('Navigation state (Desktop):', {
+    console.log('Navigation state:', {
       path: location.pathname,
-      forceGuestNav: forceGuestNavigation,
       isAdmin,
       isAuthenticated: !!user, 
       isEmailVerified,
       navigationType,
-      useGuestNav: useGuestNavigation(),
-      userType
+      useGuestNav: useGuestNavigation()
     });
-  }, [location.pathname, forceGuestNavigation, user, isAdmin, isEmailVerified, userType]);
+  }, [location.pathname, user, isAdmin, isEmailVerified]);
 
   return (
     <div className={`flex flex-col min-h-screen w-full max-w-full bg-background transition-colors duration-300`}>
       {renderNavigation()}
       
       <main className={`flex-1 w-full max-w-full overflow-x-hidden ${getContentPadding()}`}>
-        {shouldShowBreadcrumbs && (
+        {shouldShowBreadcrumbs() && (
           <div className="container max-w-6xl mx-auto px-4 pt-2">
-            <Breadcrumbs items={breadcrumbItems} />
+            <Breadcrumbs />
           </div>
         )}
         {children}

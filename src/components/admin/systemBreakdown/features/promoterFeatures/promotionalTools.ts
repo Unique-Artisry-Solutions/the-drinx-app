@@ -1,27 +1,39 @@
 
 import { FeatureItem } from '../../types';
 
-export const promoCodeManagement: FeatureItem = {
-  id: 'promo-code-management',
-  name: 'Promotion Code Management',
-  category: 'marketing',
-  description: 'Enables promoters to create, manage and track promotional codes for events',
-  status: 'implemented',
-  implementationProgress: 100,
-  dependencies: [
-    'database-schema',
-    'auth-system'
-  ],
+export const promotionalTools: FeatureItem = {
+  id: "promoter-13",
+  name: "Promotional Tools",
+  description: "Comprehensive tools to promote events, track marketing effectiveness, and increase attendance",
+  status: "in_progress",
+  adminAccess: "moderate",
+  establishmentAccess: "none",
+  individualAccess: "none",
+  promoterAccess: "full",
+  databaseStatus: "in_progress",
+  userImpact: "high",
+  complexity: "medium",
+  implementationProgress: 40, // Starting implementation
+  tags: ["marketing", "promoter", "events", "social media"],
   databaseAnalysis: `
-    - Implemented optimized code validation with multi-level caching
-    - Added comprehensive audit logging for all promotion code operations
-    - Improved error handling with detailed feedback
-    - Enhanced performance for frequently used codes
+    Database Implementation:
+    - [x] Promo codes table implemented
+    - [x] Promo code redemptions table implemented
+    - [x] Marketing campaigns table implemented
+    - [x] Campaign performance metrics tracking implemented
+    - [ ] Email campaign tracking (in progress)
+    - [ ] Custom landing pages (planned)
+    - [ ] Cross-promotion relationships (planned)
   `,
   testSteps: [
-    'Create promotion code',
-    'Test code validation',
-    'Verify audit logging',
-    'Test error handling'
+    "Create promotional codes with different discount types",
+    "Track promo code usage and effectiveness",
+    "Share events on various social media platforms",
+    "Create and monitor marketing campaigns",
+    "View analytics on campaign performance",
+    "Generate custom landing pages for events",
+    "Set up email campaigns",
+    "Track click-through and conversion rates",
+    "Set up cross-promotions with related events"
   ]
 };

@@ -1,10 +1,11 @@
 
 import { FeatureItem, FeatureStatus } from '../types';
+import { ReleaseFeature, ReleaseStatus } from '../types/releaseTypes';
 
 /**
  * Maps feature status to release status
  */
-export function mapFeatureStatusToReleaseStatus(status: FeatureStatus): string {
+export function mapFeatureStatusToReleaseStatus(status: FeatureStatus): ReleaseStatus {
   switch (status) {
     case 'implemented':
       return 'released';
@@ -20,23 +21,27 @@ export function mapFeatureStatusToReleaseStatus(status: FeatureStatus): string {
 }
 
 /**
- * Maps feature status to release feature status
+ * Converts a list of feature items to release features
  */
-export function mapFeatureStatusToReleaseFeatureStatus(status: FeatureStatus): string {
-  switch (status) {
-    case 'implemented':
-      return 'completed';
-    case 'in_progress':
-      return 'in_progress';
-    case 'partial':
-      return 'in_progress';
-    case 'planned':
-      return 'pending';
-    case 'blocked':
-      return 'blocked';
-    default:
-      return 'pending';
-  }
+export function mapFeaturesToReleaseFeatures(
+  features: FeatureItem[],
+  releaseDate: string
+): ReleaseFeature[] {
+  return features.map(feature => {
+    const completeDate = new Date(releaseDate);
+    completeDate.setDate(completeDate.getDate() + 14); // Two weeks after release date
+    
+    return {
+      id: feature.id,
+      name: feature.name,
+      description: feature.description,
+      status: feature.status === 'implemented' ? 'completed' : 'in_progress',
+      notes: feature.databaseAnalysis,
+      startDate: new Date().toISOString().split('T')[0],
+      completionDate: completeDate.toISOString().split('T')[0],
+      percentComplete: feature.implementationProgress || 0
+    };
+  });
 }
 
 /**
@@ -66,14 +71,4 @@ export function groupFeaturesByStatus(features: FeatureItem[]): Record<string, F
   });
   
   return result;
-}
-
-/**
- * Calculate completion percentage
- */
-export function calculateReleaseCompletion(features: any[]): number {
-  if (features.length === 0) return 0;
-  
-  const completed = features.filter(f => f.status === 'completed').length;
-  return Math.round((completed / features.length) * 100);
 }

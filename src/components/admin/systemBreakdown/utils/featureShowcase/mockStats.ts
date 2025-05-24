@@ -1,42 +1,39 @@
 
 import { FeatureItem } from '../../types';
-import { determineComplexity } from './featureTransformation';
+import { isSignatureFeature, isPromoterDashboardFeature, isPromoterCommunicationFeature } from '../detection';
 
-/**
- * Generates mock implementation statistics for a feature
- */
-export function generateMockImplementationStats(feature: FeatureItem) {
-  // Base the mock stats on feature complexity
-  const complexity = determineComplexity(feature);
-  let timeToImplement: string;
-  let componentsCount: number;
-  let apiEndpoints: number;
-  let testCoverage: number;
-
-  switch (complexity) {
-    case 'high':
-      timeToImplement = '3-4 weeks';
-      componentsCount = Math.floor(Math.random() * 6) + 10; // 10-15
-      apiEndpoints = Math.floor(Math.random() * 6) + 5; // 5-10
-      testCoverage = Math.floor(Math.random() * 16) + 75; // 75-90%
-      break;
-    case 'medium':
-      timeToImplement = '1-2 weeks';
-      componentsCount = Math.floor(Math.random() * 6) + 5; // 5-10
-      apiEndpoints = Math.floor(Math.random() * 3) + 3; // 3-5
-      testCoverage = Math.floor(Math.random() * 11) + 80; // 80-90%
-      break;
-    default: // 'low'
-      timeToImplement = '3-5 days';
-      componentsCount = Math.floor(Math.random() * 3) + 2; // 2-4
-      apiEndpoints = Math.floor(Math.random() * 2) + 1; // 1-2
-      testCoverage = Math.floor(Math.random() * 11) + 85; // 85-95%
+export const generateMockImplementationStats = (feature: FeatureItem): { implementations: number; avgRating: number } => {
+  const hash = feature.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  
+  // Special cases for different feature types
+  let baseFactor = 0.5; // Default base factor
+  
+  // Signature features get higher stats
+  if (isSignatureFeature(feature)) {
+    baseFactor = 0.8;
   }
-
+  
+  // Core promoter features get moderate stats since they're newer
+  if (isPromoterDashboardFeature(feature) || isPromoterCommunicationFeature(feature)) {
+    baseFactor = 0.6;
+  }
+  
+  // Implemented features show higher usage stats
+  if (feature.status === 'implemented') {
+    baseFactor *= 1.2;
+  }
+  
+  // Partial features show moderate usage stats
+  if (feature.status === 'partial') {
+    baseFactor *= 0.9;
+  }
+  
+  // Generate implementation count and average rating based on feature hash and factor
+  const implementations = Math.floor(10 + (hash % 90) * baseFactor);
+  const avgRating = 3.5 + ((hash % 15) / 10) * baseFactor;
+  
   return {
-    timeToImplement,
-    componentsCount,
-    apiEndpoints,
-    testCoverage
+    implementations,
+    avgRating: Number(avgRating.toFixed(1))
   };
-}
+};

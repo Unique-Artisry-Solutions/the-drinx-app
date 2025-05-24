@@ -1,17 +1,15 @@
-
 import React, { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { NavigationType } from '../navigation/NavigationTypes';
 import MobileNavigation from '../navigation/MobileNavigation';
 import UserNavbar from '../navigation/user/UserNavbar';
 import Breadcrumbs from '../navigation/Breadcrumbs';
-import { useAuth } from '@/contexts/auth';
+import { useAuth } from '@/contexts/auth/AuthProvider';
 import { useTheme } from '@/contexts/ThemeContext';
 import GuestTopNavigation from '../navigation/GuestTopNavigation';
 import AdminTopNavigation from '../navigation/AdminTopNavigation';
 import AppFooter from '../AppFooter';
 import AdminFooter from '../admin/AdminFooter';
-import { useBreadcrumbs } from '@/hooks/useBreadcrumbs';
 
 interface TabOption {
   value: string;
@@ -48,12 +46,6 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
 
   useEffect(() => {
     const checkAuth = () => {
-      // If we're forcing guest navigation, always use guest type regardless of other flags
-      if (forceGuestNavigation) {
-        setNavigationType(NavigationType.GUEST);
-        return;
-      }
-      
       const isAdminAuth = localStorage.getItem('admin_authenticated') === 'true';
       const userTypeStored = localStorage.getItem('user_type');
       
@@ -69,10 +61,10 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
       
       // Define public paths that always use guest navigation
       const publicPaths = ['/', '/landing', '/login', '/signup', '/mission', '/pricing'];
-      const isPublicPath = publicPaths.includes(location.pathname);
+      const isPublicPath = publicPaths.includes(location.pathname) || forceGuestNavigation;
       
       // Determine navigation type based on auth state and path
-      if (isAdminAuth && !forceGuestNavigation) {
+      if (isAdminAuth) {
         setNavigationType(NavigationType.ADMIN);
       } else if (user && isEmailVerified && !isPublicPath) {
         setNavigationType(NavigationType.USER);
@@ -83,9 +75,6 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
     
     checkAuth();
   }, [user, isEmailVerified, location.pathname, forceGuestNavigation]);
-
-  // Get breadcrumb items
-  const { items: breadcrumbItems, shouldShow: shouldShowBreadcrumbs } = useBreadcrumbs();
 
   // Determine page types for specialized navigation
   const isLandingPage = location.pathname === '/' || location.pathname === '/landing' || forceGuestNavigation;
@@ -103,6 +92,32 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
     }
   };
 
+  // Refined shouldShowBreadcrumbs logic
+  const shouldShowBreadcrumbs = () => {
+    // List of paths where breadcrumbs should not be shown
+    const excludedPaths = [
+      '/', 
+      '/landing', 
+      '/login', 
+      '/signup', 
+      '/mission', 
+      '/map', 
+      '/explore'
+    ];
+    
+    // Don't show breadcrumbs on excluded paths
+    if (excludedPaths.includes(location.pathname)) {
+      return false;
+    }
+    
+    // Don't show on landing page or admin login page
+    if (isLandingPage || location.pathname === '/admin/login') {
+      return false;
+    }
+    
+    return true;
+  };
+
   // Determine if mobile navigation bar should be shown
   const shouldShowMobileNav = () => {
     return !isAdminPage;
@@ -110,7 +125,6 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
   
   // Determine whether to show guest navigation
   const useGuestNavigation = () => {
-    // Always use guest navigation when forceGuestNavigation is true
     if (forceGuestNavigation) return true;
     
     // Always show guest navigation for non-authenticated users
@@ -123,13 +137,8 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
 
   // Render the appropriate navigation
   const renderNavigation = () => {
-    // If forceGuestNavigation is true, always show guest navigation regardless of other conditions
-    if (forceGuestNavigation) {
-      return <GuestTopNavigation />;
-    }
-    
-    // For admin pages or admin users (when not forcing guest nav)
-    else if (isAdminPage || isAdmin) {
+    // Always show admin navigation for admin pages or admin users
+    if (isAdminPage || isAdmin) {
       return <AdminTopNavigation />;
     } 
     
@@ -146,35 +155,21 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
   
   // Render the appropriate footer
   const renderFooter = () => {
-    if (isAdminPage || (isAdmin && !forceGuestNavigation)) {
+    if (isAdminPage || isAdmin) {
       return <AdminFooter />;
     }
     // Only return AppFooter if not showing mobile nav
     return !shouldShowMobileNav() ? <AppFooter /> : null;
   };
 
-  // Debug navigation state - remove in production
-  useEffect(() => {
-    console.log('Navigation state (Mobile):', {
-      path: location.pathname,
-      forceGuestNav: forceGuestNavigation,
-      isAdmin,
-      isAuthenticated: !!user, 
-      isEmailVerified,
-      navigationType,
-      useGuestNav: useGuestNavigation(),
-      userType
-    });
-  }, [location.pathname, forceGuestNavigation, user, isAdmin, isEmailVerified, userType]);
-
   return (
     <div className={`flex flex-col min-h-screen w-full max-w-full bg-background transition-colors duration-300`}>
       {renderNavigation()}
       
       <main className={`flex-1 w-full max-w-full overflow-x-hidden ${getContentPadding()}`}>
-        {shouldShowBreadcrumbs && (
+        {shouldShowBreadcrumbs() && (
           <div className="w-full px-3">
-            <Breadcrumbs items={breadcrumbItems} />
+            <Breadcrumbs />
           </div>
         )}
         {children}

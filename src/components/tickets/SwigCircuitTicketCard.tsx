@@ -1,66 +1,56 @@
 
 import React from 'react';
-import { 
-  Card, 
-  CardHeader, 
-  CardTitle, 
-  CardDescription, 
-  CardContent, 
-  CardFooter
-} from '@/components/ui/card';
-import QRCode from '@/components/ui/qrcode';
+import { Calendar, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Calendar, MapPin } from 'lucide-react';
-import { format } from 'date-fns';
 import { SwigCircuitTicket } from '@/types/TicketTypes';
 
-export interface SwigCircuitTicketCardProps {
+interface SwigCircuitTicketCardProps {
   ticket: SwigCircuitTicket;
-  onShowQR?: (code: string, name: string, details: string) => void;
+  onShowQR: (code: string, name: string, details: string) => void;
 }
 
-const SwigCircuitTicketCard: React.FC<SwigCircuitTicketCardProps> = ({ 
-  ticket,
-  onShowQR
-}) => {
-  const handleShowQR = () => {
-    if (onShowQR && ticket.ticket_code) {
-      const ticketDetails = `Ticket Type: ${ticket.ticket_tier?.name || 'Standard'}`;
-      onShowQR(ticket.ticket_code, `Swig Circuit Ticket`, ticketDetails);
-    }
-  };
-
-  // Determine venue name from ticket data
-  const venueName = ticket.venue_name || 'Multiple Venues';
-
+const SwigCircuitTicketCard: React.FC<SwigCircuitTicketCardProps> = ({ ticket, onShowQR }) => {
+  const swigCircuit = ticket.swig_circuit || {};
+  const hasCircuitDate = swigCircuit && 'date' in swigCircuit && swigCircuit.date;
+  const circuitDate = hasCircuitDate 
+    ? new Date(swigCircuit.date as string).toLocaleDateString() 
+    : ticket.purchase_date 
+      ? new Date(ticket.purchase_date).toLocaleDateString() 
+      : 'No date';
+  
   return (
-    <Card className="mb-4 hover:shadow-md transition-shadow">
-      <CardHeader>
-        <CardTitle>Swig Circuit Ticket</CardTitle>
-        <CardDescription>
-          Purchased on {ticket.purchase_date ? format(new Date(ticket.purchase_date), 'MMM d, yyyy') : 'N/A'}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="flex flex-col gap-2">
-          <p className="text-sm font-medium">Location: {venueName}</p>
-          <div className="mt-4">
-            {ticket.ticket_code ? (
-              <div className="flex justify-center">
-                <QRCode value={ticket.ticket_code} size={120} />
-              </div>
-            ) : (
-              <p className="text-center text-sm text-muted-foreground">No ticket code available</p>
-            )}
-          </div>
+    <div className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+      <h3 className="font-semibold text-lg">
+        {swigCircuit && 'name' in swigCircuit && swigCircuit.name ? String(swigCircuit.name) : 'Swig Circuit'}
+      </h3>
+      <div className="text-sm text-muted-foreground space-y-1 mt-2">
+        <div className="flex items-center">
+          <Calendar className="h-4 w-4 mr-1" />
+          <span>{circuitDate}</span>
         </div>
-      </CardContent>
-      <CardFooter className="flex justify-between">
-        <Button variant="outline" size="sm" onClick={handleShowQR} disabled={!ticket.ticket_code}>
-          View Full QR Code
+        {swigCircuit && 'time' in swigCircuit && swigCircuit.time && (
+          <div className="flex items-center">
+            <Clock className="h-4 w-4 mr-1" />
+            <span>{String(swigCircuit.time)}</span>
+          </div>
+        )}
+      </div>
+      <div className="mt-4 flex items-center justify-between">
+        <span className="font-medium">
+          {(ticket.ticket_tier && ticket.ticket_tier.name) || 'Standard Ticket'}
+        </span>
+        <Button 
+          size="sm" 
+          onClick={() => onShowQR(
+            String(ticket.ticket_code || ticket.id),
+            (swigCircuit && 'name' in swigCircuit && swigCircuit.name) ? String(swigCircuit.name) : 'Swig Circuit',
+            `Swig Circuit Pass`
+          )}
+        >
+          Show QR Code
         </Button>
-      </CardFooter>
-    </Card>
+      </div>
+    </div>
   );
 };
 

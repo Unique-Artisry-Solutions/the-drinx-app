@@ -1,8 +1,10 @@
 
 import { supabase } from '@/lib/supabase';
 import { SessionValidationResult } from '@/types/auth';
-import { SESSION_VALIDATION_KEY, MAX_SESSION_AGE_MS } from './constants';
-import { isValidSession, hasValidLocalStorage } from './helpers';
+
+// Constants for session validation
+export const SESSION_VALIDATION_KEY = 'last_session_validation';
+export const MAX_SESSION_AGE_MS = 1000 * 60 * 30; // 30 minutes
 
 /**
  * Checks if session validation is due based on the last validation time
@@ -33,53 +35,46 @@ export async function validateSessionState(): Promise<SessionValidationResult> {
   };
   
   try {
-    console.log('Validating session state...');
-    
     // Check localStorage flags
-    const hasLocalStorageAuth = hasValidLocalStorage();
-    result.hasLocalStorage = hasLocalStorageAuth;
+    const isAuthenticatedInLocalStorage = localStorage.getItem('user_authenticated') === 'true';
+    const authEmail = localStorage.getItem('user_email');
+    const authType = localStorage.getItem('user_type');
+    
+    result.hasLocalStorage = isAuthenticatedInLocalStorage;
     
     // Check Supabase session
     const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
     
     if (sessionError) {
       result.errorDetails = `Session fetch error: ${sessionError.message}`;
-      console.error('Session validation error:', sessionError);
       return result;
     }
     
-    const hasSupabaseSession = !!sessionData.session && isValidSession(sessionData.session);
+    const hasSupabaseSession = !!sessionData.session;
     result.hasSupabaseSession = hasSupabaseSession;
     
     // Detect mismatches
-    if (hasLocalStorageAuth && !hasSupabaseSession) {
+    if (isAuthenticatedInLocalStorage && !hasSupabaseSession) {
       result.hasMismatch = true;
       result.errorDetails = "User marked as authenticated in localStorage but no valid Supabase session";
-      console.warn('Session mismatch detected:', result.errorDetails);
       return result;
     }
     
-    if (!hasLocalStorageAuth && hasSupabaseSession) {
+    if (!isAuthenticatedInLocalStorage && hasSupabaseSession) {
       result.hasMismatch = true;
       result.errorDetails = "Valid Supabase session exists but user not authenticated in localStorage";
-      console.warn('Session mismatch detected:', result.errorDetails);
       return result;
     }
     
     // Email mismatch check
-    if (hasSupabaseSession && sessionData.session?.user) {
-      const authEmail = localStorage.getItem('user_email');
-      
-      if (authEmail && sessionData.session.user.email !== authEmail) {
-        result.hasMismatch = true;
-        result.errorDetails = "Email mismatch between localStorage and Supabase session";
-        console.warn('Session mismatch detected:', result.errorDetails);
-        return result;
-      }
+    if (hasSupabaseSession && authEmail && sessionData.session?.user.email !== authEmail) {
+      result.hasMismatch = true;
+      result.errorDetails = "Email mismatch between localStorage and Supabase session";
+      return result;
     }
     
     // If we're here, session state is valid
-    result.isValid = (hasLocalStorageAuth === hasSupabaseSession);
+    result.isValid = isAuthenticatedInLocalStorage === hasSupabaseSession;
     
     // Update the last validation timestamp
     localStorage.setItem(SESSION_VALIDATION_KEY, new Date().getTime().toString());
@@ -88,7 +83,6 @@ export async function validateSessionState(): Promise<SessionValidationResult> {
     
   } catch (error: any) {
     result.errorDetails = `Validation error: ${error.message}`;
-    console.error('Unexpected error during session validation:', error);
     return result;
   }
 }

@@ -10,7 +10,7 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { FeatureItem } from './types';
 import { FeatureImplementationStatus } from './shared/FeatureImplementationStatus';
-import FeaturePhasesDisplay from './shared/FeaturePhasesDisplay';
+import { FeaturePhasesDisplay } from './shared/FeaturePhasesDisplay';
 import { ImplementationDetailsPanel } from './shared/ImplementationDetailsPanel';
 import { Badge } from '@/components/ui/badge';
 

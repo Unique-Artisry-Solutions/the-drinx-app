@@ -1,107 +1,180 @@
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { CheckCircle, AlertTriangle, Loader2 } from 'lucide-react';
-
-// Only import components that actually exist in the project
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent } from '@/components/ui/tabs';
+import { useSystemBreakdown } from '@/components/admin/systemBreakdown/hooks/useSystemBreakdown';
+import { useSearchParams } from 'react-router-dom';
+import StatusUpdateNotification from '@/components/admin/systemBreakdown/StatusUpdateNotification';
+import SystemHeader from '@/components/admin/systemBreakdown/SystemHeader';
+import OverviewTab from '@/components/admin/systemBreakdown/OverviewTab';
+import { EnhancedFeatureTab } from '@/components/admin/systemBreakdown/EnhancedFeatureTab';
+import ProposedImprovementsTab from '@/components/admin/systemBreakdown/ProposedImprovementsTab';
+import AnalysisProgress from '@/components/admin/systemBreakdown/AnalysisProgress';
+import ReleaseManagementTab from '@/components/admin/systemBreakdown/ReleaseManagementTab';
+import CreateReleaseFromFeaturesButton from '@/components/admin/systemBreakdown/CreateReleaseFromFeaturesButton';
+import FeatureShowcaseTab from '@/components/admin/systemBreakdown/FeatureShowcaseTab';
+import PromoterRequirementsTab from '@/components/admin/systemBreakdown/PromoterRequirementsTab';
+import SystemBreakdownNavigation, { MobileSystemBreakdownNavigation } from '@/components/admin/systemBreakdown/SystemBreakdownNavigation';
+import SystemHealthCheck from '@/components/admin/systemBreakdown/components/SystemHealthCheck';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { useToast } from "@/hooks/use-toast";
-import { Spinner } from "@/components/ui/spinner";
+import { Settings } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
-// Define AnalysisStep interface to be consistent with the component usage
-interface AnalysisStep {
-  id: string;
-  name: string;
-  description: string;
-  status: 'completed' | 'pending' | 'error';
-  completed: boolean;
-}
+// Import improvements data
+import { proposedImprovements as improvementsData } from '@/components/admin/systemBreakdown/improvementsData';
 
 const SystemFunctionalityBreakdown: React.FC = () => {
-  const analysisSteps: AnalysisStep[] = [
-    {
-      id: 'scan',
-      name: 'Scan System Components',
-      description: 'Scanning and identifying system components',
-      status: 'completed',
-      completed: true
-    },
-    {
-      id: 'analyze',
-      name: 'Analyze System Functionality',
-      description: 'Analyzing the functionality of each component',
-      status: 'pending',
-      completed: false
-    },
-    {
-      id: 'report',
-      name: 'Generate Report',
-      description: 'Generating a detailed report of system functionality',
-      status: 'pending',
-      completed: false
-    },
-  ];
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab = searchParams.get('tab') || 'overview';
+  
+  const {
+    adminFeatures,
+    establishmentFeatures,
+    individualFeatures,
+    promoterFeatures,
+    analyzing,
+    analysisProgress,
+    analysisSteps,
+    updatedFeaturesCount,
+    handleLogout,
+    handleExportCSV,
+    handleAnalyzeFeatures,
+    handleCreateReleaseFromFeatures,
+    monthlyProgressData,
+    currentSnapshot,
+    dataValidation
+  } = useSystemBreakdown();
+  
+  const [activeTab, setActiveTab] = React.useState(initialTab);
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    setSearchParams({ tab: value });
+  };
+  
+  const handleConfigureFeatures = () => {
+    navigate('/admin/system-configuration?tab=features');
+  };
+  
+  const isMobile = useIsMobile();
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">System Functionality Breakdown</h1>
-      <p className="text-muted-foreground mb-6">
-        A breakdown of the system's functionality and status.
-      </p>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {analysisSteps.map((step) => (
-          <Card key={step.id}>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>{step.name}</CardTitle>
-                {step.status === 'completed' && (
-                  <Badge variant="outline">
-                    <CheckCircle className="h-4 w-4 mr-2" />
-                    Completed
-                  </Badge>
-                )}
-                {step.status === 'pending' && (
-                  <Badge variant="secondary">
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Pending
-                  </Badge>
-                )}
-                {step.status === 'error' && (
-                  <Badge variant="destructive">
-                    <AlertTriangle className="h-4 w-4 mr-2" />
-                    Error
-                  </Badge>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">{step.description}</p>
-            </CardContent>
-          </Card>
-        ))}
+    <div className="p-4 md:p-8 max-w-7xl mx-auto">
+      <div className="flex justify-between items-start mb-6">
+        <SystemHeader
+          onAnalyzeFeatures={handleAnalyzeFeatures}
+          onExportCSV={handleExportCSV}
+          analyzing={analyzing}
+        />
+        
+        <Button 
+          variant="outline" 
+          className="flex items-center gap-2" 
+          onClick={handleConfigureFeatures}
+        >
+          <Settings className="h-4 w-4" />
+          Configure Features
+        </Button>
       </div>
+
+      {analyzing && (
+        <AnalysisProgress
+          progress={analysisProgress}
+          steps={analysisSteps}
+          analyzing={analyzing}
+        />
+      )}
+
+      {updatedFeaturesCount > 0 && !analyzing && (
+        <StatusUpdateNotification updatedFeaturesCount={updatedFeaturesCount} />
+      )}
+
+      {isMobile ? (
+        <MobileSystemBreakdownNavigation activeTab={activeTab} setActiveTab={handleTabChange} />
+      ) : (
+        <SystemBreakdownNavigation activeTab={activeTab} setActiveTab={handleTabChange} />
+      )}
+
+      <Tabs value={activeTab} className="space-y-4">
+        <TabsContent value="overview" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <OverviewTab
+                adminFeatures={adminFeatures}
+                establishmentFeatures={establishmentFeatures}
+                individualFeatures={individualFeatures}
+                promoterFeatures={promoterFeatures}
+                monthlyProgressData={monthlyProgressData}
+                currentSnapshot={currentSnapshot}
+                dataValidation={dataValidation}
+              />
+            </div>
+            <div>
+              <SystemHealthCheck
+                dataValidation={dataValidation}
+                currentSnapshot={currentSnapshot}
+              />
+            </div>
+          </div>
+          <CreateReleaseFromFeaturesButton 
+            onClick={handleCreateReleaseFromFeatures} 
+          />
+        </TabsContent>
+
+        <TabsContent value="admin" className="space-y-4">
+          <EnhancedFeatureTab
+            features={adminFeatures}
+            title="Admin Features"
+            description="Features accessible to system administrators and content managers"
+          />
+        </TabsContent>
+
+        <TabsContent value="establishment" className="space-y-4">
+          <EnhancedFeatureTab
+            features={establishmentFeatures}
+            title="Establishment Features"
+            description="Features accessible to bar, restaurant, and venue owners"
+          />
+        </TabsContent>
+
+        <TabsContent value="individual" className="space-y-4">
+          <EnhancedFeatureTab
+            features={individualFeatures}
+            title="Individual User Features"
+            description="Features accessible to regular users of the platform"
+          />
+        </TabsContent>
+
+        <TabsContent value="promoter" className="space-y-4">
+          <EnhancedFeatureTab
+            features={promoterFeatures}
+            title="Promoter Features"
+            description="Features accessible to event promoters and organizers"
+          />
+        </TabsContent>
+        
+        <TabsContent value="promoter-requirements" className="space-y-4">
+          <PromoterRequirementsTab features={promoterFeatures} />
+        </TabsContent>
+
+        <TabsContent value="improvements" className="space-y-4">
+          <ProposedImprovementsTab improvements={improvementsData} />
+        </TabsContent>
+        
+        <TabsContent value="releases" className="space-y-4">
+          <ReleaseManagementTab />
+        </TabsContent>
+
+        <TabsContent value="showcase" className="space-y-4">
+          <FeatureShowcaseTab
+            adminFeatures={adminFeatures}
+            establishmentFeatures={establishmentFeatures}
+            individualFeatures={individualFeatures}
+            promoterFeatures={promoterFeatures}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

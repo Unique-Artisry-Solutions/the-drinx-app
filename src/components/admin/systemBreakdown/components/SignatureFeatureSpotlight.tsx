@@ -6,23 +6,22 @@ import { Star } from 'lucide-react';
 import { FeatureShowcaseData, FeatureItem, FeatureBusinessValueType } from '../types';
 import * as Icons from 'lucide-react';
 
+// Interface for the component when used with FeatureShowcaseData
 interface SignatureFeatureSpotlightProps {
-  feature?: FeatureItem;
-  features?: FeatureShowcaseData[];
-  businessValue?: FeatureBusinessValueType;
+  features: FeatureShowcaseData[];
 }
 
-const SignatureFeatureSpotlight: React.FC<SignatureFeatureSpotlightProps> = (props) => {
-  // Check which type of props we received and prepare data accordingly
-  let features: FeatureShowcaseData[] = [];
-  
-  if (props.features) {
-    // If we got a list of showcase features directly
-    features = props.features;
-  } else if (props.feature) {
-    // If we got a single feature item, map it to showcase data
-    features = [mapFeatureItemToShowcaseData(props.feature, props.businessValue)];
-  }
+// Interface for the component when used with FeatureItem
+interface LegacySignatureFeatureSpotlightProps {
+  feature: FeatureItem;
+}
+
+type Props = SignatureFeatureSpotlightProps | LegacySignatureFeatureSpotlightProps;
+
+const SignatureFeatureSpotlight: React.FC<Props> = (props) => {
+  // Check which type of props we received
+  const isLegacy = 'feature' in props;
+  const features = isLegacy ? [mapFeatureItemToShowcaseData(props.feature)] : props.features;
   
   // If we have no signature features, show a message
   if (features.length === 0) {
@@ -67,7 +66,7 @@ const SignatureFeatureSpotlight: React.FC<SignatureFeatureSpotlightProps> = (pro
                 </div>
                 <div className="flex items-center gap-3">
                   <div className={`${colorClass} p-2 rounded-lg`}>
-                    <DynamicIcon iconName={feature.iconName || 'star'} />
+                    <DynamicIcon iconName={feature.icon || 'star'} />
                   </div>
                   <CardTitle>{feature.name}</CardTitle>
                 </div>
@@ -88,11 +87,11 @@ const SignatureFeatureSpotlight: React.FC<SignatureFeatureSpotlightProps> = (pro
               </CardContent>
               <CardFooter className="flex justify-between border-t pt-4 text-sm text-gray-500">
                 <div>
-                  {feature.implementationPercentage ?? 0}% Complete
+                  {feature.implementations ?? 0} Implementations
                 </div>
                 <div className="flex items-center">
                   <Star className="h-4 w-4 text-yellow-500 mr-1" /> 
-                  {feature.userType}
+                  {feature.avgRating?.toFixed(1) ?? "N/A"}
                 </div>
               </CardFooter>
             </Card>
@@ -104,32 +103,23 @@ const SignatureFeatureSpotlight: React.FC<SignatureFeatureSpotlightProps> = (pro
 };
 
 // Helper function to map a FeatureItem to FeatureShowcaseData
-function mapFeatureItemToShowcaseData(feature: FeatureItem, overrideBusinessValue?: FeatureBusinessValueType): FeatureShowcaseData {
-  // Use the provided business value or default to the feature's userImpact
-  const businessValue = overrideBusinessValue || (feature.userImpact as FeatureBusinessValueType) || 'medium';
-  
+function mapFeatureItemToShowcaseData(feature: FeatureItem): FeatureShowcaseData {
   return {
     id: feature.id,
     name: feature.name,
     description: feature.description,
-    businessValue,
-    complexityLevel: feature.complexity || 'medium',
+    businessValue: (feature.userImpact as FeatureBusinessValueType) || 'medium',
+    complexity: feature.complexity || 'medium',
     implementationStatus: feature.status,
-    showcaseCategory: feature.category || 'Management Tools', // Default category
+    showcaseCategory: 'Management Tools', // Default category
     isSignature: feature.tags?.includes('signature') || false,
-    iconName: 'Star',
-    userType: determineUserType(feature),
-    marketingPoints: feature.description ? [feature.description.split('.')[0]] : [],
-    implementationPercentage: feature.implementationProgress
+    icon: 'Star',
+    implementations: 0,
+    avgRating: 0,
+    marketingPoints: [],
+    categories: [],
+    businessValues: []
   };
-}
-
-// Helper function to determine the user type from a feature
-function determineUserType(feature: FeatureItem): 'admin' | 'establishment' | 'individual' | 'promoter' {
-  if (feature.adminAccess === 'full') return 'admin';
-  if (feature.establishmentAccess === 'full') return 'establishment';
-  if (feature.promoterAccess === 'full') return 'promoter';
-  return 'individual';
 }
 
 export default SignatureFeatureSpotlight;

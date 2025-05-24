@@ -1,6 +1,14 @@
 
 import { Home, Map, User, Route, Megaphone, BarChart2, Building, Bell, Calendar, Ticket } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 import { UnifiedNavItem } from '@/types/navigation/NavigationTypes';
+import { Link } from 'react-router-dom';
 
 export const getUserNavItems = (
   userType: 'individual' | 'establishment' | 'promoter', 
@@ -16,7 +24,6 @@ export const getUserNavItems = (
     navItems.push({ icon: Home, label: 'Home', path: '/promoter/dashboard' });
     navItems.push({ icon: Bell, label: 'Notifications', path: '/promoter/notifications' });
   } else {
-    // Individual user navigation
     navItems.push({ icon: Home, label: 'Explore', path: '/explore' });
     navItems.push({ icon: Bell, label: 'Notifications', path: '/notifications' });
   }

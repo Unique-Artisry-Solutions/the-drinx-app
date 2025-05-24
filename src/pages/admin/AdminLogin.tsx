@@ -1,95 +1,152 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { isAdminAuthenticated, setAdminAuthenticated } from '@/utils/adminAuth';
+import { useToast } from '@/hooks/use-toast';
+import { useAppNavigation } from '@/hooks/useAppNavigation';
+import GuestTopNavigation from '@/components/navigation/GuestTopNavigation';
+import { enableAdminBypass, checkAdminBypassStatus } from '@/utils/adminBypass';
+import { isPreviewEnvironment } from '@/utils/environment';
 
 const AdminLogin: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
+  const { goToAdminDashboard } = useAppNavigation();
+  const { toast } = useToast();
+  const showBypassButtons = isPreviewEnvironment() || process.env.NODE_ENV === 'development';
 
-  // Check if user is already authenticated
   useEffect(() => {
-    if (isAdminAuthenticated()) {
-      console.log('User already authenticated as admin, redirecting to system breakdown');
-      navigate('/admin/system-breakdown');
+    // Check if admin is already logged in
+    const isAdminAuth = localStorage.getItem('admin_authenticated') === 'true';
+    const { isEnabled, userType } = checkAdminBypassStatus();
+    const isAdminBypass = isEnabled && userType === 'admin';
+    
+    if (isAdminAuth || isAdminBypass) {
+      goToAdminDashboard();
     }
-  }, [navigate]);
+  }, [goToAdminDashboard]);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
     setIsLoading(true);
-
-    // Simple admin authentication for demo purposes
-    // In a real application, this would validate against a secure backend
-    if (username === 'admin' && password === 'admin123') {
-      console.log('Admin authentication successful');
-      setAdminAuthenticated(username);
-      navigate('/admin/system-breakdown');
-    } else {
-      setError('Invalid username or password');
+    
+    // In a real app, this would call an API endpoint to validate credentials
+    setTimeout(() => {
+      if (username === 'admin' && password === 'password') {
+        // Set admin session in localStorage (in a real app, use proper JWT tokens or cookies)
+        localStorage.setItem('admin_authenticated', 'true');
+        localStorage.setItem('admin_username', username);
+        
+        // Set a session timestamp
+        localStorage.setItem('admin_session_created', new Date().toISOString());
+        
+        toast({
+          title: 'Login successful',
+          description: 'Welcome to the admin dashboard',
+        });
+        goToAdminDashboard();
+      } else {
+        toast({
+          title: 'Login failed',
+          description: 'Invalid username or password',
+          variant: 'destructive',
+        });
+      }
       setIsLoading(false);
+    }, 1000);
+  };
+  
+  const handleBypassLogin = () => {
+    try {
+      enableAdminBypass('admin');
+      
+      toast({
+        title: 'Admin Bypass Activated',
+        description: 'You now have access to the admin dashboard in testing mode',
+      });
+      
+      goToAdminDashboard();
+    } catch (error) {
+      console.error('Error during admin bypass login:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to enable admin bypass mode',
+        variant: 'destructive',
+      });
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-background">
-      <Card className="w-[400px]">
-        <CardHeader>
-          <CardTitle className="text-xl font-bold">Admin Portal</CardTitle>
-          <CardDescription>
-            Enter your credentials to access the admin dashboard
-          </CardDescription>
-        </CardHeader>
-        
-        <form onSubmit={handleLogin}>
-          <CardContent className="space-y-4">
-            {error && (
-              <div className="p-3 bg-destructive/15 text-destructive text-sm rounded-md">
-                {error}
+    <div className="min-h-screen flex flex-col bg-gray-50">
+      <GuestTopNavigation />
+      <div className="flex-1 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md shadow-lg">
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl font-bold text-center">Admin Login</CardTitle>
+            <CardDescription className="text-center">
+              Enter your credentials to access the admin dashboard
+            </CardDescription>
+          </CardHeader>
+          <form onSubmit={handleLogin}>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium" htmlFor="username">
+                  Username
+                </label>
+                <Input
+                  id="username"
+                  placeholder="Enter your username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="focus:ring-2 focus:ring-material-primary/30"
+                  required
+                />
               </div>
-            )}
-            
-            <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
-              <Input
-                id="username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                autoComplete="username"
-                required
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
+              <div className="space-y-2">
+                <label className="text-sm font-medium" htmlFor="password">
+                  Password
+                </label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="focus:ring-2 focus:ring-material-primary/30"
+                  required
+                />
               </div>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoComplete="current-password"
-                required
-              />
-            </div>
-          </CardContent>
-          
-          <CardFooter>
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Logging in..." : "Login to Admin"}
-            </Button>
-          </CardFooter>
-        </form>
-      </Card>
+              <div className="text-sm text-gray-500">
+                <p>For demo purposes:</p>
+                <p>Username: admin</p>
+                <p>Password: password</p>
+              </div>
+            </CardContent>
+            <CardFooter className="flex flex-col gap-3">
+              <Button
+                type="submit"
+                className="w-full bg-material-primary hover:bg-material-primary/90 text-white"
+                disabled={isLoading}
+              >
+                {isLoading ? 'Logging in...' : 'Login'}
+              </Button>
+              
+              {showBypassButtons && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full text-sm"
+                  onClick={handleBypassLogin}
+                >
+                  Use Admin Bypass (Development Only)
+                </Button>
+              )}
+            </CardFooter>
+          </form>
+        </Card>
+      </div>
     </div>
   );
 };

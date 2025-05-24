@@ -1,70 +1,92 @@
 
-import { useState, useCallback, useEffect } from 'react';
-import { FeatureItem, ProgressSnapshot, MonthlyProgressData } from '../types';
-import { 
-  createProgressSnapshot, 
-  validateProgressData, 
-  generateHistoricalProgressData 
-} from '../utils';
+import { useState, useEffect } from 'react';
+import { ProgressSnapshot, MonthlyProgressData, FeatureItem } from '../types';
+import { createProgressSnapshot, validateProgressData } from '../utils';
+import { generateHistoricalProgressData } from '../utils/historicalData';
 
-export function useProgressTracking(
+export const useProgressTracking = (
   adminFeatures: FeatureItem[],
   establishmentFeatures: FeatureItem[],
   individualFeatures: FeatureItem[],
   promoterFeatures: FeatureItem[]
-) {
-  // State for tracking progress
-  const [currentSnapshot, setCurrentSnapshot] = useState<ProgressSnapshot | null>(null);
+) => {
+  const [progressHistory, setProgressHistory] = useState<ProgressSnapshot[]>([]);
   const [monthlyProgressData, setMonthlyProgressData] = useState<MonthlyProgressData[]>([]);
-  const [dataValidation, setDataValidation] = useState<{ isValid: boolean; issues: string[] }>({ 
-    isValid: true, 
-    issues: [] 
-  });
+  const [currentSnapshot, setCurrentSnapshot] = useState<ProgressSnapshot | null>(null);
+  const [dataValidation, setDataValidation] = useState<{ isValid: boolean, issues: string[] }>({ isValid: true, issues: [] });
   
-  // Create a new progress snapshot
-  const createSnapshot = useCallback(() => {
+  // Initialize project status on mount and when features change
+  useEffect(() => {
+    const initialSnapshot = createProgressSnapshot(
+      adminFeatures,
+      establishmentFeatures,
+      individualFeatures,
+      promoterFeatures
+    );
+    
+    setCurrentSnapshot(initialSnapshot);
+    
+    const validationResult = validateProgressData(initialSnapshot);
+    setDataValidation(validationResult);
+    
+    generateHistoricalProgressDataAndUpdate(initialSnapshot);
+  }, [adminFeatures, establishmentFeatures, individualFeatures, promoterFeatures]);
+  
+  const updateProgressTracking = () => {
     const newSnapshot = createProgressSnapshot(
       adminFeatures,
       establishmentFeatures,
       individualFeatures,
-      promoterFeatures,
-      true
+      promoterFeatures
     );
+    
+    const validationResult = validateProgressData(newSnapshot);
+    setDataValidation(validationResult);
     
     setCurrentSnapshot(newSnapshot);
     
-    // Also validate the data
-    const validationResult = validateProgressData(
-      adminFeatures,
-      establishmentFeatures,
-      individualFeatures,
-      promoterFeatures,
-      newSnapshot
-    );
+    setProgressHistory(prevHistory => [...prevHistory, newSnapshot]);
     
-    setDataValidation(validationResult);
+    generateHistoricalProgressDataAndUpdate(newSnapshot, [...progressHistory, newSnapshot]);
     
-    return newSnapshot;
-  }, [adminFeatures, establishmentFeatures, individualFeatures, promoterFeatures]);
-  
-  // Generate historical data for charts
-  const generateHistoricalData = useCallback(() => {
-    const data = generateHistoricalProgressData(6);
-    setMonthlyProgressData(data);
-    return data;
-  }, []);
-  
-  // Initialize data on mount
-  useEffect(() => {
-    createSnapshot();
-    generateHistoricalData();
-  }, [createSnapshot, generateHistoricalData]);
-  
-  return {
-    currentSnapshot,
-    monthlyProgressData,
-    dataValidation,
-    createSnapshot,
-    generateHistoricalData
+    return {
+      snapshot: newSnapshot,
+      validation: validationResult
+    };
   };
-}
+
+  const generateHistoricalProgressDataAndUpdate = (
+    snapshot: ProgressSnapshot,
+    history: ProgressSnapshot[] = []
+  ) => {
+    generateHistoricalProgressData(snapshot, history)
+      .then(data => {
+        setMonthlyProgressData(data);
+      })
+      .catch(error => {
+        console.error("Error generating historical progress data:", error);
+        // Use basic fallback data if generation fails
+        const currentMonth = new Date().getMonth();
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        
+        const fallbackData = Array.from({ length: currentMonth + 1 }, (_, i) => {
+          const progressRatio = (i + 1) / (currentMonth + 1);
+          return {
+            month: monthNames[i],
+            frontend: Math.round(snapshot.frontendProgress * progressRatio),
+            backend: Math.round(snapshot.backendProgress * progressRatio * 0.85)
+          };
+        });
+        
+        setMonthlyProgressData(fallbackData);
+      });
+  };
+
+  return {
+    progressHistory,
+    monthlyProgressData,
+    currentSnapshot,
+    dataValidation,
+    updateProgressTracking
+  };
+};

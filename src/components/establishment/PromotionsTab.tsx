@@ -1,129 +1,106 @@
 
-import React, { useState } from 'react';
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger 
-} from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, PlusCircle } from 'lucide-react';
-import { PromotionFormData, Promotion } from '@/types/PromotionTypes';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Trash } from 'lucide-react';
 
-export interface PromotionsTabProps {
-  promotions: Promotion[];
-  handleAddPromotion: (data: PromotionFormData) => Promise<void>;
-  handleDeletePromotion: (id: string) => Promise<void>;
-  handleUpdatePromotion?: (id: string, data: PromotionFormData) => Promise<void>;
+interface Promotion {
+  id: string;
+  code: string;
+  description: string;
 }
 
-const PromotionsTab: React.FC<PromotionsTabProps> = ({ 
-  promotions, 
-  handleAddPromotion, 
-  handleDeletePromotion,
-  handleUpdatePromotion
+interface PromotionsTabProps {
+  promotions: Promotion[];
+  newPromoCode: string;
+  newPromoDescription: string;
+  setNewPromoCode: (code: string) => void;
+  setNewPromoDescription: (desc: string) => void;
+  handleAddPromotion: () => void;
+  handleDeletePromotion: (id: string) => void;
+}
+
+const PromotionsTab: React.FC<PromotionsTabProps> = ({
+  promotions,
+  newPromoCode,
+  newPromoDescription,
+  setNewPromoCode,
+  setNewPromoDescription,
+  handleAddPromotion,
+  handleDeletePromotion
 }) => {
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  
-  const openAddDialog = () => setIsAddDialogOpen(true);
-  const closeAddDialog = () => setIsAddDialogOpen(false);
-  
-  const handleCreate = async (data: PromotionFormData) => {
-    await handleAddPromotion(data);
-    closeAddDialog();
-  };
-  
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Promotion Codes</h2>
-        <Button onClick={openAddDialog} size="sm">
-          <PlusCircle className="h-4 w-4 mr-2" />
-          Add New
-        </Button>
-      </div>
-      
-      <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-        {promotions.length === 0 ? (
-          <Card className="col-span-full">
-            <CardContent className="pt-6 text-center">
-              <p className="text-muted-foreground">No promotions found. Create your first promotion code!</p>
-            </CardContent>
-          </Card>
-        ) : (
-          promotions.map(promotion => (
-            <Card key={promotion.id}>
-              <CardHeader>
-                <div className="flex justify-between">
-                  <CardTitle className="font-mono">{promotion.code}</CardTitle>
-                  <Badge variant={promotion.is_active ? "default" : "outline"}>
-                    {promotion.is_active ? "Active" : "Inactive"}
-                  </Badge>
-                </div>
-                <CardDescription>{promotion.description}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2 text-sm">
-                  <div>
-                    <span className="font-medium">Discount:</span> 
-                    {promotion.discount_type === 'percentage' 
-                      ? ` ${promotion.discount_value}% off` 
-                      : ` $${promotion.discount_value.toFixed(2)} off`}
-                  </div>
-                  {promotion.usage_limit && (
-                    <div>
-                      <span className="font-medium">Usage:</span> {promotion.used_count || 0} / {promotion.usage_limit}
-                    </div>
-                  )}
-                  {promotion.end_date && (
-                    <div>
-                      <span className="font-medium">Expires:</span> {new Date(promotion.end_date).toLocaleDateString()}
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-              <CardFooter className="flex justify-end gap-2">
-                {handleUpdatePromotion && (
-                  <Button variant="outline" size="sm">
-                    <Edit className="h-4 w-4 mr-1" /> Edit
-                  </Button>
-                )}
-                <Button 
-                  variant="destructive" 
-                  size="sm"
-                  onClick={() => handleDeletePromotion(promotion.id)}
-                >
-                  <Trash2 className="h-4 w-4 mr-1" /> Delete
+    <Card>
+      <CardHeader>
+        <CardTitle>Promotional Offers</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-6">
+          {/* Add new promotion form */}
+          <div className="bg-background rounded-lg border p-4">
+            <h3 className="font-medium mb-3 text-left">Add New Promotion</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium mb-1 text-left block">Promo Code</label>
+                <Input
+                  value={newPromoCode}
+                  onChange={(e) => setNewPromoCode(e.target.value)}
+                  placeholder="e.g. WELCOME10"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 text-left block">Description</label>
+                <Textarea
+                  value={newPromoDescription}
+                  onChange={(e) => setNewPromoDescription(e.target.value)}
+                  placeholder="e.g. 10% off for first-time visitors"
+                  rows={1}
+                />
+              </div>
+              <div className="md:col-span-2 flex justify-end">
+                <Button onClick={handleAddPromotion}>
+                  Add Promotion
                 </Button>
-              </CardFooter>
-            </Card>
-          ))
-        )}
-      </div>
-      
-      {/* Add Dialog would go here */}
-      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add New Promotion Code</DialogTitle>
-          </DialogHeader>
-          <div>
-            {/* Promotion form would go here */}
-            <Button onClick={closeAddDialog}>Cancel</Button>
+              </div>
+            </div>
           </div>
-        </DialogContent>
-      </Dialog>
-    </div>
+          
+          {/* Current promotions */}
+          <div>
+            <h3 className="font-medium mb-3 text-left">Active Promotions</h3>
+            {promotions.length === 0 ? (
+              <p className="text-center py-6 text-muted-foreground">
+                No active promotions. Add a new promotion above.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {promotions.map(promo => (
+                  <div 
+                    key={promo.id} 
+                    className="flex items-center justify-between p-3 bg-background rounded-lg border"
+                  >
+                    <div className="flex-1">
+                      <div className="font-medium text-left">{promo.code}</div>
+                      <div className="text-sm text-muted-foreground text-left">{promo.description}</div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDeletePromotion(promo.id)}
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    >
+                      <Trash className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 

@@ -9,12 +9,10 @@ describe('Feature Registry', () => {
   });
 
   it('should be able to get features by ID', () => {
-    const featureId = FEATURES.VENUE_DISCOVERY;
-    const feature = getFeature(featureId);
-    expect(feature).toBeDefined();
-    if (feature) {
-      expect(feature.name).toBe('Venue Discovery');
-    }
+    const advancedAnalytics = getFeature(FEATURES.ADVANCED_ANALYTICS);
+    expect(advancedAnalytics).toBeDefined();
+    expect(advancedAnalytics?.name).toBe('Advanced Analytics');
+    expect(advancedAnalytics?.category).toBe('analytics');
   });
 
   it('should return undefined for unknown feature IDs', () => {
@@ -36,9 +34,13 @@ describe('Feature Registry', () => {
   });
 
   it('should get features for a specific category', () => {
-    // This test might need adjustment depending on if categories are implemented
     const analyticsFeatures = getFeaturesForCategory('analytics');
     expect(analyticsFeatures).toBeInstanceOf(Array);
+    
+    // All features in this category should have the correct category
+    analyticsFeatures.forEach(feature => {
+      expect(feature.category).toBe('analytics');
+    });
   });
 
   it('should have consistent tier mappings', () => {

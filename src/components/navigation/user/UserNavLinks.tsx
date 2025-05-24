@@ -39,30 +39,6 @@ const NavLink: React.FC<NavLinkProps> = ({
 };
 
 const UserNavLinks: React.FC<UserNavLinksProps> = ({ userType = 'individual' }) => {
-  // Return appropriate navigation links based on user type
-  if (userType === 'establishment') {
-    return (
-      <nav className="hidden md:flex items-center gap-1">
-        <NavLink href="/establishment/dashboard">Dashboard</NavLink>
-        <NavLink href="/establishment/profile">Profile</NavLink>
-        <NavLink href="/establishment/menu">Menu</NavLink>
-        <NavLink href="/establishment/analytics">Analytics</NavLink>
-      </nav>
-    );
-  }
-
-  if (userType === 'promoter') {
-    return (
-      <nav className="hidden md:flex items-center gap-1">
-        <NavLink href="/promoter/dashboard">Dashboard</NavLink>
-        <NavLink href="/promoter/events">Events</NavLink>
-        <NavLink href="/promoter/analytics">Analytics</NavLink>
-        <NavLink href="/promoter/profile">Profile</NavLink>
-      </nav>
-    );
-  }
-
-  // Individual user navigation
   return (
     <nav className="hidden md:flex items-center gap-1">
       <NavLink href="/explore">Explore</NavLink>

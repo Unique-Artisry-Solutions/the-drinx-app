@@ -1,24 +1,14 @@
 
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BarChart, PieChart, LineChart } from 'lucide-react';
-import { FeatureItem, MonthlyProgressData } from './types';
+import { FeatureItem } from './types';
+import SystemHealthCheck from './components/SystemHealthCheck';
+import { calculateFeatureStatistics } from './utils';
 import StatusPieChart from './components/charts/StatusPieChart';
 import ProgressLineChart from './components/charts/ProgressLineChart';
-import { calculateFeatureStatistics } from './utils';
-import {
-  ResponsiveContainer,
-  BarChart as RechartsBarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  Cell,
-  LabelList,
-  AreaChart,
-  Area
-} from 'recharts';
+import { MonthlyProgressData } from './types';
 
 interface ImplementationOverviewProps {
   adminFeatures: FeatureItem[];
@@ -54,19 +44,6 @@ const ImplementationOverview: React.FC<ImplementationOverviewProps> = ({
     { name: 'Planned', value: overallStats.plannedFeatures, color: '#94a3b8' },
     { name: 'Blocked', value: overallStats.blockedFeatures, color: '#ef4444' },
   ], [overallStats]);
-
-  // Convert MonthlyProgressData to ProgressData for ProgressLineChart
-  const progressData = useMemo(() => {
-    if (!monthlyProgressData || monthlyProgressData.length === 0) {
-      return [];
-    }
-    
-    return monthlyProgressData.map(item => ({
-      month: item.month,
-      frontend: item.frontend || 0, // Ensure frontend is always provided
-      backend: item.backend || 0 // Ensure backend is always provided
-    }));
-  }, [monthlyProgressData]);
 
   // Render bar chart with basic CSS
   const renderBarChart = () => (
@@ -199,9 +176,9 @@ const ImplementationOverview: React.FC<ImplementationOverviewProps> = ({
         
         {chartType === 'bar' && renderBarChart()}
         {chartType === 'pie' && <StatusPieChart data={pieChartData} title="Feature Status Distribution" />}
-        {chartType === 'line' && progressData.length > 0 && (
+        {chartType === 'line' && monthlyProgressData && (
           <ProgressLineChart 
-            data={progressData} 
+            data={monthlyProgressData} 
             title="Implementation Progress Over Time" 
           />
         )}

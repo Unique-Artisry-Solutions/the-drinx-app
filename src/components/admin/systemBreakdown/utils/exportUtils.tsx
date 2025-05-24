@@ -1,21 +1,15 @@
 
-import { FeatureItem } from '../types';
+import { FeatureItem, FeatureCategory } from '../types';
 
-// Define a simple category type to use in this file
-type FeatureCategory = 'Admin' | 'Establishment' | 'Individual' | 'Promoter';
-
-// Main CSV generation function
 export function generateCSV(
   adminFeatures: FeatureItem[],
   establishmentFeatures: FeatureItem[],
-  individualFeatures: FeatureItem[],
-  promoterFeatures: FeatureItem[] = []
+  individualFeatures: FeatureItem[]
 ) {
   const allFeatures = [
     ...adminFeatures.map(f => ({ ...f, category: 'Admin' as FeatureCategory })),
     ...establishmentFeatures.map(f => ({ ...f, category: 'Establishment' as FeatureCategory })),
-    ...individualFeatures.map(f => ({ ...f, category: 'Individual' as FeatureCategory })),
-    ...promoterFeatures.map(f => ({ ...f, category: 'Promoter' as FeatureCategory }))
+    ...individualFeatures.map(f => ({ ...f, category: 'Individual' as FeatureCategory }))
   ];
   
   const headers = [
@@ -26,8 +20,7 @@ export function generateCSV(
     'Database Status',
     'Admin Access',
     'Establishment Access',
-    'Individual Access',
-    'Promoter Access'
+    'Individual Access'
   ];
   
   const rows = allFeatures.map(feature => [
@@ -38,13 +31,12 @@ export function generateCSV(
     feature.databaseStatus,
     feature.adminAccess,
     feature.establishmentAccess,
-    feature.individualAccess,
-    feature.promoterAccess
+    feature.individualAccess
   ]);
   
   const csvContent = [
     headers.join(','),
-    ...rows.map(row => row.map(cell => `"${String(cell || '').replace(/"/g, '""')}"`).join(','))
+    ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
   ].join('\n');
   
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -56,6 +48,3 @@ export function generateCSV(
   link.click();
   document.body.removeChild(link);
 }
-
-// Export both function names for backward compatibility
-export const exportFeaturesAsCSV = generateCSV;

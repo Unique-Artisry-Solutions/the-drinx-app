@@ -1,196 +1,94 @@
 
-export interface Task {
-  name: string;
-  status: 'pending' | 'in_progress' | 'completed' | 'blocked';
-  description?: string;
-  effort?: number;
-  impact?: number;
-}
+export type FeatureStatus = 'implemented' | 'in_progress' | 'planned' | 'blocked' | 'partial';
+export type DatabaseStatus = 'complete' | 'in_progress' | 'not_started' | 'implemented' | 'partial';
+export type AccessLevel = 'full' | 'partial' | 'read' | 'none' | 'write' | 'moderate';
+export type FeatureComplexity = 'high' | 'medium' | 'low';
+export type FeatureCategory = string;
 
-export interface Feature {
-  id: string;
-  name: string;
-  category: string;
-  description: string;
-  implementation_status: 'planned' | 'in_progress' | 'completed' | 'blocked';
-  tasks: Task[];
-  dependencies?: string[];
-  ui_components?: string[];
-  api_endpoints?: string[];
-  technical_details?: string;
-  business_value?: string[];
-}
-
-// Define the possible values for feature status
-export type FeatureStatus = 'planned' | 'in_progress' | 'partial' | 'implemented' | 'blocked';
-
-// Define the possible values for database status
-export type DatabaseStatus = 'not_started' | 'in_progress' | 'partial' | 'completed' | 'implemented';
-
-// Define access levels
-export type AccessLevel = 'none' | 'partial' | 'full';
-
-// Define FeatureComplexity type
-export type FeatureComplexity = 'low' | 'medium' | 'high';
-
-// Extended feature item interface for the enhanced system breakdown
 export interface FeatureItem {
   id: string;
   name: string;
   description: string;
   status: FeatureStatus;
-  statusUpdated?: boolean;
-  originalStatus?: FeatureStatus;
-  category?: string;
-  complexity?: FeatureComplexity;
-  adminAccess?: AccessLevel;
-  establishmentAccess?: AccessLevel;
-  individualAccess?: AccessLevel;
-  promoterAccess?: AccessLevel;
-  databaseStatus?: DatabaseStatus;
-  userImpact?: 'low' | 'medium' | 'high';
-  components?: {
-    name: string;
-    type: string;
-    status: string;
-  }[];
-  lastUpdated?: string;
-  assignedTo?: string;
-  dependencies?: string[];
-  implementationProgress?: number;
-  tags?: string[];
+  adminAccess: AccessLevel;
+  establishmentAccess: AccessLevel;
+  individualAccess: AccessLevel;
+  promoterAccess?: AccessLevel; // Added promoterAccess property
+  databaseStatus: DatabaseStatus;
+  dbStatus?: DatabaseStatus;
+  userImpact: 'high' | 'medium' | 'low';
+  complexity: FeatureComplexity;
   databaseAnalysis?: string;
+  statusUpdated?: boolean;
+  implementationProgress?: number;
+  dbCompleted?: number;
   testSteps?: string[];
-  scheduledFor?: string;
-  dependsOn?: string[];
+  subFeatures?: SubFeature[];
+  originalStatus?: string;
+  tags?: string[];
   dbRequirementsText?: string;
-  integrations?: string[];
+  dependsOn?: string[];
+  scheduledFor?: string;
+  integrations?: string[]; // Added integrations property
+  category?: FeatureCategory; // Added category property
+  components?: Component[]; // Added components property
+  lastUpdated?: string; // Added lastUpdated property
+  assignedTo?: string; // Added assignedTo property
+  dependencies?: string[]; // Added dependencies property
 }
 
-// Analytics step for feature analysis process
-export interface AnalysisStep {
+// Add Component interface for the components property
+export interface Component {
   name: string;
-  description: string;
-  progressPercentage: number;
-  status: 'pending' | 'running' | 'completed' | 'error';
-  details?: string;
+  type: string;
+  status: string;
 }
 
-// Monthly progress data for charts
-export interface MonthlyProgressData {
-  month: string;
-  totalImplemented: number;
-  adminImplemented: number;
-  establishmentImplemented: number;
-  individualImplemented: number;
-  promoterImplemented: number;
-  // For backward compatibility with existing components
-  frontend: number;
-  backend: number;
-}
-
-// Progress snapshot for system state
-export interface ProgressSnapshot {
-  date: string;
-  timestamp?: string;
-  totalFeatures: number;
-  implementedFeatures: number;
-  inProgressFeatures: number;
-  plannedFeatures: number;
-  blockedFeatures?: number;
-  implementationPercentage?: number;
-  adminProgress: number;
-  establishmentProgress: number;
-  individualProgress: number;
-  promoterProgress: number;
-  // For backward compatibility
-  frontendProgress?: number;
-  backendProgress?: number;
-  averageImplementationProgress?: number;
-  overallProgress?: number;
-  adminFeatureCount?: number;
-  establishmentFeatureCount?: number;
-  individualFeatureCount?: number;
-  promoterFeatureCount?: number;
-  adminImplementationRate?: number;
-  establishmentImplementationRate?: number;
-  individualImplementationRate?: number;
-  promoterImplementationRate?: number;
-  dbComplete?: number;
-  confidenceScore?: number;
-}
-
-// Progress data for historical tracking
-export interface ProgressData {
-  date: string;
-  implementationRate: number;
-  features: {
-    implemented: number;
-    inProgress: number;
-    planned: number;
-    blocked: number;
-    total: number;
-  };
-}
-
-// Release progress tracking
-export interface ReleaseProgress {
-  id: string;
-  version: string;
-  implementationRate: number;
-  features: {
-    completed: number;
-    inProgress: number;
-    planned: number;
-    blocked: number;
-    total: number;
-  };
-}
-
-// Feature showcase data types
-export interface FeatureShowcaseData {
-  id: string;
+export interface Phase {
   name: string;
-  description: string;
-  showcaseCategory: string;
-  complexityLevel: FeatureComplexity;
-  businessValue: FeatureBusinessValueType;
-  implementationStatus: FeatureStatus;
-  marketingPoints: string[];
-  iconName: string;
-  isSignature: boolean;
-  userType: 'admin' | 'establishment' | 'individual' | 'promoter';
-  implementationPercentage?: number;
-  mockImplementationStats?: {
-    timeToImplement: string;
-    componentsCount: number;
-    apiEndpoints: number;
-    testCoverage: number;
-  };
+  status: FeatureStatus;
+  tasks: string[];
 }
 
+export interface SubFeature {
+  name: string;
+  status: FeatureStatus;
+  description: string;
+  progress: number;
+  phases?: Phase[];
+}
+
+export type FeatureShowcaseCategoryType = string;
 export type FeatureBusinessValueType = 'high' | 'medium' | 'low';
-
-export interface FeatureShowcaseCategoryType {
-  name: string;
-  description: string;
-  features: FeatureShowcaseData[];
-  implementationRate: number;
-  featureCount: number;
-}
 
 export interface FeatureBusinessValueObject {
   value: FeatureBusinessValueType;
   label: string;
-  name: string;
   description: string;
   color: string;
+  name: string;
   features: FeatureItem[];
   implementationRate: number;
-  featureCount: number;
+  featureCount?: number;
 }
 
-// Improvement item types
+export interface FeatureShowcaseData {
+  id: string;
+  name: string;
+  description: string;
+  businessValue: FeatureBusinessValueType;
+  complexity: FeatureComplexity;
+  implementationStatus: FeatureStatus;
+  showcaseCategory: string;
+  isSignature: boolean;
+  icon: string;
+  implementations?: number;
+  avgRating?: number;
+  marketingPoints?: string[];
+  categories: string[];
+  businessValues: string[];
+}
+
 export interface ImprovementItem {
   id: string;
   title: string;
@@ -198,32 +96,59 @@ export interface ImprovementItem {
   impact: 'high' | 'medium' | 'low';
   effort: 'high' | 'medium' | 'low';
   priority: number;
-  status: 'proposed' | 'approved' | 'in_progress' | 'completed' | 'rejected';
   category: string;
+  status: 'proposed' | 'approved' | 'in_progress' | 'completed' | 'rejected';
+  targetDate?: string;
+  assignedTo?: string;
+  relatedFeatures?: string[];
+  type: 'enhancement' | 'new-feature';
   votes: number;
-  submittedBy: string;
   submittedDate: string;
-  type: 'new-feature' | 'enhancement' | 'bug-fix' | 'refactor';
-  lovableCompatible: boolean;
-  technicalRequirements: string;
+  submittedBy: string;
+  lovableCompatible?: boolean;
+  technicalRequirements?: string;
   implementationSteps: string[];
   estimatedEffort: string;
   businessImpact: string;
-  currentStatus: string;
-  affectedAreas: string[];
+  currentStatus?: string;
+  affectedAreas: ('admin' | 'establishment' | 'individual')[];
 }
 
-// Sorting options for improvements
-export type SortField = 
-  | 'title' 
-  | 'impact' 
-  | 'effort' 
-  | 'priority' 
-  | 'votes' 
-  | 'submittedDate' 
-  | 'status'  // Added additional sort fields
-  | 'type'
-  | 'lovableCompatible'
-  | 'name';
-
+export type SortField = 'priority' | 'impact' | 'effort' | 'title' | 'name' | 'status' | 'type' | 'lovableCompatible' | 'submittedDate' | 'votes';
 export type SortOrder = 'asc' | 'desc';
+
+export interface ProgressSnapshot {
+  timestamp: string;
+  date: string;
+  totalFeatures: number;
+  implementedFeatures: number;
+  inProgressFeatures: number;
+  plannedFeatures: number;
+  blockedFeatures: number;
+  averageImplementationProgress: number;
+  frontendProgress: number;
+  backendProgress: number;
+  adminFeatureCount: number;
+  establishmentFeatureCount: number;
+  individualFeatureCount: number;
+  promoterFeatureCount: number;
+  adminImplementationRate: number;
+  establishmentImplementationRate: number;
+  individualImplementationRate: number;
+  promoterImplementationRate: number;
+  overallProgress: number;
+  dbComplete: number;
+  confidenceScore: number;
+}
+
+export interface MonthlyProgressData {
+  month: string;
+  frontend: number;
+  backend: number;
+}
+
+export interface AnalysisStep {
+  name: string;
+  completed: boolean;
+  details?: string;
+}

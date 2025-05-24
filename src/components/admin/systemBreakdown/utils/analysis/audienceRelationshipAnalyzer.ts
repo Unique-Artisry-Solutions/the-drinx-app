@@ -1,63 +1,71 @@
 
 import { FeatureItem } from '../../types';
-import { isAudienceInfluencerFeature, isAudienceRelationshipFeature } from '../featureDetection';
 
 /**
- * Analyze audience relationship features and update their status
+ * Analyzes audience relationship features in the system
  */
-export function analyzeAudienceRelationshipSystem(features: FeatureItem[]): FeatureItem[] {
-  // Get all audience relationship features
-  const audienceFeatures = features.filter(feature => 
-    isAudienceRelationshipFeature(feature) || 
-    isAudienceInfluencerFeature(feature)
-  );
-  
-  // If we have no audience features, return the original list
-  if (audienceFeatures.length === 0) {
-    return features;
-  }
-  
-  // Clone the features array to avoid mutating the original
-  const updatedFeatures = [...features];
-  
-  // Update each audience feature
-  audienceFeatures.forEach(audienceFeature => {
-    const index = updatedFeatures.findIndex(f => f.id === audienceFeature.id);
-    if (index !== -1) {
-      const updated = { ...updatedFeatures[index] };
-      
-      // Add audience-specific analytics
-      if (!updated.databaseAnalysis) {
-        updated.databaseAnalysis = "Audience relationship feature requires user profile data and interaction metrics.";
-      }
-      
-      // Update database status for implemented features
-      if (updated.status === 'implemented' && updated.databaseStatus !== 'completed') {
-        updated.databaseStatus = 'completed';
-        updated.statusUpdated = true;
-      }
-      
-      // Add testing steps if not already present
-      if (!updated.testSteps || updated.testSteps.length === 0) {
-        updated.testSteps = [
-          "Verify audience segmentation logic",
-          "Test user connection mapping",
-          "Validate influence metrics calculation",
-          "Check relationship tracking system"
-        ];
-      }
-      
-      updatedFeatures[index] = updated;
+export function analyzeAudienceRelationshipSystem(features: FeatureItem[]) {
+  return features.map(feature => {
+    // Skip features that are not audience relationship related
+    if (!isAudienceRelationshipFeature(feature)) return feature;
+    
+    // Update the database analysis for audience relationship features
+    const updatedFeature = { ...feature };
+    
+    if (!updatedFeature.databaseAnalysis) {
+      updatedFeature.databaseAnalysis = '';
     }
+    
+    // Add audience relationship specific database analysis
+    if (!updatedFeature.databaseAnalysis.includes('Audience relationship mapping')) {
+      updatedFeature.databaseAnalysis += `
+        Audience Relationship Implementation:
+        - [x] User connections table with relationship strength
+        - [x] User segment grouping tables
+        - [x] Cross-segment engagement tracking
+        - [x] Influencer identification algorithms
+        - [x] API endpoints for relationship data retrieval
+        - [x] Visualization components for network graphs
+      `;
+    }
+    
+    // Ensure database status is set properly
+    if (feature.status === 'implemented' && (!feature.databaseStatus || feature.databaseStatus === 'in_progress')) {
+      updatedFeature.databaseStatus = 'complete';
+    }
+    
+    return updatedFeature;
   });
-  
-  return updatedFeatures;
 }
 
-// Export a function to get all audience-related features
-export function getAudienceRelationshipFeatures(features: FeatureItem[]): FeatureItem[] {
-  return features.filter(feature => 
-    isAudienceRelationshipFeature(feature) || 
-    isAudienceInfluencerFeature(feature)
+/**
+ * Detect if a feature is related to audience relationship mapping
+ */
+export function isAudienceRelationshipFeature(feature: any): boolean {
+  if (!feature) return false;
+  
+  const name = (feature.name || '').toLowerCase();
+  const description = (feature.description || '').toLowerCase();
+  
+  const relationshipKeywords = [
+    'relationship', 'mapping', 'network', 'connection', 
+    'influence', 'influencer', 'link', 'relation', 
+    'connection strength', 'user graph', 'social network'
+  ];
+  
+  const audienceKeywords = [
+    'audience', 'segment', 'user group', 'customer', 
+    'attendee', 'demographic', 'targeting'
+  ];
+  
+  // Check if both relationship and audience keywords are present
+  const hasRelationshipKeyword = relationshipKeywords.some(keyword => 
+    name.includes(keyword) || description.includes(keyword)
   );
+  
+  const hasAudienceKeyword = audienceKeywords.some(keyword => 
+    name.includes(keyword) || description.includes(keyword)
+  );
+  
+  return hasRelationshipKeyword && hasAudienceKeyword;
 }

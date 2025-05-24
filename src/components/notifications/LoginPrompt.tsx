@@ -3,7 +3,7 @@ import React from 'react';
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { User } from "lucide-react";
-import { useAuth } from '@/contexts/auth/AuthProvider';
+import { useAuth } from '@/contexts/auth';
 import { useNavigate } from 'react-router-dom';
 
 export const LoginPrompt = () => {
@@ -12,7 +12,7 @@ export const LoginPrompt = () => {
 
   // Handle sign in click - navigate to login page
   const handleSignIn = () => {
-    navigate('/login');
+    navigate('/auth');
   };
 
   return (

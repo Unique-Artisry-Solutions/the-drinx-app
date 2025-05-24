@@ -5,12 +5,9 @@ import {
   validateProgressData,
   generateHistoricalProgressData
 } from './statisticsUtils';
-import { generateCSV, exportFeaturesAsCSV } from './exportUtils';
-import { 
-  analyzeAllFeatures,
-  determineSystemHealth,
-  updateFeatureDatabaseStatus as analyzeDatabaseStatus
-} from './analysis';
+import { generateCSV } from './exportUtils';
+import { analyzeAllFeatures } from './analysis';
+import { analyzeDbRequirements } from './analysisHelpers';
 import { 
   isFeatureFlagRelated,
   isMocktailSuggestionFeature,
@@ -53,11 +50,13 @@ import {
   isAudienceRelationshipFeature,
   isAudienceInfluencerFeature,
   isCrossSegmentEngagementFeature,
-  isAudienceVisualizationFeature,
-  isPromoterCommunicationFeature
+  isAudienceVisualizationFeature
 } from './featureDetection';
 import { isTaskCompleted, parseTasks } from './taskDetection';
-import { groupFeaturesByStatus, calculateReleaseCompletion } from './releaseUtils';
+import { 
+  mapFeaturesToReleaseFeatures, 
+  mapFeatureStatusToReleaseStatus 
+} from './releaseUtils';
 import { 
   prepareFeatureShowcaseData,
   generateFeatureReport
@@ -79,7 +78,6 @@ export function getDateMonthsFromNow(months: number): string {
   return date.toISOString().split('T')[0]; // YYYY-MM-DD format
 }
 
-// Re-export all utility functions (minus the release-specific ones)
 export {
   renderStatusBadge,
   renderDatabaseStatusBadge,
@@ -88,10 +86,8 @@ export {
   calculateCategoryProgress,
   groupFeaturesByCategory,
   generateCSV,
-  exportFeaturesAsCSV, 
   analyzeAllFeatures,
-  determineSystemHealth,
-  analyzeDatabaseStatus,
+  analyzeDbRequirements,
   isFeatureFlagRelated,
   isMocktailSuggestionFeature,
   isMocktailTrendsFeature, 
@@ -134,11 +130,10 @@ export {
   isAudienceInfluencerFeature,
   isCrossSegmentEngagementFeature,
   isAudienceVisualizationFeature,
-  isPromoterCommunicationFeature,
   isTaskCompleted,
   parseTasks,
-  groupFeaturesByStatus,
-  calculateReleaseCompletion,
+  mapFeaturesToReleaseFeatures,
+  mapFeatureStatusToReleaseStatus,
   createProgressSnapshot,
   validateProgressData,
   generateHistoricalProgressData,
@@ -146,13 +141,15 @@ export {
   generateFeatureReport
 };
 
-// Export types from types.ts
-export type { AnalysisStep, MonthlyProgressData, ProgressData, ProgressSnapshot } from '../types';
-export type { FeatureShowcaseData, FeatureShowcaseCategoryType, FeatureBusinessValueType, FeatureBusinessValueObject } from '../types';
-export type { ImprovementItem, SortField, SortOrder } from '../types';
+// Use 'export type' for type exports when isolatedModules is enabled
+export type { AnalysisStep } from '../types';
+export type { ReleaseProgress } from '../types/releaseTypes';
+export type { MonthlyProgressData } from '../types';
+export type { FeatureShowcaseData, FeatureShowcaseCategoryType, FeatureBusinessValueType } from '../types';
 
 export { determineBusinessValue, determineComplexity } from './featureShowcase/featureTransformation';
 export { determineShowcaseCategory } from './featureShowcase/categoryDetection';
 export { generateMarketingPoints } from './featureShowcase/marketingUtils';
 export { determineFeatureIcon } from './featureShowcase/iconSelection';
 export { generateMockImplementationStats } from './featureShowcase/mockStats';
+

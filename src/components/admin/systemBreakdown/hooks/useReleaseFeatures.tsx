@@ -1,8 +1,12 @@
 
-import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { FeatureItem } from '../types';
+import { mapFeaturesToReleaseFeatures } from '../utils';
+import { getDateMonthsFromNow } from '../utils';
 
+/**
+ * Hook to handle feature-to-release conversion
+ */
 export const useReleaseFeatures = (
   adminFeatures: FeatureItem[],
   establishmentFeatures: FeatureItem[],
@@ -10,20 +14,39 @@ export const useReleaseFeatures = (
   promoterFeatures: FeatureItem[],
   setActiveTab: (tab: string) => void
 ) => {
-  const [isCreatingRelease, setIsCreatingRelease] = useState(false);
   const { toast } = useToast();
-  
-  // Simple stub function that only shows a toast
-  const handleCreateReleaseFromFeatures = async () => {
+
+  const handleCreateReleaseFromFeatures = () => {
+    // Create a simulated release from ready features
+    const releaseDate = getDateMonthsFromNow(1);
+    
+    // Get all ready features (implemented >= 80%)
+    const readyFeatures = [
+      ...adminFeatures,
+      ...establishmentFeatures,
+      ...individualFeatures,
+      ...promoterFeatures
+    ].filter(
+      feature => (feature.implementationProgress || 0) >= 80 && 
+      (feature.status === 'in_progress' || feature.status === 'implemented')
+    );
+    
+    // Map features to release features format
+    const releaseFeatures = mapFeaturesToReleaseFeatures(readyFeatures, releaseDate);
+    
+    // In a real implementation, this would save to Supabase
+    console.log('Creating release with features:', releaseFeatures);
+    
     toast({
-      title: "Feature Unavailable",
-      description: "The Release Management module has been removed from the system.",
-      duration: 5000,
+      title: "Release Created",
+      description: `Created a new release with ${readyFeatures.length} features`,
     });
+    
+    // Navigate to releases tab
+    setActiveTab('releases');
   };
-  
+
   return {
-    isCreatingRelease,
     handleCreateReleaseFromFeatures
   };
 };

@@ -22,7 +22,6 @@ const PhotoModerationPage = lazy(() => import('@/pages/admin/PhotoModerationPage
 const ContentModerationPage = lazy(() => import('@/pages/admin/ContentModerationPage'));
 const ThemeCustomizationPage = lazy(() => import('@/pages/admin/ThemeCustomizationPage'));
 const TestingInterfacePage = lazy(() => import('@/pages/admin/TestingInterfacePage'));
-const FeatureAccessMonitoringPage = lazy(() => import('@/pages/admin/FeatureAccessMonitoringPage'));
 
 // The AdminLogin page will not use the layout
 export const adminRoutes: RouteObject[] = [
@@ -100,9 +99,5 @@ export const adminRoutes: RouteObject[] = [
   { 
     path: '/admin/testing', 
     element: <AdminLayout><TestingInterfacePage /></AdminLayout> 
-  },
-  {
-    path: '/admin/feature-access',
-    element: <AdminLayout><FeatureAccessMonitoringPage /></AdminLayout>
   },
 ];

@@ -1,89 +1,275 @@
 
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Slider } from '@/components/ui/slider';
+import { useUserLocation } from '@/hooks/useUserLocation';
 import { useSubscriptions } from '@/hooks/useSubscriptions';
-import SubscriptionList from '@/components/subscription/SubscriptionList';
-import SubscriptionDetailCard from './SubscriptionDetailCard';
-import { AppSubscription } from '@/types/SubscriptionTypes';
+import { useAuth } from '@/contexts/auth';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/lib/supabase';
 
-interface SubscriptionManagementProps {
-  promoterId: string;
+// Define BioData type to properly handle the properties
+interface BioData {
+  location_settings?: {
+    sharing: boolean;
+    radius: number;
+  };
+  location?: {
+    latitude: number;
+    longitude: number;
+    updated_at: string;
+  };
+  [key: string]: any; // Allow for other properties
 }
 
-const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ promoterId }) => {
-  const {
-    tiers,
-    subscriptions,
-    isLoading,
-    subscribe,
-    unsubscribe,
-    refetch,
-    error
-  } = useSubscriptions(promoterId);
+export const SubscriptionManagement = () => {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const { subscriptions, tiers, isLoading, subscribe, unsubscribe } = useSubscriptions();
+  const { userLocation, refreshLocation } = useUserLocation();
+  const [locationSharing, setLocationSharing] = useState(false);
+  const [notificationRadius, setNotificationRadius] = useState(10);
+  const [updatingSettings, setUpdatingSettings] = useState(false);
 
-  if (isLoading) {
-    return (
-      <Card className="w-full">
-        <CardContent className="pt-6">
-          <div className="flex justify-center p-8">Loading promoter subscription details...</div>
-        </CardContent>
-      </Card>
-    );
-  }
+  // Fetch subscription settings
+  React.useEffect(() => {
+    const fetchSettings = async () => {
+      if (!user?.id) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+        
+        if (error && error.code !== 'PGRST116') {
+          console.error('Error fetching subscription settings:', error);
+          return;
+        }
+        
+        if (data) {
+          try {
+            const bioData: BioData = data.bio ? JSON.parse(data.bio) : {};
+            if (bioData.location_settings) {
+              setLocationSharing(bioData.location_settings.sharing || false);
+              setNotificationRadius(bioData.location_settings.radius || 10);
+            }
+          } catch (parseError) {
+            console.error('Error parsing bio JSON:', parseError);
+          }
+        }
+      } catch (err) {
+        console.error('Error in subscription settings fetch:', err);
+      }
+    };
+    
+    fetchSettings();
+  }, [user]);
 
-  if (error) {
-    return (
-      <Card className="w-full">
-        <CardContent className="pt-6">
-          <div className="text-center p-8">
-            <p className="text-destructive">Failed to load subscription information.</p>
-            <Button 
-              variant="outline" 
-              onClick={() => refetch()}
-              className="mt-4"
-            >
-              Try Again
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+  const saveSubscriptionSettings = async () => {
+    if (!user?.id) return;
+    
+    setUpdatingSettings(true);
+    
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('bio')
+        .eq('id', user.id)
+        .single();
+      
+      let bioData: BioData = {};
+      
+      if (profile?.bio) {
+        try {
+          bioData = JSON.parse(profile.bio);
+        } catch (e) {
+          // If the bio isn't valid JSON, just use an empty object
+          console.warn('Existing bio was not valid JSON:', e);
+        }
+      }
+      
+      // Update the location settings within the bio
+      const updatedBio: BioData = {
+        ...bioData,
+        location_settings: {
+          sharing: locationSharing,
+          radius: notificationRadius
+        }
+      };
+      
+      // Update the location data if we have it and location sharing is enabled
+      if (locationSharing && userLocation) {
+        updatedBio.location = {
+          latitude: userLocation.latitude,
+          longitude: userLocation.longitude,
+          updated_at: new Date().toISOString()
+        };
+      } else if (!locationSharing) {
+        // Remove location data if location sharing is disabled
+        if (updatedBio.location) {
+          delete updatedBio.location;
+        }
+      }
+      
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          bio: JSON.stringify(updatedBio)
+        })
+        .eq('id', user.id);
+      
+      if (error) throw error;
+      
+      toast({
+        title: 'Settings saved',
+        description: 'Your subscription settings have been updated',
+      });
+      
+    } catch (err: any) {
+      toast({
+        title: 'Failed to save settings',
+        description: err.message,
+        variant: 'destructive',
+      });
+      console.error('Error saving subscription settings:', err);
+    } finally {
+      setUpdatingSettings(false);
+    }
+  };
 
-  const hasActiveSubscription = subscriptions.some(sub => sub.status === 'active' || sub.status === 'pending');
+  const handleLocationSharingToggle = (enabled: boolean) => {
+    setLocationSharing(enabled);
+    
+    if (enabled && !userLocation) {
+      refreshLocation();
+    }
+  };
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle>Subscription Management</CardTitle>
-        <CardDescription>
-          Manage your subscriptions to this promoter
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {hasActiveSubscription ? (
-          <div className="space-y-6">
-            <p className="text-sm text-muted-foreground">Your current subscription:</p>
-            {subscriptions
-              .filter(sub => sub.status === 'active' || sub.status === 'pending')
-              .map(subscription => (
-                <SubscriptionDetailCard
-                  key={subscription.id}
-                  subscription={subscription}
-                  onCancel={() => unsubscribe.mutate(subscription.id)}
-                />
-              ))}
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Subscription Settings</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-medium">Location-Based Notifications</h3>
+                <p className="text-sm text-muted-foreground">
+                  Receive notifications about events happening near you
+                </p>
+              </div>
+              <Switch
+                checked={locationSharing}
+                onCheckedChange={handleLocationSharingToggle}
+              />
+            </div>
+            
+            {locationSharing && (
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="notification-radius">Notification Radius</Label>
+                    <span className="text-sm font-medium">{notificationRadius} miles</span>
+                  </div>
+                  <Slider
+                    id="notification-radius"
+                    min={1}
+                    max={50}
+                    step={1}
+                    value={[notificationRadius]}
+                    onValueChange={(values) => setNotificationRadius(values[0])}
+                    className="w-full"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    You'll receive notifications for events within {notificationRadius} miles of your location
+                  </p>
+                </div>
+                
+                <div className="space-y-2">
+                  <h4 className="text-sm font-medium">Current Location</h4>
+                  {userLocation ? (
+                    <div className="text-sm">
+                      <Badge variant="outline" className="mr-2">
+                        Lat: {userLocation.latitude.toFixed(4)}
+                      </Badge>
+                      <Badge variant="outline">
+                        Long: {userLocation.longitude.toFixed(4)}
+                      </Badge>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      Location not available. Please enable location services in your browser.
+                    </p>
+                  )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={refreshLocation}
+                    disabled={!locationSharing}
+                  >
+                    Refresh Location
+                  </Button>
+                </div>
+              </div>
+            )}
+            
+            <div className="pt-4">
+              <Button 
+                onClick={saveSubscriptionSettings}
+                disabled={updatingSettings}
+              >
+                {updatingSettings ? 'Saving...' : 'Save Settings'}
+              </Button>
+            </div>
           </div>
-        ) : (
-          // Create an empty list for SubscriptionList component
-          <SubscriptionList
-            subscriptions={[]}
-            isLoading={false}
-          />
-        )}
-      </CardContent>
-    </Card>
+
+          <Separator />
+          
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Active Subscriptions</h3>
+            {isLoading ? (
+              <p className="text-sm text-muted-foreground">Loading subscriptions...</p>
+            ) : subscriptions && subscriptions.length > 0 ? (
+              <div className="space-y-2">
+                {subscriptions.map((sub) => (
+                  <Card key={sub.id} className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="font-medium">{sub.promoter_name || 'Unknown Promoter'}</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {sub.tier_name ? `${sub.tier_name} tier` : 'Basic subscription'}
+                        </p>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => unsubscribe.mutate(sub.id)}
+                        disabled={unsubscribe.isPending}
+                      >
+                        Unsubscribe
+                      </Button>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                You don't have any active subscriptions.
+              </p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 

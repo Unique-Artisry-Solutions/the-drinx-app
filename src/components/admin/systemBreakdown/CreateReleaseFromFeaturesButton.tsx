@@ -10,44 +10,34 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { useToast } from '@/hooks/use-toast';
 
 interface CreateReleaseFromFeaturesButtonProps {
   onClick: () => void;
 }
 
 const CreateReleaseFromFeaturesButton: React.FC<CreateReleaseFromFeaturesButtonProps> = ({ onClick }) => {
-  const { toast } = useToast();
-  
-  const handleClick = () => {
-    toast({
-      title: "Feature Unavailable",
-      description: "The Release Management module has been removed from the system.",
-      duration: 5000,
-    });
-  };
-  
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Package className="h-5 w-5 text-blue-500" />
-          Feature Management
+          Prepare Next Release
         </CardTitle>
         <CardDescription>
-          Consolidate and manage application features
+          Consolidate implemented, partial, and not-started features into the next release
         </CardDescription>
       </CardHeader>
       <CardContent>
         <p className="text-sm text-gray-600">
-          The release management functionality has been removed from this system.
-          Please contact your system administrator for more information about feature management.
+          This action will create a new release scheduled for one month from today, and add all current 
+          features to it based on their implementation status. Implemented features will be marked as completed,
+          partial features as in progress, and not-started features as pending.
         </p>
       </CardContent>
       <CardFooter className="flex justify-end">
-        <Button onClick={handleClick} className="flex items-center gap-2">
+        <Button onClick={onClick} className="flex items-center gap-2">
           <Calendar className="h-4 w-4" />
-          <span>Feature Management</span>
+          <span>Create Release from Features</span>
           <ArrowRight className="h-4 w-4 ml-1" />
         </Button>
       </CardFooter>

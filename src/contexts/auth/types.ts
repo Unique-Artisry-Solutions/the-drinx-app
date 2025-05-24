@@ -1,19 +1,19 @@
 
-import { User, Session } from '@supabase/supabase-js';
+import { Session, User } from '@supabase/supabase-js';
 
-/**
- * User type extending Supabase User with additional properties
- */
 export interface AuthUser extends User {
-  // Additional properties for authenticated users can be added here
-  email_confirmed_at?: string | null;
+  app_metadata: {
+    provider?: string;
+    [key: string]: any;
+  };
+  user_metadata: {
+    name?: string;
+    avatar_url?: string;
+    [key: string]: any;
+  };
 }
 
-/**
- * Auth context state and methods
- */
-export interface AuthContextType {
-  // State
+export interface AuthState {
   session: Session | null;
   user: AuthUser | null;
   isAuthenticated: boolean;
@@ -22,8 +22,9 @@ export interface AuthContextType {
   isVerificationEmailSent: boolean;
   authError: Error | null;
   authStable: boolean;
-  
-  // Methods
+}
+
+export interface AuthActions {
   signIn: (email: string, password: string) => Promise<{ error: Error | null; data: any }>;
   signUp: (formData: any) => Promise<any>;
   signOut: () => Promise<void>;
@@ -33,3 +34,5 @@ export interface AuthContextType {
   updateUserProfile: (data: any) => Promise<void>;
   updatePassword: (newPassword: string) => Promise<void>;
 }
+
+export interface AuthContextType extends AuthState, AuthActions {}

@@ -1,142 +1,174 @@
 
-import { useState, useEffect } from 'react';
-import { Card } from '@/components/ui/card';
-import { useFeatureStatus } from './hooks/useFeatureStatus';
-import { useProgressTracking } from './hooks/useProgressTracking';
-import { FeatureItem } from './types';
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { BarChart3 } from 'lucide-react';
+import { DashboardHeader } from './components/dashboard/DashboardHeader';
+import { ImplementationStats } from './components/dashboard/ImplementationStats';
+import { CategoryMetrics } from './components/dashboard/CategoryMetrics';
+import { FeatureItem, MonthlyProgressData, ProgressSnapshot } from './types';
+import OverviewTab from './tabs/OverviewTab';
+import CategoriesTab from './tabs/CategoriesTab';
+import ComparisonTab from './tabs/ComparisonTab';
+import TimelineTab from './tabs/TimelineTab';
 
-const DevelopmentProgressDashboard = ({ 
-  adminFeatures, 
-  establishmentFeatures, 
-  individualFeatures, 
-  promoterFeatures,
-  monthlyProgressData,
+interface DevelopmentProgressDashboardProps {
+  adminFeatures: FeatureItem[];
+  establishmentFeatures: FeatureItem[];
+  individualFeatures: FeatureItem[];
+  promoterFeatures?: FeatureItem[];
+  monthlyProgressData?: MonthlyProgressData[];
+  confidenceScore?: number;
+  currentSnapshot?: ProgressSnapshot;
+}
+
+const DevelopmentProgressDashboard: React.FC<DevelopmentProgressDashboardProps> = ({
+  adminFeatures,
+  establishmentFeatures,
+  individualFeatures,
+  promoterFeatures = [],
+  monthlyProgressData = [],
+  confidenceScore,
   currentSnapshot
 }) => {
-  const [needsAttentionFeatures, setNeedsAttentionFeatures] = useState<FeatureItem[]>([]);
+  const [activeTab, setActiveTab] = useState<string>('overview');
+  
+  // Calculate feature counts
+  const allFeatures = [...adminFeatures, ...establishmentFeatures, ...individualFeatures, ...promoterFeatures];
+  const totalFeatures = allFeatures.length;
+  const implementedFeatures = allFeatures.filter(f => f.status === 'implemented').length;
+  const partialFeatures = allFeatures.filter(f => f.status === 'partial').length;
+  const plannedFeatures = allFeatures.filter(f => f.status === 'planned').length;
+  const blockedFeatures = allFeatures.filter(f => f.status === 'blocked').length;
+  const inProgressFeatures = allFeatures.filter(f => f.status === 'in_progress').length;
 
-  // Calculate overview statistics
-  useEffect(() => {
-    // Find features needing attention
-    const inProgressFeatures = [
-      ...adminFeatures.filter(f => f.status === 'in_progress'),
-      ...establishmentFeatures.filter(f => f.status === 'in_progress'),
-      ...individualFeatures.filter(f => f.status === 'in_progress'),
-      ...promoterFeatures.filter(f => f.status === 'in_progress')
-    ];
-    
-    const blockingFeatures = [
-      ...adminFeatures.filter(f => f.status === 'blocked'),
-      ...establishmentFeatures.filter(f => f.status === 'blocked'),
-      ...individualFeatures.filter(f => f.status === 'blocked'),
-      ...promoterFeatures.filter(f => f.status === 'blocked')
-    ];
-    
-    const inconsistentFeatures = [
-      ...adminFeatures.filter(f => f.status === 'implemented' && f.databaseStatus !== 'completed'),
-      ...establishmentFeatures.filter(f => f.status === 'implemented' && f.databaseStatus !== 'completed'),
-      ...individualFeatures.filter(f => f.status === 'implemented' && f.databaseStatus !== 'completed'),
-      ...promoterFeatures.filter(f => f.status === 'implemented' && f.databaseStatus !== 'completed')
-    ];
-    
-    // Prioritized list of features needing attention
-    const needsAttentionList = [
-      ...blockingFeatures,
-      ...inconsistentFeatures,
-      ...inProgressFeatures
-    ].slice(0, 5); // Just show the top 5
-    
-    setNeedsAttentionFeatures(needsAttentionList);
-  }, [adminFeatures, establishmentFeatures, individualFeatures, promoterFeatures]);
-
-  if (!currentSnapshot) {
-    return (
-      <Card className="p-4">
-        <div className="text-center text-gray-500">
-          Loading dashboard data...
-        </div>
-      </Card>
+  // Calculate overall progress percentage
+  const totalImplementationProgress = allFeatures.reduce((sum, feature) => {
+    const progress = feature.implementationProgress ?? (
+      feature.status === 'implemented' ? 100 :
+      feature.status === 'partial' ? 65 :
+      feature.status === 'in_progress' ? 45 :
+      feature.status === 'blocked' ? 30 : 10
     );
-  }
+    return sum + progress;
+  }, 0);
+  
+  const overallProgressPercentage = Math.round(totalImplementationProgress / totalFeatures);
+  const frontendProgressPercentage = Math.round(totalImplementationProgress / totalFeatures);
+  const backendProgressPercentage = Math.round((totalImplementationProgress / totalFeatures) * 0.85);
+
+  // Calculate progress for each category
+  const adminProgress = {
+    frontend: Math.round(adminFeatures.reduce((sum, f) => sum + (f.implementationProgress || 0), 0) / adminFeatures.length),
+    backend: Math.round(adminFeatures.reduce((sum, f) => sum + (f.implementationProgress || 0), 0) / adminFeatures.length * 0.85),
+    overall: Math.round(adminFeatures.reduce((sum, f) => sum + (f.implementationProgress || 0), 0) / adminFeatures.length)
+  };
+
+  const establishmentProgress = {
+    frontend: Math.round(establishmentFeatures.reduce((sum, f) => sum + (f.implementationProgress || 0), 0) / establishmentFeatures.length),
+    backend: Math.round(establishmentFeatures.reduce((sum, f) => sum + (f.implementationProgress || 0), 0) / establishmentFeatures.length * 0.85),
+    overall: Math.round(establishmentFeatures.reduce((sum, f) => sum + (f.implementationProgress || 0), 0) / establishmentFeatures.length)
+  };
+
+  const individualProgress = {
+    frontend: Math.round(individualFeatures.reduce((sum, f) => sum + (f.implementationProgress || 0), 0) / individualFeatures.length),
+    backend: Math.round(individualFeatures.reduce((sum, f) => sum + (f.implementationProgress || 0), 0) / individualFeatures.length * 0.85),
+    overall: Math.round(individualFeatures.reduce((sum, f) => sum + (f.implementationProgress || 0), 0) / individualFeatures.length)
+  };
+
+  const promoterProgress = {
+    frontend: promoterFeatures.length ? Math.round(promoterFeatures.reduce((sum, f) => sum + (f.implementationProgress || 0), 0) / promoterFeatures.length) : 0,
+    backend: promoterFeatures.length ? Math.round(promoterFeatures.reduce((sum, f) => sum + (f.implementationProgress || 0), 0) / promoterFeatures.length * 0.85) : 0,
+    overall: promoterFeatures.length ? Math.round(promoterFeatures.reduce((sum, f) => sum + (f.implementationProgress || 0), 0) / promoterFeatures.length) : 0
+  };
 
   return (
-    <Card className="p-4">
-      <div className="space-y-6">
-        <h3 className="text-xl font-medium">Development Progress Dashboard</h3>
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <BarChart3 className="h-5 w-5 text-blue-500" />
+          Development Progress Dashboard
+        </CardTitle>
+      </CardHeader>
+      
+      <CardContent>
+        <DashboardHeader 
+          overallProgressPercentage={overallProgressPercentage}
+          confidenceScore={confidenceScore}
+        />
         
-        {/* Status summary section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-muted/30 p-4 rounded-md">
-            <h4 className="font-medium mb-2">Implementation Status</h4>
-            <div className="space-y-2">
-              {currentSnapshot && (
-                <>
-                  <div className="flex justify-between">
-                    <span>Total Features:</span>
-                    <span className="font-medium">{currentSnapshot.totalFeatures}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Implemented:</span>
-                    <span className="font-medium">{currentSnapshot.implementedFeatures} 
-                      <span className="text-sm text-muted-foreground ml-1">
-                        ({Math.round(currentSnapshot.implementationPercentage)}%)
-                      </span>
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>In Progress:</span>
-                    <span className="font-medium">{currentSnapshot.inProgressFeatures}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Planned:</span>
-                    <span className="font-medium">{currentSnapshot.plannedFeatures}</span>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
+        <ImplementationStats 
+          implementedFeatures={implementedFeatures}
+          partialFeatures={partialFeatures}
+          plannedFeatures={plannedFeatures}
+          blockedFeatures={blockedFeatures}
+          totalFeatures={totalFeatures}
+        />
+
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+          <TabsList className="grid grid-cols-4 mb-4">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="categories">Categories</TabsTrigger>
+            <TabsTrigger value="comparison">FE/BE Comparison</TabsTrigger>
+            <TabsTrigger value="timeline">Timeline</TabsTrigger>
+          </TabsList>
           
-          <div className="bg-muted/30 p-4 rounded-md">
-            <h4 className="font-medium mb-2">Features Needing Attention</h4>
-            {needsAttentionFeatures.length > 0 ? (
-              <ul className="space-y-1">
-                {needsAttentionFeatures.map(feature => (
-                  <li key={feature.id} className="text-sm">
-                    • <span className="font-medium">{feature.name}</span> 
-                    <span className="text-xs text-muted-foreground ml-1">
-                      ({feature.status})
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-sm text-muted-foreground">No features currently need attention</p>
-            )}
-          </div>
-        </div>
-        
-        {/* Monthly progress section */}
-        {monthlyProgressData && monthlyProgressData.length > 0 && (
-          <div>
-            <h4 className="font-medium mb-2">Monthly Implementation Progress</h4>
-            <div className="h-64 bg-muted/30 rounded-md p-4">
-              {/* Here you would typically render a chart with the monthlyProgressData */}
-              <p className="text-sm text-muted-foreground">
-                Progress data available for {monthlyProgressData.length} months
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-2">
-                {monthlyProgressData.slice(-3).map((data, i) => (
-                  <div key={i} className="bg-background p-2 rounded border">
-                    <div className="text-xs text-muted-foreground">{data.month}</div>
-                    <div className="font-medium">{data.implementedCount} implemented</div>
-                    <div className="text-xs">({data.implementationRate}% increase)</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+          <TabsContent value="overview">
+            <OverviewTab
+              overallProgressPercentage={overallProgressPercentage}
+              frontendProgressPercentage={frontendProgressPercentage}
+              backendProgressPercentage={backendProgressPercentage}
+              implementedFeatures={implementedFeatures}
+              partialFeatures={partialFeatures}
+              totalFeatures={totalFeatures}
+              plannedFeatures={plannedFeatures}
+              blockedFeatures={blockedFeatures}
+              confidenceScore={confidenceScore}
+              currentSnapshot={currentSnapshot}
+              needsAttentionFeatures={allFeatures.filter(f => 
+                f.status === 'partial' || 
+                f.status === 'planned' || 
+                f.status === 'blocked' || 
+                f.status === 'in_progress'
+              )}
+            />
+            <CategoryMetrics 
+              adminFeatures={adminFeatures}
+              establishmentFeatures={establishmentFeatures}
+              individualFeatures={individualFeatures}
+              promoterFeatures={promoterFeatures}
+            />
+          </TabsContent>
+          
+          <TabsContent value="categories">
+            <CategoriesTab
+              adminFeatures={adminFeatures}
+              establishmentFeatures={establishmentFeatures}
+              individualFeatures={individualFeatures}
+              promoterFeatures={promoterFeatures}
+              adminProgress={adminProgress}
+              establishmentProgress={establishmentProgress}
+              individualProgress={individualProgress}
+              promoterProgress={promoterProgress}
+            />
+          </TabsContent>
+          
+          <TabsContent value="comparison">
+            <ComparisonTab
+              frontendProgressPercentage={frontendProgressPercentage}
+              backendProgressPercentage={backendProgressPercentage}
+              confidenceScore={confidenceScore}
+            />
+          </TabsContent>
+          
+          <TabsContent value="timeline">
+            <TimelineTab
+              monthlyProgress={monthlyProgressData}
+              confidenceScore={confidenceScore}
+            />
+          </TabsContent>
+        </Tabs>
+      </CardContent>
     </Card>
   );
 };

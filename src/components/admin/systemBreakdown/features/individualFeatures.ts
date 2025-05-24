@@ -1,126 +1,187 @@
 import { FeatureItem } from '../types';
+import { rewardProgramFeature } from './rewardSystem/rewardFeature';
 
 export const individualFeatures: FeatureItem[] = [
   {
-    id: "individual-profile",
+    id: "explore-mocktails",
+    name: "Explore Mocktails",
+    description: "Browse, search, and filter mocktails by ingredients, flavors, and establishments",
+    status: "implemented",
+    adminAccess: "full",
+    establishmentAccess: "full",
+    individualAccess: "full",
+    databaseStatus: "complete",
+    dbStatus: "complete",
+    userImpact: "high",
+    complexity: "medium",
+    testSteps: [
+      "Navigate to Mocktails section",
+      "Search for mocktails by name",
+      "Filter by ingredients",
+      "Sort by rating",
+      "View mocktail details"
+    ]
+  },
+  {
+    id: "establishment-discovery",
+    name: "Establishment Discovery",
+    description: "Find nearby establishments with map view, filters, and search functionality",
+    status: "implemented",
+    adminAccess: "full",
+    establishmentAccess: "full",
+    individualAccess: "full",
+    databaseStatus: "complete",
+    dbStatus: "complete",
+    userImpact: "high",
+    complexity: "medium",
+    testSteps: [
+      "Open Map view",
+      "Enable location services",
+      "View nearby establishments",
+      "Filter by rating or features",
+      "Search for specific establishment"
+    ]
+  },
+  {
+    id: "user-profile",
     name: "User Profile",
-    description: "View and edit personal profile information",
+    description: "Manage personal profile, preferences, and account settings",
     status: "implemented",
-    databaseStatus: "completed",
-    adminAccess: "none",
+    adminAccess: "full",
+    establishmentAccess: "full",
+    individualAccess: "full",
+    databaseStatus: "complete",
+    dbStatus: "complete",
+    userImpact: "medium",
+    complexity: "low",
+    testSteps: [
+      "Navigate to Profile section",
+      "Update profile photo",
+      "Edit personal information",
+      "Set preferences",
+      "Save changes and verify"
+    ]
+  },
+  {
+    id: "favorites-collection",
+    name: "Favorites Collection",
+    description: "Save favorite mocktails and establishments for quick access",
+    status: "implemented",
+    adminAccess: "full",
     establishmentAccess: "none",
     individualAccess: "full",
+    databaseStatus: "complete",
+    dbStatus: "complete",
+    userImpact: "medium",
+    complexity: "low",
+    testSteps: [
+      "Find a mocktail or establishment",
+      "Add to favorites",
+      "View favorites collection",
+      "Remove from favorites",
+      "Verify changes are saved"
+    ]
+  },
+  {
+    id: "rating-reviews",
+    name: "Rating & Reviews",
+    description: "Rate and review mocktails and establishments with photos and comments",
+    status: "implemented",
+    adminAccess: "full",
+    establishmentAccess: "none",
+    individualAccess: "full",
+    databaseStatus: "complete",
+    dbStatus: "complete",
     userImpact: "high",
-    complexity: "low"
+    complexity: "medium",
+    testSteps: [
+      "Find mocktail or establishment",
+      "Write a review with rating",
+      "Add photos to review",
+      "Submit and verify it appears",
+      "Edit existing review"
+    ]
   },
   {
-    id: "mocktail-suggestions",
-    name: "Mocktail Suggestions",
-    description: "Suggest new mocktails to establishments",
+    id: "swig-circuit-creation",
+    name: "Swig Circuit Creation",
+    description: "Create custom bar crawls selecting multiple establishments and drinks",
     status: "implemented",
-    databaseStatus: "completed",
-    adminAccess: "none",
+    adminAccess: "full",
     establishmentAccess: "none",
     individualAccess: "full",
-    userImpact: "medium",
-    complexity: "medium"
-  },
-  {
-    id: "event-discovery",
-    name: "Event Discovery",
-    description: "Discover local events and bar crawls",
-    status: "implemented",
-    databaseStatus: "completed",
-    adminAccess: "none",
-    establishmentAccess: "none",
-    individualAccess: "full",
+    databaseStatus: "complete",
+    dbStatus: "complete",
     userImpact: "high",
-    complexity: "medium"
+    complexity: "high",
+    testSteps: [
+      "Start new Swig Circuit creation",
+      "Select multiple establishments",
+      "Arrange visit order",
+      "Add recommended drinks",
+      "Save and share circuit"
+    ]
   },
   {
-    id: "friend-activity",
-    name: "Friend Activity",
-    description: "See what events your friends are attending",
+    id: "visit-tracking",
+    name: "Visit Tracking",
+    description: "Track visited establishments and tried mocktails with personal notes",
     status: "implemented",
-    databaseStatus: "completed",
-    adminAccess: "none",
+    adminAccess: "full",
     establishmentAccess: "none",
     individualAccess: "full",
+    databaseStatus: "complete",
+    dbStatus: "complete",
     userImpact: "medium",
-    complexity: "medium"
+    complexity: "medium",
+    testSteps: [
+      "Mark establishment as visited",
+      "Check in at location",
+      "Add notes about experience",
+      "Track tried mocktails",
+      "View visit history"
+    ],
+    databaseAnalysis: "Visit tracking system database implementation completed:\n\n✓ user_visits table created with metadata fields\n✓ visit_notes table created for personal user notes\n✓ tried_mocktails tracking table implemented\n✓ user_visit_achievements table added\n✓ user_notifications table for system notifications\n✓ SQL triggers and functions for achievement tracking\n✓ Geofencing data integration for location verification"
   },
-  {
-    id: "loyalty-points",
-    name: "Loyalty Points",
-    description: "Earn loyalty points for attending events",
-    status: "implemented",
-    databaseStatus: "completed",
-    adminAccess: "none",
-    establishmentAccess: "none",
-    individualAccess: "full",
-    userImpact: "medium",
-    complexity: "medium"
-  },
-  {
-    id: "personalized-recommendations",
-    name: "Personalized Recommendations",
-    description: "Receive personalized event recommendations",
-    status: "implemented",
-    databaseStatus: "completed",
-    adminAccess: "none",
-    establishmentAccess: "none",
-    individualAccess: "full",
-    userImpact: "medium",
-    complexity: "medium"
-  },
+  rewardProgramFeature,
   {
     id: "social-sharing",
     name: "Social Sharing",
-    description: "Share events with friends on social media",
+    description: "Share favorite mocktails, establishments, and bar crawls on social media",
     status: "implemented",
-    databaseStatus: "completed",
-    adminAccess: "none",
-    establishmentAccess: "none",
+    adminAccess: "full",
+    establishmentAccess: "full",
     individualAccess: "full",
+    databaseStatus: "complete",
+    dbStatus: "complete",
     userImpact: "medium",
-    complexity: "medium"
+    complexity: "low",
+    testSteps: [
+      "Find shareable content",
+      "Click share button",
+      "Select social platform",
+      "Customize sharing message",
+      "Complete sharing process"
+    ]
   },
   {
-    id: "ticket-purchasing",
-    name: "Ticket Purchasing",
-    description: "Purchase tickets for events",
+    id: "personal-recipe-creation",
+    name: "Personal Recipe Creation",
+    description: "Create and save personal mocktail recipes with ingredient lists and instructions",
     status: "implemented",
-    databaseStatus: "completed",
-    adminAccess: "none",
+    adminAccess: "full",
     establishmentAccess: "none",
     individualAccess: "full",
-    userImpact: "high",
-    complexity: "medium"
-  },
-  {
-    id: "venue-reviews",
-    name: "Venue Reviews",
-    description: "Write reviews for venues",
-    status: "implemented",
-    databaseStatus: "completed",
-    adminAccess: "none",
-    establishmentAccess: "none",
-    individualAccess: "full",
+    databaseStatus: "complete",
+    dbStatus: "complete",
     userImpact: "medium",
-    complexity: "medium"
-  },
-  {
-    id: "wishlist",
-    name: "Wishlist",
-    description: "Save events to a wishlist",
-    status: "implemented",
-    databaseStatus: "completed",
-    adminAccess: "none",
-    establishmentAccess: "none",
-    individualAccess: "full",
-    userImpact: "medium",
-    complexity: "medium"
+    complexity: "medium",
+    testSteps: [
+      "Navigate to My Recipes section",
+      "Start new recipe creation",
+      "Add ingredients and amounts",
+      "Write preparation instructions",
+      "Save and view created recipe"
+    ]
   }
 ];
-
-export default individualFeatures;

@@ -1,40 +1,10 @@
-
 import React from 'react';
 import Layout from '@/components/Layout';
 import { useEstablishmentProfile } from '@/hooks/establishment/useEstablishmentProfile';
 import PromotionsTab from '@/components/establishment/PromotionsTab';
-import { PromotionFormData, Promotion } from '@/types/PromotionTypes';
 
 const PromotionsPage: React.FC = () => {
   const { promotionsState } = useEstablishmentProfile();
-
-  // Directly use the promotions array without mapping
-  const promotions = promotionsState.promotions;
-
-  // Wrap the handlers to ensure they return promises
-  const handleAddPromotion = async (data: PromotionFormData): Promise<void> => {
-    // Call the implementation in useEstablishmentProfile without parameters
-    // since that's what its signature expects
-    promotionsState.handleAddPromotion();
-    return Promise.resolve();
-  };
-
-  const handleDeletePromotion = async (id: string): Promise<void> => {
-    promotionsState.handleDeletePromotion(id);
-    return Promise.resolve();
-  };
-
-  // Added for updating promotions with proper checking
-  const handleUpdatePromotion = async (id: string, data: PromotionFormData): Promise<void> => {
-    // Check if the function exists in promotionsState before calling it
-    if (typeof promotionsState.handleUpdatePromotion === 'function') {
-      promotionsState.handleUpdatePromotion(id, data);
-    } else {
-      console.warn('updatePromotion function not available in promotionsState');
-      // Fallback implementation if needed
-    }
-    return Promise.resolve();
-  };
 
   return (
     <Layout>
@@ -45,10 +15,13 @@ const PromotionsPage: React.FC = () => {
         </div>
         
         <PromotionsTab 
-          promotions={promotions as Promotion[]}
-          handleAddPromotion={handleAddPromotion}
-          handleDeletePromotion={handleDeletePromotion}
-          handleUpdatePromotion={handleUpdatePromotion}
+          promotions={promotionsState.promotions} 
+          newPromoCode={promotionsState.newPromoCode} 
+          newPromoDescription={promotionsState.newPromoDescription} 
+          setNewPromoCode={promotionsState.setNewPromoCode} 
+          setNewPromoDescription={promotionsState.setNewPromoDescription} 
+          handleAddPromotion={promotionsState.handleAddPromotion} 
+          handleDeletePromotion={promotionsState.handleDeletePromotion} 
         />
       </div>
     </Layout>

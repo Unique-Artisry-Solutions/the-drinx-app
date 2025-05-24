@@ -3,7 +3,7 @@ import React from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import AdminLayout from '@/components/admin/layout/AdminLayout';
 import SystemConfigurationPage from '@/pages/admin/SystemConfigurationPage';
-import FeatureAccessMonitoringPage from './admin/FeatureAccessMonitoringPage';
+import FeatureAccessMonitoringPage from '../admin/FeatureAccessMonitoringPage';
 
 const SettingsPage: React.FC = () => {
   // Add console logging to confirm page is rendering

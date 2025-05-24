@@ -1,74 +1,111 @@
 
 import React from 'react';
-import { formatCurrency } from '@/utils/formatters';
-import { Card, CardContent, CardTitle } from '@/components/ui/card';
-import { DiscountSavingsIndicator } from './DiscountSavingsIndicator';
+import { Link } from 'react-router-dom';
+import { HelpCircle } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { CartItem } from '@/contexts/CartContext';
+import { default as CartItemComponent } from '@/components/cart/CartItem';
 
-export interface CartItem {
-  id: number;
-  name: string;
-  price: number;
-  quantity: number;
+interface GroupedItems {
+  subscriptions: CartItem[];
+  eventTickets: CartItem[];
+  swigCircuitTickets: CartItem[];
 }
 
-export interface AppliedDiscount {
-  code: string;
-  type: 'percentage' | 'fixed' | 'free_item'; // Changed to match DiscountCodeSection type
-  value: number;
-  amount: number; // Added to match DiscountCodeSection
-  discountType: 'percentage' | 'fixed' | 'free_item'; // Added to match expected prop in DiscountSavingsIndicator
-}
-
-export interface CheckoutSummaryProps {
-  cartItems: CartItem[];
-  subtotal: number;
-  discount: AppliedDiscount | null;
-  total: number;
+interface CheckoutSummaryProps {
+  groupedItems: GroupedItems;
+  totalPrice: number;
+  serviceFee: number;
+  serviceFeePercentage: number;
+  totalWithFees: number;
 }
 
 const CheckoutSummary: React.FC<CheckoutSummaryProps> = ({
-  cartItems,
-  subtotal,
-  discount,
-  total
+  groupedItems,
+  totalPrice,
+  serviceFee,
+  serviceFeePercentage,
+  totalWithFees
 }) => {
+  const renderSection = (title: string, items: CartItem[]) => {
+    if (items.length === 0) return null;
+    
+    return (
+      <div>
+        <h4 className="text-sm font-medium text-gray-500 mb-2">
+          {title}
+        </h4>
+        <div className="divide-y">
+          {items.map(item => (
+            <div key={item.id} className="py-3">
+              <CartItemComponent item={item} />
+              {(item.type === 'event_ticket' && item.eventId) && (
+                <div className="mt-2 text-right">
+                  <Link 
+                    to={`/event/${item.eventId}`} 
+                    className="text-xs text-material-primary hover:underline"
+                  >
+                    View Event Details
+                  </Link>
+                </div>
+              )}
+              {(item.type === 'swig_circuit_ticket' && item.swigCircuitId) && (
+                <div className="mt-2 text-right">
+                  <Link 
+                    to={`/swig-circuit/${item.swigCircuitId}`} 
+                    className="text-xs text-material-primary hover:underline"
+                  >
+                    View Circuit Details
+                  </Link>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <Card className="w-full">
-      <CardContent className="pt-6">
-        <CardTitle className="text-lg mb-4">Order Summary</CardTitle>
-        
+    <Card>
+      <CardHeader>
+        <CardTitle>Order Summary</CardTitle>
+      </CardHeader>
+      <CardContent>
         <div className="space-y-4">
-          <div className="space-y-2">
-            {cartItems.map(item => (
-              <div key={item.id} className="flex justify-between text-sm">
-                <span className="flex-1">
-                  {item.name} {item.quantity > 1 && <span className="text-muted-foreground">x{item.quantity}</span>}
-                </span>
-                <span className="font-medium">{formatCurrency(item.price * item.quantity)}</span>
-              </div>
-            ))}
-          </div>
+          {renderSection('Subscriptions', groupedItems.subscriptions)}
+          {renderSection('Event Tickets', groupedItems.eventTickets)}
+          {renderSection('Swig Circuit Tickets', groupedItems.swigCircuitTickets)}
           
-          <div className="border-t pt-2">
-            <div className="flex justify-between mb-1">
-              <span className="text-muted-foreground">Subtotal</span>
-              <span>{formatCurrency(subtotal)}</span>
+          <div className="border-t pt-4 mt-4 space-y-2">
+            <div className="flex justify-between">
+              <span className="text-gray-600">Subtotal:</span>
+              <span>${totalPrice.toFixed(2)}</span>
             </div>
-            
-            {discount && (
-              <div className="flex justify-between text-green-600 mb-1">
-                <span>Discount ({discount.code})</span>
-                <span>-{formatCurrency(discount.amount)}</span>
-              </div>
-            )}
-            
-            <div className="flex justify-between font-medium text-lg mt-2 border-t pt-2">
-              <span>Total</span>
-              <span>{formatCurrency(total)}</span>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600 flex items-center">
+                Service Fee ({serviceFeePercentage}%):
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="ml-1 inline-flex">
+                        <HelpCircle size={14} className="text-gray-400" />
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs">
+                      <p>This service fee helps support platform maintenance and payment processing.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </span>
+              <span>${serviceFee.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between font-bold pt-2 text-lg">
+              <span>Total:</span>
+              <span>${totalWithFees.toFixed(2)}</span>
             </div>
           </div>
-          
-          {/* We display the discount indicator outside of the summary now */}
         </div>
       </CardContent>
     </Card>

@@ -1,42 +1,15 @@
 
-import { supabase } from '@/lib/supabase';
-import { clearAllSessions } from '@/utils/sessionCleaner';
+import { sessionManager } from './SessionManager';
 import { validateSessionState } from './validation';
-import { StuckStateHandler } from '@/types/auth';
+import { StuckStateHandler } from '@/types/AuthTypes';
 import { DEFAULT_STUCK_TIMEOUT_MS } from './constants';
+import { toastService } from '@/services/ToastService';
 
 /**
  * Recovers from a stuck authentication state
  */
 export const recoverFromStuckState = async (): Promise<boolean> => {
-  console.log("Attempting to recover from stuck auth state");
-  
-  try {
-    // First try to sign out globally to clear any problematic sessions
-    await supabase.auth.signOut({ scope: 'global' });
-    
-    // Clear all localStorage session data
-    clearAllSessions();
-    
-    // Clear the Supabase storage item explicitly
-    localStorage.removeItem('spiritless-auth-storage');
-    
-    // Force a page reload to ensure clean state
-    setTimeout(() => {
-      window.location.href = '/landing';
-    }, 100);
-    
-    return true;
-  } catch (error) {
-    console.error("Error recovering from stuck state:", error);
-    
-    // Even if there's an error, we'll still redirect to ensure user isn't stuck
-    setTimeout(() => {
-      window.location.href = '/landing';
-    }, 100);
-    
-    return false;
-  }
+  return sessionManager.recoverFromStuckState();
 };
 
 /**
@@ -58,18 +31,15 @@ export const handlePotentialStuckState = (
       if (autoRecovery) {
         await recoverFromStuckState();
       } else {
-        // Show a toast notification through window events
-        const event = new CustomEvent('showSessionErrorToast', {
-          detail: {
-            title: "Loading issue detected",
-            description: "The application seems to be stuck. Click to refresh.",
-            action: {
-              label: "Refresh Now",
-              onClick: () => window.location.reload()
-            }
-          }
+        // Show a stuck state toast
+        toastService.info("Loading issue detected", "The application seems to be stuck. Click to refresh.", {
+          action: {
+            label: "Refresh Now",
+            onClick: () => window.location.reload(),
+            altText: "Refresh Now"
+          },
+          duration: 0 // Don't auto-dismiss
         });
-        window.dispatchEvent(event);
       }
     }
   }, timeoutMs);

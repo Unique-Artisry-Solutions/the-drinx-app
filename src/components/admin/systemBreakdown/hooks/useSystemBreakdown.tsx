@@ -1,52 +1,48 @@
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState } from 'react';
+import { useAuthCheck } from './useAuthCheck';
 import { useFeatureStatus } from './useFeatureStatus';
-import { useAnalysisProcess } from './useAnalysisProcess';
 import { useProgressTracking } from './useProgressTracking';
-import { AnalysisStep, FeatureItem, ProgressSnapshot, MonthlyProgressData } from '../types';
-import { generateCSV, exportFeaturesAsCSV } from '../utils/exportUtils';
-import { useReleaseManagement } from './useReleaseManagement';
+import { useAnalysisProcess } from './useAnalysisProcess';
+import { useReleaseFeatures } from './useReleaseFeatures';
+import { useExportFunctions } from './useExportFunctions';
+import { useToast } from '@/hooks/use-toast';
 
 export const useSystemBreakdown = () => {
-  // Tab navigation state - Remove 'releases' from default tabs
   const [activeTab, setActiveTab] = useState<string>('overview');
+  const { toast } = useToast();
   
-  // Get features from feature status hook
-  const {
-    adminFeatures,
-    establishmentFeatures,
+  // Use our new modular hooks
+  const { handleLogout } = useAuthCheck();
+  
+  const { 
+    adminFeatures, 
+    establishmentFeatures, 
     individualFeatures,
     promoterFeatures,
     setAdminFeatures,
     setEstablishmentFeatures,
     setIndividualFeatures,
     setPromoterFeatures,
-    updatedFeaturesCount
+    updatedFeaturesCount 
   } = useFeatureStatus();
   
-  // Get progress tracking data
   const {
-    currentSnapshot,
+    progressHistory,
     monthlyProgressData,
+    currentSnapshot,
     dataValidation,
-    createSnapshot,
-    generateHistoricalData
-  } = useProgressTracking(
-    adminFeatures,
-    establishmentFeatures,
-    individualFeatures,
-    promoterFeatures
-  );
+    updateProgressTracking
+  } = useProgressTracking(adminFeatures, establishmentFeatures, individualFeatures, promoterFeatures);
   
-  // Analysis process state
   const {
     analyzing,
     analysisProgress,
     analysisSteps,
     handleAnalyzeFeatures
   } = useAnalysisProcess(
-    adminFeatures,
-    establishmentFeatures,
+    adminFeatures, 
+    establishmentFeatures, 
     individualFeatures,
     promoterFeatures,
     setAdminFeatures,
@@ -55,19 +51,33 @@ export const useSystemBreakdown = () => {
     setPromoterFeatures
   );
   
-  // Using our stub implementation
-  const { createReleaseFromFeatures } = useReleaseManagement();
+  const { handleCreateReleaseFromFeatures } = useReleaseFeatures(
+    adminFeatures, 
+    establishmentFeatures, 
+    individualFeatures,
+    promoterFeatures,
+    setActiveTab
+  );
+
+  const { handleExportCSV } = useExportFunctions();
   
-  // Export all data as CSV
-  const handleExportCSV = useCallback(() => {
-    exportFeaturesAsCSV(adminFeatures, establishmentFeatures, individualFeatures, promoterFeatures);
-  }, [adminFeatures, establishmentFeatures, individualFeatures, promoterFeatures]);
-  
-  // Mock logout function
-  const handleLogout = () => {
-    console.log("Logout");
+  // Wrap the analysis function to also update progress tracking
+  const handleAnalyzeAndUpdateProgress = () => {
+    handleAnalyzeFeatures((totalUpdated) => {
+      // Update progress tracking with new feature states
+      const result = updateProgressTracking();
+      
+      // Show validation warning if needed
+      if (!result.validation.isValid) {
+        toast({
+          title: "Data Validation Warning",
+          description: "Some data inconsistencies were detected in the progress tracking.",
+          variant: "destructive"
+        });
+      }
+    });
   };
-  
+
   return {
     activeTab,
     setActiveTab,
@@ -81,8 +91,10 @@ export const useSystemBreakdown = () => {
     updatedFeaturesCount,
     handleLogout,
     handleExportCSV,
-    handleAnalyzeFeatures,
-    handleCreateReleaseFromFeatures: createReleaseFromFeatures,
+    handleAnalyzeFeatures: handleAnalyzeAndUpdateProgress,
+    handleCreateReleaseFromFeatures,
+    // Expose additional state for Dashboard
+    progressHistory,
     monthlyProgressData,
     currentSnapshot,
     dataValidation

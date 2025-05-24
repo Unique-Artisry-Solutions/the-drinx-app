@@ -1,8 +1,6 @@
 
-// Import from the correct location
-import { useToast as useToastOriginal } from "@/hooks/use-toast";
+// This file re-exports the toast hook and toast function from our implementation
+import { useToast, toast, ActionConfig } from "@/hooks/use-toast";
 
-// Re-export the hook to make it available 
-export function useToast() {
-  return useToastOriginal();
-}
+export { useToast, toast };
+export type { ActionConfig };

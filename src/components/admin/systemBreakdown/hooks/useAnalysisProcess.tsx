@@ -28,97 +28,19 @@ export const useAnalysisProcess = (
     
     // Create initial database tasks array with reward system and promoter tasks
     const initialDatabaseTasks: AnalysisStep[] = [
-      { 
-        name: 'Database schema verification', 
-        description: 'Verifying database schemas',
-        status: 'pending',
-        progressPercentage: 0,
-        details: 'Starting database schema verification'
-      },
-      { 
-        name: 'API endpoints validation', 
-        description: 'Validating API endpoint implementation',
-        status: 'pending',
-        progressPercentage: 0,
-        details: 'Starting API endpoints validation'
-      },
-      { 
-        name: 'Authentication flow check', 
-        description: 'Checking authentication flows',
-        status: 'pending',
-        progressPercentage: 0,
-        details: 'Starting authentication flow check'
-      },
-      { 
-        name: 'User permissions validation', 
-        description: 'Validating user permissions',
-        status: 'pending',
-        progressPercentage: 0,
-        details: 'Starting user permissions validation'
-      },
-      { 
-        name: 'Content moderation implementation', 
-        description: 'Checking content moderation implementation',
-        status: 'pending',
-        progressPercentage: 0,
-        details: 'Starting content moderation implementation check'
-      },
-      { 
-        name: 'Storage bucket configuration', 
-        description: 'Verifying storage configurations',
-        status: 'pending',
-        progressPercentage: 0,
-        details: 'Starting storage bucket configuration check'
-      },
-      { 
-        name: 'Database trigger functions verification', 
-        description: 'Checking database triggers',
-        status: 'pending',
-        progressPercentage: 0,
-        details: 'Starting database trigger functions verification'
-      },
-      { 
-        name: 'Frontend component implementation check', 
-        description: 'Verifying UI components',
-        status: 'pending',
-        progressPercentage: 0,
-        details: 'Starting frontend component implementation check'
-      },
-      { 
-        name: 'Reward system implementation analysis', 
-        description: 'Analyzing reward system',
-        status: 'pending',
-        progressPercentage: 0,
-        details: 'Starting reward system implementation analysis'
-      },
-      { 
-        name: 'Reward program data validation', 
-        description: 'Validating reward program data',
-        status: 'pending',
-        progressPercentage: 0,
-        details: 'Starting reward program data validation'
-      },
-      { 
-        name: 'Promoter notification triggers verification', 
-        description: 'Checking promoter notifications',
-        status: 'pending',
-        progressPercentage: 0,
-        details: 'Starting promoter notification triggers verification'
-      },
-      { 
-        name: 'Event management system validation', 
-        description: 'Validating event system',
-        status: 'pending',
-        progressPercentage: 0,
-        details: 'Starting event management system validation'
-      },
-      { 
-        name: 'Notification delivery system check', 
-        description: 'Checking notification delivery',
-        status: 'pending',
-        progressPercentage: 0,
-        details: 'Starting notification delivery system check'
-      }
+      { name: 'Database schema verification', completed: false },
+      { name: 'API endpoints validation', completed: false },
+      { name: 'Authentication flow check', completed: false },
+      { name: 'User permissions validation', completed: false },
+      { name: 'Content moderation implementation', completed: false },
+      { name: 'Storage bucket configuration', completed: false },
+      { name: 'Database trigger functions verification', completed: false },
+      { name: 'Frontend component implementation check', completed: false },
+      { name: 'Reward system implementation analysis', completed: false },
+      { name: 'Reward program data validation', completed: false },
+      { name: 'Promoter notification triggers verification', completed: false },
+      { name: 'Event management system validation', completed: false },
+      { name: 'Notification delivery system check', completed: false }
     ];
     setAnalysisSteps(initialDatabaseTasks);
     
@@ -128,15 +50,10 @@ export const useAnalysisProcess = (
     
     const progressInterval = setInterval(() => {
       if (currentStep < totalSteps) {
-        const updatedSteps = [...initialDatabaseTasks].map((step, index) => {
-          if (index < currentStep) {
-            return { ...step, status: 'completed' as const, progressPercentage: 100 };
-          } else if (index === currentStep) {
-            return { ...step, status: 'running' as const, progressPercentage: 50 };
-          }
-          return step;
-        });
+        const updatedSteps = [...initialDatabaseTasks];
         
+        // Mark the current task as completed
+        updatedSteps[currentStep].completed = true;
         setAnalysisSteps(updatedSteps);
         
         currentStep++;
@@ -153,15 +70,6 @@ export const useAnalysisProcess = (
     }, 600); // Update every 600ms
     
     const completeAnalysis = () => {
-      // Update all steps to completed
-      setAnalysisSteps(prevSteps => 
-        prevSteps.map(step => ({
-          ...step,
-          status: 'completed', // Using 'completed' instead of 'complete'
-          progressPercentage: 100,
-        }))
-      );
-      
       // Apply the actual analysis to the features
       const analyzedFeatures = analyzeAllFeatures(
         adminFeatures,
@@ -201,21 +109,10 @@ export const useAnalysisProcess = (
     };
   };
 
-  const updateAnalysisStep = (step: string, progress: number) => {
-    setAnalysisSteps(prev => 
-      prev.map(s => 
-        s.name === step 
-          ? { ...s, progressPercentage: progress, status: progress >= 100 ? 'completed' : 'running' } 
-          : s
-      )
-    );
-  };
-
   return {
     analyzing,
     analysisProgress,
     analysisSteps,
-    handleAnalyzeFeatures,
-    updateAnalysisStep
+    handleAnalyzeFeatures
   };
 };

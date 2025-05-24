@@ -21,16 +21,16 @@ export const FeatureImplementationStatus: React.FC<FeatureImplementationStatusPr
   );
 
   // Get database implementation status
-  const dbStatus = feature.databaseStatus || 'not_started';
+  const dbStatus = feature.dbStatus || feature.databaseStatus || 'not_started';
   const dbProgress = 
-    dbStatus === 'completed' || dbStatus === 'implemented' ? 100 :
+    dbStatus === 'complete' || dbStatus === 'implemented' ? 100 :
     dbStatus === 'in_progress' ? 50 :
     dbStatus === 'not_started' ? 0 : 25;
 
   const getStatusLabel = (status: string): string => {
     switch (status) {
       case 'implemented':
-      case 'completed':
+      case 'complete':
         return 'Completed';
       case 'in_progress':
         return 'In Progress';
@@ -48,7 +48,7 @@ export const FeatureImplementationStatus: React.FC<FeatureImplementationStatusPr
   const getStatusColorClass = (status: string): string => {
     switch (status) {
       case 'implemented':
-      case 'completed':
+      case 'complete':
         return 'bg-green-100 text-green-800 border-green-300';
       case 'in_progress':
         return 'bg-blue-100 text-blue-800 border-blue-300';

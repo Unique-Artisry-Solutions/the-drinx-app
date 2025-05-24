@@ -1,16 +1,8 @@
 
 /**
- * Type definition for breadcrumb item
+ * Interface for breadcrumb navigation items
  */
 export interface BreadcrumbItem {
   label: string;
-  href: string;
-}
-
-/**
- * Props for the Breadcrumbs component
- */
-export interface BreadcrumbsProps {
-  items: BreadcrumbItem[];
-  className?: string;
+  href?: string;
 }

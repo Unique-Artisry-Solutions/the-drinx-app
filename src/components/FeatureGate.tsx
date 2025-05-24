@@ -1,7 +1,7 @@
 
 import React, { useEffect } from 'react';
 import { useFeatures } from '@/contexts/FeatureContext';
-import { FeatureId, FEATURES } from '@/lib/features/registry';
+import { FeatureId } from '@/lib/features/registry';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 

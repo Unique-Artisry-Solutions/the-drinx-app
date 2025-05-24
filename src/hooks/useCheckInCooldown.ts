@@ -1,83 +1,87 @@
 
 import { useState, useEffect, useCallback } from 'react';
+import { useToast } from '@/hooks/use-toast';
 
 interface UseCheckInCooldownProps {
   lastCheckInTime: Date | null;
-  cooldownMinutes?: number; // Time in minutes before next check-in
+  cooldownDuration?: number; // in minutes
 }
 
-export const useCheckInCooldown = ({ 
+export function useCheckInCooldown({ 
   lastCheckInTime, 
-  cooldownMinutes = 30 
-}: UseCheckInCooldownProps) => {
-  const [canCheckIn, setCanCheckIn] = useState<boolean>(true);
-  const [remainingTime, setRemainingTime] = useState<number>(0);
-  
-  // Calculate if enough time has passed since last check-in
-  const calculateCooldown = useCallback(() => {
+  cooldownDuration = 5 
+}: UseCheckInCooldownProps) {
+  const [canCheckIn, setCanCheckIn] = useState(true);
+  const [timeRemaining, setTimeRemaining] = useState(0);
+  const { toast } = useToast();
+
+  // Calculate time left in cooldown period
+  useEffect(() => {
     if (!lastCheckInTime) {
       setCanCheckIn(true);
-      setRemainingTime(0);
       return;
     }
-    
-    const now = new Date();
-    const lastCheck = new Date(lastCheckInTime);
-    
-    // Calculate time difference in milliseconds
-    const timeDiff = now.getTime() - lastCheck.getTime();
-    
-    // Convert cooldown minutes to milliseconds
-    const cooldownMs = cooldownMinutes * 60 * 1000;
-    
-    if (timeDiff < cooldownMs) {
-      // Still in cooldown period
-      setCanCheckIn(false);
-      setRemainingTime(Math.ceil((cooldownMs - timeDiff) / 1000)); // remaining seconds
-    } else {
-      // Cooldown period has ended
-      setCanCheckIn(true);
-      setRemainingTime(0);
-    }
-  }, [lastCheckInTime, cooldownMinutes]);
-  
-  // Format the remaining time as mm:ss
-  const formatTimeRemaining = useCallback(() => {
-    const minutes = Math.floor(remainingTime / 60);
-    const seconds = remainingTime % 60;
-    return `${minutes}:${seconds < 10 ? '0' + seconds : seconds}`;
-  }, [remainingTime]);
-  
-  // Set up a timer to count down and update state
-  useEffect(() => {
-    calculateCooldown();
-    
-    // If we're in cooldown period, start countdown
-    if (remainingTime > 0) {
-      const timer = setInterval(() => {
-        setRemainingTime(prev => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            setCanCheckIn(true);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-      
-      return () => clearInterval(timer);
-    }
-  }, [lastCheckInTime, calculateCooldown, remainingTime]);
 
-  const attemptCheckIn = useCallback(() => {
-    if (!canCheckIn) return false;
+    const checkCooldown = () => {
+      const now = new Date();
+      const cooldownMs = cooldownDuration * 60 * 1000;
+      const nextAvailableTime = new Date(lastCheckInTime.getTime() + cooldownMs);
+      
+      if (now < nextAvailableTime) {
+        // Still in cooldown
+        const timeLeftMs = nextAvailableTime.getTime() - now.getTime();
+        setTimeRemaining(Math.ceil(timeLeftMs / 1000));
+        setCanCheckIn(false);
+      } else {
+        // Cooldown expired
+        setCanCheckIn(true);
+        setTimeRemaining(0);
+      }
+    };
+
+    // Check immediately
+    checkCooldown();
+    
+    // Then set up interval to update
+    const intervalId = setInterval(checkCooldown, 1000);
+    
+    return () => clearInterval(intervalId);
+  }, [lastCheckInTime, cooldownDuration]);
+
+  // Format time remaining into minutes:seconds
+  const formatTimeRemaining = useCallback(() => {
+    const minutes = Math.floor(timeRemaining / 60);
+    const seconds = timeRemaining % 60;
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  }, [timeRemaining]);
+
+  // Function to attempt a check-in (returns boolean to indicate success/failure)
+  const attemptCheckIn = useCallback((establishmentId: string, establishmentName: string) => {
+    if (!canCheckIn) {
+      toast({
+        title: "Cooldown Period",
+        description: `Please wait ${formatTimeRemaining()} before checking in again`,
+        variant: "destructive",
+      });
+      return false;
+    }
+    
+    // Cooldown is good, record the new check-in time
+    localStorage.setItem('last_check_in_time', new Date().toISOString());
+    localStorage.setItem('last_checked_in_establishment', establishmentId);
+    
+    toast({
+      title: "Checked In!",
+      description: `You've checked in at ${establishmentName}`,
+    });
+    
     return true;
-  }, [canCheckIn]);
-  
+  }, [canCheckIn, formatTimeRemaining, toast]);
+
   return {
     canCheckIn,
-    remainingTime,
+    timeRemaining,
     formatTimeRemaining,
     attemptCheckIn
   };
-};
+}

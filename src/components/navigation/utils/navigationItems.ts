@@ -29,9 +29,10 @@ export const getNavItems = (
   }
   
   // Define public paths that should always show guest navigation
+  // Removing '/explore' from this list to ensure authenticated users see the user navigation
   const publicPaths = ['/', '/landing', '/login', '/signup', '/mission'];
   
-  // Special case for public paths - show guest navigation even if authenticated
+  // Special case for public paths - show guest navigation
   if (publicPaths.includes(location.pathname)) {
     return getGuestNavItems();
   }
@@ -46,11 +47,18 @@ export const getNavItems = (
     return getAdminNavItems();
   }
 
-  // For authenticated users, show user navigation based on their type
-  if (user) {
+  // Check for establishment or promoter user paths
+  if (currentUserType === 'establishment' || currentUserType === 'promoter') {
     return getUserNavItems(currentUserType, getProfilePath);
   }
   
-  // Default fallback to guest navigation
-  return getGuestNavItems();
+  // Use navigation type based on authentication state
+  switch (type) {
+    case NavigationType.ADMIN:
+      return getAdminNavItems();
+    case NavigationType.USER:
+      return getUserNavItems(currentUserType, getProfilePath);
+    default:
+      return getGuestNavItems();
+  }
 };

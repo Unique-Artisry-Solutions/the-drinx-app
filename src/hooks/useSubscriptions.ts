@@ -1,146 +1,178 @@
 
-import { useEffect, useState } from 'react';
-// Fix: Remove non-existent import
-// import { useSupabaseClient, useUser } from '@supabase/auth-helpers-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { AppSubscription, SubscriptionTier } from '@/types/SubscriptionTypes';
-import { supabase } from '@/integrations/supabase/client'; // Use direct supabase import
+import { Subscription, SubscriptionTier } from '@/types/SubscriptionTypes';
 
 export const useSubscriptions = (promoterId?: string) => {
   const { toast } = useToast();
-  // Fix: Get auth from supabase directly
-  const [user, setUser] = useState<any>(null);
+  const queryClient = useQueryClient();
 
-  // Get the current user
-  useEffect(() => {
-    const fetchUser = async () => {
-      const { data } = await supabase.auth.getUser();
-      setUser(data.user);
-    };
-    fetchUser();
-  }, []);
+  const { data: subscriptions = [], isLoading: isLoadingSubscriptions } = useQuery({
+    queryKey: ['subscriptions', promoterId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('promoter_subscriptions')
+        .select('*')
+        .eq('promoter_id', promoterId);
 
-  // Fetch subscription tiers
-  const { 
-    data: tiers = [], 
-    isLoading: isLoadingTiers 
-  } = useQuery({
+      if (error) throw error;
+      return data as Subscription[];
+    },
+    enabled: !!promoterId,
+  });
+
+  const { data: subscribedPromoters = [], isLoading: isLoadingSubscribed } = useQuery({
+    queryKey: ['subscribed-promoters'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+      
+      const { data, error } = await supabase
+        .from('promoter_subscriptions')
+        .select(`
+          id,
+          promoter_id,
+          subscriber_id,
+          tier_id,
+          subscription_start,
+          subscription_end,
+          status,
+          promoter:promoter_id (
+            id,
+            display_name,
+            username
+          )
+        `)
+        .eq('subscriber_id', user.id);
+
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const { data: tiers = [], isLoading: isLoadingTiers } = useQuery({
     queryKey: ['subscription-tiers', promoterId],
     queryFn: async () => {
-      if (!promoterId) return [];
-      
       const { data, error } = await supabase
         .from('promoter_subscription_tiers')
         .select('*')
         .eq('promoter_id', promoterId)
         .eq('is_active', true);
-      
+
       if (error) throw error;
-      
       return data as SubscriptionTier[];
     },
     enabled: !!promoterId,
   });
 
-  // Fetch user subscriptions
-  const { 
-    data: subscriptions = [], 
-    isLoading: isLoadingSubscriptions,
-    refetch 
-  } = useQuery({
-    queryKey: ['user-subscriptions', user?.id],
-    queryFn: async () => {
-      if (!user) return [];
-      
-      const { data, error } = await supabase
-        .from('app_subscriptions')
-        .select('*')
-        .eq('user_id', user.id);
-      
-      if (error) throw error;
-      
-      return data as AppSubscription[];
-    },
-    enabled: !!user,
-  });
-
-  // Subscribe to a tier
   const subscribe = useMutation({
-    mutationFn: async ({ promoterId, tierId }: { promoterId: string, tierId: string }) => {
+    mutationFn: async ({ promoterId, tierId }: { promoterId: string; tierId?: string }) => {
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
-      
+
       const { data, error } = await supabase
-        .from('app_subscriptions')
+        .from('promoter_subscriptions')
         .insert({
-          user_id: user.id,
-          subscription_type: 'basic', // Default
-          status: 'active',
-          subscription_start: new Date().toISOString(),
+          subscriber_id: user.id,
+          promoter_id: promoterId,
+          tier_id: tierId
         })
-        .select();
-      
+        .select()
+        .single();
+
       if (error) throw error;
-      
       return data;
     },
     onSuccess: () => {
-      refetch();
+      queryClient.invalidateQueries({ queryKey: ['subscriptions'] });
+      queryClient.invalidateQueries({ queryKey: ['subscribed-promoters'] });
       toast({
-        title: 'Subscription successful',
-        description: 'You have successfully subscribed'
+        title: 'Subscribed successfully',
+        description: 'You are now subscribed to this promoter',
       });
     },
-    onError: () => {
+    onError: (error: any) => {
       toast({
         title: 'Subscription failed',
-        description: 'Could not process your subscription',
-        variant: 'destructive'
+        description: error.message,
+        variant: 'destructive',
       });
-    }
+    },
   });
 
-  // Unsubscribe from a tier
   const unsubscribe = useMutation({
     mutationFn: async (subscriptionId: string) => {
-      const { data, error } = await supabase
-        .from('app_subscriptions')
-        .update({ 
-          status: 'cancelled',
-          subscription_end: new Date().toISOString()
-        })
-        .eq('id', subscriptionId)
-        .select();
-      
+      const { error } = await supabase
+        .from('promoter_subscriptions')
+        .delete()
+        .eq('id', subscriptionId);
+
       if (error) throw error;
-      
-      return data;
     },
     onSuccess: () => {
-      refetch();
+      queryClient.invalidateQueries({ queryKey: ['subscriptions'] });
+      queryClient.invalidateQueries({ queryKey: ['subscribed-promoters'] });
       toast({
-        title: 'Unsubscribed',
-        description: 'You have successfully unsubscribed'
+        title: 'Unsubscribed successfully',
+        description: 'You have unsubscribed from this promoter',
       });
     },
-    onError: () => {
+    onError: (error: any) => {
       toast({
         title: 'Unsubscribe failed',
-        description: 'Could not process your unsubscription request',
-        variant: 'destructive'
+        description: error.message,
+        variant: 'destructive',
       });
-    }
+    },
   });
 
-  const isLoading = isLoadingTiers || isLoadingSubscriptions;
+  const { data: settings, isLoading: isLoadingSettings } = useQuery({
+    queryKey: ['subscription-settings'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+      
+      // Use profiles table directly instead of helper function
+      const { data, error } = await supabase
+        .from('profiles')
+        .select()
+        .eq('id', user.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') throw error;
+      
+      // Parse location settings from the bio field
+      let locationSettings = null;
+      if (data && data.bio) {
+        try {
+          const bioData = JSON.parse(data.bio);
+          if (bioData.location_settings) {
+            locationSettings = {
+              id: data.id,
+              user_id: data.id,
+              location_sharing: bioData.location_settings.sharing || false,
+              notification_radius: bioData.location_settings.radius || 10,
+              created_at: data.created_at,
+              updated_at: data.updated_at
+            };
+          }
+        } catch (e) {
+          console.error('Error parsing bio JSON:', e);
+        }
+      }
+      
+      return locationSettings;
+    },
+  });
 
   return {
-    tiers,
     subscriptions,
-    isLoading,
-    refetch,
+    subscribedPromoters,
+    tiers,
+    settings,
+    isLoading: isLoadingSubscriptions || isLoadingTiers || isLoadingSubscribed || isLoadingSettings,
     subscribe,
     unsubscribe,
-    error: null // Added for compatibility
   };
 };
