@@ -1,6 +1,7 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import Draggable, { DraggableData, DraggableEvent } from 'react-draggable';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -17,21 +18,50 @@ import {
   User, 
   ChevronDown,
   X,
-  Minimize2
+  Minimize2,
+  GripVertical,
+  RotateCcw
 } from 'lucide-react';
 import { useDevelopmentMode, DevUserType } from '@/contexts/DevelopmentModeContext';
 import { cn } from '@/lib/utils';
+
+interface Position {
+  x: number;
+  y: number;
+}
+
+const DEFAULT_POSITION: Position = { x: 20, y: 20 };
+const STORAGE_KEY = 'dev-role-switcher-position';
 
 const DevRoleSwitcher: React.FC = () => {
   const { isDevelopment, devMode, switchToUserType, exitDevMode, isDevModeActive } = useDevelopmentMode();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [position, setPosition] = useState<Position>(DEFAULT_POSITION);
+  const [isDragging, setIsDragging] = useState(false);
+  const nodeRef = useRef(null);
 
   // Check if we're in admin context
   const isAdminContext = window.location.pathname.startsWith('/admin');
 
   useEffect(() => {
     setMounted(true);
+    
+    // Load saved position from localStorage
+    const savedPosition = localStorage.getItem(STORAGE_KEY);
+    if (savedPosition) {
+      try {
+        const parsedPosition = JSON.parse(savedPosition);
+        // Validate position is within reasonable bounds
+        if (parsedPosition.x >= 0 && parsedPosition.y >= 0 && 
+            parsedPosition.x <= window.innerWidth - 200 && 
+            parsedPosition.y <= window.innerHeight - 100) {
+          setPosition(parsedPosition);
+        }
+      } catch (error) {
+        console.log('DevRoleSwitcher: Failed to parse saved position, using default');
+      }
+    }
     
     // Enhanced logging for admin context
     console.log('DevRoleSwitcher mount state:', {
@@ -41,6 +71,7 @@ const DevRoleSwitcher: React.FC = () => {
       isAdminContext,
       pathname: window.location.pathname,
       mounted,
+      position,
       timestamp: new Date().toISOString()
     });
 
@@ -119,36 +150,61 @@ const DevRoleSwitcher: React.FC = () => {
     return 'z-50';
   };
 
-  // Enhanced container classes with admin-specific styling
+  // Handle drag events
+  const handleDragStart = () => {
+    setIsDragging(true);
+  };
+
+  const handleDragStop = (e: DraggableEvent, data: DraggableData) => {
+    setIsDragging(false);
+    const newPosition = { x: data.x, y: data.y };
+    setPosition(newPosition);
+    
+    // Save position to localStorage
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(newPosition));
+    
+    console.log('DevRoleSwitcher: Position saved:', newPosition);
+  };
+
+  // Reset position to default
+  const resetPosition = () => {
+    setPosition(DEFAULT_POSITION);
+    localStorage.removeItem(STORAGE_KEY);
+    console.log('DevRoleSwitcher: Position reset to default');
+  };
+
+  // Enhanced container classes with admin-specific styling and drag states
   const getContainerClasses = () => {
-    const baseClasses = "fixed top-4 right-4 min-w-[220px]";
-    const zIndex = getZIndex();
+    const baseClasses = "min-w-[220px] select-none";
+    const dragClasses = isDragging ? "shadow-2xl scale-105" : "shadow-lg";
     
     if (isAdminContext) {
       return cn(
         baseClasses,
-        zIndex,
-        "bg-white/95 backdrop-blur-sm rounded-lg shadow-2xl border-2 border-orange-200 p-4",
-        "ring-2 ring-orange-100"
+        "bg-white/95 backdrop-blur-sm rounded-lg border-2 border-orange-200 p-4",
+        "ring-2 ring-orange-100",
+        dragClasses,
+        "transition-all duration-200"
       );
     }
     
     return cn(
       baseClasses,
-      zIndex,
-      "bg-white rounded-lg shadow-lg border-2 border-orange-200 p-4"
+      "bg-white rounded-lg border-2 border-orange-200 p-4",
+      dragClasses,
+      "transition-all duration-200"
     );
   };
 
   const getCollapsedClasses = () => {
-    const baseClasses = "fixed top-4 right-4";
-    const zIndex = getZIndex();
+    const baseClasses = "select-none";
+    const dragClasses = isDragging ? "shadow-2xl scale-105" : "shadow-lg";
     
     if (isAdminContext) {
-      return cn(baseClasses, zIndex, "shadow-2xl ring-2 ring-orange-100");
+      return cn(baseClasses, "ring-2 ring-orange-100", dragClasses, "transition-all duration-200");
     }
     
-    return cn(baseClasses, zIndex, "shadow-lg");
+    return cn(baseClasses, dragClasses, "transition-all duration-200");
   };
 
   const DevContent = () => {
@@ -159,7 +215,7 @@ const DevRoleSwitcher: React.FC = () => {
             variant="outline"
             size="sm"
             onClick={() => setIsCollapsed(false)}
-            className={cn("border-2", currentColor)}
+            className={cn("border-2 cursor-pointer", currentColor)}
           >
             {React.createElement(currentIcon, { className: "h-4 w-4" })}
           </Button>
@@ -170,10 +226,27 @@ const DevRoleSwitcher: React.FC = () => {
     return (
       <div className={getContainerClasses()}>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-orange-800">
-            🛠️ Dev Tools {isAdminContext && '(Admin)'}
-          </h3>
+          <div className="flex items-center gap-2">
+            <GripVertical 
+              className={cn(
+                "h-4 w-4 text-orange-600 cursor-grab", 
+                isDragging && "cursor-grabbing"
+              )} 
+            />
+            <h3 className="text-sm font-semibold text-orange-800">
+              🛠️ Dev Tools {isAdminContext && '(Admin)'}
+            </h3>
+          </div>
           <div className="flex gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={resetPosition}
+              className="h-6 w-6 p-0 text-orange-600"
+              title="Reset position"
+            >
+              <RotateCcw className="h-3 w-3" />
+            </Button>
             <Button
               variant="ghost"
               size="sm"
@@ -237,20 +310,44 @@ const DevRoleSwitcher: React.FC = () => {
           <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
             💡 Use URL params: ?dev_mode=admin
             {isAdminContext && <div className="mt-1 text-orange-600">Z-index: {getZIndex()}</div>}
+            <div className="mt-1 text-orange-600">Draggable • Position: {position.x}, {position.y}</div>
           </div>
         </div>
       </div>
     );
   };
 
+  const DraggableDevContent = () => (
+    <Draggable
+      nodeRef={nodeRef}
+      position={position}
+      onStart={handleDragStart}
+      onStop={handleDragStop}
+      bounds="parent"
+      handle=".drag-handle"
+    >
+      <div 
+        ref={nodeRef}
+        className={cn("fixed", getZIndex())}
+        style={{ 
+          cursor: isDragging ? 'grabbing' : 'default',
+        }}
+      >
+        <div className="drag-handle">
+          <DevContent />
+        </div>
+      </div>
+    </Draggable>
+  );
+
   // Use portal for admin context to ensure proper rendering above admin layout
   if (isAdminContext) {
-    console.log('DevRoleSwitcher: Rendering with portal for admin context');
-    return createPortal(<DevContent />, document.body);
+    console.log('DevRoleSwitcher: Rendering with portal and drag for admin context');
+    return createPortal(<DraggableDevContent />, document.body);
   }
 
-  console.log('DevRoleSwitcher: Rendering normally for non-admin context');
-  return <DevContent />;
+  console.log('DevRoleSwitcher: Rendering with drag for non-admin context');
+  return <DraggableDevContent />;
 };
 
 export default DevRoleSwitcher;
