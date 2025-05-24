@@ -22,6 +22,7 @@ export interface AuthState {
   isVerificationEmailSent: boolean;
   authError: Error | null;
   authStable: boolean;
+  userType: 'individual' | 'establishment' | 'promoter' | 'admin' | null;
 }
 
 export interface AuthActions {

@@ -46,11 +46,12 @@ export interface NavSection {
 
 /**
  * User types for authentication and access control
- * Note: 'admin' is handled in the auth logic but not part of the database enum
+ * Matches the auth context userType definition
  */
 export type UserType = 'individual' | 'establishment' | 'promoter' | 'admin';
 
 /**
  * Database role types that match the Supabase enum
+ * Note: 'admin' is handled in auth logic but not part of the database enum
  */
 export type DatabaseRole = 'individual' | 'establishment' | 'promoter';

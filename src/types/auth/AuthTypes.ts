@@ -46,9 +46,9 @@ export interface AuthState {
   isVerificationEmailSent: boolean;
 
   /**
-   * The current user type
+   * The current user type - matches auth context definition
    */
-  userType: string;
+  userType: 'individual' | 'establishment' | 'promoter' | 'admin' | null;
 }
 
 /**

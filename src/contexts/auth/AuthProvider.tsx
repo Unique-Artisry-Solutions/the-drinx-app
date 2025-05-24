@@ -1,9 +1,10 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
-import { Session, User, AuthError } from '@supabase/supabase-js';
+import React, { createContext, useState, useEffect, useCallback, useRef, useContext } from 'react';
+import { Session, User, AuthChangeEvent } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
-import { useToast } from '@/hooks/use-toast';
+import { AuthContextType, AuthUser } from './types';
 import { clearAllSessions } from '@/utils/sessionCleaner';
-import { AuthState, AuthActions, AuthContextType } from './types';
+import { useToast } from '@/hooks/use-toast';
+import { useAppNavigation } from '@/hooks/useAppNavigation';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -15,19 +16,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isVerificationEmailSent, setIsVerificationEmailSent] = useState(false);
   const [authError, setAuthError] = useState<Error | null>(null);
   const [authStable, setAuthStable] = useState(false);
-  const [userType, setUserType] = useState<string>('individual');
-  
+  const [userType, setUserType] = useState<'individual' | 'establishment' | 'promoter' | 'admin' | null>(null);
+
   const { toast } = useToast();
-  const initializationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const isInitializingRef = useRef(false);
-  const cleanupRef = useRef<(() => void) | null>(null);
-  
-  // Check user roles from the database
-  const checkUserRoles = useCallback(async (userId: string): Promise<string> => {
+  const { goToHomePage } = useAppNavigation();
+
+  // Prevent useEffect from running on initial render
+  const isFirstRender = useRef(true);
+
+  // Store the timeout id in a ref
+  const timeoutIdRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Function to clear the timeout
+  const clearTimeoutRef = useRef(() => {
+    if (timeoutIdRef.current) {
+      clearTimeout(timeoutIdRef.current);
+      timeoutIdRef.current = null;
+    }
+  });
+
+  // Function to set the timeout
+  const setTimeoutRef = useRef((callback: (...args: any[]) => void, ms: number) => {
+    timeoutIdRef.current = setTimeout(callback, ms);
+  });
+
+  const determineUserType = useCallback(async (userId: string): Promise<'individual' | 'establishment' | 'promoter' | 'admin'> => {
     try {
-      console.log('Checking user roles for:', userId);
+      console.log('AuthProvider: Determining user type for user:', userId);
       
-      // Get active role from user_roles table
+      // Special handling for admin - check if this is the admin email first
+      const { data: userData } = await supabase.auth.getUser();
+      if (userData.user?.email === 'jacksonmcfarland14@gmail.com') {
+        console.log('AuthProvider: Admin user detected by email');
+        return 'admin';
+      }
+
+      // Check user_roles table for role assignment
       const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
         .select('role')
@@ -35,409 +59,432 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .eq('is_active', true)
         .single();
 
-      if (roleError && roleError.code !== 'PGRST116') {
-        console.error('Error fetching user role:', roleError);
+      if (roleError) {
+        console.error('AuthProvider: Error fetching user role:', roleError);
+        // If admin email but no role found, still return admin
+        if (userData.user?.email === 'jacksonmcfarland14@gmail.com') {
+          return 'admin';
+        }
         return 'individual'; // Default fallback
       }
 
-      if (roleData?.role) {
-        console.log('Found active role:', roleData.role);
-        // Handle admin role which might not be in the enum but exists in practice
-        if (roleData.role === 'admin' || 
-            ['individual', 'establishment', 'promoter'].includes(roleData.role)) {
-          return roleData.role;
-        }
+      const dbRole = roleData.role as 'individual' | 'establishment' | 'promoter';
+      
+      // Special case: if this is the admin email, return admin regardless of DB role
+      if (userData.user?.email === 'jacksonmcfarland14@gmail.com') {
+        console.log('AuthProvider: Admin user confirmed by email, overriding DB role');
+        return 'admin';
       }
 
-      // Fallback to individual if no valid role found
-      return 'individual';
+      console.log('AuthProvider: User type determined from database:', dbRole);
+      return dbRole;
     } catch (error) {
-      console.error('Error in checkUserRoles:', error);
+      console.error('AuthProvider: Error in determineUserType:', error);
       return 'individual';
     }
   }, []);
 
-  const refreshSession = useCallback(async (): Promise<{ isEmailVerified: boolean }> => {
-    try {
-      console.log('Refreshing session...');
-      const { data, error } = await supabase.auth.refreshSession();
-      
-      if (error) {
-        console.error('Session refresh error:', error);
-        setAuthError(error);
-        return { isEmailVerified: false };
-      }
-      
-      if (data.session) {
-        setSession(data.session);
-        setUser(data.user);
-        
-        const verified = !!(data.user?.email_confirmed_at);
-        setIsEmailVerified(verified);
-        
-        if (verified && data.user) {
-          const detectedUserType = await checkUserRoles(data.user.id);
-          setUserType(detectedUserType);
-          localStorage.setItem('user_type', detectedUserType);
-        }
-        
-        return { isEmailVerified: verified };
-      }
-      
-      return { isEmailVerified: false };
-    } catch (error: any) {
-      console.error('Session refresh failed:', error);
-      setAuthError(error);
-      return { isEmailVerified: false };
-    }
-  }, [checkUserRoles]);
+  const processAuthChange = useCallback(async (event: AuthChangeEvent, session: Session | null) => {
+    console.log('AuthProvider: Auth change event:', event);
+    setIsLoading(true);
+    setAuthError(null);
 
-  const recoverAuthState = useCallback(async (): Promise<boolean> => {
-    try {
-      console.log('Attempting auth state recovery...');
-      setIsLoading(true);
-      setAuthError(null);
-      
-      clearAllSessions();
-      
-      const { data, error } = await supabase.auth.getSession();
-      
-      if (error) {
-        console.error('Auth recovery error:', error);
-        setAuthError(error);
-        return false;
+    if (session) {
+      console.log('AuthProvider: Session found, setting session and user');
+      setSession(session);
+      setUser(session.user);
+      localStorage.setItem('user_authenticated', 'true');
+      localStorage.setItem('user_email', session.user.email || '');
+
+      try {
+        const determinedUserType = await determineUserType(session.user.id);
+        console.log('AuthProvider: Setting user type:', determinedUserType);
+        setUserType(determinedUserType);
+        localStorage.setItem('user_type', determinedUserType);
+      } catch (error) {
+        console.error('AuthProvider: Error determining user type:', error);
+        setUserType('individual');
+        localStorage.setItem('user_type', 'individual');
       }
-      
-      if (data.session?.user) {
-        setSession(data.session);
-        setUser(data.session.user);
-        
-        const verified = !!(data.session.user.email_confirmed_at);
-        setIsEmailVerified(verified);
-        
-        if (verified) {
-          const detectedUserType = await checkUserRoles(data.session.user.id);
-          setUserType(detectedUserType);
-          localStorage.setItem('user_type', detectedUserType);
-        }
-        
-        console.log('Auth state recovered successfully');
-        return true;
-      }
-      
-      return false;
-    } catch (error: any) {
-      console.error('Auth recovery failed:', error);
-      setAuthError(error);
-      return false;
-    } finally {
-      setIsLoading(false);
+    } else {
+      console.log('AuthProvider: No session, clearing session and user');
+      setSession(null);
+      setUser(null);
+      localStorage.removeItem('user_authenticated');
+      localStorage.removeItem('user_email');
+      setUserType(null);
+      localStorage.removeItem('user_type');
+    }
+
+    // Set auth as stable after initial load
+    if (isFirstRender.current) {
+      console.log('AuthProvider: Initial auth load complete, setting authStable to true');
       setAuthStable(true);
+      isFirstRender.current = false;
     }
-  }, [checkUserRoles]);
 
-  const signIn = useCallback(async (email: string, password: string): Promise<{ error: Error | null; data: any }> => {
-    try {
+    setIsLoading(false);
+  }, [determineUserType]);
+
+  useEffect(() => {
+    // Initial load of auth state
+    const loadSession = async () => {
+      console.log('AuthProvider: Initializing auth state...');
       setIsLoading(true);
-      setAuthError(null);
-      
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      supabase.auth.getSession()
+        .then(({ data: { session } }) => {
+          processAuthChange('INITIAL_SESSION', session);
+        })
+        .catch(error => {
+          console.error("AuthProvider: Error getting initial session:", error);
+          setAuthError(error);
+          setIsLoading(false);
+          setAuthStable(true); // Mark as stable even on error
+        });
+
+      // Set up auth state listener
+      supabase.auth.onAuthStateChange((event, session) => {
+        console.log('AuthProvider: Supabase auth state change:', event);
+        processAuthChange(event, session);
       });
-      
+    };
+
+    loadSession();
+
+    // Cleanup function
+    return () => {
+      console.log('AuthProvider: Cleaning up auth state listener');
+      clearTimeoutRef.current();
+    };
+  }, [processAuthChange]);
+
+  const signIn = async (email: string, password: string) => {
+    setIsLoading(true);
+    setAuthError(null);
+
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password,
+      });
+
       if (error) {
-        console.error('Sign in error:', error);
+        console.error('AuthProvider: Sign in error:', error);
         setAuthError(error);
+        toast({
+          title: 'Sign-in failed',
+          description: error.message,
+          variant: 'destructive',
+        });
         return { error, data: null };
       }
-      
-      if (data.user && data.session) {
-        setUser(data.user);
-        setSession(data.session);
-        
-        const verified = !!(data.user.email_confirmed_at);
-        setIsEmailVerified(verified);
-        
-        if (verified) {
-          const detectedUserType = await checkUserRoles(data.user.id);
-          setUserType(detectedUserType);
-          localStorage.setItem('user_type', detectedUserType);
-          localStorage.setItem('user_authenticated', 'true');
-          localStorage.setItem('user_email', data.user.email || '');
-        }
-        
-        console.log('Sign in successful, user type:', userType);
-        return { error: null, data };
-      }
-      
-      return { error: new Error('Authentication failed'), data: null };
+
+      console.log('AuthProvider: Sign in successful, data:', data);
+      return { error: null, data };
     } catch (error: any) {
-      console.error('Sign in failed:', error);
+      console.error('AuthProvider: Unexpected sign-in error:', error);
       setAuthError(error);
-      return { error, data: null };
+      toast({
+        title: 'Sign-in failed',
+        description: error.message || 'An unexpected error occurred',
+        variant: 'destructive',
+      });
+      return { error: new Error(error.message || 'An unexpected error occurred'), data: null };
     } finally {
       setIsLoading(false);
     }
-  }, [checkUserRoles]);
+  };
 
-  const signUp = useCallback(async (formData: any): Promise<any> => {
+  const signUp = async (formData: any) => {
+    setIsLoading(true);
+    setAuthError(null);
+
     try {
-      setIsLoading(true);
-      setAuthError(null);
-      
       const { data, error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
           data: {
-            name: formData.name || formData.display_name,
+            name: formData.name,
             username: formData.username,
-            user_type: formData.user_type || 'individual',
+            user_type: formData.userType,
             phone: formData.phone
           }
         }
       });
-      
+
       if (error) {
-        console.error('Sign up error:', error);
+        console.error('AuthProvider: Sign up error:', error);
         setAuthError(error);
-        return { error, data: null };
+        toast({
+          title: 'Sign-up failed',
+          description: error.message,
+          variant: 'destructive',
+        });
+        return { error };
       }
-      
-      if (data.user) {
-        setUser(data.user);
-        setIsVerificationEmailSent(true);
-        
-        console.log('Sign up successful, please verify email');
-        return { error: null, data };
-      }
-      
-      return { error: new Error('Registration failed'), data: null };
+
+      console.log('AuthProvider: Sign up successful, data:', data);
+      toast({
+        title: 'Sign-up successful',
+        description: 'Please check your email to verify your account.',
+      });
+      return { data };
     } catch (error: any) {
-      console.error('Sign up failed:', error);
+      console.error('AuthProvider: Unexpected sign-up error:', error);
       setAuthError(error);
-      return { error, data: null };
+      toast({
+        title: 'Sign-up failed',
+        description: error.message || 'An unexpected error occurred',
+        variant: 'destructive',
+      });
+      return { error: new Error(error.message || 'An unexpected error occurred') };
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  };
 
-  const signOut = useCallback(async (): Promise<void> => {
+  const signOut = async () => {
+    setIsLoading(true);
+    setAuthError(null);
+
     try {
-      setIsLoading(true);
-      
       const { error } = await supabase.auth.signOut();
-      
+
       if (error) {
-        console.error('Sign out error:', error);
+        console.error('AuthProvider: Sign out error:', error);
         setAuthError(error);
+        toast({
+          title: 'Sign-out failed',
+          description: error.message,
+          variant: 'destructive',
+        });
+        return;
       }
-      
-      // Clear all state
-      setUser(null);
-      setSession(null);
-      setUserType('individual');
-      setIsEmailVerified(false);
-      setIsVerificationEmailSent(false);
-      setAuthError(null);
-      
-      // Clear localStorage
+
+      console.log('AuthProvider: Sign out successful');
       clearAllSessions();
-      
-      console.log('Signed out successfully');
+      goToHomePage();
     } catch (error: any) {
-      console.error('Sign out failed:', error);
+      console.error('AuthProvider: Unexpected sign-out error:', error);
       setAuthError(error);
+      toast({
+        title: 'Sign-out failed',
+        description: error.message || 'An unexpected error occurred',
+        variant: 'destructive',
+      });
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  };
 
-  const sendVerificationEmail = useCallback(async (email: string): Promise<void> => {
+  const refreshSession = async () => {
+    setIsLoading(true);
+    setAuthError(null);
+
+    try {
+      const { data, error } = await supabase.auth.refreshSession();
+
+      if (error) {
+        console.error('AuthProvider: Refresh session error:', error);
+        setAuthError(error);
+        toast({
+          title: 'Refresh session failed',
+          description: error.message,
+          variant: 'destructive',
+        });
+        return { isEmailVerified: false };
+      }
+
+      console.log('AuthProvider: Refresh session successful, data:', data);
+      setIsEmailVerified(data?.session?.user?.email_confirmed_at !== null);
+      return { isEmailVerified: data?.session?.user?.email_confirmed_at !== null };
+    } catch (error: any) {
+      console.error('AuthProvider: Unexpected refresh session error:', error);
+      setAuthError(error);
+      toast({
+        title: 'Refresh session failed',
+        description: error.message || 'An unexpected error occurred',
+        variant: 'destructive',
+      });
+      return { isEmailVerified: false };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const recoverAuthState = async (): Promise<boolean> => {
+    setIsLoading(true);
+    setAuthError(null);
+    console.log('AuthProvider: Attempting to recover auth state...');
+
+    try {
+      // Trigger a session recovery with the Supabase client
+      await supabase.auth.getSession();
+      console.log('AuthProvider: Session recovery triggered.');
+      toast({
+        title: 'Session recovery initiated',
+        description: 'Attempting to re-establish your session...',
+      });
+      return true;
+    } catch (recoveryError: any) {
+      console.error('AuthProvider: Session recovery failed:', recoveryError);
+      setAuthError(recoveryError);
+      toast({
+        title: 'Session recovery failed',
+        description: recoveryError.message || 'Failed to recover session.',
+        variant: 'destructive',
+      });
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const sendVerificationEmail = async (email: string) => {
+    setIsLoading(true);
+    setIsVerificationEmailSent(false);
+    setAuthError(null);
+
     try {
       const { error } = await supabase.auth.resend({
-        type: 'signup',
-        email: email
+        type: 'email',
+        email: email,
       });
-      
+
       if (error) {
-        throw error;
+        console.error('AuthProvider: Send verification email error:', error);
+        setAuthError(error);
+        toast({
+          title: 'Failed to send verification email',
+          description: error.message,
+          variant: 'destructive',
+        });
+        return;
       }
-      
+
+      console.log('AuthProvider: Verification email sent successfully');
       setIsVerificationEmailSent(true);
       toast({
         title: 'Verification email sent',
-        description: 'Please check your email for the verification link.',
+        description: 'Please check your email to verify your account.',
       });
     } catch (error: any) {
-      console.error('Send verification email error:', error);
+      console.error('AuthProvider: Unexpected send verification email error:', error);
       setAuthError(error);
       toast({
         title: 'Failed to send verification email',
-        description: error.message,
+        description: error.message || 'An unexpected error occurred',
         variant: 'destructive',
       });
+    } finally {
+      setIsLoading(false);
     }
-  }, [toast]);
+  };
 
-  const updateUserProfile = useCallback(async (data: any): Promise<void> => {
+  const updateUserProfile = async (data: any) => {
+    setIsLoading(true);
+    setAuthError(null);
+
     try {
-      const { error } = await supabase.auth.updateUser({
-        data
-      });
-      
-      if (error) {
-        throw error;
+      if (!user) {
+        throw new Error('No user is currently signed in.');
       }
-      
+
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .update(data)
+        .eq('id', user.id)
+        .select()
+        .single();
+
+      if (profileError) {
+        console.error('AuthProvider: Update user profile error:', profileError);
+        setAuthError(profileError);
+        toast({
+          title: 'Failed to update profile',
+          description: profileError.message,
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      console.log('AuthProvider: User profile updated successfully, data:', profileData);
+
+      // Update the user object in the AuthContext
+      setUser({
+        ...user,
+        user_metadata: {
+          ...user.user_metadata,
+          ...data,
+        },
+      });
+
       toast({
         title: 'Profile updated',
         description: 'Your profile has been updated successfully.',
       });
     } catch (error: any) {
-      console.error('Update profile error:', error);
+      console.error('AuthProvider: Unexpected update user profile error:', error);
       setAuthError(error);
       toast({
         title: 'Failed to update profile',
-        description: error.message,
+        description: error.message || 'An unexpected error occurred',
         variant: 'destructive',
       });
+    } finally {
+      setIsLoading(false);
     }
-  }, [toast]);
+  };
 
-  const updatePassword = useCallback(async (newPassword: string): Promise<void> => {
+  const updatePassword = async (newPassword: string) => {
+    setIsLoading(true);
+    setAuthError(null);
+
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword
+      const { data, error } = await supabase.auth.updateUser({
+        password: newPassword,
       });
-      
+
       if (error) {
-        throw error;
+        console.error('AuthProvider: Update password error:', error);
+        setAuthError(error);
+        toast({
+          title: 'Failed to update password',
+          description: error.message,
+          variant: 'destructive',
+        });
+        return;
       }
-      
+
+      console.log('AuthProvider: Password updated successfully, data:', data);
       toast({
         title: 'Password updated',
         description: 'Your password has been updated successfully.',
       });
     } catch (error: any) {
-      console.error('Update password error:', error);
+      console.error('AuthProvider: Unexpected update password error:', error);
       setAuthError(error);
       toast({
         title: 'Failed to update password',
-        description: error.message,
+        description: error.message || 'An unexpected error occurred',
         variant: 'destructive',
       });
+    } finally {
+      setIsLoading(false);
     }
-  }, [toast]);
-
-  useEffect(() => {
-    if (isInitializingRef.current) return;
-    
-    isInitializingRef.current = true;
-    let mounted = true;
-    
-    const initializeAuth = async () => {
-      try {
-        console.log('Initializing auth...');
-        
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (!mounted) return;
-        
-        if (error) {
-          console.error('Session initialization error:', error);
-          setAuthError(error);
-        } else if (session?.user) {
-          console.log('Found existing session');
-          setSession(session);
-          setUser(session.user);
-          
-          const verified = !!(session.user.email_confirmed_at);
-          setIsEmailVerified(verified);
-          
-          if (verified) {
-            const detectedUserType = await checkUserRoles(session.user.id);
-            setUserType(detectedUserType);
-            localStorage.setItem('user_type', detectedUserType);
-            localStorage.setItem('user_authenticated', 'true');
-            localStorage.setItem('user_email', session.user.email || '');
-          }
-        }
-      } catch (error: any) {
-        console.error('Auth initialization failed:', error);
-        if (mounted) {
-          setAuthError(error);
-        }
-      } finally {
-        if (mounted) {
-          setIsLoading(false);
-          setAuthStable(true);
-          isInitializingRef.current = false;
-        }
-      }
-    };
-    
-    initializeAuth();
-    
-    // Set up auth state change listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (!mounted) return;
-        
-        console.log('Auth state changed:', event, !!session);
-        
-        if (event === 'SIGNED_OUT') {
-          setUser(null);
-          setSession(null);
-          setUserType('individual');
-          setIsEmailVerified(false);
-          setIsVerificationEmailSent(false);
-          clearAllSessions();
-        } else if (session?.user) {
-          setUser(session.user);
-          setSession(session);
-          
-          const verified = !!(session.user.email_confirmed_at);
-          setIsEmailVerified(verified);
-          
-          if (verified) {
-            const detectedUserType = await checkUserRoles(session.user.id);
-            setUserType(detectedUserType);
-            localStorage.setItem('user_type', detectedUserType);
-            localStorage.setItem('user_authenticated', 'true');
-            localStorage.setItem('user_email', session.user.email || '');
-          }
-        }
-        
-        setIsLoading(false);
-        setAuthStable(true);
-      }
-    );
-    
-    cleanupRef.current = () => subscription.unsubscribe();
-    
-    return () => {
-      mounted = false;
-      if (cleanupRef.current) {
-        cleanupRef.current();
-      }
-      if (initializationTimeoutRef.current) {
-        clearTimeout(initializationTimeoutRef.current);
-      }
-    };
-  }, [checkUserRoles]);
+  };
 
   const contextValue: AuthContextType = {
-    user,
     session,
+    user,
+    isAuthenticated: !!(user && session),
     isLoading,
     isEmailVerified,
     isVerificationEmailSent,
     authError,
     authStable,
     userType,
-    isAuthenticated: !!(user && session),
     signIn,
     signUp,
     signOut,
@@ -445,7 +492,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     recoverAuthState,
     sendVerificationEmail,
     updateUserProfile,
-    updatePassword,
+    updatePassword
   };
 
   return (
@@ -457,7 +504,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
