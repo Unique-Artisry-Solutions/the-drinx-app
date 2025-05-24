@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
@@ -25,11 +24,52 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [authStable, setAuthStable] = useState(false);
   const [navigationReady, setNavigationReady] = useState(false);
   
-  const { goToAfterLogin } = useAppNavigation();
+  const { goToAfterLogin, goToLandingPage } = useAppNavigation();
 
   // Computed state
   const isAuthenticated = !!(session && user);
   const userType = user ? getUserTypeFromMetadata(user.user_metadata) : 'individual';
+
+  // Central navigation handler - only place that triggers navigation
+  useEffect(() => {
+    // Only handle navigation when auth is stable and navigation is ready
+    if (!authStable || !navigationReady) {
+      return;
+    }
+
+    // Prevent navigation during loading states
+    if (isLoading) {
+      return;
+    }
+
+    console.log('AuthProvider - Central navigation handler:', {
+      isAuthenticated,
+      userType,
+      currentPath: window.location.pathname
+    });
+
+    // Handle authenticated user navigation
+    if (isAuthenticated && user) {
+      // Only redirect if user is on login/signup pages or landing
+      const currentPath = window.location.pathname;
+      const shouldRedirect = ['/login', '/signup', '/landing', '/admin/login'].includes(currentPath);
+      
+      if (shouldRedirect) {
+        console.log('AuthProvider - Redirecting authenticated user from:', currentPath);
+        goToAfterLogin(userType);
+      }
+    } else {
+      // Handle unauthenticated user - redirect to landing if on protected routes
+      const currentPath = window.location.pathname;
+      const protectedRoutes = ['/explore', '/profile', '/admin', '/establishment', '/promoter'];
+      const isOnProtectedRoute = protectedRoutes.some(route => currentPath.startsWith(route));
+      
+      if (isOnProtectedRoute) {
+        console.log('AuthProvider - Redirecting unauthenticated user from protected route:', currentPath);
+        goToLandingPage();
+      }
+    }
+  }, [isAuthenticated, user, userType, authStable, navigationReady, isLoading, goToAfterLogin, goToLandingPage]);
 
   // Initialize session
   useEffect(() => {
@@ -68,7 +108,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         if (mounted) {
           setIsLoading(false);
           setAuthStable(true);
-          setNavigationReady(true);
+          // Add small delay to ensure auth state is fully settled
+          setTimeout(() => {
+            setNavigationReady(true);
+          }, 100);
         }
 
         return () => {
@@ -80,6 +123,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setAuthError(error as Error);
           setIsLoading(false);
           setAuthStable(true);
+          setNavigationReady(true);
         }
       }
     };
@@ -91,7 +135,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
   }, []);
 
-  // Actions
+  // Actions - no navigation logic here anymore
   const signIn = async (email: string, password: string) => {
     try {
       setIsLoading(true);
@@ -108,6 +152,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         throw new Error('Email not verified. Please check your email and verify your account.');
       }
 
+      // No navigation here - central handler will take care of it
       return { error: null, data };
     } catch (error: any) {
       setAuthError(error);
@@ -134,6 +179,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (error) throw error;
 
       setIsVerificationEmailSent(true);
+      // No navigation here - user stays on signup page to see confirmation
       return { error: null, data };
     } catch (error: any) {
       setAuthError(error);
@@ -155,6 +201,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUser(null);
       setIsEmailVerified(false);
       setAuthError(null);
+      
+      // Navigation will be handled by central handler
     } catch (error: any) {
       console.error('Sign out error:', error);
       setAuthError(error);

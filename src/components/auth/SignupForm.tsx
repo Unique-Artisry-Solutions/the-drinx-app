@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { CardContent, CardFooter } from '@/components/ui/card';
-import { useNavigate } from 'react-router-dom';
 import { debouncedToast } from '@/utils/debouncedToast';
 import AuthButton from './AuthButton';
 import { useAuth } from '@/contexts/auth/AuthProvider';
@@ -29,8 +28,7 @@ const SignupForm: React.FC<SignupFormProps> = ({
   const [formError, setFormError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
-  const navigate = useNavigate();
-  const { signUp, isLoading } = useAuth();
+  const { signUp, isLoading, navigationReady } = useAuth();
 
   const handleUserTypeChange = (value: string) => {
     setSelectedUserType(value as 'individual' | 'establishment' | 'promoter');
@@ -84,10 +82,20 @@ const SignupForm: React.FC<SignupFormProps> = ({
         'Please check your email to verify your account.',
         3000
       );
+      
+      // Only call onSuccess callback if provided (for modal use cases)
+      if (onSuccess) {
+        onSuccess();
+      }
+      
+      // No manual navigation - user stays to see confirmation modal
     }
     
     setIsSubmitting(false);
   };
+
+  // Navigation guard - prevent form submission during navigation loading
+  const canSubmit = navigationReady && !isLoading && !isSubmitting;
 
   return (
     <>
@@ -178,10 +186,11 @@ const SignupForm: React.FC<SignupFormProps> = ({
         <CardFooter className="flex flex-col gap-4">
           <AuthButton
             type="submit"
-            isLoading={isLoading || isSubmitting}
+            isLoading={!canSubmit}
+            disabled={!canSubmit}
             className={`w-full ${selectedUserType === 'individual' ? 'bg-spiritless-pink hover:bg-spiritless-pink/90' : selectedUserType === 'promoter' ? 'bg-purple-600 hover:bg-purple-700' : 'bg-spiritless-green hover:bg-spiritless-green/90'} text-white`}
           >
-            {isLoading || isSubmitting ? 'Creating account...' : `Create ${selectedUserType === 'establishment' ? 'Business' : selectedUserType === 'promoter' ? 'Promoter' : 'Personal'} Account`}
+            {!canSubmit ? 'Creating account...' : `Create ${selectedUserType === 'establishment' ? 'Business' : selectedUserType === 'promoter' ? 'Promoter' : 'Personal'} Account`}
           </AuthButton>
           
           <p className="text-xs text-center text-muted-foreground">

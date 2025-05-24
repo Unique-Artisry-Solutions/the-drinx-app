@@ -13,7 +13,7 @@ const LoginPage = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { theme, setTheme } = useTheme();
   const location = useLocation();
-  const { user, isLoading, isAuthenticated } = useAuth();
+  const { user, isLoading, isAuthenticated, navigationReady } = useAuth();
   
   // Refs to prevent duplicate processing
   const processedStateRef = useRef<string>('');
@@ -47,12 +47,12 @@ const LoginPage = () => {
     }
   }, [location.state, errorMessage]);
   
-  // Note: Removed manual redirect logic - AuthProvider handles all navigation
+  // Remove manual redirect logic - AuthProvider handles all navigation
   useEffect(() => {
-    if (isAuthenticated && user) {
+    if (isAuthenticated && user && navigationReady) {
       console.log("LoginPage - User already authenticated, AuthProvider will handle redirect");
     }
-  }, [user, isAuthenticated]);
+  }, [user, isAuthenticated, navigationReady]);
   
   // Always force light theme for login page
   useEffect(() => {

@@ -21,7 +21,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
   const [password, setPassword] = useState('');
   const [formError, setFormError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { signIn, isLoading } = useAuth();
+  const { signIn, isLoading, navigationReady } = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,11 +53,14 @@ const LoginForm: React.FC<LoginFormProps> = ({
         onSuccess();
       }
       
-      // AuthProvider will handle all navigation automatically
+      // AuthProvider will handle all navigation automatically - no manual navigation here
     }
     
     setIsSubmitting(false);
   };
+
+  // Navigation guard - prevent form submission during navigation loading
+  const canSubmit = navigationReady && !isLoading && !isSubmitting;
 
   return (
     <form onSubmit={handleLogin}>
@@ -100,10 +103,11 @@ const LoginForm: React.FC<LoginFormProps> = ({
       <CardFooter className="flex flex-col gap-4">
         <AuthButton
           type="submit"
-          isLoading={isLoading || isSubmitting}
+          isLoading={!canSubmit}
+          disabled={!canSubmit}
           className={`w-full ${userType === 'individual' ? 'bg-spiritless-pink hover:bg-spiritless-pink/90' : userType === 'promoter' ? 'bg-purple-600 hover:bg-purple-700' : 'bg-spiritless-green hover:bg-spiritless-green/90'} text-white`}
         >
-          {isLoading || isSubmitting ? 'Signing in...' : `Sign In${userType !== 'individual' ? ` as ${userType === 'establishment' ? 'Business' : 'Promoter'}` : ''}`}
+          {!canSubmit ? 'Signing in...' : `Sign In${userType !== 'individual' ? ` as ${userType === 'establishment' ? 'Business' : 'Promoter'}` : ''}`}
         </AuthButton>
         
         {onClose && (

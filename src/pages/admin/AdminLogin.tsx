@@ -11,7 +11,7 @@ const AdminLogin: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { signIn, user, userType, isAuthenticated, isLoading } = useAuth();
+  const { signIn, user, userType, isAuthenticated, isLoading, navigationReady } = useAuth();
 
   useEffect(() => {
     // Check if user is already logged in as admin
@@ -53,6 +53,9 @@ const AdminLogin: React.FC = () => {
       setIsSubmitting(false);
     }
   };
+
+  // Navigation guard - prevent form submission during navigation loading
+  const canSubmit = navigationReady && !isLoading && !isSubmitting;
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
@@ -103,9 +106,9 @@ const AdminLogin: React.FC = () => {
               <Button
                 type="submit"
                 className="w-full bg-material-primary hover:bg-material-primary/90 text-white"
-                disabled={isLoading || isSubmitting}
+                disabled={!canSubmit}
               >
-                {isLoading || isSubmitting ? 'Logging in...' : 'Login as Admin'}
+                {!canSubmit ? 'Logging in...' : 'Login as Admin'}
               </Button>
             </CardFooter>
           </form>
