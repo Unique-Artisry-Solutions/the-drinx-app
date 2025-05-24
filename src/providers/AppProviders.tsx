@@ -22,6 +22,7 @@ const queryClient = new QueryClient({
 /**
  * Main providers wrapper for the application
  * Contains all the context providers needed for the app to function
+ * Now uses simplified AuthProvider as single source of truth
  */
 const AppProviders: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
