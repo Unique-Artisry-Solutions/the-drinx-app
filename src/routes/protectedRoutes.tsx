@@ -42,9 +42,16 @@ export const ProtectedRouteWithChildren: React.FC<{
 }> = ({ children, userType }) => {
   const { isDevModeActive, devMode } = useDevelopmentMode();
   
-  // In development mode, bypass protection and render directly
-  if (isDevModeActive && devMode === userType) {
-    console.log(`ProtectedRouteWithChildren: Development mode active for ${userType}, bypassing protection`);
+  console.log('ProtectedRouteWithChildren rendering:', { 
+    userType, 
+    isDevModeActive, 
+    devMode,
+    shouldBypass: isDevModeActive 
+  });
+  
+  // In development mode, bypass protection completely for any user type
+  if (isDevModeActive) {
+    console.log(`ProtectedRouteWithChildren: Development mode active, bypassing protection for ${userType}`);
     return children;
   }
   

@@ -17,7 +17,7 @@ export const useDevelopmentMode = () => {
                        window.location.hostname.includes('preview--') ||
                        window.location.hostname.includes('lovable');
     setIsDevelopment(isLocalhost);
-    console.log('Development mode detected:', isLocalhost);
+    console.log('useDevelopmentMode - Development mode detected:', isLocalhost);
   }, []);
 
   // Check for URL parameters on route changes
@@ -29,7 +29,7 @@ export const useDevelopmentMode = () => {
       const validTypes: DevUserType[] = ['individual', 'establishment', 'promoter', 'admin'];
       if (validTypes.includes(devModeParam as DevUserType)) {
         const userType = devModeParam as DevUserType;
-        console.log('Setting dev mode from URL parameter:', userType);
+        console.log('useDevelopmentMode - Setting dev mode from URL parameter:', userType);
         switchToUserType(userType);
       }
     }
@@ -41,7 +41,7 @@ export const useDevelopmentMode = () => {
       const savedDevType = localStorage.getItem('dev_user_type') as DevUserType;
       if (savedDevType) {
         setDevMode(savedDevType);
-        console.log('Loaded dev mode from storage:', savedDevType);
+        console.log('useDevelopmentMode - Loaded dev mode from storage:', savedDevType);
       }
     }
   }, [isDevelopment]);
@@ -51,6 +51,8 @@ export const useDevelopmentMode = () => {
     const newUrl = new URL(window.location.href);
     newUrl.searchParams.delete('dev_mode');
     window.history.replaceState({}, '', newUrl.toString());
+
+    console.log('useDevelopmentMode - Navigating to dashboard for:', userType);
 
     // Navigate to appropriate dashboard
     switch (userType) {
@@ -73,11 +75,11 @@ export const useDevelopmentMode = () => {
 
   const switchToUserType = (userType: DevUserType) => {
     if (!isDevelopment) {
-      console.log('Not in development mode, ignoring user type switch');
+      console.log('useDevelopmentMode - Not in development mode, ignoring user type switch');
       return;
     }
     
-    console.log('Switching to user type:', userType);
+    console.log('useDevelopmentMode - Switching to user type:', userType);
     setDevMode(userType);
     
     if (userType) {
@@ -90,17 +92,26 @@ export const useDevelopmentMode = () => {
   };
 
   const exitDevMode = () => {
-    console.log('Exiting dev mode');
+    console.log('useDevelopmentMode - Exiting dev mode');
     setDevMode(null);
     localStorage.removeItem('dev_user_type');
     navigate('/landing');
   };
+
+  const isDevModeActive = isDevelopment && devMode !== null;
+  
+  console.log('useDevelopmentMode - Current state:', {
+    isDevelopment,
+    devMode,
+    isDevModeActive,
+    location: location.pathname
+  });
 
   return {
     isDevelopment,
     devMode,
     switchToUserType,
     exitDevMode,
-    isDevModeActive: isDevelopment && devMode !== null
+    isDevModeActive
   };
 };

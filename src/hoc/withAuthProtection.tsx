@@ -37,9 +37,17 @@ export function withAuthProtection<P extends object>(
     const [shouldRedirect, setShouldRedirect] = useState(false);
     
     useEffect(() => {
-      // In development mode, bypass authentication checks
+      console.log('withAuthProtection - Development mode check:', { 
+        isDevModeActive, 
+        devMode, 
+        path: location.pathname,
+        userTypes,
+        requireAuth 
+      });
+      
+      // In development mode, bypass authentication checks completely
       if (isDevModeActive) {
-        console.log('Development mode active, bypassing auth protection');
+        console.log('withAuthProtection: Development mode active, bypassing all auth protection');
         setShouldRedirect(false);
         return;
       }
@@ -49,7 +57,7 @@ export function withAuthProtection<P extends object>(
       
       // Check authentication requirement
       if (requireAuth && (!user || !session)) {
-        console.log("Auth required but no user/session");
+        console.log("withAuthProtection: Auth required but no user/session");
         localStorage.setItem('auth_redirect', location.pathname);
         setShouldRedirect(true);
         return;
@@ -60,7 +68,7 @@ export function withAuthProtection<P extends object>(
         const currentUserType = userType || 'individual';
         
         if (!userTypes.includes(currentUserType as UserType)) {
-          console.log("User type mismatch", { currentUserType, requiredTypes: userTypes });
+          console.log("withAuthProtection: User type mismatch", { currentUserType, requiredTypes: userTypes });
           localStorage.setItem('auth_redirect', location.pathname);
           setShouldRedirect(true);
           return;
@@ -69,7 +77,7 @@ export function withAuthProtection<P extends object>(
       
       // All checks passed
       setShouldRedirect(false);
-    }, [user, session, isLoading, authStable, userType, location.pathname, isDevModeActive]);
+    }, [user, session, isLoading, authStable, userType, location.pathname, isDevModeActive, devMode]);
     
     // Show loading state while checking auth (but not in dev mode)
     if ((isLoading || !authStable) && showLoadingState && !isDevModeActive) {
@@ -120,9 +128,15 @@ export function withAdminProtection<P extends object>(
     const [shouldRedirect, setShouldRedirect] = useState(false);
     
     useEffect(() => {
-      // In development mode, bypass admin authentication checks
+      console.log('withAdminProtection - Development mode check:', { 
+        isDevModeActive, 
+        devMode, 
+        path: location.pathname 
+      });
+      
+      // In development mode with admin role, bypass admin authentication checks
       if (isDevModeActive && devMode === 'admin') {
-        console.log('Development mode active with admin role, bypassing auth protection');
+        console.log('withAdminProtection: Development mode active with admin role, bypassing auth protection');
         setShouldRedirect(false);
         return;
       }
@@ -133,7 +147,7 @@ export function withAdminProtection<P extends object>(
       const isAuthorized = (user && session) && userType === 'admin';
       
       if (!isAuthorized) {
-        console.log("Admin authorization failed", { user: !!user, session: !!session, userType });
+        console.log("withAdminProtection: Admin authorization failed", { user: !!user, session: !!session, userType });
         localStorage.setItem('auth_redirect', location.pathname);
         setShouldRedirect(true);
         return;

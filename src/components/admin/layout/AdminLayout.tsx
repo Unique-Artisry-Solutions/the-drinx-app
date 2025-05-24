@@ -16,12 +16,20 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   
   // Log to confirm layout is rendering
   React.useEffect(() => {
-    console.log('AdminLayout rendering with children:', !!children);
-    console.log('Development mode state:', { isDevModeActive, devMode });
-  }, [children, isDevModeActive, devMode]);
+    console.log('AdminLayout rendering:', {
+      children: !!children,
+      isDevModeActive,
+      devMode,
+      user: !!user,
+      session: !!session,
+      userType,
+      isLoading,
+      authStable
+    });
+  }, [children, isDevModeActive, devMode, user, session, userType, isLoading, authStable]);
 
   // In development mode with admin role, bypass all auth checks
-  if (isDevModeActive && devMode === 'admin') {
+  if (isDevModeActive) {
     console.log('AdminLayout: Development mode active, rendering admin interface');
     return (
       <div className="h-screen flex flex-col bg-gray-100">

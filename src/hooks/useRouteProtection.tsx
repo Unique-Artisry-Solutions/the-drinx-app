@@ -37,9 +37,17 @@ export const useRouteProtection = ({
   
   // Memoize the protection check to prevent unnecessary re-runs
   const checkProtection = useCallback(() => {
+    console.log('useRouteProtection - checkProtection called:', {
+      isDevModeActive,
+      devMode,
+      path: location.pathname,
+      requireAuth,
+      allowedUserTypes
+    });
+    
     // In development mode, bypass all protection checks
     if (isDevModeActive) {
-      console.log('Route protection: Development mode active, bypassing all checks');
+      console.log('useRouteProtection: Development mode active, bypassing all checks');
       setIsAuthorized(true);
       return;
     }
@@ -69,7 +77,7 @@ export const useRouteProtection = ({
     lastCheckedUser.current = currentUserId;
     lastCheckedAuthState.current = currentAuthState;
     
-    console.log('Route protection: Checking access for', currentPath, 'user:', !!user, 'authStable:', authStable);
+    console.log('useRouteProtection: Checking access for', currentPath, 'user:', !!user, 'authStable:', authStable);
     
     // Clear any existing cleanup timeout
     if (cleanupTimeoutRef.current) {
@@ -144,7 +152,7 @@ export const useRouteProtection = ({
     cleanupTimeoutRef.current = setTimeout(() => {
       protectionInProgress.current = false;
     }, 100);
-  }, [user, session, isLoading, authStable, userType, requireAuth, allowedUserTypes, navigate, redirectTo, location.pathname, location.search, showToast, showError, isDevModeActive]);
+  }, [user, session, isLoading, authStable, userType, requireAuth, allowedUserTypes, navigate, redirectTo, location.pathname, location.search, showToast, showError, isDevModeActive, devMode]);
   
   // Use effect with stable dependencies and cleanup
   useEffect(() => {
