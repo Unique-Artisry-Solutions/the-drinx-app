@@ -68,8 +68,8 @@ const AdminTopNav: React.FC = () => {
 
   return (
     <AnalyticsService pageView="admin_navigation">
-      <nav className="admin-top-nav sticky top-0 bg-material-primary text-white z-50 shadow-md h-16">
-        <div className="admin-nav-container h-full max-w-full mx-auto px-4">
+      <nav className="admin-top-nav bg-material-primary text-white z-50 shadow-md h-16 w-full">
+        <div className="admin-nav-container h-full w-full px-4">
           <div className="admin-nav-inner h-full flex items-center justify-between">
             <div className="admin-nav-left flex items-center">
               <Link to="/admin/dashboard" className="admin-nav-logo text-lg font-semibold mr-8">
