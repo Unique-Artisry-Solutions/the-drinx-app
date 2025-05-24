@@ -15,7 +15,8 @@ import {
   Shield, 
   User, 
   ChevronDown,
-  X 
+  X,
+  Minimize2
 } from 'lucide-react';
 import { useDevelopmentMode, DevUserType } from '@/hooks/useDevelopmentMode';
 import { cn } from '@/lib/utils';
@@ -24,7 +25,12 @@ const DevRoleSwitcher: React.FC = () => {
   const { isDevelopment, devMode, switchToUserType, exitDevMode, isDevModeActive } = useDevelopmentMode();
   const [isCollapsed, setIsCollapsed] = useState(false);
 
-  if (!isDevelopment) return null;
+  console.log('DevRoleSwitcher render:', { isDevelopment, devMode, isDevModeActive });
+
+  if (!isDevelopment) {
+    console.log('Not in development mode, hiding DevRoleSwitcher');
+    return null;
+  }
 
   const getUserTypeIcon = (userType: DevUserType) => {
     switch (userType) {
@@ -52,7 +58,7 @@ const DevRoleSwitcher: React.FC = () => {
       case 'individual':
         return 'Individual';
       default:
-        return 'None';
+        return 'Guest';
     }
   };
 
@@ -82,7 +88,7 @@ const DevRoleSwitcher: React.FC = () => {
           variant="outline"
           size="sm"
           onClick={() => setIsCollapsed(false)}
-          className={cn("shadow-lg", currentColor)}
+          className={cn("shadow-lg border-2", currentColor)}
         >
           {React.createElement(currentIcon, { className: "h-4 w-4" })}
         </Button>
@@ -91,32 +97,34 @@ const DevRoleSwitcher: React.FC = () => {
   }
 
   return (
-    <div className="fixed top-4 right-4 z-50 bg-white rounded-lg shadow-lg border p-4 min-w-[200px]">
+    <div className="fixed top-4 right-4 z-50 bg-white rounded-lg shadow-lg border-2 border-orange-200 p-4 min-w-[220px]">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-gray-700">Dev Tools</h3>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setIsCollapsed(true)}
-          className="h-6 w-6 p-0"
-        >
-          <X className="h-4 w-4" />
-        </Button>
+        <h3 className="text-sm font-semibold text-orange-800">🛠️ Dev Tools</h3>
+        <div className="flex gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsCollapsed(true)}
+            className="h-6 w-6 p-0 text-orange-600"
+          >
+            <Minimize2 className="h-3 w-3" />
+          </Button>
+        </div>
       </div>
       
-      <div className="space-y-2">
-        <div className="text-xs text-gray-500 mb-2">Current View:</div>
+      <div className="space-y-3">
+        <div className="text-xs text-orange-600 font-medium">Current View:</div>
         
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="outline"
               size="sm"
-              className={cn("w-full justify-between", currentColor)}
+              className={cn("w-full justify-between border-2", currentColor)}
             >
               <div className="flex items-center gap-2">
                 {React.createElement(currentIcon, { className: "h-4 w-4" })}
-                <span>{currentLabel}</span>
+                <span className="font-medium">{currentLabel}</span>
               </div>
               <ChevronDown className="h-4 w-4" />
             </Button>
@@ -147,10 +155,14 @@ const DevRoleSwitcher: React.FC = () => {
         </DropdownMenu>
         
         {isDevModeActive && (
-          <div className="text-xs text-orange-600 bg-orange-50 p-2 rounded border">
-            ⚠️ Development mode active
+          <div className="text-xs text-orange-700 bg-orange-100 p-2 rounded border border-orange-300">
+            🔧 Dev mode active - bypassing auth
           </div>
         )}
+        
+        <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
+          💡 Use URL params: ?dev_mode=admin
+        </div>
       </div>
     </div>
   );

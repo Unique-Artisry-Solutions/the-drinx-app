@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -26,6 +27,8 @@ const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = (props) => {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [location.pathname]);
+  
+  console.log('ResponsiveLayout rendering DevRoleSwitcher');
   
   return (
     <>

@@ -14,8 +14,10 @@ export const useDevelopmentMode = () => {
   useEffect(() => {
     const isLocalhost = window.location.hostname === 'localhost' || 
                        window.location.hostname === '127.0.0.1' ||
-                       window.location.hostname.includes('preview--');
+                       window.location.hostname.includes('preview--') ||
+                       window.location.hostname.includes('lovable');
     setIsDevelopment(isLocalhost);
+    console.log('Development mode detected:', isLocalhost);
   }, []);
 
   // Check for URL parameters on route changes
@@ -29,6 +31,7 @@ export const useDevelopmentMode = () => {
         const userType = devModeParam as DevUserType;
         setDevMode(userType);
         localStorage.setItem('dev_user_type', userType);
+        console.log('Setting dev mode from URL:', userType);
         
         // Navigate to appropriate dashboard without the dev_mode parameter
         const newUrl = new URL(window.location.href);
@@ -47,6 +50,7 @@ export const useDevelopmentMode = () => {
       const savedDevType = localStorage.getItem('dev_user_type') as DevUserType;
       if (savedDevType) {
         setDevMode(savedDevType);
+        console.log('Loaded dev mode from storage:', savedDevType);
       }
     }
   }, [isDevelopment]);
@@ -74,6 +78,7 @@ export const useDevelopmentMode = () => {
     if (!isDevelopment) return;
     
     setDevMode(userType);
+    console.log('Switching to user type:', userType);
     
     if (userType) {
       localStorage.setItem('dev_user_type', userType);
@@ -88,6 +93,7 @@ export const useDevelopmentMode = () => {
     setDevMode(null);
     localStorage.removeItem('dev_user_type');
     navigate('/landing');
+    console.log('Exited dev mode');
   };
 
   return {
