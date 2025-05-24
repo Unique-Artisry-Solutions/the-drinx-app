@@ -62,13 +62,6 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const determineUserType = useCallback((): 'individual' | 'establishment' | 'promoter' | 'admin' | 'guest' => {
     if (!authStable) return 'guest';
     
-    // Check for admin authentication
-    const isAdminAuth = localStorage.getItem('admin_authenticated') === 'true';
-    
-    if (isAdminAuth) {
-      return 'admin';
-    }
-    
     // Check for authenticated user
     if (user && session) {
       // Use userType from auth context first, then localStorage

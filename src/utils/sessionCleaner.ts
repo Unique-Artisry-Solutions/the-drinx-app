@@ -18,9 +18,4 @@ export const clearAllSessions = () => {
   // Role-specific items
   localStorage.removeItem('establishment_name');
   localStorage.removeItem('promoter_name');
-  
-  // Admin items - they have their own logout flow
-  localStorage.removeItem('admin_authenticated');
-  localStorage.removeItem('admin_username');
-  localStorage.removeItem('admin_session_created');
 };

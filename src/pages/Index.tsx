@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
 
 const Index = () => {
-  const { user, isLoading, session, authStable, authError, recoverAuthState } = useAuth();
+  const { user, isLoading, session, authStable, authError, recoverAuthState, userType } = useAuth();
   const navigate = useNavigate();
   
   // Log information for debugging
@@ -20,27 +20,19 @@ const Index = () => {
       session: !!session, 
       isLoading,
       authStable,
+      userType,
       authError: authError?.message
     });
     
     // Always log the current session state
     getSessionDebug();
-  }, [user, session, isLoading, authStable, authError]);
+  }, [user, session, isLoading, authStable, userType, authError]);
   
   // Use useEffect to handle navigation properly
   useEffect(() => {
     // Wait until auth is stable before making navigation decisions
     if (isLoading || !authStable) {
       console.log("Index page - Auth is still loading or not stable, waiting...");
-      return;
-    }
-    
-    // Check for admin authentication first
-    const isAdmin = localStorage.getItem('admin_authenticated') === 'true';
-    
-    if (isAdmin) {
-      console.log("Index page - Admin auth active, redirecting to admin");
-      navigate('/admin/system-breakdown', { replace: true });
       return;
     }
     
@@ -59,10 +51,10 @@ const Index = () => {
       }
       
       // Get user type and redirect to appropriate dashboard
-      const userType = localStorage.getItem('user_type') || 'individual';
-      console.log("Index page - Using user type for redirect:", userType);
+      const currentUserType = userType || 'individual';
+      console.log("Index page - Using user type for redirect:", currentUserType);
       
-      switch (userType) {
+      switch (currentUserType) {
         case 'establishment':
           console.log("Index page - Redirecting to establishment dashboard");
           navigate('/establishment/dashboard', { replace: true });
@@ -90,7 +82,7 @@ const Index = () => {
       navigate('/landing', { replace: true });
       return;
     }
-  }, [user, session, isLoading, navigate, authStable, authError]);
+  }, [user, session, isLoading, navigate, authStable, userType, authError]);
 
   const handleRecoveryClick = () => {
     recoverAuthState();

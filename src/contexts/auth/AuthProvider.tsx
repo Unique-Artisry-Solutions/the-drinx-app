@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
@@ -138,7 +137,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error) {
       const authError = error as Error;
       setAuthError(authError);
-      return { error: authError, user: null, session: null };
+      return { error: authError, data: null };
     }
   }, []);
 

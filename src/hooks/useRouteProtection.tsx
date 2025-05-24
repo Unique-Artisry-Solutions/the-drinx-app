@@ -67,20 +67,6 @@ export const useRouteProtection = ({
       clearTimeout(cleanupTimeoutRef.current);
     }
     
-    // Check for admin authentication
-    const isAdmin = localStorage.getItem('admin_authenticated') === 'true';
-    
-    if (isAdmin) {
-      console.log('Route protection: Admin auth detected, allowing access');
-      setIsAuthorized(true);
-      
-      // Reset protection flag with cleanup
-      cleanupTimeoutRef.current = setTimeout(() => {
-        protectionInProgress.current = false;
-      }, 100);
-      return;
-    }
-    
     // Check if auth is required and user is not logged in
     if (requireAuth && (!user || !session)) {
       setIsAuthorized(false);
@@ -110,7 +96,7 @@ export const useRouteProtection = ({
     
     // Check for user type restrictions
     if ((user && session) && allowedUserTypes.length > 0) {
-      const currentUserType = userType || localStorage.getItem('user_type') || 'individual';
+      const currentUserType = userType || 'individual';
       const isAllowedType = allowedUserTypes.includes(currentUserType);
       
       setIsAuthorized(isAllowedType);

@@ -32,24 +32,11 @@ export function withAuthProtection<P extends object>(
   const ProtectedComponent: React.FC<P> = (props) => {
     const { user, session, isLoading, authStable, userType } = useAuth();
     const location = useLocation();
-    const isAdminAuthenticated = localStorage.getItem('admin_authenticated') === 'true';
     const [shouldRedirect, setShouldRedirect] = useState(false);
     
     useEffect(() => {
       // Wait for auth to stabilize
       if (isLoading || !authStable) return;
-      
-      // Handle admin authentication case
-      if (isAdminAuthenticated) {
-        const effectiveUserType: UserType = 'admin';
-        
-        if (userTypes.length > 0 && !userTypes.includes(effectiveUserType)) {
-          setShouldRedirect(true);
-        } else {
-          setShouldRedirect(false);
-        }
-        return;
-      }
       
       // Check authentication requirement
       if (requireAuth && (!user || !session)) {
@@ -61,9 +48,9 @@ export function withAuthProtection<P extends object>(
       
       // Check user type requirement
       if (userTypes.length > 0 && (user && session)) {
-        const currentUserType = userType || localStorage.getItem('user_type');
+        const currentUserType = userType || 'individual';
         
-        if (!currentUserType || !userTypes.includes(currentUserType as UserType)) {
+        if (!userTypes.includes(currentUserType as UserType)) {
           console.log("User type mismatch", { currentUserType, requiredTypes: userTypes });
           localStorage.setItem('auth_redirect', location.pathname);
           setShouldRedirect(true);
@@ -73,7 +60,7 @@ export function withAuthProtection<P extends object>(
       
       // All checks passed
       setShouldRedirect(false);
-    }, [user, session, isLoading, authStable, userType, isAdminAuthenticated, location.pathname]);
+    }, [user, session, isLoading, authStable, userType, location.pathname]);
     
     // Show loading state while checking auth
     if ((isLoading || !authStable) && showLoadingState) {
@@ -118,17 +105,15 @@ export function withAdminProtection<P extends object>(
   Component: React.ComponentType<P>
 ) {
   const AdminProtectedComponent: React.FC<P> = (props) => {
-    const { user, session, isLoading, authStable } = useAuth();
+    const { user, session, isLoading, authStable, userType } = useAuth();
     const location = useLocation();
-    const isAdminAuthenticated = localStorage.getItem('admin_authenticated') === 'true';
     const [shouldRedirect, setShouldRedirect] = useState(false);
     
     useEffect(() => {
       if (isLoading || !authStable) return;
       
-      // Allow access if admin authenticated or regular user with admin role
-      const isAuthorized = isAdminAuthenticated || 
-                           ((user && session) && localStorage.getItem('user_type') === 'admin');
+      // Check for admin authentication through regular auth system
+      const isAuthorized = (user && session) && userType === 'admin';
       
       if (!isAuthorized) {
         console.log("Admin authorization failed");
@@ -138,7 +123,7 @@ export function withAdminProtection<P extends object>(
       }
       
       setShouldRedirect(false);
-    }, [user, session, isLoading, authStable, isAdminAuthenticated, location.pathname]);
+    }, [user, session, isLoading, authStable, userType, location.pathname]);
     
     if (isLoading || !authStable) {
       return (
@@ -152,7 +137,7 @@ export function withAdminProtection<P extends object>(
     }
     
     if (shouldRedirect) {
-      return <Navigate to="/admin/login" state={{ from: location.pathname }} replace />;
+      return <Navigate to="/login" state={{ from: location.pathname }} replace />;
     }
     
     return <Component {...props} />;
