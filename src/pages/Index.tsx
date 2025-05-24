@@ -1,6 +1,5 @@
 
 import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/auth/AuthProvider';
 import { getSessionDebug } from '@/lib/supabase';
@@ -8,8 +7,16 @@ import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
 
 const Index = () => {
-  const { user, isLoading, session, authStable, authError, recoverAuthState, userType } = useAuth();
-  const navigate = useNavigate();
+  const { 
+    user, 
+    isLoading, 
+    session, 
+    authStable, 
+    authError, 
+    recoverAuthState, 
+    userType,
+    navigationReady 
+  } = useAuth();
   
   // Log information for debugging
   useEffect(() => {
@@ -21,74 +28,22 @@ const Index = () => {
       isLoading,
       authStable,
       userType,
+      navigationReady,
       authError: authError?.message
     });
     
     // Always log the current session state
     getSessionDebug();
-  }, [user, session, isLoading, authStable, userType, authError]);
+  }, [user, session, isLoading, authStable, userType, navigationReady, authError]);
   
-  // Use useEffect to handle navigation properly
-  useEffect(() => {
-    // Wait until auth is stable before making navigation decisions
-    if (isLoading || !authStable) {
-      console.log("Index page - Auth is still loading or not stable, waiting...");
-      return;
-    }
-    
-    // For normal authenticated users - explicitly check both user and session
-    if (user && session) {
-      console.log("Index page - User authenticated with valid session, determining redirect");
-      
-      // Check if there's a saved redirect first
-      const savedRedirect = localStorage.getItem('auth_redirect');
-      
-      if (savedRedirect) {
-        console.log("Index page - Using saved redirect path:", savedRedirect);
-        navigate(savedRedirect, { replace: true });
-        localStorage.removeItem('auth_redirect');
-        return;
-      }
-      
-      // Get user type and redirect to appropriate dashboard
-      const currentUserType = userType || 'individual';
-      console.log("Index page - Using user type for redirect:", currentUserType);
-      
-      switch (currentUserType) {
-        case 'establishment':
-          console.log("Index page - Redirecting to establishment dashboard");
-          navigate('/establishment/dashboard', { replace: true });
-          break;
-        case 'promoter':
-          console.log("Index page - Redirecting to promoter dashboard");
-          navigate('/promoter/dashboard', { replace: true });
-          break;
-        case 'admin':
-          console.log("Index page - Redirecting to admin dashboard");
-          navigate('/admin/system-breakdown', { replace: true });
-          break;
-        case 'individual':
-        default:
-          console.log("Index page - Redirecting to explore (individual user)");
-          navigate('/explore', { replace: true });
-          break;
-      }
-      return;
-    }
-    
-    // If user is not authenticated, redirect to landing
-    if ((!user || !session) && !isLoading && authStable) {
-      console.log("Index page - No authenticated user/session, redirecting to landing");
-      navigate('/landing', { replace: true });
-      return;
-    }
-  }, [user, session, isLoading, navigate, authStable, userType, authError]);
-
+  // Note: Removed all manual navigation - AuthProvider handles everything automatically
+  // The AuthProvider will redirect users based on their authentication state and userType
+  
   const handleRecoveryClick = () => {
     recoverAuthState();
   };
 
-  // Show improved loading state
+  // Show improved loading state with more detailed information
   return (
     <Layout>
       <div className="flex items-center justify-center min-h-screen">
@@ -99,6 +54,10 @@ const Index = () => {
           
           {!authStable && (
             <p className="text-sm text-amber-500 mt-2">Verifying your authentication...</p>
+          )}
+          
+          {!navigationReady && authStable && (
+            <p className="text-sm text-blue-500 mt-2">Determining user type...</p>
           )}
           
           {authError && (
@@ -116,7 +75,7 @@ const Index = () => {
           )}
           
           {/* Show recovery button if loading takes too long */}
-          {isLoading && (
+          {(isLoading || !navigationReady) && !authError && (
             <div className="mt-6">
               <p className="text-sm text-gray-500 mb-2">Taking longer than expected?</p>
               <Button 

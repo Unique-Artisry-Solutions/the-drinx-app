@@ -1,7 +1,7 @@
+
 import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { CardContent, CardFooter } from '@/components/ui/card';
-import { useNavigate } from 'react-router-dom';
 import { debouncedToast } from '@/utils/debouncedToast';
 import AuthButton from './AuthButton';
 import { useAuth } from '@/contexts/auth/AuthProvider';
@@ -21,7 +21,6 @@ const LoginForm: React.FC<LoginFormProps> = ({
   const [password, setPassword] = useState('');
   const [formError, setFormError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const navigate = useNavigate();
   const { signIn, isLoading } = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -44,12 +43,12 @@ const LoginForm: React.FC<LoginFormProps> = ({
         3000
       );
       
+      // Only call onSuccess callback if provided (for modal use cases)
       if (onSuccess) {
         onSuccess();
-      } else {
-        // Let the auth system handle the redirect
-        navigate('/');
       }
+      
+      // AuthProvider will handle all navigation automatically
       
     } catch (error: any) {
       console.error('Login error:', error);

@@ -1,26 +1,22 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import UserAuth from '@/components/UserAuth';
 import { ArrowLeft } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/auth/AuthProvider';
 import { Button } from '@/components/ui/button';
 import TestCredentials from '@/components/auth/TestCredentials';
-import { useDebouncedToast } from '@/hooks/useDebouncedToast';
 
 const LoginPage = () => {
   const [requiredUserType, setRequiredUserType] = useState<'individual' | 'establishment' | 'promoter'>('individual');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { theme, setTheme } = useTheme();
   const location = useLocation();
-  const navigate = useNavigate();
-  const { user, isLoading } = useAuth();
-  const { showError } = useDebouncedToast();
+  const { user, isLoading, isAuthenticated } = useAuth();
   
   // Refs to prevent duplicate processing
   const processedStateRef = useRef<string>('');
-  const hasRedirectedRef = useRef(false);
   
   // Check for userType in the location state - debounced to prevent repeated processing
   useEffect(() => {
@@ -51,34 +47,12 @@ const LoginPage = () => {
     }
   }, [location.state, errorMessage]);
   
-  // Redirect if already logged in - only once
+  // Note: Removed manual redirect logic - AuthProvider handles all navigation
   useEffect(() => {
-    if (!isLoading && user && !hasRedirectedRef.current) {
-      hasRedirectedRef.current = true;
-      console.log("LoginPage - User already authenticated, redirecting");
-      
-      // Check if there's a saved redirect
-      const savedRedirect = localStorage.getItem('auth_redirect');
-      
-      if (savedRedirect) {
-        console.log("LoginPage - Found saved redirect path:", savedRedirect);
-        navigate(savedRedirect);
-        localStorage.removeItem('auth_redirect');
-      } else {
-        // Default redirect based on user type
-        const userType = localStorage.getItem('user_type');
-        console.log("LoginPage - No saved redirect, using user type for redirect:", userType);
-        
-        if (userType === 'establishment') {
-          navigate('/establishment/dashboard');
-        } else if (userType === 'promoter') {
-          navigate('/promoter/dashboard');
-        } else {
-          navigate('/explore');
-        }
-      }
+    if (isAuthenticated && user) {
+      console.log("LoginPage - User already authenticated, AuthProvider will handle redirect");
     }
-  }, [user, isLoading, navigate]);
+  }, [user, isAuthenticated]);
   
   // Always force light theme for login page
   useEffect(() => {
