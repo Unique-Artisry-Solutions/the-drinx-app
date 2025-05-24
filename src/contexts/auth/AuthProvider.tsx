@@ -131,9 +131,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (result.error) {
         setAuthError(result.error);
+        return { error: result.error, data: null };
       }
       
-      return result;
+      return { error: null, data: result.data };
     } catch (error) {
       const authError = error as Error;
       setAuthError(authError);

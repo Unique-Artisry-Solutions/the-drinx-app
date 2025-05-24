@@ -1,23 +1,17 @@
 
 import { useNavigate } from 'react-router-dom';
 import { useCallback, useMemo } from 'react';
-import { checkAdminBypassStatus } from '@/utils/adminBypass';
 
 export const useAppNavigation = () => {
   const navigate = useNavigate();
 
-  // Memoize admin status to prevent unnecessary checks
-  const adminStatus = useMemo(() => {
-    const { isEnabled: isAdminBypass, userType: bypassType } = checkAdminBypassStatus();
-    const isAdmin = localStorage.getItem('admin_authenticated') === 'true';
-    return { isAdminBypass, bypassType, isAdmin };
-  }, []);
-
   const goToHomePage = useCallback((userType?: string) => {
     console.log("useAppNavigation - goToHomePage called with userType:", userType);
     
-    // Use memoized admin status
-    if (adminStatus.isAdminBypass || adminStatus.isAdmin) {
+    // Check if admin is logged in through regular auth system
+    const isAdmin = localStorage.getItem('admin_authenticated') === 'true';
+    
+    if (isAdmin) {
       console.log("useAppNavigation - Redirecting to admin dashboard");
       navigate('/admin/system-breakdown');
       return;
@@ -46,7 +40,7 @@ export const useAppNavigation = () => {
         navigate('/explore');
         break;
     }
-  }, [navigate, adminStatus]);
+  }, [navigate]);
 
   const goToLoginPage = useCallback(() => {
     console.log("useAppNavigation - Redirecting to login page");
@@ -58,10 +52,16 @@ export const useAppNavigation = () => {
     navigate('/landing');
   }, [navigate]);
 
+  const goToAdminDashboard = useCallback(() => {
+    console.log("useAppNavigation - Redirecting to admin dashboard");
+    navigate('/admin/system-breakdown');
+  }, [navigate]);
+
   // Memoize the return object to prevent recreating it on every render
   return useMemo(() => ({
     goToHomePage,
     goToLoginPage,
-    goToLandingPage
-  }), [goToHomePage, goToLoginPage, goToLandingPage]);
+    goToLandingPage,
+    goToAdminDashboard
+  }), [goToHomePage, goToLoginPage, goToLandingPage, goToAdminDashboard]);
 };

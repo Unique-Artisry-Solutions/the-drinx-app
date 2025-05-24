@@ -58,13 +58,13 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   }, []);
 
-  // Memoized function to determine user type
+  // Simplified function to determine user type from auth context only
   const determineUserType = useCallback((): 'individual' | 'establishment' | 'promoter' | 'admin' | 'guest' => {
     if (!authStable) return 'guest';
     
     // Check for authenticated user
     if (user && session) {
-      // Use userType from auth context first, then localStorage
+      // Use userType from auth context first, then localStorage as fallback
       const userTypeFromAuth = authUserType;
       const userTypeFromStorage = localStorage.getItem('user_type');
       const finalUserType = userTypeFromAuth || userTypeFromStorage || 'individual';
