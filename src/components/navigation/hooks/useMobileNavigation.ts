@@ -32,6 +32,6 @@ export const useMobileNavigation = (
   return {
     expanded,
     toggleExpand,
-    getProfilePath: getProfilePath(),
+    getProfilePath, // Return the function itself, not the result of calling it
   };
 };
