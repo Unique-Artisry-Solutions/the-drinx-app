@@ -1,6 +1,7 @@
 
 import { lazy } from 'react';
 import { RouteObject } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import AdminLogin from '@/pages/admin/AdminLogin';
 import AdminNotificationsPage from '@/pages/admin/notifications/AdminNotificationsPage';
 import NotificationTestingPage from '@/pages/admin/notifications/NotificationTestingPage';
@@ -26,78 +27,89 @@ const TestingInterfacePage = lazy(() => import('@/pages/admin/TestingInterfacePa
 
 export const adminRoutes: RouteObject[] = [
   { path: '/admin/login', element: <AdminLogin /> },
-  // All admin routes use the AdminLayout
+  // Base admin route - redirect to dashboard
   { 
-    path: '/admin/dashboard', 
-    element: <AdminLayout><AdminDashboard /></AdminLayout> 
+    path: '/admin', 
+    element: <Navigate to="/admin/dashboard" replace /> 
   },
-  { 
-    path: '/admin/users', 
-    element: <AdminLayout><AdminUsersPage /></AdminLayout> 
-  },
-  { 
-    path: '/admin/users/:id', 
-    element: <AdminLayout><AdminUserProfile /></AdminLayout> 
-  },
-  { 
-    path: '/admin/establishments', 
-    element: <AdminLayout><AdminEstablishmentsPage /></AdminLayout> 
-  },
-  { 
-    path: '/admin/establishments/:id', 
-    element: <AdminLayout><AdminEstablishmentProfile /></AdminLayout> 
-  },
-  { 
-    path: '/admin/system-breakdown', 
-    element: <AdminLayout><SystemFunctionalityBreakdown /></AdminLayout> 
-  },
-  { 
-    path: '/admin/component-catalog', 
-    element: <AdminLayout><ComponentCatalogPage /></AdminLayout> 
-  },
-  { 
-    path: '/admin/analytics', 
-    element: <AdminLayout><SystemAnalyticsPage /></AdminLayout> 
-  },
-  { 
-    path: '/admin/photo-moderation', 
-    element: <AdminLayout><PhotoModerationPage /></AdminLayout> 
-  },
-  { 
-    path: '/admin/content-moderation', 
-    element: <AdminLayout><ContentModerationPage /></AdminLayout> 
-  },
-  { 
-    path: '/admin/theme-customization', 
-    element: <AdminLayout><ThemeCustomizationPage /></AdminLayout> 
-  },
-  { 
-    path: '/admin/documentation', 
-    element: <AdminLayout><AdminDocumentationPage /></AdminLayout> 
-  },
-  { 
-    path: '/admin/system-configuration', 
-    element: <AdminLayout><SystemConfigurationPage /></AdminLayout> 
-  },
-  { 
-    path: '/admin/notifications', 
-    element: <AdminLayout><AdminNotificationsPage /></AdminLayout> 
-  },
-  { 
-    path: '/admin/notification-testing', 
-    element: <AdminLayout><NotificationTestingPage /></AdminLayout> 
-  },
-  { 
-    path: '/admin/reward-system-monitor', 
-    element: <AdminLayout><RewardSystemMonitorPage /></AdminLayout> 
-  },
-  { 
-    path: '/admin/rewards', 
-    element: <AdminLayout><RewardsAdminPage /></AdminLayout> 
-  },
-  { 
-    path: '/admin/testing', 
-    element: <AdminLayout><TestingInterfacePage /></AdminLayout> 
+  // All other admin routes use the AdminLayout wrapper
+  {
+    path: '/admin',
+    element: <AdminLayout />,
+    children: [
+      { 
+        path: 'dashboard', 
+        element: <AdminDashboard /> 
+      },
+      { 
+        path: 'users', 
+        element: <AdminUsersPage /> 
+      },
+      { 
+        path: 'users/:id', 
+        element: <AdminUserProfile /> 
+      },
+      { 
+        path: 'establishments', 
+        element: <AdminEstablishmentsPage /> 
+      },
+      { 
+        path: 'establishments/:id', 
+        element: <AdminEstablishmentProfile /> 
+      },
+      { 
+        path: 'system-breakdown', 
+        element: <SystemFunctionalityBreakdown /> 
+      },
+      { 
+        path: 'component-catalog', 
+        element: <ComponentCatalogPage /> 
+      },
+      { 
+        path: 'analytics', 
+        element: <SystemAnalyticsPage /> 
+      },
+      { 
+        path: 'photo-moderation', 
+        element: <PhotoModerationPage /> 
+      },
+      { 
+        path: 'content-moderation', 
+        element: <ContentModerationPage /> 
+      },
+      { 
+        path: 'theme-customization', 
+        element: <ThemeCustomizationPage /> 
+      },
+      { 
+        path: 'documentation', 
+        element: <AdminDocumentationPage /> 
+      },
+      { 
+        path: 'system-configuration', 
+        element: <SystemConfigurationPage /> 
+      },
+      { 
+        path: 'notifications', 
+        element: <AdminNotificationsPage /> 
+      },
+      { 
+        path: 'notification-testing', 
+        element: <NotificationTestingPage /> 
+      },
+      { 
+        path: 'reward-system-monitor', 
+        element: <RewardSystemMonitorPage /> 
+      },
+      { 
+        path: 'rewards', 
+        element: <RewardsAdminPage /> 
+      },
+      { 
+        path: 'testing', 
+        element: <TestingInterfacePage /> 
+      },
+    ]
   },
   // Admin-specific 404 handler for any /admin/* routes not matched above
   { 

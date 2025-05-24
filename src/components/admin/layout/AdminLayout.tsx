@@ -72,7 +72,9 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
           <AdminSidebar />
           <main className="flex-1 overflow-auto">
             <div className="p-6">
-              {children || <Outlet />}
+              {/* Use Outlet for nested routes, fallback to children for direct usage */}
+              <Outlet />
+              {children}
             </div>
           </main>
         </div>
