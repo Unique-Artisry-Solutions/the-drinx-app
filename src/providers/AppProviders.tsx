@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { AuthProvider } from '@/contexts/auth';
+import { AuthProvider } from '@/contexts/auth/AuthProvider';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { CartProvider } from '@/contexts/CartContext';
 import { StripeProvider } from '@/contexts/StripeContext';
@@ -30,7 +30,6 @@ const AppProviders: React.FC<{ children: React.ReactNode }> = ({ children }) => 
         <ThemeProvider>
           <NavigationProvider>
             <CartProvider>
-              {/* Now the StripeProvider uses lazy loading and only initializes when needed */}
               <StripeProvider>
                 <FeatureProvider>
                   {children}

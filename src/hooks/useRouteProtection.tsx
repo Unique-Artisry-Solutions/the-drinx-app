@@ -1,7 +1,7 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '@/contexts/auth';
+import { useAuth } from '@/contexts/auth/AuthProvider';
 import { useDebouncedToast } from '@/hooks/useDebouncedToast';
 
 interface RouteProtectionOptions {
@@ -26,7 +26,7 @@ export const useRouteProtection = ({
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
   const { showError } = useDebouncedToast();
   
-  // Step 4: Add protection state to prevent overlapping checks
+  // Protection state to prevent overlapping checks
   const protectionInProgress = useRef(false);
   const lastCheckedPath = useRef<string>('');
   const lastCheckedUser = useRef<string | null>(null);
@@ -40,7 +40,7 @@ export const useRouteProtection = ({
       return;
     }
     
-    // Step 4: Prevent overlapping protection checks for the same state
+    // Prevent overlapping protection checks for the same state
     const currentPath = location.pathname + location.search;
     const currentUserId = user?.id || null;
     const currentAuthState = !!user;
@@ -54,7 +54,7 @@ export const useRouteProtection = ({
       return;
     }
     
-    // Step 4: Set protection in progress flag
+    // Set protection in progress flag
     protectionInProgress.current = true;
     lastCheckedPath.current = currentPath;
     lastCheckedUser.current = currentUserId;
@@ -62,7 +62,7 @@ export const useRouteProtection = ({
     
     console.log('Route protection: Checking access for', currentPath, 'user:', !!user, 'authStable:', authStable);
     
-    // Step 4: Clear any existing cleanup timeout
+    // Clear any existing cleanup timeout
     if (cleanupTimeoutRef.current) {
       clearTimeout(cleanupTimeoutRef.current);
     }
@@ -87,7 +87,7 @@ export const useRouteProtection = ({
       
       navigate(redirectTo, { replace: true });
       
-      // Step 4: Reset protection flag with cleanup
+      // Reset protection flag with cleanup
       cleanupTimeoutRef.current = setTimeout(() => {
         protectionInProgress.current = false;
       }, 100);
@@ -120,7 +120,7 @@ export const useRouteProtection = ({
           navigate('/explore', { replace: true });
         }
         
-        // Step 4: Reset protection flag with cleanup
+        // Reset protection flag with cleanup
         cleanupTimeoutRef.current = setTimeout(() => {
           protectionInProgress.current = false;
         }, 100);
@@ -131,7 +131,7 @@ export const useRouteProtection = ({
     // If we reach here, user is authorized
     setIsAuthorized(true);
     
-    // Step 4: Reset protection flag with cleanup
+    // Reset protection flag with cleanup
     cleanupTimeoutRef.current = setTimeout(() => {
       protectionInProgress.current = false;
     }, 100);
@@ -141,16 +141,15 @@ export const useRouteProtection = ({
   useEffect(() => {
     checkProtection();
     
-    // Step 4: Cleanup function to reset protection state
+    // Cleanup function to reset protection state
     return () => {
       if (cleanupTimeoutRef.current) {
         clearTimeout(cleanupTimeoutRef.current);
       }
-      // Don't reset protectionInProgress here as it might interfere with ongoing checks
     };
   }, [checkProtection]);
   
-  // Step 4: Cleanup on unmount
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (cleanupTimeoutRef.current) {

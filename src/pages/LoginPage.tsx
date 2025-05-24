@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import UserAuth from '@/components/UserAuth';
 import { ArrowLeft } from 'lucide-react';
@@ -6,6 +7,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/auth/AuthProvider';
 import { Button } from '@/components/ui/button';
 import TestCredentials from '@/components/auth/TestCredentials';
+import { useDebouncedToast } from '@/hooks/useDebouncedToast';
 
 const LoginPage = () => {
   const [requiredUserType, setRequiredUserType] = useState<'individual' | 'establishment' | 'promoter'>('individual');
@@ -14,30 +16,45 @@ const LoginPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, isLoading } = useAuth();
+  const { showError } = useDebouncedToast();
   
-  // Check for userType in the location state
+  // Refs to prevent duplicate processing
+  const processedStateRef = useRef<string>('');
+  const hasRedirectedRef = useRef(false);
+  
+  // Check for userType in the location state - debounced to prevent repeated processing
   useEffect(() => {
     const state = location.state as { 
       userType?: 'individual' | 'establishment' | 'promoter', 
       message?: string 
     };
-
-    console.log("LoginPage - Location state:", state);
+    
+    const stateKey = JSON.stringify(state);
+    
+    // Only process if state has actually changed
+    if (processedStateRef.current === stateKey) {
+      return;
+    }
+    
+    processedStateRef.current = stateKey;
+    
+    console.log("LoginPage - Processing location state:", state);
     
     if (state?.userType) {
       console.log("LoginPage - Setting required user type from state:", state.userType);
       setRequiredUserType(state.userType);
     }
     
-    // If there's a redirect message, display it
-    if (state?.message) {
+    // If there's a redirect message, display it (only once)
+    if (state?.message && !errorMessage) {
       setErrorMessage(state.message);
     }
-  }, [location]);
+  }, [location.state, errorMessage]);
   
-  // Redirect if already logged in
+  // Redirect if already logged in - only once
   useEffect(() => {
-    if (!isLoading && user) {
+    if (!isLoading && user && !hasRedirectedRef.current) {
+      hasRedirectedRef.current = true;
       console.log("LoginPage - User already authenticated, redirecting");
       
       // Check if there's a saved redirect

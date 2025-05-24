@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
-import { useAuth } from '@/contexts/auth';
+import { useAuth } from '@/contexts/auth/AuthProvider';
 import { UnifiedNavItem } from '@/types/navigation/NavigationTypes';
 import { 
   individualNavItems, 
@@ -145,7 +145,7 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         isUpdatingRef.current = false;
         updateTimeoutRef.current = null;
       }
-    }, 100); // 100ms debounce
+    }, 150); // Increased debounce to 150ms for better stability
   }, [user, authStable, determineUserType, getNavigationItems]);
 
   // Manual refresh function
@@ -160,7 +160,7 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     if (authStable) {
       updateNavigation();
     }
-  }, [user, authStable, location.pathname, updateNavigation]);
+  }, [user, authStable, updateNavigation]);
 
   // Cleanup effect
   useEffect(() => {
