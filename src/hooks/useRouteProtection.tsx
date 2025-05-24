@@ -37,30 +37,42 @@ export const useRouteProtection = ({
   
   // Memoize the protection check to prevent unnecessary re-runs
   const checkProtection = useCallback(() => {
-    console.log('useRouteProtection - checkProtection called:', {
+    const debugInfo = {
+      path: location.pathname,
       isDevModeActive,
       devMode,
       isDevelopment,
       isInitialized,
-      path: location.pathname,
       requireAuth,
-      allowedUserTypes
-    });
+      allowedUserTypes,
+      isLoading,
+      authStable,
+      hasUser: !!user,
+      hasSession: !!session,
+      userType
+    };
+    
+    console.log('useRouteProtection - checkProtection called:', debugInfo);
     
     // Wait for development mode initialization
     if (!isInitialized) {
+      console.log('useRouteProtection: Waiting for development mode initialization');
       return;
     }
     
-    // In development mode, bypass all protection checks
+    // EARLY RETURN: In development mode, bypass all protection checks
     if (isDevelopment && isDevModeActive) {
-      console.log('useRouteProtection: Development mode active, bypassing all checks');
+      console.log('useRouteProtection: Development mode active - BYPASSING ALL CHECKS', {
+        devMode,
+        bypassingForPath: location.pathname
+      });
       setIsAuthorized(true);
       return;
     }
     
-    // Wait until auth is loaded and stable
+    // Wait until auth is loaded and stable (only for non-dev mode)
     if (isLoading || !authStable) {
+      console.log('useRouteProtection: Waiting for auth to stabilize');
       return;
     }
     
@@ -75,6 +87,7 @@ export const useRouteProtection = ({
        lastCheckedUser.current === currentUserId &&
        lastCheckedAuthState.current === currentAuthState)
     ) {
+      console.log('useRouteProtection: Skipping duplicate check');
       return;
     }
     
@@ -84,7 +97,7 @@ export const useRouteProtection = ({
     lastCheckedUser.current = currentUserId;
     lastCheckedAuthState.current = currentAuthState;
     
-    console.log('useRouteProtection: Checking access for', currentPath, 'user:', !!user, 'authStable:', authStable);
+    console.log('useRouteProtection: Performing auth check for', currentPath);
     
     // Clear any existing cleanup timeout
     if (cleanupTimeoutRef.current) {
@@ -93,6 +106,7 @@ export const useRouteProtection = ({
     
     // Check if auth is required and user is not logged in
     if (requireAuth && (!user || !session)) {
+      console.log('useRouteProtection: Auth required but user not authenticated');
       setIsAuthorized(false);
       
       if (showToast) {
@@ -122,6 +136,12 @@ export const useRouteProtection = ({
     if ((user && session) && allowedUserTypes.length > 0) {
       const currentUserType = userType || 'individual';
       const isAllowedType = allowedUserTypes.includes(currentUserType);
+      
+      console.log('useRouteProtection: Checking user type restrictions', {
+        currentUserType,
+        allowedUserTypes,
+        isAllowedType
+      });
       
       setIsAuthorized(isAllowedType);
       
@@ -153,6 +173,7 @@ export const useRouteProtection = ({
     }
     
     // If we reach here, user is authorized
+    console.log('useRouteProtection: User authorized for', currentPath);
     setIsAuthorized(true);
     
     // Reset protection flag with cleanup
@@ -183,9 +204,18 @@ export const useRouteProtection = ({
     };
   }, []);
   
+  const isLoadingState = isLoading || !authStable || isAuthorized === null || !isInitialized;
+  
+  console.log('useRouteProtection - Final state:', {
+    isAuthorized,
+    isLoadingState,
+    isDevModeActive,
+    path: location.pathname
+  });
+  
   return { 
     isAuthorized, 
-    isLoading: isLoading || !authStable || isAuthorized === null || !isInitialized
+    isLoading: isLoadingState
   };
 };
 
