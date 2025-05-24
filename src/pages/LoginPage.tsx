@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import UserAuth from '@/components/UserAuth';
@@ -8,6 +7,7 @@ import { useAuth } from '@/contexts/auth/AuthProvider';
 import { useAppNavigation } from '@/hooks/useAppNavigation';
 import { Button } from '@/components/ui/button';
 import TestCredentials from '@/components/auth/TestCredentials';
+import AutoCreateAdminUser from '@/components/auth/AutoCreateAdminUser';
 
 const LoginPage = () => {
   const [requiredUserType, setRequiredUserType] = useState<'individual' | 'establishment' | 'promoter' | 'admin'>('individual');
@@ -100,6 +100,9 @@ const LoginPage = () => {
   
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-white to-purple-50">
+      {/* Auto-create admin user component */}
+      <AutoCreateAdminUser />
+      
       <div className="container max-w-6xl mx-auto px-4 py-8 flex-1 flex flex-col">
         <div className="mb-8">
           <Link to="/" className="inline-flex items-center text-material-primary hover:underline">
