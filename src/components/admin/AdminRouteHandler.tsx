@@ -1,7 +1,7 @@
 
 import React, { useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
-import { useDevelopmentMode } from '@/hooks/useDevelopmentMode';
+import { useDevelopmentMode } from '@/contexts/DevelopmentModeContext';
 import AdminLogin from '@/pages/admin/AdminLogin';
 
 const AdminRouteHandler: React.FC = () => {

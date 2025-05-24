@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { debouncedToast } from '@/utils/debouncedToast';
 import { useAuth } from '@/contexts/auth/AuthProvider';
-import { useDevelopmentMode } from '@/hooks/useDevelopmentMode';
+import { useDevelopmentMode } from '@/contexts/DevelopmentModeContext';
 import GuestTopNavigation from '@/components/navigation/GuestTopNavigation';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Info, Zap } from 'lucide-react';

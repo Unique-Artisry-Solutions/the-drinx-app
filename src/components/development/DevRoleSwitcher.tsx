@@ -18,7 +18,7 @@ import {
   X,
   Minimize2
 } from 'lucide-react';
-import { useDevelopmentMode, DevUserType } from '@/hooks/useDevelopmentMode';
+import { useDevelopmentMode, DevUserType } from '@/contexts/DevelopmentModeContext';
 import { cn } from '@/lib/utils';
 
 const DevRoleSwitcher: React.FC = () => {
