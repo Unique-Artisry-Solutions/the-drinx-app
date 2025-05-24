@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { FileDown, Database, Loader2 } from 'lucide-react';
+import { FileDown, Database, Loader2, BarChart3 } from 'lucide-react';
 
 interface SystemHeaderProps {
   onAnalyzeFeatures: () => void;
@@ -18,7 +18,7 @@ const SystemHeader: React.FC<SystemHeaderProps> = ({
     <div className="flex items-center justify-between mb-6">
       <div>
         <h1 className="text-3xl font-bold mb-2">System Functionality Breakdown</h1>
-        <p className="text-gray-500">Comprehensive overview of all features for marketing and sales campaigns</p>
+        <p className="text-gray-500">Comprehensive overview of all features, implementation status, and system analytics</p>
       </div>
       <div className="flex gap-2">
         <Button 
@@ -37,6 +37,10 @@ const SystemHeader: React.FC<SystemHeaderProps> = ({
         <Button onClick={onExportCSV} className="flex items-center gap-2">
           <FileDown className="h-4 w-4" />
           Export to CSV
+        </Button>
+        <Button variant="outline" className="flex items-center gap-2">
+          <BarChart3 className="h-4 w-4" />
+          View Analytics
         </Button>
       </div>
     </div>

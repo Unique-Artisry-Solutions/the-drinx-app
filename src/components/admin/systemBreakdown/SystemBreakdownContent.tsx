@@ -1,61 +1,114 @@
 
-import React, { useState } from 'react';
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Search } from "lucide-react";
-import Phase1Ideation from "./phases/Phase1Ideation";
-import Phase2Planning from "./phases/Phase2Planning";
-import Phase3Design from "./phases/Phase3Design";
-import Phase4Development from "./phases/Phase4Development";
-import Phase5Refinement from "./phases/Phase5Refinement";
-import Phase6Testing from "./phases/Phase6Testing";
-import Phase7FeatureSystemRollout from './phases/Phase7FeatureSystemRollout';
-import { useSystemData } from '@/hooks/useSystemData';
+import React from 'react';
+import { TabsContent } from '@/components/ui/tabs';
+import SystemBreakdownNavigation from './SystemBreakdownNavigation';
+import SystemHeader from './SystemHeader';
+import OverviewTab from './OverviewTab';
+import EnhancedFeatureTab from './EnhancedFeatureTab';
+import FeatureShowcaseTab from './FeatureShowcaseTab';
+import { useSystemBreakdown } from './hooks/useSystemBreakdown';
 
 const SystemBreakdownContent: React.FC = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const { isLoading, error } = useSystemData();
-  
-  if (isLoading) {
-    return <div className="text-center p-12">Loading system information...</div>;
-  }
-  
-  if (error) {
-    return (
-      <div className="text-center p-12">
-        <p className="text-red-500">Error loading system information</p>
-        <p className="text-sm text-muted-foreground mt-2">{error}</p>
-      </div>
-    );
-  }
-  
+  const {
+    activeTab,
+    setActiveTab,
+    adminFeatures,
+    establishmentFeatures,
+    individualFeatures,
+    promoterFeatures,
+    analyzing,
+    analysisProgress,
+    analysisSteps,
+    updatedFeaturesCount,
+    handleLogout,
+    handleExportCSV,
+    handleAnalyzeFeatures,
+    handleCreateReleaseFromFeatures,
+    progressHistory,
+    monthlyProgressData,
+    currentSnapshot,
+    dataValidation
+  } = useSystemBreakdown();
+
+  console.log('SystemBreakdownContent: Rendering with activeTab:', activeTab);
+  console.log('SystemBreakdownContent: Feature counts:', {
+    admin: adminFeatures.length,
+    establishment: establishmentFeatures.length,
+    individual: individualFeatures.length,
+    promoter: promoterFeatures.length
+  });
+
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col sm:flex-row gap-4 items-center">
-        <div className="relative w-full max-w-md">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search system components..."
-            className="pl-8"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+    <div className="space-y-6">
+      <SystemHeader
+        onAnalyzeFeatures={handleAnalyzeFeatures}
+        onExportCSV={() => handleExportCSV(adminFeatures, establishmentFeatures, individualFeatures)}
+        analyzing={analyzing}
+      />
+
+      <SystemBreakdownNavigation
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+      />
+
+      <div className="min-h-[600px]">
+        <TabsContent value="overview" className={activeTab === 'overview' ? 'block' : 'hidden'}>
+          <OverviewTab
+            adminFeatures={adminFeatures}
+            establishmentFeatures={establishmentFeatures}
+            individualFeatures={individualFeatures}
+            promoterFeatures={promoterFeatures}
+            analyzing={analyzing}
+            analysisProgress={analysisProgress}
+            analysisSteps={analysisSteps}
+            updatedFeaturesCount={updatedFeaturesCount}
+            onCreateRelease={handleCreateReleaseFromFeatures}
+            progressHistory={progressHistory}
+            monthlyProgressData={monthlyProgressData}
+            currentSnapshot={currentSnapshot}
+            dataValidation={dataValidation}
           />
-        </div>
-        <Button variant="outline" size="sm">Export Report</Button>
-      </div>
-      
-      <div className="space-y-6">
-        <h2 className="text-2xl font-bold">System Implementation Phases</h2>
-        
-        <div className="space-y-4">
-          <Phase1Ideation />
-          <Phase2Planning />
-          <Phase3Design />
-          <Phase4Development />
-          <Phase5Refinement />
-          <Phase6Testing />
-          <Phase7FeatureSystemRollout />
-        </div>
+        </TabsContent>
+
+        <TabsContent value="admin" className={activeTab === 'admin' ? 'block' : 'hidden'}>
+          <EnhancedFeatureTab
+            features={adminFeatures}
+            title="Admin Features"
+            userType="admin"
+          />
+        </TabsContent>
+
+        <TabsContent value="establishment" className={activeTab === 'establishment' ? 'block' : 'hidden'}>
+          <EnhancedFeatureTab
+            features={establishmentFeatures}
+            title="Establishment Features"
+            userType="establishment"
+          />
+        </TabsContent>
+
+        <TabsContent value="individual" className={activeTab === 'individual' ? 'block' : 'hidden'}>
+          <EnhancedFeatureTab
+            features={individualFeatures}
+            title="Individual User Features"
+            userType="individual"
+          />
+        </TabsContent>
+
+        <TabsContent value="promoter" className={activeTab === 'promoter' ? 'block' : 'hidden'}>
+          <EnhancedFeatureTab
+            features={promoterFeatures}
+            title="Promoter Features"
+            userType="promoter"
+          />
+        </TabsContent>
+
+        <TabsContent value="showcase" className={activeTab === 'showcase' ? 'block' : 'hidden'}>
+          <FeatureShowcaseTab
+            adminFeatures={adminFeatures}
+            establishmentFeatures={establishmentFeatures}
+            individualFeatures={individualFeatures}
+          />
+        </TabsContent>
       </div>
     </div>
   );
