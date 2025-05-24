@@ -17,10 +17,10 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const { isDevModeActive, devMode, isDevelopment, isInitialized } = useDevelopmentMode();
   const { user, session, isLoading, userType } = useAuth();
   
-  // Add debugging for route resolution
+  // Enhanced debugging for route resolution
   console.log('AdminLayout: Rendering for path', location.pathname);
-  console.log('AdminLayout: Route search params', location.search);
-  console.log('AdminLayout: Route state', location.state);
+  console.log('AdminLayout: Location state', location.state);
+  console.log('AdminLayout: Should render Outlet for nested route?', !children);
   
   // Get effective auth state (dev bypass or real auth)
   const effectiveAuth = DevAuthService.getEffectiveAuthState(
@@ -80,9 +80,18 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
           <AdminSidebar />
           <main className="flex-1 overflow-auto">
             <div className="p-6">
-              {/* Use Outlet for nested routes, fallback to children for direct usage */}
-              <Outlet />
-              {children}
+              {/* Debug which content is being rendered */}
+              {children ? (
+                <>
+                  {console.log('AdminLayout: Rendering children prop')}
+                  {children}
+                </>
+              ) : (
+                <>
+                  {console.log('AdminLayout: Rendering Outlet for nested route at:', location.pathname)}
+                  <Outlet />
+                </>
+              )}
             </div>
           </main>
         </div>

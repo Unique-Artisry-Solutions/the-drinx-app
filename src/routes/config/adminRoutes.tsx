@@ -11,7 +11,7 @@ import AdminDocumentationPage from '@/pages/admin/AdminDocumentationPage';
 import SystemConfigurationPage from '@/pages/admin/SystemConfigurationPage';
 import AdminLayout from '@/components/admin/layout/AdminLayout';
 import AdminNotFound from '@/components/admin/AdminNotFound';
-// Convert problematic lazy imports to direct imports
+// Direct imports for problematic components
 import AdminEstablishmentsPage from '@/pages/admin/AdminEstablishmentsPage';
 import PhotoModerationPage from '@/pages/admin/PhotoModerationPage';
 
@@ -25,6 +25,8 @@ const SystemAnalyticsPage = lazy(() => import('@/pages/admin/SystemAnalyticsPage
 const ContentModerationPage = lazy(() => import('@/pages/admin/ContentModerationPage'));
 const ThemeCustomizationPage = lazy(() => import('@/pages/admin/ThemeCustomizationPage'));
 const TestingInterfacePage = lazy(() => import('@/pages/admin/TestingInterfacePage'));
+
+console.log('adminRoutes: Module loaded, registering routes');
 
 export const adminRoutes: RouteObject[] = [
   // Admin login - separate from protected routes
@@ -54,7 +56,10 @@ export const adminRoutes: RouteObject[] = [
       },
       { 
         path: 'establishments', 
-        element: <AdminEstablishmentsPage /> 
+        element: (() => {
+          console.log('adminRoutes: Establishments route matched');
+          return <AdminEstablishmentsPage />;
+        })()
       },
       { 
         path: 'establishments/:id', 
@@ -62,7 +67,10 @@ export const adminRoutes: RouteObject[] = [
       },
       { 
         path: 'system-breakdown', 
-        element: <SystemFunctionalityBreakdown /> 
+        element: (() => {
+          console.log('adminRoutes: System breakdown route matched');
+          return <SystemFunctionalityBreakdown />;
+        })()
       },
       { 
         path: 'component-catalog', 
@@ -74,7 +82,10 @@ export const adminRoutes: RouteObject[] = [
       },
       { 
         path: 'photo-moderation', 
-        element: <PhotoModerationPage /> 
+        element: (() => {
+          console.log('adminRoutes: Photo moderation route matched');
+          return <PhotoModerationPage />;
+        })()
       },
       { 
         path: 'content-moderation', 
@@ -120,3 +131,5 @@ export const adminRoutes: RouteObject[] = [
     element: <AdminNotFound /> 
   },
 ];
+
+console.log('adminRoutes: Routes configured', adminRoutes.length, 'total routes');

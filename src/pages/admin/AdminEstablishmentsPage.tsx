@@ -23,15 +23,18 @@ const AdminEstablishmentsPage = () => {
   } = useEstablishments({ searchTerm });
 
   // Add debugging
-  console.log('AdminEstablishmentsPage: Component rendered');
+  console.log('AdminEstablishmentsPage: Component rendered at path');
+  console.log('AdminEstablishmentsPage: Current URL:', window.location.pathname);
 
   // Check if user is authenticated as admin
   React.useEffect(() => {
     const isAdmin = localStorage.getItem('admin_authenticated') === 'true';
+    console.log('AdminEstablishmentsPage: Admin check:', isAdmin);
     if (!isAdmin) {
+      console.log('AdminEstablishmentsPage: Not admin, redirecting');
       navigate('/admin');
     }
-    console.log("AdminEstablishmentsPage rendered inside AdminLayout");
+    console.log("AdminEstablishmentsPage: Successfully rendered inside AdminLayout");
   }, [navigate]);
 
   const handleSearchChange = (value: string) => {
@@ -63,6 +66,8 @@ const AdminEstablishmentsPage = () => {
     if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString();
   };
+
+  console.log('AdminEstablishmentsPage: Rendering establishments page content');
 
   return (
     <div className="min-h-full">
