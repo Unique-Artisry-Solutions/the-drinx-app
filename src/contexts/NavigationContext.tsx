@@ -10,7 +10,6 @@ import {
   adminNavItems,
   guestNavItems 
 } from '@/config/navigation';
-import { checkAdminBypassStatus } from '@/utils/adminBypass';
 
 interface NavigationContextType {
   navigationItems: UnifiedNavItem[];
@@ -63,13 +62,8 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const determineUserType = useCallback((): 'individual' | 'establishment' | 'promoter' | 'admin' | 'guest' => {
     if (!authStable) return 'guest';
     
-    // Check admin bypass first
-    const { isEnabled: isAdminBypass, userType: bypassType } = checkAdminBypassStatus();
+    // Check for admin authentication
     const isAdminAuth = localStorage.getItem('admin_authenticated') === 'true';
-    
-    if (isAdminBypass && bypassType === 'admin') {
-      return 'admin';
-    }
     
     if (isAdminAuth) {
       return 'admin';
@@ -91,20 +85,6 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           return 'admin';
         default:
           return 'individual';
-      }
-    }
-    
-    // Check bypass for non-admin types
-    if (isAdminBypass && bypassType) {
-      switch (bypassType) {
-        case 'establishment':
-          return 'establishment';
-        case 'promoter':
-          return 'promoter';
-        case 'individual':
-          return 'individual';
-        default:
-          return 'guest';
       }
     }
     

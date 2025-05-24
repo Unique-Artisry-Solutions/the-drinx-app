@@ -61,9 +61,9 @@ export function withAuthProtection<P extends object>(
       
       // Check user type requirement
       if (userTypes.length > 0 && (user && session)) {
-        const currentUserType = userType || localStorage.getItem('user_type') as UserType | null;
+        const currentUserType = userType || localStorage.getItem('user_type');
         
-        if (!currentUserType || !userTypes.includes(currentUserType)) {
+        if (!currentUserType || !userTypes.includes(currentUserType as UserType)) {
           console.log("User type mismatch", { currentUserType, requiredTypes: userTypes });
           localStorage.setItem('auth_redirect', location.pathname);
           setShouldRedirect(true);

@@ -6,8 +6,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useToast } from '@/hooks/use-toast';
 import { useAppNavigation } from '@/hooks/useAppNavigation';
 import GuestTopNavigation from '@/components/navigation/GuestTopNavigation';
-import { enableAdminBypass, checkAdminBypassStatus } from '@/utils/adminBypass';
-import { isPreviewEnvironment } from '@/utils/environment';
 
 const AdminLogin: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -15,15 +13,12 @@ const AdminLogin: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { goToAdminDashboard } = useAppNavigation();
   const { toast } = useToast();
-  const showBypassButtons = isPreviewEnvironment() || process.env.NODE_ENV === 'development';
 
   useEffect(() => {
     // Check if admin is already logged in
     const isAdminAuth = localStorage.getItem('admin_authenticated') === 'true';
-    const { isEnabled, userType } = checkAdminBypassStatus();
-    const isAdminBypass = isEnabled && userType === 'admin';
     
-    if (isAdminAuth || isAdminBypass) {
+    if (isAdminAuth) {
       goToAdminDashboard();
     }
   }, [goToAdminDashboard]);
@@ -56,26 +51,6 @@ const AdminLogin: React.FC = () => {
       }
       setIsLoading(false);
     }, 1000);
-  };
-  
-  const handleBypassLogin = () => {
-    try {
-      enableAdminBypass('admin');
-      
-      toast({
-        title: 'Admin Bypass Activated',
-        description: 'You now have access to the admin dashboard in testing mode',
-      });
-      
-      goToAdminDashboard();
-    } catch (error) {
-      console.error('Error during admin bypass login:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to enable admin bypass mode',
-        variant: 'destructive',
-      });
-    }
   };
 
   return (
@@ -132,17 +107,6 @@ const AdminLogin: React.FC = () => {
               >
                 {isLoading ? 'Logging in...' : 'Login'}
               </Button>
-              
-              {showBypassButtons && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full text-sm"
-                  onClick={handleBypassLogin}
-                >
-                  Use Admin Bypass (Development Only)
-                </Button>
-              )}
             </CardFooter>
           </form>
         </Card>

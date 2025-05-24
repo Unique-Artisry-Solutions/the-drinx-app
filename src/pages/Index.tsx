@@ -3,7 +3,6 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/auth/AuthProvider';
-import { checkAdminBypassStatus } from '@/utils/adminBypass';
 import { getSessionDebug } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
@@ -24,10 +23,6 @@ const Index = () => {
       authError: authError?.message
     });
     
-    // Check for admin bypass
-    const { isEnabled: isAdminBypass, userType } = checkAdminBypassStatus();
-    console.log("Admin bypass status:", { isAdminBypass, userType });
-    
     // Always log the current session state
     getSessionDebug();
   }, [user, session, isLoading, authStable, authError]);
@@ -40,12 +35,11 @@ const Index = () => {
       return;
     }
     
-    // Check for admin bypass first since it overrides normal auth
-    const { isEnabled: isAdminBypass, userType: bypassType } = checkAdminBypassStatus();
+    // Check for admin authentication first
     const isAdmin = localStorage.getItem('admin_authenticated') === 'true';
     
-    if (isAdminBypass || isAdmin) {
-      console.log("Index page - Admin bypass or auth active, redirecting to admin");
+    if (isAdmin) {
+      console.log("Index page - Admin auth active, redirecting to admin");
       navigate('/admin/system-breakdown', { replace: true });
       return;
     }
