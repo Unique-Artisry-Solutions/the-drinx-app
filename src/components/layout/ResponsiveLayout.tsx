@@ -1,9 +1,9 @@
-
 import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useIsMobile } from '@/hooks/use-mobile';
 import DesktopLayout from './DesktopLayout';
 import MobileLayout from './MobileLayout';
+import DevRoleSwitcher from '@/components/development/DevRoleSwitcher';
 
 interface TabOption {
   value: string;
@@ -27,11 +27,12 @@ const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = (props) => {
     window.scrollTo(0, 0);
   }, [location.pathname]);
   
-  if (isMobile) {
-    return <MobileLayout {...props} />;
-  }
-  
-  return <DesktopLayout {...props} />;
+  return (
+    <>
+      {isMobile ? <MobileLayout {...props} /> : <DesktopLayout {...props} />}
+      <DevRoleSwitcher />
+    </>
+  );
 };
 
 export default ResponsiveLayout;

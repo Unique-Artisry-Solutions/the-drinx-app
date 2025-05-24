@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthProvider';
@@ -10,6 +9,7 @@ import {
   adminNavItems,
   guestNavItems 
 } from '@/config/navigation';
+import { useDevelopmentMode } from '@/hooks/useDevelopmentMode';
 
 interface NavigationContextType {
   navigationItems: UnifiedNavItem[];
@@ -22,6 +22,7 @@ const NavigationContext = createContext<NavigationContextType | undefined>(undef
 
 export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, session, authStable, userType: authUserType } = useAuth();
+  const { devMode, isDevModeActive } = useDevelopmentMode();
   const location = useLocation();
   const [userType, setUserType] = useState<'individual' | 'establishment' | 'promoter' | 'admin' | 'guest'>('guest');
   const [navigationItems, setNavigationItems] = useState<UnifiedNavItem[]>(guestNavItems);
@@ -54,6 +55,11 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   // Simplified function to determine user type
   const determineUserType = useCallback((): 'individual' | 'establishment' | 'promoter' | 'admin' | 'guest' => {
+    // In development mode, use the dev user type if active
+    if (isDevModeActive && devMode) {
+      return devMode;
+    }
+    
     if (!authStable) return 'guest';
     
     if (user && session) {
@@ -74,7 +80,7 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
     
     return 'guest';
-  }, [user, session, authStable, authUserType]);
+  }, [user, session, authStable, authUserType, devMode, isDevModeActive]);
 
   // Update navigation when auth state changes
   const updateNavigation = useCallback(() => {

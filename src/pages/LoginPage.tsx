@@ -8,6 +8,7 @@ import { useAppNavigation } from '@/hooks/useAppNavigation';
 import { Button } from '@/components/ui/button';
 import TestCredentials from '@/components/auth/TestCredentials';
 import AutoCreateAdminUser from '@/components/auth/AutoCreateAdminUser';
+import DevBypassLinks from '@/components/development/DevBypassLinks';
 
 const LoginPage = () => {
   const [requiredUserType, setRequiredUserType] = useState<'individual' | 'establishment' | 'promoter' | 'admin'>('individual');
@@ -153,6 +154,9 @@ const LoginPage = () => {
             <div className="mt-8">
               <TestCredentials />
             </div>
+            
+            {/* Add development bypass links */}
+            <DevBypassLinks />
           </div>
         </div>
       </div>

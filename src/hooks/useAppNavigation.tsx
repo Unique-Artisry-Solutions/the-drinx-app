@@ -2,16 +2,19 @@ import { useNavigate } from 'react-router-dom';
 import { useCallback, useMemo } from 'react';
 import { useAuth } from '@/contexts/auth/AuthProvider';
 import { debouncedToast } from '@/utils/debouncedToast';
+import { useDevelopmentMode } from './useDevelopmentMode';
 
 export const useAppNavigation = () => {
   const navigate = useNavigate();
   const { userType } = useAuth();
+  const { devMode, isDevModeActive } = useDevelopmentMode();
 
   /**
    * Navigate to the appropriate home page based on userType
    */
   const goToHomePage = useCallback((fallbackUserType?: string) => {
-    const confirmedUserType = userType || fallbackUserType;
+    // In dev mode, use the dev user type for navigation
+    const confirmedUserType = isDevModeActive ? devMode : (userType || fallbackUserType);
     console.log("useAppNavigation - Using confirmed user type:", confirmedUserType);
     
     if (!confirmedUserType) {
@@ -39,13 +42,13 @@ export const useAppNavigation = () => {
         navigate('/explore');
         break;
     }
-  }, [navigate, userType]);
+  }, [navigate, userType, devMode, isDevModeActive]);
 
   /**
    * Navigate to the profile page based on userType
    */
   const goToProfilePage = useCallback((fallbackUserType?: string) => {
-    const confirmedUserType = userType || fallbackUserType || 'individual';
+    const confirmedUserType = isDevModeActive ? devMode : (userType || fallbackUserType || 'individual');
     console.log("useAppNavigation - Profile navigation for user type:", confirmedUserType);
     
     switch (confirmedUserType) {
@@ -63,7 +66,7 @@ export const useAppNavigation = () => {
         navigate('/profile');
         break;
     }
-  }, [navigate, userType]);
+  }, [navigate, userType, devMode, isDevModeActive]);
 
   /**
    * Navigate after successful login with proper auth state coordination
@@ -72,7 +75,9 @@ export const useAppNavigation = () => {
     console.log("useAppNavigation - Post-login navigation:", { 
       fallbackUserType, 
       savedRedirect,
-      userType 
+      userType,
+      devMode,
+      isDevModeActive
     });
     
     // Priority: saved redirect > user type based navigation
@@ -151,7 +156,7 @@ export const useAppNavigation = () => {
     goToEditPage,
     goToRoute,
     navigate,
-    userType
+    userType: isDevModeActive ? devMode : userType
   }), [
     goToHomePage, 
     goToProfilePage, 
@@ -162,7 +167,9 @@ export const useAppNavigation = () => {
     goToEditPage,
     goToRoute,
     navigate,
-    userType
+    userType,
+    devMode,
+    isDevModeActive
   ]);
 };
 
