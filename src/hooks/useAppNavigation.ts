@@ -58,6 +58,13 @@ export const useAppNavigation = () => {
     
     goToHomePage(userType);
   }, [navigate, goToHomePage]);
+
+  /**
+   * Navigate to login page
+   */
+  const goToLoginPage = useCallback(() => {
+    navigate('/login');
+  }, [navigate]);
   
   /**
    * Navigate to admin dashboard
@@ -112,6 +119,7 @@ export const useAppNavigation = () => {
     goToHomePage,
     goToProfilePage,
     goToAfterLogin,
+    goToLoginPage,
     goToAdminDashboard,
     goToEditPage,
     goToRoute,
