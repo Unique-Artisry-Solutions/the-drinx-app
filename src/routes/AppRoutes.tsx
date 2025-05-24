@@ -6,6 +6,7 @@ import { establishmentRoutes } from './config/establishmentRoutes';
 import { promoterRoutes } from './config/promoterRoutes';
 import { profileRoutes } from './config/profileRoutes';
 import { publicRoutes } from './config/publicRoutes';
+import { individualRoutes } from './config/individualRoutes';
 import PageSuspense from '@/components/loading/PageSuspense';
 import { useNavigationTracking } from '@/utils/lazyRouteLoader';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -30,6 +31,11 @@ const AppRoutes = () => {
         <Routes location={location} key={location.pathname}>
           {/* Public Routes */}
           {publicRoutes.map((route) => (
+            <Route key={route.path} path={route.path} element={route.element} />
+          ))}
+
+          {/* Individual User Routes */}
+          {individualRoutes.map((route) => (
             <Route key={route.path} path={route.path} element={route.element} />
           ))}
 
