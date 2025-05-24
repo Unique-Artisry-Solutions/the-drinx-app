@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { NavigationType } from '../navigation/NavigationTypes';
@@ -7,7 +8,7 @@ import GuestTopNavigation from '../navigation/GuestTopNavigation';
 import Breadcrumbs from '../navigation/Breadcrumbs';
 import AppFooter from '../AppFooter';
 import AdminFooter from '../admin/AdminFooter';
-import { useAuth } from '@/contexts/auth/AuthProvider';
+import { useDevAuthBypass } from '@/hooks/useDevAuthBypass';
 import { useTheme } from '@/contexts/ThemeContext';
 
 interface TabOption {
@@ -32,34 +33,34 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
 }) => {
   const location = useLocation();
   const { theme } = useTheme();
-  const { user, isEmailVerified } = useAuth();
+  const { 
+    user, 
+    isAuthenticated, 
+    userType, 
+    isLoading, 
+    isUsingDevBypass 
+  } = useDevAuthBypass();
+  
   const [navigationType, setNavigationType] = React.useState<NavigationType>(NavigationType.GUEST);
-  const [userType, setUserType] = React.useState<'individual' | 'establishment' | 'promoter'>('individual');
-  const [isAdmin, setIsAdmin] = React.useState(false);
 
   useEffect(() => {
     const checkAuth = () => {
-      const isAdminAuth = localStorage.getItem('admin_authenticated') === 'true';
-      const userTypeStored = localStorage.getItem('user_type');
-      
-      setIsAdmin(isAdminAuth);
-      
-      if (userTypeStored === 'establishment') {
-        setUserType('establishment');
-      } else if (userTypeStored === 'promoter') {
-        setUserType('promoter');
-      } else {
-        setUserType('individual');
-      }
+      console.log('DesktopLayout - Auth state check:', {
+        isAuthenticated,
+        userType,
+        isUsingDevBypass,
+        location: location.pathname,
+        forceGuestNavigation
+      });
       
       // Define public paths that always use guest navigation
       const publicPaths = ['/', '/landing', '/login', '/signup', '/mission', '/pricing'];
       const isPublicPath = publicPaths.includes(location.pathname) || forceGuestNavigation;
       
-      // Determine navigation type based on auth state and path
-      if (isAdminAuth) {
+      // Determine navigation type based on effective auth state and path
+      if (userType === 'admin' && isAuthenticated) {
         setNavigationType(NavigationType.ADMIN);
-      } else if (user && isEmailVerified && !isPublicPath) {
+      } else if (isAuthenticated && !isPublicPath) {
         setNavigationType(NavigationType.USER);
       } else {
         setNavigationType(NavigationType.GUEST);
@@ -67,13 +68,10 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     };
     
     checkAuth();
-  }, [user, isEmailVerified, location.pathname, forceGuestNavigation]);
+  }, [isAuthenticated, userType, location.pathname, forceGuestNavigation, isUsingDevBypass]);
 
   const isLandingPage = location.pathname === '/' || location.pathname === '/landing' || forceGuestNavigation;
   const isAdminPage = location.pathname.startsWith('/admin');
-  const isSettingsPage = location.pathname === '/settings';
-  const isEstablishmentPage = location.pathname.startsWith('/establishment');
-  const isPromoterPage = location.pathname.startsWith('/promotion') || location.pathname === '/analytics';
 
   const getContentPadding = () => {
     if (isLandingPage) {
@@ -88,7 +86,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     if (forceGuestNavigation) return true;
     
     // Always use guest navigation for non-authenticated users
-    if (!user) return true;
+    if (!isAuthenticated) return true;
     
     // For authenticated users, use guest navigation only on explicit public paths
     const publicPaths = ['/', '/landing', '/login', '/signup', '/mission', '/pricing'];
@@ -97,12 +95,12 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
 
   const renderNavigation = () => {
     // Always show admin navigation for admin pages or admin users
-    if (isAdminPage || isAdmin) {
+    if (isAdminPage || userType === 'admin') {
       return <AdminTopNavigation />;
     } 
     
     // For authenticated users on non-public pages, show appropriate navigation
-    else if (user && !useGuestNavigation()) {
+    else if (isAuthenticated && !useGuestNavigation()) {
       return <UserTopNavigation activeTab={activeTab} handleTabChange={handleTabChange} tabOptions={tabOptions} />;
     } 
     
@@ -140,7 +138,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
 
   // Render the appropriate footer based on the page type
   const renderFooter = () => {
-    if (isAdminPage || isAdmin) {
+    if (isAdminPage || userType === 'admin') {
       return <AdminFooter />;
     }
     return <AppFooter />;
@@ -148,15 +146,15 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
 
   // Debug navigation state - remove in production
   useEffect(() => {
-    console.log('Navigation state:', {
+    console.log('DesktopLayout - Navigation state:', {
       path: location.pathname,
-      isAdmin,
-      isAuthenticated: !!user, 
-      isEmailVerified,
+      userType,
+      isAuthenticated, 
       navigationType,
-      useGuestNav: useGuestNavigation()
+      useGuestNav: useGuestNavigation(),
+      isUsingDevBypass
     });
-  }, [location.pathname, user, isAdmin, isEmailVerified]);
+  }, [location.pathname, userType, isAuthenticated, navigationType, isUsingDevBypass]);
 
   return (
     <div className={`flex flex-col min-h-screen w-full max-w-full bg-background transition-colors duration-300`}>

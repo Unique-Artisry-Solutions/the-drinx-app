@@ -1,6 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthProvider';
+import { useDevAuthBypass } from '@/hooks/useDevAuthBypass';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAppNavigation } from '@/hooks/useAppNavigation';
 import { supabase } from '@/lib/supabase';
@@ -32,25 +34,34 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
   const location = useLocation();
   const { goToHomePage } = useAppNavigation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [userType, setUserType] = useState<'individual' | 'establishment' | 'promoter'>('individual');
   const [username, setUsername] = useState<string | null>("Guest");
   const { theme } = useTheme();
-  const { signOut, user } = useAuth();
+  const { signOut } = useAuth();
+  const { 
+    user, 
+    userType, 
+    isAuthenticated, 
+    isUsingDevBypass 
+  } = useDevAuthBypass();
   const isMobile = useIsMobile();
   
   useEffect(() => {
-    const storedUserType = localStorage.getItem('user_type');
-    if (storedUserType === 'establishment') {
-      setUserType('establishment');
-    } else if (storedUserType === 'promoter') {
-      setUserType('promoter');
-    } else {
-      setUserType('individual');
-    }
-    
     const fetchUsername = async () => {
       if (user) {
         try {
+          // In dev mode, use mock profile data
+          if (isUsingDevBypass) {
+            const displayNames = {
+              admin: 'System Administrator',
+              establishment: 'Test Bar & Grill',
+              promoter: 'Test Event Promoter',
+              individual: 'Test Individual'
+            };
+            setUsername(displayNames[userType] || 'Test User');
+            return;
+          }
+
+          // For real users, fetch from database
           const { data, error } = await supabase
             .from('profiles')
             .select('username, display_name')
@@ -70,7 +81,7 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
     };
     
     fetchUsername();
-  }, [user]);
+  }, [user, userType, isUsingDevBypass]);
   
   const handleLogout = async () => {
     try {
@@ -87,7 +98,7 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
   
   const handleHomeClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault(); // Prevent default navigation
-    goToHomePage(userType);
+    goToHomePage(userType || 'individual');
   };
   
   const getTabOptions = () => {
@@ -116,15 +127,17 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
               {isMobile ? "SL" : "Spirit"}
               {!isMobile && <span>less</span>}
               {userType === 'promoter' && !isMobile && <span className="ml-1 text-xs px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded-md">Promoter</span>}
+              {userType === 'establishment' && !isMobile && <span className="ml-1 text-xs px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded-md">Establishment</span>}
+              {isUsingDevBypass && !isMobile && <span className="ml-1 text-xs px-1.5 py-0.5 bg-orange-100 text-orange-700 rounded-md">Dev Mode</span>}
             </Link>
             
-            <UserNavLinks userType={userType} />
+            <UserNavLinks userType={userType || 'individual'} />
           </div>
           
           <div className="user-nav-right flex items-center space-x-4">
             {username && (
               <span className="text-sm hidden md:block">
-                Welcome, <span className={`font-medium ${userType === 'promoter' ? 'text-purple-600' : 'text-spiritless-pink'}`}>{username}</span>
+                Welcome, <span className={`font-medium ${userType === 'promoter' ? 'text-purple-600' : userType === 'establishment' ? 'text-blue-600' : 'text-spiritless-pink'}`}>{username}</span>
               </span>
             )}
             
@@ -141,7 +154,7 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
             
             <UserProfileDropdown 
               username={username} 
-              userType={userType} 
+              userType={userType || 'individual'} 
               handleLogout={handleLogout} 
               activeTab={location.pathname === '/establishment/profile' ? activeTab : undefined} 
               handleTabChange={location.pathname === '/establishment/profile' ? handleTabChange : undefined} 
@@ -153,7 +166,7 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
         <UserMobileMenu 
           isOpen={isMobileMenuOpen} 
           username={username} 
-          userType={userType} 
+          userType={userType || 'individual'} 
           onClose={() => setIsMobileMenuOpen(false)} 
           handleLogout={handleLogout} 
           activeTab={location.pathname === '/establishment/profile' ? activeTab : undefined} 
