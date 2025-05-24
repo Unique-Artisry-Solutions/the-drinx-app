@@ -26,17 +26,19 @@ const ThemeCustomizationPage = lazy(() => import('@/pages/admin/ThemeCustomizati
 const TestingInterfacePage = lazy(() => import('@/pages/admin/TestingInterfacePage'));
 
 export const adminRoutes: RouteObject[] = [
+  // Admin login - separate from protected routes
   { path: '/admin/login', element: <AdminLogin /> },
-  // Base admin route - redirect to dashboard
-  { 
-    path: '/admin', 
-    element: <Navigate to="/admin/dashboard" replace /> 
-  },
-  // All other admin routes use the AdminLayout wrapper
+  
+  // All admin routes use the AdminLayout wrapper
   {
     path: '/admin',
     element: <AdminLayout />,
     children: [
+      // Index route - redirects /admin to /admin/dashboard
+      { 
+        index: true, 
+        element: <Navigate to="/admin/dashboard" replace /> 
+      },
       { 
         path: 'dashboard', 
         element: <AdminDashboard /> 

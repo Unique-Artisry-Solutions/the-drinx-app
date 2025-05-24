@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import AdminTopNav from '@/components/navigation/admin/AdminTopNav';
 import AdminSidebar from './AdminSidebar';
 import DevRoleSwitcher from '@/components/development/DevRoleSwitcher';
@@ -13,8 +13,12 @@ interface AdminLayoutProps {
 }
 
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
+  const location = useLocation();
   const { isDevModeActive, devMode, isDevelopment, isInitialized } = useDevelopmentMode();
   const { user, session, isLoading, userType } = useAuth();
+  
+  // Add debugging for route resolution
+  console.log('AdminLayout: Rendering for path', location.pathname);
   
   // Get effective auth state (dev bypass or real auth)
   const effectiveAuth = DevAuthService.getEffectiveAuthState(
