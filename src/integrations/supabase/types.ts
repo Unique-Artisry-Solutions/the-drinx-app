@@ -186,6 +186,45 @@ export type Database = {
         }
         Relationships: []
       }
+      app_subscriptions: {
+        Row: {
+          created_at: string
+          id: string
+          payment_id: string | null
+          payment_provider: string | null
+          status: string
+          subscription_end: string | null
+          subscription_start: string
+          subscription_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          payment_id?: string | null
+          payment_provider?: string | null
+          status?: string
+          subscription_end?: string | null
+          subscription_start?: string
+          subscription_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          payment_id?: string | null
+          payment_provider?: string | null
+          status?: string
+          subscription_end?: string | null
+          subscription_start?: string
+          subscription_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       audience_segment_analytics: {
         Row: {
           campaign_id: string | null
@@ -826,6 +865,7 @@ export type Database = {
       establishment_promotions: {
         Row: {
           code: string
+          combinable: boolean
           created_at: string
           description: string
           discount_type: string
@@ -836,12 +876,17 @@ export type Database = {
           is_active: boolean
           max_discount: number | null
           min_purchase: number | null
+          min_purchase_amount: number | null
           start_date: string
           updated_at: string
           usage_limit: number | null
+          user_segment: string | null
+          valid_days: string[] | null
+          valid_hours: Json | null
         }
         Insert: {
           code: string
+          combinable?: boolean
           created_at?: string
           description: string
           discount_type: string
@@ -852,12 +897,17 @@ export type Database = {
           is_active?: boolean
           max_discount?: number | null
           min_purchase?: number | null
+          min_purchase_amount?: number | null
           start_date?: string
           updated_at?: string
           usage_limit?: number | null
+          user_segment?: string | null
+          valid_days?: string[] | null
+          valid_hours?: Json | null
         }
         Update: {
           code?: string
+          combinable?: boolean
           created_at?: string
           description?: string
           discount_type?: string
@@ -868,9 +918,13 @@ export type Database = {
           is_active?: boolean
           max_discount?: number | null
           min_purchase?: number | null
+          min_purchase_amount?: number | null
           start_date?: string
           updated_at?: string
           usage_limit?: number | null
+          user_segment?: string | null
+          valid_days?: string[] | null
+          valid_hours?: Json | null
         }
         Relationships: [
           {
@@ -1837,6 +1891,57 @@ export type Database = {
           },
         ]
       }
+      mocktail_suggestion_notifications: {
+        Row: {
+          content: string
+          created_at: string | null
+          establishment_id: string | null
+          id: string
+          notification_type: string
+          read_at: string | null
+          suggestion_id: string | null
+          title: string
+          user_id: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          establishment_id?: string | null
+          id?: string
+          notification_type: string
+          read_at?: string | null
+          suggestion_id?: string | null
+          title: string
+          user_id?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          establishment_id?: string | null
+          id?: string
+          notification_type?: string
+          read_at?: string | null
+          suggestion_id?: string | null
+          title?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mocktail_suggestion_notifications_establishment_id_fkey"
+            columns: ["establishment_id"]
+            isOneToOne: false
+            referencedRelation: "establishments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mocktail_suggestion_notifications_suggestion_id_fkey"
+            columns: ["suggestion_id"]
+            isOneToOne: false
+            referencedRelation: "mocktail_suggestions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mocktail_suggestions: {
         Row: {
           created_at: string
@@ -2457,6 +2562,42 @@ export type Database = {
           },
         ]
       }
+      promoter_followers: {
+        Row: {
+          created_at: string
+          follow_status: string
+          id: string
+          notification_preferences: Json
+          promoter_id: string
+          subscriber_id: string
+          subscription_end: string | null
+          subscription_start: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          follow_status?: string
+          id?: string
+          notification_preferences?: Json
+          promoter_id: string
+          subscriber_id: string
+          subscription_end?: string | null
+          subscription_start?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          follow_status?: string
+          id?: string
+          notification_preferences?: Json
+          promoter_id?: string
+          subscriber_id?: string
+          subscription_end?: string | null
+          subscription_start?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       promoter_notification_preferences: {
         Row: {
           channels: Database["public"]["Enums"]["notification_channel"][]
@@ -2557,50 +2698,6 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
-      }
-      promoter_subscriptions: {
-        Row: {
-          created_at: string
-          id: string
-          promoter_id: string
-          status: string
-          subscriber_id: string
-          subscription_end: string | null
-          subscription_start: string
-          tier_id: string | null
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          promoter_id: string
-          status?: string
-          subscriber_id: string
-          subscription_end?: string | null
-          subscription_start?: string
-          tier_id?: string | null
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          promoter_id?: string
-          status?: string
-          subscriber_id?: string
-          subscription_end?: string | null
-          subscription_start?: string
-          tier_id?: string | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "promoter_subscriptions_tier_id_fkey"
-            columns: ["tier_id"]
-            isOneToOne: false
-            referencedRelation: "promoter_subscription_tiers"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       promoter_venue_messages: {
         Row: {
@@ -3418,6 +3515,121 @@ export type Database = {
           },
         ]
       }
+      swig_circuit_attendees: {
+        Row: {
+          checked_in_at: string | null
+          created_at: string
+          first_check_in: string | null
+          id: string
+          purchase_date: string
+          purchaser_info: Json | null
+          quantity: number
+          status: string
+          swig_circuit_id: string | null
+          ticket_code: string | null
+          ticket_type_id: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          checked_in_at?: string | null
+          created_at?: string
+          first_check_in?: string | null
+          id?: string
+          purchase_date?: string
+          purchaser_info?: Json | null
+          quantity?: number
+          status?: string
+          swig_circuit_id?: string | null
+          ticket_code?: string | null
+          ticket_type_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          checked_in_at?: string | null
+          created_at?: string
+          first_check_in?: string | null
+          id?: string
+          purchase_date?: string
+          purchaser_info?: Json | null
+          quantity?: number
+          status?: string
+          swig_circuit_id?: string | null
+          ticket_code?: string | null
+          ticket_type_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "swig_circuit_attendees_swig_circuit_id_fkey"
+            columns: ["swig_circuit_id"]
+            isOneToOne: false
+            referencedRelation: "swig_circuits"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "swig_circuit_attendees_ticket_type_id_fkey"
+            columns: ["ticket_type_id"]
+            isOneToOne: false
+            referencedRelation: "swig_circuit_ticket_tiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      swig_circuit_check_ins: {
+        Row: {
+          attendee_id: string | null
+          checked_in_at: string
+          checked_in_by: string | null
+          created_at: string
+          establishment_id: string | null
+          id: string
+          swig_circuit_id: string | null
+        }
+        Insert: {
+          attendee_id?: string | null
+          checked_in_at?: string
+          checked_in_by?: string | null
+          created_at?: string
+          establishment_id?: string | null
+          id?: string
+          swig_circuit_id?: string | null
+        }
+        Update: {
+          attendee_id?: string | null
+          checked_in_at?: string
+          checked_in_by?: string | null
+          created_at?: string
+          establishment_id?: string | null
+          id?: string
+          swig_circuit_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "swig_circuit_check_ins_attendee_id_fkey"
+            columns: ["attendee_id"]
+            isOneToOne: false
+            referencedRelation: "swig_circuit_attendees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "swig_circuit_check_ins_establishment_id_fkey"
+            columns: ["establishment_id"]
+            isOneToOne: false
+            referencedRelation: "establishments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "swig_circuit_check_ins_swig_circuit_id_fkey"
+            columns: ["swig_circuit_id"]
+            isOneToOne: false
+            referencedRelation: "swig_circuits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       swig_circuit_drink_highlights: {
         Row: {
           created_at: string | null
@@ -3953,6 +4165,42 @@ export type Database = {
         }
         Relationships: []
       }
+      user_saved_codes: {
+        Row: {
+          code_id: string
+          id: string
+          saved_at: string
+          user_id: string
+        }
+        Insert: {
+          code_id: string
+          id?: string
+          saved_at?: string
+          user_id: string
+        }
+        Update: {
+          code_id?: string
+          id?: string
+          saved_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_saved_codes_code_id_fkey"
+            columns: ["code_id"]
+            isOneToOne: false
+            referencedRelation: "establishment_promotions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_saved_codes_code_id_fkey"
+            columns: ["code_id"]
+            isOneToOne: false
+            referencedRelation: "promotion_analytics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       visitor_sessions: {
         Row: {
           created_at: string
@@ -4364,6 +4612,15 @@ export type Database = {
       update_user_points: {
         Args: { p_user_id: string; p_points: number }
         Returns: undefined
+      }
+      validate_promotion: {
+        Args: {
+          p_promotion_id: string
+          p_user_id: string
+          p_purchase_amount?: number
+          p_current_time?: string
+        }
+        Returns: Json
       }
       verify_event_access_token: {
         Args: { p_event_id: string; p_token: string }

@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
@@ -26,18 +27,6 @@ const Index = () => {
     // Check for admin bypass
     const { isEnabled: isAdminBypass, userType } = checkAdminBypassStatus();
     console.log("Admin bypass status:", { isAdminBypass, userType });
-    
-    // Log all localStorage keys and values for debugging
-    const localStorageKeys = Object.keys(localStorage);
-    const localStorageData: Record<string, string | null> = {};
-    
-    localStorageKeys.forEach(key => {
-      if (!key.includes('supabase.auth.token')) { // Skip sensitive auth tokens
-        localStorageData[key] = localStorage.getItem(key);
-      }
-    });
-    
-    console.log("LocalStorage data:", localStorageData);
     
     // Always log the current session state
     getSessionDebug();
@@ -95,15 +84,6 @@ const Index = () => {
       } else {
         navigate('/explore', { replace: true });
       }
-      return;
-    }
-    
-    // Check localStorage as a fallback
-    const isAuthenticated = localStorage.getItem('user_authenticated') === 'true';
-    if (isAuthenticated && !user) {
-      console.log("Index page - User marked as authenticated in localStorage but session missing. Refreshing...");
-      // This is an edge case - don't redirect yet, but refresh the session first
-      getSessionDebug();
       return;
     }
     

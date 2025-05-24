@@ -1,8 +1,7 @@
 
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom';
-import AppProviders from './providers/AppProviders';
-import AppRoutes from './routes/AppRoutes';
+import App from './App';
 import './index.css'
 import { isPreviewEnvironment } from './utils/environment';
 
@@ -34,7 +33,7 @@ const registerServiceWorker = async () => {
       return registration;
     } catch (error) {
       console.error('Service Worker registration failed:', error);
-      return null; // Changed from throwing to returning null for safer error handling
+      return null;
     }
   } else {
     console.warn('Service Workers are not supported in this browser');
@@ -44,23 +43,19 @@ const registerServiceWorker = async () => {
 
 // Get the correct basename for preview URLs
 const getBasename = () => {
-  // For debugging purposes
   console.log('Current URL:', window.location.href);
   console.log('Hostname:', window.location.hostname);
   
-  const { hostname, pathname } = window.location;
+  const { hostname } = window.location;
   
   // Check if we're on a Lovable preview URL
   if (hostname.includes('lovable.app') || 
       hostname.includes('lovable.dev') || 
       hostname.includes('gptengineer.app')) {
     console.log('Detected preview URL');
-    
-    // For preview URLs, no basename is needed as the server handles it
     return '/';
   }
   
-  // Default case - use root path
   console.log('Using default basename: /');
   return '/';
 };
@@ -82,12 +77,10 @@ const initializeApp = async () => {
     console.error('Failed to register service worker, continuing without it:', error);
   }
   
-  // Always render the app regardless of service worker status
+  // Render the app with single provider wrapping
   createRoot(document.getElementById("root")!).render(
     <BrowserRouter basename={basename}>
-      <AppProviders>
-        <AppRoutes />
-      </AppProviders>
+      <App />
     </BrowserRouter>
   );
 };
