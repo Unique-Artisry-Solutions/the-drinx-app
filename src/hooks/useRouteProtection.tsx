@@ -26,11 +26,12 @@ export const useRouteProtection = ({
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
   const { showError } = useDebouncedToast();
   
-  // Add protection state to prevent overlapping checks
+  // Step 4: Add protection state to prevent overlapping checks
   const protectionInProgress = useRef(false);
   const lastCheckedPath = useRef<string>('');
   const lastCheckedUser = useRef<string | null>(null);
   const lastCheckedAuthState = useRef<boolean>(false);
+  const cleanupTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // Memoize the protection check to prevent unnecessary re-runs
   const checkProtection = useCallback(() => {
@@ -39,7 +40,7 @@ export const useRouteProtection = ({
       return;
     }
     
-    // Prevent overlapping protection checks for the same state
+    // Step 4: Prevent overlapping protection checks for the same state
     const currentPath = location.pathname + location.search;
     const currentUserId = user?.id || null;
     const currentAuthState = !!user;
@@ -53,12 +54,18 @@ export const useRouteProtection = ({
       return;
     }
     
+    // Step 4: Set protection in progress flag
     protectionInProgress.current = true;
     lastCheckedPath.current = currentPath;
     lastCheckedUser.current = currentUserId;
     lastCheckedAuthState.current = currentAuthState;
     
     console.log('Route protection: Checking access for', currentPath, 'user:', !!user, 'authStable:', authStable);
+    
+    // Step 4: Clear any existing cleanup timeout
+    if (cleanupTimeoutRef.current) {
+      clearTimeout(cleanupTimeoutRef.current);
+    }
     
     // Check if auth is required and user is not logged in
     if (requireAuth && !user) {
@@ -79,7 +86,11 @@ export const useRouteProtection = ({
       }
       
       navigate(redirectTo, { replace: true });
-      protectionInProgress.current = false;
+      
+      // Step 4: Reset protection flag with cleanup
+      cleanupTimeoutRef.current = setTimeout(() => {
+        protectionInProgress.current = false;
+      }, 100);
       return;
     }
     
@@ -108,20 +119,46 @@ export const useRouteProtection = ({
         } else {
           navigate('/explore', { replace: true });
         }
-        protectionInProgress.current = false;
+        
+        // Step 4: Reset protection flag with cleanup
+        cleanupTimeoutRef.current = setTimeout(() => {
+          protectionInProgress.current = false;
+        }, 100);
         return;
       }
     }
     
     // If we reach here, user is authorized
     setIsAuthorized(true);
-    protectionInProgress.current = false;
+    
+    // Step 4: Reset protection flag with cleanup
+    cleanupTimeoutRef.current = setTimeout(() => {
+      protectionInProgress.current = false;
+    }, 100);
   }, [user, isLoading, authStable, requireAuth, allowedUserTypes, navigate, redirectTo, location.pathname, location.search, showToast, showError]);
   
-  // Use effect with stable dependencies
+  // Use effect with stable dependencies and cleanup
   useEffect(() => {
     checkProtection();
+    
+    // Step 4: Cleanup function to reset protection state
+    return () => {
+      if (cleanupTimeoutRef.current) {
+        clearTimeout(cleanupTimeoutRef.current);
+      }
+      // Don't reset protectionInProgress here as it might interfere with ongoing checks
+    };
   }, [checkProtection]);
+  
+  // Step 4: Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (cleanupTimeoutRef.current) {
+        clearTimeout(cleanupTimeoutRef.current);
+      }
+      protectionInProgress.current = false;
+    };
+  }, []);
   
   return { 
     isAuthorized, 

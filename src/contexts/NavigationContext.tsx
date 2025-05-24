@@ -15,6 +15,7 @@ interface NavigationContextType {
   navigationItems: UnifiedNavItem[];
   userType: 'individual' | 'establishment' | 'promoter' | 'admin' | 'guest';
   refreshNavigation: () => void;
+  isPathActive: (path: string) => boolean;
 }
 
 const NavigationContext = createContext<NavigationContextType | undefined>(undefined);
@@ -29,6 +30,14 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const previousUserTypeRef = useRef<string>('guest');
   const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isUpdatingRef = useRef(false);
+
+  // Helper function to check if a path is active
+  const isPathActive = (path: string): boolean => {
+    if (path === '/') {
+      return location.pathname === '/';
+    }
+    return location.pathname.startsWith(path);
+  };
 
   // Debounced navigation update function
   const updateNavigation = useMemo(() => {
@@ -119,8 +128,9 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const contextValue = useMemo(() => ({
     navigationItems,
     userType,
-    refreshNavigation
-  }), [navigationItems, userType, refreshNavigation]);
+    refreshNavigation,
+    isPathActive
+  }), [navigationItems, userType, refreshNavigation, isPathActive]);
 
   return (
     <NavigationContext.Provider value={contextValue}>
