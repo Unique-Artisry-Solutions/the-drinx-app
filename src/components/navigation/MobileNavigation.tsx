@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth';
 import { useAppNavigation } from '@/hooks/useAppNavigation';
@@ -13,7 +13,7 @@ interface ExtendedMobileNavigationProps extends MobileNavigationProps {
   forceGuestNavigation?: boolean;
 }
 
-const MobileNavigation: React.FC<ExtendedMobileNavigationProps> = ({ 
+const MobileNavigation: React.FC<ExtendedMobileNavigationProps> = React.memo(({ 
   type, 
   userType = 'individual',
   forceGuestNavigation = false
@@ -23,19 +23,19 @@ const MobileNavigation: React.FC<ExtendedMobileNavigationProps> = ({
   const { goToHomePage } = useAppNavigation();
   const { navigationItems, userType: currentUserType } = useNavigation();
   
-  // Convert guest to individual for mobile navigation components that don't support guest
-  const mobileUserType = currentUserType === 'guest' ? 'individual' : 
-    (currentUserType === 'admin' ? 'individual' : currentUserType);
+  // Memoize the mobile user type conversion
+  const mobileUserType = useMemo(() => {
+    return currentUserType === 'guest' ? 'individual' : 
+      (currentUserType === 'admin' ? 'individual' : currentUserType);
+  }, [currentUserType]);
   
-  // Get the proper profile user type for mobile navigation hook
-  const getMobileProfileUserType = (): 'individual' | 'establishment' | 'promoter' | 'admin' => {
+  // Memoize the profile user type for mobile navigation hook
+  const profileUserType = useMemo((): 'individual' | 'establishment' | 'promoter' | 'admin' => {
     if (currentUserType === 'admin') return 'admin';
     if (currentUserType === 'establishment') return 'establishment';
     if (currentUserType === 'promoter') return 'promoter';
     return 'individual';
-  };
-  
-  const profileUserType = getMobileProfileUserType();
+  }, [currentUserType]);
   
   const {
     expanded,
@@ -43,27 +43,32 @@ const MobileNavigation: React.FC<ExtendedMobileNavigationProps> = ({
     getProfilePath,
   } = useMobileNavigation(type, profileUserType, forceGuestNavigation);
 
-  // Create a handleHomeClick that uses the navigation hook and prevents default
-  const handleHomeClick = (e: React.MouseEvent) => {
+  // Memoize the home click handler
+  const handleHomeClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     goToHomePage(currentUserType === 'guest' ? 'individual' : currentUserType);
-  };
+  }, [goToHomePage, currentUserType]);
 
-  const handleProfileClick = (item: any, e: React.MouseEvent) => {
+  // Memoize the profile click handler
+  const handleProfileClick = useCallback((item: any, e: React.MouseEvent) => {
     if (item.path === getProfilePath() && shouldShowProfileItems) {
       e.preventDefault();
       toggleExpand();
     }
-  };
+  }, [getProfilePath, toggleExpand]);
 
-  const shouldShowProfileItems = 
-    type === 'user' && 
-    ((location.pathname === '/profile' || location.pathname.startsWith('/profile/')) ||
-     (currentUserType === 'establishment' && 
-      (location.pathname === '/establishment' || location.pathname.startsWith('/establishment/'))));
+  // Memoize the profile items visibility check
+  const shouldShowProfileItems = useMemo(() => {
+    return type === 'user' && 
+      ((location.pathname === '/profile' || location.pathname.startsWith('/profile/')) ||
+       (currentUserType === 'establishment' && 
+        (location.pathname === '/establishment' || location.pathname.startsWith('/establishment/'))));
+  }, [type, location.pathname, currentUserType]);
 
-  const hiddenNavPaths = ['/admin/login'];
+  // Memoize hidden nav paths
+  const hiddenNavPaths = useMemo(() => ['/admin/login'], []);
 
+  // Early return if path should be hidden
   if (hiddenNavPaths.includes(location.pathname)) {
     return null;
   }
@@ -84,6 +89,8 @@ const MobileNavigation: React.FC<ExtendedMobileNavigationProps> = ({
       />
     </>
   );
-};
+});
+
+MobileNavigation.displayName = 'MobileNavigation';
 
 export default MobileNavigation;
