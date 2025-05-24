@@ -23,9 +23,8 @@ const ContentModerationPage = lazy(() => import('@/pages/admin/ContentModeration
 const ThemeCustomizationPage = lazy(() => import('@/pages/admin/ThemeCustomizationPage'));
 const TestingInterfacePage = lazy(() => import('@/pages/admin/TestingInterfacePage'));
 
-// Simplified admin routes - removed AdminRouteHandler complexity
+// Simplified admin routes - removed conflicting /admin route
 export const adminRoutes: RouteObject[] = [
-  { path: '/admin', element: <AdminLogin /> },
   { path: '/admin/login', element: <AdminLogin /> },
   // All admin routes use the AdminLayout
   { 
