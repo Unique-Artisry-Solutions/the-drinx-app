@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -24,12 +25,15 @@ const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = (props) => {
   const location = useLocation();
   const { isDevelopment, isInitialized, isDevModeActive, devMode } = useDevelopmentMode();
   
+  // Check if we're in admin context
+  const isAdminContext = location.pathname.startsWith('/admin');
+  
   // Scroll to top when route changes
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [location.pathname]);
   
-  // Log comprehensive state for debugging
+  // Enhanced logging for admin context
   useEffect(() => {
     console.log('ResponsiveLayout - Route navigation flow:', {
       pathname: location.pathname,
@@ -38,19 +42,35 @@ const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = (props) => {
       isDevModeActive,
       devMode,
       isMobile,
+      isAdminContext,
       timestamp: new Date().toISOString()
     });
-  }, [location.pathname, isDevelopment, isInitialized, isDevModeActive, devMode, isMobile]);
+
+    // Additional admin-specific logging
+    if (isAdminContext) {
+      console.log('ResponsiveLayout - Admin context detected:', {
+        shouldShowDevSwitcher: isDevelopment && isInitialized,
+        adminPath: location.pathname,
+        devSwitcherConditions: {
+          isDevelopment,
+          isInitialized
+        }
+      });
+    }
+  }, [location.pathname, isDevelopment, isInitialized, isDevModeActive, devMode, isMobile, isAdminContext]);
   
   console.log('ResponsiveLayout rendering DevRoleSwitcher with development state:', {
     isDevelopment,
-    isInitialized
+    isInitialized,
+    isAdminContext,
+    willRender: isDevelopment && isInitialized
   });
   
   return (
     <>
       {isMobile ? <MobileLayout {...props} /> : <DesktopLayout {...props} />}
-      <DevRoleSwitcher />
+      {/* Always render DevRoleSwitcher if in development, regardless of admin context */}
+      {isDevelopment && isInitialized && <DevRoleSwitcher />}
     </>
   );
 };
