@@ -1,7 +1,8 @@
+
 import { useNavigate } from 'react-router-dom';
 import { useCallback, useMemo } from 'react';
 import { useAuth } from '@/contexts/auth/AuthProvider';
-import { enhancedDebouncedToast } from '@/utils/enhancedDebouncedToast';
+import { debouncedToast } from '@/utils/debouncedToast';
 
 export const useAppNavigation = () => {
   const navigate = useNavigate();
@@ -132,7 +133,7 @@ export const useAppNavigation = () => {
 
   const goToAdminDashboard = useCallback(() => {
     if (!canNavigate()) {
-      enhancedDebouncedToast.navigationError(
+      debouncedToast.error(
         'Navigation Error', 
         'Please wait for authentication to complete.',
         { duration: 3000 }
@@ -149,7 +150,7 @@ export const useAppNavigation = () => {
    */
   const goToEditPage = useCallback((entityType: string, id: string, preventRefresh = true) => {
     if (!canNavigate()) {
-      enhancedDebouncedToast.navigationError(
+      debouncedToast.error(
         'Navigation Error', 
         'Please wait for the page to load completely.',
         { duration: 3000 }
@@ -180,7 +181,7 @@ export const useAppNavigation = () => {
     if (!options?.bypassGuards && !canNavigate()) {
       console.log("useAppNavigation - Route navigation blocked for path:", path);
       if (options?.showToast) {
-        enhancedDebouncedToast.navigationError(
+        debouncedToast.error(
           'Navigation Error', 
           'Please wait for authentication to complete.',
           { duration: 3000 }
@@ -197,11 +198,11 @@ export const useAppNavigation = () => {
                                                 toastType === 'error' ? 'Error' : 'Information');
       
       if (toastType === 'success') {
-        enhancedDebouncedToast.authSuccess(toastTitle, options.toastMessage, { duration: 3000 });
+        debouncedToast.success(toastTitle, options.toastMessage, { duration: 3000 });
       } else if (toastType === 'error') {
-        enhancedDebouncedToast.authError(toastTitle, options.toastMessage, { duration: 5000 });
+        debouncedToast.error(toastTitle, options.toastMessage, { duration: 5000 });
       } else {
-        enhancedDebouncedToast.authRecovery(toastTitle, options.toastMessage, { duration: 3000 });
+        debouncedToast.info(toastTitle, options.toastMessage, { duration: 3000 });
       }
     }
   }, [navigate, canNavigate]);

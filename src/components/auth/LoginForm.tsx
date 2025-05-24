@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { CardContent, CardFooter } from '@/components/ui/card';
-import { enhancedDebouncedToast } from '@/utils/enhancedDebouncedToast';
+import { debouncedToast } from '@/utils/debouncedToast';
 import AuthButton from './AuthButton';
 import { useAuth } from '@/contexts/auth/AuthProvider';
 import { useAuthLoadingStates } from '@/hooks/useAuthLoadingStates';
@@ -43,7 +43,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
         throw result.error;
       }
       
-      enhancedDebouncedToast.authSuccess(
+      debouncedToast.success(
         'Login Successful',
         'Welcome back!',
         { duration: 3000 }
@@ -60,7 +60,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
       const errorMessage = error.message || 'Failed to sign in';
       setFormError(errorMessage);
       
-      enhancedDebouncedToast.authError(
+      debouncedToast.error(
         'Login Failed',
         errorMessage,
         { duration: 5000 }

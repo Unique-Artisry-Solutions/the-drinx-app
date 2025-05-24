@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { CardContent, CardFooter } from '@/components/ui/card';
-import { enhancedDebouncedToast } from '@/utils/enhancedDebouncedToast';
+import { debouncedToast } from '@/utils/debouncedToast';
 import AuthButton from './AuthButton';
 import { useAuth } from '@/contexts/auth/AuthProvider';
 import SignupConfirmationModal from './SignupConfirmationModal';
@@ -78,7 +78,7 @@ const SignupForm: React.FC<SignupFormProps> = ({
       
       setShowConfirmationModal(true);
       
-      enhancedDebouncedToast.authSuccess(
+      debouncedToast.success(
         'Signup Successful',
         'Please check your email to verify your account.',
         { duration: 3000 }
@@ -93,7 +93,7 @@ const SignupForm: React.FC<SignupFormProps> = ({
       const errorMessage = error.message || 'Failed to sign up';
       setFormError(errorMessage);
       
-      enhancedDebouncedToast.authError(
+      debouncedToast.error(
         'Signup Failed',
         errorMessage,
         { duration: 5000 }
