@@ -65,12 +65,13 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
         <AnalysisProgress 
           progress={analysisProgress}
           steps={analysisSteps}
+          analyzing={analyzing}
         />
       )}
 
       {/* Status Update Notification */}
       {updatedFeaturesCount > 0 && (
-        <StatusUpdateNotification count={updatedFeaturesCount} />
+        <StatusUpdateNotification updatedCount={updatedFeaturesCount} />
       )}
 
       {/* Data Validation Warning */}
@@ -171,7 +172,6 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
         <DevelopmentProgressDashboard
           currentSnapshot={currentSnapshot}
           monthlyProgressData={monthlyProgressData}
-          progressHistory={progressHistory}
         />
       )}
 
@@ -183,7 +183,6 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
         <CardContent className="flex gap-4">
           <CreateReleaseFromFeaturesButton 
             onClick={onCreateRelease}
-            featuresReady={allFeatures.filter(f => f.status === 'implemented').length}
           />
           <Button variant="outline">
             View Analytics

@@ -107,6 +107,7 @@ const SystemBreakdownContent: React.FC = () => {
             adminFeatures={adminFeatures}
             establishmentFeatures={establishmentFeatures}
             individualFeatures={individualFeatures}
+            promoterFeatures={promoterFeatures}
           />
         </TabsContent>
       </div>

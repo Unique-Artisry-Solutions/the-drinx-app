@@ -15,13 +15,13 @@ import { Search, Filter } from 'lucide-react';
 interface EnhancedFeatureTabProps {
   features: FeatureItem[];
   title: string;
-  description: string;
+  userType: string;
 }
 
-export const EnhancedFeatureTab: React.FC<EnhancedFeatureTabProps> = ({
+const EnhancedFeatureTab: React.FC<EnhancedFeatureTabProps> = ({
   features,
   title,
-  description
+  userType
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
@@ -39,7 +39,7 @@ export const EnhancedFeatureTab: React.FC<EnhancedFeatureTabProps> = ({
     <div className="space-y-6">
       <div className="flex flex-col gap-2">
         <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
-        <p className="text-gray-500">{description}</p>
+        <p className="text-gray-500">Features for {userType} users</p>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4">
@@ -174,3 +174,5 @@ export const EnhancedFeatureTab: React.FC<EnhancedFeatureTabProps> = ({
     </div>
   );
 };
+
+export default EnhancedFeatureTab;
