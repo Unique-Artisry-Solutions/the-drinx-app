@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -22,6 +21,9 @@ const AdminEstablishmentsPage = () => {
     isLoading, 
     filterEstablishments 
   } = useEstablishments({ searchTerm });
+
+  // Add debugging
+  console.log('AdminEstablishmentsPage: Component rendered');
 
   // Check if user is authenticated as admin
   React.useEffect(() => {

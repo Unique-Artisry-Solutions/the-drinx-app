@@ -6,6 +6,9 @@ import PhotoModeration from '@/components/admin/PhotoModeration';
 const PhotoModerationPage: React.FC = () => {
   const navigate = useNavigate();
   
+  // Add debugging
+  console.log('PhotoModerationPage: Component rendered');
+  
   // Check if user is authenticated as admin
   useEffect(() => {
     const isAdmin = localStorage.getItem('admin_authenticated') === 'true';

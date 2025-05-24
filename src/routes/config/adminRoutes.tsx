@@ -11,16 +11,17 @@ import AdminDocumentationPage from '@/pages/admin/AdminDocumentationPage';
 import SystemConfigurationPage from '@/pages/admin/SystemConfigurationPage';
 import AdminLayout from '@/components/admin/layout/AdminLayout';
 import AdminNotFound from '@/components/admin/AdminNotFound';
+// Convert problematic lazy imports to direct imports
+import AdminEstablishmentsPage from '@/pages/admin/AdminEstablishmentsPage';
+import PhotoModerationPage from '@/pages/admin/PhotoModerationPage';
 
 const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
 const RewardSystemMonitorPage = lazy(() => import('@/pages/admin/RewardSystemMonitorPage'));
 const RewardsAdminPage = lazy(() => import('@/pages/admin/RewardsAdminPage'));
 const AdminUsersPage = lazy(() => import('@/pages/admin/AdminUsersPage'));
 const AdminUserProfile = lazy(() => import('@/pages/admin/AdminUserProfile'));
-const AdminEstablishmentsPage = lazy(() => import('@/pages/admin/AdminEstablishmentsPage'));
 const AdminEstablishmentProfile = lazy(() => import('@/pages/admin/AdminEstablishmentProfile'));
 const SystemAnalyticsPage = lazy(() => import('@/pages/admin/SystemAnalyticsPage'));
-const PhotoModerationPage = lazy(() => import('@/pages/admin/PhotoModerationPage'));
 const ContentModerationPage = lazy(() => import('@/pages/admin/ContentModerationPage'));
 const ThemeCustomizationPage = lazy(() => import('@/pages/admin/ThemeCustomizationPage'));
 const TestingInterfacePage = lazy(() => import('@/pages/admin/TestingInterfacePage'));
