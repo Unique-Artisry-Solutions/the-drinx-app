@@ -70,7 +70,8 @@ export const ProtectedRouteWithChildren: React.FC<{
   if (isDevelopment && isDevModeActive) {
     console.log(`ProtectedRouteWithChildren: Development mode active - BYPASSING protection for ${userType}`, {
       devMode,
-      requestedUserType: userType
+      requestedUserType: userType,
+      immediate: true
     });
     return children;
   }

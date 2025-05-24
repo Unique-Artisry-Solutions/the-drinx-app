@@ -11,8 +11,9 @@ export const useDevelopmentMode = () => {
   const [isDevelopment, setIsDevelopment] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
   
-  // Use refs to prevent render fluctuations
+  // Use refs to prevent render fluctuations and enable synchronous access
   const isDevelopmentRef = useRef<boolean>(false);
+  const devModeRef = useRef<DevUserType>(null);
   const initializationRef = useRef<boolean>(false);
 
   // Initialize development mode detection immediately and persistently
@@ -47,11 +48,13 @@ export const useDevelopmentMode = () => {
       const savedDevType = localStorage.getItem('dev_user_type') as DevUserType;
       if (savedDevType) {
         console.log('useDevelopmentMode - Restored dev mode from storage:', savedDevType);
+        devModeRef.current = savedDevType;
         setDevMode(savedDevType);
       }
     } else {
       // Clear dev mode if not in development
       localStorage.removeItem('dev_user_type');
+      devModeRef.current = null;
       setDevMode(null);
     }
   }, []);
@@ -107,29 +110,39 @@ export const useDevelopmentMode = () => {
     }
     
     console.log('useDevelopmentMode - Switching to user type:', userType);
+    
+    // Update both state and ref synchronously for immediate availability
+    devModeRef.current = userType;
     setDevMode(userType);
     
     if (userType) {
       localStorage.setItem('dev_user_type', userType);
-      navigateToUserTypeDashboard(userType);
+      // Add small delay to ensure state is propagated before navigation
+      setTimeout(() => {
+        navigateToUserTypeDashboard(userType);
+      }, 10);
     } else {
       localStorage.removeItem('dev_user_type');
-      navigate('/landing');
+      setTimeout(() => {
+        navigate('/landing');
+      }, 10);
     }
   };
 
   const exitDevMode = () => {
     console.log('useDevelopmentMode - Exiting dev mode');
+    devModeRef.current = null;
     setDevMode(null);
     localStorage.removeItem('dev_user_type');
     navigate('/landing');
   };
 
-  const isDevModeActive = isDevelopmentRef.current && devMode !== null;
+  // Use refs for immediate state access, preventing race conditions
+  const isDevModeActive = isDevelopmentRef.current && devModeRef.current !== null;
   
   console.log('useDevelopmentMode - Current state:', {
     isDevelopment: isDevelopmentRef.current,
-    devMode,
+    devMode: devModeRef.current,
     isDevModeActive,
     isInitialized,
     location: location.pathname
@@ -137,7 +150,7 @@ export const useDevelopmentMode = () => {
 
   return {
     isDevelopment: isDevelopmentRef.current,
-    devMode,
+    devMode: devModeRef.current, // Return ref value for immediate access
     switchToUserType,
     exitDevMode,
     isDevModeActive,

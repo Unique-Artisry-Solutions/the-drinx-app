@@ -1,62 +1,13 @@
 
-import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React from 'react';
 import Layout from '@/components/Layout';
 import { MessageSquare, CalendarDays, ChartBar, Users, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/contexts/auth';
-import { useToast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const PromoterDashboardPage = () => {
-  const { user, isLoading } = useAuth();
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  
-  useEffect(() => {
-    const userType = localStorage.getItem('user_type');
-    
-    if (!isLoading) {
-      // If not loading and no user, redirect to auth
-      if (!user) {
-        // Store the current page as redirect destination
-        localStorage.setItem('auth_redirect', '/promoter/dashboard');
-        toast({
-          title: "Authentication Required",
-          description: "Please sign in to access the promoter dashboard",
-          variant: "destructive"
-        });
-        navigate('/login');
-      } 
-      // If user but wrong type, show error and redirect
-      else if (userType !== 'promoter') {
-        toast({
-          title: "Access Restricted",
-          description: "This area is for promoters only",
-          variant: "destructive"
-        });
-        navigate('/landing');
-      }
-    }
-  }, [user, isLoading, navigate, toast]);
-
-  if (isLoading) {
-    return (
-      <Layout>
-        <div className="container mx-auto max-w-6xl px-4 py-8">
-          <div className="animate-pulse space-y-4">
-            <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="h-40 bg-gray-200 rounded"></div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </Layout>
-    );
-  }
+  console.log('PromoterDashboardPage - Rendering dashboard (route protection handled at route level)');
 
   return (
     <Layout>
