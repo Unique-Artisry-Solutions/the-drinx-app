@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
+import { useDevAuthBypass } from '@/hooks/useDevAuthBypass';
 
 // Sample data - would be fetched from API in a real application
 import { sampleEstablishments, sampleCocktails } from '@/data/sampleData';
@@ -17,6 +18,13 @@ const AdminDashboard: React.FC = () => {
   const [cocktails, setCocktails] = useState(sampleCocktails);
   const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
+  const { user, isUsingDevBypass } = useDevAuthBypass();
+
+  console.log('AdminDashboard: Auth state', { 
+    user: !!user, 
+    isUsingDevBypass,
+    userId: user?.id 
+  });
 
   const handleDeleteEstablishment = (id: string) => {
     setEstablishments(establishments.filter(est => est.id !== id));
@@ -47,7 +55,14 @@ const AdminDashboard: React.FC = () => {
       <main className="container max-w-5xl mx-auto p-4 pt-6">
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
           <h1 className="text-2xl font-semibold mb-2 text-gray-800">Dashboard</h1>
-          <p className="text-gray-600 mb-4">Manage your establishments, cocktails, and more</p>
+          <p className="text-gray-600 mb-4">
+            Manage your establishments, cocktails, and more
+            {isUsingDevBypass && (
+              <span className="ml-2 text-sm bg-orange-100 text-orange-800 px-2 py-1 rounded">
+                Dev Mode Active
+              </span>
+            )}
+          </p>
           
           <SearchToolbar 
             searchTerm={searchTerm} 

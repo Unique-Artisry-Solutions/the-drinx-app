@@ -5,6 +5,7 @@ import AdminTopNav from '@/components/navigation/admin/AdminTopNav';
 import AdminSidebar from './AdminSidebar';
 import { useDevelopmentMode } from '@/contexts/DevelopmentModeContext';
 import { useAuth } from '@/contexts/auth/AuthProvider';
+import { DevAuthService } from '@/services/DevAuthService';
 
 interface AdminLayoutProps {
   children?: React.ReactNode;
@@ -14,24 +15,26 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const { isDevModeActive, devMode, isDevelopment } = useDevelopmentMode();
   const { user, session, isLoading, userType } = useAuth();
   
-  // SIMPLE DEV MODE BYPASS: If in dev mode with admin role, render directly
-  if (isDevelopment && isDevModeActive && devMode === 'admin') {
-    console.log('AdminLayout: Dev mode bypass - rendering admin interface');
-    return (
-      <div className="h-screen flex flex-col bg-gray-100">
-        <AdminTopNav />
-        <div className="flex flex-1 overflow-hidden">
-          <AdminSidebar />
-          <main className="flex-1 overflow-auto p-6">
-            {children || <Outlet />}
-          </main>
-        </div>
-      </div>
-    );
-  }
+  // Get effective auth state (dev bypass or real auth)
+  const effectiveAuth = DevAuthService.getEffectiveAuthState(
+    user,
+    session,
+    !!user && !!session,
+    isDevelopment,
+    isDevModeActive,
+    devMode
+  );
+  
+  console.log('AdminLayout: Auth state', {
+    isDevelopment,
+    isDevModeActive,
+    devMode,
+    effectiveAuth,
+    realAuth: { user: !!user, session: !!session, userType }
+  });
 
-  // Show loading state while auth is being checked
-  if (isLoading) {
+  // Show loading state while auth is being checked (but not in dev mode)
+  if (isLoading && !DevAuthService.shouldBypassAuth(isDevelopment, isDevModeActive, devMode)) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -42,19 +45,24 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     );
   }
 
-  // Check if user is properly authenticated as admin
-  if (!user || !session || userType !== 'admin') {
+  // Check if user is properly authenticated as admin (with dev bypass)
+  if (!effectiveAuth.isAuthenticated || effectiveAuth.userType !== 'admin') {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <h2 className="text-xl font-semibold text-gray-800 mb-2">Access Denied</h2>
           <p className="text-gray-600">You need admin privileges to access this area.</p>
+          {isDevelopment && (
+            <p className="text-sm text-orange-600 mt-2">
+              Tip: Use the dev mode toggle to switch to admin user type for testing
+            </p>
+          )}
         </div>
       </div>
     );
   }
 
-  // Normal authenticated admin flow
+  // Render admin interface
   return (
     <div className="h-screen flex flex-col bg-gray-100">
       <AdminTopNav />
