@@ -9,6 +9,6 @@ export type { UnifiedNavItem };
 
 export interface MobileNavigationProps {
   type: NavigationType;
-  userType: 'individual' | 'establishment' | 'promoter';
+  userType: 'individual' | 'establishment' | 'promoter' | 'admin';
   forceGuestNavigation?: boolean;
 }

@@ -7,18 +7,22 @@ import { useAppNavigation } from '@/hooks/useAppNavigation';
 
 export const useMobileNavigation = (
   type: NavigationType,
-  userType: 'individual' | 'establishment' | 'promoter',
+  userType: 'individual' | 'establishment' | 'promoter' | 'admin',
   forceGuestNavigation: boolean = false
 ) => {
   const location = useLocation();
   const { navigate } = useAppNavigation();
-  const [currentUserType, setCurrentUserType] = useState<'individual' | 'establishment' | 'promoter'>(userType);
+  const [currentUserType, setCurrentUserType] = useState<'individual' | 'establishment' | 'promoter' | 'admin'>(userType);
   const [expanded, setExpanded] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
     const userTypeFromStorage = localStorage.getItem('user_type');
-    if (userTypeFromStorage === 'establishment') {
+    const isAdminAuth = localStorage.getItem('admin_authenticated') === 'true';
+    
+    if (isAdminAuth) {
+      setCurrentUserType('admin');
+    } else if (userTypeFromStorage === 'establishment') {
       setCurrentUserType('establishment');
     } else if (userTypeFromStorage === 'promoter') {
       setCurrentUserType('promoter');
@@ -40,7 +44,16 @@ export const useMobileNavigation = (
   const toggleExpand = () => setExpanded(!expanded);
 
   const getProfilePath = () => {
-    return currentUserType === 'establishment' ? '/establishment/profile' : '/profile';
+    switch (currentUserType) {
+      case 'establishment':
+        return '/establishment/profile';
+      case 'promoter':
+        return '/promoter/profile';
+      case 'admin':
+        return '/admin/profile';
+      default:
+        return '/profile';
+    }
   };
 
   const navigateToProfile = (e?: React.MouseEvent) => {

@@ -7,7 +7,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 
 interface ProfileMenuProps {
   expanded: boolean;
-  userType?: 'individual' | 'establishment' | 'promoter';
+  userType?: 'individual' | 'establishment' | 'promoter' | 'admin';
 }
 
 const ProfileMenu: React.FC<ProfileMenuProps> = ({ 
@@ -17,31 +17,34 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   
+  // Convert admin to individual for menu display purposes
+  const displayUserType = userType === 'admin' ? 'individual' : userType;
+  
   const bgClass = isDark 
     ? 'bg-gray-900/95 border-t border-gray-800' 
-    : userType === 'promoter'
+    : displayUserType === 'promoter'
       ? 'bg-white/95 border-t border-purple-200'
       : 'bg-white/95 border-t border-gray-100';
   
   const textClass = isDark 
     ? 'text-gray-300' 
-    : userType === 'promoter'
+    : displayUserType === 'promoter'
       ? 'text-purple-700'
       : 'text-gray-600';
     
   const activeClass = isDark 
     ? 'bg-gray-800 text-white' 
-    : userType === 'promoter'
+    : displayUserType === 'promoter'
       ? 'bg-purple-50 text-purple-700'
       : 'bg-spiritless-pink/10 text-spiritless-pink';
   
-  const menuItems = userType === 'establishment' 
+  const menuItems = displayUserType === 'establishment' 
     ? [
         { icon: Store, label: 'Dashboard', path: '/establishment/dashboard' },
         { icon: BarChart4, label: 'Analytics', path: '/establishment/analytics' },
         { icon: Settings, label: 'Settings', path: '/settings' }
       ]
-    : userType === 'promoter'
+    : displayUserType === 'promoter'
     ? [
         { icon: Megaphone, label: 'Promotions', path: '/promotions' },
         { icon: BarChart4, label: 'Analytics', path: '/analytics' },

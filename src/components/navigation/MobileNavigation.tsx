@@ -25,7 +25,16 @@ const MobileNavigation: React.FC<ExtendedMobileNavigationProps> = ({
   
   // Convert admin to individual for mobile navigation components that don't support admin
   const mobileUserType = currentUserType === 'admin' ? 'individual' : currentUserType;
-  const profileUserType = userType === 'admin' ? 'individual' : userType;
+  
+  // Get the proper profile user type for mobile navigation hook
+  const getMobileProfileUserType = (): 'individual' | 'establishment' | 'promoter' | 'admin' => {
+    if (currentUserType === 'admin') return 'admin';
+    if (currentUserType === 'establishment') return 'establishment';
+    if (currentUserType === 'promoter') return 'promoter';
+    return 'individual';
+  };
+  
+  const profileUserType = getMobileProfileUserType();
   
   const {
     expanded,
