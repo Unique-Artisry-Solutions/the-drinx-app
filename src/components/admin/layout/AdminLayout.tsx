@@ -3,6 +3,7 @@ import React from 'react';
 import { Outlet } from 'react-router-dom';
 import AdminTopNav from '@/components/navigation/admin/AdminTopNav';
 import AdminSidebar from './AdminSidebar';
+import DevRoleSwitcher from '@/components/development/DevRoleSwitcher';
 import { useDevelopmentMode } from '@/contexts/DevelopmentModeContext';
 import { useAuth } from '@/contexts/auth/AuthProvider';
 import { DevAuthService } from '@/services/DevAuthService';
@@ -12,7 +13,7 @@ interface AdminLayoutProps {
 }
 
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
-  const { isDevModeActive, devMode, isDevelopment } = useDevelopmentMode();
+  const { isDevModeActive, devMode, isDevelopment, isInitialized } = useDevelopmentMode();
   const { user, session, isLoading, userType } = useAuth();
   
   // Get effective auth state (dev bypass or real auth)
@@ -64,15 +65,19 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
   // Render admin interface
   return (
-    <div className="h-screen flex flex-col bg-gray-100">
-      <AdminTopNav />
-      <div className="flex flex-1 overflow-hidden">
-        <AdminSidebar />
-        <main className="flex-1 overflow-auto p-6">
-          {children || <Outlet />}
-        </main>
+    <>
+      <div className="h-screen flex flex-col bg-gray-100">
+        <AdminTopNav />
+        <div className="flex flex-1 overflow-hidden">
+          <AdminSidebar />
+          <main className="flex-1 overflow-auto p-6">
+            {children || <Outlet />}
+          </main>
+        </div>
       </div>
-    </div>
+      {/* Add DevRoleSwitcher for admin pages */}
+      {isDevelopment && isInitialized && <DevRoleSwitcher />}
+    </>
   );
 };
 
