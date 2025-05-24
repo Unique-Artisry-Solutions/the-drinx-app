@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from './auth/AuthProvider';
@@ -20,7 +21,9 @@ interface NavigationContextType {
   navigationItems: NavigationItem[];
   breadcrumbs: BreadcrumbItem[];
   activeTab: string | null;
+  userType: UserType | null;
   shouldShowFeature: (featureKey: string) => boolean;
+  isPathActive: (path: string) => boolean;
 }
 
 const NavigationContext = createContext<NavigationContextType | undefined>(undefined);
@@ -38,6 +41,11 @@ export const NavigationProvider: React.FC<NavigationProviderProps> = ({ children
   const [navigationItems, setNavigationItems] = useState<NavigationItem[]>([]);
   const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbItem[]>([]);
   const [activeTab, setActiveTab] = useState<string | null>(null);
+  
+  // Function to check if a path is active
+  const isPathActive = (path: string): boolean => {
+    return location.pathname === path || location.pathname.startsWith(path + '/');
+  };
   
   // Rebuild navigation items and breadcrumbs on route changes or auth state changes
   useEffect(() => {
@@ -76,7 +84,9 @@ export const NavigationProvider: React.FC<NavigationProviderProps> = ({ children
     navigationItems,
     breadcrumbs,
     activeTab,
-    shouldShowFeature: (featureKey: string) => shouldShowFeature(featureKey, userType)
+    userType,
+    shouldShowFeature: (featureKey: string) => shouldShowFeature(featureKey, userType),
+    isPathActive
   };
   
   return (

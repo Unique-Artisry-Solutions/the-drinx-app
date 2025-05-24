@@ -30,6 +30,9 @@ export interface UnifiedNavItem {
   };
 }
 
+// Define NavigationItem as an alias to UnifiedNavItem for NavigationContext
+export type NavigationItem = UnifiedNavItem;
+
 // Define AdminNavItem as an alias to UnifiedNavItem for compatibility
 export type AdminNavItem = UnifiedNavItem;
 
@@ -55,3 +58,12 @@ export type UserType = 'individual' | 'establishment' | 'promoter' | 'admin';
  * Note: 'admin' is handled in auth logic but not part of the database enum
  */
 export type DatabaseRole = 'individual' | 'establishment' | 'promoter';
+
+/**
+ * Configuration interface for navigation
+ */
+export interface NavigationConfig {
+  enableBreadcrumbs?: boolean;
+  enableActiveTabDetection?: boolean;
+  customNavItems?: NavigationItem[];
+}
