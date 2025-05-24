@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
@@ -19,7 +20,7 @@ export function useAuthActions() {
     }
   });
 
-  const refreshSession = async () => {
+  const refreshSession = async (): Promise<{ isEmailVerified: boolean }> => {
     try {
       console.log('Refreshing session in useAuthActions...');
       
@@ -41,21 +42,17 @@ export function useAuthActions() {
         const isVerified = !!data.session.user.email_confirmed_at;
         console.log('Session refreshed, email verified:', isVerified);
         
-        return { 
-          session: data.session, 
-          user: data.session.user,
-          isEmailVerified: isVerified
-        };
+        return { isEmailVerified: isVerified };
       }
       
-      return { session: null, user: null, isEmailVerified: false };
+      return { isEmailVerified: false };
     } catch (error) {
       console.error('Error in refreshSession:', error);
-      return { session: null, user: null, isEmailVerified: false };
+      return { isEmailVerified: false };
     }
   };
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (email: string, password: string): Promise<{ error: Error | null; data: any }> => {
     try {
       setIsLoading(true);
       console.log('Signing in user:', email);
@@ -76,7 +73,7 @@ export function useAuthActions() {
         });
         
         await supabase.auth.signOut();
-        throw new Error('Email not verified');
+        return { error: new Error('Email not verified'), data: null };
       } else if (data.user && data.session) {
         toast({
           title: 'Login successful',
@@ -98,43 +95,44 @@ export function useAuthActions() {
         if (data.user.user_metadata.username) {
           localStorage.setItem('user_username', data.user.user_metadata.username);
         }
+        
+        return { error: null, data };
       }
+      
+      return { error: new Error('Unknown error occurred'), data: null };
     } catch (error: any) {
       toast({
         title: 'Login failed',
         description: error.message || 'An error occurred during login',
         variant: 'destructive',
       });
-      throw error;
+      return { error, data: null };
     } finally {
       setIsLoading(false);
     }
   };
 
-  const signUp = async (email: string, password: string, options?: { 
-    data?: { [key: string]: any },
-    emailRedirectTo?: string 
-  }) => {
+  const signUp = async (formData: any): Promise<any> => {
     try {
       setIsLoading(true);
-      console.log('Starting sign up process for:', email);
+      console.log('Starting sign up process for:', formData.email);
       
       const baseUrl = window.location.origin;
-      const finalRedirectTo = options?.emailRedirectTo || `${baseUrl}/?email_confirmed=true`;
+      const finalRedirectTo = formData.emailRedirectTo || `${baseUrl}/?email_confirmed=true`;
       console.log('Using redirect URL:', finalRedirectTo);
       
       const { data, error } = await supabase.auth.signUp({ 
-        email, 
-        password,
+        email: formData.email, 
+        password: formData.password,
         options: {
-          data: options?.data,
+          data: formData.data,
           emailRedirectTo: finalRedirectTo,
         }
       });
       
       if (error) {
         console.error('Signup error from Supabase:', error);
-        throw error;
+        return { error, data: null };
       }
       
       console.log('Signup response:', data);
@@ -143,9 +141,11 @@ export function useAuthActions() {
         console.log('User created, email verification needed');
         toast({
           title: 'Verification email sent',
-          description: `Please check ${email} inbox and click the verification link`,
+          description: `Please check ${formData.email} inbox and click the verification link`,
         });
       }
+      
+      return { error: null, data };
     } catch (error: any) {
       console.error('Error in signUp function:', error);
       toast({
@@ -153,13 +153,13 @@ export function useAuthActions() {
         description: error.message || 'An error occurred during registration',
         variant: 'destructive',
       });
-      throw error;
+      return { error, data: null };
     } finally {
       setIsLoading(false);
     }
   };
 
-  const signOut = async () => {
+  const signOut = async (): Promise<void> => {
     try {
       setIsLoading(true);
       console.log('Signing out user and ending all sessions...');
@@ -201,7 +201,7 @@ export function useAuthActions() {
     }
   };
 
-  const updateProfile = async (data: { [key: string]: any }) => {
+  const updateUserProfile = async (data: { [key: string]: any }): Promise<void> => {
     try {
       setIsLoading(true);
       console.log('Updating user profile:', data);
@@ -239,34 +239,89 @@ export function useAuthActions() {
     }
   };
 
-  const resetPassword = async (email: string) => {
+  const updatePassword = async (newPassword: string): Promise<void> => {
     try {
       setIsLoading(true);
-      console.log('Sending password reset email to:', email);
+      console.log('Updating user password');
       
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+      await executeWithRetry(async () => {
+        const { error } = await supabase.auth.updateUser({ password: newPassword });
+        if (error) throw error;
       });
-      
-      if (error) {
-        console.error('Password reset error:', error);
-        throw error;
-      }
       
       toast({
-        title: 'Password Reset Email Sent',
-        description: 'Check your email for password reset instructions',
+        title: 'Password updated',
+        description: 'Your password has been successfully updated',
       });
-      
     } catch (error: any) {
       toast({
-        title: 'Password Reset Failed',
-        description: error.message || 'Failed to send password reset email',
+        title: 'Password update failed',
+        description: error.message || 'An error occurred while updating password',
         variant: 'destructive',
       });
       throw error;
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const sendVerificationEmail = async (email: string): Promise<void> => {
+    try {
+      setIsLoading(true);
+      console.log('Sending verification email to:', email);
+      
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/?email_confirmed=true`
+        }
+      });
+      
+      if (error) {
+        console.error('Verification email error:', error);
+        throw error;
+      }
+      
+      toast({
+        title: 'Verification Email Sent',
+        description: 'Check your email for verification instructions',
+      });
+      
+    } catch (error: any) {
+      toast({
+        title: 'Verification Email Failed',
+        description: error.message || 'Failed to send verification email',
+        variant: 'destructive',
+      });
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const recoverAuthState = async (): Promise<boolean> => {
+    try {
+      console.log('Attempting to recover auth state...');
+      
+      const { data, error } = await supabase.auth.refreshSession();
+      
+      if (!error && data.session) {
+        sessionPersistenceService.updateSession(data.session, data.session.user);
+        
+        if (data.session.user?.user_metadata?.user_type) {
+          authCache.setUserType(data.session.user.id, data.session.user.user_metadata.user_type);
+        }
+        
+        console.log('Auth state recovered successfully');
+        return true;
+      }
+      
+      console.log('Auth state recovery failed');
+      return false;
+    } catch (error) {
+      console.error('Error recovering auth state:', error);
+      return false;
     }
   };
 
@@ -276,7 +331,9 @@ export function useAuthActions() {
     signIn,
     signUp,
     signOut,
-    updateProfile,
-    resetPassword
+    updateUserProfile,
+    updatePassword,
+    sendVerificationEmail,
+    recoverAuthState
   };
 }

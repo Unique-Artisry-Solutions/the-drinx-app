@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { CardContent, CardFooter } from '@/components/ui/card';
@@ -40,28 +41,37 @@ const SignupForm: React.FC<SignupFormProps> = ({
     setFormError('');
     setIsSubmitting(true);
     
-    try {
-      console.log('Signup attempt:', { 
-        email, 
-        username, 
-        userType: selectedUserType 
-      });
+    console.log('Signup attempt:', { 
+      email, 
+      username, 
+      userType: selectedUserType 
+    });
+    
+    const metadata = {
+      name,
+      username,
+      user_type: selectedUserType
+    };
+    
+    const redirectTo = `${window.location.origin}/?email_confirmed=true`;
+    
+    const result = await signUp({
+      email,
+      password,
+      data: metadata,
+      emailRedirectTo: redirectTo
+    });
+    
+    if (result.error) {
+      const errorMessage = result.error.message || 'Failed to sign up';
+      setFormError(errorMessage);
       
-      const metadata = {
-        name,
-        username,
-        user_type: selectedUserType
-      };
-      
-      const redirectTo = `${window.location.origin}/?email_confirmed=true`;
-      
-      await signUp({
-        email,
-        password,
-        data: metadata,
-        emailRedirectTo: redirectTo
-      });
-      
+      debouncedToast.error(
+        'Signup Failed',
+        errorMessage,
+        5000
+      );
+    } else {
       if (email === 'jacksonmcfarland14@gmail.com') {
         await supabase.rpc('initialize_admin_roles');
         console.log('Admin roles initialized');
@@ -74,22 +84,9 @@ const SignupForm: React.FC<SignupFormProps> = ({
         'Please check your email to verify your account.',
         3000
       );
-      
-    } catch (error: any) {
-      console.error('Signup error:', error);
-      
-      // More specific error handling
-      const errorMessage = error.message || 'Failed to sign up';
-      setFormError(errorMessage);
-      
-      debouncedToast.error(
-        'Signup Failed',
-        errorMessage,
-        5000
-      );
-    } finally {
-      setIsSubmitting(false);
     }
+    
+    setIsSubmitting(false);
   };
 
   return (

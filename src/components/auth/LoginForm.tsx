@@ -28,15 +28,20 @@ const LoginForm: React.FC<LoginFormProps> = ({
     setFormError('');
     setIsSubmitting(true);
     
-    try {
-      console.log('Login attempt:', { email, userType });
+    console.log('Login attempt:', { email, userType });
+    
+    const result = await signIn(email, password);
+    
+    if (result.error) {
+      const errorMessage = result.error.message || 'Failed to sign in';
+      setFormError(errorMessage);
       
-      const { error } = await signIn(email, password);
-      
-      if (error) {
-        throw error;
-      }
-      
+      debouncedToast.error(
+        'Login Failed',
+        errorMessage,
+        5000
+      );
+    } else {
       debouncedToast.success(
         'Login Successful',
         'Welcome back!',
@@ -49,21 +54,9 @@ const LoginForm: React.FC<LoginFormProps> = ({
       }
       
       // AuthProvider will handle all navigation automatically
-      
-    } catch (error: any) {
-      console.error('Login error:', error);
-      
-      const errorMessage = error.message || 'Failed to sign in';
-      setFormError(errorMessage);
-      
-      debouncedToast.error(
-        'Login Failed',
-        errorMessage,
-        5000
-      );
-    } finally {
-      setIsSubmitting(false);
     }
+    
+    setIsSubmitting(false);
   };
 
   return (
