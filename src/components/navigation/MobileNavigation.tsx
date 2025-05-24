@@ -79,7 +79,7 @@ const MobileNavigation: React.FC<ExtendedMobileNavigationProps> = ({
         handleHomeClick={handleHomeClick}
         handleProfileClick={handleProfileClick}
         getProfilePath={getProfilePath}
-        currentUserType={currentUserType}
+        currentUserType={mobileUserType}
       />
     </>
   );
