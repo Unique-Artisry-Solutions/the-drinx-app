@@ -1,6 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 
@@ -17,16 +16,7 @@ const AdminDashboard: React.FC = () => {
   const [establishments, setEstablishments] = useState(sampleEstablishments);
   const [cocktails, setCocktails] = useState(sampleCocktails);
   const [searchTerm, setSearchTerm] = useState('');
-  const navigate = useNavigate();
   const { toast } = useToast();
-
-  // Check if user is authenticated as admin
-  useEffect(() => {
-    const isAdmin = localStorage.getItem('admin_authenticated') === 'true';
-    if (!isAdmin) {
-      navigate('/admin');
-    }
-  }, [navigate]);
 
   const handleDeleteEstablishment = (id: string) => {
     setEstablishments(establishments.filter(est => est.id !== id));
