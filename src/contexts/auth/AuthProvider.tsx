@@ -1,328 +1,262 @@
 
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { AuthState, AuthActions, AuthContextType } from './types';
+import { toUserType, getUserTypeFromMetadata } from '@/utils/userTypeGuards';
 import { sessionPersistenceService } from '@/services/SessionPersistenceService';
 import { authCache } from './authCache';
-import { toUserType, getUserTypeFromMetadata } from '@/utils/userTypeGuards';
 import { useAppNavigation } from '@/hooks/useAppNavigation';
+import { debouncedToast } from '@/utils/debouncedToast';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [state, setState] = useState<AuthState>({
-    session: null,
-    user: null,
-    isAuthenticated: false,
-    isLoading: true,
-    isEmailVerified: false,
-    isVerificationEmailSent: false,
-    authError: null,
-    authStable: false,
-    userType: 'individual',
-    navigationReady: false,
-  });
+interface AuthProviderProps {
+  children: ReactNode;
+}
 
-  const { goToAfterLogin, goToHomePage } = useAppNavigation();
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [isVerificationEmailSent, setIsVerificationEmailSent] = useState(false);
+  const [authError, setAuthError] = useState<Error | null>(null);
+  const [authStable, setAuthStable] = useState(false);
+  const [navigationReady, setNavigationReady] = useState(false);
+  
+  const { goToAfterLogin } = useAppNavigation();
 
-  // Single source of truth for updating auth state
-  const updateAuthState = useCallback((updates: Partial<AuthState>) => {
-    setState(prev => ({ ...prev, ...updates }));
-  }, []);
+  // Computed state
+  const isAuthenticated = !!(session && user);
+  const userType = user ? getUserTypeFromMetadata(user.user_metadata) : 'individual';
 
-  // Determine user type from session data
-  const determineUserType = useCallback(async (user: any) => {
-    if (!user?.id) return 'individual';
-    
-    // Try cache first
-    const cachedUserType = authCache.getUserType(user.id);
-    if (cachedUserType) {
-      return cachedUserType;
-    }
-    
-    // Try user metadata
-    if (user.user_metadata?.user_type) {
-      const userType = getUserTypeFromMetadata(user.user_metadata);
-      authCache.setUserType(user.id, userType);
-      return userType;
-    }
-    
-    // Try database query
-    try {
-      const { data: roleData } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user.id)
-        .eq('is_active', true)
-        .single();
-      
-      if (roleData) {
-        const userType = toUserType(roleData.role);
-        authCache.setUserType(user.id, userType);
-        return userType;
-      }
-    } catch (error) {
-      console.warn('Failed to fetch user role from database:', error);
-    }
-    
-    return 'individual';
-  }, []);
-
-  // Handle auth state changes from Supabase
-  const handleAuthStateChange = useCallback(async (event: string, session: any) => {
-    console.log('Auth state change:', event, !!session);
-    
-    if (session?.user) {
-      const userType = await determineUserType(session.user);
-      const isEmailVerified = !!session.user.email_confirmed_at;
-      
-      // Update persistence service
-      sessionPersistenceService.updateSession(session, session.user);
-      
-      updateAuthState({
-        session,
-        user: session.user,
-        isAuthenticated: true,
-        isEmailVerified,
-        userType,
-        authError: null,
-        authStable: true,
-        navigationReady: true,
-        isLoading: false,
-      });
-    } else {
-      // Clear all auth data
-      sessionPersistenceService.clearSession();
-      
-      updateAuthState({
-        session: null,
-        user: null,
-        isAuthenticated: false,
-        isEmailVerified: false,
-        userType: 'individual',
-        authError: null,
-        authStable: true,
-        navigationReady: true,
-        isLoading: false,
-      });
-    }
-  }, [determineUserType, updateAuthState]);
-
-  // Initialize auth state
+  // Initialize session
   useEffect(() => {
     let mounted = true;
-    
+
     const initializeAuth = async () => {
       try {
         // Set up auth state listener first
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthStateChange);
-        
-        // Then check for existing session
-        const { session } = await sessionPersistenceService.initializeSession();
-        
-        if (mounted) {
-          if (session?.user) {
-            await handleAuthStateChange('SIGNED_IN', session);
-          } else {
-            updateAuthState({
-              authStable: true,
-              navigationReady: true,
-              isLoading: false,
-            });
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+          (event, newSession) => {
+            if (!mounted) return;
+            
+            console.log('Auth state change:', event, newSession?.user?.email);
+            
+            setSession(newSession);
+            setUser(newSession?.user || null);
+            setIsEmailVerified(!!newSession?.user?.email_confirmed_at);
+            setAuthError(null);
+            
+            if (newSession?.user) {
+              sessionPersistenceService.updateSession(newSession, newSession.user);
+            } else {
+              sessionPersistenceService.clearSession();
+            }
           }
+        );
+
+        // Then check for existing session
+        const persisted = await sessionPersistenceService.initializeSession();
+        if (mounted && persisted.session) {
+          setSession(persisted.session);
+          setUser(persisted.user);
+          setIsEmailVerified(!!persisted.user?.email_confirmed_at);
         }
-        
+
+        if (mounted) {
+          setIsLoading(false);
+          setAuthStable(true);
+          setNavigationReady(true);
+        }
+
         return () => {
           subscription.unsubscribe();
         };
       } catch (error) {
         console.error('Auth initialization error:', error);
         if (mounted) {
-          updateAuthState({
-            authError: error as Error,
-            authStable: true,
-            navigationReady: true,
-            isLoading: false,
-          });
+          setAuthError(error as Error);
+          setIsLoading(false);
+          setAuthStable(true);
         }
       }
     };
-    
-    const cleanup = initializeAuth();
-    
+
+    initializeAuth();
+
     return () => {
       mounted = false;
-      cleanup.then(fn => fn?.());
     };
-  }, [handleAuthStateChange, updateAuthState]);
+  }, []);
 
-  // Auth actions
-  const signIn = useCallback(async (email: string, password: string) => {
+  // Actions
+  const signIn = async (email: string, password: string) => {
     try {
-      updateAuthState({ isLoading: true, authError: null });
-      
+      setIsLoading(true);
+      setAuthError(null);
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
-        password,
+        password
       });
-      
-      if (error) {
-        updateAuthState({ authError: error, isLoading: false });
-        return { error, data: null };
-      }
-      
-      // Auth state will be updated via onAuthStateChange
-      return { error: null, data };
-    } catch (error) {
-      const authError = error as Error;
-      updateAuthState({ authError, isLoading: false });
-      return { error: authError, data: null };
-    }
-  }, [updateAuthState]);
 
-  const signUp = useCallback(async (formData: any) => {
+      if (error) throw error;
+
+      if (data.user && !data.user.email_confirmed_at) {
+        throw new Error('Email not verified. Please check your email and verify your account.');
+      }
+
+      return { error: null, data };
+    } catch (error: any) {
+      setAuthError(error);
+      return { error, data: null };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const signUp = async (formData: any) => {
     try {
-      updateAuthState({ isLoading: true, authError: null });
-      
+      setIsLoading(true);
+      setAuthError(null);
+
       const { data, error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
           data: formData.data,
-          emailRedirectTo: formData.emailRedirectTo,
-        },
+          emailRedirectTo: formData.emailRedirectTo
+        }
       });
-      
-      if (error) {
-        updateAuthState({ authError: error, isLoading: false });
-        return { error, data: null };
-      }
-      
-      updateAuthState({ 
-        isVerificationEmailSent: true,
-        isLoading: false 
-      });
-      
-      return { error: null, data };
-    } catch (error) {
-      const authError = error as Error;
-      updateAuthState({ authError, isLoading: false });
-      return { error: authError, data: null };
-    }
-  }, [updateAuthState]);
 
-  const signOut = useCallback(async () => {
+      if (error) throw error;
+
+      setIsVerificationEmailSent(true);
+      return { error: null, data };
+    } catch (error: any) {
+      setAuthError(error);
+      return { error, data: null };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const signOut = async () => {
     try {
-      updateAuthState({ isLoading: true });
-      
-      await supabase.auth.signOut();
-      
-      // Clear all cached data
+      setIsLoading(true);
       sessionPersistenceService.clearSession();
       
-      // Auth state will be updated via onAuthStateChange
-    } catch (error) {
-      console.error('Sign out error:', error);
-      updateAuthState({ authError: error as Error, isLoading: false });
-    }
-  }, [updateAuthState]);
-
-  const refreshSession = useCallback(async () => {
-    try {
-      const { data, error } = await supabase.auth.refreshSession();
-      
+      const { error } = await supabase.auth.signOut({ scope: 'global' });
       if (error) throw error;
       
-      const isEmailVerified = !!data.session?.user?.email_confirmed_at;
+      setSession(null);
+      setUser(null);
+      setIsEmailVerified(false);
+      setAuthError(null);
+    } catch (error: any) {
+      console.error('Sign out error:', error);
+      setAuthError(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const refreshSession = async () => {
+    try {
+      const { data, error } = await supabase.auth.refreshSession();
+      if (error) throw error;
       
-      // Auth state will be updated via onAuthStateChange
-      return { isEmailVerified };
-    } catch (error) {
-      console.error('Session refresh error:', error);
-      updateAuthState({ authError: error as Error });
+      const isVerified = !!data.session?.user?.email_confirmed_at;
+      setIsEmailVerified(isVerified);
+      
+      return { isEmailVerified: isVerified };
+    } catch (error: any) {
+      console.error('Refresh session error:', error);
+      setAuthError(error);
       return { isEmailVerified: false };
     }
-  }, [updateAuthState]);
+  };
 
-  const recoverAuthState = useCallback(async () => {
+  const recoverAuthState = async (): Promise<boolean> => {
     try {
-      updateAuthState({ isLoading: true, authError: null });
+      const { data, error } = await supabase.auth.getSession();
+      if (error) throw error;
       
-      const { data, error } = await supabase.auth.refreshSession();
-      
-      if (error || !data.session) {
-        // Clear invalid state
-        sessionPersistenceService.clearSession();
-        updateAuthState({
-          session: null,
-          user: null,
-          isAuthenticated: false,
-          userType: 'individual',
-          authStable: true,
-          navigationReady: true,
-          isLoading: false,
-        });
-        return false;
+      if (data.session) {
+        setSession(data.session);
+        setUser(data.session.user);
+        setIsEmailVerified(!!data.session.user.email_confirmed_at);
+        sessionPersistenceService.updateSession(data.session, data.session.user);
+        return true;
       }
       
-      // Auth state will be updated via onAuthStateChange
-      return true;
-    } catch (error) {
+      return false;
+    } catch (error: any) {
       console.error('Auth recovery error:', error);
-      updateAuthState({ authError: error as Error, isLoading: false });
+      setAuthError(error);
       return false;
     }
-  }, [updateAuthState]);
+  };
 
-  const sendVerificationEmail = useCallback(async (email: string) => {
+  const sendVerificationEmail = async (email: string) => {
     try {
       const { error } = await supabase.auth.resend({
         type: 'signup',
-        email,
+        email
       });
-      
       if (error) throw error;
       
-      updateAuthState({ isVerificationEmailSent: true });
-    } catch (error) {
-      console.error('Verification email error:', error);
-      updateAuthState({ authError: error as Error });
+      setIsVerificationEmailSent(true);
+      debouncedToast.success('Verification email sent', 'Please check your inbox.');
+    } catch (error: any) {
+      console.error('Send verification error:', error);
+      setAuthError(error);
       throw error;
     }
-  }, [updateAuthState]);
+  };
 
-  const updateUserProfile = useCallback(async (data: any) => {
+  const updateUserProfile = async (data: any) => {
     try {
       const { error } = await supabase.auth.updateUser({
-        data,
+        data
       });
-      
       if (error) throw error;
-      
-      // Auth state will be updated via onAuthStateChange
-    } catch (error) {
-      console.error('Profile update error:', error);
-      updateAuthState({ authError: error as Error });
+    } catch (error: any) {
+      console.error('Update profile error:', error);
+      setAuthError(error);
       throw error;
     }
-  }, [updateAuthState]);
+  };
 
-  const updatePassword = useCallback(async (newPassword: string) => {
+  const updatePassword = async (newPassword: string) => {
     try {
       const { error } = await supabase.auth.updateUser({
-        password: newPassword,
+        password: newPassword
       });
-      
       if (error) throw error;
-    } catch (error) {
-      console.error('Password update error:', error);
-      updateAuthState({ authError: error as Error });
+    } catch (error: any) {
+      console.error('Update password error:', error);
+      setAuthError(error);
       throw error;
     }
-  }, [updateAuthState]);
+  };
 
-  const value: AuthContextType = {
-    ...state,
+  const authState: AuthState = {
+    session,
+    user,
+    isAuthenticated,
+    isLoading,
+    isEmailVerified,
+    isVerificationEmailSent,
+    authError,
+    authStable,
+    userType,
+    navigationReady
+  };
+
+  const authActions: AuthActions = {
     signIn,
     signUp,
     signOut,
@@ -330,11 +264,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     recoverAuthState,
     sendVerificationEmail,
     updateUserProfile,
-    updatePassword,
+    updatePassword
+  };
+
+  const contextValue: AuthContextType = {
+    ...authState,
+    ...authActions
   };
 
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );
