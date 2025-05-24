@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 
 interface AuthButtonProps {
   isLoading: boolean;
+  disabled?: boolean;
   type: 'submit' | 'button';
   onClick?: () => void;
   variant?: 'default' | 'outline' | 'gradient';
@@ -14,6 +15,7 @@ interface AuthButtonProps {
 
 const AuthButton: React.FC<AuthButtonProps> = ({
   isLoading,
+  disabled = false,
   type = 'submit',
   onClick,
   variant = 'gradient',
@@ -31,7 +33,7 @@ const AuthButton: React.FC<AuthButtonProps> = ({
       type={type}
       className={buttonClass}
       variant={variant === 'gradient' ? 'default' : variant}
-      disabled={isLoading}
+      disabled={isLoading || disabled}
       onClick={onClick}
       size={size || (typeof children === 'string' && (children as string).length > 10 ? 'compact' : 'default')}
     >
