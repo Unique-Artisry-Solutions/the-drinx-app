@@ -3,6 +3,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthProvider';
 import { useDebouncedToast } from '@/hooks/useDebouncedToast';
+import { useDevelopmentMode } from '@/hooks/useDevelopmentMode';
 
 interface RouteProtectionOptions {
   requireAuth?: boolean;
@@ -21,6 +22,7 @@ export const useRouteProtection = ({
   showToast = true
 }: RouteProtectionOptions = {}) => {
   const { user, session, isLoading, authStable, userType } = useAuth();
+  const { isDevModeActive, devMode } = useDevelopmentMode();
   const navigate = useNavigate();
   const location = useLocation();
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
@@ -35,6 +37,13 @@ export const useRouteProtection = ({
   
   // Memoize the protection check to prevent unnecessary re-runs
   const checkProtection = useCallback(() => {
+    // In development mode, bypass all protection checks
+    if (isDevModeActive) {
+      console.log('Route protection: Development mode active, bypassing all checks');
+      setIsAuthorized(true);
+      return;
+    }
+    
     // Wait until auth is loaded and stable
     if (isLoading || !authStable) {
       return;
@@ -135,7 +144,7 @@ export const useRouteProtection = ({
     cleanupTimeoutRef.current = setTimeout(() => {
       protectionInProgress.current = false;
     }, 100);
-  }, [user, session, isLoading, authStable, userType, requireAuth, allowedUserTypes, navigate, redirectTo, location.pathname, location.search, showToast, showError]);
+  }, [user, session, isLoading, authStable, userType, requireAuth, allowedUserTypes, navigate, redirectTo, location.pathname, location.search, showToast, showError, isDevModeActive]);
   
   // Use effect with stable dependencies and cleanup
   useEffect(() => {

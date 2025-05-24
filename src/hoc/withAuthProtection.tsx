@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthProvider';
+import { useDevelopmentMode } from '@/hooks/useDevelopmentMode';
 import { UserType } from '@/types/navigation';
 
 export interface AuthProtectionOptions {
@@ -31,10 +32,18 @@ export function withAuthProtection<P extends object>(
 
   const ProtectedComponent: React.FC<P> = (props) => {
     const { user, session, isLoading, authStable, userType } = useAuth();
+    const { isDevModeActive, devMode } = useDevelopmentMode();
     const location = useLocation();
     const [shouldRedirect, setShouldRedirect] = useState(false);
     
     useEffect(() => {
+      // In development mode, bypass authentication checks
+      if (isDevModeActive) {
+        console.log('Development mode active, bypassing auth protection');
+        setShouldRedirect(false);
+        return;
+      }
+      
       // Wait for auth to stabilize
       if (isLoading || !authStable) return;
       
@@ -60,10 +69,10 @@ export function withAuthProtection<P extends object>(
       
       // All checks passed
       setShouldRedirect(false);
-    }, [user, session, isLoading, authStable, userType, location.pathname]);
+    }, [user, session, isLoading, authStable, userType, location.pathname, isDevModeActive]);
     
-    // Show loading state while checking auth
-    if ((isLoading || !authStable) && showLoadingState) {
+    // Show loading state while checking auth (but not in dev mode)
+    if ((isLoading || !authStable) && showLoadingState && !isDevModeActive) {
       return (
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
@@ -79,8 +88,8 @@ export function withAuthProtection<P extends object>(
       return <>{fallbackComponent}</>;
     }
     
-    // Redirect if checks failed
-    if (shouldRedirect) {
+    // Redirect if checks failed (but not in dev mode)
+    if (shouldRedirect && !isDevModeActive) {
       const redirectPath = userTypes.length > 0 
         ? { 
             pathname: redirectTo, 
@@ -91,7 +100,7 @@ export function withAuthProtection<P extends object>(
       return <Navigate to={redirectPath} state={{ from: location.pathname }} replace />;
     }
     
-    // Render protected component if all checks pass
+    // Render protected component if all checks pass or in dev mode
     return <Component {...props} />;
   };
 
@@ -106,10 +115,18 @@ export function withAdminProtection<P extends object>(
 ) {
   const AdminProtectedComponent: React.FC<P> = (props) => {
     const { user, session, isLoading, authStable, userType } = useAuth();
+    const { isDevModeActive, devMode } = useDevelopmentMode();
     const location = useLocation();
     const [shouldRedirect, setShouldRedirect] = useState(false);
     
     useEffect(() => {
+      // In development mode, bypass admin authentication checks
+      if (isDevModeActive && devMode === 'admin') {
+        console.log('Development mode active with admin role, bypassing auth protection');
+        setShouldRedirect(false);
+        return;
+      }
+      
       if (isLoading || !authStable) return;
       
       // Check for admin authentication through regular auth system
@@ -123,9 +140,9 @@ export function withAdminProtection<P extends object>(
       }
       
       setShouldRedirect(false);
-    }, [user, session, isLoading, authStable, userType, location.pathname]);
+    }, [user, session, isLoading, authStable, userType, location.pathname, isDevModeActive, devMode]);
     
-    if (isLoading || !authStable) {
+    if ((isLoading || !authStable) && !isDevModeActive) {
       return (
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
@@ -136,7 +153,7 @@ export function withAdminProtection<P extends object>(
       );
     }
     
-    if (shouldRedirect) {
+    if (shouldRedirect && !isDevModeActive) {
       return <Navigate to="/admin/login" state={{ from: location.pathname }} replace />;
     }
     

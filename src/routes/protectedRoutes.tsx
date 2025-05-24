@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { withAuthProtection, withAdminProtection, withUserTypeProtection } from '@/hoc/withAuthProtection';
+import { useDevelopmentMode } from '@/hooks/useDevelopmentMode';
 import { UserType } from '@/types/navigation';
 
 /**
@@ -39,6 +40,14 @@ export const ProtectedRouteWithChildren: React.FC<{
   children: React.ReactElement;
   userType: UserType;
 }> = ({ children, userType }) => {
+  const { isDevModeActive, devMode } = useDevelopmentMode();
+  
+  // In development mode, bypass protection and render directly
+  if (isDevModeActive && devMode === userType) {
+    console.log(`ProtectedRouteWithChildren: Development mode active for ${userType}, bypassing protection`);
+    return children;
+  }
+  
   // The component is the child element
   const Component = () => children;
   const Protected = TypedProtectedRoute(Component, userType);
