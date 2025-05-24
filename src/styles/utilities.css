@@ -1,0 +1,54 @@
+
+/* Utility Classes */
+@layer utilities {
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* Material design elevation shadows */
+  .elevation-1 {
+    @apply shadow-sm;
+  }
+  
+  .elevation-2 {
+    @apply shadow;
+  }
+  
+  .elevation-3 {
+    @apply shadow-md;
+  }
+  
+  .elevation-4 {
+    @apply shadow-lg;
+  }
+  
+  .elevation-5 {
+    @apply shadow-xl;
+  }
+
+  /* Glass morphism */
+  .glass {
+    @apply bg-white/10 backdrop-blur-md border border-white/20;
+  }
+
+  .glass-dark {
+    @apply bg-black/50 backdrop-blur-md border border-white/10;
+  }
+
+  /* Transitions */
+  .transition-all-200 {
+    @apply transition-all duration-200;
+  }
+
+  .transition-all-300 {
+    @apply transition-all duration-300;
+  }
+
+  .transition-transform-300 {
+    @apply transition-transform duration-300;
+  }
+}

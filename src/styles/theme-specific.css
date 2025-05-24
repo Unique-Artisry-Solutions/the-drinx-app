@@ -1,0 +1,116 @@
+
+/* Theme-specific component styles */
+
+/* Dark mode specific custom styles */
+.dark .user-top-nav {
+  @apply bg-gray-900 border-b border-gray-800;
+}
+
+.dark .user-nav-logo {
+  @apply text-material-primary;
+}
+
+.light .user-top-nav {
+  @apply bg-[#f5f3ed] border-b border-gray-200;
+}
+
+.light .user-nav-logo {
+  @apply text-material-primary;
+}
+
+.dark input, .dark textarea, .dark select {
+  @apply bg-gray-800 border-gray-700 text-white placeholder:text-gray-400;
+}
+
+.light input, .light textarea, .light select {
+  @apply bg-[#f5f3ed] border-gray-300 text-gray-800 placeholder:text-gray-500;
+}
+
+/* Style adjustments for footer */
+.dark footer {
+  @apply bg-gray-900 text-white;
+}
+
+.light footer {
+  @apply bg-[#f5f3ed] text-gray-800;
+}
+
+/* Adjust card styles for light/dark modes */
+.dark .card {
+  @apply bg-gray-800 border-gray-700;
+}
+
+.light .card {
+  @apply bg-[#f5f3ed] border-gray-200 shadow-sm;
+}
+
+/* Interior card content styling */
+.light .vibrant-card {
+  @apply bg-[#f5f3ed]/90 backdrop-blur-sm border-gray-200 shadow-sm;
+}
+
+.dark .vibrant-card {
+  @apply bg-gray-800/70 border-gray-700;
+}
+
+.light .vibrant-bg {
+  @apply bg-[#f5f3ed]/80 backdrop-blur-sm;
+}
+
+.dark .vibrant-bg {
+  @apply bg-gray-800/50;
+}
+
+/* Light mode text adjustments */
+.light .text-material-on-surface {
+  @apply text-gray-800;
+}
+
+.light .text-material-on-surface-variant {
+  @apply text-gray-600;
+}
+
+.light .gradient-text {
+  @apply bg-gradient-to-r from-material-primary to-material-tertiary bg-clip-text text-transparent;
+}
+
+/* Light mode tab adjustments */
+.light .vibrant-tab[data-state="active"] {
+  @apply bg-[#f5f3ed] text-material-primary font-medium;
+}
+
+/* Card header adjustments for light mode */
+.light .card-header h3 {
+  @apply text-gray-800;
+}
+
+/* Dark theme outline and border adjustments */
+.dark .border {
+  @apply border-gray-800;
+}
+
+.dark .border-dashed {
+  @apply border-gray-700;
+}
+
+.dark .outline-none {
+  @apply outline-gray-800;
+}
+
+.dark .ring {
+  @apply ring-gray-700;
+}
+
+.dark .divide-y > * {
+  @apply border-gray-800;
+}
+
+/* Subdiv adjustments for dark theme */
+.dark .subdiv {
+  @apply bg-[#12123e] border-gray-800;
+}
+
+/* Dark theme dropdown content */
+.dark .dropdown-content {
+  @apply bg-gray-900 border-gray-800;
+}

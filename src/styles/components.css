@@ -1,0 +1,69 @@
+
+/* Component-specific styles */
+@layer base {
+  /* Button hover effects */
+  .btn-hover-effect {
+    @apply relative overflow-hidden;
+  }
+
+  .btn-hover-effect::after {
+    content: '';
+    @apply absolute inset-0 bg-white/20 scale-x-0 origin-left transition-transform duration-300 ease-out;
+  }
+
+  .btn-hover-effect:hover::after {
+    @apply scale-x-100;
+  }
+
+  /* Custom scrollbar */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/30 rounded-full;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/50;
+  }
+
+  /* Map container */
+  .map-container {
+    @apply w-full h-full rounded-lg overflow-hidden;
+  }
+
+  /* Bold colorful cards */
+  .card-pink {
+    @apply bg-gradient-to-br from-spiritless-pink to-spiritless-pink/80 text-white shadow-lg hover:shadow-xl transition-all border-l-4 border-spiritless-pink;
+  }
+  
+  .card-green {
+    @apply bg-gradient-to-br from-spiritless-green to-spiritless-green/80 text-white shadow-lg hover:shadow-xl transition-all border-l-4 border-spiritless-green;
+  }
+  
+  .card-orange {
+    @apply bg-gradient-to-br from-spiritless-orange to-spiritless-orange/80 text-white shadow-lg hover:shadow-xl transition-all border-l-4 border-spiritless-orange;
+  }
+  
+  .card-burgundy {
+    @apply bg-gradient-to-br from-spiritless-burgundy to-spiritless-burgundy/80 text-white shadow-lg hover:shadow-xl transition-all border-l-4 border-spiritless-burgundy;
+  }
+
+  /* Bold section backgrounds */
+  .bg-pattern-pink {
+    @apply dark:bg-[#3A1525] bg-[#FFECF4];
+    background-image: radial-gradient(circle at 1px 1px, var(--pink-dot, #D94E8F) 1px, transparent 0);
+    background-size: 20px 20px;
+  }
+  
+  .bg-pattern-green {
+    @apply dark:bg-[#253601] bg-[#F0FFE0];
+    background-image: radial-gradient(circle at 1px 1px, var(--green-dot, #84BF04) 1px, transparent 0);
+    background-size: 20px 20px;
+  }
+}
