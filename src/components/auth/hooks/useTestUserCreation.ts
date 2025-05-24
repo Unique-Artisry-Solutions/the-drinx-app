@@ -1,12 +1,11 @@
 
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { useToast } from '@/hooks/use-toast';
+import { debouncedToast } from '@/utils/debouncedToast';
 import { createProfileManually } from '../utils/testUserCreation';
 import { TestUserCredential, TestCredentialsData } from '../types/testCredentials';
 
 export const useTestUserCreation = () => {
-  const { toast } = useToast();
   const [isCreating, setIsCreating] = useState(false);
 
   const createUserViaEdgeFunction = async (credentials: TestUserCredential) => {
@@ -24,20 +23,20 @@ export const useTestUserCreation = () => {
 
       if (error) throw error;
 
-      toast({
-        title: `Test ${credentials.userType} created (via Edge Function)`,
-        description: `Email: ${credentials.email} | Password: ${credentials.password}`,
-        duration: 10000,
-      });
+      debouncedToast.success(
+        `Test ${credentials.userType} created (via Edge Function)`,
+        `Email: ${credentials.email} | Password: ${credentials.password}`,
+        { duration: 10000 }
+      );
 
       return data.user;
     } catch (fallbackError: any) {
       console.error('Edge function user creation failed:', fallbackError);
-      toast({
-        title: 'Creation via Edge Function failed',
-        description: 'Please use the existing test credentials below to log in.',
-        variant: 'destructive',
-      });
+      debouncedToast.error(
+        'Creation via Edge Function failed',
+        'Please use the existing test credentials below to log in.',
+        5000
+      );
       return null;
     }
   };
@@ -54,10 +53,11 @@ export const useTestUserCreation = () => {
         // Sign out immediately after checking
         await supabase.auth.signOut();
         
-        toast({
-          title: `${credentials.userType === 'individual' ? 'User' : credentials.userType === 'establishment' ? 'Business' : 'Promoter'} already exists`,
-          description: `You can log in with ${credentials.email} / ${credentials.password}`,
-        });
+        debouncedToast.info(
+          `${credentials.userType === 'individual' ? 'User' : credentials.userType === 'establishment' ? 'Business' : 'Promoter'} already exists`,
+          `You can log in with ${credentials.email} / ${credentials.password}`,
+          3000
+        );
         return;
       }
 
@@ -144,11 +144,11 @@ export const useTestUserCreation = () => {
       // Sign out the test user immediately after creation
       await supabase.auth.signOut();
 
-      toast({
-        title: `Test ${credentials.userType} created successfully`,
-        description: `Email: ${credentials.email} | Password: ${credentials.password}`,
-        duration: 10000,
-      });
+      debouncedToast.success(
+        `Test ${credentials.userType} created successfully`,
+        `Email: ${credentials.email} | Password: ${credentials.password}`,
+        { duration: 10000 }
+      );
       
       return authData.user;
     } catch (error: any) {
@@ -160,11 +160,11 @@ export const useTestUserCreation = () => {
         ? 'Database trigger error when creating user. Try refreshing and logging in with the test credentials.'
         : error.message || 'Something went wrong';
         
-      toast({
-        title: 'Error creating test user',
-        description: errorMessage,
-        variant: 'destructive',
-      });
+      debouncedToast.error(
+        'Error creating test user',
+        errorMessage,
+        5000
+      );
       
       return null;
     }
@@ -189,17 +189,18 @@ export const useTestUserCreation = () => {
         admin: adminUser ? 'created' : 'failed'
       });
       
-      toast({
-        title: 'Test credentials processed',
-        description: 'Test users have been set up or already exist. You can now log in with any of the test accounts.',
-      });
+      debouncedToast.info(
+        'Test credentials processed',
+        'Test users have been set up or already exist. You can now log in with any of the test accounts.',
+        3000
+      );
     } catch (error: any) {
       console.error('Error creating all test users:', error);
-      toast({
-        title: 'Creation failed',
-        description: error.message || 'Failed to create test users',
-        variant: 'destructive'
-      });
+      debouncedToast.error(
+        'Creation failed',
+        error.message || 'Failed to create test users',
+        5000
+      );
     } finally {
       setIsCreating(false);
     }

@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { useToast } from '@/hooks/use-toast';
+import { debouncedToast } from '@/utils/debouncedToast';
 import { useAuth } from '@/contexts/auth/AuthProvider';
 import { useNavigate } from 'react-router-dom';
 import GuestTopNavigation from '@/components/navigation/GuestTopNavigation';
@@ -13,7 +12,6 @@ const AdminLogin: React.FC = () => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { signIn, user, userType, isAuthenticated } = useAuth();
-  const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -35,21 +33,22 @@ const AdminLogin: React.FC = () => {
       }
       
       // Note: userType will be set automatically by the auth context after role check
-      toast({
-        title: 'Login successful',
-        description: 'Checking admin permissions...',
-      });
+      debouncedToast.success(
+        'Login successful',
+        'Checking admin permissions...',
+        3000
+      );
       
       // The auth context will handle the redirect through userType
       
     } catch (error: any) {
       console.error('Admin login error:', error);
       
-      toast({
-        title: 'Login failed',
-        description: error.message || 'Invalid credentials or insufficient permissions',
-        variant: 'destructive',
-      });
+      debouncedToast.error(
+        'Login failed',
+        error.message || 'Invalid credentials or insufficient permissions',
+        5000
+      );
     } finally {
       setIsLoading(false);
     }

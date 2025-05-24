@@ -1,9 +1,8 @@
-
 import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { CardContent, CardFooter } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
-import { useToast } from '@/hooks/use-toast';
+import { debouncedToast } from '@/utils/debouncedToast';
 import AuthButton from './AuthButton';
 import { useAuth } from '@/contexts/auth/AuthProvider';
 import SignupConfirmationModal from './SignupConfirmationModal';
@@ -30,7 +29,6 @@ const SignupForm: React.FC<SignupFormProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const navigate = useNavigate();
-  const { toast } = useToast();
   const { signUp, isLoading } = useAuth();
 
   const handleUserTypeChange = (value: string) => {
@@ -71,10 +69,11 @@ const SignupForm: React.FC<SignupFormProps> = ({
       
       setShowConfirmationModal(true);
       
-      toast({
-        title: 'Signup Successful',
-        description: 'Please check your email to verify your account.',
-      });
+      debouncedToast.success(
+        'Signup Successful',
+        'Please check your email to verify your account.',
+        3000
+      );
       
     } catch (error: any) {
       console.error('Signup error:', error);
@@ -83,11 +82,11 @@ const SignupForm: React.FC<SignupFormProps> = ({
       const errorMessage = error.message || 'Failed to sign up';
       setFormError(errorMessage);
       
-      toast({
-        title: 'Signup Failed',
-        description: errorMessage,
-        variant: 'destructive',
-      });
+      debouncedToast.error(
+        'Signup Failed',
+        errorMessage,
+        5000
+      );
     } finally {
       setIsSubmitting(false);
     }

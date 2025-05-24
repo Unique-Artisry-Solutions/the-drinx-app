@@ -1,11 +1,10 @@
 
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { useToast } from '@/hooks/use-toast';
+import { debouncedToast } from '@/utils/debouncedToast';
 
 export const useAdminCreation = () => {
   const [isCreating, setIsCreating] = useState(false);
-  const { toast } = useToast();
 
   const createAdminUser = async (email: string, password: string) => {
     setIsCreating(true);
@@ -40,20 +39,21 @@ export const useAdminCreation = () => {
           // Still show success since user was created
         }
 
-        toast({
-          title: 'Admin user created',
-          description: `Admin user ${email} has been created successfully.`,
-        });
+        debouncedToast.success(
+          'Admin user created',
+          `Admin user ${email} has been created successfully.`,
+          3000
+        );
 
         return authData.user;
       }
     } catch (error: any) {
       console.error('Error creating admin user:', error);
-      toast({
-        title: 'Error creating admin user',
-        description: error.message || 'Failed to create admin user',
-        variant: 'destructive',
-      });
+      debouncedToast.error(
+        'Error creating admin user',
+        error.message || 'Failed to create admin user',
+        5000
+      );
     } finally {
       setIsCreating(false);
     }

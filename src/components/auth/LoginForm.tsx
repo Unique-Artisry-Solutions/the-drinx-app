@@ -1,9 +1,8 @@
-
 import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { CardContent, CardFooter } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
-import { useToast } from '@/hooks/use-toast';
+import { debouncedToast } from '@/utils/debouncedToast';
 import AuthButton from './AuthButton';
 import { useAuth } from '@/contexts/auth/AuthProvider';
 
@@ -23,7 +22,6 @@ const LoginForm: React.FC<LoginFormProps> = ({
   const [formError, setFormError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
-  const { toast } = useToast();
   const { signIn, isLoading } = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -40,10 +38,11 @@ const LoginForm: React.FC<LoginFormProps> = ({
         throw error;
       }
       
-      toast({
-        title: 'Login Successful',
-        description: 'Welcome back!',
-      });
+      debouncedToast.success(
+        'Login Successful',
+        'Welcome back!',
+        3000
+      );
       
       if (onSuccess) {
         onSuccess();
@@ -58,11 +57,11 @@ const LoginForm: React.FC<LoginFormProps> = ({
       const errorMessage = error.message || 'Failed to sign in';
       setFormError(errorMessage);
       
-      toast({
-        title: 'Login Failed',
-        description: errorMessage,
-        variant: 'destructive',
-      });
+      debouncedToast.error(
+        'Login Failed',
+        errorMessage,
+        5000
+      );
     } finally {
       setIsSubmitting(false);
     }
