@@ -31,6 +31,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
     console.log('Login attempt:', { email, userType });
     
     try {
+      // Sign in with any valid credentials - don't restrict by userType
       const result = await signIn(email, password);
       
       if (result.error) {
