@@ -65,6 +65,13 @@ export const useAppNavigation = () => {
   const goToLoginPage = useCallback(() => {
     navigate('/login');
   }, [navigate]);
+
+  /**
+   * Navigate to landing page
+   */
+  const goToLandingPage = useCallback(() => {
+    navigate('/landing');
+  }, [navigate]);
   
   /**
    * Navigate to admin dashboard
@@ -120,6 +127,7 @@ export const useAppNavigation = () => {
     goToProfilePage,
     goToAfterLogin,
     goToLoginPage,
+    goToLandingPage,
     goToAdminDashboard,
     goToEditPage,
     goToRoute,
