@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { CardContent, CardFooter } from '@/components/ui/card';
@@ -13,7 +12,7 @@ import { useAuthLoadingStates } from '@/hooks/useAuthLoadingStates';
 interface SignupFormProps {
   onSuccess?: () => void;
   onClose?: () => void;
-  userType?: 'individual' | 'establishment' | 'promoter';
+  userType?: 'individual' | 'establishment' | 'promoter' | 'admin';
 }
 
 const SignupForm: React.FC<SignupFormProps> = ({ 
@@ -25,7 +24,7 @@ const SignupForm: React.FC<SignupFormProps> = ({
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
-  const [selectedUserType, setSelectedUserType] = useState<'individual' | 'establishment' | 'promoter'>(initialUserType);
+  const [selectedUserType, setSelectedUserType] = useState<'individual' | 'establishment' | 'promoter' | 'admin'>(initialUserType);
   const [formError, setFormError] = useState('');
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const { signUp, isLoading, navigationReady } = useAuth();
@@ -37,7 +36,7 @@ const SignupForm: React.FC<SignupFormProps> = ({
   } = useAuthLoadingStates();
 
   const handleUserTypeChange = (value: string) => {
-    setSelectedUserType(value as 'individual' | 'establishment' | 'promoter');
+    setSelectedUserType(value as 'individual' | 'establishment' | 'promoter' | 'admin');
   };
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -181,6 +180,7 @@ const SignupForm: React.FC<SignupFormProps> = ({
                 <SelectItem value="individual">Personal Account</SelectItem>
                 <SelectItem value="promoter">Promoter Account</SelectItem>
                 <SelectItem value="establishment">Business Account</SelectItem>
+                <SelectItem value="admin">Admin Account</SelectItem>
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
