@@ -1,8 +1,7 @@
-
 import { useNavigate } from 'react-router-dom';
 import { useCallback, useMemo } from 'react';
 import { useAuth } from '@/contexts/auth/AuthProvider';
-import { debouncedToast } from '@/utils/debouncedToast';
+import { enhancedDebouncedToast } from '@/utils/enhancedDebouncedToast';
 
 export const useAppNavigation = () => {
   const navigate = useNavigate();
@@ -133,10 +132,10 @@ export const useAppNavigation = () => {
 
   const goToAdminDashboard = useCallback(() => {
     if (!canNavigate()) {
-      debouncedToast.error(
+      enhancedDebouncedToast.navigationError(
         'Navigation Error', 
-        'Please wait for authentication to complete.', 
-        3000
+        'Please wait for authentication to complete.',
+        { duration: 3000 }
       );
       return;
     }
@@ -150,10 +149,10 @@ export const useAppNavigation = () => {
    */
   const goToEditPage = useCallback((entityType: string, id: string, preventRefresh = true) => {
     if (!canNavigate()) {
-      debouncedToast.error(
+      enhancedDebouncedToast.navigationError(
         'Navigation Error', 
-        'Please wait for the page to load completely.', 
-        3000
+        'Please wait for the page to load completely.',
+        { duration: 3000 }
       );
       return;
     }
@@ -164,7 +163,7 @@ export const useAppNavigation = () => {
     }
     return path;
   }, [navigate, canNavigate]);
-  
+
   /**
    * Navigate to a specific route with enhanced error handling
    */
@@ -181,10 +180,10 @@ export const useAppNavigation = () => {
     if (!options?.bypassGuards && !canNavigate()) {
       console.log("useAppNavigation - Route navigation blocked for path:", path);
       if (options?.showToast) {
-        debouncedToast.error(
+        enhancedDebouncedToast.navigationError(
           'Navigation Error', 
-          'Please wait for authentication to complete.', 
-          3000
+          'Please wait for authentication to complete.',
+          { duration: 3000 }
         );
       }
       return;
@@ -198,11 +197,11 @@ export const useAppNavigation = () => {
                                                 toastType === 'error' ? 'Error' : 'Information');
       
       if (toastType === 'success') {
-        debouncedToast.success(toastTitle, options.toastMessage, 3000);
+        enhancedDebouncedToast.authSuccess(toastTitle, options.toastMessage, { duration: 3000 });
       } else if (toastType === 'error') {
-        debouncedToast.error(toastTitle, options.toastMessage, 5000);
+        enhancedDebouncedToast.authError(toastTitle, options.toastMessage, { duration: 5000 });
       } else {
-        debouncedToast.info(toastTitle, options.toastMessage, 3000);
+        enhancedDebouncedToast.authRecovery(toastTitle, options.toastMessage, { duration: 3000 });
       }
     }
   }, [navigate, canNavigate]);

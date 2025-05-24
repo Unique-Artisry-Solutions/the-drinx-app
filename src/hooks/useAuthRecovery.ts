@@ -1,10 +1,9 @@
-
 import { useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRetry } from '@/hooks/useRetry';
 import { authCache } from '@/contexts/auth/authCache';
 import { sessionPersistenceService } from '@/services/SessionPersistenceService';
-import { debouncedToast } from '@/utils/debouncedToast';
+import { enhancedDebouncedToast } from '@/utils/enhancedDebouncedToast';
 
 interface AuthRecoveryOptions {
   maxRetries?: number;
@@ -33,10 +32,10 @@ export const useAuthRecovery = (options: AuthRecoveryOptions = {}) => {
       setRecoveryAttempts(attempt);
       
       if (showToasts) {
-        debouncedToast.info(
+        enhancedDebouncedToast.authRecovery(
           'Recovery in progress',
           `Attempting to restore session (attempt ${attempt}/${maxRetries})`,
-          3000
+          { duration: 3000 }
         );
       }
     },
@@ -45,10 +44,10 @@ export const useAuthRecovery = (options: AuthRecoveryOptions = {}) => {
       setRecoveryError(error);
       
       if (showToasts) {
-        debouncedToast.error(
+        enhancedDebouncedToast.authError(
           'Recovery failed',
           'Unable to restore your session. Please sign in again.',
-          5000
+          { duration: 5000 }
         );
       }
     }
@@ -170,10 +169,10 @@ export const useAuthRecovery = (options: AuthRecoveryOptions = {}) => {
         const userType = await recoverUserType(sessionResult.user.id);
         
         if (showToasts) {
-          debouncedToast.success(
+          enhancedDebouncedToast.authSuccess(
             'Session recovered',
             'Your authentication has been restored successfully.',
-            3000
+            { duration: 3000 }
           );
         }
         
@@ -193,10 +192,10 @@ export const useAuthRecovery = (options: AuthRecoveryOptions = {}) => {
       sessionPersistenceService.clearSession();
       
       if (showToasts) {
-        debouncedToast.error(
+        enhancedDebouncedToast.authError(
           'Recovery failed',
           'Please sign in again to continue.',
-          5000
+          { duration: 5000 }
         );
       }
       

@@ -2,12 +2,13 @@
 import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { CardContent, CardFooter } from '@/components/ui/card';
-import { debouncedToast } from '@/utils/debouncedToast';
+import { enhancedDebouncedToast } from '@/utils/enhancedDebouncedToast';
 import AuthButton from './AuthButton';
 import { useAuth } from '@/contexts/auth/AuthProvider';
 import SignupConfirmationModal from './SignupConfirmationModal';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/lib/supabase';
+import { useAuthLoadingStates } from '@/hooks/useAuthLoadingStates';
 
 interface SignupFormProps {
   onSuccess?: () => void;
@@ -26,9 +27,14 @@ const SignupForm: React.FC<SignupFormProps> = ({
   const [username, setUsername] = useState('');
   const [selectedUserType, setSelectedUserType] = useState<'individual' | 'establishment' | 'promoter'>(initialUserType);
   const [formError, setFormError] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const { signUp, isLoading, navigationReady } = useAuth();
+  const { 
+    setSigningUp, 
+    shouldPreventInteraction, 
+    getLoadingMessage,
+    loadingStates 
+  } = useAuthLoadingStates();
 
   const handleUserTypeChange = (value: string) => {
     setSelectedUserType(value as 'individual' | 'establishment' | 'promoter');
@@ -37,7 +43,7 @@ const SignupForm: React.FC<SignupFormProps> = ({
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError('');
-    setIsSubmitting(true);
+    setSigningUp(true);
     
     console.log('Signup attempt:', { 
       email, 
@@ -45,31 +51,26 @@ const SignupForm: React.FC<SignupFormProps> = ({
       userType: selectedUserType 
     });
     
-    const metadata = {
-      name,
-      username,
-      user_type: selectedUserType
-    };
-    
-    const redirectTo = `${window.location.origin}/?email_confirmed=true`;
-    
-    const result = await signUp({
-      email,
-      password,
-      data: metadata,
-      emailRedirectTo: redirectTo
-    });
-    
-    if (result.error) {
-      const errorMessage = result.error.message || 'Failed to sign up';
-      setFormError(errorMessage);
+    try {
+      const metadata = {
+        name,
+        username,
+        user_type: selectedUserType
+      };
       
-      debouncedToast.error(
-        'Signup Failed',
-        errorMessage,
-        5000
-      );
-    } else {
+      const redirectTo = `${window.location.origin}/?email_confirmed=true`;
+      
+      const result = await signUp({
+        email,
+        password,
+        data: metadata,
+        emailRedirectTo: redirectTo
+      });
+      
+      if (result.error) {
+        throw result.error;
+      }
+      
       if (email === 'jacksonmcfarland14@gmail.com') {
         await supabase.rpc('initialize_admin_roles');
         console.log('Admin roles initialized');
@@ -77,10 +78,10 @@ const SignupForm: React.FC<SignupFormProps> = ({
       
       setShowConfirmationModal(true);
       
-      debouncedToast.success(
+      enhancedDebouncedToast.authSuccess(
         'Signup Successful',
         'Please check your email to verify your account.',
-        3000
+        { duration: 3000 }
       );
       
       // Only call onSuccess callback if provided (for modal use cases)
@@ -88,14 +89,23 @@ const SignupForm: React.FC<SignupFormProps> = ({
         onSuccess();
       }
       
-      // No manual navigation - user stays to see confirmation modal
+    } catch (error: any) {
+      const errorMessage = error.message || 'Failed to sign up';
+      setFormError(errorMessage);
+      
+      enhancedDebouncedToast.authError(
+        'Signup Failed',
+        errorMessage,
+        { duration: 5000 }
+      );
+    } finally {
+      setSigningUp(false);
     }
-    
-    setIsSubmitting(false);
   };
 
-  // Navigation guard - prevent form submission during navigation loading
-  const canSubmit = navigationReady && !isLoading && !isSubmitting;
+  // Enhanced interaction prevention
+  const canSubmit = navigationReady && !isLoading && !shouldPreventInteraction();
+  const currentLoadingMessage = getLoadingMessage();
 
   return (
     <>
@@ -181,6 +191,13 @@ const SignupForm: React.FC<SignupFormProps> = ({
           {formError && (
             <div className="text-red-500 text-sm mt-2">{formError}</div>
           )}
+          
+          {currentLoadingMessage && (
+            <div className="text-blue-600 text-sm mt-2 flex items-center">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+              {currentLoadingMessage}
+            </div>
+          )}
         </CardContent>
         
         <CardFooter className="flex flex-col gap-4">
@@ -190,7 +207,7 @@ const SignupForm: React.FC<SignupFormProps> = ({
             disabled={!canSubmit}
             className={`w-full ${selectedUserType === 'individual' ? 'bg-spiritless-pink hover:bg-spiritless-pink/90' : selectedUserType === 'promoter' ? 'bg-purple-600 hover:bg-purple-700' : 'bg-spiritless-green hover:bg-spiritless-green/90'} text-white`}
           >
-            {!canSubmit ? 'Creating account...' : `Create ${selectedUserType === 'establishment' ? 'Business' : selectedUserType === 'promoter' ? 'Promoter' : 'Personal'} Account`}
+            {!canSubmit ? (currentLoadingMessage || 'Creating account...') : `Create ${selectedUserType === 'establishment' ? 'Business' : selectedUserType === 'promoter' ? 'Promoter' : 'Personal'} Account`}
           </AuthButton>
           
           <p className="text-xs text-center text-muted-foreground">
@@ -203,6 +220,7 @@ const SignupForm: React.FC<SignupFormProps> = ({
               variant="outline"
               onClick={onClose}
               isLoading={false}
+              disabled={shouldPreventInteraction()}
               className="w-full border-spiritless-orange text-spiritless-orange hover:bg-spiritless-orange/10"
             >
               Cancel
