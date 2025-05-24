@@ -29,17 +29,8 @@ export const useDevelopmentMode = () => {
       const validTypes: DevUserType[] = ['individual', 'establishment', 'promoter', 'admin'];
       if (validTypes.includes(devModeParam as DevUserType)) {
         const userType = devModeParam as DevUserType;
-        setDevMode(userType);
-        localStorage.setItem('dev_user_type', userType);
-        console.log('Setting dev mode from URL:', userType);
-        
-        // Navigate to appropriate dashboard without the dev_mode parameter
-        const newUrl = new URL(window.location.href);
-        newUrl.searchParams.delete('dev_mode');
-        window.history.replaceState({}, '', newUrl.toString());
-        
-        // Navigate to the appropriate dashboard
-        navigateToUserTypeDashboard(userType);
+        console.log('Setting dev mode from URL parameter:', userType);
+        switchToUserType(userType);
       }
     }
   }, [location.search, isDevelopment]);
@@ -56,6 +47,12 @@ export const useDevelopmentMode = () => {
   }, [isDevelopment]);
 
   const navigateToUserTypeDashboard = (userType: DevUserType) => {
+    // Clean up URL parameters first
+    const newUrl = new URL(window.location.href);
+    newUrl.searchParams.delete('dev_mode');
+    window.history.replaceState({}, '', newUrl.toString());
+
+    // Navigate to appropriate dashboard
     switch (userType) {
       case 'establishment':
         navigate('/establishment/dashboard');
@@ -75,10 +72,13 @@ export const useDevelopmentMode = () => {
   };
 
   const switchToUserType = (userType: DevUserType) => {
-    if (!isDevelopment) return;
+    if (!isDevelopment) {
+      console.log('Not in development mode, ignoring user type switch');
+      return;
+    }
     
-    setDevMode(userType);
     console.log('Switching to user type:', userType);
+    setDevMode(userType);
     
     if (userType) {
       localStorage.setItem('dev_user_type', userType);
@@ -90,10 +90,10 @@ export const useDevelopmentMode = () => {
   };
 
   const exitDevMode = () => {
+    console.log('Exiting dev mode');
     setDevMode(null);
     localStorage.removeItem('dev_user_type');
     navigate('/landing');
-    console.log('Exited dev mode');
   };
 
   return {
