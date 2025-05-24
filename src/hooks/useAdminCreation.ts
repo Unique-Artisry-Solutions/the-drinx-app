@@ -25,12 +25,13 @@ export const useAdminCreation = () => {
       if (signUpError) throw signUpError;
 
       if (authData.user) {
-        // Add admin role to user_roles table
+        // Add role to user_roles table - use 'individual' as base role since 'admin' isn't in enum
+        // Admin status will be determined by separate logic in auth context
         const { error: roleError } = await supabase
           .from('user_roles')
           .insert({
             user_id: authData.user.id,
-            role: 'admin',
+            role: 'individual' as 'individual' | 'promoter' | 'establishment',
             is_active: true
           });
 

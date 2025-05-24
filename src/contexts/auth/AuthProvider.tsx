@@ -1,335 +1,443 @@
-import React, { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react';
-import { User, Session } from '@supabase/supabase-js';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { Session, User, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
-import { AuthContextType } from '@/types/auth';
-import { authService } from '@/services/AuthService';
+import { useToast } from '@/hooks/use-toast';
+import { clearAllSessions } from '@/utils/sessionCleaner';
+import { AuthState, AuthActions, AuthContextType } from './types';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEmailVerified, setIsEmailVerified] = useState(false);
-  const [authStable, setAuthStable] = useState(false);
-  const [authError, setAuthError] = useState<Error | null>(null);
   const [isVerificationEmailSent, setIsVerificationEmailSent] = useState(false);
-  const [userType, setUserType] = useState<string>('');
+  const [authError, setAuthError] = useState<Error | null>(null);
+  const [authStable, setAuthStable] = useState(false);
+  const [userType, setUserType] = useState<string>('individual');
   
-  // Refs to prevent race conditions and duplicate calls
-  const initializationComplete = useRef(false);
-  const isInitializing = useRef(false);
+  const { toast } = useToast();
+  const initializationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isInitializingRef = useRef(false);
+  const cleanupRef = useRef<(() => void) | null>(null);
   
-  // Function to check user roles from database
-  const checkUserRoles = useCallback(async (userId: string) => {
+  // Check user roles from the database
+  const checkUserRoles = useCallback(async (userId: string): Promise<string> => {
     try {
-      const { data: roles, error } = await supabase
-        .from('user_roles')
-        .select('role, is_active')
-        .eq('user_id', userId)
-        .eq('is_active', true);
+      console.log('Checking user roles for:', userId);
       
-      if (error) {
-        console.error('Error fetching user roles:', error);
+      // Get active role from user_roles table
+      const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .eq('is_active', true)
+        .single();
+
+      if (roleError && roleError.code !== 'PGRST116') {
+        console.error('Error fetching user role:', roleError);
         return 'individual'; // Default fallback
       }
-      
-      // Check for admin role first
-      const adminRole = roles?.find(role => role.role === 'admin');
-      if (adminRole) {
-        return 'admin';
+
+      if (roleData?.role) {
+        console.log('Found active role:', roleData.role);
+        // Handle admin role which might not be in the enum but exists in practice
+        if (roleData.role === 'admin' || 
+            ['individual', 'establishment', 'promoter'].includes(roleData.role)) {
+          return roleData.role;
+        }
       }
-      
-      // Check for other roles
-      const promoterRole = roles?.find(role => role.role === 'promoter');
-      if (promoterRole) {
-        return 'promoter';
-      }
-      
-      const establishmentRole = roles?.find(role => role.role === 'establishment');
-      if (establishmentRole) {
-        return 'establishment';
-      }
-      
-      // Default to individual
+
+      // Fallback to individual if no valid role found
       return 'individual';
     } catch (error) {
       console.error('Error in checkUserRoles:', error);
       return 'individual';
     }
   }, []);
-  
-  // Initialize auth state
-  const initializeAuth = useCallback(async () => {
-    if (initializationComplete.current || isInitializing.current) {
-      return;
-    }
-    
-    isInitializing.current = true;
-    setIsLoading(true);
-    
+
+  const refreshSession = useCallback(async (): Promise<{ isEmailVerified: boolean }> => {
     try {
-      console.log("AuthProvider: Initializing auth state");
-      
-      const { data, error } = await supabase.auth.getSession();
+      console.log('Refreshing session...');
+      const { data, error } = await supabase.auth.refreshSession();
       
       if (error) {
-        console.error("AuthProvider: Session retrieval error:", error);
+        console.error('Session refresh error:', error);
         setAuthError(error);
-        setUser(null);
-        setSession(null);
-        setIsEmailVerified(false);
-        setUserType('');
-      } else {
-        const currentSession = data.session;
-        const currentUser = currentSession?.user || null;
+        return { isEmailVerified: false };
+      }
+      
+      if (data.session) {
+        setSession(data.session);
+        setUser(data.user);
         
-        console.log("AuthProvider: Session retrieved", { 
-          hasSession: !!currentSession, 
-          hasUser: !!currentUser,
-          emailVerified: currentUser?.email_confirmed_at ? true : false
-        });
+        const verified = !!(data.user?.email_confirmed_at);
+        setIsEmailVerified(verified);
         
-        setSession(currentSession);
-        setUser(currentUser);
-        setIsEmailVerified(currentUser?.email_confirmed_at ? true : false);
-        
-        if (currentUser) {
-          // Update localStorage with session data
-          authService.updateLocalStorage(currentUser);
-          
-          // Check user roles from database
-          const dbUserType = await checkUserRoles(currentUser.id);
-          setUserType(dbUserType);
-          localStorage.setItem('user_type', dbUserType);
-        } else {
-          setUserType('');
-          localStorage.removeItem('user_type');
+        if (verified && data.user) {
+          const detectedUserType = await checkUserRoles(data.user.id);
+          setUserType(detectedUserType);
+          localStorage.setItem('user_type', detectedUserType);
         }
         
-        setAuthError(null);
-      }
-    } catch (error) {
-      console.error("AuthProvider: Initialization error:", error);
-      setAuthError(error as Error);
-      setUser(null);
-      setSession(null);
-      setIsEmailVerified(false);
-      setUserType('');
-    } finally {
-      setIsLoading(false);
-      setAuthStable(true);
-      initializationComplete.current = true;
-      isInitializing.current = false;
-    }
-  }, [checkUserRoles]);
-
-  // Set up auth state listener
-  useEffect(() => {
-    console.log("AuthProvider: Setting up auth state listener");
-    
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log("AuthProvider: Auth state changed", { event, hasSession: !!session });
-        
-        const currentUser = session?.user || null;
-        
-        setSession(session);
-        setUser(currentUser);
-        setIsEmailVerified(currentUser?.email_confirmed_at ? true : false);
-        
-        if (currentUser) {
-          // Update localStorage and check user roles
-          authService.updateLocalStorage(currentUser);
-          
-          // Check user roles from database
-          const dbUserType = await checkUserRoles(currentUser.id);
-          setUserType(dbUserType);
-          localStorage.setItem('user_type', dbUserType);
-        } else {
-          // Clear auth data when no user
-          authService.updateLocalStorage(null);
-          setUserType('');
-          localStorage.removeItem('user_type');
-        }
-        
-        // Mark as stable after auth state change
-        if (!authStable) {
-          setAuthStable(true);
-        }
-        
-        setAuthError(null);
-      }
-    );
-    
-    // Initialize auth after setting up listener
-    initializeAuth();
-    
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [initializeAuth, checkUserRoles, authStable]);
-
-  // Auth methods
-  const signIn = useCallback(async (email: string, password: string) => {
-    try {
-      setAuthError(null);
-      const result = await authService.signIn(email, password);
-      
-      if (result.error) {
-        setAuthError(result.error);
-        return { error: result.error, data: null };
+        return { isEmailVerified: verified };
       }
       
-      // Check user roles after successful sign in
-      if (result.user) {
-        const dbUserType = await checkUserRoles(result.user.id);
-        setUserType(dbUserType);
-        localStorage.setItem('user_type', dbUserType);
-      }
-      
-      return { error: null, data: { user: result.user, session: result.session } };
-    } catch (error) {
-      const authError = error as Error;
-      setAuthError(authError);
-      return { error: authError, data: null };
-    }
-  }, [checkUserRoles]);
-
-  const signUp = useCallback(async (formData: any) => {
-    try {
-      setAuthError(null);
-      return await authService.signUp(formData.email, formData.password, {
-        data: formData.data,
-        emailRedirectTo: formData.emailRedirectTo
-      });
-    } catch (error) {
-      const authError = error as Error;
-      setAuthError(authError);
-      throw error;
-    }
-  }, []);
-
-  const signOut = useCallback(async () => {
-    try {
-      setAuthError(null);
-      const { error } = await authService.signOut();
-      
-      if (error) {
-        setAuthError(error);
-        throw error;
-      }
-      
-      // Clear local state
-      setUser(null);
-      setSession(null);
-      setIsEmailVerified(false);
-      setUserType('');
-      
-    } catch (error) {
-      const authError = error as Error;
-      setAuthError(authError);
-      throw error;
-    }
-  }, []);
-
-  const refreshSession = useCallback(async () => {
-    try {
-      setAuthError(null);
-      const result = await authService.refreshSession();
-      
-      if (result.error) {
-        setAuthError(result.error);
-      } else {
-        setSession(result.session);
-        setUser(result.user);
-        setIsEmailVerified(result.isEmailVerified);
-        
-        if (result.user) {
-          const dbUserType = await checkUserRoles(result.user.id);
-          setUserType(dbUserType);
-          localStorage.setItem('user_type', dbUserType);
-        }
-      }
-      
-      return { isEmailVerified: result.isEmailVerified };
-    } catch (error) {
-      const authError = error as Error;
-      setAuthError(authError);
+      return { isEmailVerified: false };
+    } catch (error: any) {
+      console.error('Session refresh failed:', error);
+      setAuthError(error);
       return { isEmailVerified: false };
     }
   }, [checkUserRoles]);
 
-  const recoverAuthState = useCallback(async () => {
+  const recoverAuthState = useCallback(async (): Promise<boolean> => {
     try {
+      console.log('Attempting auth state recovery...');
+      setIsLoading(true);
       setAuthError(null);
-      return await authService.recoverFromStuckState({ autoRecovery: true });
-    } catch (error) {
-      const authError = error as Error;
-      setAuthError(authError);
+      
+      clearAllSessions();
+      
+      const { data, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error('Auth recovery error:', error);
+        setAuthError(error);
+        return false;
+      }
+      
+      if (data.session?.user) {
+        setSession(data.session);
+        setUser(data.session.user);
+        
+        const verified = !!(data.session.user.email_confirmed_at);
+        setIsEmailVerified(verified);
+        
+        if (verified) {
+          const detectedUserType = await checkUserRoles(data.session.user.id);
+          setUserType(detectedUserType);
+          localStorage.setItem('user_type', detectedUserType);
+        }
+        
+        console.log('Auth state recovered successfully');
+        return true;
+      }
+      
       return false;
+    } catch (error: any) {
+      console.error('Auth recovery failed:', error);
+      setAuthError(error);
+      return false;
+    } finally {
+      setIsLoading(false);
+      setAuthStable(true);
+    }
+  }, [checkUserRoles]);
+
+  const signIn = useCallback(async (email: string, password: string): Promise<{ error: Error | null; data: any }> => {
+    try {
+      setIsLoading(true);
+      setAuthError(null);
+      
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      if (error) {
+        console.error('Sign in error:', error);
+        setAuthError(error);
+        return { error, data: null };
+      }
+      
+      if (data.user && data.session) {
+        setUser(data.user);
+        setSession(data.session);
+        
+        const verified = !!(data.user.email_confirmed_at);
+        setIsEmailVerified(verified);
+        
+        if (verified) {
+          const detectedUserType = await checkUserRoles(data.user.id);
+          setUserType(detectedUserType);
+          localStorage.setItem('user_type', detectedUserType);
+          localStorage.setItem('user_authenticated', 'true');
+          localStorage.setItem('user_email', data.user.email || '');
+        }
+        
+        console.log('Sign in successful, user type:', userType);
+        return { error: null, data };
+      }
+      
+      return { error: new Error('Authentication failed'), data: null };
+    } catch (error: any) {
+      console.error('Sign in failed:', error);
+      setAuthError(error);
+      return { error, data: null };
+    } finally {
+      setIsLoading(false);
+    }
+  }, [checkUserRoles]);
+
+  const signUp = useCallback(async (formData: any): Promise<any> => {
+    try {
+      setIsLoading(true);
+      setAuthError(null);
+      
+      const { data, error } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          data: {
+            name: formData.name || formData.display_name,
+            username: formData.username,
+            user_type: formData.user_type || 'individual',
+            phone: formData.phone
+          }
+        }
+      });
+      
+      if (error) {
+        console.error('Sign up error:', error);
+        setAuthError(error);
+        return { error, data: null };
+      }
+      
+      if (data.user) {
+        setUser(data.user);
+        setIsVerificationEmailSent(true);
+        
+        console.log('Sign up successful, please verify email');
+        return { error: null, data };
+      }
+      
+      return { error: new Error('Registration failed'), data: null };
+    } catch (error: any) {
+      console.error('Sign up failed:', error);
+      setAuthError(error);
+      return { error, data: null };
+    } finally {
+      setIsLoading(false);
     }
   }, []);
 
-  const sendVerificationEmail = useCallback(async (email: string) => {
+  const signOut = useCallback(async (): Promise<void> => {
     try {
+      setIsLoading(true);
+      
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error('Sign out error:', error);
+        setAuthError(error);
+      }
+      
+      // Clear all state
+      setUser(null);
+      setSession(null);
+      setUserType('individual');
+      setIsEmailVerified(false);
+      setIsVerificationEmailSent(false);
       setAuthError(null);
+      
+      // Clear localStorage
+      clearAllSessions();
+      
+      console.log('Signed out successfully');
+    } catch (error: any) {
+      console.error('Sign out failed:', error);
+      setAuthError(error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const sendVerificationEmail = useCallback(async (email: string): Promise<void> => {
+    try {
       const { error } = await supabase.auth.resend({
         type: 'signup',
         email: email
       });
       
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
       
       setIsVerificationEmailSent(true);
-    } catch (error) {
-      const authError = error as Error;
-      setAuthError(authError);
-      throw error;
+      toast({
+        title: 'Verification email sent',
+        description: 'Please check your email for the verification link.',
+      });
+    } catch (error: any) {
+      console.error('Send verification email error:', error);
+      setAuthError(error);
+      toast({
+        title: 'Failed to send verification email',
+        description: error.message,
+        variant: 'destructive',
+      });
     }
-  }, []);
+  }, [toast]);
 
-  const updateUserProfile = useCallback(async (data: any) => {
+  const updateUserProfile = useCallback(async (data: any): Promise<void> => {
     try {
-      setAuthError(null);
-      const { error } = await supabase.auth.updateUser(data);
+      const { error } = await supabase.auth.updateUser({
+        data
+      });
       
-      if (error) throw error;
-    } catch (error) {
-      const authError = error as Error;
-      setAuthError(authError);
-      throw error;
+      if (error) {
+        throw error;
+      }
+      
+      toast({
+        title: 'Profile updated',
+        description: 'Your profile has been updated successfully.',
+      });
+    } catch (error: any) {
+      console.error('Update profile error:', error);
+      setAuthError(error);
+      toast({
+        title: 'Failed to update profile',
+        description: error.message,
+        variant: 'destructive',
+      });
     }
-  }, []);
+  }, [toast]);
 
-  const updatePassword = useCallback(async (newPassword: string) => {
+  const updatePassword = useCallback(async (newPassword: string): Promise<void> => {
     try {
-      setAuthError(null);
       const { error } = await supabase.auth.updateUser({
         password: newPassword
       });
       
-      if (error) throw error;
-    } catch (error) {
-      const authError = error as Error;
-      setAuthError(authError);
-      throw error;
+      if (error) {
+        throw error;
+      }
+      
+      toast({
+        title: 'Password updated',
+        description: 'Your password has been updated successfully.',
+      });
+    } catch (error: any) {
+      console.error('Update password error:', error);
+      setAuthError(error);
+      toast({
+        title: 'Failed to update password',
+        description: error.message,
+        variant: 'destructive',
+      });
     }
-  }, []);
+  }, [toast]);
+
+  useEffect(() => {
+    if (isInitializingRef.current) return;
+    
+    isInitializingRef.current = true;
+    let mounted = true;
+    
+    const initializeAuth = async () => {
+      try {
+        console.log('Initializing auth...');
+        
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (!mounted) return;
+        
+        if (error) {
+          console.error('Session initialization error:', error);
+          setAuthError(error);
+        } else if (session?.user) {
+          console.log('Found existing session');
+          setSession(session);
+          setUser(session.user);
+          
+          const verified = !!(session.user.email_confirmed_at);
+          setIsEmailVerified(verified);
+          
+          if (verified) {
+            const detectedUserType = await checkUserRoles(session.user.id);
+            setUserType(detectedUserType);
+            localStorage.setItem('user_type', detectedUserType);
+            localStorage.setItem('user_authenticated', 'true');
+            localStorage.setItem('user_email', session.user.email || '');
+          }
+        }
+      } catch (error: any) {
+        console.error('Auth initialization failed:', error);
+        if (mounted) {
+          setAuthError(error);
+        }
+      } finally {
+        if (mounted) {
+          setIsLoading(false);
+          setAuthStable(true);
+          isInitializingRef.current = false;
+        }
+      }
+    };
+    
+    initializeAuth();
+    
+    // Set up auth state change listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (!mounted) return;
+        
+        console.log('Auth state changed:', event, !!session);
+        
+        if (event === 'SIGNED_OUT') {
+          setUser(null);
+          setSession(null);
+          setUserType('individual');
+          setIsEmailVerified(false);
+          setIsVerificationEmailSent(false);
+          clearAllSessions();
+        } else if (session?.user) {
+          setUser(session.user);
+          setSession(session);
+          
+          const verified = !!(session.user.email_confirmed_at);
+          setIsEmailVerified(verified);
+          
+          if (verified) {
+            const detectedUserType = await checkUserRoles(session.user.id);
+            setUserType(detectedUserType);
+            localStorage.setItem('user_type', detectedUserType);
+            localStorage.setItem('user_authenticated', 'true');
+            localStorage.setItem('user_email', session.user.email || '');
+          }
+        }
+        
+        setIsLoading(false);
+        setAuthStable(true);
+      }
+    );
+    
+    cleanupRef.current = () => subscription.unsubscribe();
+    
+    return () => {
+      mounted = false;
+      if (cleanupRef.current) {
+        cleanupRef.current();
+      }
+      if (initializationTimeoutRef.current) {
+        clearTimeout(initializationTimeoutRef.current);
+      }
+    };
+  }, [checkUserRoles]);
 
   const contextValue: AuthContextType = {
-    // State
     user,
     session,
     isLoading,
     isEmailVerified,
-    authStable,
-    authError,
-    isAuthenticated: !!user && !!session,
     isVerificationEmailSent,
+    authError,
+    authStable,
     userType,
-    
-    // Actions
+    isAuthenticated: !!(user && session),
     signIn,
     signUp,
     signOut,
@@ -337,7 +445,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     recoverAuthState,
     sendVerificationEmail,
     updateUserProfile,
-    updatePassword
+    updatePassword,
   };
 
   return (

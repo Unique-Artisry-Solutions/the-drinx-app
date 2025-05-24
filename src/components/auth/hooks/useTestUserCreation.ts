@@ -108,18 +108,37 @@ export const useTestUserCreation = () => {
         await createProfileManually(authData.user);
       }
 
-      // Create user role entry
+      // Create user role entry - handle admin role properly
+      const roleToAssign = credentials.userType === 'admin' ? 'individual' : credentials.userType;
+      
       const { error: roleError } = await supabase
         .from('user_roles')
         .insert({
           user_id: authData.user.id,
-          role: credentials.userType,
+          role: roleToAssign as 'individual' | 'promoter' | 'establishment',
           is_active: true
         });
 
       if (roleError) {
         console.error('Error creating user role:', roleError);
         // Don't fail the whole creation for role error
+      }
+
+      // For admin users, we need to handle this differently since 'admin' isn't in the enum
+      // We'll use a function call or direct SQL to handle admin role assignment
+      if (credentials.userType === 'admin') {
+        try {
+          // Try to call the admin role assignment function
+          const { error: adminRoleError } = await supabase.rpc('switch_active_role', {
+            role_to_activate: 'individual' // Start with individual, admin will be handled in auth context
+          });
+          
+          if (adminRoleError) {
+            console.warn('Could not set admin role via function:', adminRoleError);
+          }
+        } catch (adminError) {
+          console.warn('Admin role assignment failed:', adminError);
+        }
       }
 
       // Sign out the test user immediately after creation
