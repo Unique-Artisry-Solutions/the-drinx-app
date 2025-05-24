@@ -29,7 +29,7 @@ const AppRoutes = () => {
     <PageSuspense>
       <AnimatePresence mode="wait">
         <Routes location={location} key={location.pathname}>
-          {/* Public Routes */}
+          {/* Public Routes - includes the /404 route */}
           {publicRoutes.map((route) => (
             <Route key={route.path} path={route.path} element={route.element} />
           ))}
@@ -69,7 +69,7 @@ const AppRoutes = () => {
             }
           />
 
-          {/* Admin Routes */}
+          {/* Admin Routes - must come before the catch-all to ensure admin/* routes are matched properly */}
           {adminRoutes.map((route) => (
             <Route key={route.path} path={route.path} element={route.element} />
           ))}

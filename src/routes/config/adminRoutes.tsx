@@ -9,6 +9,7 @@ import ComponentCatalogPage from '@/pages/admin/ComponentCatalogPage';
 import AdminDocumentationPage from '@/pages/admin/AdminDocumentationPage';
 import SystemConfigurationPage from '@/pages/admin/SystemConfigurationPage';
 import AdminLayout from '@/components/admin/layout/AdminLayout';
+import AdminNotFound from '@/components/admin/AdminNotFound';
 
 const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
 const RewardSystemMonitorPage = lazy(() => import('@/pages/admin/RewardSystemMonitorPage'));
@@ -23,7 +24,6 @@ const ContentModerationPage = lazy(() => import('@/pages/admin/ContentModeration
 const ThemeCustomizationPage = lazy(() => import('@/pages/admin/ThemeCustomizationPage'));
 const TestingInterfacePage = lazy(() => import('@/pages/admin/TestingInterfacePage'));
 
-// Simplified admin routes - removed conflicting /admin route
 export const adminRoutes: RouteObject[] = [
   { path: '/admin/login', element: <AdminLogin /> },
   // All admin routes use the AdminLayout
@@ -98,5 +98,10 @@ export const adminRoutes: RouteObject[] = [
   { 
     path: '/admin/testing', 
     element: <AdminLayout><TestingInterfacePage /></AdminLayout> 
+  },
+  // Admin-specific 404 handler for any /admin/* routes not matched above
+  { 
+    path: '/admin/*', 
+    element: <AdminNotFound /> 
   },
 ];

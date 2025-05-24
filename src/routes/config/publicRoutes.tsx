@@ -1,59 +1,18 @@
 
-import React, { lazy } from 'react';
-import { Route } from 'react-router-dom';
+import { lazy } from 'react';
+import { RouteObject } from 'react-router-dom';
 import LandingPage from '@/pages/LandingPage';
 import LoginPage from '@/pages/LoginPage';
 import SignupPage from '@/pages/SignupPage';
-import MissionPage from '@/pages/MissionPage';
-import ResourcesPage from '@/pages/ResourcesPage';
-import LegalPage from '@/pages/LegalPage';
-import PricingPage from '@/pages/PricingPage';
+import EmailVerificationPage from '@/pages/EmailVerificationPage';
 
-// This export is used by routeConfig.tsx
-export const publicRoutes = [
-  {
-    path: '/',
-    element: <LandingPage />,
-  },
-  {
-    path: '/landing',
-    element: <LandingPage />,
-  },
-  {
-    path: '/login',
-    element: <LoginPage />,
-  },
-  {
-    path: '/signup',
-    element: <SignupPage />,
-  },
-  {
-    path: '/mission',
-    element: <MissionPage />,
-  },
-  {
-    path: '/resources',
-    element: <ResourcesPage />,
-  },
-  {
-    path: '/legal',
-    element: <LegalPage />,
-  },
-  {
-    path: '/pricing',
-    element: <PricingPage />,
-  }
+const NotFound = lazy(() => import('@/pages/NotFound'));
+
+export const publicRoutes: RouteObject[] = [
+  { path: '/', element: <LandingPage /> },
+  { path: '/landing', element: <LandingPage /> },
+  { path: '/login', element: <LoginPage /> },
+  { path: '/signup', element: <SignupPage /> },
+  { path: '/verify-email', element: <EmailVerificationPage /> },
+  { path: '/404', element: <NotFound /> },
 ];
-
-// This component is used by AppRoutes.tsx
-const PublicRoutes = () => {
-  return (
-    <>
-      {publicRoutes.map((route) => (
-        <Route key={route.path} path={route.path} element={route.element} />
-      ))}
-    </>
-  );
-};
-
-export default PublicRoutes;
