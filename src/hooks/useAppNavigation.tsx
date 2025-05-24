@@ -1,4 +1,3 @@
-
 import { useNavigate } from 'react-router-dom';
 import { useCallback, useMemo } from 'react';
 import { useAuth } from '@/contexts/auth/AuthProvider';
@@ -55,6 +54,9 @@ export const useAppNavigation = () => {
         break;
       case 'promoter':
         navigate('/promoter/profile');
+        break;
+      case 'admin':
+        navigate('/admin/system-breakdown');
         break;
       case 'individual':
       default:

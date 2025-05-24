@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import TestCredentials from '@/components/auth/TestCredentials';
 
 const LoginPage = () => {
-  const [requiredUserType, setRequiredUserType] = useState<'individual' | 'establishment' | 'promoter'>('individual');
+  const [requiredUserType, setRequiredUserType] = useState<'individual' | 'establishment' | 'promoter' | 'admin'>('individual');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { theme, setTheme } = useTheme();
   const location = useLocation();
@@ -21,14 +21,17 @@ const LoginPage = () => {
   const processedStateRef = useRef<string>('');
   const navigationHandledRef = useRef(false);
   
-  // Check for userType in the location state
+  // Check for userType in URL search parameters and location state
   useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const urlUserType = searchParams.get('userType');
+    
     const state = location.state as { 
-      userType?: 'individual' | 'establishment' | 'promoter', 
+      userType?: 'individual' | 'establishment' | 'promoter' | 'admin', 
       message?: string 
     };
     
-    const stateKey = JSON.stringify(state);
+    const stateKey = JSON.stringify({ state, urlUserType });
     
     // Only process if state has actually changed
     if (processedStateRef.current === stateKey) {
@@ -37,18 +40,21 @@ const LoginPage = () => {
     
     processedStateRef.current = stateKey;
     
-    console.log("LoginPage - Processing location state:", state);
+    console.log("LoginPage - Processing location state and URL params:", { state, urlUserType });
     
-    if (state?.userType) {
-      console.log("LoginPage - Setting required user type from state:", state.userType);
-      setRequiredUserType(state.userType);
+    // Priority: URL parameter > location state
+    const userTypeToSet = urlUserType || state?.userType;
+    
+    if (userTypeToSet && ['individual', 'establishment', 'promoter', 'admin'].includes(userTypeToSet)) {
+      console.log("LoginPage - Setting required user type:", userTypeToSet);
+      setRequiredUserType(userTypeToSet as 'individual' | 'establishment' | 'promoter' | 'admin');
     }
     
     // If there's a redirect message, display it (only once)
     if (state?.message && !errorMessage) {
       setErrorMessage(state.message);
     }
-  }, [location.state, errorMessage]);
+  }, [location.search, location.state, errorMessage]);
   
   // Handle post-authentication navigation
   useEffect(() => {
@@ -78,6 +84,19 @@ const LoginPage = () => {
       return () => clearTimeout(timer);
     }
   }, [errorMessage]);
+
+  const getUserTypeDisplayName = (userType: string) => {
+    switch (userType) {
+      case 'establishment':
+        return 'Business';
+      case 'promoter':
+        return 'Promoter';
+      case 'admin':
+        return 'Admin';
+      default:
+        return '';
+    }
+  };
   
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-white to-purple-50">
@@ -94,8 +113,8 @@ const LoginPage = () => {
             <div className="text-center mb-8">
               <h1 className="text-3xl font-bold mb-2">Welcome Back</h1>
               <p className="text-gray-600">
-                Sign in to your Spiritless account 
-                {requiredUserType !== 'individual' ? ` as ${requiredUserType}` : ''}
+                Sign in to your Spiritless account
+                {requiredUserType !== 'individual' ? ` as ${getUserTypeDisplayName(requiredUserType)}` : ''}
               </p>
               
               {errorMessage && (

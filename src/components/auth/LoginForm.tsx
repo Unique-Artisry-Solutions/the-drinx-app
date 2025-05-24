@@ -9,7 +9,7 @@ import { useAuth } from '@/contexts/auth/AuthProvider';
 interface LoginFormProps {
   onSuccess?: () => void;
   onClose?: () => void;
-  userType?: 'individual' | 'establishment' | 'promoter';
+  userType?: 'individual' | 'establishment' | 'promoter' | 'admin';
 }
 
 const LoginForm: React.FC<LoginFormProps> = ({ 
@@ -66,6 +66,34 @@ const LoginForm: React.FC<LoginFormProps> = ({
 
   const isDisabled = isSubmitting || isLoading;
 
+  const getButtonStyle = () => {
+    switch (userType) {
+      case 'admin':
+        return 'bg-gray-800 hover:bg-gray-900 text-white';
+      case 'promoter':
+        return 'bg-purple-600 hover:bg-purple-700 text-white';
+      case 'establishment':
+        return 'bg-spiritless-green hover:bg-spiritless-green/90 text-white';
+      default:
+        return 'bg-spiritless-pink hover:bg-spiritless-pink/90 text-white';
+    }
+  };
+
+  const getButtonText = () => {
+    if (isDisabled) return 'Signing in...';
+    
+    switch (userType) {
+      case 'admin':
+        return 'Sign In as Admin';
+      case 'promoter':
+        return 'Sign In as Promoter';
+      case 'establishment':
+        return 'Sign In as Business';
+      default:
+        return 'Sign In';
+    }
+  };
+
   return (
     <form onSubmit={handleLogin}>
       <CardContent className="space-y-4 pt-6">
@@ -118,9 +146,9 @@ const LoginForm: React.FC<LoginFormProps> = ({
           type="submit"
           isLoading={isDisabled}
           disabled={isDisabled}
-          className={`w-full ${userType === 'individual' ? 'bg-spiritless-pink hover:bg-spiritless-pink/90' : userType === 'promoter' ? 'bg-purple-600 hover:bg-purple-700' : 'bg-spiritless-green hover:bg-spiritless-green/90'} text-white`}
+          className={`w-full ${getButtonStyle()}`}
         >
-          {isDisabled ? 'Signing in...' : `Sign In${userType !== 'individual' ? ` as ${userType === 'establishment' ? 'Business' : 'Promoter'}` : ''}`}
+          {getButtonText()}
         </AuthButton>
         
         {onClose && (
