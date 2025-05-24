@@ -341,46 +341,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const sendVerificationEmail = async (email: string) => {
-    setIsLoading(true);
-    setIsVerificationEmailSent(false);
-    setAuthError(null);
-
+  const sendVerificationEmail = useCallback(async (email: string) => {
     try {
+      console.log("Attempting to send verification email to:", email);
+      
       const { error } = await supabase.auth.resend({
-        type: 'email',
-        email: email,
+        type: 'signup',
+        email: email
       });
 
       if (error) {
-        console.error('AuthProvider: Send verification email error:', error);
-        setAuthError(error);
-        toast({
-          title: 'Failed to send verification email',
-          description: error.message,
-          variant: 'destructive',
-        });
-        return;
+        console.error("Error sending verification email:", error);
+        throw error;
       }
 
-      console.log('AuthProvider: Verification email sent successfully');
+      console.log("Verification email sent successfully");
       setIsVerificationEmailSent(true);
+      
       toast({
-        title: 'Verification email sent',
-        description: 'Please check your email to verify your account.',
+        title: "Verification email sent",
+        description: "Please check your email and click the verification link.",
       });
     } catch (error: any) {
-      console.error('AuthProvider: Unexpected send verification email error:', error);
-      setAuthError(error);
+      console.error("Failed to send verification email:", error);
       toast({
-        title: 'Failed to send verification email',
-        description: error.message || 'An unexpected error occurred',
-        variant: 'destructive',
+        title: "Failed to send verification email",
+        description: error.message || "Please try again later.",
+        variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
+      throw error;
     }
-  };
+  }, []);
 
   const updateUserProfile = async (data: any) => {
     setIsLoading(true);

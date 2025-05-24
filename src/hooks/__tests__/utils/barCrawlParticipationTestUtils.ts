@@ -2,6 +2,7 @@
 import { vi } from 'vitest';
 import { useAuth } from '@/contexts/auth/AuthProvider';
 import { useToast } from '@/hooks/use-toast';
+import { AuthContextType } from '@/contexts/auth/types';
 
 // Create a proper mockUser that satisfies the User type from Supabase
 export const mockUser = {
@@ -33,8 +34,8 @@ export function setupMocks(authUser = mockUser) {
   // Clear localStorage mock
   getLocalStorageMock().clear();
   
-  // Create a complete mock auth context
-  const mockAuthContext = {
+  // Create a complete mock auth context with proper typing
+  const mockAuthContext: AuthContextType = {
     user: authUser,
     session: authUser ? { 
       user: authUser,
@@ -52,7 +53,7 @@ export function setupMocks(authUser = mockUser) {
     authStable: true,
     authError: null,
     isVerificationEmailSent: false,
-    userType: 'individual', // Add the missing userType property
+    userType: 'individual' as const, // Use 'as const' to ensure literal type
     signIn: vi.fn().mockResolvedValue({ error: null, data: {} }),
     signUp: vi.fn().mockResolvedValue({}),
     signOut: vi.fn().mockResolvedValue({}),
