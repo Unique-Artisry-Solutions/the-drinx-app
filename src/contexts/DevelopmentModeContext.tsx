@@ -30,7 +30,6 @@ export const DevelopmentModeProvider: React.FC<{ children: React.ReactNode }> = 
   const devModeRef = useRef<DevUserType>(null);
   const isInitializedRef = useRef<boolean>(false);
   const stateStableRef = useRef<boolean>(false);
-  const lastProcessedUrl = useRef<string>('');
 
   // Initialize development mode detection ONCE at app startup
   useEffect(() => {
@@ -44,12 +43,6 @@ export const DevelopmentModeProvider: React.FC<{ children: React.ReactNode }> = 
                          hostname === '127.0.0.1' ||
                          hostname.includes('preview--') ||
                          hostname.includes('lovable');
-      
-      console.log('DevelopmentModeProvider - Environment detection:', {
-        hostname,
-        isLocalhost,
-        href: window.location.href
-      });
       
       return isLocalhost;
     };
@@ -87,18 +80,9 @@ export const DevelopmentModeProvider: React.FC<{ children: React.ReactNode }> = 
     
   }, []); // Empty dependency array - run only once
 
-  // Handle URL parameters on route changes (only after initialization) - DEBOUNCED
+  // Handle URL parameters on route changes (only after initialization)
   useEffect(() => {
     if (!isInitializedRef.current || !isDevelopmentRef.current) return;
-    
-    const currentUrl = location.pathname + location.search;
-    
-    // Prevent processing the same URL multiple times
-    if (lastProcessedUrl.current === currentUrl) {
-      return;
-    }
-    
-    lastProcessedUrl.current = currentUrl;
     
     const searchParams = new URLSearchParams(location.search);
     const devModeParam = searchParams.get('dev_mode');
@@ -115,7 +99,7 @@ export const DevelopmentModeProvider: React.FC<{ children: React.ReactNode }> = 
         }
       }
     }
-  }, [location.search]); // Only depend on search params
+  }, [location.search]);
 
   const navigateToUserTypeDashboard = useCallback((userType: DevUserType) => {
     // Clean up URL parameters first
@@ -125,7 +109,7 @@ export const DevelopmentModeProvider: React.FC<{ children: React.ReactNode }> = 
 
     console.log('DevelopmentModeProvider - Navigating to dashboard for:', userType);
 
-    // Navigate to appropriate dashboard ONLY if not already there
+    // Navigate to appropriate dashboard
     const currentPath = location.pathname;
     let targetPath = '';
     
@@ -137,7 +121,7 @@ export const DevelopmentModeProvider: React.FC<{ children: React.ReactNode }> = 
         targetPath = '/promoter/dashboard';
         break;
       case 'admin':
-        targetPath = '/admin/system-breakdown';
+        targetPath = '/admin/dashboard'; // Simplified to go directly to dashboard
         break;
       case 'individual':
         targetPath = '/explore';
@@ -200,15 +184,6 @@ export const DevelopmentModeProvider: React.FC<{ children: React.ReactNode }> = 
     isInitialized: isInitializedRef.current,
     isStateStable: stateStableRef.current
   };
-
-  console.log('DevelopmentModeProvider - Current state:', {
-    isDevelopment: isDevelopmentRef.current,
-    devMode: devModeRef.current,
-    isDevModeActive: value.isDevModeActive,
-    isInitialized: isInitializedRef.current,
-    isStateStable: stateStableRef.current,
-    location: location.pathname
-  });
 
   return (
     <DevelopmentModeContext.Provider value={value}>

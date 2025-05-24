@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCallback, useMemo } from 'react';
 import { useAuth } from '@/contexts/auth/AuthProvider';
 import { debouncedToast } from '@/utils/debouncedToast';
-import { useDevelopmentMode } from './useDevelopmentMode';
+import { useDevelopmentMode } from '@/contexts/DevelopmentModeContext';
 
 export const useAppNavigation = () => {
   const navigate = useNavigate();
@@ -34,7 +34,7 @@ export const useAppNavigation = () => {
         break;
       case 'admin':
         console.log("useAppNavigation - Navigating to admin dashboard");
-        navigate('/admin/system-breakdown');
+        navigate('/admin/dashboard'); // Simplified to go directly to dashboard
         break;
       case 'individual':
       default:
@@ -103,7 +103,7 @@ export const useAppNavigation = () => {
 
   const goToAdminDashboard = useCallback(() => {
     console.log("useAppNavigation - Redirecting to admin dashboard");
-    navigate('/admin/system-breakdown');
+    navigate('/admin/dashboard'); // Simplified route
   }, [navigate]);
 
   /**

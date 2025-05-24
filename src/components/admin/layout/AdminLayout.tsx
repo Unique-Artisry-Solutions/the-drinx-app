@@ -11,42 +11,17 @@ interface AdminLayoutProps {
 }
 
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
-  const { isDevModeActive, devMode, isDevelopment, isInitialized, isStateStable } = useDevelopmentMode();
-  const { user, session, isLoading, authStable, userType } = useAuth();
+  const { isDevModeActive, devMode, isDevelopment } = useDevelopmentMode();
+  const { user, session, isLoading, userType } = useAuth();
   
-  const debugInfo = {
-    children: !!children,
-    isDevModeActive,
-    devMode,
-    isDevelopment,
-    isInitialized,
-    isStateStable,
-    user: !!user,
-    session: !!session,
-    userType,
-    isLoading,
-    authStable
-  };
-  
-  // Log to confirm layout is rendering
-  React.useEffect(() => {
-    console.log('AdminLayout rendering with state:', debugInfo);
-  }, [children, isDevModeActive, devMode, isDevelopment, isInitialized, isStateStable, user, session, userType, isLoading, authStable]);
-
-  // EARLY RETURN FOR DEV MODE: If in development mode with admin role, render immediately without any auth checks
-  if (isDevelopment && isDevModeActive && devMode === 'admin' && isInitialized && isStateStable) {
-    console.log('AdminLayout: Development mode active with admin role - RENDERING DIRECTLY');
+  // SIMPLE DEV MODE BYPASS: If in dev mode with admin role, render directly
+  if (isDevelopment && isDevModeActive && devMode === 'admin') {
+    console.log('AdminLayout: Dev mode bypass - rendering admin interface');
     return (
       <div className="h-screen flex flex-col bg-gray-100">
-        {/* Top Navigation */}
         <AdminTopNav />
-        
-        {/* Main Content Area with Sidebar */}
-        <div className="flex flex-1 overflow-hidden" style={{ display: 'flex' }}>
-          {/* Sidebar Navigation */}
+        <div className="flex flex-1 overflow-hidden">
           <AdminSidebar />
-          
-          {/* Main Content */}
           <main className="flex-1 overflow-auto p-6">
             {children || <Outlet />}
           </main>
@@ -55,22 +30,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     );
   }
 
-  // Wait for development mode to initialize and stabilize (only for non-dev mode)
-  if (!isDevelopment && (!isInitialized || !isStateStable)) {
-    console.log('AdminLayout: Waiting for development mode initialization and stabilization');
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-spiritless-pink border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="mt-4 text-gray-600">Initializing...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Show loading state while auth is being checked (only if not in dev mode)
-  if (!isDevelopment && (isLoading || !authStable)) {
-    console.log('AdminLayout: Waiting for auth to stabilize');
+  // Show loading state while auth is being checked
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -81,17 +42,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     );
   }
 
-  // Check if user is properly authenticated as admin (only if not in dev mode)
-  if (!isDevelopment && (!user || !session || userType !== 'admin')) {
-    console.log('AdminLayout: Access denied - not authenticated as admin:', {
-      hasUser: !!user,
-      hasSession: !!session,
-      userType,
-      isDevelopment,
-      isDevModeActive,
-      devMode
-    });
-    
+  // Check if user is properly authenticated as admin
+  if (!user || !session || userType !== 'admin') {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -102,19 +54,12 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     );
   }
 
-  console.log('AdminLayout: Normal auth flow - user authenticated as admin');
-
+  // Normal authenticated admin flow
   return (
     <div className="h-screen flex flex-col bg-gray-100">
-      {/* Top Navigation */}
       <AdminTopNav />
-      
-      {/* Main Content Area with Sidebar */}
-      <div className="flex flex-1 overflow-hidden" style={{ display: 'flex' }}>
-        {/* Sidebar Navigation */}
+      <div className="flex flex-1 overflow-hidden">
         <AdminSidebar />
-        
-        {/* Main Content */}
         <main className="flex-1 overflow-auto p-6">
           {children || <Outlet />}
         </main>
