@@ -1,71 +1,94 @@
+
 import React, { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { Pencil, Save, UserIcon, History, Award, RefreshCw } from 'lucide-react';
-import { RewardTransaction, transformTransaction } from '@/lib/rewards/types';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { MockDataService } from '@/services/MockDataService';
+import { useMockDatabase } from '@/hooks/useMockDatabase';
 
 interface UserRewardProfileProps {
   userId: string;
-  onUpdate: (userId: string, points: number) => Promise<void>;
+  onUpdate: (userId: string, points: number) => void;
 }
 
-export const UserRewardProfile = ({ userId, onUpdate }: UserRewardProfileProps) => {
+export const UserRewardProfile: React.FC<UserRewardProfileProps> = ({ 
+  userId, 
+  onUpdate 
+}) => {
   const [profile, setProfile] = useState<any>(null);
-  const [transactions, setTransactions] = useState<RewardTransaction[]>([]);
-  const [isEditingPoints, setIsEditingPoints] = useState(false);
-  const [pointsAdjustment, setPointsAdjustment] = useState<number>(0);
+  const [rewards, setRewards] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
+  const [pointsToAdd, setPointsToAdd] = useState('');
   const { toast } = useToast();
+  const { supabase, isMockMode } = useMockDatabase();
 
   useEffect(() => {
     fetchUserProfile();
-    fetchTransactions();
-  }, [userId]);
+  }, [userId, isMockMode]);
 
   const fetchUserProfile = async () => {
     setIsLoading(true);
     try {
-      // Get user reward data
-      const { data: rewardData, error: rewardError } = await supabase
-        .from('user_rewards')
-        .select(`
-          *,
-          reward_tiers:current_tier_id(id, name, points_required, benefits, icon, color)
-        `)
-        .eq('user_id', userId)
-        .single();
+      if (isMockMode) {
+        // Use mock data
+        const mockProfile = MockDataService.getProfile(userId);
+        const mockRewards = {
+          points: 150,
+          lifetime_points: 450,
+          current_tier: { name: 'Silver', points_required: 100 },
+          recent_transactions: [
+            {
+              id: 'txn-001',
+              points: 25,
+              description: 'Visit check-in',
+              created_at: new Date().toISOString()
+            },
+            {
+              id: 'txn-002', 
+              points: -50,
+              description: 'Reward redemption',
+              created_at: new Date(Date.now() - 86400000).toISOString()
+            }
+          ]
+        };
         
-      if (rewardError) throw rewardError;
-      
-      // Get user profile data
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-        
-      if (profileError && profileError.code !== 'PGRST116') {
-        // PGRST116 is "no rows returned" which is okay if the user doesn't have a profile
-        throw profileError;
+        setProfile(mockProfile);
+        setRewards(mockRewards);
+        console.log('[MockDB] Loaded mock user profile:', mockProfile);
+      } else {
+        // Use real Supabase queries
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .single();
+
+        if (profileError) throw profileError;
+
+        const { data: rewardsData, error: rewardsError } = await supabase
+          .from('user_rewards')
+          .select(`
+            points,
+            lifetime_points,
+            reward_tiers (*)
+          `)
+          .eq('user_id', userId)
+          .maybeSingle();
+
+        if (rewardsError) throw rewardsError;
+
+        setProfile(profileData);
+        setRewards(rewardsData);
       }
-      
-      setProfile({
-        ...rewardData,
-        profile: profileData || { username: 'Unknown User' }
-      });
     } catch (error) {
       console.error('Error fetching user profile:', error);
       toast({
         title: 'Failed to load profile',
-        description: 'There was a problem loading the user reward profile.',
+        description: 'There was an error loading the user profile.',
         variant: 'destructive',
       });
     } finally {
@@ -73,85 +96,50 @@ export const UserRewardProfile = ({ userId, onUpdate }: UserRewardProfileProps) 
     }
   };
 
-  const fetchTransactions = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('reward_transactions')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(20);
-        
-      if (error) throw error;
-      
-      // Transform raw transaction data to match RewardTransaction type
-      const transformedTransactions = data?.map(tx => transformTransaction(tx)) || [];
-      setTransactions(transformedTransactions);
-    } catch (error) {
-      console.error('Error fetching transactions:', error);
+  const handlePointsUpdate = async () => {
+    const points = parseInt(pointsToAdd);
+    if (isNaN(points)) {
       toast({
-        title: 'Failed to load transactions',
-        description: 'There was a problem loading the reward transactions.',
+        title: 'Invalid input',
+        description: 'Please enter a valid number of points.',
         variant: 'destructive',
       });
+      return;
     }
-  };
 
-  const handleSavePointsAdjustment = async () => {
-    if (!pointsAdjustment) return;
-    
-    setIsSaving(true);
     try {
-      await onUpdate(userId, pointsAdjustment);
-      setIsEditingPoints(false);
-      setPointsAdjustment(0);
-      fetchUserProfile();
-      fetchTransactions();
+      if (isMockMode) {
+        // Simulate points update in mock mode
+        setRewards(prev => ({
+          ...prev,
+          points: prev.points + points,
+          lifetime_points: points > 0 ? prev.lifetime_points + points : prev.lifetime_points
+        }));
+        
+        toast({
+          title: 'Points updated (Mock Mode)',
+          description: `Successfully ${points > 0 ? 'added' : 'deducted'} ${Math.abs(points)} points.`,
+        });
+      } else {
+        await onUpdate(userId, points);
+      }
+      
+      setPointsToAdd('');
     } catch (error) {
       console.error('Error updating points:', error);
-    } finally {
-      setIsSaving(false);
     }
-  };
-
-  const formattedDate = (dateString?: string) => {
-    if (!dateString) return '';
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
-
-  const TransactionRow = ({ transaction }: { transaction: RewardTransaction }) => {
-    // Normalize type for case-insensitive comparison
-    const transactionType = transaction.type.toUpperCase();
-    const isEarn = transactionType === "EARN";
-    
-    return (
-      <tr className="border-b border-gray-100">
-        <td className="py-2 px-4">{formattedDate(transaction.timestamp)}</td>
-        <td className="py-2 px-4">
-          <div className={`inline-flex items-center ${isEarn ? "text-green-600" : "text-amber-600"}`}>
-            {isEarn ? "+" : "-"}
-            {transaction.pointsAmount || transaction.points}
-          </div>
-        </td>
-        <td className="py-2 px-4">{transaction.description || transaction.source || "-"}</td>
-      </tr>
-    );
   };
 
   if (isLoading) {
     return (
       <Card>
         <CardHeader>
-          <Skeleton className="h-8 w-3/4" />
-          <Skeleton className="h-4 w-1/2" />
+          <Skeleton className="h-6 w-48" />
+          <Skeleton className="h-4 w-32" />
         </CardHeader>
         <CardContent className="space-y-4">
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-32 w-full" />
+          <Skeleton className="h-20 w-full" />
+          <Skeleton className="h-16 w-full" />
         </CardContent>
       </Card>
     );
@@ -160,186 +148,104 @@ export const UserRewardProfile = ({ userId, onUpdate }: UserRewardProfileProps) 
   if (!profile) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle>User Not Found</CardTitle>
-          <CardDescription>
-            This user doesn't have a reward profile yet
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button onClick={() => fetchUserProfile()}>
-            <RefreshCw className="mr-2 h-4 w-4" /> Retry
-          </Button>
+        <CardContent className="flex items-center justify-center h-32">
+          <p className="text-muted-foreground">No user selected</p>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex justify-between items-center">
-          <div>
-            <CardTitle>
-              {profile.profile?.username || `User ${userId.substring(0, 8)}`}
-            </CardTitle>
-            <CardDescription>
-              User ID: {userId}
-            </CardDescription>
-          </div>
-          <Button variant="outline" onClick={() => fetchUserProfile()}>
-            <RefreshCw className="h-4 w-4" />
-          </Button>
+    <div className="space-y-4">
+      {isMockMode && (
+        <div className="bg-orange-50 border border-orange-200 rounded-md p-3">
+          <p className="text-sm text-orange-800">
+            <strong>Mock Mode Active:</strong> This data is simulated for testing purposes.
+          </p>
         </div>
-      </CardHeader>
-      <CardContent>
-        <div className="grid gap-6 md:grid-cols-3">
-          <div className="space-y-2">
-            <div className="text-sm font-medium">Current Points</div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-bold">{profile.points}</span>
-              {isEditingPoints ? (
-                <div className="flex items-center gap-2">
-                  <Input 
-                    type="number" 
-                    className="w-20 h-8"
-                    value={pointsAdjustment}
-                    onChange={(e) => setPointsAdjustment(parseInt(e.target.value) || 0)}
-                  />
-                  <Button 
-                    variant="outline" 
-                    size="icon" 
-                    onClick={handleSavePointsAdjustment}
-                    disabled={isSaving}
-                  >
-                    {isSaving ? (
-                      <RefreshCw className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Save className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
-              ) : (
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={() => setIsEditingPoints(true)}
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
-              )}
+      )}
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>{profile.display_name}</CardTitle>
+          <CardDescription>@{profile.username} • {profile.user_type}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label className="text-sm font-medium">Current Points</Label>
+              <p className="text-2xl font-bold text-green-600">
+                {rewards?.points || 0}
+              </p>
+            </div>
+            <div>
+              <Label className="text-sm font-medium">Lifetime Points</Label>
+              <p className="text-2xl font-bold text-blue-600">
+                {rewards?.lifetime_points || 0}
+              </p>
             </div>
           </div>
-          <div className="space-y-2">
-            <div className="text-sm font-medium">Lifetime Points</div>
-            <div className="text-3xl font-bold">{profile.lifetime_points}</div>
-          </div>
-          <div className="space-y-2">
-            <div className="text-sm font-medium">Current Tier</div>
-            <div className="flex items-center gap-2">
-              {profile.reward_tiers ? (
-                <Badge className="text-lg py-1 px-3" style={{
-                  backgroundColor: profile.reward_tiers.color || '#4f46e5',
-                  color: '#ffffff'
-                }}>
-                  {profile.reward_tiers.name}
-                </Badge>
-              ) : (
-                <span className="text-muted-foreground">No tier assigned</span>
-              )}
+          
+          {rewards?.current_tier && (
+            <div className="mt-4">
+              <Label className="text-sm font-medium">Current Tier</Label>
+              <Badge variant="secondary" className="ml-2">
+                {rewards.current_tier.name}
+              </Badge>
             </div>
-          </div>
-        </div>
+          )}
+        </CardContent>
+      </Card>
 
-        <div className="mt-8">
-          <Tabs defaultValue="transactions">
-            <TabsList className="mb-4">
-              <TabsTrigger value="transactions">
-                <History className="h-4 w-4 mr-2" />
-                Transactions
-              </TabsTrigger>
-              <TabsTrigger value="profile">
-                <UserIcon className="h-4 w-4 mr-2" />
-                User Details
-              </TabsTrigger>
-              <TabsTrigger value="achievements">
-                <Award className="h-4 w-4 mr-2" />
-                Achievements
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="transactions">
-              <div className="border rounded-md overflow-hidden">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Points</TableHead>
-                      <TableHead>Source</TableHead>
-                      <TableHead>Description</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {transactions.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={5} className="text-center text-muted-foreground py-4">
-                          No transactions found
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      transactions.map(tx => (
-                        <TransactionRow key={tx.id} transaction={tx} />
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="profile">
-              <Card>
-                <CardContent className="pt-6">
-                  <dl className="grid grid-cols-2 gap-4">
-                    <div>
-                      <dt className="text-sm font-medium text-muted-foreground">Username</dt>
-                      <dd className="text-lg">{profile.profile?.username || 'N/A'}</dd>
-                    </div>
-                    <div>
-                      <dt className="text-sm font-medium text-muted-foreground">Display Name</dt>
-                      <dd className="text-lg">{profile.profile?.display_name || 'N/A'}</dd>
-                    </div>
-                    <div>
-                      <dt className="text-sm font-medium text-muted-foreground">User Type</dt>
-                      <dd className="text-lg">{profile.profile?.user_type || 'N/A'}</dd>
-                    </div>
-                    <div>
-                      <dt className="text-sm font-medium text-muted-foreground">Joined</dt>
-                      <dd className="text-lg">
-                        {profile.profile?.created_at ? new Date(profile.profile.created_at).toLocaleDateString() : 'N/A'}
-                      </dd>
-                    </div>
-                  </dl>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="achievements">
-              <div className="flex items-center justify-center h-40 border rounded-md bg-muted/20">
-                <p className="text-muted-foreground">No achievements data available yet</p>
-              </div>
-            </TabsContent>
-          </Tabs>
-        </div>
-      </CardContent>
-      <CardFooter className="border-t bg-muted/50 flex justify-between">
-        <div className="text-xs text-muted-foreground">
-          Last updated: {profile.updated_at ? new Date(profile.updated_at).toLocaleString() : 'Unknown'}
-        </div>
-        <Button variant="outline" onClick={() => fetchTransactions()}>
-          Refresh Transactions
-        </Button>
-      </CardFooter>
-    </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Adjust Points</CardTitle>
+          <CardDescription>
+            Add or remove points from this user's account
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-2">
+            <Input
+              type="number"
+              placeholder="Points to add/remove"
+              value={pointsToAdd}
+              onChange={(e) => setPointsToAdd(e.target.value)}
+            />
+            <Button onClick={handlePointsUpdate}>
+              Update Points
+            </Button>
+          </div>
+          <p className="text-sm text-muted-foreground mt-2">
+            Use negative numbers to remove points
+          </p>
+        </CardContent>
+      </Card>
+
+      {rewards?.recent_transactions && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Transactions</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {rewards.recent_transactions.map((txn: any) => (
+                <div key={txn.id} className="flex justify-between items-center p-2 border rounded">
+                  <div>
+                    <p className="font-medium">{txn.description}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {new Date(txn.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <Badge variant={txn.points > 0 ? 'default' : 'destructive'}>
+                    {txn.points > 0 ? '+' : ''}{txn.points}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 };
