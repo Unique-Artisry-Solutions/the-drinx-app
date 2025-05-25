@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,7 +20,7 @@ import SystemHeader from '@/components/admin/systemBreakdown/SystemHeader';
 import OverviewTab from '@/components/admin/systemBreakdown/OverviewTab';
 import EnhancedFeatureTab from '@/components/admin/systemBreakdown/EnhancedFeatureTab';
 import FeatureShowcaseTab from '@/components/admin/systemBreakdown/FeatureShowcaseTab';
-import { useSystemBreakdown } from './hooks/useSystemBreakdown';
+import { useSystemBreakdown } from '@/components/admin/systemBreakdown/hooks/useSystemBreakdown';
 import RouteTestRunner from '@/components/development/RouteTestRunner';
 
 const SystemBreakdownPage: React.FC = () => {
