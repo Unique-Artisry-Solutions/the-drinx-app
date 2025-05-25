@@ -6,6 +6,9 @@ import SystemHeader from './SystemHeader';
 import OverviewTab from './OverviewTab';
 import EnhancedFeatureTab from './EnhancedFeatureTab';
 import FeatureShowcaseTab from './FeatureShowcaseTab';
+import ComparisonTab from './tabs/ComparisonTab';
+import TimelineTab from './tabs/TimelineTab';
+import TabContentPlaceholder from '../TabContentPlaceholder';
 import { useSystemBreakdown } from './hooks/useSystemBreakdown';
 
 const SystemBreakdownContent: React.FC = () => {
@@ -37,6 +40,11 @@ const SystemBreakdownContent: React.FC = () => {
     individual: individualFeatures.length,
     promoter: promoterFeatures.length
   });
+
+  // Calculate mock progress percentages for tabs that need them
+  const frontendProgressPercentage = 75;
+  const backendProgressPercentage = 68;
+  const confidenceScore = 85;
 
   return (
     <div className="space-y-6">
@@ -99,6 +107,42 @@ const SystemBreakdownContent: React.FC = () => {
             features={promoterFeatures}
             title="Promoter Features"
             userType="promoter"
+          />
+        </TabsContent>
+
+        <TabsContent value="promoter-requirements" className={activeTab === 'promoter-requirements' ? 'block' : 'hidden'}>
+          <TabContentPlaceholder
+            title="Promoter Requirements"
+            description="Detailed requirements and specifications for promoter functionality are being developed."
+          />
+        </TabsContent>
+
+        <TabsContent value="improvements" className={activeTab === 'improvements' ? 'block' : 'hidden'}>
+          <TabContentPlaceholder
+            title="Proposed Improvements"
+            description="System improvement suggestions and enhancement proposals will be displayed here."
+          />
+        </TabsContent>
+
+        <TabsContent value="releases" className={activeTab === 'releases' ? 'block' : 'hidden'}>
+          <TabContentPlaceholder
+            title="Release Management"
+            description="Release planning, version control, and deployment management interface."
+          />
+        </TabsContent>
+
+        <TabsContent value="comparison" className={activeTab === 'comparison' ? 'block' : 'hidden'}>
+          <ComparisonTab
+            frontendProgressPercentage={frontendProgressPercentage}
+            backendProgressPercentage={backendProgressPercentage}
+            confidenceScore={confidenceScore}
+          />
+        </TabsContent>
+
+        <TabsContent value="timeline" className={activeTab === 'timeline' ? 'block' : 'hidden'}>
+          <TimelineTab
+            monthlyProgress={monthlyProgressData}
+            confidenceScore={confidenceScore}
           />
         </TabsContent>
 
