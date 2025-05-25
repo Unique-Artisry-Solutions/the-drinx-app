@@ -42,7 +42,7 @@ const SystemBreakdownContent: React.FC = () => {
     <div className="space-y-6">
       <SystemHeader
         onAnalyzeFeatures={handleAnalyzeFeatures}
-        onExportCSV={() => handleExportCSV(adminFeatures, establishmentFeatures, individualFeatures)}
+        onExportCSV={handleExportCSV}
         analyzing={analyzing}
       />
 
