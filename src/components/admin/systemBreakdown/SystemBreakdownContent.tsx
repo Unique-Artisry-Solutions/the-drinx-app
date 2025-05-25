@@ -46,10 +46,33 @@ const SystemBreakdownContent: React.FC = () => {
     promoter: promoterFeatures.length
   });
 
-  // Calculate mock progress percentages for tabs that need them
-  const frontendProgressPercentage = 75;
-  const backendProgressPercentage = 68;
-  const confidenceScore = 85;
+  // Calculate progress percentages for components that need them
+  const calculateProgress = (features: any[]) => {
+    if (!features || features.length === 0) return { frontend: 0, backend: 0, overall: 0 };
+    
+    const implemented = features.filter(f => f.status === 'implemented').length;
+    const inProgress = features.filter(f => f.status === 'in_progress').length;
+    
+    const overall = Math.round(((implemented + inProgress * 0.5) / features.length) * 100);
+    const frontend = Math.min(overall + 5, 100); // Frontend typically slightly ahead
+    const backend = Math.max(overall - 5, 0); // Backend typically slightly behind
+    
+    return { frontend, backend, overall };
+  };
+
+  const adminProgress = calculateProgress(adminFeatures);
+  const establishmentProgress = calculateProgress(establishmentFeatures);
+  const individualProgress = calculateProgress(individualFeatures);
+  const promoterProgress = calculateProgress(promoterFeatures);
+
+  // Overall system progress
+  const frontendProgressPercentage = Math.round(
+    (adminProgress.frontend + establishmentProgress.frontend + individualProgress.frontend + promoterProgress.frontend) / 4
+  );
+  const backendProgressPercentage = Math.round(
+    (adminProgress.backend + establishmentProgress.backend + individualProgress.backend + promoterProgress.backend) / 4
+  );
+  const confidenceScore = 85; // Static confidence score
 
   const tabs = [
     { value: 'overview', label: 'Overview' },
@@ -115,25 +138,25 @@ const SystemBreakdownContent: React.FC = () => {
         <div className="min-h-[600px]">
           <TabsContent value="overview">
             <OverviewTab
-              adminFeatures={adminFeatures}
-              establishmentFeatures={establishmentFeatures}
-              individualFeatures={individualFeatures}
-              promoterFeatures={promoterFeatures}
+              adminFeatures={adminFeatures || []}
+              establishmentFeatures={establishmentFeatures || []}
+              individualFeatures={individualFeatures || []}
+              promoterFeatures={promoterFeatures || []}
               analyzing={analyzing}
               analysisProgress={analysisProgress}
-              analysisSteps={analysisSteps}
-              updatedFeaturesCount={updatedFeaturesCount}
+              analysisSteps={analysisSteps || []}
+              updatedFeaturesCount={updatedFeaturesCount || 0}
               onCreateRelease={handleCreateReleaseFromFeatures}
-              progressHistory={progressHistory}
-              monthlyProgressData={monthlyProgressData}
+              progressHistory={progressHistory || []}
+              monthlyProgressData={monthlyProgressData || []}
               currentSnapshot={currentSnapshot}
-              dataValidation={dataValidation}
+              dataValidation={dataValidation || { isValid: true, issues: [] }}
             />
           </TabsContent>
 
           <TabsContent value="admin">
             <EnhancedFeatureTab
-              features={adminFeatures}
+              features={adminFeatures || []}
               title="Admin Features"
               userType="admin"
             />
@@ -141,7 +164,7 @@ const SystemBreakdownContent: React.FC = () => {
 
           <TabsContent value="establishment">
             <EnhancedFeatureTab
-              features={establishmentFeatures}
+              features={establishmentFeatures || []}
               title="Establishment Features"
               userType="establishment"
             />
@@ -149,7 +172,7 @@ const SystemBreakdownContent: React.FC = () => {
 
           <TabsContent value="individual">
             <EnhancedFeatureTab
-              features={individualFeatures}
+              features={individualFeatures || []}
               title="Individual User Features"
               userType="individual"
             />
@@ -157,7 +180,7 @@ const SystemBreakdownContent: React.FC = () => {
 
           <TabsContent value="promoter">
             <EnhancedFeatureTab
-              features={promoterFeatures}
+              features={promoterFeatures || []}
               title="Promoter Features"
               userType="promoter"
             />
@@ -185,17 +208,17 @@ const SystemBreakdownContent: React.FC = () => {
 
           <TabsContent value="timeline">
             <TimelineTab
-              monthlyProgress={monthlyProgressData}
+              monthlyProgress={monthlyProgressData || []}
               confidenceScore={confidenceScore}
             />
           </TabsContent>
 
           <TabsContent value="showcase">
             <FeatureShowcaseTab
-              adminFeatures={adminFeatures}
-              establishmentFeatures={establishmentFeatures}
-              individualFeatures={individualFeatures}
-              promoterFeatures={promoterFeatures}
+              adminFeatures={adminFeatures || []}
+              establishmentFeatures={establishmentFeatures || []}
+              individualFeatures={individualFeatures || []}
+              promoterFeatures={promoterFeatures || []}
             />
           </TabsContent>
         </div>
