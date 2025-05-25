@@ -1,8 +1,12 @@
 
-import { RouteObject } from 'react-router-dom';
 import { UserType } from '@/types/navigation';
 
-export interface EnhancedRouteConfig extends RouteObject {
+// Define our own route interface that includes the properties we need
+export interface EnhancedRouteConfig {
+  path?: string;
+  element?: React.ReactNode;
+  children?: EnhancedRouteConfig[];
+  index?: boolean;
   userType?: UserType[];
   requireAuth?: boolean;
   prefetchPriority?: 'high' | 'medium' | 'low';
