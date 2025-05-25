@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { Tabs } from '@/components/ui/tabs';
 import SystemBreakdownContent from '@/components/admin/systemBreakdown/SystemBreakdownContent';
 
 const SystemFunctionalityBreakdown: React.FC = () => {
@@ -9,9 +8,7 @@ const SystemFunctionalityBreakdown: React.FC = () => {
   
   return (
     <div className="container mx-auto p-6 max-w-7xl">
-      <Tabs defaultValue="overview" className="w-full">
-        <SystemBreakdownContent />
-      </Tabs>
+      <SystemBreakdownContent />
     </div>
   );
 };
