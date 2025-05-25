@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -121,7 +120,7 @@ export const DevelopmentModeProvider: React.FC<{ children: React.ReactNode }> = 
         targetPath = '/promoter/dashboard';
         break;
       case 'admin':
-        targetPath = '/admin/dashboard'; // Simplified to go directly to dashboard
+        targetPath = '/admin/system-breakdown'; // Fixed: Use system-breakdown instead of dashboard
         break;
       case 'individual':
         targetPath = '/explore';
@@ -132,6 +131,7 @@ export const DevelopmentModeProvider: React.FC<{ children: React.ReactNode }> = 
     
     // Only navigate if we're not already at the target
     if (currentPath !== targetPath) {
+      console.log('DevelopmentModeProvider - Navigating from', currentPath, 'to', targetPath);
       navigate(targetPath, { replace: true });
     }
   }, [navigate, location.pathname]);

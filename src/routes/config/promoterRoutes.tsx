@@ -3,7 +3,8 @@ import { lazy } from 'react';
 import { RouteObject } from 'react-router-dom';
 import RouteProtectionWrapper from '@/hoc/RouteProtectionWrapper';
 
-const PromoterDashboard = lazy(() => import('@/pages/promoter/PromoterDashboard'));
+// Import the correct promoter dashboard component
+const PromoterDashboard = lazy(() => import('@/pages/promoter/PromoterDashboardPage'));
 const PromoterProfile = lazy(() => import('@/pages/promoter/PromoterProfile'));
 const PromoterEvents = lazy(() => import('@/pages/promoter/PromoterEvents'));
 
