@@ -1,4 +1,3 @@
-
 import { UserType } from '@/types/navigation';
 import { NavigationType } from '@/components/navigation/NavigationTypes';
 
@@ -88,7 +87,7 @@ export const shouldUseGuestNavigation = (
 };
 
 /**
- * Gets the appropriate home path for a user type
+ * Gets the appropriate home path for a user type - Updated to match route configuration
  */
 export const getHomePathForUserType = (userType: UserType | null): string => {
   if (!userType) return '/landing';
@@ -99,7 +98,7 @@ export const getHomePathForUserType = (userType: UserType | null): string => {
     case 'promoter':
       return '/promoter/dashboard';
     case 'admin':
-      return '/admin/system-breakdown';
+      return '/admin/system-breakdown'; // Fixed: system-breakdown is now the admin default
     case 'individual':
     default:
       return '/explore';

@@ -1,4 +1,3 @@
-
 import { lazy } from 'react';
 import { RouteObject } from 'react-router-dom';
 import AdminLogin from '@/pages/admin/AdminLogin';
@@ -10,6 +9,7 @@ import AdminDocumentationPage from '@/pages/admin/AdminDocumentationPage';
 import SystemConfigurationPage from '@/pages/admin/SystemConfigurationPage';
 import AdminLayout from '@/components/admin/layout/AdminLayout';
 import AdminNotFound from '@/components/admin/AdminNotFound';
+import RouteProtectionWrapper from '@/hoc/RouteProtectionWrapper';
 // Direct imports for problematic components
 import AdminEstablishmentsPage from '@/pages/admin/AdminEstablishmentsPage';
 import PhotoModerationPage from '@/pages/admin/PhotoModerationPage';
@@ -34,24 +34,40 @@ export const adminRoutes: RouteObject[] = [
     element: <AdminLogin /> 
   },
   
-  // All admin routes use the AdminLayout wrapper
+  // All admin routes use the AdminLayout wrapper with standardized protection
   {
     path: '/admin',
-    element: <AdminLayout />,
+    element: (
+      <RouteProtectionWrapper 
+        requireAuth={true} 
+        allowedUserTypes={['admin']}
+        redirectTo="/admin/login"
+      >
+        <AdminLayout />
+      </RouteProtectionWrapper>
+    ),
     children: [
-      // Index route - use dashboard as the default for /admin
+      // Fixed: Use system-breakdown as the default instead of dashboard
       { 
         index: true, 
         element: (() => {
-          console.log('adminRoutes: Dashboard index route matched');
-          return <AdminDashboard />;
+          console.log('adminRoutes: System breakdown index route matched');
+          return <SystemFunctionalityBreakdown />;
         })()
       },
+      // Keep dashboard route for direct access
       { 
         path: 'dashboard', 
         element: (() => {
           console.log('adminRoutes: Dashboard route matched');
           return <AdminDashboard />;
+        })()
+      },
+      { 
+        path: 'system-breakdown', 
+        element: (() => {
+          console.log('adminRoutes: System breakdown route matched');
+          return <SystemFunctionalityBreakdown />;
         })()
       },
       { 
@@ -71,7 +87,7 @@ export const adminRoutes: RouteObject[] = [
       { 
         path: 'establishments', 
         element: (() => {
-          console.log('adminRoutes: Establishments route matched - rendering AdminEstablishmentsPage');
+          console.log('adminRoutes: Establishments route matched');
           return <AdminEstablishmentsPage />;
         })()
       },
@@ -80,13 +96,6 @@ export const adminRoutes: RouteObject[] = [
         element: (() => {
           console.log('adminRoutes: Establishment profile route matched');
           return <AdminEstablishmentProfile />;
-        })()
-      },
-      { 
-        path: 'system-breakdown', 
-        element: (() => {
-          console.log('adminRoutes: System breakdown route matched');
-          return <SystemFunctionalityBreakdown />;
         })()
       },
       { 
@@ -106,7 +115,7 @@ export const adminRoutes: RouteObject[] = [
       { 
         path: 'photo-moderation', 
         element: (() => {
-          console.log('adminRoutes: Photo moderation route matched - rendering PhotoModerationPage');
+          console.log('adminRoutes: Photo moderation route matched');
           return <PhotoModerationPage />;
         })()
       },

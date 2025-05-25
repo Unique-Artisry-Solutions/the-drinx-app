@@ -1,65 +1,64 @@
 
+import { lazy } from 'react';
 import { RouteObject } from 'react-router-dom';
-import { ProtectedRouteWithChildren } from '../protectedRoutes';
-import PromoterDashboardPage from '@/pages/promoter/PromoterDashboardPage';
-import PromoterCommunicationPage from '@/pages/promoter/PromoterCommunicationPage';
-import PromoterAnalyticsPage from '@/pages/promoter/PromoterAnalyticsPage';
-import CreateSwigCircuitPage from '@/pages/profile/CreateSwigCircuitPage';
-import PromoterNotificationsPage from '@/pages/promoter/notifications/PromoterNotificationsPage';
-import EventManagementPage from '@/pages/promoter/events/EventManagementPage';
-import CreateEventPage from '@/pages/promoter/events/CreateEventPage';
-import EventDetailsPage from '@/pages/promoter/events/EventDetailsPage';
-import PromotionalToolsPage from '@/pages/promoter/marketing/PromotionalToolsPage';
+import RouteProtectionWrapper from '@/hoc/RouteProtectionWrapper';
 
-const wrapPromoterRoute = (element: JSX.Element) => (
-  <ProtectedRouteWithChildren userType="promoter">
-    {element}
-  </ProtectedRouteWithChildren>
-);
+const PromoterDashboard = lazy(() => import('@/pages/promoter/PromoterDashboard'));
+const PromoterProfile = lazy(() => import('@/pages/promoter/PromoterProfile'));
+const PromoterEvents = lazy(() => import('@/pages/promoter/PromoterEvents'));
 
 export const promoterRoutes: RouteObject[] = [
   {
     path: '/promoter',
-    element: wrapPromoterRoute(<PromoterDashboardPage />),
-  },
-  {
-    path: '/promoter/dashboard',
-    element: wrapPromoterRoute(<PromoterDashboardPage />),
-  },
-  {
-    path: '/promoter/communication',
-    element: wrapPromoterRoute(<PromoterCommunicationPage />),
-  },
-  {
-    path: '/promoter/analytics',
-    element: wrapPromoterRoute(<PromoterAnalyticsPage />),
-  },
-  {
-    path: '/create-swig-circuit',
-    element: wrapPromoterRoute(<CreateSwigCircuitPage />),
-  },
-  {
-    path: '/create-bar-crawl',
-    element: wrapPromoterRoute(<CreateSwigCircuitPage />),
-  },
-  {
-    path: '/promoter/notifications',
-    element: wrapPromoterRoute(<PromoterNotificationsPage />),
-  },
-  {
-    path: '/promoter/events',
-    element: wrapPromoterRoute(<EventManagementPage />),
-  },
-  {
-    path: '/promoter/events/create',
-    element: wrapPromoterRoute(<CreateEventPage />),
-  },
-  {
-    path: '/promoter/events/:eventId',
-    element: wrapPromoterRoute(<EventDetailsPage />),
-  },
-  {
-    path: '/promoter/marketing',
-    element: wrapPromoterRoute(<PromotionalToolsPage />),
+    children: [
+      {
+        index: true,
+        element: (
+          <RouteProtectionWrapper 
+            requireAuth={true} 
+            allowedUserTypes={['promoter']}
+            redirectTo="/login"
+          >
+            <PromoterDashboard />
+          </RouteProtectionWrapper>
+        )
+      },
+      {
+        path: 'dashboard',
+        element: (
+          <RouteProtectionWrapper 
+            requireAuth={true} 
+            allowedUserTypes={['promoter']}
+            redirectTo="/login"
+          >
+            <PromoterDashboard />
+          </RouteProtectionWrapper>
+        )
+      },
+      {
+        path: 'profile',
+        element: (
+          <RouteProtectionWrapper 
+            requireAuth={true} 
+            allowedUserTypes={['promoter']}
+            redirectTo="/login"
+          >
+            <PromoterProfile />
+          </RouteProtectionWrapper>
+        )
+      },
+      {
+        path: 'events',
+        element: (
+          <RouteProtectionWrapper 
+            requireAuth={true} 
+            allowedUserTypes={['promoter']}
+            redirectTo="/login"
+          >
+            <PromoterEvents />
+          </RouteProtectionWrapper>
+        )
+      }
+    ]
   }
 ];
