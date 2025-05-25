@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -79,6 +80,28 @@ export const DevelopmentModeProvider: React.FC<{ children: React.ReactNode }> = 
     
   }, []); // Empty dependency array - run only once
 
+  // Validate route exists before navigation
+  const validateAndNavigateToRoute = useCallback((targetPath: string) => {
+    console.log('DevelopmentModeProvider - Validating route:', targetPath);
+    
+    // Define known valid routes
+    const validRoutes = [
+      '/admin/system-breakdown',
+      '/establishment/dashboard', 
+      '/promoter/dashboard',
+      '/explore',
+      '/landing'
+    ];
+    
+    if (validRoutes.includes(targetPath)) {
+      console.log('DevelopmentModeProvider - Route validated, navigating to:', targetPath);
+      navigate(targetPath, { replace: true });
+    } else {
+      console.warn('DevelopmentModeProvider - Invalid route detected:', targetPath, 'falling back to /landing');
+      navigate('/landing', { replace: true });
+    }
+  }, [navigate]);
+
   // Handle URL parameters on route changes (only after initialization)
   useEffect(() => {
     if (!isInitializedRef.current || !isDevelopmentRef.current) return;
@@ -108,7 +131,7 @@ export const DevelopmentModeProvider: React.FC<{ children: React.ReactNode }> = 
 
     console.log('DevelopmentModeProvider - Navigating to dashboard for:', userType);
 
-    // Navigate to appropriate dashboard
+    // Navigate to appropriate dashboard with validation
     const currentPath = location.pathname;
     let targetPath = '';
     
@@ -120,7 +143,7 @@ export const DevelopmentModeProvider: React.FC<{ children: React.ReactNode }> = 
         targetPath = '/promoter/dashboard';
         break;
       case 'admin':
-        targetPath = '/admin/system-breakdown'; // Fixed: Use system-breakdown instead of dashboard
+        targetPath = '/admin/system-breakdown';
         break;
       case 'individual':
         targetPath = '/explore';
@@ -132,9 +155,9 @@ export const DevelopmentModeProvider: React.FC<{ children: React.ReactNode }> = 
     // Only navigate if we're not already at the target
     if (currentPath !== targetPath) {
       console.log('DevelopmentModeProvider - Navigating from', currentPath, 'to', targetPath);
-      navigate(targetPath, { replace: true });
+      validateAndNavigateToRoute(targetPath);
     }
-  }, [navigate, location.pathname]);
+  }, [validateAndNavigateToRoute, location.pathname]);
 
   const switchToUserType = useCallback((userType: DevUserType) => {
     if (!isDevelopmentRef.current) {
@@ -159,21 +182,17 @@ export const DevelopmentModeProvider: React.FC<{ children: React.ReactNode }> = 
       navigateToUserTypeDashboard(userType);
     } else {
       localStorage.removeItem('dev_user_type');
-      if (location.pathname !== '/landing') {
-        navigate('/landing', { replace: true });
-      }
+      validateAndNavigateToRoute('/landing');
     }
-  }, [navigateToUserTypeDashboard, navigate, location.pathname]);
+  }, [navigateToUserTypeDashboard, validateAndNavigateToRoute]);
 
   const exitDevMode = useCallback(() => {
     console.log('DevelopmentModeProvider - Exiting dev mode');
     devModeRef.current = null;
     setDevMode(null);
     localStorage.removeItem('dev_user_type');
-    if (location.pathname !== '/landing') {
-      navigate('/landing', { replace: true });
-    }
-  }, [navigate, location.pathname]);
+    validateAndNavigateToRoute('/landing');
+  }, [validateAndNavigateToRoute]);
 
   const value: DevelopmentModeContextType = {
     isDevelopment: isDevelopmentRef.current,

@@ -16,8 +16,7 @@ const createMockFeature = (id: string, name: string, description: string, status
   promoterAccess: 'read',
   databaseStatus: 'complete',
   userImpact: 'medium',
-  complexity: 'medium',
-  progress: status === 'implemented' ? 100 : status === 'in_progress' ? 75 : 0
+  complexity: 'medium'
 });
 
 const mockFeatures: FeatureItem[] = [

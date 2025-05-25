@@ -11,55 +11,50 @@ const PromoterEvents = lazy(() => import('@/pages/promoter/PromoterEvents'));
 export const promoterRoutes: RouteObject[] = [
   {
     path: '/promoter',
-    children: [
-      {
-        index: true,
-        element: (
-          <RouteProtectionWrapper 
-            requireAuth={true} 
-            allowedUserTypes={['promoter']}
-            redirectTo="/login"
-          >
-            <PromoterDashboard />
-          </RouteProtectionWrapper>
-        )
-      },
-      {
-        path: 'dashboard',
-        element: (
-          <RouteProtectionWrapper 
-            requireAuth={true} 
-            allowedUserTypes={['promoter']}
-            redirectTo="/login"
-          >
-            <PromoterDashboard />
-          </RouteProtectionWrapper>
-        )
-      },
-      {
-        path: 'profile',
-        element: (
-          <RouteProtectionWrapper 
-            requireAuth={true} 
-            allowedUserTypes={['promoter']}
-            redirectTo="/login"
-          >
-            <PromoterProfile />
-          </RouteProtectionWrapper>
-        )
-      },
-      {
-        path: 'events',
-        element: (
-          <RouteProtectionWrapper 
-            requireAuth={true} 
-            allowedUserTypes={['promoter']}
-            redirectTo="/login"
-          >
-            <PromoterEvents />
-          </RouteProtectionWrapper>
-        )
-      }
-    ]
+    element: (
+      <RouteProtectionWrapper 
+        requireAuth={true} 
+        allowedUserTypes={['promoter']}
+        redirectTo="/login"
+      >
+        <PromoterDashboard />
+      </RouteProtectionWrapper>
+    )
+  },
+  {
+    path: '/promoter/dashboard',
+    element: (
+      <RouteProtectionWrapper 
+        requireAuth={true} 
+        allowedUserTypes={['promoter']}
+        redirectTo="/login"
+      >
+        <PromoterDashboard />
+      </RouteProtectionWrapper>
+    )
+  },
+  {
+    path: '/promoter/profile',
+    element: (
+      <RouteProtectionWrapper 
+        requireAuth={true} 
+        allowedUserTypes={['promoter']}
+        redirectTo="/login"
+      >
+        <PromoterProfile />
+      </RouteProtectionWrapper>
+    )
+  },
+  {
+    path: '/promoter/events',
+    element: (
+      <RouteProtectionWrapper 
+        requireAuth={true} 
+        allowedUserTypes={['promoter']}
+        redirectTo="/login"
+      >
+        <PromoterEvents />
+      </RouteProtectionWrapper>
+    )
   }
 ];
