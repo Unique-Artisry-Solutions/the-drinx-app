@@ -35,6 +35,7 @@ export function useOptimizedRealTimeAnalytics(
 ): UseOptimizedRealTimeAnalyticsReturn {
   const { eventId, enableRealTime = true, refreshInterval = 300000 } = options;
 
+  // Initialize with safe default values
   const [metrics, setMetrics] = useState<OptimizedRealTimeMetrics>({
     activeUsers: 0,
     pageViews: 0,
@@ -56,24 +57,64 @@ export function useOptimizedRealTimeAnalytics(
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Helper function to safely handle service responses
+  const handleServiceResponse = <T>(
+    result: { status: 'fulfilled' | 'rejected', value?: T, reason?: any },
+    defaultValue: T,
+    successCallback: (value: T) => void,
+    errorName: string
+  ) => {
+    if (result.status === 'fulfilled' && result.value !== undefined) {
+      successCallback(result.value);
+      console.log(`${errorName} loaded successfully:`, result.value);
+    } else {
+      console.error(`Failed to load ${errorName}:`, result.reason);
+      successCallback(defaultValue);
+    }
+  };
+
   const loadData = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
 
-      console.log('Loading analytics data...');
+      console.log('Loading optimized analytics data...');
 
-      // Load all data in parallel with proper error handling
+      // Load all data in parallel with comprehensive error handling
       const [
         metricsResult,
         timeFrameResult,
         chartResult,
         eventAnalyticsResult
       ] = await Promise.allSettled([
-        getOptimizedRealTimeMetrics(),
-        getOptimizedAnalyticsTimeFrameData(7),
-        getOptimizedChartData(30),
-        eventId ? getOptimizedEventAnalyticsData(eventId) : Promise.resolve({
+        getOptimizedRealTimeMetrics().catch(err => {
+          console.warn('Metrics service failed, using defaults:', err);
+          return {
+            activeUsers: 0,
+            pageViews: 0,
+            conversions: 0,
+            revenue: 0,
+            eventCount: 0,
+            userEngagement: 0
+          };
+        }),
+        getOptimizedAnalyticsTimeFrameData(7).catch(err => {
+          console.warn('Timeframe data service failed, using defaults:', err);
+          return [];
+        }),
+        getOptimizedChartData(30).catch(err => {
+          console.warn('Chart data service failed, using defaults:', err);
+          return [];
+        }),
+        eventId ? getOptimizedEventAnalyticsData(eventId).catch(err => {
+          console.warn('Event analytics service failed, using defaults:', err);
+          return {
+            totalAttendees: 0,
+            checkedInAttendees: 0,
+            revenue: 0,
+            conversionRate: 0
+          };
+        }) : Promise.resolve({
           totalAttendees: 0,
           checkedInAttendees: 0,
           revenue: 0,
@@ -81,61 +122,68 @@ export function useOptimizedRealTimeAnalytics(
         })
       ]);
 
-      // Handle metrics
-      if (metricsResult.status === 'fulfilled') {
-        setMetrics(metricsResult.value);
-        console.log('Metrics loaded:', metricsResult.value);
-      } else {
-        console.error('Failed to load metrics:', metricsResult.reason);
-        setError('Failed to load real-time metrics');
-      }
+      // Handle each response with proper fallbacks
+      handleServiceResponse(
+        metricsResult,
+        { activeUsers: 0, pageViews: 0, conversions: 0, revenue: 0, eventCount: 0, userEngagement: 0 },
+        setMetrics,
+        'metrics'
+      );
 
-      // Handle timeframe data
-      if (timeFrameResult.status === 'fulfilled') {
-        setTimeFrameData(timeFrameResult.value);
-        console.log('Timeframe data loaded:', timeFrameResult.value.length, 'items');
-      } else {
-        console.error('Failed to load timeframe data:', timeFrameResult.reason);
-        setTimeFrameData([]);
-      }
+      handleServiceResponse(
+        timeFrameResult,
+        [],
+        setTimeFrameData,
+        'timeframe data'
+      );
 
-      // Handle chart data
-      if (chartResult.status === 'fulfilled') {
-        setChartData(chartResult.value);
-        console.log('Chart data loaded:', chartResult.value.length, 'points');
-      } else {
-        console.error('Failed to load chart data:', chartResult.reason);
-        setChartData([]);
-      }
+      handleServiceResponse(
+        chartResult,
+        [],
+        setChartData,
+        'chart data'
+      );
 
-      // Handle event analytics
-      if (eventAnalyticsResult.status === 'fulfilled') {
-        setEventAnalytics(eventAnalyticsResult.value);
-        console.log('Event analytics loaded:', eventAnalyticsResult.value);
-      } else {
-        console.error('Failed to load event analytics:', eventAnalyticsResult.reason);
-        setEventAnalytics({
-          totalAttendees: 0,
-          checkedInAttendees: 0,
-          revenue: 0,
-          conversionRate: 0
-        });
-      }
+      handleServiceResponse(
+        eventAnalyticsResult,
+        { totalAttendees: 0, checkedInAttendees: 0, revenue: 0, conversionRate: 0 },
+        setEventAnalytics,
+        'event analytics'
+      );
 
       // Only set error if all critical requests failed
       const failedRequests = [metricsResult, timeFrameResult, chartResult, eventAnalyticsResult]
         .filter(result => result.status === 'rejected');
       
       if (failedRequests.length === 4) {
-        setError('Failed to load analytics data. Please try again.');
-      } else if (failedRequests.length > 0 && metricsResult.status === 'rejected') {
-        // Only show error if metrics (the most important) failed
-        setError('Some analytics data may be incomplete');
+        setError('Failed to load analytics data. Using default values.');
+        console.warn('All analytics services failed, using default values');
+      } else if (failedRequests.length > 0) {
+        console.warn(`${failedRequests.length} analytics services failed, using partial data`);
+        // Don't set error for partial failures, just log them
       }
 
     } catch (err) {
-      console.error('Error loading optimized analytics data:', err);
+      console.error('Unexpected error loading optimized analytics data:', err);
       setError(err instanceof Error ? err.message : 'Failed to load analytics data');
+      
+      // Set safe fallback values even on complete failure
+      setMetrics({
+        activeUsers: 0,
+        pageViews: 0,
+        conversions: 0,
+        revenue: 0,
+        eventCount: 0,
+        userEngagement: 0
+      });
+      setTimeFrameData([]);
+      setChartData([]);
+      setEventAnalytics({
+        totalAttendees: 0,
+        checkedInAttendees: 0,
+        revenue: 0,
+        conversionRate: 0
+      });
     } finally {
       setIsLoading(false);
     }
@@ -165,7 +213,7 @@ export function useOptimizedRealTimeAnalytics(
     loadData();
   }, [loadData]);
 
-  // Real-time subscription
+  // Real-time subscription with improved error handling
   useEffect(() => {
     if (!enableRealTime) {
       console.log('Real-time updates disabled');
@@ -174,25 +222,37 @@ export function useOptimizedRealTimeAnalytics(
 
     console.log('Setting up optimized real-time analytics subscription');
     
-    const cleanup = subscribeToOptimizedRealTimeAnalytics(
-      (newMetrics) => {
-        console.log('Real-time metrics update:', newMetrics);
-        setMetrics(newMetrics);
-        setError(null); // Clear error on successful update
-      },
-      (error) => {
-        console.error('Real-time subscription error:', error);
-        setError(`Real-time updates failed: ${error.message}`);
-      }
-    );
+    let cleanup: (() => void) | null = null;
+    
+    try {
+      cleanup = subscribeToOptimizedRealTimeAnalytics(
+        (newMetrics) => {
+          console.log('Real-time metrics update:', newMetrics);
+          setMetrics(prevMetrics => ({
+            ...prevMetrics,
+            ...newMetrics
+          }));
+          setError(null); // Clear error on successful update
+        },
+        (error) => {
+          console.error('Real-time subscription error:', error);
+          setError(`Real-time updates failed: ${error.message}`);
+        }
+      );
+    } catch (error) {
+      console.error('Failed to setup real-time subscription:', error);
+      setError('Failed to setup real-time updates');
+    }
 
     return () => {
-      console.log('Cleaning up real-time analytics subscription');
-      cleanup();
+      if (cleanup) {
+        console.log('Cleaning up real-time analytics subscription');
+        cleanup();
+      }
     };
   }, [enableRealTime]);
 
-  // Periodic refresh for non-real-time data
+  // Periodic refresh for non-real-time data with better error handling
   useEffect(() => {
     if (refreshInterval <= 0) {
       return;
@@ -200,14 +260,25 @@ export function useOptimizedRealTimeAnalytics(
 
     console.log(`Setting up periodic refresh every ${refreshInterval}ms`);
     
-    const interval = setInterval(() => {
+    const interval = setInterval(async () => {
       console.log('Periodic refresh of timeframe and chart data');
-      Promise.allSettled([
-        getOptimizedAnalyticsTimeFrameData(7).then(setTimeFrameData),
-        getOptimizedChartData(30).then(setChartData)
-      ]).catch(error => {
+      try {
+        const [timeFrameResult, chartResult] = await Promise.allSettled([
+          getOptimizedAnalyticsTimeFrameData(7),
+          getOptimizedChartData(30)
+        ]);
+
+        if (timeFrameResult.status === 'fulfilled') {
+          setTimeFrameData(timeFrameResult.value);
+        }
+        
+        if (chartResult.status === 'fulfilled') {
+          setChartData(chartResult.value);
+        }
+      } catch (error) {
         console.error('Periodic refresh failed:', error);
-      });
+        // Don't update error state for periodic refresh failures
+      }
     }, refreshInterval);
 
     return () => {
