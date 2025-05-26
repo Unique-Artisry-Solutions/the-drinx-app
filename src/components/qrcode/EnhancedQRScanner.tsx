@@ -1,12 +1,12 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { Html5QrcodeScanner, Html5QrcodeScannerConfig } from 'html5-qrcode';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { Html5Qrcode, Html5QrcodeScanner } from 'html5-qrcode';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { QRCodeService, ScanResult } from '@/services/qrCodeService';
-import { Check, Loader2, AlertTriangle, Wifi, WifiOff, RotateCcw } from 'lucide-react';
+import { Camera, RefreshCw, X, Wifi, WifiOff, AlertTriangle } from 'lucide-react';
 
 interface EnhancedQRScannerProps {
   onScan: (result: ScanResult) => Promise<void>;
@@ -15,22 +15,26 @@ interface EnhancedQRScannerProps {
   showOfflineStatus?: boolean;
 }
 
-const EnhancedQRScanner: React.FC<EnhancedQRScannerProps> = ({ 
-  onScan, 
-  onClose, 
-  allowOfflineScanning = true,
-  showOfflineStatus = true 
+interface CameraDevice {
+  id: string;
+  label: string;
+}
+
+const EnhancedQRScanner: React.FC<EnhancedQRScannerProps> = ({
+  onScan,
+  onClose,
+  allowOfflineScanning = false,
+  showOfflineStatus = false
 }) => {
-  const [scanning, setScanning] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isOnline, setIsOnline] = useState(QRCodeService.isOnline());
-  const [processing, setProcessing] = useState(false);
-  const [offlineScanCount, setOfflineScanCount] = useState(0);
-  const [retryCount, setRetryCount] = useState(0);
-  
-  const scannerId = 'enhanced-qrcode-scanner';
-  const maxRetries = 3;
+  const [cameras, setCameras] = useState<CameraDevice[]>([]);
+  const [selectedCamera, setSelectedCamera] = useState<string>('');
+  const [scanAttempts, setScanAttempts] = useState(0);
+  const [lastScanTime, setLastScanTime] = useState<number>(0);
+  const scannerRef = useRef<Html5QrcodeScanner | null>(null);
+  const elementRef = useRef<HTMLDivElement>(null);
 
   // Monitor online status
   useEffect(() => {
@@ -46,261 +50,247 @@ const EnhancedQRScanner: React.FC<EnhancedQRScannerProps> = ({
     };
   }, []);
 
-  // Update offline scan count
+  // Load available cameras
   useEffect(() => {
-    const updateCount = () => {
-      setOfflineScanCount(QRCodeService.getOfflineScanCount());
+    const loadCameras = async () => {
+      try {
+        const devices = await Html5Qrcode.getCameras();
+        const cameraDevices: CameraDevice[] = devices.map(device => ({
+          id: device.id,
+          label: device.label || `Camera ${device.id}`
+        }));
+        setCameras(cameraDevices);
+        
+        // Select the first back camera or first available camera
+        const backCamera = cameraDevices.find(camera => 
+          camera.label.toLowerCase().includes('back') || 
+          camera.label.toLowerCase().includes('rear')
+        );
+        setSelectedCamera(backCamera?.id || cameraDevices[0]?.id || '');
+      } catch (error) {
+        console.error('Failed to load cameras:', error);
+        setError('Failed to access cameras. Please check permissions.');
+      }
     };
-    
-    updateCount();
-    const interval = setInterval(updateCount, 5000); // Update every 5 seconds
-    
-    return () => clearInterval(interval);
+
+    loadCameras();
   }, []);
 
-  const scannerConfig: Html5QrcodeScannerConfig = {
-    fps: 10,
-    qrbox: { width: 280, height: 280 },
-    aspectRatio: 1,
-    formatsToSupport: [0], // QR Code only
-    experimentalFeatures: {
-      useBarCodeDetectorIfSupported: true
-    },
-    showTorchButtonIfSupported: true,
-    showZoomSliderIfSupported: true
-  };
+  // Initialize scanner
+  useEffect(() => {
+    if (!selectedCamera || !elementRef.current) return;
 
-  const handleScanSuccess = useCallback(async (decodedText: string) => {
-    if (processing) return;
-
-    setProcessing(true);
-    setError(null);
-
-    try {
-      // Parse QR code
-      const parseResult = QRCodeService.parseQRCode(decodedText);
-      
-      if (!parseResult.success || !parseResult.data) {
-        throw new Error(parseResult.error || 'Invalid QR code');
-      }
-
-      // Validate QR code data
-      if (!QRCodeService.validateQRData(parseResult.data)) {
-        throw new Error('QR code validation failed');
-      }
-
-      // If offline and offline scanning is allowed, store for later processing
-      if (!isOnline && allowOfflineScanning) {
-        QRCodeService.storeOfflineScan(parseResult.data);
-        setSuccess(true);
+    const startScanner = async () => {
+      try {
+        setIsScanning(true);
         setError(null);
-        setOfflineScanCount(QRCodeService.getOfflineScanCount());
-        
-        const offlineResult: ScanResult = {
-          ...parseResult,
-          offline: true
+
+        const config = {
+          fps: 10,
+          qrbox: { width: 250, height: 250 },
+          aspectRatio: 1.0,
+          showTorchButtonIfSupported: true,
+          showZoomSliderIfSupported: true,
+          defaultZoomValueIfSupported: 2,
         };
-        
-        await onScan(offlineResult);
-        return;
+
+        const scanner = new Html5QrcodeScanner(
+          "qr-scanner-container",
+          config,
+          false
+        );
+
+        scannerRef.current = scanner;
+
+        const onScanSuccess = async (decodedText: string) => {
+          // Prevent rapid consecutive scans
+          const now = Date.now();
+          if (now - lastScanTime < 1000) return;
+          setLastScanTime(now);
+
+          try {
+            const result = QRCodeService.parseQRCode(decodedText);
+            
+            if (result.success && result.data) {
+              // Validate QR code data
+              if (QRCodeService.validateQRData(result.data)) {
+                await onScan(result);
+                scanner.clear();
+                setIsScanning(false);
+              } else {
+                throw new Error('Invalid or expired QR code');
+              }
+            } else {
+              throw new Error(result.error || 'Failed to parse QR code');
+            }
+          } catch (error: any) {
+            console.error('QR scan error:', error);
+            
+            // Store for offline processing if allowed and offline
+            if (allowOfflineScanning && !isOnline) {
+              try {
+                const offlineResult = QRCodeService.parseQRCode(decodedText);
+                if (offlineResult.success && offlineResult.data) {
+                  QRCodeService.storeOfflineScan(offlineResult.data);
+                  await onScan({ 
+                    ...offlineResult, 
+                    offline: true 
+                  });
+                  scanner.clear();
+                  setIsScanning(false);
+                  return;
+                }
+              } catch (offlineError) {
+                console.error('Offline scan storage failed:', offlineError);
+              }
+            }
+            
+            setScanAttempts(prev => prev + 1);
+            setError(error.message || 'Failed to process QR code');
+            
+            // Auto-retry after a few seconds for certain errors
+            if (scanAttempts < 3 && error.message?.includes('Invalid')) {
+              setTimeout(() => setError(null), 2000);
+            }
+          }
+        };
+
+        const onScanFailure = (error: string) => {
+          // Only log errors that aren't just "No QR code found"
+          if (!error.includes('NotFoundException')) {
+            console.warn('QR scan failure:', error);
+          }
+        };
+
+        scanner.render(onScanSuccess, onScanFailure);
+      } catch (error: any) {
+        console.error('Scanner initialization failed:', error);
+        setError('Failed to initialize camera scanner');
+        setIsScanning(false);
       }
+    };
 
-      // If offline and offline scanning not allowed
-      if (!isOnline) {
-        throw new Error('No internet connection. Online connection required for scanning.');
-      }
+    startScanner();
 
-      // Process scan online
-      await onScan(parseResult);
-      setSuccess(true);
-      setRetryCount(0);
-
-    } catch (error: any) {
-      console.error('Scan processing error:', error);
-      setError(error.message || 'Failed to process scan');
-      
-      // Implement retry logic for network errors
-      if (error.message.includes('network') || error.message.includes('connection')) {
-        if (retryCount < maxRetries) {
-          setTimeout(() => {
-            setRetryCount(prev => prev + 1);
-            handleScanSuccess(decodedText);
-          }, 1000 * (retryCount + 1)); // Exponential backoff
-          return;
+    // Cleanup function
+    return () => {
+      if (scannerRef.current) {
+        try {
+          scannerRef.current.clear();
+        } catch (error) {
+          console.warn('Error clearing scanner:', error);
         }
       }
-      
-      setSuccess(false);
-    } finally {
-      setProcessing(false);
-    }
-  }, [onScan, isOnline, allowOfflineScanning, processing, retryCount]);
+      setIsScanning(false);
+    };
+  }, [selectedCamera, onScan, allowOfflineScanning, isOnline, scanAttempts, lastScanTime]);
 
-  const handleScanError = useCallback((error: string) => {
-    // Only log actual errors, not the constant scanning feedback
-    if (!error.includes('NotFoundException') && !error.includes('NotFoundError')) {
-      console.warn('QR scan error:', error);
-    }
+  const handleRetry = useCallback(() => {
+    setError(null);
+    setScanAttempts(0);
+    // The useEffect will reinitialize the scanner
   }, []);
 
-  const startScanning = () => {
-    if (scanning) return;
-
-    setScanning(true);
-    setSuccess(false);
-    setError(null);
-    setRetryCount(0);
-
-    try {
-      const scanner = new Html5QrcodeScanner(scannerId, scannerConfig, false);
-      
-      scanner.render(handleScanSuccess, handleScanError);
-    } catch (error) {
-      console.error('Failed to start scanner:', error);
-      setError('Failed to initialize camera. Please check permissions.');
-      setScanning(false);
+  const handleCameraChange = useCallback((cameraId: string) => {
+    if (scannerRef.current) {
+      scannerRef.current.clear();
     }
-  };
-
-  const stopScanning = () => {
-    if (!scanning) return;
-
-    try {
-      const scanner = Html5QrcodeScanner.getCameras().then(() => {
-        // Clear any existing scanner instance
-        const element = document.getElementById(scannerId);
-        if (element) {
-          element.innerHTML = '';
-        }
-      });
-    } catch (error) {
-      console.error('Error stopping scanner:', error);
-    } finally {
-      setScanning(false);
-    }
-  };
-
-  const handleReset = () => {
-    setSuccess(false);
+    setSelectedCamera(cameraId);
     setError(null);
-    setRetryCount(0);
-    stopScanning();
-  };
-
-  const handleRetry = () => {
-    setError(null);
-    setRetryCount(0);
-    if (!scanning) {
-      startScanning();
-    }
-  };
+    setScanAttempts(0);
+  }, []);
 
   return (
     <Card className="w-full max-w-md mx-auto">
-      <CardHeader>
+      <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-center flex-1">Enhanced QR Scanner</CardTitle>
-          {showOfflineStatus && (
-            <div className="flex items-center gap-2">
-              {isOnline ? (
-                <Badge variant="default" className="text-xs">
+          <CardTitle className="flex items-center">
+            <Camera className="h-5 w-5 mr-2" />
+            QR Code Scanner
+          </CardTitle>
+          <div className="flex items-center gap-2">
+            {showOfflineStatus && (
+              <Badge variant={isOnline ? "default" : "secondary"}>
+                {isOnline ? (
                   <Wifi className="h-3 w-3 mr-1" />
-                  Online
-                </Badge>
-              ) : (
-                <Badge variant="secondary" className="text-xs">
+                ) : (
                   <WifiOff className="h-3 w-3 mr-1" />
-                  Offline
-                </Badge>
-              )}
+                )}
+                {isOnline ? "Online" : "Offline"}
+              </Badge>
+            )}
+            {onClose && (
+              <Button variant="ghost" size="sm" onClick={onClose}>
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        </div>
+      </CardHeader>
+
+      <CardContent className="space-y-4">
+        {/* Camera Selection */}
+        {cameras.length > 1 && (
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Camera</label>
+            <select
+              value={selectedCamera}
+              onChange={(e) => handleCameraChange(e.target.value)}
+              className="w-full p-2 border rounded-md"
+            >
+              {cameras.map((camera) => (
+                <option key={camera.id} value={camera.id}>
+                  {camera.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* Scanner Container */}
+        <div className="relative">
+          <div
+            id="qr-scanner-container"
+            ref={elementRef}
+            className="w-full rounded-lg overflow-hidden bg-black"
+            style={{ minHeight: '300px' }}
+          />
+          
+          {isScanning && (
+            <div className="absolute top-2 left-2">
+              <Badge variant="default">Scanning...</Badge>
             </div>
           )}
         </div>
-        
-        {offlineScanCount > 0 && (
-          <Alert>
+
+        {/* Error Display */}
+        {error && (
+          <Alert variant="destructive">
             <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>
-              {offlineScanCount} scan{offlineScanCount > 1 ? 's' : ''} pending sync
+            <AlertDescription className="flex items-center justify-between">
+              <span>{error}</span>
+              <Button variant="ghost" size="sm" onClick={handleRetry}>
+                <RefreshCw className="h-4 w-4" />
+              </Button>
             </AlertDescription>
           </Alert>
         )}
-      </CardHeader>
 
-      <CardContent>
-        {scanning && !success && !error ? (
-          <div className="space-y-4">
-            <div id={scannerId} className="w-full" />
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={stopScanning} className="flex-1">
-                Cancel
-              </Button>
-              {retryCount > 0 && (
-                <Badge variant="secondary" className="text-xs">
-                  Retry {retryCount}/{maxRetries}
-                </Badge>
-              )}
-            </div>
-          </div>
-        ) : success ? (
-          <div className="flex flex-col items-center justify-center space-y-4">
-            <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
-              {processing ? (
-                <Loader2 className="h-8 w-8 text-green-600 animate-spin" />
-              ) : (
-                <Check className="h-8 w-8 text-green-600" />
-              )}
-            </div>
-            <p className="text-green-600 font-medium text-lg">
-              {processing ? 'Processing...' : 'Scan successful!'}
-            </p>
-            {!isOnline && allowOfflineScanning && (
-              <p className="text-sm text-muted-foreground text-center">
-                Scan stored offline. Will sync when connection is restored.
-              </p>
-            )}
-            <div className="flex space-x-2">
-              <Button onClick={handleReset}>Scan Another</Button>
-              {onClose && (
-                <Button variant="outline" onClick={onClose}>Close</Button>
-              )}
-            </div>
-          </div>
-        ) : error ? (
-          <div className="flex flex-col items-center justify-center space-y-4">
-            <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center">
-              <AlertTriangle className="h-8 w-8 text-red-600" />
-            </div>
-            <p className="text-red-600 font-medium text-lg">Scan Failed</p>
-            <p className="text-sm text-muted-foreground text-center">{error}</p>
-            <div className="flex space-x-2">
-              <Button onClick={handleRetry}>
-                <RotateCcw className="h-4 w-4 mr-2" />
-                Try Again
-              </Button>
-              {onClose && (
-                <Button variant="outline" onClick={onClose}>Close</Button>
-              )}
-            </div>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center space-y-4">
-            <p className="text-gray-500 text-center">
-              Position the QR code within the camera view to scan.
-            </p>
-            {!isOnline && !allowOfflineScanning && (
-              <Alert>
-                <WifiOff className="h-4 w-4" />
-                <AlertDescription>
-                  Internet connection required for scanning
-                </AlertDescription>
-              </Alert>
-            )}
-            <Button onClick={startScanning} disabled={!isOnline && !allowOfflineScanning}>
-              Start Enhanced Scan
-            </Button>
-          </div>
+        {/* Offline Mode Info */}
+        {allowOfflineScanning && !isOnline && (
+          <Alert>
+            <WifiOff className="h-4 w-4" />
+            <AlertDescription>
+              Offline mode: Scans will be stored locally and synced when online
+            </AlertDescription>
+          </Alert>
         )}
+
+        {/* Instructions */}
+        <div className="text-center text-sm text-muted-foreground">
+          <p>Position the QR code within the camera frame</p>
+          <p>The scanner will automatically detect and process the code</p>
+        </div>
       </CardContent>
     </Card>
   );
