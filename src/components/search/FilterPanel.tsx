@@ -22,28 +22,21 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   onApplyFilters,
   className
 }) => {
-  // Get the current theme
   const { theme } = useTheme();
   const isDarkTheme = theme === 'dark';
   
-  // Track when user is currently sliding to prevent firing queries too frequently
   const [isDragging, setIsDragging] = React.useState(false);
   
-  // Handle slider mousedown - start of drag
   const handleDragStart = () => {
     setIsDragging(true);
   };
   
-  // Handle slider mouseup - end of drag
   const handleDragEnd = () => {
     if (isDragging) {
       setIsDragging(false);
-      // Fire query when user lifts mouse button after sliding
-      onApplyFilters();
     }
   };
   
-  // Add mouseup event listener to document to catch all mouseup events
   React.useEffect(() => {
     document.addEventListener('mouseup', handleDragEnd);
     return () => {
@@ -51,12 +44,17 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
     };
   }, [isDragging]);
 
+  const handleApplyClick = () => {
+    console.log('FilterPanel - Apply button clicked');
+    onApplyFilters();
+  };
+
   return (
     <div className={cn(
-      "mt-2 p-4 rounded-lg shadow-sm", 
+      "mt-2 p-4 rounded-lg shadow-lg border animate-in slide-in-from-top-2",
       isDarkTheme 
-        ? "bg-gray-800 border border-gray-700" 
-        : "bg-[#f5f3ed] border border-gray-200",
+        ? "bg-gray-800 border-gray-700" 
+        : "bg-white border-gray-200",
       className
     )}>
       <div className="mb-4">
@@ -73,6 +71,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
           max={50}
           step={1}
           onValueChange={(values) => {
+            console.log('Price range changed:', values);
             onPriceRangeChange([values[0], values[1]]);
           }}
           className="my-4"
@@ -93,6 +92,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
           max={20}
           step={1}
           onValueChange={(values) => {
+            console.log('Distance changed:', values[0]);
             onDistanceChange(values[0]);
           }}
           className="my-4"
@@ -101,8 +101,9 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
       
       <div className="flex justify-end">
         <Button 
-          onClick={onApplyFilters}
+          onClick={handleApplyClick}
           size="sm"
+          className="bg-primary text-primary-foreground hover:bg-primary/90"
         >
           Apply Filters
         </Button>

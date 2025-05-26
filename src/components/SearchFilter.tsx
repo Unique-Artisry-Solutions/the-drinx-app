@@ -36,12 +36,10 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
 
   // Initialize fuzzy search when cocktails or establishments change
   useEffect(() => {
-    // Make sure we have data to work with
     const cocktailItems = cocktails.length > 0 ? cocktails : []; 
     const establishmentItems = establishments.length > 0 ? establishments : [];
     
     if (cocktailItems.length > 0 || establishmentItems.length > 0) {
-      // Combine cocktails and establishments for fuzzy search
       const searchItems = [
         ...cocktailItems.map(c => ({
           ...c,
@@ -53,10 +51,8 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
         })),
       ];
       
-      // Create Fuse instance
       setFuseInstance(createFuzzySearch(searchItems));
       
-      // Extract suggestions
       const extractedSuggestions = extractSearchSuggestions(cocktailItems, establishmentItems);
       setSuggestions(extractedSuggestions);
     }
@@ -83,6 +79,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
   }, []);
 
   const handleSearch = (value: string) => {
+    console.log('SearchFilter - handleSearch called with:', value);
     onSearch(value);
   };
 
@@ -94,9 +91,9 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
   };
 
   const handleApplyFilters = () => {
+    console.log('SearchFilter - applying filters:', { priceRange, distance });
     handleFilterChange();
     onApplyFilters();
-    // Close the filters after applying
     setShowFilters(false);
   };
 
@@ -117,11 +114,16 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
         />
         <button
           type="button"
-          onClick={() => setShowFilters(!showFilters)}
+          onClick={() => {
+            console.log('Filter button clicked, current state:', showFilters);
+            setShowFilters(!showFilters);
+          }}
           className={cn(
-            "absolute right-3 top-1/2 transform -translate-y-1/2 p-1 rounded-full",
-            showFilters ? "bg-material-primary text-material-on-primary" : "text-material-outline"
+            "absolute right-3 top-1/2 transform -translate-y-1/2 p-2 rounded-full transition-colors",
+            "hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary",
+            showFilters ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
           )}
+          aria-label="Toggle filters"
         >
           <SlidersHorizontal size={16} />
         </button>

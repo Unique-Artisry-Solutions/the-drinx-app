@@ -1,8 +1,10 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Search, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import SearchSuggestions from './SearchSuggestions';
-import { getSuggestionCompletions, getAutoCorrectSuggestion } from './AutoCorrectHelper';
+import { getSuggestionCompletions } from './AutoCorrectHelper';
+
 interface SearchInputProps {
   value: string;
   onChange: (value: string) => void;
@@ -15,6 +17,7 @@ interface SearchInputProps {
   }>;
   className?: string;
 }
+
 const SearchInput: React.FC<SearchInputProps> = ({
   value,
   onChange,
@@ -24,10 +27,10 @@ const SearchInput: React.FC<SearchInputProps> = ({
   className
 }) => {
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
   const [autoCompleteSuggestions, setAutoCompleteSuggestions] = useState<string[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   useEffect(() => {
     if (value.length >= 2) {
       const completions = getSuggestionCompletions(value);
@@ -36,27 +39,34 @@ const SearchInput: React.FC<SearchInputProps> = ({
       setAutoCompleteSuggestions([]);
     }
   }, [value]);
-  const enhancedSuggestions = [...autoCompleteSuggestions.map(term => ({
-    value: term,
-    label: term,
-    type: 'autocomplete' as 'cocktail' | 'establishment' | 'ingredient'
-  })), ...suggestions];
+
+  const enhancedSuggestions = [
+    ...autoCompleteSuggestions.map(term => ({
+      value: term,
+      label: term,
+      type: 'autocomplete' as 'cocktail' | 'establishment' | 'ingredient'
+    })), 
+    ...suggestions
+  ];
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setShowSuggestions(false);
+    console.log('SearchInput - form submitted with value:', value);
     onSearch(value);
-    console.log(`Search submitted: "${value}"`);
   };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     onChange(newValue);
+    
     if (newValue.length > 1) {
       setShowSuggestions(true);
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
       }
       debounceTimerRef.current = setTimeout(() => {
-        console.log(`Debounced search for: "${newValue}"`);
+        console.log(`SearchInput - debounced search for: "${newValue}"`);
         onSearch(newValue);
       }, 300);
     } else {
@@ -66,38 +76,64 @@ const SearchInput: React.FC<SearchInputProps> = ({
       }
     }
   };
+
   const handleSuggestionSelect = (selectedValue: string) => {
+    console.log('SearchInput - suggestion selected:', selectedValue);
     onChange(selectedValue);
     setShowSuggestions(false);
     onSearch(selectedValue);
   };
-  const handleMouseDown = () => {
-    setIsDragging(true);
-  };
-  const handleMouseUp = () => {
-    if (isDragging) {
-      setIsDragging(false);
-      onSearch(value);
+
+  const handleClearClick = () => {
+    console.log('SearchInput - clear button clicked');
+    onClear();
+    setShowSuggestions(false);
+    if (inputRef.current) {
+      inputRef.current.focus();
     }
   };
-  useEffect(() => {
-    document.addEventListener('mouseup', handleMouseUp);
-    return () => {
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isDragging, value]);
-  return <div className={cn("relative", className)}>
+
+  return (
+    <div className={cn("relative", className)}>
       <form onSubmit={handleSubmit}>
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-material-outline" size={20} />
-          <input ref={inputRef} type="text" value={value} onChange={handleInputChange} onMouseDown={handleMouseDown} onFocus={() => value.length > 1 && setShowSuggestions(true)} placeholder="Search cocktails or establishments..." className="w-full pl-10 pr-14 py-3 rounded-full border border-material-outline focus:outline-none focus:ring-2 focus:ring-material-primary bg-indigo-950" />
-          {value && <button type="button" onClick={onClear} className="absolute right-14 top-1/2 transform -translate-y-1/2 text-material-outline hover:text-material-on-surface">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={20} />
+          <input
+            ref={inputRef}
+            type="text"
+            value={value}
+            onChange={handleInputChange}
+            onFocus={() => value.length > 1 && setShowSuggestions(true)}
+            placeholder="Search cocktails or establishments..."
+            className={cn(
+              "w-full pl-10 pr-14 py-3 rounded-full border border-input",
+              "bg-background text-foreground placeholder:text-muted-foreground",
+              "focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent",
+              "transition-colors"
+            )}
+          />
+          {value && (
+            <button
+              type="button"
+              onClick={handleClearClick}
+              className="absolute right-14 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1 rounded-full hover:bg-muted"
+              aria-label="Clear search"
+            >
               <X size={16} />
-            </button>}
+            </button>
+          )}
         </div>
       </form>
       
-      <SearchSuggestions suggestions={enhancedSuggestions} isOpen={showSuggestions} onSelect={handleSuggestionSelect} onOpenChange={setShowSuggestions} searchTerm={value} />
-    </div>;
+      <SearchSuggestions 
+        suggestions={enhancedSuggestions} 
+        isOpen={showSuggestions} 
+        onSelect={handleSuggestionSelect} 
+        onOpenChange={setShowSuggestions} 
+        searchTerm={value} 
+      />
+    </div>
+  );
 };
+
 export default SearchInput;

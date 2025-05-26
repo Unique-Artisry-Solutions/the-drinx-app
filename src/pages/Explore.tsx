@@ -8,7 +8,6 @@ import FeaturedEstablishmentsSection from '@/components/explore/FeaturedEstablis
 import BarCrawlSection from '@/components/explore/BarCrawlSection';
 import CocktailsSection from '@/components/explore/CocktailsSection';
 import EventsSection from '@/components/explore/EventsSection';
-import DataMigration from '@/components/admin/DataMigration';
 
 // Sample data - would be fetched from API in a real application
 import { sampleCocktails, sampleEstablishments, sampleBarCrawls } from '@/data/sampleData';
@@ -19,7 +18,7 @@ const Explore = () => {
   const [filteredCocktails, setFilteredCocktails] = useState(sampleCocktails);
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState({
-    priceRange: [0, 25],
+    priceRange: [0, 25] as [number, number],
     distance: 10,
   });
   const { user } = useAuth();
@@ -95,47 +94,46 @@ const Explore = () => {
 
   return (
     <Layout>
-      <div className="animate-fade-in max-w-7xl mx-auto px-3 py-4">
-        <div className="mb-6">
-          <h1 className="text-2xl font-medium text-foreground">Explore Cocktails</h1>
-          <p className="text-muted-foreground">
-            Find your perfect non-alcoholic drink
-          </p>
-        </div>
+      <div className="min-h-screen bg-background">
+        <div className="max-w-7xl mx-auto px-4 py-6">
+          <div className="mb-6">
+            <h1 className="text-2xl font-medium text-foreground mb-2">Explore Cocktails</h1>
+            <p className="text-muted-foreground">
+              Find your perfect non-alcoholic drink
+            </p>
+          </div>
 
-        <SearchFilter 
-          onSearch={handleSearch} 
-          onFilterChange={handleFilterChange}
-          onApplyFilters={applyFilters} 
-          className="mb-6"
-          initialSearchTerm={searchQuery}
-        />
-        
-        {/* Add the data migration component for admins or development */}
-        <div className="mb-6">
-          <DataMigration />
-        </div>
-
-        {/* Events Section */}
-        <EventsSection />
-
-        {/* Swig Circuit Section */}
-        <BarCrawlSection 
-          barCrawls={sampleBarCrawls} 
-          isAuthenticated={!!user}
-        />
-
-        {/* Featured Establishments Section */}
-        <div className="mt-6">
-          <FeaturedEstablishmentsSection establishments={establishments} />
-        </div>
-
-        {/* Cocktails Section */}
-        <div className="mt-6">
-          <CocktailsSection 
-            cocktails={filteredCocktails} 
-            resetFilters={resetFilters}
+          <SearchFilter 
+            onSearch={handleSearch} 
+            onFilterChange={handleFilterChange}
+            onApplyFilters={applyFilters} 
+            className="mb-6"
+            initialSearchTerm={searchQuery}
+            cocktails={cocktails}
+            establishments={establishments}
           />
+
+          {/* Events Section */}
+          <EventsSection />
+
+          {/* Swig Circuit Section */}
+          <BarCrawlSection 
+            barCrawls={sampleBarCrawls} 
+            isAuthenticated={!!user}
+          />
+
+          {/* Featured Establishments Section */}
+          <div className="mt-8">
+            <FeaturedEstablishmentsSection establishments={establishments} />
+          </div>
+
+          {/* Cocktails Section */}
+          <div className="mt-8">
+            <CocktailsSection 
+              cocktails={filteredCocktails} 
+              resetFilters={resetFilters}
+            />
+          </div>
         </div>
       </div>
     </Layout>
