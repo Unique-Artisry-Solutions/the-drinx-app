@@ -1,3 +1,4 @@
+import React from 'react';
 
 export interface NetworkError extends Error {
   code?: string;
