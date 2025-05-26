@@ -27,6 +27,21 @@ export interface RealtimeAnalyticsData {
   recent_events: AnalyticsEvent[];
 }
 
+// Helper function to safely convert Json to Record<string, any>
+function safeJsonToRecord(json: any): Record<string, any> {
+  if (typeof json === 'object' && json !== null) {
+    return json as Record<string, any>;
+  }
+  if (typeof json === 'string') {
+    try {
+      return JSON.parse(json);
+    } catch {
+      return {};
+    }
+  }
+  return {};
+}
+
 export async function trackEvent(event: AnalyticsEvent): Promise<void> {
   const { error } = await supabase
     .from('analytics_events')
@@ -57,7 +72,11 @@ export async function getAnalyticsMetrics(
 
     if (error) throw error;
 
-    const events = data || [];
+    const events = (data || []).map(event => ({
+      ...event,
+      event_data: safeJsonToRecord(event.event_data)
+    }));
+    
     const uniqueUsers = new Set(events.map(e => e.user_id).filter(Boolean)).size;
     const pageViews = events.filter(e => e.event_type === 'page_view').length;
     const conversions = events.filter(e => e.event_type === 'conversion').length;
@@ -106,7 +125,11 @@ export async function getRealtimeAnalytics(): Promise<RealtimeAnalyticsData> {
 
     if (usersError) throw usersError;
 
-    const events = recentEvents || [];
+    const events = (recentEvents || []).map(event => ({
+      ...event,
+      event_data: safeJsonToRecord(event.event_data)
+    }));
+    
     const liveUsers = new Set((activeUsers || []).map(u => u.user_id).filter(Boolean)).size;
     const conversionsLastHour = events.filter(e => e.event_type === 'conversion').length;
 

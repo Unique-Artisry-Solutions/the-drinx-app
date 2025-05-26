@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { EventMarketingCampaign } from '@/types/EventTypes';
 import * as campaignService from './campaignService';
@@ -33,6 +34,89 @@ export async function createMarketingCampaign(
     console.error('Error creating marketing campaign:', error);
     throw error;
   }
+}
+
+export async function updateMarketingCampaign(
+  campaignId: string,
+  updates: campaignService.CampaignUpdateData
+): Promise<EventMarketingCampaign> {
+  try {
+    const campaign = await campaignService.updateCampaign(campaignId, updates);
+    
+    // Track campaign update event
+    await analyticsService.trackEvent({
+      event_type: 'campaign_updated',
+      event_data: {
+        campaign_id: campaignId,
+        updates: Object.keys(updates)
+      }
+    });
+    
+    return campaign;
+  } catch (error) {
+    console.error('Error updating campaign:', error);
+    throw error;
+  }
+}
+
+export async function deleteMarketingCampaign(campaignId: string): Promise<void> {
+  try {
+    await campaignService.deleteCampaign(campaignId);
+    
+    // Track campaign deletion event
+    await analyticsService.trackEvent({
+      event_type: 'campaign_deleted',
+      event_data: { campaign_id: campaignId }
+    });
+  } catch (error) {
+    console.error('Error deleting campaign:', error);
+    throw error;
+  }
+}
+
+export async function trackCampaignMetric(
+  campaignId: string, 
+  metricName: string, 
+  value: number = 1
+): Promise<void> {
+  try {
+    const currentMetrics = await campaignService.getCampaignMetrics(campaignId);
+    const updatedMetrics = {
+      ...currentMetrics,
+      [metricName]: (currentMetrics[metricName as keyof typeof currentMetrics] || 0) + value
+    };
+    
+    await campaignService.updateCampaignMetrics(campaignId, updatedMetrics);
+    
+    // Track metric event
+    await analyticsService.trackEvent({
+      event_type: 'campaign_metric_tracked',
+      event_data: {
+        campaign_id: campaignId,
+        metric_name: metricName,
+        value: value
+      }
+    });
+  } catch (error) {
+    console.error('Error tracking campaign metric:', error);
+    throw error;
+  }
+}
+
+export function generateCampaignLink(
+  eventId: string, 
+  campaignId: string, 
+  medium: string = 'website'
+): string {
+  const baseUrl = window.location.origin;
+  const params = new URLSearchParams({
+    utm_source: 'swig_app',
+    utm_medium: medium,
+    utm_campaign: campaignId,
+    utm_content: eventId
+  });
+  
+  return `${baseUrl}/events/${eventId}?${params.toString()}`;
 }
 
 export async function fetchEventCampaigns(eventId: string): Promise<EventMarketingCampaign[]> {

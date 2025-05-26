@@ -177,24 +177,27 @@ export async function updateTicketInventory(
   quantitySold: number
 ): Promise<void> {
   try {
-    const { error } = await supabase.rpc('update_ticket_inventory', {
-      ticket_type_id: ticketTypeId,
-      quantity_sold: quantitySold
-    });
+    // Get current ticket type data
+    const { data: ticketType, error: fetchError } = await supabase
+      .from('event_ticket_types')
+      .select('quantity')
+      .eq('id', ticketTypeId)
+      .single();
 
-    if (error) {
-      // Fallback to direct update if RPC doesn't exist
-      const { data: ticketType } = await supabase
+    if (fetchError) {
+      throw new Error(`Failed to fetch ticket type: ${fetchError.message}`);
+    }
+
+    if (ticketType) {
+      const newQuantity = Math.max(0, ticketType.quantity - quantitySold);
+      
+      const { error: updateError } = await supabase
         .from('event_ticket_types')
-        .select('quantity')
-        .eq('id', ticketTypeId)
-        .single();
+        .update({ quantity: newQuantity })
+        .eq('id', ticketTypeId);
 
-      if (ticketType) {
-        await supabase
-          .from('event_ticket_types')
-          .update({ quantity: Math.max(0, ticketType.quantity - quantitySold) })
-          .eq('id', ticketTypeId);
+      if (updateError) {
+        throw new Error(`Failed to update ticket inventory: ${updateError.message}`);
       }
     }
   } catch (error) {
