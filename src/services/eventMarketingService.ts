@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { EventMarketingCampaign } from '@/types/EventTypes';
+import { EventMarketingCampaign, EventTargetAudience } from '@/types/EventTypes';
 
 export interface CreateMarketingCampaignRequest {
   event_id: string;
@@ -25,6 +25,19 @@ export interface UpdateMarketingCampaignRequest {
   metrics?: any;
 }
 
+// Helper function to safely convert JSON to EventTargetAudience
+function safeParseTargetAudience(data: any): EventTargetAudience | undefined {
+  if (!data) return undefined;
+  if (typeof data === 'string') {
+    try {
+      return JSON.parse(data) as EventTargetAudience;
+    } catch {
+      return undefined;
+    }
+  }
+  return data as EventTargetAudience;
+}
+
 /**
  * Fetch all marketing campaigns for an event
  */
@@ -43,7 +56,8 @@ export async function fetchEventCampaigns(eventId: string): Promise<EventMarketi
   return (data || []).map(campaign => ({
     ...campaign,
     status: campaign.status as 'draft' | 'active' | 'completed' | 'cancelled',
-    metrics: (campaign.metrics as any) || {}
+    metrics: (campaign.metrics as any) || {},
+    target_audience: safeParseTargetAudience(campaign.target_audience)
   }));
 }
 
@@ -78,7 +92,8 @@ export async function createMarketingCampaign(
   return {
     ...data,
     status: data.status as 'draft' | 'active' | 'completed' | 'cancelled',
-    metrics: (data.metrics as any) || {}
+    metrics: (data.metrics as any) || {},
+    target_audience: safeParseTargetAudience(data.target_audience)
   };
 }
 
@@ -104,7 +119,8 @@ export async function updateMarketingCampaign(
   return {
     ...data,
     status: data.status as 'draft' | 'active' | 'completed' | 'cancelled',
-    metrics: (data.metrics as any) || {}
+    metrics: (data.metrics as any) || {},
+    target_audience: safeParseTargetAudience(data.target_audience)
   };
 }
 
@@ -219,7 +235,8 @@ export async function getPromoterCampaigns(promoterId: string): Promise<EventMar
   return (data || []).map(campaign => ({
     ...campaign,
     status: campaign.status as 'draft' | 'active' | 'completed' | 'cancelled',
-    metrics: (campaign.metrics as any) || {}
+    metrics: (campaign.metrics as any) || {},
+    target_audience: safeParseTargetAudience(campaign.target_audience)
   }));
 }
 

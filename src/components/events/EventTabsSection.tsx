@@ -29,7 +29,7 @@ const EventTabsSection: React.FC<EventTabsSectionProps> = ({ eventId, eventName 
         <MarketingTabContent eventId={eventId || ''} eventName={eventName} />
       </TabsContent>
       <TabsContent value="segments">
-        <AttendeeSegmentsTab eventId={eventId || ''} eventName={eventName} />
+        <AttendeeSegmentsTab eventId={eventId || ''} />
       </TabsContent>
       <TabsContent value="attendees">
         {eventId ? (
