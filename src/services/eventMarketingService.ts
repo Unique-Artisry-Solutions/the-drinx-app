@@ -42,7 +42,8 @@ export async function fetchEventCampaigns(eventId: string): Promise<EventMarketi
 
   return (data || []).map(campaign => ({
     ...campaign,
-    status: campaign.status as 'draft' | 'active' | 'completed' | 'cancelled'
+    status: campaign.status as 'draft' | 'active' | 'completed' | 'cancelled',
+    metrics: (campaign.metrics as any) || {}
   }));
 }
 
@@ -76,7 +77,8 @@ export async function createMarketingCampaign(
 
   return {
     ...data,
-    status: data.status as 'draft' | 'active' | 'completed' | 'cancelled'
+    status: data.status as 'draft' | 'active' | 'completed' | 'cancelled',
+    metrics: (data.metrics as any) || {}
   };
 }
 
@@ -101,7 +103,8 @@ export async function updateMarketingCampaign(
 
   return {
     ...data,
-    status: data.status as 'draft' | 'active' | 'completed' | 'cancelled'
+    status: data.status as 'draft' | 'active' | 'completed' | 'cancelled',
+    metrics: (data.metrics as any) || {}
   };
 }
 
@@ -140,7 +143,7 @@ export async function trackCampaignMetric(
     throw new Error(`Failed to fetch campaign: ${fetchError.message}`);
   }
 
-  const currentMetrics = campaign?.metrics || {};
+  const currentMetrics = (campaign?.metrics as any) || {};
   const updatedMetrics = {
     ...currentMetrics,
     [metricName]: (currentMetrics[metricName] || 0) + value,
@@ -192,7 +195,7 @@ export async function getCampaignMetrics(campaignId: string): Promise<any> {
     throw new Error(`Failed to fetch metrics: ${error.message}`);
   }
 
-  return data?.metrics || {};
+  return (data?.metrics as any) || {};
 }
 
 /**
@@ -215,7 +218,8 @@ export async function getPromoterCampaigns(promoterId: string): Promise<EventMar
 
   return (data || []).map(campaign => ({
     ...campaign,
-    status: campaign.status as 'draft' | 'active' | 'completed' | 'cancelled'
+    status: campaign.status as 'draft' | 'active' | 'completed' | 'cancelled',
+    metrics: (campaign.metrics as any) || {}
   }));
 }
 
@@ -266,7 +270,7 @@ export async function createSegmentBasedNotification(
   }
 
   // Create notifications for each user in the segment
-  const notifications = segmentUsers.map(user => ({
+  const notifications = (segmentUsers || []).map(user => ({
     recipient_id: user.user_id,
     title: notificationData.title,
     content: notificationData.content,

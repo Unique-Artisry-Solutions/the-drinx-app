@@ -20,6 +20,7 @@ import {
 } from '@/services/campaignSegmentService';
 import { CampaignSegmentMapping, CampaignSegmentAnalytics, InteractionType } from '@/types/CampaignSegmentTypes';
 import { AudienceSegment } from '@/types/AudienceTypes';
+import { useMutation } from '@tanstack/react-query';
 
 export const useEventMarketingWithSegments = (eventId: string) => {
   const [campaigns, setCampaigns] = useState<EventMarketingCampaign[]>([]);
@@ -361,6 +362,38 @@ export const useEventMarketingWithSegments = (eventId: string) => {
     }
   };
 
+  // Create segment-based notification
+  const createSegmentNotificationMutation = useMutation({
+    mutationFn: (data: {
+      campaignId: string;
+      segmentId: string;
+      title: string;
+      content: string;
+      priority?: 'low' | 'medium' | 'high';
+    }) => eventMarketingService.createSegmentBasedNotification(
+      data.campaignId,
+      data.segmentId,
+      {
+        title: data.title,
+        content: data.content,
+        priority: data.priority
+      }
+    ),
+    onSuccess: () => {
+      toast({
+        title: 'Success',
+        description: 'Segment-based notification created successfully',
+      });
+    },
+    onError: (err: any) => {
+      toast({
+        title: 'Error',
+        description: 'Failed to create segment-based notification',
+        variant: 'destructive'
+      });
+    }
+  });
+
   // Get campaign link (original function)
   const getCampaignLink = (campaignId: string, medium: string = 'website', segmentId?: string) => {
     if (segmentId) {
@@ -408,6 +441,7 @@ export const useEventMarketingWithSegments = (eventId: string) => {
     removeSegment,
     trackSegmentInteraction,
     getAvailableSegments,
-    refreshCampaignAnalytics
+    refreshCampaignAnalytics,
+    createSegmentNotificationMutation
   };
 };

@@ -30,7 +30,7 @@ export const useEventTicketing = (eventId: string) => {
   const applyDiscountMutation = useMutation({
     mutationFn: ({ code, ticketTypeId }: { code: string; ticketTypeId: string }) => 
       eventTicketService.applyDiscountCode(code, eventId, ticketTypeId),
-    onSuccess: (data) => {
+    onSuccess: (data: eventTicketService.DiscountValidationResult) => {
       setAppliedDiscount(data);
       if (data.valid) {
         toast({
@@ -66,7 +66,7 @@ export const useEventTicketing = (eventId: string) => {
       applicableTicketTypes?: string[];
       description?: string;
     }) => eventTicketService.createDiscountCode({
-      eventId,
+      event_id: eventId,
       ...discountData
     }),
     onSuccess: () => {
@@ -103,10 +103,10 @@ export const useEventTicketing = (eventId: string) => {
       discountCode?: string;
       paymentMethodId?: string;
     }) => eventTicketService.processTicketPurchase({
-      eventId,
+      event_id: eventId,
       ...purchaseData
     }),
-    onSuccess: (data) => {
+    onSuccess: (data: eventTicketService.TicketPurchaseResult) => {
       if (data.success) {
         queryClient.invalidateQueries({ queryKey: ['eventTicketTypes', eventId] });
         toast({
