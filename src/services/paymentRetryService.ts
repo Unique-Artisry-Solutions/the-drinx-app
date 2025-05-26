@@ -1,5 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { typedPaymentService } from './typedPaymentService';
 import { enhancedPaymentService } from './enhancedPaymentService';
 
 export interface PaymentRetryRecord {
@@ -24,48 +25,16 @@ class PaymentRetryService {
       return;
     }
 
-    const retryScheduledFor = new Date(Date.now() + retryDelayMinutes * 60 * 1000).toISOString();
-
-    const { error } = await supabase
-      .from('payment_retries')
-      .insert({
-        transaction_id: transactionId,
-        attempt_number: attemptNumber,
-        failure_reason: failureReason,
-        retry_scheduled_for: retryScheduledFor,
-        max_retries: maxRetries,
-        metadata: {
-          original_failure: failureReason,
-          retry_delay_minutes: retryDelayMinutes
-        }
-      });
-
-    if (error) {
-      console.error('Error scheduling payment retry:', error);
-      throw error;
-    }
+    await typedPaymentService.createPaymentRetry(
+      transactionId,
+      failureReason,
+      attemptNumber,
+      retryDelayMinutes
+    );
   }
 
   async processPendingRetries(): Promise<void> {
-    const { data: pendingRetries, error } = await supabase
-      .from('payment_retries')
-      .select(`
-        *,
-        payment_transactions (
-          payment_method_id,
-          amount,
-          currency,
-          metadata
-        )
-      `)
-      .lte('retry_scheduled_for', new Date().toISOString())
-      .eq('status', 'pending')
-      .limit(10);
-
-    if (error) {
-      console.error('Error fetching pending retries:', error);
-      return;
-    }
+    const pendingRetries = await typedPaymentService.getPendingRetries();
 
     for (const retry of pendingRetries || []) {
       await this.executeRetry(retry);
@@ -75,10 +44,7 @@ class PaymentRetryService {
   private async executeRetry(retry: any): Promise<void> {
     try {
       // Mark retry as processing
-      await supabase
-        .from('payment_retries')
-        .update({ status: 'processing' })
-        .eq('id', retry.id);
+      await typedPaymentService.updateRetryStatus(retry.id, 'processing');
 
       const transaction = retry.payment_transactions;
       if (!transaction) {
@@ -95,13 +61,11 @@ class PaymentRetryService {
 
       if (result.success) {
         // Retry successful
-        await supabase
-          .from('payment_retries')
-          .update({ 
-            status: 'completed',
-            completed_at: new Date().toISOString()
-          })
-          .eq('id', retry.id);
+        await typedPaymentService.updateRetryStatus(
+          retry.id, 
+          'completed', 
+          new Date().toISOString()
+        );
 
         console.log(`Payment retry successful for transaction ${retry.transaction_id}`);
       } else {
@@ -119,39 +83,17 @@ class PaymentRetryService {
         );
         
         // Mark current retry as failed
-        await supabase
-          .from('payment_retries')
-          .update({ 
-            status: 'failed',
-            failure_reason: error.message
-          })
-          .eq('id', retry.id);
+        await typedPaymentService.updateRetryStatus(retry.id, 'failed');
       } else {
         // Max retries exceeded
-        await supabase
-          .from('payment_retries')
-          .update({ 
-            status: 'max_retries_exceeded',
-            failure_reason: error.message
-          })
-          .eq('id', retry.id);
-
+        await typedPaymentService.updateRetryStatus(retry.id, 'max_retries_exceeded');
         await this.markTransactionAsFailed(retry.transaction_id);
       }
     }
   }
 
   private async markTransactionAsFailed(transactionId: string): Promise<void> {
-    await supabase
-      .from('payment_transactions')
-      .update({ 
-        status: 'failed',
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', transactionId);
-
-    // Send notification to user about failed payment
-    // This would integrate with your notification system
+    await typedPaymentService.updatePaymentTransactionStatus(transactionId, 'failed');
     console.log(`Transaction ${transactionId} marked as permanently failed`);
   }
 

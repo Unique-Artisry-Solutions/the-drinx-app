@@ -2321,6 +2321,39 @@ export type Database = {
           },
         ]
       }
+      payment_failure_logs: {
+        Row: {
+          amount: number | null
+          created_at: string
+          currency: string | null
+          error_message: string | null
+          id: string
+          metadata: Json
+          payment_method_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          currency?: string | null
+          error_message?: string | null
+          id?: string
+          metadata?: Json
+          payment_method_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          currency?: string | null
+          error_message?: string | null
+          id?: string
+          metadata?: Json
+          payment_method_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       payment_gateway_configs: {
         Row: {
           configuration: Json
@@ -2348,6 +2381,177 @@ export type Database = {
           is_active?: boolean
           test_mode?: boolean
           updated_at?: string
+        }
+        Relationships: []
+      }
+      payment_receipts: {
+        Row: {
+          created_at: string
+          id: string
+          receipt_data: Json
+          receipt_number: string
+          receipt_url: string | null
+          transaction_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          receipt_data?: Json
+          receipt_number: string
+          receipt_url?: string | null
+          transaction_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          receipt_data?: Json
+          receipt_number?: string
+          receipt_url?: string | null
+          transaction_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_payment_receipts_transaction"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "payment_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_refunds: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          metadata: Json
+          provider_refund_id: string | null
+          reason: string | null
+          refunded_by: string | null
+          status: string
+          transaction_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          metadata?: Json
+          provider_refund_id?: string | null
+          reason?: string | null
+          refunded_by?: string | null
+          status?: string
+          transaction_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          metadata?: Json
+          provider_refund_id?: string | null
+          reason?: string | null
+          refunded_by?: string | null
+          status?: string
+          transaction_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_payment_refunds_transaction"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "payment_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_retries: {
+        Row: {
+          attempt_number: number
+          completed_at: string | null
+          created_at: string
+          failure_reason: string
+          id: string
+          max_retries: number
+          metadata: Json
+          retry_scheduled_for: string
+          status: string
+          transaction_id: string
+        }
+        Insert: {
+          attempt_number?: number
+          completed_at?: string | null
+          created_at?: string
+          failure_reason: string
+          id?: string
+          max_retries?: number
+          metadata?: Json
+          retry_scheduled_for: string
+          status?: string
+          transaction_id: string
+        }
+        Update: {
+          attempt_number?: number
+          completed_at?: string | null
+          created_at?: string
+          failure_reason?: string
+          id?: string
+          max_retries?: number
+          metadata?: Json
+          retry_scheduled_for?: string
+          status?: string
+          transaction_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_payment_retries_transaction"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "payment_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          id: string
+          metadata: Json
+          payment_method_id: string | null
+          provider: string
+          provider_transaction_id: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string
+          id?: string
+          metadata?: Json
+          payment_method_id?: string | null
+          provider?: string
+          provider_transaction_id?: string | null
+          status: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          metadata?: Json
+          payment_method_id?: string | null
+          provider?: string
+          provider_transaction_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -3466,6 +3670,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      subscription_payments: {
+        Row: {
+          cancel_at_period_end: boolean | null
+          cancelled_at: string | null
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          metadata: Json
+          status: string
+          stripe_subscription_id: string | null
+          subscription_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cancel_at_period_end?: boolean | null
+          cancelled_at?: string | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          metadata?: Json
+          status?: string
+          stripe_subscription_id?: string | null
+          subscription_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cancel_at_period_end?: boolean | null
+          cancelled_at?: string | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          metadata?: Json
+          status?: string
+          stripe_subscription_id?: string | null
+          subscription_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       suggestion_feedback: {
         Row: {

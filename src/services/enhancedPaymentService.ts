@@ -6,6 +6,7 @@ import {
   ProcessRefundRequest,
   ProcessRefundResponse
 } from '@/types/PaymentTypes';
+import { typedPaymentService } from './typedPaymentService';
 
 export interface MultiCurrencyPaymentRequest extends ProcessPaymentRequest {
   currency: string;
@@ -159,7 +160,7 @@ class EnhancedPaymentService {
       }
     }
 
-    // All retries failed
+    // All retries failed - log using the typed service
     await this.logPaymentFailure(request, lastError);
     throw lastError || new Error('Payment processing failed after retries');
   }
@@ -181,17 +182,17 @@ class EnhancedPaymentService {
 
   private async logPaymentFailure(request: ProcessPaymentRequest, error: Error | null) {
     try {
-      await supabase.from('payment_failure_logs').insert({
-        user_id: request.metadata?.userId,
-        payment_method_id: request.paymentMethodId,
-        amount: request.amount,
-        currency: request.currency || 'USD',
-        error_message: error?.message,
-        metadata: {
+      await typedPaymentService.logPaymentFailure(
+        request.metadata?.userId,
+        request.paymentMethodId,
+        request.amount,
+        request.currency || 'USD',
+        error?.message,
+        {
           ...request.metadata,
           failure_timestamp: new Date().toISOString()
         }
-      });
+      );
     } catch (logError) {
       console.error('Failed to log payment failure:', logError);
     }
