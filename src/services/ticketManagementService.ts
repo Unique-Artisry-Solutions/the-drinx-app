@@ -8,8 +8,18 @@ import {
   TicketCancellationPolicy,
   BulkTicketOperation,
   RefundCalculation,
-  TicketPriceInfo
+  TicketPriceInfo,
+  TicketPricingTier,
+  TicketTransactionHistory
 } from '@/types/TicketManagementTypes';
+import {
+  mapTicketPurchaseFromDb,
+  mapTicketTransferFromDb,
+  mapTicketRefundFromDb,
+  mapTicketPricingTierFromDb,
+  mapTicketTransactionHistoryFromDb,
+  prepareTicketRefundForDb
+} from '@/utils/ticketDataMappers';
 
 export class TicketManagementService {
   // Get current ticket pricing information
@@ -29,7 +39,6 @@ export class TicketManagementService {
       throw new Error(error.message);
     }
 
-    // Map the RPC function response to TicketPriceInfo
     return (data || []).map((item: any): TicketPriceInfo => ({
       tier_id: item.tier_id,
       tier_name: item.tier_name,
@@ -41,7 +50,7 @@ export class TicketManagementService {
     }));
   }
 
-  // Get ticket purchases
+  // Get ticket purchases with type-safe mapping
   static async getTicketPurchases(filters: {
     eventId?: string;
     swigCircuitId?: string;
@@ -68,7 +77,7 @@ export class TicketManagementService {
       throw new Error(error.message);
     }
 
-    return data || [];
+    return (data || []).map(mapTicketPurchaseFromDb);
   }
 
   // Get ticket inventory
@@ -97,11 +106,54 @@ export class TicketManagementService {
     return data || [];
   }
 
-  // Transfer ticket
+  // Get ticket transaction history
+  static async getTicketHistory(ticketId: string): Promise<TicketTransactionHistory[]> {
+    const { data, error } = await supabase
+      .from('ticket_transaction_history')
+      .select('*')
+      .eq('ticket_purchase_id', ticketId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching ticket history:', error);
+      throw new Error(error.message);
+    }
+
+    return (data || []).map(mapTicketTransactionHistoryFromDb);
+  }
+
+  // Get pricing tiers
+  static async getPricingTiers(filters?: {
+    eventId?: string;
+    swigCircuitId?: string;
+  }): Promise<TicketPricingTier[]> {
+    let query = supabase
+      .from('ticket_pricing_tiers')
+      .select('*')
+      .eq('is_active', true);
+
+    if (filters?.eventId) {
+      query = query.eq('event_id', filters.eventId);
+    }
+    if (filters?.swigCircuitId) {
+      query = query.eq('swig_circuit_id', filters.swigCircuitId);
+    }
+
+    const { data, error } = await query.order('tier_order', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching pricing tiers:', error);
+      throw new Error(error.message);
+    }
+
+    return (data || []).map(mapTicketPricingTierFromDb);
+  }
+
+  // Transfer ticket with type-safe mapping
   static async initiateTicketTransfer(ticketId: string, toEmail: string): Promise<TicketTransfer> {
     const transferCode = Math.random().toString(36).substring(2, 15);
     const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7); // 7 days to accept
+    expiresAt.setDate(expiresAt.getDate() + 7);
 
     const { data, error } = await supabase
       .from('ticket_transfers')
@@ -120,10 +172,10 @@ export class TicketManagementService {
       throw new Error(error.message);
     }
 
-    return data;
+    return mapTicketTransferFromDb(data);
   }
 
-  // Accept ticket transfer
+  // Accept ticket transfer with type-safe mapping
   static async acceptTicketTransfer(transferCode: string): Promise<TicketTransfer> {
     const { data, error } = await supabase
       .from('ticket_transfers')
@@ -141,18 +193,16 @@ export class TicketManagementService {
       throw new Error(error.message);
     }
 
-    return data;
+    return mapTicketTransferFromDb(data);
   }
 
-  // Request ticket refund
+  // Request ticket refund with proper data preparation
   static async requestTicketRefund(ticketId: string, reason?: string): Promise<TicketRefund> {
+    const refundData = prepareTicketRefundForDb(ticketId, reason);
+    
     const { data, error } = await supabase
       .from('ticket_refunds')
-      .insert({
-        ticket_purchase_id: ticketId,
-        refund_reason: reason,
-        status: 'pending'
-      })
+      .insert(refundData)
       .select()
       .single();
 
@@ -161,10 +211,10 @@ export class TicketManagementService {
       throw new Error(error.message);
     }
 
-    return data;
+    return mapTicketRefundFromDb(data);
   }
 
-  // Process ticket refund
+  // Process ticket refund with type-safe mapping
   static async processTicketRefund(refundId: string, approved: boolean): Promise<TicketRefund> {
     const { data, error } = await supabase
       .from('ticket_refunds')
@@ -181,7 +231,7 @@ export class TicketManagementService {
       throw new Error(error.message);
     }
 
-    return data;
+    return mapTicketRefundFromDb(data);
   }
 
   // Calculate refund amount

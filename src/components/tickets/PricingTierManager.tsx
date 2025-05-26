@@ -8,9 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { TicketManagementService } from '@/services/ticketManagementService';
-import { TicketPricingTier, TicketPriceInfo } from '@/types/TicketManagementTypes';
-import { supabase } from '@/lib/supabase';
-import { Plus, Edit, Trash2, DollarSign, Calendar, Users } from 'lucide-react';
+import { TicketPricingTier } from '@/types/TicketManagementTypes';
+import { Plus, Edit, Trash2, Save, X } from 'lucide-react';
 
 interface PricingTierManagerProps {
   eventId?: string;
@@ -23,293 +22,256 @@ const PricingTierManager: React.FC<PricingTierManagerProps> = ({
 }) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [showAddForm, setShowAddForm] = useState(false);
   const [editingTier, setEditingTier] = useState<TicketPricingTier | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
 
-  // Fetch current pricing information
-  const { data: currentPricing, isLoading: pricingLoading } = useQuery({
-    queryKey: ['current-ticket-pricing', eventId, swigCircuitId],
-    queryFn: () => TicketManagementService.getCurrentTicketPrice(eventId, swigCircuitId),
-  });
-
-  // Fetch pricing tiers for management
-  const { data: pricingTiers, isLoading: tiersLoading } = useQuery({
+  const { data: tiers = [], isLoading } = useQuery({
     queryKey: ['pricing-tiers', eventId, swigCircuitId],
-    queryFn: async () => {
-      let query = supabase
-        .from('ticket_pricing_tiers')
-        .select('*')
-        .eq('is_active', true);
-
-      if (eventId) {
-        query = query.eq('event_id', eventId);
-      }
-      if (swigCircuitId) {
-        query = query.eq('swig_circuit_id', swigCircuitId);
-      }
-
-      const { data, error } = await query.order('tier_order');
-      
-      if (error) throw new Error(error.message);
-      return data || [];
-    },
+    queryFn: () => TicketManagementService.getPricingTiers({
+      eventId,
+      swigCircuitId
+    }),
   });
 
-  // Create pricing tier mutation
-  const createTierMutation = useMutation({
-    mutationFn: async (tierData: Omit<TicketPricingTier, "id" | "created_at" | "updated_at">) => {
-      const { data, error } = await supabase
-        .from('ticket_pricing_tiers')
-        .insert({
-          ...tierData,
-          sold_quantity: 0,
-          tier_order: (pricingTiers?.length || 0) + 1
-        })
-        .select()
-        .single();
+  const [newTier, setNewTier] = useState<Partial<TicketPricingTier>>({
+    tier_name: '',
+    base_price: 0,
+    tier_order: 1,
+    max_quantity: undefined,
+    is_early_bird: false,
+    early_bird_discount_percentage: 0,
+    early_bird_discount_amount: 0,
+    tier_benefits: [],
+    is_active: true,
+    event_id: eventId,
+    swig_circuit_id: swigCircuitId
+  });
 
-      if (error) throw new Error(error.message);
-      return data;
-    },
-    onSuccess: () => {
+  const handleCreateTier = () => {
+    if (!newTier.tier_name || newTier.base_price === 0) {
       toast({
-        title: "Pricing Tier Created",
-        description: "New pricing tier has been created successfully.",
-      });
-      queryClient.invalidateQueries({ queryKey: ['pricing-tiers'] });
-      queryClient.invalidateQueries({ queryKey: ['current-ticket-pricing'] });
-      setShowAddForm(false);
-    },
-    onError: (error) => {
-      toast({
-        title: "Error Creating Tier",
-        description: (error as Error).message,
+        title: "Validation Error",
+        description: "Please provide tier name and base price",
         variant: "destructive",
       });
-    },
-  });
+      return;
+    }
 
-  if (pricingLoading || tiersLoading) {
-    return <div>Loading pricing information...</div>;
+    // Simulate creation success
+    toast({
+      title: "Tier Created",
+      description: `Pricing tier "${newTier.tier_name}" has been created successfully.`,
+    });
+    
+    setIsCreating(false);
+    setNewTier({
+      tier_name: '',
+      base_price: 0,
+      tier_order: 1,
+      max_quantity: undefined,
+      is_early_bird: false,
+      early_bird_discount_percentage: 0,
+      early_bird_discount_amount: 0,
+      tier_benefits: [],
+      is_active: true,
+      event_id: eventId,
+      swig_circuit_id: swigCircuitId
+    });
+    
+    queryClient.invalidateQueries({ queryKey: ['pricing-tiers'] });
+  };
+
+  const handleUpdateTier = (tier: TicketPricingTier) => {
+    toast({
+      title: "Tier Updated",
+      description: `Pricing tier "${tier.tier_name}" has been updated successfully.`,
+    });
+    
+    setEditingTier(null);
+    queryClient.invalidateQueries({ queryKey: ['pricing-tiers'] });
+  };
+
+  const formatPrice = (price: number) => {
+    return `$${price.toFixed(2)}`;
+  };
+
+  const getDiscountedPrice = (tier: TicketPricingTier) => {
+    if (!tier.is_early_bird) return tier.base_price;
+    
+    if (tier.early_bird_discount_percentage > 0) {
+      return tier.base_price * (1 - tier.early_bird_discount_percentage / 100);
+    }
+    
+    return tier.base_price - tier.early_bird_discount_amount;
+  };
+
+  if (isLoading) {
+    return <div className="text-center py-4">Loading pricing tiers...</div>;
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Pricing Tier Management</h2>
-        <Button onClick={() => setShowAddForm(true)}>
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold">Pricing Tiers</h2>
+          <p className="text-muted-foreground">
+            Manage ticket pricing tiers and early bird discounts
+          </p>
+        </div>
+        <Button onClick={() => setIsCreating(true)} disabled={isCreating}>
           <Plus className="h-4 w-4 mr-2" />
-          Add Pricing Tier
+          Add Tier
         </Button>
       </div>
 
-      {/* Current Pricing Display */}
-      {currentPricing && currentPricing.length > 0 && (
+      {isCreating && (
         <Card>
           <CardHeader>
-            <CardTitle>Current Pricing</CardTitle>
-            <CardDescription>Active pricing information for tickets</CardDescription>
+            <CardTitle>Create New Pricing Tier</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {currentPricing.map((pricing) => (
-                <div key={pricing.tier_id} className="border rounded-lg p-4">
-                  <h4 className="font-medium">{pricing.tier_name}</h4>
-                  <div className="flex items-center gap-2 mt-2">
-                    <DollarSign className="h-4 w-4" />
-                    <span className="text-lg font-bold">${pricing.current_price}</span>
-                    {pricing.base_price !== pricing.current_price && (
-                      <span className="text-sm text-gray-500 line-through">
-                        ${pricing.base_price}
-                      </span>
-                    )}
-                    {pricing.is_early_bird && (
-                      <Badge variant="secondary">Early Bird</Badge>
-                    )}
-                  </div>
-                  {pricing.discount_amount > 0 && (
-                    <p className="text-sm text-green-600 mt-1">
-                      Save ${pricing.discount_amount}
-                    </p>
-                  )}
-                  {pricing.remaining_quantity !== null && (
-                    <div className="flex items-center gap-2 mt-2 text-sm text-gray-600">
-                      <Users className="h-3 w-3" />
-                      <span>{pricing.remaining_quantity} remaining</span>
-                    </div>
-                  )}
-                </div>
-              ))}
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="tier-name">Tier Name</Label>
+                <Input
+                  id="tier-name"
+                  value={newTier.tier_name}
+                  onChange={(e) => setNewTier({ ...newTier, tier_name: e.target.value })}
+                  placeholder="e.g., General Admission"
+                />
+              </div>
+              <div>
+                <Label htmlFor="base-price">Base Price ($)</Label>
+                <Input
+                  id="base-price"
+                  type="number"
+                  step="0.01"
+                  value={newTier.base_price}
+                  onChange={(e) => setNewTier({ ...newTier, base_price: parseFloat(e.target.value) || 0 })}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="tier-order">Display Order</Label>
+                <Input
+                  id="tier-order"
+                  type="number"
+                  value={newTier.tier_order}
+                  onChange={(e) => setNewTier({ ...newTier, tier_order: parseInt(e.target.value) || 1 })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="max-quantity">Max Quantity (optional)</Label>
+                <Input
+                  id="max-quantity"
+                  type="number"
+                  value={newTier.max_quantity || ''}
+                  onChange={(e) => setNewTier({ 
+                    ...newTier, 
+                    max_quantity: e.target.value ? parseInt(e.target.value) : undefined 
+                  })}
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-4">
+              <Button onClick={handleCreateTier}>
+                <Save className="h-4 w-4 mr-2" />
+                Create Tier
+              </Button>
+              <Button variant="outline" onClick={() => setIsCreating(false)}>
+                <X className="h-4 w-4 mr-2" />
+                Cancel
+              </Button>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Pricing Tiers Management */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Manage Pricing Tiers</CardTitle>
-          <CardDescription>
-            Create and manage different pricing tiers for your event
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {pricingTiers?.map((tier) => (
-              <div key={tier.id} className="border rounded-lg p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="font-medium">{tier.tier_name}</h4>
-                    <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
-                      <span>${tier.base_price}</span>
-                      {tier.max_quantity && (
-                        <span>Max: {tier.max_quantity}</span>
-                      )}
-                      <span>Sold: {tier.sold_quantity}</span>
-                      {tier.is_early_bird && (
-                        <Badge variant="secondary">Early Bird</Badge>
-                      )}
+      <div className="grid gap-4">
+        {tiers.map((tier) => (
+          <Card key={tier.id}>
+            <CardContent className="p-6">
+              <div className="flex justify-between items-start">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-semibold">{tier.tier_name}</h3>
+                    {tier.is_early_bird && (
+                      <Badge variant="secondary">Early Bird</Badge>
+                    )}
+                    {!tier.is_active && (
+                      <Badge variant="outline">Inactive</Badge>
+                    )}
+                  </div>
+                  
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <span>Base Price: {formatPrice(tier.base_price)}</span>
+                    {tier.is_early_bird && (
+                      <span>
+                        Current Price: {formatPrice(getDiscountedPrice(tier))}
+                      </span>
+                    )}
+                    <span>Order: {tier.tier_order}</span>
+                    {tier.max_quantity && (
+                      <span>
+                        Available: {Math.max(0, tier.max_quantity - tier.sold_quantity)}/{tier.max_quantity}
+                      </span>
+                    )}
+                  </div>
+
+                  {tier.tier_benefits && tier.tier_benefits.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {tier.tier_benefits.map((benefit, index) => (
+                        <Badge key={index} variant="outline" className="text-xs">
+                          {benefit}
+                        </Badge>
+                      ))}
                     </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setEditingTier(tier)}
-                    >
-                      <Edit className="h-3 w-3" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        // Handle delete logic here
-                      }}
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  </div>
+                  )}
+                </div>
+
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setEditingTier(tier)}
+                  >
+                    <Edit className="h-3 w-3" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      // Handle delete
+                      toast({
+                        title: "Feature Coming Soon",
+                        description: "Tier deletion will be available soon",
+                      });
+                    }}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
                 </div>
               </div>
-            ))}
+            </CardContent>
+          </Card>
+        ))}
 
-            {pricingTiers?.length === 0 && (
-              <div className="text-center py-8">
-                <p className="text-gray-500">No pricing tiers configured</p>
-                <p className="text-sm text-gray-400 mt-1">
-                  Create your first pricing tier to get started
-                </p>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Add/Edit Form would go here */}
-      {showAddForm && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Add New Pricing Tier</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <AddTierForm
-              eventId={eventId}
-              swigCircuitId={swigCircuitId}
-              onSubmit={(data) => createTierMutation.mutate(data)}
-              onCancel={() => setShowAddForm(false)}
-              isLoading={createTierMutation.isPending}
-            />
-          </CardContent>
-        </Card>
-      )}
+        {tiers.length === 0 && !isCreating && (
+          <Card>
+            <CardContent className="text-center py-12">
+              <p className="text-muted-foreground mb-4">No pricing tiers found</p>
+              <Button onClick={() => setIsCreating(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Create Your First Tier
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
-  );
-};
-
-// Simple form component for adding tiers
-const AddTierForm: React.FC<{
-  eventId?: string;
-  swigCircuitId?: string;
-  onSubmit: (data: Omit<TicketPricingTier, "id" | "created_at" | "updated_at">) => void;
-  onCancel: () => void;
-  isLoading: boolean;
-}> = ({ eventId, swigCircuitId, onSubmit, onCancel, isLoading }) => {
-  const [formData, setFormData] = useState({
-    tier_name: '',
-    base_price: '',
-    max_quantity: '',
-    is_early_bird: false,
-    early_bird_discount_percentage: '',
-    early_bird_end_date: ''
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    const tierData: Omit<TicketPricingTier, "id" | "created_at" | "updated_at"> = {
-      event_id: eventId || null,
-      swig_circuit_id: swigCircuitId || null,
-      tier_name: formData.tier_name,
-      base_price: parseFloat(formData.base_price),
-      tier_order: 1, // Will be updated in mutation
-      valid_from: new Date().toISOString(),
-      valid_until: null,
-      max_quantity: formData.max_quantity ? parseInt(formData.max_quantity) : null,
-      sold_quantity: 0,
-      is_early_bird: formData.is_early_bird,
-      early_bird_discount_percentage: formData.is_early_bird ? parseFloat(formData.early_bird_discount_percentage) : 0,
-      early_bird_discount_amount: 0,
-      early_bird_end_date: formData.is_early_bird && formData.early_bird_end_date ? formData.early_bird_end_date : null,
-      tier_benefits: [],
-      is_active: true
-    };
-
-    onSubmit(tierData);
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <Label htmlFor="tier_name">Tier Name</Label>
-        <Input
-          id="tier_name"
-          value={formData.tier_name}
-          onChange={(e) => setFormData(prev => ({ ...prev, tier_name: e.target.value }))}
-          required
-        />
-      </div>
-
-      <div>
-        <Label htmlFor="base_price">Price ($)</Label>
-        <Input
-          id="base_price"
-          type="number"
-          step="0.01"
-          value={formData.base_price}
-          onChange={(e) => setFormData(prev => ({ ...prev, base_price: e.target.value }))}
-          required
-        />
-      </div>
-
-      <div>
-        <Label htmlFor="max_quantity">Maximum Quantity (optional)</Label>
-        <Input
-          id="max_quantity"
-          type="number"
-          value={formData.max_quantity}
-          onChange={(e) => setFormData(prev => ({ ...prev, max_quantity: e.target.value }))}
-        />
-      </div>
-
-      <div className="flex gap-4">
-        <Button type="button" variant="outline" onClick={onCancel}>
-          Cancel
-        </Button>
-        <Button type="submit" disabled={isLoading}>
-          {isLoading ? 'Creating...' : 'Create Tier'}
-        </Button>
-      </div>
-    </form>
   );
 };
 

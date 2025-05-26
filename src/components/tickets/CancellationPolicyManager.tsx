@@ -1,15 +1,15 @@
 
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { useTicketManagement } from '@/hooks/useTicketManagement';
+import { useToast } from '@/hooks/use-toast';
 import { TicketManagementService } from '@/services/ticketManagementService';
 import { TicketCancellationPolicy } from '@/types/TicketManagementTypes';
-import { Plus, Shield, Percent } from 'lucide-react';
+import { Plus, Edit, Trash2, Save, X } from 'lucide-react';
 
 interface CancellationPolicyManagerProps {
   eventId?: string;
@@ -20,112 +20,154 @@ const CancellationPolicyManager: React.FC<CancellationPolicyManagerProps> = ({
   eventId,
   swigCircuitId
 }) => {
-  const { createCancellationPolicy, isCreatingPolicy } = useTicketManagement();
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [formData, setFormData] = useState({
-    days_before_event: 7,
-    refund_percentage: 80,
-    processing_fee: 5
-  });
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [isCreating, setIsCreating] = useState(false);
 
   const { data: policies = [], isLoading } = useQuery({
     queryKey: ['cancellation-policies', eventId, swigCircuitId],
-    queryFn: () => TicketManagementService.getCancellationPolicies(eventId, swigCircuitId),
+    queryFn: () => TicketManagementService.getCancellationPolicies({
+      eventId,
+      swigCircuitId
+    }),
+  });
+
+  const createPolicyMutation = useMutation({
+    mutationFn: TicketManagementService.createCancellationPolicy,
+    onSuccess: () => {
+      toast({
+        title: "Policy Created",
+        description: "Cancellation policy has been created successfully.",
+      });
+      setIsCreating(false);
+      setNewPolicy({
+        event_id: eventId,
+        swig_circuit_id: swigCircuitId,
+        days_before_event: 0,
+        refund_percentage: 0,
+        processing_fee: 0,
+        is_active: true
+      });
+      queryClient.invalidateQueries({ queryKey: ['cancellation-policies'] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: (error as Error).message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const [newPolicy, setNewPolicy] = useState<Omit<TicketCancellationPolicy, 'id' | 'created_at'>>({
+    event_id: eventId,
+    swig_circuit_id: swigCircuitId,
+    days_before_event: 0,
+    refund_percentage: 0,
+    processing_fee: 0,
+    is_active: true
   });
 
   const handleCreatePolicy = () => {
-    const policy: Omit<TicketCancellationPolicy, 'id' | 'created_at'> = {
-      event_id: eventId,
-      swig_circuit_id: swigCircuitId,
-      days_before_event: formData.days_before_event,
-      refund_percentage: formData.refund_percentage,
-      processing_fee: formData.processing_fee,
-      is_active: true
-    };
+    if (newPolicy.days_before_event < 0 || newPolicy.refund_percentage < 0 || newPolicy.refund_percentage > 100) {
+      toast({
+        title: "Validation Error",
+        description: "Please provide valid values for all fields",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    createCancellationPolicy(policy);
-    setShowCreateForm(false);
-    setFormData({
-      days_before_event: 7,
-      refund_percentage: 80,
-      processing_fee: 5
-    });
+    createPolicyMutation.mutate(newPolicy);
   };
 
   if (isLoading) {
-    return <div>Loading cancellation policies...</div>;
+    return <div className="text-center py-4">Loading cancellation policies...</div>;
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold">Cancellation Policies</h2>
           <p className="text-muted-foreground">
-            Manage refund policies for different time periods
+            Configure refund policies based on cancellation timing
           </p>
         </div>
-        <Button onClick={() => setShowCreateForm(true)}>
+        <Button onClick={() => setIsCreating(true)} disabled={isCreating}>
           <Plus className="h-4 w-4 mr-2" />
           Add Policy
         </Button>
       </div>
 
-      {showCreateForm && (
+      {isCreating && (
         <Card>
           <CardHeader>
             <CardTitle>Create Cancellation Policy</CardTitle>
             <CardDescription>
-              Set refund percentages based on how far in advance tickets are cancelled
+              Set refund percentage and fees based on how many days before the event
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="days">Days Before Event</Label>
+                <Label htmlFor="days-before">Days Before Event</Label>
                 <Input
-                  id="days"
+                  id="days-before"
                   type="number"
-                  value={formData.days_before_event}
-                  onChange={(e) => setFormData(prev => ({
-                    ...prev,
-                    days_before_event: parseInt(e.target.value) || 0
-                  }))}
+                  min="0"
+                  value={newPolicy.days_before_event}
+                  onChange={(e) => setNewPolicy({ 
+                    ...newPolicy, 
+                    days_before_event: parseInt(e.target.value) || 0 
+                  })}
+                  placeholder="e.g., 7"
                 />
               </div>
               <div>
-                <Label htmlFor="percentage">Refund Percentage</Label>
+                <Label htmlFor="refund-percentage">Refund Percentage (%)</Label>
                 <Input
-                  id="percentage"
+                  id="refund-percentage"
                   type="number"
-                  value={formData.refund_percentage}
-                  onChange={(e) => setFormData(prev => ({
-                    ...prev,
-                    refund_percentage: parseInt(e.target.value) || 0
-                  }))}
-                />
-              </div>
-              <div>
-                <Label htmlFor="fee">Processing Fee ($)</Label>
-                <Input
-                  id="fee"
-                  type="number"
-                  step="0.01"
-                  value={formData.processing_fee}
-                  onChange={(e) => setFormData(prev => ({
-                    ...prev,
-                    processing_fee: parseFloat(e.target.value) || 0
-                  }))}
+                  min="0"
+                  max="100"
+                  value={newPolicy.refund_percentage}
+                  onChange={(e) => setNewPolicy({ 
+                    ...newPolicy, 
+                    refund_percentage: parseFloat(e.target.value) || 0 
+                  })}
+                  placeholder="e.g., 80"
                 />
               </div>
             </div>
-            
-            <div className="flex justify-end space-x-2">
-              <Button variant="outline" onClick={() => setShowCreateForm(false)}>
-                Cancel
+
+            <div>
+              <Label htmlFor="processing-fee">Processing Fee ($)</Label>
+              <Input
+                id="processing-fee"
+                type="number"
+                min="0"
+                step="0.01"
+                value={newPolicy.processing_fee}
+                onChange={(e) => setNewPolicy({ 
+                  ...newPolicy, 
+                  processing_fee: parseFloat(e.target.value) || 0 
+                })}
+                placeholder="e.g., 5.00"
+              />
+            </div>
+
+            <div className="flex gap-4">
+              <Button 
+                onClick={handleCreatePolicy}
+                disabled={createPolicyMutation.isPending}
+              >
+                <Save className="h-4 w-4 mr-2" />
+                {createPolicyMutation.isPending ? 'Creating...' : 'Create Policy'}
               </Button>
-              <Button onClick={handleCreatePolicy} disabled={isCreatingPolicy}>
-                {isCreatingPolicy ? 'Creating...' : 'Create Policy'}
+              <Button variant="outline" onClick={() => setIsCreating(false)}>
+                <X className="h-4 w-4 mr-2" />
+                Cancel
               </Button>
             </div>
           </CardContent>
@@ -136,41 +178,64 @@ const CancellationPolicyManager: React.FC<CancellationPolicyManagerProps> = ({
         {policies.map((policy) => (
           <Card key={policy.id}>
             <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center space-x-2">
-                    <Shield className="h-5 w-5 text-blue-500" />
-                    <span className="font-medium">
-                      {policy.days_before_event}+ days before
-                    </span>
+              <div className="flex justify-between items-center">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-semibold">
+                      {policy.days_before_event} days before event
+                    </h3>
+                    {policy.is_active ? (
+                      <Badge variant="default">Active</Badge>
+                    ) : (
+                      <Badge variant="outline">Inactive</Badge>
+                    )}
                   </div>
                   
-                  <div className="flex items-center space-x-2">
-                    <Percent className="h-4 w-4 text-green-500" />
-                    <span className="text-green-600 font-medium">
-                      {policy.refund_percentage}% refund
-                    </span>
-                  </div>
-                  
-                  <div className="text-sm text-muted-foreground">
-                    Processing fee: ${policy.processing_fee.toFixed(2)}
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <span>Refund: {policy.refund_percentage}%</span>
+                    <span>Processing Fee: ${policy.processing_fee.toFixed(2)}</span>
                   </div>
                 </div>
-                
-                <Badge variant={policy.is_active ? 'default' : 'secondary'}>
-                  {policy.is_active ? 'Active' : 'Inactive'}
-                </Badge>
+
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      toast({
+                        title: "Feature Coming Soon",
+                        description: "Policy editing will be available soon",
+                      });
+                    }}
+                  >
+                    <Edit className="h-3 w-3" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      toast({
+                        title: "Feature Coming Soon",
+                        description: "Policy deletion will be available soon",
+                      });
+                    }}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
         ))}
-        
-        {policies.length === 0 && (
+
+        {policies.length === 0 && !isCreating && (
           <Card>
-            <CardContent className="py-12 text-center">
-              <p className="text-muted-foreground">
-                No cancellation policies configured. Add one to get started.
-              </p>
+            <CardContent className="text-center py-12">
+              <p className="text-muted-foreground mb-4">No cancellation policies found</p>
+              <Button onClick={() => setIsCreating(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Create Your First Policy
+              </Button>
             </CardContent>
           </Card>
         )}
