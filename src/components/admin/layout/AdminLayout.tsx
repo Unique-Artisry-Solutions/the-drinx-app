@@ -17,12 +17,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const { isDevModeActive, devMode, isDevelopment, isInitialized } = useDevelopmentMode();
   const { user, session, isLoading, userType } = useAuth();
   
-  // Enhanced debugging for route resolution
-  console.log('AdminLayout: Rendering for path', location.pathname);
-  console.log('AdminLayout: Location state', location.state);
-  console.log('AdminLayout: Should render Outlet for nested route?', !children);
-  console.log('AdminLayout: Route pathname segments:', location.pathname.split('/'));
-  
   // Get effective auth state (dev bypass or real auth)
   const effectiveAuth = DevAuthService.getEffectiveAuthState(
     user,
@@ -32,14 +26,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     isDevModeActive,
     devMode
   );
-  
-  console.log('AdminLayout: Auth state', {
-    isDevelopment,
-    isDevModeActive,
-    devMode,
-    effectiveAuth,
-    realAuth: { user: !!user, session: !!session, userType }
-  });
 
   // Show loading state while auth is being checked (but not in dev mode)
   if (isLoading && !DevAuthService.shouldBypassAuth(isDevelopment, isDevModeActive, devMode)) {
@@ -70,15 +56,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     );
   }
 
-  console.log('AdminLayout: Successfully authenticated, rendering admin interface');
-  console.log('AdminLayout: Current path analysis:', {
-    fullPath: location.pathname,
-    isRootAdmin: location.pathname === '/admin',
-    isNestedRoute: location.pathname !== '/admin',
-    shouldRenderOutlet: !children
-  });
-
-  // Render admin interface
   return (
     <>
       <div className="fixed inset-0 flex flex-col bg-gray-100">
@@ -87,24 +64,11 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
           <AdminSidebar />
           <main className="flex-1 overflow-auto">
             <div className="p-6">
-              {/* Enhanced debugging for content rendering */}
-              {children ? (
-                <>
-                  {console.log('AdminLayout: Rendering children prop for path:', location.pathname)}
-                  {children}
-                </>
-              ) : (
-                <>
-                  {console.log('AdminLayout: Rendering Outlet for nested route at:', location.pathname)}
-                  {console.log('AdminLayout: Outlet should handle route matching for admin subroutes')}
-                  <Outlet />
-                </>
-              )}
+              {children ? children : <Outlet />}
             </div>
           </main>
         </div>
       </div>
-      {/* Add DevRoleSwitcher for admin pages */}
       {isDevelopment && isInitialized && <DevRoleSwitcher />}
     </>
   );

@@ -25,30 +25,14 @@ const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = (props) => {
   const location = useLocation();
   const { isDevelopment, isInitialized } = useDevelopmentMode();
   
-  // Check if we're in admin context
-  const isAdminContext = location.pathname.startsWith('/admin');
-  
   // Scroll to top when route changes
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [location.pathname]);
   
-  // Enhanced logging for route navigation
-  useEffect(() => {
-    console.log('ResponsiveLayout - Route navigation:', {
-      pathname: location.pathname,
-      isDevelopment,
-      isInitialized,
-      isMobile,
-      isAdminContext,
-      timestamp: new Date().toISOString()
-    });
-  }, [location.pathname, isDevelopment, isInitialized, isMobile, isAdminContext]);
-  
   return (
     <div className="w-full min-h-screen">
       {isMobile ? <MobileLayout {...props} /> : <DesktopLayout {...props} />}
-      {/* Only render DevRoleSwitcher in development mode when initialized */}
       {isDevelopment && isInitialized && (
         <div className="fixed top-4 right-4 z-[9999]">
           <DevRoleSwitcher />

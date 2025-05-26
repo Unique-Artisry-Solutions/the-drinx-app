@@ -5,99 +5,44 @@ import { NavigationType } from '@/components/navigation/NavigationTypes';
 export interface EffectiveAuthState {
   userType: UserType | null;
   isAuthenticated: boolean;
-  isUsingDevBypass: boolean;
   navigationType: NavigationType;
 }
 
 /**
- * Resolves the effective navigation state considering both real auth and dev bypass
+ * Simplified navigation state resolver
  */
 export const resolveNavigationState = (
-  authUserType: UserType | null,
-  authIsAuthenticated: boolean,
-  devUserType: UserType | null,
-  devIsAuthenticated: boolean,
-  isUsingDevBypass: boolean,
-  currentPath: string,
-  forceGuestNavigation: boolean = false
-): EffectiveAuthState => {
-  console.log('NavigationResolver - Resolving state:', {
-    authUserType,
-    authIsAuthenticated,
-    devUserType,
-    devIsAuthenticated,
-    isUsingDevBypass,
-    currentPath,
-    forceGuestNavigation
-  });
-
-  // Define public paths that always use guest navigation
-  const publicPaths = ['/', '/landing', '/login', '/signup', '/mission', '/pricing'];
-  const isPublicPath = publicPaths.includes(currentPath) || forceGuestNavigation;
-  
-  // Determine effective auth state - prioritize real auth unless dev bypass is active
-  let effectiveUserType: UserType | null;
-  let effectiveIsAuthenticated: boolean;
-  
-  if (isUsingDevBypass && devUserType && devIsAuthenticated) {
-    effectiveUserType = devUserType;
-    effectiveIsAuthenticated = devIsAuthenticated;
-  } else {
-    effectiveUserType = authUserType;
-    effectiveIsAuthenticated = authIsAuthenticated;
-  }
-  
-  // Determine navigation type with clear precedence
-  let navigationType: NavigationType;
-  
-  // Admin takes highest precedence when authenticated
-  if (effectiveUserType === 'admin' && effectiveIsAuthenticated && currentPath.startsWith('/admin')) {
-    navigationType = NavigationType.ADMIN;
-  } 
-  // User navigation for authenticated users on non-public paths
-  else if (effectiveIsAuthenticated && !isPublicPath && effectiveUserType && effectiveUserType !== 'admin') {
-    navigationType = NavigationType.USER;
-  } 
-  // Guest navigation for everything else
-  else {
-    navigationType = NavigationType.GUEST;
-  }
-  
-  const result = {
-    userType: effectiveUserType,
-    isAuthenticated: effectiveIsAuthenticated,
-    isUsingDevBypass,
-    navigationType
-  };
-  
-  console.log('NavigationResolver - Resolved state:', result);
-  return result;
-};
-
-/**
- * Determines if guest navigation should be used
- */
-export const shouldUseGuestNavigation = (
+  userType: UserType | null,
   isAuthenticated: boolean,
   currentPath: string,
   forceGuestNavigation: boolean = false
-): boolean => {
-  if (forceGuestNavigation) return true;
-  
-  // Always use guest navigation for non-authenticated users
-  if (!isAuthenticated) return true;
-  
-  // For authenticated users, use guest navigation only on explicit public paths
+): EffectiveAuthState => {
+  // Public paths that always use guest navigation
   const publicPaths = ['/', '/landing', '/login', '/signup', '/mission', '/pricing'];
-  return publicPaths.includes(currentPath);
+  const isPublicPath = publicPaths.includes(currentPath) || forceGuestNavigation;
+  
+  // Determine navigation type
+  let navigationType: NavigationType;
+  
+  if (userType === 'admin' && isAuthenticated && currentPath.startsWith('/admin')) {
+    navigationType = NavigationType.ADMIN;
+  } else if (isAuthenticated && !isPublicPath && userType && userType !== 'admin') {
+    navigationType = NavigationType.USER;
+  } else {
+    navigationType = NavigationType.GUEST;
+  }
+  
+  return {
+    userType,
+    isAuthenticated,
+    navigationType
+  };
 };
 
 /**
- * Gets the appropriate home path for a user type - Updated to match route configuration
+ * Gets the appropriate home path for a user type
  */
 export const getHomePathForUserType = (userType: UserType | null): string => {
-  if (!userType) return '/landing';
-  
   switch (userType) {
     case 'establishment':
       return '/establishment/dashboard';
@@ -112,7 +57,7 @@ export const getHomePathForUserType = (userType: UserType | null): string => {
 };
 
 /**
- * Converts admin user type to non-admin for components that don't handle admin
+ * Converts admin user type to individual for components that don't handle admin
  */
 export const toNonAdminUserType = (userType: UserType | null): 'individual' | 'establishment' | 'promoter' => {
   if (userType === 'admin') return 'individual';

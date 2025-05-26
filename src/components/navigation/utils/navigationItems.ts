@@ -21,19 +21,11 @@ export const resolveEffectiveUserType = (
   isDevelopment: boolean,
   isDevModeActive: boolean
 ): EffectiveUserState => {
-  console.log('resolveEffectiveUserType called with:', {
-    authUserType,
-    authIsAuthenticated,
-    devUserType,
-    isDevelopment,
-    isDevModeActive
-  });
-
   // In development mode with dev mode active, use dev settings
   if (isDevelopment && isDevModeActive && devUserType) {
     return {
       userType: devUserType,
-      isAuthenticated: true, // Dev mode implies authenticated state
+      isAuthenticated: true,
       isDevelopment,
       isDevModeActive
     };
@@ -52,19 +44,14 @@ export const generateNavigationItems = (
   effectiveState: EffectiveUserState,
   config?: NavigationConfig
 ): NavigationItem[] => {
-  console.log('generateNavigationItems called with:', effectiveState);
-  
-  // If custom nav items are provided in config, use them
   if (config?.customNavItems) {
     return config.customNavItems;
   }
   
-  // If not authenticated and not in dev mode, show guest navigation
   if (!effectiveState.isAuthenticated) {
     return guestNavItems;
   }
   
-  // Return navigation based on effective user type
   switch (effectiveState.userType) {
     case 'establishment':
       return establishmentNavItems;
@@ -84,7 +71,6 @@ export const generateBreadcrumbs = (
 ): BreadcrumbItem[] => {
   const breadcrumbs: BreadcrumbItem[] = [];
   
-  // Always include home if not on home page
   if (pathname !== '/' && pathname !== '/landing') {
     breadcrumbs.push({
       label: 'Home',
@@ -92,7 +78,6 @@ export const generateBreadcrumbs = (
     });
   }
   
-  // Find matching navigation item
   const matchingItem = navigationItems.find(item => 
     pathname === item.path || pathname.startsWith(item.path + '/')
   );
@@ -104,19 +89,16 @@ export const generateBreadcrumbs = (
     });
   }
   
-  // Handle nested paths
   const pathSegments = pathname.split('/').filter(Boolean);
   if (pathSegments.length > 1) {
     let currentPath = '';
     pathSegments.forEach((segment, index) => {
       currentPath += `/${segment}`;
       
-      // Skip if we already added this breadcrumb
       if (breadcrumbs.some(b => b.href === currentPath)) {
         return;
       }
       
-      // Add segment as breadcrumb if it's not the last one
       if (index < pathSegments.length - 1) {
         breadcrumbs.push({
           label: segment.charAt(0).toUpperCase() + segment.slice(1),
@@ -144,14 +126,13 @@ export const shouldShowFeature = (
   featureKey: string,
   effectiveState: EffectiveUserState
 ): boolean => {
-  // Basic feature access logic - can be expanded based on requirements
   if (!effectiveState.isAuthenticated) {
     return ['explore', 'home', 'landing'].includes(featureKey);
   }
   
   switch (effectiveState.userType) {
     case 'admin':
-      return true; // Admin can access all features
+      return true;
     case 'establishment':
       return ['dashboard', 'events', 'profile', 'analytics'].includes(featureKey);
     case 'promoter':

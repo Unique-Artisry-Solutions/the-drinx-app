@@ -9,7 +9,6 @@ import Breadcrumbs from '../navigation/Breadcrumbs';
 import AppFooter from '../AppFooter';
 import AdminFooter from '../admin/AdminFooter';
 import { useDevAuthBypass } from '@/hooks/useDevAuthBypass';
-import { useTheme } from '@/contexts/ThemeContext';
 import { resolveNavigationState } from '@/utils/navigationResolver';
 
 interface TabOption {
@@ -33,56 +32,30 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   forceGuestNavigation = false
 }) => {
   const location = useLocation();
-  const { theme } = useTheme();
-  const { 
-    user, 
-    isAuthenticated, 
-    userType, 
-    isLoading, 
-    isUsingDevBypass 
-  } = useDevAuthBypass();
+  const { userType, isAuthenticated } = useDevAuthBypass();
   
   const [effectiveNavState, setEffectiveNavState] = React.useState(() => 
-    resolveNavigationState(
-      null, false, null, false, false, location.pathname, forceGuestNavigation
-    )
+    resolveNavigationState(null, false, location.pathname, forceGuestNavigation)
   );
 
   useEffect(() => {
-    console.log('DesktopLayout - Resolving navigation state:', {
-      userType,
-      isAuthenticated,
-      isUsingDevBypass,
-      location: location.pathname,
-      forceGuestNavigation
-    });
-    
     const navState = resolveNavigationState(
       userType,
       isAuthenticated,
-      userType,
-      isAuthenticated,
-      isUsingDevBypass,
       location.pathname,
       forceGuestNavigation
     );
-    
     setEffectiveNavState(navState);
-  }, [userType, isAuthenticated, isUsingDevBypass, location.pathname, forceGuestNavigation]);
+  }, [userType, isAuthenticated, location.pathname, forceGuestNavigation]);
 
   const isLandingPage = location.pathname === '/' || location.pathname === '/landing' || forceGuestNavigation;
   const isAdminPage = location.pathname.startsWith('/admin');
 
   const getContentPadding = () => {
-    if (isLandingPage) {
-      return 'pt-16 pb-0 px-0';
-    } else {
-      return 'pt-20 pb-6 px-4';
-    }
+    return isLandingPage ? 'pt-16 pb-0 px-0' : 'pt-20 pb-6 px-4';
   };
 
   const renderNavigation = () => {
-    // Ensure only one navigation type renders
     switch (effectiveNavState.navigationType) {
       case NavigationType.ADMIN:
         return <AdminTopNavigation />;
@@ -94,34 +67,13 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     }
   };
 
-  // Refined shouldShowBreadcrumbs logic
   const shouldShowBreadcrumbs = () => {
-    const excludedPaths = [
-      '/', 
-      '/landing', 
-      '/login', 
-      '/signup', 
-      '/mission', 
-      '/map', 
-      '/explore'
-    ];
-    
-    if (excludedPaths.includes(location.pathname)) {
-      return false;
-    }
-    
-    if (isLandingPage || location.pathname === '/admin/login') {
-      return false;
-    }
-    
-    return true;
+    const excludedPaths = ['/', '/landing', '/login', '/signup', '/mission', '/map', '/explore'];
+    return !excludedPaths.includes(location.pathname) && !isLandingPage && location.pathname !== '/admin/login';
   };
 
   const renderFooter = () => {
-    if (isAdminPage || effectiveNavState.userType === 'admin') {
-      return <AdminFooter />;
-    }
-    return <AppFooter />;
+    return isAdminPage || effectiveNavState.userType === 'admin' ? <AdminFooter /> : <AppFooter />;
   };
 
   return (

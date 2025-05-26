@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { ChevronDown, ChevronRight, ChevronLeft } from 'lucide-react';
 import { adminNavItems } from '@/components/navigation/admin/AdminNavItems';
 import { cn } from '@/lib/utils';
@@ -14,9 +14,6 @@ const AdminSidebar: React.FC = () => {
   
   // Initialize expanded categories based on current path and defaults
   useEffect(() => {
-    console.log('AdminSidebar: Rendering at path:', location.pathname);
-    
-    // Get expanded state from localStorage or set defaults
     const savedExpanded = localStorage.getItem('admin_sidebar_expanded');
     let initialExpanded: string[] = [];
     
@@ -35,26 +32,23 @@ const AdminSidebar: React.FC = () => {
         const hasActiveChild = category.children.some(child => isActive(child.path));
         if (hasActiveChild) {
           activeCategories.push(category.path);
-          console.log('AdminSidebar: Auto-expanding category:', category.label, 'for path:', location.pathname);
         }
       }
     });
     
     // Default expanded categories for better UX
     const defaultExpanded = [
-      '/admin/dashboard', // Dashboard & Analytics
-      '/admin/content', // Content Management
-      '/admin/system-tools', // System Tools
+      '/admin/dashboard',
+      '/admin/content',
+      '/admin/system-tools',
     ];
     
-    // Combine all expanded categories (active + saved + defaults)
     const combinedExpanded = Array.from(new Set([
       ...activeCategories,
       ...initialExpanded,
       ...defaultExpanded
     ]));
     
-    console.log('AdminSidebar: Setting expanded categories:', combinedExpanded);
     setExpandedCategories(combinedExpanded);
   }, [location.pathname]);
   
@@ -64,7 +58,6 @@ const AdminSidebar: React.FC = () => {
   }, [expandedCategories]);
   
   const toggleCategory = (categoryPath: string) => {
-    console.log('AdminSidebar: Toggling category:', categoryPath);
     setExpandedCategories(prev => 
       prev.includes(categoryPath) 
         ? prev.filter(path => path !== categoryPath) 
@@ -77,21 +70,15 @@ const AdminSidebar: React.FC = () => {
   };
   
   const isActive = (path: string) => {
-    const active = location.pathname === path || 
+    return location.pathname === path || 
       (path !== '/admin/dashboard' && location.pathname.startsWith(path));
-    if (active) {
-      console.log('AdminSidebar: Active path detected:', path, 'for current:', location.pathname);
-    }
-    return active;
   };
   
   const hasActiveChild = (category: any) => {
     return category.children?.some((child: any) => isActive(child.path)) || false;
   };
 
-  const handleNavigation = (path: string, label: string) => {
-    console.log('AdminSidebar: Navigating to:', path, 'Label:', label);
-    console.log('AdminSidebar: Current location before navigation:', location.pathname);
+  const handleNavigation = (path: string) => {
     navigate(path);
   };
   
@@ -101,7 +88,6 @@ const AdminSidebar: React.FC = () => {
         "bg-material-primary text-white h-full flex-shrink-0 overflow-y-auto shadow-lg transition-all duration-300",
         collapsed ? "w-16" : "w-64"
       )}
-      style={{ display: 'block', height: '100%' }}
     >
       <div className="flex justify-between items-center px-4 py-3 border-b border-white/10">
         {!collapsed && <h2 className="text-lg font-semibold">Admin Panel</h2>}
@@ -122,7 +108,6 @@ const AdminSidebar: React.FC = () => {
           
           return (
             <div key={category.path} className={cn("mb-1", collapsed && "w-full flex justify-center")}>
-              {/* Category Header */}
               <button
                 className={cn(
                   "flex items-center w-full px-3 py-2 text-sm font-medium rounded-md transition-colors",
@@ -151,13 +136,12 @@ const AdminSidebar: React.FC = () => {
                 )}
               </button>
               
-              {/* Category Children - Only show when not collapsed */}
               {!collapsed && isExpanded && category.children && (
                 <div className="mt-1 ml-4 space-y-1 border-l border-white/10 pl-2">
                   {category.children.map(item => (
                     <button
                       key={item.path}
-                      onClick={() => handleNavigation(item.path, item.label)}
+                      onClick={() => handleNavigation(item.path)}
                       className={cn(
                         "flex items-center w-full px-3 py-2 text-sm rounded-md transition-colors text-left",
                         isActive(item.path)

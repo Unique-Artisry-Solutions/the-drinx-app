@@ -1,12 +1,11 @@
 
 import React, { useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { NavigationType } from '../navigation/NavigationTypes';
 import MobileNavigation from '../navigation/MobileNavigation';
 import UserNavbar from '../navigation/user/UserNavbar';
 import Breadcrumbs from '../navigation/Breadcrumbs';
 import { useDevAuthBypass } from '@/hooks/useDevAuthBypass';
-import { useTheme } from '@/contexts/ThemeContext';
 import GuestTopNavigation from '../navigation/GuestTopNavigation';
 import AdminTopNavigation from '../navigation/AdminTopNavigation';
 import AppFooter from '../AppFooter';
@@ -34,20 +33,10 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
   forceGuestNavigation = false
 }) => {
   const location = useLocation();
-  const navigate = useNavigate();
-  const { theme } = useTheme();
-  const { 
-    user, 
-    isAuthenticated, 
-    userType, 
-    isLoading, 
-    isUsingDevBypass 
-  } = useDevAuthBypass();
+  const { userType, isAuthenticated } = useDevAuthBypass();
   
   const [effectiveNavState, setEffectiveNavState] = React.useState(() => 
-    resolveNavigationState(
-      null, false, null, false, false, location.pathname, forceGuestNavigation
-    )
+    resolveNavigationState(null, false, location.pathname, forceGuestNavigation)
   );
 
   // Scroll to top when route changes
@@ -56,73 +45,31 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
   }, [location.pathname]);
 
   useEffect(() => {
-    console.log('MobileLayout - Resolving navigation state:', {
-      userType,
-      isAuthenticated,
-      isUsingDevBypass,
-      location: location.pathname,
-      forceGuestNavigation
-    });
-    
     const navState = resolveNavigationState(
       userType,
       isAuthenticated,
-      userType, // In dev bypass, userType is already the effective type
-      isAuthenticated,
-      isUsingDevBypass,
       location.pathname,
       forceGuestNavigation
     );
-    
     setEffectiveNavState(navState);
-  }, [userType, isAuthenticated, isUsingDevBypass, location.pathname, forceGuestNavigation]);
+  }, [userType, isAuthenticated, location.pathname, forceGuestNavigation]);
 
-  // Determine page types for specialized navigation
   const isLandingPage = location.pathname === '/' || location.pathname === '/landing' || forceGuestNavigation;
-  const isAuthPage = location.pathname === '/login' || location.pathname === '/signup';
   const isAdminPage = location.pathname.startsWith('/admin');
-  const isPublicPage = isLandingPage || isAuthPage || location.pathname === '/mission';
 
   const getContentPadding = () => {
-    if (isLandingPage) {
-      return 'pt-16 pb-0';
-    } else {
-      return 'pt-16 pb-20';
-    }
+    return isLandingPage ? 'pt-16 pb-0' : 'pt-16 pb-20';
   };
 
-  // Refined shouldShowBreadcrumbs logic
   const shouldShowBreadcrumbs = () => {
-    // List of paths where breadcrumbs should not be shown
-    const excludedPaths = [
-      '/', 
-      '/landing', 
-      '/login', 
-      '/signup', 
-      '/mission', 
-      '/map', 
-      '/explore'
-    ];
-    
-    // Don't show breadcrumbs on excluded paths
-    if (excludedPaths.includes(location.pathname)) {
-      return false;
-    }
-    
-    // Don't show on landing page or admin login page
-    if (isLandingPage || location.pathname === '/admin/login') {
-      return false;
-    }
-    
-    return true;
+    const excludedPaths = ['/', '/landing', '/login', '/signup', '/mission', '/map', '/explore'];
+    return !excludedPaths.includes(location.pathname) && !isLandingPage && location.pathname !== '/admin/login';
   };
 
-  // Determine if mobile navigation bar should be shown
   const shouldShowMobileNav = () => {
     return !isAdminPage;
   };
 
-  // Render the appropriate navigation
   const renderNavigation = () => {
     switch (effectiveNavState.navigationType) {
       case NavigationType.ADMIN:
@@ -135,16 +82,13 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
     }
   };
   
-  // Render the appropriate footer
   const renderFooter = () => {
     if (isAdminPage || effectiveNavState.userType === 'admin') {
       return <AdminFooter />;
     }
-    // Only return AppFooter if not showing mobile nav
     return !shouldShowMobileNav() ? <AppFooter /> : null;
   };
 
-  // Convert userType to the format expected by MobileNavigation
   const mobileUserType = toNonAdminUserType(effectiveNavState.userType);
 
   return (
