@@ -105,9 +105,15 @@ class AnalyticsMonitor {
 
   private async insertAnalyticsEvents(events: any[], eventType: string): Promise<boolean> {
     return await retryWithBackoff(async () => {
+      // Insert system-level analytics events with user_id = null
+      const systemEvents = events.map(event => ({
+        ...event,
+        user_id: null // Explicitly set to null for system events
+      }));
+
       const { error } = await supabase
         .from('analytics_events')
-        .insert(events);
+        .insert(systemEvents);
 
       if (error) {
         throw new Error(`Failed to insert ${eventType} events: ${error.message}`);
@@ -208,6 +214,40 @@ class AnalyticsMonitor {
       totalQueuedItems: this.errorQueue.length + this.performanceQueue.length + fallbackHealth.errors + fallbackHealth.performance
     };
   }
+
+  // Test the analytics system
+  async testAnalyticsInsertion(): Promise<boolean> {
+    try {
+      console.log('Testing analytics system...');
+      
+      // Test inserting a system health check event
+      const testEvent = {
+        event_type: 'system_health_check',
+        event_data: {
+          test: true,
+          timestamp: new Date().toISOString(),
+          system: 'analytics_monitor'
+        },
+        timestamp: new Date().toISOString(),
+        user_id: null
+      };
+
+      const { error } = await supabase
+        .from('analytics_events')
+        .insert([testEvent]);
+
+      if (error) {
+        console.error('Analytics test failed:', error);
+        return false;
+      }
+
+      console.log('Analytics system test passed!');
+      return true;
+    } catch (error) {
+      console.error('Analytics test error:', error);
+      return false;
+    }
+  }
 }
 
 export const analyticsMonitor = new AnalyticsMonitor();
@@ -221,8 +261,20 @@ export const gracefulLogPerformance = createGracefulAnalytics(
   analyticsMonitor.logPerformance.bind(analyticsMonitor)
 );
 
-// Cleanup on page unload
+// Test the analytics system on initialization
 if (typeof window !== 'undefined') {
+  // Run test after a short delay to ensure everything is initialized
+  setTimeout(() => {
+    analyticsMonitor.testAnalyticsInsertion().then(success => {
+      if (success) {
+        console.log('✅ Analytics monitoring system is working correctly');
+      } else {
+        console.warn('⚠️ Analytics monitoring system test failed');
+      }
+    });
+  }, 2000);
+
+  // Cleanup on page unload
   window.addEventListener('beforeunload', () => {
     analyticsMonitor.destroy();
   });
