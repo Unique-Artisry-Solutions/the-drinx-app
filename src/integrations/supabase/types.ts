@@ -3897,6 +3897,316 @@ export type Database = {
         }
         Relationships: []
       }
+      ticket_cancellation_policies: {
+        Row: {
+          created_at: string | null
+          days_before_event: number
+          event_id: string | null
+          id: string
+          is_active: boolean | null
+          processing_fee: number | null
+          refund_percentage: number
+          swig_circuit_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          days_before_event: number
+          event_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          processing_fee?: number | null
+          refund_percentage?: number
+          swig_circuit_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          days_before_event?: number
+          event_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          processing_fee?: number | null
+          refund_percentage?: number
+          swig_circuit_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_cancellation_policies_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_statistics"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "ticket_cancellation_policies_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_cancellation_policies_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "promoter_event_performance_view"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "ticket_cancellation_policies_swig_circuit_id_fkey"
+            columns: ["swig_circuit_id"]
+            isOneToOne: false
+            referencedRelation: "swig_circuits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ticket_inventory: {
+        Row: {
+          available_quantity: number | null
+          event_id: string | null
+          id: string
+          last_updated: string | null
+          reserved_quantity: number | null
+          sold_quantity: number | null
+          swig_circuit_id: string | null
+          ticket_type_id: string | null
+          total_quantity: number
+        }
+        Insert: {
+          available_quantity?: number | null
+          event_id?: string | null
+          id?: string
+          last_updated?: string | null
+          reserved_quantity?: number | null
+          sold_quantity?: number | null
+          swig_circuit_id?: string | null
+          ticket_type_id?: string | null
+          total_quantity: number
+        }
+        Update: {
+          available_quantity?: number | null
+          event_id?: string | null
+          id?: string
+          last_updated?: string | null
+          reserved_quantity?: number | null
+          sold_quantity?: number | null
+          swig_circuit_id?: string | null
+          ticket_type_id?: string | null
+          total_quantity?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_inventory_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_statistics"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "ticket_inventory_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_inventory_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "promoter_event_performance_view"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "ticket_inventory_swig_circuit_id_fkey"
+            columns: ["swig_circuit_id"]
+            isOneToOne: false
+            referencedRelation: "swig_circuits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ticket_purchases: {
+        Row: {
+          contact_email: string
+          contact_name: string
+          created_at: string | null
+          event_id: string | null
+          id: string
+          payment_status: string
+          price_per_ticket: number
+          purchase_details: Json | null
+          quantity: number
+          service_fee: number | null
+          service_fee_percentage: number | null
+          swig_circuit_id: string | null
+          ticket_code: string | null
+          ticket_type: string
+          ticket_type_id: string | null
+          total_amount: number
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          contact_email: string
+          contact_name: string
+          created_at?: string | null
+          event_id?: string | null
+          id?: string
+          payment_status?: string
+          price_per_ticket: number
+          purchase_details?: Json | null
+          quantity?: number
+          service_fee?: number | null
+          service_fee_percentage?: number | null
+          swig_circuit_id?: string | null
+          ticket_code?: string | null
+          ticket_type: string
+          ticket_type_id?: string | null
+          total_amount: number
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          contact_email?: string
+          contact_name?: string
+          created_at?: string | null
+          event_id?: string | null
+          id?: string
+          payment_status?: string
+          price_per_ticket?: number
+          purchase_details?: Json | null
+          quantity?: number
+          service_fee?: number | null
+          service_fee_percentage?: number | null
+          swig_circuit_id?: string | null
+          ticket_code?: string | null
+          ticket_type?: string
+          ticket_type_id?: string | null
+          total_amount?: number
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_purchases_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_statistics"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "ticket_purchases_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_purchases_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "promoter_event_performance_view"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "ticket_purchases_swig_circuit_id_fkey"
+            columns: ["swig_circuit_id"]
+            isOneToOne: false
+            referencedRelation: "swig_circuits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ticket_refunds: {
+        Row: {
+          created_at: string | null
+          id: string
+          processed_at: string | null
+          processed_by: string | null
+          processing_fee: number | null
+          refund_amount: number
+          refund_reason: string | null
+          status: string
+          ticket_purchase_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          processing_fee?: number | null
+          refund_amount: number
+          refund_reason?: string | null
+          status?: string
+          ticket_purchase_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          processing_fee?: number | null
+          refund_amount?: number
+          refund_reason?: string | null
+          status?: string
+          ticket_purchase_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_refunds_ticket_purchase_id_fkey"
+            columns: ["ticket_purchase_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_purchases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ticket_transfers: {
+        Row: {
+          created_at: string | null
+          expires_at: string | null
+          from_user_id: string | null
+          id: string
+          status: string
+          ticket_purchase_id: string | null
+          to_email: string
+          to_user_id: string | null
+          transfer_code: string
+          transferred_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at?: string | null
+          from_user_id?: string | null
+          id?: string
+          status?: string
+          ticket_purchase_id?: string | null
+          to_email: string
+          to_user_id?: string | null
+          transfer_code: string
+          transferred_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string | null
+          from_user_id?: string | null
+          id?: string
+          status?: string
+          ticket_purchase_id?: string | null
+          to_email?: string
+          to_user_id?: string | null
+          transfer_code?: string
+          transferred_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_transfers_ticket_purchase_id_fkey"
+            columns: ["ticket_purchase_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_purchases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trend_data_points: {
         Row: {
           created_at: string
@@ -4513,6 +4823,14 @@ export type Database = {
           points_change: number
           new_balance: number
           error: string
+        }[]
+      }
+      calculate_refund_amount: {
+        Args: { p_ticket_purchase_id: string; p_event_date?: string }
+        Returns: {
+          refund_amount: number
+          processing_fee: number
+          refund_percentage: number
         }[]
       }
       can_join_bar_crawl: {
