@@ -1,18 +1,16 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { 
   TicketPurchase, 
+  TicketTransactionHistory, 
   TicketTransfer, 
   TicketRefund, 
-  TicketTransactionHistory,
-  TicketPricingTier,
-  TicketInventory,
-  TicketCancellationPolicy,
   BulkTicketOperation,
-  RefundCalculation
+  TicketCancellationPolicy,
+  TicketPricingTier,
+  TicketPriceInfo
 } from '@/types/TicketManagementTypes';
-import {
-  safeJsonToStringArray,
+import { 
+  safeJsonToStringArray, 
   safeJsonToRecord,
   convertToTransactionType,
   convertToTransferStatus,
@@ -22,323 +20,239 @@ import {
 } from '@/utils/ticketTypeGuards';
 
 export class TicketManagementService {
-  // Get ticket purchase history for a specific ticket
-  static async getTicketHistory(ticketId: string): Promise<TicketTransactionHistory[]> {
-    const { data, error } = await supabase
-      .from('ticket_transaction_history')
-      .select('*')
-      .eq('ticket_purchase_id', ticketId)
-      .order('created_at', { ascending: false });
+  static async getTicketPurchases(eventId?: string, swigCircuitId?: string, userId?: string): Promise<TicketPurchase[]> {
+    let query = supabase
+      .from('ticket_purchases')
+      .select('*');
 
-    if (error) throw error;
-
-    return data.map(item => ({
-      id: item.id,
-      ticket_purchase_id: item.ticket_purchase_id,
-      transaction_type: convertToTransactionType(item.transaction_type),
-      from_status: item.from_status || undefined,
-      to_status: item.to_status || undefined,
-      performed_by: item.performed_by || undefined,
-      transaction_data: safeJsonToRecord(item.transaction_data),
-      notes: item.notes || undefined,
-      created_at: item.created_at
-    }));
-  }
-
-  // Get current pricing for tickets
-  static async getCurrentPricing(eventId?: string, swigCircuitId?: string): Promise<TicketPricingTier[]> {
-    const { data, error } = await supabase
-      .rpc('get_current_ticket_price', {
-        p_event_id: eventId || null,
-        p_swig_circuit_id: swigCircuitId || null
-      });
-
-    if (error) throw error;
-
-    return data.map(item => ({
-      id: item.tier_id,
-      event_id: eventId || undefined,
-      swig_circuit_id: swigCircuitId || undefined,
-      tier_name: item.tier_name,
-      base_price: item.base_price,
-      tier_order: 1,
-      valid_from: new Date().toISOString(),
-      valid_until: undefined,
-      max_quantity: item.remaining_quantity || undefined,
-      sold_quantity: 0,
-      is_early_bird: item.is_early_bird,
-      early_bird_discount_percentage: 0,
-      early_bird_discount_amount: item.discount_amount,
-      early_bird_end_date: undefined,
-      tier_benefits: [],
-      is_active: true,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    }));
-  }
-
-  // Get all pricing tiers for an event or swig circuit
-  static async getPricingTiers(eventId?: string, swigCircuitId?: string): Promise<TicketPricingTier[]> {
-    let query = supabase.from('ticket_pricing_tiers').select('*');
-    
     if (eventId) {
       query = query.eq('event_id', eventId);
-    } else if (swigCircuitId) {
+    }
+    if (swigCircuitId) {
       query = query.eq('swig_circuit_id', swigCircuitId);
     }
+    if (userId) {
+      query = query.eq('user_id', userId);
+    }
 
-    const { data, error } = await query.order('tier_order');
+    const { data, error } = await query;
 
-    if (error) throw error;
+    if (error) {
+      throw new Error(`Failed to get ticket purchases: ${error.message}`);
+    }
 
-    return data.map(item => ({
-      id: item.id,
-      event_id: item.event_id || undefined,
-      swig_circuit_id: item.swig_circuit_id || undefined,
-      tier_name: item.tier_name,
-      base_price: item.base_price,
-      tier_order: item.tier_order,
-      valid_from: item.valid_from,
-      valid_until: item.valid_until || undefined,
-      max_quantity: item.max_quantity || undefined,
-      sold_quantity: item.sold_quantity || 0,
-      is_early_bird: item.is_early_bird || false,
-      early_bird_discount_percentage: item.early_bird_discount_percentage || 0,
-      early_bird_discount_amount: item.early_bird_discount_amount || 0,
-      early_bird_end_date: item.early_bird_end_date || undefined,
-      tier_benefits: safeJsonToStringArray(item.tier_benefits),
-      is_active: item.is_active || true,
-      created_at: item.created_at,
-      updated_at: item.updated_at
+    return (data || []).map(purchase => ({
+      ...purchase,
+      purchase_details: safeJsonToRecord(purchase.purchase_details),
+      payment_status: convertToPaymentStatus(purchase.payment_status),
+      status: convertToTicketStatus(purchase.status)
     }));
   }
 
-  // Initiate ticket transfer
   static async initiateTicketTransfer(ticketId: string, toEmail: string): Promise<TicketTransfer> {
-    const transferCode = Math.random().toString(36).substring(2, 15);
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 1); // 24 hours
-
     const { data, error } = await supabase
       .from('ticket_transfers')
-      .insert({
+      .insert([{
         ticket_purchase_id: ticketId,
         to_email: toEmail,
-        transfer_code: transferCode,
-        status: 'pending',
-        expires_at: expiresAt.toISOString()
-      })
-      .select()
+        status: 'pending'
+      }])
+      .select('*')
       .single();
 
-    if (error) throw error;
+    if (error) {
+      throw new Error(`Failed to initiate ticket transfer: ${error.message}`);
+    }
 
     return {
-      id: data.id,
-      ticket_purchase_id: data.ticket_purchase_id,
-      from_user_id: data.from_user_id || undefined,
-      to_user_id: data.to_user_id || undefined,
-      to_email: data.to_email,
-      transfer_code: data.transfer_code,
-      status: convertToTransferStatus(data.status),
-      expires_at: data.expires_at || undefined,
-      transferred_at: data.transferred_at || undefined,
-      created_at: data.created_at
+      ...data,
+      status: convertToTransferStatus(data.status)
     };
   }
 
-  // Accept ticket transfer
-  static async acceptTicketTransfer(transferCode: string): Promise<TicketTransfer> {
-    const { data, error } = await supabase
+  static async acceptTicketTransfer(transferCode: string): Promise<void> {
+    // Get transfer
+    const { data: transfer, error: transferError } = await supabase
       .from('ticket_transfers')
-      .update({ 
+      .select('*')
+      .eq('transfer_code', transferCode)
+      .eq('status', 'pending')
+      .single();
+
+    if (transferError) {
+      throw new Error(`Invalid transfer code or transfer already processed: ${transferError.message}`);
+    }
+
+    // Update ticket purchase
+    const { error: purchaseError } = await supabase
+      .from('ticket_purchases')
+      .update({
+        user_id: supabase.auth.user()?.id,
+        status: 'transferred'
+      })
+      .eq('id', transfer.ticket_purchase_id);
+
+    if (purchaseError) {
+      throw new Error(`Failed to update ticket purchase: ${purchaseError.message}`);
+    }
+
+    // Update transfer status
+    const { error: updateError } = await supabase
+      .from('ticket_transfers')
+      .update({
         status: 'completed',
         transferred_at: new Date().toISOString()
       })
-      .eq('transfer_code', transferCode)
-      .select()
-      .single();
+      .eq('transfer_code', transferCode);
 
-    if (error) throw error;
-
-    return {
-      id: data.id,
-      ticket_purchase_id: data.ticket_purchase_id,
-      from_user_id: data.from_user_id || undefined,
-      to_user_id: data.to_user_id || undefined,
-      to_email: data.to_email,
-      transfer_code: data.transfer_code,
-      status: convertToTransferStatus(data.status),
-      expires_at: data.expires_at || undefined,
-      transferred_at: data.transferred_at || undefined,
-      created_at: data.created_at
-    };
+    if (updateError) {
+      throw new Error(`Failed to update transfer status: ${updateError.message}`);
+    }
   }
 
-  // Request ticket refund
   static async requestTicketRefund(ticketId: string, reason?: string): Promise<TicketRefund> {
-    const { data, error } = await supabase
-      .from('ticket_refunds')
-      .insert({
-        ticket_purchase_id: ticketId,
-        refund_reason: reason,
-        status: 'pending',
-        refund_amount: 0, // Will be calculated by admin
-        processing_fee: 0
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    return {
-      id: data.id,
-      ticket_purchase_id: data.ticket_purchase_id,
-      refund_amount: data.refund_amount,
-      refund_reason: data.refund_reason || undefined,
-      processing_fee: data.processing_fee,
-      status: convertToRefundStatus(data.status),
-      processed_at: data.processed_at || undefined,
-      processed_by: data.processed_by || undefined,
-      created_at: data.created_at
-    };
-  }
-
-  // Process ticket refund (admin only)
-  static async processTicketRefund(refundId: string, approved: boolean): Promise<TicketRefund> {
-    const { data, error } = await supabase
-      .from('ticket_refunds')
-      .update({ 
-        status: approved ? 'processed' : 'failed',
-        processed_at: new Date().toISOString()
-      })
-      .eq('id', refundId)
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    return {
-      id: data.id,
-      ticket_purchase_id: data.ticket_purchase_id,
-      refund_amount: data.refund_amount,
-      refund_reason: data.refund_reason || undefined,
-      processing_fee: data.processing_fee,
-      status: convertToRefundStatus(data.status),
-      processed_at: data.processed_at || undefined,
-      processed_by: data.processed_by || undefined,
-      created_at: data.created_at
-    };
-  }
-
-  // Get ticket inventory
-  static async getTicketInventory(): Promise<TicketInventory[]> {
-    const { data, error } = await supabase
-      .from('ticket_inventory')
+    // Get cancellation policy
+    const { data: policy, error: policyError } = await supabase
+      .from('ticket_cancellation_policies')
       .select('*')
-      .order('last_updated', { ascending: false });
+      .eq('event_id', (await supabase.from('ticket_purchases').select('event_id').eq('id', ticketId).single()).data?.event_id)
+      .eq('is_active', true)
+      .order('days_before_event', { ascending: false })
+      .limit(1)
+      .single();
 
-    if (error) throw error;
+    if (policyError) {
+      throw new Error(`Failed to get cancellation policy: ${policyError.message}`);
+    }
 
-    return data.map(item => ({
-      id: item.id,
-      event_id: item.event_id || undefined,
-      swig_circuit_id: item.swig_circuit_id || undefined,
-      ticket_type_id: item.ticket_type_id || undefined,
-      total_quantity: item.total_quantity,
-      sold_quantity: item.sold_quantity || 0,
-      reserved_quantity: item.reserved_quantity || 0,
-      available_quantity: item.available_quantity || 0,
-      last_updated: item.last_updated || new Date().toISOString()
-    }));
+    // Calculate refund amount
+    const { data: refundCalculation, error: refundError } = await supabase.rpc('calculate_refund_amount', {
+      p_ticket_id: ticketId,
+      p_cancellation_policy_id: policy?.id || null
+    });
+
+    if (refundError) {
+      throw new Error(`Failed to calculate refund amount: ${refundError.message}`);
+    }
+
+    // Create refund request
+    const { data, error } = await supabase
+      .from('ticket_refunds')
+      .insert([{
+        ticket_purchase_id: ticketId,
+        refund_amount: refundCalculation?.refund_amount || 0,
+        refund_reason: reason,
+        processing_fee: refundCalculation?.processing_fee || 0,
+        status: 'pending'
+      }])
+      .select('*')
+      .single();
+
+    if (error) {
+      throw new Error(`Failed to request ticket refund: ${error.message}`);
+    }
+
+    return {
+      ...data,
+      status: convertToRefundStatus(data.status)
+    };
   }
 
-  // Get ticket purchases with filters
-  static async getTicketPurchases(filters: {
-    eventId?: string;
-    swigCircuitId?: string;
-    userId?: string;
-  }): Promise<TicketPurchase[]> {
-    let query = supabase.from('ticket_purchases').select('*');
+  static async processTicketRefund(refundId: string, approved: boolean): Promise<void> {
+    // Get refund
+    const { data: refund, error: refundError } = await supabase
+      .from('ticket_refunds')
+      .select('*')
+      .eq('id', refundId)
+      .eq('status', 'pending')
+      .single();
 
-    if (filters.eventId) {
-      query = query.eq('event_id', filters.eventId);
-    }
-    if (filters.swigCircuitId) {
-      query = query.eq('swig_circuit_id', filters.swigCircuitId);
-    }
-    if (filters.userId) {
-      query = query.eq('user_id', filters.userId);
+    if (refundError) {
+      throw new Error(`Invalid refund request or refund already processed: ${refundError.message}`);
     }
 
-    const { data, error } = await query.order('created_at', { ascending: false });
+    let purchaseUpdates: any = {};
 
-    if (error) throw error;
+    if (approved) {
+      purchaseUpdates.status = 'refunded';
+    } else {
+      purchaseUpdates.status = 'purchased';
+    }
 
-    return data.map(item => ({
-      id: item.id,
-      user_id: item.user_id || undefined,
-      event_id: item.event_id || undefined,
-      swig_circuit_id: item.swig_circuit_id || undefined,
-      ticket_type_id: item.ticket_type_id || undefined,
-      ticket_type: item.ticket_type,
-      quantity: item.quantity,
-      price_per_ticket: item.price_per_ticket,
-      total_amount: item.total_amount,
-      service_fee: item.service_fee || 0,
-      service_fee_percentage: item.service_fee_percentage || 0,
-      contact_name: item.contact_name,
-      contact_email: item.contact_email,
-      payment_status: convertToPaymentStatus(item.payment_status),
-      status: convertToTicketStatus(item.status),
-      ticket_code: item.ticket_code || undefined,
-      purchase_details: safeJsonToRecord(item.purchase_details),
-      created_at: item.created_at || new Date().toISOString(),
-      updated_at: item.updated_at || new Date().toISOString()
-    }));
+    // Update ticket purchase
+    const { error: purchaseError } = await supabase
+      .from('ticket_purchases')
+      .update(purchaseUpdates)
+      .eq('id', refund.ticket_purchase_id);
+
+    if (purchaseError) {
+      throw new Error(`Failed to update ticket purchase: ${purchaseError.message}`);
+    }
+
+    // Update refund status
+    const { error: updateError } = await supabase
+      .from('ticket_refunds')
+      .update({
+        status: approved ? 'processed' : 'failed',
+        processed_at: new Date().toISOString(),
+        processed_by: supabase.auth.user()?.id
+      })
+      .eq('id', refundId);
+
+    if (updateError) {
+      throw new Error(`Failed to update refund status: ${updateError.message}`);
+    }
   }
 
-  // Perform bulk operations on tickets
-  static async performBulkOperation(operation: BulkTicketOperation): Promise<Array<{id: string, success: boolean, error?: string}>> {
-    const results = [];
+  static async performBulkOperation(operation: BulkTicketOperation): Promise<{ id: string; success: boolean; error?: string; }[]> {
+    const results: { id: string; success: boolean; error?: string; }[] = [];
 
     for (const ticketId of operation.ticket_ids) {
       try {
         switch (operation.operation) {
+          case 'transfer':
+            // Assuming parameters include 'to_email'
+            await this.initiateTicketTransfer(ticketId, operation.parameters?.to_email);
+            break;
+          case 'refund':
+            // Assuming parameters include 'reason'
+            await this.requestTicketRefund(ticketId, operation.parameters?.reason);
+            break;
           case 'cancel':
+            // Update ticket status to 'cancelled'
             await supabase
               .from('ticket_purchases')
               .update({ status: 'cancelled' })
               .eq('id', ticketId);
             break;
-          case 'refund':
-            await this.requestTicketRefund(ticketId, 'Bulk refund operation');
-            break;
           case 'update_status':
-            await supabase
-              .from('ticket_purchases')
-              .update({ status: operation.parameters?.status || 'purchased' })
-              .eq('id', ticketId);
+            // Assuming parameters include 'status'
+            const newStatus = operation.parameters?.status;
+            if (newStatus) {
+              await supabase
+                .from('ticket_purchases')
+                .update({ status: newStatus })
+                .eq('id', ticketId);
+            }
             break;
           default:
             throw new Error(`Unsupported operation: ${operation.operation}`);
         }
         results.push({ id: ticketId, success: true });
-      } catch (error) {
-        results.push({ 
-          id: ticketId, 
-          success: false, 
-          error: error instanceof Error ? error.message : 'Unknown error' 
-        });
+      } catch (error: any) {
+        results.push({ id: ticketId, success: false, error: error.message });
       }
     }
 
     return results;
   }
 
-  // Get cancellation policies
   static async getCancellationPolicies(eventId?: string, swigCircuitId?: string): Promise<TicketCancellationPolicy[]> {
-    let query = supabase.from('ticket_cancellation_policies').select('*');
+    let query = supabase
+      .from('ticket_cancellation_policies')
+      .select('*')
+      .eq('is_active', true)
+      .order('days_before_event', { ascending: false });
 
     if (eventId) {
       query = query.eq('event_id', eventId);
@@ -347,58 +261,169 @@ export class TicketManagementService {
       query = query.eq('swig_circuit_id', swigCircuitId);
     }
 
-    const { data, error } = await query.eq('is_active', true).order('days_before_event');
+    const { data, error } = await query;
 
-    if (error) throw error;
+    if (error) {
+      throw new Error(`Failed to get cancellation policies: ${error.message}`);
+    }
 
-    return data.map(item => ({
-      id: item.id,
-      event_id: item.event_id || undefined,
-      swig_circuit_id: item.swig_circuit_id || undefined,
-      days_before_event: item.days_before_event,
-      refund_percentage: item.refund_percentage,
-      processing_fee: item.processing_fee || 0,
-      is_active: item.is_active || true,
-      created_at: item.created_at || new Date().toISOString()
-    }));
+    return data || [];
   }
 
-  // Create cancellation policy
   static async createCancellationPolicy(policy: Omit<TicketCancellationPolicy, 'id' | 'created_at'>): Promise<TicketCancellationPolicy> {
     const { data, error } = await supabase
       .from('ticket_cancellation_policies')
-      .insert(policy)
-      .select()
+      .insert([policy])
+      .select('*')
       .single();
 
-    if (error) throw error;
+    if (error) {
+      throw new Error(`Failed to create cancellation policy: ${error.message}`);
+    }
+
+    return data as TicketCancellationPolicy;
+  }
+
+  static async calculateRefund(ticketId: string, cancellationPolicyId?: string): Promise<{ refund_amount: number; processing_fee: number; refund_percentage: number; }> {
+    const { data, error } = await supabase.rpc('calculate_refund_amount', {
+      p_ticket_id: ticketId,
+      p_cancellation_policy_id: cancellationPolicyId || null
+    });
+
+    if (error) {
+      throw new Error(`Failed to calculate refund: ${error.message}`);
+    }
+
+    return data;
+  }
+
+  static async getTicketHistory(ticketId: string): Promise<TicketTransactionHistory[]> {
+    const { data, error } = await supabase
+      .from('ticket_transaction_history')
+      .select('*')
+      .eq('ticket_purchase_id', ticketId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      throw new Error(`Failed to get ticket history: ${error.message}`);
+    }
+
+    return (data || []).map(history => ({
+      ...history,
+      transaction_type: convertToTransactionType(history.transaction_type),
+      transaction_data: safeJsonToRecord(history.transaction_data)
+    }));
+  }
+
+  static async getTicketInventory(eventId?: string, swigCircuitId?: string): Promise<any[]> {
+    let query = supabase
+      .from('ticket_inventory')
+      .select('*');
+
+    if (eventId) {
+      query = query.eq('event_id', eventId);
+    }
+    if (swigCircuitId) {
+      query = query.eq('swig_circuit_id', swigCircuitId);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      throw new Error(`Failed to get ticket inventory: ${error.message}`);
+    }
+
+    return data || [];
+  }
+
+  static async getCurrentTicketPrices(eventId?: string, swigCircuitId?: string): Promise<TicketPriceInfo[]> {
+    const { data, error } = await supabase.rpc('get_current_ticket_price', {
+      p_event_id: eventId || null,
+      p_swig_circuit_id: swigCircuitId || null
+    });
+
+    if (error) {
+      throw new Error(`Failed to get current ticket prices: ${error.message}`);
+    }
+
+    return data || [];
+  }
+
+  static async getPricingTiers(eventId?: string, swigCircuitId?: string): Promise<TicketPricingTier[]> {
+    let query = supabase
+      .from('ticket_pricing_tiers')
+      .select('*')
+      .eq('is_active', true)
+      .order('tier_order', { ascending: true });
+
+    if (eventId) {
+      query = query.eq('event_id', eventId);
+    }
+    if (swigCircuitId) {
+      query = query.eq('swig_circuit_id', swigCircuitId);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      throw new Error(`Failed to get pricing tiers: ${error.message}`);
+    }
+
+    return (data || []).map(tier => ({
+      ...tier,
+      tier_benefits: safeJsonToStringArray(tier.tier_benefits)
+    }));
+  }
+
+  static async createPricingTier(tier: Omit<TicketPricingTier, 'id' | 'created_at' | 'updated_at'>): Promise<TicketPricingTier> {
+    const { data, error } = await supabase
+      .from('ticket_pricing_tiers')
+      .insert({
+        ...tier,
+        tier_benefits: tier.tier_benefits || []
+      })
+      .select('*')
+      .single();
+
+    if (error) {
+      throw new Error(`Failed to create pricing tier: ${error.message}`);
+    }
 
     return {
-      id: data.id,
-      event_id: data.event_id || undefined,
-      swig_circuit_id: data.swig_circuit_id || undefined,
-      days_before_event: data.days_before_event,
-      refund_percentage: data.refund_percentage,
-      processing_fee: data.processing_fee || 0,
-      is_active: data.is_active || true,
-      created_at: data.created_at || new Date().toISOString()
+      ...data,
+      tier_benefits: safeJsonToStringArray(data.tier_benefits)
     };
   }
 
-  // Calculate refund amount
-  static async calculateRefund(ticketId: string, eventDate?: string): Promise<RefundCalculation> {
+  static async updatePricingTier(id: string, updates: Partial<TicketPricingTier>): Promise<TicketPricingTier> {
     const { data, error } = await supabase
-      .rpc('calculate_refund_amount', {
-        p_ticket_purchase_id: ticketId,
-        p_event_date: eventDate || null
-      });
+      .from('ticket_pricing_tiers')
+      .update({
+        ...updates,
+        tier_benefits: updates.tier_benefits || []
+      })
+      .eq('id', id)
+      .select('*')
+      .single();
 
-    if (error) throw error;
+    if (error) {
+      throw new Error(`Failed to update pricing tier: ${error.message}`);
+    }
 
     return {
-      refund_amount: data[0].refund_amount,
-      processing_fee: data[0].processing_fee,
-      refund_percentage: data[0].refund_percentage
+      ...data,
+      tier_benefits: safeJsonToStringArray(data.tier_benefits)
     };
+  }
+
+  static async deletePricingTier(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('ticket_pricing_tiers')
+      .update({ is_active: false })
+      .eq('id', id);
+
+    if (error) {
+      throw new Error(`Failed to delete pricing tier: ${error.message}`);
+    }
   }
 }
