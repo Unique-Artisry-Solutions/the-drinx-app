@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { useTicketManagement } from '@/hooks/useTicketManagement';
 import { TicketManagementService } from '@/services/ticketManagementService';
 import { TicketCancellationPolicy } from '@/types/TicketManagementTypes';
-import { Plus, Edit, Trash } from 'lucide-react';
+import { Plus, Shield, Percent } from 'lucide-react';
 
 interface CancellationPolicyManagerProps {
   eventId?: string;
@@ -21,35 +21,34 @@ const CancellationPolicyManager: React.FC<CancellationPolicyManagerProps> = ({
   swigCircuitId
 }) => {
   const { createCancellationPolicy, isCreatingPolicy } = useTicketManagement();
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [newPolicy, setNewPolicy] = useState({
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [formData, setFormData] = useState({
     days_before_event: 7,
-    refund_percentage: 100,
-    processing_fee: 0
+    refund_percentage: 80,
+    processing_fee: 5
   });
 
-  const { data: policies, isLoading } = useQuery({
+  const { data: policies = [], isLoading } = useQuery({
     queryKey: ['cancellation-policies', eventId, swigCircuitId],
     queryFn: () => TicketManagementService.getCancellationPolicies(eventId, swigCircuitId),
   });
 
   const handleCreatePolicy = () => {
-    const policyData = {
-      ...newPolicy,
+    const policy: Omit<TicketCancellationPolicy, 'id' | 'created_at'> = {
       event_id: eventId,
       swig_circuit_id: swigCircuitId,
+      days_before_event: formData.days_before_event,
+      refund_percentage: formData.refund_percentage,
+      processing_fee: formData.processing_fee,
       is_active: true
     };
 
-    createCancellationPolicy(policyData, {
-      onSuccess: () => {
-        setShowAddForm(false);
-        setNewPolicy({
-          days_before_event: 7,
-          refund_percentage: 100,
-          processing_fee: 0
-        });
-      }
+    createCancellationPolicy(policy);
+    setShowCreateForm(false);
+    setFormData({
+      days_before_event: 7,
+      refund_percentage: 80,
+      processing_fee: 5
     });
   };
 
@@ -63,133 +62,119 @@ const CancellationPolicyManager: React.FC<CancellationPolicyManagerProps> = ({
         <div>
           <h2 className="text-2xl font-bold">Cancellation Policies</h2>
           <p className="text-muted-foreground">
-            Set refund policies based on how far in advance cancellations occur
+            Manage refund policies for different time periods
           </p>
         </div>
-        <Button onClick={() => setShowAddForm(true)}>
+        <Button onClick={() => setShowCreateForm(true)}>
           <Plus className="h-4 w-4 mr-2" />
           Add Policy
         </Button>
       </div>
 
-      {showAddForm && (
+      {showCreateForm && (
         <Card>
           <CardHeader>
-            <CardTitle>Add Cancellation Policy</CardTitle>
+            <CardTitle>Create Cancellation Policy</CardTitle>
             <CardDescription>
-              Define refund terms for different cancellation timeframes
+              Set refund percentages based on how far in advance tickets are cancelled
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
+            <div className="grid grid-cols-3 gap-4">
+              <div>
                 <Label htmlFor="days">Days Before Event</Label>
                 <Input
                   id="days"
                   type="number"
-                  min="0"
-                  value={newPolicy.days_before_event}
-                  onChange={(e) => setNewPolicy({
-                    ...newPolicy,
+                  value={formData.days_before_event}
+                  onChange={(e) => setFormData(prev => ({
+                    ...prev,
                     days_before_event: parseInt(e.target.value) || 0
-                  })}
+                  }))}
                 />
               </div>
-              
-              <div className="space-y-2">
+              <div>
                 <Label htmlFor="percentage">Refund Percentage</Label>
                 <Input
                   id="percentage"
                   type="number"
-                  min="0"
-                  max="100"
-                  value={newPolicy.refund_percentage}
-                  onChange={(e) => setNewPolicy({
-                    ...newPolicy,
+                  value={formData.refund_percentage}
+                  onChange={(e) => setFormData(prev => ({
+                    ...prev,
                     refund_percentage: parseInt(e.target.value) || 0
-                  })}
+                  }))}
                 />
               </div>
-              
-              <div className="space-y-2">
+              <div>
                 <Label htmlFor="fee">Processing Fee ($)</Label>
                 <Input
                   id="fee"
                   type="number"
-                  min="0"
                   step="0.01"
-                  value={newPolicy.processing_fee}
-                  onChange={(e) => setNewPolicy({
-                    ...newPolicy,
+                  value={formData.processing_fee}
+                  onChange={(e) => setFormData(prev => ({
+                    ...prev,
                     processing_fee: parseFloat(e.target.value) || 0
-                  })}
+                  }))}
                 />
               </div>
             </div>
-
-            <div className="flex items-center gap-2">
-              <Button 
-                onClick={handleCreatePolicy}
-                disabled={isCreatingPolicy}
-              >
-                {isCreatingPolicy ? 'Creating...' : 'Create Policy'}
-              </Button>
-              <Button 
-                variant="outline" 
-                onClick={() => setShowAddForm(false)}
-              >
+            
+            <div className="flex justify-end space-x-2">
+              <Button variant="outline" onClick={() => setShowCreateForm(false)}>
                 Cancel
+              </Button>
+              <Button onClick={handleCreatePolicy} disabled={isCreatingPolicy}>
+                {isCreatingPolicy ? 'Creating...' : 'Create Policy'}
               </Button>
             </div>
           </CardContent>
         </Card>
       )}
 
-      <div className="space-y-4">
-        {policies?.map((policy) => (
+      <div className="grid gap-4">
+        {policies.map((policy) => (
           <Card key={policy.id}>
-            <CardContent className="pt-6">
+            <CardContent className="p-6">
               <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-medium">
-                      {policy.days_before_event}+ days before event
-                    </h3>
-                    <Badge variant={policy.is_active ? "default" : "secondary"}>
-                      {policy.is_active ? "Active" : "Inactive"}
-                    </Badge>
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2">
+                    <Shield className="h-5 w-5 text-blue-500" />
+                    <span className="font-medium">
+                      {policy.days_before_event}+ days before
+                    </span>
                   </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Percent className="h-4 w-4 text-green-500" />
+                    <span className="text-green-600 font-medium">
+                      {policy.refund_percentage}% refund
+                    </span>
+                  </div>
+                  
                   <div className="text-sm text-muted-foreground">
-                    <span className="font-medium">{policy.refund_percentage}% refund</span>
-                    {policy.processing_fee > 0 && (
-                      <span> • ${policy.processing_fee} processing fee</span>
-                    )}
+                    Processing fee: ${policy.processing_fee.toFixed(2)}
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm">
-                    <Edit className="h-3 w-3" />
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    <Trash className="h-3 w-3" />
-                  </Button>
-                </div>
+                <Badge variant={policy.is_active ? 'default' : 'secondary'}>
+                  {policy.is_active ? 'Active' : 'Inactive'}
+                </Badge>
               </div>
             </CardContent>
           </Card>
         ))}
+        
+        {policies.length === 0 && (
+          <Card>
+            <CardContent className="py-12 text-center">
+              <p className="text-muted-foreground">
+                No cancellation policies configured. Add one to get started.
+              </p>
+            </CardContent>
+          </Card>
+        )}
       </div>
-
-      {policies?.length === 0 && (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <p className="text-muted-foreground">
-              No cancellation policies set. Add policies to define refund terms.
-            </p>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 };
