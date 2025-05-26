@@ -1,10 +1,7 @@
 
 import React from 'react';
-import { Command, CommandList } from "@/components/ui/command";
+import { Command, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
 import { cn } from '@/lib/utils';
-import SuggestionGroup from './SuggestionGroup';
-import EmptySuggestion from './EmptySuggestion';
-import { getAutoCorrectSuggestion } from './AutoCorrectHelper';
 
 interface SearchSuggestion {
   value: string;
@@ -32,9 +29,6 @@ const SearchSuggestions: React.FC<SearchSuggestionsProps> = ({
   const establishments = suggestions.filter(item => item.type === 'establishment');
   const ingredients = suggestions.filter(item => item.type === 'ingredient');
 
-  // Get auto-correct suggestion if needed
-  const autoCorrect = getAutoCorrectSuggestion(searchTerm);
-
   return (
     <div className={cn(
       "absolute z-50 w-full mt-1 rounded-xl bg-white border shadow-md",
@@ -42,29 +36,51 @@ const SearchSuggestions: React.FC<SearchSuggestionsProps> = ({
     )}>
       <Command>
         <CommandList>
-          <EmptySuggestion 
-            searchTerm={searchTerm} 
-            autoCorrect={autoCorrect} 
-            onSelect={onSelect} 
-          />
+          <CommandEmpty>
+            <p className="px-2 py-3 text-sm">No results found</p>
+          </CommandEmpty>
 
-          <SuggestionGroup 
-            heading="Cocktails" 
-            items={cocktails} 
-            onSelect={onSelect} 
-          />
+          {cocktails.length > 0 && (
+            <CommandGroup heading="Cocktails">
+              {cocktails.map((item) => (
+                <CommandItem
+                  key={`${item.type}-${item.value}`}
+                  value={item.value}
+                  onSelect={() => onSelect(item.value)}
+                >
+                  {item.label}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
 
-          <SuggestionGroup 
-            heading="Establishments" 
-            items={establishments} 
-            onSelect={onSelect} 
-          />
+          {establishments.length > 0 && (
+            <CommandGroup heading="Establishments">
+              {establishments.map((item) => (
+                <CommandItem
+                  key={`${item.type}-${item.value}`}
+                  value={item.value}
+                  onSelect={() => onSelect(item.value)}
+                >
+                  {item.label}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
 
-          <SuggestionGroup 
-            heading="Ingredients" 
-            items={ingredients} 
-            onSelect={onSelect} 
-          />
+          {ingredients.length > 0 && (
+            <CommandGroup heading="Ingredients">
+              {ingredients.map((item) => (
+                <CommandItem
+                  key={`${item.type}-${item.value}`}
+                  value={item.value}
+                  onSelect={() => onSelect(item.value)}
+                >
+                  {item.label}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
         </CommandList>
       </Command>
     </div>

@@ -2,10 +2,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useUserLocation } from '@/hooks/useUserLocation';
-import Fuse from 'fuse.js';
 import { performAdvancedSearch, createFuzzySearch, SearchableItem } from '@/utils/searchUtils';
-
-// Import sample data
 import { sampleCocktails, sampleEstablishments } from '@/data/sampleData';
 
 interface Filters {
@@ -13,7 +10,6 @@ interface Filters {
   distance: number;
 }
 
-// Define the cocktail interface to match the expected structure
 interface Cocktail {
   id: string;
   name: string;
@@ -37,9 +33,7 @@ export const useIndexPageLogic = () => {
     distance: 10
   });
   const [activeTab, setActiveTab] = useState("featured");
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
   const {
     userLocation,
     isLoading: isLoadingLocation,
@@ -48,23 +42,9 @@ export const useIndexPageLogic = () => {
     formatDistance
   } = useUserLocation();
 
-  // Create fuzzy search instance for cocktails with better settings for auto-suggestion
+  // Create fuzzy search instance
   const fuseInstance = useMemo(() => 
-    createFuzzySearch(allCocktails as SearchableItem[], {
-      // Lower threshold for better fuzzy matching sensitivity
-      threshold: 0.3,
-      // Include score to better rank results
-      includeScore: true,
-      // Ignore location for better partial matches
-      ignoreLocation: true,
-      // Search these fields
-      keys: [
-        { name: 'name', weight: 2 }, // Give name higher priority
-        'description',
-        'ingredients',
-        'establishment.name'
-      ]
-    }),
+    createFuzzySearch(allCocktails as SearchableItem[]),
     [allCocktails]
   );
 
@@ -79,13 +59,10 @@ export const useIndexPageLogic = () => {
     }
   }, [userLocation, establishments, calculateDistance, formatDistance]);
 
-  // Memoize the search handler to avoid unnecessary rerenders
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
 
-    // Perform advanced search only if there is a query
     if (query) {
-      // Cast search results back to Cocktail[] to match the expected type
       const searchResults = performAdvancedSearch(
         allCocktails as SearchableItem[], 
         query, 
@@ -94,7 +71,6 @@ export const useIndexPageLogic = () => {
       
       setCocktails(searchResults);
       
-      // Show toast for search results
       if (searchResults.length === 0) {
         toast({
           title: "No results found",
@@ -102,7 +78,6 @@ export const useIndexPageLogic = () => {
         });
       }
     } else {
-      // If no search query, show all cocktails
       setCocktails(allCocktails);
     }
   }, [allCocktails, fuseInstance, toast]);
@@ -112,7 +87,6 @@ export const useIndexPageLogic = () => {
   };
   
   const applyFilters = useCallback(() => {
-    // Start with all cocktails or current search results
     let filteredCocktails = searchQuery ? 
       performAdvancedSearch(
         allCocktails as SearchableItem[], 

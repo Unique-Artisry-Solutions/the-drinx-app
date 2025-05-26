@@ -1,48 +1,49 @@
 
 import Fuse from 'fuse.js';
 
-// Type for search items
+// Simplified search item interface
 export interface SearchableItem {
   id: string;
   name: string;
-  price?: string | number;
   description?: string;
   ingredients?: string[];
-  image?: string;
   establishment?: {
     name: string;
-    distance?: string;
   };
   [key: string]: any;
 }
 
-// Default fuse options for fuzzy searching
-const defaultFuseOptions = {
+// Simplified fuse options
+const fuseOptions = {
   keys: ['name', 'description', 'ingredients', 'establishment.name'],
-  threshold: 0.4, // Lower threshold = stricter matching
+  threshold: 0.3,
   ignoreLocation: true,
   includeScore: true,
 };
 
 /**
- * Creates a fuzzy search instance with custom or default options
+ * Creates a fuzzy search instance
  */
-export function createFuzzySearch(items: SearchableItem[], customOptions?: Fuse.IFuseOptions<SearchableItem>) {
-  return new Fuse(items, customOptions || defaultFuseOptions);
+export function createFuzzySearch(items: SearchableItem[]) {
+  return new Fuse(items, fuseOptions);
 }
 
 /**
- * Performs fuzzy search on items
+ * Performs fuzzy search and returns results
  */
-export function fuzzySearch(fuse: Fuse<SearchableItem>, query: string): SearchableItem[] {
-  if (!query.trim()) return [];
+export function performAdvancedSearch(
+  items: SearchableItem[],
+  query: string,
+  fuse: Fuse<SearchableItem>
+): SearchableItem[] {
+  if (!query.trim()) return items;
   
   const results = fuse.search(query);
   return results.map(result => result.item);
 }
 
 /**
- * Extract search suggestions from cocktails and establishments
+ * Extract basic search suggestions from data
  */
 export function extractSearchSuggestions(
   cocktails: any[],
@@ -58,7 +59,7 @@ export function extractSearchSuggestions(
       type: 'cocktail'
     });
     
-    // Add unique ingredients from cocktails
+    // Add unique ingredients
     if (cocktail.ingredients && Array.isArray(cocktail.ingredients)) {
       cocktail.ingredients.forEach((ingredient: string) => {
         if (!suggestions.some(s => s.type === 'ingredient' && s.value === ingredient)) {
@@ -82,81 +83,4 @@ export function extractSearchSuggestions(
   });
   
   return suggestions;
-}
-
-/**
- * Performs regex-based search
- */
-export function regexSearch(items: SearchableItem[], pattern: string): SearchableItem[] {
-  if (!pattern.trim()) return [];
-  
-  try {
-    // Escape special regex characters if not explicitly using regex
-    const isExplicitRegex = pattern.startsWith('/') && pattern.endsWith('/');
-    const regexPattern = isExplicitRegex 
-      ? new RegExp(pattern.slice(1, -1), 'i') 
-      : new RegExp(pattern.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&'), 'i');
-    
-    return items.filter(item => {
-      // Search in name
-      if (regexPattern.test(item.name)) return true;
-      
-      // Search in description
-      if (item.description && regexPattern.test(item.description)) return true;
-      
-      // Search in ingredients
-      if (item.ingredients && Array.isArray(item.ingredients)) {
-        if (item.ingredients.some(ingredient => regexPattern.test(ingredient))) return true;
-      }
-      
-      // Search in establishment name
-      if (item.establishment && regexPattern.test(item.establishment.name)) return true;
-      
-      return false;
-    });
-  } catch (error) {
-    console.error("Invalid regex pattern:", error);
-    return [];
-  }
-}
-
-/**
- * Detects if the search query is a regex pattern
- */
-export function isRegexSearch(query: string): boolean {
-  return query.startsWith('/') && query.endsWith('/') && query.length > 2;
-}
-
-/**
- * Performs a search using both fuzzy and regex methods
- */
-export function performAdvancedSearch(
-  items: SearchableItem[],
-  query: string,
-  fuse: Fuse<SearchableItem>
-): SearchableItem[] {
-  if (!query.trim()) return items;
-  
-  // Check if it's a regex search
-  if (isRegexSearch(query)) {
-    return regexSearch(items, query);
-  }
-  
-  // Split the query into individual keywords for multi-term search
-  const keywords = query.toLowerCase().split(/\s+/).filter(Boolean);
-  
-  // If it's a single keyword, just do a simple fuzzy search
-  if (keywords.length === 1) {
-    return fuzzySearch(fuse, query);
-  }
-  
-  // For multiple keywords, combine results from each keyword
-  const resultSets = keywords.map(keyword => 
-    new Set(fuzzySearch(fuse, keyword).map(item => item.id))
-  );
-  
-  // Find items that match all keywords
-  return items.filter(item => 
-    resultSets.every(set => set.has(item.id))
-  );
 }

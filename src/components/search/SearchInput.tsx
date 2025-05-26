@@ -1,9 +1,8 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { Search, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import SearchSuggestions from './SearchSuggestions';
-import { getSuggestionCompletions } from './AutoCorrectHelper';
 
 interface SearchInputProps {
   value: string;
@@ -27,32 +26,11 @@ const SearchInput: React.FC<SearchInputProps> = ({
   className
 }) => {
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [autoCompleteSuggestions, setAutoCompleteSuggestions] = useState<string[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
-
-  useEffect(() => {
-    if (value.length >= 2) {
-      const completions = getSuggestionCompletions(value);
-      setAutoCompleteSuggestions(completions);
-    } else {
-      setAutoCompleteSuggestions([]);
-    }
-  }, [value]);
-
-  const enhancedSuggestions = [
-    ...autoCompleteSuggestions.map(term => ({
-      value: term,
-      label: term,
-      type: 'autocomplete' as 'cocktail' | 'establishment' | 'ingredient'
-    })), 
-    ...suggestions
-  ];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setShowSuggestions(false);
-    console.log('SearchInput - form submitted with value:', value);
     onSearch(value);
   };
 
@@ -62,13 +40,6 @@ const SearchInput: React.FC<SearchInputProps> = ({
     
     if (newValue.length > 1) {
       setShowSuggestions(true);
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
-      debounceTimerRef.current = setTimeout(() => {
-        console.log(`SearchInput - debounced search for: "${newValue}"`);
-        onSearch(newValue);
-      }, 300);
     } else {
       setShowSuggestions(false);
       if (newValue === '') {
@@ -78,14 +49,12 @@ const SearchInput: React.FC<SearchInputProps> = ({
   };
 
   const handleSuggestionSelect = (selectedValue: string) => {
-    console.log('SearchInput - suggestion selected:', selectedValue);
     onChange(selectedValue);
     setShowSuggestions(false);
     onSearch(selectedValue);
   };
 
   const handleClearClick = () => {
-    console.log('SearchInput - clear button clicked');
     onClear();
     setShowSuggestions(false);
     if (inputRef.current) {
@@ -126,7 +95,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
       </form>
       
       <SearchSuggestions 
-        suggestions={enhancedSuggestions} 
+        suggestions={suggestions} 
         isOpen={showSuggestions} 
         onSelect={handleSuggestionSelect} 
         onOpenChange={setShowSuggestions} 
