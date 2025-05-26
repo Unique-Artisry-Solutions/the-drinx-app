@@ -3,6 +3,7 @@ import { lazy } from 'react';
 import { RouteObject } from 'react-router-dom';
 import RouteProtectionWrapper from '@/hoc/RouteProtectionWrapper';
 
+// Lazy loaded components
 const EstablishmentDashboardPage = lazy(() => import('@/pages/establishment/EstablishmentDashboardPage'));
 const EstablishmentProfile = lazy(() => import('@/pages/establishment/EstablishmentProfile'));
 const EstablishmentEvents = lazy(() => import('@/pages/establishment/EstablishmentEvents'));

@@ -13,27 +13,20 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 
-// Import the EventScannerPage component
+// Lazy loaded special pages
 const EventScannerPage = React.lazy(() => import('@/pages/events/EventScannerPage'));
-// Import the EventDetailPage component 
 const EventDetailPage = React.lazy(() => import('@/pages/EventDetailPage'));
-// Import the BarCrawlDetail component
 const BarCrawlDetail = React.lazy(() => import('@/pages/BarCrawlDetail'));
 
 const AppRoutes = () => {
-  // Track navigation for prefetching optimization
   useNavigationTracking();
   const location = useLocation();
 
-  // Add debugging for route resolution
-  console.log('AppRoutes: Current location', location.pathname);
-  console.log('AppRoutes: Admin routes count', adminRoutes.length);
-  
   return (
     <PageSuspense>
       <AnimatePresence mode="wait">
         <Routes location={location} key={location.pathname}>
-          {/* Public Routes - includes the /404 route */}
+          {/* Public Routes */}
           {publicRoutes.map((route) => (
             <Route key={route.path} path={route.path} element={route.element} />
           ))}
@@ -43,7 +36,7 @@ const AppRoutes = () => {
             <Route key={route.path} path={route.path} element={route.element} />
           ))}
 
-          {/* Ensure we have a direct route for event details */}
+          {/* Special Routes */}
           <Route 
             path="/event/:id" 
             element={
@@ -53,7 +46,6 @@ const AppRoutes = () => {
             } 
           />
           
-          {/* Add direct route for bar crawl details */}
           <Route 
             path="/bar-crawl/:id" 
             element={
@@ -63,7 +55,6 @@ const AppRoutes = () => {
             }
           />
 
-          {/* Special public route for event scanner that requires token */}
           <Route 
             path="/events/scan/:eventId/:token" 
             element={
@@ -73,10 +64,9 @@ const AppRoutes = () => {
             }
           />
 
-          {/* Admin Routes - must come before the catch-all to ensure admin/* routes are matched properly */}
-          {adminRoutes.map((route, index) => {
-            console.log(`AppRoutes: Registering admin route ${index}:`, route.path);
-            return <Route key={route.path} path={route.path} element={route.element}>
+          {/* Admin Routes */}
+          {adminRoutes.map((route, index) => (
+            <Route key={route.path} path={route.path} element={route.element}>
               {route.children && route.children.map((childRoute, childIndex) => (
                 <Route 
                   key={childRoute.path || 'index'} 
@@ -86,7 +76,7 @@ const AppRoutes = () => {
                 />
               ))}
             </Route>
-          })}
+          ))}
 
           {/* Establishment Routes */}
           {establishmentRoutes.map((route) => (

@@ -1,19 +1,21 @@
 
-import React from 'react';
+import { lazy } from 'react';
 import { RouteObject } from 'react-router-dom';
-import UserProfilePage from '@/pages/profile/UserProfilePage';
-import VisitedPage from '@/pages/profile/VisitedPage';
-import FavoritesPage from '@/pages/profile/FavoritesPage';
-import BarCrawlsPage from '@/pages/profile/BarCrawlsPage';
-import BarCrawlManagementPage from '@/pages/profile/BarCrawlManagementPage';
-import CrawlersListPage from '@/pages/profile/CrawlersListPage';
-import UserRecipesPage from '@/pages/profile/UserRecipesPage';
-import CreateSwigCircuitPage from '@/pages/profile/CreateSwigCircuitPage';
-import CheckInScannerPage from '@/pages/profile/CheckInScannerPage';
-import SettingsPage from '@/pages/settings/SettingsPage';
-import NotificationsPage from '@/pages/notifications/NotificationsPage';
-import RewardsPage from '@/pages/profile/RewardsPage';
-import MyTicketsPage from '@/pages/profile/MyTicketsPage';
+
+// Lazy loaded components
+const UserProfilePage = lazy(() => import('@/pages/profile/UserProfilePage'));
+const VisitedPage = lazy(() => import('@/pages/profile/VisitedPage'));
+const FavoritesPage = lazy(() => import('@/pages/profile/FavoritesPage'));
+const BarCrawlsPage = lazy(() => import('@/pages/profile/BarCrawlsPage'));
+const BarCrawlManagementPage = lazy(() => import('@/pages/profile/BarCrawlManagementPage'));
+const CrawlersListPage = lazy(() => import('@/pages/profile/CrawlersListPage'));
+const UserRecipesPage = lazy(() => import('@/pages/profile/UserRecipesPage'));
+const CreateSwigCircuitPage = lazy(() => import('@/pages/profile/CreateSwigCircuitPage'));
+const CheckInScannerPage = lazy(() => import('@/pages/profile/CheckInScannerPage'));
+const SettingsPage = lazy(() => import('@/pages/settings/SettingsPage'));
+const NotificationsPage = lazy(() => import('@/pages/notifications/NotificationsPage'));
+const RewardsPage = lazy(() => import('@/pages/profile/RewardsPage'));
+const MyTicketsPage = lazy(() => import('@/pages/profile/MyTicketsPage'));
 
 export const profileRoutes: RouteObject[] = [
   { path: '/profile', element: <UserProfilePage /> },
