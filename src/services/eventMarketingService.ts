@@ -40,7 +40,10 @@ export async function fetchEventCampaigns(eventId: string): Promise<EventMarketi
     throw new Error(`Failed to fetch campaigns: ${error.message}`);
   }
 
-  return data || [];
+  return (data || []).map(campaign => ({
+    ...campaign,
+    status: campaign.status as 'draft' | 'active' | 'completed' | 'cancelled'
+  }));
 }
 
 /**
@@ -71,7 +74,10 @@ export async function createMarketingCampaign(
     throw new Error(`Failed to create campaign: ${error.message}`);
   }
 
-  return data;
+  return {
+    ...data,
+    status: data.status as 'draft' | 'active' | 'completed' | 'cancelled'
+  };
 }
 
 /**
@@ -93,7 +99,10 @@ export async function updateMarketingCampaign(
     throw new Error(`Failed to update campaign: ${error.message}`);
   }
 
-  return data;
+  return {
+    ...data,
+    status: data.status as 'draft' | 'active' | 'completed' | 'cancelled'
+  };
 }
 
 /**
@@ -131,7 +140,7 @@ export async function trackCampaignMetric(
     throw new Error(`Failed to fetch campaign: ${fetchError.message}`);
   }
 
-  const currentMetrics = campaign.metrics || {};
+  const currentMetrics = campaign?.metrics || {};
   const updatedMetrics = {
     ...currentMetrics,
     [metricName]: (currentMetrics[metricName] || 0) + value,
@@ -204,5 +213,77 @@ export async function getPromoterCampaigns(promoterId: string): Promise<EventMar
     throw new Error(`Failed to fetch promoter campaigns: ${error.message}`);
   }
 
-  return data || [];
+  return (data || []).map(campaign => ({
+    ...campaign,
+    status: campaign.status as 'draft' | 'active' | 'completed' | 'cancelled'
+  }));
+}
+
+/**
+ * Get segment-targeted content for campaigns
+ */
+export async function getSegmentTargetedContent(campaignId: string, segmentId: string): Promise<any> {
+  const { data, error } = await supabase
+    .from('campaign_segment_mappings')
+    .select(`
+      *,
+      campaign_segment_performance(*)
+    `)
+    .eq('campaign_id', campaignId)
+    .eq('segment_id', segmentId)
+    .single();
+
+  if (error) {
+    console.error('Error fetching segment targeted content:', error);
+    throw new Error(`Failed to fetch segment content: ${error.message}`);
+  }
+
+  return data;
+}
+
+/**
+ * Create segment-based notification for marketing campaigns
+ */
+export async function createSegmentBasedNotification(
+  campaignId: string,
+  segmentId: string,
+  notificationData: {
+    title: string;
+    content: string;
+    priority?: 'low' | 'medium' | 'high';
+  }
+): Promise<void> {
+  // Get users in the segment
+  const { data: segmentUsers, error: segmentError } = await supabase
+    .from('audience_segment_memberships')
+    .select('user_id')
+    .eq('segment_id', segmentId)
+    .eq('is_active', true);
+
+  if (segmentError) {
+    console.error('Error fetching segment users:', segmentError);
+    throw new Error(`Failed to fetch segment users: ${segmentError.message}`);
+  }
+
+  // Create notifications for each user in the segment
+  const notifications = segmentUsers.map(user => ({
+    recipient_id: user.user_id,
+    title: notificationData.title,
+    content: notificationData.content,
+    priority: notificationData.priority || 'medium',
+    metadata: {
+      campaign_id: campaignId,
+      segment_id: segmentId,
+      type: 'marketing_campaign'
+    }
+  }));
+
+  const { error: notificationError } = await supabase
+    .from('notifications')
+    .insert(notifications);
+
+  if (notificationError) {
+    console.error('Error creating segment notifications:', notificationError);
+    throw new Error(`Failed to create notifications: ${notificationError.message}`);
+  }
 }
