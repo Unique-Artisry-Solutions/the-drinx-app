@@ -7,6 +7,7 @@ import RouteProtectionWrapper from '@/hoc/RouteProtectionWrapper';
 const PromoterDashboard = lazy(() => import('@/pages/promoter/PromoterDashboardPage'));
 const PromoterProfile = lazy(() => import('@/pages/promoter/PromoterProfile'));
 const PromoterEvents = lazy(() => import('@/pages/promoter/PromoterEvents'));
+const PromoterAnalyticsPage = lazy(() => import('@/pages/promoter/PromoterAnalyticsPage'));
 
 export const promoterRoutes: RouteObject[] = [
   {
@@ -54,6 +55,18 @@ export const promoterRoutes: RouteObject[] = [
         redirectTo="/login"
       >
         <PromoterEvents />
+      </RouteProtectionWrapper>
+    )
+  },
+  {
+    path: '/promoter/analytics',
+    element: (
+      <RouteProtectionWrapper 
+        requireAuth={true} 
+        allowedUserTypes={['promoter']}
+        redirectTo="/login"
+      >
+        <PromoterAnalyticsPage />
       </RouteProtectionWrapper>
     )
   }

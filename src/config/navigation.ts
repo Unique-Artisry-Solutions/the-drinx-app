@@ -63,6 +63,11 @@ export const promoterNavItems: UnifiedNavItem[] = [
     icon: Calendar
   },
   {
+    label: 'Analytics',
+    path: '/promoter/analytics',
+    icon: BarChart3
+  },
+  {
     label: 'Profile',
     path: '/promoter/profile',
     icon: User
