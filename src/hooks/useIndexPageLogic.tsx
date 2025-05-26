@@ -25,7 +25,7 @@ interface Cocktail {
 
 export const useIndexPageLogic = () => {
   const [cocktails, setCocktails] = useState<Cocktail[]>(sampleCocktails);
-  const [allCocktails, setAllCocktails] = useState<Cocktail[]>(sampleCocktails);
+  const [allCocktails] = useState<Cocktail[]>(sampleCocktails);
   const [establishments, setEstablishments] = useState(sampleEstablishments);
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<Filters>({
@@ -34,21 +34,10 @@ export const useIndexPageLogic = () => {
   });
   const [activeTab, setActiveTab] = useState("featured");
   const { toast } = useToast();
-  const {
-    userLocation,
-    isLoading: isLoadingLocation,
-    refreshLocation,
-    calculateDistance,
-    formatDistance
-  } = useUserLocation();
+  const { userLocation, isLoading: isLoadingLocation, refreshLocation, calculateDistance, formatDistance } = useUserLocation();
 
-  // Create fuzzy search instance
-  const fuseInstance = useMemo(() => 
-    createFuzzySearch(allCocktails as SearchableItem[]),
-    [allCocktails]
-  );
+  const fuseInstance = useMemo(() => createFuzzySearch(allCocktails as SearchableItem[]), [allCocktails]);
 
-  // Calculate distances when user location changes
   useEffect(() => {
     if (userLocation && establishments.length > 0) {
       const updatedEstablishments = establishments.map(est => ({
@@ -63,64 +52,40 @@ export const useIndexPageLogic = () => {
     setSearchQuery(query);
 
     if (query) {
-      const searchResults = performAdvancedSearch(
-        allCocktails as SearchableItem[], 
-        query, 
-        fuseInstance
-      ) as Cocktail[];
-      
+      const searchResults = performAdvancedSearch(allCocktails as SearchableItem[], query, fuseInstance) as Cocktail[];
       setCocktails(searchResults);
       
       if (searchResults.length === 0) {
-        toast({
-          title: "No results found",
-          description: `Try a different search term or reset filters.`
-        });
+        toast({ title: "No results found", description: "Try a different search term." });
       }
     } else {
       setCocktails(allCocktails);
     }
   }, [allCocktails, fuseInstance, toast]);
   
-  const handleFilterChange = (newFilters: any) => {
+  const handleFilterChange = (newFilters: Filters) => {
     setFilters(newFilters);
   };
   
   const applyFilters = useCallback(() => {
     let filteredCocktails = searchQuery ? 
-      performAdvancedSearch(
-        allCocktails as SearchableItem[], 
-        searchQuery, 
-        fuseInstance
-      ) as Cocktail[] : 
+      performAdvancedSearch(allCocktails as SearchableItem[], searchQuery, fuseInstance) as Cocktail[] : 
       [...allCocktails];
     
-    // Apply price range filter
+    // Apply price filter
     filteredCocktails = filteredCocktails.filter(cocktail => {
-      const cocktailPrice = typeof cocktail.price === 'string' 
-        ? parseFloat(cocktail.price) 
-        : cocktail.price;
-      
-      return !isNaN(cocktailPrice) && 
-        cocktailPrice >= filters.priceRange[0] && 
-        cocktailPrice <= filters.priceRange[1];
+      const price = typeof cocktail.price === 'string' ? parseFloat(cocktail.price) : cocktail.price;
+      return !isNaN(price) && price >= filters.priceRange[0] && price <= filters.priceRange[1];
     });
     
     setCocktails(filteredCocktails);
-    
-    toast({
-      title: "Filters Applied",
-      description: `Found ${filteredCocktails.length} cocktails matching your criteria.`
-    });
+    toast({ title: "Filters Applied", description: `Found ${filteredCocktails.length} cocktails.` });
   }, [allCocktails, filters, fuseInstance, searchQuery, toast]);
 
   const resetFilters = useCallback(() => {
     setSearchQuery('');
     setCocktails(allCocktails);
-    setFilters({
-      priceRange: [0, 25],
-      distance: 10
-    });
+    setFilters({ priceRange: [0, 25], distance: 10 });
   }, [allCocktails]);
 
   return {

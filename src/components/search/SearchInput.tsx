@@ -37,14 +37,10 @@ const SearchInput: React.FC<SearchInputProps> = ({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     onChange(newValue);
+    setShowSuggestions(newValue.length > 1);
     
-    if (newValue.length > 1) {
-      setShowSuggestions(true);
-    } else {
-      setShowSuggestions(false);
-      if (newValue === '') {
-        onSearch('');
-      }
+    if (newValue === '') {
+      onSearch('');
     }
   };
 
@@ -57,9 +53,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
   const handleClearClick = () => {
     onClear();
     setShowSuggestions(false);
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
+    inputRef.current?.focus();
   };
 
   return (
@@ -77,16 +71,14 @@ const SearchInput: React.FC<SearchInputProps> = ({
             className={cn(
               "w-full pl-10 pr-14 py-3 rounded-full border border-input",
               "bg-background text-foreground placeholder:text-muted-foreground",
-              "focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent",
-              "transition-colors"
+              "focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
             )}
           />
           {value && (
             <button
               type="button"
               onClick={handleClearClick}
-              className="absolute right-14 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1 rounded-full hover:bg-muted"
-              aria-label="Clear search"
+              className="absolute right-14 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground p-1 rounded-full hover:bg-muted"
             >
               <X size={16} />
             </button>

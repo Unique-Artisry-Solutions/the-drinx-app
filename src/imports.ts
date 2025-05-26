@@ -1,6 +1,3 @@
 
-// Import the BarCrawlManagementPage component
-import BarCrawlManagementPage from './pages/profile/BarCrawlManagementPage';
-
-// Export it so it can be imported in AppRoutes
-export { BarCrawlManagementPage };
+// Simplified imports file - only essential exports
+export { default as BarCrawlManagementPage } from './pages/profile/BarCrawlManagementPage';

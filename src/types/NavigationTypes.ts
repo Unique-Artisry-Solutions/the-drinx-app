@@ -1,7 +1,6 @@
 
-/**
- * Central definition for navigation-related types
- */
+import { ReactNode } from 'react';
+import { LucideIcon } from 'lucide-react';
 
 export enum NavigationType {
   GUEST = 'guest',
@@ -12,7 +11,7 @@ export enum NavigationType {
 export interface NavItem {
   label: string;
   href: string;
-  icon?: React.ComponentType<any>;
+  icon?: LucideIcon;
   isActive?: boolean;
   children?: NavItem[];
 }

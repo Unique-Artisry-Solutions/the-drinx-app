@@ -1,33 +1,36 @@
 
-import { Home, Map, User, Route, Megaphone, BarChart2, Building, Bell, Calendar, Ticket, Users, ChartBar } from 'lucide-react';
-import { UnifiedNavItem } from '@/types/navigation/NavigationTypes';
+import { Home, MapPin, Search, User, Calendar, Route } from 'lucide-react';
+import { UnifiedNavItem, UserType } from '@/types/navigation/NavigationTypes';
 
-export const getUserNavItems = (
-  userType: 'individual' | 'establishment' | 'promoter', 
-  getProfilePath: () => string
-): UnifiedNavItem[] => {
-  const navItems: UnifiedNavItem[] = [];
-  
-  // Add appropriate home/dashboard path based on user type
-  if (userType === 'establishment') {
-    navItems.push({ icon: Building, label: 'Dashboard', path: '/establishment/dashboard' });
-    navItems.push({ icon: Calendar, label: 'Events', path: '/establishment/events' });
-    navItems.push({ icon: ChartBar, label: 'Analytics', path: '/establishment/analytics' });
-    navItems.push({ icon: Bell, label: 'Notifications', path: '/establishment/notifications' });
-  } else if (userType === 'promoter') {
-    navItems.push({ icon: Megaphone, label: 'Dashboard', path: '/promoter/dashboard' });
-    navItems.push({ icon: Calendar, label: 'Events', path: '/promoter/events' });
-    navItems.push({ icon: ChartBar, label: 'Analytics', path: '/promoter/analytics' });
-    navItems.push({ icon: Bell, label: 'Notifications', path: '/promoter/notifications' });
-  } else {
-    navItems.push({ icon: Home, label: 'Explore', path: '/explore' });
-    navItems.push({ icon: Map, label: 'Map', path: '/map' });
-    navItems.push({ icon: Ticket, label: 'My Tickets', path: '/profile/my-tickets' });
-    navItems.push({ icon: Bell, label: 'Notifications', path: '/notifications' });
+export const getUserNavItems = (userType: UserType): UnifiedNavItem[] => {
+  const baseItems: UnifiedNavItem[] = [
+    { icon: Home, label: 'Home', path: '/explore' },
+    { icon: Search, label: 'Search', path: '/search' },
+    { icon: MapPin, label: 'Map', path: '/map' },
+  ];
+
+  switch (userType) {
+    case 'establishment':
+      return [
+        { icon: Home, label: 'Dashboard', path: '/establishment/dashboard' },
+        { icon: Calendar, label: 'Events', path: '/establishment/events' },
+        { icon: Route, label: 'Circuits', path: '/establishment/circuits' },
+        { icon: User, label: 'Profile', path: '/establishment/profile' },
+      ];
+    
+    case 'promoter':
+      return [
+        { icon: Home, label: 'Dashboard', path: '/promoter/dashboard' },
+        { icon: Calendar, label: 'Events', path: '/promoter/events' },
+        { icon: Route, label: 'Circuits', path: '/promoter/circuits' },
+        { icon: User, label: 'Profile', path: '/promoter/profile' },
+      ];
+    
+    case 'individual':
+    default:
+      return [
+        ...baseItems,
+        { icon: User, label: 'Profile', path: '/profile' },
+      ];
   }
-  
-  // Add Profile for all user types
-  navItems.push({ icon: User, label: 'Profile', path: getProfilePath() });
-  
-  return navItems;
 };
