@@ -14,10 +14,54 @@ export interface TicketPurchase {
   contact_name: string;
   contact_email: string;
   payment_status: 'pending' | 'completed' | 'failed' | 'refunded';
+  status: 'purchased' | 'used' | 'cancelled' | 'transferred' | 'refunded';
   ticket_code?: string;
   purchase_details: any;
   created_at: string;
   updated_at: string;
+}
+
+export interface TicketTransactionHistory {
+  id: string;
+  ticket_purchase_id: string;
+  transaction_type: 'purchase' | 'use' | 'cancel' | 'transfer' | 'refund' | 'status_change';
+  from_status?: string;
+  to_status?: string;
+  performed_by?: string;
+  transaction_data?: any;
+  notes?: string;
+  created_at: string;
+}
+
+export interface TicketPricingTier {
+  id: string;
+  event_id?: string;
+  swig_circuit_id?: string;
+  tier_name: string;
+  base_price: number;
+  tier_order: number;
+  valid_from: string;
+  valid_until?: string;
+  max_quantity?: number;
+  sold_quantity: number;
+  is_early_bird: boolean;
+  early_bird_discount_percentage: number;
+  early_bird_discount_amount: number;
+  early_bird_end_date?: string;
+  tier_benefits: string[];
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TicketPriceInfo {
+  tier_id: string;
+  tier_name: string;
+  current_price: number;
+  base_price: number;
+  discount_amount: number;
+  is_early_bird: boolean;
+  remaining_quantity?: number;
 }
 
 export interface TicketTransfer {

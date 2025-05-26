@@ -4024,6 +4024,98 @@ export type Database = {
           },
         ]
       }
+      ticket_pricing_tiers: {
+        Row: {
+          base_price: number
+          created_at: string
+          early_bird_discount_amount: number | null
+          early_bird_discount_percentage: number | null
+          early_bird_end_date: string | null
+          event_id: string | null
+          id: string
+          is_active: boolean | null
+          is_early_bird: boolean | null
+          max_quantity: number | null
+          sold_quantity: number | null
+          swig_circuit_id: string | null
+          tier_benefits: Json | null
+          tier_name: string
+          tier_order: number
+          updated_at: string
+          valid_from: string
+          valid_until: string | null
+        }
+        Insert: {
+          base_price: number
+          created_at?: string
+          early_bird_discount_amount?: number | null
+          early_bird_discount_percentage?: number | null
+          early_bird_end_date?: string | null
+          event_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_early_bird?: boolean | null
+          max_quantity?: number | null
+          sold_quantity?: number | null
+          swig_circuit_id?: string | null
+          tier_benefits?: Json | null
+          tier_name: string
+          tier_order?: number
+          updated_at?: string
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Update: {
+          base_price?: number
+          created_at?: string
+          early_bird_discount_amount?: number | null
+          early_bird_discount_percentage?: number | null
+          early_bird_end_date?: string | null
+          event_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_early_bird?: boolean | null
+          max_quantity?: number | null
+          sold_quantity?: number | null
+          swig_circuit_id?: string | null
+          tier_benefits?: Json | null
+          tier_name?: string
+          tier_order?: number
+          updated_at?: string
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_pricing_tiers_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_statistics"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "ticket_pricing_tiers_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_pricing_tiers_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "promoter_event_performance_view"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "ticket_pricing_tiers_swig_circuit_id_fkey"
+            columns: ["swig_circuit_id"]
+            isOneToOne: false
+            referencedRelation: "swig_circuits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ticket_purchases: {
         Row: {
           contact_email: string
@@ -4037,6 +4129,7 @@ export type Database = {
           quantity: number
           service_fee: number | null
           service_fee_percentage: number | null
+          status: string
           swig_circuit_id: string | null
           ticket_code: string | null
           ticket_type: string
@@ -4057,6 +4150,7 @@ export type Database = {
           quantity?: number
           service_fee?: number | null
           service_fee_percentage?: number | null
+          status?: string
           swig_circuit_id?: string | null
           ticket_code?: string | null
           ticket_type: string
@@ -4077,6 +4171,7 @@ export type Database = {
           quantity?: number
           service_fee?: number | null
           service_fee_percentage?: number | null
+          status?: string
           swig_circuit_id?: string | null
           ticket_code?: string | null
           ticket_type?: string
@@ -4153,6 +4248,50 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "ticket_refunds_ticket_purchase_id_fkey"
+            columns: ["ticket_purchase_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_purchases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ticket_transaction_history: {
+        Row: {
+          created_at: string
+          from_status: string | null
+          id: string
+          notes: string | null
+          performed_by: string | null
+          ticket_purchase_id: string | null
+          to_status: string | null
+          transaction_data: Json | null
+          transaction_type: string
+        }
+        Insert: {
+          created_at?: string
+          from_status?: string | null
+          id?: string
+          notes?: string | null
+          performed_by?: string | null
+          ticket_purchase_id?: string | null
+          to_status?: string | null
+          transaction_data?: Json | null
+          transaction_type: string
+        }
+        Update: {
+          created_at?: string
+          from_status?: string | null
+          id?: string
+          notes?: string | null
+          performed_by?: string | null
+          ticket_purchase_id?: string | null
+          to_status?: string | null
+          transaction_data?: Json | null
+          transaction_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_transaction_history_ticket_purchase_id_fkey"
             columns: ["ticket_purchase_id"]
             isOneToOne: false
             referencedRelation: "ticket_purchases"
@@ -4848,6 +4987,22 @@ export type Database = {
       generate_expiring_promotion_notifications: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      get_current_ticket_price: {
+        Args: {
+          p_event_id?: string
+          p_swig_circuit_id?: string
+          p_ticket_type_id?: string
+        }
+        Returns: {
+          tier_id: string
+          tier_name: string
+          current_price: number
+          base_price: number
+          discount_amount: number
+          is_early_bird: boolean
+          remaining_quantity: number
+        }[]
       }
       get_user_retention: {
         Args: { p_start_date: string; p_end_date: string }
