@@ -1,5 +1,8 @@
 
 import { supabase } from '@/lib/supabase';
+import { toJsonCompatible, prepareDatabaseRecord } from '@/utils/databaseSerialization';
+import { validateAnalyticsError, validatePerformanceMetric, validateData } from '@/utils/analyticsValidation';
+import { analyticsFallback, safeExecute, retryWithBackoff, createGracefulAnalytics } from '@/utils/analyticsFallback';
 
 export interface AnalyticsError {
   service: string;
@@ -17,11 +20,6 @@ export interface PerformanceMetric {
   timestamp: string;
   success: boolean;
   [key: string]: any; // Index signature for Supabase Json compatibility
-}
-
-// Type conversion functions to ensure Supabase compatibility
-function toJsonCompatible<T extends Record<string, any>>(obj: T): Record<string, any> {
-  return JSON.parse(JSON.stringify(obj));
 }
 
 class AnalyticsMonitor {
@@ -45,8 +43,16 @@ class AnalyticsMonitor {
       context
     };
 
-    console.error(`[Analytics Error] ${service}.${method}:`, errorEntry);
-    this.errorQueue.push(errorEntry);
+    // Validate the error entry
+    const validatedError = validateData(errorEntry, validateAnalyticsError, 'AnalyticsError');
+    if (!validatedError) {
+      console.error('Failed to validate analytics error, adding to fallback queue');
+      analyticsFallback.addError(errorEntry);
+      return;
+    }
+
+    console.error(`[Analytics Error] ${service}.${method}:`, validatedError);
+    this.errorQueue.push(validatedError);
 
     // Flush immediately for critical errors
     if (this.errorQueue.length > 10) {
@@ -63,8 +69,16 @@ class AnalyticsMonitor {
       success
     };
 
+    // Validate the performance entry
+    const validatedMetric = validateData(performanceEntry, validatePerformanceMetric, 'PerformanceMetric');
+    if (!validatedMetric) {
+      console.error('Failed to validate performance metric, adding to fallback queue');
+      analyticsFallback.addPerformanceMetric(performanceEntry);
+      return;
+    }
+
     console.info(`[Analytics Performance] ${service}.${method}: ${duration}ms (${success ? 'success' : 'failed'})`);
-    this.performanceQueue.push(performanceEntry);
+    this.performanceQueue.push(validatedMetric);
   }
 
   async measurePerformance<T>(
@@ -89,56 +103,89 @@ class AnalyticsMonitor {
     }
   }
 
+  private async insertAnalyticsEvents(events: any[], eventType: string): Promise<boolean> {
+    return await retryWithBackoff(async () => {
+      const { error } = await supabase
+        .from('analytics_events')
+        .insert(events);
+
+      if (error) {
+        throw new Error(`Failed to insert ${eventType} events: ${error.message}`);
+      }
+
+      return true;
+    }, 2, 1000, `insert ${eventType} events`) !== null;
+  }
+
   private async flushQueues() {
     if (this.errorQueue.length === 0 && this.performanceQueue.length === 0) {
       return;
     }
 
-    try {
-      // Log errors to analytics_events table
-      if (this.errorQueue.length > 0) {
-        const errorEvents = this.errorQueue.map(error => ({
-          event_type: 'analytics_error',
-          event_data: toJsonCompatible(error),
-          timestamp: error.timestamp
-        }));
+    // Process error queue with fallback
+    if (this.errorQueue.length > 0) {
+      const errorEvents = this.errorQueue.map(error => {
+        const prepared = prepareDatabaseRecord(
+          {
+            event_type: 'analytics_error',
+            event_data: error,
+            timestamp: error.timestamp
+          },
+          ['event_type', 'event_data', 'timestamp']
+        );
+        return prepared;
+      }).filter(Boolean);
 
-        const { error: insertError } = await supabase
-          .from('analytics_events')
-          .insert(errorEvents);
+      if (errorEvents.length > 0) {
+        const success = await safeExecute(
+          () => this.insertAnalyticsEvents(errorEvents, 'error'),
+          () => {
+            // Add failed items to fallback queue
+            this.errorQueue.forEach(error => {
+              analyticsFallback.addError(error);
+            });
+          },
+          'flush error queue'
+        );
 
-        if (insertError) {
-          console.error('[Analytics Monitor] Failed to insert error events:', insertError);
-        } else {
+        if (success) {
           console.info(`[Analytics Monitor] Flushed ${this.errorQueue.length} error events`);
           this.errorQueue = [];
         }
       }
+    }
 
-      // Log performance metrics
-      if (this.performanceQueue.length > 0) {
-        const performanceEvents = this.performanceQueue.map(metric => ({
-          event_type: 'analytics_performance',
-          event_data: toJsonCompatible(metric),
-          timestamp: metric.timestamp
-        }));
+    // Process performance queue with fallback
+    if (this.performanceQueue.length > 0) {
+      const performanceEvents = this.performanceQueue.map(metric => {
+        const prepared = prepareDatabaseRecord(
+          {
+            event_type: 'analytics_performance',
+            event_data: metric,
+            timestamp: metric.timestamp
+          },
+          ['event_type', 'event_data', 'timestamp']
+        );
+        return prepared;
+      }).filter(Boolean);
 
-        const { error: insertError } = await supabase
-          .from('analytics_events')
-          .insert(performanceEvents);
+      if (performanceEvents.length > 0) {
+        const success = await safeExecute(
+          () => this.insertAnalyticsEvents(performanceEvents, 'performance'),
+          () => {
+            // Add failed items to fallback queue
+            this.performanceQueue.forEach(metric => {
+              analyticsFallback.addPerformanceMetric(metric);
+            });
+          },
+          'flush performance queue'
+        );
 
-        if (insertError) {
-          console.error('[Analytics Monitor] Failed to insert performance events:', insertError);
-        } else {
+        if (success) {
           console.info(`[Analytics Monitor] Flushed ${this.performanceQueue.length} performance events`);
           this.performanceQueue = [];
         }
       }
-    } catch (error) {
-      console.error('[Analytics Monitor] Failed to flush queues:', error);
-      // Keep the queues for next attempt but limit size
-      this.errorQueue = this.errorQueue.slice(-50);
-      this.performanceQueue = this.performanceQueue.slice(-100);
     }
   }
 
@@ -148,9 +195,31 @@ class AnalyticsMonitor {
     }
     this.flushQueues();
   }
+
+  // Get system health status
+  getHealth() {
+    const fallbackHealth = analyticsFallback.getQueueSizes();
+    return {
+      activeQueues: {
+        errors: this.errorQueue.length,
+        performance: this.performanceQueue.length
+      },
+      fallbackQueues: fallbackHealth,
+      totalQueuedItems: this.errorQueue.length + this.performanceQueue.length + fallbackHealth.errors + fallbackHealth.performance
+    };
+  }
 }
 
 export const analyticsMonitor = new AnalyticsMonitor();
+
+// Create graceful versions of key methods
+export const gracefulLogError = createGracefulAnalytics(
+  analyticsMonitor.logError.bind(analyticsMonitor)
+);
+
+export const gracefulLogPerformance = createGracefulAnalytics(
+  analyticsMonitor.logPerformance.bind(analyticsMonitor)
+);
 
 // Cleanup on page unload
 if (typeof window !== 'undefined') {
