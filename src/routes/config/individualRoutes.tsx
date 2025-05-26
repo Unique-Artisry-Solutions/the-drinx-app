@@ -13,15 +13,15 @@ export const individualRoutes: RouteObject[] = [
     path: '/explore',
     element: (
       <RouteProtectionWrapper requireAuth={false}>
-        <PersonalizedExplorePage />
+        <ExplorePage />
       </RouteProtectionWrapper>
     )
   },
   {
-    path: '/explore/basic',
+    path: '/explore/personalized',
     element: (
       <RouteProtectionWrapper requireAuth={false}>
-        <ExplorePage />
+        <PersonalizedExplorePage />
       </RouteProtectionWrapper>
     )
   },
