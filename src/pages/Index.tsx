@@ -1,5 +1,6 @@
 
 import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/auth/AuthProvider';
 import { useAuthRecovery } from '@/hooks/useAuthRecovery';
@@ -8,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { RefreshCw, Shield } from 'lucide-react';
 
 const Index = () => {
+  const navigate = useNavigate();
   const { 
     user, 
     isLoading, 
@@ -26,10 +28,9 @@ const Index = () => {
     recoveryAttempts 
   } = useAuthRecovery();
   
-  // Log information for debugging
+  // Smart routing logic
   useEffect(() => {
-    console.log("Index page loaded");
-    console.log("Current URL:", window.location.href);
+    console.log("Index page loaded - Smart routing check");
     console.log("Auth state:", { 
       user: !!user, 
       session: !!session, 
@@ -44,7 +45,34 @@ const Index = () => {
     
     // Always log the current session state
     getSessionDebug();
-  }, [user, session, isLoading, authStable, userType, navigationReady, authError, isRecovering, recoveryAttempts]);
+
+    // If auth is stable and we have no user, redirect to landing page
+    if (authStable && !user && !isLoading && !isRecovering) {
+      console.log("No authenticated user - redirecting to landing page");
+      navigate('/landing', { replace: true });
+      return;
+    }
+
+    // If user is authenticated and navigation is ready, redirect based on user type
+    if (user && navigationReady && authStable) {
+      console.log("Authenticated user detected - redirecting based on user type:", userType);
+      
+      switch (userType) {
+        case 'promoter':
+          navigate('/promoter-dashboard', { replace: true });
+          break;
+        case 'establishment':
+          navigate('/establishment-dashboard', { replace: true });
+          break;
+        case 'admin':
+          navigate('/admin/system-breakdown', { replace: true });
+          break;
+        default:
+          navigate('/explore', { replace: true });
+          break;
+      }
+    }
+  }, [user, session, isLoading, authStable, userType, navigationReady, authError, isRecovering, navigate]);
   
   const handleBasicRecovery = () => {
     recoverAuthState();

@@ -6,6 +6,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider } from '@/contexts/auth/AuthProvider';
 import { CartProvider } from '@/contexts/CartContext';
 import { StripeProvider } from '@/contexts/StripeContext';
+import Index from '@/pages/Index';
 import LandingPage from '@/pages/LandingPage';
 import EventsPage from '@/pages/EventsPage';
 import EventDetailsPage from '@/pages/promoter/events/EventDetailsPage';
@@ -32,7 +33,8 @@ function App() {
             <StripeProvider>
               <div className="min-h-screen bg-gray-50">
                 <Routes>
-                  <Route path="/" element={<LandingPage />} />
+                  <Route path="/" element={<Index />} />
+                  <Route path="/landing" element={<LandingPage />} />
                   <Route path="/events" element={<EventsPage />} />
                   <Route path="/event/:eventId" element={<EventDetailsPage />} />
                   <Route path="/swig-circuits" element={<SwigCircuitsPage />} />
