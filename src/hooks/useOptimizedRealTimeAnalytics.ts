@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import {
   getOptimizedRealTimeMetrics,
@@ -12,6 +11,7 @@ import {
   type OptimizedChartDataPoint,
   type OptimizedEventAnalytics
 } from '@/services/optimizedRealTimeAnalyticsService';
+import { analyticsMonitor } from '@/services/analyticsMonitoring';
 
 interface UseOptimizedRealTimeAnalyticsReturn {
   metrics: OptimizedRealTimeMetrics;
@@ -58,132 +58,96 @@ export function useOptimizedRealTimeAnalytics(
   const [error, setError] = useState<string | null>(null);
 
   // Helper function to safely handle service responses
-  const handleServiceResponse = <T>(
-    result: { status: 'fulfilled' | 'rejected', value?: T, reason?: any },
-    defaultValue: T,
-    successCallback: (value: T) => void,
-    errorName: string
-  ) => {
-    if (result.status === 'fulfilled' && result.value !== undefined) {
-      successCallback(result.value);
-      console.log(`${errorName} loaded successfully:`, result.value);
-    } else {
-      console.error(`Failed to load ${errorName}:`, result.reason);
-      successCallback(defaultValue);
+  const handleServiceResponse = async <T>(
+    serviceCall: () => Promise<T>,
+    fallbackValue: T,
+    serviceName: string
+  ): Promise<T> => {
+    try {
+      return await serviceCall();
+    } catch (error) {
+      analyticsMonitor.logError(
+        'useOptimizedRealTimeAnalytics',
+        serviceName,
+        error as Error,
+        { options }
+      );
+      console.warn(`Service ${serviceName} failed, using fallback:`, error);
+      return fallbackValue;
     }
   };
 
   const loadData = useCallback(async () => {
+    console.info('useOptimizedRealTimeAnalytics: Loading data...');
+    
     try {
       setIsLoading(true);
       setError(null);
 
-      console.log('Loading optimized analytics data...');
-
-      // Load all data in parallel with comprehensive error handling
-      const [
-        metricsResult,
-        timeFrameResult,
-        chartResult,
-        eventAnalyticsResult
-      ] = await Promise.allSettled([
-        getOptimizedRealTimeMetrics().catch(err => {
-          console.warn('Metrics service failed, using defaults:', err);
-          return {
+      const [metricsResult, timeFrameResult, chartResult, eventAnalyticsResult] = await Promise.allSettled([
+        handleServiceResponse(
+          () => getOptimizedRealTimeMetrics(),
+          {
             activeUsers: 0,
             pageViews: 0,
             conversions: 0,
             revenue: 0,
             eventCount: 0,
             userEngagement: 0
-          };
-        }),
-        getOptimizedAnalyticsTimeFrameData(7).catch(err => {
-          console.warn('Timeframe data service failed, using defaults:', err);
-          return [];
-        }),
-        getOptimizedChartData(30).catch(err => {
-          console.warn('Chart data service failed, using defaults:', err);
-          return [];
-        }),
-        eventId ? getOptimizedEventAnalyticsData(eventId).catch(err => {
-          console.warn('Event analytics service failed, using defaults:', err);
-          return {
+          },
+          'getOptimizedRealTimeMetrics'
+        ),
+        handleServiceResponse(
+          () => getOptimizedAnalyticsTimeFrameData(7),
+          [],
+          'getOptimizedAnalyticsTimeFrameData'
+        ),
+        handleServiceResponse(
+          () => getOptimizedChartData(30),
+          [],
+          'getOptimizedChartData'
+        ),
+        handleServiceResponse(
+          () => getOptimizedEventAnalyticsData(eventId),
+          {
             totalAttendees: 0,
             checkedInAttendees: 0,
             revenue: 0,
             conversionRate: 0
-          };
-        }) : Promise.resolve({
-          totalAttendees: 0,
-          checkedInAttendees: 0,
-          revenue: 0,
-          conversionRate: 0
-        })
+          },
+          'getEventAnalyticsData'
+        )
       ]);
 
-      // Handle each response with proper fallbacks
-      handleServiceResponse(
-        metricsResult,
-        { activeUsers: 0, pageViews: 0, conversions: 0, revenue: 0, eventCount: 0, userEngagement: 0 },
-        setMetrics,
-        'metrics'
-      );
-
-      handleServiceResponse(
-        timeFrameResult,
-        [],
-        setTimeFrameData,
-        'timeframe data'
-      );
-
-      handleServiceResponse(
-        chartResult,
-        [],
-        setChartData,
-        'chart data'
-      );
-
-      handleServiceResponse(
-        eventAnalyticsResult,
-        { totalAttendees: 0, checkedInAttendees: 0, revenue: 0, conversionRate: 0 },
-        setEventAnalytics,
-        'event analytics'
-      );
-
-      // Only set error if all critical requests failed
-      const failedRequests = [metricsResult, timeFrameResult, chartResult, eventAnalyticsResult]
-        .filter(result => result.status === 'rejected');
-      
-      if (failedRequests.length === 4) {
-        setError('Failed to load analytics data. Using default values.');
-        console.warn('All analytics services failed, using default values');
-      } else if (failedRequests.length > 0) {
-        console.warn(`${failedRequests.length} analytics services failed, using partial data`);
-        // Don't set error for partial failures, just log them
-      }
-
-    } catch (err) {
-      console.error('Unexpected error loading optimized analytics data:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load analytics data');
-      
-      // Set safe fallback values even on complete failure
-      setMetrics({
+      // Extract results, using fallbacks for any failed promises
+      const metrics = metricsResult.status === 'fulfilled' ? metricsResult.value : {
         activeUsers: 0,
         pageViews: 0,
         conversions: 0,
         revenue: 0,
         eventCount: 0,
         userEngagement: 0
-      });
-      setTimeFrameData([]);
-      setChartData([]);
-      setEventAnalytics({
+      };
+      const timeFrameData = timeFrameResult.status === 'fulfilled' ? timeFrameResult.value : [];
+      const chartData = chartResult.status === 'fulfilled' ? chartResult.value : [];
+      const eventAnalytics = eventAnalyticsResult.status === 'fulfilled' ? eventAnalyticsResult.value : {
         totalAttendees: 0,
         checkedInAttendees: 0,
         revenue: 0,
         conversionRate: 0
-      });
+      };
+
+      setMetrics(metrics);
+      setTimeFrameData(timeFrameData);
+      setChartData(chartData);
+      setEventAnalytics(eventAnalytics);
+
+      console.info('Analytics data loaded successfully');
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to load analytics data';
+      analyticsMonitor.logError('useOptimizedRealTimeAnalytics', 'loadData', error as Error);
+      console.error('Error loading analytics data:', error);
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
