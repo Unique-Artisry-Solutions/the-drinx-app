@@ -1,7 +1,8 @@
 
-import { supabase } from '@/lib/supabaseClient';
-import { withNetworkErrorHandling } from '@/utils/networkErrorHandler';
+import { supabase } from '@/integrations/supabase/client';
+import { NetworkErrorHandler } from '@/utils/networkErrorHandler';
 
+// Type definitions for the analytics data
 export interface OptimizedRealTimeMetrics {
   activeUsers: number;
   pageViews: number;
@@ -13,18 +14,16 @@ export interface OptimizedRealTimeMetrics {
 
 export interface CachedAnalyticsTimeFrame {
   date: string;
-  activeUsers: number;
-  pageViews: number;
-  conversions: number;
-  revenue: number;
+  metric_type: string;
+  value: number;
+  change_percentage: number;
+  trend: 'up' | 'down' | 'stable';
 }
 
 export interface OptimizedChartDataPoint {
   date: string;
   value: number;
   metric: string;
-  trend: 'up' | 'down' | 'stable';
-  changePercentage: number;
 }
 
 export interface OptimizedEventAnalytics {
@@ -34,96 +33,89 @@ export interface OptimizedEventAnalytics {
   conversionRate: number;
 }
 
-// Cache for storing metrics temporarily
-const metricsCache = new Map<string, { data: any; timestamp: number }>();
+// Cache for real-time metrics
+let metricsCache: OptimizedRealTimeMetrics | null = null;
+let cacheTimestamp: number = 0;
 const CACHE_DURATION = 30000; // 30 seconds
 
-function getCachedData<T>(key: string): T | null {
-  const cached = metricsCache.get(key);
-  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-    return cached.data as T;
-  }
-  return null;
-}
-
-function setCachedData<T>(key: string, data: T): void {
-  metricsCache.set(key, { data, timestamp: Date.now() });
-}
-
 export async function getOptimizedRealTimeMetrics(): Promise<OptimizedRealTimeMetrics> {
-  return withNetworkErrorHandling(async () => {
-    const cacheKey = 'real_time_metrics';
-    const cached = getCachedData<OptimizedRealTimeMetrics>(cacheKey);
-    if (cached) {
-      return cached;
-    }
-
-    try {
-      // Try to use the optimized database function first
-      const { data, error } = await supabase.rpc('get_cached_real_time_metrics');
-      
-      if (error) {
-        console.warn('Optimized function failed, falling back to direct queries:', error);
-        return await getFallbackRealTimeMetrics();
-      }
-
-      if (!data || (Array.isArray(data) && data.length === 0)) {
-        console.warn('No data returned from optimized function, using fallback');
-        return await getFallbackRealTimeMetrics();
-      }
-
-      // Handle both array and single object responses
-      const metrics = Array.isArray(data) ? data[0] : data;
-      
-      const result: OptimizedRealTimeMetrics = {
-        activeUsers: Number(metrics?.active_users) || 0,
-        pageViews: Number(metrics?.page_views) || 0,
-        conversions: Number(metrics?.conversions) || 0,
-        revenue: Number(metrics?.revenue) || 0,
-        eventCount: Number(metrics?.event_count) || 0,
-        userEngagement: Number(metrics?.user_engagement) || 0,
-      };
-
-      setCachedData(cacheKey, result);
-      return result;
-    } catch (error) {
-      console.error('Error fetching optimized real-time metrics:', error);
-      return await getFallbackRealTimeMetrics();
-    }
-  });
-}
-
-async function getFallbackRealTimeMetrics(): Promise<OptimizedRealTimeMetrics> {
-  const now = new Date();
-  const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+  console.log('Fetching optimized real-time metrics...');
+  
+  // Check cache first
+  const now = Date.now();
+  if (metricsCache && (now - cacheTimestamp) < CACHE_DURATION) {
+    console.log('Returning cached metrics');
+    return metricsCache;
+  }
 
   try {
-    const { data: events, error } = await supabase
+    // Try to get data from analytics_events table directly
+    const { data: analyticsData, error } = await supabase
       .from('analytics_events')
-      .select('event_type, user_id, event_data')
-      .gte('timestamp', oneHourAgo.toISOString())
-      .lte('timestamp', now.toISOString());
+      .select('event_type, user_id, event_data, timestamp')
+      .gte('timestamp', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error fetching analytics events:', error);
+      throw error;
+    }
 
-    const metrics = {
-      activeUsers: new Set(events?.map(e => e.user_id).filter(Boolean)).size || 0,
-      pageViews: events?.filter(e => e.event_type === 'page_view').length || 0,
-      conversions: events?.filter(e => e.event_type === 'conversion').length || 0,
-      revenue: events
-        ?.filter(e => e.event_type === 'conversion' && e.event_data)
-        ?.reduce((sum, e) => {
-          const data = e.event_data as any;
-          return sum + (Number(data?.revenue) || 0);
-        }, 0) || 0,
-      eventCount: events?.length || 0,
-      userEngagement: 0 // Calculate if needed
+    // Process the data to calculate metrics
+    const uniqueUsers = new Set();
+    let pageViews = 0;
+    let conversions = 0;
+    let revenue = 0;
+    let eventCount = 0;
+    let engagementSum = 0;
+    let engagementCount = 0;
+
+    analyticsData?.forEach(event => {
+      if (event.user_id) {
+        uniqueUsers.add(event.user_id);
+      }
+      
+      eventCount++;
+      
+      if (event.event_type === 'page_view') {
+        pageViews++;
+      } else if (event.event_type === 'conversion') {
+        conversions++;
+      }
+      
+      // Try to extract revenue from event_data
+      if (event.event_data && typeof event.event_data === 'object') {
+        const eventData = event.event_data as any;
+        if (eventData.revenue && typeof eventData.revenue === 'number') {
+          revenue += eventData.revenue;
+        }
+        if (eventData.engagement_score && typeof eventData.engagement_score === 'number') {
+          engagementSum += eventData.engagement_score;
+          engagementCount++;
+        }
+      }
+    });
+
+    const metrics: OptimizedRealTimeMetrics = {
+      activeUsers: uniqueUsers.size,
+      pageViews,
+      conversions,
+      revenue,
+      eventCount,
+      userEngagement: engagementCount > 0 ? engagementSum / engagementCount : 0
     };
 
+    // Update cache
+    metricsCache = metrics;
+    cacheTimestamp = now;
+
+    console.log('Calculated metrics:', metrics);
     return metrics;
+
   } catch (error) {
-    console.error('Fallback metrics query failed:', error);
-    return {
+    console.error('Failed to fetch real-time metrics:', error);
+    
+    // Return default metrics as fallback
+    const fallbackMetrics: OptimizedRealTimeMetrics = {
       activeUsers: 0,
       pageViews: 0,
       conversions: 0,
@@ -131,171 +123,215 @@ async function getFallbackRealTimeMetrics(): Promise<OptimizedRealTimeMetrics> {
       eventCount: 0,
       userEngagement: 0
     };
+
+    return fallbackMetrics;
   }
 }
 
 export async function getOptimizedAnalyticsTimeFrameData(days: number): Promise<CachedAnalyticsTimeFrame[]> {
-  return withNetworkErrorHandling(async () => {
-    const cacheKey = `timeframe_data_${days}`;
-    const cached = getCachedData<CachedAnalyticsTimeFrame[]>(cacheKey);
-    if (cached) {
-      return cached;
-    }
+  console.log(`Fetching analytics timeframe data for ${days} days...`);
+  
+  try {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
 
-    try {
-      // Query materialized view directly using raw SQL
-      const { data, error } = await supabase
-        .from('analytics_daily_rollup')
-        .select('*')
-        .gte('date', new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
-        .order('date', { ascending: false });
+    // Query analytics_daily_rollup table if it exists, otherwise use analytics_events
+    const { data, error } = await supabase
+      .from('analytics_daily_rollup')
+      .select('date, event_type, event_count, unique_users')
+      .gte('date', startDate.toISOString().split('T')[0])
+      .order('date', { ascending: false });
 
-      if (error) throw error;
-
-      const result = data?.map(row => ({
-        date: row.date,
-        activeUsers: row.unique_users || 0,
-        pageViews: row.event_count || 0,
-        conversions: 0, // Calculate from event_type if needed
-        revenue: 0 // Calculate separately if needed
-      })) || [];
-
-      setCachedData(cacheKey, result);
-      return result;
-    } catch (error) {
+    if (error) {
       console.error('Error fetching timeframe data:', error);
-      return [];
+      throw error;
     }
-  });
+
+    // Transform the data
+    const transformedData: CachedAnalyticsTimeFrame[] = data?.map(item => ({
+      date: item.date,
+      metric_type: item.event_type,
+      value: item.event_count || 0,
+      change_percentage: 0, // Calculate this if needed
+      trend: 'stable' as const
+    })) || [];
+
+    return transformedData;
+
+  } catch (error) {
+    console.error('Failed to fetch timeframe data:', error);
+    return [];
+  }
 }
 
 export async function getOptimizedChartData(days: number): Promise<OptimizedChartDataPoint[]> {
-  return withNetworkErrorHandling(async () => {
-    const cacheKey = `chart_data_${days}`;
-    const cached = getCachedData<OptimizedChartDataPoint[]>(cacheKey);
-    if (cached) {
-      return cached;
-    }
+  console.log(`Fetching chart data for ${days} days...`);
+  
+  try {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
 
-    try {
-      // Use analytics_daily_rollup for chart data
-      const { data, error } = await supabase
-        .from('analytics_daily_rollup')
-        .select('*')
-        .gte('date', new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
-        .order('date', { ascending: false });
+    const { data, error } = await supabase
+      .from('analytics_events')
+      .select('event_type, timestamp')
+      .gte('timestamp', startDate.toISOString())
+      .order('timestamp', { ascending: false });
 
-      if (error) throw error;
-
-      const result: OptimizedChartDataPoint[] = data?.map(row => ({
-        date: row.date,
-        value: row.event_count || 0,
-        metric: row.event_type || 'unknown',
-        trend: 'stable' as const,
-        changePercentage: 0
-      })) || [];
-
-      setCachedData(cacheKey, result);
-      return result;
-    } catch (error) {
+    if (error) {
       console.error('Error fetching chart data:', error);
-      return [];
+      throw error;
     }
-  });
+
+    // Group by date and count events
+    const chartData: { [key: string]: { [metric: string]: number } } = {};
+    
+    data?.forEach(event => {
+      const date = event.timestamp.split('T')[0];
+      if (!chartData[date]) {
+        chartData[date] = {};
+      }
+      if (!chartData[date][event.event_type]) {
+        chartData[date][event.event_type] = 0;
+      }
+      chartData[date][event.event_type]++;
+    });
+
+    // Transform to array format
+    const result: OptimizedChartDataPoint[] = [];
+    Object.entries(chartData).forEach(([date, metrics]) => {
+      Object.entries(metrics).forEach(([metric, value]) => {
+        result.push({ date, metric, value });
+      });
+    });
+
+    return result.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+  } catch (error) {
+    console.error('Failed to fetch chart data:', error);
+    return [];
+  }
 }
 
 export async function getOptimizedEventAnalyticsData(eventId?: string): Promise<OptimizedEventAnalytics> {
-  return withNetworkErrorHandling(async () => {
-    if (!eventId) {
-      return {
-        totalAttendees: 0,
-        checkedInAttendees: 0,
-        revenue: 0,
-        conversionRate: 0
-      };
-    }
+  console.log('Fetching event analytics data...', eventId);
+  
+  if (!eventId) {
+    return {
+      totalAttendees: 0,
+      checkedInAttendees: 0,
+      revenue: 0,
+      conversionRate: 0
+    };
+  }
 
-    const cacheKey = `event_analytics_${eventId}`;
-    const cached = getCachedData<OptimizedEventAnalytics>(cacheKey);
-    if (cached) {
-      return cached;
-    }
+  try {
+    const { data: attendees, error } = await supabase
+      .from('event_attendees')
+      .select('status, checked_in_at')
+      .eq('event_id', eventId);
 
-    try {
-      const { data: attendees, error } = await supabase
-        .from('event_attendees')
-        .select('status, checked_in_at')
-        .eq('event_id', eventId);
-
-      if (error) throw error;
-
-      const result: OptimizedEventAnalytics = {
-        totalAttendees: attendees?.length || 0,
-        checkedInAttendees: attendees?.filter(a => a.checked_in_at).length || 0,
-        revenue: 0, // Calculate from ticket sales if needed
-        conversionRate: 0 // Calculate conversion rate if needed
-      };
-
-      setCachedData(cacheKey, result);
-      return result;
-    } catch (error) {
+    if (error) {
       console.error('Error fetching event analytics:', error);
-      return {
-        totalAttendees: 0,
-        checkedInAttendees: 0,
-        revenue: 0,
-        conversionRate: 0
-      };
-    }
-  });
-}
-
-export function subscribeToOptimizedRealTimeAnalytics(
-  onMetricsUpdate: (metrics: OptimizedRealTimeMetrics) => void,
-  onError: (error: Error) => void
-): () => void {
-  let intervalId: NodeJS.Timeout;
-
-  const fetchAndUpdate = async () => {
-    try {
-      const metrics = await getOptimizedRealTimeMetrics();
-      onMetricsUpdate(metrics);
-    } catch (error) {
-      onError(error instanceof Error ? error : new Error('Unknown error'));
-    }
-  };
-
-  // Initial fetch
-  fetchAndUpdate();
-
-  // Set up polling interval
-  intervalId = setInterval(fetchAndUpdate, 30000); // 30 seconds
-
-  // Return cleanup function
-  return () => {
-    if (intervalId) {
-      clearInterval(intervalId);
-    }
-  };
-}
-
-export async function refreshAnalyticsMaterializedViews(): Promise<void> {
-  return withNetworkErrorHandling(async () => {
-    try {
-      // Try to refresh materialized views using the function
-      const { error } = await supabase.rpc('refresh_analytics_materialized_views');
-      
-      if (error) {
-        console.warn('Failed to refresh materialized views:', error);
-        throw error;
-      }
-
-      // Clear cache after refresh
-      metricsCache.clear();
-      console.log('Analytics materialized views refreshed successfully');
-    } catch (error) {
-      console.error('Error refreshing materialized views:', error);
       throw error;
     }
-  });
+
+    const totalAttendees = attendees?.length || 0;
+    const checkedInAttendees = attendees?.filter(a => a.checked_in_at).length || 0;
+
+    return {
+      totalAttendees,
+      checkedInAttendees,
+      revenue: 0, // Calculate from ticket sales if needed
+      conversionRate: totalAttendees > 0 ? (checkedInAttendees / totalAttendees) * 100 : 0
+    };
+
+  } catch (error) {
+    console.error('Failed to fetch event analytics:', error);
+    return {
+      totalAttendees: 0,
+      checkedInAttendees: 0,
+      revenue: 0,
+      conversionRate: 0
+    };
+  }
+}
+
+// Real-time subscription setup
+let realTimeSubscription: any = null;
+
+export function subscribeToOptimizedRealTimeAnalytics(
+  onUpdate: (metrics: OptimizedRealTimeMetrics) => void,
+  onError?: (error: Error) => void
+): () => void {
+  console.log('Setting up optimized real-time analytics subscription');
+
+  try {
+    realTimeSubscription = supabase
+      .channel('optimized-analytics')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'analytics_events'
+        },
+        async () => {
+          console.log('New analytics event detected, refreshing metrics...');
+          try {
+            // Invalidate cache and fetch fresh data
+            cacheTimestamp = 0;
+            const newMetrics = await getOptimizedRealTimeMetrics();
+            onUpdate(newMetrics);
+          } catch (error) {
+            console.error('Error updating real-time metrics:', error);
+            if (onError) {
+              onError(error as Error);
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('Cleaning up optimized real-time analytics subscription');
+      if (realTimeSubscription) {
+        supabase.removeChannel(realTimeSubscription);
+        realTimeSubscription = null;
+      }
+    };
+
+  } catch (error) {
+    console.error('Failed to set up real-time subscription:', error);
+    if (onError) {
+      onError(error as Error);
+    }
+    return () => {}; // Return empty cleanup function
+  }
+}
+
+// Materialized view refresh function (fallback to manual refresh)
+export async function refreshAnalyticsMaterializedViews(): Promise<void> {
+  console.log('Attempting to refresh materialized views...');
+  
+  try {
+    // Try to call the database function if it exists
+    const { error } = await supabase.rpc('refresh_analytics_materialized_views');
+    
+    if (error) {
+      console.warn('Materialized view refresh function not available:', error.message);
+      // Fallback: just invalidate our cache
+      cacheTimestamp = 0;
+      metricsCache = null;
+    } else {
+      console.log('Materialized views refreshed successfully');
+      // Invalidate cache after refresh
+      cacheTimestamp = 0;
+      metricsCache = null;
+    }
+  } catch (error) {
+    console.warn('Failed to refresh materialized views, using fallback:', error);
+    // Fallback: invalidate cache
+    cacheTimestamp = 0;
+    metricsCache = null;
+  }
 }
