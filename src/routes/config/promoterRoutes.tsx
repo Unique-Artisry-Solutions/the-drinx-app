@@ -8,6 +8,7 @@ const PromoterDashboard = lazy(() => import('@/pages/promoter/PromoterDashboardP
 const PromoterProfile = lazy(() => import('@/pages/promoter/PromoterProfile'));
 const PromoterEvents = lazy(() => import('@/pages/promoter/PromoterEvents'));
 const PromoterAnalyticsPage = lazy(() => import('@/pages/promoter/PromoterAnalyticsPage'));
+const PromoterMarketingAnalytics = lazy(() => import('@/pages/promoter/PromoterMarketingAnalytics'));
 
 export const promoterRoutes: RouteObject[] = [
   {
@@ -67,6 +68,18 @@ export const promoterRoutes: RouteObject[] = [
         redirectTo="/login"
       >
         <PromoterAnalyticsPage />
+      </RouteProtectionWrapper>
+    )
+  },
+  {
+    path: '/promoter/marketing-analytics',
+    element: (
+      <RouteProtectionWrapper 
+        requireAuth={true} 
+        allowedUserTypes={['promoter']}
+        redirectTo="/login"
+      >
+        <PromoterMarketingAnalytics />
       </RouteProtectionWrapper>
     )
   }

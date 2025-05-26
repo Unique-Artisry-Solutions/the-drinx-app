@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Megaphone, Users, Calendar, TrendingUp, DollarSign } from 'lucide-react';
+import { Megaphone, Users, Calendar, TrendingUp, DollarSign, Target } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { usePromoterAnalytics } from '@/hooks/usePromoterAnalytics';
@@ -174,6 +174,12 @@ const PromoterDashboard: React.FC = () => {
               <Link to="/promoter/analytics">
                 <Button variant="ghost" className="w-full text-left p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors justify-start">
                   View Analytics Report
+                </Button>
+              </Link>
+              <Link to="/promoter/marketing-analytics">
+                <Button variant="ghost" className="w-full text-left p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors justify-start">
+                  <Target className="h-4 w-4 mr-2" />
+                  Marketing Analytics
                 </Button>
               </Link>
               <Link to="/promoter/events">
