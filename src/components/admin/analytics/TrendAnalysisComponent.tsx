@@ -1,122 +1,176 @@
 
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { TrendingUp } from 'lucide-react';
-import AnalyticsLineChart from '@/components/charts/AnalyticsLineChart';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import React from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import type { AnalyticsTimeFrame, ChartDataPoint } from '@/services/realTimeAnalyticsService';
 
-// Sample data for the trend analysis
-const trendData = {
-  daily: [
-    { name: 'Mon', value: 420, previous: 380 },
-    { name: 'Tue', value: 450, previous: 410 },
-    { name: 'Wed', value: 520, previous: 430 },
-    { name: 'Thu', value: 490, previous: 450 },
-    { name: 'Fri', value: 580, previous: 510 },
-    { name: 'Sat', value: 670, previous: 590 },
-    { name: 'Sun', value: 590, previous: 520 },
-  ],
-  weekly: [
-    { name: 'Week 1', value: 3200, previous: 2800 },
-    { name: 'Week 2', value: 3500, previous: 3100 },
-    { name: 'Week 3', value: 3800, previous: 3400 },
-    { name: 'Week 4', value: 4200, previous: 3600 },
-  ],
-  monthly: [
-    { name: 'Jan', value: 14500, previous: 12200 },
-    { name: 'Feb', value: 15800, previous: 13500 },
-    { name: 'Mar', value: 16700, previous: 14800 },
-    { name: 'Apr', value: 18200, previous: 16000 },
-    { name: 'May', value: 19500, previous: 17200 },
-    { name: 'Jun', value: 21000, previous: 18500 },
-  ],
-};
-
-type PeriodType = 'daily' | 'weekly' | 'monthly';
-type MetricType = 'points_earned' | 'points_redeemed' | 'active_users' | 'redemption_rate';
-
-interface MetricOption {
-  label: string;
-  value: MetricType;
-  color: string;
-  previousColor: string;
+interface TrendAnalysisComponentProps {
+  timeFrameData?: AnalyticsTimeFrame[];
+  chartData?: ChartDataPoint[];
 }
 
-const metricOptions: MetricOption[] = [
-  { label: 'Points Earned', value: 'points_earned', color: '#8884d8', previousColor: '#bfbdee' },
-  { label: 'Points Redeemed', value: 'points_redeemed', color: '#82ca9d', previousColor: '#c4e6d4' },
-  { label: 'Active Users', value: 'active_users', color: '#ffc658', previousColor: '#ffe2a8' },
-  { label: 'Redemption Rate', value: 'redemption_rate', color: '#ff8042', previousColor: '#ffbda1' },
-];
+const TrendAnalysisComponent: React.FC<TrendAnalysisComponentProps> = ({
+  timeFrameData = [],
+  chartData = []
+}) => {
+  const getTrendIcon = (trend: 'up' | 'down' | 'stable') => {
+    switch (trend) {
+      case 'up':
+        return <TrendingUp className="h-4 w-4 text-green-500" />;
+      case 'down':
+        return <TrendingDown className="h-4 w-4 text-red-500" />;
+      default:
+        return <Minus className="h-4 w-4 text-gray-500" />;
+    }
+  };
 
-const TrendAnalysisComponent = () => {
-  const [period, setPeriod] = useState<PeriodType>('weekly');
-  const [metric, setMetric] = useState<MetricType>('points_earned');
-  const [showComparison, setShowComparison] = useState(true);
-  
-  const selectedMetric = metricOptions.find(m => m.value === metric) || metricOptions[0];
-  
-  // Format the chart data based on the selected metric and period
-  const chartData = trendData[period].map(item => ({
-    name: item.name,
-    current: item.value,
-    previous: item.previous,
-  }));
+  const getTrendColor = (trend: 'up' | 'down' | 'stable') => {
+    switch (trend) {
+      case 'up':
+        return 'text-green-600';
+      case 'down':
+        return 'text-red-600';
+      default:
+        return 'text-gray-600';
+    }
+  };
+
+  const formatChange = (change: number) => {
+    const absChange = Math.abs(change);
+    const sign = change >= 0 ? '+' : '';
+    return `${sign}${absChange.toFixed(1)}%`;
+  };
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="flex items-center gap-2">
-          <TrendingUp className="h-5 w-5 text-primary" />
-          Trend Analysis
-        </CardTitle>
-        <div className="flex items-center gap-2">
-          <Select value={metric} onValueChange={(value) => setMetric(value as MetricType)}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Select metric" />
-            </SelectTrigger>
-            <SelectContent>
-              {metricOptions.map(option => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <Tabs defaultValue={period} value={period} onValueChange={(value) => setPeriod(value as PeriodType)}>
-          <TabsList className="mb-4">
-            <TabsTrigger value="daily">Daily</TabsTrigger>
-            <TabsTrigger value="weekly">Weekly</TabsTrigger>
-            <TabsTrigger value="monthly">Monthly</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value={period}>
-            <AnalyticsLineChart
-              title=""
-              description={`${selectedMetric.label} trends over ${period} periods`}
-              data={chartData}
-              series={[
-                { key: 'current', name: 'Current', color: selectedMetric.color },
-                ...(showComparison ? [{ key: 'previous', name: 'Previous Period', color: selectedMetric.previousColor }] : []),
-              ]}
-              height={350}
-            />
-            
-            <div className="mt-4 text-sm">
-              <h4 className="font-medium mb-2">Analysis:</h4>
-              <p>Based on the trend data, {selectedMetric.label.toLowerCase()} shows a consistent growth pattern over the last few periods.</p>
-              <p className="mt-2">The current period demonstrates a 
-                <span className="font-medium text-green-500"> +12.4% increase</span> compared to the previous period, 
-                indicating positive performance in this metric.</p>
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Trend Analysis</CardTitle>
+          <CardDescription>
+            Performance trends and comparative analysis over time
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 md:grid-cols-2">
+            {timeFrameData.map((metric, index) => (
+              <div key={index} className="p-4 border rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium">{metric.label}</span>
+                  {getTrendIcon(metric.trend)}
+                </div>
+                <div className="text-2xl font-bold mb-1">
+                  {metric.value.toLocaleString()}
+                </div>
+                <div className={`text-sm ${getTrendColor(metric.trend)}`}>
+                  {formatChange(metric.change)} vs previous period
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Weekly Trends */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Weekly Activity Trends</CardTitle>
+          <CardDescription>
+            Daily activity patterns over the past month
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {chartData.length > 0 ? (
+            <div className="space-y-4">
+              <div className="h-64 w-full bg-gray-50 rounded-lg flex items-center justify-center">
+                <div className="text-center">
+                  <p className="text-lg font-medium">Activity Chart</p>
+                  <p className="text-sm text-gray-500">
+                    {chartData.length} data points from {chartData[0]?.date} to {chartData[chartData.length - 1]?.date}
+                  </p>
+                </div>
+              </div>
+              
+              {/* Summary stats */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="text-center">
+                  <div className="text-lg font-bold">
+                    {Math.max(...chartData.map(d => d.value))}
+                  </div>
+                  <div className="text-xs text-gray-500">Peak Activity</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-bold">
+                    {Math.min(...chartData.map(d => d.value))}
+                  </div>
+                  <div className="text-xs text-gray-500">Lowest Activity</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-bold">
+                    {Math.round(chartData.reduce((sum, d) => sum + d.value, 0) / chartData.length)}
+                  </div>
+                  <div className="text-xs text-gray-500">Daily Average</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-bold">
+                    {chartData.reduce((sum, d) => sum + d.value, 0)}
+                  </div>
+                  <div className="text-xs text-gray-500">Total Activity</div>
+                </div>
+              </div>
             </div>
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
+          ) : (
+            <div className="h-64 flex items-center justify-center">
+              <p className="text-gray-500">No trend data available</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Performance Insights */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Performance Insights</CardTitle>
+          <CardDescription>
+            Key insights and recommendations based on current trends
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {timeFrameData.map((metric, index) => {
+              let insight = '';
+              let badgeVariant: 'default' | 'secondary' | 'destructive' | 'outline' = 'outline';
+
+              if (metric.trend === 'up' && metric.change > 10) {
+                insight = `${metric.label} showing strong growth (+${metric.change.toFixed(1)}%)`;
+                badgeVariant = 'default';
+              } else if (metric.trend === 'down' && metric.change < -10) {
+                insight = `${metric.label} needs attention (${metric.change.toFixed(1)}% decline)`;
+                badgeVariant = 'destructive';
+              } else if (metric.trend === 'stable') {
+                insight = `${metric.label} is stable with minimal change`;
+                badgeVariant = 'secondary';
+              } else if (metric.trend === 'up') {
+                insight = `${metric.label} showing modest improvement (+${metric.change.toFixed(1)}%)`;
+                badgeVariant = 'outline';
+              } else {
+                insight = `${metric.label} showing slight decline (${metric.change.toFixed(1)}%)`;
+                badgeVariant = 'outline';
+              }
+
+              return (
+                <div key={index} className="flex items-center justify-between">
+                  <span className="text-sm">{insight}</span>
+                  <Badge variant={badgeVariant}>
+                    {metric.trend === 'up' ? 'Positive' : metric.trend === 'down' ? 'Negative' : 'Stable'}
+                  </Badge>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 

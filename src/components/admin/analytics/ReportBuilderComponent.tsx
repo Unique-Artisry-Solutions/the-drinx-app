@@ -1,202 +1,249 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { DatePicker } from '@/components/ui/date-picker';
-import { FileText, Download, Save, Eye } from 'lucide-react';
-import { Separator } from '@/components/ui/separator';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { FileText, Download, Calendar, BarChart } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import type { RealTimeMetrics, AnalyticsTimeFrame, ChartDataPoint } from '@/services/realTimeAnalyticsService';
 
-const metricOptions = [
-  { label: 'User Engagement', value: 'user_engagement' },
-  { label: 'Points Earned', value: 'points_earned' },
-  { label: 'Points Redeemed', value: 'points_redeemed' },
-  { label: 'Active Users', value: 'active_users' },
-  { label: 'New Users', value: 'new_users' },
-  { label: 'Redemption Rate', value: 'redemption_rate' },
-  { label: 'Average Points per User', value: 'avg_points_per_user' },
-];
-
-const ReportBuilderComponent = () => {
-  const { toast } = useToast();
-  const [reportName, setReportName] = useState('');
-  const [selectedMetrics, setSelectedMetrics] = useState<string[]>([]);
-  const [timeframe, setTimeframe] = useState('last_30_days');
-  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
-  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
-  const [saveAsTemplate, setSaveAsTemplate] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [format, setFormat] = useState('pdf');
-
-  const handleMetricToggle = (metric: string) => {
-    setSelectedMetrics(current => 
-      current.includes(metric)
-        ? current.filter(m => m !== metric)
-        : [...current, metric]
-    );
+interface ReportBuilderComponentProps {
+  analyticsData?: {
+    metrics: RealTimeMetrics;
+    timeFrameData: AnalyticsTimeFrame[];
+    chartData: ChartDataPoint[];
+    eventAnalytics: {
+      totalAttendees: number;
+      checkedInAttendees: number;
+      revenue: number;
+      conversionRate: number;
+    };
   };
+}
 
-  const handleGenerateReport = () => {
-    if (!reportName) {
-      toast({
-        title: "Report Name Required",
-        description: "Please provide a name for your report.",
-        variant: "destructive"
-      });
-      return;
-    }
+const ReportBuilderComponent: React.FC<ReportBuilderComponentProps> = ({
+  analyticsData
+}) => {
+  const { toast } = useToast();
+  const [reportType, setReportType] = useState('');
+  const [dateRange, setDateRange] = useState('7d');
+  const [reportTitle, setReportTitle] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
 
-    if (selectedMetrics.length === 0) {
+  const reportTypes = [
+    { value: 'performance', label: 'Performance Summary' },
+    { value: 'engagement', label: 'User Engagement Report' },
+    { value: 'revenue', label: 'Revenue Analysis' },
+    { value: 'trends', label: 'Trends Analysis' },
+    { value: 'custom', label: 'Custom Report' }
+  ];
+
+  const dateRangeOptions = [
+    { value: '7d', label: 'Last 7 days' },
+    { value: '30d', label: 'Last 30 days' },
+    { value: '90d', label: 'Last 90 days' },
+    { value: 'ytd', label: 'Year to date' }
+  ];
+
+  const generateReport = async () => {
+    if (!reportType || !reportTitle.trim()) {
       toast({
-        title: "No Metrics Selected",
-        description: "Please select at least one metric to include in your report.",
-        variant: "destructive"
+        title: 'Missing Information',
+        description: 'Please select a report type and enter a title.',
+        variant: 'destructive'
       });
       return;
     }
 
     setIsGenerating(true);
-    
-    // Simulating report generation
-    setTimeout(() => {
-      setIsGenerating(false);
-      
-      toast({
-        title: "Report Generated",
-        description: `Your report "${reportName}" has been generated successfully.`,
+
+    try {
+      // Simulate report generation
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      const reportData = {
+        title: reportTitle,
+        type: reportType,
+        dateRange,
+        generatedAt: new Date().toISOString(),
+        data: analyticsData || {},
+        summary: generateReportSummary()
+      };
+
+      // In a real implementation, this would generate and download a PDF or Excel file
+      const blob = new Blob([JSON.stringify(reportData, null, 2)], {
+        type: 'application/json'
       });
-      
-      if (saveAsTemplate) {
-        toast({
-          title: "Template Saved",
-          description: "This report configuration has been saved as a template.",
-        });
-      }
-    }, 2000);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${reportTitle.replace(/\s+/g, '_')}_${Date.now()}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: 'Report Generated',
+        description: 'Your analytics report has been generated and downloaded.',
+      });
+    } catch (error) {
+      toast({
+        title: 'Report Generation Failed',
+        description: 'There was an error generating the report.',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const generateReportSummary = () => {
+    if (!analyticsData) return 'No data available for analysis.';
+
+    const { metrics, timeFrameData, eventAnalytics } = analyticsData;
+    
+    const summaryPoints = [
+      `Active users: ${metrics.activeUsers}`,
+      `Total page views: ${metrics.pageViews}`,
+      `Conversions: ${metrics.conversions}`,
+      `Revenue: $${metrics.revenue.toLocaleString()}`,
+      `Event attendees: ${eventAnalytics.totalAttendees}`,
+      `Check-in rate: ${eventAnalytics.totalAttendees > 0 ? ((eventAnalytics.checkedInAttendees / eventAnalytics.totalAttendees) * 100).toFixed(1) : 0}%`,
+      `Conversion rate: ${eventAnalytics.conversionRate.toFixed(1)}%`
+    ];
+
+    return summaryPoints.join(', ');
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <FileText className="h-5 w-5 text-primary" />
-          Custom Report Builder
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-3">
-            <div>
-              <Label htmlFor="report-name">Report Name</Label>
-              <Input 
-                id="report-name" 
-                placeholder="Monthly Performance Summary" 
-                value={reportName} 
-                onChange={(e) => setReportName(e.target.value)} 
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="h-5 w-5" />
+            Custom Report Builder
+          </CardTitle>
+          <CardDescription>
+            Create custom analytics reports with real-time data
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="reportTitle">Report Title</Label>
+              <Input
+                id="reportTitle"
+                placeholder="Enter report title..."
+                value={reportTitle}
+                onChange={(e) => setReportTitle(e.target.value)}
               />
             </div>
-            
-            <div>
-              <Label>Time Period</Label>
-              <Select value={timeframe} onValueChange={setTimeframe}>
+
+            <div className="space-y-2">
+              <Label htmlFor="reportType">Report Type</Label>
+              <Select value={reportType} onValueChange={setReportType}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select time period" />
+                  <SelectValue placeholder="Select report type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="today">Today</SelectItem>
-                  <SelectItem value="yesterday">Yesterday</SelectItem>
-                  <SelectItem value="last_7_days">Last 7 Days</SelectItem>
-                  <SelectItem value="last_30_days">Last 30 Days</SelectItem>
-                  <SelectItem value="this_month">This Month</SelectItem>
-                  <SelectItem value="last_month">Last Month</SelectItem>
-                  <SelectItem value="custom">Custom Date Range</SelectItem>
+                  {reportTypes.map(type => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
-            
-            {timeframe === 'custom' && (
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <Label>Start Date</Label>
-                  <DatePicker date={startDate} setDate={setStartDate} />
-                </div>
-                <div>
-                  <Label>End Date</Label>
-                  <DatePicker date={endDate} setDate={setEndDate} />
+
+            <div className="space-y-2">
+              <Label htmlFor="dateRange">Date Range</Label>
+              <Select value={dateRange} onValueChange={setDateRange}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {dateRangeOptions.map(option => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-end">
+              <Button 
+                onClick={generateReport} 
+                disabled={isGenerating}
+                className="w-full"
+              >
+                <Download className="mr-2 h-4 w-4" />
+                {isGenerating ? 'Generating...' : 'Generate Report'}
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Data Preview */}
+      {analyticsData && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart className="h-5 w-5" />
+              Data Preview
+            </CardTitle>
+            <CardDescription>
+              Preview of data that will be included in your report
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="p-3 bg-blue-50 rounded-lg">
+                <h4 className="font-medium text-blue-900">Real-time Metrics</h4>
+                <p className="text-sm text-blue-700 mt-1">
+                  Active users, page views, conversions, and revenue data
+                </p>
+                <div className="text-xs text-blue-600 mt-2">
+                  Last updated: {new Date().toLocaleString()}
                 </div>
               </div>
-            )}
-            
-            <div>
-              <Label>Export Format</Label>
-              <Select value={format} onValueChange={setFormat}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select format" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="pdf">PDF Document</SelectItem>
-                  <SelectItem value="excel">Excel Spreadsheet</SelectItem>
-                  <SelectItem value="csv">CSV File</SelectItem>
-                  <SelectItem value="json">JSON Data</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="save-template" 
-                checked={saveAsTemplate} 
-                onCheckedChange={(checked) => setSaveAsTemplate(checked === true)} 
-              />
-              <Label htmlFor="save-template">Save as report template</Label>
-            </div>
-          </div>
-          
-          <div>
-            <Label className="mb-2 block">Select Metrics</Label>
-            <div className="border rounded-md p-3 space-y-2 max-h-64 overflow-y-auto">
-              {metricOptions.map((metric) => (
-                <div className="flex items-center space-x-2" key={metric.value}>
-                  <Checkbox 
-                    id={`metric-${metric.value}`} 
-                    checked={selectedMetrics.includes(metric.value)} 
-                    onCheckedChange={() => handleMetricToggle(metric.value)} 
-                  />
-                  <Label htmlFor={`metric-${metric.value}`}>{metric.label}</Label>
+
+              <div className="p-3 bg-green-50 rounded-lg">
+                <h4 className="font-medium text-green-900">Trend Analysis</h4>
+                <p className="text-sm text-green-700 mt-1">
+                  {analyticsData.timeFrameData.length} trend metrics with comparative analysis
+                </p>
+                <div className="text-xs text-green-600 mt-2">
+                  7-day comparison period
                 </div>
-              ))}
+              </div>
+
+              <div className="p-3 bg-purple-50 rounded-lg">
+                <h4 className="font-medium text-purple-900">Event Analytics</h4>
+                <p className="text-sm text-purple-700 mt-1">
+                  Attendee data, check-ins, and conversion metrics
+                </p>
+                <div className="text-xs text-purple-600 mt-2">
+                  {analyticsData.eventAnalytics.totalAttendees} total attendees
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-        
-        <Separator />
-        
-        <div className="flex justify-end gap-2">
-          <Button variant="outline" disabled={isGenerating}>
-            <Eye className="mr-2 h-4 w-4" />
-            Preview
-          </Button>
-          <Button variant="outline" disabled={isGenerating}>
-            <Save className="mr-2 h-4 w-4" />
-            Save
-          </Button>
-          <Button onClick={handleGenerateReport} disabled={isGenerating}>
-            {isGenerating ? (
-              <>Generating...</>
-            ) : (
-              <>
-                <Download className="mr-2 h-4 w-4" />
-                Generate Report
-              </>
-            )}
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+
+            {/* Summary */}
+            <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+              <h4 className="font-medium mb-2">Report Summary</h4>
+              <p className="text-sm text-gray-600">
+                {generateReportSummary()}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 };
 
