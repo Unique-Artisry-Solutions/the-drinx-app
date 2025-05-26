@@ -61,8 +61,11 @@ export function useOptimizedRealTimeAnalytics(
       setIsLoading(true);
       setError(null);
 
+      console.log('Loading analytics data...');
+
+      // Load all data in parallel with proper error handling
       const [
-        metricsData,
+        metricsResult,
         timeFrameResult,
         chartResult,
         eventAnalyticsResult
@@ -70,45 +73,64 @@ export function useOptimizedRealTimeAnalytics(
         getOptimizedRealTimeMetrics(),
         getOptimizedAnalyticsTimeFrameData(7),
         getOptimizedChartData(30),
-        getOptimizedEventAnalyticsData(eventId)
+        eventId ? getOptimizedEventAnalyticsData(eventId) : Promise.resolve({
+          totalAttendees: 0,
+          checkedInAttendees: 0,
+          revenue: 0,
+          conversionRate: 0
+        })
       ]);
 
       // Handle metrics
-      if (metricsData.status === 'fulfilled') {
-        setMetrics(metricsData.value);
+      if (metricsResult.status === 'fulfilled') {
+        setMetrics(metricsResult.value);
+        console.log('Metrics loaded:', metricsResult.value);
       } else {
-        console.error('Failed to load metrics:', metricsData.reason);
+        console.error('Failed to load metrics:', metricsResult.reason);
+        setError('Failed to load real-time metrics');
       }
 
       // Handle timeframe data
       if (timeFrameResult.status === 'fulfilled') {
         setTimeFrameData(timeFrameResult.value);
+        console.log('Timeframe data loaded:', timeFrameResult.value.length, 'items');
       } else {
         console.error('Failed to load timeframe data:', timeFrameResult.reason);
+        setTimeFrameData([]);
       }
 
       // Handle chart data
       if (chartResult.status === 'fulfilled') {
         setChartData(chartResult.value);
+        console.log('Chart data loaded:', chartResult.value.length, 'points');
       } else {
         console.error('Failed to load chart data:', chartResult.reason);
+        setChartData([]);
       }
 
       // Handle event analytics
       if (eventAnalyticsResult.status === 'fulfilled') {
         setEventAnalytics(eventAnalyticsResult.value);
+        console.log('Event analytics loaded:', eventAnalyticsResult.value);
       } else {
         console.error('Failed to load event analytics:', eventAnalyticsResult.reason);
+        setEventAnalytics({
+          totalAttendees: 0,
+          checkedInAttendees: 0,
+          revenue: 0,
+          conversionRate: 0
+        });
       }
 
-      // Set error only if all requests failed
-      const failedRequests = [metricsData, timeFrameResult, chartResult, eventAnalyticsResult]
+      // Only set error if all critical requests failed
+      const failedRequests = [metricsResult, timeFrameResult, chartResult, eventAnalyticsResult]
         .filter(result => result.status === 'rejected');
       
       if (failedRequests.length === 4) {
         setError('Failed to load analytics data. Please try again.');
-      } else if (failedRequests.length > 0) {
-        setError(`Some analytics data failed to load (${failedRequests.length}/4 requests failed)`);
+      } else if (failedRequests.length > 0 && metricsResult.status === 'rejected') {
+        // Only show error if metrics (the most important) failed
+        setError('Some analytics data may be incomplete');
       }
 
     } catch (err) {
@@ -120,11 +142,13 @@ export function useOptimizedRealTimeAnalytics(
   }, [eventId]);
 
   const refresh = useCallback(async () => {
+    console.log('Refreshing analytics data...');
     await loadData();
   }, [loadData]);
 
   const refreshMaterializedViews = useCallback(async () => {
     try {
+      console.log('Refreshing materialized views...');
       await refreshAnalyticsMaterializedViews();
       console.log('Materialized views refreshed successfully');
       // Reload data after refreshing views
@@ -135,17 +159,24 @@ export function useOptimizedRealTimeAnalytics(
     }
   }, [loadData]);
 
+  // Initial data load
   useEffect(() => {
+    console.log('useOptimizedRealTimeAnalytics: Initial data load');
     loadData();
   }, [loadData]);
 
+  // Real-time subscription
   useEffect(() => {
-    if (!enableRealTime) return;
+    if (!enableRealTime) {
+      console.log('Real-time updates disabled');
+      return;
+    }
 
     console.log('Setting up optimized real-time analytics subscription');
     
     const cleanup = subscribeToOptimizedRealTimeAnalytics(
       (newMetrics) => {
+        console.log('Real-time metrics update:', newMetrics);
         setMetrics(newMetrics);
         setError(null); // Clear error on successful update
       },
@@ -155,11 +186,20 @@ export function useOptimizedRealTimeAnalytics(
       }
     );
 
-    return cleanup;
+    return () => {
+      console.log('Cleaning up real-time analytics subscription');
+      cleanup();
+    };
   }, [enableRealTime]);
 
+  // Periodic refresh for non-real-time data
   useEffect(() => {
-    // Set up periodic refresh for non-real-time data
+    if (refreshInterval <= 0) {
+      return;
+    }
+
+    console.log(`Setting up periodic refresh every ${refreshInterval}ms`);
+    
     const interval = setInterval(() => {
       console.log('Periodic refresh of timeframe and chart data');
       Promise.allSettled([
@@ -170,7 +210,10 @@ export function useOptimizedRealTimeAnalytics(
       });
     }, refreshInterval);
 
-    return () => clearInterval(interval);
+    return () => {
+      console.log('Cleaning up periodic refresh interval');
+      clearInterval(interval);
+    };
   }, [refreshInterval]);
 
   return {
