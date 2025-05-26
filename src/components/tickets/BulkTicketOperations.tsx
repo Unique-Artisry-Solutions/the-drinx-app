@@ -2,29 +2,21 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 import { useTicketManagement } from '@/hooks/useTicketManagement';
-import { TicketPurchase } from '@/types/TicketManagementTypes';
-import { Users, FileText, CreditCard, XCircle } from 'lucide-react';
+import { TicketPurchase, BulkTicketOperation } from '@/types/TicketManagementTypes';
+import { Package, Users, Send, RefreshCw, AlertTriangle } from 'lucide-react';
 
 interface BulkTicketOperationsProps {
   tickets: TicketPurchase[];
 }
 
 const BulkTicketOperations: React.FC<BulkTicketOperationsProps> = ({ tickets }) => {
-  const { 
-    selectedTickets, 
-    setSelectedTickets, 
-    performBulkOperation, 
-    isBulkOperating 
-  } = useTicketManagement();
-  
-  const [operation, setOperation] = useState<string>('');
-  const [operationParams, setOperationParams] = useState<any>({});
+  const { selectedTickets, setSelectedTickets, performBulkOperation, isBulkOperating } = useTicketManagement();
+  const [selectedOperation, setSelectedOperation] = useState<string>('');
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
@@ -43,161 +35,213 @@ const BulkTicketOperations: React.FC<BulkTicketOperationsProps> = ({ tickets }) 
   };
 
   const handleBulkOperation = () => {
-    if (!operation || selectedTickets.length === 0) return;
+    if (!selectedOperation || selectedTickets.length === 0) return;
 
-    performBulkOperation({
-      operation: operation as any,
+    const operation: BulkTicketOperation = {
+      operation: selectedOperation as any,
       ticket_ids: selectedTickets,
-      parameters: operationParams
+      parameters: {}
+    };
+
+    performBulkOperation(operation, {
+      onSuccess: () => {
+        setSelectedTickets([]);
+        setSelectedOperation('');
+      }
     });
   };
 
-  const renderOperationParams = () => {
-    switch (operation) {
-      case 'transfer':
-        return (
-          <div className="space-y-2">
-            <Label htmlFor="bulk-email">Recipient Email</Label>
-            <Input
-              id="bulk-email"
-              type="email"
-              placeholder="Enter email address"
-              value={operationParams.to_email || ''}
-              onChange={(e) => setOperationParams({ ...operationParams, to_email: e.target.value })}
-            />
-          </div>
-        );
-      
-      case 'refund':
-        return (
-          <div className="space-y-2">
-            <Label htmlFor="bulk-reason">Refund Reason</Label>
-            <Textarea
-              id="bulk-reason"
-              placeholder="Enter reason for bulk refund..."
-              value={operationParams.reason || ''}
-              onChange={(e) => setOperationParams({ ...operationParams, reason: e.target.value })}
-            />
-          </div>
-        );
-      
-      case 'update_status':
-        return (
-          <div className="space-y-2">
-            <Label htmlFor="bulk-status">New Status</Label>
-            <Select 
-              value={operationParams.status || ''} 
-              onValueChange={(value) => setOperationParams({ ...operationParams, status: value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
-                <SelectItem value="refunded">Refunded</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        );
-      
-      default:
-        return null;
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'completed': return 'default';
+      case 'pending': return 'secondary';
+      case 'failed': return 'destructive';
+      case 'refunded': return 'outline';
+      default: return 'secondary';
     }
   };
 
-  const getOperationIcon = (op: string) => {
-    switch (op) {
-      case 'transfer': return <Users className="h-4 w-4" />;
-      case 'refund': return <CreditCard className="h-4 w-4" />;
-      case 'cancel': return <XCircle className="h-4 w-4" />;
-      case 'update_status': return <FileText className="h-4 w-4" />;
-      default: return null;
+  const getOperationIcon = (operation: string) => {
+    switch (operation) {
+      case 'transfer': return <Send className="h-4 w-4" />;
+      case 'refund': return <RefreshCw className="h-4 w-4" />;
+      case 'cancel': return <AlertTriangle className="h-4 w-4" />;
+      default: return <Package className="h-4 w-4" />;
     }
   };
+
+  const canPerformOperation = (operation: string, ticket: TicketPurchase) => {
+    switch (operation) {
+      case 'transfer':
+      case 'refund':
+        return ticket.payment_status === 'completed';
+      case 'cancel':
+        return ticket.payment_status === 'pending' || ticket.payment_status === 'completed';
+      case 'update_status':
+        return true;
+      default:
+        return false;
+    }
+  };
+
+  const eligibleTickets = selectedOperation 
+    ? tickets.filter(ticket => canPerformOperation(selectedOperation, ticket))
+    : tickets;
 
   return (
     <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold">Bulk Ticket Operations</h2>
+        <p className="text-muted-foreground">
+          Select multiple tickets to perform bulk operations
+        </p>
+      </div>
+
       <Card>
         <CardHeader>
-          <CardTitle>Bulk Operations</CardTitle>
+          <CardTitle className="flex items-center">
+            <Users className="h-5 w-5 mr-2" />
+            Operation Controls
+          </CardTitle>
           <CardDescription>
-            Perform operations on multiple tickets at once
+            Choose an operation and select tickets to perform bulk actions
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="select-all"
-              checked={selectedTickets.length === tickets.length && tickets.length > 0}
-              onCheckedChange={handleSelectAll}
-            />
-            <Label htmlFor="select-all">
-              Select All ({selectedTickets.length} of {tickets.length} selected)
-            </Label>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="operation">Operation</Label>
-            <Select value={operation} onValueChange={setOperation}>
-              <SelectTrigger>
+          <div className="flex items-center gap-4">
+            <Select value={selectedOperation} onValueChange={setSelectedOperation}>
+              <SelectTrigger className="w-48">
                 <SelectValue placeholder="Select operation" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="transfer">Transfer Tickets</SelectItem>
-                <SelectItem value="refund">Request Refunds</SelectItem>
-                <SelectItem value="cancel">Cancel Tickets</SelectItem>
-                <SelectItem value="update_status">Update Status</SelectItem>
+                <SelectItem value="transfer">
+                  <div className="flex items-center">
+                    <Send className="h-4 w-4 mr-2" />
+                    Transfer Tickets
+                  </div>
+                </SelectItem>
+                <SelectItem value="refund">
+                  <div className="flex items-center">
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Request Refunds
+                  </div>
+                </SelectItem>
+                <SelectItem value="cancel">
+                  <div className="flex items-center">
+                    <AlertTriangle className="h-4 w-4 mr-2" />
+                    Cancel Tickets
+                  </div>
+                </SelectItem>
+                <SelectItem value="update_status">
+                  <div className="flex items-center">
+                    <Package className="h-4 w-4 mr-2" />
+                    Update Status
+                  </div>
+                </SelectItem>
               </SelectContent>
             </Select>
+
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="select-all"
+                checked={selectedTickets.length === eligibleTickets.length && eligibleTickets.length > 0}
+                onCheckedChange={handleSelectAll}
+              />
+              <label htmlFor="select-all" className="text-sm">
+                Select All ({eligibleTickets.length})
+              </label>
+            </div>
+
+            <Badge variant="outline">
+              {selectedTickets.length} selected
+            </Badge>
           </div>
 
-          {renderOperationParams()}
-
-          <Button
-            onClick={handleBulkOperation}
-            disabled={!operation || selectedTickets.length === 0 || isBulkOperating}
-            className="w-full"
-          >
-            {isBulkOperating ? (
-              'Processing...'
-            ) : (
-              <>
-                {getOperationIcon(operation)}
-                <span className="ml-2">
-                  Apply to {selectedTickets.length} ticket{selectedTickets.length !== 1 ? 's' : ''}
-                </span>
-              </>
-            )}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={handleBulkOperation}
+              disabled={!selectedOperation || selectedTickets.length === 0 || isBulkOperating}
+            >
+              {isBulkOperating ? (
+                'Processing...'
+              ) : (
+                <>
+                  {selectedOperation && getOperationIcon(selectedOperation)}
+                  <span className="ml-2">
+                    Execute on {selectedTickets.length} ticket{selectedTickets.length !== 1 ? 's' : ''}
+                  </span>
+                </>
+              )}
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
-      <div className="space-y-2">
-        {tickets.map((ticket) => (
-          <div 
-            key={ticket.id}
-            className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50"
-          >
-            <Checkbox
-              checked={selectedTickets.includes(ticket.id)}
-              onCheckedChange={(checked) => handleSelectTicket(ticket.id, checked as boolean)}
-            />
-            <div className="flex-1">
-              <div className="flex items-center justify-between">
-                <h4 className="font-medium">{ticket.purchase_details?.item_name || 'Event Ticket'}</h4>
-                <span className="text-sm text-muted-foreground">
-                  ${ticket.total_amount.toFixed(2)}
-                </span>
+      <Card>
+        <CardHeader>
+          <CardTitle>Ticket List</CardTitle>
+          <CardDescription>
+            {selectedOperation ? 
+              `Showing ${eligibleTickets.length} tickets eligible for ${selectedOperation}` :
+              `Showing all ${tickets.length} tickets`
+            }
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {eligibleTickets.map((ticket) => (
+              <div
+                key={ticket.id}
+                className={`flex items-center justify-between p-4 border rounded-lg transition-colors ${
+                  selectedTickets.includes(ticket.id) ? 'bg-blue-50 border-blue-200' : 'hover:bg-gray-50'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <Checkbox
+                    checked={selectedTickets.includes(ticket.id)}
+                    onCheckedChange={(checked) => handleSelectTicket(ticket.id, checked as boolean)}
+                  />
+                  
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-medium">
+                        {ticket.purchase_details?.item_name || 'Event Ticket'}
+                      </h4>
+                      <Badge variant={getStatusColor(ticket.payment_status) as any}>
+                        {ticket.payment_status}
+                      </Badge>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {ticket.contact_name} • {ticket.contact_email}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      Qty: {ticket.quantity} • ${ticket.total_amount.toFixed(2)} • 
+                      {ticket.ticket_code && ` Code: ${ticket.ticket_code}`}
+                    </div>
+                  </div>
+                </div>
+
+                {selectedOperation && !canPerformOperation(selectedOperation, ticket) && (
+                  <Badge variant="secondary" className="text-xs">
+                    Not Eligible
+                  </Badge>
+                )}
               </div>
-              <div className="text-sm text-muted-foreground">
-                {ticket.contact_name} • {ticket.contact_email} • {ticket.payment_status}
+            ))}
+
+            {eligibleTickets.length === 0 && (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">
+                  {selectedOperation ? 
+                    `No tickets eligible for ${selectedOperation}` : 
+                    'No tickets found'
+                  }
+                </p>
               </div>
-            </div>
+            )}
           </div>
-        ))}
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
