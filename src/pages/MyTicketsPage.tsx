@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth/AuthProvider';
 import { supabase } from '@/lib/supabase';
 import Layout from '@/components/Layout';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -9,28 +9,30 @@ import { Button } from '@/components/ui/button';
 import { Calendar, MapPin, QrCode, Download, Mail } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-interface TicketPurchase {
+interface EventTicket {
   id: string;
-  ticket_type: string;
-  quantity: number;
-  price_per_ticket: number;
-  total_amount: number;
-  payment_status: string;
-  contact_name: string;
-  contact_email: string;
-  created_at: string;
-  purchase_details: {
-    item_name: string;
-    date?: string;
-    time?: string;
-    venue?: string;
+  event: {
+    id: string;
+    name: string;
+    date: string;
+    time: string;
+    venue?: {
+      name: string;
+    };
   };
+  ticket_type: {
+    name: string;
+    price: number;
+  };
+  purchase_date: string;
+  status: string;
+  ticket_code: string;
 }
 
 const MyTicketsPage: React.FC = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [tickets, setTickets] = useState<TicketPurchase[]>([]);
+  const [tickets, setTickets] = useState<EventTicket[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -43,10 +45,28 @@ const MyTicketsPage: React.FC = () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('ticket_purchases')
-        .select('*')
+        .from('event_attendees')
+        .select(`
+          id,
+          purchase_date,
+          status,
+          ticket_code,
+          event:event_id (
+            id,
+            name,
+            date,
+            time,
+            venue:venue_id (
+              name
+            )
+          ),
+          ticket_type:ticket_type_id (
+            name,
+            price
+          )
+        `)
         .eq('user_id', user?.id)
-        .order('created_at', { ascending: false });
+        .order('purchase_date', { ascending: false });
 
       if (error) {
         throw error;
@@ -66,27 +86,23 @@ const MyTicketsPage: React.FC = () => {
   };
 
   const generateQRCode = (ticketId: string) => {
-    // This would typically generate a QR code
-    // For now, we'll just show the ticket ID
     toast({
       title: "QR Code",
       description: `Ticket ID: ${ticketId}`,
     });
   };
 
-  const downloadTicket = (ticket: TicketPurchase) => {
-    // This would generate and download a PDF ticket
+  const downloadTicket = (ticket: EventTicket) => {
     toast({
       title: "Download started",
       description: "Your ticket is being prepared for download.",
     });
   };
 
-  const resendConfirmation = (ticket: TicketPurchase) => {
-    // This would resend the confirmation email
+  const resendConfirmation = (ticket: EventTicket) => {
     toast({
       title: "Email sent",
-      description: `Confirmation resent to ${ticket.contact_email}`,
+      description: `Confirmation resent to your email`,
     });
   };
 
@@ -137,15 +153,15 @@ const MyTicketsPage: React.FC = () => {
                 <CardHeader>
                   <div className="flex justify-between items-start">
                     <div>
-                      <CardTitle>{ticket.purchase_details.item_name}</CardTitle>
+                      <CardTitle>{ticket.event.name}</CardTitle>
                       <p className="text-gray-600">
-                        Purchased on {new Date(ticket.created_at).toLocaleDateString()}
+                        Purchased on {new Date(ticket.purchase_date).toLocaleDateString()}
                       </p>
                     </div>
                     <Badge 
-                      variant={ticket.payment_status === 'completed' ? 'default' : 'secondary'}
+                      variant={ticket.status === 'confirmed' ? 'default' : 'secondary'}
                     >
-                      {ticket.payment_status}
+                      {ticket.status}
                     </Badge>
                   </div>
                 </CardHeader>
@@ -156,35 +172,27 @@ const MyTicketsPage: React.FC = () => {
                       <div>
                         <p className="font-medium">Ticket Details</p>
                         <p className="text-sm text-gray-600">
-                          {ticket.quantity} × {ticket.ticket_type} ticket{ticket.quantity > 1 ? 's' : ''}
+                          {ticket.ticket_type.name} ticket
                         </p>
                         <p className="text-sm text-gray-600">
-                          ${ticket.price_per_ticket} each (Total: ${ticket.total_amount})
+                          ${ticket.ticket_type.price}
                         </p>
                       </div>
 
-                      {ticket.purchase_details.date && (
-                        <div className="flex items-center gap-2 text-sm">
-                          <Calendar className="h-4 w-4 text-gray-500" />
-                          <span>{ticket.purchase_details.date} at {ticket.purchase_details.time}</span>
-                        </div>
-                      )}
+                      <div className="flex items-center gap-2 text-sm">
+                        <Calendar className="h-4 w-4 text-gray-500" />
+                        <span>{ticket.event.date} at {ticket.event.time}</span>
+                      </div>
 
-                      {ticket.purchase_details.venue && (
+                      {ticket.event.venue && (
                         <div className="flex items-center gap-2 text-sm">
                           <MapPin className="h-4 w-4 text-gray-500" />
-                          <span>{ticket.purchase_details.venue}</span>
+                          <span>{ticket.event.venue.name}</span>
                         </div>
                       )}
                     </div>
 
                     <div className="space-y-3">
-                      <div>
-                        <p className="font-medium">Contact Information</p>
-                        <p className="text-sm text-gray-600">{ticket.contact_name}</p>
-                        <p className="text-sm text-gray-600">{ticket.contact_email}</p>
-                      </div>
-
                       <div className="flex flex-wrap gap-2">
                         <Button
                           size="sm"
