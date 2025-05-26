@@ -17,6 +17,8 @@ import { useLocation } from 'react-router-dom';
 const EventScannerPage = React.lazy(() => import('@/pages/events/EventScannerPage'));
 const EventDetailPage = React.lazy(() => import('@/pages/EventDetailPage'));
 const BarCrawlDetail = React.lazy(() => import('@/pages/BarCrawlDetail'));
+const CheckoutPage = React.lazy(() => import('@/pages/CheckoutPage'));
+const PurchaseSuccessPage = React.lazy(() => import('@/pages/PurchaseSuccessPage'));
 
 const AppRoutes = () => {
   useNavigationTracking();
@@ -35,6 +37,25 @@ const AppRoutes = () => {
           {individualRoutes.map((route) => (
             <Route key={route.path} path={route.path} element={route.element} />
           ))}
+
+          {/* Checkout Routes */}
+          <Route 
+            path="/checkout" 
+            element={
+              <PageSuspense fallback={<Skeleton className="h-screen w-full" />}>
+                <CheckoutPage />
+              </PageSuspense>
+            } 
+          />
+          
+          <Route 
+            path="/purchase-success" 
+            element={
+              <PageSuspense fallback={<Skeleton className="h-screen w-full" />}>
+                <PurchaseSuccessPage />
+              </PageSuspense>
+            } 
+          />
 
           {/* Special Routes */}
           <Route 
