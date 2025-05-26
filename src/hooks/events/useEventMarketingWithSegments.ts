@@ -1,9 +1,10 @@
-
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { EventMarketingCampaign } from '@/types/EventTypes';
 import * as eventMarketingService from '@/services/eventMarketingService';
+import * as campaignService from '@/services/campaignService';
+import * as analyticsService from '@/services/analyticsService';
 
 // Define audience segment interface
 interface AudienceSegment {
@@ -24,7 +25,7 @@ export const useEventMarketingWithSegments = (eventId: string) => {
   const [notificationTitle, setNotificationTitle] = useState('');
   const [notificationContent, setNotificationContent] = useState('');
 
-  // Fetch campaigns
+  // Fetch campaigns with real-time updates
   const { 
     data: campaigns = [], 
     isLoading: campaignsLoading,
@@ -32,10 +33,11 @@ export const useEventMarketingWithSegments = (eventId: string) => {
   } = useQuery({
     queryKey: ['eventCampaigns', eventId],
     queryFn: () => eventMarketingService.fetchEventCampaigns(eventId),
-    enabled: !!eventId
+    enabled: !!eventId,
+    refetchInterval: 30000 // Refresh every 30 seconds for real-time feel
   });
 
-  // Fetch segments
+  // Fetch segments (keeping mock data for now)
   const { 
     data: segments = [], 
     isLoading: segmentsLoading 
@@ -62,7 +64,14 @@ export const useEventMarketingWithSegments = (eventId: string) => {
     }
   });
 
-  // Create campaign mutation
+  // Fetch real-time analytics
+  const { data: realtimeAnalytics } = useQuery({
+    queryKey: ['realtimeAnalytics'],
+    queryFn: () => analyticsService.getRealtimeAnalytics(),
+    refetchInterval: 5000 // Refresh every 5 seconds
+  });
+
+  // Create campaign mutation with proper data connection
   const createCampaignMutation = useMutation({
     mutationFn: (name: string) => eventMarketingService.createMarketingCampaign({
       event_id: eventId,
@@ -73,6 +82,7 @@ export const useEventMarketingWithSegments = (eventId: string) => {
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['eventCampaigns', eventId] });
+      queryClient.invalidateQueries({ queryKey: ['realtimeAnalytics'] });
       setCampaignName('');
       toast({
         title: "Campaign created",
@@ -118,9 +128,9 @@ export const useEventMarketingWithSegments = (eventId: string) => {
     }
   });
 
-  // Create segment notification mutation
+  // Enhanced segment notification mutation with metrics tracking
   const createSegmentNotificationMutation = useMutation({
-    mutationFn: ({
+    mutationFn: async ({
       campaignId,
       segmentId,
       title,
@@ -132,14 +142,26 @@ export const useEventMarketingWithSegments = (eventId: string) => {
       title: string;
       content: string;
       priority?: 'low' | 'medium' | 'high';
-    }) => eventMarketingService.createSegmentBasedNotification(
-      campaignId,
-      segmentId,
-      { title, content, priority }
-    ),
+    }) => {
+      const result = await eventMarketingService.createSegmentBasedNotification(
+        campaignId,
+        segmentId,
+        { title, content, priority }
+      );
+      
+      // Update metrics in real-time
+      await eventMarketingService.updateCampaignMetrics(campaignId, {
+        emails_sent: 1,
+        impressions: 10 // Estimated impressions per email
+      });
+      
+      return result;
+    },
     onSuccess: () => {
       setNotificationTitle('');
       setNotificationContent('');
+      queryClient.invalidateQueries({ queryKey: ['eventCampaigns', eventId] });
+      queryClient.invalidateQueries({ queryKey: ['realtimeAnalytics'] });
       toast({
         title: "Notification sent",
         description: "Segment notification has been sent successfully.",
@@ -214,6 +236,9 @@ export const useEventMarketingWithSegments = (eventId: string) => {
     // Error state
     error: campaignsError ? (campaignsError as Error).message : null,
     
+    // Real-time analytics data
+    realtimeAnalytics,
+    
     // Form state
     campaignName,
     setCampaignName,
@@ -228,6 +253,13 @@ export const useEventMarketingWithSegments = (eventId: string) => {
     createCampaign,
     createSegment,
     createSegmentNotification,
+    
+    // Enhanced analytics functions
+    getCampaignMetrics: (campaignId: string) => 
+      campaignService.getCampaignMetrics(campaignId),
+    
+    updateCampaignMetrics: (campaignId: string, metrics: Partial<campaignService.CampaignMetrics>) =>
+      campaignService.updateCampaignMetrics(campaignId, metrics),
     
     // Mutations for advanced usage
     createCampaignMutation,
